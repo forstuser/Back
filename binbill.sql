@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: 127.0.0.1
--- Generation Time: Aug 02, 2017 at 03:56 PM
+-- Generation Time: Aug 03, 2017 at 04:07 PM
 -- Server version: 5.6.17
 -- PHP Version: 5.5.12
 
@@ -19,6 +19,59 @@ SET time_zone = "+00:00";
 --
 -- Database: `binbill`
 --
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `table_brands`
+--
+
+CREATE TABLE IF NOT EXISTS `table_brands` (
+  `brand_id` int(11) NOT NULL AUTO_INCREMENT,
+  `brand_name` varchar(200) NOT NULL,
+  `brand_description` text NOT NULL,
+  `created_on` datetime NOT NULL,
+  `updated_on` datetime NOT NULL,
+  `updated_by_user_id` int(11) NOT NULL,
+  `status_id` int(11) NOT NULL,
+  PRIMARY KEY (`brand_id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=5 ;
+
+--
+-- Dumping data for table `table_brands`
+--
+
+INSERT INTO `table_brands` (`brand_id`, `brand_name`, `brand_description`, `created_on`, `updated_on`, `updated_by_user_id`, `status_id`) VALUES
+(1, 'Test', '', '2017-08-03 14:57:35', '2017-08-03 16:17:30', 1, 1),
+(2, 'Testdsf', '', '2017-08-03 14:57:42', '2017-08-03 17:40:20', 1, 3),
+(3, 'Test2', 'sdfsf', '2017-08-03 15:10:25', '2017-08-03 17:40:39', 1, 3),
+(4, 'Test3', 'sdfsf', '2017-08-03 15:10:53', '2017-08-03 15:10:53', 1, 1);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `table_brand_details`
+--
+
+CREATE TABLE IF NOT EXISTS `table_brand_details` (
+  `brand_detail_id` int(11) NOT NULL AUTO_INCREMENT,
+  `brand_id` int(11) NOT NULL,
+  `contactdetails_type_id` int(11) NOT NULL,
+  `display_name` varchar(100) NOT NULL,
+  `details` varchar(255) NOT NULL,
+  `status_id` int(11) NOT NULL,
+  PRIMARY KEY (`brand_detail_id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=5 ;
+
+--
+-- Dumping data for table `table_brand_details`
+--
+
+INSERT INTO `table_brand_details` (`brand_detail_id`, `brand_id`, `contactdetails_type_id`, `display_name`, `details`, `status_id`) VALUES
+(1, 1, 1, 'Suport', 'fsdfsdf', 1),
+(2, 2, 3, 'Suport', '3333', 1),
+(3, 2, 2, 'Suport', 'dfdf', 3),
+(4, 2, 1, 'Suport', 'fsdfsdf', 1);
 
 -- --------------------------------------------------------
 
@@ -52,6 +105,27 @@ INSERT INTO `table_categories` (`category_id`, `category_name`, `display_id`, `r
 (6, 'Test5', NULL, 1, 2, '2017-08-01 19:01:54', '2017-08-02 18:18:54', 1, 3),
 (7, 'Test6', NULL, 1, 2, '2017-08-01 19:03:56', '2017-08-02 18:18:54', 1, 3),
 (8, 'Test6', NULL, 4, 3, '2017-08-02 18:02:37', '2017-08-02 18:18:54', 1, 3);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `table_contactdetails_type`
+--
+
+CREATE TABLE IF NOT EXISTS `table_contactdetails_type` (
+  `contactdetails_type_id` int(11) NOT NULL AUTO_INCREMENT,
+  `contactdetails_type_name` varchar(100) NOT NULL,
+  PRIMARY KEY (`contactdetails_type_id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=4 ;
+
+--
+-- Dumping data for table `table_contactdetails_type`
+--
+
+INSERT INTO `table_contactdetails_type` (`contactdetails_type_id`, `contactdetails_type_name`) VALUES
+(1, 'URL'),
+(2, 'Email-ID'),
+(3, 'Phone Number');
 
 -- --------------------------------------------------------
 
@@ -106,7 +180,7 @@ CREATE TABLE IF NOT EXISTS `table_token` (
 --
 
 INSERT INTO `table_token` (`id`, `token_id`, `user_id`, `created_on`, `expiry_on`) VALUES
-(1, '72L0ddzozUeHZhkNYQFNlnIbu', 1, '2017-08-01 16:09:40', '2017-08-01 16:09:40');
+(1, 'Fx0MRTsuObGfsF0XAo8UIzoEg', 1, '2017-08-01 16:09:40', '2017-08-01 16:09:40');
 
 -- --------------------------------------------------------
 
@@ -145,7 +219,7 @@ CREATE TABLE IF NOT EXISTS `table_users` (
 --
 
 INSERT INTO `table_users` (`user_id`, `user_type_id`, `fullname`, `gmail_id`, `facebook_id`, `email_id`, `mobile_no`, `password`, `tmp_password`, `location`, `latitude`, `longitude`, `image`, `os_type_id`, `gcm_id`, `device_id`, `device_model`, `apk_version`, `created_on`, `updated_on`, `last_login`, `status_id`) VALUES
-(1, 1, 'SuperAdmin', '', '', 'superadmin@binbill.com', '', '51bd42b3493de035a325ae9b7c3f14e1', 'SuperAdmin@123', '', '', '', '', 0, '', '', '', '', '0000-00-00 00:00:00', '0000-00-00 00:00:00', '0000-00-00 00:00:00', 1),
+(1, 1, 'SuperAdmin', '', '', 'superadmin@binbill.com', '', '81dc9bdb52d04dc20036dbd8313ed055', '1234', '', '', '', '', 0, '', '', '', '', '0000-00-00 00:00:00', '0000-00-00 00:00:00', '0000-00-00 00:00:00', 1),
 (5, 2, 'Admin1', NULL, NULL, 'admin11@binbill.com', NULL, '289dff07669d7a23de0ef88d2f7129e7', '234', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2017-08-02 14:34:40', '2017-08-02 16:30:54', '0000-00-00 00:00:00', 1),
 (6, 2, 'Admin', NULL, NULL, 'admin1@binbill.com', NULL, '0e7517141fb53f21ee439b355b5a1d0a', 'Admin@123', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2017-08-02 15:38:16', '2017-08-02 16:51:59', '0000-00-00 00:00:00', 3);
 
