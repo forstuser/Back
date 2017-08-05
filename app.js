@@ -1529,7 +1529,7 @@ server.route({
             if (error) throw error;
             if(token.length > 0){
                 var UserID = token[0]['id'];
-                connection.query('SELECT color_id as ID,color_name as Name FROM table_color WHERE status_id=1', function (error, color, fields) {
+                connection.query('SELECT color_id as ID,color_name as Name FROM table_color WHERE status_id=1 ORDER BY color_name', function (error, color, fields) {
                     if (error) throw error;
                     if(color.length > 0){
                         var data = '{"statusCode": 100,"ColorList": '+ JSON.stringify(color) +'}';
@@ -1556,10 +1556,10 @@ server.route({
         }
     }
 });
-//Add List Of Exclusions
+//Add Exclusions
 server.route({
     method: 'POST',
-    path: '/Services/ListOfExclusions',
+    path: '/Services/AddExclusions',
     handler: function (request, reply) {
         const TokenNo = request.payload.TokenNo;
         const CatID = request.payload.CatID;
@@ -1568,15 +1568,15 @@ server.route({
             if (error) throw error;
             if(token.length > 0){
                 var UserID = token[0]['id'];
-                connection.query('SELECT exclusions_id FROM table_list_of_exclusions WHERE exclusions_name = "' + Name + '" and category_id = "' + CatID + '" and status_id=1', function (error, category, fields) {
+                connection.query('SELECT exclusions_id FROM table_list_of_exclusions WHERE exclusions_name = "' + Name + '" and category_id = "' + CatID + '" and status_id=1', function (error, data, fields) {
                     if (error) throw error;
-                    if(category.length > 0){
+                    if(data.length > 0){
                         var data = '{"statusCode": 104,"error": "Data Exist","message": "Data Exist."}';
                         reply(data);
                     } else {
                         connection.query('INSERT INTO table_list_of_exclusions (category_id,exclusions_name,created_on,updated_on,updated_by_user_id,status_id) VALUES ("' + CatID + '","' + Name + '","' + getDateTime() + '","' + getDateTime() + '","' + UserID + '",1)', function (error, results, fields) {
                             if (error) throw error;
-                            var data = '{"statusCode": 100,"error": "","message": "Invalid Token."}';
+                            var data = '{"statusCode": 100,"error": "","message": "Data add successfully."}';
                             reply(data);
                         });
                     }
@@ -1593,6 +1593,332 @@ server.route({
                 TokenNo: Joi.string(),
                 Name: Joi.string(),
                 CatID: Joi.number().integer(),
+                output: 'data',
+                parse:true
+            }
+        }
+    }
+});
+//Edit Exclusions
+server.route({
+    method: 'POST',
+    path: '/Services/EditExclusions',
+    handler: function (request, reply) {
+        const TokenNo = request.payload.TokenNo;
+        const ID = request.payload.ID;
+        const Name = request.payload.Name;
+        const CatID = request.payload.CatID;
+        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+            if (error) throw error;
+            if(token.length > 0){
+                var UserID = token[0]['id'];
+                connection.query('SELECT exclusions_id FROM table_list_of_exclusions WHERE exclusions_name = "' + Name + '" and status_id=1 and exclusions_id!="'+ID+'" and category_id="'+CatID+'"', function (error, data, fields) {
+                    if (error) throw error;
+                    if(data.length > 0){
+                        var data = '{"statusCode": 104,"error": "Data Exist","message": "Data Exist."}';
+                        reply(data);
+                    } else {
+                        connection.query('UPDATE table_list_of_exclusions SET exclusions_name="' + Name + '",updated_on="' + getDateTime() + '",updated_by_user_id="' + UserID + '" WHERE exclusions_id="' + ID + '"', function (error, results, fields) {
+                            if (error) throw error;
+                            var data = '{"statusCode": 100,"error": "","message": "Data update successfully."}';
+                            reply(data);
+                        });
+                    }
+                });
+            } else {
+                var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+                reply(data);
+            }
+        });
+    },
+    config:{
+        validate: {
+            payload: {
+                TokenNo: Joi.string(),
+                Name: Joi.string(),
+                ID: Joi.number().integer(),
+                CatID: Joi.number().integer(),
+                output: 'data',
+                parse:true
+            }
+        }
+    }
+});
+
+//Delete Exclusions
+server.route({
+    method: 'POST',
+    path: '/Services/DeleteExclusions',
+    handler: function (request, reply) {
+        const TokenNo = request.payload.TokenNo;
+        const ID = request.payload.ID;
+        const Name = request.payload.Name;
+        const CatID = request.payload.CatID;
+        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+            if (error) throw error;
+            if(token.length > 0){
+                var UserID = token[0]['id'];
+                connection.query('UPDATE table_list_of_exclusions SET status_id=3,updated_on="' + getDateTime() + '",updated_by_user_id="' + UserID + '" WHERE exclusions_id="' + ID + '"', function (error, results, fields) {
+                    if (error) throw error;
+                    var data = '{"statusCode": 100,"error": "","message": "Data Delete successfully."}';
+                    reply(data);
+                });
+            } else {
+                var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+                reply(data);
+            }
+        });
+    },
+    config:{
+        validate: {
+            payload: {
+                TokenNo: Joi.string(),
+                Name: Joi.string(),
+                ID: Joi.number().integer(),
+                CatID: Joi.number().integer(),
+                output: 'data',
+                parse:true
+            }
+        }
+    }
+});
+
+//Exclusions List
+server.route({
+    method: 'POST',
+    path: '/Services/ExclusionsList',
+    handler: function (request, reply) {
+        const TokenNo = request.payload.TokenNo;
+        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+            if (error) throw error;
+            if(token.length > 0){
+                var UserID = token[0]['id'];
+                connection.query('SELECT e.exclusions_id as ID, e.category_id as CatID,c.category_name as CatName,e.exclusions_name as Name FROM table_list_of_exclusions as e left join table_categories as c on c.category_id=e.category_id WHERE e.status_id=1', function (error, results, fields) {
+                    if (error) throw error;
+                    var data = '{"statusCode": 100,"ExclusionsList": "'+JSON.stringify(results)+'"}';
+                    reply(data);
+                });
+            } else {
+                var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+                reply(data);
+            }
+        });
+    },
+    config:{
+        validate: {
+            payload: {
+                TokenNo: Joi.string(),
+                output: 'data',
+                parse:true
+            }
+        }
+    }
+});
+//Add Inclusions
+server.route({
+    method: 'POST',
+    path: '/Services/AddInclusions',
+    handler: function (request, reply) {
+        const TokenNo = request.payload.TokenNo;
+        const CatID = request.payload.CatID;
+        const Name = request.payload.Name;
+        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+            if (error) throw error;
+            if(token.length > 0){
+                var UserID = token[0]['id'];
+                connection.query('SELECT inclusions_id FROM table_list_of_inclusions WHERE inclusions_name = "' + Name + '" and category_id = "' + CatID + '" and status_id=1', function (error, data, fields) {
+                    if (error) throw error;
+                    if(data.length > 0){
+                        var data = '{"statusCode": 104,"error": "Data Exist","message": "Data Exist."}';
+                        reply(data);
+                    } else {
+                        connection.query('INSERT INTO table_list_of_inclusions (category_id,inclusions_name,created_on,updated_on,updated_by_user_id,status_id) VALUES ("' + CatID + '","' + Name + '","' + getDateTime() + '","' + getDateTime() + '","' + UserID + '",1)', function (error, results, fields) {
+                            if (error) throw error;
+                            var data = '{"statusCode": 100,"error": "","message": "Data add successfully."}';
+                            reply(data);
+                        });
+                    }
+                });
+            } else {
+                var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+                reply(data);
+            }
+        });
+    },
+    config:{
+        validate: {
+            payload: {
+                TokenNo: Joi.string(),
+                Name: Joi.string(),
+                CatID: Joi.number().integer(),
+                output: 'data',
+                parse:true
+            }
+        }
+    }
+});
+//Edit Inclusions
+server.route({
+    method: 'POST',
+    path: '/Services/EditInclusions',
+    handler: function (request, reply) {
+        const TokenNo = request.payload.TokenNo;
+        const ID = request.payload.ID;
+        const Name = request.payload.Name;
+        const CatID = request.payload.CatID;
+        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+            if (error) throw error;
+            if(token.length > 0){
+                var UserID = token[0]['id'];
+                connection.query('SELECT inclusions_id FROM table_list_of_inclusions WHERE inclusions_name = "' + Name + '" and status_id=1 and inclusions_id!="'+ID+'" and category_id="'+CatID+'"', function (error, data, fields) {
+                    if (error) throw error;
+                    if(data.length > 0){
+                        var data = '{"statusCode": 104,"error": "Data Exist","message": "Data Exist."}';
+                        reply(data);
+                    } else {
+                        connection.query('UPDATE table_list_of_inclusions SET inclusions_name="' + Name + '",updated_on="' + getDateTime() + '",updated_by_user_id="' + UserID + '" WHERE inclusions_id="' + ID + '"', function (error, results, fields) {
+                            if (error) throw error;
+                            var data = '{"statusCode": 100,"error": "","message": "Data update successfully."}';
+                            reply(data);
+                        });
+                    }
+                });
+            } else {
+                var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+                reply(data);
+            }
+        });
+    },
+    config:{
+        validate: {
+            payload: {
+                TokenNo: Joi.string(),
+                Name: Joi.string(),
+                ID: Joi.number().integer(),
+                CatID: Joi.number().integer(),
+                output: 'data',
+                parse:true
+            }
+        }
+    }
+});
+
+//Delete Inclusions
+server.route({
+    method: 'POST',
+    path: '/Services/DeleteInclusions',
+    handler: function (request, reply) {
+        const TokenNo = request.payload.TokenNo;
+        const ID = request.payload.ID;
+        const Name = request.payload.Name;
+        const CatID = request.payload.CatID;
+        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+            if (error) throw error;
+            if(token.length > 0){
+                var UserID = token[0]['id'];
+                connection.query('UPDATE table_list_of_inclusions SET status_id=3,updated_on="' + getDateTime() + '",updated_by_user_id="' + UserID + '" WHERE inclusions_id="' + ID + '"', function (error, results, fields) {
+                    if (error) throw error;
+                    var data = '{"statusCode": 100,"error": "","message": "Data Delete successfully."}';
+                    reply(data);
+                });
+            } else {
+                var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+                reply(data);
+            }
+        });
+    },
+    config:{
+        validate: {
+            payload: {
+                TokenNo: Joi.string(),
+                Name: Joi.string(),
+                ID: Joi.number().integer(),
+                CatID: Joi.number().integer(),
+                output: 'data',
+                parse:true
+            }
+        }
+    }
+});
+//Inclusions List
+server.route({
+    method: 'POST',
+    path: '/Services/InclusionsList',
+    handler: function (request, reply) {
+        const TokenNo = request.payload.TokenNo;
+        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+            if (error) throw error;
+            if(token.length > 0){
+                var UserID = token[0]['id'];
+                connection.query('SELECT i.inclusions_id as ID, i.category_id as CatID,c.category_name as CatName,i.inclusions_name as Name FROM table_list_of_inclusions as i left join table_categories as c on c.category_id=i.category_id WHERE i.status_id=1', function (error, results, fields) {
+                    if (error) throw error;
+                    var data = '{"statusCode": 100,"InclusionsList": "'+JSON.stringify(results)+'"}';
+                    reply(data);
+                });
+            } else {
+                var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+                reply(data);
+            }
+        });
+    },
+    config:{
+        validate: {
+            payload: {
+                TokenNo: Joi.string(),
+                output: 'data',
+                parse:true
+            }
+        }
+    }
+});
+
+//Add Offline Seller
+server.route({
+    method: 'POST',
+    path: '/Services/AddOfflineSeller',
+    handler: function (request, reply) {
+        const TokenNo = request.payload.TokenNo;
+        const Details = request.payload.Details;
+        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+            if (error) throw error;
+            if(token.length > 0){
+                var UserID = token[0]['id'];
+                connection.query('INSERT INTO table_authorized_service_center (brand_id,center_name,address_house_no,address_block,address_street,address_sector,address_city,address_state,address_pin_code,address_nearby,lattitude,longitude,open_days,timings,status_id) VALUES ("'+request.payload.BrandID+'","'+request.payload.Name+'","'+request.payload.HouseNo+'","'+request.payload.Block+'","'+request.payload.Street+'","'+request.payload.Sector+'","'+request.payload.City+'","'+request.payload.State+'","'+request.payload.PinCode+'","'+request.payload.NearBy+'","'+request.payload.Lattitude+'","'+request.payload.Longitude+'","'+request.payload.OpenDays+'","'+request.payload.Timings+'",1)', function (error, results, fields) {
+                    if (error) throw error;
+                    for(var i = 0; i < Details.length; i++) {
+                        connection.query('INSERT INTO table_authorized_service_center_details (center_id,contactdetail_type_id,display_name,details,status_id) VALUES ("'+results['insertId']+'","'+Details[i].DetailTypeID+'","'+Details[i].DisplayName+'","'+Details[i].Details+'",1)', function (error, detail, fields) {
+                        });
+                    }
+                    var data = '{"statusCode": 100,"error": "","message": "Authorized service center add successfully."}';
+                    reply(data);
+                });
+
+            } else {
+                var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+                reply(data);
+            }
+        });
+    },
+    config:{
+        validate: {
+            payload: {
+                TokenNo: Joi.string(),
+                Name: Joi.string(),
+                OwnerName: Joi.allow(null),
+                GstinNo: Joi.allow(null),
+                PanNo: Joi.allow(null),
+                RegNo: Joi.allow(null),
+                HouseNo: Joi.allow(null),
+                Block: Joi.allow(null),
+                Street: Joi.allow(null),
+                Sector: Joi.allow(null),
+                City: Joi.string(),
+                State: Joi.string(),
+                PinCode: Joi.allow(null),
+                NearBy: Joi.allow(null),
+                Lattitude: Joi.allow(null),
+                Longitude: Joi.allow(null),
+                Details: Joi.array(),
                 output: 'data',
                 parse:true
             }

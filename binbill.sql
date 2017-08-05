@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: 127.0.0.1
--- Generation Time: Aug 03, 2017 at 04:07 PM
+-- Generation Time: Aug 05, 2017 at 03:15 PM
 -- Server version: 5.6.17
 -- PHP Version: 5.5.12
 
@@ -19,6 +19,67 @@ SET time_zone = "+00:00";
 --
 -- Database: `binbill`
 --
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `table_authorized_service_center`
+--
+
+CREATE TABLE IF NOT EXISTS `table_authorized_service_center` (
+  `center_id` int(11) NOT NULL AUTO_INCREMENT,
+  `brand_id` int(11) NOT NULL,
+  `center_name` varchar(200) NOT NULL,
+  `address_house_no` varchar(100) NOT NULL,
+  `address_block` varchar(100) NOT NULL,
+  `address_street` varchar(100) NOT NULL,
+  `address_sector` varchar(100) NOT NULL,
+  `address_city` varchar(100) NOT NULL,
+  `address_state` varchar(100) NOT NULL,
+  `address_pin_code` int(11) NOT NULL,
+  `address_nearby` varchar(200) NOT NULL,
+  `lattitude` varchar(255) NOT NULL,
+  `longitude` varchar(255) NOT NULL,
+  `open_days` varchar(255) NOT NULL,
+  `timings` varchar(255) NOT NULL,
+  `status_id` int(11) NOT NULL,
+  PRIMARY KEY (`center_id`),
+  KEY `brand_id` (`brand_id`,`status_id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=3 ;
+
+--
+-- Dumping data for table `table_authorized_service_center`
+--
+
+INSERT INTO `table_authorized_service_center` (`center_id`, `brand_id`, `center_name`, `address_house_no`, `address_block`, `address_street`, `address_sector`, `address_city`, `address_state`, `address_pin_code`, `address_nearby`, `lattitude`, `longitude`, `open_days`, `timings`, `status_id`) VALUES
+(1, 1, 'Testingxzvdsv', '', 'Test1', '', '', 'South Delhi', 'Delhi', 110062, 'Test1', '', '', 'Test1', 'Test1', 1),
+(2, 1, 'Testing', '', 'Test1', '', '', 'South Delhi', 'Delhi', 110062, 'Test1', '', '', 'Test1', 'Test1', 1);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `table_authorized_service_center_details`
+--
+
+CREATE TABLE IF NOT EXISTS `table_authorized_service_center_details` (
+  `center_detail_id` int(11) NOT NULL AUTO_INCREMENT,
+  `center_id` int(11) NOT NULL,
+  `contactdetail_type_id` int(11) NOT NULL,
+  `display_name` varchar(100) NOT NULL,
+  `details` varchar(100) NOT NULL,
+  `status_id` int(11) NOT NULL,
+  PRIMARY KEY (`center_detail_id`),
+  KEY `center_id` (`center_id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=4 ;
+
+--
+-- Dumping data for table `table_authorized_service_center_details`
+--
+
+INSERT INTO `table_authorized_service_center_details` (`center_detail_id`, `center_id`, `contactdetail_type_id`, `display_name`, `details`, `status_id`) VALUES
+(1, 1, 1, 'Suport', '3333', 1),
+(2, 1, 1, 'Suport', '3333', 1),
+(3, 2, 1, 'Suport', '2222222', 1);
 
 -- --------------------------------------------------------
 
@@ -68,7 +129,7 @@ CREATE TABLE IF NOT EXISTS `table_brand_details` (
 --
 
 INSERT INTO `table_brand_details` (`brand_detail_id`, `brand_id`, `contactdetails_type_id`, `display_name`, `details`, `status_id`) VALUES
-(1, 1, 1, 'Suport', 'fsdfsdf', 1),
+(1, 1, 1, 'Suport', 'fsdfsdf', 3),
 (2, 2, 3, 'Suport', '3333', 1),
 (3, 2, 2, 'Suport', 'dfdf', 3),
 (4, 2, 1, 'Suport', 'fsdfsdf', 1);
@@ -109,6 +170,27 @@ INSERT INTO `table_categories` (`category_id`, `category_name`, `display_id`, `r
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `table_color`
+--
+
+CREATE TABLE IF NOT EXISTS `table_color` (
+  `color_id` int(11) NOT NULL AUTO_INCREMENT,
+  `color_name` varchar(100) NOT NULL,
+  `status_id` int(11) NOT NULL,
+  PRIMARY KEY (`color_id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=3 ;
+
+--
+-- Dumping data for table `table_color`
+--
+
+INSERT INTO `table_color` (`color_id`, `color_name`, `status_id`) VALUES
+(1, 'Red', 3),
+(2, 'Red', 1);
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `table_contactdetails_type`
 --
 
@@ -126,6 +208,155 @@ INSERT INTO `table_contactdetails_type` (`contactdetails_type_id`, `contactdetai
 (1, 'URL'),
 (2, 'Email-ID'),
 (3, 'Phone Number');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `table_list_of_exclusions`
+--
+
+CREATE TABLE IF NOT EXISTS `table_list_of_exclusions` (
+  `exclusions_id` int(11) NOT NULL AUTO_INCREMENT,
+  `category_id` int(11) NOT NULL,
+  `exclusions_name` varchar(200) NOT NULL,
+  `created_on` datetime NOT NULL,
+  `updated_on` datetime NOT NULL,
+  `updated_by_user_id` int(11) NOT NULL,
+  `status_id` int(11) NOT NULL,
+  PRIMARY KEY (`exclusions_id`),
+  KEY `category_id` (`category_id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=4 ;
+
+--
+-- Dumping data for table `table_list_of_exclusions`
+--
+
+INSERT INTO `table_list_of_exclusions` (`exclusions_id`, `category_id`, `exclusions_name`, `created_on`, `updated_on`, `updated_by_user_id`, `status_id`) VALUES
+(1, 4, 'ddd', '2017-08-05 13:05:43', '2017-08-05 14:25:23', 1, 1),
+(2, 4, 'sdadad', '2017-08-05 13:05:52', '2017-08-05 15:25:13', 1, 1),
+(3, 6, 'dasd', '2017-08-05 13:06:13', '2017-08-05 13:06:13', 1, 1);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `table_list_of_inclusions`
+--
+
+CREATE TABLE IF NOT EXISTS `table_list_of_inclusions` (
+  `inclusions_id` int(11) NOT NULL AUTO_INCREMENT,
+  `category_id` int(11) NOT NULL,
+  `inclusions_name` varchar(200) NOT NULL,
+  `created_on` datetime NOT NULL,
+  `updated_on` datetime NOT NULL,
+  `updated_by_user_id` int(11) NOT NULL,
+  `status_id` int(11) NOT NULL,
+  PRIMARY KEY (`inclusions_id`),
+  KEY `category_id` (`category_id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=2 ;
+
+--
+-- Dumping data for table `table_list_of_inclusions`
+--
+
+INSERT INTO `table_list_of_inclusions` (`inclusions_id`, `category_id`, `inclusions_name`, `created_on`, `updated_on`, `updated_by_user_id`, `status_id`) VALUES
+(1, 6, 'dgfdgfdg', '2017-08-05 14:57:11', '2017-08-05 14:59:50', 1, 1);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `table_offline_seller`
+--
+
+CREATE TABLE IF NOT EXISTS `table_offline_seller` (
+  `offline_seller_id` int(11) NOT NULL AUTO_INCREMENT,
+  `offline_seller_name` varchar(255) NOT NULL,
+  `offline_seller_owner_name` varchar(200) NOT NULL,
+  `offline_seller_gstin_no` varchar(100) NOT NULL,
+  `offline_seller_pan_number` varchar(50) NOT NULL,
+  `offline_seller_registration_no` varchar(200) NOT NULL,
+  `is_service_provider` tinyint(1) NOT NULL,
+  `is_onboarded` tinyint(1) NOT NULL,
+  `address_house_no` int(100) NOT NULL,
+  `address_block` int(100) NOT NULL,
+  `address_street` int(100) NOT NULL,
+  `address_sector` int(100) NOT NULL,
+  `address_city` int(100) NOT NULL,
+  `address_state` int(100) NOT NULL,
+  `address_pin_code` int(11) NOT NULL,
+  `address_nearby` int(255) NOT NULL,
+  `lattitude` int(255) NOT NULL,
+  `longitude` varchar(255) NOT NULL,
+  `status_id` int(11) NOT NULL,
+  PRIMARY KEY (`offline_seller_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `table_offline_seller_details`
+--
+
+CREATE TABLE IF NOT EXISTS `table_offline_seller_details` (
+  `seller_detail_id` int(11) NOT NULL AUTO_INCREMENT,
+  `offline_seller_id` int(11) NOT NULL,
+  `contactdetail_type_id` int(11) NOT NULL,
+  `display_name` varchar(100) NOT NULL,
+  `details` varchar(200) NOT NULL,
+  `status_id` int(11) NOT NULL,
+  PRIMARY KEY (`seller_detail_id`),
+  KEY `offline_seller_id` (`offline_seller_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `table_online_seller`
+--
+
+CREATE TABLE IF NOT EXISTS `table_online_seller` (
+  `seller_id` int(11) NOT NULL AUTO_INCREMENT,
+  `seller_name` varchar(150) NOT NULL,
+  `seller_url` varchar(255) NOT NULL,
+  `seller_gstin_no` varchar(100) NOT NULL,
+  `status_id` int(11) NOT NULL,
+  PRIMARY KEY (`seller_id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=4 ;
+
+--
+-- Dumping data for table `table_online_seller`
+--
+
+INSERT INTO `table_online_seller` (`seller_id`, `seller_name`, `seller_url`, `seller_gstin_no`, `status_id`) VALUES
+(1, 'Testdsf', 'sad', 'asd', 1),
+(2, 'Test1', '', '', 1),
+(3, 'Test3', '', '', 1);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `table_online_seller_details`
+--
+
+CREATE TABLE IF NOT EXISTS `table_online_seller_details` (
+  `seller_detail_id` int(11) NOT NULL AUTO_INCREMENT,
+  `seller_id` int(11) NOT NULL,
+  `contactdetail_type_id` int(11) NOT NULL,
+  `display_name` varchar(100) NOT NULL,
+  `details` varchar(255) NOT NULL,
+  `status_id` int(11) NOT NULL,
+  PRIMARY KEY (`seller_detail_id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=6 ;
+
+--
+-- Dumping data for table `table_online_seller_details`
+--
+
+INSERT INTO `table_online_seller_details` (`seller_detail_id`, `seller_id`, `contactdetail_type_id`, `display_name`, `details`, `status_id`) VALUES
+(1, 1, 1, 'Suport', '3333', 3),
+(2, 2, 3, 'Suport', '2222222', 1),
+(3, 1, 1, 'Suport', '3333', 1),
+(4, 1, 2, 'Suport', 'dfdf', 1),
+(5, 3, 3, 'Suport', '2222222', 1);
 
 -- --------------------------------------------------------
 
@@ -180,7 +411,7 @@ CREATE TABLE IF NOT EXISTS `table_token` (
 --
 
 INSERT INTO `table_token` (`id`, `token_id`, `user_id`, `created_on`, `expiry_on`) VALUES
-(1, 'Fx0MRTsuObGfsF0XAo8UIzoEg', 1, '2017-08-01 16:09:40', '2017-08-01 16:09:40');
+(1, '72L0ddzozUeHZhkNYQFNlnIbu', 1, '2017-08-01 16:09:40', '2017-08-01 16:09:40');
 
 -- --------------------------------------------------------
 
@@ -212,7 +443,7 @@ CREATE TABLE IF NOT EXISTS `table_users` (
   `last_login` datetime NOT NULL,
   `status_id` int(11) NOT NULL,
   PRIMARY KEY (`user_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=7 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=9 ;
 
 --
 -- Dumping data for table `table_users`
@@ -221,7 +452,9 @@ CREATE TABLE IF NOT EXISTS `table_users` (
 INSERT INTO `table_users` (`user_id`, `user_type_id`, `fullname`, `gmail_id`, `facebook_id`, `email_id`, `mobile_no`, `password`, `tmp_password`, `location`, `latitude`, `longitude`, `image`, `os_type_id`, `gcm_id`, `device_id`, `device_model`, `apk_version`, `created_on`, `updated_on`, `last_login`, `status_id`) VALUES
 (1, 1, 'SuperAdmin', '', '', 'superadmin@binbill.com', '', '81dc9bdb52d04dc20036dbd8313ed055', '1234', '', '', '', '', 0, '', '', '', '', '0000-00-00 00:00:00', '0000-00-00 00:00:00', '0000-00-00 00:00:00', 1),
 (5, 2, 'Admin1', NULL, NULL, 'admin11@binbill.com', NULL, '289dff07669d7a23de0ef88d2f7129e7', '234', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2017-08-02 14:34:40', '2017-08-02 16:30:54', '0000-00-00 00:00:00', 1),
-(6, 2, 'Admin', NULL, NULL, 'admin1@binbill.com', NULL, '0e7517141fb53f21ee439b355b5a1d0a', 'Admin@123', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2017-08-02 15:38:16', '2017-08-02 16:51:59', '0000-00-00 00:00:00', 3);
+(6, 2, 'Admin', NULL, NULL, 'admin1@binbill.com', NULL, '0e7517141fb53f21ee439b355b5a1d0a', 'Admin@123', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2017-08-02 15:38:16', '2017-08-02 16:51:59', '0000-00-00 00:00:00', 3),
+(7, 2, 'Admin', NULL, NULL, 'admin1@binbill.com', NULL, '0e7517141fb53f21ee439b355b5a1d0a', 'Admin@123', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2017-08-05 12:15:32', '2017-08-05 12:15:32', '0000-00-00 00:00:00', 1),
+(8, 2, 'Admin', NULL, NULL, 'admin@gmail.com', NULL, '81dc9bdb52d04dc20036dbd8313ed055', '1234', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2017-08-05 12:17:04', '2017-08-05 12:17:04', '0000-00-00 00:00:00', 1);
 
 -- --------------------------------------------------------
 
