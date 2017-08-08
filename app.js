@@ -303,7 +303,7 @@ server.route({
             if(token.length > 0){
                 var UserID = token[0]['id'];
                 if(Level == 1){
-                    connection.query('SELECT category_id as ID,category_name as Name,ref_id as RefID,category_level as Level FROM table_categories WHERE category_level=1 ORDER BY category_name', function (error, category, fields) {
+                    connection.query('SELECT category_id as ID,category_name as Name,ref_id as RefID,category_level as Level FROM table_categories WHERE category_level=1 and status_id=1 ORDER BY category_name', function (error, category, fields) {
                         if (error) throw error;
                         if(category.length > 0){
                             var datalist=category;
@@ -316,7 +316,7 @@ server.route({
                     });
                 }
                 if(Level == 2){
-                    connection.query('SELECT t2.category_id as ID,t1.category_name AS maincategory, t2.category_name as category,t2.ref_id as RefID,t2.category_level as Level FROM table_categories AS t1 INNER JOIN table_categories AS t2 ON t2.ref_id = t1.category_id WHERE t2.category_level = 2 ORDER BY t1.category_name,t2.category_name', function (error, category, fields) {
+                    connection.query('SELECT t2.category_id as ID,t1.category_name AS maincategory, t2.category_name as category,t2.ref_id as RefID,t2.category_level as Level FROM table_categories AS t1 INNER JOIN table_categories AS t2 ON t2.ref_id = t1.category_id WHERE t2.category_level = 2 and t2.status_id=1 ORDER BY t1.category_name,t2.category_name', function (error, category, fields) {
                         if (error) throw error;
                         if(category.length > 0){
                             var datalist=category;
@@ -329,7 +329,7 @@ server.route({
                     });
                 }
                 if(Level == 3){
-                    connection.query('SELECT t3.category_id as ID,t1.category_name AS maincategory,t2.category_name as category,t3.category_name as subcategory,t3.ref_id as RefID,t3.category_level as Level FROM table_categories AS t1 INNER JOIN table_categories AS t2 ON t2.ref_id = t1.category_id INNER JOIN table_categories AS t3 ON t3.ref_id = t2.category_id WHERE t3.category_level = 3 ORDER BY t1.category_name,t2.category_name,t3.category_name', function (error, category, fields) {
+                    connection.query('SELECT t3.category_id as ID,t1.category_name AS maincategory,t2.category_name as category,t3.category_name as subcategory,t3.ref_id as RefID,t3.category_level as Level FROM table_categories AS t1 INNER JOIN table_categories AS t2 ON t2.ref_id = t1.category_id INNER JOIN table_categories AS t3 ON t3.ref_id = t2.category_id WHERE t3.category_level = 3 and t3.status_id=1 ORDER BY t1.category_name,t2.category_name,t3.category_name', function (error, category, fields) {
                         if (error) throw error;
                         if(category.length > 0){
                             var datalist=category;
@@ -1883,13 +1883,13 @@ server.route({
             if (error) throw error;
             if(token.length > 0){
                 var UserID = token[0]['id'];
-                connection.query('INSERT INTO table_authorized_service_center (brand_id,center_name,address_house_no,address_block,address_street,address_sector,address_city,address_state,address_pin_code,address_nearby,lattitude,longitude,open_days,timings,status_id) VALUES ("'+request.payload.BrandID+'","'+request.payload.Name+'","'+request.payload.HouseNo+'","'+request.payload.Block+'","'+request.payload.Street+'","'+request.payload.Sector+'","'+request.payload.City+'","'+request.payload.State+'","'+request.payload.PinCode+'","'+request.payload.NearBy+'","'+request.payload.Lattitude+'","'+request.payload.Longitude+'","'+request.payload.OpenDays+'","'+request.payload.Timings+'",1)', function (error, results, fields) {
+                connection.query('INSERT INTO table_offline_seller (offline_seller_name,offline_seller_owner_name,offline_seller_gstin_no,offline_seller_pan_number,offline_seller_registration_no,is_service_provider,is_onboarded,address_house_no,address_block,address_street,address_sector,address_city,address_state,address_pin_code,address_nearby,lattitude,longitude,status_id) VALUES ("'+request.payload.Name+'","'+request.payload.OwnerName+'","'+request.payload.GstinNo+'","'+request.payload.PanNo+'","'+request.payload.RegNo+'","'+request.payload.ServiceProvider+'","'+request.payload.Onboarded+'","'+request.payload.HouseNo+'","'+request.payload.Block+'","'+request.payload.Street+'","'+request.payload.Sector+'","'+request.payload.City+'","'+request.payload.State+'","'+request.payload.PinCode+'","'+request.payload.NearBy+'","'+request.payload.Lattitude+'","'+request.payload.Longitude+'",1)', function (error, results, fields) {
                     if (error) throw error;
                     for(var i = 0; i < Details.length; i++) {
-                        connection.query('INSERT INTO table_authorized_service_center_details (center_id,contactdetail_type_id,display_name,details,status_id) VALUES ("'+results['insertId']+'","'+Details[i].DetailTypeID+'","'+Details[i].DisplayName+'","'+Details[i].Details+'",1)', function (error, detail, fields) {
+                        connection.query('INSERT INTO table_offline_seller_details (offline_seller_id,contactdetail_type_id,display_name,details,status_id) VALUES ("'+results['insertId']+'","'+Details[i].DetailTypeID+'","'+Details[i].DisplayName+'","'+Details[i].Details+'",1)', function (error, detail, fields) {
                         });
                     }
-                    var data = '{"statusCode": 100,"error": "","message": "Authorized service center add successfully."}';
+                    var data = '{"statusCode": 100,"error": "","message": "Offline Seller add successfully."}';
                     reply(data);
                 });
 
@@ -1904,21 +1904,357 @@ server.route({
             payload: {
                 TokenNo: Joi.string(),
                 Name: Joi.string(),
-                OwnerName: Joi.allow(null),
-                GstinNo: Joi.allow(null),
-                PanNo: Joi.allow(null),
-                RegNo: Joi.allow(null),
-                HouseNo: Joi.allow(null),
-                Block: Joi.allow(null),
-                Street: Joi.allow(null),
-                Sector: Joi.allow(null),
+                OwnerName: [Joi.string(), Joi.allow(null)],
+                GstinNo: [Joi.string(), Joi.allow(null)],
+                PanNo: [Joi.string(), Joi.allow(null)],
+                RegNo: [Joi.string(), Joi.allow(null)],
+                ServiceProvider: [Joi.number().integer(), Joi.allow(null)],
+                Onboarded: [Joi.number().integer(), Joi.allow(null)],
+                HouseNo: [Joi.string(), Joi.allow(null)],
+                Block: [Joi.string(), Joi.allow(null)],
+                Street: [Joi.string(), Joi.allow(null)],
+                Sector: [Joi.string(), Joi.allow(null)],
                 City: Joi.string(),
                 State: Joi.string(),
-                PinCode: Joi.allow(null),
-                NearBy: Joi.allow(null),
-                Lattitude: Joi.allow(null),
-                Longitude: Joi.allow(null),
+                PinCode: [Joi.number().integer(), Joi.allow(null)],
+                NearBy: [Joi.string(), Joi.allow(null)],
+                Lattitude: [Joi.string(), Joi.allow(null)],
+                Longitude: [Joi.string(), Joi.allow(null)],
                 Details: Joi.array(),
+                output: 'data',
+                parse:true
+            }
+        }
+    }
+});
+
+//Edit Offline Seller
+server.route({
+    method: 'POST',
+    path: '/Services/EditOfflineSeller',
+    handler: function (request, reply) {
+        const TokenNo = request.payload.TokenNo;
+        const ID = request.payload.ID;
+        const Details = request.payload.Details;
+        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+            if (error) throw error;
+            if(token.length > 0){
+                var UserID = token[0]['id'];
+                connection.query('UPDATE table_offline_seller SET offline_seller_name="'+request.payload.Name+'",offline_seller_owner_name="'+request.payload.OwnerName+'",offline_seller_gstin_no="'+request.payload.GstinNo+'",offline_seller_pan_number="'+request.payload.PanNo+'",offline_seller_registration_no="'+request.payload.RegNo+'",is_service_provider="'+request.payload.ServiceProvider+'",is_onboarded="'+request.payload.Onboarded+'",address_house_no="'+request.payload.HouseNo+'",address_block="'+request.payload.Block+'",address_street="'+request.payload.Street+'",address_sector="'+request.payload.Sector+'",address_city="'+request.payload.City+'",address_state="'+request.payload.State+'",address_pin_code="'+request.payload.PinCode+'",address_nearby="'+request.payload.NearBy+'",lattitude="'+request.payload.Lattitude+'",longitude="'+request.payload.Longitude+'" WHERE offline_seller_id="' + ID + '"', function (error, results, fields) {
+                    if (error) throw error;
+                    for(var i = 0; i < Details.length; i++) {
+                        if(Details[i].DetailID != null && Details[i].DetailID != ''){
+                            connection.query('UPDATE table_offline_seller_details SET contactdetail_type_id="' + Details[i].DetailTypeID + '",display_name="' + Details[i].DisplayName + '",details="' + Details[i].Details + '"WHERE seller_detail_id="' + Details[i].DetailID + '"', function (error, detail, fields) {
+                            });
+                        } else {
+                            connection.query('INSERT INTO table_offline_seller_details (offline_seller_id,contactdetail_type_id,display_name,details,status_id) VALUES ("'+ID+'","'+Details[i].DetailTypeID+'","'+Details[i].DisplayName+'","'+Details[i].Details+'",1)', function (error, detail, fields) {
+                            });
+                        }
+
+                    }
+                    var data = '{"statusCode": 100,"error": "","message": "Offline Seller update successfully."}';
+                    reply(data);
+                });
+            } else {
+                var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+                reply(data);
+            }
+        });
+    },
+    config:{
+        validate: {
+            payload: {
+                TokenNo: Joi.string(),
+                ID: Joi.number().integer(),
+                Name: Joi.string(),
+                OwnerName: [Joi.string(), Joi.allow(null)],
+                GstinNo: [Joi.string(), Joi.allow(null)],
+                PanNo: [Joi.string(), Joi.allow(null)],
+                RegNo: [Joi.string(), Joi.allow(null)],
+                ServiceProvider: [Joi.number().integer(), Joi.allow(null)],
+                Onboarded: [Joi.number().integer(), Joi.allow(null)],
+                HouseNo: [Joi.string(), Joi.allow(null)],
+                Block: [Joi.string(), Joi.allow(null)],
+                Street: [Joi.string(), Joi.allow(null)],
+                Sector: [Joi.string(), Joi.allow(null)],
+                City: Joi.string(),
+                State: Joi.string(),
+                PinCode: [Joi.number().integer(), Joi.allow(null)],
+                NearBy: [Joi.string(), Joi.allow(null)],
+                Lattitude: [Joi.string(), Joi.allow(null)],
+                Longitude: [Joi.string(), Joi.allow(null)],
+                Details: Joi.array(),
+                output: 'data',
+                parse:true
+            }
+        }
+    }
+});
+
+//Delete Offline Seller
+server.route({
+    method: 'POST',
+    path: '/Services/DeleteOfflineSeller',
+    handler: function (request, reply) {
+        const TokenNo = request.payload.TokenNo;
+        const ID = request.payload.ID;
+        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+            if (error) throw error;
+            if(token.length > 0){
+                var UserID = token[0]['id'];
+                connection.query('UPDATE table_offline_seller as s left Join table_offline_seller_details as d on s.offline_seller_id=d.offline_seller_id SET s.status_id=3,d.status_id=3 WHERE s.offline_seller_id="' + ID + '"', function (error, results, fields) {
+                    if (error) throw error;
+                    var data = '{"statusCode": 100,"error": "","message": "Offline Seller Delete successfully."}';
+                    reply(data);
+                });
+            } else {
+                var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+                reply(data);
+            }
+        });
+    },
+    config:{
+        validate: {
+            payload: {
+                TokenNo: Joi.string(),
+                ID: Joi.number().integer(),
+                output: 'data',
+                parse:true
+            }
+        }
+    }
+});
+//Delete Offline Seller Detail
+server.route({
+    method: 'POST',
+    path: '/Services/DeleteOfflineSellerDetail',
+    handler: function (request, reply) {
+        const TokenNo = request.payload.TokenNo;
+        const ID = request.payload.ID;
+        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+            if (error) throw error;
+            if(token.length > 0){
+                var UserID = token[0]['id'];
+                connection.query('UPDATE table_offline_seller_details SET status_id=3 WHERE seller_detail_id="' + ID + '"', function (error, results, fields) {
+                    if (error) throw error;
+                    var data = '{"statusCode": 100,"error": "","message": "Offline Seller Detail Delete successfully."}';
+                    reply(data);
+                });
+            } else {
+                var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+                reply(data);
+            }
+        });
+    },
+    config:{
+        validate: {
+            payload: {
+                TokenNo: Joi.string(),
+                ID: Joi.number().integer(),
+                output: 'data',
+                parse:true
+            }
+        }
+    }
+});
+
+//Get Offline Seller List
+server.route({
+    method: 'POST',
+    path: '/Services/OfflineSellerList',
+    handler: function (request, reply) {
+        const TokenNo = request.payload.TokenNo;
+        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+            if (error) throw error;
+            if(token.length > 0){
+                var UserID = token[0]['id'];
+                connection.query('SELECT offline_seller_id as ID,offline_seller_name as Name,offline_seller_owner_name as OwnerName,offline_seller_gstin_no as GstinNo,offline_seller_pan_number as PanNo,offline_seller_registration_no as RegNo,is_service_provider as ServiceProvider,is_onboarded as Onboarded,address_house_no as HouseNo,address_block as Block,address_street as Street,address_sector as Sector,address_city as City,address_state as State,address_pin_code as PinCode,address_nearby as NearBy,lattitude as Lattitude,longitude as Longitude FROM table_offline_seller WHERE status_id!=3 ORDER BY offline_seller_name', function (error, service_center, fields) {
+                    if (error) throw error;
+                    if(service_center.length > 0){
+                        var data = '{"statusCode": 100,"OfflineSellerList": '+ JSON.stringify(service_center) +'}';
+                        reply(data);
+                    } else {
+                        var data = '{"statusCode": 105,"error": "Not Found","message": "Data not Available."}';
+                        reply(data);
+                    }
+                });
+            } else {
+                var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+                reply(data);
+            }
+        });
+    },
+    config:{
+        validate: {
+            payload: {
+                TokenNo: Joi.string(),
+                output: 'data',
+                parse:true
+            }
+        }
+    }
+});
+//Get Offline Seller By ID
+server.route({
+    method: 'POST',
+    path: '/Services/OfflineSellerByID',
+    handler: function (request, reply) {
+        const TokenNo = request.payload.TokenNo;
+        const ID = request.payload.ID;
+        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+            if (error) throw error;
+            if(token.length > 0){
+                var UserID = token[0]['id'];
+                connection.query('SELECT offline_seller_id as ID,offline_seller_name as Name,offline_seller_owner_name as OwnerName,offline_seller_gstin_no as GstinNo,offline_seller_pan_number as PanNo,offline_seller_registration_no as RegNo,is_service_provider as ServiceProvider,is_onboarded as Onboarded,address_house_no as HouseNo,address_block as Block,address_street as Street,address_sector as Sector,address_city as City,address_state as State,address_pin_code as PinCode,address_nearby as NearBy,lattitude as Lattitude,longitude as Longitude FROM table_offline_seller WHERE offline_seller_id = "' + ID + '"', function (error, offline_seller, fields) {
+                    if (error) throw error;
+                    if(offline_seller.length > 0){
+                        connection.query('SELECT seller_detail_id as DetailID,contactdetail_type_id as DetailTypeID,display_name as DisplayName,details as Details FROM table_offline_seller_details WHERE offline_seller_id = "' + ID + '" and status_id!=3', function (error, detail, fields) {
+                            if (error) throw error;
+                            var data = '{"statusCode": 100,"ID":'+offline_seller[0]['ID']+',"Name":'+offline_seller[0]['Name']+',"OwnerName":"'+offline_seller[0]['OwnerName']+'","GstinNo":"'+offline_seller[0]['GstinNo']+'","PanNo":"'+offline_seller[0]['PanNo']+'","RegNo":"'+offline_seller[0]['RegNo']+'","ServiceProvider":"'+offline_seller[0]['ServiceProvider']+'","Onboarded":"'+offline_seller[0]['Onboarded']+'","HouseNo":"'+offline_seller[0]['HouseNo']+'","Block":"'+offline_seller[0]['Block']+'","Street":"'+offline_seller[0]['Street']+'","Sector":"'+offline_seller[0]['Sector']+'","City":"'+offline_seller[0]['City']+'","State":"'+offline_seller[0]['State']+'","PinCode":'+offline_seller[0]['PinCode']+',"NearBy":"'+offline_seller[0]['NearBy']+'","Lattitude":"'+offline_seller[0]['Lattitude']+'","Longitude":"'+offline_seller[0]['Longitude']+'","Details": '+ JSON.stringify(detail) +'}';
+                            reply(data);
+                        });
+                    } else {
+                        var data = '{"statusCode": 105,"error": "Not Found","message": "Data not Available."}';
+                        reply(data);
+                    }
+                });
+            } else {
+                var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+                reply(data);
+            }
+        });
+    },
+    config:{
+        validate: {
+            payload: {
+                TokenNo: Joi.string(),
+                ID: Joi.number().integer(),
+                output: 'data',
+                parse:true
+            }
+        }
+    }
+});
+
+//Add Task Assigned To CE
+server.route({
+    method: 'POST',
+    path: '/Services/TaskAssignedCE',
+    handler: function (request, reply) {
+        const TokenNo = request.payload.TokenNo;
+        const UID = request.payload.UID;
+        const BID = request.payload.BID;
+        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+            if (error) throw error;
+            if(token.length > 0){
+                var UserID = token[0]['id'];
+                connection.query('SELECT id FROM table_cust_executive_tasks WHERE user_id = "' + UID + '" and bill_id = "' + BID + '"', function (error, data, fields) {
+                    if (error) throw error;
+                    if(data.length > 0){
+                        connection.query('UPDATE table_cust_executive_tasks SET updated_on="' + getDateTime() + '",updated_by_user_id="' + UserID + '",status_id=7 WHERE id="' + data[0]['id'] + '"', function (error, results, fields) {
+                            if (error) throw error;
+                            var data = '{"statusCode": 100,"error": "","message": "Task Assigned successfully."}';
+                            reply(data);
+                        });
+                    } else {
+                        connection.query('INSERT INTO table_cust_executive_tasks (user_id,bill_id,created_on,updated_on,updated_by_user_id,status_id) VALUES ("' + UID + '","' + BID + '","' + getDateTime() + '","' + getDateTime() + '","' + UserID + '",4)', function (error, results, fields) {
+                            if (error) throw error;
+                            var data = '{"statusCode": 100,"error": "","message": "Task Assigned successfully."}';
+                            reply(data);
+                        });
+                    }
+                });
+            } else {
+                var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+                reply(data);
+            }
+        });
+    },
+    config:{
+        validate: {
+            payload: {
+                TokenNo: Joi.string(),
+                UID: Joi.number().integer(),
+                BID: Joi.number().integer(),
+                output: 'data',
+                parse:true
+            }
+        }
+    }
+});
+//Get Task Assigned To CE
+server.route({
+    method: 'POST',
+    path: '/Services/TaskCEList',
+    handler: function (request, reply) {
+        const TokenNo = request.payload.TokenNo;
+        const Status = request.payload.Status;
+        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+            if (error) throw error;
+            if(token.length > 0){
+                var UserID = token[0]['id'];
+                connection.query('SELECT id FROM table_cust_executive_tasks WHERE user_id = "' + UID + '" and bill_id = "' + BID + '"', function (error, data, fields) {
+                    if (error) throw error;
+                    if(data.length > 0){
+                        connection.query('UPDATE table_cust_executive_tasks SET updated_on="' + getDateTime() + '",updated_by_user_id="' + UserID + '",status_id=7 WHERE id="' + data[0]['id'] + '"', function (error, results, fields) {
+                            if (error) throw error;
+                            var data = '{"statusCode": 100,"error": "","message": "Task Assigned successfully."}';
+                            reply(data);
+                        });
+                    } else {
+                        connection.query('INSERT INTO table_cust_executive_tasks (user_id,bill_id,created_on,updated_on,updated_by_user_id,status_id) VALUES ("' + UID + '","' + BID + '","' + getDateTime() + '","' + getDateTime() + '","' + UserID + '",4)', function (error, results, fields) {
+                            if (error) throw error;
+                            var data = '{"statusCode": 100,"error": "","message": "Task Assigned successfully."}';
+                            reply(data);
+                        });
+                    }
+                });
+            } else {
+                var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+                reply(data);
+            }
+        });
+    },
+    config:{
+        validate: {
+            payload: {
+                TokenNo: Joi.string(),
+                Status: Joi.number().integer(),
+                output: 'data',
+                parse:true
+            }
+        }
+    }
+});
+//Add Task Assigned To QE
+server.route({
+    method: 'POST',
+    path: '/Services/TaskAssignedQE',
+    handler: function (request, reply) {
+        const TokenNo = request.payload.TokenNo;
+        const UID = request.payload.UID;
+        const BID = request.payload.BID;
+        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+            if (error) throw error;
+            if(token.length > 0){
+                var UserID = token[0]['id'];
+                connection.query('INSERT INTO table_qual_executive_tasks (user_id,bill_id,created_on,updated_on,updated_by_user_id,status_id) VALUES ("' + UID + '","' + BID + '","' + getDateTime() + '","' + getDateTime() + '","' + UserID + '",4)', function (error, results, fields) {
+                    if (error) throw error;
+                    var data = '{"statusCode": 100,"error": "","message": "Task Assigned successfully."}';
+                    reply(data);
+                });
+            } else {
+                var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+                reply(data);
+            }
+        });
+    },
+    config:{
+        validate: {
+            payload: {
+                TokenNo: Joi.string(),
+                UID: Joi.number().integer(),
+                BID: Joi.number().integer(),
                 output: 'data',
                 parse:true
             }
