@@ -1806,8 +1806,6 @@ server.route({
     handler: function (request, reply) {
         const TokenNo = request.payload.TokenNo;
         const ID = request.payload.ID;
-        const Name = request.payload.Name;
-        const CatID = request.payload.CatID;
         connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
@@ -1827,9 +1825,7 @@ server.route({
         validate: {
             payload: {
                 TokenNo: Joi.string().required(),
-                Name: Joi.string().required(),
                 ID: Joi.number().integer().required(),
-                CatID: Joi.number().integer().required(),
                 output: 'data',
                 parse:true
             }
