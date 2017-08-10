@@ -113,8 +113,8 @@ server.route({
     config:{
         validate: {
             payload: {
-                EmailID: Joi.string().email(),
-                Password: Joi.string(),
+                EmailID: Joi.string().email().required(),
+                Password: Joi.string().required(),
                 output: 'data',
                 parse:true
             }
@@ -131,10 +131,10 @@ server.route({
         const Level = request.payload.Level;
         const RefID = request.payload.RefID;
         const Name = request.payload.Name;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 connection.query('SELECT category_id FROM table_categories WHERE category_name = "' + Name + '" and status_id=1 and ref_id="'+RefID+'"', function (error, category, fields) {
                     if (error) throw error;
                     if(category.length > 0){
@@ -157,9 +157,9 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
-                Name: Joi.string(),
-                Level: Joi.number().integer(),
+                TokenNo: Joi.string().required(),
+                Name: Joi.string().required(),
+                Level: Joi.number().integer().required(),
                 RefID: [Joi.number().integer(), Joi.allow(null)],
                 output: 'data',
                 parse:true
@@ -177,10 +177,10 @@ server.route({
         const ID = request.payload.ID;
         const Name = request.payload.Name;
         const RefID = request.payload.RefID;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 connection.query('SELECT category_id FROM table_categories WHERE category_name = "' + Name + '" and status_id=1 and category_id!="'+ID+'" and ref_id="'+RefID+'"', function (error, category, fields) {
                     if (error) throw error;
                     if(category.length > 0){
@@ -203,9 +203,9 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
-                Name: Joi.string(),
-                ID: Joi.number().integer(),
+                TokenNo: Joi.string().required(),
+                Name: Joi.string().required(),
+                ID: Joi.number().integer().required(),
                 RefID: [Joi.number().integer(), Joi.allow(null)],
                 output: 'data',
                 parse:true
@@ -220,10 +220,10 @@ server.route({
     handler: function (request, reply) {
         const TokenNo = request.payload.TokenNo;
         const ID = request.payload.ID;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 connection.query('UPDATE table_categories AS t1 LEFT JOIN table_categories AS t2 ON t2.ref_id = t1.category_id LEFT JOIN table_categories AS t3 ON t3.ref_id = t2.category_id SET t1.status_id=3,t2.status_id=3,t3.status_id=3,t1.updated_on="' + getDateTime() + '",t1.updated_by_user_id="' + UserID + '",t2.updated_on="' + getDateTime() + '",t2.updated_by_user_id="' + UserID + '",t3.updated_on="' + getDateTime() + '",t3.updated_by_user_id="' + UserID + '" WHERE t1.category_id="' + ID + '"', function (error, results, fields) {
                     if (error) throw error;
                     var data = '{"statusCode": 100,"error": "","message": "Data Delete successfully."}';
@@ -238,8 +238,8 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
-                ID: Joi.number().integer(),
+                TokenNo: Joi.string().required(),
+                ID: Joi.number().integer().required(),
                 output: 'data',
                 parse:true
             }
@@ -253,10 +253,10 @@ server.route({
     handler: function (request, reply) {
         const TokenNo = request.payload.TokenNo;
         const RefID = request.payload.RefID;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 if(RefID != null){
                     var condition = 'WHERE status_id=1 and ref_id='+RefID+'';
                 } else {
@@ -282,7 +282,7 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
+                TokenNo: Joi.string().required(),
                 RefID: [Joi.number().integer(), Joi.allow(null)],
                 output: 'data',
                 parse:true
@@ -298,10 +298,10 @@ server.route({
     handler: function (request, reply) {
         const TokenNo = request.payload.TokenNo;
         const Level = request.payload.Level;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 if(Level == 1){
                     connection.query('SELECT category_id as ID,category_name as Name,ref_id as RefID,category_level as Level FROM table_categories WHERE category_level=1 and status_id=1 ORDER BY category_name', function (error, category, fields) {
                         if (error) throw error;
@@ -351,8 +351,8 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
-                Level: Joi.number().integer(),
+                TokenNo: Joi.string().required(),
+                Level: Joi.number().integer().required(),
                 output: 'data',
                 parse:true
             }
@@ -366,10 +366,10 @@ server.route({
     handler: function (request, reply) {
         const TokenNo = request.payload.TokenNo;
         const ID = request.payload.ID;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 connection.query('SELECT category_id as ID,category_name as Name,ref_id as RefID,category_level as Level FROM table_categories WHERE category_id="' + ID + '"', function (error, category, fields) {
                     if (error) throw error;
                     if(category.length > 0){
@@ -390,8 +390,8 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
-                ID: Joi.number().integer(),
+                TokenNo: Joi.string().required(),
+                ID: Joi.number().integer().required(),
                 output: 'data',
                 parse:true
             }
@@ -405,10 +405,10 @@ server.route({
     handler: function (request, reply) {
         const TokenNo = request.payload.TokenNo;
         const UserType = request.payload.UserType;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 if(UserType != 1 && UserType != 2){
                     var data = '{"statusCode": 105,"error": "Not Found","message": "Data not Available."}';
                     reply(data);
@@ -439,8 +439,8 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
-                UserType: Joi.number().integer(),
+                TokenNo: Joi.string().required(),
+                UserType: Joi.number().integer().required(),
                 output: 'data',
                 parse:true
             }
@@ -458,10 +458,10 @@ server.route({
         const EmailID = request.payload.EmailID;
         const Password = request.payload.Password;
         const UserType = request.payload.UserType;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 connection.query('SELECT user_id FROM table_users WHERE email_id = "' + EmailID + '" and status_id!=3', function (error, user, fields) {
                     if (error) throw error;
                     if(user.length > 0){
@@ -485,11 +485,11 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
-                Name: Joi.string(),
-                EmailID: Joi.string().email(),
-                Password: Joi.string(),
-                UserType: Joi.number().integer(),
+                TokenNo: Joi.string().required(),
+                Name: Joi.string().required(),
+                EmailID: Joi.string().email().required(),
+                Password: Joi.string().required(),
+                UserType: Joi.number().integer().required(),
                 output: 'data',
                 parse:true
             }
@@ -504,10 +504,10 @@ server.route({
     handler: function (request, reply) {
         const TokenNo = request.payload.TokenNo;
         const UserType = request.payload.UserType;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 connection.query('SELECT u.user_id as ID,u.fullname as Name,u.email_id as EmailID,status_name as Status FROM table_users as u inner join table_status as s on s.status_id=u.status_id WHERE u.user_type_id="' + UserType + '" and u.status_id!=3', function (error, usertype, fields) {
                     if (error) throw error;
                     if(usertype.length > 0){
@@ -527,8 +527,8 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
-                UserType: Joi.number().integer(),
+                TokenNo: Joi.string().required(),
+                UserType: Joi.number().integer().required(),
                 output: 'data',
                 parse:true
             }
@@ -543,10 +543,10 @@ server.route({
     handler: function (request, reply) {
         const TokenNo = request.payload.TokenNo;
         const ID = request.payload.ID;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 connection.query('SELECT user_type_id as UserType,user_id as ID,fullname as Name,email_id as EmailID FROM table_users WHERE user_id="' + ID + '"', function (error, usertype, fields) {
                     if (error) throw error;
                     if(usertype.length > 0){
@@ -566,8 +566,8 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
-                ID: Joi.number().integer(),
+                TokenNo: Joi.string().required(),
+                ID: Joi.number().integer().required(),
                 output: 'data',
                 parse:true
             }
@@ -587,10 +587,10 @@ server.route({
         const Password = request.payload.Password;
         const UserType = request.payload.UserType;
         const Status = request.payload.Status;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 connection.query('SELECT user_id FROM table_users WHERE email_id = "' + EmailID + '" and status_id!=3 and user_id!="' + ID + '"', function (error, user, fields) {
                     if (error) throw error;
                     if(user.length > 0){
@@ -621,13 +621,13 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
-                ID: Joi.number().integer(),
-                Name: Joi.string(),
-                EmailID: Joi.string().email(),
+                TokenNo: Joi.string().required(),
+                ID: Joi.number().integer().required(),
+                Name: Joi.string().required(),
+                EmailID: Joi.string().email().required(),
                 Password: [Joi.string(), Joi.allow(null)],
-                UserType: Joi.number().integer(),
-                Status: Joi.number().integer(),
+                UserType: Joi.number().integer().required(),
+                Status: Joi.number().integer().required(),
                 output: 'data',
                 parse:true
             }
@@ -642,10 +642,10 @@ server.route({
     handler: function (request, reply) {
         const TokenNo = request.payload.TokenNo;
         const ID = request.payload.ID;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 connection.query('UPDATE table_users SET status_id=3,updated_on="' + getDateTime() + '" WHERE user_id="' + ID + '"', function (error, results, fields) {
                     if (error) throw error;
                     var data = '{"statusCode": 100,"error": "","message": "User Delete successfully."}';
@@ -660,8 +660,8 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
-                ID: Joi.number().integer(),
+                TokenNo: Joi.string().required(),
+                ID: Joi.number().integer().required(),
                 output: 'data',
                 parse:true
             }
@@ -678,10 +678,10 @@ server.route({
         const Name = request.payload.Name;
         const Description = request.payload.Description;
         const Details = request.payload.Details;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 connection.query('SELECT brand_id FROM table_brands WHERE brand_name = "' + Name + '" and status_id=1', function (error, brand, fields) {
                     if (error) throw error;
                     if(brand.length > 0){
@@ -709,10 +709,10 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
-                Name: Joi.string(),
+                TokenNo: Joi.string().required(),
+                Name: Joi.string().required(),
                 Description: Joi.allow(null),
-                Details: Joi.array(),
+                Details: Joi.array().required(),
                 output: 'data',
                 parse:true
             }
@@ -730,10 +730,10 @@ server.route({
         const Name = request.payload.Name;
         const Description = request.payload.Description;
         const Details = request.payload.Details;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 connection.query('SELECT brand_id FROM table_brands WHERE brand_name = "' + Name + '" and brand_id!="' + ID + '" and status_id=1', function (error, brand, fields) {
                     if (error) throw error;
                     if(brand.length > 0){
@@ -767,9 +767,9 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
-                ID: Joi.number().integer(),
-                Name: Joi.string(),
+                TokenNo: Joi.string().required(),
+                ID: Joi.number().integer().required(),
+                Name: Joi.string().required(),
                 Description: Joi.allow(null),
                 Details: Joi.array(),
                 output: 'data',
@@ -786,10 +786,10 @@ server.route({
     handler: function (request, reply) {
         const TokenNo = request.payload.TokenNo;
         const ID = request.payload.ID;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 connection.query('UPDATE table_brands as b left Join table_brand_details as d on b.brand_id=d.brand_id SET b.status_id=3,d.status_id=3,b.updated_on="' + getDateTime() + '",b.updated_by_user_id="' + UserID + '" WHERE b.brand_id="' + ID + '"', function (error, results, fields) {
                     if (error) throw error;
                     var data = '{"statusCode": 100,"error": "","message": "Brand Delete successfully."}';
@@ -804,8 +804,8 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
-                ID: Joi.number().integer(),
+                TokenNo: Joi.string().required(),
+                ID: Joi.number().integer().required(),
                 output: 'data',
                 parse:true
             }
@@ -820,10 +820,10 @@ server.route({
     handler: function (request, reply) {
         const TokenNo = request.payload.TokenNo;
         const ID = request.payload.ID;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 connection.query('UPDATE table_brand_details SET status_id=3 WHERE brand_detail_id="' + ID + '"', function (error, results, fields) {
                     if (error) throw error;
                     var data = '{"statusCode": 100,"error": "","message": "Brand Detail Delete successfully."}';
@@ -838,8 +838,8 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
-                ID: Joi.number().integer(),
+                TokenNo: Joi.string().required(),
+                ID: Joi.number().integer().required(),
                 output: 'data',
                 parse:true
             }
@@ -853,10 +853,10 @@ server.route({
     path: '/Services/BrandList',
     handler: function (request, reply) {
         const TokenNo = request.payload.TokenNo;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 connection.query('SELECT brand_id as ID,brand_name as Name,brand_description as Description FROM table_brands WHERE status_id!=3 ORDER BY brand_name', function (error, brand, fields) {
                     if (error) throw error;
                     if(brand.length > 0){
@@ -876,7 +876,7 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
+                TokenNo: Joi.string().required(),
                 output: 'data',
                 parse:true
             }
@@ -890,10 +890,10 @@ server.route({
     handler: function (request, reply) {
         const TokenNo = request.payload.TokenNo;
         const ID = request.payload.ID;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 connection.query('SELECT brand_id as ID,brand_name as Name,brand_description as Description FROM table_brands WHERE brand_id = "' + ID + '"', function (error, brand, fields) {
                     if (error) throw error;
                     if(brand.length > 0){
@@ -917,8 +917,8 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
-                ID: Joi.number().integer(),
+                TokenNo: Joi.string().required(),
+                ID: Joi.number().integer().required(),
                 output: 'data',
                 parse:true
             }
@@ -936,10 +936,10 @@ server.route({
         const URL = request.payload.URL;
         const GstinNo = request.payload.GstinNo;
         const Details = request.payload.Details;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 connection.query('SELECT seller_id FROM table_online_seller WHERE seller_name = "' + Name + '" and status_id=1', function (error, seller, fields) {
                     if (error) throw error;
                     if(seller.length > 0){
@@ -968,8 +968,8 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
-                Name: Joi.string(),
+                TokenNo: Joi.string().required(),
+                Name: Joi.string().required(),
                 URL: Joi.allow(null),
                 GstinNo: Joi.allow(null),
                 Details: Joi.array(),
@@ -991,10 +991,10 @@ server.route({
         const URL = request.payload.URL;
         const GstinNo = request.payload.GstinNo;
         const Details = request.payload.Details;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 connection.query('SELECT seller_id FROM table_online_seller WHERE seller_name = "' + Name + '" and seller_id!="' + ID + '" and status_id=1', function (error, brand, fields) {
                     if (error) throw error;
                     if(brand.length > 0){
@@ -1028,9 +1028,9 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
-                ID: Joi.number().integer(),
-                Name: Joi.string(),
+                TokenNo: Joi.string().required(),
+                ID: Joi.number().integer().required(),
+                Name: Joi.string().required(),
                 URL: Joi.allow(null),
                 GstinNo: Joi.allow(null),
                 Details: Joi.array(),
@@ -1047,10 +1047,10 @@ server.route({
     handler: function (request, reply) {
         const TokenNo = request.payload.TokenNo;
         const ID = request.payload.ID;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 connection.query('UPDATE table_online_seller as s left Join table_online_seller_details as d on s.seller_id=d.seller_id SET s.status_id=3,d.status_id=3 WHERE s.seller_id="' + ID + '"', function (error, results, fields) {
                     if (error) throw error;
                     var data = '{"statusCode": 100,"error": "","message": "Online Seller Delete successfully."}';
@@ -1065,8 +1065,8 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
-                ID: Joi.number().integer(),
+                TokenNo: Joi.string().required(),
+                ID: Joi.number().integer().required(),
                 output: 'data',
                 parse:true
             }
@@ -1081,10 +1081,10 @@ server.route({
     handler: function (request, reply) {
         const TokenNo = request.payload.TokenNo;
         const ID = request.payload.ID;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 connection.query('UPDATE table_online_seller_details SET status_id=3 WHERE seller_detail_id="' + ID + '"', function (error, results, fields) {
                     if (error) throw error;
                     var data = '{"statusCode": 100,"error": "","message": "Online Seller Detail Delete successfully."}';
@@ -1099,8 +1099,8 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
-                ID: Joi.number().integer(),
+                TokenNo: Joi.string().required(),
+                ID: Joi.number().integer().required(),
                 output: 'data',
                 parse:true
             }
@@ -1113,10 +1113,10 @@ server.route({
     path: '/Services/OnlineSellerList',
     handler: function (request, reply) {
         const TokenNo = request.payload.TokenNo;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 connection.query('SELECT seller_id as ID,seller_name as Name,seller_url as URL,seller_gstin_no as GstinNo FROM table_online_seller WHERE status_id!=3 ORDER BY seller_name', function (error, seller, fields) {
                     if (error) throw error;
                     if(seller.length > 0){
@@ -1136,7 +1136,7 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
+                TokenNo: Joi.string().required(),
                 output: 'data',
                 parse:true
             }
@@ -1150,16 +1150,16 @@ server.route({
     handler: function (request, reply) {
         const TokenNo = request.payload.TokenNo;
         const ID = request.payload.ID;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 connection.query('SELECT seller_id as ID,seller_name as Name,seller_url as URL,seller_gstin_no as GstinNo FROM table_online_seller WHERE seller_id = "' + ID + '"', function (error, seller, fields) {
                     if (error) throw error;
                     if(seller.length > 0){
                         connection.query('SELECT seller_detail_id as DetailID,contactdetail_type_id as DetailTypeID,display_name as DisplayName,details as Details FROM table_online_seller_details WHERE seller_id = "' + ID + '" and status_id!=3', function (error, detail, fields) {
                             if (error) throw error;
-                            var data = '{"statusCode": 100,"ID":'+seller[0]['ID']+',"Name":"'+seller[0]['Name']+'","Description":"'+seller[0]['URL']+'","Description":"'+seller[0]['GstinNo']+'","Details": '+ JSON.stringify(detail) +'}';
+                            var data = '{"statusCode": 100,"ID":'+seller[0]['ID']+',"Name":"'+seller[0]['Name']+'","URL":"'+seller[0]['URL']+'","GstinNo":"'+seller[0]['GstinNo']+'","Details": '+ JSON.stringify(detail) +'}';
                             reply(data);
                         });
 
@@ -1177,8 +1177,8 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
-                ID: Joi.number().integer(),
+                TokenNo: Joi.string().required(),
+                ID: Joi.number().integer().required(),
                 output: 'data',
                 parse:true
             }
@@ -1192,10 +1192,10 @@ server.route({
     handler: function (request, reply) {
         const TokenNo = request.payload.TokenNo;
         const Details = request.payload.Details;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 connection.query('INSERT INTO table_authorized_service_center (brand_id,center_name,address_house_no,address_block,address_street,address_sector,address_city,address_state,address_pin_code,address_nearby,lattitude,longitude,open_days,timings,status_id) VALUES ("'+request.payload.BrandID+'","'+request.payload.Name+'","'+request.payload.HouseNo+'","'+request.payload.Block+'","'+request.payload.Street+'","'+request.payload.Sector+'","'+request.payload.City+'","'+request.payload.State+'","'+request.payload.PinCode+'","'+request.payload.NearBy+'","'+request.payload.Lattitude+'","'+request.payload.Longitude+'","'+request.payload.OpenDays+'","'+request.payload.Timings+'",1)', function (error, results, fields) {
                     if (error) throw error;
                     for(var i = 0; i < Details.length; i++) {
@@ -1215,15 +1215,15 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
-                BrandID: Joi.number().integer(),
-                Name: Joi.string(),
+                TokenNo: Joi.string().required(),
+                BrandID: Joi.number().integer().required(),
+                Name: Joi.string().required(),
                 HouseNo: Joi.allow(null),
                 Block: Joi.allow(null),
                 Street: Joi.allow(null),
                 Sector: Joi.allow(null),
-                City: Joi.string(),
-                State: Joi.string(),
+                City: Joi.string().required(),
+                State: Joi.string().required(),
                 PinCode: Joi.allow(null),
                 NearBy: Joi.allow(null),
                 Lattitude: Joi.allow(null),
@@ -1246,10 +1246,10 @@ server.route({
         const TokenNo = request.payload.TokenNo;
         const ID = request.payload.ID;
         const Details = request.payload.Details;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 connection.query('UPDATE table_authorized_service_center SET brand_id="'+request.payload.BrandID+'",center_name="'+request.payload.Name+'",address_house_no="'+request.payload.HouseNo+'",address_block="'+request.payload.Block+'",address_street="'+request.payload.Street+'",address_sector="'+request.payload.Sector+'",address_city="'+request.payload.City+'",address_state="'+request.payload.State+'",address_pin_code="'+request.payload.PinCode+'",address_nearby="'+request.payload.NearBy+'",lattitude="'+request.payload.Lattitude+'",longitude="'+request.payload.Longitude+'",open_days="'+request.payload.OpenDays+'",timings="'+request.payload.Timings+'" WHERE center_id="' + ID + '"', function (error, results, fields) {
                     if (error) throw error;
                     for(var i = 0; i < Details.length; i++) {
@@ -1274,16 +1274,16 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
-                ID: Joi.number().integer(),
-                BrandID: Joi.number().integer(),
-                Name: Joi.string(),
+                TokenNo: Joi.string().required(),
+                ID: Joi.number().integer().required(),
+                BrandID: Joi.number().integer().required(),
+                Name: Joi.string().required(),
                 HouseNo: Joi.allow(null),
                 Block: Joi.allow(null),
                 Street: Joi.allow(null),
                 Sector: Joi.allow(null),
-                City: Joi.string(),
-                State: Joi.string(),
+                City: Joi.string().required(),
+                State: Joi.string().required(),
                 PinCode: Joi.allow(null),
                 NearBy: Joi.allow(null),
                 Lattitude: Joi.allow(null),
@@ -1305,10 +1305,10 @@ server.route({
     handler: function (request, reply) {
         const TokenNo = request.payload.TokenNo;
         const ID = request.payload.ID;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 connection.query('UPDATE table_authorized_service_center as c left Join table_authorized_service_center_details as d on c.center_id=d.center_id SET c.status_id=3,d.status_id=3 WHERE c.center_id="' + ID + '"', function (error, results, fields) {
                     if (error) throw error;
                     var data = '{"statusCode": 100,"error": "","message": "Authorized Service Center Delete successfully."}';
@@ -1323,8 +1323,8 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
-                ID: Joi.number().integer(),
+                TokenNo: Joi.string().required(),
+                ID: Joi.number().integer().required(),
                 output: 'data',
                 parse:true
             }
@@ -1338,10 +1338,10 @@ server.route({
     handler: function (request, reply) {
         const TokenNo = request.payload.TokenNo;
         const ID = request.payload.ID;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 connection.query('UPDATE table_authorized_service_center_details SET status_id=3 WHERE center_detail_id="' + ID + '"', function (error, results, fields) {
                     if (error) throw error;
                     var data = '{"statusCode": 100,"error": "","message": "Authorized Service Center Detail Delete successfully."}';
@@ -1356,8 +1356,8 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
-                ID: Joi.number().integer(),
+                TokenNo: Joi.string().required(),
+                ID: Joi.number().integer().required(),
                 output: 'data',
                 parse:true
             }
@@ -1370,10 +1370,10 @@ server.route({
     path: '/Services/AuthorizedServiceCenterList',
     handler: function (request, reply) {
         const TokenNo = request.payload.TokenNo;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 connection.query('SELECT a.center_id as ID,a.brand_id as BrandID,b.brand_name as BrandName,a.center_name as Name,a.address_house_no as HouseNo,a.address_block as Block,a.address_street as Street,a.address_sector as Sector,a.address_city as City,a.address_state as State,a.address_pin_code as PinCode,a.address_nearby as NearBy,a.lattitude as Lattitude,a.longitude as Longitude,a.open_days as OpenDays,a.timings as Timings FROM table_authorized_service_center as a inner join table_brands as b on a.brand_id=b.brand_id WHERE a.status_id!=3 ORDER BY b.brand_name', function (error, service_center, fields) {
                     if (error) throw error;
                     if(service_center.length > 0){
@@ -1393,7 +1393,7 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
+                TokenNo: Joi.string().required(),
                 output: 'data',
                 parse:true
             }
@@ -1407,10 +1407,10 @@ server.route({
     handler: function (request, reply) {
         const TokenNo = request.payload.TokenNo;
         const ID = request.payload.ID;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 connection.query('SELECT a.center_id as ID,a.brand_id as BrandID,b.brand_name as BrandName,a.center_name as Name,a.address_house_no as HouseNo,a.address_block as Block,a.address_street as Street,a.address_sector as Sector,a.address_city as City,a.address_state as State,a.address_pin_code as PinCode,a.address_nearby as NearBy,a.lattitude as Lattitude,a.longitude as Longitude,a.open_days as OpenDays,a.timings as Timings FROM table_authorized_service_center as a inner join table_brands as b on a.brand_id=b.brand_id WHERE a.center_id = "' + ID + '"', function (error, brand, fields) {
                     if (error) throw error;
                     if(brand.length > 0){
@@ -1434,8 +1434,8 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
-                ID: Joi.number().integer(),
+                TokenNo: Joi.string().required(),
+                ID: Joi.number().integer().required(),
                 output: 'data',
                 parse:true
             }
@@ -1450,10 +1450,10 @@ server.route({
     handler: function (request, reply) {
         const TokenNo = request.payload.TokenNo;
         const Name = request.payload.Name;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 connection.query('SELECT color_id FROM table_color WHERE color_name = "' + Name + '" and status_id=1', function (error, color, fields) {
                     if (error) throw error;
                     if(color.length > 0){
@@ -1476,8 +1476,8 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
-                Name: Joi.string(),
+                TokenNo: Joi.string().required(),
+                Name: Joi.string().required(),
                 output: 'data',
                 parse:true
             }
@@ -1491,10 +1491,10 @@ server.route({
     handler: function (request, reply) {
         const TokenNo = request.payload.TokenNo;
         const ID = request.payload.ID;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 connection.query('UPDATE table_color SET status_id=3 WHERE color_id="' + ID + '"', function (error, results, fields) {
                     if (error) throw error;
                     var data = '{"statusCode": 100,"error": "","message": "Data Delete successfully."}';
@@ -1509,8 +1509,8 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
-                ID: Joi.number().integer(),
+                TokenNo: Joi.string().required(),
+                ID: Joi.number().integer().required(),
                 output: 'data',
                 parse:true
             }
@@ -1525,10 +1525,10 @@ server.route({
     handler: function (request, reply) {
         const TokenNo = request.payload.TokenNo;
         const RefID = request.payload.RefID;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 connection.query('SELECT color_id as ID,color_name as Name FROM table_color WHERE status_id=1 ORDER BY color_name', function (error, color, fields) {
                     if (error) throw error;
                     if(color.length > 0){
@@ -1548,7 +1548,7 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
+                TokenNo: Joi.string().required(),
                 RefID: [Joi.number().integer(), Joi.allow(null)],
                 output: 'data',
                 parse:true
@@ -1564,10 +1564,10 @@ server.route({
         const TokenNo = request.payload.TokenNo;
         const CatID = request.payload.CatID;
         const Name = request.payload.Name;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 connection.query('SELECT exclusions_id FROM table_list_of_exclusions WHERE exclusions_name = "' + Name + '" and category_id = "' + CatID + '" and status_id=1', function (error, data, fields) {
                     if (error) throw error;
                     if(data.length > 0){
@@ -1590,9 +1590,9 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
-                Name: Joi.string(),
-                CatID: Joi.number().integer(),
+                TokenNo: Joi.string().required(),
+                Name: Joi.string().required(),
+                CatID: Joi.number().integer().required(),
                 output: 'data',
                 parse:true
             }
@@ -1608,10 +1608,10 @@ server.route({
         const ID = request.payload.ID;
         const Name = request.payload.Name;
         const CatID = request.payload.CatID;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 connection.query('SELECT exclusions_id FROM table_list_of_exclusions WHERE exclusions_name = "' + Name + '" and status_id=1 and exclusions_id!="'+ID+'" and category_id="'+CatID+'"', function (error, data, fields) {
                     if (error) throw error;
                     if(data.length > 0){
@@ -1634,10 +1634,10 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
-                Name: Joi.string(),
-                ID: Joi.number().integer(),
-                CatID: Joi.number().integer(),
+                TokenNo: Joi.string().required(),
+                Name: Joi.string().required(),
+                ID: Joi.number().integer().required(),
+                CatID: Joi.number().integer().required(),
                 output: 'data',
                 parse:true
             }
@@ -1652,12 +1652,10 @@ server.route({
     handler: function (request, reply) {
         const TokenNo = request.payload.TokenNo;
         const ID = request.payload.ID;
-        const Name = request.payload.Name;
-        const CatID = request.payload.CatID;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 connection.query('UPDATE table_list_of_exclusions SET status_id=3,updated_on="' + getDateTime() + '",updated_by_user_id="' + UserID + '" WHERE exclusions_id="' + ID + '"', function (error, results, fields) {
                     if (error) throw error;
                     var data = '{"statusCode": 100,"error": "","message": "Data Delete successfully."}';
@@ -1672,10 +1670,8 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
-                Name: Joi.string(),
-                ID: Joi.number().integer(),
-                CatID: Joi.number().integer(),
+                TokenNo: Joi.string().required(),
+                ID: Joi.number().integer().required(),
                 output: 'data',
                 parse:true
             }
@@ -1689,13 +1685,13 @@ server.route({
     path: '/Services/ExclusionsList',
     handler: function (request, reply) {
         const TokenNo = request.payload.TokenNo;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 connection.query('SELECT e.exclusions_id as ID, e.category_id as CatID,c.category_name as CatName,e.exclusions_name as Name FROM table_list_of_exclusions as e left join table_categories as c on c.category_id=e.category_id WHERE e.status_id=1', function (error, results, fields) {
                     if (error) throw error;
-                    var data = '{"statusCode": 100,"ExclusionsList": "'+JSON.stringify(results)+'"}';
+                    var data = '{"statusCode": 100,"ExclusionsList": '+JSON.stringify(results)+'}';
                     reply(data);
                 });
             } else {
@@ -1722,10 +1718,10 @@ server.route({
         const TokenNo = request.payload.TokenNo;
         const CatID = request.payload.CatID;
         const Name = request.payload.Name;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 connection.query('SELECT inclusions_id FROM table_list_of_inclusions WHERE inclusions_name = "' + Name + '" and category_id = "' + CatID + '" and status_id=1', function (error, data, fields) {
                     if (error) throw error;
                     if(data.length > 0){
@@ -1748,9 +1744,9 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
-                Name: Joi.string(),
-                CatID: Joi.number().integer(),
+                TokenNo: Joi.string().required(),
+                Name: Joi.string().required(),
+                CatID: Joi.number().integer().required(),
                 output: 'data',
                 parse:true
             }
@@ -1766,10 +1762,10 @@ server.route({
         const ID = request.payload.ID;
         const Name = request.payload.Name;
         const CatID = request.payload.CatID;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 connection.query('SELECT inclusions_id FROM table_list_of_inclusions WHERE inclusions_name = "' + Name + '" and status_id=1 and inclusions_id!="'+ID+'" and category_id="'+CatID+'"', function (error, data, fields) {
                     if (error) throw error;
                     if(data.length > 0){
@@ -1792,10 +1788,10 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
-                Name: Joi.string(),
-                ID: Joi.number().integer(),
-                CatID: Joi.number().integer(),
+                TokenNo: Joi.string().required(),
+                Name: Joi.string().required(),
+                ID: Joi.number().integer().required(),
+                CatID: Joi.number().integer().required(),
                 output: 'data',
                 parse:true
             }
@@ -1812,10 +1808,10 @@ server.route({
         const ID = request.payload.ID;
         const Name = request.payload.Name;
         const CatID = request.payload.CatID;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 connection.query('UPDATE table_list_of_inclusions SET status_id=3,updated_on="' + getDateTime() + '",updated_by_user_id="' + UserID + '" WHERE inclusions_id="' + ID + '"', function (error, results, fields) {
                     if (error) throw error;
                     var data = '{"statusCode": 100,"error": "","message": "Data Delete successfully."}';
@@ -1830,10 +1826,10 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
-                Name: Joi.string(),
-                ID: Joi.number().integer(),
-                CatID: Joi.number().integer(),
+                TokenNo: Joi.string().required(),
+                Name: Joi.string().required(),
+                ID: Joi.number().integer().required(),
+                CatID: Joi.number().integer().required(),
                 output: 'data',
                 parse:true
             }
@@ -1846,13 +1842,13 @@ server.route({
     path: '/Services/InclusionsList',
     handler: function (request, reply) {
         const TokenNo = request.payload.TokenNo;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 connection.query('SELECT i.inclusions_id as ID, i.category_id as CatID,c.category_name as CatName,i.inclusions_name as Name FROM table_list_of_inclusions as i left join table_categories as c on c.category_id=i.category_id WHERE i.status_id=1', function (error, results, fields) {
                     if (error) throw error;
-                    var data = '{"statusCode": 100,"InclusionsList": "'+JSON.stringify(results)+'"}';
+                    var data = '{"statusCode": 100,"InclusionsList": '+JSON.stringify(results)+'}';
                     reply(data);
                 });
             } else {
@@ -1864,7 +1860,7 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
+                TokenNo: Joi.string().required(),
                 output: 'data',
                 parse:true
             }
@@ -1879,10 +1875,10 @@ server.route({
     handler: function (request, reply) {
         const TokenNo = request.payload.TokenNo;
         const Details = request.payload.Details;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 connection.query('INSERT INTO table_offline_seller (offline_seller_name,offline_seller_owner_name,offline_seller_gstin_no,offline_seller_pan_number,offline_seller_registration_no,is_service_provider,is_onboarded,address_house_no,address_block,address_street,address_sector,address_city,address_state,address_pin_code,address_nearby,lattitude,longitude,status_id) VALUES ("'+request.payload.Name+'","'+request.payload.OwnerName+'","'+request.payload.GstinNo+'","'+request.payload.PanNo+'","'+request.payload.RegNo+'","'+request.payload.ServiceProvider+'","'+request.payload.Onboarded+'","'+request.payload.HouseNo+'","'+request.payload.Block+'","'+request.payload.Street+'","'+request.payload.Sector+'","'+request.payload.City+'","'+request.payload.State+'","'+request.payload.PinCode+'","'+request.payload.NearBy+'","'+request.payload.Lattitude+'","'+request.payload.Longitude+'",1)', function (error, results, fields) {
                     if (error) throw error;
                     for(var i = 0; i < Details.length; i++) {
@@ -1902,8 +1898,8 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
-                Name: Joi.string(),
+                TokenNo: Joi.string().required(),
+                Name: Joi.string().required(),
                 OwnerName: [Joi.string(), Joi.allow(null)],
                 GstinNo: [Joi.string(), Joi.allow(null)],
                 PanNo: [Joi.string(), Joi.allow(null)],
@@ -1914,8 +1910,8 @@ server.route({
                 Block: [Joi.string(), Joi.allow(null)],
                 Street: [Joi.string(), Joi.allow(null)],
                 Sector: [Joi.string(), Joi.allow(null)],
-                City: Joi.string(),
-                State: Joi.string(),
+                City: Joi.string().required(),
+                State: Joi.string().required(),
                 PinCode: [Joi.number().integer(), Joi.allow(null)],
                 NearBy: [Joi.string(), Joi.allow(null)],
                 Lattitude: [Joi.string(), Joi.allow(null)],
@@ -1936,10 +1932,10 @@ server.route({
         const TokenNo = request.payload.TokenNo;
         const ID = request.payload.ID;
         const Details = request.payload.Details;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 connection.query('UPDATE table_offline_seller SET offline_seller_name="'+request.payload.Name+'",offline_seller_owner_name="'+request.payload.OwnerName+'",offline_seller_gstin_no="'+request.payload.GstinNo+'",offline_seller_pan_number="'+request.payload.PanNo+'",offline_seller_registration_no="'+request.payload.RegNo+'",is_service_provider="'+request.payload.ServiceProvider+'",is_onboarded="'+request.payload.Onboarded+'",address_house_no="'+request.payload.HouseNo+'",address_block="'+request.payload.Block+'",address_street="'+request.payload.Street+'",address_sector="'+request.payload.Sector+'",address_city="'+request.payload.City+'",address_state="'+request.payload.State+'",address_pin_code="'+request.payload.PinCode+'",address_nearby="'+request.payload.NearBy+'",lattitude="'+request.payload.Lattitude+'",longitude="'+request.payload.Longitude+'" WHERE offline_seller_id="' + ID + '"', function (error, results, fields) {
                     if (error) throw error;
                     for(var i = 0; i < Details.length; i++) {
@@ -1964,9 +1960,9 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
-                ID: Joi.number().integer(),
-                Name: Joi.string(),
+                TokenNo: Joi.string().required(),
+                ID: Joi.number().integer().required(),
+                Name: Joi.string().required(),
                 OwnerName: [Joi.string(), Joi.allow(null)],
                 GstinNo: [Joi.string(), Joi.allow(null)],
                 PanNo: [Joi.string(), Joi.allow(null)],
@@ -1977,8 +1973,8 @@ server.route({
                 Block: [Joi.string(), Joi.allow(null)],
                 Street: [Joi.string(), Joi.allow(null)],
                 Sector: [Joi.string(), Joi.allow(null)],
-                City: Joi.string(),
-                State: Joi.string(),
+                City: Joi.string().required(),
+                State: Joi.string().required(),
                 PinCode: [Joi.number().integer(), Joi.allow(null)],
                 NearBy: [Joi.string(), Joi.allow(null)],
                 Lattitude: [Joi.string(), Joi.allow(null)],
@@ -1998,10 +1994,10 @@ server.route({
     handler: function (request, reply) {
         const TokenNo = request.payload.TokenNo;
         const ID = request.payload.ID;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 connection.query('UPDATE table_offline_seller as s left Join table_offline_seller_details as d on s.offline_seller_id=d.offline_seller_id SET s.status_id=3,d.status_id=3 WHERE s.offline_seller_id="' + ID + '"', function (error, results, fields) {
                     if (error) throw error;
                     var data = '{"statusCode": 100,"error": "","message": "Offline Seller Delete successfully."}';
@@ -2016,8 +2012,8 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
-                ID: Joi.number().integer(),
+                TokenNo: Joi.string().required(),
+                ID: Joi.number().integer().required(),
                 output: 'data',
                 parse:true
             }
@@ -2031,10 +2027,10 @@ server.route({
     handler: function (request, reply) {
         const TokenNo = request.payload.TokenNo;
         const ID = request.payload.ID;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 connection.query('UPDATE table_offline_seller_details SET status_id=3 WHERE seller_detail_id="' + ID + '"', function (error, results, fields) {
                     if (error) throw error;
                     var data = '{"statusCode": 100,"error": "","message": "Offline Seller Detail Delete successfully."}';
@@ -2049,8 +2045,8 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
-                ID: Joi.number().integer(),
+                TokenNo: Joi.string().required(),
+                ID: Joi.number().integer().required(),
                 output: 'data',
                 parse:true
             }
@@ -2064,10 +2060,10 @@ server.route({
     path: '/Services/OfflineSellerList',
     handler: function (request, reply) {
         const TokenNo = request.payload.TokenNo;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 connection.query('SELECT offline_seller_id as ID,offline_seller_name as Name,offline_seller_owner_name as OwnerName,offline_seller_gstin_no as GstinNo,offline_seller_pan_number as PanNo,offline_seller_registration_no as RegNo,is_service_provider as ServiceProvider,is_onboarded as Onboarded,address_house_no as HouseNo,address_block as Block,address_street as Street,address_sector as Sector,address_city as City,address_state as State,address_pin_code as PinCode,address_nearby as NearBy,lattitude as Lattitude,longitude as Longitude FROM table_offline_seller WHERE status_id!=3 ORDER BY offline_seller_name', function (error, service_center, fields) {
                     if (error) throw error;
                     if(service_center.length > 0){
@@ -2087,7 +2083,7 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
+                TokenNo: Joi.string().required(),
                 output: 'data',
                 parse:true
             }
@@ -2101,16 +2097,16 @@ server.route({
     handler: function (request, reply) {
         const TokenNo = request.payload.TokenNo;
         const ID = request.payload.ID;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 connection.query('SELECT offline_seller_id as ID,offline_seller_name as Name,offline_seller_owner_name as OwnerName,offline_seller_gstin_no as GstinNo,offline_seller_pan_number as PanNo,offline_seller_registration_no as RegNo,is_service_provider as ServiceProvider,is_onboarded as Onboarded,address_house_no as HouseNo,address_block as Block,address_street as Street,address_sector as Sector,address_city as City,address_state as State,address_pin_code as PinCode,address_nearby as NearBy,lattitude as Lattitude,longitude as Longitude FROM table_offline_seller WHERE offline_seller_id = "' + ID + '"', function (error, offline_seller, fields) {
                     if (error) throw error;
                     if(offline_seller.length > 0){
                         connection.query('SELECT seller_detail_id as DetailID,contactdetail_type_id as DetailTypeID,display_name as DisplayName,details as Details FROM table_offline_seller_details WHERE offline_seller_id = "' + ID + '" and status_id!=3', function (error, detail, fields) {
                             if (error) throw error;
-                            var data = '{"statusCode": 100,"ID":'+offline_seller[0]['ID']+',"Name":'+offline_seller[0]['Name']+',"OwnerName":"'+offline_seller[0]['OwnerName']+'","GstinNo":"'+offline_seller[0]['GstinNo']+'","PanNo":"'+offline_seller[0]['PanNo']+'","RegNo":"'+offline_seller[0]['RegNo']+'","ServiceProvider":"'+offline_seller[0]['ServiceProvider']+'","Onboarded":"'+offline_seller[0]['Onboarded']+'","HouseNo":"'+offline_seller[0]['HouseNo']+'","Block":"'+offline_seller[0]['Block']+'","Street":"'+offline_seller[0]['Street']+'","Sector":"'+offline_seller[0]['Sector']+'","City":"'+offline_seller[0]['City']+'","State":"'+offline_seller[0]['State']+'","PinCode":'+offline_seller[0]['PinCode']+',"NearBy":"'+offline_seller[0]['NearBy']+'","Lattitude":"'+offline_seller[0]['Lattitude']+'","Longitude":"'+offline_seller[0]['Longitude']+'","Details": '+ JSON.stringify(detail) +'}';
+                            var data = '{"statusCode": 100,"ID":'+offline_seller[0]['ID']+',"Name":"'+offline_seller[0]['Name']+'","OwnerName":"'+offline_seller[0]['OwnerName']+'","GstinNo":"'+offline_seller[0]['GstinNo']+'","PanNo":"'+offline_seller[0]['PanNo']+'","RegNo":"'+offline_seller[0]['RegNo']+'","ServiceProvider":"'+offline_seller[0]['ServiceProvider']+'","Onboarded":"'+offline_seller[0]['Onboarded']+'","HouseNo":"'+offline_seller[0]['HouseNo']+'","Block":"'+offline_seller[0]['Block']+'","Street":"'+offline_seller[0]['Street']+'","Sector":"'+offline_seller[0]['Sector']+'","City":"'+offline_seller[0]['City']+'","State":"'+offline_seller[0]['State']+'","PinCode":'+offline_seller[0]['PinCode']+',"NearBy":"'+offline_seller[0]['NearBy']+'","Lattitude":"'+offline_seller[0]['Lattitude']+'","Longitude":"'+offline_seller[0]['Longitude']+'","Details": '+ JSON.stringify(detail) +'}';
                             reply(data);
                         });
                     } else {
@@ -2127,8 +2123,8 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
-                ID: Joi.number().integer(),
+                TokenNo: Joi.string().required(),
+                ID: Joi.number().integer().required(),
                 output: 'data',
                 parse:true
             }
@@ -2136,6 +2132,75 @@ server.route({
     }
 });
 
+//Get Admin Consumer Bills List
+server.route({
+    method: 'POST',
+    path: '/Services/AdminConsumerBillsList',
+    handler: function (request, reply) {
+        const TokenNo = request.payload.TokenNo;
+        const Status = request.payload.Status;
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+            if (error) throw error;
+            if(token.length > 0){
+                var UserID = token[0]['user_id'];
+                switch (Status) {
+                    case 4:
+                        connection.query('SELECT b.bill_id as BID,b.user_id as UID,b.bill_reference_id as BillNo,u.fullname as Name,u.email_id as EmailID,u.mobile_no as PhoneNo,b.created_on as BillDate FROM table_consumer_bills as b LEFT JOIN table_users as u on u.user_id=b.user_id WHERE b.admin_status=4 and b.user_status!=3 ORDER BY b.updated_on DESC', function (error, bill, fields) {
+                            if (error) throw error;
+                            if(bill.length > 0){
+                                var data = '{"statusCode": 100,"BillList": '+ JSON.stringify(bill) +'}';
+                                reply(data);
+                            } else {
+                                var data = '{"statusCode": 105,"error": "Not Found","message": "Data not Available."}';
+                                reply(data);
+                            }
+                        });
+                        break;
+                    case 8:
+                        connection.query('SELECT b.bill_id as BID,b.user_id as UID,b.bill_reference_id as BillNo,u.fullname as Name,u.email_id as EmailID,u.mobile_no as PhoneNo,b.created_on as BillDate,ceu.fullname as CE_Name,ceu.email_id as CE_EmailID,ce.created_on as CE_TaskDate,ces.status_name as CE_Status,ces.status_id as CE_StatusID,qeu.fullname as QE_Name,ceu.email_id as QE_EmailID,ce.created_on as QE_TaskDate,qes.status_name as QE_Status,qes.status_id as QE_StatusID FROM table_consumer_bills as b LEFT JOIN table_users as u on u.user_id=b.user_id LEFT JOIN table_cust_executive_tasks as ce on ce.bill_id=b.bill_id LEFT JOIN table_users as ceu on ceu.user_id=ce.user_id LEFT JOIN table_status as ces on ce.status_id=ces.status_id LEFT JOIN table_qual_executive_tasks as qe on qe.bill_id=b.bill_id LEFT JOIN table_users as qeu on qe.user_id=qeu.user_id LEFT JOIN table_status as qes on qes.status_id=qe.status_id WHERE b.admin_status=8 and b.user_status!=3 ORDER BY b.updated_on DESC', function (error, bill, fields) {
+                            if (error) throw error;
+                            if(bill.length > 0){
+                                var data = '{"statusCode": 100,"BillList": '+ JSON.stringify(bill) +'}';
+                                reply(data);
+                            } else {
+                                var data = '{"statusCode": 105,"error": "Not Found","message": "Data not Available."}';
+                                reply(data);
+                            }
+                        });
+                        break;
+                    case 5:
+                        connection.query('SELECT b.bill_id as BID,b.user_id as UID,b.bill_reference_id as BillNo,u.fullname as Name,u.email_id as EmailID,u.mobile_no as PhoneNo,b.created_on as BillDate,ceu.fullname as CE_Name,ceu.email_id as CE_EmailID,ce.created_on as CE_TaskDate,ces.status_name as CE_Status,ces.status_id as CE_StatusID,qeu.fullname as QE_Name,ceu.email_id as QE_EmailID,ce.created_on as QE_TaskDate,qes.status_name as QE_Status,qes.status_id as QE_StatusID FROM table_consumer_bills as b LEFT JOIN table_users as u on u.user_id=b.user_id LEFT JOIN table_cust_executive_tasks as ce on ce.bill_id=b.bill_id LEFT JOIN table_users as ceu on ceu.user_id=ce.user_id LEFT JOIN table_status as ces on ce.status_id=ces.status_id LEFT JOIN table_qual_executive_tasks as qe on qe.bill_id=b.bill_id LEFT JOIN table_users as qeu on qe.user_id=qeu.user_id LEFT JOIN table_status as qes on qes.status_id=qe.status_id WHERE b.admin_status=5 and b.user_status!=3 ORDER BY b.updated_on DESC', function (error, bill, fields) {
+                            if (error) throw error;
+                            if(bill.length > 0){
+                                var data = '{"statusCode": 100,"BillList": '+ JSON.stringify(bill) +'}';
+                                reply(data);
+                            } else {
+                                var data = '{"statusCode": 105,"error": "Not Found","message": "Data not Available."}';
+                                reply(data);
+                            }
+                        });
+                        break;
+                    default:
+                        var data = '{"statusCode": 100,"error": "Invalid Status","message": "Invalid Status."}';
+                        reply(data);
+                }
+            } else {
+                var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+                reply(data);
+            }
+        });
+    },
+    config:{
+        validate: {
+            payload: {
+                TokenNo: Joi.string().required(),
+                Status: Joi.number().required(),
+                output: 'data',
+                parse:true
+            }
+        }
+    }
+});
 //Add Task Assigned To CE
 server.route({
     method: 'POST',
@@ -2144,21 +2209,28 @@ server.route({
         const TokenNo = request.payload.TokenNo;
         const UID = request.payload.UID;
         const BID = request.payload.BID;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        const Comments = request.payload.Comments;
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
+                var UserID = token[0]['user_id'];
                 connection.query('SELECT id FROM table_cust_executive_tasks WHERE user_id = "' + UID + '" and bill_id = "' + BID + '"', function (error, data, fields) {
                     if (error) throw error;
                     if(data.length > 0){
-                        connection.query('UPDATE table_cust_executive_tasks SET updated_on="' + getDateTime() + '",updated_by_user_id="' + UserID + '",status_id=7 WHERE id="' + data[0]['id'] + '"', function (error, results, fields) {
+                        connection.query('UPDATE table_cust_executive_tasks SET comments="' + Comments + '",updated_on="' + getDateTime() + '",updated_by_user_id="' + UserID + '",status_id=7 WHERE id="' + data[0]['id'] + '"', function (error, results, fields) {
                             if (error) throw error;
                             var data = '{"statusCode": 100,"error": "","message": "Task Assigned successfully."}';
                             reply(data);
                         });
                     } else {
-                        connection.query('INSERT INTO table_cust_executive_tasks (user_id,bill_id,created_on,updated_on,updated_by_user_id,status_id) VALUES ("' + UID + '","' + BID + '","' + getDateTime() + '","' + getDateTime() + '","' + UserID + '",4)', function (error, results, fields) {
+                        connection.query('INSERT INTO table_cust_executive_tasks (user_id,bill_id,created_on,updated_on,updated_by_user_id,status_id) VALUES ("' + UID + '","' + BID + '","' + getDateTime() + '","' + getDateTime() + '","' + UserID + '",6)', function (error, results, fields) {
                             if (error) throw error;
+                            connection.query('UPDATE table_consumer_bills SET admin_status=8 WHERE bill_id="' + BID + '"', function (error, results, fields) {
+                                if (error) throw error;
+                            });
+                            connection.query('DELETE FROM table_cust_executive_tasks WHERE bill_id="' + BID + '" and user_id!="' + UID + '"', function (error, results, fields) {
+                                if (error) throw error;
+                            });
                             var data = '{"statusCode": 100,"error": "","message": "Task Assigned successfully."}';
                             reply(data);
                         });
@@ -2173,53 +2245,10 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
-                UID: Joi.number().integer(),
-                BID: Joi.number().integer(),
-                output: 'data',
-                parse:true
-            }
-        }
-    }
-});
-//Get Task Assigned To CE
-server.route({
-    method: 'POST',
-    path: '/Services/TaskCEList',
-    handler: function (request, reply) {
-        const TokenNo = request.payload.TokenNo;
-        const Status = request.payload.Status;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
-            if (error) throw error;
-            if(token.length > 0){
-                var UserID = token[0]['id'];
-                connection.query('SELECT id FROM table_cust_executive_tasks WHERE user_id = "' + UID + '" and bill_id = "' + BID + '"', function (error, data, fields) {
-                    if (error) throw error;
-                    if(data.length > 0){
-                        connection.query('UPDATE table_cust_executive_tasks SET updated_on="' + getDateTime() + '",updated_by_user_id="' + UserID + '",status_id=7 WHERE id="' + data[0]['id'] + '"', function (error, results, fields) {
-                            if (error) throw error;
-                            var data = '{"statusCode": 100,"error": "","message": "Task Assigned successfully."}';
-                            reply(data);
-                        });
-                    } else {
-                        connection.query('INSERT INTO table_cust_executive_tasks (user_id,bill_id,created_on,updated_on,updated_by_user_id,status_id) VALUES ("' + UID + '","' + BID + '","' + getDateTime() + '","' + getDateTime() + '","' + UserID + '",4)', function (error, results, fields) {
-                            if (error) throw error;
-                            var data = '{"statusCode": 100,"error": "","message": "Task Assigned successfully."}';
-                            reply(data);
-                        });
-                    }
-                });
-            } else {
-                var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
-                reply(data);
-            }
-        });
-    },
-    config:{
-        validate: {
-            payload: {
-                TokenNo: Joi.string(),
-                Status: Joi.number().integer(),
+                TokenNo: Joi.string().required(),
+                UID: Joi.number().integer().required(),
+                BID: Joi.number().integer().required(),
+                Comments: [Joi.string(), Joi.allow(null)],
                 output: 'data',
                 parse:true
             }
@@ -2234,11 +2263,11 @@ server.route({
         const TokenNo = request.payload.TokenNo;
         const UID = request.payload.UID;
         const BID = request.payload.BID;
-        connection.query('SELECT id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
-                var UserID = token[0]['id'];
-                connection.query('INSERT INTO table_qual_executive_tasks (user_id,bill_id,created_on,updated_on,updated_by_user_id,status_id) VALUES ("' + UID + '","' + BID + '","' + getDateTime() + '","' + getDateTime() + '","' + UserID + '",4)', function (error, results, fields) {
+                var UserID = token[0]['user_id'];
+                connection.query('INSERT INTO table_qual_executive_tasks (user_id,bill_id,created_on,updated_on,updated_by_user_id,status_id) VALUES ("' + UID + '","' + BID + '","' + getDateTime() + '","' + getDateTime() + '","' + UserID + '",6)', function (error, results, fields) {
                     if (error) throw error;
                     var data = '{"statusCode": 100,"error": "","message": "Task Assigned successfully."}';
                     reply(data);
@@ -2252,9 +2281,117 @@ server.route({
     config:{
         validate: {
             payload: {
-                TokenNo: Joi.string(),
-                UID: Joi.number().integer(),
-                BID: Joi.number().integer(),
+                TokenNo: Joi.string().required(),
+                UID: Joi.number().integer().required(),
+                BID: Joi.number().integer().required(),
+                output: 'data',
+                parse:true
+            }
+        }
+    }
+});
+//Get CE Consumer Bills List
+server.route({
+    method: 'POST',
+    path: '/Services/CEConsumerBillsList',
+    handler: function (request, reply) {
+        const TokenNo = request.payload.TokenNo;
+        const Status = request.payload.Status;
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+            if (error) throw error;
+            if(token.length > 0){
+                var UserID = token[0]['user_id'];
+                switch (Status) {
+                    case 4:
+                        var status = true;
+                        var condition = 'WHERE ce.status_id IN (6,7) and  b.user_status!=3 and ce.user_id='+UserID+'';
+                        break;
+                    case 5:
+                        var status = true;
+                        var condition = 'WHERE ce.status_id=5 and ce.user_id='+UserID+'';
+                        break;
+                    default:
+                        var status = false;
+                        var data = '{"statusCode": 100,"error": "Invalid Status","message": "Invalid Status."}';
+                        reply(data);
+                }
+                if(status == true){
+                    connection.query('SELECT b.bill_id as BID,b.user_id as UID,b.bill_reference_id as BillNo,u.fullname as Name,u.email_id as EmailID,u.mobile_no as PhoneNo,b.created_on as BillDate,assu.fullname as AssignedBy,ce.created_on as AssignedDate,status_name as Status FROM table_cust_executive_tasks as ce INNER JOIN table_consumer_bills as b on b.bill_id=ce.bill_id LEFT JOIN table_users as u on u.user_id=b.user_id  LEFT JOIN table_users as assu on ce.updated_by_user_id=assu.user_id LEFT JOIN table_status as s on s.status_id=ce.status_id '+condition+' ORDER BY ce.updated_on DESC', function (error, bill, fields) {
+                        if (error) throw error;
+                        if(bill.length > 0){
+                            var data = '{"statusCode": 100,"BillList": '+ JSON.stringify(bill) +'}';
+                            reply(data);
+                        } else {
+                            var data = '{"statusCode": 105,"error": "Not Found","message": "Data not Available."}';
+                            reply(data);
+                        }
+                    });
+                }
+            } else {
+                var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+                reply(data);
+            }
+        });
+    },
+    config:{
+        validate: {
+            payload: {
+                TokenNo: Joi.string().required(),
+                Status: Joi.number().required(),
+                output: 'data',
+                parse:true
+            }
+        }
+    }
+});
+//Get QE Consumer Bills List
+server.route({
+    method: 'POST',
+    path: '/Services/QEConsumerBillsList',
+    handler: function (request, reply) {
+        const TokenNo = request.payload.TokenNo;
+        const Status = request.payload.Status;
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+            if (error) throw error;
+            if(token.length > 0){
+                var UserID = token[0]['user_id'];
+                switch (Status) {
+                    case 4:
+                        var status = true;
+                        var condition = 'WHERE qe.status_id=6 and  b.user_status!=3 and qe.user_id='+UserID+'';
+                        break;
+                    case 5:
+                        var status = true;
+                        var condition = 'WHERE qe.status_id=5 and qe.user_id='+UserID+'';
+                        break;
+                    default:
+                        var status = false;
+                        var data = '{"statusCode": 100,"error": "Invalid Status","message": "Invalid Status."}';
+                        reply(data);
+                }
+                if(status == true){
+                    connection.query('SELECT b.bill_id as BID,b.user_id as UID,b.bill_reference_id as BillNo,u.fullname as Name,u.email_id as EmailID,u.mobile_no as PhoneNo,b.created_on as BillDate,assu.fullname as AssignedBy,qe.created_on as AssignedDate,status_name as Status FROM table_qual_executive_tasks as qe INNER JOIN table_consumer_bills as b on b.bill_id=qe.bill_id LEFT JOIN table_users as u on u.user_id=b.user_id  LEFT JOIN table_users as assu on ce.updated_by_user_id=assu.user_id LEFT JOIN table_status as s on s.status_id=qe.status_id '+condition+' ORDER BY qe.updated_on DESC', function (error, bill, fields) {
+                        if (error) throw error;
+                        if(bill.length > 0){
+                            var data = '{"statusCode": 100,"BillList": '+ JSON.stringify(bill) +'}';
+                            reply(data);
+                        } else {
+                            var data = '{"statusCode": 105,"error": "Not Found","message": "Data not Available."}';
+                            reply(data);
+                        }
+                    });
+                }
+            } else {
+                var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+                reply(data);
+            }
+        });
+    },
+    config:{
+        validate: {
+            payload: {
+                TokenNo: Joi.string().required(),
+                Status: Joi.number().required(),
                 output: 'data',
                 parse:true
             }

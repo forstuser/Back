@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: 127.0.0.1
--- Generation Time: Aug 08, 2017 at 03:54 PM
+-- Generation Time: Aug 10, 2017 at 03:38 PM
 -- Server version: 5.6.17
 -- PHP Version: 5.5.12
 
@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS `table_authorized_service_center` (
   `status_id` int(11) NOT NULL,
   PRIMARY KEY (`center_id`),
   KEY `brand_id` (`brand_id`,`status_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=3 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=4 ;
 
 --
 -- Dumping data for table `table_authorized_service_center`
@@ -53,7 +53,8 @@ CREATE TABLE IF NOT EXISTS `table_authorized_service_center` (
 
 INSERT INTO `table_authorized_service_center` (`center_id`, `brand_id`, `center_name`, `address_house_no`, `address_block`, `address_street`, `address_sector`, `address_city`, `address_state`, `address_pin_code`, `address_nearby`, `lattitude`, `longitude`, `open_days`, `timings`, `status_id`) VALUES
 (1, 1, 'Testingxzvdsv', '', 'Test1', '', '', 'South Delhi', 'Delhi', 110062, 'Test1', '', '', 'Test1', 'Test1', 1),
-(2, 1, 'Testing', '', 'Test1', '', '', 'South Delhi', 'Delhi', 110062, 'Test1', '', '', 'Test1', 'Test1', 1);
+(2, 1, 'Testing', '', 'Test1', '', '', 'South Delhi', 'Delhi', 110062, 'Test1', '', '', 'Test1', 'Test1', 1),
+(3, 1, 'new service center', '', '', '', '', 'Delhi', 'Haryana', 0, '', '', '', '24 hours', '12', 1);
 
 -- --------------------------------------------------------
 
@@ -70,7 +71,7 @@ CREATE TABLE IF NOT EXISTS `table_authorized_service_center_details` (
   `status_id` int(11) NOT NULL,
   PRIMARY KEY (`center_detail_id`),
   KEY `center_id` (`center_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=4 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=5 ;
 
 --
 -- Dumping data for table `table_authorized_service_center_details`
@@ -79,7 +80,8 @@ CREATE TABLE IF NOT EXISTS `table_authorized_service_center_details` (
 INSERT INTO `table_authorized_service_center_details` (`center_detail_id`, `center_id`, `contactdetail_type_id`, `display_name`, `details`, `status_id`) VALUES
 (1, 1, 1, 'Suport', '3333', 1),
 (2, 1, 1, 'Suport', '3333', 1),
-(3, 2, 1, 'Suport', '2222222', 1);
+(3, 2, 1, 'Suport', '2222222', 1),
+(4, 3, 0, '', '', 1);
 
 -- --------------------------------------------------------
 
@@ -197,7 +199,7 @@ CREATE TABLE IF NOT EXISTS `table_color` (
   `color_name` varchar(100) NOT NULL,
   `status_id` int(11) NOT NULL,
   PRIMARY KEY (`color_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=3 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=5 ;
 
 --
 -- Dumping data for table `table_color`
@@ -205,7 +207,9 @@ CREATE TABLE IF NOT EXISTS `table_color` (
 
 INSERT INTO `table_color` (`color_id`, `color_name`, `status_id`) VALUES
 (1, 'Red', 3),
-(2, 'Red', 1);
+(2, 'Red', 1),
+(3, 'Black', 3),
+(4, 'sadfsfd', 3);
 
 -- --------------------------------------------------------
 
@@ -221,10 +225,18 @@ CREATE TABLE IF NOT EXISTS `table_consumer_bills` (
   `created_on` datetime NOT NULL,
   `updated_on` datetime NOT NULL,
   `updated_by_user_id` int(11) NOT NULL,
-  `status_id` int(11) NOT NULL,
+  `user_status` int(11) NOT NULL COMMENT 'status_id',
+  `admin_status` int(11) NOT NULL COMMENT 'status_id',
   PRIMARY KEY (`bill_id`),
   KEY `user_id` (`user_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=2 ;
+
+--
+-- Dumping data for table `table_consumer_bills`
+--
+
+INSERT INTO `table_consumer_bills` (`bill_id`, `user_id`, `bill_reference_id`, `uploaded_by`, `created_on`, `updated_on`, `updated_by_user_id`, `user_status`, `admin_status`) VALUES
+(1, 10, 'BinBill 1', 1, '2017-08-09 06:17:16', '2017-08-09 04:12:10', 10, 8, 8);
 
 -- --------------------------------------------------------
 
@@ -240,7 +252,15 @@ CREATE TABLE IF NOT EXISTS `table_consumer_bill_copies` (
   `status_id` int(11) NOT NULL,
   PRIMARY KEY (`bill_copie_id`),
   KEY `bill_id` (`bill_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=3 ;
+
+--
+-- Dumping data for table `table_consumer_bill_copies`
+--
+
+INSERT INTO `table_consumer_bill_copies` (`bill_copie_id`, `bill_id`, `bill_copie_name`, `bill_copie_type`, `status_id`) VALUES
+(1, 1, 'jdfskljklfjsd.PNG', 'Image', 1),
+(2, 1, 'dsadsa.PNG', 'Image', 1);
 
 -- --------------------------------------------------------
 
@@ -273,13 +293,21 @@ CREATE TABLE IF NOT EXISTS `table_cust_executive_tasks` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `user_id` int(11) NOT NULL,
   `bill_id` int(11) NOT NULL,
+  `comments` text,
   `created_on` datetime NOT NULL,
   `updated_on` datetime NOT NULL,
   `updated_by_user_id` int(11) NOT NULL,
   `status_id` int(11) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`,`bill_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=3 ;
+
+--
+-- Dumping data for table `table_cust_executive_tasks`
+--
+
+INSERT INTO `table_cust_executive_tasks` (`id`, `user_id`, `bill_id`, `comments`, `created_on`, `updated_on`, `updated_by_user_id`, `status_id`) VALUES
+(2, 9, 1, 'test', '2017-08-09 19:00:28', '2017-08-10 16:03:42', 1, 5);
 
 -- --------------------------------------------------------
 
@@ -309,16 +337,19 @@ CREATE TABLE IF NOT EXISTS `table_list_of_exclusions` (
   `status_id` int(11) NOT NULL,
   PRIMARY KEY (`exclusions_id`),
   KEY `category_id` (`category_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=4 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=7 ;
 
 --
 -- Dumping data for table `table_list_of_exclusions`
 --
 
 INSERT INTO `table_list_of_exclusions` (`exclusions_id`, `category_id`, `exclusions_name`, `created_on`, `updated_on`, `updated_by_user_id`, `status_id`) VALUES
-(1, 4, 'ddd', '2017-08-05 13:05:43', '2017-08-05 14:25:23', 1, 1),
-(2, 4, 'sdadad', '2017-08-05 13:05:52', '2017-08-05 15:25:13', 1, 1),
-(3, 6, 'dasd', '2017-08-05 13:06:13', '2017-08-05 13:06:13', 1, 1);
+(1, 4, 'ddd', '2017-08-05 13:05:43', '2017-08-10 18:57:21', 1, 3),
+(2, 4, 'sdadad', '2017-08-05 13:05:52', '2017-08-10 18:57:26', 1, 3),
+(3, 6, 'appl', '2017-08-05 13:06:13', '2017-08-10 19:07:19', 1, 1),
+(4, 15, 'sddsf', '2017-08-10 18:50:51', '2017-08-10 18:50:51', 1, 1),
+(5, 15, 'exclusion', '2017-08-10 18:52:10', '2017-08-10 19:07:45', 1, 3),
+(6, 15, 'final', '2017-08-10 18:54:14', '2017-08-10 18:54:14', 1, 1);
 
 -- --------------------------------------------------------
 
@@ -372,14 +403,18 @@ CREATE TABLE IF NOT EXISTS `table_offline_seller` (
   `longitude` varchar(255) NOT NULL,
   `status_id` int(11) NOT NULL,
   PRIMARY KEY (`offline_seller_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=2 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=6 ;
 
 --
 -- Dumping data for table `table_offline_seller`
 --
 
 INSERT INTO `table_offline_seller` (`offline_seller_id`, `offline_seller_name`, `offline_seller_owner_name`, `offline_seller_gstin_no`, `offline_seller_pan_number`, `offline_seller_registration_no`, `is_service_provider`, `is_onboarded`, `address_house_no`, `address_block`, `address_street`, `address_sector`, `address_city`, `address_state`, `address_pin_code`, `address_nearby`, `lattitude`, `longitude`, `status_id`) VALUES
-(1, 'Testingww', 'Test', '', '', '', 0, 0, '', '', '', '', 'South Delhi', 'Delhi', '110062', 'Test1', '', '', 1);
+(1, 'Testing', 'Test', '', '', '', 0, 0, '', '', '', '', 'South Delhi', 'Delhi', '110062', 'Test1', '', '', 1),
+(2, 'new seller', '', '', '', '', 0, 0, '', '', '', '', 'gurgaon', 'Haryana', 'null', 'null', 'null', 'null', 3),
+(3, 'new', 'null', 'null', 'null', 'null', 0, 0, 'null', 'null', 'null', 'null', 'sdfsdf', 'sdfsdf', 'null', 'null', 'null', 'null', 3),
+(4, 'Test', 'null', 'null', 'null', 'null', 0, 0, 'null', 'null', 'null', 'null', 'city', 'state', 'null', 'null', 'null', 'null', 3),
+(5, 'test', '', '', '', 'null', 0, 0, 'null', 'null', 'null', 'null', 'asdasd', 'asdasd', 'null', 'null', 'null', 'null', 3);
 
 -- --------------------------------------------------------
 
@@ -396,17 +431,21 @@ CREATE TABLE IF NOT EXISTS `table_offline_seller_details` (
   `status_id` int(11) NOT NULL,
   PRIMARY KEY (`seller_detail_id`),
   KEY `offline_seller_id` (`offline_seller_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=5 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=9 ;
 
 --
 -- Dumping data for table `table_offline_seller_details`
 --
 
 INSERT INTO `table_offline_seller_details` (`seller_detail_id`, `offline_seller_id`, `contactdetail_type_id`, `display_name`, `details`, `status_id`) VALUES
-(1, 1, 1, 'Suport', '3334', 1),
+(1, 1, 1, 'Suport', '3335', 1),
 (2, 1, 1, 'Suport', '2222222', 3),
 (3, 1, 1, 'Suport', '2222222', 3),
-(4, 1, 1, 'Suport', '3334', 3);
+(4, 1, 1, 'Suport', '3334', 3),
+(5, 2, 2, 'email', 'email@gmail.com', 3),
+(6, 3, 2, 'sdfs', 'dfsd', 3),
+(7, 4, 0, 'null', 'null', 3),
+(8, 5, 0, 'null', 'null', 3);
 
 -- --------------------------------------------------------
 
@@ -421,7 +460,7 @@ CREATE TABLE IF NOT EXISTS `table_online_seller` (
   `seller_gstin_no` varchar(100) NOT NULL,
   `status_id` int(11) NOT NULL,
   PRIMARY KEY (`seller_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=4 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=6 ;
 
 --
 -- Dumping data for table `table_online_seller`
@@ -429,8 +468,10 @@ CREATE TABLE IF NOT EXISTS `table_online_seller` (
 
 INSERT INTO `table_online_seller` (`seller_id`, `seller_name`, `seller_url`, `seller_gstin_no`, `status_id`) VALUES
 (1, 'Testdsf', 'sad', 'asd', 1),
-(2, 'Test1', '', '', 1),
-(3, 'Test3', '', '', 1);
+(2, 'Test1', 'url', 'sdfsdfdfdffds', 1),
+(3, 'Test3', '', '', 1),
+(4, 'new seller', 'undefined', 'sdsdf', 3),
+(5, 'new online seller', 'undefined', 'sdsdf', 3);
 
 -- --------------------------------------------------------
 
@@ -446,7 +487,7 @@ CREATE TABLE IF NOT EXISTS `table_online_seller_details` (
   `details` varchar(255) NOT NULL,
   `status_id` int(11) NOT NULL,
   PRIMARY KEY (`seller_detail_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=6 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=8 ;
 
 --
 -- Dumping data for table `table_online_seller_details`
@@ -457,7 +498,9 @@ INSERT INTO `table_online_seller_details` (`seller_detail_id`, `seller_id`, `con
 (2, 2, 3, 'Suport', '2222222', 1),
 (3, 1, 1, 'Suport', '3333', 1),
 (4, 1, 2, 'Suport', 'dfdf', 1),
-(5, 3, 3, 'Suport', '2222222', 1);
+(5, 3, 3, 'Suport', '2222222', 1),
+(6, 4, 2, 'asdas', 'assadasd', 3),
+(7, 5, 0, '', '', 3);
 
 -- --------------------------------------------------------
 
@@ -487,7 +530,14 @@ CREATE TABLE IF NOT EXISTS `table_qual_executive_tasks` (
   `status_id` int(11) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`,`bill_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=2 ;
+
+--
+-- Dumping data for table `table_qual_executive_tasks`
+--
+
+INSERT INTO `table_qual_executive_tasks` (`id`, `user_id`, `bill_id`, `created_on`, `updated_on`, `updated_by_user_id`, `status_id`) VALUES
+(1, 8, 1, '2017-08-10 02:10:12', '2017-08-10 04:11:08', 1, 6);
 
 -- --------------------------------------------------------
 
@@ -499,7 +549,7 @@ CREATE TABLE IF NOT EXISTS `table_status` (
   `status_id` int(11) NOT NULL AUTO_INCREMENT,
   `status_name` varchar(50) NOT NULL,
   PRIMARY KEY (`status_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=8 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=9 ;
 
 --
 -- Dumping data for table `table_status`
@@ -512,7 +562,8 @@ INSERT INTO `table_status` (`status_id`, `status_name`) VALUES
 (4, 'New'),
 (5, 'Complete'),
 (6, 'Incomplete'),
-(7, 'Reassigned');
+(7, 'Reassigned'),
+(8, 'Under Progress');
 
 -- --------------------------------------------------------
 
@@ -527,14 +578,16 @@ CREATE TABLE IF NOT EXISTS `table_token` (
   `created_on` datetime NOT NULL,
   `expiry_on` datetime NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=2 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=4 ;
 
 --
 -- Dumping data for table `table_token`
 --
 
 INSERT INTO `table_token` (`id`, `token_id`, `user_id`, `created_on`, `expiry_on`) VALUES
-(1, 'jbo57oAmOhnIJqnOilq0hTm54', 1, '2017-08-01 16:09:40', '2017-08-01 16:09:40');
+(1, 'jjGtwi0XhkZu4dKTr4T5gsMfs', 1, '2017-08-01 16:09:40', '2017-08-01 16:09:40'),
+(2, 'xhNtjokJ0IHJ2wQWRjKdEqldz', 9, '2017-08-10 15:32:32', '2017-08-10 15:32:32'),
+(3, '3p9WEPGB2dEDlX0zR0Xo3pCoJ', 8, '2017-08-10 16:41:52', '2017-08-10 16:41:52');
 
 -- --------------------------------------------------------
 
@@ -566,7 +619,7 @@ CREATE TABLE IF NOT EXISTS `table_users` (
   `last_login` datetime NOT NULL,
   `status_id` int(11) NOT NULL,
   PRIMARY KEY (`user_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=10 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=11 ;
 
 --
 -- Dumping data for table `table_users`
@@ -577,8 +630,9 @@ INSERT INTO `table_users` (`user_id`, `user_type_id`, `fullname`, `gmail_id`, `f
 (5, 2, 'Admin1', NULL, NULL, 'admin11@binbill.com', NULL, '289dff07669d7a23de0ef88d2f7129e7', '234', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2017-08-02 14:34:40', '2017-08-08 18:37:24', '0000-00-00 00:00:00', 1),
 (6, 2, 'Admin', NULL, NULL, 'admin1@binbill.com', NULL, '0e7517141fb53f21ee439b355b5a1d0a', 'Admin@123', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2017-08-02 15:38:16', '2017-08-02 16:51:59', '0000-00-00 00:00:00', 3),
 (7, 2, 'Admin', NULL, NULL, 'admin1@binbill.com', NULL, '0e7517141fb53f21ee439b355b5a1d0a', 'Admin@123', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2017-08-05 12:15:32', '2017-08-05 12:15:32', '0000-00-00 00:00:00', 1),
-(8, 2, 'Admin', NULL, NULL, 'admin@gmail.com', NULL, '81dc9bdb52d04dc20036dbd8313ed055', '1234', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2017-08-05 12:17:04', '2017-08-08 18:37:31', '0000-00-00 00:00:00', 3),
-(9, 3, 'CE1', NULL, NULL, 'ce@gmail.com', NULL, '81dc9bdb52d04dc20036dbd8313ed055', '1234', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2017-08-08 11:20:16', '2017-08-08 11:20:16', '0000-00-00 00:00:00', 1);
+(8, 4, 'QE', NULL, NULL, 'qe@gmail.com', NULL, '81dc9bdb52d04dc20036dbd8313ed055', '1234', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2017-08-05 12:17:04', '2017-08-08 18:37:31', '0000-00-00 00:00:00', 1),
+(9, 3, 'CE1', NULL, NULL, 'ce@gmail.com', NULL, '81dc9bdb52d04dc20036dbd8313ed055', '1234', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2017-08-08 11:20:16', '2017-08-08 11:20:16', '0000-00-00 00:00:00', 1),
+(10, 5, 'Amit Kuamr', NULL, NULL, NULL, '9953145118', '81dc9bdb52d04dc20036dbd8313ed055', '1234', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2017-08-09 02:14:08', '2017-08-09 04:11:06', '2017-08-09 07:13:13', 1);
 
 -- --------------------------------------------------------
 
