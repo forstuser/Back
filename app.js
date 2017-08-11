@@ -10,7 +10,7 @@ const server = new Hapi.Server();
 const connection = MySQL.createConnection({
     host: 'localhost',
     user: 'root',
-    password: 'binbill@321',
+    password: 'binbill@123',
     database: 'binbill'
 });
 server.connection({ port: 3000});
