@@ -10,10 +10,11 @@ const server = new Hapi.Server();
 const connection = MySQL.createConnection({
     host: 'localhost',
     user: 'root',
-    password: '',
+    password: 'binbill@321',
     database: 'binbill'
 });
-server.connection({ port: 3000, host: '192.168.0.9'});
+server.connection({ port: 3000});
+//server.connection({ port: 3000, host: '192.168.0.9'});
 server.register({
     register: require('hapi-cors'),
     options: {
@@ -1377,7 +1378,7 @@ server.route({
                 connection.query('SELECT a.center_id as ID,a.brand_id as BrandID,b.brand_name as BrandName,a.center_name as Name,a.address_house_no as HouseNo,a.address_block as Block,a.address_street as Street,a.address_sector as Sector,a.address_city as City,a.address_state as State,a.address_pin_code as PinCode,a.address_nearby as NearBy,a.lattitude as Lattitude,a.longitude as Longitude,a.open_days as OpenDays,a.timings as Timings FROM table_authorized_service_center as a inner join table_brands as b on a.brand_id=b.brand_id WHERE a.status_id!=3 ORDER BY b.brand_name', function (error, service_center, fields) {
                     if (error) throw error;
                     if(service_center.length > 0){
-                        var data = '{"statusCode": 100,"BrandList": '+ JSON.stringify(service_center) +'}';
+                        var data = '{"statusCode": 100,"AuthorizedList": '+ JSON.stringify(service_center) +'}';
                         reply(data);
                     } else {
                         var data = '{"statusCode": 105,"error": "Not Found","message": "Data not Available."}';
