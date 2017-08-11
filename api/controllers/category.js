@@ -4,6 +4,7 @@
 const shared = require('../../helpers/shared');
 
 let modals;
+const excludedAttributes = { exclude: ['display_id', 'created_on', 'updated_on', 'updated_by_user_id', 'status_id'] };
 
 class CategoryController {
   constructor(modal) {
@@ -14,31 +15,33 @@ class CategoryController {
     const user = shared.verifyAuthorization(request.headers);
     modals.table_categories.findOrCreate({
       where: {
-        category_name: request.payload.Name,
+        Name: request.payload.Name,
         status_id: 1,
-        ref_id: request.payload.RefID
+        RefID: request.payload.RefID
       },
       defaults: {
-        category_level: request.payload.Level,
+        Level: request.payload.Level,
         updated_by_user_id: user.userId
       },
-      attributes: ['Name', 'RefID', 'Level', 'ID']
+      attributes: excludedAttributes
     }).then((category) => {
       if (category[1]) {
-        return reply(category[1]).header('categoryId', category.category_id).code(201);
+        return reply(category[0]).header('categoryId', category.category_id).code(201);
       }
 
       return reply(category[0]).header('categoryId', category.category_id).code(422);
+    }).catch((err) => {
+      reply(err);
     });
   }
 
   static updateCategory(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     modals.table_categories.update({
-      category_name: request.payload.Name,
+      Name: request.payload.Name,
       status_id: 1,
-      ref_id: request.payload.RefID,
-      category_level: request.payload.Level,
+      RefID: request.payload.RefID,
+      Level: request.payload.Level,
       updated_by_user_id: user.userId
     }, {
       where: {
@@ -74,7 +77,7 @@ class CategoryController {
             { category_level: shared.verifyParameters(request.query, 'level', '') }]
         }]
     },
-    attributes: ['Name', 'RefID', 'Level', 'ID']
+    attributes: excludedAttributes
     }).then((result) => {
       reply(result).code(200);
     }).catch(err => reply(err));
@@ -85,7 +88,7 @@ class CategoryController {
       where: {
         category_id: request.params.id
       },
-      attributes: ['Name', 'RefID', 'Level', 'ID']
+      attributes: excludedAttributes
     }).then((result) => {
       reply(result).code(200);
     }).catch((err) => {

@@ -132,6 +132,7 @@ module.exports = (app, models) => {
           payload: {
             Name: joi.string().required(),
             RefID: [joi.number().integer(), joi.allow(null)],
+            Level: joi.number().integer(),
             output: 'data',
             parse: true
           }
