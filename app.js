@@ -10,7 +10,7 @@ const server = new Hapi.Server();
 const connection = MySQL.createConnection({
     host: 'localhost',
     user: 'root',
-    password: 'binbill@123',
+    password: 'binbill@321',
     database: 'binbill'
 });
 server.connection({ port: 3000});
@@ -2367,7 +2367,7 @@ server.route({
                         reply(data);
                 }
                 if(status == true){
-                    connection.query('SELECT b.bill_id as BID,b.user_id as UID,b.bill_reference_id as BillNo,u.fullname as Name,u.email_id as EmailID,u.mobile_no as PhoneNo,b.created_on as BillDate,assu.fullname as AssignedBy,qe.created_on as AssignedDate,status_name as Status FROM table_qual_executive_tasks as qe INNER JOIN table_consumer_bills as b on b.bill_id=qe.bill_id LEFT JOIN table_users as u on u.user_id=b.user_id  LEFT JOIN table_users as assu on ce.updated_by_user_id=assu.user_id LEFT JOIN table_status as s on s.status_id=qe.status_id '+condition+' ORDER BY qe.updated_on DESC', function (error, bill, fields) {
+                    connection.query('SELECT b.bill_id as BID,b.user_id as UID,b.bill_reference_id as BillNo,u.fullname as Name,u.email_id as EmailID,u.mobile_no as PhoneNo,b.created_on as BillDate,assu.fullname as AssignedBy,qe.created_on as AssignedDate,ceu.user_id as CE_ID,ceu.fullname as CE_Name,s.status_name as Status FROM table_qual_executive_tasks as qe INNER JOIN table_consumer_bills as b on b.bill_id=qe.bill_id LEFT JOIN table_users as u on u.user_id=b.user_id  LEFT JOIN table_users as assu on qe.updated_by_user_id=assu.user_id LEFT JOIN table_status as s on s.status_id=qe.status_id LEFT JOIN table_cust_executive_tasks as ce on ce.bill_id=b.bill_id LEFT JOIN table_users as ceu on ce.user_id=ceu.user_id '+condition+' ORDER BY qe.updated_on DESC', function (error, bill, fields) {
                         if (error) throw error;
                         if(bill.length > 0){
                             var data = '{"statusCode": 100,"BillList": '+ JSON.stringify(bill) +'}';
@@ -2389,6 +2389,46 @@ server.route({
             payload: {
                 TokenNo: Joi.string().required(),
                 Status: Joi.number().required(),
+                output: 'data',
+                parse:true
+            }
+        }
+    }
+});
+//Add QE Task Assigned To CE
+server.route({
+    method: 'POST',
+    path: '/Services/QEAssignedCE',
+    handler: function (request, reply) {
+        const TokenNo = request.payload.TokenNo;
+        const UID = request.payload.UID;
+        const BID = request.payload.BID;
+        const Comments = request.payload.Comments;
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+            if (error) throw error;
+            if(token.length > 0){
+                var UserID = token[0]['user_id'];
+                connection.query('UPDATE table_cust_executive_tasks SET comments="' + Comments + '",updated_on="' + getDateTime() + '",updated_by_user_id="' + UserID + '",status_id=7 WHERE user_id="' + UID + '" and bill_id="' + BID + '"', function (error, results, fields) {
+                    if (error) throw error;
+                    connection.query('DELETE FROM table_qual_executive_tasks WHERE user_id="' + UserID + '" and bill_id="' + BID + '"', function (error, results, fields) {
+                        if (error) throw error;
+                    });
+                    var data = '{"statusCode": 100,"error": "","message": "Task Assigned successfully."}';
+                    reply(data);
+                });
+            } else {
+                var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+                reply(data);
+            }
+        });
+    },
+    config:{
+        validate: {
+            payload: {
+                TokenNo: Joi.string().required(),
+                UID: Joi.number().integer().required(),
+                BID: Joi.number().integer().required(),
+                Comments: [Joi.string(), Joi.allow(null)],
                 output: 'data',
                 parse:true
             }
