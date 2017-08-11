@@ -93,12 +93,12 @@ module.exports = (app, models) => {
       method: 'POST',
       path: '/admin/categories',
       config: {
-        handler: CategoryController.addCategory,
         auth: 'jwt',
+        handler: CategoryController.addCategory,
         validate: {
           payload: {
-            Name: joi.string(),
-            Level: joi.number().integer(),
+            Name: joi.string().required(),
+            Level: joi.number().integer().required(),
             RefID: [joi.number().integer(), joi.allow(null)],
             output: 'data',
             parse: true
@@ -115,6 +115,54 @@ module.exports = (app, models) => {
             ]
           }
         }
+      }
+    });
+
+    // Edit Category
+    categoryRoutes.push({
+      method: 'PUT',
+      path: '/admin/categories/{id}',
+      config: {
+        handler: CategoryController.updateCategory,
+        auth: 'jwt',
+        validate: {
+          params: {
+            id: joi.number().integer().required()
+          },
+          payload: {
+            Name: joi.string().required(),
+            RefID: [joi.number().integer(), joi.allow(null)],
+            output: 'data',
+            parse: true
+          }
+        }
+      }
+    });
+    // Delete Category
+    categoryRoutes.push({
+      method: 'DELETE',
+      path: '/admin/categories/{id}',
+      config: {
+        handler: CategoryController.deleteCategory,
+        auth: 'jwt'
+      }
+    });
+    // Category List
+    categoryRoutes.push({
+      method: 'GET',
+      path: '/admin/categories',
+      config: {
+        auth: 'jwt',
+        handler: CategoryController.retrieveCategory
+      }
+    });
+    // Category By Id
+    categoryRoutes.push({
+      method: 'GET',
+      path: '/admin/categories/{id}',
+      config: {
+        auth: 'jwt',
+        handler: CategoryController.retrieveCategoryById
       }
     });
   }

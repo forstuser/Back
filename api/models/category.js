@@ -3,33 +3,37 @@
  */
 
 module.exports = (sequelize, Sequelize) => sequelize.define('table_categories', {
-  category_id: {
+  ID: {
     type: Sequelize.INTEGER,
     autoIncrement: true,
-    primaryKey: true
+    primaryKey: true,
+    field: 'category_id'
   },
   display_id: {
     type: Sequelize.INTEGER
   },
-  category_name: {
+  Name: {
     type: Sequelize.STRING,
-    notEmpty: false
+    notEmpty: false,
+    field: 'category_name'
   },
-  ref_id: {
-    type: Sequelize.INTEGER
+  RefID: {
+    type: Sequelize.INTEGER,
+    field: 'ref_id'
   },
-  category_level: {
-    type: Sequelize.STRING
+  Level: {
+    type: Sequelize.INTEGER,
+    field: 'category_level'
   },
   created_on: {
     type: Sequelize.DATE(6),
     defaultValue: Sequelize.NOW
   },
-  updated_0n: {
+  updated_on: {
     type: Sequelize.DATE(6),
     defaultValue: Sequelize.NOW
   },
-  updated_by: {
+  updated_by_user_id: {
     type: Sequelize.INTEGER
   },
   status_id: {
