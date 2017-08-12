@@ -1,5 +1,5 @@
 /**
- * Created by arpit on 7/31/2017.
+ * Created by arpit on 8/11/2017.
  */
 const shared = require('../../helpers/shared');
 
@@ -26,10 +26,10 @@ class CategoryController {
       attributes: excludedAttributes
     }).then((category) => {
       if (category[1]) {
-        return reply(category[0]).header('categoryId', category.category_id).code(201);
+        return reply(category[0]).header('categoryId', category.ID).code(201);
       }
 
-      return reply(category[0]).header('categoryId', category.category_id).code(422);
+      return reply(category[0]).header('categoryId', category.ID).code(422);
     }).catch((err) => {
       reply(err);
     });

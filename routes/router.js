@@ -4,6 +4,7 @@ const PassportService = require('../config/passport');
 
 const UserController = require('../api/controllers/user');
 const CategoryController = require('../api/controllers/category');
+const BrandController = require('../api/controllers/brand');
 
 let User;
 module.exports = (app, models) => {
@@ -15,8 +16,10 @@ module.exports = (app, models) => {
   // Initializing route groups
   const authRoutes = [];
   const categoryRoutes = [];
+  const brandRoutes = [];
   const userController = new UserController(models);
   const categoryController = new CategoryController(models);
+  const brandController = new BrandController(models);
 
   //= ========================
   // Auth Routes
@@ -167,6 +170,118 @@ module.exports = (app, models) => {
       }
     });
   }
+  if (brandController) {
+  // Add Brand
+    brandRoutes.push({
+      method: 'POST',
+      path: '/admin/brands',
+      config: {
+        auth: 'jwt',
+        handler: BrandController.addBrand,
+        validate: {
+          payload: {
+            Name: joi.string().required(),
+            Description: joi.string(),
+            Details: joi.array(),
+            output: 'data',
+            parse: true
+          }
+        }
+      }
+    });
 
-  app.route([...authRoutes, ...categoryRoutes]);
+    brandRoutes.push({
+      method: 'POST',
+      path: '/admin/brands/{id}/details',
+      config: {
+        auth: 'jwt',
+        handler: BrandController.addBrandDetail,
+        validate: {
+          payload: {
+            DetailTypeID: joi.number().integer().required(),
+            DisplayName: joi.string().required(),
+            Details: joi.string(),
+            output: 'data',
+            parse: true
+          }
+        }
+      }
+    });
+
+    // Edit Brand
+    brandRoutes.push({
+      method: 'PUT',
+      path: '/admin/brands/{id}',
+      config: {
+        auth: 'jwt',
+        handler: BrandController.updateBrand,
+        validate: {
+          payload: {
+            Name: joi.string().required(),
+            Description: joi.string(),
+            Details: joi.array(),
+            output: 'data',
+            parse: true
+          }
+        }
+      }
+    });
+
+    brandRoutes.push({
+      method: 'PUT',
+      path: '/admin/brands/{id}/details/{detailid}',
+      config: {
+        auth: 'jwt',
+        handler: BrandController.updateBrandDetail,
+        validate: {
+          payload: {
+            DetailTypeID: joi.number().integer().required(),
+            DisplayName: joi.string().required(),
+            Details: joi.string(),
+            output: 'data',
+            parse: true
+          }
+        }
+      }
+    });
+    // Delete Brand
+    brandRoutes.push({
+      method: 'DELETE',
+      path: '/admin/brands/{id}',
+      config: {
+        auth: 'jwt',
+        handler: BrandController.deleteBrand
+      }
+    });
+
+    // Delete Brand Detail
+    brandRoutes.push({
+      method: 'DELETE',
+      path: '/admin/brands/{id}/details/{detailid}',
+      config: {
+        auth: 'jwt',
+        handler: BrandController.deleteBrandDetail
+      }
+    });
+
+    // Get Brand List
+    brandRoutes.push({
+      method: 'GET',
+      path: '/admin/brands',
+      config: {
+        auth: 'jwt',
+        handler: BrandController.retrieveBrand
+      }
+    });
+
+    brandRoutes.push({
+      method: 'GET',
+      path: '/admin/brands/{id}',
+      config: {
+        auth: 'jwt',
+        handler: BrandController.retrieveBrandById
+      }
+    });
+  }
+  app.route([...authRoutes, ...categoryRoutes, ...brandRoutes]);
 };
