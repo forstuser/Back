@@ -10,11 +10,11 @@ const server = new Hapi.Server();
 const connection = MySQL.createConnection({
     host: 'localhost',
     user: 'root',
-    password: 'binbill@321',
+    password: '',
     database: 'binbill'
 });
-server.connection({ port: 3000});
-//server.connection({ port: 3000, host: '192.168.0.9'});
+//server.connection({ port: 3000});
+server.connection({ port: 3000, host: '192.168.0.9'});
 server.register({
     register: require('hapi-cors'),
     options: {
@@ -2142,7 +2142,7 @@ server.route({
                 var UserID = token[0]['user_id'];
                 switch (Status) {
                     case 4:
-                        connection.query('SELECT b.bill_id as BID,b.user_id as UID,b.bill_reference_id as BillNo,u.fullname as Name,u.email_id as EmailID,u.mobile_no as PhoneNo,b.created_on as BillDate FROM table_consumer_bills as b LEFT JOIN table_users as u on u.user_id=b.user_id WHERE b.admin_status=4 and b.user_status!=3 ORDER BY b.updated_on DESC', function (error, bill, fields) {
+                        connection.query('SELECT b.bill_id as BID,b.bill_reference_id as BillNo,u.fullname as Name,u.email_id as EmailID,u.mobile_no as PhoneNo,b.created_on as BillDate FROM table_consumer_bills as b LEFT JOIN table_users as u on u.user_id=b.user_id WHERE b.admin_status=4 and b.user_status!=3 ORDER BY b.updated_on DESC', function (error, bill, fields) {
                             if (error) throw error;
                             if(bill.length > 0){
                                 var data = '{"statusCode": 100,"BillList": '+ JSON.stringify(bill) +'}';
@@ -2154,7 +2154,7 @@ server.route({
                         });
                         break;
                     case 8:
-                        connection.query('SELECT b.bill_id as BID,b.user_id as UID,b.bill_reference_id as BillNo,u.fullname as Name,u.email_id as EmailID,u.mobile_no as PhoneNo,b.created_on as BillDate,ceu.fullname as CE_Name,ceu.email_id as CE_EmailID,ce.created_on as CE_TaskDate,ces.status_name as CE_Status,ces.status_id as CE_StatusID,qeu.fullname as QE_Name,ceu.email_id as QE_EmailID,ce.created_on as QE_TaskDate,qes.status_name as QE_Status,qes.status_id as QE_StatusID FROM table_consumer_bills as b LEFT JOIN table_users as u on u.user_id=b.user_id LEFT JOIN table_cust_executive_tasks as ce on ce.bill_id=b.bill_id LEFT JOIN table_users as ceu on ceu.user_id=ce.user_id LEFT JOIN table_status as ces on ce.status_id=ces.status_id LEFT JOIN table_qual_executive_tasks as qe on qe.bill_id=b.bill_id LEFT JOIN table_users as qeu on qe.user_id=qeu.user_id LEFT JOIN table_status as qes on qes.status_id=qe.status_id WHERE b.admin_status=8 and b.user_status!=3 ORDER BY b.updated_on DESC', function (error, bill, fields) {
+                        connection.query('SELECT b.bill_id as BID,b.user_id as UID,b.bill_reference_id as BillNo,u.fullname as Name,u.email_id as EmailID,u.mobile_no as PhoneNo,b.created_on as BillDate,ceu.fullname as CE_Name,ceu.email_id as CE_EmailID,ce.created_on as CE_TaskDate,ces.status_name as CE_Status,ces.status_id as CE_StatusID,qeu.fullname as QE_Name,qeu.email_id as QE_EmailID,qe.created_on as QE_TaskDate,qes.status_name as QE_Status,qes.status_id as QE_StatusID FROM table_consumer_bills as b LEFT JOIN table_users as u on u.user_id=b.user_id LEFT JOIN table_cust_executive_tasks as ce on ce.bill_id=b.bill_id LEFT JOIN table_users as ceu on ceu.user_id=ce.user_id LEFT JOIN table_status as ces on ce.status_id=ces.status_id LEFT JOIN table_qual_executive_tasks as qe on qe.bill_id=b.bill_id LEFT JOIN table_users as qeu on qe.user_id=qeu.user_id LEFT JOIN table_status as qes on qes.status_id=qe.status_id WHERE b.admin_status=8 and b.user_status!=3 ORDER BY b.updated_on DESC', function (error, bill, fields) {
                             if (error) throw error;
                             if(bill.length > 0){
                                 var data = '{"statusCode": 100,"BillList": '+ JSON.stringify(bill) +'}';
@@ -2166,7 +2166,7 @@ server.route({
                         });
                         break;
                     case 5:
-                        connection.query('SELECT b.bill_id as BID,b.user_id as UID,b.bill_reference_id as BillNo,u.fullname as Name,u.email_id as EmailID,u.mobile_no as PhoneNo,b.created_on as BillDate,ceu.fullname as CE_Name,ceu.email_id as CE_EmailID,ce.created_on as CE_TaskDate,ces.status_name as CE_Status,ces.status_id as CE_StatusID,qeu.fullname as QE_Name,ceu.email_id as QE_EmailID,ce.created_on as QE_TaskDate,qes.status_name as QE_Status,qes.status_id as QE_StatusID FROM table_consumer_bills as b LEFT JOIN table_users as u on u.user_id=b.user_id LEFT JOIN table_cust_executive_tasks as ce on ce.bill_id=b.bill_id LEFT JOIN table_users as ceu on ceu.user_id=ce.user_id LEFT JOIN table_status as ces on ce.status_id=ces.status_id LEFT JOIN table_qual_executive_tasks as qe on qe.bill_id=b.bill_id LEFT JOIN table_users as qeu on qe.user_id=qeu.user_id LEFT JOIN table_status as qes on qes.status_id=qe.status_id WHERE b.admin_status=5 and b.user_status!=3 ORDER BY b.updated_on DESC', function (error, bill, fields) {
+                        connection.query('SELECT b.bill_id as BID,b.user_id as UID,b.bill_reference_id as BillNo,u.fullname as Name,u.email_id as EmailID,u.mobile_no as PhoneNo,b.created_on as BillDate,ceu.fullname as CE_Name,ceu.email_id as CE_EmailID,ce.created_on as CE_TaskDate,ces.status_name as CE_Status,ces.status_id as CE_StatusID,qeu.fullname as QE_Name,qeu.email_id as QE_EmailID,qe.created_on as QE_TaskDate,qes.status_name as QE_Status,qes.status_id as QE_StatusID FROM table_consumer_bills as b LEFT JOIN table_users as u on u.user_id=b.user_id LEFT JOIN table_cust_executive_tasks as ce on ce.bill_id=b.bill_id LEFT JOIN table_users as ceu on ceu.user_id=ce.user_id LEFT JOIN table_status as ces on ce.status_id=ces.status_id LEFT JOIN table_qual_executive_tasks as qe on qe.bill_id=b.bill_id LEFT JOIN table_users as qeu on qe.user_id=qeu.user_id LEFT JOIN table_status as qes on qes.status_id=qe.status_id WHERE b.admin_status=5 and b.user_status!=3 ORDER BY b.updated_on DESC', function (error, bill, fields) {
                             if (error) throw error;
                             if(bill.length > 0){
                                 var data = '{"statusCode": 100,"BillList": '+ JSON.stringify(bill) +'}';

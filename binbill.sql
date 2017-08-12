@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: 127.0.0.1
--- Generation Time: Aug 10, 2017 at 03:38 PM
+-- Generation Time: Aug 12, 2017 at 03:00 PM
 -- Server version: 5.6.17
 -- PHP Version: 5.5.12
 
@@ -191,6 +191,37 @@ INSERT INTO `table_categories` (`category_id`, `category_name`, `display_id`, `r
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `table_cateogry_form`
+--
+
+CREATE TABLE IF NOT EXISTS `table_cateogry_form` (
+  `cateogry_form_id` int(11) NOT NULL AUTO_INCREMENT,
+  `category_id` int(11) NOT NULL,
+  `form_element_name` varchar(200) NOT NULL,
+  `form_element_type` int(11) NOT NULL,
+  `status_id` int(11) NOT NULL,
+  PRIMARY KEY (`cateogry_form_id`),
+  KEY `category_id` (`category_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `table_cateogry_form_mapping`
+--
+
+CREATE TABLE IF NOT EXISTS `table_cateogry_form_mapping` (
+  `mapping_id` int(11) NOT NULL AUTO_INCREMENT,
+  `cateogry_form_id` int(11) NOT NULL,
+  `dropdown_name` varchar(200) NOT NULL,
+  `status_id` int(11) NOT NULL,
+  PRIMARY KEY (`mapping_id`),
+  KEY `cateogry_form_id` (`cateogry_form_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `table_color`
 --
 
@@ -307,7 +338,7 @@ CREATE TABLE IF NOT EXISTS `table_cust_executive_tasks` (
 --
 
 INSERT INTO `table_cust_executive_tasks` (`id`, `user_id`, `bill_id`, `comments`, `created_on`, `updated_on`, `updated_by_user_id`, `status_id`) VALUES
-(2, 9, 1, 'test', '2017-08-09 19:00:28', '2017-08-10 16:03:42', 1, 5);
+(2, 11, 1, '', '2017-08-12 17:57:38', '2017-08-12 18:00:07', 1, 5);
 
 -- --------------------------------------------------------
 
@@ -367,14 +398,15 @@ CREATE TABLE IF NOT EXISTS `table_list_of_inclusions` (
   `status_id` int(11) NOT NULL,
   PRIMARY KEY (`inclusions_id`),
   KEY `category_id` (`category_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=2 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=3 ;
 
 --
 -- Dumping data for table `table_list_of_inclusions`
 --
 
 INSERT INTO `table_list_of_inclusions` (`inclusions_id`, `category_id`, `inclusions_name`, `created_on`, `updated_on`, `updated_by_user_id`, `status_id`) VALUES
-(1, 6, 'dgfdgfdg', '2017-08-05 14:57:11', '2017-08-05 14:59:50', 1, 1);
+(1, 6, 'dgfdgfdg', '2017-08-05 14:57:11', '2017-08-10 19:14:03', 1, 3),
+(2, 18, 'inclu2', '2017-08-10 19:12:48', '2017-08-10 19:12:54', 1, 1);
 
 -- --------------------------------------------------------
 
@@ -495,7 +527,7 @@ CREATE TABLE IF NOT EXISTS `table_online_seller_details` (
 
 INSERT INTO `table_online_seller_details` (`seller_detail_id`, `seller_id`, `contactdetail_type_id`, `display_name`, `details`, `status_id`) VALUES
 (1, 1, 1, 'Suport', '3333', 3),
-(2, 2, 3, 'Suport', '2222222', 1),
+(2, 2, 3, 'Suport', '11', 1),
 (3, 1, 1, 'Suport', '3333', 1),
 (4, 1, 2, 'Suport', 'dfdf', 1),
 (5, 3, 3, 'Suport', '2222222', 1),
@@ -530,14 +562,7 @@ CREATE TABLE IF NOT EXISTS `table_qual_executive_tasks` (
   `status_id` int(11) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`,`bill_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=2 ;
-
---
--- Dumping data for table `table_qual_executive_tasks`
---
-
-INSERT INTO `table_qual_executive_tasks` (`id`, `user_id`, `bill_id`, `created_on`, `updated_on`, `updated_by_user_id`, `status_id`) VALUES
-(1, 8, 1, '2017-08-10 02:10:12', '2017-08-10 04:11:08', 1, 6);
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -585,7 +610,7 @@ CREATE TABLE IF NOT EXISTS `table_token` (
 --
 
 INSERT INTO `table_token` (`id`, `token_id`, `user_id`, `created_on`, `expiry_on`) VALUES
-(1, 'jjGtwi0XhkZu4dKTr4T5gsMfs', 1, '2017-08-01 16:09:40', '2017-08-01 16:09:40'),
+(1, '3Ubh2jOO2lepwAKh2jSWZcFO7', 1, '2017-08-01 16:09:40', '2017-08-01 16:09:40'),
 (2, 'xhNtjokJ0IHJ2wQWRjKdEqldz', 9, '2017-08-10 15:32:32', '2017-08-10 15:32:32'),
 (3, '3p9WEPGB2dEDlX0zR0Xo3pCoJ', 8, '2017-08-10 16:41:52', '2017-08-10 16:41:52');
 
@@ -619,7 +644,7 @@ CREATE TABLE IF NOT EXISTS `table_users` (
   `last_login` datetime NOT NULL,
   `status_id` int(11) NOT NULL,
   PRIMARY KEY (`user_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=11 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=12 ;
 
 --
 -- Dumping data for table `table_users`
@@ -630,9 +655,10 @@ INSERT INTO `table_users` (`user_id`, `user_type_id`, `fullname`, `gmail_id`, `f
 (5, 2, 'Admin1', NULL, NULL, 'admin11@binbill.com', NULL, '289dff07669d7a23de0ef88d2f7129e7', '234', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2017-08-02 14:34:40', '2017-08-08 18:37:24', '0000-00-00 00:00:00', 1),
 (6, 2, 'Admin', NULL, NULL, 'admin1@binbill.com', NULL, '0e7517141fb53f21ee439b355b5a1d0a', 'Admin@123', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2017-08-02 15:38:16', '2017-08-02 16:51:59', '0000-00-00 00:00:00', 3),
 (7, 2, 'Admin', NULL, NULL, 'admin1@binbill.com', NULL, '0e7517141fb53f21ee439b355b5a1d0a', 'Admin@123', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2017-08-05 12:15:32', '2017-08-05 12:15:32', '0000-00-00 00:00:00', 1),
-(8, 4, 'QE', NULL, NULL, 'qe@gmail.com', NULL, '81dc9bdb52d04dc20036dbd8313ed055', '1234', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2017-08-05 12:17:04', '2017-08-08 18:37:31', '0000-00-00 00:00:00', 1),
-(9, 3, 'CE1', NULL, NULL, 'ce@gmail.com', NULL, '81dc9bdb52d04dc20036dbd8313ed055', '1234', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2017-08-08 11:20:16', '2017-08-08 11:20:16', '0000-00-00 00:00:00', 1),
-(10, 5, 'Amit Kuamr', NULL, NULL, NULL, '9953145118', '81dc9bdb52d04dc20036dbd8313ed055', '1234', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2017-08-09 02:14:08', '2017-08-09 04:11:06', '2017-08-09 07:13:13', 1);
+(8, 4, 'QE1', NULL, NULL, 'qe@gmail.com', NULL, '81dc9bdb52d04dc20036dbd8313ed055', '1234', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2017-08-05 12:17:04', '2017-08-10 19:34:20', '0000-00-00 00:00:00', 1),
+(9, 3, 'CE12', NULL, NULL, 'ce@gmail.com', NULL, '81dc9bdb52d04dc20036dbd8313ed055', '1234', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2017-08-08 11:20:16', '2017-08-10 19:25:51', '0000-00-00 00:00:00', 1),
+(10, 5, 'Amit Kuamr', NULL, NULL, NULL, '9953145118', '81dc9bdb52d04dc20036dbd8313ed055', '1234', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2017-08-09 02:14:08', '2017-08-09 04:11:06', '2017-08-09 07:13:13', 1),
+(11, 3, 'ce', NULL, NULL, 'cddd@dd', NULL, '81dc9bdb52d04dc20036dbd8313ed055', '1234', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2017-08-10 19:24:15', '2017-08-10 19:24:15', '0000-00-00 00:00:00', 1);
 
 -- --------------------------------------------------------
 
