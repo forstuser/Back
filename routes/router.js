@@ -1,10 +1,13 @@
 const joi = require('joi');
 const passport = require('passport');
+const Path = require('path');
+
 const PassportService = require('../config/passport');
 
 const UserController = require('../api/controllers/user');
 const CategoryController = require('../api/controllers/category');
 const BrandController = require('../api/controllers/brand');
+const UploadController = require('../api/controllers/upload');
 
 let User;
 module.exports = (app, models) => {
@@ -283,5 +286,26 @@ module.exports = (app, models) => {
       }
     });
   }
-  app.route([...authRoutes, ...categoryRoutes, ...brandRoutes]);
+
+  const uploadFileRoute = {
+    method: 'POST',
+    path: '/consumer/upload',
+    config: {
+      auth: 'jwt',
+      files: {
+        relativeTo: Path.join(__dirname, '../static/src')
+      },
+      handler: UploadController.uploadFiles,
+      payload: {
+        output: 'stream',
+        parse: true,
+        uploads: 'up_files',
+        timeout: 30034,
+        allow: 'multipart/form-data',
+        failAction: 'log',
+        maxBytes: 3000000
+      }
+    }
+  };
+  app.route([...authRoutes, ...categoryRoutes, ...brandRoutes, uploadFileRoute]);
 };
