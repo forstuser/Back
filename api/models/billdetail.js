@@ -2,27 +2,24 @@
  * Created by arpit on 6/30/2017.
  */
 
-module.exports = (sequelize, Sequelize) => sequelize.define('table_consumer_bill_details', {
+module.exports = (sequelize, Sequelize) => sequelize.define('table_consumer_bill_copies', {
   ID: {
     type: Sequelize.INTEGER,
     autoIncrement: true,
     primaryKey: true,
-    field: 'bill_detail_id'
+    field: 'bill_copy_id'
   },
   BillID: {
     type: Sequelize.INTEGER,
     field: 'bill_id'
   },
-  created_on: {
-    type: Sequelize.DATE(6),
-    defaultValue: Sequelize.NOW
+  CopyName: {
+    type: Sequelize.STRING,
+    field: 'bill_copy_name'
   },
-  updated_on: {
-    type: Sequelize.DATE(6),
-    defaultValue: Sequelize.NOW
-  },
-  user_id: {
-    type: Sequelize.INTEGER
+  CopyType: {
+    type: Sequelize.STRING,
+    field: 'bill_copy_type'
   },
   updated_by_user_id: {
     type: Sequelize.INTEGER
@@ -30,10 +27,7 @@ module.exports = (sequelize, Sequelize) => sequelize.define('table_consumer_bill
   uploaded_by_id: {
     type: Sequelize.INTEGER
   },
-  user_status_id: {
-    type: Sequelize.INTEGER
-  },
-  admin_status_id: {
+  status_id: {
     type: Sequelize.INTEGER
   }
 }, {

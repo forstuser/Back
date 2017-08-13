@@ -23,6 +23,7 @@ module.exports = (app, models) => {
   const userController = new UserController(models);
   const categoryController = new CategoryController(models);
   const brandController = new BrandController(models);
+  const uploadController = new UploadController(models);
 
   //= ========================
   // Auth Routes
@@ -287,25 +288,29 @@ module.exports = (app, models) => {
     });
   }
 
-  const uploadFileRoute = {
-    method: 'POST',
-    path: '/consumer/upload',
-    config: {
-      auth: 'jwt',
-      files: {
-        relativeTo: Path.join(__dirname, '../static/src')
-      },
-      handler: UploadController.uploadFiles,
-      payload: {
-        output: 'stream',
-        parse: true,
-        uploads: 'up_files',
-        timeout: 30034,
-        allow: 'multipart/form-data',
-        failAction: 'log',
-        maxBytes: 3000000
-      }
-    }
-  };
+  let uploadFileRoute;
+
+   if(uploadController) {
+     uploadFileRoute= {
+       method: 'POST',
+       path: '/consumer/upload',
+       config: {
+         auth: 'jwt',
+         files: {
+           relativeTo: Path.join(__dirname, '../static/src')
+         },
+         handler: UploadController.uploadFiles,
+         payload: {
+           output: 'stream',
+           parse: true,
+           uploads: 'up_files',
+           timeout: 30034,
+           allow: 'multipart/form-data',
+           failAction: 'log',
+           maxBytes: 3000000
+         }
+       }
+     };
+   }
   app.route([...authRoutes, ...categoryRoutes, ...brandRoutes, uploadFileRoute]);
 };

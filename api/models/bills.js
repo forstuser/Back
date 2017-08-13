@@ -11,7 +11,7 @@ module.exports = (sequelize, Sequelize) => sequelize.define('table_consumer_bill
   },
   BillRefID: {
     type: Sequelize.INTEGER,
-    field: 'bill_ref_id'
+    field: 'bill_reference_id'
   },
   created_on: {
     type: Sequelize.DATE(6),
@@ -27,13 +27,13 @@ module.exports = (sequelize, Sequelize) => sequelize.define('table_consumer_bill
   updated_by_user_id: {
     type: Sequelize.INTEGER
   },
-  uploaded_by_id: {
+  uploaded_by: {
     type: Sequelize.INTEGER
   },
-  user_status_id: {
+  user_status: {
     type: Sequelize.INTEGER
   },
-  admin_status_id: {
+  admin_status: {
     type: Sequelize.INTEGER
   }
 }, {
