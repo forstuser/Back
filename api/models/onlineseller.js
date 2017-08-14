@@ -19,8 +19,7 @@ module.exports = (sequelize, Sequelize) => sequelize.define('table_online_seller
     field: 'seller_url'
   },
   GstinNo: {
-    type: Sequelize.DATE(6),
-    defaultValue: Sequelize.NOW,
+    type: Sequelize.STRING,
     field: 'seller_gstin_no'
   },
   updated_on: {

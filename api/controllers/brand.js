@@ -63,7 +63,7 @@ class BrandController {
     const DisplayName = request.payload.DisplayName;
     const Details = request.payload.Details;
     if (user.accessLevel.toLowerCase() === 'premium') {
-      modals.table_brands.findOrCreate({
+      modals.table_brand_details.findOrCreate({
         where: {
           DetailTypeID,
           DisplayName,
@@ -104,14 +104,13 @@ class BrandController {
       const brandId = request.params.id;
       for (let i = 0; i < Details.length; i += 1) {
         if (Details[i].DetailID) {
-          Promise.all(detailPromise).push(modals.table_brand_details.update({
+          detailPromise.push(modals.table_brand_details.update({
             DetailTypeID: Details[i].DetailTypeID,
             DisplayName: Details[i].DisplayName,
             Details: Details[i].Details,
             status_id: 1
           }, {
             where: {
-              BrandID: brandId,
               DetailID: Details[i].DetailID
             }
           }));
@@ -211,9 +210,13 @@ class BrandController {
         BrandID: request.params.id
       }
     })]).then((result) => {
-      const brand = result[0].toJSON();
-      brand.Details = result[1];
-      reply(brand).code(200);
+      if (result[0]) {
+        const brand = result[0].toJSON();
+        brand.Details = result[1];
+        return reply(brand).code(200);
+      }
+
+      return reply().code(404);
     }).catch((err) => {
       reply(err);
     });

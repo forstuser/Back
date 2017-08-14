@@ -16,7 +16,7 @@ module.exports = (sequelize, Sequelize) => sequelize.define('table_online_seller
   },
   DetailTypeID: {
     type: Sequelize.INTEGER,
-    field: 'contactdetails_type_id'
+    field: 'contactdetail_type_id'
   },
   DisplayName: {
     type: Sequelize.STRING,

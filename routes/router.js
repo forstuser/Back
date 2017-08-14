@@ -8,6 +8,7 @@ const UserController = require('../api/controllers/user');
 const CategoryController = require('../api/controllers/category');
 const BrandController = require('../api/controllers/brand');
 const UploadController = require('../api/controllers/upload');
+const SellerController = require('../api/controllers/seller');
 
 let User;
 module.exports = (app, models) => {
@@ -20,10 +21,12 @@ module.exports = (app, models) => {
   const authRoutes = [];
   const categoryRoutes = [];
   const brandRoutes = [];
+  const sellerRoutes = [];
   const userController = new UserController(models);
   const categoryController = new CategoryController(models);
   const brandController = new BrandController(models);
   const uploadController = new UploadController(models);
+  const sellerController = new SellerController(models);
 
   //= ========================
   // Auth Routes
@@ -174,6 +177,7 @@ module.exports = (app, models) => {
       }
     });
   }
+
   if (brandController) {
   // Add Brand
     brandRoutes.push({
@@ -288,29 +292,290 @@ module.exports = (app, models) => {
     });
   }
 
+  if (sellerController) {
+    // Add Online Seller
+    sellerRoutes.push({
+      method: 'POST',
+      path: '/admin/sellers',
+      config: {
+        auth: 'jwt',
+        handler: SellerController.addSeller,
+        validate: {
+          payload: {
+            TokenNo: joi.string().required(),
+            Name: joi.string().required(),
+            URL: joi.allow(null),
+            GstinNo: joi.allow(null),
+            Details: joi.array(),
+            output: 'data',
+            parse: true
+          }
+        }
+      }
+    });
+
+    sellerRoutes.push({
+      method: 'POST',
+      path: '/admin/sellers/{id}/details',
+      config: {
+        auth: 'jwt',
+        handler: SellerController.addSellerDetail,
+        validate: {
+          payload: {
+            DetailTypeID: joi.number().integer().required(),
+            DisplayName: joi.string().required(),
+            Details: joi.string(),
+            output: 'data',
+            parse: true
+          }
+        }
+      }
+    });
+
+    // Edit Seller
+    sellerRoutes.push({
+      method: 'PUT',
+      path: '/admin/sellers/{id}',
+      config: {
+        auth: 'jwt',
+        handler: SellerController.updateSeller,
+        validate: {
+          payload: {
+            Name: joi.string().required(),
+            Description: joi.string(),
+            Details: joi.array(),
+            output: 'data',
+            parse: true
+          }
+        }
+      }
+    });
+
+    sellerRoutes.push({
+      method: 'PUT',
+      path: '/admin/sellers/{id}/details/{detailid}',
+      config: {
+        auth: 'jwt',
+        handler: SellerController.updateSellerDetail,
+        validate: {
+          payload: {
+            DetailTypeID: joi.number().integer().required(),
+            DisplayName: joi.string().required(),
+            Details: joi.string(),
+            output: 'data',
+            parse: true
+          }
+        }
+      }
+    });
+
+    // Delete Seller
+    sellerRoutes.push({
+      method: 'DELETE',
+      path: '/admin/sellers/{id}',
+      config: {
+        auth: 'jwt',
+        handler: SellerController.deleteSeller
+      }
+    });
+
+    // Delete Seller Detail
+    sellerRoutes.push({
+      method: 'DELETE',
+      path: '/admin/sellers/{id}/details/{detailid}',
+      config: {
+        auth: 'jwt',
+        handler: SellerController.deleteSellerDetail
+      }
+    });
+
+    // Get Seller List
+    sellerRoutes.push({
+      method: 'GET',
+      path: '/admin/sellers',
+      config: {
+        auth: 'jwt',
+        handler: SellerController.retrieveSeller
+      }
+    });
+
+    sellerRoutes.push({
+      method: 'GET',
+      path: '/admin/sellers/{id}',
+      config: {
+        auth: 'jwt',
+        handler: SellerController.retrieveSellerById
+      }
+    });
+
+    // Add Offline Seller
+    sellerRoutes.push({
+      method: 'POST',
+      path: '/admin/sellers/offline',
+      config: {
+        auth: 'jwt',
+        handler: SellerController.addOfflineSeller,
+        validate: {
+          payload: {
+            TokenNo: joi.string().required(),
+            Name: joi.string().required(),
+            OwnerName: [joi.string(), joi.allow(null)],
+            GstinNo: [joi.string(), joi.allow(null)],
+            PanNo: [joi.string(), joi.allow(null)],
+            RegNo: [joi.string(), joi.allow(null)],
+            ServiceProvider: [joi.number().integer(), joi.allow(null)],
+            Onboarded: [joi.number().integer(), joi.allow(null)],
+            HouseNo: [joi.string(), joi.allow(null)],
+            Block: [joi.string(), joi.allow(null)],
+            Street: [joi.string(), joi.allow(null)],
+            Sector: [joi.string(), joi.allow(null)],
+            City: joi.string().required(),
+            State: joi.string().required(),
+            PinCode: [joi.number().integer(), joi.allow(null)],
+            NearBy: [joi.string(), joi.allow(null)],
+            Lattitude: [joi.string(), joi.allow(null)],
+            Longitude: [joi.string(), joi.allow(null)],
+            Details: joi.array(),
+            output: 'data',
+            parse: true
+          }
+        }
+      }
+    });
+
+    sellerRoutes.push({
+      method: 'POST',
+      path: '/admin/sellers/offline/{id}/details',
+      config: {
+        auth: 'jwt',
+        handler: SellerController.addOfflineSellerDetail,
+        validate: {
+          payload: {
+            DetailTypeID: joi.number().integer().required(),
+            DisplayName: joi.string().required(),
+            Details: joi.string(),
+            output: 'data',
+            parse: true
+          }
+        }
+      }
+    });
+
+    // Edit Offline Seller
+    sellerRoutes.push({
+      method: 'PUT',
+      path: '/admin/sellers/offline',
+      config: {
+        auth: 'jwt',
+        handler: SellerController.updateOfflineSeller,
+        validate: {
+          payload: {
+            TokenNo: joi.string().required(),
+            ID: joi.number().integer().required(),
+            Name: joi.string().required(),
+            OwnerName: [joi.string(), joi.allow(null)],
+            GstinNo: [joi.string(), joi.allow(null)],
+            PanNo: [joi.string(), joi.allow(null)],
+            RegNo: [joi.string(), joi.allow(null)],
+            ServiceProvider: [joi.number().integer(), joi.allow(null)],
+            Onboarded: [joi.number().integer(), joi.allow(null)],
+            HouseNo: [joi.string(), joi.allow(null)],
+            Block: [joi.string(), joi.allow(null)],
+            Street: [joi.string(), joi.allow(null)],
+            Sector: [joi.string(), joi.allow(null)],
+            City: joi.string().required(),
+            State: joi.string().required(),
+            PinCode: [joi.number().integer(), joi.allow(null)],
+            NearBy: [joi.string(), joi.allow(null)],
+            Lattitude: [joi.string(), joi.allow(null)],
+            Longitude: [joi.string(), joi.allow(null)],
+            Details: joi.array(),
+            output: 'data',
+            parse: true
+          }
+        }
+      }
+    });
+
+    sellerRoutes.push({
+      method: 'PUT',
+      path: '/admin/sellers/offline/{id}/details/{detailid}',
+      config: {
+        auth: 'jwt',
+        handler: SellerController.updateOfflineSellerDetail,
+        validate: {
+          payload: {
+            DetailTypeID: joi.number().integer().required(),
+            DisplayName: joi.string().required(),
+            Details: joi.string(),
+            output: 'data',
+            parse: true
+          }
+        }
+      }
+    });
+
+    // Delete Offline Seller
+    sellerRoutes.push({
+      method: 'DELETE',
+      path: '/admin/sellers/offline/{id}',
+      config: {
+        auth: 'jwt',
+        handler: SellerController.deleteOfflineSeller
+      }
+    });
+    sellerRoutes.push({
+      method: 'DELETE',
+      path: '/admin/sellers/offline/{id}/details/{detailid}',
+      config: {
+        auth: 'jwt',
+        handler: SellerController.deleteOfflineSellerDetail
+      }
+    });
+
+    // Get Brand List
+    sellerRoutes.push({
+      method: 'GET',
+      path: '/admin/sellers/offline',
+      config: {
+        auth: 'jwt',
+        handler: SellerController.retrieveOfflineSeller
+      }
+    });
+
+    sellerRoutes.push({
+      method: 'GET',
+      path: '/admin/sellers/offline/{id}',
+      config: {
+        auth: 'jwt',
+        handler: SellerController.retrieveOfflineSellerById
+      }
+    });
+  }
+
   let uploadFileRoute;
 
-   if(uploadController) {
-     uploadFileRoute= {
-       method: 'POST',
-       path: '/consumer/upload',
-       config: {
-         auth: 'jwt',
-         files: {
-           relativeTo: Path.join(__dirname, '../static/src')
-         },
-         handler: UploadController.uploadFiles,
-         payload: {
-           output: 'stream',
-           parse: true,
-           uploads: 'up_files',
-           timeout: 30034,
-           allow: 'multipart/form-data',
-           failAction: 'log',
-           maxBytes: 3000000
-         }
-       }
-     };
-   }
-  app.route([...authRoutes, ...categoryRoutes, ...brandRoutes, uploadFileRoute]);
+  if (uploadController) {
+    uploadFileRoute = {
+      method: 'POST',
+      path: '/consumer/upload',
+      config: {
+        auth: 'jwt',
+        files: {
+          relativeTo: Path.join(__dirname, '../static/src')
+        },
+        handler: UploadController.uploadFiles,
+        payload: {
+          output: 'stream',
+          parse: true,
+          uploads: 'up_files',
+          timeout: 30034,
+          allow: 'multipart/form-data',
+          failAction: 'log',
+          maxBytes: 3000000
+        }
+      }
+    };
+  }
+  app.route([...authRoutes, ...categoryRoutes, ...brandRoutes, ...sellerRoutes, uploadFileRoute]);
 };
