@@ -399,6 +399,7 @@ server.route({
         }
     }
 });
+
 //User Type List
 server.route({
     method: 'POST',
@@ -2429,6 +2430,193 @@ server.route({
                 UID: Joi.number().integer().required(),
                 BID: Joi.number().integer().required(),
                 Comments: [Joi.string(), Joi.allow(null)],
+                output: 'data',
+                parse:true
+            }
+        }
+    }
+});
+//Add Category Form
+server.route({
+    method: 'POST',
+    path: '/Services/AddCategoryForm',
+    handler: function (request, reply) {
+        const TokenNo = request.payload.TokenNo;
+        const Level = request.payload.Level;
+        const RefID = request.payload.RefID;
+        const Name = request.payload.Name;
+        const FormList = request.payload.FormList;
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+            if (error) throw error;
+            if(token.length > 0){
+                var UserID = token[0]['user_id'];
+                connection.query('SELECT category_id FROM table_categories WHERE category_name = "' + Name + '" and status_id=1 and ref_id="'+RefID+'"', function (error, category, fields) {
+                    if (error) throw error;
+                    if(category.length > 0){
+                        var data = '{"statusCode": 104,"error": "Data Exist","message": "Data Exist."}';
+                        reply(data);
+                    } else {
+                        connection.query('INSERT INTO table_categories (category_name,ref_id,category_level,created_on,updated_on,updated_by_user_id,status_id) VALUES ("' + Name + '","' + RefID + '","' + Level + '","' + getDateTime() + '","' + getDateTime() + '","' + UserID + '",1)', function (error, results, fields) {
+                            if (error) throw error;
+                            for(var i = 0; i < FormList.length; i++) {
+                                const CatType=FormList[i].Type;
+                                const List = FormList[i].List;
+                                connection.query('INSERT INTO table_cateogry_form (category_id,form_element_name,form_element_type,status_id) VALUES ("'+results['insertId']+'","'+FormList[i].ElementName+'","'+FormList[i].Type+'",1)', function (error, formlist, fields) {
+                                    if (error) throw error;
+                                        if(CatType == 2){
+                                            for(var a = 0; a < List.length; a++) {
+                                            connection.query('INSERT INTO table_cateogry_form_mapping (cateogry_form_id,dropdown_name,status_id) VALUES ("'+formlist['insertId']+'","'+List[a].DropdownName+'",1)', function (error, list, fields) {
+                                             });
+                                         }
+                                     }
+                                });
+                            }
+                            var data = '{"statusCode": 100,"ID": "'+results['insertId']+'","Name": "'+Name+'","RefID": "'+RefID+'","Level": "'+Level+'"}';
+                            reply(data);
+                        });
+                    }
+                });
+            } else {
+                var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+                reply(data);
+            }
+        });
+    },
+    config:{
+        validate: {
+            payload: {
+                TokenNo: Joi.string().required(),
+                Name: Joi.string().required(),
+                Level: Joi.number().integer().required(),
+                RefID: [Joi.number().integer(), Joi.allow(null)],
+                FormList: Joi.array(),
+                output: 'data',
+                parse:true
+            }
+        }
+    }
+});
+
+//Get Category By ID
+server.route({
+    method: 'POST',
+    path: '/Services/CategoryFormByID',
+    handler: function (request, reply) {
+        const TokenNo = request.payload.TokenNo;
+        const ID = request.payload.ID;
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+            if (error) throw error;
+            if(token.length > 0){
+                var UserID = token[0]['user_id'];
+                connection.query('SELECT category_id as ID,category_name as Name,ref_id as RefID,category_level as Level FROM table_categories WHERE category_id="' + ID + '"', function (error, category, fields) {
+                    if (error) throw error;
+                    if(category.length > 0){
+                        connection.query('SELECT cateogry_form_id as FormID,form_element_name as ElementName,form_element_type as Type FROM table_cateogry_form WHERE category_id="' + ID + '" and status_id=1 ', function (error, form, fields) {
+                            var id = [];
+                            for(var i = 0; i < form.length; i++) {
+                                id.push(form[i].FormID);
+                            }
+                            var FormIDList = id.join();
+                           connection.query('SELECT cateogry_form_id as FormID,mapping_id as DropdownID,dropdown_name as DropdownName FROM table_cateogry_form_mapping WHERE cateogry_form_id IN ('+FormIDList+')  and status_id=1 ', function (error, droupdown, fields) {
+                               console.log(droupdown);
+                               var data = '{"statusCode": 100,"Category": '+ JSON.stringify(category) +',"FormList": '+ JSON.stringify(form) +',"List": '+ JSON.stringify(droupdown) +'}';
+                               reply(data);
+                            });
+                        });
+                    } else {
+                        var data = '{"statusCode": 105,"error": "Not Found","message": "Data not Available."}';
+                        reply(data);
+                    }
+                });
+            } else {
+                var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+                reply(data);
+            }
+        });
+    },
+    config:{
+        validate: {
+            payload: {
+                TokenNo: Joi.string().required(),
+                ID: Joi.number().integer().required(),
+                output: 'data',
+                parse:true
+            }
+        }
+    }
+});
+
+//Edit Form Category
+server.route({
+    method: 'POST',
+    path: '/Services/EditCategoryForm',
+    handler: function (request, reply) {
+        const TokenNo = request.payload.TokenNo;
+        const ID = request.payload.ID;
+        const Name = request.payload.Name;
+        const RefID = request.payload.RefID;
+        const FormList = request.payload.FormList;
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+            if (error) throw error;
+            if(token.length > 0){
+                var UserID = token[0]['user_id'];
+                connection.query('SELECT category_id FROM table_categories WHERE category_name = "' + Name + '" and status_id=1 and category_id!="'+ID+'" and ref_id="'+RefID+'"', function (error, category, fields) {
+                    if (error) throw error;
+                    if(category.length > 0){
+                        var data = '{"statusCode": 104,"error": "Data Exist","message": "Data Exist."}';
+                        reply(data);
+                    } else {
+                        connection.query('UPDATE table_categories SET category_name="' + Name + '",updated_on="' + getDateTime() + '",updated_by_user_id="' + UserID + '" WHERE category_id="' + ID + '"', function (error, results, fields) {
+                            if (error) throw error;
+                            for(var i = 0; i < FormList.length; i++) {
+                                const CatType=FormList[i].Type;
+                                const List = FormList[i].List;
+                                if(FormList[i].FormID != null && FormList[i].FormID != ''){
+                                    connection.query('UPDATE table_cateogry_form SET form_element_name="' + FormList[i].ElementName + '" "WHERE cateogry_form_id="' + FormList[i].FormID + '"', function (error, detail, fields) {
+                                        if(CatType == 2){
+                                            for(var a = 0; a < List.length; a++) {
+                                                if(List[a].DropdownID != null && List[a].DropdownID !=''){
+                                                    connection.query('UPDATE table_cateogry_form_mapping SET dropdown_name="' + List[a].DropdownName + '" "WHERE mapping_id="' + List[a].DropdownID + '"', function (error, detail, fields) {
+                                                    });
+                                                } else {
+                                                    connection.query('INSERT INTO table_cateogry_form_mapping (cateogry_form_id,dropdown_name,status_id) VALUES ("'+FormList[i].FormID+'","'+List[a].DropdownName+'",1)', function (error, list, fields) {
+                                                    });
+                                                }
+                                            }
+                                        }
+                                    });
+                                } else {
+                                    connection.query('INSERT INTO table_cateogry_form (category_id,form_element_name,form_element_type,status_id) VALUES ("'+ID+'","'+FormList[i].ElementName+'","'+FormList[i].Type+'",1)', function (error, formlist, fields) {
+                                        if (error) throw error;
+                                        if(CatType == 2){
+                                            for(var a = 0; a < List.length; a++) {
+                                                connection.query('INSERT INTO table_cateogry_form_mapping (cateogry_form_id,dropdown_name,status_id) VALUES ("'+formlist['insertId']+'","'+List[a].DropdownName+'",1)', function (error, list, fields) {
+                                                });
+                                            }
+                                        }
+                                    });
+                                }
+
+                            }
+                            var data = '{"statusCode": 100,"error": "","message": "Data update successfully."}';
+                            reply(data);
+                        });
+                    }
+                });
+            } else {
+                var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+                reply(data);
+            }
+        });
+    },
+    config:{
+        validate: {
+            payload: {
+                TokenNo: Joi.string().required(),
+                Name: Joi.string().required(),
+                ID: Joi.number().integer().required(),
+                RefID: [Joi.number().integer(), Joi.allow(null)],
+                FormList: Joi.array(),
                 output: 'data',
                 parse:true
             }
