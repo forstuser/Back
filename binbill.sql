@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS `table_authorized_service_center` (
   `address_state` varchar(100) NOT NULL,
   `address_pin_code` int(11) NOT NULL,
   `address_nearby` varchar(200) NOT NULL,
-  `lattitude` varchar(255) NOT NULL,
+  `Latitude` varchar(255) NOT NULL,
   `longitude` varchar(255) NOT NULL,
   `open_days` varchar(255) NOT NULL,
   `timings` varchar(255) NOT NULL,
@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS `table_authorized_service_center` (
 -- Dumping data for table `table_authorized_service_center`
 --
 
-INSERT INTO `table_authorized_service_center` (`center_id`, `brand_id`, `center_name`, `address_house_no`, `address_block`, `address_street`, `address_sector`, `address_city`, `address_state`, `address_pin_code`, `address_nearby`, `lattitude`, `longitude`, `open_days`, `timings`, `status_id`) VALUES
+INSERT INTO `table_authorized_service_center` (`center_id`, `brand_id`, `center_name`, `address_house_no`, `address_block`, `address_street`, `address_sector`, `address_city`, `address_state`, `address_pin_code`, `address_nearby`, `Latitude`, `longitude`, `open_days`, `timings`, `status_id`) VALUES
 (1, 1, 'Testingxzvdsv', '', 'Test1', '', '', 'South Delhi', 'Delhi', 110062, 'Test1', '', '', 'Test1', 'Test1', 1),
 (2, 1, 'Testing', '', 'Test1', '', '', 'South Delhi', 'Delhi', 110062, 'Test1', '', '', 'Test1', 'Test1', 1);
 
@@ -368,7 +368,7 @@ CREATE TABLE IF NOT EXISTS `table_offline_seller` (
   `address_state` varchar(100) NOT NULL,
   `address_pin_code` varchar(11) NOT NULL,
   `address_nearby` varchar(255) NOT NULL,
-  `lattitude` varchar(255) NOT NULL,
+  `Latitude` varchar(255) NOT NULL,
   `longitude` varchar(255) NOT NULL,
   `status_id` int(11) NOT NULL,
   PRIMARY KEY (`offline_seller_id`)
@@ -378,7 +378,7 @@ CREATE TABLE IF NOT EXISTS `table_offline_seller` (
 -- Dumping data for table `table_offline_seller`
 --
 
-INSERT INTO `table_offline_seller` (`offline_seller_id`, `offline_seller_name`, `offline_seller_owner_name`, `offline_seller_gstin_no`, `offline_seller_pan_number`, `offline_seller_registration_no`, `is_service_provider`, `is_onboarded`, `address_house_no`, `address_block`, `address_street`, `address_sector`, `address_city`, `address_state`, `address_pin_code`, `address_nearby`, `lattitude`, `longitude`, `status_id`) VALUES
+INSERT INTO `table_offline_seller` (`offline_seller_id`, `offline_seller_name`, `offline_seller_owner_name`, `offline_seller_gstin_no`, `offline_seller_pan_number`, `offline_seller_registration_no`, `is_service_provider`, `is_onboarded`, `address_house_no`, `address_block`, `address_street`, `address_sector`, `address_city`, `address_state`, `address_pin_code`, `address_nearby`, `Latitude`, `longitude`, `status_id`) VALUES
 (1, 'Testingww', 'Test', '', '', '', 0, 0, '', '', '', '', 'South Delhi', 'Delhi', '110062', 'Test1', '', '', 1);
 
 -- --------------------------------------------------------

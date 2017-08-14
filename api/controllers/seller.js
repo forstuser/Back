@@ -238,7 +238,7 @@ class SellerController {
     const State = request.payload.State;
     const PinCode = request.payload.PinCode;
     const NearBy = request.payload.NearBy;
-    const Lattitude = request.payload.Lattitude;
+    const Latitude = request.payload.Latitude;
     const Longitude = request.payload.Longitude;
     const Name = request.payload.Name;
     const URL = request.payload.URL;
@@ -256,7 +256,7 @@ class SellerController {
       },
       defaults: {
         Longitude,
-        Lattitude,
+        Latitude,
         OwnerName,
         GstinNo,
         Details,
@@ -347,7 +347,7 @@ class SellerController {
     const State = request.payload.State;
     const PinCode = request.payload.PinCode;
     const NearBy = request.payload.NearBy;
-    const Lattitude = request.payload.Lattitude;
+    const Latitude = request.payload.Latitude;
     const Longitude = request.payload.Longitude;
     const Name = request.payload.Name;
     const URL = request.payload.URL;
@@ -370,7 +370,7 @@ class SellerController {
       State,
       PinCode,
       NearBy,
-      Lattitude,
+      Latitude,
       Longitude,
       updated_by_user_id: user.userId
     }, {
@@ -382,7 +382,7 @@ class SellerController {
       const SellerID = request.params.id;
       for (let i = 0; i < Details.length; i += 1) {
         if (Details[i].DetailID) {
-          detailPromise.push(modals.table_online_seller_details.update({
+          detailPromise.push(modals.table_offline_seller_details.update({
             DetailTypeID: Details[i].DetailTypeID,
             DisplayName: Details[i].DisplayName,
             Details: Details[i].Details,
@@ -393,7 +393,7 @@ class SellerController {
             }
           }));
         } else {
-          detailPromise.push(modals.table_online_seller_details.create({
+          detailPromise.push(modals.table_offline_seller_details.create({
             SellerID,
             DetailTypeID: Details[i].DetailTypeID,
             DisplayName: Details[i].DisplayName,

@@ -2,45 +2,21 @@
  * Created by arpit on 6/30/2017.
  */
 
-module.exports = (sequelize, Sequelize) => sequelize.define('table_offline_seller', {
+module.exports = (sequelize, Sequelize) => sequelize.define('table_authorized_service_center', {
   ID: {
     type: Sequelize.INTEGER,
     autoIncrement: true,
     primaryKey: true,
-    field: 'offline_seller_id'
+    field: 'center_id'
+  },
+  BrandID: {
+    type: Sequelize.INTEGER,
+    field: 'brand_id'
   },
   Name: {
     type: Sequelize.STRING,
     notEmpty: false,
-    field: 'offline_seller_name'
-  },
-  OwnerName: {
-    type: Sequelize.STRING,
-    field: 'offline_seller_owner_name'
-  },
-  URL: {
-    type: Sequelize.INTEGER,
-    field: 'seller_url'
-  },
-  GstinNo: {
-    type: Sequelize.STRING,
-    field: 'offline_seller_gstin_no'
-  },
-  PanNo: {
-    type: Sequelize.STRING,
-    field: 'offline_seller_pan_number'
-  },
-  RegNo: {
-    type: Sequelize.STRING,
-    field: 'offline_seller_registration_no'
-  },
-  ServiceProvider: {
-    type: Sequelize.INTEGER,
-    field: 'is_service_provider'
-  },
-  OnBoarded: {
-    type: Sequelize.INTEGER,
-    field: 'is_onboarded'
+    field: 'center_name'
   },
   HouseNo: {
     type: Sequelize.STRING,
@@ -81,6 +57,14 @@ module.exports = (sequelize, Sequelize) => sequelize.define('table_offline_selle
   Longitude: {
     type: Sequelize.STRING,
     field: 'longitude'
+  },
+  Timings: {
+    type: Sequelize.STRING,
+    field: 'timings'
+  },
+  OpenDays: {
+    type: Sequelize.STRING,
+    field: 'open_days'
   },
   updated_on: {
     type: Sequelize.DATE(6),

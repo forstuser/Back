@@ -9,6 +9,7 @@ const CategoryController = require('../api/controllers/category');
 const BrandController = require('../api/controllers/brand');
 const UploadController = require('../api/controllers/upload');
 const SellerController = require('../api/controllers/seller');
+const ServiceCenterController = require('../api/controllers/serviceCenter');
 
 let User;
 module.exports = (app, models) => {
@@ -22,11 +23,13 @@ module.exports = (app, models) => {
   const categoryRoutes = [];
   const brandRoutes = [];
   const sellerRoutes = [];
+  const serviceCenterRoutes = [];
   const userController = new UserController(models);
   const categoryController = new CategoryController(models);
   const brandController = new BrandController(models);
   const uploadController = new UploadController(models);
   const sellerController = new SellerController(models);
+  const serviceCenterController = new ServiceCenterController(models);
 
   //= ========================
   // Auth Routes
@@ -433,7 +436,7 @@ module.exports = (app, models) => {
             State: joi.string().required(),
             PinCode: [joi.number().integer(), joi.allow(null)],
             NearBy: [joi.string(), joi.allow(null)],
-            Lattitude: [joi.string(), joi.allow(null)],
+            Latitude: [joi.string(), joi.allow(null)],
             Longitude: [joi.string(), joi.allow(null)],
             Details: joi.array(),
             output: 'data',
@@ -487,7 +490,7 @@ module.exports = (app, models) => {
             State: joi.string().required(),
             PinCode: [joi.number().integer(), joi.allow(null)],
             NearBy: [joi.string(), joi.allow(null)],
-            Lattitude: [joi.string(), joi.allow(null)],
+            Latitude: [joi.string(), joi.allow(null)],
             Longitude: [joi.string(), joi.allow(null)],
             Details: joi.array(),
             output: 'data',
@@ -524,6 +527,7 @@ module.exports = (app, models) => {
         handler: SellerController.deleteOfflineSeller
       }
     });
+
     sellerRoutes.push({
       method: 'DELETE',
       path: '/admin/sellers/offline/{id}/details/{detailid}',
@@ -533,7 +537,7 @@ module.exports = (app, models) => {
       }
     });
 
-    // Get Brand List
+    // Get Offline Seller List
     sellerRoutes.push({
       method: 'GET',
       path: '/admin/sellers/offline',
@@ -549,6 +553,144 @@ module.exports = (app, models) => {
       config: {
         auth: 'jwt',
         handler: SellerController.retrieveOfflineSellerById
+      }
+    });
+  }
+
+  if (serviceCenterController) {
+    // Add Authorized Service Center
+    serviceCenterRoutes.push({
+      method: 'POST',
+      path: '/admin/servicecenters',
+      config: {
+        auth: 'jwt',
+        handler: ServiceCenterController.addServiceCenter,
+        validate: {
+          payload: {
+            BrandID: joi.number().integer().required(),
+            Name: joi.string().required(),
+            HouseNo: joi.allow(null),
+            Block: joi.allow(null),
+            Street: joi.allow(null),
+            Sector: joi.allow(null),
+            City: joi.string().required(),
+            State: joi.string().required(),
+            PinCode: joi.allow(null),
+            NearBy: joi.allow(null),
+            Latitude: joi.allow(null),
+            Longitude: joi.allow(null),
+            OpenDays: joi.string(),
+            Timings: joi.string(),
+            Details: joi.array(),
+            output: 'data',
+            parse: true
+          }
+        }
+      }
+    });
+
+    serviceCenterRoutes.push({
+      method: 'POST',
+      path: '/admin/servicecenters/{id}/details',
+      config: {
+        auth: 'jwt',
+        handler: ServiceCenterController.addServiceCenterDetail,
+        validate: {
+          payload: {
+            DetailTypeID: joi.number().integer().required(),
+            DisplayName: joi.string().required(),
+            Details: joi.string(),
+            output: 'data',
+            parse: true
+          }
+        }
+      }
+    });
+
+    // Edit Authorized Service Center
+    serviceCenterRoutes.push({
+      method: 'PUT',
+      path: '/admin/servicecenters/{id}',
+      config: {
+        auth: 'jwt',
+        handler: ServiceCenterController.updateServiceCenter,
+        validate: {
+          payload: {
+            BrandID: joi.number().integer().required(),
+            Name: joi.string().required(),
+            HouseNo: joi.allow(null),
+            Block: joi.allow(null),
+            Street: joi.allow(null),
+            Sector: joi.allow(null),
+            City: joi.string().required(),
+            State: joi.string().required(),
+            PinCode: joi.allow(null),
+            NearBy: joi.allow(null),
+            Latitude: joi.allow(null),
+            Longitude: joi.allow(null),
+            OpenDays: joi.string(),
+            Timings: joi.string(),
+            Details: joi.array(),
+            output: 'data',
+            parse: true
+          }
+        }
+      }
+    });
+
+    sellerRoutes.push({
+      method: 'PUT',
+      path: '/admin/servicecenters/{id}/details/{detailid}',
+      config: {
+        auth: 'jwt',
+        handler: ServiceCenterController.updateServiceCenterDetail,
+        validate: {
+          payload: {
+            DetailTypeID: joi.number().integer().required(),
+            DisplayName: joi.string().required(),
+            Details: joi.string(),
+            output: 'data',
+            parse: true
+          }
+        }
+      }
+    });
+
+    // Delete Authorized Service Center
+    serviceCenterRoutes.push({
+      method: 'DELETE',
+      path: '/admin/servicecenters/{id}',
+      config: {
+        auth: 'jwt',
+        handler: ServiceCenterController.deleteServiceCenter
+      }
+    });
+
+    // Delete Authorized Service Center Detail
+    serviceCenterRoutes.push({
+      method: 'DELETE',
+      path: '/admin/servicecenters/{id}/details/{detailid}',
+      config: {
+        auth: 'jwt',
+        handler: ServiceCenterController.deleteServiceCenterDetail
+      }
+    });
+    // Get Authorized Service Center List
+    serviceCenterRoutes.push({
+      method: 'GET',
+      path: '/admin/servicecenters',
+      config: {
+        auth: 'jwt',
+        handler: ServiceCenterController.retrieveServiceCenters
+      }
+    });
+    // Get Authorized Service Center By ID
+    serviceCenterRoutes.push({
+      method: 'GET',
+      path: '/admin/servicecenters/{id}',
+      config: {
+        auth: 'jwt',
+        handler: ServiceCenterController.retrieveServiceCenterById
       }
     });
   }
@@ -577,5 +719,10 @@ module.exports = (app, models) => {
       }
     };
   }
-  app.route([...authRoutes, ...categoryRoutes, ...brandRoutes, ...sellerRoutes, uploadFileRoute]);
+  app.route([...authRoutes,
+    ...categoryRoutes,
+    ...brandRoutes,
+    ...sellerRoutes,
+    ...serviceCenterRoutes,
+    uploadFileRoute]);
 };
