@@ -10,291 +10,12 @@ const BrandController = require('../api/controllers/brand');
 const UploadController = require('../api/controllers/upload');
 const SellerController = require('../api/controllers/seller');
 const ServiceCenterController = require('../api/controllers/serviceCenter');
+const BillManagementController = require('../api/controllers/consumerBillManagement');
+const ExclusionInclusionController = require('../api/controllers/exclusionInclusion');
 
 let User;
-module.exports = (app, models) => {
-  User = models.users;
-  // Middleware to require login/auth
 
-  PassportService(User);
-  passport.authenticate('jwt', { session: false });
-  // Initializing route groups
-  const authRoutes = [];
-  const categoryRoutes = [];
-  const brandRoutes = [];
-  const sellerRoutes = [];
-  const serviceCenterRoutes = [];
-  const userController = new UserController(models);
-  const categoryController = new CategoryController(models);
-  const brandController = new BrandController(models);
-  const uploadController = new UploadController(models);
-  const sellerController = new SellerController(models);
-  const serviceCenterController = new ServiceCenterController(models);
-
-  //= ========================
-  // Auth Routes
-  //= ========================
-
-  if (userController) {
-    // Registration route
-    authRoutes.push({
-      method: 'POST',
-      path: '/admin/register',
-      config: {
-        handler: UserController.register,
-        auth: null,
-        description: 'Register User for Admin Portal.',
-        tags: ['api', 'User', 'Authentication'],
-        validate: {
-          payload: {
-            emailAddress: joi.string().email().required(),
-            password: joi.string().required(),
-            fullName: joi.string().required(),
-            output: 'data',
-            parse: true
-          }
-        },
-        plugins: {
-          'hapi-swagger': {
-            responseMessages: [
-              { code: 200, message: 'Authenticated' },
-              { code: 400, message: 'Bad Request' },
-              { code: 401, message: 'Invalid Credentials' },
-              { code: 404, message: 'Not Found' },
-              { code: 500, message: 'Internal Server Error' }
-            ]
-          }
-        }
-      }
-    });
-
-    // Login route
-    authRoutes.push({
-      method: 'POST',
-      path: '/admin/login',
-      config: {
-        handler: UserController.login,
-        auth: false,
-        description: 'Login User.',
-        tags: ['api', 'User', 'Authentication'],
-        validate: {
-          payload: {
-            UserName: joi.string().required(),
-            Password: joi.string().required(),
-            output: 'data',
-            parse: true
-          }
-        },
-        plugins: {
-          'hapi-swagger': {
-            responseMessages: [
-              { code: 202, message: 'Authenticated' },
-              { code: 400, message: 'Bad Request' },
-              { code: 401, message: 'Invalid Credentials' },
-              { code: 404, message: 'Not Found' },
-              { code: 500, message: 'Internal Server Error' }
-            ]
-          }
-        }
-      }
-    });
-  }
-
-  if (categoryController) {
-    // Add Category
-    categoryRoutes.push({
-      method: 'POST',
-      path: '/admin/categories',
-      config: {
-        auth: 'jwt',
-        handler: CategoryController.addCategory,
-        validate: {
-          payload: {
-            Name: joi.string().required(),
-            Level: joi.number().integer().required(),
-            RefID: [joi.number().integer(), joi.allow(null)],
-            output: 'data',
-            parse: true
-          }
-        },
-        plugins: {
-          'hapi-swagger': {
-            responseMessages: [
-              { code: 201, message: 'Created' },
-              { code: 400, message: 'Bad Request' },
-              { code: 401, message: 'Invalid Credentials' },
-              { code: 404, message: 'Not Found' },
-              { code: 500, message: 'Internal Server Error' }
-            ]
-          }
-        }
-      }
-    });
-
-    // Edit Category
-    categoryRoutes.push({
-      method: 'PUT',
-      path: '/admin/categories/{id}',
-      config: {
-        handler: CategoryController.updateCategory,
-        auth: 'jwt',
-        validate: {
-          params: {
-            id: joi.number().integer().required()
-          },
-          payload: {
-            Name: joi.string().required(),
-            RefID: [joi.number().integer(), joi.allow(null)],
-            Level: joi.number().integer(),
-            output: 'data',
-            parse: true
-          }
-        }
-      }
-    });
-    // Delete Category
-    categoryRoutes.push({
-      method: 'DELETE',
-      path: '/admin/categories/{id}',
-      config: {
-        handler: CategoryController.deleteCategory,
-        auth: 'jwt'
-      }
-    });
-    // Category List
-    categoryRoutes.push({
-      method: 'GET',
-      path: '/admin/categories',
-      config: {
-        auth: 'jwt',
-        handler: CategoryController.retrieveCategory
-      }
-    });
-    // Category By Id
-    categoryRoutes.push({
-      method: 'GET',
-      path: '/admin/categories/{id}',
-      config: {
-        auth: 'jwt',
-        handler: CategoryController.retrieveCategoryById
-      }
-    });
-  }
-
-  if (brandController) {
-  // Add Brand
-    brandRoutes.push({
-      method: 'POST',
-      path: '/admin/brands',
-      config: {
-        auth: 'jwt',
-        handler: BrandController.addBrand,
-        validate: {
-          payload: {
-            Name: joi.string().required(),
-            Description: joi.string(),
-            Details: joi.array(),
-            output: 'data',
-            parse: true
-          }
-        }
-      }
-    });
-
-    brandRoutes.push({
-      method: 'POST',
-      path: '/admin/brands/{id}/details',
-      config: {
-        auth: 'jwt',
-        handler: BrandController.addBrandDetail,
-        validate: {
-          payload: {
-            DetailTypeID: joi.number().integer().required(),
-            DisplayName: joi.string().required(),
-            Details: joi.string(),
-            output: 'data',
-            parse: true
-          }
-        }
-      }
-    });
-
-    // Edit Brand
-    brandRoutes.push({
-      method: 'PUT',
-      path: '/admin/brands/{id}',
-      config: {
-        auth: 'jwt',
-        handler: BrandController.updateBrand,
-        validate: {
-          payload: {
-            Name: joi.string().required(),
-            Description: joi.string(),
-            Details: joi.array(),
-            output: 'data',
-            parse: true
-          }
-        }
-      }
-    });
-
-    brandRoutes.push({
-      method: 'PUT',
-      path: '/admin/brands/{id}/details/{detailid}',
-      config: {
-        auth: 'jwt',
-        handler: BrandController.updateBrandDetail,
-        validate: {
-          payload: {
-            DetailTypeID: joi.number().integer().required(),
-            DisplayName: joi.string().required(),
-            Details: joi.string(),
-            output: 'data',
-            parse: true
-          }
-        }
-      }
-    });
-    // Delete Brand
-    brandRoutes.push({
-      method: 'DELETE',
-      path: '/admin/brands/{id}',
-      config: {
-        auth: 'jwt',
-        handler: BrandController.deleteBrand
-      }
-    });
-
-    // Delete Brand Detail
-    brandRoutes.push({
-      method: 'DELETE',
-      path: '/admin/brands/{id}/details/{detailid}',
-      config: {
-        auth: 'jwt',
-        handler: BrandController.deleteBrandDetail
-      }
-    });
-
-    // Get Brand List
-    brandRoutes.push({
-      method: 'GET',
-      path: '/admin/brands',
-      config: {
-        auth: 'jwt',
-        handler: BrandController.retrieveBrand
-      }
-    });
-
-    brandRoutes.push({
-      method: 'GET',
-      path: '/admin/brands/{id}',
-      config: {
-        auth: 'jwt',
-        handler: BrandController.retrieveBrandById
-      }
-    });
-  }
-
+function prepareSellerRoutes(sellerController, sellerRoutes) {
   if (sellerController) {
     // Add Online Seller
     sellerRoutes.push({
@@ -556,7 +277,9 @@ module.exports = (app, models) => {
       }
     });
   }
+}
 
+function prepareServiceCenterRoutes(serviceCenterController, serviceCenterRoutes) {
   if (serviceCenterController) {
     // Add Authorized Service Center
     serviceCenterRoutes.push({
@@ -638,7 +361,7 @@ module.exports = (app, models) => {
       }
     });
 
-    sellerRoutes.push({
+    serviceCenterRoutes.push({
       method: 'PUT',
       path: '/admin/servicecenters/{id}/details/{detailid}',
       config: {
@@ -694,6 +417,502 @@ module.exports = (app, models) => {
       }
     });
   }
+}
+
+function prepareBrandRoutes(brandController, brandRoutes) {
+  if (brandController) {
+    // Add Brand
+    brandRoutes.push({
+      method: 'POST',
+      path: '/admin/brands',
+      config: {
+        auth: 'jwt',
+        handler: BrandController.addBrand,
+        validate: {
+          payload: {
+            Name: joi.string().required(),
+            Description: joi.string(),
+            Details: joi.array(),
+            output: 'data',
+            parse: true
+          }
+        }
+      }
+    });
+
+    brandRoutes.push({
+      method: 'POST',
+      path: '/admin/brands/{id}/details',
+      config: {
+        auth: 'jwt',
+        handler: BrandController.addBrandDetail,
+        validate: {
+          payload: {
+            DetailTypeID: joi.number().integer().required(),
+            DisplayName: joi.string().required(),
+            Details: joi.string(),
+            output: 'data',
+            parse: true
+          }
+        }
+      }
+    });
+
+    // Edit Brand
+    brandRoutes.push({
+      method: 'PUT',
+      path: '/admin/brands/{id}',
+      config: {
+        auth: 'jwt',
+        handler: BrandController.updateBrand,
+        validate: {
+          payload: {
+            Name: joi.string().required(),
+            Description: joi.string(),
+            Details: joi.array(),
+            output: 'data',
+            parse: true
+          }
+        }
+      }
+    });
+
+    brandRoutes.push({
+      method: 'PUT',
+      path: '/admin/brands/{id}/details/{detailid}',
+      config: {
+        auth: 'jwt',
+        handler: BrandController.updateBrandDetail,
+        validate: {
+          payload: {
+            DetailTypeID: joi.number().integer().required(),
+            DisplayName: joi.string().required(),
+            Details: joi.string(),
+            output: 'data',
+            parse: true
+          }
+        }
+      }
+    });
+    // Delete Brand
+    brandRoutes.push({
+      method: 'DELETE',
+      path: '/admin/brands/{id}',
+      config: {
+        auth: 'jwt',
+        handler: BrandController.deleteBrand
+      }
+    });
+
+    // Delete Brand Detail
+    brandRoutes.push({
+      method: 'DELETE',
+      path: '/admin/brands/{id}/details/{detailid}',
+      config: {
+        auth: 'jwt',
+        handler: BrandController.deleteBrandDetail
+      }
+    });
+
+    // Get Brand List
+    brandRoutes.push({
+      method: 'GET',
+      path: '/admin/brands',
+      config: {
+        auth: 'jwt',
+        handler: BrandController.retrieveBrand
+      }
+    });
+
+    brandRoutes.push({
+      method: 'GET',
+      path: '/admin/brands/{id}',
+      config: {
+        auth: 'jwt',
+        handler: BrandController.retrieveBrandById
+      }
+    });
+  }
+}
+
+function prepareCategoryRoutes(categoryController, categoryRoutes) {
+  if (categoryController) {
+    // Add Category
+    categoryRoutes.push({
+      method: 'POST',
+      path: '/admin/categories',
+      config: {
+        auth: 'jwt',
+        handler: CategoryController.addCategory,
+        validate: {
+          payload: {
+            Name: joi.string().required(),
+            Level: joi.number().integer().required(),
+            RefID: [joi.number().integer(), joi.allow(null)],
+            output: 'data',
+            parse: true
+          }
+        },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              { code: 201, message: 'Created' },
+              { code: 400, message: 'Bad Request' },
+              { code: 401, message: 'Invalid Credentials' },
+              { code: 404, message: 'Not Found' },
+              { code: 500, message: 'Internal Server Error' }
+            ]
+          }
+        }
+      }
+    });
+
+    // Edit Category
+    categoryRoutes.push({
+      method: 'PUT',
+      path: '/admin/categories/{id}',
+      config: {
+        handler: CategoryController.updateCategory,
+        auth: 'jwt',
+        validate: {
+          params: {
+            id: joi.number().integer().required()
+          },
+          payload: {
+            Name: joi.string().required(),
+            RefID: [joi.number().integer(), joi.allow(null)],
+            Level: joi.number().integer(),
+            output: 'data',
+            parse: true
+          }
+        }
+      }
+    });
+    // Delete Category
+    categoryRoutes.push({
+      method: 'DELETE',
+      path: '/admin/categories/{id}',
+      config: {
+        handler: CategoryController.deleteCategory,
+        auth: 'jwt'
+      }
+    });
+    // Category List
+    categoryRoutes.push({
+      method: 'GET',
+      path: '/admin/categories',
+      config: {
+        auth: 'jwt',
+        handler: CategoryController.retrieveCategory
+      }
+    });
+    // Category By Id
+    categoryRoutes.push({
+      method: 'GET',
+      path: '/admin/categories/{id}',
+      config: {
+        auth: 'jwt',
+        handler: CategoryController.retrieveCategoryById
+      }
+    });
+  }
+}
+
+function prepareBillManagementRoutes(billManagementController, billManagementRoutes) {
+  if (billManagementController) {
+    // Add Category
+    billManagementRoutes.push({
+      method: 'POST',
+      path: '/admin/bill',
+      config: {
+        auth: 'jwt',
+        handler: CategoryController.addCategory,
+        validate: {
+          payload: {
+            Name: joi.string().required(),
+            Level: joi.number().integer().required(),
+            RefID: [joi.number().integer(), joi.allow(null)],
+            output: 'data',
+            parse: true
+          }
+        },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              { code: 201, message: 'Created' },
+              { code: 400, message: 'Bad Request' },
+              { code: 401, message: 'Invalid Credentials' },
+              { code: 404, message: 'Not Found' },
+              { code: 500, message: 'Internal Server Error' }
+            ]
+          }
+        }
+      }
+    });
+
+    // Edit Category
+    billManagementRoutes.push({
+      method: 'PUT',
+      path: '/admin/bill/{id}',
+      config: {
+        handler: CategoryController.updateCategory,
+        auth: 'jwt',
+        validate: {
+          params: {
+            id: joi.number().integer().required()
+          },
+          payload: {
+            Name: joi.string().required(),
+            RefID: [joi.number().integer(), joi.allow(null)],
+            Level: joi.number().integer(),
+            output: 'data',
+            parse: true
+          }
+        }
+      }
+    });
+    // Delete Category
+    billManagementRoutes.push({
+      method: 'DELETE',
+      path: '/admin/bill/{id}',
+      config: {
+        handler: CategoryController.deleteCategory,
+        auth: 'jwt'
+      }
+    });
+    // Category List
+    billManagementRoutes.push({
+      method: 'GET',
+      path: '/admin/bill',
+      config: {
+        auth: 'jwt',
+        handler: BillManagementController.retrieveAdminConsumerBillList
+      }
+    });
+    // Category By Id
+    billManagementRoutes.push({
+      method: 'GET',
+      path: '/admin/bill/{id}',
+      config: {
+        auth: 'jwt',
+        handler: CategoryController.retrieveCategoryById
+      }
+    });
+  }
+}
+
+function prepareExclusionInclusionRoutes(exclusionInclusionController, categoryRoutes) {
+  if (exclusionInclusionController) {
+    // Add Exclusions
+    categoryRoutes.push({
+      method: 'POST',
+      path: '/admin/exclusions',
+      config: {
+        auth: 'jwt',
+        handler: ExclusionInclusionController.addExclusions,
+        validate: {
+          payload: {
+            Name: joi.string().required(),
+            CatID: joi.number().integer().required(),
+            output: 'data',
+            parse: true
+          }
+        }
+      }
+    });
+
+    categoryRoutes.push({
+      method: 'POST',
+      path: '/admin/inclusions',
+      config: {
+        auth: 'jwt',
+        handler: ExclusionInclusionController.addInclusions,
+        validate: {
+          payload: {
+            Name: joi.string().required(),
+            CatID: joi.number().integer().required(),
+            output: 'data',
+            parse: true
+          }
+        }
+      }
+    });
+
+    // Edit Exclusions
+    categoryRoutes.push({
+      method: 'PUT',
+      path: '/admin/exclusions/{id}',
+      config: {
+        auth: 'jwt',
+        handler: ExclusionInclusionController.updateExclusions,
+        validate: {
+          payload: {
+            Name: joi.string().required(),
+            CatID: joi.number().integer().required(),
+            output: 'data',
+            parse: true
+          }
+        }
+      }
+    });
+
+    categoryRoutes.push({
+      method: 'PUT',
+      path: '/admin/inclusions/{id}',
+      config: {
+        auth: 'jwt',
+        handler: ExclusionInclusionController.updateInclusions,
+        validate: {
+          payload: {
+            Name: joi.string().required(),
+            CatID: joi.number().integer().required(),
+            output: 'data',
+            parse: true
+          }
+        }
+      }
+    });
+    // Delete Exclusions
+    categoryRoutes.push({
+      method: 'DELETE',
+      path: '/admin/exclusions/{id}',
+      config: {
+        auth: 'jwt',
+        handler: ExclusionInclusionController.deleteExclusions
+      }
+    });
+
+    // Delete Inclusions
+    categoryRoutes.push({
+      method: 'DELETE',
+      path: '/admin/inclusions/{id}',
+      config: {
+        auth: 'jwt',
+        handler: ExclusionInclusionController.deleteInclusions
+      }
+    });
+
+    categoryRoutes.push({
+      method: 'GET',
+      path: '/admin/exclusions',
+      config: {
+        auth: 'jwt',
+        handler: ExclusionInclusionController.retrieveExclusions
+      }
+    });
+
+    categoryRoutes.push({
+      method: 'GET',
+      path: '/admin/inclusions',
+      config: {
+        auth: 'jwt',
+        handler: ExclusionInclusionController.retrieveInclusions
+      }
+    });
+  }
+}
+module.exports = (app, models) => {
+  User = models.users;
+  // Middleware to require login/auth
+
+  PassportService(User);
+  passport.authenticate('jwt', { session: false });
+  // Initializing route groups
+  const authRoutes = [];
+  const categoryRoutes = [];
+  const brandRoutes = [];
+  const sellerRoutes = [];
+  const serviceCenterRoutes = [];
+  const billManagementRoutes = [];
+  const userController = new UserController(models);
+  const categoryController = new CategoryController(models);
+  const brandController = new BrandController(models);
+  const uploadController = new UploadController(models);
+  const sellerController = new SellerController(models);
+  const serviceCenterController = new ServiceCenterController(models);
+  const billManagementController = new BillManagementController(models);
+  const exclusionInclusionController = new ExclusionInclusionController(models);
+
+  //= ========================
+  // Auth Routes
+  //= ========================
+
+  if (userController) {
+    // Registration route
+    authRoutes.push({
+      method: 'POST',
+      path: '/admin/register',
+      config: {
+        handler: UserController.register,
+        auth: null,
+        description: 'Register User for Admin Portal.',
+        tags: ['api', 'User', 'Authentication'],
+        validate: {
+          payload: {
+            emailAddress: joi.string().email().required(),
+            password: joi.string().required(),
+            fullName: joi.string().required(),
+            output: 'data',
+            parse: true
+          }
+        },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              { code: 200, message: 'Authenticated' },
+              { code: 400, message: 'Bad Request' },
+              { code: 401, message: 'Invalid Credentials' },
+              { code: 404, message: 'Not Found' },
+              { code: 500, message: 'Internal Server Error' }
+            ]
+          }
+        }
+      }
+    });
+
+    // Login route
+    authRoutes.push({
+      method: 'POST',
+      path: '/admin/login',
+      config: {
+        handler: UserController.login,
+        auth: false,
+        description: 'Login User.',
+        tags: ['api', 'User', 'Authentication'],
+        validate: {
+          payload: {
+            UserName: joi.string().required(),
+            Password: joi.string().required(),
+            output: 'data',
+            parse: true
+          }
+        },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              { code: 202, message: 'Authenticated' },
+              { code: 400, message: 'Bad Request' },
+              { code: 401, message: 'Invalid Credentials' },
+              { code: 404, message: 'Not Found' },
+              { code: 500, message: 'Internal Server Error' }
+            ]
+          }
+        }
+      }
+    });
+  }
+
+  prepareCategoryRoutes(categoryController, categoryRoutes);
+
+  prepareBrandRoutes(brandController, brandRoutes);
+
+  prepareSellerRoutes(sellerController, sellerRoutes);
+
+  prepareServiceCenterRoutes(serviceCenterController, serviceCenterRoutes);
+
+  prepareBillManagementRoutes(billManagementController, billManagementRoutes);
+
+  prepareExclusionInclusionRoutes(exclusionInclusionController, categoryRoutes);
 
   let uploadFileRoute;
 
@@ -724,5 +943,6 @@ module.exports = (app, models) => {
     ...brandRoutes,
     ...sellerRoutes,
     ...serviceCenterRoutes,
+    ...billManagementRoutes,
     uploadFileRoute]);
 };

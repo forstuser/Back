@@ -76,7 +76,7 @@ module.exports = (sequelize, Sequelize) => sequelize.define('table_offline_selle
   },
   Latitude: {
     type: Sequelize.STRING,
-    field: 'Latitude'
+    field: 'latitude'
   },
   Longitude: {
     type: Sequelize.STRING,

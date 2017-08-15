@@ -52,7 +52,7 @@ module.exports = (sequelize, Sequelize) => sequelize.define('table_authorized_se
   },
   Latitude: {
     type: Sequelize.STRING,
-    field: 'Latitude'
+    field: 'latitude'
   },
   Longitude: {
     type: Sequelize.STRING,
