@@ -12,6 +12,7 @@ const SellerController = require('../api/controllers/seller');
 const ServiceCenterController = require('../api/controllers/serviceCenter');
 const BillManagementController = require('../api/controllers/consumerBillManagement');
 const ExclusionInclusionController = require('../api/controllers/exclusionInclusion');
+const ReferenceDataController = require('../api/controllers/referenceData');
 
 let User;
 
@@ -811,6 +812,70 @@ function prepareExclusionInclusionRoutes(exclusionInclusionController, categoryR
     });
   }
 }
+
+function prepareReferenceData(referenceDataController, referenceDataRoutes) {
+  if (referenceDataController) {
+    referenceDataRoutes.push({
+      method: 'POST',
+      path: '/admin/colors',
+      config: {
+        auth: 'jwt',
+        handler: ReferenceDataController.addColors,
+        validate: {
+          payload: {
+            Name: joi.string().required(),
+            output: 'data',
+            parse: true
+          }
+        }
+      }
+    });
+
+    referenceDataRoutes.push({
+      method: 'PUT',
+      path: '/admin/colors/{id}',
+      config: {
+        auth: 'jwt',
+        handler: ReferenceDataController.updateColors,
+        validate: {
+          payload: {
+            Name: joi.string().required(),
+            output: 'data',
+            parse: true
+          }
+        }
+      }
+    });
+
+    referenceDataRoutes.push({
+      method: 'DELETE',
+      path: '/admin/colors/{id}',
+      config: {
+        auth: 'jwt',
+        handler: ReferenceDataController.deleteColors
+      }
+    });
+
+    referenceDataRoutes.push({
+      method: 'GET',
+      path: '/admin/colors',
+      config: {
+        auth: 'jwt',
+        handler: ReferenceDataController.retrieveColors
+      }
+    });
+
+    referenceDataRoutes.push({
+      method: 'GET',
+      path: '/admin/colors/{id}',
+      config: {
+        auth: 'jwt',
+        handler: ReferenceDataController.retrieveColorsById
+      }
+    });
+  }
+}
+
 module.exports = (app, models) => {
   User = models.users;
   // Middleware to require login/auth
@@ -824,6 +889,7 @@ module.exports = (app, models) => {
   const sellerRoutes = [];
   const serviceCenterRoutes = [];
   const billManagementRoutes = [];
+  const referenceDataRoutes = [];
   const userController = new UserController(models);
   const categoryController = new CategoryController(models);
   const brandController = new BrandController(models);
@@ -832,6 +898,7 @@ module.exports = (app, models) => {
   const serviceCenterController = new ServiceCenterController(models);
   const billManagementController = new BillManagementController(models);
   const exclusionInclusionController = new ExclusionInclusionController(models);
+  const referenceDataController = new ReferenceDataController(models);
 
   //= ========================
   // Auth Routes
@@ -914,6 +981,8 @@ module.exports = (app, models) => {
 
   prepareExclusionInclusionRoutes(exclusionInclusionController, categoryRoutes);
 
+  prepareReferenceData(referenceDataController, referenceDataRoutes);
+
   let uploadFileRoute;
 
   if (uploadController) {
@@ -944,5 +1013,6 @@ module.exports = (app, models) => {
     ...sellerRoutes,
     ...serviceCenterRoutes,
     ...billManagementRoutes,
+    ...referenceDataRoutes,
     uploadFileRoute]);
 };
