@@ -1,3 +1,5 @@
+const shared = require('../../helpers/shared');
+
 let modals;
 const excludedAttributes = { exclude: ['tableBrandID', 'tableUserID', 'display_id', 'created_on', 'updated_on', 'updated_by_user_id', 'status_id', 'tableAuthorizedServiceCenterID'] };
 
@@ -52,6 +54,33 @@ class ReferenceDataController {
       attributes: excludedAttributes
     }).then((result) => {
       reply(result).code(200);
+    }).catch((err) => {
+      reply(err);
+    });
+  }
+
+  static retrieveUserTypes(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    let userFilter;
+    if (user.UserTypeID === 2) {
+      userFilter = [3, 4, 6];
+    } else if (user.UserTypeID === 1) {
+      userFilter = [2, 3, 4, 6];
+    } else {
+      userFilter = 0;
+    }
+
+    modals.user_type_name.findAll({
+      where: {
+        ID: userFilter
+      },
+      attributes: excludedAttributes
+    }).then((result) => {
+      if (result.length > 0) {
+        reply(result).code(200);
+      } else {
+        reply().code(404);
+      }
     }).catch((err) => {
       reply(err);
     });

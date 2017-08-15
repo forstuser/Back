@@ -7,7 +7,6 @@ const shared = require('../../helpers/shared');
 let modals;
 
 class UploadController {
-
   constructor(modal) {
     modals = modal;
   }
@@ -17,13 +16,13 @@ class UploadController {
     const data = request.payload.fieldNameHere;
     const promisedQuery = [];
     modals.table_consumer_bills.create({
-        BillRefID: uuid.v4(),
-        user_id: user.userId,
-        updated_by_user_id: user.userId,
-        uploaded_by: user.userId,
-        user_status: 8,
-        admin_status: 6
-      }).then((result) => {
+      BillRefID: uuid.v4(),
+      user_id: user.userId,
+      updated_by_user_id: user.userId,
+      uploaded_by: user.userId,
+      user_status: 8,
+      admin_status: 6
+    }).then((result) => {
       for (let i = 0; i < Object.keys(data).length; i += 1) {
         if (Object.prototype.hasOwnProperty.call(data, i)) {
           const name = data[i].hapi.filename;
@@ -39,6 +38,7 @@ class UploadController {
 
           data[i].fileName = fileName;
           data[i].UserId = user.userId;
+          // eslint-disable-next-line no-loop-func
           promisedQuery.push(new Promise((resolve, reject) => {
             data[i].on('end', (err) => {
               if (!err) {
@@ -61,12 +61,14 @@ class UploadController {
         }
       }
 
-      if(promisedQuery.length === Object.keys(data).length) {
-        Promise.all(promisedQuery).then((result) => Promise.all(result).then(reply).catch((err) => {
-          reply(err);
-        })).catch((err) => {
-          reply(err);
-        });
+      if (promisedQuery.length === Object.keys(data).length) {
+        Promise.all(promisedQuery)
+          .then(promisedQueryResult => Promise.all(promisedQueryResult)
+            .then(reply).catch((err) => {
+              reply(err);
+            })).catch((err) => {
+            reply(err);
+          });
       }
     }).catch((err) => {
       reply(err);

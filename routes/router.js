@@ -13,6 +13,7 @@ const ServiceCenterController = require('../api/controllers/serviceCenter');
 const BillManagementController = require('../api/controllers/consumerBillManagement');
 const ExclusionInclusionController = require('../api/controllers/exclusionInclusion');
 const ReferenceDataController = require('../api/controllers/referenceData');
+const UserManagementController = require('../api/controllers/userManagement');
 
 let User;
 
@@ -619,6 +620,125 @@ function prepareCategoryRoutes(categoryController, categoryRoutes) {
   }
 }
 
+function prepareUserManagementRoutes(userManagementController, authRoutes) {
+  if (userManagementController) {
+    // Add Category
+    authRoutes.push({
+      method: 'POST',
+      path: '/admin/user/management',
+      config: {
+        auth: 'jwt',
+        handler: UserManagementController.addUser,
+        validate: {
+          payload: {
+            UserTypeID: joi.number().integer().required(),
+            Name: joi.string().required(),
+            GoogleAuthKey: joi.string(),
+            FacebookAuthKey: joi.string(),
+            EmailAddress: joi.string().required(),
+            PhoneNo: joi.string(),
+            Password: joi.string(),
+            OTP: joi.string(),
+            Location: joi.string(),
+            Latitude: joi.string(),
+            Longitude: joi.string(),
+            ImageLink: joi.string(),
+            OSTypeId: joi.string(),
+            accessLevel: joi.string(),
+            GCMId: joi.string(),
+            passwordResetToken: joi.string(),
+            token: joi.string(),
+            expiresIn: joi.number(),
+            deviceId: joi.string(),
+            deviceModel: joi.string(),
+            apkVersion: joi.string(),
+            output: 'data',
+            parse: true
+          }
+        },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              { code: 201, message: 'Created' },
+              { code: 400, message: 'Bad Request' },
+              { code: 401, message: 'Invalid Credentials' },
+              { code: 404, message: 'Not Found' },
+              { code: 500, message: 'Internal Server Error' }
+            ]
+          }
+        }
+      }
+    });
+
+    // Edit Category
+    authRoutes.push({
+      method: 'PUT',
+      path: '/admin/user/management/{id}',
+      config: {
+        handler: UserManagementController.updateUsers,
+        auth: 'jwt',
+        validate: {
+          params: {
+            id: joi.number().integer().required()
+          },
+          payload: {
+            UserTypeID: joi.number().integer().required(),
+            Name: joi.string().required(),
+            GoogleAuthKey: joi.string(),
+            FacebookAuthKey: joi.string(),
+            EmailAddress: joi.string().required(),
+            PhoneNo: joi.string(),
+            Password: joi.string(),
+            OTP: joi.string(),
+            Location: joi.string(),
+            Latitude: joi.string(),
+            Longitude: joi.string(),
+            ImageLink: joi.string(),
+            OSTypeId: joi.string(),
+            accessLevel: joi.string(),
+            GCMId: joi.string(),
+            passwordResetToken: joi.string(),
+            token: joi.string(),
+            expiresIn: joi.number(),
+            deviceId: joi.string(),
+            deviceModel: joi.string(),
+            apkVersion: joi.string(),
+            output: 'data',
+            parse: true
+          }
+        }
+      }
+    });
+    // Delete Category
+    authRoutes.push({
+      method: 'DELETE',
+      path: '/admin/user/management/{id}',
+      config: {
+        handler: UserManagementController.deleteUsers,
+        auth: 'jwt'
+      }
+    });
+    // Category List
+    authRoutes.push({
+      method: 'GET',
+      path: '/admin/user/management',
+      config: {
+        auth: 'jwt',
+        handler: UserManagementController.retrieveUsers
+      }
+    });
+    // Category By Id
+    authRoutes.push({
+      method: 'GET',
+      path: '/admin/user/management/{id}',
+      config: {
+        auth: 'jwt',
+        handler: UserManagementController.retrieveUserByID
+      }
+    });
+  }
+}
+
 function prepareBillManagementRoutes(billManagementController, billManagementRoutes) {
   if (billManagementController) {
     // Add Category
@@ -873,6 +993,15 @@ function prepareReferenceData(referenceDataController, referenceDataRoutes) {
         handler: ReferenceDataController.retrieveColorsById
       }
     });
+
+    referenceDataRoutes.push({
+      method: 'GET',
+      path: '/admin/usertypes',
+      config: {
+        auth: 'jwt',
+        handler: ReferenceDataController.retrieveUserTypes
+      }
+    });
   }
 }
 
@@ -900,6 +1029,7 @@ module.exports = (app, models) => {
   const exclusionInclusionController = new ExclusionInclusionController(models);
   const referenceDataController = new ReferenceDataController(models);
 
+  const userManagementController = new UserManagementController(models);
   //= ========================
   // Auth Routes
   //= ========================
@@ -982,6 +1112,8 @@ module.exports = (app, models) => {
   prepareExclusionInclusionRoutes(exclusionInclusionController, categoryRoutes);
 
   prepareReferenceData(referenceDataController, referenceDataRoutes);
+
+  prepareUserManagementRoutes(userManagementController, authRoutes);
 
   let uploadFileRoute;
 
