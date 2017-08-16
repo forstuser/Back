@@ -14,7 +14,7 @@ const connection = MySQL.createConnection({
     database: 'binbill'
 });
 //server.connection({ port: 3000});
-server.connection({ port: 3000, host: '192.168.0.9'});
+server.connection({ port: 3000, host: 'localhost'});
 server.register({
     register: require('hapi-cors'),
     options: {
@@ -2617,6 +2617,72 @@ server.route({
                 ID: Joi.number().integer().required(),
                 RefID: [Joi.number().integer(), Joi.allow(null)],
                 FormList: Joi.array(),
+                output: 'data',
+                parse:true
+            }
+        }
+    }
+});
+//Delete Form Element
+server.route({
+    method: 'POST',
+    path: '/Services/DeleteFromElement',
+    handler: function (request, reply) {
+        const TokenNo = request.payload.TokenNo;
+        const ID = request.payload.ID;
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+            if (error) throw error;
+            if(token.length > 0){
+                var UserID = token[0]['user_id'];
+                connection.query('UPDATE table_cateogry_form as f left Join table_cateogry_form_mapping as m on m.cateogry_form_id=f.cateogry_form_id SET f.status_id=3,m.status_id=3 WHERE f.cateogry_form_id="' + ID + '"', function (error, results, fields) {
+                    if (error) throw error;
+                    var data = '{"statusCode": 100,"error": "","message": "Data Delete successfully."}';
+                    reply(data);
+                });
+            } else {
+                var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+                reply(data);
+            }
+        });
+    },
+    config:{
+        validate: {
+            payload: {
+                TokenNo: Joi.string().required(),
+                ID: Joi.number().integer().required(),
+                output: 'data',
+                parse:true
+            }
+        }
+    }
+});
+//Delete Form Element Dropdown
+server.route({
+    method: 'POST',
+    path: '/Services/DeleteFromElementDropdown',
+    handler: function (request, reply) {
+        const TokenNo = request.payload.TokenNo;
+        const ID = request.payload.ID;
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+            if (error) throw error;
+            if(token.length > 0){
+                var UserID = token[0]['user_id'];
+                connection.query('UPDATE table_cateogry_form_mapping SET status_id=3 WHERE mapping_id="' + ID + '"', function (error, results, fields) {
+                    if (error) throw error;
+                    var data = '{"statusCode": 100,"error": "","message": "Data Delete successfully."}';
+                    reply(data);
+                });
+            } else {
+                var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+                reply(data);
+            }
+        });
+    },
+    config:{
+        validate: {
+            payload: {
+                TokenNo: Joi.string().required(),
+                ID: Joi.number().integer().required(),
                 output: 'data',
                 parse:true
             }
