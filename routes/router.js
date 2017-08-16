@@ -741,18 +741,17 @@ function prepareUserManagementRoutes(userManagementController, authRoutes) {
 
 function prepareBillManagementRoutes(billManagementController, billManagementRoutes) {
   if (billManagementController) {
-    // Add Category
     billManagementRoutes.push({
       method: 'POST',
-      path: '/admin/bill',
+      path: '/admin/billtoce',
       config: {
         auth: 'jwt',
-        handler: CategoryController.addCategory,
+        handler: BillManagementController.assignTaskTOCE,
         validate: {
           payload: {
-            Name: joi.string().required(),
-            Level: joi.number().integer().required(),
-            RefID: [joi.number().integer(), joi.allow(null)],
+            UserID: joi.number().integer().required(),
+            BillID: joi.number().integer().required(),
+            Comments: joi.string(),
             output: 'data',
             parse: true
           }
@@ -771,52 +770,88 @@ function prepareBillManagementRoutes(billManagementController, billManagementRou
       }
     });
 
-    // Edit Category
     billManagementRoutes.push({
-      method: 'PUT',
-      path: '/admin/bill/{id}',
+      method: 'POST',
+      path: '/admin/billtoqe',
       config: {
-        handler: CategoryController.updateCategory,
         auth: 'jwt',
+        handler: BillManagementController.assignTaskTOQE,
         validate: {
-          params: {
-            id: joi.number().integer().required()
-          },
           payload: {
-            Name: joi.string().required(),
-            RefID: [joi.number().integer(), joi.allow(null)],
-            Level: joi.number().integer(),
+            UserID: joi.number().integer().required(),
+            BillID: joi.number().integer().required(),
+            Comments: joi.string(),
             output: 'data',
             parse: true
+          }
+        },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              { code: 201, message: 'Created' },
+              { code: 400, message: 'Bad Request' },
+              { code: 401, message: 'Invalid Credentials' },
+              { code: 404, message: 'Not Found' },
+              { code: 500, message: 'Internal Server Error' }
+            ]
           }
         }
       }
     });
-    // Delete Category
+
     billManagementRoutes.push({
-      method: 'DELETE',
-      path: '/admin/bill/{id}',
+      method: 'POST',
+      path: '/qe/billtoce',
       config: {
-        handler: CategoryController.deleteCategory,
-        auth: 'jwt'
+        auth: 'jwt',
+        handler: BillManagementController.qeAssignTaskTOCE,
+        validate: {
+          payload: {
+            UserID: joi.number().integer().required(),
+            BillID: joi.number().integer().required(),
+            Comments: joi.string(),
+            output: 'data',
+            parse: true
+          }
+        },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              { code: 204, message: 'Updated' },
+              { code: 400, message: 'Bad Request' },
+              { code: 401, message: 'Invalid Credentials' },
+              { code: 404, message: 'Not Found' },
+              { code: 500, message: 'Internal Server Error' }
+            ]
+          }
+        }
       }
     });
-    // Category List
+
     billManagementRoutes.push({
       method: 'GET',
-      path: '/admin/bill',
+      path: '/admin/bills',
       config: {
         auth: 'jwt',
         handler: BillManagementController.retrieveAdminConsumerBillList
       }
     });
-    // Category By Id
+
     billManagementRoutes.push({
       method: 'GET',
-      path: '/admin/bill/{id}',
+      path: '/ce/bills',
       config: {
         auth: 'jwt',
-        handler: CategoryController.retrieveCategoryById
+        handler: BillManagementController.retrieveCEBills
+      }
+    });
+
+    billManagementRoutes.push({
+      method: 'GET',
+      path: '/qe/bills',
+      config: {
+        auth: 'jwt',
+        handler: BillManagementController.retrieveQEBills
       }
     });
   }

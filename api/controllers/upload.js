@@ -20,8 +20,8 @@ class UploadController {
       user_id: user.userId,
       updated_by_user_id: user.userId,
       uploaded_by: user.userId,
-      user_status: 8,
-      admin_status: 6
+      user_status: 4,
+      admin_status: 4
     }).then((result) => {
       for (let i = 0; i < Object.keys(data).length; i += 1) {
         if (Object.prototype.hasOwnProperty.call(data, i)) {

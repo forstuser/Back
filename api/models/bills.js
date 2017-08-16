@@ -13,9 +13,10 @@ module.exports = (sequelize, Sequelize) => sequelize.define('table_consumer_bill
     type: Sequelize.INTEGER,
     field: 'bill_reference_id'
   },
-  created_on: {
+  BillDate: {
     type: Sequelize.DATE(6),
-    defaultValue: Sequelize.NOW
+    defaultValue: Sequelize.NOW,
+    field: 'created_on'
   },
   updated_on: {
     type: Sequelize.DATE(6),
