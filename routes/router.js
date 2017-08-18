@@ -1107,7 +1107,6 @@ module.exports = (app, models) => {
       path: '/consumer/getotp',
       config: {
         handler: UserController.dispatchOTP,
-        auth: null,
         description: 'Generate OTP.',
         tags: ['api', 'User', 'Authentication'],
         validate: {
@@ -1136,11 +1135,11 @@ module.exports = (app, models) => {
       path: '/consumer/validate',
       config: {
         handler: UserController.validateOTP,
-        auth: null,
         description: 'Register User for Consumer Portal.',
         tags: ['api', 'User', 'Authentication'],
         validate: {
           payload: {
+            Token: joi.number(),
             TrueObject: {
               EmailAddress: joi.string().email(),
               PhoneNo: joi.string().required(),

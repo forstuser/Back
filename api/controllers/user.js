@@ -4,6 +4,7 @@
 const bCrypt = require('bcrypt-nodejs');
 // const fs = require('fs');
 const authentication = require('./authentication');
+const shared = require('../../helpers/shared');
 const roles = require('../constants');
 
 const otplib = require('otplib').default;
@@ -12,7 +13,6 @@ const requestPromise = require('request-promise');
 
 let userModel;
 let userRelationModel;
-let sequelize;
 
 function isValidPassword(userpass, passwordValue) {
   return bCrypt.compareSync(passwordValue, userpass);
@@ -23,11 +23,13 @@ class UserController {
     this.User = modal.users;
     userModel = modal.table_users;
     userRelationModel = modal.table_users_temp;
-    sequelize = modal.Sequelize;
   }
 
   static dispatchOTP(request, reply) {
     totp.options = {
+      step: 180
+    };
+    otplib.authenticator.options = {
       step: 180
     };
 
@@ -55,18 +57,6 @@ class UserController {
       }
     })]).then((response) => {
       if (response[0].ErrorMessage === 'Success') {
-        if (response[1]) {
-          response[0].updateAttributes({
-            LastLoginOn: sequelize.NOW
-          });
-          reply({
-            Name: response[0].Name
-          });
-        } else {
-          reply({
-            PhoneNo: request.payload.PhoneNo
-          });
-        }
         userRelationModel.findOrCreate({
           where: {
             PhoneNo: request.payload.PhoneNo
@@ -82,14 +72,37 @@ class UserController {
               secret
             });
           }
-        }).catch(reply);
+
+          if (response[1] && response[1][1]) {
+            response[1][0].updateAttributes({
+              LastLoginOn: shared.formatDate(new Date(), 'yyyy-mm-dd HH:MM:ss')
+            });
+            reply({
+              Name: response[1][0].Name
+            }).code(201);
+          } else {
+            reply({
+              PhoneNo: request.payload.PhoneNo
+            }).code(201);
+          }
+        }).catch((err) => {
+          reply(err);
+        });
       } else {
         reply({ Error: response.ErrorMessage }).code(403);
       }
-    }).catch(reply);
+    }).catch((err) => {
+      reply(err);
+    });
   }
 
   static validateOTP(request, reply) {
+    totp.options = {
+      step: 180
+    };
+    otplib.authenticator.options = {
+      step: 180
+    };
     const trueObject = request.payload.TrueObject;
     if (request.payload.BBLogin_Type === 1) {
       userRelationModel.findOne({
@@ -97,20 +110,23 @@ class UserController {
           PhoneNo: trueObject.PhoneNo
         }
       }).then((tokenResult) => {
-        if (totp.check(tokenResult.OTP, tokenResult.secret)) {
+        if (totp.check(request.payload.Token, tokenResult.secret)) {
           userModel.findOrCreate({
             where: {
-              PhoneNo: trueObject.PhoneNo
+              PhoneNo: trueObject.PhoneNo,
+              status_id: 1
             }
           }).then((userData) => {
-            userData.updateAttributes({
-              LastLoginOn: sequelize.NOW
+            userData[0].updateAttributes({
+              LastLoginOn: shared.formatDate(new Date(), 'yyyy-mm-dd HH:MM:ss')
             });
-            reply({ statusCode: 201 }).header('authorization', `bearer ${authentication.generateToken(userData[0])}`);
+            reply().code(201).header('authorization', `bearer ${authentication.generateToken(userData[0])}`);
           });
         } else {
           reply({ message: 'Invalid OTP' }).code(401);
         }
+      }).catch((err) => {
+        reply(err);
       });
     } else if (request.payload.BBLogin_Type === 2) {
       const userItem = {
@@ -122,20 +138,24 @@ class UserController {
         Longitude: trueObject.Longitude,
         ImageLink: trueObject.ImageLink,
         accessLevel: trueObject.accessLevel ? trueObject.accessLevel : roles.ROLE_MEMBER,
-        LastLoginOn: sequelize.NOW
+        LastLoginOn: shared.formatDate(new Date(), 'yyyy-mm-dd HH:MM:ss')
       };
 
-      userModel.findOrCreate({ where: { PhoneNo: trueObject.PhoneNo }, defaults: userItem })
+      userModel.findOrCreate({ where: {
+        PhoneNo: trueObject.PhoneNo,
+        status_id: 1
+      },
+      defaults: userItem })
         .then((userData) => {
           if (!userData[1]) {
             userData[1].updateAttributes({
               EmailAddress: trueObject.EmailAddress,
               Name: trueObject.Name,
               ImageLink: trueObject.ImageLink,
-              LastLoginOn: sequelize.NOW
+              LastLoginOn: shared.formatDate(new Date(), 'yyyy-mm-dd HH:MM:ss')
             });
           }
-          reply({ statusCode: 201 }).header('authorization', `bearer ${authentication.generateToken(userData[0])}`);
+          reply().code(201).header('authorization', `bearer ${authentication.generateToken(userData[0])}`);
         });
     }
   }

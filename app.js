@@ -96,8 +96,6 @@ models.sequelize.sync().then(() => {
               },
               verifyOptions: { algorithms: ['RS256'] } // pick a strong algorithm
             });
-
-          server.auth.default('jwt');
           server.start(() => {
             console.log(server.info.uri);
           });
