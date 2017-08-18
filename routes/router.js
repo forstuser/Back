@@ -1102,6 +1102,72 @@ module.exports = (app, models) => {
       }
     });
 
+    authRoutes.push({
+      method: 'POST',
+      path: '/consumer/getotp',
+      config: {
+        handler: UserController.dispatchOTP,
+        auth: null,
+        description: 'Generate OTP.',
+        tags: ['api', 'User', 'Authentication'],
+        validate: {
+          payload: {
+            PhoneNo: joi.string().required(),
+            output: 'data',
+            parse: true
+          }
+        },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              { code: 200, message: 'Authenticated' },
+              { code: 400, message: 'Bad Request' },
+              { code: 401, message: 'Invalid Credentials' },
+              { code: 404, message: 'Not Found' },
+              { code: 500, message: 'Internal Server Error' }
+            ]
+          }
+        }
+      }
+    });
+
+    authRoutes.push({
+      method: 'POST',
+      path: '/consumer/validate',
+      config: {
+        handler: UserController.validateOTP,
+        auth: null,
+        description: 'Register User for Consumer Portal.',
+        tags: ['api', 'User', 'Authentication'],
+        validate: {
+          payload: {
+            TrueObject: {
+              EmailAddress: joi.string().email(),
+              PhoneNo: joi.string().required(),
+              Name: joi.string(),
+              ImageLink: joi.string()
+            },
+            TruePayload: joi.string(),
+            BBLogin_Type: joi.number().required(),
+            TrueSecret: joi.string(),
+            output: 'data',
+            parse: true
+          }
+        },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              { code: 200, message: 'Authenticated' },
+              { code: 400, message: 'Bad Request' },
+              { code: 401, message: 'Invalid Credentials' },
+              { code: 404, message: 'Not Found' },
+              { code: 500, message: 'Internal Server Error' }
+            ]
+          }
+        }
+      }
+    });
+
     // Login route
     authRoutes.push({
       method: 'POST',

@@ -15,7 +15,6 @@ module.exports = (sequelize, Sequelize) => sequelize.define('table_users', {
   },
   Name: {
     type: Sequelize.STRING,
-    notEmpty: false,
     field: 'fullname'
   },
   GoogleAuthKey: {
@@ -36,6 +35,7 @@ module.exports = (sequelize, Sequelize) => sequelize.define('table_users', {
   },
   PhoneNo: {
     type: Sequelize.STRING,
+    unique: true,
     field: 'mobile_no'
   },
   Password: {
@@ -72,7 +72,8 @@ module.exports = (sequelize, Sequelize) => sequelize.define('table_users', {
   },
   createdAt: {
     type: Sequelize.DATE(6),
-    defaultValue: Sequelize.NOW
+    defaultValue: Sequelize.NOW,
+    field: 'created_on'
   },
   GCMId: {
     type: Sequelize.STRING,
@@ -89,7 +90,8 @@ module.exports = (sequelize, Sequelize) => sequelize.define('table_users', {
   },
   updatedAt: {
     type: Sequelize.DATE(6),
-    defaultValue: Sequelize.NOW
+    defaultValue: Sequelize.NOW,
+    field: 'updated_on'
   },
   deviceId: {
     type: Sequelize.STRING,
