@@ -33,6 +33,8 @@ class UserController {
       step: 180
     };
 
+    console.log(JSON.stringify(request));
+
     const secret = otplib.authenticator.generateSecret();
     const otp = totp.generate(secret);
     const options = {
