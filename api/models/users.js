@@ -109,6 +109,10 @@ module.exports = (sequelize, Sequelize) => sequelize.define('table_users', {
     type: Sequelize.DATE(6),
     defaultValue: Sequelize.NOW,
     field: 'last_login'
+  },
+  status_id: {
+    defaultValue: 1,
+    type: Sequelize.INTEGER
   }
 }, {
   freezeTableName: true,
