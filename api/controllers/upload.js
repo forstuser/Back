@@ -1,6 +1,13 @@
-const Path = require('path');
-const fs = require('fs');
+/* eslint-disable no-loop-func,no-underscore-dangle */
 const uuid = require('uuid');
+const S3FS = require('s3fs');
+const mime = require('mime-types');
+
+const fsImpl = new S3FS('binbillbucket', {
+  accessKeyId: 'AKIAJWC3NVWYOO6YFVVQ',
+  secretAccessKey: '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',
+  region: 'ap-south-1'
+});
 
 const shared = require('../../helpers/shared');
 
@@ -13,7 +20,7 @@ class UploadController {
 
   static uploadFiles(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    const data = request.payload.fieldNameHere;
+    const fileData = request.payload.fieldNameHere;
     const promisedQuery = [];
     modals.table_consumer_bills.create({
       BillRefID: uuid.v4(),
@@ -23,56 +30,55 @@ class UploadController {
       user_status: 4,
       admin_status: 4
     }).then((result) => {
-      for (let i = 0; i < Object.keys(data).length; i += 1) {
-        if (Object.prototype.hasOwnProperty.call(data, i)) {
-          const name = data[i].hapi.filename;
+      for (let i = 0; i < Object.keys(fileData).length; i += 1) {
+        if (Object.prototype.hasOwnProperty.call(fileData, i)) {
+          const name = fileData[i].hapi.filename;
           const fileType = name.split('.')[name.split('.').length - 1];
           const fileName = `${user.userId}-${result.ID}-${new Date().getTime()}.${fileType}`;
-          const path = Path.join(__dirname, `../uploadFiles/${fileName}`);
-          const file = fs.createWriteStream(path);
+          // const file = fs.createReadStream();
+          fsImpl.writeFile(fileName, fileData[i]._data, { ContentType: mime.lookup(fileName) })
+            .then((fileResult) => {
+              const ret = {
+                BillID: result.ID,
+                CopyName: fileName,
+                CopyType: fileType,
+                status_id: 6,
+                updated_by_user_id: user.userId,
+                uploaded_by_id: user.userId
+              };
 
-          file.on('error', (err) => {
-            reply(err);
-          });
-          data[i].pipe(file);
+              console.log(fileResult);
+              promisedQuery.push(modals.table_consumer_bill_copies.create(ret));
 
-          data[i].fileName = fileName;
-          data[i].UserId = user.userId;
-          // eslint-disable-next-line no-loop-func
-          promisedQuery.push(new Promise((resolve, reject) => {
-            data[i].on('end', (err) => {
-              if (!err) {
-                setTimeout(() => {
-                  const ret = {
-                    filename: data[i].fileName,
-                    headers: data[i].hapi.headers,
-                    BillID: result.ID,
-                    CopyName: data[i].fileName,
-                    CopyType: fileType,
-                    status_id: 6
-                  };
-                  resolve(modals.table_consumer_bill_copies.create(ret));
-                }, 200);
-              } else {
-                reject(err);
+
+              if (promisedQuery.length === Object.keys(fileData).length) {
+                Promise.all(promisedQuery)
+                  .then(reply).catch((err) => {
+                    reply(err);
+                  });
               }
-            });
-          }));
+            }).catch(err => reply({ error: err }).code(500));
         }
-      }
-
-      if (promisedQuery.length === Object.keys(data).length) {
-        Promise.all(promisedQuery)
-          .then(promisedQueryResult => Promise.all(promisedQueryResult)
-            .then(reply).catch((err) => {
-              reply(err);
-            })).catch((err) => {
-            reply(err);
-          });
       }
     }).catch((err) => {
       reply(err);
     });
+  }
+  static retrieveFiles(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    if (user) {
+      modals.table_consumer_bill_copies.findOne({
+        where: {
+          ID: request.params.id
+        }
+      }).then((result) => {
+        fsImpl.readFile(result.CopyName, 'utf8').then(fileResult => reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${result.CopyName}`)).catch(reply);
+      }).catch((err) => {
+        reply(err);
+      });
+    } else {
+      reply().code(401);
+    }
   }
 }
 

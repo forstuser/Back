@@ -1150,10 +1150,10 @@ module.exports = (app, models) => {
 
   prepareUserManagementRoutes(userManagementController, authRoutes);
 
-  let uploadFileRoute;
+  const uploadFileRoute = [];
 
   if (uploadController) {
-    uploadFileRoute = {
+    uploadFileRoute.push({
       method: 'POST',
       path: '/consumer/upload',
       config: {
@@ -1172,7 +1172,15 @@ module.exports = (app, models) => {
           maxBytes: 3000000
         }
       }
-    };
+    });
+    uploadFileRoute.push({
+      method: 'GET',
+      path: '/bills/{id}/files',
+      config: {
+        auth: 'jwt',
+        handler: UploadController.retrieveFiles
+      }
+    });
   }
   app.route([...authRoutes,
     ...categoryRoutes,
@@ -1181,5 +1189,5 @@ module.exports = (app, models) => {
     ...serviceCenterRoutes,
     ...billManagementRoutes,
     ...referenceDataRoutes,
-    uploadFileRoute]);
+    ...uploadFileRoute]);
 };
