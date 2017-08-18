@@ -121,7 +121,7 @@ class UserController {
             userData[0].updateAttributes({
               LastLoginOn: shared.formatDate(new Date(), 'yyyy-mm-dd HH:MM:ss')
             });
-            reply().code(201).header('authorization', `bearer ${authentication.generateToken(userData[0])}`);
+            reply().code(201).header('authorization', `bearer ${authentication.generateToken(userData[0]).token}`);
           }).catch((err) => {
             console.log(err);
             reply(err);
@@ -159,7 +159,7 @@ class UserController {
               LastLoginOn: shared.formatDate(new Date(), 'yyyy-mm-dd HH:MM:ss')
             });
           }
-          reply().code(201).header('authorization', `bearer ${authentication.generateToken(userData[0])}`);
+          reply().code(201).header('authorization', `bearer ${authentication.generateToken(userData[0]).token}`);
         });
     }
   }
