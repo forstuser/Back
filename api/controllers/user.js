@@ -122,7 +122,10 @@ class UserController {
               LastLoginOn: shared.formatDate(new Date(), 'yyyy-mm-dd HH:MM:ss')
             });
             reply().code(201).header('authorization', `bearer ${authentication.generateToken(userData[0])}`);
-          }).catch(reply);
+          }).catch((err) => {
+            console.log(err);
+            reply(err);
+          });
         } else {
           reply({ message: 'Invalid OTP' }).code(401);
         }
