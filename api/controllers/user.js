@@ -11,8 +11,11 @@ const otplib = require('otplib').default;
 const totp = require('otplib/totp').default;
 const requestPromise = require('request-promise');
 
+const DashboardAdaptor = require('../Adaptors/dashboard');
+
 let userModel;
 let userRelationModel;
+let modals;
 
 function isValidPassword(userpass, passwordValue) {
   return bCrypt.compareSync(passwordValue, userpass);
@@ -23,6 +26,7 @@ class UserController {
     this.User = modal.users;
     userModel = modal.table_users;
     userRelationModel = modal.table_users_temp;
+    modals = modal;
   }
 
   static dispatchOTP(request, reply) {
@@ -118,10 +122,12 @@ class UserController {
               status_id: 1
             }
           }).then((userData) => {
+            const dashboardAdaptor = new DashboardAdaptor(modals);
+
             userData[0].updateAttributes({
               LastLoginOn: shared.formatDate(new Date(), 'yyyy-mm-dd HH:MM:ss')
             });
-            reply().code(201).header('authorization', `bearer ${authentication.generateToken(userData[0]).token}`);
+            reply(dashboardAdaptor.prepareDashboardResult(userData[1])).code(201).header('authorization', `bearer ${authentication.generateToken(userData[0]).token}`);
           }).catch((err) => {
             console.log(err);
             reply(err);
