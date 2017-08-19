@@ -20,7 +20,9 @@ class UploadController {
 
   static uploadFiles(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    const fileData = request.payload.fieldNameHere;
+    const fieldNameHere = request.payload.fieldNameHere;
+    const fileData = fieldNameHere ? fieldNameHere : request.payload.filesName;
+
     const promisedQuery = [];
     modals.consumerBills.create({
       BillRefID: uuid.v4(),
@@ -30,13 +32,43 @@ class UploadController {
       user_status: 4,
       admin_status: 4
     }).then((result) => {
-      for (let i = 0; i < Object.keys(fileData).length; i += 1) {
-        if (Object.prototype.hasOwnProperty.call(fileData, i)) {
-          const name = fileData[i].hapi.filename;
-          const fileType = name.split('.')[name.split('.').length - 1];
-          const fileName = `${user.userId}-${result.ID}-${new Date().getTime()}.${fileType}`;
-          // const file = fs.createReadStream();
-          fsImpl.writeFile(fileName, fileData[i]._data, { ContentType: mime.lookup(fileName) })
+      if(Array.isArray(fileData)) {
+        for (let i = 0; i < Object.keys(fileData).length; i += 1) {
+          if (Object.prototype.hasOwnProperty.call(fileData, i)) {
+            const name = fileData[i].hapi.filename;
+            const fileType = name.split('.')[name.split('.').length - 1];
+            const fileName = `${user.userId}-${result.ID}-${new Date().getTime()}.${fileType}`;
+            // const file = fs.createReadStream();
+            fsImpl.writeFile(fileName, fileData[i]._data, {ContentType: mime.lookup(fileName)})
+                .then((fileResult) => {
+                  const ret = {
+                    BillID: result.ID,
+                    CopyName: fileName,
+                    CopyType: fileType,
+                    status_id: 6,
+                    updated_by_user_id: user.ID,
+                    uploaded_by_id: user.ID
+                  };
+
+                  console.log(fileResult);
+                  promisedQuery.push(modals.billCopies.create(ret));
+
+
+                  if (promisedQuery.length === Object.keys(fileData).length) {
+                    Promise.all(promisedQuery)
+                        .then(reply).catch((err) => {
+                      reply({status: false, message: 'Upload Failed', err});
+                    });
+                  }
+                }).catch(err => reply({status: false, message: 'Upload Failed', err: JSON.stringify(err)}).code(500));
+          }
+        }
+      } else {
+        const name = fileData.hapi.filename;
+        const fileType = name.split('.')[name.split('.').length - 1];
+        const fileName = `${user.ID}-${result.ID}-${new Date().getTime()}.${fileType}`;
+        // const file = fs.createReadStream();
+        fsImpl.writeFile(fileName, fileData._data, {ContentType: mime.lookup(fileName)})
             .then((fileResult) => {
               const ret = {
                 BillID: result.ID,
@@ -48,20 +80,14 @@ class UploadController {
               };
 
               console.log(fileResult);
-              promisedQuery.push(modals.billCopies.create(ret));
-
-
-              if (promisedQuery.length === Object.keys(fileData).length) {
-                Promise.all(promisedQuery)
-                  .then(reply).catch((err) => {
-                    reply({status: false, message: 'Upload Failed', err});
-                  });
-              }
+              modals.billCopies.create(ret)
+                    .then((result) => reply({status: true, message: 'Uploaded Successfully', result})).catch((err) => {
+                  reply({status: false, message: 'Upload Failed', err: JSON.stringify(err)});
+                });
             }).catch(err => reply({status: false, message: 'Upload Failed', err: JSON.stringify(err)}).code(500));
-        }
       }
     }).catch((err) => {
-      reply(err);
+      reply({status: false, message: 'Upload Failed', err: JSON.stringify(err)}).code(500);
     });
   }
   static retrieveFiles(request, reply) {
