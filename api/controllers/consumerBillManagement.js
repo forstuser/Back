@@ -26,8 +26,8 @@ class BillManagementController {
     modals.table_qual_executive_tasks.belongsTo(modals.table_users, { foreignKey: 'updated_by_user_id', as: 'Admin' });
     modals.table_qual_executive_tasks.hasOne(modals.table_status, { foreignKey: 'status_id', as: 'Status' });
 
-    modals.table_consumer_bill_copies.belongsTo(modals.consumerBills, { foreignKey: 'BillID', as: 'BillCopies' });
-    modals.consumerBills.hasMany(modals.table_consumer_bill_copies, { foreignKey: 'BillID', as: 'BillCopies' });
+    modals.billCopies.belongsTo(modals.consumerBills, { foreignKey: 'BillID', as: 'BillCopies' });
+    modals.consumerBills.hasMany(modals.billCopies, { foreignKey: 'BillID', as: 'BillCopies' });
   }
 
   // Assign Task To CE
