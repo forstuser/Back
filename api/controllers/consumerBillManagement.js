@@ -7,11 +7,11 @@ class BillManagementController {
   constructor(modal) {
     modals = modal;
 
-    modals.table_consumer_bills.belongsTo(modals.table_users, { foreignKey: 'user_id', as: 'User' });
-    modals.table_users.hasMany(modals.table_consumer_bills);
+    modals.consumerBills.belongsTo(modals.table_users, { foreignKey: 'user_id', as: 'User' });
+    modals.table_users.hasMany(modals.consumerBills);
 
-    modals.table_cust_executive_tasks.belongsTo(modals.table_consumer_bills, { foreignKey: 'BillID', as: 'ConsumerBill' });
-    modals.table_consumer_bills.hasOne(modals.table_cust_executive_tasks, { foreignKey: 'BillID', as: 'CustomerExecutive' });
+    modals.table_cust_executive_tasks.belongsTo(modals.consumerBills, { foreignKey: 'BillID', as: 'ConsumerBill' });
+    modals.consumerBills.hasOne(modals.table_cust_executive_tasks, { foreignKey: 'BillID', as: 'CustomerExecutive' });
     modals.table_cust_executive_tasks.belongsTo(modals.table_users, { foreignKey: 'user_id', as: 'User' });
     modals.table_users.hasMany(modals.table_cust_executive_tasks);
     modals.table_cust_executive_tasks.belongsTo(modals.table_users, { foreignKey: 'updated_by_user_id', as: 'Admin' });
@@ -19,15 +19,15 @@ class BillManagementController {
     modals.table_status.belongsTo(modals.table_cust_executive_tasks, { foreignKey: 'status_id', as: 'Status' });
     modals.table_cust_executive_tasks.hasOne(modals.table_status, { foreignKey: 'status_id', as: 'Status' });
 
-    modals.table_qual_executive_tasks.belongsTo(modals.table_consumer_bills, { foreignKey: 'BillID', as: 'ConsumerBill' });
+    modals.table_qual_executive_tasks.belongsTo(modals.consumerBills, { foreignKey: 'BillID', as: 'ConsumerBill' });
     modals.table_qual_executive_tasks.hasOne(modals.table_cust_executive_tasks, { foreignKey: 'BillID', as: 'QualityExecutive' });
     modals.table_qual_executive_tasks.belongsTo(modals.table_users, { foreignKey: 'user_id', as: 'User' });
     modals.table_users.hasMany(modals.table_qual_executive_tasks);
     modals.table_qual_executive_tasks.belongsTo(modals.table_users, { foreignKey: 'updated_by_user_id', as: 'Admin' });
     modals.table_qual_executive_tasks.hasOne(modals.table_status, { foreignKey: 'status_id', as: 'Status' });
 
-    modals.table_consumer_bill_copies.belongsTo(modals.table_consumer_bills, { foreignKey: 'BillID', as: 'BillCopies' });
-    modals.table_consumer_bills.hasMany(modals.table_consumer_bill_copies, { foreignKey: 'BillID', as: 'BillCopies' });
+    modals.table_consumer_bill_copies.belongsTo(modals.consumerBills, { foreignKey: 'BillID', as: 'BillCopies' });
+    modals.consumerBills.hasMany(modals.table_consumer_bill_copies, { foreignKey: 'BillID', as: 'BillCopies' });
   }
 
   // Assign Task To CE
@@ -49,7 +49,7 @@ class BillManagementController {
       attributes: excludedAttributes
     }).then((ceTask) => {
       if (ceTask[1]) {
-        Promise.all([modals.table_consumer_bills.update({
+        Promise.all([modals.consumerBills.update({
           admin_status: 8,
           updated_by_user_id: user.userId
         }, {
@@ -292,7 +292,7 @@ class BillManagementController {
       }
     }
 
-    return modals.table_consumer_bills.findAll({
+    return modals.consumerBills.findAll({
       where: {
         user_status: {
           $ne: 3
@@ -316,7 +316,7 @@ class BillManagementController {
     switch (Status) {
       case '4': {
         includeTables = [
-          { model: modals.table_consumer_bills,
+          { model: modals.consumerBills,
             as: 'ConsumerBill',
             attributes: ['BillDate', 'TaskAssignedDate'],
             include: [{ model: modals.table_users, as: 'User', attributes: ['Name', 'EmailAddress', 'PhoneNo'] }],
@@ -330,7 +330,7 @@ class BillManagementController {
       }
       case '5': {
         includeTables = [
-          { model: modals.table_consumer_bills, as: 'ConsumerBill', attributes: ['BillDate', 'TaskAssignedDate'], include: [{ model: modals.table_users, as: 'User', attributes: ['Name', 'EmailAddress', 'PhoneNo'] }] },
+          { model: modals.consumerBills, as: 'ConsumerBill', attributes: ['BillDate', 'TaskAssignedDate'], include: [{ model: modals.table_users, as: 'User', attributes: ['Name', 'EmailAddress', 'PhoneNo'] }] },
           { model: modals.table_users, as: 'Admin', attributes: ['Name', 'EmailAddress', 'PhoneNo'] },
           { model: modals.table_status, as: 'Status', attributes: ['Name'] }
         ];
@@ -361,7 +361,7 @@ class BillManagementController {
     switch (Status) {
       case '4': {
         includeTables = [
-          { model: modals.table_consumer_bills,
+          { model: modals.consumerBills,
             as: 'ConsumerBill',
             attributes: ['BillDate', 'TaskAssignedDate'],
             include: [{ model: modals.table_users, as: 'User', attributes: ['Name', 'EmailAddress', 'PhoneNo'] }],
@@ -375,7 +375,7 @@ class BillManagementController {
       }
       case '5': {
         includeTables = [
-          { model: modals.table_consumer_bills, as: 'ConsumerBill', attributes: ['BillDate', 'TaskAssignedDate'], include: [{ model: modals.table_users, as: 'User', attributes: ['Name', 'EmailAddress', 'PhoneNo'] }] },
+          { model: modals.consumerBills, as: 'ConsumerBill', attributes: ['BillDate', 'TaskAssignedDate'], include: [{ model: modals.table_users, as: 'User', attributes: ['Name', 'EmailAddress', 'PhoneNo'] }] },
           { model: modals.table_users, as: 'Admin', attributes: ['Name', 'EmailAddress', 'PhoneNo'] },
           { model: modals.table_status, as: 'Status', attributes: ['Name'] }
         ];

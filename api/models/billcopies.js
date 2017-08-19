@@ -2,7 +2,7 @@
  * Created by arpit on 6/30/2017.
  */
 
-module.exports = (sequelize, Sequelize) => sequelize.define('table_consumer_bill_copies', {
+module.exports = (sequelize, Sequelize) => sequelize.define('billCopies', {
   ID: {
     type: Sequelize.INTEGER,
     autoIncrement: true,
@@ -33,5 +33,6 @@ module.exports = (sequelize, Sequelize) => sequelize.define('table_consumer_bill
 }, {
   freezeTableName: true,
   defaultPrimaryKey: false,
-  timestamps: false
+  timestamps: false,
+  tableName: 'table_consumer_bill_copies'
 });

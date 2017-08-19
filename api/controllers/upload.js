@@ -48,7 +48,7 @@ class UploadController {
               };
 
               console.log(fileResult);
-              promisedQuery.push(modals.table_consumer_bill_copies.create(ret));
+              promisedQuery.push(modals.billCopies.create(ret));
 
 
               if (promisedQuery.length === Object.keys(fileData).length) {
@@ -67,7 +67,7 @@ class UploadController {
   static retrieveFiles(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (user) {
-      modals.table_consumer_bill_copies.findOne({
+      modals.billCopies.findOne({
         where: {
           ID: request.params.id
         }

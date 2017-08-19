@@ -129,7 +129,7 @@ class UserController {
             userData[0].updateAttributes({
               LastLoginOn: shared.formatDate(new Date(), 'yyyy-mm-dd HH:MM:ss')
             });
-            reply(dashboardAdaptor.prepareDashboardResult(userData[1])).code(201).header('authorization', `bearer ${authentication.generateToken(userData[0]).token}`);
+            reply(dashboardAdaptor.prepareDashboardResult(userData[1], userData[0], `bearer ${authentication.generateToken(userData[0]).token}`)).code(201).header('authorization', `bearer ${authentication.generateToken(userData[0]).token}`);
           }).catch((err) => {
             console.log(err);
             reply(err);

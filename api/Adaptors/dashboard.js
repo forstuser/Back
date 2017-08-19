@@ -1,13 +1,30 @@
 class DashboardAdaptor {
   constructor(modals) {
     this.modals = modals;
+    this.modals.consumerBills.belongsTo(this.modals.table_users, { foreignKey: 'user_id', as: 'consumer' });
+    this.modals.table_users.hasMany(this.modals.consumerBills);
+    this.modals.consumerBills.hasMany(this.modals.consumerBillDetails, { foreignKey: 'bill_id', as: 'billDetails' });
+    this.modals.consumerBillDetails.belongsTo(this.modals.consumerBills);
+    this.modals.consumerBillDetails.hasMany(this.modals.productBills, { foreignKey: 'bill_detail_id', as: 'products' });
+    this.modals.productBills.belongsTo(this.modals.consumerBillDetails);
+    this.modals.productBills.hasMany(this.modals.amcBills, { foreignKey: 'bill_product_id', as: 'amcDetails' });
+    this.modals.amcBills.belongsTo(this.modals.productBills);
+    this.modals.productBills.hasMany(this.modals.insuranceBills, { foreignKey: 'bill_product_id', as: 'insuranceDetails' });
+    this.modals.insuranceBills.belongsTo(this.modals.productBills);
+    this.modals.productBills.hasMany(this.modals.warranty, { foreignKey: 'bill_product_id', as: 'warrantyDetails' });
+    this.modals.warranty.belongsTo(this.modals.productBills);
+    this.modals.warranty.hasMany(this.modals.warrantyCopies, { foreignKey: 'bill_warranty_id', as: 'warrantyCopies' });
+    this.modals.amcBills.hasMany(this.modals.amcBillCopies, { foreignKey: 'bill_amc_id', as: 'amcCopies' });
+    this.modals.insuranceBills.hasMany(this.modals.insuranceBillCopies, { foreignKey: 'bill_insurance_id', as: 'insuranceCopies' });
+    this.modals.consumerBillDetails.hasMany(this.modals.billDetailCopies, { foreignKey: 'bill_detail_id', as: 'billDetailCopies' });
   }
 
-  prepareDashboardResult(isNewUser) {
+  prepareDashboardResult(isNewUser, user, token) {
     if (!isNewUser) {
       return {
         Status: true,
         Message: 'Dashboard restore Successful',
+        Authorization: token,
         NotificationCount: '2',
         RecentSearches: [
           'Amazon',
@@ -68,8 +85,26 @@ class DashboardAdaptor {
 
     return {
       Status: true,
+      Authorization: token,
       Message: 'Dashboard restore Successful'
     };
+  }
+
+  filterUpcomingService(user) {
+    this.modals.consumerBills.findAll({
+      where: {
+        user_id: user.ID,
+        status_id: {
+          $ne: 3
+        }
+      }
+    }).then((result) => {
+      Promise.all([this.modals.productBills.findAll({
+        where: {
+
+        }
+      })]);
+    });
   }
 }
 
