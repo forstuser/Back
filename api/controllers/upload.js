@@ -22,11 +22,11 @@ class UploadController {
     const user = shared.verifyAuthorization(request.headers);
     const fileData = request.payload.fieldNameHere;
     const promisedQuery = [];
-    modals.table_consumer_bills.create({
+    modals.consumerBills.create({
       BillRefID: uuid.v4(),
-      user_id: user.userId,
-      updated_by_user_id: user.userId,
-      uploaded_by: user.userId,
+      user_id: user.ID,
+      updated_by_user_id: user.ID,
+      uploaded_by: user.ID,
       user_status: 4,
       admin_status: 4
     }).then((result) => {
@@ -43,8 +43,8 @@ class UploadController {
                 CopyName: fileName,
                 CopyType: fileType,
                 status_id: 6,
-                updated_by_user_id: user.userId,
-                uploaded_by_id: user.userId
+                updated_by_user_id: user.ID,
+                uploaded_by_id: user.ID
               };
 
               console.log(fileResult);
@@ -54,10 +54,10 @@ class UploadController {
               if (promisedQuery.length === Object.keys(fileData).length) {
                 Promise.all(promisedQuery)
                   .then(reply).catch((err) => {
-                    reply(err);
+                    reply({status: false, message: 'Upload Failed', err});
                   });
               }
-            }).catch(err => reply({ error: err }).code(500));
+            }).catch(err => reply({status: false, message: 'Upload Failed', err: JSON.stringify(err)}).code(500));
         }
       }
     }).catch((err) => {
