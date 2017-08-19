@@ -1,4 +1,4 @@
-export default class DashboardAdaptor {
+class DashboardAdaptor {
   constructor(modals) {
     this.modals = modals;
   }
@@ -72,3 +72,5 @@ export default class DashboardAdaptor {
     };
   }
 }
+
+module.exports = DashboardAdaptor
