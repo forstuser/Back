@@ -82,10 +82,12 @@ class UserController {
               LastLoginOn: shared.formatDate(new Date(), 'yyyy-mm-dd HH:MM:ss')
             });
             reply({
+              Status: true,
               Name: response[1][0].Name
             }).code(201);
           } else {
             reply({
+              Status: true,
               PhoneNo: request.payload.PhoneNo
             }).code(201);
           }
