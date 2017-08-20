@@ -120,8 +120,8 @@ class UserController {
         if (totp.check(request.payload.Token, tokenResult.secret)) {
           userModel.findOrCreate({
             where: {
-              PhoneNo: { $ne: trueObject.PhoneNo },
-              status_id: 3
+              PhoneNo: trueObject.PhoneNo,
+              status_id: 1
             }
           }).then((userData) => {
             const dashboardAdaptor = new DashboardAdaptor(modals);
@@ -155,8 +155,8 @@ class UserController {
       };
 
       userModel.findOrCreate({ where: {
-        PhoneNo: { $ne: trueObject.PhoneNo },
-        status_id: 3
+        PhoneNo: trueObject.PhoneNo,
+        status_id: 1
       },
       defaults: userItem })
         .then((userData) => {
