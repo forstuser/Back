@@ -132,13 +132,14 @@ class UserController {
             reply(dashboardAdaptor.prepareDashboardResult(userData[1], userData[0], `bearer ${authentication.generateToken(userData[0]).token}`)).code(201).header('authorization', `bearer ${authentication.generateToken(userData[0]).token}`);
           }).catch((err) => {
             console.log(err);
-            reply(err);
+            reply({ message: 'Issue in updation', status: false });
           });
         } else {
           reply({ message: 'Invalid OTP' }).code(401);
         }
       }).catch((err) => {
-        reply(err);
+        console.log(err);
+        reply({ message: 'Issue in updation', status: false });
       });
     } else if (request.payload.BBLogin_Type === 2) {
       const userItem = {

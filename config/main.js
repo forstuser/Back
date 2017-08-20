@@ -13,9 +13,18 @@ module.exports = {
     password: 'yellow*99',
     database: 'binbill',
     autoReconnect: true,
-    host: '127.0.0.1',
+    host: 'localhost',
     dialect: 'mysql'
   },
+  /* database: {
+    username: 'binbillDB',
+    password: 'devbindb1!#',
+    database: 'binbill',
+    autoReconnect: true,
+    host: 'binbilldbinstancetest.cpnnj7xlkrir.ap-south-1.rds.amazonaws.com',
+    dialect: 'mysql',
+    port: 3306
+  }, */
   // Setting port for server
   port: 3001,
   test_port: 3001
