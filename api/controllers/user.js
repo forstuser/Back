@@ -122,6 +122,10 @@ class UserController {
             where: {
               PhoneNo: trueObject.PhoneNo,
               status_id: 1
+            },
+            defaults: {
+              PhoneNo: trueObject.PhoneNo,
+              status_id: 1
             }
           }).then((userData) => {
             const dashboardAdaptor = new DashboardAdaptor(modals);
