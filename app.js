@@ -3395,4 +3395,42 @@ server.route({
             }
         }
     }
+})
+
+//Add Task Complete To QE
+server.route({
+    method: 'POST',
+    path: '/Services/TaskCompleteQE',
+    handler: function (request, reply) {
+        const TokenNo = request.payload.TokenNo;
+        const UID = request.payload.UID;
+        const BID = request.payload.BID;
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+            if (error) throw error;
+            if(token.length > 0){
+                var UserID = token[0]['user_id'];
+                connection.query('UPDATE table_qual_executive_tasks SET status_id=5 WHERE bill_id="'+BillID +'"', function (error, results, fields) {
+                    if (error) throw error;
+                })
+                connection.query('UPDATE table_consumer_bills SET user_status=5, admin_status=5 WHERE bill_id="'+BillID +'"', function (error, results, fields) {
+                    if (error) throw error;
+                });
+                var data = '{"statusCode": 100,"error": "","message": "Task Complete successfully."}';
+                reply(data);
+            } else {
+                var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+                reply(data);
+            }
+        });
+    },
+    config:{
+        validate: {
+            payload: {
+                TokenNo: Joi.string().required(),
+                BID: Joi.number().integer().required(),
+                output: 'data',
+                parse:true
+            }
+        }
+    }
 });
