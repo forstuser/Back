@@ -167,7 +167,7 @@ class UserController {
       defaults: userItem })
         .then((userData) => {
           if (!userData[1]) {
-            userData[1].updateAttributes({
+            userData[0].updateAttributes({
               EmailAddress: trueObject.EmailAddress,
               Name: trueObject.Name,
               ImageLink: trueObject.ImageLink,
