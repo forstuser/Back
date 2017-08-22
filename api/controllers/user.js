@@ -155,7 +155,9 @@ class UserController {
         Longitude: trueObject.Longitude,
         ImageLink: trueObject.ImageLink,
         accessLevel: trueObject.accessLevel ? trueObject.accessLevel : roles.ROLE_MEMBER,
-        LastLoginOn: shared.formatDate(new Date(), 'yyyy-mm-dd HH:MM:ss')
+        LastLoginOn: shared.formatDate(new Date(), 'yyyy-mm-dd HH:MM:ss'),
+        PhoneNo: trueObject.PhoneNo,
+        status_id: 1
       };
 
       userModel.findOrCreate({ where: {
