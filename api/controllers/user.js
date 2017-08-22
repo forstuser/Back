@@ -174,7 +174,9 @@ class UserController {
               LastLoginOn: shared.formatDate(new Date(), 'yyyy-mm-dd HH:MM:ss')
             });
           }
-          reply().code(201).header('authorization', `bearer ${authentication.generateToken(userData[0]).token}`);
+
+          const dashboardAdaptor = new DashboardAdaptor(modals);
+          reply(dashboardAdaptor.prepareDashboardResult(userData[1], userData[0], `bearer ${authentication.generateToken(userData[0]).token}`)).code(201).header('authorization', `bearer ${authentication.generateToken(userData[0]).token}`);
         });
     }
   }
