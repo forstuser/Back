@@ -16,7 +16,7 @@ const DashboardAdaptor = require('../Adaptors/dashboard');
 let userModel;
 let userRelationModel;
 let modals;
-
+let dashboardAdaptor;
 function isValidPassword(userpass, passwordValue) {
   return bCrypt.compareSync(passwordValue, userpass);
 }
@@ -27,6 +27,7 @@ class UserController {
     userModel = modal.table_users;
     userRelationModel = modal.table_users_temp;
     modals = modal;
+    dashboardAdaptor = new DashboardAdaptor(modals);
   }
 
   static dispatchOTP(request, reply) {
@@ -128,8 +129,6 @@ class UserController {
               status_id: 1
             }
           }).then((userData) => {
-            const dashboardAdaptor = new DashboardAdaptor(modals);
-
             userData[0].updateAttributes({
               LastLoginOn: shared.formatDate(new Date(), 'yyyy-mm-dd HH:MM:ss')
             });
@@ -175,7 +174,6 @@ class UserController {
             });
           }
 
-          const dashboardAdaptor = new DashboardAdaptor(modals);
           reply(dashboardAdaptor.prepareDashboardResult(userData[1], userData[0], `bearer ${authentication.generateToken(userData[0]).token}`)).code(201).header('authorization', `bearer ${authentication.generateToken(userData[0]).token}`);
         });
     }
