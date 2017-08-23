@@ -14,8 +14,40 @@ const BillManagementController = require('../api/controllers/consumerBillManagem
 const ExclusionInclusionController = require('../api/controllers/exclusionInclusion');
 const ReferenceDataController = require('../api/controllers/referenceData');
 const UserManagementController = require('../api/controllers/userManagement');
+const DashboardController = require('../api/controllers/dashboard');
 
 let User;
+
+function associateModals(modals) {
+  modals.consumerBills.belongsTo(modals.table_users, { foreignKey: 'user_id', as: 'consumer' });
+  modals.table_users.hasMany(modals.consumerBills);
+  modals.consumerBills.hasMany(modals.consumerBillDetails, { foreignKey: 'bill_id', as: 'billDetails' });
+  modals.consumerBillDetails.belongsTo(modals.consumerBills);
+  modals.consumerBillDetails.hasMany(modals.productBills, { foreignKey: 'bill_detail_id', as: 'products' });
+  modals.productBills.belongsTo(modals.consumerBillDetails, { foreignKey: 'bill_detail_id', as: 'consumerBill' });
+  modals.productBills.hasMany(modals.amcBills, { foreignKey: 'bill_product_id', as: 'amcDetails' });
+  modals.amcBills.belongsTo(modals.productBills, { foreignKey: 'bill_product_id', as: 'amcProduct' });
+  modals.productBills.hasMany(modals.insuranceBills, {
+    foreignKey: 'bill_product_id',
+    as: 'insuranceDetails'
+  });
+  modals.insuranceBills.belongsTo(modals.productBills, {
+    foreignKey: 'bill_product_id',
+    as: 'insuredProduct'
+  });
+  modals.productBills.hasMany(modals.warranty, { foreignKey: 'bill_product_id', as: 'warrantyDetails' });
+  modals.warranty.belongsTo(modals.productBills, { foreignKey: 'bill_product_id', as: 'warrantyProduct' });
+  modals.warranty.hasMany(modals.warrantyCopies, { foreignKey: 'bill_warranty_id', as: 'warrantyCopies' });
+  modals.amcBills.hasMany(modals.amcBillCopies, { foreignKey: 'bill_amc_id', as: 'amcCopies' });
+  modals.insuranceBills.hasMany(modals.insuranceBillCopies, {
+    foreignKey: 'bill_insurance_id',
+    as: 'insuranceCopies'
+  });
+  modals.consumerBillDetails.hasMany(modals.billDetailCopies, {
+    foreignKey: 'bill_detail_id',
+    as: 'billDetailCopies'
+  });
+}
 
 function prepareSellerRoutes(sellerController, sellerRoutes) {
   if (sellerController) {
@@ -1040,10 +1072,10 @@ function prepareReferenceData(referenceDataController, referenceDataRoutes) {
   }
 }
 
-module.exports = (app, models) => {
-  User = models.users;
+module.exports = (app, modals) => {
+  User = modals.users;
   // Middleware to require login/auth
-
+  associateModals(modals);
   PassportService(User);
   passport.authenticate('jwt', { session: false });
   // Initializing route groups
@@ -1054,17 +1086,19 @@ module.exports = (app, models) => {
   const serviceCenterRoutes = [];
   const billManagementRoutes = [];
   const referenceDataRoutes = [];
-  const userController = new UserController(models);
-  const categoryController = new CategoryController(models);
-  const brandController = new BrandController(models);
-  const uploadController = new UploadController(models);
-  const sellerController = new SellerController(models);
-  const serviceCenterController = new ServiceCenterController(models);
-  const billManagementController = new BillManagementController(models);
-  const exclusionInclusionController = new ExclusionInclusionController(models);
-  const referenceDataController = new ReferenceDataController(models);
+  const dashboardRoutes = [];
+  const userController = new UserController(modals);
+  const categoryController = new CategoryController(modals);
+  const brandController = new BrandController(modals);
+  const uploadController = new UploadController(modals);
+  const sellerController = new SellerController(modals);
+  const serviceCenterController = new ServiceCenterController(modals);
+  const billManagementController = new BillManagementController(modals);
+  const exclusionInclusionController = new ExclusionInclusionController(modals);
+  const referenceDataController = new ReferenceDataController(modals);
+  const dashboardController = new DashboardController(modals);
 
-  const userManagementController = new UserManagementController(models);
+  const userManagementController = new UserManagementController(modals);
   //= ========================
   // Auth Routes
   //= ========================
@@ -1247,12 +1281,26 @@ module.exports = (app, models) => {
       }
     });
   }
-  app.route([...authRoutes,
+
+  if (dashboardController) {
+    dashboardRoutes.push({
+      method: 'GET',
+      path: '/consumer/dashboard',
+      config: {
+        auth: 'jwt',
+        handler: DashboardController.getDashboard
+      }
+    });
+  }
+  app.route([
+    ...authRoutes,
     ...categoryRoutes,
     ...brandRoutes,
     ...sellerRoutes,
     ...serviceCenterRoutes,
     ...billManagementRoutes,
     ...referenceDataRoutes,
-    ...uploadFileRoute]);
+    ...uploadFileRoute,
+    ...dashboardRoutes
+  ]);
 };

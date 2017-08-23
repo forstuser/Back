@@ -3,50 +3,42 @@
  */
 
 module.exports = (sequelize, Sequelize) => sequelize.define('consumerBillDetails', {
-  ID: {
+  bill_detail_id: {
     type: Sequelize.INTEGER,
     autoIncrement: true,
-    primaryKey: true,
-    field: 'bill_detail_id'
+    primaryKey: true
   },
   BillID: {
     type: Sequelize.INTEGER,
     field: 'bill_id'
   },
-  Name: {
-    type: Sequelize.STRING,
-    field: 'consumer_name'
+  consumer_name: {
+    type: Sequelize.STRING
   },
-  EmailAddress: {
+  consumer_email_id: {
     type: Sequelize.STRING,
     validate: {
       isEmail: true
-    },
-    field: 'consumer_email_id'
+    }
   },
-  PhoneNo: {
-    type: Sequelize.STRING,
-    field: 'consumer_phone_no'
+  consumer_phone_no: {
+    type: Sequelize.STRING
   },
   document_id: {
     type: Sequelize.INTEGER
   },
-  InvoiceNo: {
-    type: Sequelize.STRING,
-    field: 'invoice_number'
+  invoice_number: {
+    type: Sequelize.STRING
   },
-  TotalValue: {
-    type: Sequelize.FLOAT,
-    field: 'total_purchase_value'
+  total_purchase_value: {
+    type: Sequelize.FLOAT
   },
-  Taxes: {
-    type: Sequelize.FLOAT,
-    field: 'taxes'
+  taxes: {
+    type: Sequelize.FLOAT
   },
-  PurchaseDate: {
+  purchase_date: {
     type: Sequelize.DATE(6),
-    defaultValue: Sequelize.NOW,
-    field: 'purchase_date'
+    defaultValue: Sequelize.NOW
   },
   created_on: {
     type: Sequelize.DATE(6),

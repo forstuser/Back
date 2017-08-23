@@ -13,34 +13,41 @@ const dueDays = {
 class DashboardAdaptor {
   constructor(modals) {
     this.modals = modals;
-    this.modals.consumerBills.hasOne(this.modals.table_users, { foreignKey: 'user_id', as: 'consumer' });
-    this.modals.table_users.hasMany(this.modals.consumerBills);
-    this.modals.consumerBills.hasMany(this.modals.consumerBillDetails, { foreignKey: 'bill_id', as: 'billDetails' });
-    this.modals.consumerBillDetails.belongsTo(this.modals.consumerBills);
-    this.modals.consumerBillDetails.hasMany(this.modals.productBills, { foreignKey: 'bill_detail_id', as: 'products' });
-    this.modals.productBills.belongsTo(this.modals.consumerBillDetails, { foreignKey: 'bill_detail_id', as: 'consumerBill' });
-    this.modals.productBills.hasMany(this.modals.amcBills, { foreignKey: 'bill_product_id', as: 'amcDetails' });
-    this.modals.amcBills.belongsTo(this.modals.productBills, { foreignKey: 'bill_product_id', as: 'amcProduct' });
-    this.modals.productBills.hasMany(this.modals.insuranceBills, {
-      foreignKey: 'bill_product_id',
-      as: 'insuranceDetails'
-    });
-    this.modals.insuranceBills.belongsTo(this.modals.productBills, {
-      foreignKey: 'bill_product_id',
-      as: 'insuredProduct'
-    });
-    this.modals.productBills.hasMany(this.modals.warranty, { foreignKey: 'bill_product_id', as: 'warrantyDetails' });
-    this.modals.warranty.belongsTo(this.modals.productBills, { foreignKey: 'bill_product_id', as: 'warrantyProduct' });
-    this.modals.warranty.hasMany(this.modals.warrantyCopies, { foreignKey: 'bill_warranty_id', as: 'warrantyCopies' });
-    this.modals.amcBills.hasMany(this.modals.amcBillCopies, { foreignKey: 'bill_amc_id', as: 'amcCopies' });
-    this.modals.insuranceBills.hasMany(this.modals.insuranceBillCopies, {
-      foreignKey: 'bill_insurance_id',
-      as: 'insuranceCopies'
-    });
-    this.modals.consumerBillDetails.hasMany(this.modals.billDetailCopies, {
-      foreignKey: 'bill_detail_id',
-      as: 'billDetailCopies'
-    });
+  }
+
+  retrieveDashboardResult(user) {
+    return Promise.all([
+      this.filterUpcomingService(user),
+      this.prepareInsightData(user),
+      this.retrieveRecentSearch(user)
+    ]).then((result) => {
+      const insightData = result[1];
+      const insightResult = insightData ? {
+        StartDate: insightData[0].PurchaseDate,
+        EndDate: insightData[insightData.length - 1].PurchaseDate,
+        TotalSpend: sumProps(insightData, 'TotalValue'),
+        TotalDays: insightData.length,
+        insightData
+      } : {
+        StartDate: '',
+        EndDate: '',
+        TotalSpend: 0,
+        TotalDays: 0,
+        insightData
+      };
+      return {
+        status: true,
+        message: 'Dashboard restore Successful',
+        notificationCount: '2',
+        recentSearches: result[2],
+        upcomingServices: result[0],
+        insight: insightResult
+      };
+    }).catch(err => ({
+      status: false,
+      message: 'Dashboard restore failed',
+      err
+    }));
   }
 
   prepareDashboardResult(isNewUser, user, token) {
@@ -62,10 +69,10 @@ class DashboardAdaptor {
           ]).then((result) => {
             const insightData = result[1];
             const insightResult = insightData ? {
-              StartDate: insightData[0].PurchaseDate,
-              EndDate: insightData[insightData.length - 1].PurchaseDate,
-              TotalSpend: sumProps(insightData, 'TotalValue'),
-              TotalDays: insightData.length,
+              startDate: insightData[0].purchaseDate,
+              endDate: insightData[insightData.length - 1].purchaseDate,
+              totalSpend: sumProps(insightData, 'value'),
+              totalDays: insightData.length,
               insightData
             } : {
               StartDate: '',
@@ -257,13 +264,13 @@ class DashboardAdaptor {
           status_id: {
             $ne: 3
           },
-          PurchaseDate: {
+          purchase_date: {
             $lt: new Date(),
             $gt: new Date(new Date() - (7 * 24 * 60 * 60 * 1000))
           }
         },
-        order: [['PurchaseDate', 'ASC']],
-        attributes: ['TotalValue', 'PurchaseDate']
+        order: [['purchase_date', 'ASC']],
+        attributes: [['total_purchase_value', 'value'], ['purchase_date', 'purchaseDate']]
       }).then(resolve).catch(reject);
     });
   }
