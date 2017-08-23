@@ -9,6 +9,12 @@ const fsImpl = new S3FS('binbillbucket', {
   region: 'ap-south-1'
 });
 
+const fsImplUser = new S3FS('binbillbucket/userimages', {
+  accessKeyId: 'AKIAJWC3NVWYOO6YFVVQ',
+  secretAccessKey: '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',
+  region: 'ap-south-1'
+});
+
 const shared = require('../../helpers/shared');
 
 let modals;
@@ -16,6 +22,57 @@ let modals;
 class UploadController {
   constructor(modal) {
     modals = modal;
+  }
+
+  static uploadUserImage(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    if (request.payload) {
+      const fieldNameHere = request.payload.fieldNameHere;
+      const fileData = fieldNameHere || request.payload.filesName;
+
+      const name = fileData.hapi.filename;
+      const fileType = name.split('.')[name.split('.').length - 1];
+      const fileName = `${user.ID}-${new Date().getTime()}.${fileType}`;
+      // const file = fs.createReadStream();
+      fsImplUser.writeFile(fileName, fileData._data, { ContentType: mime.lookup(fileName) })
+        .then((fileResult) => {
+          const ret = {
+            user_id: user.ID,
+            user_image_name: fileName,
+            user_image_type: fileType,
+            status_id: 1,
+            updated_by_user_id: user.ID,
+            uploaded_by_id: user.ID
+          };
+
+          console.log(fileResult);
+          modals.userImages.findOrCreate({
+            where: {
+              user_id: user.ID
+            },
+            defaults: ret
+          }).then((userResult) => {
+            if (!userResult[1]) {
+              userResult[0].updateAttributes({ user_image_name: fileName,
+                user_image_type: fileType,
+                status_id: 1,
+                updated_by_user_id: user.ID,
+                uploaded_by_id: user.ID
+              });
+            }
+
+            reply({
+              status: true,
+              message: 'Uploaded Successfully',
+              userResult: userResult[0]
+            });
+          }).catch((err) => {
+            reply({ status: false, message: 'Upload Failed', err });
+          });
+        }).catch(err => reply({ status: false, message: 'Upload Failed', err }));
+    } else {
+      reply({ message: 'Invalid OTP' }).code(401);
+    }
   }
 
   static uploadFiles(request, reply) {
@@ -91,12 +148,12 @@ class UploadController {
                 message: 'Uploaded Successfully',
                 billResult
               })).catch((err) => {
-                reply({ status: false, message: 'Upload Failed', err: JSON.stringify(err) });
+                reply({ status: false, message: 'Upload Failed', err });
               });
-          }).catch(err => reply({ status: false, message: 'Upload Failed', err: JSON.stringify(err) }).code(500));
+          }).catch(err => reply({ status: false, message: 'Upload Failed', err }));
       }
     }).catch((err) => {
-      reply({ status: false, message: 'Upload Failed', err: JSON.stringify(err) }).code(500);
+      reply({ status: false, message: 'Upload Failed', err });
     });
   }
 
@@ -104,6 +161,23 @@ class UploadController {
     const user = shared.verifyAuthorization(request.headers);
     if (user) {
       modals.billCopies.findOne({
+        where: {
+          ID: request.params.id
+        }
+      }).then((result) => {
+        fsImpl.readFile(result.CopyName, 'utf8').then(fileResult => reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${result.CopyName}`)).catch(reply);
+      }).catch((err) => {
+        reply(err);
+      });
+    } else {
+      reply().code(401);
+    }
+  }
+
+  static retrieveUserImage(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    if (user) {
+      modals.userImages.findOne({
         where: {
           ID: request.params.id
         }

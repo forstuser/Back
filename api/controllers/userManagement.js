@@ -74,35 +74,35 @@ class UserManagementController {
     const FacebookAuthKey = request.payload.FacebookAuthKey;
     const EmailAddress = request.payload.EmailAddress;
     const PhoneNo = request.payload.PhoneNo;
-    const Password = bCrypt.hashSync(request.payload.password, bCrypt.genSaltSync(8), null);
+    const password = bCrypt.hashSync(request.payload.password, bCrypt.genSaltSync(8), null);
     const OTP = request.payload.OTP;
-    const Location = request.payload.Location;
-    const Latitude = request.payload.Latitude;
-    const Longitude = request.payload.Longitude;
-    const ImageLink = request.payload.ImageLink;
+    const location = request.payload.Location;
+    const latitude = request.payload.Latitude;
+    const longitude = request.payload.Longitude;
+    const image = request.payload.ImageLink;
     const OSTypeId = request.payload.OSTypeId;
     const GCMId = request.payload.GCMId;
     const deviceId = request.payload.deviceId;
     const deviceModel = request.payload.deviceModel;
     const apkVersion = request.payload.apkVersion;
     modals.table_users.update({
-      UserTypeID,
+      user_type_id: UserTypeID,
       GoogleAuthKey,
       FacebookAuthKey,
-      PhoneNo,
-      Password,
-      OTP,
-      Location,
-      Longitude,
-      Latitude,
-      ImageLink,
-      OSTypeId,
-      GCMId,
-      EmailAddress,
-      deviceId,
-      deviceModel,
-      apkVersion,
-      Name,
+      mobile_no: PhoneNo,
+      password,
+      tmp_password: OTP,
+      location,
+      longitude,
+      latitude,
+      image,
+      os_type_id: OSTypeId,
+      gcm_id: GCMId,
+      email_id: EmailAddress,
+      device_id: deviceId,
+      device_model: deviceModel,
+      apk_version: apkVersion,
+      fullname: Name,
       updated_by_user_id: user.userId
     }, {
       where: {

@@ -12,11 +12,13 @@ const totp = require('otplib/totp').default;
 const requestPromise = require('request-promise');
 
 const DashboardAdaptor = require('../Adaptors/dashboard');
+const UserAdaptor = require('../Adaptors/user');
 
 let userModel;
 let userRelationModel;
 let modals;
 let dashboardAdaptor;
+let userAdaptor;
 function isValidPassword(userpass, passwordValue) {
   return bCrypt.compareSync(passwordValue, userpass);
 }
@@ -28,6 +30,7 @@ class UserController {
     userRelationModel = modal.table_users_temp;
     modals = modal;
     dashboardAdaptor = new DashboardAdaptor(modals);
+    userAdaptor = new UserAdaptor(modals);
   }
 
   static dispatchOTP(request, reply) {
@@ -222,6 +225,24 @@ class UserController {
       error.raw = err;
       return reply(error);
     });
+  }
+
+  static retrieveUserProfile(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    if (user) {
+      reply(userAdaptor.retrieveUserProfile(user));
+    } else {
+      reply({ message: 'Invalid Token' }).code(401);
+    }
+  }
+
+  static updateUserProfile(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    if (user) {
+      userAdaptor.updateUser(user, request.payload, reply);
+    } else {
+      reply({ message: 'Invalid Token' }).code(401);
+    }
   }
 }
 

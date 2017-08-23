@@ -19,6 +19,8 @@ const DashboardController = require('../api/controllers/dashboard');
 let User;
 
 function associateModals(modals) {
+  modals.userImages.belongsTo(modals.table_users, { foreignKey: 'user_id', as: 'user' });
+  modals.table_users.hasMany(modals.userImages, { foreignKey: 'user_id', as: 'userImages' });
   modals.consumerBills.belongsTo(modals.table_users, { foreignKey: 'user_id', as: 'consumer' });
   modals.table_users.hasMany(modals.consumerBills);
   modals.consumerBills.hasMany(modals.consumerBillDetails, { foreignKey: 'bill_id', as: 'billDetails' });
@@ -1165,6 +1167,69 @@ module.exports = (app, modals) => {
     });
 
     authRoutes.push({
+      method: 'PUT',
+      path: '/consumer/profile',
+      config: {
+        handler: UserController.updateUserProfile,
+        auth: false,
+        description: 'Update User Profile.',
+        validate: {
+          payload: {
+            phoneNo: joi.string(),
+            location: joi.string(),
+            longitude: joi.string(),
+            latitude: joi.string(),
+            osTypeId: joi.string(),
+            gcmId: joi.string(),
+            email: joi.string(),
+            deviceId: joi.string(),
+            deviceModel: joi.string(),
+            apkVersion: joi.string(),
+            name: joi.string(),
+            isEnrolled: joi.boolean(),
+            categoryId: joi.number(),
+            isPhoneAllowed: joi.boolean(),
+            isEmailAllowed: joi.boolean(),
+            output: 'data',
+            parse: true
+          }
+        },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              { code: 202, message: 'Authenticated' },
+              { code: 400, message: 'Bad Request' },
+              { code: 401, message: 'Invalid Credentials' },
+              { code: 404, message: 'Not Found' },
+              { code: 500, message: 'Internal Server Error' }
+            ]
+          }
+        }
+      }
+    });
+
+    authRoutes.push({
+      method: 'GET',
+      path: '/consumer/profile',
+      config: {
+        handler: UserController.retrieveUserProfile,
+        description: 'Get User Profile.',
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              { code: 200, message: 'Successful' },
+              { code: 400, message: 'Bad Request' },
+              { code: 401, message: 'Invalid Credentials' },
+              { code: 404, message: 'Not Found' },
+              { code: 500, message: 'Internal Server Error' }
+            ]
+          }
+        }
+      }
+    });
+
+    // Login route
+    authRoutes.push({
       method: 'POST',
       path: '/consumer/validate',
       config: {
@@ -1254,6 +1319,26 @@ module.exports = (app, modals) => {
   if (uploadController) {
     uploadFileRoute.push({
       method: 'POST',
+      path: '/consumer/upload/selfie',
+      config: {
+        auth: 'jwt',
+        files: {
+          relativeTo: Path.join(__dirname, '../static/src')
+        },
+        handler: UploadController.uploadUserImage,
+        payload: {
+          output: 'stream',
+          parse: true,
+          uploads: 'up_files',
+          timeout: 30034,
+          allow: 'multipart/form-data',
+          failAction: 'log',
+          maxBytes: 209715200
+        }
+      }
+    });
+    uploadFileRoute.push({
+      method: 'POST',
       path: '/consumer/upload',
       config: {
         auth: 'jwt',
@@ -1278,6 +1363,14 @@ module.exports = (app, modals) => {
       config: {
         auth: 'jwt',
         handler: UploadController.retrieveFiles
+      }
+    });
+    uploadFileRoute.push({
+      method: 'GET',
+      path: '/consumer/{id}/images',
+      config: {
+        auth: 'jwt',
+        handler: UploadController.retrieveUserImage
       }
     });
   }

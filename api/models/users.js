@@ -9,13 +9,11 @@ module.exports = (sequelize, Sequelize) => sequelize.define('table_users', {
     primaryKey: true,
     field: 'user_id'
   },
-  UserTypeID: {
-    type: Sequelize.INTEGER,
-    field: 'user_type_id'
+  user_type_id: {
+    type: Sequelize.INTEGER
   },
-  Name: {
-    type: Sequelize.STRING,
-    field: 'fullname'
+  fullname: {
+    type: Sequelize.STRING
   },
   GoogleAuthKey: {
     type: Sequelize.STRING,
@@ -25,59 +23,48 @@ module.exports = (sequelize, Sequelize) => sequelize.define('table_users', {
     type: Sequelize.STRING,
     field: 'facebook_id'
   },
-  EmailAddress: {
+  email_id: {
     type: Sequelize.STRING,
     unique: true,
     validate: {
       isEmail: true
-    },
-    field: 'email_id'
+    }
   },
-  PhoneNo: {
+  mobile_no: {
     type: Sequelize.STRING,
-    unique: true,
-    field: 'mobile_no'
+    unique: true
   },
-  Password: {
-    type: Sequelize.STRING,
-    field: 'password'
+  password: {
+    type: Sequelize.STRING
   },
-  OTP: {
-    type: Sequelize.STRING,
-    field: 'tmp_password'
+  tmp_password: {
+    type: Sequelize.STRING
   },
-  Location: {
-    type: Sequelize.STRING,
-    field: 'location'
+  location: {
+    type: Sequelize.STRING
   },
-  Latitude: {
-    type: Sequelize.STRING,
-    field: 'latitude'
+  latitude: {
+    type: Sequelize.STRING
   },
-  Longitude: {
-    type: Sequelize.STRING,
-    field: 'longitude'
+  longitude: {
+    type: Sequelize.STRING
   },
-  ImageLink: {
-    type: Sequelize.STRING,
-    field: 'image'
+  image: {
+    type: Sequelize.STRING
   },
-  OSTypeId: {
-    type: Sequelize.STRING,
-    field: 'os_type_id'
+  os_type_id: {
+    type: Sequelize.STRING
   },
   accessLevel: {
     type: Sequelize.ENUM('user', 'free', 'premium'),
     defaultValue: 'user'
   },
-  createdAt: {
+  created_on: {
     type: Sequelize.DATE(6),
-    defaultValue: Sequelize.NOW,
-    field: 'created_on'
+    defaultValue: Sequelize.NOW
   },
-  GCMId: {
-    type: Sequelize.STRING,
-    field: 'gcm_id'
+  gcm_id: {
+    type: Sequelize.STRING
   },
   passwordResetToken: {
     type: Sequelize.STRING
@@ -88,31 +75,38 @@ module.exports = (sequelize, Sequelize) => sequelize.define('table_users', {
   expiresIn: {
     type: Sequelize.BIGINT
   },
-  updatedAt: {
+  updated_on: {
     type: Sequelize.DATE(6),
-    defaultValue: Sequelize.NOW,
-    field: 'updated_on'
+    defaultValue: Sequelize.NOW
   },
-  deviceId: {
-    type: Sequelize.STRING,
-    field: 'device_id'
+  device_id: {
+    type: Sequelize.STRING
   },
-  deviceModel: {
-    type: Sequelize.STRING,
-    field: 'device_model'
+  device_model: {
+    type: Sequelize.STRING
   },
-  apkVersion: {
-    type: Sequelize.STRING,
-    field: 'apk_version'
+  apk_version: {
+    type: Sequelize.STRING
   },
-  LastLoginOn: {
+  last_login: {
     type: Sequelize.DATE(6),
-    defaultValue: Sequelize.NOW,
-    field: 'last_login'
+    defaultValue: Sequelize.NOW
   },
   status_id: {
     defaultValue: 1,
     type: Sequelize.INTEGER
+  },
+  is_enrolled_professional: {
+    type: Sequelize.BOOLEAN
+  },
+  professional_category_id: {
+    type: Sequelize.INTEGER
+  },
+  share_mobile: {
+    type: Sequelize.BOOLEAN
+  },
+  share_email: {
+    type: Sequelize.BOOLEAN
   }
 }, {
   freezeTableName: true,

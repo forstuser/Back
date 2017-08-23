@@ -183,7 +183,7 @@ class DashboardAdaptor {
           },
           masterCatID: 8
         },
-        include: [{ model: this.modals.consumerBillDetails, as: 'consumerBill', attributes: [['document_id', 'docId']], include: [{ model: this.modals.billDetailCopies, as: 'billDetailCopies', attributes: [['bill_copy_id', 'billCopyId']] }] }]
+        include: [{ model: this.modals.consumerBillDetails, as: 'consumerBill', attributes: [['document_id', 'docId']], include: [{ model: this.modals.billDetailCopies, as: 'billDetailCopies', attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('bill_copy_id'), '/files'), 'fileUrl']] }] }]
       }),
       this.modals.amcBills.findAll({
         attributes: [['bill_amc_id', 'id'], 'policyNo', 'premiumType', 'premiumAmount', 'effectiveDate', 'expiryDate'],
@@ -197,7 +197,7 @@ class DashboardAdaptor {
             $lt: new Date(new Date() + (dueDays[this.modals.sequelize.col('premiumType')] * 24 * 60 * 60 * 1000))
           }
         },
-        include: [{ model: this.modals.productBills, as: 'amcProduct', attributes: [['product_name', 'productName']] }, { model: this.modals.amcBillCopies, as: 'amcCopies', attributes: [['bill_copy_id', 'billCopyId']] }]
+        include: [{ model: this.modals.productBills, as: 'amcProduct', attributes: [['product_name', 'productName']] }, { model: this.modals.amcBillCopies, as: 'amcCopies', attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('bill_copy_id'), '/files'), 'fileUrl']] }]
       }), this.modals.insuranceBills.findAll({
         attributes: [['bill_insurance_id', 'id'], 'policyNo', 'premiumType', 'premiumAmount', 'effectiveDate', 'expiryDate', 'amountInsured', 'plan'],
         where: {
@@ -210,7 +210,7 @@ class DashboardAdaptor {
             $lt: new Date(new Date() + (dueDays[this.modals.sequelize.col('premiumType')] * 24 * 60 * 60 * 1000))
           }
         },
-        include: [{ model: this.modals.productBills, as: 'insuredProduct', attributes: [['product_name', 'productName']] }, { model: this.modals.insuranceBillCopies, as: 'insuranceCopies', attributes: [['bill_copy_id', 'billCopyId']] }]
+        include: [{ model: this.modals.productBills, as: 'insuredProduct', attributes: [['product_name', 'productName']] }, { model: this.modals.insuranceBillCopies, as: 'insuranceCopies', attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('bill_copy_id'), '/files'), 'fileUrl']] }]
       }),
       this.modals.warranty.findAll({
         attributes: [['bill_warranty_id', 'id'], 'warrantyType', 'policyNo', 'premiumType', 'premiumAmount', 'effectiveDate', 'expiryDate'],
@@ -224,7 +224,7 @@ class DashboardAdaptor {
             $lt: new Date(new Date() + (dueDays[this.modals.sequelize.col('premiumType')] * 24 * 60 * 60 * 1000))
           }
         },
-        include: [{ model: this.modals.productBills, as: 'warrantyProduct', attributes: [['product_name', 'productName']] }, { model: this.modals.warrantyCopies, as: 'warrantyCopies', attributes: [['bill_copy_id', 'billCopyId']] }]
+        include: [{ model: this.modals.productBills, as: 'warrantyProduct', attributes: [['product_name', 'productName']] }, { model: this.modals.warrantyCopies, as: 'warrantyCopies', attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('bill_copy_id'), '/files'), 'fileUrl']] }]
       })]).then((result) => {
         const products = result[0].map(item => item.toJSON());
         const amcs = result[1].map(item => item.toJSON());
