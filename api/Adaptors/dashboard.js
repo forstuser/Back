@@ -67,7 +67,7 @@ class DashboardAdaptor {
             this.prepareInsightData(user),
             this.retrieveRecentSearch(user)
           ]).then((result) => {
-            const insightData = result[1];
+            const insightData = result[1].map(item => item.toJSON());
             const insightResult = insightData ? {
               startDate: insightData[0].purchaseDate,
               endDate: insightData[insightData.length - 1].purchaseDate,
