@@ -21,18 +21,18 @@ class DashboardAdaptor {
       this.prepareInsightData(user),
       this.retrieveRecentSearch(user)
     ]).then((result) => {
-      const insightData = result[1];
+      const insightData = result[1].map(item => item.toJSON());
       const insightResult = insightData ? {
-        StartDate: insightData[0].PurchaseDate,
-        EndDate: insightData[insightData.length - 1].PurchaseDate,
-        TotalSpend: sumProps(insightData, 'TotalValue'),
-        TotalDays: insightData.length,
+        startDate: insightData[0].purchaseDate,
+        endDate: insightData[insightData.length - 1].purchaseDate,
+        totalSpend: sumProps(insightData, 'value'),
+        totalDays: insightData.length,
         insightData
       } : {
-        StartDate: '',
-        EndDate: '',
-        TotalSpend: 0,
-        TotalDays: 0,
+        startDate: '',
+        endDate: '',
+        totalSpend: 0,
+        totalDays: 0,
         insightData
       };
       return {
@@ -75,10 +75,10 @@ class DashboardAdaptor {
               totalDays: insightData.length,
               insightData
             } : {
-              StartDate: '',
-              EndDate: '',
-              TotalSpend: 0,
-              TotalDays: 0,
+              startDate: '',
+              endDate: '',
+              totalSpend: 0,
+              totalDays: 0,
               insightData
             };
             return {
