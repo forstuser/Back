@@ -2,7 +2,7 @@
  * Created by arpit on 6/30/2017.
  */
 
-module.exports = (sequelize, Sequelize) => sequelize.define('table_online_seller', {
+module.exports = (sequelize, Sequelize) => sequelize.define('onlineSeller', {
   ID: {
     type: Sequelize.INTEGER,
     autoIncrement: true,
@@ -15,7 +15,7 @@ module.exports = (sequelize, Sequelize) => sequelize.define('table_online_seller
     field: 'seller_name'
   },
   URL: {
-    type: Sequelize.INTEGER,
+    type: Sequelize.STRING,
     field: 'seller_url'
   },
   GstinNo: {
@@ -35,5 +35,6 @@ module.exports = (sequelize, Sequelize) => sequelize.define('table_online_seller
 }, {
   freezeTableName: true,
   defaultPrimaryKey: false,
-  timestamps: false
+  timestamps: false,
+  tableName: 'table_online_seller'
 });

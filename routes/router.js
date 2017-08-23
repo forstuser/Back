@@ -1234,7 +1234,7 @@ module.exports = (app, models) => {
           timeout: 30034,
           allow: 'multipart/form-data',
           failAction: 'log',
-          maxBytes: 3000000
+          maxBytes: 209715200
         }
       }
     });

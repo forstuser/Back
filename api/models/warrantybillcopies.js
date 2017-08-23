@@ -7,8 +7,7 @@ module.exports = (sequelize, Sequelize) => sequelize.define('warrantyCopies', {
     type: Sequelize.INTEGER(11),
     allowNull: false,
     primaryKey: true,
-    autoIncrement: true,
-
+    autoIncrement: true
   },
   bill_warranty_id: {
     type: Sequelize.INTEGER(11),

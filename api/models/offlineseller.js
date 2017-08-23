@@ -2,7 +2,7 @@
  * Created by arpit on 6/30/2017.
  */
 
-module.exports = (sequelize, Sequelize) => sequelize.define('table_offline_seller', {
+module.exports = (sequelize, Sequelize) => sequelize.define('offlineSeller', {
   ID: {
     type: Sequelize.INTEGER,
     autoIncrement: true,
@@ -95,5 +95,6 @@ module.exports = (sequelize, Sequelize) => sequelize.define('table_offline_selle
 }, {
   freezeTableName: true,
   defaultPrimaryKey: false,
-  timestamps: false
+  timestamps: false,
+  tableName: 'table_offline_seller'
 });

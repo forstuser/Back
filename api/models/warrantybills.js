@@ -3,53 +3,53 @@
  */
 
 module.exports = (sequelize, Sequelize) => sequelize.define('warranty', {
-  ID: {
+  bill_warranty_id: {
     type: Sequelize.INTEGER(11),
     allowNull: false,
     primaryKey: true,
-    autoIncrement: true,
-    field: 'bill_warranty_id'
+    autoIncrement: true
   },
-  BillProductID: {
+  billProductID: {
     type: Sequelize.INTEGER(11),
     allowNull: false,
     field: 'bill_product_id'
   },
-  ProvideType: {
-    type: Sequelize.INTEGER(11),
-    allowNull: false,
-    field: 'warranty_provider_type'
+  sellerType: {
+    type: Sequelize.INTEGER,
+    field: 'seller_type'
   },
-  ProviderID: {
-    type: Sequelize.INTEGER(11),
-    allowNull: false,
-    field: 'warranty_provider_id'
+  sellerID: {
+    type: Sequelize.INTEGER,
+    field: 'seller_id'
   },
-  WarrantyType: {
+  warrantyType: {
     type: Sequelize.STRING(100),
     allowNull: false,
     field: 'warranty_type'
   },
-  PolicyNo: {
+  user_id: {
+    type: Sequelize.INTEGER
+  },
+  policyNo: {
     type: Sequelize.STRING,
     field: 'policy_number'
   },
-  PremiumType: {
-    type: Sequelize.ENUM('Yearly','HalfYearly','Quarterly','Monthly','Weekly','Daily'),
+  premiumType: {
+    type: Sequelize.ENUM('Yearly', 'HalfYearly', 'Quarterly', 'Monthly', 'Weekly', 'Daily'),
     allowNull: false,
     defaultValue: 'Yearly',
     field: 'premium_type'
   },
-  PremiumAmount: {
-    type:Sequelize.FLOAT,
+  premiumAmount: {
+    type: Sequelize.FLOAT,
     field: 'premium_amount'
   },
-  EffectiveDate: {
+  effectiveDate: {
     type: Sequelize.DATE(6),
     default: Sequelize.NOW,
     field: 'policy_effective_date'
   },
-  ExpiryDate: {
+  expiryDate: {
     type: Sequelize.DATE(6),
     default: Sequelize.NOW,
     field: 'policy_expiry_date'

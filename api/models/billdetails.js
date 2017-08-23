@@ -28,9 +28,8 @@ module.exports = (sequelize, Sequelize) => sequelize.define('consumerBillDetails
     type: Sequelize.STRING,
     field: 'consumer_phone_no'
   },
-  DocID: {
-    type: Sequelize.INTEGER,
-    field: 'document_id'
+  document_id: {
+    type: Sequelize.INTEGER
   },
   InvoiceNo: {
     type: Sequelize.STRING,
@@ -58,6 +57,9 @@ module.exports = (sequelize, Sequelize) => sequelize.define('consumerBillDetails
     defaultValue: Sequelize.NOW
   },
   updated_by_user_id: {
+    type: Sequelize.INTEGER
+  },
+  user_id: {
     type: Sequelize.INTEGER
   },
   status_id: {

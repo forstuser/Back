@@ -2,49 +2,50 @@
  * Created by arpit on 6/30/2017.
  */
 
-module.exports = (sequelize, Sequelize) => sequelize.define(
-    'amcBills', {
-  ID: {
+module.exports = (sequelize, Sequelize) => sequelize.define('amcBills', {
+  bill_amc_id: {
     type: Sequelize.INTEGER,
     autoIncrement: true,
-    primaryKey: true,
-    field: 'bill_amc_id'
+    primaryKey: true
   },
-  BillProductID: {
+  billProductID: {
     type: Sequelize.INTEGER,
     field: 'bill_product_id'
   },
-  ProviderType: {
+  sellerType: {
     type: Sequelize.INTEGER,
-    field: 'amc_provider_type'
+    field: 'seller_type'
   },
-  ProviderID: {
+  sellerID: {
     type: Sequelize.INTEGER,
-    field: 'amc_provider_id'
+    field: 'seller_id'
   },
-  PolicyNo: {
+  policyNo: {
     type: Sequelize.STRING,
     field: 'policy_number'
   },
-  PremiumType: {
-    type: Sequelize.ENUM('Yearly','HalfYearly','Quarterly','Monthly','Weekly','Daily'),
+  premiumType: {
+    type: Sequelize.ENUM('Yearly', 'HalfYearly', 'Quarterly', 'Monthly', 'Weekly', 'Daily'),
     allowNull: false,
     defaultValue: 'Yearly',
     field: 'premium_type'
   },
-  PremiumAmount: {
-    type:Sequelize.FLOAT,
+  premiumAmount: {
+    type: Sequelize.FLOAT,
     field: 'premium_amount'
   },
-  EffectiveDate: {
+  effectiveDate: {
     type: Sequelize.DATE(6),
     default: Sequelize.NOW,
     field: 'policy_effective_date'
   },
-  ExpiryDate: {
+  expiryDate: {
     type: Sequelize.DATE(6),
     default: Sequelize.NOW,
     field: 'policy_expiry_date'
+  },
+  user_id: {
+    type: Sequelize.INTEGER
   },
   status_id: {
     type: Sequelize.INTEGER
@@ -53,5 +54,5 @@ module.exports = (sequelize, Sequelize) => sequelize.define(
   freezeTableName: true,
   defaultPrimaryKey: false,
   timestamps: false,
-      tableName: 'table_consumer_bill_amc'
+  tableName: 'table_consumer_bill_amc'
 });

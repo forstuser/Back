@@ -3,55 +3,57 @@
  */
 
 module.exports = (sequelize, Sequelize) => sequelize.define('insuranceBills', {
-  ID: {
+  bill_insurance_id: {
     type: Sequelize.INTEGER,
     autoIncrement: true,
-    primaryKey: true,
-    field: 'bill_insurance_id'
+    primaryKey: true
   },
-  BillProductID: {
+  billProductID: {
     type: Sequelize.INTEGER,
     field: 'bill_product_id'
   },
-  ProviderType: {
+  sellerType: {
     type: Sequelize.INTEGER,
-    field: 'insurance_provider_type'
+    field: 'seller_type'
   },
-  ProviderID: {
+  sellerID: {
     type: Sequelize.INTEGER,
-    field: 'insurance_provider_id'
+    field: 'seller_id'
   },
-  Plan: {
+  plan: {
     type: Sequelize.STRING,
     field: 'insurance_plan'
   },
-  PolicyNo: {
+  policyNo: {
     type: Sequelize.STRING,
     field: 'policy_number'
   },
-  AmountInsured: {
+  amountInsured: {
     type: Sequelize.FLOAT,
     field: 'amount_insured'
   },
-  PremiumType: {
-    type: Sequelize.ENUM('Yearly','HalfYearly','Quarterly','Monthly','Weekly','Daily'),
+  premiumType: {
+    type: Sequelize.ENUM('Yearly', 'HalfYearly', 'Quarterly', 'Monthly', 'Weekly', 'Daily'),
     allowNull: false,
     defaultValue: 'Yearly',
     field: 'premium_type'
   },
-  PremiumAmount: {
-    type:Sequelize.FLOAT,
+  premiumAmount: {
+    type: Sequelize.FLOAT,
     field: 'premium_amount'
   },
-  EffectiveDate: {
+  effectiveDate: {
     type: Sequelize.DATE(6),
     default: Sequelize.NOW,
     field: 'policy_effective_date'
   },
-  ExpiryDate: {
+  expiryDate: {
     type: Sequelize.DATE(6),
     default: Sequelize.NOW,
     field: 'policy_expiry_date'
+  },
+  user_id: {
+    type: Sequelize.INTEGER
   },
   status_id: {
     type: Sequelize.INTEGER
