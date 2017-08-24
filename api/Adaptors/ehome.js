@@ -86,10 +86,8 @@ class EHomeAdaptor {
                 user_status: 5,
                 admin_status: 5
               },
-              attributes: [],
-              required: true
-            }],
-            required: false
+              attributes: []
+            }]
           }],
           attributes: [['product_name', 'name']],
           required: false
