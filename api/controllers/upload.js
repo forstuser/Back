@@ -182,7 +182,7 @@ class UploadController {
           ID: request.params.id
         }
       }).then((result) => {
-        fsImpl.readFile(result.CopyName, 'utf8').then(fileResult => reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${result.CopyName}`)).catch(reply);
+        fsImplUser.readFile(result.CopyName, 'utf8').then(fileResult => reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${result.CopyName}`)).catch(reply);
       }).catch((err) => {
         reply(err);
       });
