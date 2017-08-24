@@ -107,6 +107,9 @@ module.exports = (sequelize, Sequelize) => sequelize.define('table_users', {
   },
   share_email: {
     type: Sequelize.BOOLEAN
+  },
+  email_verified: {
+    type: Sequelize.BOOLEAN
   }
 }, {
   freezeTableName: true,
