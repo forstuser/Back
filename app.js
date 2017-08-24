@@ -14,7 +14,7 @@ const connection = MySQL.createConnection({
     database: 'binbill'
 });
 //server.connection({ port: 3000});
-server.connection({ port: 3000, host: '192.168.0.9'});
+server.connection({ port: 3001, host: '192.168.0.9'});
 server.register({
     register: require('hapi-cors'),
     options: {
@@ -131,12 +131,12 @@ server.route({
         const TokenNo = request.payload.TokenNo;
         const Level = request.payload.Level;
         const RefID = request.payload.RefID;
-        const Name = request.payload.Name;
+        const Name = request.payload.Name.trim();
         connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
                 var UserID = token[0]['user_id'];
-                connection.query('SELECT category_id FROM table_categories WHERE category_name = "' + Name + '" and status_id=1 and ref_id="'+RefID+'"', function (error, category, fields) {
+                connection.query('SELECT category_id FROM table_categories WHERE category_name = "'+Name+'" and status_id=1 and ref_id="'+RefID+'"', function (error, category, fields) {
                     if (error) throw error;
                     if(category.length > 0){
                         var data = '{"statusCode": 104,"error": "Data Exist","message": "Data Exist."}';
@@ -2707,8 +2707,11 @@ server.route({
                             if (error) throw error;
                             connection.query('SELECT d.bill_detail_id as DetailID,d.consumer_name as Name,d.consumer_email_id as EmailID,d.consumer_phone_no as PhoneNo,d.invoice_number as Invoice, d.total_purchase_value as TotalAmount,d.taxes as Tex,d.purchase_date as PurchaseDate FROM table_consumer_bill_details as d LEFT JOIN table_consumer_bill_mapping as m on (m.ref_id=d.bill_detail_id and m.bill_ref_type=1) WHERE m.bill_id = "' + ID + '" and d.status_id!=3', function (error, detail, fields) {
                                 if (error) throw error;
-                                var data = '{"statusCode": 100,"BillID":'+bill[0]['BillID']+',"BillNo":"'+bill[0]['BillNo']+'","UserID":"'+bill[0]['UserID']+'","Name":"'+bill[0]['Name']+'","EmailID":"'+bill[0]['EmailID']+'","PhoneNo":"'+bill[0]['PhoneNo']+'","ImageList": '+ JSON.stringify(image) +',"Detail": '+ JSON.stringify(detail) +'}';
-                                reply(data);
+                                connection.query('SELECT p.bill_product_id as ProductID,p.product_name as ProductName,p.value_of_purchase as Value,p.taxes as Taxes,p.tag as Tag,mc.category_name as MasterCatName,c.category_name as CatName, b.brand_name,co.color_name FROM table_consumer_bill_products as p LEFT JOIN table_consumer_bill_mapping as m on (m.ref_id=p.bill_product_id and m.bill_ref_type=2) LEFT JOIN table_categories as mc on mc.category_id=p.master_category_id LEFT JOIN table_categories as c on c.category_id=p.category_id LEFT JOIN table_brands as b on b.brand_id=p.brand_id LEFT JOIN table_color as co on co.color_id=p.color_id WHERE m.bill_id = "' + ID + '" and p.status_id!=3', function (error, productdetail, fields) {
+                                    if (error) throw error;
+                                    var data = '{"statusCode": 100,"BillID":'+bill[0]['BillID']+',"BillNo":"'+bill[0]['BillNo']+'","UserID":"'+bill[0]['UserID']+'","Name":"'+bill[0]['Name']+'","EmailID":"'+bill[0]['EmailID']+'","PhoneNo":"'+bill[0]['PhoneNo']+'","ImageList": '+ JSON.stringify(image) +',"Detail": '+ JSON.stringify(detail) +',"ProductDetail": '+ JSON.stringify(productdetail) +'}';
+                                    reply(data);
+                                });
                             });
                         });
                     } else {
@@ -2921,9 +2924,9 @@ server.route({
                         }
                     }
                     //Update ce status
-                    connection.query('UPDATE table_cust_executive_tasks SET status_id=5 WHERE bill_id="'+BillID +'" and user_id="'+UserID+'"', function (error, results, fields) {
+                   /* connection.query('UPDATE table_cust_executive_tasks SET status_id=5 WHERE bill_id="'+BillID +'" and user_id="'+UserID+'"', function (error, results, fields) {
                         if (error) throw error;
-                    });
+                    });*/
                     var data = '{"statusCode": 100,"message": "Data added."}';
                     reply(data);
                 });
@@ -2981,7 +2984,7 @@ server.route({
                                     id.push(product[i].ProductID);
                                 }
                                 var ProductIDList = id.join();
-                                connection.query('SELECT m.bill_product_id as ProductID,m.cateogry_form_id as CatFormID,m.form_element_value as value, cf.form_element_name as CatFormName,mc.dropdown_name as DropdownValue FROM table_consumer_bill_product_meta_data as m left join table_cateogry_form as cf on cf.cateogry_form_id=m.cateogry_form_id left join table_cateogry_form_mapping as mc on (mc.mapping_id=m.form_element_value and cf.form_element_type=2)  WHERE m.bill_product_id IN ('+ProductIDList+')', function (error, productform, fields) {
+                                connection.query('SELECT m.bill_product_id as ProductID,m.cateogry_form_id as CatFormID,m.form_element_value as value, cf.form_element_name as CatFormName,cf.form_element_type as ElementType,mc.dropdown_name as DropdownValue FROM table_consumer_bill_product_meta_data as m left join table_cateogry_form as cf on cf.cateogry_form_id=m.cateogry_form_id left join table_cateogry_form_mapping as mc on (mc.mapping_id=m.form_element_value and cf.form_element_type=2)  WHERE m.bill_product_id IN ('+ProductIDList+')', function (error, productform, fields) {
                                     if (error) throw error;
                                     connection.query('SELECT bill_insurance_id as InsuranceID,bill_product_id as ProductID,seller_type as SellerType, seller_id as SellerID, insurance_plan as Plan,policy_number as PolicyNo,amount_insured as AmountInsured,premium_type as PremiumType,premium_amount as PremiumAmount,policy_effective_date as PolicyEffectiveDate,policy_expiry_date as PolicyExpiryDate FROM table_consumer_bill_insurance  WHERE bill_product_id IN ('+ProductIDList+')', function (error, insurance, fields) {
                                         if (error) throw error;
@@ -3292,9 +3295,9 @@ server.route({
                 }
 
                 //Update ce status
-                connection.query('UPDATE table_cust_executive_tasks SET status_id=5 WHERE bill_id="'+BillID +'" and user_id="'+UserID+'"', function (error, results, fields) {
+                /*connection.query('UPDATE table_cust_executive_tasks SET status_id=5 WHERE bill_id="'+BillID +'" and user_id="'+UserID+'"', function (error, results, fields) {
                     if (error) throw error;
-                });
+                });*/
                 var data = '{"statusCode": 100,"message": "Data updated."}';
                 reply(data);
             } else {
@@ -3335,7 +3338,7 @@ server.route({
             if (error) throw error;
             if(token.length > 0){
                 var UserID = token[0]['user_id'];
-                connection.query('SELECT exclusions_id as ID,exclusions_name as Name FROM table_list_of_exclusions WHERE category_id = "' + RefID + '" and status_id!=3 ', function (error, exclusions, fields) {
+                connection.query('SELECT exclusions_id as id,exclusions_name as name FROM table_list_of_exclusions WHERE category_id = "' + RefID + '" and status_id!=3 ', function (error, exclusions, fields) {
                     if (error) throw error;
                     if(exclusions.length > 0){
                         var data = '{"statusCode": 100,"ExclusionsList": '+ JSON.stringify(exclusions) +'}';
@@ -3373,7 +3376,7 @@ server.route({
             if (error) throw error;
             if(token.length > 0){
                 var UserID = token[0]['user_id'];
-                connection.query('SELECT inclusions_id as ID,inclusions_name as Name FROM table_list_of_inclusions WHERE category_id = "' + RefID + '" and status_id!=3 ', function (error, inclusions, fields) {
+                connection.query('SELECT inclusions_id as id,inclusions_name as name FROM table_list_of_inclusions WHERE category_id = "' + RefID + '" and status_id!=3 ', function (error, inclusions, fields) {
                     if (error) throw error;
                     if(inclusions.length > 0){
                         var data = '{"statusCode": 100,"InclusionsList": '+ JSON.stringify(inclusions) +'}';
@@ -3407,16 +3410,15 @@ server.route({
     path: '/Services/TaskCompleteQE',
     handler: function (request, reply) {
         const TokenNo = request.payload.TokenNo;
-        const UID = request.payload.UID;
         const BID = request.payload.BID;
         connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
                 var UserID = token[0]['user_id'];
-                connection.query('UPDATE table_qual_executive_tasks SET status_id=5 WHERE bill_id="'+BillID +'"', function (error, results, fields) {
+                connection.query('UPDATE table_qual_executive_tasks SET status_id=5 WHERE bill_id="'+BID +'"', function (error, results, fields) {
                     if (error) throw error;
                 })
-                connection.query('UPDATE table_consumer_bills SET user_status=5, admin_status=5 WHERE bill_id="'+BillID +'"', function (error, results, fields) {
+                connection.query('UPDATE table_consumer_bills SET user_status=5, admin_status=5 WHERE bill_id="'+BID +'"', function (error, results, fields) {
                     if (error) throw error;
                 });
                 var data = '{"statusCode": 100,"error": "","message": "Task Complete successfully."}';
@@ -3590,9 +3592,226 @@ server.route({
                     }
                 }
                 //Update ce status
-                connection.query('UPDATE table_cust_executive_tasks SET status_id=5 WHERE bill_id="'+BillID +'" and user_id="'+UserID+'"', function (error, results, fields) {
+               /* connection.query('UPDATE table_cust_executive_tasks SET status_id=5 WHERE bill_id="'+BillID +'" and user_id="'+UserID+'"', function (error, results, fields) {
                     if (error) throw error;
-                });
+                });*/
+                var data = '{"statusCode": 100,"message": "Data added."}';
+                reply(data);
+            } else {
+                var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+                reply(data);
+            }
+        });
+    },
+    config:{
+        validate: {
+            payload: {
+                TokenNo: Joi.string().required(),
+                UserID: Joi.number().integer().required(),
+                BillID: Joi.number().integer().required(),
+                ProductID: Joi.number().integer().required(),
+                InsuranceList: Joi.array(),
+                WarrantyList: Joi.array(),
+                AMCList: Joi.array(),
+                RepairList: Joi.array(),
+                output: 'data',
+                parse:true
+            }
+        }
+    }
+});
+//Edit Consumer Product
+server.route({
+    method: 'POST',
+    path: '/Services/EditConsumerProduct',
+    handler: function (request, reply) {
+        const TokenNo = request.payload.TokenNo;
+        const BillUserID = request.payload.UserID;
+        const BillID = request.payload.BillID;
+        const ProductID = request.payload.ProductID;
+        const InsuranceList = request.payload.InsuranceList;
+        const WarrantyList = request.payload.WarrantyList;
+        const AMCList = request.payload.AMCList;
+        const RepairList = request.payload.RepairList;
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+            if (error) throw error;
+            if(token.length > 0){
+                var UserID = token[0]['user_id'];
+                // Update Insurance
+                if(InsuranceList.length > 0){
+                    for(var i = 0; i < InsuranceList.length; i++) {
+                        var Insurance = InsuranceList[i];
+                        var InsuranceSellerInfo = InsuranceList[i].SellerInfo;
+                        var InsuranceInclusions = InsuranceList[i].Inclusions;
+                        var InsuranceExclusions = InsuranceList[i].Exclusions;
+                        var InsuranceImage = InsuranceList[i].InsuranceImage;
+                        if(InsuranceList[i].BrandID != null && InsuranceList[i].BrandID!='') {
+                            var SellerType = 1;
+                            var SellerID = InsuranceList[i].BrandID;
+                        } else {
+                            var SellerType = 2;
+                            var SellerID = InsuranceList[i].SellerInfo;
+                        }
+                        connection.query('UPDATE table_consumer_bill_insurance SET seller_type = "'+SellerType+'",seller_id = "'+SellerID+'",insurance_plan = "' + InsuranceList[i].Plan + '",policy_number = "' + InsuranceList[i].PolicyNo + '",amount_insured = "' + InsuranceList[i].AmountInsured + '",premium_type = "' + InsuranceList[i].PremiumType + '",premium_amount = "' + InsuranceList[i].PremiumAmount + '",policy_effective_date = "' + InsuranceList[i].PolicyEffectiveDate + '",policy_expiry_date = "' + InsuranceList[i].PolicyExpiryDate + '" WHERE bill_insurance_id = "' + InsuranceList[i].InsuranceID + '" ', function (error, insurance, fields) {
+                            if (error) throw error;
+                        });
+                        var InsuranceID = InsuranceList[i].InsuranceID;
+                        if(InsuranceImage.length > 0){
+                            connection.query('DELETE FROM table_consumer_bill_insurance_copies WHERE bill_insurance_id="'+InsuranceID+'"', function (error, results, fields) {
+                                if (error) throw error;
+                            });
+                            for(var i = 0; i < InsuranceImage.length; i++) {
+                                connection.query('INSERT INTO table_consumer_bill_insurance_copies (bill_insurance_id,bill_copy_id) VALUES ("'+InsuranceID+'","'+InsuranceImage[i]+'")', function (error, list, fields) {
+                                });
+                            }
+                        }
+                        if(InsuranceInclusions.length > 0){
+                            connection.query('DELETE FROM table_consumer_bill_insurance_inclusions WHERE bill_insurance_id="'+InsuranceID+'"', function (error, results, fields) {
+                                if (error) throw error;
+                            });
+                            for(var i = 0; i < InsuranceInclusions.length; i++) {
+                                connection.query('INSERT INTO table_consumer_bill_insurance_inclusions (bill_insurance_id,inclusions_id) VALUES ("'+InsuranceID+'","'+InsuranceInclusions[i]+'")', function (error, list, fields) {
+                                });
+                            }
+                        }
+                        if(InsuranceExclusions.length > 0){
+                            connection.query('DELETE FROM table_consumer_bill_insurance_exclusions WHERE bill_insurance_id="'+InsuranceID+'"', function (error, results, fields) {
+                                if (error) throw error;
+                            });
+                            for(var i = 0; i < InsuranceExclusions.length; i++) {
+                                connection.query('INSERT INTO table_consumer_bill_insurance_exclusions (bill_insurance_id,exclusions_id) VALUES ("'+InsuranceID+'","'+InsuranceExclusions[i]+'")', function (error, list, fields) {
+                                });
+                            }
+                        }
+
+                    }
+                }
+                //Update Warranty
+                if(WarrantyList.length > 0){
+                    for(var w = 0; w < WarrantyList.length; w++) {
+                        var Warranty = WarrantyList[w];
+                        var WarrantySellerInfo = WarrantyList[w].SellerInfo;
+                        var WarrantyInclusions = WarrantyList[w].Inclusions;
+                        var WarrantyExclusions = WarrantyList[w].Exclusions;
+                        var WarrantyImage = WarrantyList[w].WarrantyImage;
+                        if(WarrantyList[w].BrandID != null && WarrantyList[w].BrandID!='') {
+                            var SellerType = 1;
+                            var SellerID = WarrantyList[w].BrandID;
+                        } else {
+                            var SellerType = 2;
+                            var SellerID = WarrantyList[w].SellerInfo;
+                        }
+                        connection.query('UPDATE table_consumer_bill_warranty SET seller_type = "'+SellerType+'",seller_id = "'+SellerID+'",warranty_type = "'+WarrantyList[w].WarrantyType+'",policy_number = "'+WarrantyList[w].PolicyNo+'",premium_type = "'+WarrantyList[w].PremiumType+'",premium_amount = "'+WarrantyList[w].PremiumAmount+'",policy_effective_date = "'+WarrantyList[w].PolicyEffectiveDate+'",policy_expiry_date = "'+WarrantyList[w].PolicyExpiryDate+'" WHERE bill_warranty_id = "'+WarrantyList[w].WarrantyID+'" ', function (error, warranty, fields) {
+                            if (error) throw error;
+                        });
+                        if(WarrantyImage.length > 0){
+                            connection.query('DELETE FROM table_consumer_bill_warranty_copies WHERE bill_warranty_id="'+WarrantyList[w].WarrantyID+'"', function (error, results, fields) {
+                                if (error) throw error;
+                            });
+                            for(var i = 0; i < WarrantyImage.length; i++) {
+                                connection.query('INSERT INTO table_consumer_bill_warranty_copies (bill_warranty_id,bill_copy_id) VALUES ("'+WarrantyList[w].WarrantyID+'","'+WarrantyImage[i]+'")', function (error, list, fields) {
+                                });
+                            }
+                        }
+                        if(WarrantyInclusions.length > 0){
+                            connection.query('DELETE FROM table_consumer_bill_warranty_inclusions WHERE bill_warranty_id="'+WarrantyList[w].WarrantyID+'"', function (error, results, fields) {
+                                if (error) throw error;
+                            });
+                            for(var i = 0; i < WarrantyInclusions.length; i++) {
+                                connection.query('INSERT INTO table_consumer_bill_warranty_inclusions ( bill_warranty_id,inclusions_id) VALUES ("'+WarrantyList[w].WarrantyID+'","'+WarrantyInclusions[i]+'")', function (error, list, fields) {
+                                });
+                            }
+                        }
+                        if(WarrantyExclusions.length > 0){
+                            connection.query('DELETE FROM table_consumer_bill_warranty_exclusions WHERE bill_warranty_id="'+WarrantyList[w].WarrantyID+'"', function (error, results, fields) {
+                                if (error) throw error;
+                            });
+                            for(var i = 0; i < WarrantyExclusions.length; i++) {
+                                connection.query('INSERT INTO table_consumer_bill_warranty_exclusions (bill_warranty_id,exclusions_id) VALUES ("'+WarrantyList[w].WarrantyID+'","'+WarrantyExclusions[i]+'")', function (error, list, fields) {
+                                });
+                            }
+                        }
+
+                    }
+                }
+                //Update AMC
+                if(AMCList.length > 0){
+                    for(var a = 0; a < AMCList.length; a++) {
+                        var AMC = AMCList[a];
+                        var AMCSellerInfo = AMCList[a].SellerInfo;
+                        var AMCInclusions = AMCList[a].Inclusions;
+                        var AMCExclusions = AMCList[a].Exclusions;
+                        var AMCImage = AMCList[a].AMCImage;
+                        if(AMCList[a].BrandID != null && AMCList[a].BrandID!='') {
+                            var SellerType = 1;
+                            var SellerID = AMCList[a].BrandID;
+                        } else {
+                            var SellerType = 2;
+                            var SellerID = AMCList[a].SellerInfo;
+                        }
+                        connection.query('UPDATE table_consumer_bill_amc SET seller_type = "'+SellerType+'",seller_id = "'+SellerID+'",policy_number = "'+AMCList[a].PolicyNo+'",premium_type = "'+AMCList[a].PremiumType+'",premium_amount = "'+AMCList[a].PremiumAmount+'",policy_effective_date = "'+AMCList[a].PolicyEffectiveDate+'",policy_expiry_date = "'+AMCList[a].PolicyExpiryDate+'" WHERE bill_amc_id = "'+AMCList[a].AmcID+'" ', function (error, amc, fields) {
+                            if (error) throw error;
+                        });
+                        if(AMCImage.length > 0){
+                            connection.query('DELETE FROM table_consumer_bill_amc_copies WHERE bill_amc_id = "'+AMCList[a].AmcID+'"', function (error, results, fields) {
+                                if (error) throw error;
+                            });
+                            for(var i = 0; i < AMCImage.length; i++) {
+                                connection.query('INSERT INTO table_consumer_bill_amc_copies (bill_amc_id,bill_copy_id) VALUES ("'+AMCList[a].AmcID+'","'+AMCImage[i]+'")', function (error, list, fields) {
+                                });
+                            }
+                        }
+                        if(AMCInclusions.length > 0){
+                            connection.query('DELETE FROM table_consumer_bill_amc_inclusions WHERE bill_amc_id = "'+AMCList[a].AmcID+'"', function (error, results, fields) {
+                                if (error) throw error;
+                            });
+                            for(var i = 0; i < AMCInclusions.length; i++) {
+                                connection.query('INSERT INTO table_consumer_bill_amc_inclusions (bill_amc_id,inclusions_id) VALUES ("'+AMCList[a].AmcID+'","'+AMCInclusions[i]+'")', function (error, list, fields) {
+                                });
+                            }
+                        }
+                        if(AMCInclusions.length > 0){
+                            connection.query('DELETE FROM table_consumer_bill_amc_exclusions WHERE bill_amc_id = "'+AMCList[a].AmcID+'"', function (error, results, fields) {
+                                if (error) throw error;
+                            });
+                            for(var i = 0; i < AMCInclusions.length; i++) {
+                                connection.query('INSERT INTO table_consumer_bill_amc_exclusions (bill_amc_id,exclusions_id) VALUES ("'+AMCList[a].AmcID+'","'+AMCExclusions[i]+'")', function (error, list, fields) {
+                                });
+                            }
+                        }
+
+                    }
+                }
+                //Update Repair
+                if(RepairList.length > 0){
+                    for(var r = 0; r < RepairList.length; r++) {
+                        var RepairImage = RepairList[r].RepairImage;
+                        if(RepairList[r].BrandID != null && RepairList[r].BrandID!='') {
+                            var SellerType = 1;
+                            var SellerID = RepairList[r].BrandID;
+                        } else {
+                            var SellerType = 2;
+                            var SellerID = RepairList[r].SellerInfo;
+                        }
+                        connection.query('UPDATE table_consumer_bill_repair SET seller_type = "'+SellerType+'",seller_id = "'+SellerID+'",value_of_repair = "'+RepairList[r].RepairValue+'",taxes = "'+RepairList[r].Taxes+'",repair_invoice_number = "'+RepairList[r].RepairInvoiceNumber+'",repair_date = "'+RepairList[r].RepairDate+'" WHERE bill_repair_id = "'+RepairList[r].RepairID+'" ', function (error, repair, fields) {
+                            if (error) throw error;
+                        });
+                        if(RepairImage.length > 0){
+                            connection.query('DELETE FROM table_consumer_bill_repair_copies WHERE bill_repair_id = "'+RepairList[r].RepairID+'"', function (error, results, fields) {
+                                if (error) throw error;
+                            });
+                            for(var i = 0; i < RepairImage.length; i++) {
+                                connection.query('INSERT INTO table_consumer_bill_repair_copies (bill_repair_id,bill_copy_id) VALUES ("'+RepairList[r].RepairID+'","'+RepairImage[i]+'")', function (error, list, fields) {
+                                });
+                            }
+                        }
+
+                    }
+                }
+                //Update ce status
+                /*connection.query('UPDATE table_cust_executive_tasks SET status_id=5 WHERE bill_id="'+BillID +'" and user_id="'+UserID+'"', function (error, results, fields) {
+                    if (error) throw error;
+                });*/
                 var data = '{"statusCode": 100,"message": "Data updated."}';
                 reply(data);
             } else {
@@ -3612,6 +3831,183 @@ server.route({
                 WarrantyList: Joi.array(),
                 AMCList: Joi.array(),
                 RepairList: Joi.array(),
+                output: 'data',
+                parse:true
+            }
+        }
+    }
+});
+//Get Consumer Bill Product By ID
+server.route({
+    method: 'POST',
+    path: '/Services/ConsumerBillProductByID',
+    handler: function (request, reply) {
+        const TokenNo = request.payload.TokenNo;
+        const ID = request.payload.ID;
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+            if (error) throw error;
+            if(token.length > 0){
+                var UserID = token[0]['user_id'];
+                connection.query('SELECT p.bill_product_id as ProductID,p.product_name as ProductName,p.value_of_purchase as Value,p.taxes as Taxes,p.tag as Tag,mc.category_name as MasterCatName,c.category_name as CatName, b.brand_name,co.color_name FROM table_consumer_bill_products as p LEFT JOIN table_categories as mc on mc.category_id=p.master_category_id LEFT JOIN table_categories as c on c.category_id=p.category_id LEFT JOIN table_brands as b on b.brand_id=p.brand_id LEFT JOIN table_color as co on co.color_id=p.color_id WHERE p.bill_product_id = "'+ID+ '"', function (error, product, fields) {
+                    if (error) throw error;
+                    if(product.length > 0){
+                        connection.query('SELECT m.bill_product_id as ProductID,m.cateogry_form_id as CatFormID,m.form_element_value as value, cf.form_element_name as CatFormName,cf.form_element_type as ElementType,mc.dropdown_name as DropdownValue FROM table_consumer_bill_product_meta_data as m left join table_cateogry_form as cf on cf.cateogry_form_id=m.cateogry_form_id left join table_cateogry_form_mapping as mc on (mc.mapping_id=m.form_element_value and cf.form_element_type=2)  WHERE m.bill_product_id ='+product[0].ProductID+'', function (error, productform, fields) {
+                            if (error) throw error;
+                            connection.query('SELECT bill_insurance_id as InsuranceID,bill_product_id as ProductID,seller_type as SellerType, seller_id as SellerID, insurance_plan as Plan,policy_number as PolicyNo,amount_insured as AmountInsured,premium_type as PremiumType,premium_amount as PremiumAmount,policy_effective_date as PolicyEffectiveDate,policy_expiry_date as PolicyExpiryDate FROM table_consumer_bill_insurance  WHERE bill_product_id ='+product[0].ProductID+'', function (error, insurance, fields) {
+                                if (error) throw error;
+                                var insuranceid = [];
+                                for(var i = 0; i < insurance.length; i++) {
+                                    insuranceid.push(insurance[i].InsuranceID);
+                                }
+                                var InsuranceIDList = insuranceid.join();
+                                connection.query('SELECT bill_insurance_id as InsuranceID,bill_copy_id as ImageID FROM table_consumer_bill_insurance_copies WHERE bill_insurance_id IN ('+InsuranceIDList+')', function (error, insuranceimage, fields) {
+                                    if (error) throw error;
+                                    connection.query('SELECT i.bill_insurance_id as InsuranceID,i.inclusions_id as InclusionsID,il.inclusions_name as InclusionsName FROM table_consumer_bill_insurance_inclusions as i LEFT JOIN table_list_of_inclusions as il on il.inclusions_id=i.inclusions_id WHERE i.bill_insurance_id IN ('+InsuranceIDList+')', function (error, insuranceinclusions, fields) {
+                                        if (error) throw error;
+                                        connection.query('SELECT e.bill_insurance_id as InsuranceID,e.exclusions_id as ExclusionsID,el.exclusions_name as ExclusionsName FROM table_consumer_bill_insurance_exclusions as e LEFT JOIN table_list_of_exclusions as el on el.exclusions_id=e.exclusions_id WHERE e.bill_insurance_id IN ('+InsuranceIDList+')', function (error, insuranceexclusions, fields) {
+                                            if (error) throw error;
+                                            connection.query('SELECT bill_warranty_id as WarrantyID,bill_product_id as ProductID,seller_type as SellerType,seller_id as SellerID,warranty_type as WarrantyType,policy_number as PolicyNo,premium_type as PremiumType,premium_amount as PremiumAmount,policy_effective_date as PolicyEffectiveDate,policy_expiry_date as PolicyExpiryDate FROM table_consumer_bill_warranty  WHERE bill_product_id ='+product[0].ProductID+'', function (error, warranty, fields) {
+                                                if (error) throw error;
+                                                var warrantyid = [];
+                                                for(var i = 0; i < warranty.length; i++) {
+                                                    warrantyid.push(warranty[i].WarrantyID);
+                                                }
+                                                var WarrantyIDList = warrantyid.join();
+                                                connection.query('SELECT bill_warranty_id as WarrantyID,bill_copy_id as ImageID FROM table_consumer_bill_warranty_copies WHERE bill_warranty_id IN ('+WarrantyIDList+')', function (error, warrantyimage, fields) {
+                                                    if (error) throw error;
+                                                    connection.query('SELECT e.bill_warranty_id as WarrantyID,e.exclusions_id as ExclusionsID,el.exclusions_name as ExclusionsName FROM table_consumer_bill_warranty_exclusions as e LEFT JOIN table_list_of_exclusions as el on el.exclusions_id=e.exclusions_id WHERE e.bill_warranty_id IN ('+WarrantyIDList+')', function (error, warrantyexclusions, fields) {
+                                                        if (error) throw error;
+                                                        connection.query('SELECT i.bill_warranty_id as WarrantyID,i.inclusions_id as InclusionsID,il.inclusions_name as InclusionsName FROM table_consumer_bill_warranty_inclusions as i LEFT JOIN table_list_of_inclusions as il on il.inclusions_id=i.inclusions_id WHERE i.bill_warranty_id IN ('+WarrantyIDList+')', function (error, warrantyinclusions, fields) {
+                                                            if (error) throw error;
+                                                            connection.query('SELECT bill_amc_id as AmcID,bill_product_id as ProductID,seller_type as SellerType,seller_id as SellerID,policy_number as PolicyNo,premium_type as PremiumType,premium_amount as PremiumAmount,policy_effective_date as PolicyEffectiveDate,policy_expiry_date as PolicyExpiryDate FROM table_consumer_bill_amc  WHERE bill_product_id ='+product[0].ProductID+'', function (error, amc, fields) {
+                                                                if (error) throw error;
+                                                                var amcid = [];
+                                                                for (var i = 0; i < amc.length; i++) {
+                                                                    amcid.push(amc[i].AmcID);
+                                                                }
+                                                                var AMCIDList = amcid.join();
+                                                                connection.query('SELECT bill_amc_id as AmcID,bill_copy_id as ImageID FROM table_consumer_bill_amc_copies WHERE bill_amc_id IN ('+AMCIDList+')', function (error, amcimage, fields) {
+                                                                    if (error) throw error;
+                                                                    connection.query('SELECT e.bill_amc_id as AmcID,e.exclusions_id as ExclusionsID,el.exclusions_name as ExclusionsName FROM table_consumer_bill_amc_exclusions as e LEFT JOIN table_list_of_exclusions as el on el.exclusions_id=e.exclusions_id WHERE e.bill_amc_id IN ('+AMCIDList+')', function (error, amcexclusions, fields) {
+                                                                        if (error) throw error;
+                                                                        connection.query('SELECT i.bill_amc_id as AmcID,i.inclusions_id as InclusionsID,il.inclusions_name as InclusionsName FROM table_consumer_bill_amc_inclusions as i LEFT JOIN table_list_of_inclusions as il on il.inclusions_id=i.inclusions_id WHERE i.bill_amc_id IN (' + AMCIDList + ')', function (error, amcinclusions, fields) {
+                                                                            if (error) throw error;
+                                                                            connection.query('SELECT bill_repair_id as RepairID,bill_product_id as ProductID,seller_type as SellerType,seller_id as SellerID,value_of_repair as RepairValue,taxes as Taxes,repair_invoice_number as RepairInvoiceNumber,repair_date as RepairDate FROM table_consumer_bill_repair  WHERE bill_product_id ='+product[0].ProductID+'', function (error, repair, fields) {
+                                                                                if (error) throw error;
+                                                                                var repairid = [];
+                                                                                for(var i = 0; i < repair.length; i++) {
+                                                                                    repairid.push(repair[i].RepairID);
+                                                                                }
+                                                                                var RepairIDList = repairid.join();
+                                                                                connection.query('SELECT bill_repair_id as RepairID,bill_copy_id as ImageID FROM table_consumer_bill_repair_copies WHERE bill_repair_id IN ('+RepairIDList+')', function (error, repairimage, fields) {
+                                                                                    if (error) throw error;
+                                                                                    var data = '{"statusCode": 100,"ProductList": '+JSON.stringify(product)+',"ProductForm":'+JSON.stringify(productform)+',"InsuranceList":'+JSON.stringify(insurance)+',"InsuranceImage":'+JSON.stringify(insuranceimage)+',"InsuranceInclusions":'+JSON.stringify(insuranceinclusions)+',"InsuranceExclusions":'+JSON.stringify(insuranceexclusions)+',"WarrantyList":'+JSON.stringify(warranty)+',"WarrantyImage":'+JSON.stringify(warrantyimage)+',"WarrantyExclusions":'+JSON.stringify(warrantyexclusions)+',"WarrantyInclusions":'+JSON.stringify(warrantyinclusions)+',"AMCList":'+JSON.stringify(amc)+',"AMCImage":'+JSON.stringify(amcimage)+',"AMCExclusions":'+JSON.stringify(amcexclusions)+',"AMCInclusions":'+JSON.stringify(amcinclusions)+',"RepairList":'+JSON.stringify(repair)+',"RepairImage":'+JSON.stringify(repairimage)+'}';
+                                                                                    reply(data);
+                                                                                });
+                                                                            });
+                                                                        });
+                                                                    });
+                                                                });
+                                                            });
+                                                        });
+                                                    });
+                                                });
+                                            });
+                                        });
+                                    });
+                                });
+                            });
+                        });
+                    } else {
+                        var data = '{"statusCode": 105,"error": "Not Found","message": "Data not Available."}';
+                        reply(data);
+                    }
+                });
+            } else {
+                var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+                reply(data);
+            }
+        });
+    },
+    config:{
+        validate: {
+            payload: {
+                TokenNo: Joi.string().required(),
+                ID: Joi.number().integer().required(),
+                output: 'data',
+                parse:true
+            }
+        }
+    }
+});
+
+//Consumer Product Search
+server.route({
+    method: 'POST',
+    path: '/Services/ConsumerProductSearch',
+    handler: function (request, reply) {
+        const TokenNo = request.payload.TokenNo;
+        const ConsumerID = request.payload.ConsumerID;
+        const Search = request.payload.Search;
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+            if (error) throw error;
+            if(token.length > 0){
+                var UserID = token[0]['user_id'];
+                connection.query('SELECT p.bill_product_id as ProductID,p.product_name as ProductName,p.value_of_purchase as Value,p.taxes as Taxes,p.tag as Tag,mc.category_name as MasterCatName,c.category_name as CatName, b.brand_name,co.color_name FROM table_consumer_bill_products as p LEFT JOIN table_categories as mc on mc.category_id=p.master_category_id LEFT JOIN table_categories as c on c.category_id=p.category_id LEFT JOIN table_brands as b on b.brand_id=p.brand_id LEFT JOIN table_color as co on co.color_id=p.color_id WHERE p.user_id = '+ConsumerID+' AND (p.product_name LIKE "%' + Search + '%" OR mc.category_name LIKE "%' + Search + '%" OR c.category_name LIKE "%' + Search + '%" OR b.brand_name LIKE "%' + Search + '%")', function (error, product, fields) {
+                    if (error) throw error;
+                    if (product.length > 0) {
+                        var data = '{"statusCode": 100,"ProductList":'+JSON.stringify(product)+'}';
+                        reply(data);
+                    } else {
+                        var data = '{"statusCode": 105,"error": "Not Found","message": "Data not Available."}';
+                        reply(data);
+                    }
+                });
+            } else {
+                var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+                reply(data);
+            }
+        });
+    },
+    config:{
+        validate: {
+            payload: {
+                TokenNo: Joi.string().required(),
+                ConsumerID: Joi.number().integer().required(),
+                Search: Joi.string().required(),
+                output: 'data',
+                parse:true
+            }
+        }
+    }
+});
+//Task Complete CE
+server.route({
+    method: 'POST',
+    path: '/Services/TaskCompleteCE',
+    handler: function (request, reply) {
+        const TokenNo = request.payload.TokenNo;
+        const BillID = request.payload.BID;
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+            if (error) throw error;
+            if(token.length > 0){
+                var UserID = token[0]['user_id'];
+                connection.query('UPDATE table_cust_executive_tasks SET status_id=5 WHERE bill_id="'+BillID +'" and user_id="'+UserID+'"', function (error, results, fields) {
+                    if (error) throw error;
+                    var data = '{"statusCode": 100,"error": "","message": "Task Complete successfully."}';
+                    reply(data);
+                });
+            } else {
+                var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+                reply(data);
+            }
+        });
+    },
+    config:{
+        validate: {
+            payload: {
+                TokenNo: Joi.string().required(),
+                BID: Joi.number().integer().required(),
                 output: 'data',
                 parse:true
             }
