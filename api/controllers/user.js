@@ -127,22 +127,23 @@ class UserController {
     if (request.payload.BBLogin_Type === 1) {
       userRelationModel.findOne({
         where: {
-          PhoneNo: trueObject.PhoneNo
+          mobile_no: trueObject.PhoneNo
         }
       }).then((tokenResult) => {
         if (totp.check(request.payload.Token, tokenResult.secret)) {
           userModel.findOrCreate({
             where: {
-              PhoneNo: trueObject.PhoneNo,
+              mobile_no: trueObject.PhoneNo,
               status_id: 1
             },
             defaults: {
-              PhoneNo: trueObject.PhoneNo,
+              mobile_no: trueObject.PhoneNo,
               status_id: 1
-            }
+            },
+            attributes: [['fullname', 'name'], ['mobile_no', 'phoneNo'], ['email_id', 'email'], 'location', 'longitude', 'latitude', ['is_enrolled_professional', 'isEnrolled'], ['professional_category_id', 'categoryId'], ['share_mobile', 'isPhoneAllowed'], ['share_email', 'isEmailAllowed']]
           }).then((userData) => {
             userData[0].updateAttributes({
-              LastLoginOn: shared.formatDate(new Date(), 'yyyy-mm-dd HH:MM:ss')
+              last_login: shared.formatDate(new Date(), 'yyyy-mm-dd HH:MM:ss')
             });
             reply(dashboardAdaptor.prepareDashboardResult(userData[1], userData[0], `bearer ${authentication.generateToken(userData[0]).token}`)).code(201).header('authorization', `bearer ${authentication.generateToken(userData[0]).token}`);
           }).catch((err) => {
@@ -158,31 +159,32 @@ class UserController {
       });
     } else if (request.payload.BBLogin_Type === 2) {
       const userItem = {
-        EmailAddress: trueObject.EmailAddress,
-        Name: trueObject.Name,
+        email_id: trueObject.EmailAddress,
+        fullname: trueObject.Name,
         Password: bCrypt.hashSync(trueObject.Password, bCrypt.genSaltSync(8), null),
-        Location: trueObject.Location,
-        Latitude: trueObject.Latitude,
-        Longitude: trueObject.Longitude,
-        ImageLink: trueObject.ImageLink,
+        location: trueObject.Location,
+        latitude: trueObject.Latitude,
+        longitude: trueObject.Longitude,
+        image: trueObject.ImageLink,
         accessLevel: trueObject.accessLevel ? trueObject.accessLevel : roles.ROLE_MEMBER,
-        LastLoginOn: shared.formatDate(new Date(), 'yyyy-mm-dd HH:MM:ss'),
-        PhoneNo: trueObject.PhoneNo,
+        last_login: shared.formatDate(new Date(), 'yyyy-mm-dd HH:MM:ss'),
+        mobile_no: trueObject.PhoneNo,
         status_id: 1
       };
 
       userModel.findOrCreate({ where: {
-        PhoneNo: trueObject.PhoneNo,
+        mobile_no: trueObject.PhoneNo,
         status_id: 1
       },
-      defaults: userItem })
+      defaults: userItem,
+      attributes: ['ID', ['fullname', 'name'], ['mobile_no', 'phoneNo'], ['email_id', 'email'], 'location', 'longitude', 'latitude', ['is_enrolled_professional', 'isEnrolled'], ['professional_category_id', 'categoryId'], ['share_mobile', 'isPhoneAllowed'], ['share_email', 'isEmailAllowed']]
+      })
         .then((userData) => {
           if (!userData[1]) {
             userData[0].updateAttributes({
-              EmailAddress: trueObject.EmailAddress,
-              Name: trueObject.Name,
-              ImageLink: trueObject.ImageLink,
-              LastLoginOn: shared.formatDate(new Date(), 'yyyy-mm-dd HH:MM:ss')
+              email_id: trueObject.EmailAddress,
+              fullname: trueObject.Name,
+              last_login: shared.formatDate(new Date(), 'yyyy-mm-dd HH:MM:ss')
             });
           }
 
