@@ -77,7 +77,8 @@ models.sequelize.sync().then(() => {
     {
       register: cors,
       options: {
-        origins: ['http://localhost:4200']
+        origins: ['http://localhost:4200'],
+        methods: ['POST, GET, OPTIONS', 'PUT', 'DELETE']
       }
     }], (err) => {
     if (!err) {
