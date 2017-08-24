@@ -158,37 +158,33 @@ class UploadController {
   }
 
   static retrieveFiles(request, reply) {
-    const user = shared.verifyAuthorization(request.headers);
-    if (user) {
-      modals.billCopies.findOne({
-        where: {
-          ID: request.params.id
-        }
-      }).then((result) => {
-        fsImpl.readFile(result.CopyName, 'utf8').then(fileResult => reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${result.CopyName}`)).catch(reply);
-      }).catch((err) => {
-        reply(err);
-      });
-    } else {
-      reply().code(401);
-    }
+    modals.billCopies.findOne({
+      where: {
+        ID: request.params.id
+      }
+    }).then((result) => {
+      fsImpl.readFile(result.CopyName, 'utf8').then(fileResult => reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${result.CopyName}`)).catch(reply);
+    }).catch((err) => {
+      reply(err);
+    });
   }
 
   static retrieveUserImage(request, reply) {
-    const user = shared.verifyAuthorization(request.headers);
-    if (user) {
-      modals.userImages.findOne({
-        where: {
-          ID: request.params.id
-        }
-      }).then((result) => {
-        fsImplUser.readFile(result.CopyName, 'utf8').then(fileResult => reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${result.CopyName}`)).catch(reply);
-      }).catch((err) => {
-        reply(err);
+    modals.userImages.findOne({
+      where: {
+        user_image_id: request.params.id
+      }
+    }).then((result) => {
+      fsImplUser.readFile(result.user_image_name, 'utf8').then(fileResult => reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${result.CopyName}`)).catch((err) => {
+        reply({
+          status: false,
+          message: 'Unable to retrieve image',
+          err
+        });
       });
-    } else {
-      reply().code(401);
-    }
+    }).catch((err) => {
+      reply(err);
+    });
   }
 }
 

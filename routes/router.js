@@ -1361,7 +1361,6 @@ module.exports = (app, modals) => {
       method: 'GET',
       path: '/bills/{id}/files',
       config: {
-        auth: 'jwt',
         handler: UploadController.retrieveFiles
       }
     });
@@ -1369,7 +1368,6 @@ module.exports = (app, modals) => {
       method: 'GET',
       path: '/consumer/{id}/images',
       config: {
-        auth: 'jwt',
         handler: UploadController.retrieveUserImage
       }
     });
