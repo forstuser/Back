@@ -87,11 +87,11 @@ class UploadController {
   static uploadFileGeneric(user, fileData, reply) {
     const promisedQuery = [];
     return modals.consumerBills.create({
-      BillRefID: uuid.v4(),
+      bill_reference_id: uuid.v4(),
       user_id: user.ID,
       updated_by_user_id: user.ID,
       uploaded_by: user.ID,
-      user_status: 4,
+      user_status: 8,
       admin_status: 4
     }).then((result) => {
       if (Array.isArray(fileData)) {
@@ -104,9 +104,9 @@ class UploadController {
             fsImpl.writeFile(fileName, fileData[i]._data, { ContentType: mime.lookup(fileName) })
               .then((fileResult) => {
                 const ret = {
-                  BillID: result.ID,
-                  CopyName: fileName,
-                  CopyType: fileType,
+                  bill_id: result.ID,
+                  bill_copy_name: fileName,
+                  bill_copy_type: fileType,
                   status_id: 6,
                   updated_by_user_id: user.ID,
                   uploaded_by_id: user.ID
@@ -133,9 +133,9 @@ class UploadController {
         fsImpl.writeFile(fileName, fileData._data, { ContentType: mime.lookup(fileName) })
           .then((fileResult) => {
             const ret = {
-              BillID: result.ID,
-              CopyName: fileName,
-              CopyType: fileType,
+              bill_id: result.ID,
+              bill_copy_name: fileName,
+              bill_copy_type: fileType,
               status_id: 6,
               updated_by_user_id: user.ID,
               uploaded_by_id: user.ID

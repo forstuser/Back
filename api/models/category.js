@@ -2,28 +2,24 @@
  * Created by arpit on 6/30/2017.
  */
 
-module.exports = (sequelize, Sequelize) => sequelize.define('table_categories', {
-  ID: {
+module.exports = (sequelize, Sequelize) => sequelize.define('categories', {
+  category_id: {
     type: Sequelize.INTEGER,
     autoIncrement: true,
-    primaryKey: true,
-    field: 'category_id'
+    primaryKey: true
   },
   display_id: {
     type: Sequelize.INTEGER
   },
-  Name: {
+  category_name: {
     type: Sequelize.STRING,
-    notEmpty: false,
-    field: 'category_name'
+    notEmpty: false
   },
-  RefID: {
-    type: Sequelize.INTEGER,
-    field: 'ref_id'
+  ref_id: {
+    type: Sequelize.INTEGER
   },
-  Level: {
-    type: Sequelize.INTEGER,
-    field: 'category_level'
+  category_level: {
+    type: Sequelize.INTEGER
   },
   created_on: {
     type: Sequelize.DATE(6),
@@ -42,5 +38,6 @@ module.exports = (sequelize, Sequelize) => sequelize.define('table_categories', 
 }, {
   freezeTableName: true,
   defaultPrimaryKey: false,
-  timestamps: false
+  timestamps: false,
+  tableName: 'table_categories'
 });

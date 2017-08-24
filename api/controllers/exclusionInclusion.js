@@ -7,8 +7,8 @@ const excludedAttributes = { exclude: ['tableBrandID', 'tableUserID', 'display_i
 class ExclusionInclusionController {
   constructor(modal) {
     modals = modal;
-    modals.table_list_of_exclusions.belongsTo(modals.table_categories, { foreignKey: 'CatID', as: 'Categories' });
-    modals.table_list_of_inclusions.belongsTo(modals.table_categories, { foreignKey: 'CatID', as: 'Categories' });
+    modals.table_list_of_exclusions.belongsTo(modals.categories, { foreignKey: 'CatID', as: 'Categories' });
+    modals.table_list_of_inclusions.belongsTo(modals.categories, { foreignKey: 'CatID', as: 'Categories' });
   }
 
   // Add Exclusions

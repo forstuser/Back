@@ -3,20 +3,17 @@
  */
 
 module.exports = (sequelize, Sequelize) => sequelize.define('consumerBills', {
-  ID: {
+  bill_id: {
     type: Sequelize.INTEGER,
     autoIncrement: true,
-    primaryKey: true,
-    field: 'bill_id'
+    primaryKey: true
   },
-  BillRefID: {
-    type: Sequelize.INTEGER,
-    field: 'bill_reference_id'
+  bill_reference_id: {
+    type: Sequelize.INTEGER
   },
-  BillDate: {
+  created_on: {
     type: Sequelize.DATE(6),
-    defaultValue: Sequelize.NOW,
-    field: 'created_on'
+    defaultValue: Sequelize.NOW
   },
   updated_on: {
     type: Sequelize.DATE(6),

@@ -3,23 +3,19 @@
  */
 
 module.exports = (sequelize, Sequelize) => sequelize.define('billCopies', {
-  ID: {
+  bill_copy_id: {
     type: Sequelize.INTEGER,
     autoIncrement: true,
-    primaryKey: true,
-    field: 'bill_copy_id'
+    primaryKey: true
   },
-  BillID: {
-    type: Sequelize.INTEGER,
-    field: 'bill_id'
+  bill_id: {
+    type: Sequelize.INTEGER
   },
-  CopyName: {
-    type: Sequelize.STRING,
-    field: 'bill_copy_name'
+  bill_copy_name: {
+    type: Sequelize.STRING
   },
-  CopyType: {
-    type: Sequelize.STRING,
-    field: 'bill_copy_type'
+  bill_copy_type: {
+    type: Sequelize.STRING
   },
   updated_by_user_id: {
     type: Sequelize.INTEGER

@@ -19,12 +19,18 @@ const DashboardController = require('../api/controllers/dashboard');
 let User;
 
 function associateModals(modals) {
+  modals.categories.hasMany(modals.productBills, {
+    foreignKey: 'master_category_id', as: 'products'
+  });
+  modals.productBills.belongsTo(modals.categories, {
+    foreignKey: 'master_category_id', as: 'category'
+  });
   modals.userImages.belongsTo(modals.table_users, { foreignKey: 'user_id', as: 'user' });
   modals.table_users.hasMany(modals.userImages, { foreignKey: 'user_id', as: 'userImages' });
   modals.consumerBills.belongsTo(modals.table_users, { foreignKey: 'user_id', as: 'consumer' });
   modals.table_users.hasMany(modals.consumerBills);
   modals.consumerBills.hasMany(modals.consumerBillDetails, { foreignKey: 'bill_id', as: 'billDetails' });
-  modals.consumerBillDetails.belongsTo(modals.consumerBills);
+  modals.consumerBillDetails.belongsTo(modals.consumerBills, { foreignKey: 'bill_id', as: 'bill' });
   modals.consumerBillDetails.hasMany(modals.productBills, { foreignKey: 'bill_detail_id', as: 'products' });
   modals.productBills.belongsTo(modals.consumerBillDetails, { foreignKey: 'bill_detail_id', as: 'consumerBill' });
   modals.productBills.hasMany(modals.amcBills, { foreignKey: 'bill_product_id', as: 'amcDetails' });
@@ -48,6 +54,10 @@ function associateModals(modals) {
   modals.consumerBillDetails.hasMany(modals.billDetailCopies, {
     foreignKey: 'bill_detail_id',
     as: 'billDetailCopies'
+  });
+  modals.consumerBills.hasMany(modals.billCopies, {
+    foreignKey: 'bill_id',
+    as: 'billCopies'
   });
 }
 
@@ -1380,6 +1390,14 @@ module.exports = (app, modals) => {
       config: {
         auth: 'jwt',
         handler: DashboardController.getDashboard
+      }
+    });
+    dashboardRoutes.push({
+      method: 'GET',
+      path: '/consumer/ehome',
+      config: {
+        auth: 'jwt',
+        handler: DashboardController.getEHome
       }
     });
   }
