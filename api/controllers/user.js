@@ -61,7 +61,10 @@ class UserController {
 
     Promise.all([requestPromise(options), userModel.findOne({
       where: {
-        PhoneNo: request.payload.PhoneNo
+        mobile_no: request.payload.PhoneNo
+      },
+      attributes: {
+        exclude: ['UserTypeID']
       }
     })]).then((response) => {
       if (response[0].ErrorMessage === 'Success') {
@@ -97,13 +100,19 @@ class UserController {
           }
         }).catch((err) => {
           console.log(err);
-          reply(err);
+          reply({
+            status: false,
+            err
+          });
         });
       } else {
-        reply({ Error: response.ErrorMessage }).code(403);
+        reply({ error: response.ErrorMessage }).code(403);
       }
     }).catch((err) => {
-      reply(err);
+      reply({
+        status: false,
+        err
+      });
     });
   }
 
