@@ -205,7 +205,7 @@ class EHomeAdaptor {
         }],
         required: false
       }],
-      attributes: [['bill_product_id', 'id'], ['product_name', 'productName'], ['value_of_purchase', 'value'], 'taxes', ['category_id', 'categoryId'], ['brand_id', 'brandId'], ['color_id', 'colorId'], [this.modals.sequelize.fn('CONCAT', 'categories/', categoryId, '/products', this.modals.sequelize.col('`productBills`.`bill_product_id`')), 'productURL']]
+      attributes: [['bill_product_id', 'id'], ['product_name', 'productName'], ['value_of_purchase', 'value'], 'taxes', ['category_id', 'categoryId'], ['brand_id', 'brandId'], ['color_id', 'colorId'], [this.modals.sequelize.fn('CONCAT', 'categories/', categoryId, '/products/', this.modals.sequelize.col('`productBills`.`bill_product_id`')), 'productURL']]
     }), this.modals.categories.findAll({
       where: {
         ref_id: categoryId,

@@ -20,6 +20,12 @@ const ProductController = require('../api/controllers/product');
 let User;
 
 function associateModals(modals) {
+  modals.offlineSeller.hasMany(modals.offlineSellerDetails, { as: 'sellerDetails', foreignKey: 'offline_seller_id' });
+  modals.onlineSeller.hasMany(modals.onlineSellerDetails, { as: 'sellerDetails', foreignKey: 'seller_id' });
+  modals.table_brands.hasMany(modals.brandReviews, { as: 'brandReviews', foreignKey: 'brand_id' });
+  modals.productBills.hasMany(modals.productReviews, { as: 'productReviews', foreignKey: 'bill_product_id' });
+  modals.offlineSeller.hasMany(modals.sellerReviews, { as: 'sellerReviews', foreignKey: 'offline_seller_id' });
+  modals.onlineSeller.hasMany(modals.sellerReviews, { as: 'sellerReviews', foreignKey: 'seller_id' });
   modals.categories.hasMany(modals.categories, { as: 'subCategories', foreignKey: 'ref_id' });
   modals.categories.hasMany(modals.productBills, {
     foreignKey: 'master_category_id', as: 'products'
@@ -1364,7 +1370,6 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
       method: 'GET',
       path: '/bills/{id}/files',
       config: {
-        auth: false,
         handler: UploadController.retrieveFiles
       }
     });
@@ -1372,7 +1377,6 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
       method: 'GET',
       path: '/consumer/{id}/images',
       config: {
-        auth: false,
         handler: UploadController.retrieveUserImage
       }
     });
@@ -1448,8 +1452,8 @@ function prepareProductRoutes(productController, productRoutes) {
       method: 'GET',
       path: '/categories/{categoryid}/products/{id}',
       config: {
-        handler: UserController.retrieveUserProfile,
-        description: 'Get User Profile.',
+        handler: ProductController.retrieveProductDetail,
+        description: 'Get Product Details.',
         plugins: {
           'hapi-swagger': {
             responseMessages: [

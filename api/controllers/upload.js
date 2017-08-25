@@ -160,10 +160,11 @@ class UploadController {
   static retrieveFiles(request, reply) {
     modals.billCopies.findOne({
       where: {
-        ID: request.params.id
-      }
+        bill_copy_id: request.params.id
+      },
+      attributes: { exclude: ['BillID'] }
     }).then((result) => {
-      fsImpl.readFile(result.CopyName, 'utf8').then(fileResult => reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${result.CopyName}`)).catch(reply);
+      fsImpl.readFile(result.bill_copy_name, 'utf8').then(fileResult => reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${result.bill_copy_name}`)).catch(reply);
     }).catch((err) => {
       reply(err);
     });
