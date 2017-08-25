@@ -124,7 +124,7 @@ class ProductAdaptor {
         }, {
           model: this.modals.offlineSeller,
           as: 'productOfflineSeller',
-          attributes: ['ID', ['offline_seller_name', 'sellerName'], ['seller_url', 'url'], ['houseNo', 'address_house_no'], ['block', 'address_block'], ['street', 'address_street'], ['sector', 'address_sector'], ['city', 'address_city'], ['state', 'address_state'], ['pinCode', 'address_pin_code'], ['nearBy', 'address_nearby'], 'latitude', 'longitude'],
+          attributes: ['ID', ['offline_seller_name', 'sellerName'], ['seller_url', 'url'], ['address_house_no', 'houseNo'], ['address_block', 'block'], ['address_street', 'street'], ['address_sector', 'sector'], ['address_city', 'city'], ['address_state', 'state'], ['address_pin_code', 'pinCode'], ['address_nearby', 'nearBy'], 'latitude', 'longitude', [this.modals.sequelize.fn('CONCAT', 'sellers/', this.modals.sequelize.col('`consumerBill->productOfflineSeller`.`offline_seller_id`'), '/reviews?isonlineseller=false'), 'reviewUrl']],
           required: false,
           include: [{
             model: this.modals.offlineSellerDetails,
@@ -133,13 +133,13 @@ class ProductAdaptor {
           }, {
             model: this.modals.sellerReviews,
             as: 'sellerReviews',
-            attributes: [['review_ratings', 'ratings'], ['review_feedback', 'feedback'], ['review_comments', 'comments'], [this.modals.sequelize.fn('CONCAT', 'sellers/', this.modals.sequelize.col('sellerReviews.offline_seller_id'), '/reviews?isonlineseller=true'), 'reviewUrl']],
+            attributes: [['review_ratings', 'ratings'], ['review_feedback', 'feedback'], ['review_comments', 'comments']],
             required: false
           }]
         }, {
           model: this.modals.onlineSeller,
           as: 'productOnlineSeller',
-          attributes: ['ID', ['seller_name', 'sellerName'], ['seller_url', 'url']],
+          attributes: ['ID', ['seller_name', 'sellerName'], ['seller_url', 'url'], [this.modals.sequelize.fn('CONCAT', 'sellers/', this.modals.sequelize.col('`consumerBill->productOnlineSeller`.`seller_id`'), '/reviews?isonlineseller=true'), 'reviewUrl']],
           include: [{
             model: this.modals.onlineSellerDetails,
             as: 'sellerDetails',
@@ -147,7 +147,7 @@ class ProductAdaptor {
           }, {
             model: this.modals.sellerReviews,
             as: 'sellerReviews',
-            attributes: [['review_ratings', 'ratings'], ['review_feedback', 'feedback'], ['review_comments', 'comments'], [this.modals.sequelize.fn('CONCAT', 'sellers/', this.modals.sequelize.col('sellerReviews.seller_id'), '/reviews?isonlineseller=true'), 'reviewUrl']],
+            attributes: [['review_ratings', 'ratings'], ['review_feedback', 'feedback'], ['review_comments', 'comments']],
             required: false
           }]
         }],
@@ -155,12 +155,12 @@ class ProductAdaptor {
       }, {
         model: this.modals.table_brands,
         as: 'brand',
-        attributes: [['brand_name', 'name'], ['brand_description', 'description'], ['brand_id', 'id']],
+        attributes: [['brand_name', 'name'], ['brand_description', 'description'], ['brand_id', 'id'], [this.modals.sequelize.fn('CONCAT', 'brands/', this.modals.sequelize.col('`brand`.`brand_id`'), '/reviews'), 'reviewUrl']],
         required: false,
         include: [{
           model: this.modals.brandReviews,
           as: 'brandReviews',
-          attributes: [['review_ratings', 'ratings'], ['review_feedback', 'feedback'], ['review_comments', 'comments'], [this.modals.sequelize.fn('CONCAT', 'brands/', this.modals.sequelize.col('brandReviews.brand_id'), '/reviews'), 'reviewUrl']],
+          attributes: [['review_ratings', 'ratings'], ['review_feedback', 'feedback'], ['review_comments', 'comments']],
           required: false
         }]
       }, {
@@ -224,10 +224,10 @@ class ProductAdaptor {
       }, {
         model: this.modals.productReviews,
         as: 'productReviews',
-        attributes: [['review_ratings', 'ratings'], ['review_feedback', 'feedback'], ['review_comments', 'comments'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('productReviews.bill_product_id'), '/reviews'), 'reviewUrl']],
+        attributes: [['review_ratings', 'ratings'], ['review_feedback', 'feedback'], ['review_comments', 'comments']],
         required: false
       }],
-      attributes: [['bill_product_id', 'id'], ['product_name', 'productName'], ['value_of_purchase', 'value'], 'taxes', ['category_id', 'categoryId'], ['brand_id', 'brandId'], ['color_id', 'colorId'], [this.modals.sequelize.fn('CONCAT', 'categories/', '/products', this.modals.sequelize.col('`productBills`.`bill_product_id`')), 'productURL']]
+      attributes: [['bill_product_id', 'id'], ['product_name', 'productName'], ['value_of_purchase', 'value'], 'taxes', ['category_id', 'categoryId'], ['brand_id', 'brandId'], ['color_id', 'colorId'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`productBills`.`bill_product_id`'), '/reviews'), 'reviewUrl']]
     }).then(result => ({
       status: true,
       product: result
