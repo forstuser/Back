@@ -9,14 +9,12 @@ module.exports = (sequelize, Sequelize) => sequelize.define('onlineSeller', {
     primaryKey: true,
     field: 'seller_id'
   },
-  Name: {
+  seller_name: {
     type: Sequelize.STRING,
-    notEmpty: false,
-    field: 'seller_name'
+    notEmpty: false
   },
-  URL: {
-    type: Sequelize.STRING,
-    field: 'seller_url'
+  seller_url: {
+    type: Sequelize.STRING
   },
   GstinNo: {
     type: Sequelize.STRING,

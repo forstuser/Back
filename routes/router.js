@@ -23,7 +23,22 @@ function associateModals(modals) {
     foreignKey: 'master_category_id', as: 'products'
   });
   modals.productBills.belongsTo(modals.categories, {
-    foreignKey: 'master_category_id', as: 'category'
+    foreignKey: 'master_category_id', as: 'masterCategory'
+  });
+  modals.productBills.belongsTo(modals.categories, {
+    foreignKey: 'category_id', as: 'category'
+  });
+  modals.productBills.belongsTo(modals.table_brands, {
+    foreignKey: 'brand_id', as: 'brand'
+  });
+  modals.productBills.belongsTo(modals.table_color, {
+    foreignKey: 'color_id', as: 'color'
+  });
+  modals.productBills.belongsToMany(modals.consumerBills, {
+    foreignKey: 'ref_id', as: 'productBillMaps', through: modals.billMapping, where: { bill_ref_type: 2 }
+  });
+  modals.consumerBills.belongsToMany(modals.productBills, {
+    foreignKey: 'bill_id', as: 'billProductMaps', through: modals.billMapping, where: { bill_ref_type: 2 }
   });
   modals.userImages.belongsTo(modals.table_users, { foreignKey: 'user_id', as: 'user' });
   modals.table_users.hasMany(modals.userImages, { foreignKey: 'user_id', as: 'userImages' });
@@ -31,8 +46,26 @@ function associateModals(modals) {
   modals.table_users.hasMany(modals.consumerBills);
   modals.consumerBills.hasMany(modals.consumerBillDetails, { foreignKey: 'bill_id', as: 'billDetails' });
   modals.consumerBillDetails.belongsTo(modals.consumerBills, { foreignKey: 'bill_id', as: 'bill' });
+  modals.consumerBillDetails.belongsToMany(modals.offlineSeller, {
+    through: modals.billSellerMapping,
+    foreignKey: 'bill_detail_id',
+    as: 'productOfflineSeller',
+    where: {
+      ref_type: 2
+    }
+  });
+  modals.consumerBillDetails.belongsToMany(modals.onlineSeller, {
+    through: modals.billSellerMapping,
+    foreignKey: 'bill_detail_id',
+    as: 'productOnlineSeller',
+    where: {
+      ref_type: 1
+    }
+  });
   modals.consumerBillDetails.hasMany(modals.productBills, { foreignKey: 'bill_detail_id', as: 'products' });
   modals.productBills.belongsTo(modals.consumerBillDetails, { foreignKey: 'bill_detail_id', as: 'consumerBill' });
+  modals.productBills.hasMany(modals.productMetaData, { foreignKey: 'bill_product_id', as: 'productMetaData' });
+  modals.productMetaData.belongsTo(modals.categoryForm, { foreignKey: 'category_form_id', as: 'categoryForm' });
   modals.productBills.hasMany(modals.amcBills, { foreignKey: 'bill_product_id', as: 'amcDetails' });
   modals.amcBills.belongsTo(modals.productBills, { foreignKey: 'bill_product_id', as: 'amcProduct' });
   modals.productBills.hasMany(modals.insuranceBills, {
@@ -1398,6 +1431,14 @@ module.exports = (app, modals) => {
       config: {
         auth: 'jwt',
         handler: DashboardController.getEHome
+      }
+    });
+    dashboardRoutes.push({
+      method: 'GET',
+      path: '/categories/{id}/products',
+      config: {
+        auth: 'jwt',
+        handler: DashboardController.getProductsInCategory
       }
     });
   }

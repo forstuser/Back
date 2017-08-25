@@ -175,15 +175,23 @@ class DashboardAdaptor {
   filterUpcomingService(user) {
     return new Promise((resolve, reject) => {
       Promise.all([this.modals.productBills.findAll({
-        attributes: [['bill_product_id', 'id'], 'product_name', 'value', 'taxes'],
+        attributes: [['bill_product_id', 'id'], ['product_name', 'productName'], ['value_of_purchase', 'value'], 'taxes'],
         where: {
           user_id: user.ID,
           status_id: {
             $ne: 3
           },
-          masterCatID: 8
+          master_category_id: 8
         },
-        include: [{ model: this.modals.consumerBillDetails, as: 'consumerBill', attributes: [['document_id', 'docId']], include: [{ model: this.modals.billDetailCopies, as: 'billDetailCopies', attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('bill_copy_id'), '/files'), 'fileUrl']] }] }]
+        include: [{ model: this.modals.consumerBillDetails, as: 'consumerBill', attributes: [['document_id', 'docId']], include: [{ model: this.modals.billDetailCopies, as: 'billDetailCopies', attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('bill_copy_id'), '/files'), 'fileUrl']] }] }, {
+          model: this.modals.productMetaData,
+          as: 'productMetaData',
+          attributes: [['form_element_value', 'value']],
+          include: [{
+            model: this.modals.categoryForm, as: 'categoryForm', attributes: [['form_element_name', 'name']]
+          }],
+          required: false
+        }]
       }),
       this.modals.amcBills.findAll({
         attributes: [['bill_amc_id', 'id'], 'policyNo', 'premiumType', 'premiumAmount', 'effectiveDate', 'expiryDate'],

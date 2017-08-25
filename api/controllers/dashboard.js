@@ -32,6 +32,11 @@ class DashboardController {
       reply({ message: 'Token Expired or Invalid' }).code(401);
     }
   }
+
+  static getProductsInCategory(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    reply(ehomeAdaptor.prepareProductDetail(user, request.params.id)).code(200);
+  }
 }
 
 module.exports = DashboardController;

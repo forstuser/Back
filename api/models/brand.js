@@ -3,20 +3,17 @@
  */
 
 module.exports = (sequelize, Sequelize) => sequelize.define('table_brands', {
-  ID: {
+  brand_id: {
     type: Sequelize.INTEGER,
     autoIncrement: true,
-    primaryKey: true,
-    field: 'brand_id'
+    primaryKey: true
   },
-  Name: {
+  brand_name: {
     type: Sequelize.STRING,
-    notEmpty: false,
-    field: 'brand_name'
+    notEmpty: false
   },
-  Description: {
-    type: Sequelize.INTEGER,
-    field: 'brand_description'
+  brand_description: {
+    type: Sequelize.STRING
   },
   created_on: {
     type: Sequelize.DATE(6),

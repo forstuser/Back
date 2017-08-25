@@ -9,78 +9,60 @@ module.exports = (sequelize, Sequelize) => sequelize.define('offlineSeller', {
     primaryKey: true,
     field: 'offline_seller_id'
   },
-  Name: {
+  offline_seller_name: {
     type: Sequelize.STRING,
-    notEmpty: false,
-    field: 'offline_seller_name'
+    notEmpty: false
   },
-  OwnerName: {
-    type: Sequelize.STRING,
-    field: 'offline_seller_owner_name'
+  offline_seller_owner_name: {
+    type: Sequelize.STRING
   },
-  URL: {
-    type: Sequelize.INTEGER,
-    field: 'seller_url'
+  seller_url: {
+    type: Sequelize.INTEGER
   },
-  GstinNo: {
-    type: Sequelize.STRING,
-    field: 'offline_seller_gstin_no'
+  offline_seller_gstin_no: {
+    type: Sequelize.STRING
   },
-  PanNo: {
-    type: Sequelize.STRING,
-    field: 'offline_seller_pan_number'
+  offline_seller_pan_number: {
+    type: Sequelize.STRING
   },
-  RegNo: {
-    type: Sequelize.STRING,
-    field: 'offline_seller_registration_no'
+  offline_seller_registration_no: {
+    type: Sequelize.STRING
   },
-  ServiceProvider: {
-    type: Sequelize.INTEGER,
-    field: 'is_service_provider'
+  is_service_provider: {
+    type: Sequelize.BOOLEAN
   },
-  OnBoarded: {
-    type: Sequelize.INTEGER,
-    field: 'is_onboarded'
+  is_onboarded: {
+    type: Sequelize.BOOLEAN
   },
-  HouseNo: {
-    type: Sequelize.STRING,
-    field: 'address_house_no'
+  address_house_no: {
+    type: Sequelize.STRING
   },
-  Block: {
-    type: Sequelize.STRING,
-    field: 'address_block'
+  address_block: {
+    type: Sequelize.STRING
   },
-  Street: {
-    type: Sequelize.STRING,
-    field: 'address_street'
+  address_street: {
+    type: Sequelize.STRING
   },
-  Sector: {
-    type: Sequelize.STRING,
-    field: 'address_sector'
+  address_sector: {
+    type: Sequelize.STRING
   },
-  City: {
-    type: Sequelize.STRING,
-    field: 'address_city'
+  address_city: {
+    type: Sequelize.STRING
   },
-  State: {
-    type: Sequelize.STRING,
-    field: 'address_state'
+  address_state: {
+    type: Sequelize.STRING
   },
-  PinCode: {
-    type: Sequelize.STRING,
-    field: 'address_pin_code'
+  address_pin_code: {
+    type: Sequelize.STRING
   },
-  NearBy: {
-    type: Sequelize.STRING,
-    field: 'address_nearby'
+  address_nearby: {
+    type: Sequelize.STRING
   },
-  Latitude: {
-    type: Sequelize.STRING,
-    field: 'latitude'
+  latitude: {
+    type: Sequelize.STRING
   },
-  Longitude: {
-    type: Sequelize.STRING,
-    field: 'longitude'
+  longitude: {
+    type: Sequelize.STRING
   },
   updated_on: {
     type: Sequelize.DATE(6),

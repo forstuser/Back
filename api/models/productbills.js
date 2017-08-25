@@ -8,48 +8,38 @@ module.exports = (sequelize, Sequelize) => sequelize.define('productBills', {
     autoIncrement: true,
     primaryKey: true
   },
-  billDetailID: {
-    type: Sequelize.INTEGER,
-    field: 'bill_detail_id'
+  bill_detail_id: {
+    type: Sequelize.INTEGER
   },
   product_name: {
     type: Sequelize.STRING
   },
-  masterCatID: {
-    type: Sequelize.INTEGER,
-    field: 'master_category_id'
+  master_category_id: {
+    type: Sequelize.INTEGER
   },
-  catID: {
-    type: Sequelize.INTEGER,
-    field: 'category_id'
+  category_id: {
+    type: Sequelize.INTEGER
   },
-  brandID: {
-    type: Sequelize.INTEGER,
-    field: 'brand_id'
+  brand_id: {
+    type: Sequelize.INTEGER
   },
-  colorID: {
-    type: Sequelize.INTEGER,
-    field: 'color_id'
+  color_id: {
+    type: Sequelize.INTEGER
   },
-  sellerType: {
-    type: Sequelize.INTEGER,
-    field: 'seller_type'
+  seller_type: {
+    type: Sequelize.INTEGER
   },
-  sellerID: {
-    type: Sequelize.INTEGER,
-    field: 'seller_id'
+  seller_id: {
+    type: Sequelize.INTEGER
   },
-  value: {
-    type: Sequelize.FLOAT,
-    field: 'value_of_purchase'
+  value_of_purchase: {
+    type: Sequelize.FLOAT
   },
   taxes: {
-    type: Sequelize.FLOAT,
-    field: 'taxes'
+    type: Sequelize.FLOAT
   },
   tag: {
-    type: Sequelize.STRING,
-    field: 'tag'
+    type: Sequelize.STRING
   },
   user_id: {
     type: Sequelize.INTEGER

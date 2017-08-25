@@ -3,15 +3,13 @@
  */
 
 module.exports = (sequelize, Sequelize) => sequelize.define('table_color', {
-  ID: {
+  color_id: {
     type: Sequelize.INTEGER,
     autoIncrement: true,
-    primaryKey: true,
-    field: 'color_id'
+    primaryKey: true
   },
-  Name: {
-    type: Sequelize.STRING,
-    field: 'color_name'
+  color_name: {
+    type: Sequelize.STRING
   },
   status_id: {
     type: Sequelize.INTEGER
