@@ -15,6 +15,7 @@ const ExclusionInclusionController = require('../api/controllers/exclusionInclus
 const ReferenceDataController = require('../api/controllers/referenceData');
 const UserManagementController = require('../api/controllers/userManagement');
 const DashboardController = require('../api/controllers/dashboard');
+const ProductController = require('../api/controllers/product');
 
 let User;
 
@@ -1118,34 +1119,8 @@ function prepareReferenceData(referenceDataController, referenceDataRoutes) {
   }
 }
 
-module.exports = (app, modals) => {
-  User = modals.users;
-  // Middleware to require login/auth
-  associateModals(modals);
-  PassportService(User);
-  passport.authenticate('jwt', { session: false });
-  // Initializing route groups
-  const authRoutes = [];
-  const categoryRoutes = [];
-  const brandRoutes = [];
-  const sellerRoutes = [];
-  const serviceCenterRoutes = [];
-  const billManagementRoutes = [];
-  const referenceDataRoutes = [];
-  const dashboardRoutes = [];
-  const userController = new UserController(modals);
-  const categoryController = new CategoryController(modals);
-  const brandController = new BrandController(modals);
-  const uploadController = new UploadController(modals);
-  const sellerController = new SellerController(modals);
-  const serviceCenterController = new ServiceCenterController(modals);
-  const billManagementController = new BillManagementController(modals);
-  const exclusionInclusionController = new ExclusionInclusionController(modals);
-  const referenceDataController = new ReferenceDataController(modals);
-  const dashboardController = new DashboardController(modals);
-
-  const userManagementController = new UserManagementController(modals);
-  //= ========================
+function prepareAuthRoutes(userController, authRoutes) {
+//= ========================
   // Auth Routes
   //= ========================
 
@@ -1341,25 +1316,9 @@ module.exports = (app, modals) => {
       }
     });
   }
+}
 
-  prepareCategoryRoutes(categoryController, categoryRoutes);
-
-  prepareBrandRoutes(brandController, brandRoutes);
-
-  prepareSellerRoutes(sellerController, sellerRoutes);
-
-  prepareServiceCenterRoutes(serviceCenterController, serviceCenterRoutes);
-
-  prepareBillManagementRoutes(billManagementController, billManagementRoutes);
-
-  prepareExclusionInclusionRoutes(exclusionInclusionController, categoryRoutes);
-
-  prepareReferenceData(referenceDataController, referenceDataRoutes);
-
-  prepareUserManagementRoutes(userManagementController, authRoutes);
-
-  const uploadFileRoute = [];
-
+function prepareUploadRoutes(uploadController, uploadFileRoute) {
   if (uploadController) {
     uploadFileRoute.push({
       method: 'POST',
@@ -1405,6 +1364,7 @@ module.exports = (app, modals) => {
       method: 'GET',
       path: '/bills/{id}/files',
       config: {
+        auth: false,
         handler: UploadController.retrieveFiles
       }
     });
@@ -1412,11 +1372,14 @@ module.exports = (app, modals) => {
       method: 'GET',
       path: '/consumer/{id}/images',
       config: {
+        auth: false,
         handler: UploadController.retrieveUserImage
       }
     });
   }
+}
 
+function prepareDashboardRoutes(dashboardController, dashboardRoutes) {
   if (dashboardController) {
     dashboardRoutes.push({
       method: 'GET',
@@ -1443,6 +1406,190 @@ module.exports = (app, modals) => {
       }
     });
   }
+}
+
+function prepareProductRoutes(productController, productRoutes) {
+//= ========================
+  // Product Routes
+  //= ========================
+
+  if (productController) {
+    productRoutes.push({
+      method: 'PUT',
+      path: '/consumer/{reviewfor}/{id}/reviews',
+      config: {
+        handler: ProductController.updateUserReview,
+        auth: 'jwt',
+        description: 'Update User Review.',
+        validate: {
+          payload: {
+            ratings: joi.number(),
+            feedback: [joi.string(), joi.allow(null)],
+            comments: [joi.string(), joi.allow(null)],
+            output: 'data',
+            parse: true
+          }
+        },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              { code: 204, message: 'No Content' },
+              { code: 400, message: 'Bad Request' },
+              { code: 401, message: 'Invalid Credentials' },
+              { code: 404, message: 'Not Found' },
+              { code: 500, message: 'Internal Server Error' }
+            ]
+          }
+        }
+      }
+    });
+
+    productRoutes.push({
+      method: 'GET',
+      path: '/consumer/profile',
+      config: {
+        handler: UserController.retrieveUserProfile,
+        description: 'Get User Profile.',
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              { code: 200, message: 'Successful' },
+              { code: 400, message: 'Bad Request' },
+              { code: 401, message: 'Invalid Credentials' },
+              { code: 404, message: 'Not Found' },
+              { code: 500, message: 'Internal Server Error' }
+            ]
+          }
+        }
+      }
+    });
+
+    // Login route
+    productRoutes.push({
+      method: 'POST',
+      path: '/consumer/validate',
+      config: {
+        handler: UserController.validateOTP,
+        description: 'Register User for Consumer Portal.',
+        tags: ['api', 'User', 'Authentication'],
+        validate: {
+          payload: {
+            Token: joi.number(),
+            TrueObject: {
+              EmailAddress: joi.string().email(),
+              PhoneNo: joi.string().required(),
+              Name: joi.string(),
+              ImageLink: joi.string()
+            },
+            TruePayload: joi.string(),
+            BBLogin_Type: joi.number().required(),
+            TrueSecret: joi.string(),
+            output: 'data',
+            parse: true
+          }
+        },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              { code: 200, message: 'Authenticated' },
+              { code: 400, message: 'Bad Request' },
+              { code: 401, message: 'Invalid Credentials' },
+              { code: 404, message: 'Not Found' },
+              { code: 500, message: 'Internal Server Error' }
+            ]
+          }
+        }
+      }
+    });
+
+    // Login route
+    productRoutes.push({
+      method: 'POST',
+      path: '/admin/login',
+      config: {
+        handler: UserController.login,
+        auth: false,
+        description: 'Login User.',
+        tags: ['api', 'User', 'Authentication'],
+        validate: {
+          payload: {
+            UserName: joi.string().required(),
+            Password: joi.string().required(),
+            output: 'data',
+            parse: true
+          }
+        },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              { code: 202, message: 'Authenticated' },
+              { code: 400, message: 'Bad Request' },
+              { code: 401, message: 'Invalid Credentials' },
+              { code: 404, message: 'Not Found' },
+              { code: 500, message: 'Internal Server Error' }
+            ]
+          }
+        }
+      }
+    });
+  }
+}
+
+module.exports = (app, modals) => {
+  User = modals.users;
+  // Middleware to require login/auth
+  associateModals(modals);
+  PassportService(User);
+  passport.authenticate('jwt', { session: false });
+  // Initializing route groups
+  const authRoutes = [];
+  const categoryRoutes = [];
+  const brandRoutes = [];
+  const sellerRoutes = [];
+  const serviceCenterRoutes = [];
+  const billManagementRoutes = [];
+  const referenceDataRoutes = [];
+  const dashboardRoutes = [];
+  const productRoutes = [];
+  const userController = new UserController(modals);
+  const categoryController = new CategoryController(modals);
+  const brandController = new BrandController(modals);
+  const uploadController = new UploadController(modals);
+  const sellerController = new SellerController(modals);
+  const serviceCenterController = new ServiceCenterController(modals);
+  const billManagementController = new BillManagementController(modals);
+  const exclusionInclusionController = new ExclusionInclusionController(modals);
+  const referenceDataController = new ReferenceDataController(modals);
+  const dashboardController = new DashboardController(modals);
+  const productController = new ProductController(modals);
+  const userManagementController = new UserManagementController(modals);
+
+  prepareAuthRoutes(userController, authRoutes);
+
+  prepareCategoryRoutes(categoryController, categoryRoutes);
+
+  prepareBrandRoutes(brandController, brandRoutes);
+
+  prepareSellerRoutes(sellerController, sellerRoutes);
+
+  prepareServiceCenterRoutes(serviceCenterController, serviceCenterRoutes);
+
+  prepareBillManagementRoutes(billManagementController, billManagementRoutes);
+
+  prepareExclusionInclusionRoutes(exclusionInclusionController, categoryRoutes);
+
+  prepareReferenceData(referenceDataController, referenceDataRoutes);
+
+  prepareUserManagementRoutes(userManagementController, authRoutes);
+
+  const uploadFileRoute = [];
+
+  prepareUploadRoutes(uploadController, uploadFileRoute);
+
+  prepareDashboardRoutes(dashboardController, dashboardRoutes);
+
+  prepareProductRoutes(productController, productRoutes);
+
   app.route([
     ...authRoutes,
     ...categoryRoutes,
@@ -1452,6 +1599,7 @@ module.exports = (app, modals) => {
     ...billManagementRoutes,
     ...referenceDataRoutes,
     ...uploadFileRoute,
-    ...dashboardRoutes
+    ...dashboardRoutes,
+    ...productRoutes
   ]);
 };
