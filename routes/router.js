@@ -19,6 +19,7 @@ const DashboardController = require('../api/controllers/dashboard');
 let User;
 
 function associateModals(modals) {
+  modals.categories.hasMany(modals.categories, { as: 'subCategories', foreignKey: 'ref_id' });
   modals.categories.hasMany(modals.productBills, {
     foreignKey: 'master_category_id', as: 'products'
   });

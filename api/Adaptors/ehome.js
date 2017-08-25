@@ -102,7 +102,7 @@ class EHomeAdaptor {
   }
 
   prepareProductDetail(user, categoryId) {
-    return this.modals.productBills.findAll({
+    return Promise.all([this.modals.productBills.findAll({
       where: {
         user_id: user.ID,
         status_id: {
@@ -126,11 +126,11 @@ class EHomeAdaptor {
         }, {
           model: this.modals.offlineSeller,
           as: 'productOfflineSeller',
-          attributes: [['offline_seller_name', 'sellerName'], ['seller_url', 'url']]
+          attributes: ['ID', ['offline_seller_name', 'sellerName'], ['seller_url', 'url']]
         }, {
           model: this.modals.onlineSeller,
           as: 'productOnlineSeller',
-          attributes: [['seller_name', 'sellerName'], ['seller_url', 'url']]
+          attributes: ['ID', ['seller_name', 'sellerName'], ['seller_url', 'url']]
         }],
         required: false
       }, {
@@ -206,9 +206,57 @@ class EHomeAdaptor {
         required: false
       }],
       attributes: [['bill_product_id', 'id'], ['product_name', 'productName'], ['value_of_purchase', 'value'], 'taxes', ['category_id', 'categoryId'], ['brand_id', 'brandId'], ['color_id', 'colorId'], [this.modals.sequelize.fn('CONCAT', 'categories/', categoryId, '/products', this.modals.sequelize.col('`productBills`.`bill_product_id`')), 'productURL']]
-    }).then(result => ({
+    }), this.modals.categories.findAll({
+      where: {
+        ref_id: categoryId,
+        status_id: {
+          $ne: 3
+        }
+      },
+      include: [{
+        model: this.modals.categories,
+        as: 'subCategories',
+        where: {
+          status_id: {
+            $ne: 3
+          }
+        },
+        attributes: [['category_id', 'id'], ['category_name', 'name']]
+      }],
+      attributes: [['category_id', 'id'], ['category_name', 'name']]
+    }), this.modals.table_brands.findAll({
+      where: {
+        status_id: {
+          $ne: 3
+        }
+      },
+      attributes: [['brand_id', 'id'], ['brand_name', 'name']]
+    }), this.modals.offlineSeller.findAll({
+      where: {
+        status_id: {
+          $ne: 3
+        }
+      },
+      attributes: ['ID', ['offline_seller_name', 'name']]
+    }), this.modals.onlineSeller.findAll({
+      where: {
+        status_id: {
+          $ne: 3
+        }
+      },
+      attributes: ['ID', ['seller_name', 'name']]
+    }), this.retrieveRecentSearch(user)]).then(result => ({
       status: true,
-      result
+      productList: result[0],
+      filterData: {
+        categories: result[1],
+        brands: result[2],
+        sellers: {
+          offlineSellers: result[3],
+          onlineSellers: result[4]
+        }
+      },
+      recentSearches: result[5]
     })).catch(err => ({
       status: false,
       err
