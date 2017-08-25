@@ -46,14 +46,25 @@ class ProductAdaptor {
       status_id: 1
     };
 
+    const defaultClause = isOnlineSeller ? {
+      user_id: user.ID,
+      seller_id: sellerId,
+      status_id: 1,
+      review_ratings: payload.ratings,
+      review_feedback: payload.feedback,
+      review_comments: payload.comments
+    } : {
+      user_id: user.ID,
+      offline_seller_id: sellerId,
+      status_id: 1,
+      review_ratings: payload.ratings,
+      review_feedback: payload.feedback,
+      review_comments: payload.comments
+    };
+
     return this.modals.sellerReviews.findOrCreate({
       where: whereClause,
-      defaults: {
-        ...whereClause,
-        review_ratings: payload.ratings,
-        review_feedback: payload.feedback,
-        review_comments: payload.comments
-      }
+      defaults: defaultClause
     }).then((result) => {
       if (!result[1]) {
         result[0].updateAttributes({
@@ -77,7 +88,9 @@ class ProductAdaptor {
     return this.modals.sellerReviews.findOrCreate({
       where: whereClause,
       defaults: {
-        ...whereClause,
+        user_id: user.ID,
+        bill_product_id: productId,
+        status_id: 1,
         review_ratings: payload.ratings,
         review_feedback: payload.feedback,
         review_comments: payload.comments
