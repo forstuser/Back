@@ -1416,7 +1416,7 @@ function prepareProductRoutes(productController, productRoutes) {
   if (productController) {
     productRoutes.push({
       method: 'PUT',
-      path: '/consumer/{reviewfor}/{id}/reviews',
+      path: '/{reviewfor}/{id}/reviews',
       config: {
         handler: ProductController.updateUserReview,
         auth: 'jwt',
@@ -1446,7 +1446,7 @@ function prepareProductRoutes(productController, productRoutes) {
 
     productRoutes.push({
       method: 'GET',
-      path: '/consumer/profile',
+      path: '/categories/{categoryid}/products/{id}',
       config: {
         handler: UserController.retrieveUserProfile,
         description: 'Get User Profile.',
@@ -1454,75 +1454,6 @@ function prepareProductRoutes(productController, productRoutes) {
           'hapi-swagger': {
             responseMessages: [
               { code: 200, message: 'Successful' },
-              { code: 400, message: 'Bad Request' },
-              { code: 401, message: 'Invalid Credentials' },
-              { code: 404, message: 'Not Found' },
-              { code: 500, message: 'Internal Server Error' }
-            ]
-          }
-        }
-      }
-    });
-
-    // Login route
-    productRoutes.push({
-      method: 'POST',
-      path: '/consumer/validate',
-      config: {
-        handler: UserController.validateOTP,
-        description: 'Register User for Consumer Portal.',
-        tags: ['api', 'User', 'Authentication'],
-        validate: {
-          payload: {
-            Token: joi.number(),
-            TrueObject: {
-              EmailAddress: joi.string().email(),
-              PhoneNo: joi.string().required(),
-              Name: joi.string(),
-              ImageLink: joi.string()
-            },
-            TruePayload: joi.string(),
-            BBLogin_Type: joi.number().required(),
-            TrueSecret: joi.string(),
-            output: 'data',
-            parse: true
-          }
-        },
-        plugins: {
-          'hapi-swagger': {
-            responseMessages: [
-              { code: 200, message: 'Authenticated' },
-              { code: 400, message: 'Bad Request' },
-              { code: 401, message: 'Invalid Credentials' },
-              { code: 404, message: 'Not Found' },
-              { code: 500, message: 'Internal Server Error' }
-            ]
-          }
-        }
-      }
-    });
-
-    // Login route
-    productRoutes.push({
-      method: 'POST',
-      path: '/admin/login',
-      config: {
-        handler: UserController.login,
-        auth: false,
-        description: 'Login User.',
-        tags: ['api', 'User', 'Authentication'],
-        validate: {
-          payload: {
-            UserName: joi.string().required(),
-            Password: joi.string().required(),
-            output: 'data',
-            parse: true
-          }
-        },
-        plugins: {
-          'hapi-swagger': {
-            responseMessages: [
-              { code: 202, message: 'Authenticated' },
               { code: 400, message: 'Bad Request' },
               { code: 401, message: 'Invalid Credentials' },
               { code: 404, message: 'Not Found' },
