@@ -18,7 +18,7 @@ class ProductController {
     if (request.params.reviewfor === 'brands') {
       reply(productAdaptor
         .updateBrandReview(user, id, request.payload));
-    } else if (request.params.reviewfor === 'seller') {
+    } else if (request.params.reviewfor === 'sellers') {
       reply(productAdaptor
         .updateSellerReview(user, id, request.query.isonlineseller, request.payload));
     } else {
@@ -27,16 +27,7 @@ class ProductController {
     }
   }
 
-  static getEHome(request, reply) {
-    const user = shared.verifyAuthorization(request.headers);
-    if (user) {
-      reply(productAdaptor.prepareEHomeResult(user)).code(200);
-    } else {
-      reply({ message: 'Token Expired or Invalid' }).code(401);
-    }
-  }
-
-  static getProductsInCategory(request, reply) {
+  static retrieveProductDetail(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     reply(productAdaptor.prepareProductDetail(user, request.params.id)).code(200);
   }

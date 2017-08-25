@@ -16,8 +16,7 @@ module.exports = (sequelize, Sequelize) => sequelize.define('brandReviews', {
     type: Sequelize.FLOAT
   },
   review_feedback: {
-    type: Sequelize.STRING,
-    notEmpty: false
+    type: Sequelize.STRING
   },
   review_comments: {
     type: Sequelize.STRING

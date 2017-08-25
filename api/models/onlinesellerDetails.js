@@ -2,30 +2,25 @@
  * Created by arpit on 6/30/2017.
  */
 
-module.exports = (sequelize, Sequelize) => sequelize.define('table_online_seller_details', {
-  DetailID: {
+module.exports = (sequelize, Sequelize) => sequelize.define('onlineSellerDetails', {
+  seller_detail_id: {
     type: Sequelize.INTEGER,
     autoIncrement: true,
-    primaryKey: true,
-    field: 'seller_detail_id'
+    primaryKey: true
   },
-  SellerID: {
+  seller_id: {
     type: Sequelize.INTEGER,
-    notEmpty: true,
-    field: 'seller_id'
+    notEmpty: true
   },
-  DetailTypeID: {
-    type: Sequelize.INTEGER,
-    field: 'contactdetail_type_id'
+  contactdetail_type_id: {
+    type: Sequelize.INTEGER
   },
-  DisplayName: {
+  display_name: {
     type: Sequelize.STRING,
-    notEmpty: false,
-    field: 'display_name'
+    notEmpty: false
   },
-  Details: {
-    type: Sequelize.STRING,
-    field: 'details'
+  details: {
+    type: Sequelize.STRING
   },
   status_id: {
     type: Sequelize.INTEGER
@@ -33,5 +28,6 @@ module.exports = (sequelize, Sequelize) => sequelize.define('table_online_seller
 }, {
   freezeTableName: true,
   defaultPrimaryKey: false,
-  timestamps: false
+  timestamps: false,
+  tableName: 'table_online_seller_details'
 });
