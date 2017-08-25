@@ -14,7 +14,7 @@ const connection = MySQL.createConnection({
     database: 'binbill'
 });
 //server.connection({ port: 3000});
-server.connection({ port: 3000, host: 'localhost'});
+server.connection({ port: 3000, host: '192.168.0.9'});
 server.register({
     register: require('hapi-cors'),
     options: {
@@ -65,6 +65,16 @@ function getDateTime() {
     day = (day < 10 ? "0" : "") + day;
 
     return year + "-" + month + "-" + day + "-" + hour + ":" + min + ":" + sec;
+
+}
+function getDate() {
+    var date = new Date();
+    var year = date.getFullYear();
+    var month = date.getMonth() + 1;
+    month = (month < 10 ? "0" : "") + month;
+    var day  = date.getDate();
+    day = (day < 10 ? "0" : "") + day;
+    return year + "-" + month + "-" + day;
 
 }
 
@@ -2975,6 +2985,8 @@ server.route({
                 connection.query('SELECT bill_detail_id as DetailID,consumer_name as Name,consumer_email_id as EmailID,consumer_phone_no as PhoneNo,invoice_number as InvoiceNo,total_purchase_value as TotalValue,taxes as Tax,purchase_date as PurchaseDate FROM table_consumer_bill_details WHERE bill_detail_id = "' + ID + '"', function (error, bill, fields) {
                     if (error) throw error;
                     if(bill.length > 0){
+                        connection.query('SELECT bill_detail_id as DetailID,ref_type as SellerType,seller_ref_id as SellerID FROM table_consumer_bill_seller_mapping as m WHERE m.bill_detail_id = "' + ID + '"', function (error, billseller, fields) {
+                            if (error) throw error;
                         connection.query('SELECT bill_copy_id as ImageID FROM table_consumer_bill_copies WHERE bill_id = "' + ID + '" and status_id!=3', function (error, image, fields) {
                             if (error) throw error;
                             connection.query('SELECT p.bill_product_id as ProductID,p.bill_detail_id as DetailID,p.product_name as ProductName,p.master_category_id as MasterCatID,p.category_id as ColorID,p.brand_id as BrandID,p.color_id as ColorID,p.value_of_purchase as Value,p.taxes as Taxes,p.tag as Tag,mc.category_name as MasterCatName, c.category_name as CatName, b.brand_name as BrandName, cl.color_name ColorName FROM table_consumer_bill_products as p left join table_categories as mc on p.master_category_id=mc.category_id left join table_categories as c on c.category_id=p.category_id left join table_brands as b on b.brand_id=p.brand_id left join table_color as cl on cl.color_id=p.color_id WHERE p.bill_detail_id = "' + ID + '" and p.status_id!=3', function (error, product, fields) {
@@ -3055,7 +3067,7 @@ server.route({
 
                                                                                         connection.query('SELECT bill_repair_id as RepairID,bill_copy_id as ImageID FROM table_consumer_bill_repair_copies WHERE bill_repair_id IN ('+RepairIDList+')', function (error, repairimage, fields) {
                                                                                             if (error) throw error;
-                                                                                            var data = '{"statusCode": 100,"BillDetail": '+ JSON.stringify(bill) +',"BillImage": '+JSON.stringify(image)+',"ProductList": '+JSON.stringify(product)+',"ProductForm":'+JSON.stringify(productform)+',"InsuranceList":'+JSON.stringify(insurance)+',"InsuranceImage":'+JSON.stringify(insuranceimage)+',"InsuranceInclusions":'+JSON.stringify(insuranceinclusions)+',"InsuranceExclusions":'+JSON.stringify(insuranceexclusions)+',"WarrantyList":'+JSON.stringify(warranty)+',"WarrantyImage":'+JSON.stringify(warrantyimage)+',"WarrantyExclusions":'+JSON.stringify(warrantyexclusions)+',"WarrantyInclusions":'+JSON.stringify(warrantyinclusions)+',"AMCList":'+JSON.stringify(amc)+',"AMCImage":'+JSON.stringify(amcimage)+',"AMCExclusions":'+JSON.stringify(amcexclusions)+',"AMCInclusions":'+JSON.stringify(amcinclusions)+',"RepairList":'+JSON.stringify(repair)+',"RepairImage":'+JSON.stringify(repairimage)+'}';
+                                                                                            var data = '{"statusCode": 100,"BillDetail": '+ JSON.stringify(bill) +',"BillSeller": '+JSON.stringify(billseller)+',,"BillImage": '+JSON.stringify(image)+',"ProductList": '+JSON.stringify(product)+',"ProductForm":'+JSON.stringify(productform)+',"InsuranceList":'+JSON.stringify(insurance)+',"InsuranceImage":'+JSON.stringify(insuranceimage)+',"InsuranceInclusions":'+JSON.stringify(insuranceinclusions)+',"InsuranceExclusions":'+JSON.stringify(insuranceexclusions)+',"WarrantyList":'+JSON.stringify(warranty)+',"WarrantyImage":'+JSON.stringify(warrantyimage)+',"WarrantyExclusions":'+JSON.stringify(warrantyexclusions)+',"WarrantyInclusions":'+JSON.stringify(warrantyinclusions)+',"AMCList":'+JSON.stringify(amc)+',"AMCImage":'+JSON.stringify(amcimage)+',"AMCExclusions":'+JSON.stringify(amcexclusions)+',"AMCInclusions":'+JSON.stringify(amcinclusions)+',"RepairList":'+JSON.stringify(repair)+',"RepairImage":'+JSON.stringify(repairimage)+'}';
                                                                                             reply(data);
                                                                                         });
 
@@ -3076,7 +3088,7 @@ server.route({
                                 });
                             });
                         });
-
+                    });
                     } else {
                         var data = '{"statusCode": 105,"error": "Not Found","message": "Data not Available."}';
                         reply(data);
@@ -3938,7 +3950,7 @@ server.route({
                                                                                 } else {
                                                                                     var RepairIDList = 0;
                                                                                 }
-                                                                                
+
                                                                                 connection.query('SELECT bill_repair_id as RepairID,bill_copy_id as ImageID FROM table_consumer_bill_repair_copies WHERE bill_repair_id IN ('+RepairIDList+')', function (error, repairimage, fields) {
                                                                                     if (error) throw error;
                                                                                     var data = '{"statusCode": 100,"ProductList": '+JSON.stringify(product)+',"ProductForm":'+JSON.stringify(productform)+',"InsuranceList":'+JSON.stringify(insurance)+',"InsuranceImage":'+JSON.stringify(insuranceimage)+',"InsuranceInclusions":'+JSON.stringify(insuranceinclusions)+',"InsuranceExclusions":'+JSON.stringify(insuranceexclusions)+',"WarrantyList":'+JSON.stringify(warranty)+',"WarrantyImage":'+JSON.stringify(warrantyimage)+',"WarrantyExclusions":'+JSON.stringify(warrantyexclusions)+',"WarrantyInclusions":'+JSON.stringify(warrantyinclusions)+',"AMCList":'+JSON.stringify(amc)+',"AMCImage":'+JSON.stringify(amcimage)+',"AMCExclusions":'+JSON.stringify(amcexclusions)+',"AMCInclusions":'+JSON.stringify(amcinclusions)+',"RepairList":'+JSON.stringify(repair)+',"RepairImage":'+JSON.stringify(repairimage)+'}';
@@ -4048,6 +4060,67 @@ server.route({
             payload: {
                 TokenNo: Joi.string().required(),
                 BID: Joi.number().integer().required(),
+                output: 'data',
+                parse:true
+            }
+        }
+    }
+});
+//Admin Analytics
+server.route({
+    method: 'POST',
+    path: '/Services/AdminAnalytics',
+    handler: function (request, reply) {
+        const TokenNo = request.payload.TokenNo;
+        const DateRange = request.payload.DateRange;
+        const FromDate = request.payload.FromDate;
+        const ToDate = request.payload.ToDate;
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+            if (error) throw error;
+            if(token.length > 0){
+                var UserID = token[0]['user_id'];
+                switch (DateRange) {
+                    case 1:
+                        var status = true;
+                        var condition = 'DATE(created_on) = CURDATE()';
+                        break;
+                    case 2:
+                        var status = true;
+                        var condition = 'DATE(created_on) > (NOW() - INTERVAL 7 DAY)';
+                        break;
+                    case 3:
+                        var status = true;
+                        var condition = '(created_on BETWEEN "'+FromDate+'" AND "'+ToDate+'")';
+                        break;
+                    default:
+                        var status = false;
+                        var data = '{"statusCode": 101,"error": "Invalid DateRange","message": "Invalid DateRange."}';
+                        reply(data);
+                }
+                if(status == true){
+                    //console.log('SELECT COUNT(bill_id) as Total FROM table_consumer_bills WHERE user_status !=3 AND '+condition+'');
+                    connection.query('SELECT COUNT(bill_id) as Total FROM table_consumer_bills WHERE user_status !=3 AND '+condition+'', function (error, bill, fields) {
+                        if (error) throw error;
+                        connection.query('SELECT COUNT(user_id) as Total FROM table_users WHERE status_id !=3 AND user_type_id=5 AND '+condition+'', function (error, user, fields) {
+                            if (error) throw error;
+                            var data = '{"statusCode": 10,"TotalBills": "'+bill[0].Total+'","TotalUsers": "'+user[0].Total+'"}';
+                            reply(data);
+                        });
+                    });
+                }
+            } else {
+                var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+                reply(data);
+            }
+        });
+    },
+    config:{
+        validate: {
+            payload: {
+                TokenNo: Joi.string().required(),
+                DateRange: Joi.number().integer().required(),
+                FromDate: [Joi.string(), Joi.allow(null)],
+                ToDate: [Joi.string(), Joi.allow(null)],
                 output: 'data',
                 parse:true
             }
