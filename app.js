@@ -2985,11 +2985,13 @@ server.route({
                 connection.query('SELECT bill_detail_id as DetailID,consumer_name as Name,consumer_email_id as EmailID,consumer_phone_no as PhoneNo,invoice_number as InvoiceNo,total_purchase_value as TotalValue,taxes as Tax,purchase_date as PurchaseDate FROM table_consumer_bill_details WHERE bill_detail_id = "' + ID + '"', function (error, bill, fields) {
                     if (error) throw error;
                     if(bill.length > 0){
-                        connection.query('SELECT bill_detail_id as DetailID,ref_type as SellerType,seller_ref_id as SellerID FROM table_consumer_bill_seller_mapping as m WHERE m.bill_detail_id = "' + ID + '"', function (error, billseller, fields) {
+                        connection.query('SELECT m.bill_detail_id as DetailID,m.seller_ref_id as SellerID,s.seller_name as SellerName FROM table_consumer_bill_seller_mapping as m left join table_online_seller as s on s.seller_id=m.seller_ref_id WHERE m.bill_detail_id = "' + ID + '" AND m.ref_type=1 ', function (error, billonlineseller, fields) {
+                            if (error) throw error;
+                        connection.query('SELECT m.bill_detail_id as DetailID,m.seller_ref_id as SellerID,s.offline_seller_name as SellerName FROM table_consumer_bill_seller_mapping as m left join table_offline_seller as s on s.offline_seller_id=m.seller_ref_id WHERE m.bill_detail_id = "' + ID + '" AND m.ref_type=2 ', function (error, billofflineseller, fields) {
                             if (error) throw error;
                         connection.query('SELECT bill_copy_id as ImageID FROM table_consumer_bill_copies WHERE bill_id = "' + ID + '" and status_id!=3', function (error, image, fields) {
                             if (error) throw error;
-                            connection.query('SELECT p.bill_product_id as ProductID,p.bill_detail_id as DetailID,p.product_name as ProductName,p.master_category_id as MasterCatID,p.category_id as ColorID,p.brand_id as BrandID,p.color_id as ColorID,p.value_of_purchase as Value,p.taxes as Taxes,p.tag as Tag,mc.category_name as MasterCatName, c.category_name as CatName, b.brand_name as BrandName, cl.color_name ColorName FROM table_consumer_bill_products as p left join table_categories as mc on p.master_category_id=mc.category_id left join table_categories as c on c.category_id=p.category_id left join table_brands as b on b.brand_id=p.brand_id left join table_color as cl on cl.color_id=p.color_id WHERE p.bill_detail_id = "' + ID + '" and p.status_id!=3', function (error, product, fields) {
+                            connection.query('SELECT p.bill_product_id as ProductID,p.bill_detail_id as DetailID,p.product_name as ProductName,p.master_category_id as MasterCatID,p.category_id as ColorID,p.brand_id as BrandID,p.color_id as ColorID,p.value_of_purchase as Value,p.taxes as Taxes,p.tag as Tag,mc.category_name as MasterCatName, c.category_id as CatID, c.category_name as CatName, b.brand_name as BrandName, cl.color_name ColorName FROM table_consumer_bill_products as p left join table_categories as mc on p.master_category_id=mc.category_id left join table_categories as c on c.category_id=p.category_id left join table_brands as b on b.brand_id=p.brand_id left join table_color as cl on cl.color_id=p.color_id WHERE p.bill_detail_id = "' + ID + '" and p.status_id!=3', function (error, product, fields) {
                                 if (error) throw error;
                                 var id = [];
                                 for(var i = 0; i < product.length; i++) {
@@ -3067,12 +3069,11 @@ server.route({
 
                                                                                         connection.query('SELECT bill_repair_id as RepairID,bill_copy_id as ImageID FROM table_consumer_bill_repair_copies WHERE bill_repair_id IN ('+RepairIDList+')', function (error, repairimage, fields) {
                                                                                             if (error) throw error;
-                                                                                            var data = '{"statusCode": 100,"BillDetail": '+ JSON.stringify(bill) +',"BillSeller": '+JSON.stringify(billseller)+',,"BillImage": '+JSON.stringify(image)+',"ProductList": '+JSON.stringify(product)+',"ProductForm":'+JSON.stringify(productform)+',"InsuranceList":'+JSON.stringify(insurance)+',"InsuranceImage":'+JSON.stringify(insuranceimage)+',"InsuranceInclusions":'+JSON.stringify(insuranceinclusions)+',"InsuranceExclusions":'+JSON.stringify(insuranceexclusions)+',"WarrantyList":'+JSON.stringify(warranty)+',"WarrantyImage":'+JSON.stringify(warrantyimage)+',"WarrantyExclusions":'+JSON.stringify(warrantyexclusions)+',"WarrantyInclusions":'+JSON.stringify(warrantyinclusions)+',"AMCList":'+JSON.stringify(amc)+',"AMCImage":'+JSON.stringify(amcimage)+',"AMCExclusions":'+JSON.stringify(amcexclusions)+',"AMCInclusions":'+JSON.stringify(amcinclusions)+',"RepairList":'+JSON.stringify(repair)+',"RepairImage":'+JSON.stringify(repairimage)+'}';
+                                                                                            var data = '{"statusCode": 100,"BillDetail": '+ JSON.stringify(bill) +',"BillOnlineSeller": '+JSON.stringify(billonlineseller)+',"BillOfflineSeller": '+JSON.stringify(billofflineseller)+',"BillImage": '+JSON.stringify(image)+',"ProductList": '+JSON.stringify(product)+',"ProductForm":'+JSON.stringify(productform)+',"InsuranceList":'+JSON.stringify(insurance)+',"InsuranceImage":'+JSON.stringify(insuranceimage)+',"InsuranceInclusions":'+JSON.stringify(insuranceinclusions)+',"InsuranceExclusions":'+JSON.stringify(insuranceexclusions)+',"WarrantyList":'+JSON.stringify(warranty)+',"WarrantyImage":'+JSON.stringify(warrantyimage)+',"WarrantyExclusions":'+JSON.stringify(warrantyexclusions)+',"WarrantyInclusions":'+JSON.stringify(warrantyinclusions)+',"AMCList":'+JSON.stringify(amc)+',"AMCImage":'+JSON.stringify(amcimage)+',"AMCExclusions":'+JSON.stringify(amcexclusions)+',"AMCInclusions":'+JSON.stringify(amcinclusions)+',"RepairList":'+JSON.stringify(repair)+',"RepairImage":'+JSON.stringify(repairimage)+'}';
                                                                                             reply(data);
+                                                                                            });
                                                                                         });
-
                                                                                     });
-
                                                                                 });
                                                                             });
                                                                         });
@@ -3088,7 +3089,7 @@ server.route({
                                 });
                             });
                         });
-                    });
+                        });
                     } else {
                         var data = '{"statusCode": 105,"error": "Not Found","message": "Data not Available."}';
                         reply(data);
@@ -3881,7 +3882,7 @@ server.route({
             if (error) throw error;
             if(token.length > 0){
                 var UserID = token[0]['user_id'];
-                connection.query('SELECT p.bill_product_id as ProductID,p.product_name as ProductName,p.value_of_purchase as Value,p.taxes as Taxes,p.tag as Tag,mc.category_name as MasterCatName,c.category_name as CatName, b.brand_name,co.color_name FROM table_consumer_bill_products as p LEFT JOIN table_categories as mc on mc.category_id=p.master_category_id LEFT JOIN table_categories as c on c.category_id=p.category_id LEFT JOIN table_brands as b on b.brand_id=p.brand_id LEFT JOIN table_color as co on co.color_id=p.color_id WHERE p.bill_product_id = "'+ID+ '"', function (error, product, fields) {
+                connection.query('SELECT p.bill_product_id as ProductID,p.product_name as ProductName,p.value_of_purchase as Value,p.taxes as Taxes,p.tag as Tag,mc.category_id as MasterCatID,mc.category_name as MasterCatName,c.category_id as CatID,c.category_name as CatName, b.brand_id as BrandID, b.brand_name as BrandName,co.color_id as ColorID,co.color_name as ColorName FROM table_consumer_bill_products as p LEFT JOIN table_categories as mc on mc.category_id=p.master_category_id LEFT JOIN table_categories as c on c.category_id=p.category_id LEFT JOIN table_brands as b on b.brand_id=p.brand_id LEFT JOIN table_color as co on co.color_id=p.color_id WHERE p.bill_product_id = "'+ID+ '"', function (error, product, fields) {
                     if (error) throw error;
                     if(product.length > 0){
                         connection.query('SELECT m.bill_product_id as ProductID,m.cateogry_form_id as CatFormID,m.form_element_value as value, cf.form_element_name as CatFormName,cf.form_element_type as ElementType,mc.dropdown_name as DropdownValue FROM table_consumer_bill_product_meta_data as m left join table_cateogry_form as cf on cf.cateogry_form_id=m.cateogry_form_id left join table_cateogry_form_mapping as mc on (mc.mapping_id=m.form_element_value and cf.form_element_type=2)  WHERE m.bill_product_id ='+product[0].ProductID+'', function (error, productform, fields) {
@@ -4082,29 +4083,54 @@ server.route({
                 switch (DateRange) {
                     case 1:
                         var status = true;
-                        var condition = 'DATE(created_on) = CURDATE()';
+                        var condition = 'AND DATE(created_on) = CURDATE()';
                         break;
                     case 2:
                         var status = true;
-                        var condition = 'DATE(created_on) > (NOW() - INTERVAL 7 DAY)';
+                        var condition = 'AND DATE(created_on) > (NOW() - INTERVAL 7 DAY)';
                         break;
                     case 3:
                         var status = true;
-                        var condition = '(created_on BETWEEN "'+FromDate+'" AND "'+ToDate+'")';
+                        var condition = 'AND (created_on BETWEEN "'+FromDate+'" AND "'+ToDate+'")';
                         break;
                     default:
-                        var status = false;
-                        var data = '{"statusCode": 101,"error": "Invalid DateRange","message": "Invalid DateRange."}';
-                        reply(data);
+                        var status = true;
+                        var condition = '';
+                        break;
                 }
                 if(status == true){
                     //console.log('SELECT COUNT(bill_id) as Total FROM table_consumer_bills WHERE user_status !=3 AND '+condition+'');
-                    connection.query('SELECT COUNT(bill_id) as Total FROM table_consumer_bills WHERE user_status !=3 AND '+condition+'', function (error, bill, fields) {
+                    connection.query('SELECT COUNT(bill_id) as Total FROM table_consumer_bills WHERE user_status !=3 '+condition+'', function (error, bill, fields) {
                         if (error) throw error;
-                        connection.query('SELECT COUNT(user_id) as Total FROM table_users WHERE status_id !=3 AND user_type_id=5 AND '+condition+'', function (error, user, fields) {
+                        connection.query('SELECT COUNT(user_id) as Total FROM table_users WHERE status_id !=3 AND user_type_id=5 '+condition+'', function (error, user, fields) {
                             if (error) throw error;
-                            var data = '{"statusCode": 10,"TotalBills": "'+bill[0].Total+'","TotalUsers": "'+user[0].Total+'"}';
-                            reply(data);
+                            connection.query('SELECT COUNT(brand_id) as Total FROM table_brands WHERE status_id !=3 '+condition+'', function (error, brand, fields) {
+                                if (error) throw error;
+                                connection.query('SELECT COUNT(offline_seller_id) as Total FROM table_offline_seller WHERE status_id !=3', function (error, offline, fields) {
+                                    if (error) throw error;
+                                    connection.query('SELECT COUNT(seller_id) as Total FROM table_online_seller WHERE status_id !=3 ', function (error, online, fields) {
+                                        if (error) throw error;
+                                        connection.query('SELECT COUNT(DISTINCT seller_id) as Total FROM table_consumer_bill_insurance WHERE status_id =1 ', function (error, insurance, fields) {
+                                            if (error) throw error;
+                                            connection.query('SELECT COUNT(DISTINCT seller_id) as Total FROM table_consumer_bill_warranty WHERE status_id =1 ', function (error, warranty, fields) {
+                                                if (error) throw error;
+                                                connection.query('SELECT COUNT(DISTINCT seller_id) as Total FROM table_consumer_bill_amc WHERE status_id =1 ', function (error, amc, fields) {
+                                                    if (error) throw error;
+                                                    connection.query('SELECT COUNT(DISTINCT seller_id) as Total FROM table_consumer_bill_repair WHERE status_id =1 ', function (error, repair, fields) {
+                                                        if (error) throw error;
+                                                        connection.query('SELECT COUNT(center_id) as Total FROM table_authorized_service_center WHERE status_id =1 ', function (error, repair, fields) {
+                                                            if (error) throw error;
+                                                            var data = '{"statusCode": 10,"TotalBills": "'+bill[0].Total+'","TotalUsers": "'+user[0].Total+'","TotalBrands": "'+brand[0].Total+'","TotalASC": "'+repair[0].Total+'","TotalOfflineSeller": "'+offline[0].Total+'","TotalOnlineSeller": "'+online[0].Total+'","TotalInsurance": "'+insurance[0].Total+'","TotalWarranty": "'+warranty[0].Total+'","TotalAMC": "'+amc[0].Total+'","TotalRepair": "'+repair[0].Total+'"}';
+                                                            reply(data);
+                                                        });
+                                                    });
+                                                });
+                                            });
+                                        });
+                                    });
+
+                                });
+                            });
                         });
                     });
                 }
@@ -4118,7 +4144,7 @@ server.route({
         validate: {
             payload: {
                 TokenNo: Joi.string().required(),
-                DateRange: Joi.number().integer().required(),
+                DateRange: [Joi.number().integer(), Joi.allow(null)],
                 FromDate: [Joi.string(), Joi.allow(null)],
                 ToDate: [Joi.string(), Joi.allow(null)],
                 output: 'data',

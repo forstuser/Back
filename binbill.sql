@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: 127.0.0.1
--- Generation Time: Aug 24, 2017 at 03:50 PM
+-- Generation Time: Aug 25, 2017 at 03:35 PM
 -- Server version: 5.6.17
 -- PHP Version: 5.5.12
 
@@ -277,8 +277,8 @@ CREATE TABLE IF NOT EXISTS `table_consumer_bills` (
 
 INSERT INTO `table_consumer_bills` (`bill_id`, `user_id`, `bill_reference_id`, `uploaded_by`, `created_on`, `updated_on`, `updated_by_user_id`, `user_status`, `admin_status`) VALUES
 (1, 10, 'BinBill 1', 1, '2017-08-09 06:17:16', '2017-08-09 04:12:10', 10, 8, 8),
-(2, 10, 'BibBill2', 1, '2017-08-22 02:06:06', '2017-08-22 04:10:08', 10, 8, 4),
-(3, 10, 'BibBill3', 1, '2017-08-22 00:00:00', '2017-08-22 00:00:00', 10, 8, 4);
+(2, 10, 'BibBill2', 1, '2017-08-22 02:06:06', '2017-08-22 04:10:08', 10, 8, 8),
+(3, 10, 'BibBill3', 1, '2017-08-25 00:00:00', '2017-08-22 00:00:00', 10, 8, 4);
 
 -- --------------------------------------------------------
 
@@ -300,7 +300,15 @@ CREATE TABLE IF NOT EXISTS `table_consumer_bill_amc` (
   `status_id` int(11) NOT NULL,
   PRIMARY KEY (`bill_amc_id`),
   KEY `bill_product_id` (`bill_product_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=3 ;
+
+--
+-- Dumping data for table `table_consumer_bill_amc`
+--
+
+INSERT INTO `table_consumer_bill_amc` (`bill_amc_id`, `user_id`, `bill_product_id`, `seller_type`, `seller_id`, `policy_number`, `premium_type`, `premium_amount`, `policy_effective_date`, `policy_expiry_date`, `status_id`) VALUES
+(1, 10, 3, 2, 0, 'bhjv', 'bnk', 0.00, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 1),
+(2, 10, 4, 2, 1, 'sd', 'Yearly', 200.00, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 1);
 
 -- --------------------------------------------------------
 
@@ -313,7 +321,17 @@ CREATE TABLE IF NOT EXISTS `table_consumer_bill_amc_copies` (
   `bill_amc_id` int(11) NOT NULL,
   `bill_copy_id` int(11) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=5 ;
+
+--
+-- Dumping data for table `table_consumer_bill_amc_copies`
+--
+
+INSERT INTO `table_consumer_bill_amc_copies` (`id`, `bill_amc_id`, `bill_copy_id`) VALUES
+(1, 1, 0),
+(2, 1, 0),
+(3, 1, 0),
+(4, 2, 2);
 
 -- --------------------------------------------------------
 
@@ -326,7 +344,15 @@ CREATE TABLE IF NOT EXISTS `table_consumer_bill_amc_exclusions` (
   `bill_amc_id` int(11) NOT NULL,
   `exclusions_id` int(11) NOT NULL,
   PRIMARY KEY (`amc_exclusions_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=3 ;
+
+--
+-- Dumping data for table `table_consumer_bill_amc_exclusions`
+--
+
+INSERT INTO `table_consumer_bill_amc_exclusions` (`amc_exclusions_id`, `bill_amc_id`, `exclusions_id`) VALUES
+(1, 2, 1),
+(2, 2, 2);
 
 -- --------------------------------------------------------
 
@@ -339,7 +365,15 @@ CREATE TABLE IF NOT EXISTS `table_consumer_bill_amc_inclusions` (
   `bill_amc_id` int(11) NOT NULL,
   `inclusions_id` int(11) NOT NULL,
   PRIMARY KEY (`amc_inclusions_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=3 ;
+
+--
+-- Dumping data for table `table_consumer_bill_amc_inclusions`
+--
+
+INSERT INTO `table_consumer_bill_amc_inclusions` (`amc_inclusions_id`, `bill_amc_id`, `inclusions_id`) VALUES
+(1, 2, 1),
+(2, 2, 2);
 
 -- --------------------------------------------------------
 
@@ -390,14 +424,18 @@ CREATE TABLE IF NOT EXISTS `table_consumer_bill_details` (
   `updated_by_user_id` int(11) NOT NULL,
   `status_id` int(11) NOT NULL,
   PRIMARY KEY (`bill_detail_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=2 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=6 ;
 
 --
 -- Dumping data for table `table_consumer_bill_details`
 --
 
 INSERT INTO `table_consumer_bill_details` (`bill_detail_id`, `user_id`, `consumer_name`, `consumer_email_id`, `consumer_phone_no`, `document_id`, `invoice_number`, `total_purchase_value`, `taxes`, `purchase_date`, `created_on`, `updated_on`, `updated_by_user_id`, `status_id`) VALUES
-(1, 10, 'Pritam', 'pritamparker@gmail.com', '9661086188', 1, '12345', 50000.00, 5000.00, '2017-08-17 00:00:00', '2017-08-24 18:43:45', '2017-08-24 18:43:45', 9, 1);
+(1, 10, 'Pritam', 'pritamparker@gmail.com', '9661086188', 1, '12345', 50000.00, 5000.00, '2017-08-17 00:00:00', '2017-08-24 18:43:45', '2017-08-24 18:43:45', 9, 1),
+(2, 10, 'Parker', 'pritamparker@gmail.com', '9661086188', 1, '1233', 50000.00, 1212.00, '2017-08-17 00:00:00', '2017-08-24 19:25:12', '2017-08-24 19:25:12', 9, 1),
+(3, 10, 'shk', 'asdj', 'sdjkf', 1, 'hbj', 0.00, 0.00, '2017-08-17 00:00:00', '2017-08-24 20:10:04', '2017-08-24 20:10:04', 9, 1),
+(4, 10, 'Amit', '', '', 1, '123', 1000.00, 10.00, '2017-08-17 00:00:00', '2017-08-24 22:23:15', '2017-08-24 22:23:15', 9, 1),
+(5, 10, 'final vbill', 'pritamparker@gmail.com', '919912911', 1, '123', 1212.00, 1212.00, '2017-08-17 00:00:00', '2017-08-25 16:32:12', '2017-08-25 16:32:12', 9, 1);
 
 -- --------------------------------------------------------
 
@@ -410,7 +448,7 @@ CREATE TABLE IF NOT EXISTS `table_consumer_bill_details_copies` (
   `bill_detail_id` int(11) NOT NULL,
   `bill_copy_id` int(11) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=3 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=11 ;
 
 --
 -- Dumping data for table `table_consumer_bill_details_copies`
@@ -418,7 +456,15 @@ CREATE TABLE IF NOT EXISTS `table_consumer_bill_details_copies` (
 
 INSERT INTO `table_consumer_bill_details_copies` (`id`, `bill_detail_id`, `bill_copy_id`) VALUES
 (1, 1, 1),
-(2, 1, 2);
+(2, 1, 2),
+(3, 2, 1),
+(4, 2, 2),
+(5, 3, 1),
+(6, 3, 2),
+(7, 4, 1),
+(8, 4, 2),
+(9, 5, 1),
+(10, 5, 2);
 
 -- --------------------------------------------------------
 
@@ -442,7 +488,17 @@ CREATE TABLE IF NOT EXISTS `table_consumer_bill_insurance` (
   `status_id` int(11) NOT NULL,
   PRIMARY KEY (`bill_insurance_id`),
   KEY `bill_product_id` (`bill_product_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=5 ;
+
+--
+-- Dumping data for table `table_consumer_bill_insurance`
+--
+
+INSERT INTO `table_consumer_bill_insurance` (`bill_insurance_id`, `user_id`, `bill_product_id`, `seller_type`, `seller_id`, `insurance_plan`, `policy_number`, `amount_insured`, `premium_type`, `premium_amount`, `policy_effective_date`, `policy_expiry_date`, `status_id`) VALUES
+(1, 10, 3, 2, 0, 'sdhj', 'sdkj', 0.00, 'qha', 0.00, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 1),
+(2, 10, 4, 2, 1, 'sadsad', 'sad', 1000.00, 'Yearly', 100.00, '2017-08-17 00:00:00', '2018-08-17 00:00:00', 1),
+(3, 10, 5, 1, 2, 'asdaw', '213213', 12321321.00, 'sfef', 123123.00, '2012-12-12 00:00:00', '2012-12-12 00:00:00', 1),
+(4, 10, 5, 1, 2, 'asdjh', 'sdbfhj', 1212132.00, 'y', 1212.00, '2012-12-12 00:00:00', '2012-12-12 00:00:00', 1);
 
 -- --------------------------------------------------------
 
@@ -455,7 +511,22 @@ CREATE TABLE IF NOT EXISTS `table_consumer_bill_insurance_copies` (
   `bill_insurance_id` int(11) NOT NULL,
   `bill_copy_id` int(11) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=10 ;
+
+--
+-- Dumping data for table `table_consumer_bill_insurance_copies`
+--
+
+INSERT INTO `table_consumer_bill_insurance_copies` (`id`, `bill_insurance_id`, `bill_copy_id`) VALUES
+(1, 1, 0),
+(2, 1, 0),
+(3, 1, 0),
+(4, 1, 0),
+(5, 1, 0),
+(6, 1, 0),
+(7, 2, 1),
+(8, 3, 1),
+(9, 4, 1);
 
 -- --------------------------------------------------------
 
@@ -468,7 +539,23 @@ CREATE TABLE IF NOT EXISTS `table_consumer_bill_insurance_exclusions` (
   `bill_insurance_id` int(11) NOT NULL,
   `exclusions_id` int(11) NOT NULL,
   PRIMARY KEY (`insurance_exclusions_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=11 ;
+
+--
+-- Dumping data for table `table_consumer_bill_insurance_exclusions`
+--
+
+INSERT INTO `table_consumer_bill_insurance_exclusions` (`insurance_exclusions_id`, `bill_insurance_id`, `exclusions_id`) VALUES
+(1, 1, 1),
+(2, 1, 2),
+(3, 2, 1),
+(4, 2, 2),
+(5, 3, 2),
+(6, 3, 3),
+(7, 3, 1),
+(8, 4, 2),
+(9, 4, 3),
+(10, 4, 1);
 
 -- --------------------------------------------------------
 
@@ -481,7 +568,23 @@ CREATE TABLE IF NOT EXISTS `table_consumer_bill_insurance_inclusions` (
   `bill_insurance_id` int(11) NOT NULL,
   `inclusions_id` int(11) NOT NULL,
   PRIMARY KEY (`insurance_inclusions_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=11 ;
+
+--
+-- Dumping data for table `table_consumer_bill_insurance_inclusions`
+--
+
+INSERT INTO `table_consumer_bill_insurance_inclusions` (`insurance_inclusions_id`, `bill_insurance_id`, `inclusions_id`) VALUES
+(1, 1, 1),
+(2, 1, 2),
+(3, 2, 1),
+(4, 2, 2),
+(5, 3, 2),
+(6, 3, 3),
+(7, 3, 1),
+(8, 4, 2),
+(9, 4, 3),
+(10, 4, 1);
 
 -- --------------------------------------------------------
 
@@ -495,14 +598,18 @@ CREATE TABLE IF NOT EXISTS `table_consumer_bill_mapping` (
   `bill_ref_type` int(11) NOT NULL COMMENT '1=bill,2=product',
   `ref_id` int(11) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=2 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=6 ;
 
 --
 -- Dumping data for table `table_consumer_bill_mapping`
 --
 
 INSERT INTO `table_consumer_bill_mapping` (`id`, `bill_id`, `bill_ref_type`, `ref_id`) VALUES
-(1, 1, 1, 1);
+(1, 1, 1, 1),
+(2, 1, 1, 2),
+(3, 1, 1, 3),
+(4, 1, 1, 4),
+(5, 1, 1, 5);
 
 -- --------------------------------------------------------
 
@@ -525,14 +632,18 @@ CREATE TABLE IF NOT EXISTS `table_consumer_bill_products` (
   `status_id` int(11) NOT NULL,
   PRIMARY KEY (`bill_product_id`),
   KEY `bill_id` (`bill_detail_id`,`master_category_id`,`category_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=2 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=6 ;
 
 --
 -- Dumping data for table `table_consumer_bill_products`
 --
 
 INSERT INTO `table_consumer_bill_products` (`bill_product_id`, `user_id`, `bill_detail_id`, `product_name`, `master_category_id`, `category_id`, `brand_id`, `color_id`, `value_of_purchase`, `taxes`, `tag`, `status_id`) VALUES
-(1, 10, 1, 'iphone 6', 3, 13, 2, 2, 50000.00, 5000.00, 'Phone', 1);
+(1, 10, 1, 'iphone 6', 3, 13, 2, 2, 50000.00, 5000.00, 'Phone', 1),
+(2, 10, 2, 'iphone', 3, 13, 2, 3, 6.00, 1000.00, 'Phone', 1),
+(3, 10, 3, 'asd', 3, 13, 2, 4, 0.00, 0.00, 'sdf', 1),
+(4, 10, 4, 'Text', 1, 38, 1, 1, 1000.00, 10.00, 'dsadad', 1),
+(5, 10, 5, 'p1', 3, 13, 4, 4, 12120.00, 1212.00, 'car', 1);
 
 -- --------------------------------------------------------
 
@@ -546,7 +657,7 @@ CREATE TABLE IF NOT EXISTS `table_consumer_bill_product_meta_data` (
   `cateogry_form_id` int(11) NOT NULL,
   `form_element_value` varchar(200) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=8 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=31 ;
 
 --
 -- Dumping data for table `table_consumer_bill_product_meta_data`
@@ -559,7 +670,30 @@ INSERT INTO `table_consumer_bill_product_meta_data` (`id`, `bill_product_id`, `c
 (4, 1, 4, '1'),
 (5, 1, 5, '6'),
 (6, 1, 6, '18'),
-(7, 1, 7, '19');
+(7, 1, 7, '19'),
+(8, 2, 1, 'iphone'),
+(9, 2, 2, '6'),
+(10, 2, 3, '1111111111111111111'),
+(11, 2, 4, '1'),
+(12, 2, 5, '6'),
+(13, 2, 6, '18'),
+(14, 2, 7, '19'),
+(15, 3, 1, 'sad'),
+(16, 3, 2, 'sasc'),
+(17, 3, 3, '12123'),
+(18, 3, 4, '2'),
+(19, 3, 5, '6'),
+(20, 3, 6, '17'),
+(21, 3, 7, '19'),
+(22, 4, 1, 'dasda'),
+(23, 4, 2, '2'),
+(24, 5, 1, 'asdjh'),
+(25, 5, 2, 'j'),
+(26, 5, 3, 'jk'),
+(27, 5, 4, '2'),
+(28, 5, 5, '7'),
+(29, 5, 6, '17'),
+(30, 5, 7, '19');
 
 -- --------------------------------------------------------
 
@@ -579,7 +713,16 @@ CREATE TABLE IF NOT EXISTS `table_consumer_bill_repair` (
   `repair_date` datetime NOT NULL,
   `status_id` int(11) NOT NULL,
   PRIMARY KEY (`bill_repair_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=4 ;
+
+--
+-- Dumping data for table `table_consumer_bill_repair`
+--
+
+INSERT INTO `table_consumer_bill_repair` (`bill_repair_id`, `user_id`, `bill_product_id`, `seller_type`, `seller_id`, `value_of_repair`, `taxes`, `repair_invoice_number`, `repair_date`, `status_id`) VALUES
+(1, 10, 3, 2, 0, 0.00, 0.00, 'n', '0000-00-00 00:00:00', 1),
+(2, 10, 4, 2, 1, 200.00, 20.00, '123456', '2017-08-17 00:00:00', 1),
+(3, 10, 5, 2, 0, 0.00, 0.00, 'sad21', '0000-00-00 00:00:00', 1);
 
 -- --------------------------------------------------------
 
@@ -592,7 +735,17 @@ CREATE TABLE IF NOT EXISTS `table_consumer_bill_repair_copies` (
   `bill_repair_id` int(11) NOT NULL,
   `bill_copy_id` int(11) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=5 ;
+
+--
+-- Dumping data for table `table_consumer_bill_repair_copies`
+--
+
+INSERT INTO `table_consumer_bill_repair_copies` (`id`, `bill_repair_id`, `bill_copy_id`) VALUES
+(1, 1, 0),
+(2, 1, 0),
+(3, 2, 1),
+(4, 3, 1);
 
 -- --------------------------------------------------------
 
@@ -607,14 +760,20 @@ CREATE TABLE IF NOT EXISTS `table_consumer_bill_seller_mapping` (
   `seller_ref_id` int(11) NOT NULL,
   PRIMARY KEY (`bill_seller_info_id`),
   KEY `bill_product_id` (`bill_detail_id`,`seller_ref_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=2 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=8 ;
 
 --
 -- Dumping data for table `table_consumer_bill_seller_mapping`
 --
 
 INSERT INTO `table_consumer_bill_seller_mapping` (`bill_seller_info_id`, `bill_detail_id`, `ref_type`, `seller_ref_id`) VALUES
-(1, 1, 1, 1);
+(1, 1, 1, 1),
+(2, 2, 1, 3),
+(3, 3, 1, 1),
+(4, 4, 1, 2),
+(5, 4, 2, 1),
+(6, 4, 2, 2),
+(7, 5, 1, 1);
 
 -- --------------------------------------------------------
 
@@ -637,7 +796,16 @@ CREATE TABLE IF NOT EXISTS `table_consumer_bill_warranty` (
   `status_id` int(11) NOT NULL,
   PRIMARY KEY (`bill_warranty_id`),
   KEY `bill_product_id` (`bill_product_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=4 ;
+
+--
+-- Dumping data for table `table_consumer_bill_warranty`
+--
+
+INSERT INTO `table_consumer_bill_warranty` (`bill_warranty_id`, `user_id`, `bill_product_id`, `seller_type`, `seller_id`, `warranty_type`, `policy_number`, `premium_type`, `premium_amount`, `policy_effective_date`, `policy_expiry_date`, `status_id`) VALUES
+(1, 10, 3, 2, 0, 'undefined', 'bhzx', 'jbdv', 0.00, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 1),
+(2, 10, 4, 1, 1, 'Warranty', 'sadad', 'Yearly', 2000.00, '2017-08-17 00:00:00', '2018-08-17 00:00:00', 1),
+(3, 10, 5, 1, 1, 'undefined', '1212', 'y', 11000.00, '2012-12-12 00:00:00', '2012-12-12 00:00:00', 1);
 
 -- --------------------------------------------------------
 
@@ -650,7 +818,26 @@ CREATE TABLE IF NOT EXISTS `table_consumer_bill_warranty_copies` (
   `bill_warranty_id` int(11) NOT NULL,
   `bill_copy_id` int(11) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=14 ;
+
+--
+-- Dumping data for table `table_consumer_bill_warranty_copies`
+--
+
+INSERT INTO `table_consumer_bill_warranty_copies` (`id`, `bill_warranty_id`, `bill_copy_id`) VALUES
+(1, 1, 0),
+(2, 1, 0),
+(3, 1, 0),
+(4, 1, 0),
+(5, 1, 0),
+(6, 1, 0),
+(7, 1, 0),
+(8, 1, 0),
+(9, 1, 0),
+(10, 1, 0),
+(11, 1, 0),
+(12, 2, 1),
+(13, 3, 2);
 
 -- --------------------------------------------------------
 
@@ -663,7 +850,17 @@ CREATE TABLE IF NOT EXISTS `table_consumer_bill_warranty_exclusions` (
   `bill_warranty_id` int(11) NOT NULL,
   `exclusions_id` int(11) NOT NULL,
   PRIMARY KEY (`warranty_exclusions_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=5 ;
+
+--
+-- Dumping data for table `table_consumer_bill_warranty_exclusions`
+--
+
+INSERT INTO `table_consumer_bill_warranty_exclusions` (`warranty_exclusions_id`, `bill_warranty_id`, `exclusions_id`) VALUES
+(1, 2, 1),
+(2, 2, 2),
+(3, 3, 2),
+(4, 3, 3);
 
 -- --------------------------------------------------------
 
@@ -676,7 +873,17 @@ CREATE TABLE IF NOT EXISTS `table_consumer_bill_warranty_inclusions` (
   `bill_warranty_id` int(11) NOT NULL,
   `inclusions_id` int(11) NOT NULL,
   PRIMARY KEY (`warranty_inclusions_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=5 ;
+
+--
+-- Dumping data for table `table_consumer_bill_warranty_inclusions`
+--
+
+INSERT INTO `table_consumer_bill_warranty_inclusions` (`warranty_inclusions_id`, `bill_warranty_id`, `inclusions_id`) VALUES
+(1, 2, 1),
+(2, 2, 2),
+(3, 3, 2),
+(4, 3, 3);
 
 -- --------------------------------------------------------
 
@@ -716,14 +923,15 @@ CREATE TABLE IF NOT EXISTS `table_cust_executive_tasks` (
   `status_id` int(11) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`,`bill_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=2 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=3 ;
 
 --
 -- Dumping data for table `table_cust_executive_tasks`
 --
 
 INSERT INTO `table_cust_executive_tasks` (`id`, `user_id`, `bill_id`, `comments`, `created_on`, `updated_on`, `updated_by_user_id`, `status_id`) VALUES
-(1, 9, 1, NULL, '2017-08-24 18:36:10', '2017-08-24 18:36:10', 1, 6);
+(1, 9, 1, NULL, '2017-08-24 18:36:10', '2017-08-24 18:36:10', 1, 5),
+(2, 9, 2, NULL, '2017-08-25 17:16:07', '2017-08-25 17:16:07', 1, 6);
 
 -- --------------------------------------------------------
 
@@ -818,7 +1026,15 @@ CREATE TABLE IF NOT EXISTS `table_offline_seller` (
   `longitude` varchar(255) NOT NULL,
   `status_id` int(11) NOT NULL,
   PRIMARY KEY (`offline_seller_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=3 ;
+
+--
+-- Dumping data for table `table_offline_seller`
+--
+
+INSERT INTO `table_offline_seller` (`offline_seller_id`, `offline_seller_name`, `offline_seller_owner_name`, `offline_seller_gstin_no`, `offline_seller_pan_number`, `offline_seller_registration_no`, `is_service_provider`, `is_onboarded`, `address_house_no`, `address_block`, `address_street`, `address_sector`, `address_city`, `address_state`, `address_pin_code`, `address_nearby`, `lattitude`, `longitude`, `status_id`) VALUES
+(1, 'New Seller', 'Pritam', '1213', 'ZZZZ', '', 0, 0, '', '', '', '', 'Gurgaon', 'Haryana', '', '', '', '', 1),
+(2, 'Mobile Store', 'Parker', 'null', 'null', 'null', 0, 0, 'null', 'null', 'null', 'null', 'Saket', 'new Delhi', 'null', 'null', 'null', 'null', 1);
 
 -- --------------------------------------------------------
 
@@ -835,7 +1051,15 @@ CREATE TABLE IF NOT EXISTS `table_offline_seller_details` (
   `status_id` int(11) NOT NULL,
   PRIMARY KEY (`seller_detail_id`),
   KEY `offline_seller_id` (`offline_seller_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=3 ;
+
+--
+-- Dumping data for table `table_offline_seller_details`
+--
+
+INSERT INTO `table_offline_seller_details` (`seller_detail_id`, `offline_seller_id`, `contactdetail_type_id`, `display_name`, `details`, `status_id`) VALUES
+(1, 1, 0, '', '', 1),
+(2, 2, 0, 'null', 'null', 1);
 
 -- --------------------------------------------------------
 
@@ -914,7 +1138,14 @@ CREATE TABLE IF NOT EXISTS `table_qual_executive_tasks` (
   `status_id` int(11) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`,`bill_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=2 ;
+
+--
+-- Dumping data for table `table_qual_executive_tasks`
+--
+
+INSERT INTO `table_qual_executive_tasks` (`id`, `user_id`, `bill_id`, `created_on`, `updated_on`, `updated_by_user_id`, `status_id`) VALUES
+(1, 8, 1, '2017-08-25 17:17:07', '2017-08-25 17:17:07', 1, 6);
 
 -- --------------------------------------------------------
 
@@ -1028,9 +1259,9 @@ CREATE TABLE IF NOT EXISTS `table_token` (
 --
 
 INSERT INTO `table_token` (`id`, `token_id`, `user_id`, `created_on`, `expiry_on`) VALUES
-(1, 'Q4k4hePma7KZ2LPK9GnwNAfub', 1, '2017-08-01 16:09:40', '2017-08-01 16:09:40'),
-(2, '95CLTCfeXeQf9yq96YPYIXWli', 9, '2017-08-10 15:32:32', '2017-08-10 15:32:32'),
-(3, 'lFFg5ZjCBAcrqde5AR5cq1CIu', 8, '2017-08-10 16:41:52', '2017-08-10 16:41:52'),
+(1, 'Qb1DRgcfhZcbgGQnpt9WcdQyx', 1, '2017-08-01 16:09:40', '2017-08-01 16:09:40'),
+(2, 'WyBY14R0yrhYBlP6be2p5bS1n', 9, '2017-08-10 15:32:32', '2017-08-10 15:32:32'),
+(3, 'yeUh9jSGMBTjchOrtb2mxDD3z', 8, '2017-08-10 16:41:52', '2017-08-10 16:41:52'),
 (4, 'Ub3KxSEoPsycRjMd6ZljqcjcU', 11, '2017-08-18 15:17:54', '2017-08-18 15:17:54'),
 (5, 'osaue2LZqEC7uRzfEhatLxJZ5', 13, '2017-08-24 17:23:29', '2017-08-24 17:23:29');
 
@@ -1061,10 +1292,10 @@ CREATE TABLE IF NOT EXISTS `table_users` (
   `apk_version` varchar(10) DEFAULT NULL,
   `created_on` datetime NOT NULL,
   `updated_on` datetime NOT NULL,
-  `last_login` datetime NOT NULL,
+  `last_login` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `status_id` int(11) NOT NULL,
   PRIMARY KEY (`user_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=14 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=16 ;
 
 --
 -- Dumping data for table `table_users`
@@ -1077,10 +1308,12 @@ INSERT INTO `table_users` (`user_id`, `user_type_id`, `fullname`, `gmail_id`, `f
 (7, 2, 'Admin', NULL, NULL, 'admin1@binbill.com', NULL, '0e7517141fb53f21ee439b355b5a1d0a', 'Admin@123', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2017-08-05 12:15:32', '2017-08-05 12:15:32', '0000-00-00 00:00:00', 1),
 (8, 4, 'QE1', NULL, NULL, 'qe@gmail.com', NULL, '81dc9bdb52d04dc20036dbd8313ed055', '1234', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2017-08-05 12:17:04', '2017-08-10 19:34:20', '0000-00-00 00:00:00', 1),
 (9, 3, 'CE12', NULL, NULL, 'ce@gmail.com', NULL, '81dc9bdb52d04dc20036dbd8313ed055', '1234', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2017-08-08 11:20:16', '2017-08-10 19:25:51', '0000-00-00 00:00:00', 1),
-(10, 5, 'Amit Kuamr', NULL, NULL, NULL, '9953145118', '81dc9bdb52d04dc20036dbd8313ed055', '1234', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2017-08-09 02:14:08', '2017-08-09 04:11:06', '2017-08-09 07:13:13', 1),
+(10, 5, 'Amit Kuamr', NULL, NULL, NULL, '9953145118', '81dc9bdb52d04dc20036dbd8313ed055', '1234', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2017-08-25 02:14:08', '2017-08-09 04:11:06', '2017-08-09 07:13:13', 1),
 (11, 3, 'ce', NULL, NULL, 'ce@binbill.com', NULL, '81dc9bdb52d04dc20036dbd8313ed055', '1234', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2017-08-10 19:24:15', '2017-08-21 16:01:26', '0000-00-00 00:00:00', 1),
 (12, 3, 'cenasnsasd', NULL, NULL, 'ashdjk@gmaoil.com', NULL, 'd1758a69c60f126d5523868055d370ec', 'sadfjksdf', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2017-08-14 11:30:13', '2017-08-14 11:30:32', '0000-00-00 00:00:00', 3),
-(13, 4, 'qe', NULL, NULL, 'qe@binbill.com', NULL, '81dc9bdb52d04dc20036dbd8313ed055', '1234', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2017-08-21 16:01:51', '2017-08-21 16:01:51', '0000-00-00 00:00:00', 1);
+(13, 4, 'qe', NULL, NULL, 'qe@binbill.com', NULL, '81dc9bdb52d04dc20036dbd8313ed055', '1234', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2017-08-21 16:01:51', '2017-08-21 16:01:51', '0000-00-00 00:00:00', 1),
+(14, 2, 'Admin', NULL, NULL, 'admin2@binbill.com', NULL, '0e7517141fb53f21ee439b355b5a1d0a', 'Admin@123', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2017-08-25 18:57:31', '2017-08-25 18:57:31', '0000-00-00 00:00:00', 1),
+(15, 2, 'Admin', NULL, NULL, 'admin3@binbill.com', NULL, '0e7517141fb53f21ee439b355b5a1d0a', 'Admin@123', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2017-08-25 19:04:41', '2017-08-25 19:04:41', '2017-08-25 19:04:41', 1);
 
 -- --------------------------------------------------------
 
