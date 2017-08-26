@@ -4153,3 +4153,121 @@ server.route({
         }
     }
 });
+
+//Get Consumer User List
+server.route({
+    method: 'POST',
+    path: '/Services/ConsumerList',
+    handler: function (request, reply) {
+        const TokenNo = request.payload.TokenNo;
+        const OffSet = request.payload.OffSet;
+        const Limit = request.payload.Limit;
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+            if (error) throw error;
+            if(token.length > 0){
+                var UserID = token[0]['user_id'];
+                if(OffSet != '' && Limit != ''){
+                    var LimitCondition = 'LIMIT '+Limit+' OFFSET '+OffSet+'';
+                } else {
+                    var LimitCondition = '';
+                }
+                //console.log(LimitCondition);
+                connection.query('SELECT u.user_id as ID,u.fullname as Name,u.email_id as EmailID,u.mobile_no as PhoneNo,u.created_on as AddedDate,status_name as Status FROM table_users as u inner join table_status as s on s.status_id=u.status_id WHERE u.user_type_id=5 and u.status_id!=3 ORDER BY u.created_on DESC '+LimitCondition+' ', function (error, consumer, fields) {
+                    if (error) throw error;
+                    if(consumer.length > 0){
+                        var data = '{"statusCode": 100,"ConsumerList": '+ JSON.stringify(consumer) +'}';
+                        reply(data);
+                    } else {
+                        var data = '{"statusCode": 105,"error": "Not Found","message": "Data not Available."}';
+                        reply(data);
+                    }
+                });
+            } else {
+                var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+                reply(data);
+            }
+        });
+    },
+    config:{
+        validate: {
+            payload: {
+                TokenNo: Joi.string().required(),
+                OffSet: [Joi.string(), Joi.allow(null)],
+                Limit: [Joi.string(), Joi.allow(null)],
+                output: 'data',
+                parse:true
+            }
+        }
+    }
+});
+//Search Consumer User
+server.route({
+    method: 'POST',
+    path: '/Services/SearchConsumer',
+    handler: function (request, reply) {
+        const TokenNo = request.payload.TokenNo;
+        const Search = request.payload.Search;
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+            if (error) throw error;
+            if(token.length > 0){
+                var UserID = token[0]['user_id'];
+                connection.query('SELECT u.user_id as ID,u.fullname as Name,u.email_id as EmailID,u.mobile_no as PhoneNo,u.created_on as AddedDate,status_name as Status FROM table_users as u inner join table_status as s on s.status_id=u.status_id WHERE u.user_type_id=5 AND u.status_id!=3 AND (u.fullname LIKE "%'+Search+'%" OR u.email_id LIKE "%'+Search+'%" OR u.mobile_no LIKE "%'+Search+'%") ', function (error, consumer, fields) {
+                    if (error) throw error;
+                    if(consumer.length > 0){
+                        var data = '{"statusCode": 100,"ConsumerList": '+ JSON.stringify(consumer) +'}';
+                        reply(data);
+                    } else {
+                        var data = '{"statusCode": 105,"error": "Not Found","message": "Data not Available."}';
+                        reply(data);
+                    }
+                });
+            } else {
+                var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+                reply(data);
+            }
+        });
+    },
+    config:{
+        validate: {
+            payload: {
+                TokenNo: Joi.string().required(),
+                Search: Joi.string().required(),
+                output: 'data',
+                parse:true
+            }
+        }
+    }
+});
+//Delete Consumer User
+server.route({
+    method: 'POST',
+    path: '/Services/DeleteConsumer',
+    handler: function (request, reply) {
+        const TokenNo = request.payload.TokenNo;
+        const ID = request.payload.ID;
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+            if (error) throw error;
+            if(token.length > 0){
+                var UserID = token[0]['user_id'];
+                connection.query('UPDATE table_users SET status_id=3,updated_on="' + getDateTime() + '" WHERE user_id="' + ID + '"', function (error, results, fields) {
+                    if (error) throw error;
+                    var data = '{"statusCode": 100,"error": "","message": "User Delete successfully."}';
+                    reply(data);
+                });
+            } else {
+                var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+                reply(data);
+            }
+        });
+    },
+    config:{
+        validate: {
+            payload: {
+                TokenNo: Joi.string().required(),
+                ID: Joi.number().integer().required(),
+                output: 'data',
+                parse:true
+            }
+        }
+    }
+});
