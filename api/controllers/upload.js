@@ -99,12 +99,12 @@ class UploadController {
           if (Object.prototype.hasOwnProperty.call(fileData, i)) {
             const name = fileData[i].hapi.filename;
             const fileType = name.split('.')[name.split('.').length - 1];
-            const fileName = `${user.userId}-${result.ID}-${new Date().getTime()}.${fileType}`;
+            const fileName = `${user.userId}-${result.bill_id}-${new Date().getTime()}.${fileType}`;
             // const file = fs.createReadStream();
             fsImpl.writeFile(fileName, fileData[i]._data, { ContentType: mime.lookup(fileName) })
               .then((fileResult) => {
                 const ret = {
-                  bill_id: result.ID,
+                  bill_id: result.bill_id,
                   bill_copy_name: fileName,
                   bill_copy_type: fileType,
                   status_id: 6,
@@ -128,12 +128,12 @@ class UploadController {
       } else {
         const name = fileData.hapi.filename;
         const fileType = name.split('.')[name.split('.').length - 1];
-        const fileName = `${user.ID}-${result.ID}-${new Date().getTime()}.${fileType}`;
+        const fileName = `${user.ID}-${result.bill_id}-${new Date().getTime()}.${fileType}`;
         // const file = fs.createReadStream();
         fsImpl.writeFile(fileName, fileData._data, { ContentType: mime.lookup(fileName) })
           .then((fileResult) => {
             const ret = {
-              bill_id: result.ID,
+              bill_id: result.bill_id,
               bill_copy_name: fileName,
               bill_copy_type: fileType,
               status_id: 6,
