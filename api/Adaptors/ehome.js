@@ -15,11 +15,12 @@ class EHomeAdaptor {
       this.retrieveRecentSearch(user)
     ]).then((result) => {
       const categoryList = result[1];
+      const recentSearches = result[2].map(item => item.toJSON());
       return {
         status: true,
         message: 'EHome restore successful',
         notificationCount: '2',
-        recentSearches: result[2],
+        recentSearches: recentSearches.map(item => item.searchValue),
         unProcessedBills: result[0],
         categoryList
       };
@@ -82,10 +83,11 @@ class EHomeAdaptor {
             },
             attributes: []
           }],
-          attributes: [['product_name', 'name']],
+          attributes: [],
           required: false
         }],
-        attributes: [['category_name', 'cName'], ['display_id', 'cType'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`categories`.`category_id`'), '/products?pageno=1'), 'cURL']]
+        attributes: [['category_name', 'cName'], ['display_id', 'cType'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`categories`.`category_id`'), '/products?pageno=1'), 'cURL'], [this.modals.sequelize.fn('MAX', this.modals.sequelize.col('`products->productBillMaps`.`updated_on`')), 'cLastUpdate'], [this.modals.sequelize.fn('COUNT', this.modals.sequelize.col('`products`.`product_name`')), 'productCounts']],
+        group: '`categories`.`category_id`'
       }).then(resolve).catch(reject);
     });
   }

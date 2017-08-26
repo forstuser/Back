@@ -16,6 +16,15 @@ module.exports = {
     host: 'localhost',
     dialect: 'mysql'
   }, */
+  /* database: {
+    username: 'binbill',
+    password: 'Binbill5#',
+    database: 'binbill',
+    autoReconnect: true,
+    host: 'binbilldbinstanceprod.cpnnj7xlkrir.ap-south-1.rds.amazonaws.com',
+    dialect: 'mysql',
+    port: 3306
+  } */
   database: {
     username: 'binbillDB',
     password: 'devbindb1!#',

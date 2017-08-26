@@ -81,12 +81,13 @@ class DashboardAdaptor {
               totalDays: 0,
               insightData
             };
+            const recentSearches = result[2].map(item => item.toJSON());
             return {
               status: true,
               message: 'Dashboard restore Successful',
               authorization: token,
               notificationCount: '2',
-              recentSearches: result[2],
+              recentSearches: recentSearches.map(item => item.searchValue),
               upcomingServices: result[0],
               insight: insightResult
             };
