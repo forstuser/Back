@@ -8,9 +8,9 @@ const crypto = require('crypto');
 // Create a server with a host and port
 const server = new Hapi.Server();
 const connection = MySQL.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: '',
+    host: 'binbilldbinstancetest.cpnnj7xlkrir.ap-south-1.rds.amazonaws.com',
+    user: 'binbillDB',
+    password: 'devbindb1!#',
     database: 'binbill'
 });
 //server.connection({ port: 3000});
@@ -1208,7 +1208,7 @@ server.route({
             if (error) throw error;
             if(token.length > 0){
                 var UserID = token[0]['user_id'];
-                connection.query('INSERT INTO table_authorized_service_center (brand_id,center_name,address_house_no,address_block,address_street,address_sector,address_city,address_state,address_pin_code,address_nearby,lattitude,longitude,open_days,timings,status_id) VALUES ("'+request.payload.BrandID+'","'+request.payload.Name+'","'+request.payload.HouseNo+'","'+request.payload.Block+'","'+request.payload.Street+'","'+request.payload.Sector+'","'+request.payload.City+'","'+request.payload.State+'","'+request.payload.PinCode+'","'+request.payload.NearBy+'","'+request.payload.Lattitude+'","'+request.payload.Longitude+'","'+request.payload.OpenDays+'","'+request.payload.Timings+'",1)', function (error, results, fields) {
+                connection.query('INSERT INTO table_authorized_service_center (brand_id,center_name,address_house_no,address_block,address_street,address_sector,address_city,address_state,address_pin_code,address_nearby,latitude,longitude,open_days,timings,status_id) VALUES ("'+request.payload.BrandID+'","'+request.payload.Name+'","'+request.payload.HouseNo+'","'+request.payload.Block+'","'+request.payload.Street+'","'+request.payload.Sector+'","'+request.payload.City+'","'+request.payload.State+'","'+request.payload.PinCode+'","'+request.payload.NearBy+'","'+request.payload.Lattitude+'","'+request.payload.Longitude+'","'+request.payload.OpenDays+'","'+request.payload.Timings+'",1)', function (error, results, fields) {
                     if (error) throw error;
                     for(var i = 0; i < Details.length; i++) {
                         connection.query('INSERT INTO table_authorized_service_center_details (center_id,contactdetail_type_id,display_name,details,status_id) VALUES ("'+results['insertId']+'","'+Details[i].DetailTypeID+'","'+Details[i].DisplayName+'","'+Details[i].Details+'",1)', function (error, detail, fields) {
@@ -1262,7 +1262,7 @@ server.route({
             if (error) throw error;
             if(token.length > 0){
                 var UserID = token[0]['user_id'];
-                connection.query('UPDATE table_authorized_service_center SET brand_id="'+request.payload.BrandID+'",center_name="'+request.payload.Name+'",address_house_no="'+request.payload.HouseNo+'",address_block="'+request.payload.Block+'",address_street="'+request.payload.Street+'",address_sector="'+request.payload.Sector+'",address_city="'+request.payload.City+'",address_state="'+request.payload.State+'",address_pin_code="'+request.payload.PinCode+'",address_nearby="'+request.payload.NearBy+'",lattitude="'+request.payload.Lattitude+'",longitude="'+request.payload.Longitude+'",open_days="'+request.payload.OpenDays+'",timings="'+request.payload.Timings+'" WHERE center_id="' + ID + '"', function (error, results, fields) {
+                connection.query('UPDATE table_authorized_service_center SET brand_id="'+request.payload.BrandID+'",center_name="'+request.payload.Name+'",address_house_no="'+request.payload.HouseNo+'",address_block="'+request.payload.Block+'",address_street="'+request.payload.Street+'",address_sector="'+request.payload.Sector+'",address_city="'+request.payload.City+'",address_state="'+request.payload.State+'",address_pin_code="'+request.payload.PinCode+'",address_nearby="'+request.payload.NearBy+'",latitude="'+request.payload.Lattitude+'",longitude="'+request.payload.Longitude+'",open_days="'+request.payload.OpenDays+'",timings="'+request.payload.Timings+'" WHERE center_id="' + ID + '"', function (error, results, fields) {
                     if (error) throw error;
                     for(var i = 0; i < Details.length; i++) {
                         if(Details[i].DetailID != null && Details[i].DetailID != ''){
@@ -1386,7 +1386,7 @@ server.route({
             if (error) throw error;
             if(token.length > 0){
                 var UserID = token[0]['user_id'];
-                connection.query('SELECT a.center_id as ID,a.brand_id as BrandID,b.brand_name as BrandName,a.center_name as Name,a.address_house_no as HouseNo,a.address_block as Block,a.address_street as Street,a.address_sector as Sector,a.address_city as City,a.address_state as State,a.address_pin_code as PinCode,a.address_nearby as NearBy,a.lattitude as Lattitude,a.longitude as Longitude,a.open_days as OpenDays,a.timings as Timings FROM table_authorized_service_center as a inner join table_brands as b on a.brand_id=b.brand_id WHERE a.status_id!=3 ORDER BY b.brand_name', function (error, service_center, fields) {
+                connection.query('SELECT a.center_id as ID,a.brand_id as BrandID,b.brand_name as BrandName,a.center_name as Name,a.address_house_no as HouseNo,a.address_block as Block,a.address_street as Street,a.address_sector as Sector,a.address_city as City,a.address_state as State,a.address_pin_code as PinCode,a.address_nearby as NearBy,a.latitude as Lattitude,a.longitude as Longitude,a.open_days as OpenDays,a.timings as Timings FROM table_authorized_service_center as a inner join table_brands as b on a.brand_id=b.brand_id WHERE a.status_id!=3 ORDER BY b.brand_name', function (error, service_center, fields) {
                     if (error) throw error;
                     if(service_center.length > 0){
                         var data = '{"statusCode": 100,"AuthorizedList": '+ JSON.stringify(service_center) +'}';
@@ -1423,7 +1423,7 @@ server.route({
             if (error) throw error;
             if(token.length > 0){
                 var UserID = token[0]['user_id'];
-                connection.query('SELECT a.center_id as ID,a.brand_id as BrandID,b.brand_name as BrandName,a.center_name as Name,a.address_house_no as HouseNo,a.address_block as Block,a.address_street as Street,a.address_sector as Sector,a.address_city as City,a.address_state as State,a.address_pin_code as PinCode,a.address_nearby as NearBy,a.lattitude as Lattitude,a.longitude as Longitude,a.open_days as OpenDays,a.timings as Timings FROM table_authorized_service_center as a inner join table_brands as b on a.brand_id=b.brand_id WHERE a.center_id = "' + ID + '"', function (error, brand, fields) {
+                connection.query('SELECT a.center_id as ID,a.brand_id as BrandID,b.brand_name as BrandName,a.center_name as Name,a.address_house_no as HouseNo,a.address_block as Block,a.address_street as Street,a.address_sector as Sector,a.address_city as City,a.address_state as State,a.address_pin_code as PinCode,a.address_nearby as NearBy,a.latitude as Lattitude,a.longitude as Longitude,a.open_days as OpenDays,a.timings as Timings FROM table_authorized_service_center as a inner join table_brands as b on a.brand_id=b.brand_id WHERE a.center_id = "' + ID + '"', function (error, brand, fields) {
                     if (error) throw error;
                     if(brand.length > 0){
                         connection.query('SELECT center_detail_id as DetailID,contactdetail_type_id as DetailTypeID,display_name as DisplayName,details as Details FROM table_authorized_service_center_details WHERE center_id = "' + ID + '" and status_id!=3', function (error, detail, fields) {
@@ -1887,7 +1887,7 @@ server.route({
             if (error) throw error;
             if(token.length > 0){
                 var UserID = token[0]['user_id'];
-                connection.query('INSERT INTO table_offline_seller (offline_seller_name,offline_seller_owner_name,offline_seller_gstin_no,offline_seller_pan_number,offline_seller_registration_no,is_service_provider,is_onboarded,address_house_no,address_block,address_street,address_sector,address_city,address_state,address_pin_code,address_nearby,lattitude,longitude,status_id) VALUES ("'+request.payload.Name+'","'+request.payload.OwnerName+'","'+request.payload.GstinNo+'","'+request.payload.PanNo+'","'+request.payload.RegNo+'","'+request.payload.ServiceProvider+'","'+request.payload.Onboarded+'","'+request.payload.HouseNo+'","'+request.payload.Block+'","'+request.payload.Street+'","'+request.payload.Sector+'","'+request.payload.City+'","'+request.payload.State+'","'+request.payload.PinCode+'","'+request.payload.NearBy+'","'+request.payload.Lattitude+'","'+request.payload.Longitude+'",1)', function (error, results, fields) {
+                connection.query('INSERT INTO table_offline_seller (offline_seller_name,offline_seller_owner_name,offline_seller_gstin_no,offline_seller_pan_number,offline_seller_registration_no,is_service_provider,is_onboarded,address_house_no,address_block,address_street,address_sector,address_city,address_state,address_pin_code,address_nearby,latitude,longitude,status_id) VALUES ("'+request.payload.Name+'","'+request.payload.OwnerName+'","'+request.payload.GstinNo+'","'+request.payload.PanNo+'","'+request.payload.RegNo+'","'+request.payload.ServiceProvider+'","'+request.payload.Onboarded+'","'+request.payload.HouseNo+'","'+request.payload.Block+'","'+request.payload.Street+'","'+request.payload.Sector+'","'+request.payload.City+'","'+request.payload.State+'","'+request.payload.PinCode+'","'+request.payload.NearBy+'","'+request.payload.Lattitude+'","'+request.payload.Longitude+'",1)', function (error, results, fields) {
                     if (error) throw error;
                     for(var i = 0; i < Details.length; i++) {
                         connection.query('INSERT INTO table_offline_seller_details (offline_seller_id,contactdetail_type_id,display_name,details,status_id) VALUES ("'+results['insertId']+'","'+Details[i].DetailTypeID+'","'+Details[i].DisplayName+'","'+Details[i].Details+'",1)', function (error, detail, fields) {
@@ -1944,7 +1944,7 @@ server.route({
             if (error) throw error;
             if(token.length > 0){
                 var UserID = token[0]['user_id'];
-                connection.query('UPDATE table_offline_seller SET offline_seller_name="'+request.payload.Name+'",offline_seller_owner_name="'+request.payload.OwnerName+'",offline_seller_gstin_no="'+request.payload.GstinNo+'",offline_seller_pan_number="'+request.payload.PanNo+'",offline_seller_registration_no="'+request.payload.RegNo+'",is_service_provider="'+request.payload.ServiceProvider+'",is_onboarded="'+request.payload.Onboarded+'",address_house_no="'+request.payload.HouseNo+'",address_block="'+request.payload.Block+'",address_street="'+request.payload.Street+'",address_sector="'+request.payload.Sector+'",address_city="'+request.payload.City+'",address_state="'+request.payload.State+'",address_pin_code="'+request.payload.PinCode+'",address_nearby="'+request.payload.NearBy+'",lattitude="'+request.payload.Lattitude+'",longitude="'+request.payload.Longitude+'" WHERE offline_seller_id="' + ID + '"', function (error, results, fields) {
+                connection.query('UPDATE table_offline_seller SET offline_seller_name="'+request.payload.Name+'",offline_seller_owner_name="'+request.payload.OwnerName+'",offline_seller_gstin_no="'+request.payload.GstinNo+'",offline_seller_pan_number="'+request.payload.PanNo+'",offline_seller_registration_no="'+request.payload.RegNo+'",is_service_provider="'+request.payload.ServiceProvider+'",is_onboarded="'+request.payload.Onboarded+'",address_house_no="'+request.payload.HouseNo+'",address_block="'+request.payload.Block+'",address_street="'+request.payload.Street+'",address_sector="'+request.payload.Sector+'",address_city="'+request.payload.City+'",address_state="'+request.payload.State+'",address_pin_code="'+request.payload.PinCode+'",address_nearby="'+request.payload.NearBy+'",latitude="'+request.payload.Lattitude+'",longitude="'+request.payload.Longitude+'" WHERE offline_seller_id="' + ID + '"', function (error, results, fields) {
                     if (error) throw error;
                     for(var i = 0; i < Details.length; i++) {
                         if(Details[i].DetailID != null && Details[i].DetailID != ''){
@@ -2072,7 +2072,7 @@ server.route({
             if (error) throw error;
             if(token.length > 0){
                 var UserID = token[0]['user_id'];
-                connection.query('SELECT offline_seller_id as ID,offline_seller_name as Name,offline_seller_owner_name as OwnerName,offline_seller_gstin_no as GstinNo,offline_seller_pan_number as PanNo,offline_seller_registration_no as RegNo,is_service_provider as ServiceProvider,is_onboarded as Onboarded,address_house_no as HouseNo,address_block as Block,address_street as Street,address_sector as Sector,address_city as City,address_state as State,address_pin_code as PinCode,address_nearby as NearBy,lattitude as Lattitude,longitude as Longitude FROM table_offline_seller WHERE status_id!=3 ORDER BY offline_seller_name', function (error, service_center, fields) {
+                connection.query('SELECT offline_seller_id as ID,offline_seller_name as Name,offline_seller_owner_name as OwnerName,offline_seller_gstin_no as GstinNo,offline_seller_pan_number as PanNo,offline_seller_registration_no as RegNo,is_service_provider as ServiceProvider,is_onboarded as Onboarded,address_house_no as HouseNo,address_block as Block,address_street as Street,address_sector as Sector,address_city as City,address_state as State,address_pin_code as PinCode,address_nearby as NearBy,latitude as Lattitude,longitude as Longitude FROM table_offline_seller WHERE status_id!=3 ORDER BY offline_seller_name', function (error, service_center, fields) {
                     if (error) throw error;
                     if(service_center.length > 0){
                         var data = '{"statusCode": 100,"OfflineSellerList": '+ JSON.stringify(service_center) +'}';
@@ -2109,7 +2109,7 @@ server.route({
             if (error) throw error;
             if(token.length > 0){
                 var UserID = token[0]['user_id'];
-                connection.query('SELECT offline_seller_id as ID,offline_seller_name as Name,offline_seller_owner_name as OwnerName,offline_seller_gstin_no as GstinNo,offline_seller_pan_number as PanNo,offline_seller_registration_no as RegNo,is_service_provider as ServiceProvider,is_onboarded as Onboarded,address_house_no as HouseNo,address_block as Block,address_street as Street,address_sector as Sector,address_city as City,address_state as State,address_pin_code as PinCode,address_nearby as NearBy,lattitude as Lattitude,longitude as Longitude FROM table_offline_seller WHERE offline_seller_id = "' + ID + '"', function (error, offline_seller, fields) {
+                connection.query('SELECT offline_seller_id as ID,offline_seller_name as Name,offline_seller_owner_name as OwnerName,offline_seller_gstin_no as GstinNo,offline_seller_pan_number as PanNo,offline_seller_registration_no as RegNo,is_service_provider as ServiceProvider,is_onboarded as Onboarded,address_house_no as HouseNo,address_block as Block,address_street as Street,address_sector as Sector,address_city as City,address_state as State,address_pin_code as PinCode,address_nearby as NearBy,latitude as Lattitude,longitude as Longitude FROM table_offline_seller WHERE offline_seller_id = "' + ID + '"', function (error, offline_seller, fields) {
                     if (error) throw error;
                     if(offline_seller.length > 0){
                         connection.query('SELECT seller_detail_id as DetailID,contactdetail_type_id as DetailTypeID,display_name as DisplayName,details as Details FROM table_offline_seller_details WHERE offline_seller_id = "' + ID + '" and status_id!=3', function (error, detail, fields) {
@@ -2471,11 +2471,11 @@ server.route({
                             for(var i = 0; i < FormList.length; i++) {
                                 const CatType=FormList[i].Type;
                                 const List = FormList[i].List;
-                                connection.query('INSERT INTO table_cateogry_form (category_id,form_element_name,form_element_type,status_id) VALUES ("'+results['insertId']+'","'+FormList[i].ElementName+'","'+FormList[i].Type+'",1)', function (error, formlist, fields) {
+                                connection.query('INSERT INTO table_category_form (category_id,form_element_name,form_element_type,status_id) VALUES ("'+results['insertId']+'","'+FormList[i].ElementName+'","'+FormList[i].Type+'",1)', function (error, formlist, fields) {
                                     if (error) throw error;
                                         if(CatType == 2){
                                             for(var a = 0; a < List.length; a++) {
-                                            connection.query('INSERT INTO table_cateogry_form_mapping (cateogry_form_id,dropdown_name,status_id) VALUES ("'+formlist['insertId']+'","'+List[a].DropdownName+'",1)', function (error, list, fields) {
+                                            connection.query('INSERT INTO table_category_form_mapping (category_form_id,dropdown_name,status_id) VALUES ("'+formlist['insertId']+'","'+List[a].DropdownName+'",1)', function (error, list, fields) {
                                              });
                                          }
                                      }
@@ -2521,13 +2521,13 @@ server.route({
                 connection.query('SELECT category_id as ID,category_name as Name,ref_id as RefID,category_level as Level FROM table_categories WHERE category_id="' + ID + '"', function (error, category, fields) {
                     if (error) throw error;
                     if(category.length > 0){
-                        connection.query('SELECT cateogry_form_id as FormID,form_element_name as ElementName,form_element_type as Type FROM table_cateogry_form WHERE category_id="' + ID + '" and status_id=1 ', function (error, form, fields) {
+                        connection.query('SELECT category_form_id as FormID,form_element_name as ElementName,form_element_type as Type FROM table_category_form WHERE category_id="' + ID + '" and status_id=1 ', function (error, form, fields) {
                             var id = [];
                             for(var i = 0; i < form.length; i++) {
                                 id.push(form[i].FormID);
                             }
                             var FormIDList = id.join();
-                           connection.query('SELECT cateogry_form_id as FormID,mapping_id as DropdownID,dropdown_name as DropdownName FROM table_cateogry_form_mapping WHERE cateogry_form_id IN ('+FormIDList+')  and status_id=1 ', function (error, droupdown, fields) {
+                           connection.query('SELECT category_form_id as FormID,mapping_id as DropdownID,dropdown_name as DropdownName FROM table_category_form_mapping WHERE category_form_id IN ('+FormIDList+')  and status_id=1 ', function (error, droupdown, fields) {
                                //console.log(droupdown);
                                var data = '{"statusCode": 100,"Category": '+ JSON.stringify(category) +',"FormList": '+ JSON.stringify(form) +',"List": '+ JSON.stringify(droupdown) +'}';
                                reply(data);
@@ -2582,25 +2582,25 @@ server.route({
                                 const CatType=FormList[i].Type;
                                 const List = FormList[i].List;
                                 if(FormList[i].FormID != null && FormList[i].FormID != ''){
-                                    connection.query('UPDATE table_cateogry_form SET form_element_name="' + FormList[i].ElementName + '" "WHERE cateogry_form_id="' + FormList[i].FormID + '"', function (error, detail, fields) {
+                                    connection.query('UPDATE table_category_form SET form_element_name="' + FormList[i].ElementName + '" "WHERE category_form_id="' + FormList[i].FormID + '"', function (error, detail, fields) {
                                         if(CatType == 2){
                                             for(var a = 0; a < List.length; a++) {
                                                 if(List[a].DropdownID != null && List[a].DropdownID !=''){
-                                                    connection.query('UPDATE table_cateogry_form_mapping SET dropdown_name="' + List[a].DropdownName + '" "WHERE mapping_id="' + List[a].DropdownID + '"', function (error, detail, fields) {
+                                                    connection.query('UPDATE table_category_form_mapping SET dropdown_name="' + List[a].DropdownName + '" "WHERE mapping_id="' + List[a].DropdownID + '"', function (error, detail, fields) {
                                                     });
                                                 } else {
-                                                    connection.query('INSERT INTO table_cateogry_form_mapping (cateogry_form_id,dropdown_name,status_id) VALUES ("'+FormList[i].FormID+'","'+List[a].DropdownName+'",1)', function (error, list, fields) {
+                                                    connection.query('INSERT INTO table_category_form_mapping (category_form_id,dropdown_name,status_id) VALUES ("'+FormList[i].FormID+'","'+List[a].DropdownName+'",1)', function (error, list, fields) {
                                                     });
                                                 }
                                             }
                                         }
                                     });
                                 } else {
-                                    connection.query('INSERT INTO table_cateogry_form (category_id,form_element_name,form_element_type,status_id) VALUES ("'+ID+'","'+FormList[i].ElementName+'","'+FormList[i].Type+'",1)', function (error, formlist, fields) {
+                                    connection.query('INSERT INTO table_category_form (category_id,form_element_name,form_element_type,status_id) VALUES ("'+ID+'","'+FormList[i].ElementName+'","'+FormList[i].Type+'",1)', function (error, formlist, fields) {
                                         if (error) throw error;
                                         if(CatType == 2){
                                             for(var a = 0; a < List.length; a++) {
-                                                connection.query('INSERT INTO table_cateogry_form_mapping (cateogry_form_id,dropdown_name,status_id) VALUES ("'+formlist['insertId']+'","'+List[a].DropdownName+'",1)', function (error, list, fields) {
+                                                connection.query('INSERT INTO table_category_form_mapping (category_form_id,dropdown_name,status_id) VALUES ("'+formlist['insertId']+'","'+List[a].DropdownName+'",1)', function (error, list, fields) {
                                                 });
                                             }
                                         }
@@ -2644,7 +2644,7 @@ server.route({
             if (error) throw error;
             if(token.length > 0){
                 var UserID = token[0]['user_id'];
-                connection.query('UPDATE table_cateogry_form as f left Join table_cateogry_form_mapping as m on m.cateogry_form_id=f.cateogry_form_id SET f.status_id=3,m.status_id=3 WHERE f.cateogry_form_id="' + ID + '"', function (error, results, fields) {
+                connection.query('UPDATE table_category_form as f left Join table_category_form_mapping as m on m.category_form_id=f.category_form_id SET f.status_id=3,m.status_id=3 WHERE f.category_form_id="' + ID + '"', function (error, results, fields) {
                     if (error) throw error;
                     var data = '{"statusCode": 100,"error": "","message": "Data Delete successfully."}';
                     reply(data);
@@ -2677,7 +2677,7 @@ server.route({
             if (error) throw error;
             if(token.length > 0){
                 var UserID = token[0]['user_id'];
-                connection.query('UPDATE table_cateogry_form_mapping SET status_id=3 WHERE mapping_id="' + ID + '"', function (error, results, fields) {
+                connection.query('UPDATE table_category_form_mapping SET status_id=3 WHERE mapping_id="' + ID + '"', function (error, results, fields) {
                     if (error) throw error;
                     var data = '{"statusCode": 100,"error": "","message": "Data Delete successfully."}';
                     reply(data);
@@ -2794,7 +2794,7 @@ server.route({
                                 const ProductID = product['insertId'];
                                 if(ProductForm.length > 0){
                                     for(var i = 0; i < ProductForm.length; i++) {
-                                        connection.query('INSERT INTO table_consumer_bill_product_meta_data (bill_product_id,cateogry_form_id,form_element_value) VALUES ("'+product['insertId']+'","'+ProductForm[i].CatFormID+'","'+ProductForm[i].value+'")', function (error, detail, fields) {
+                                        connection.query('INSERT INTO table_consumer_bill_product_meta_data (bill_product_id,category_form_id,form_element_value) VALUES ("'+product['insertId']+'","'+ProductForm[i].CatFormID+'","'+ProductForm[i].value+'")', function (error, detail, fields) {
                                         });
                                     }
                                 }
@@ -2998,7 +2998,7 @@ server.route({
                                     id.push(product[i].ProductID);
                                 }
                                 var ProductIDList = id.join();
-                                connection.query('SELECT m.bill_product_id as ProductID,m.cateogry_form_id as CatFormID,m.form_element_value as value, cf.form_element_name as CatFormName,cf.form_element_type as ElementType,mc.dropdown_name as DropdownValue FROM table_consumer_bill_product_meta_data as m left join table_cateogry_form as cf on cf.cateogry_form_id=m.cateogry_form_id left join table_cateogry_form_mapping as mc on (mc.mapping_id=m.form_element_value and cf.form_element_type=2)  WHERE m.bill_product_id IN ('+ProductIDList+')', function (error, productform, fields) {
+                                connection.query('SELECT m.bill_product_id as ProductID,m.category_form_id as CatFormID,m.form_element_value as value, cf.form_element_name as CatFormName,cf.form_element_type as ElementType,mc.dropdown_name as DropdownValue FROM table_consumer_bill_product_meta_data as m left join table_category_form as cf on cf.category_form_id=m.category_form_id left join table_category_form_mapping as mc on (mc.mapping_id=m.form_element_value and cf.form_element_type=2)  WHERE m.bill_product_id IN ('+ProductIDList+')', function (error, productform, fields) {
                                     if (error) throw error;
                                     connection.query('SELECT bill_insurance_id as InsuranceID,bill_product_id as ProductID,seller_type as SellerType, seller_id as SellerID, insurance_plan as Plan,policy_number as PolicyNo,amount_insured as AmountInsured,premium_type as PremiumType,premium_amount as PremiumAmount,policy_effective_date as PolicyEffectiveDate,policy_expiry_date as PolicyExpiryDate FROM table_consumer_bill_insurance  WHERE bill_product_id IN ('+ProductIDList+')', function (error, insurance, fields) {
                                         if (error) throw error;
@@ -3152,7 +3152,7 @@ server.route({
                                 if (error) throw error;
                             });
                             for(var i = 0; i < ProductForm.length; i++) {
-                                connection.query('INSERT INTO table_consumer_bill_product_meta_data (bill_product_id,cateogry_form_id,form_element_value) VALUES ("'+ProductList[p].ProductName+'","'+ProductForm[i].CatFormID+'","'+ProductForm[i].value+'")', function (error, detail, fields) {
+                                connection.query('INSERT INTO table_consumer_bill_product_meta_data (bill_product_id,category_form_id,form_element_value) VALUES ("'+ProductList[p].ProductName+'","'+ProductForm[i].CatFormID+'","'+ProductForm[i].value+'")', function (error, detail, fields) {
                                 });
                             }
                         }
@@ -3885,7 +3885,7 @@ server.route({
                 connection.query('SELECT p.bill_product_id as ProductID,p.product_name as ProductName,p.value_of_purchase as Value,p.taxes as Taxes,p.tag as Tag,mc.category_id as MasterCatID,mc.category_name as MasterCatName,c.category_id as CatID,c.category_name as CatName, b.brand_id as BrandID, b.brand_name as BrandName,co.color_id as ColorID,co.color_name as ColorName FROM table_consumer_bill_products as p LEFT JOIN table_categories as mc on mc.category_id=p.master_category_id LEFT JOIN table_categories as c on c.category_id=p.category_id LEFT JOIN table_brands as b on b.brand_id=p.brand_id LEFT JOIN table_color as co on co.color_id=p.color_id WHERE p.bill_product_id = "'+ID+ '"', function (error, product, fields) {
                     if (error) throw error;
                     if(product.length > 0){
-                        connection.query('SELECT m.bill_product_id as ProductID,m.cateogry_form_id as CatFormID,m.form_element_value as value, cf.form_element_name as CatFormName,cf.form_element_type as ElementType,mc.dropdown_name as DropdownValue FROM table_consumer_bill_product_meta_data as m left join table_cateogry_form as cf on cf.cateogry_form_id=m.cateogry_form_id left join table_cateogry_form_mapping as mc on (mc.mapping_id=m.form_element_value and cf.form_element_type=2)  WHERE m.bill_product_id ='+product[0].ProductID+'', function (error, productform, fields) {
+                        connection.query('SELECT m.bill_product_id as ProductID,m.category_form_id as CatFormID,m.form_element_value as value, cf.form_element_name as CatFormName,cf.form_element_type as ElementType,mc.dropdown_name as DropdownValue FROM table_consumer_bill_product_meta_data as m left join table_category_form as cf on cf.category_form_id=m.category_form_id left join table_category_form_mapping as mc on (mc.mapping_id=m.form_element_value and cf.form_element_type=2)  WHERE m.bill_product_id ='+product[0].ProductID+'', function (error, productform, fields) {
                             if (error) throw error;
                             connection.query('SELECT bill_insurance_id as InsuranceID,bill_product_id as ProductID,seller_type as SellerType, seller_id as SellerID, insurance_plan as Plan,policy_number as PolicyNo,amount_insured as AmountInsured,premium_type as PremiumType,premium_amount as PremiumAmount,policy_effective_date as PolicyEffectiveDate,policy_expiry_date as PolicyExpiryDate FROM table_consumer_bill_insurance  WHERE bill_product_id ='+product[0].ProductID+'', function (error, insurance, fields) {
                                 if (error) throw error;
