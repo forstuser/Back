@@ -87,8 +87,8 @@ class EHomeAdaptor {
           required: false
         }],
         attributes: [['category_name', 'cName'], ['display_id', 'cType'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`categories`.`category_id`'), '/products?pageno=1'), 'cURL'], [this.modals.sequelize.fn('MAX', this.modals.sequelize.col('`products->productBillMaps`.`updated_on`')), 'cLastUpdate'], [this.modals.sequelize.fn('COUNT', this.modals.sequelize.col('`products`.`product_name`')), 'productCounts']],
-        group: '`categories`.`category_id`',
-        order: '`categories`.`display_id`'
+        order: ['display_id'],
+        group: '`categories`.`category_id`'
       }).then(resolve).catch(reject);
     });
   }

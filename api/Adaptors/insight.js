@@ -129,7 +129,7 @@ class InsightAdaptor {
           }],
           attributes: [['category_name', 'cName'], ['display_id', 'cType'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`categories`.`category_id`'), '/insights'), 'cURL'], [this.modals.sequelize.fn('SUM', this.modals.sequelize.col('`products`.`value_of_purchase`')), 'totalAmount'], [this.modals.sequelize.fn('SUM', this.modals.sequelize.col('`products`.`taxes`')), 'totalTax']],
           group: '`categories`.`category_id`',
-          order: '`categories`.`display_id`'
+          order: ['display_id']
         }), this.modals.categories
         .findAll({
           where: {
@@ -176,7 +176,7 @@ class InsightAdaptor {
           }],
           attributes: [['category_name', 'cName'], ['display_id', 'cType'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`categories`.`category_id`'), '/insights'), 'cURL'], [this.modals.sequelize.fn('SUM', this.modals.sequelize.col('`products`.`value_of_purchase`')), 'totalAmount'], [this.modals.sequelize.fn('SUM', this.modals.sequelize.col('`products`.`taxes`')), 'totalTax']],
           group: '`categories`.`category_id`',
-          order: '`categories`.`display_id`'
+          order: ['display_id']
         }), this.modals.categories
         .findAll({
           where: {
@@ -223,7 +223,7 @@ class InsightAdaptor {
           }],
           attributes: [['category_name', 'cName'], ['display_id', 'cType'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`categories`.`category_id`'), '/insights'), 'cURL'], [this.modals.sequelize.fn('SUM', this.modals.sequelize.col('`products`.`value_of_purchase`')), 'totalAmount'], [this.modals.sequelize.fn('SUM', this.modals.sequelize.col('`products`.`taxes`')), 'totalTax']],
           group: '`categories`.`category_id`',
-          order: '`categories`.`display_id`'
+          order: ['display_id']
         })]) : this.modals.categories
         .findAll({
           where: {
@@ -270,7 +270,7 @@ class InsightAdaptor {
           }],
           attributes: [['category_name', 'cName'], ['display_id', 'cType'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`categories`.`category_id`'), '/insights'), 'cURL'], [this.modals.sequelize.fn('SUM', this.modals.sequelize.col('`products`.`value_of_purchase`')), 'totalAmount'], [this.modals.sequelize.fn('SUM', this.modals.sequelize.col('`products`.`taxes`')), 'totalTax']],
           group: '`categories`.`category_id`',
-          order: '`categories`.`display_id`'
+          order: ['display_id']
         });
       promiseQuery.then(resolve).catch(reject);
     });
