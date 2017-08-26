@@ -29,22 +29,22 @@ class UserAdaptor {
 
   updateUser(user, payload, reply) {
     return this.modals.table_users.update({
-      mobile_no: payload.phoneNo || user.phoneNo,
-      location: payload.location || user.location,
-      longitude: payload.longitude || user.longitude,
-      latitude: payload.latitude || user.latitude,
-      os_type_id: payload.osTypeId || user.osTypeId,
-      gcm_id: payload.gcmId || user.gcmId,
-      email_id: payload.email || user.email,
-      device_id: payload.deviceId || user.deviceId,
-      device_model: payload.deviceModel || user.deviceModel,
-      apk_version: payload.apkVersion || user.apkVersion,
-      fullname: payload.name || user.name,
-      is_enrolled_professional: payload.isEnrolled || user.isEnrolled,
-      professional_category_id: payload.categoryId || user.categoryId,
-      share_mobile: payload.isPhoneAllowed || user.isPhoneAllowed,
-      share_email: payload.isEmailAllowed || user.isEmailAllowed,
-      professional_description: payload.description || user.description,
+      mobile_no: payload.phoneNo,
+      location: payload.location,
+      longitude: payload.longitude,
+      latitude: payload.latitude,
+      os_type_id: payload.osTypeId,
+      gcm_id: payload.gcmId,
+      email_id: payload.email,
+      device_id: payload.deviceId,
+      device_model: payload.deviceModel,
+      apk_version: payload.apkVersion,
+      fullname: payload.name,
+      is_enrolled_professional: payload.isEnrolled,
+      professional_category_id: payload.categoryId,
+      share_mobile: payload.isPhoneAllowed,
+      share_email: payload.isEmailAllowed,
+      professional_description: payload.description,
       updated_by_user_id: user.ID
     }, {
       where: {

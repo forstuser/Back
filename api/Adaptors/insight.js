@@ -14,7 +14,12 @@ class InsightAdaptor {
   prepareInsightData(user, minDate, maxDate) {
     return this.prepareCategoryData(user, minDate, maxDate)
       .then((result) => {
-        const categoryData = result.map(item => item.toJSON());
+        const categoryData = result.map((item) => {
+          const categoryItem = item.toJSON();
+          categoryItem.totalAmount = categoryItem.totalAmount || 0;
+          categoryItem.totalTax = categoryItem.totalTax || 0;
+          return categoryItem;
+        });
         const totalAmounts = sumProps(categoryData, 'totalAmount');
         const totalTaxes = sumProps(categoryData, 'totalTax');
         return {
