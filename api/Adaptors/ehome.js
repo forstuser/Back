@@ -1,3 +1,4 @@
+
 const dueDays = {
   Yearly: 365, HalfYearly: 180, Quarterly: 90, Monthly: 30, Weekly: 7, Daily: 1
 };
@@ -84,7 +85,7 @@ class EHomeAdaptor {
           attributes: [['product_name', 'name']],
           required: false
         }],
-        attributes: [['category_name', 'cName'], ['display_id', 'cType'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`categories`.`category_id`'), '/products'), 'cURL']]
+        attributes: [['category_name', 'cName'], ['display_id', 'cType'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`categories`.`category_id`'), '/products?pageno=1'), 'cURL']]
       }).then(resolve).catch(reject);
     });
   }
@@ -101,8 +102,74 @@ class EHomeAdaptor {
     });
   }
 
-  prepareProductDetail(user, categoryId) {
-    return Promise.all([this.modals.productBills.findAll({
+  prepareProductDetail(user, categoryId, pageNo) {
+    const promisedQuery = Promise
+      .all([this.fetchProductDetails(user, categoryId, pageNo),
+        this.modals.categories.findAll({
+          where: {
+            ref_id: categoryId,
+            status_id: {
+              $ne: 3
+            }
+          },
+          include: [{
+            model: this.modals.categories,
+            as: 'subCategories',
+            where: {
+              status_id: {
+                $ne: 3
+              }
+            },
+            attributes: [['category_id', 'id'], ['category_name', 'name']]
+          }],
+          attributes: [['category_id', 'id'], ['category_name', 'name']]
+        }), this.modals.table_brands.findAll({
+          where: {
+            status_id: {
+              $ne: 3
+            }
+          },
+          attributes: [['brand_id', 'id'], ['brand_name', 'name']]
+        }), this.modals.offlineSeller.findAll({
+          where: {
+            status_id: {
+              $ne: 3
+            }
+          },
+          attributes: ['ID', ['offline_seller_name', 'name']]
+        }), this.modals.onlineSeller.findAll({
+          where: {
+            status_id: {
+              $ne: 3
+            }
+          },
+          attributes: ['ID', ['seller_name', 'name']]
+        }), this.retrieveRecentSearch(user)]);
+    return promisedQuery.then((result) => {
+      const productList = result[0].map(item => item.toJSON());
+      const listIndex = (pageNo * 10) - 10;
+      return {
+        status: true,
+        productList: productList.slice((pageNo * 10) - 10, 10),
+        filterData: {
+          categories: result[1],
+          brands: result[2],
+          sellers: {
+            offlineSellers: result[3],
+            onlineSellers: result[4]
+          }
+        },
+        recentSearches: result[5],
+        nextPageUrl: productList.length > listIndex + 10 ? `categories/${categoryId}/products?pageno=${pageNo + 1}` : undefined
+      };
+    }).catch(err => ({
+      status: false,
+      err
+    }));
+  }
+
+  fetchProductDetails(user, categoryId) {
+    return this.modals.productBills.findAll({
       where: {
         user_id: user.ID,
         status_id: {
@@ -205,62 +272,9 @@ class EHomeAdaptor {
         }],
         required: false
       }],
-      attributes: [['bill_product_id', 'id'], ['product_name', 'productName'], ['value_of_purchase', 'value'], 'taxes', ['category_id', 'categoryId'], ['brand_id', 'brandId'], ['color_id', 'colorId'], [this.modals.sequelize.fn('CONCAT', 'categories/', categoryId, '/products/', this.modals.sequelize.col('`productBills`.`bill_product_id`')), 'productURL']]
-    }), this.modals.categories.findAll({
-      where: {
-        ref_id: categoryId,
-        status_id: {
-          $ne: 3
-        }
-      },
-      include: [{
-        model: this.modals.categories,
-        as: 'subCategories',
-        where: {
-          status_id: {
-            $ne: 3
-          }
-        },
-        attributes: [['category_id', 'id'], ['category_name', 'name']]
-      }],
-      attributes: [['category_id', 'id'], ['category_name', 'name']]
-    }), this.modals.table_brands.findAll({
-      where: {
-        status_id: {
-          $ne: 3
-        }
-      },
-      attributes: [['brand_id', 'id'], ['brand_name', 'name']]
-    }), this.modals.offlineSeller.findAll({
-      where: {
-        status_id: {
-          $ne: 3
-        }
-      },
-      attributes: ['ID', ['offline_seller_name', 'name']]
-    }), this.modals.onlineSeller.findAll({
-      where: {
-        status_id: {
-          $ne: 3
-        }
-      },
-      attributes: ['ID', ['seller_name', 'name']]
-    }), this.retrieveRecentSearch(user)]).then(result => ({
-      status: true,
-      productList: result[0],
-      filterData: {
-        categories: result[1],
-        brands: result[2],
-        sellers: {
-          offlineSellers: result[3],
-          onlineSellers: result[4]
-        }
-      },
-      recentSearches: result[5]
-    })).catch(err => ({
-      status: false,
-      err
-    }));
+      attributes: [['bill_product_id', 'id'], ['product_name', 'productName'], ['value_of_purchase', 'value'], 'taxes', ['category_id', 'categoryId'], ['brand_id', 'brandId'], ['color_id', 'colorId'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`productBills`.`bill_product_id`')), 'productURL']],
+      order: [['bill_product_id', 'DESC']]
+    });
   }
 }
 

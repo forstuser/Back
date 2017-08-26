@@ -1,12 +1,6 @@
 /* jshint indent: 2 */
 
 module.exports = (sequelize, DataTypes) => sequelize.define('billMapping', {
-  id: {
-    type: DataTypes.INTEGER(11),
-    allowNull: false,
-    primaryKey: true,
-    autoIncrement: true
-  },
   bill_id: {
     type: DataTypes.INTEGER(11),
     allowNull: false

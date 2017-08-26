@@ -1374,6 +1374,13 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
       }
     });
     uploadFileRoute.push({
+      method: 'DELETE',
+      path: '/bills/{id}/files',
+      config: {
+        handler: UploadController.deleteFile
+      }
+    });
+    uploadFileRoute.push({
       method: 'GET',
       path: '/consumer/{id}/images',
       config: {
@@ -1450,7 +1457,7 @@ function prepareProductRoutes(productController, productRoutes) {
 
     productRoutes.push({
       method: 'GET',
-      path: '/categories/{categoryid}/products/{id}',
+      path: '/products/{id}',
       config: {
         handler: ProductController.retrieveProductDetail,
         description: 'Get Product Details.',

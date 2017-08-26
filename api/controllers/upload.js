@@ -170,6 +170,21 @@ class UploadController {
     });
   }
 
+  static deleteFile(request, reply) {
+    modals.billCopies.update({
+      status_id: 3
+    }, {
+      where: {
+        bill_copy_id: request.params.id
+      },
+      attributes: { exclude: ['BillID'] }
+    }).then(() => {
+      reply({ status: true, message: 'File deleted successfully' }).code(204);
+    }).catch((err) => {
+      reply({ status: false, err });
+    });
+  }
+
   static retrieveUserImage(request, reply) {
     modals.userImages.findOne({
       where: {
@@ -184,7 +199,11 @@ class UploadController {
         });
       });
     }).catch((err) => {
-      reply(err);
+      reply({
+        status: false,
+        message: 'Unable to retrieve image',
+        err
+      });
     });
   }
 }

@@ -175,7 +175,7 @@ class DashboardAdaptor {
   filterUpcomingService(user) {
     return new Promise((resolve, reject) => {
       Promise.all([this.modals.productBills.findAll({
-        attributes: [['bill_product_id', 'id'], ['product_name', 'productName'], ['value_of_purchase', 'value'], 'taxes'],
+        attributes: [['bill_product_id', 'id'], ['product_name', 'productName'], ['value_of_purchase', 'value'], 'taxes', [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`productBills`.`bill_product_id`')), 'productURL']],
         where: {
           user_id: user.ID,
           status_id: {
@@ -205,7 +205,7 @@ class DashboardAdaptor {
             $lt: new Date(new Date() + (dueDays[this.modals.sequelize.col('premiumType')] * 24 * 60 * 60 * 1000))
           }
         },
-        include: [{ model: this.modals.productBills, as: 'amcProduct', attributes: [['product_name', 'productName']] }, { model: this.modals.amcBillCopies, as: 'amcCopies', attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('bill_copy_id'), '/files'), 'fileUrl']] }]
+        include: [{ model: this.modals.productBills, as: 'amcProduct', attributes: [['product_name', 'productName'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`amcProduct`.`bill_product_id`')), 'productURL']] }, { model: this.modals.amcBillCopies, as: 'amcCopies', attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('bill_copy_id'), '/files'), 'fileUrl']] }]
       }), this.modals.insuranceBills.findAll({
         attributes: [['bill_insurance_id', 'id'], 'policyNo', 'premiumType', 'premiumAmount', 'effectiveDate', 'expiryDate', 'amountInsured', 'plan'],
         where: {
@@ -218,7 +218,7 @@ class DashboardAdaptor {
             $lt: new Date(new Date() + (dueDays[this.modals.sequelize.col('premiumType')] * 24 * 60 * 60 * 1000))
           }
         },
-        include: [{ model: this.modals.productBills, as: 'insuredProduct', attributes: [['product_name', 'productName']] }, { model: this.modals.insuranceBillCopies, as: 'insuranceCopies', attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('bill_copy_id'), '/files'), 'fileUrl']] }]
+        include: [{ model: this.modals.productBills, as: 'insuredProduct', attributes: [['product_name', 'productName'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`insuredProduct`.`bill_product_id`')), 'productURL']] }, { model: this.modals.insuranceBillCopies, as: 'insuranceCopies', attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('bill_copy_id'), '/files'), 'fileUrl']] }]
       }),
       this.modals.warranty.findAll({
         attributes: [['bill_warranty_id', 'id'], 'warrantyType', 'policyNo', 'premiumType', 'premiumAmount', 'effectiveDate', 'expiryDate'],
@@ -232,7 +232,7 @@ class DashboardAdaptor {
             $lt: new Date(new Date() + (dueDays[this.modals.sequelize.col('premiumType')] * 24 * 60 * 60 * 1000))
           }
         },
-        include: [{ model: this.modals.productBills, as: 'warrantyProduct', attributes: [['product_name', 'productName']] }, { model: this.modals.warrantyCopies, as: 'warrantyCopies', attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('bill_copy_id'), '/files'), 'fileUrl']] }]
+        include: [{ model: this.modals.productBills, as: 'warrantyProduct', attributes: [['product_name', 'productName'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`warrantyProduct`.`bill_product_id`')), 'productURL']] }, { model: this.modals.warrantyCopies, as: 'warrantyCopies', attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('bill_copy_id'), '/files'), 'fileUrl']] }]
       })]).then((result) => {
         const products = result[0].map(item => item.toJSON());
         const amcs = result[1].map(item => item.toJSON());
@@ -260,7 +260,9 @@ class DashboardAdaptor {
         });
 
         resolve([...products, ...warranties, ...insurances, ...amcs]);
-      }).catch(reject);
+      }).catch((err) => {
+        reject(err);
+      });
     });
   }
 
