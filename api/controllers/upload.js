@@ -99,7 +99,7 @@ class UploadController {
           if (Object.prototype.hasOwnProperty.call(fileData, i)) {
             const name = fileData[i].hapi.filename;
             const fileType = name.split('.')[name.split('.').length - 1];
-            const fileName = `${user.userId}-${result.bill_id}-${new Date().getTime()}.${fileType}`;
+            const fileName = `${user.ID}-${result.bill_id}-${new Date().getTime()}.${fileType}`;
             // const file = fs.createReadStream();
             fsImpl.writeFile(fileName, fileData[i]._data, { ContentType: mime.lookup(fileName) })
               .then((fileResult) => {
