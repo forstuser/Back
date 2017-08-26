@@ -144,7 +144,12 @@ class EHomeAdaptor {
             }
           },
           attributes: ['ID', ['seller_name', 'name']]
-        }), this.retrieveRecentSearch(user)]);
+        }), this.retrieveRecentSearch(user), this.modals.categories.findOne({
+          where: {
+            category_id: categoryId
+          },
+          attributes: [['category_name', 'name']]
+        })]);
     return promisedQuery.then((result) => {
       const productList = result[0].map(item => item.toJSON());
       const listIndex = (pageNo * 10) - 10;
@@ -160,6 +165,7 @@ class EHomeAdaptor {
           }
         },
         recentSearches: result[5],
+        categoryName: result[6],
         nextPageUrl: productList.length > listIndex + 10 ? `categories/${categoryId}/products?pageno=${pageNo + 1}` : undefined
       };
     }).catch(err => ({
@@ -271,8 +277,16 @@ class EHomeAdaptor {
           model: this.modals.categoryForm, as: 'categoryForm', attributes: [['form_element_name', 'name']]
         }],
         required: false
+      }, {
+        model: this.modals.categories,
+        as: 'masterCategory',
+        attributes: []
+      }, {
+        model: this.modals.categories,
+        as: 'category',
+        attributes: []
       }],
-      attributes: [['bill_product_id', 'id'], ['product_name', 'productName'], ['value_of_purchase', 'value'], 'taxes', ['category_id', 'categoryId'], ['brand_id', 'brandId'], ['color_id', 'colorId'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`productBills`.`bill_product_id`')), 'productURL']],
+      attributes: [['bill_product_id', 'id'], ['product_name', 'productName'], ['value_of_purchase', 'value'], 'taxes', ['category_id', 'categoryId'], [this.modals.sequelize.col('`masterCategory`.`category_name`'), 'masterCategoryName'], [this.modals.sequelize.col('`category`.`category_name`'), 'categoryName'], ['brand_id', 'brandId'], ['color_id', 'colorId'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`productBills`.`bill_product_id`')), 'productURL']],
       order: [['bill_product_id', 'DESC']]
     });
   }

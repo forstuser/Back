@@ -5,7 +5,7 @@ class UserAdaptor {
 
   retrieveUserProfile(user) {
     return this.modals.table_users.findById(user.ID, {
-      attributes: [['fullname', 'name'], ['mobile_no', 'phoneNo'], ['email_id', 'email'], 'location', 'longitude', 'latitude', ['is_enrolled_professional', 'isEnrolled'], ['professional_category_id', 'categoryId'], ['share_mobile', 'isPhoneAllowed'], ['share_email', 'isEmailAllowed'], ['email_verified', 'isEmailVerified']],
+      attributes: [['fullname', 'name'], ['mobile_no', 'phoneNo'], ['email_id', 'email'], 'location', 'longitude', 'latitude', ['is_enrolled_professional', 'isEnrolled'], ['professional_category_id', 'categoryId'], ['share_mobile', 'isPhoneAllowed'], ['share_email', 'isEmailAllowed'], ['email_verified', 'isEmailVerified'], ['professional_description', 'description']],
       include: [{
         model: this.modals.userImages, as: 'userImages', attributes: [[this.modals.sequelize.fn('CONCAT', 'consumer/', this.modals.sequelize.col('user_image_id'), '/images'), 'imageUrl']]
       }]
@@ -44,6 +44,7 @@ class UserAdaptor {
       professional_category_id: payload.categoryId || user.categoryId,
       share_mobile: payload.isPhoneAllowed || user.isPhoneAllowed,
       share_email: payload.isEmailAllowed || user.isEmailAllowed,
+      professional_description: payload.description || user.description,
       updated_by_user_id: user.ID
     }, {
       where: {
@@ -52,7 +53,7 @@ class UserAdaptor {
     }).then(reply({
       status: true,
       message: 'User Details Updated Successfully'
-    }).code(204)).catch(err => reply({
+    }).code(200)).catch(err => reply({
       status: false,
       message: 'User Detail Update failed',
       err

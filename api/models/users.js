@@ -110,6 +110,9 @@ module.exports = (sequelize, Sequelize) => sequelize.define('table_users', {
   },
   email_verified: {
     type: Sequelize.BOOLEAN
+  },
+  professional_description: {
+    type: Sequelize.STRING
   }
 }, {
   freezeTableName: true,

@@ -16,6 +16,7 @@ const ReferenceDataController = require('../api/controllers/referenceData');
 const UserManagementController = require('../api/controllers/userManagement');
 const DashboardController = require('../api/controllers/dashboard');
 const ProductController = require('../api/controllers/product');
+const InsightController = require('../api/controllers/insight');
 
 let User;
 
@@ -1215,6 +1216,7 @@ function prepareAuthRoutes(userController, authRoutes) {
             categoryId: [joi.number(), joi.allow(null)],
             isPhoneAllowed: [joi.boolean(), joi.allow(null)],
             isEmailAllowed: [joi.boolean(), joi.allow(null)],
+            description: [joi.string(), joi.allow(null)],
             output: 'data',
             parse: true
           }
@@ -1377,6 +1379,7 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
       method: 'DELETE',
       path: '/bills/{id}/files',
       config: {
+        auth: 'jwt',
         handler: UploadController.deleteFile
       }
     });
@@ -1459,8 +1462,38 @@ function prepareProductRoutes(productController, productRoutes) {
       method: 'GET',
       path: '/products/{id}',
       config: {
+        auth: 'jwt',
         handler: ProductController.retrieveProductDetail,
         description: 'Get Product Details.',
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              { code: 200, message: 'Successful' },
+              { code: 400, message: 'Bad Request' },
+              { code: 401, message: 'Invalid Credentials' },
+              { code: 404, message: 'Not Found' },
+              { code: 500, message: 'Internal Server Error' }
+            ]
+          }
+        }
+      }
+    });
+  }
+}
+
+function prepareInsightRoutes(insightController, insightRoutes) {
+//= ========================
+  // Product Routes
+  //= ========================
+
+  if (insightController) {
+    insightRoutes.push({
+      method: 'GET',
+      path: '/insight',
+      config: {
+        auth: 'jwt',
+        handler: InsightController.retrieveCategorywiseInsight,
+        description: 'Get Insight Data.',
         plugins: {
           'hapi-swagger': {
             responseMessages: [
@@ -1493,6 +1526,7 @@ module.exports = (app, modals) => {
   const referenceDataRoutes = [];
   const dashboardRoutes = [];
   const productRoutes = [];
+  const insightRoutes = [];
   const userController = new UserController(modals);
   const categoryController = new CategoryController(modals);
   const brandController = new BrandController(modals);
@@ -1504,6 +1538,7 @@ module.exports = (app, modals) => {
   const referenceDataController = new ReferenceDataController(modals);
   const dashboardController = new DashboardController(modals);
   const productController = new ProductController(modals);
+  const insightController = new InsightController(modals);
   const userManagementController = new UserManagementController(modals);
 
   prepareAuthRoutes(userController, authRoutes);
@@ -1532,6 +1567,8 @@ module.exports = (app, modals) => {
 
   prepareProductRoutes(productController, productRoutes);
 
+  prepareInsightRoutes(insightController, insightRoutes);
+
   app.route([
     ...authRoutes,
     ...categoryRoutes,
@@ -1542,6 +1579,7 @@ module.exports = (app, modals) => {
     ...referenceDataRoutes,
     ...uploadFileRoute,
     ...dashboardRoutes,
-    ...productRoutes
+    ...productRoutes,
+    ...insightRoutes
   ]);
 };
