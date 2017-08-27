@@ -14,7 +14,7 @@ const connection = MySQL.createConnection({
     database: 'binbill'
 });
 //server.connection({ port: 3000});
-server.connection({ port: 3000, host: '192.168.0.9'});
+server.connection({ port: 3000 });
 server.register({
     register: require('hapi-cors'),
     options: {
@@ -2792,9 +2792,9 @@ server.route({
                             connection.query('INSERT INTO table_consumer_bill_products (bill_detail_id,user_id,product_name,master_category_id,category_id,brand_id,color_id,value_of_purchase,taxes,tag,status_id) VALUES ("'+BillDetailID+'","'+BillUserID+'","'+ProductList[p].ProductName+'","'+ProductList[p].MasterCatID+'","'+ProductList[p].CatID+'","'+ProductList[p].BrandID+'","'+ProductList[p].ColorID+'","'+ProductList[p].Value+'","'+ProductList[p].Taxes+'","'+ProductList[p].Tag+'",1)', function (error, product, fields) {
                                 if (error) throw error;
                                 const ProductID = product['insertId'];
+                              connection.query('INSERT INTO table_consumer_bill_mapping (bill_id,bill_ref_type,ref_id) VALUES ("'+BillID+'",2,"'+ProductID+'")', function (error, list, fields) {
+                              });
                                 if(ProductForm.length > 0){
-                                  connection.query('INSERT INTO table_consumer_bill_mapping (bill_id,bill_ref_type,ref_id) VALUES ("'+BillID+'",2,"'+ProductID+'")', function (error, list, fields) {
-                                  });
                                     for(var i = 0; i < ProductForm.length; i++) {
                                         connection.query('INSERT INTO table_consumer_bill_product_meta_data (bill_product_id,category_form_id,form_element_value) VALUES ("'+product['insertId']+'","'+ProductForm[i].CatFormID+'","'+ProductForm[i].value+'")', function (error, detail, fields) {
                                         });
