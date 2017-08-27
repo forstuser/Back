@@ -9,7 +9,7 @@ module.exports = (sequelize, Sequelize) => sequelize.define('consumerBills', {
     primaryKey: true
   },
   bill_reference_id: {
-    type: Sequelize.INTEGER
+    type: Sequelize.STRING
   },
   created_on: {
     type: Sequelize.DATE(6),
