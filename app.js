@@ -2748,7 +2748,7 @@ server.route({
                     if (error) throw error;
                     const BillDetailID = bildetail['insertId'];
                     if(request.payload.OnlineSellerID != null && request.payload.OnlineSellerID !=''){
-                        connection.query('INSERT INTO table_consumer_bill_seller_mapping (bill_detail_id,ref_type,seller_ref_id) VALUES ("'+BillDetailID+'",1,"'+request.payload.OnlineSellerID+'")', function (error, list, fields) {
+                        connection.query('INSERT INTO table_consumer_bill_seller_mapping (bill_detail_id,ref_type,seller_ref_id,onlineSellerId) VALUES ("'+BillDetailID+'",1,"'+request.payload.OnlineSellerID+'""' +request.payload.OnlineSellerID+'")', function (error, list, fields) {
                         });
                     }
                     if(request.payload.SellerList.length > 0){
@@ -2764,7 +2764,7 @@ server.route({
                                         });
                                     }
                                 }
-                                connection.query('INSERT INTO table_consumer_bill_seller_mapping (bill_detail_id,ref_type,seller_ref_id) VALUES ("'+BillDetailID+'",2,"'+seller['insertId']+'")', function (error, list, fields) {
+                                connection.query('INSERT INTO table_consumer_bill_seller_mapping (bill_detail_id,ref_type,seller_ref_id,offlineSellerId) VALUES ("'+BillDetailID+'",2,"'+seller['insertId']+'"'+seller['insertId']+'")', function (error, list, fields) {
                                 });
                             });
                         }
