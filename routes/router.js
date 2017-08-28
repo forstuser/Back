@@ -55,12 +55,13 @@ function associateModals(modals) {
   modals.table_users.hasMany(modals.userImages, { foreignKey: 'user_id', as: 'userImages' });
   modals.consumerBills.belongsTo(modals.table_users, { foreignKey: 'user_id', as: 'consumer' });
   modals.table_users.hasMany(modals.consumerBills);
-  modals.consumerBills.hasMany(modals.consumerBillDetails, { foreignKey: 'bill_id', as: 'billDetails' });
-  modals.consumerBillDetails.belongsTo(modals.consumerBills, { foreignKey: 'bill_detail_id', as: 'bill', through: modals.billMapping, where: { bill_ref_type: 1 }, otherKey: 'ref_id' });
+  modals.consumerBills.belongsToMany(modals.consumerBillDetails, { foreignKey: 'bill_id', through: modals.billMapping, otherKey: 'ref_id',as: 'billDetails' });
+  modals.consumerBillDetails.belongsToMany(modals.consumerBills, { foreignKey: 'ref_id', as: 'bill', through: modals.billMapping, where: { bill_ref_type: 1 }, otherKey: 'bill_id' });
   modals.consumerBillDetails.belongsToMany(modals.offlineSeller, {
     through: modals.billSellerMapping,
     foreignKey: 'bill_detail_id',
     as: 'productOfflineSeller',
+    otherKey: 'seller_ref_id',
     where: {
       ref_type: 2
     }
@@ -69,6 +70,7 @@ function associateModals(modals) {
     through: modals.billSellerMapping,
     foreignKey: 'bill_detail_id',
     as: 'productOnlineSeller',
+    otherKey: 'seller_ref_id',
     where: {
       ref_type: 1
     }

@@ -1,4 +1,3 @@
-
 const dueDays = {
   Yearly: 365, HalfYearly: 180, Quarterly: 90, Monthly: 30, Weekly: 7, Daily: 1
 };
@@ -49,14 +48,16 @@ class EHomeAdaptor {
             $notIn: [3, 5]
           }
         },
-        include: [{ model: this.modals.billCopies,
+        include: [{
+          model: this.modals.billCopies,
           as: 'billCopies',
           attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('bill_copy_id'), '/files'), 'fileUrl']],
           where: {
             status_id: {
               $ne: 3
             }
-          } }]
+          }
+        }]
       }).then(resolve).catch(reject);
     });
   }
@@ -70,43 +71,61 @@ class EHomeAdaptor {
             $ne: 3
           }
         },
-        include: [{
-          model: this.modals.categories,
-          on: {
-            $or: [
-              this.modals.sequelize.where(this.modals.sequelize.col("`subCategories`.`ref_id`"), this.modals.sequelize.col("`categories`.`category_id`"))
-            ]
-          },
-          where: {
-            display_id: 1
-          },
-          as: 'subCategories',
-          attributes:[['display_id', 'categoryType'], ['category_id', 'categoryId'], ['category_name', 'categoryName']],
-          order: [['display_id', 'ASC']],
-          required: false
-        },
+        include: [
           {
-          model: this.modals.productBills,
-          as: 'products',
-          where: {
-            user_id: user.ID,
-            status_id: {
-              $ne: 3
-            }
-          },
-          include: [{
-            model: this.modals.consumerBills,
-            as: 'productBillMaps',
-            where: {
-              user_status: 5,
-              admin_status: 5
+            model: this.modals.categories,
+            on: {
+              $or: [
+                this.modals.sequelize.where(this.modals.sequelize.col("`subCategories`.`ref_id`"), this.modals.sequelize.col("`categories`.`category_id`"))
+              ]
             },
-            attributes: []
+            where: {
+              display_id: 1
+            },
+            as: 'subCategories',
+            attributes: [['display_id', 'categoryType'], ['category_id', 'categoryId'], ['category_name', 'categoryName']],
+            order: [['display_id', 'ASC']],
+            required: false
+          },
+          {
+            model: this.modals.productBills,
+            as: 'products',
+            where: {
+              user_id: user.ID,
+              status_id: {
+                $ne: 3
+              }
+            },
+            include: [{
+              model: this.modals.consumerBillDetails,
+              as: 'consumerBill',
+              where: {
+                status_id: {
+                  $ne: 3
+                }
+              },
+              attributes: [],
+              include: [
+                {
+                  model: this.modals.consumerBills,
+                  as: 'bill',
+                  where: {
+                    $and: [
+                      this.modals.sequelize.where(this.modals.sequelize.col("`products->consumerBill->bill->billMapping`.`bill_ref_type`"), 1),
+                      {
+                        user_status: 5,
+                        admin_status: 5
+                      }
+                    ]
+                  },
+                  attributes: []
+                }
+              ]
+            }],
+            attributes: [],
+            required: false
           }],
-          attributes: [],
-          required: false
-        }],
-        attributes: [['category_name', 'cName'], ['display_id', 'cType'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`categories`.`category_id`'), '/products?pageno=1&categoryid='), 'cURL'], [this.modals.sequelize.fn('MAX', this.modals.sequelize.col('`products->productBillMaps`.`updated_on`')), 'cLastUpdate'], [this.modals.sequelize.fn('COUNT', this.modals.sequelize.col('`products`.`product_name`')), 'productCounts']],
+        attributes: [['category_name', 'cName'], ['display_id', 'cType'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`categories`.`category_id`'), '/products?pageno=1&categoryid='), 'cURL'], [this.modals.sequelize.fn('MAX', this.modals.sequelize.col('`products->consumerBill->bill`.`updated_on`')), 'cLastUpdate'], [this.modals.sequelize.fn('COUNT', this.modals.sequelize.col('`products`.`product_name`')), 'productCounts']],
         order: ['display_id'],
         group: '`categories`.`category_id`'
       }).then(resolve).catch(reject);
@@ -127,63 +146,63 @@ class EHomeAdaptor {
 
   prepareProductDetail(user, masterCategoryId, categoryId, pageNo) {
     const promisedQuery = Promise
-      .all([this.fetchProductDetails(user, masterCategoryId, categoryId || undefined),
-        this.modals.categories.findAll({
-          where: {
-            ref_id: masterCategoryId,
-            status_id: {
-              $ne: 3
-            }
-          },
-          include: [{
-            model: this.modals.categories,
-            on: {
-              $or: [
-                this.modals.sequelize.where(this.modals.sequelize.col("`subCategories`.`ref_id`"), this.modals.sequelize.col("`categories`.`category_id`"))
-              ]
+        .all([this.fetchProductDetails(user, masterCategoryId, categoryId || undefined),
+          this.modals.categories.findAll({
+            where: {
+              ref_id: masterCategoryId,
+              status_id: {
+                $ne: 3
+              }
             },
-            as: 'subCategories',
+            include: [{
+              model: this.modals.categories,
+              on: {
+                $or: [
+                  this.modals.sequelize.where(this.modals.sequelize.col("`subCategories`.`ref_id`"), this.modals.sequelize.col("`categories`.`category_id`"))
+                ]
+              },
+              as: 'subCategories',
+              where: {
+                status_id: {
+                  $ne: 3
+                }
+              },
+              attributes: [['category_id', 'id'], ['category_name', 'name']],
+              required: false
+            }],
+            attributes: [['category_id', 'id'], [this.modals.sequelize.fn('CONCAT', 'categories/', masterCategoryId, '/products?pageno=1&categoryid=', this.modals.sequelize.col('`categories`.`category_id`')), 'cURL'], ['display_id', 'cType'], ['category_name', 'name']]
+          }), this.modals.table_brands.findAll({
             where: {
               status_id: {
                 $ne: 3
               }
             },
-            attributes: [['category_id', 'id'], ['category_name', 'name']],
-            required: false
-          }],
-          attributes: [['category_id', 'id'], [this.modals.sequelize.fn('CONCAT', 'categories/', masterCategoryId, '/products?pageno=1&categoryid=', this.modals.sequelize.col('`categories`.`category_id`')), 'cURL'], ['display_id', 'cType'], ['category_name', 'name']]
-        }), this.modals.table_brands.findAll({
-          where: {
-            status_id: {
-              $ne: 3
-            }
-          },
-          attributes: [['brand_id', 'id'], ['brand_name', 'name']]
-        }), this.modals.offlineSeller.findAll({
-          where: {
-            status_id: {
-              $ne: 3
-            }
-          },
-          attributes: ['ID', ['offline_seller_name', 'name']]
-        }), this.modals.onlineSeller.findAll({
-          where: {
-            status_id: {
-              $ne: 3
-            }
-          },
-          attributes: ['ID', ['seller_name', 'name']]
-        }), this.retrieveRecentSearch(user), this.modals.categories.findOne({
-          where: {
-            category_id: masterCategoryId
-          },
-          attributes: [['category_name', 'name']]
-        })]);
+            attributes: [['brand_id', 'id'], ['brand_name', 'name']]
+          }), this.modals.offlineSeller.findAll({
+            where: {
+              status_id: {
+                $ne: 3
+              }
+            },
+            attributes: ['ID', ['offline_seller_name', 'name']]
+          }), this.modals.onlineSeller.findAll({
+            where: {
+              status_id: {
+                $ne: 3
+              }
+            },
+            attributes: ['ID', ['seller_name', 'name']]
+          }), this.retrieveRecentSearch(user), this.modals.categories.findOne({
+            where: {
+              category_id: masterCategoryId
+            },
+            attributes: [['category_name', 'name']]
+          })]);
     return promisedQuery.then((result) => {
       const productList = result[0].map((item) => {
         let product = item.toJSON();
         product.productMetaData.map((metaData) => {
-          if(metaData.type === "2" && metaData.selectedValue){
+          if (metaData.type === "2" && metaData.selectedValue) {
             metaData.value = metaData.selectedValue.value;
           }
 
@@ -242,31 +261,35 @@ class EHomeAdaptor {
               model: this.modals.consumerBills,
               as: 'bill',
               where: {
-                user_status: 5,
-                admin_status: 5
+                $and: [
+                  this.modals.sequelize.where(this.modals.sequelize.col("`consumerBill->bill->billMapping`.`bill_ref_type`"), 1),
+                  {
+                    user_status: 5,
+                    admin_status: 5
+                  }
+                ]
               },
               attributes: []
             },
             {
               model: this.modals.offlineSeller,
               as: 'productOfflineSeller',
-              attributes: ['ID', ['offline_seller_name', 'sellerName'], ['seller_url', 'url']]
-            }, {
-            model: this.modals.onlineSeller,
-            as: 'productOnlineSeller',
-            attributes: ['ID', ['seller_name', 'sellerName'], ['seller_url', 'url']]
-          }],
-          required: false
-        },
-        {
-          model: this.modals.consumerBills,
-          as: 'productBillMaps',
-          where: {
-            user_status: 5,
-            admin_status: 5
-          },
-          attributes: [],
-          required: false
+              where: {
+                $and: [this.modals.sequelize.where(this.modals.sequelize.col('`consumerBill->productOfflineSeller->billSellerMapping`.`ref_type`'), 2)]
+              },
+              attributes: ['ID', ['offline_seller_name', 'sellerName'], ['seller_url', 'url']],
+              required: false
+            },
+            {
+              model: this.modals.onlineSeller,
+              as: 'productOnlineSeller',
+              where: {
+                $and: [this.modals.sequelize.where(this.modals.sequelize.col('`consumerBill->productOnlineSeller->billSellerMapping`.`ref_type`'), 1)]
+              },
+              attributes: ['ID', ['seller_name', 'sellerName'], ['seller_url', 'url']],
+              required: false
+            }],
+          required: true
         },
         {
           model: this.modals.table_brands,
@@ -290,8 +313,8 @@ class EHomeAdaptor {
               $ne: 3
             },
             expiryDate: {
-              $gt: new Date(new Date() + ((this.modals.sequelize.col('premiumType') ?  (dueDays[this.modals.sequelize.col('premiumType')] -30) : 7) * 24 * 60 * 60 * 1000)),
-              $lte: new Date(new Date() + ((this.modals.sequelize.col('premiumType') ?  dueDays[this.modals.sequelize.col('premiumType')] : 7) * 24 * 60 * 60 * 1000))
+              $gt: new Date(new Date() + ((this.modals.sequelize.col('premiumType') ? (dueDays[this.modals.sequelize.col('premiumType')] - 30) : 7) * 24 * 60 * 60 * 1000)),
+              $lte: new Date(new Date() + ((this.modals.sequelize.col('premiumType') ? dueDays[this.modals.sequelize.col('premiumType')] : 7) * 24 * 60 * 60 * 1000))
             }
           },
           required: false
@@ -306,8 +329,8 @@ class EHomeAdaptor {
               $ne: 3
             },
             expiryDate: {
-              $gt: new Date(new Date() + ((this.modals.sequelize.col('premiumType') ?  (dueDays[this.modals.sequelize.col('premiumType')] -30) : 7) * 24 * 60 * 60 * 1000)),
-              $lte: new Date(new Date() + ((this.modals.sequelize.col('premiumType') ?  dueDays[this.modals.sequelize.col('premiumType')] : 7) * 24 * 60 * 60 * 1000))
+              $gt: new Date(new Date() + ((this.modals.sequelize.col('premiumType') ? (dueDays[this.modals.sequelize.col('premiumType')] - 30) : 7) * 24 * 60 * 60 * 1000)),
+              $lte: new Date(new Date() + ((this.modals.sequelize.col('premiumType') ? dueDays[this.modals.sequelize.col('premiumType')] : 7) * 24 * 60 * 60 * 1000))
             }
           },
           required: false
@@ -322,8 +345,8 @@ class EHomeAdaptor {
               $ne: 3
             },
             expiryDate: {
-              $gt: new Date(new Date() + ((this.modals.sequelize.col('premiumType') ?  (dueDays[this.modals.sequelize.col('premiumType')] -30) : 7) * 24 * 60 * 60 * 1000)),
-              $lte: new Date(new Date() + ((this.modals.sequelize.col('premiumType') ?  dueDays[this.modals.sequelize.col('premiumType')] : 7) * 24 * 60 * 60 * 1000))
+              $gt: new Date(new Date() + ((this.modals.sequelize.col('premiumType') ? (dueDays[this.modals.sequelize.col('premiumType')] - 30) : 7) * 24 * 60 * 60 * 1000)),
+              $lte: new Date(new Date() + ((this.modals.sequelize.col('premiumType') ? dueDays[this.modals.sequelize.col('premiumType')] : 7) * 24 * 60 * 60 * 1000))
             }
           },
           required: false
@@ -353,14 +376,14 @@ class EHomeAdaptor {
             }],
           required: false
         }, {
-        model: this.modals.categories,
-        as: 'masterCategory',
-        attributes: []
-      }, {
-        model: this.modals.categories,
-        as: 'category',
-        attributes: []
-      }],
+          model: this.modals.categories,
+          as: 'masterCategory',
+          attributes: []
+        }, {
+          model: this.modals.categories,
+          as: 'category',
+          attributes: []
+        }],
       attributes: [['bill_product_id', 'id'], ['product_name', 'productName'], ['value_of_purchase', 'value'], 'taxes', ['category_id', 'categoryId'], [this.modals.sequelize.col('`masterCategory`.`category_name`'), 'masterCategoryName'], [this.modals.sequelize.col('`category`.`category_name`'), 'categoryName'], ['brand_id', 'brandId'], ['color_id', 'colorId'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`productBills`.`bill_product_id`')), 'productURL']],
       order: [['bill_product_id', 'DESC']]
     });
