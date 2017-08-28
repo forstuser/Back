@@ -233,15 +233,22 @@ class EHomeAdaptor {
   }
 
   fetchProductDetails(user, masterCategoryId, categoryId) {
-    return this.modals.productBills.findAll({
-      where: {
-        user_id: user.ID,
-        status_id: {
-          $ne: 3
-        },
-        master_category_id: masterCategoryId,
-        category_id: categoryId
+    const whereClause = categoryId ? {
+      user_id: user.ID,
+      status_id: {
+        $ne: 3
       },
+      master_category_id: masterCategoryId,
+      category_id: categoryId
+    } : {
+      user_id: user.ID,
+      status_id: {
+        $ne: 3
+      },
+      master_category_id: masterCategoryId
+    };
+    return this.modals.productBills.findAll({
+      where: whereClause,
       include: [
         {
           model: this.modals.consumerBillDetails,
@@ -251,7 +258,7 @@ class EHomeAdaptor {
               $ne: 3
             }
           },
-          attributes: [['invoice_number', 'invoiceNo'], ['purchase_date', 'purchaseDate']],
+          attributes: [['invoice_number', 'invoiceNo'], ['total_purchase_value', 'totalCost'], 'taxes', ['purchase_date', 'purchaseDate']],
           include: [{
             model: this.modals.billDetailCopies,
             as: 'billDetailCopies',
@@ -329,7 +336,7 @@ class EHomeAdaptor {
               $ne: 3
             },
             expiryDate: {
-              $gt: new Date(new Date() + ((this.modals.sequelize.col('premiumType') ? (dueDays[this.modals.sequelize.col('premiumType')] - 30) : 7) * 24 * 60 * 60 * 1000)),
+              $gt: new Date(new Date() + (7 * 24 * 60 * 60 * 1000)),
               $lte: new Date(new Date() + ((this.modals.sequelize.col('premiumType') ? dueDays[this.modals.sequelize.col('premiumType')] : 7) * 24 * 60 * 60 * 1000))
             }
           },
@@ -345,7 +352,7 @@ class EHomeAdaptor {
               $ne: 3
             },
             expiryDate: {
-              $gt: new Date(new Date() + ((this.modals.sequelize.col('premiumType') ? (dueDays[this.modals.sequelize.col('premiumType')] - 30) : 7) * 24 * 60 * 60 * 1000)),
+              $gt: new Date(new Date() + (7 * 24 * 60 * 60 * 1000)),
               $lte: new Date(new Date() + ((this.modals.sequelize.col('premiumType') ? dueDays[this.modals.sequelize.col('premiumType')] : 7) * 24 * 60 * 60 * 1000))
             }
           },

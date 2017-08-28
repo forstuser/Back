@@ -121,9 +121,27 @@ class ProductAdaptor {
           model: this.modals.billDetailCopies,
           as: 'billDetailCopies',
           attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('bill_copy_id'), '/files'), 'fileUrl']]
-        }, {
+        },
+          {
+            model: this.modals.consumerBills,
+            as: 'bill',
+            where: {
+              $and: [
+                this.modals.sequelize.where(this.modals.sequelize.col("`consumerBill->bill->billMapping`.`bill_ref_type`"), 1),
+                {
+                  user_status: 5,
+                  admin_status: 5
+                }
+              ]
+            },
+            attributes: []
+          },
+          {
           model: this.modals.offlineSeller,
           as: 'productOfflineSeller',
+            where: {
+              $and: [this.modals.sequelize.where(this.modals.sequelize.col('`consumerBill->productOfflineSeller->billSellerMapping`.`ref_type`'), 2)]
+            },
           attributes: ['ID', ['offline_seller_name', 'sellerName'], ['seller_url', 'url'], ['address_house_no', 'houseNo'], ['address_block', 'block'], ['address_street', 'street'], ['address_sector', 'sector'], ['address_city', 'city'], ['address_state', 'state'], ['address_pin_code', 'pinCode'], ['address_nearby', 'nearBy'], 'latitude', 'longitude', [this.modals.sequelize.fn('CONCAT', 'sellers/', this.modals.sequelize.col('`consumerBill->productOfflineSeller`.`offline_seller_id`'), '/reviews?isonlineseller=false'), 'reviewUrl']],
           required: false,
           include: [{
@@ -136,9 +154,13 @@ class ProductAdaptor {
             attributes: [['review_ratings', 'ratings'], ['review_feedback', 'feedback'], ['review_comments', 'comments']],
             required: false
           }]
-        }, {
+        },
+          {
           model: this.modals.onlineSeller,
           as: 'productOnlineSeller',
+            where: {
+              $and: [this.modals.sequelize.where(this.modals.sequelize.col('`consumerBill->productOnlineSeller->billSellerMapping`.`ref_type`'), 1)]
+            },
           attributes: ['ID', ['seller_name', 'sellerName'], ['seller_url', 'url'], [this.modals.sequelize.fn('CONCAT', 'sellers/', this.modals.sequelize.col('`consumerBill->productOnlineSeller`.`seller_id`'), '/reviews?isonlineseller=true'), 'reviewUrl']],
           include: [{
             model: this.modals.onlineSellerDetails,
@@ -151,8 +173,9 @@ class ProductAdaptor {
             required: false
           }]
         }],
-        required: false
-      }, {
+        required: true
+      },
+        {
         model: this.modals.table_brands,
         as: 'brand',
         attributes: [['brand_name', 'name'], ['brand_description', 'description'], ['brand_id', 'id'], [this.modals.sequelize.fn('CONCAT', 'brands/', this.modals.sequelize.col('`brand`.`brand_id`'), '/reviews'), 'reviewUrl']],
@@ -163,12 +186,14 @@ class ProductAdaptor {
           attributes: [['review_ratings', 'ratings'], ['review_feedback', 'feedback'], ['review_comments', 'comments']],
           required: false
         }]
-      }, {
+      },
+        {
         model: this.modals.table_color,
         as: 'color',
         attributes: [['color_name', 'name'], ['color_id', 'id']],
         required: false
-      }, {
+      },
+        {
         model: this.modals.amcBills,
         as: 'amcDetails',
         attributes: [['bill_amc_id', 'id'], 'policyNo', 'premiumType', 'premiumAmount', 'effectiveDate', 'expiryDate'],
@@ -183,7 +208,8 @@ class ProductAdaptor {
           }
         },
         required: false
-      }, {
+      },
+        {
         model: this.modals.insuranceBills,
         as: 'insuranceDetails',
         attributes: [['bill_insurance_id', 'id'], 'policyNo', 'premiumType', 'premiumAmount', 'effectiveDate', 'expiryDate', 'amountInsured', 'plan'],
@@ -198,7 +224,8 @@ class ProductAdaptor {
           }
         },
         required: false
-      }, {
+      },
+        {
         model: this.modals.warranty,
         as: 'warrantyDetails',
         attributes: [['bill_warranty_id', 'id'], 'warrantyType', 'policyNo', 'premiumType', 'premiumAmount', 'effectiveDate', 'expiryDate'],
@@ -213,15 +240,33 @@ class ProductAdaptor {
           }
         },
         required: false
-      }, {
-        model: this.modals.productMetaData,
-        as: 'productMetaData',
-        attributes: [['form_element_value', 'value']],
-        include: [{
-          model: this.modals.categoryForm, as: 'categoryForm', attributes: [['form_element_name', 'name']]
-        }],
-        required: false
-      }, {
+      },
+        {
+          model: this.modals.productMetaData,
+          as: 'productMetaData',
+          attributes: [['form_element_value', 'value'], [this.modals.sequelize.fn('upper', this.modals.sequelize.col('`productMetaData->categoryForm`.`form_element_type`')), 'type'], [this.modals.sequelize.fn('upper', this.modals.sequelize.col('`productMetaData->categoryForm`.`form_element_name`')), 'name']],
+          include: [{
+            model: this.modals.categoryForm, as: 'categoryForm', attributes: []
+          },
+            {
+              model: this.modals.categoryFormMapping,
+              as: 'selectedValue',
+              on: {
+                $or: [
+                  this.modals.sequelize.where(this.modals.sequelize.col("`productMetaData`.`category_form_id`"), this.modals.sequelize.col("`productMetaData->categoryForm`.`category_form_id`"))
+                ]
+              },
+              where: {
+                $and: [
+                  this.modals.sequelize.where(this.modals.sequelize.col("`productMetaData`.`form_element_value`"), this.modals.sequelize.col("`productMetaData->selectedValue`.`mapping_id`")),
+                  this.modals.sequelize.where(this.modals.sequelize.col("`productMetaData->categoryForm`.`form_element_type`"), 2)]
+              },
+              attributes: [['dropdown_name', 'value']],
+              required: false
+            }],
+          required: false
+        },
+        {
         model: this.modals.productReviews,
         as: 'productReviews',
         attributes: [['review_ratings', 'ratings'], ['review_feedback', 'feedback'], ['review_comments', 'comments']],
