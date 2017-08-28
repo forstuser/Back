@@ -91,9 +91,9 @@ server.route({
     method: 'POST',
     path: '/Services/Management/Login',
     handler:function(request,reply) {
-        const EmailID = request.payload.EmailID;
-        const Password = request.payload.Password;
-        //console.log('hi');
+        const EmailID = request.payload.email;
+        const Password = request.payload.password;
+        //console.log(request);
         connection.query('SELECT user_id as ID,fullname as Name,email_id as EmailID,image as Image,user_type_id as UserType FROM table_users WHERE email_id = "' + EmailID + '" and password = md5("' + Password + '") and status_id=1', function (error, admin, fields) {
             if (error) throw error;
             if(admin.length > 0){
@@ -124,8 +124,8 @@ server.route({
     config:{
         validate: {
             payload: {
-                EmailID: Joi.string().email().required(),
-                Password: Joi.string().required(),
+                email: Joi.string().email().required(),
+                password: Joi.string().required(),
                 output: 'data',
                 parse:true
             }
@@ -1423,12 +1423,12 @@ server.route({
             if (error) throw error;
             if(token.length > 0){
                 var UserID = token[0]['user_id'];
-                connection.query('SELECT a.center_id as ID,a.brand_id as BrandID,b.brand_name as BrandName,a.center_name as Name,a.address_house_no as HouseNo,a.address_block as Block,a.address_street as Street,a.address_sector as Sector,a.address_city as City,a.address_state as State,a.address_pin_code as PinCode,a.address_nearby as NearBy,a.latitude as Lattitude,a.longitude as Longitude,a.open_days as OpenDays,a.timings as Timings FROM table_authorized_service_center as a inner join table_brands as b on a.brand_id=b.brand_id WHERE a.center_id = "' + ID + '"', function (error, brand, fields) {
+                connection.query('SELECT a.center_id as ID,a.brand_id as BrandID,b.brand_name as BrandName,a.center_name as Name,a.address_house_no as HouseNo,a.address_block as Block,a.address_street as Street,a.address_sector as Sector,a.address_city as City,a.address_state as State,a.address_pin_code as PinCode,a.address_nearby as NearBy,a.latitude as Lattitude,a.longitude as Longitude,a.open_days as OpenDays,a.timings as Timings FROM table_authorized_service_center as a inner join table_brands as b on a.brand_id=b.brand_id WHERE a.center_id = "' + ID + '"', function (error, service, fields) {
                     if (error) throw error;
-                    if(brand.length > 0){
+                    if(service.length > 0){
                         connection.query('SELECT center_detail_id as DetailID,contactdetail_type_id as DetailTypeID,display_name as DisplayName,details as Details FROM table_authorized_service_center_details WHERE center_id = "' + ID + '" and status_id!=3', function (error, detail, fields) {
                             if (error) throw error;
-                            var data = '{"statusCode": 100,"ID":'+brand[0]['ID']+',"BrandID":'+brand[0]['ID']+',"BrandName":"'+brand[0]['BrandName']+'","Name":"'+brand[0]['Name']+'","HouseNo":"'+brand[0]['HouseNo']+'","Block":"'+brand[0]['Block']+'","Street":"'+brand[0]['Street']+'","Sector":"'+brand[0]['Sector']+'","City":"'+brand[0]['City']+'","State":"'+brand[0]['State']+'","PinCode":'+brand[0]['PinCode']+',"NearBy":"'+brand[0]['NearBy']+'","Lattitude":"'+brand[0]['Lattitude']+'","Longitude":"'+brand[0]['Longitude']+'","OpenDays":"'+brand[0]['OpenDays']+'","Timings":"'+brand[0]['Timings']+'","Details": '+ JSON.stringify(detail) +'}';
+                            var data = '{"statusCode": 100,"ID":'+service[0]['ID']+',"BrandID":'+service[0]['BrandID']+',"BrandName":"'+service[0]['BrandName']+'","Name":"'+service[0]['Name']+'","HouseNo":"'+service[0]['HouseNo']+'","Block":"'+service[0]['Block']+'","Street":"'+service[0]['Street']+'","Sector":"'+service[0]['Sector']+'","City":"'+service[0]['City']+'","State":"'+service[0]['State']+'","PinCode":'+service[0]['PinCode']+',"NearBy":"'+service[0]['NearBy']+'","Lattitude":"'+service[0]['Lattitude']+'","Longitude":"'+service[0]['Longitude']+'","OpenDays":"'+service[0]['OpenDays']+'","Timings":"'+service[0]['Timings']+'","Details": '+ JSON.stringify(detail) +'}';
                             reply(data);
                         });
 
@@ -4172,7 +4172,7 @@ server.route({
                     var LimitCondition = '';
                 }
                 //console.log(LimitCondition);
-                connection.query('SELECT u.user_id as ID,u.fullname as Name,u.email_id as EmailID,u.mobile_no as PhoneNo,u.created_on as AddedDate,status_name as Status FROM table_users as u inner join table_status as s on s.status_id=u.status_id WHERE u.user_type_id=5 and u.status_id!=3 ORDER BY u.created_on DESC '+LimitCondition+' ', function (error, consumer, fields) {
+                connection.query('SELECT u.user_id as ID,u.fullname as Name,u.email_id as EmailID,u.mobile_no as PhoneNo,u.last_login as LastActive,u.created_on as AddedDate,status_name as Status FROM table_users as u inner join table_status as s on s.status_id=u.status_id WHERE u.user_type_id=5 and u.status_id!=3 ORDER BY u.created_on DESC '+LimitCondition+' ', function (error, consumer, fields) {
                     if (error) throw error;
                     if(consumer.length > 0){
                         var data = '{"statusCode": 100,"ConsumerList": '+ JSON.stringify(consumer) +'}';
@@ -4211,7 +4211,7 @@ server.route({
             if (error) throw error;
             if(token.length > 0){
                 var UserID = token[0]['user_id'];
-                connection.query('SELECT u.user_id as ID,u.fullname as Name,u.email_id as EmailID,u.mobile_no as PhoneNo,u.created_on as AddedDate,status_name as Status FROM table_users as u inner join table_status as s on s.status_id=u.status_id WHERE u.user_type_id=5 AND u.status_id!=3 AND (u.fullname LIKE "%'+Search+'%" OR u.email_id LIKE "%'+Search+'%" OR u.mobile_no LIKE "%'+Search+'%") ', function (error, consumer, fields) {
+                connection.query('SELECT u.user_id as ID,u.fullname as Name,u.email_id as EmailID,u.mobile_no as PhoneNo,u.last_login as LastActive,u.created_on as AddedDate,status_name as Status FROM table_users as u inner join table_status as s on s.status_id=u.status_id WHERE u.user_type_id=5 AND u.status_id!=3 AND (u.fullname LIKE "%'+Search+'%" OR u.email_id LIKE "%'+Search+'%" OR u.mobile_no LIKE "%'+Search+'%") ', function (error, consumer, fields) {
                     if (error) throw error;
                     if(consumer.length > 0){
                         var data = '{"statusCode": 100,"ConsumerList": '+ JSON.stringify(consumer) +'}';
@@ -4253,6 +4253,42 @@ server.route({
                     if (error) throw error;
                     var data = '{"statusCode": 100,"error": "","message": "User Delete successfully."}';
                     reply(data);
+                });
+            } else {
+                var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+                reply(data);
+            }
+        });
+    },
+    config:{
+        validate: {
+            payload: {
+                TokenNo: Joi.string().required(),
+                ID: Joi.number().integer().required(),
+                output: 'data',
+                parse:true
+            }
+        }
+    }
+});
+//Analytics Consumer User
+server.route({
+    method: 'POST',
+    path: '/Services/ConsumerAnalytics',
+    handler: function (request, reply) {
+        const TokenNo = request.payload.TokenNo;
+        const ID = request.payload.ID;
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+            if (error) throw error;
+            if(token.length > 0){
+                var UserID = token[0]['user_id'];
+                connection.query('SELECT COUNT(bill_detail_id) as Total FROM table_consumer_bill_details WHERE user_id = "'+ID+'"', function (error, bill, fields) {
+                    if (error) throw error;
+                    connection.query('SELECT (SUM(total_purchase_value) + SUM(taxes)) as TotalValue FROM table_consumer_bill_details WHERE user_id = "'+ID+'"', function (error, billamount, fields) {
+                        if (error) throw error;
+                        var data = '{"statusCode": 100,"TotalBill": "'+JSON.stringify(bill[0].Total)+'","TotalAmount": "'+JSON.stringify(billamount[0].TotalValue)+'"}';
+                        reply(data);
+                    });
                 });
             } else {
                 var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
