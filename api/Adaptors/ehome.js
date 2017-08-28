@@ -16,6 +16,7 @@ class EHomeAdaptor {
     ]).then((result) => {
       const categoryList = result[1];
       const recentSearches = result[2].map(item => item.toJSON());
+
       return {
         status: true,
         message: 'EHome restore successful',
@@ -154,7 +155,17 @@ class EHomeAdaptor {
           attributes: [['category_name', 'name']]
         })]);
     return promisedQuery.then((result) => {
-      const productList = result[0].map(item => item.toJSON());
+      const productList = result[0].map((item) => {
+        let product = item.toJSON();
+        product.productMetaData.map((metaData) => {
+          if(metaData.type === "2"){
+            metaData.value = metaData.selectedValue.value;
+          }
+
+          return metaData;
+        });
+        return product;
+      });
       const listIndex = (pageNo * 10) - 10;
       return {
         status: true,
@@ -169,7 +180,7 @@ class EHomeAdaptor {
         },
         recentSearches: result[5],
         categoryName: result[6],
-        nextPageUrl: productList.length > listIndex + 10 ? `categories/${categoryId}/products?pageno=${pageNo + 1}` : undefined
+        nextPageUrl: productList.length > listIndex + 10 ? `categories/${categoryId}/products?pageno=${pageNo + 1}` : ''
       };
     }).catch(err => ({
       status: false,
@@ -186,101 +197,125 @@ class EHomeAdaptor {
         },
         master_category_id: categoryId
       },
-      include: [{
-        model: this.modals.consumerBillDetails,
-        as: 'consumerBill',
-        where: {
-          status_id: {
-            $ne: 3
-          }
+      include: [
+        {
+          model: this.modals.consumerBillDetails,
+          as: 'consumerBill',
+          where: {
+            status_id: {
+              $ne: 3
+            }
+          },
+          attributes: [['invoice_number', 'invoiceNo'], ['purchase_date', 'purchaseDate']],
+          include: [{
+            model: this.modals.billDetailCopies,
+            as: 'billDetailCopies',
+            attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('bill_copy_id'), '/files'), 'fileUrl']]
+          }, {
+            model: this.modals.offlineSeller,
+            as: 'productOfflineSeller',
+            attributes: ['ID', ['offline_seller_name', 'sellerName'], ['seller_url', 'url']]
+          }, {
+            model: this.modals.onlineSeller,
+            as: 'productOnlineSeller',
+            attributes: ['ID', ['seller_name', 'sellerName'], ['seller_url', 'url']]
+          }],
+          required: false
         },
-        attributes: [['document_id', 'docId'], ['invoice_number', 'invoiceNo'], ['total_purchase_value', 'totalCost'], 'taxes', ['purchase_date', 'purchaseDate']],
-        include: [{
-          model: this.modals.billDetailCopies,
-          as: 'billDetailCopies',
-          attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('bill_copy_id'), '/files'), 'fileUrl']]
+        {
+          model: this.modals.consumerBills,
+          as: 'productBillMaps',
+          where: {
+            user_status: 5,
+            admin_status: 5
+          },
+          attributes: []
+        },
+        {
+          model: this.modals.table_brands,
+          as: 'brand',
+          attributes: [['brand_name', 'name'], ['brand_description', 'description'], ['brand_id', 'id']],
+          required: false
+        },
+        {
+          model: this.modals.table_color,
+          as: 'color',
+          attributes: [['color_name', 'name'], ['color_id', 'id']],
+          required: false
+        },
+        {
+          model: this.modals.amcBills,
+          as: 'amcDetails',
+          attributes: [['bill_amc_id', 'id'], 'policyNo', 'premiumType', 'premiumAmount', 'effectiveDate', 'expiryDate'],
+          where: {
+            user_id: user.ID,
+            status_id: {
+              $ne: 3
+            },
+            expiryDate: {
+              $gt: new Date(new Date() + ((this.modals.sequelize.col('premiumType') ?  (dueDays[this.modals.sequelize.col('premiumType')] -30) : 7) * 24 * 60 * 60 * 1000)),
+              $lte: new Date(new Date() + ((this.modals.sequelize.col('premiumType') ?  dueDays[this.modals.sequelize.col('premiumType')] : 7) * 24 * 60 * 60 * 1000))
+            }
+          },
+          required: false
+        },
+        {
+          model: this.modals.insuranceBills,
+          as: 'insuranceDetails',
+          attributes: [['bill_insurance_id', 'id'], 'policyNo', 'premiumType', 'premiumAmount', 'effectiveDate', 'expiryDate', 'amountInsured', 'plan'],
+          where: {
+            user_id: user.ID,
+            status_id: {
+              $ne: 3
+            },
+            expiryDate: {
+              $gt: new Date(new Date() + ((this.modals.sequelize.col('premiumType') ?  (dueDays[this.modals.sequelize.col('premiumType')] -30) : 7) * 24 * 60 * 60 * 1000)),
+              $lte: new Date(new Date() + ((this.modals.sequelize.col('premiumType') ?  dueDays[this.modals.sequelize.col('premiumType')] : 7) * 24 * 60 * 60 * 1000))
+            }
+          },
+          required: false
+        },
+        {
+          model: this.modals.warranty,
+          as: 'warrantyDetails',
+          attributes: [['bill_warranty_id', 'id'], 'warrantyType', 'policyNo', 'premiumType', 'premiumAmount', 'effectiveDate', 'expiryDate'],
+          where: {
+            user_id: user.ID,
+            status_id: {
+              $ne: 3
+            },
+            expiryDate: {
+              $gt: new Date(new Date() + ((this.modals.sequelize.col('premiumType') ?  (dueDays[this.modals.sequelize.col('premiumType')] -30) : 7) * 24 * 60 * 60 * 1000)),
+              $lte: new Date(new Date() + ((this.modals.sequelize.col('premiumType') ?  dueDays[this.modals.sequelize.col('premiumType')] : 7) * 24 * 60 * 60 * 1000))
+            }
+          },
+          required: false
+        },
+        {
+          model: this.modals.productMetaData,
+          as: 'productMetaData',
+          attributes: [['form_element_value', 'value'], [this.modals.sequelize.fn('upper', this.modals.sequelize.col('`productMetaData->categoryForm`.`form_element_type`')), 'type'], [this.modals.sequelize.fn('upper', this.modals.sequelize.col('`productMetaData->categoryForm`.`form_element_name`')), 'name']],
+          include: [{
+            model: this.modals.categoryForm, as: 'categoryForm', attributes: []
+          },
+            {
+              model: this.modals.categoryFormMapping,
+              as: 'selectedValue',
+              on: {
+                $or: [
+                  this.modals.sequelize.where(this.modals.sequelize.col("`productMetaData`.`category_form_id`"), this.modals.sequelize.col("`productMetaData->categoryForm`.`category_form_id`"))
+                ]
+              },
+              where: {
+                $and: [
+                  this.modals.sequelize.where(this.modals.sequelize.col("`productMetaData`.`form_element_value`"), this.modals.sequelize.col("`productMetaData->selectedValue`.`mapping_id`")),
+                  this.modals.sequelize.where(this.modals.sequelize.col("`productMetaData->categoryForm`.`form_element_type`"), 2)]
+              },
+              attributes: [['dropdown_name', 'value']],
+              required: false
+            }],
+          required: false
         }, {
-          model: this.modals.offlineSeller,
-          as: 'productOfflineSeller',
-          attributes: ['ID', ['offline_seller_name', 'sellerName'], ['seller_url', 'url']]
-        }, {
-          model: this.modals.onlineSeller,
-          as: 'productOnlineSeller',
-          attributes: ['ID', ['seller_name', 'sellerName'], ['seller_url', 'url']]
-        }],
-        required: false
-      }, {
-        model: this.modals.consumerBills,
-        as: 'productBillMaps',
-        where: {
-          user_status: 5,
-          admin_status: 5
-        },
-        attributes: []
-      }, {
-        model: this.modals.table_brands,
-        as: 'brand',
-        attributes: [['brand_name', 'name'], ['brand_description', 'description'], ['brand_id', 'id']],
-        required: false
-      }, {
-        model: this.modals.table_color,
-        as: 'color',
-        attributes: [['color_name', 'name'], ['color_id', 'id']],
-        required: false
-      }, {
-        model: this.modals.amcBills,
-        as: 'amcDetails',
-        attributes: [['bill_amc_id', 'id'], 'policyNo', 'premiumType', 'premiumAmount', 'effectiveDate', 'expiryDate'],
-        where: {
-          user_id: user.ID,
-          status_id: {
-            $ne: 3
-          },
-          expiryDate: {
-            $gt: new Date(),
-            $lte: new Date(new Date() + (dueDays[this.modals.sequelize.col('premiumType')] * 24 * 60 * 60 * 1000))
-          }
-        },
-        required: false
-      }, {
-        model: this.modals.insuranceBills,
-        as: 'insuranceDetails',
-        attributes: [['bill_insurance_id', 'id'], 'policyNo', 'premiumType', 'premiumAmount', 'effectiveDate', 'expiryDate', 'amountInsured', 'plan'],
-        where: {
-          user_id: user.ID,
-          status_id: {
-            $ne: 3
-          },
-          expiryDate: {
-            $gt: new Date(),
-            $lte: new Date(new Date() + (dueDays[this.modals.sequelize.col('premiumType')] * 24 * 60 * 60 * 1000))
-          }
-        },
-        required: false
-      }, {
-        model: this.modals.warranty,
-        as: 'warrantyDetails',
-        attributes: [['bill_warranty_id', 'id'], 'warrantyType', 'policyNo', 'premiumType', 'premiumAmount', 'effectiveDate', 'expiryDate'],
-        where: {
-          user_id: user.ID,
-          status_id: {
-            $ne: 3
-          },
-          expiryDate: {
-            $gt: new Date(),
-            $lte: new Date(new Date() + (dueDays[this.modals.sequelize.col('premiumType')] * 24 * 60 * 60 * 1000))
-          }
-        },
-        required: false
-      }, {
-        model: this.modals.productMetaData,
-        as: 'productMetaData',
-        attributes: [['form_element_value', 'value']],
-        include: [{
-          model: this.modals.categoryForm, as: 'categoryForm', attributes: [['form_element_name', 'name']]
-        }],
-        required: false
-      }, {
         model: this.modals.categories,
         as: 'masterCategory',
         attributes: []

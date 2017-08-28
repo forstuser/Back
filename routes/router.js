@@ -17,10 +17,12 @@ const UserManagementController = require('../api/controllers/userManagement');
 const DashboardController = require('../api/controllers/dashboard');
 const ProductController = require('../api/controllers/product');
 const InsightController = require('../api/controllers/insight');
+const SearchController = require('../api/controllers/search');
 
 let User;
 
 function associateModals(modals) {
+  modals.productMetaData.hasOne(modals.categoryFormMapping, { as: 'selectedValue', foreignKey: 'category_form_id'});
   modals.offlineSeller.hasMany(modals.offlineSellerDetails, { as: 'sellerDetails', foreignKey: 'offline_seller_id' });
   modals.onlineSeller.hasMany(modals.onlineSellerDetails, { as: 'sellerDetails', foreignKey: 'seller_id' });
   modals.table_brands.hasMany(modals.brandReviews, { as: 'brandReviews', foreignKey: 'brand_id' });
@@ -1527,6 +1529,7 @@ module.exports = (app, modals) => {
   const dashboardRoutes = [];
   const productRoutes = [];
   const insightRoutes = [];
+  const searchRoutes = [];
   const userController = new UserController(modals);
   const categoryController = new CategoryController(modals);
   const brandController = new BrandController(modals);
@@ -1540,6 +1543,7 @@ module.exports = (app, modals) => {
   const productController = new ProductController(modals);
   const insightController = new InsightController(modals);
   const userManagementController = new UserManagementController(modals);
+  const searchController = new SearchController(modals);
 
   prepareAuthRoutes(userController, authRoutes);
 
@@ -1569,6 +1573,29 @@ module.exports = (app, modals) => {
 
   prepareInsightRoutes(insightController, insightRoutes);
 
+  if(searchController){
+    searchRoutes.push({
+      method: 'GET',
+      path: '/search',
+      config: {
+        auth: 'jwt',
+        handler: SearchController.retrieveSearch,
+        description: 'Get Search Data.',
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              { code: 200, message: 'Successful' },
+              { code: 400, message: 'Bad Request' },
+              { code: 401, message: 'Invalid Credentials' },
+              { code: 404, message: 'Not Found' },
+              { code: 500, message: 'Internal Server Error' }
+            ]
+          }
+        }
+      }
+    })
+  }
+
   app.route([
     ...authRoutes,
     ...categoryRoutes,
@@ -1580,6 +1607,7 @@ module.exports = (app, modals) => {
     ...uploadFileRoute,
     ...dashboardRoutes,
     ...productRoutes,
-    ...insightRoutes
+    ...insightRoutes,
+    ...searchRoutes
   ]);
 };
