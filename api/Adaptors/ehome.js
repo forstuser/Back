@@ -14,7 +14,11 @@ class EHomeAdaptor {
       this.prepareCategoryData(user),
       this.retrieveRecentSearch(user)
     ]).then((result) => {
-      const categoryList = result[1];
+      const categoryList = result[1].map((item) => {
+        const categoryData = item.toJSON();
+        categoryData.cURL += categoryData.subCategories.length > 0 && categoryData.subCategories[0].categoryType > 0 ? categoryData.subCategories[0].categoryId : '';
+        return categoryData;
+      });
       const recentSearches = result[2].map(item => item.toJSON());
 
       return {
@@ -67,6 +71,21 @@ class EHomeAdaptor {
           }
         },
         include: [{
+          model: this.modals.categories,
+          on: {
+            $or: [
+              this.modals.sequelize.where(this.modals.sequelize.col("`subCategories`.`ref_id`"), this.modals.sequelize.col("`categories`.`category_id`"))
+            ]
+          },
+          where: {
+            display_id: 1
+          },
+          as: 'subCategories',
+          attributes:[['display_id', 'categoryType'], ['category_id', 'categoryId'], ['category_name', 'categoryName']],
+          order: [['display_id', 'ASC']],
+          required: false
+        },
+          {
           model: this.modals.productBills,
           as: 'products',
           where: {
@@ -87,7 +106,7 @@ class EHomeAdaptor {
           attributes: [],
           required: false
         }],
-        attributes: [['category_name', 'cName'], ['display_id', 'cType'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`categories`.`category_id`'), '/products?pageno=1'), 'cURL'], [this.modals.sequelize.fn('MAX', this.modals.sequelize.col('`products->productBillMaps`.`updated_on`')), 'cLastUpdate'], [this.modals.sequelize.fn('COUNT', this.modals.sequelize.col('`products`.`product_name`')), 'productCounts']],
+        attributes: [['category_name', 'cName'], ['display_id', 'cType'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`categories`.`category_id`'), '/products?pageno=1&categoryid='), 'cURL'], [this.modals.sequelize.fn('MAX', this.modals.sequelize.col('`products->productBillMaps`.`updated_on`')), 'cLastUpdate'], [this.modals.sequelize.fn('COUNT', this.modals.sequelize.col('`products`.`product_name`')), 'productCounts']],
         order: ['display_id'],
         group: '`categories`.`category_id`'
       }).then(resolve).catch(reject);
@@ -106,27 +125,33 @@ class EHomeAdaptor {
     });
   }
 
-  prepareProductDetail(user, categoryId, pageNo) {
+  prepareProductDetail(user, masterCategoryId, categoryId, pageNo) {
     const promisedQuery = Promise
-      .all([this.fetchProductDetails(user, categoryId, pageNo),
+      .all([this.fetchProductDetails(user, masterCategoryId, categoryId || undefined),
         this.modals.categories.findAll({
           where: {
-            ref_id: categoryId,
+            ref_id: masterCategoryId,
             status_id: {
               $ne: 3
             }
           },
           include: [{
             model: this.modals.categories,
+            on: {
+              $or: [
+                this.modals.sequelize.where(this.modals.sequelize.col("`subCategories`.`ref_id`"), this.modals.sequelize.col("`categories`.`category_id`"))
+              ]
+            },
             as: 'subCategories',
             where: {
               status_id: {
                 $ne: 3
               }
             },
-            attributes: [['category_id', 'id'], ['category_name', 'name']]
+            attributes: [['category_id', 'id'], ['category_name', 'name']],
+            required: false
           }],
-          attributes: [['category_id', 'id'], ['category_name', 'name']]
+          attributes: [['category_id', 'id'], [this.modals.sequelize.fn('CONCAT', 'categories/', masterCategoryId, '/products?pageno=1&categoryid=', this.modals.sequelize.col('`categories`.`category_id`')), 'cURL'], ['display_id', 'cType'], ['category_name', 'name']]
         }), this.modals.table_brands.findAll({
           where: {
             status_id: {
@@ -150,7 +175,7 @@ class EHomeAdaptor {
           attributes: ['ID', ['seller_name', 'name']]
         }), this.retrieveRecentSearch(user), this.modals.categories.findOne({
           where: {
-            category_id: categoryId
+            category_id: masterCategoryId
           },
           attributes: [['category_name', 'name']]
         })]);
@@ -180,7 +205,7 @@ class EHomeAdaptor {
         },
         recentSearches: result[5],
         categoryName: result[6],
-        nextPageUrl: productList.length > listIndex + 10 ? `categories/${categoryId}/products?pageno=${pageNo + 1}` : ''
+        nextPageUrl: productList.length > listIndex + 10 ? `categories/${masterCategoryId}/products?pageno=${pageNo + 1}&categoryid=${categoryId}` : ''
       };
     }).catch(err => ({
       status: false,
@@ -188,14 +213,15 @@ class EHomeAdaptor {
     }));
   }
 
-  fetchProductDetails(user, categoryId) {
+  fetchProductDetails(user, masterCategoryId, categoryId) {
     return this.modals.productBills.findAll({
       where: {
         user_id: user.ID,
         status_id: {
           $ne: 3
         },
-        master_category_id: categoryId
+        master_category_id: masterCategoryId,
+        category_id: categoryId
       },
       include: [
         {
@@ -211,11 +237,21 @@ class EHomeAdaptor {
             model: this.modals.billDetailCopies,
             as: 'billDetailCopies',
             attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('bill_copy_id'), '/files'), 'fileUrl']]
-          }, {
-            model: this.modals.offlineSeller,
-            as: 'productOfflineSeller',
-            attributes: ['ID', ['offline_seller_name', 'sellerName'], ['seller_url', 'url']]
-          }, {
+          },
+            {
+              model: this.modals.consumerBills,
+              as: 'bill',
+              where: {
+                user_status: 5,
+                admin_status: 5
+              },
+              attributes: []
+            },
+            {
+              model: this.modals.offlineSeller,
+              as: 'productOfflineSeller',
+              attributes: ['ID', ['offline_seller_name', 'sellerName'], ['seller_url', 'url']]
+            }, {
             model: this.modals.onlineSeller,
             as: 'productOnlineSeller',
             attributes: ['ID', ['seller_name', 'sellerName'], ['seller_url', 'url']]
@@ -229,7 +265,8 @@ class EHomeAdaptor {
             user_status: 5,
             admin_status: 5
           },
-          attributes: []
+          attributes: [],
+          required: false
         },
         {
           model: this.modals.table_brands,
