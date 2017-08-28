@@ -2761,8 +2761,8 @@ server.route({
                 connection.query('INSERT INTO table_consumer_bill_details (user_id,consumer_name,consumer_email_id,consumer_phone_no,document_id,invoice_number,total_purchase_value,taxes,purchase_date,created_on,updated_on,updated_by_user_id,status_id) VALUES ("'+BillUserID+'","'+request.payload.Name+'","'+request.payload.EmailID+'","'+request.payload.PhoneNo+'","'+request.payload.DocID+'","'+request.payload.InvoiceNo+'","'+request.payload.TotalValue+'","'+request.payload.Taxes+'","'+request.payload.DateofPurchase+'","'+getDateTime()+'","'+getDateTime()+'","'+UserID+'",1)', function (error, bildetail, fields) {
                     if (error) throw error;
                     const BillDetailID = bildetail['insertId'];
-                   /* connection.query('INSERT INTO table_consumer_bill_mapping (bill_id,bill_ref_type,ref_id) VALUES ("'+request.payload.BillID+'",1,"'+BillDetailID+'")', function (error, list, fields) {
-                    });*/
+                    connection.query('INSERT INTO table_consumer_bill_mapping (bill_id,bill_ref_type,ref_id) VALUES ("'+request.payload.BillID+'",1,"'+BillDetailID+'")', function (error, list, fields) {
+                    });
                     if(request.payload.OnlineSellerID != null && request.payload.OnlineSellerID !=''){
                         connection.query('INSERT INTO table_consumer_bill_seller_mapping (bill_detail_id,ref_type,seller_ref_id,onlineSellerId) VALUES ("'+BillDetailID+'",1,"'+request.payload.OnlineSellerID+'","' +request.payload.OnlineSellerID+'")', function (error, list, fields) {
                         });
