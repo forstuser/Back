@@ -56,7 +56,7 @@ function associateModals(modals) {
   modals.consumerBills.belongsTo(modals.table_users, { foreignKey: 'user_id', as: 'consumer' });
   modals.table_users.hasMany(modals.consumerBills);
   modals.consumerBills.hasMany(modals.consumerBillDetails, { foreignKey: 'bill_id', as: 'billDetails' });
-  modals.consumerBillDetails.belongsTo(modals.consumerBills, { foreignKey: 'bill_id', as: 'bill' });
+  modals.consumerBillDetails.belongsTo(modals.consumerBills, { foreignKey: 'ref_id', as: 'bill', through: modals.billMapping, where: { bill_ref_type: 1 } });
   modals.consumerBillDetails.belongsToMany(modals.offlineSeller, {
     through: modals.billSellerMapping,
     foreignKey: 'bill_detail_id',

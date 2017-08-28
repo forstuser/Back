@@ -17,7 +17,7 @@ class SearchAdaptor {
       const productList = result[0].map((item) => {
         let product = item.toJSON();
         product.productMetaData.map((metaData) => {
-          if(metaData.type === "2"){
+          if(metaData.type === "2" && metaData.selectedValue){
             metaData.value = metaData.selectedValue.value;
           }
 
@@ -29,7 +29,7 @@ class SearchAdaptor {
         let category = item.toJSON();
         category.products.map((productItem) => {
           productItem.productMetaData.map((metaData) => {
-            if(metaData.type === "2"){
+            if(metaData.type === "2" && metaData.selectedValue){
               metaData.value = metaData.selectedValue.value;
             }
 
@@ -95,7 +95,16 @@ class SearchAdaptor {
               model: this.modals.billDetailCopies,
               as: 'billDetailCopies',
               attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('bill_copy_id'), '/files'), 'fileUrl']]
-            }, {
+            },
+              {
+                model: this.modals.consumerBills,
+                as: 'bill',
+                where: {
+                  user_status: 5,
+                  admin_status: 5
+                },
+                attributes: []
+              }, {
               model: this.modals.offlineSeller,
               as: 'productOfflineSeller',
               attributes: ['ID', ['offline_seller_name', 'sellerName'], ['seller_url', 'url']]
@@ -113,7 +122,8 @@ class SearchAdaptor {
                 user_status: 5,
                 admin_status: 5
               },
-              attributes: []
+              attributes: [],
+              required: false
             },
             {
             model: this.modals.table_brands,
@@ -249,7 +259,16 @@ class SearchAdaptor {
               model: this.modals.billDetailCopies,
               as: 'billDetailCopies',
               attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('bill_copy_id'), '/files'), 'fileUrl']]
-            }, {
+            },
+              {
+                model: this.modals.consumerBills,
+                as: 'bill',
+                where: {
+                  user_status: 5,
+                  admin_status: 5
+                },
+                attributes: []
+              }, {
               model: this.modals.offlineSeller,
               as: 'productOfflineSeller',
               attributes: ['ID', ['offline_seller_name', 'sellerName'], ['seller_url', 'url']]
@@ -267,7 +286,8 @@ class SearchAdaptor {
                 user_status: 5,
                 admin_status: 5
               },
-              attributes: []
+              attributes: [],
+              required: false
             },
             {
               model: this.modals.table_brands,

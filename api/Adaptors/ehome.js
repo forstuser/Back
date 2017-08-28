@@ -158,7 +158,7 @@ class EHomeAdaptor {
       const productList = result[0].map((item) => {
         let product = item.toJSON();
         product.productMetaData.map((metaData) => {
-          if(metaData.type === "2"){
+          if(metaData.type === "2" && metaData.selectedValue){
             metaData.value = metaData.selectedValue.value;
           }
 
