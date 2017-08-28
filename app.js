@@ -14,7 +14,7 @@ const connection = MySQL.createConnection({
     database: 'binbill'
 });
 //server.connection({ port: 3000});
-server.connection({ port: 3000, host: '192.168.0.9'});
+server.connection({ port: 3000 });
 server.register({
     register: require('hapi-cors'),
     options: {
@@ -2761,17 +2761,17 @@ server.route({
                 connection.query('INSERT INTO table_consumer_bill_details (user_id,consumer_name,consumer_email_id,consumer_phone_no,document_id,invoice_number,total_purchase_value,taxes,purchase_date,created_on,updated_on,updated_by_user_id,status_id) VALUES ("'+BillUserID+'","'+request.payload.Name+'","'+request.payload.EmailID+'","'+request.payload.PhoneNo+'","'+request.payload.DocID+'","'+request.payload.InvoiceNo+'","'+request.payload.TotalValue+'","'+request.payload.Taxes+'","'+request.payload.DateofPurchase+'","'+getDateTime()+'","'+getDateTime()+'","'+UserID+'",1)', function (error, bildetail, fields) {
                     if (error) throw error;
                     const BillDetailID = bildetail['insertId'];
-                    connection.query('INSERT INTO table_consumer_bill_mapping (bill_id,bill_ref_type,ref_id) VALUES ("'+request.payload.BillID+'",1,"'+BillDetailID+'")', function (error, list, fields) {
-                    });
+                   /* connection.query('INSERT INTO table_consumer_bill_mapping (bill_id,bill_ref_type,ref_id) VALUES ("'+request.payload.BillID+'",1,"'+BillDetailID+'")', function (error, list, fields) {
+                    });*/
                     if(request.payload.OnlineSellerID != null && request.payload.OnlineSellerID !=''){
-                        connection.query('INSERT INTO table_consumer_bill_seller_mapping (bill_detail_id,ref_type,seller_ref_id) VALUES ("'+BillDetailID+'",1,"'+request.payload.OnlineSellerID+'")', function (error, list, fields) {
+                        connection.query('INSERT INTO table_consumer_bill_seller_mapping (bill_detail_id,ref_type,seller_ref_id,onlineSellerId) VALUES ("'+BillDetailID+'",1,"'+request.payload.OnlineSellerID+'","' +request.payload.OnlineSellerID+'")', function (error, list, fields) {
                         });
                     }
                     if(request.payload.SellerList.length > 0){
                         const SellerList = request.payload.SellerList;
                         //console.log(SellerList, 'SellerList')
                         for(var s = 0; s < SellerList.length; s++) {
-                            connection.query('INSERT INTO table_consumer_bill_seller_mapping (bill_detail_id,ref_type,seller_ref_id) VALUES ("'+BillDetailID+'",2,"'+SellerList[s]+'")', function (error, list, fields) {
+                            connection.query('INSERT INTO table_consumer_bill_seller_mapping (bill_detail_id,ref_type,seller_ref_id,offlineSellerId) VALUES ("'+BillDetailID+'",2,"'+SellerList[s]+'","'+SellerList[s]+'")', function (error, list, fields) {
                             });
                         }
                     }
@@ -2792,6 +2792,8 @@ server.route({
                             connection.query('INSERT INTO table_consumer_bill_products (bill_detail_id,user_id,product_name,master_category_id,category_id,brand_id,color_id,value_of_purchase,taxes,tag,status_id) VALUES ("'+BillDetailID+'","'+BillUserID+'","'+ProductList[p].ProductName+'","'+ProductList[p].MasterCatID+'","'+ProductList[p].CatID+'","'+ProductList[p].BrandID+'","'+ProductList[p].ColorID+'","'+ProductList[p].Value+'","'+ProductList[p].Taxes+'","'+ProductList[p].Tag+'",1)', function (error, product, fields) {
                                 if (error) throw error;
                                 const ProductID = product['insertId'];
+                              connection.query('INSERT INTO table_consumer_bill_mapping (bill_id,bill_ref_type,ref_id) VALUES ("'+BillID+'",2,"'+ProductID+'")', function (error, list, fields) {
+                              });
                                 if(ProductForm.length > 0){
                                     for(var i = 0; i < ProductForm.length; i++) {
                                         connection.query('INSERT INTO table_consumer_bill_product_meta_data (bill_product_id,category_form_id,form_element_value) VALUES ("'+product['insertId']+'","'+ProductForm[i].CatFormID+'","'+ProductForm[i].value+'")', function (error, detail, fields) {
