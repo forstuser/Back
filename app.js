@@ -703,7 +703,7 @@ server.route({
                         connection.query('INSERT INTO table_brands (brand_name,brand_description,created_on,updated_on,updated_by_user_id,status_id) VALUES ("' + Name + '","' + Description + '","' + getDateTime() + '","' + getDateTime() + '","' + UserID + '",1)', function (error, results, fields) {
                             if (error) throw error;
                             for(var i = 0; i < Details.length; i++) {
-                                connection.query('INSERT INTO table_brand_details (brand_id,contactdetails_type_id,display_name,details,status_id) VALUES ("'+results['insertId']+'","'+Details[i].DetailTypeID+'","'+Details[i].DisplayName+'","'+Details[i].Details+'",1)', function (error, detail, fields) {
+                                connection.query('INSERT INTO table_brand_details (brand_id,category_id,contactdetails_type_id,display_name,details,status_id) VALUES ("'+results['insertId']+'","'+Details[i].CategoryID+'",,"'+Details[i].DetailTypeID+'","'+Details[i].DisplayName+'","'+Details[i].Details+'",1)', function (error, detail, fields) {
                                 });
                             }
                             var data = '{"statusCode": 100,"ID": "'+results['insertId']+'","Name": "'+Name+'","Description": "'+Description+'"}';
@@ -756,10 +756,10 @@ server.route({
                             if (error) throw error;
                             for(var i = 0; i < Details.length; i++) {
                                 if(Details[i].DetailID != null && Details[i].DetailID != ''){
-                                    connection.query('UPDATE table_brand_details SET contactdetails_type_id="' + Details[i].DetailTypeID + '",display_name="' + Details[i].DisplayName + '",details="' + Details[i].Details + '"WHERE brand_detail_id="' + Details[i].DetailID + '"', function (error, detail, fields) {
+                                    connection.query('UPDATE table_brand_details SET category_id="' + Details[i].CategoryID + '",contactdetails_type_id="' + Details[i].DetailTypeID + '",display_name="' + Details[i].DisplayName + '",details="' + Details[i].Details + '"WHERE brand_detail_id="' + Details[i].DetailID + '"', function (error, detail, fields) {
                                     });
                                 } else {
-                                    connection.query('INSERT INTO table_brand_details (brand_id,contactdetails_type_id,display_name,details,status_id) VALUES ("'+ID+'","'+Details[i].DetailTypeID+'","'+Details[i].DisplayName+'","'+Details[i].Details+'",1)', function (error, detail, fields) {
+                                    connection.query('INSERT INTO table_brand_details (brand_id,category_id,contactdetails_type_id,display_name,details,status_id) VALUES ("'+ID+'","'+Details[i].CategoryID+'","'+Details[i].DetailTypeID+'","'+Details[i].DisplayName+'","'+Details[i].Details+'",1)', function (error, detail, fields) {
                                     });
                                 }
 
@@ -909,7 +909,7 @@ server.route({
                 connection.query('SELECT brand_id as ID,brand_name as Name,brand_description as Description FROM table_brands WHERE brand_id = "' + ID + '"', function (error, brand, fields) {
                     if (error) throw error;
                     if(brand.length > 0){
-                        connection.query('SELECT brand_detail_id as DetailID,contactdetails_type_id as DetailTypeID,display_name as DisplayName,details as Details FROM table_brand_details WHERE brand_id = "' + ID + '" and status_id!=3', function (error, detail, fields) {
+                        connection.query('SELECT brand_detail_id as DetailID,category_id as CategoryID,contactdetails_type_id as DetailTypeID,display_name as DisplayName,details as Details FROM table_brand_details WHERE brand_id = "' + ID + '" and status_id!=3', function (error, detail, fields) {
                             if (error) throw error;
                             var data = '{"statusCode": 100,"ID":'+brand[0]['ID']+',"Name":"'+brand[0]['Name']+'","Description":"'+brand[0]['Description']+'","Details": '+ JSON.stringify(detail) +'}';
                             reply(data);
@@ -2754,6 +2754,7 @@ server.route({
         const TokenNo = request.payload.TokenNo;
         const BillID = request.payload.BillID;
         const BillUserID = request.payload.UserID;
+        //console.log(request);
         connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
@@ -2762,16 +2763,19 @@ server.route({
                     if (error) throw error;
                     const BillDetailID = bildetail['insertId'];
                     connection.query('INSERT INTO table_consumer_bill_mapping (bill_id,bill_ref_type,ref_id) VALUES ("'+request.payload.BillID+'",1,"'+BillDetailID+'")', function (error, list, fields) {
+                        if (error) throw error;
                     });
                     if(request.payload.OnlineSellerID != null && request.payload.OnlineSellerID !=''){
-                        connection.query('INSERT INTO table_consumer_bill_seller_mapping (bill_detail_id,ref_type,seller_ref_id,onlineSellerId) VALUES ("'+BillDetailID+'",1,"'+request.payload.OnlineSellerID+'","' +request.payload.OnlineSellerID+'")', function (error, list, fields) {
+                        connection.query('INSERT INTO table_consumer_bill_seller_mapping (bill_detail_id,ref_type,seller_ref_id) VALUES ("'+BillDetailID+'",1,"'+request.payload.OnlineSellerID+'")', function (error, list, fields) {
+                            if (error) throw error;
                         });
                     }
                     if(request.payload.SellerList.length > 0){
                         const SellerList = request.payload.SellerList;
                         //console.log(SellerList, 'SellerList')
                         for(var s = 0; s < SellerList.length; s++) {
-                            connection.query('INSERT INTO table_consumer_bill_seller_mapping (bill_detail_id,ref_type,seller_ref_id,offlineSellerId) VALUES ("'+BillDetailID+'",2,"'+SellerList[s]+'","'+SellerList[s]+'")', function (error, list, fields) {
+                            connection.query('INSERT INTO table_consumer_bill_seller_mapping (bill_detail_id,ref_type,seller_ref_id) VALUES ("'+BillDetailID+'",2,"'+SellerList[s]+'")', function (error, list, fields) {
+                                if (error) throw error;
                             });
                         }
                     }
@@ -2792,8 +2796,8 @@ server.route({
                             connection.query('INSERT INTO table_consumer_bill_products (bill_detail_id,user_id,product_name,master_category_id,category_id,brand_id,color_id,value_of_purchase,taxes,tag,status_id) VALUES ("'+BillDetailID+'","'+BillUserID+'","'+ProductList[p].ProductName+'","'+ProductList[p].MasterCatID+'","'+ProductList[p].CatID+'","'+ProductList[p].BrandID+'","'+ProductList[p].ColorID+'","'+ProductList[p].Value+'","'+ProductList[p].Taxes+'","'+ProductList[p].Tag+'",1)', function (error, product, fields) {
                                 if (error) throw error;
                                 const ProductID = product['insertId'];
-                              connection.query('INSERT INTO table_consumer_bill_mapping (bill_id,bill_ref_type,ref_id) VALUES ("'+BillID+'",2,"'+ProductID+'")', function (error, list, fields) {
-                              });
+                             /* connection.query('INSERT INTO table_consumer_bill_mapping (bill_id,bill_ref_type,ref_id) VALUES ("'+BillID+'",2,"'+ProductID+'")', function (error, list, fields) {
+                              });*/
                                 if(ProductForm.length > 0){
                                     for(var i = 0; i < ProductForm.length; i++) {
                                         connection.query('INSERT INTO table_consumer_bill_product_meta_data (bill_product_id,category_form_id,form_element_value) VALUES ("'+product['insertId']+'","'+ProductForm[i].CatFormID+'","'+ProductForm[i].value+'")', function (error, detail, fields) {
@@ -3002,7 +3006,8 @@ server.route({
                                 var ProductIDList = id.join();
                                 connection.query('SELECT m.bill_product_id as ProductID,m.category_form_id as CatFormID,m.form_element_value as value, cf.form_element_name as CatFormName,cf.form_element_type as ElementType,mc.dropdown_name as DropdownValue FROM table_consumer_bill_product_meta_data as m left join table_category_form as cf on cf.category_form_id=m.category_form_id left join table_category_form_mapping as mc on (mc.mapping_id=m.form_element_value and cf.form_element_type=2)  WHERE m.bill_product_id IN ('+ProductIDList+')', function (error, productform, fields) {
                                     if (error) throw error;
-                                    connection.query('SELECT i.bill_insurance_id as InsuranceID,i.bill_product_id as ProductID,i.seller_type as SellerType, i.seller_id as SellerID, i.insurance_plan as Plan,i.policy_number as PolicyNo,i.amount_insured as AmountInsured,i.premium_type as PremiumType,i.premium_amount as PremiumAmount,i.policy_effective_date as PolicyEffectiveDate,i.policy_expiry_date as PolicyExpiryDate FROM table_consumer_bill_insurance as i WHERE i.status_id=1 AND i.bill_product_id IN ('+ProductIDList+')', function (error, insurance, fields) {
+                                    //Insurance List
+                                    connection.query('SELECT i.bill_insurance_id as InsuranceID,i.bill_product_id as ProductID,i.seller_type as SellerType, i.seller_id as SellerID, b.brand_name as BrandName, s.offline_seller_name as SellerName, i.insurance_plan as Plan,i.policy_number as PolicyNo,i.amount_insured as AmountInsured,i.premium_type as PremiumType,i.premium_amount as PremiumAmount,i.policy_effective_date as PolicyEffectiveDate,i.policy_expiry_date as PolicyExpiryDate FROM table_consumer_bill_insurance as i LEFT JOIN table_brands as b on (b.brand_id=i.seller_id AND i.seller_type=1) LEFT JOIN table_offline_seller as s on (s.offline_seller_id=i.seller_id AND i.seller_type=2)  WHERE i.status_id=1 AND i.bill_product_id IN ('+ProductIDList+')', function (error, insurance, fields) {
                                         if (error) throw error;
                                         if(insurance.length > 0){
                                             var insuranceid = [];
@@ -3020,7 +3025,8 @@ server.route({
                                                 if (error) throw error;
                                                 connection.query('SELECT e.bill_insurance_id as InsuranceID,e.exclusions_id as ExclusionsID,el.exclusions_name as ExclusionsName FROM table_consumer_bill_insurance_exclusions as e LEFT JOIN table_list_of_exclusions as el on el.exclusions_id=e.exclusions_id WHERE e.bill_insurance_id IN ('+InsuranceIDList+')', function (error, insuranceexclusions, fields) {
                                                     if (error) throw error;
-                                                    connection.query('SELECT bill_warranty_id as WarrantyID,bill_product_id as ProductID,seller_type as SellerType,seller_id as SellerID,warranty_type as WarrantyType,policy_number as PolicyNo,premium_type as PremiumType,premium_amount as PremiumAmount,policy_effective_date as PolicyEffectiveDate,policy_expiry_date as PolicyExpiryDate FROM table_consumer_bill_warranty  WHERE status_id=1 AND bill_product_id IN ('+ProductIDList+')', function (error, warranty, fields) {
+                                                    //Warranty List
+                                                    connection.query('SELECT w.bill_warranty_id as WarrantyID,w.bill_product_id as ProductID,w.seller_type as SellerType,w.seller_id as SellerID, b.brand_name as BrandName, s.offline_seller_name as SellerName,w.warranty_type as WarrantyType,w.policy_number as PolicyNo,w.premium_type as PremiumType,w.premium_amount as PremiumAmount,w.policy_effective_date as PolicyEffectiveDate,w.policy_expiry_date as PolicyExpiryDate FROM table_consumer_bill_warranty as w LEFT JOIN table_brands as b on (b.brand_id=w.seller_id AND w.seller_type=1) LEFT JOIN table_offline_seller as s on (s.offline_seller_id=w.seller_id AND w.seller_type=2) WHERE w.status_id=1 AND w.bill_product_id IN ('+ProductIDList+')', function (error, warranty, fields) {
                                                         if (error) throw error;
                                                         if(warranty.length > 0){
                                                             var warrantyid = [];
@@ -3038,7 +3044,8 @@ server.route({
                                                                 if (error) throw error;
                                                                 connection.query('SELECT i.bill_warranty_id as WarrantyID,i.inclusions_id as InclusionsID,il.inclusions_name as InclusionsName FROM table_consumer_bill_warranty_inclusions as i LEFT JOIN table_list_of_inclusions as il on il.inclusions_id=i.inclusions_id WHERE i.bill_warranty_id IN ('+WarrantyIDList+')', function (error, warrantyinclusions, fields) {
                                                                     if (error) throw error;
-                                                                    connection.query('SELECT bill_amc_id as AmcID,bill_product_id as ProductID,seller_type as SellerType,seller_id as SellerID,policy_number as PolicyNo,premium_type as PremiumType,premium_amount as PremiumAmount,policy_effective_date as PolicyEffectiveDate,policy_expiry_date as PolicyExpiryDate FROM table_consumer_bill_amc  WHERE status_id=1 AND bill_product_id IN ('+ProductIDList+')', function (error, amc, fields) {
+                                                                    //AMC List
+                                                                    connection.query('SELECT a.bill_amc_id as AmcID,a.bill_product_id as ProductID,a.seller_type as SellerType,a.seller_id as SellerID, b.brand_name as BrandName, s.offline_seller_name as SellerName,a.policy_number as PolicyNo,a.premium_type as PremiumType,a.premium_amount as PremiumAmount,a.policy_effective_date as PolicyEffectiveDate,a.policy_expiry_date as PolicyExpiryDate FROM table_consumer_bill_amc as a LEFT JOIN table_brands as b on (b.brand_id=a.seller_id AND a.seller_type=1) LEFT JOIN table_offline_seller as s on (s.offline_seller_id=a.seller_id AND a.seller_type=2) WHERE a.status_id=1 AND a.bill_product_id IN ('+ProductIDList+')', function (error, amc, fields) {
                                                                         if (error) throw error;
                                                                         if(amc.length > 0){
                                                                             var amcid = [];
@@ -3055,7 +3062,8 @@ server.route({
                                                                                 if (error) throw error;
                                                                                 connection.query('SELECT i.bill_amc_id as AmcID,i.inclusions_id as InclusionsID,il.inclusions_name as InclusionsName FROM table_consumer_bill_amc_inclusions as i LEFT JOIN table_list_of_inclusions as il on il.inclusions_id=i.inclusions_id WHERE i.bill_amc_id IN (' + AMCIDList + ')', function (error, amcinclusions, fields) {
                                                                                     if (error) throw error;
-                                                                                    connection.query('SELECT bill_repair_id as RepairID,bill_product_id as ProductID,seller_type as SellerType,seller_id as SellerID,value_of_repair as RepairValue,taxes as Taxes,repair_invoice_number as RepairInvoiceNumber,repair_date as RepairDate FROM table_consumer_bill_repair  WHERE status_id=1 AND bill_product_id IN ('+ProductIDList+')', function (error, repair, fields) {
+                                                                                    //Repair List
+                                                                                    connection.query('SELECT r.bill_repair_id as RepairID,r.bill_product_id as ProductID,r.seller_type as SellerType,r.seller_id as SellerID, b.brand_name as BrandName, s.offline_seller_name as SellerName,r.value_of_repair as RepairValue,r.taxes as Taxes,r.repair_invoice_number as RepairInvoiceNumber,r.repair_date as RepairDate FROM table_consumer_bill_repair as r LEFT JOIN table_brands as b on (b.brand_id=r.seller_id AND r.seller_type=1) LEFT JOIN table_offline_seller as s on (s.offline_seller_id=r.seller_id AND r.seller_type=2) WHERE r.status_id=1 AND r.bill_product_id IN ('+ProductIDList+')', function (error, repair, fields) {
                                                                                         if (error) throw error;
                                                                                         if(repair.length > 0){
                                                                                             var repairid = [];
