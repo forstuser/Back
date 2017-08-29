@@ -40,7 +40,11 @@ class EHomeAdaptor {
         attributes: [['category_id', 'id'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`categories`.`ref_id`'), '/products?pageno=1&ctype='), 'cURL'], ['display_id', 'cType'], ['category_name', 'name'], ['ref_id', 'mainCategoryId']]
       })
     ]).then((result) => {
-      const categoryList = result[1].map(item => item.toJSON());
+      const categoryList = result[1].map((item) => {
+        const categoryData = item.toJSON();
+        categoryData.cURL += categoryData.subCategories.length > 0 && categoryData.subCategories[0].categoryType > 0 ? categoryData.subCategories[0].categoryType : '';
+        return categoryData;
+      });
       const recentSearches = result[2].map(item => item.toJSON());
 
       return {
@@ -146,7 +150,7 @@ class EHomeAdaptor {
           attributes: [],
           required: false
         }],
-      attributes: [['category_name', 'cName'], ['display_id', 'cType'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`categories`.`category_id`'), '/products?pageno=1&ctype='), 'cURL'], [this.modals.sequelize.fn('MAX', this.modals.sequelize.col('`products->consumerBill->bill`.`updated_on`')), 'cLastUpdate'], [this.modals.sequelize.fn('COUNT', this.modals.sequelize.col('`products`.`product_name`')), 'productCounts']],
+      attributes: [['category_name', 'cName'], ['display_id', 'cType'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`categories`.`category_id`'), '/products?pageno=1&ctype='), 'cURL'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`categories`.`category_id`'), '/products?pageno=1&ctype='), 'genericURL'], [this.modals.sequelize.fn('MAX', this.modals.sequelize.col('`products->consumerBill->bill`.`updated_on`')), 'cLastUpdate'], [this.modals.sequelize.fn('COUNT', this.modals.sequelize.col('`products`.`product_name`')), 'productCounts']],
       order: ['display_id'],
       group: '`categories`.`category_id`'
     });
