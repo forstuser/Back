@@ -1,3 +1,4 @@
+const shared = require('../../helpers/shared');
 
 const dueDays = {
   Yearly: 365, HalfYearly: 180, Quarterly: 90, Monthly: 30, Weekly: 7, Daily: 1
@@ -12,6 +13,7 @@ class SearchAdaptor {
     return Promise.all([
       this.fetchProductDetails(user, `%${searchValue}%`),
       this.prepareCategoryData(user, `%${searchValue}%`),
+      this.updateRecentSearch(user, searchValue),
       this.retrieveRecentSearch(user)
     ]).then((result) => {
       const productList = result[0].map((item) => {
@@ -40,11 +42,15 @@ class SearchAdaptor {
         });
         return category;
       });
-      const recentSearches = result[2].map(item => item.toJSON());
+      result[2][0].updateAttributes({
+        resultCount: productList.length + categoryList.length,
+        searchDate: shared.formatDate(new Date(), 'yyyy-mm-dd HH:MM:ss')
+      });
+      const recentSearches = result[3].map(item => item.toJSON());
       return {
         status: true,
-        message: 'EHome restore successful',
-        notificationCount: '2',
+        message: 'Search successful',
+        notificationCount: 0,
         recentSearches: recentSearches.map(item => item.searchValue),
         productDetails: productList,
         categoryList
@@ -57,8 +63,7 @@ class SearchAdaptor {
   }
 
   prepareCategoryData(user, searchValue) {
-    return new Promise((resolve, reject) => {
-      this.modals.categories.findAll({
+    return this.modals.categories.findAll({
         where: {
           $and: [
             {
@@ -66,7 +71,7 @@ class SearchAdaptor {
                 $ne: 3
               }
             },
-              this.modals.sequelize.where(this.modals.sequelize.fn('lower', this.modals.sequelize.col('category_name')), {$like: this.modals.sequelize.fn('lower', searchValue)})]
+              this.modals.sequelize.where(this.modals.sequelize.fn('lower', this.modals.sequelize.col('categories.category_name')), {$like: this.modals.sequelize.fn('lower', searchValue)})]
         },
         include: [{
           model: this.modals.productBills,
@@ -102,7 +107,7 @@ class SearchAdaptor {
               as: 'bill',
               where: {
                 $and: [
-                  this.modals.sequelize.where(this.modals.sequelize.col("`consumerBill->bill->billMapping`.`bill_ref_type`"), 1),
+                  this.modals.sequelize.where(this.modals.sequelize.col("`products->consumerBill->bill->billMapping`.`bill_ref_type`"), 1),
                   {
                     user_status: 5,
                     admin_status: 5
@@ -115,7 +120,7 @@ class SearchAdaptor {
               model: this.modals.offlineSeller,
               as: 'productOfflineSeller',
               where: {
-                $and: [this.modals.sequelize.where(this.modals.sequelize.col('`consumerBill->productOfflineSeller->billSellerMapping`.`ref_type`'), 2)]
+                $and: [this.modals.sequelize.where(this.modals.sequelize.col('`products->consumerBill->productOfflineSeller->billSellerMapping`.`ref_type`'), 2)]
               },
               attributes: ['ID', ['offline_seller_name', 'sellerName'], ['seller_url', 'url']],
               required: false
@@ -124,7 +129,7 @@ class SearchAdaptor {
               model: this.modals.onlineSeller,
               as: 'productOnlineSeller',
               where: {
-                $and: [this.modals.sequelize.where(this.modals.sequelize.col('`consumerBill->productOnlineSeller->billSellerMapping`.`ref_type`'), 1)]
+                $and: [this.modals.sequelize.where(this.modals.sequelize.col('`products->consumerBill->productOnlineSeller->billSellerMapping`.`ref_type`'), 1)]
               },
               attributes: ['ID', ['seller_name', 'sellerName'], ['seller_url', 'url']],
               required: false
@@ -194,7 +199,7 @@ class SearchAdaptor {
         {
           model: this.modals.productMetaData,
           as: 'productMetaData',
-          attributes: [['form_element_value', 'value'], [this.modals.sequelize.fn('upper', this.modals.sequelize.col('`productMetaData->categoryForm`.`form_element_type`')), 'type'], [this.modals.sequelize.fn('upper', this.modals.sequelize.col('`productMetaData->categoryForm`.`form_element_name`')), 'name']],
+          attributes: [['form_element_value', 'value'], [this.modals.sequelize.fn('concat', this.modals.sequelize.col('`products->productMetaData->categoryForm`.`form_element_type`')), 'type'], [this.modals.sequelize.fn('concat', this.modals.sequelize.col('`products->productMetaData->categoryForm`.`form_element_name`')), 'name']],
           include: [{
             model: this.modals.categoryForm, as: 'categoryForm', attributes: []
           },
@@ -203,13 +208,13 @@ class SearchAdaptor {
               as: 'selectedValue',
               on: {
                 $or: [
-                  this.modals.sequelize.where(this.modals.sequelize.col("`productMetaData`.`category_form_id`"), this.modals.sequelize.col("`productMetaData->categoryForm`.`category_form_id`"))
+                  this.modals.sequelize.where(this.modals.sequelize.col("`products->productMetaData`.`category_form_id`"), this.modals.sequelize.col("`products->productMetaData->categoryForm`.`category_form_id`"))
                 ]
               },
               where: {
                 $and: [
-                  this.modals.sequelize.where(this.modals.sequelize.col("`productMetaData`.`form_element_value`"), this.modals.sequelize.col("`productMetaData->selectedValue`.`mapping_id`")),
-                  this.modals.sequelize.where(this.modals.sequelize.col("`productMetaData->categoryForm`.`form_element_type`"), 2)]
+                  this.modals.sequelize.where(this.modals.sequelize.col("`products->productMetaData`.`form_element_value`"), this.modals.sequelize.col("`products->productMetaData->selectedValue`.`mapping_id`")),
+                  this.modals.sequelize.where(this.modals.sequelize.col("`products->productMetaData->categoryForm`.`form_element_type`"), 2)]
               },
               attributes: [['dropdown_name', 'value']],
               required: false
@@ -230,8 +235,22 @@ class SearchAdaptor {
         }],
         attributes: [['category_name', 'cName'], ['display_id', 'cType']],
         order: ['display_id']
-      }).then(resolve).catch(reject);
-    });
+      });
+  }
+
+  updateRecentSearch(user, searchValue) {
+    return this.modals.recentSearches.findOrCreate({
+        where: {
+          user_id: user.ID,
+          searchValue
+        },
+      default: {
+        user_id: user.ID,
+        searchValue,
+        resultCount: 0,
+        searchDate: shared.formatDate(new Date(), 'yyyy-mm-dd HH:MM:ss')
+      }
+      });
   }
 
   retrieveRecentSearch(user) {
