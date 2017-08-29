@@ -2,23 +2,21 @@
  * Created by arpit on 6/30/2017.
  */
 
-module.exports = (sequelize, Sequelize) => sequelize.define('table_consumer_bill_insurance_exclusions', {
-  ID: {
+module.exports = (sequelize, Sequelize) => sequelize.define('insuranceExclusion', {
+  insurance_exclusions_id: {
     type: Sequelize.INTEGER,
     autoIncrement: true,
-    primaryKey: true,
-    field: 'insurance_exclusions_id'
+    primaryKey: true
   },
   bill_insurance_id: {
-    type: Sequelize.INTEGER,
-    field: 'bill_insurance_id'
+    type: Sequelize.INTEGER
   },
   exclusions_id: {
-    type: Sequelize.INTEGER,
-    field: 'exclusions_id'
+    type: Sequelize.INTEGER
   }
 }, {
   freezeTableName: true,
   defaultPrimaryKey: false,
-  timestamps: false
+  timestamps: false,
+  tableName: 'table_consumer_bill_insurance_exclusions'
 });

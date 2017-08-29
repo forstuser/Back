@@ -281,9 +281,9 @@ class InsightAdaptor {
         });
   }
 
-  prepareCategoryInsight(user, masterCategoryId, pageNo) {
+  prepareCategoryInsight(user, masterCategoryId, pageNo, minDate, maxDate) {
     const promisedQuery = Promise
-        .all([this.fetchProductDetails(user, masterCategoryId),
+        .all([this.fetchProductDetails(user, masterCategoryId, minDate, maxDate),
           this.modals.categories.findAll({
             where: {
               ref_id: masterCategoryId,
@@ -308,28 +308,32 @@ class InsightAdaptor {
               required: false
             }],
             attributes: [['category_id', 'id'], [this.modals.sequelize.fn('CONCAT', 'categories/', masterCategoryId, '/insights?pageno=1&ctype=', this.modals.sequelize.col('`categories`.`display_id`')), 'cURL'], ['display_id', 'cType'], ['category_name', 'name']]
-          }), this.modals.table_brands.findAll({
+          }),
+          this.modals.table_brands.findAll({
             where: {
               status_id: {
                 $ne: 3
               }
             },
             attributes: [['brand_id', 'id'], ['brand_name', 'name']]
-          }), this.modals.offlineSeller.findAll({
+          }),
+          this.modals.offlineSeller.findAll({
             where: {
               status_id: {
                 $ne: 3
               }
             },
             attributes: ['ID', ['offline_seller_name', 'name']]
-          }), this.modals.onlineSeller.findAll({
+          }),
+          this.modals.onlineSeller.findAll({
             where: {
               status_id: {
                 $ne: 3
               }
             },
             attributes: ['ID', ['seller_name', 'name']]
-          }), this.modals.categories.findOne({
+          }),
+          this.modals.categories.findOne({
             where: {
               category_id: masterCategoryId
             },
@@ -363,7 +367,7 @@ class InsightAdaptor {
         status: true,
         productList: productList.slice((pageNo * 10) - 10, 10),
         categoryName: result[5],
-        nextPageUrl: productList.length > listIndex + 10 ? `categories/${masterCategoryId}/insights?pageno=${pageNo + 1}` : ''
+        nextPageUrl: productList.length > listIndex + 10 ? `categories/${masterCategoryId}/insights?pageno=${pageNo + 1}&mindate=${minDate}&maxdate=${maxDate}` : ''
 
       } : {
         status: true,
@@ -386,7 +390,8 @@ class InsightAdaptor {
     }));
   }
 
-  fetchProductDetails(user, masterCategoryId) {
+  fetchProductDetails(user, masterCategoryId, minDate, maxDate) {
+    const yearDifference = new Date() - (365 * 24 * 60 * 60 * 1000);
     const whereClause = {
       user_id: user.ID,
       status_id: {
@@ -403,6 +408,10 @@ class InsightAdaptor {
           where: {
             status_id: {
               $ne: 3
+            },
+            purchase_date: {
+              $gte: minDate ? new Date(minDate) : new Date(yearDifference),
+              $lte: maxDate ? new Date(maxDate) : new Date()
             }
           },
           attributes: [['invoice_number', 'invoiceNo'], ['total_purchase_value', 'totalCost'], 'taxes', ['purchase_date', 'purchaseDate']],

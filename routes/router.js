@@ -90,6 +90,18 @@ function associateModals(modals) {
     as: 'insuredProduct'
   });
   modals.productBills.hasMany(modals.warranty, { foreignKey: 'bill_product_id', as: 'warrantyDetails' });
+
+  modals.exclusions.belongsTo(modals.categories, { foreignKey: 'category_id', as: 'categories' });
+  modals.inclusions.belongsTo(modals.categories, { foreignKey: 'category_id', as: 'categories' });
+
+  modals.amcBills.belongsToMany(modals.exclusions, { foreignKey: 'bill_amc_id', through: modals.amcExclusion, as: 'exclusions', otherKey: 'exclusions_id' });
+  modals.amcBills.belongsToMany(modals.inclusions, { foreignKey: 'bill_amc_id', through: modals.amcInclusion, as: 'inclusions', otherKey: 'inclusions_id' });
+
+  modals.insuranceBills.belongsToMany(modals.exclusions, { foreignKey: 'bill_insurance_id', through: modals.insuranceExclusion, as: 'exclusions', otherKey: 'exclusions_id' });
+  modals.insuranceBills.belongsToMany(modals.inclusions, { foreignKey: 'bill_insurance_id', through: modals.insuranceInclusion, as: 'inclusions', otherKey: 'inclusions_id' });
+
+  modals.warranty.belongsToMany(modals.exclusions, { foreignKey: 'bill_warranty_id', through: modals.warrantyExclusion, as: 'exclusions', otherKey: 'exclusions_id' });
+  modals.warranty.belongsToMany(modals.inclusions, { foreignKey: 'bill_warranty_id', through: modals.warrantyInclusion, as: 'inclusions', otherKey: 'inclusions_id' });
   modals.warranty.belongsTo(modals.productBills, { foreignKey: 'bill_product_id', as: 'warrantyProduct' });
   modals.warrantyCopies.belongsTo(modals.billCopies, { foreignKey: 'bill_copy_id', as: 'billCopies'});
   modals.amcBillCopies.belongsTo(modals.billCopies, { foreignKey: 'bill_copy_id', as: 'billCopies'});

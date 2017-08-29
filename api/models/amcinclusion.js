@@ -3,11 +3,10 @@
  */
 
 module.exports = (sequelize, Sequelize) => sequelize.define('amcInclusion', {
-  ID: {
+  amc_inclusions_id: {
     type: Sequelize.INTEGER,
     autoIncrement: true,
-    primaryKey: true,
-    field: 'amc_inclusions_id'
+    primaryKey: true
   },
   bill_amc_id: {
     type: Sequelize.INTEGER,

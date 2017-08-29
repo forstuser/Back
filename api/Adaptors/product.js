@@ -224,7 +224,17 @@ class ProductAdaptor {
               attributes: []
             }],
             attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', this.modals.sequelize.col('`amcDetails->amcCopies->billCopies`.`bill_copy_type`')), 'billCopyType'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('`amcDetails->amcCopies->billCopies`.`bill_copy_id`'), '/files'), 'fileUrl']]
-          }],
+          },
+            {
+              model: this.modals.exclusions,
+              as: 'exclusions',
+              attributes: [['exclusions_name', 'value']]
+            },
+            {
+              model: this.modals.inclusions,
+              as: 'inclusions',
+              attributes: [['inclusions_name', 'value']]
+            }],
           required: false
         },
         {
@@ -249,7 +259,17 @@ class ProductAdaptor {
               attributes: []
             }],
             attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', this.modals.sequelize.col('`insuranceDetails->insuranceCopies->billCopies`.`bill_copy_type`')), 'billCopyType'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('`insuranceDetails->insuranceCopies->billCopies`.`bill_copy_id`'), '/files'), 'fileUrl']]
-          }],
+          },
+            {
+              model: this.modals.exclusions,
+              as: 'exclusions',
+              attributes: [['exclusions_name', 'value']]
+            },
+            {
+              model: this.modals.inclusions,
+              as: 'inclusions',
+              attributes: [['inclusions_name', 'value']]
+            }],
           required: false
         },
         {
@@ -274,7 +294,17 @@ class ProductAdaptor {
               attributes: []
             }],
             attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', this.modals.sequelize.col('`warrantyDetails->warrantyCopies->billCopies`.`bill_copy_type`')), 'billCopyType'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('`warrantyDetails->warrantyCopies->billCopies`.`bill_copy_id`'), '/files'), 'fileUrl']]
-          }],
+          },
+            {
+              model: this.modals.exclusions,
+              as: 'exclusions',
+              attributes: [['exclusions_name', 'value']]
+            },
+            {
+              model: this.modals.inclusions,
+              as: 'inclusions',
+              attributes: [['inclusions_name', 'value']]
+            }],
           required: false
         },
         {
@@ -329,7 +359,29 @@ class ProductAdaptor {
         return metaData;
       });
 
+      const amcDetails = product.amcDetails.map((amcDetail) => {
+        amcDetail.exclusions = amcDetail.exclusions.map(item => item.value);
+        amcDetail.inclusions = amcDetail.inclusions.map(item => item.value);
+
+        return amcDetail;
+      });
+
+      const warrantyDetails = product.warrantyDetails.map((warrantyCopy) => {
+        warrantyCopy.exclusions = warrantyCopy.exclusions.map(item => item.value);
+        warrantyCopy.inclusions = warrantyCopy.inclusions.map(item => item.value);
+        return warrantyCopy;
+      });
+
+      const insuranceDetails = product.insuranceDetails.map((insuranceDetail) => {
+        insuranceDetail.exclusions = insuranceDetail.exclusions.map(item => item.value);
+        insuranceDetail.inclusions = insuranceDetail.inclusions.map(item => item.value);
+        return insuranceDetail;
+      });
+
+      product.insuranceDetails = insuranceDetails;
+      product.warrantyDetails = warrantyDetails;
       product.productMetaData = productMetaData;
+      product.amcDetails = amcDetails;
       return ({
         status: true,
         product

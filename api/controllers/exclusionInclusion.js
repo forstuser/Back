@@ -7,8 +7,6 @@ const excludedAttributes = { exclude: ['tableBrandID', 'tableUserID', 'display_i
 class ExclusionInclusionController {
   constructor(modal) {
     modals = modal;
-    modals.table_list_of_exclusions.belongsTo(modals.categories, { foreignKey: 'CatID', as: 'Categories' });
-    modals.table_list_of_inclusions.belongsTo(modals.categories, { foreignKey: 'CatID', as: 'Categories' });
   }
 
   // Add Exclusions
@@ -18,8 +16,8 @@ class ExclusionInclusionController {
     const Name = request.payload.Name;
     modals.table_list_of_exclusions.findOrCreate({
       where: {
-        Name,
-        CatID,
+        exclusions_name: Name,
+        category_id: CatID,
         status_id: 1
       },
       defaults: {
@@ -28,9 +26,9 @@ class ExclusionInclusionController {
       attributes: excludedAttributes
     }).then((exclusionCat) => {
       if (exclusionCat[1]) {
-        reply(exclusionCat[0]).headers('ExclusionID', exclusionCat[0].ID).code(201);
+        reply(exclusionCat[0]).headers('ExclusionID', exclusionCat[0].exclusions_id).code(201);
       } else {
-        reply(exclusionCat[0]).header('ExclusionID', exclusionCat[0].ID).code(422);
+        reply(exclusionCat[0]).header('ExclusionID', exclusionCat[0].exclusions_id).code(422);
       }
     });
   }
@@ -42,8 +40,8 @@ class ExclusionInclusionController {
     const Name = request.payload.Name;
     modals.table_list_of_inclusions.findOrCreate({
       where: {
-        Name,
-        CatID,
+        inclusions_name: Name,
+        category_id: CatID,
         status_id: 1
       },
       defaults: {
@@ -52,9 +50,9 @@ class ExclusionInclusionController {
       attributes: excludedAttributes
     }).then((inclusionCat) => {
       if (inclusionCat[1]) {
-        reply(inclusionCat[0]).headers('InclusionID', inclusionCat[0].ID).code(201);
+        reply(inclusionCat[0]).headers('InclusionID', inclusionCat[0].inclusions_id).code(201);
       } else {
-        reply(inclusionCat[0]).header('InclusionID', inclusionCat[0].ID).code(422);
+        reply(inclusionCat[0]).header('InclusionID', inclusionCat[0].inclusions_id).code(422);
       }
     });
   }

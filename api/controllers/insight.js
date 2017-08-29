@@ -22,7 +22,7 @@ class InsightController {
   static retrieveInsightForSelectedCategory(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     reply(insightAdaptor
-        .prepareCategoryInsight(user, request.params.id, request.query.pageno))
+        .prepareCategoryInsight(user, request.params.id, request.query.pageno, request.query.mindate, request.query.maxdate))
         .code(200);
   }
 }

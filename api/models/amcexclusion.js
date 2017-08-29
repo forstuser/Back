@@ -3,19 +3,16 @@
  */
 
 module.exports = (sequelize, Sequelize) => sequelize.define('amcExclusion', {
-  ID: {
+  amc_exclusions_id: {
     type: Sequelize.INTEGER,
     autoIncrement: true,
-    primaryKey: true,
-    field: 'amc_exclusions_id'
+    primaryKey: true
   },
   bill_amc_id: {
-    type: Sequelize.INTEGER,
-    field: 'bill_amc_id'
+    type: Sequelize.INTEGER
   },
   exclusions_id: {
-    type: Sequelize.INTEGER,
-    field: 'exclusions_id'
+    type: Sequelize.INTEGER
   }
 }, {
   freezeTableName: true,

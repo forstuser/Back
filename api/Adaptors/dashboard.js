@@ -21,13 +21,23 @@ class DashboardAdaptor {
       this.prepareInsightData(user),
       this.retrieveRecentSearch(user)
     ]).then((result) => {
-      const insightData = result[1].map(item => item.toJSON());
-      const insightResult = insightData && insightData.length > 0 ? {
-        startDate: insightData[0].purchaseDate,
-        endDate: insightData[insightData.length - 1].purchaseDate,
-        totalSpend: sumProps(insightData, 'value'),
-        totalDays: insightData.length,
-        insightData
+      let distinctInsight = [];
+      const insightData = result[1].map((item) => {
+        const insightItem = item.toJSON();
+        const index = distinctInsight.findIndex(distinctItem => (new Date(distinctItem.purchaseDate).getTime() === new Date(insightItem.purchaseDate).getTime()));
+
+        if (index === -1) {
+          distinctInsight.push(insightItem);
+        } else {
+          distinctInsight[index].value += insightItem.value;
+        }
+      });
+      const insightResult = distinctInsight && distinctInsight.length > 0 ? {
+        startDate: distinctInsight[0].purchaseDate,
+        endDate: distinctInsight[distinctInsight.length - 1].purchaseDate,
+        totalSpend: sumProps(distinctInsight, 'value'),
+        totalDays: distinctInsight.length,
+        distinctInsight
       } : {
         startDate: '',
         endDate: '',
@@ -70,13 +80,24 @@ class DashboardAdaptor {
             this.prepareInsightData(user),
             this.retrieveRecentSearch(user)
           ]).then((result) => {
-            const insightData = result[1].map(item => item.toJSON());
-            const insightResult = insightData && insightData.length > 0 ? {
-              startDate: insightData[0].purchaseDate,
-              endDate: insightData[insightData.length - 1].purchaseDate,
-              totalSpend: sumProps(insightData, 'value'),
-              totalDays: insightData.length,
-              insightData
+
+            let distinctInsight = [];
+            const insightData = result[1].map((item) => {
+              const insightItem = item.toJSON();
+              const index = distinctInsight.findIndex(distinctItem => (new Date(distinctItem.purchaseDate).getTime() === new Date(insightItem.purchaseDate).getTime()));
+
+              if (index === -1) {
+                distinctInsight.push(insightItem);
+              } else {
+                distinctInsight[index].value += insightItem.value;
+              }
+            });
+            const insightResult = distinctInsight && distinctInsight.length > 0 ? {
+              startDate: distinctInsight[0].purchaseDate,
+              endDate: distinctInsight[distinctInsight.length - 1].purchaseDate,
+              totalSpend: sumProps(distinctInsight, 'value'),
+              totalDays: distinctInsight.length,
+              distinctInsight
             } : {
               startDate: '',
               endDate: '',
@@ -141,21 +162,38 @@ class DashboardAdaptor {
         include: [{
           model: this.modals.consumerBillDetails,
           as: 'consumerBill',
-          attributes: [['document_id', 'docId']],
+          attributes: [['document_id', 'docId'], ['invoice_number', 'invoiceNo'], ['total_purchase_value', 'totalCost'], 'taxes', ['purchase_date', 'purchaseDate']],
           include: [{
             model: this.modals.billDetailCopies,
             as: 'billDetailCopies',
             attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('bill_copy_id'), '/files'), 'fileUrl']]
           }]
-        }, {
-          model: this.modals.productMetaData,
-          as: 'productMetaData',
-          attributes: [['form_element_value', 'value']],
-          include: [{
-            model: this.modals.categoryForm, as: 'categoryForm', attributes: [['form_element_name', 'name']]
-          }],
-          required: false
-        }]
+        },
+          {
+            model: this.modals.productMetaData,
+            as: 'productMetaData',
+            attributes: [['form_element_value', 'value'], [this.modals.sequelize.fn('CONCAT', this.modals.sequelize.col('`productMetaData->categoryForm`.`form_element_type`')), 'type'], [this.modals.sequelize.fn('CONCAT', this.modals.sequelize.col('`productMetaData->categoryForm`.`form_element_name`')), 'name']],
+            include: [{
+              model: this.modals.categoryForm, as: 'categoryForm', attributes: []
+            },
+              {
+                model: this.modals.categoryFormMapping,
+                as: 'selectedValue',
+                on: {
+                  $or: [
+                    this.modals.sequelize.where(this.modals.sequelize.col("`productMetaData`.`category_form_id`"), this.modals.sequelize.col("`productMetaData->categoryForm`.`category_form_id`"))
+                  ]
+                },
+                where: {
+                  $and: [
+                    this.modals.sequelize.where(this.modals.sequelize.col("`productMetaData`.`form_element_value`"), this.modals.sequelize.col("`productMetaData->selectedValue`.`mapping_id`")),
+                    this.modals.sequelize.where(this.modals.sequelize.col("`productMetaData->categoryForm`.`form_element_type`"), 2)]
+                },
+                attributes: [['dropdown_name', 'value']],
+                required: false
+              }],
+            required: false
+          }]
       }),
         this.modals.amcBills.findAll({
           attributes: [['bill_amc_id', 'id'], 'policyNo', 'premiumType', 'premiumAmount', 'effectiveDate', 'expiryDate'],
@@ -178,7 +216,8 @@ class DashboardAdaptor {
             as: 'amcCopies',
             attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('bill_copy_id'), '/files'), 'fileUrl']]
           }]
-        }), this.modals.insuranceBills.findAll({
+        }),
+        this.modals.insuranceBills.findAll({
           attributes: [['bill_insurance_id', 'id'], 'policyNo', 'premiumType', 'premiumAmount', 'effectiveDate', 'expiryDate', 'amountInsured', 'plan'],
           where: {
             user_id: user.ID,
@@ -222,7 +261,19 @@ class DashboardAdaptor {
             attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('bill_copy_id'), '/files'), 'fileUrl']]
           }]
         })]).then((result) => {
-        const products = result[0].map(item => item.toJSON());
+        const products = result[0].map((item) => {
+          const product = item.toJSON();
+
+          product.productMetaData.map((metaData) => {
+            if (metaData.type === "2" && metaData.selectedValue) {
+              metaData.value = metaData.selectedValue.value;
+            }
+
+            return metaData;
+          });
+
+          return product;
+        });
         const amcs = result[1].map(item => item.toJSON());
         const insurances = result[2].map(item => item.toJSON());
         const warranties = result[3].map(item => item.toJSON());

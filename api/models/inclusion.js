@@ -2,20 +2,17 @@
  * Created by arpit on 6/30/2017.
  */
 
-module.exports = (sequelize, Sequelize) => sequelize.define('table_list_of_inclusions', {
-  ID: {
+module.exports = (sequelize, Sequelize) => sequelize.define('inclusions', {
+  inclusions_id: {
     type: Sequelize.INTEGER,
     autoIncrement: true,
-    primaryKey: true,
-    field: 'inclusions_id'
+    primaryKey: true
   },
-  CatID: {
-    type: Sequelize.INTEGER,
-    field: 'category_id'
+  category_id: {
+    type: Sequelize.INTEGER
   },
-  Name: {
-    type: Sequelize.STRING,
-    field: 'inclusions_name'
+  inclusions_name: {
+    type: Sequelize.STRING
   },
   created_on: {
     type: Sequelize.DATE(6),
@@ -34,5 +31,6 @@ module.exports = (sequelize, Sequelize) => sequelize.define('table_list_of_inclu
 }, {
   freezeTableName: true,
   defaultPrimaryKey: false,
-  timestamps: false
+  timestamps: false,
+  tableName: 'table_list_of_inclusions'
 });
