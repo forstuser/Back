@@ -75,7 +75,7 @@ class EHomeAdaptor {
         include: [{
           model: this.modals.billCopies,
           as: 'billCopies',
-          attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('bill_copy_id'), '/files'), 'fileUrl']],
+          attributes: [['bill_copy_id', 'billCopyId'], ['bill_copy_type', 'billCopyType'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('bill_copy_id'), '/files'), 'fileUrl']],
           where: {
             status_id: {
               $ne: 3
