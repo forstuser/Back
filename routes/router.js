@@ -25,10 +25,10 @@ function associateModals(modals) {
   modals.productMetaData.hasOne(modals.categoryFormMapping, { as: 'selectedValue', foreignKey: 'category_form_id'});
   modals.offlineSeller.hasMany(modals.offlineSellerDetails, { as: 'sellerDetails', foreignKey: 'offline_seller_id' });
   modals.onlineSeller.hasMany(modals.onlineSellerDetails, { as: 'sellerDetails', foreignKey: 'seller_id' });
-  modals.table_brands.hasMany(modals.brandReviews, { as: 'brandReviews', foreignKey: 'brand_id' });
-  modals.productBills.hasMany(modals.productReviews, { as: 'productReviews', foreignKey: 'bill_product_id' });
-  modals.offlineSeller.hasMany(modals.sellerReviews, { as: 'sellerReviews', foreignKey: 'offline_seller_id' });
-  modals.onlineSeller.hasMany(modals.sellerReviews, { as: 'sellerReviews', foreignKey: 'seller_id' });
+  modals.table_brands.hasOne(modals.brandReviews, { as: 'brandReviews', foreignKey: 'brand_id' });
+  modals.productBills.hasOne(modals.productReviews, { as: 'productReviews', foreignKey: 'bill_product_id' });
+  modals.offlineSeller.hasOne(modals.sellerReviews, { as: 'sellerReviews', foreignKey: 'offline_seller_id' });
+  modals.onlineSeller.hasOne(modals.sellerReviews, { as: 'sellerReviews', foreignKey: 'seller_id' });
   modals.categories.hasMany(modals.categories, { as: 'subCategories', foreignKey: 'ref_id', otherKey: 'category_id' });
   modals.categories.hasMany(modals.productBills, {
     foreignKey: 'master_category_id', as: 'products'
