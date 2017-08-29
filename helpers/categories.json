@@ -773,7 +773,7 @@
   {
     "id":81,
     "cURL":"categories/4/products?pageno=1&categoryid=81",
-    "cType":3,
+    "cType":4,
     "name":"Road",
     "mainCategoryId":4,
     "subCategories":[
@@ -783,7 +783,7 @@
   {
     "id":82,
     "cURL":"categories/4/products?pageno=1&categoryid=82",
-    "cType":4,
+    "cType":3,
     "name":"Rail",
     "mainCategoryId":4,
     "subCategories":[

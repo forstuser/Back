@@ -265,7 +265,7 @@ class EHomeAdaptor {
           $ne: 3
         },
         master_category_id: masterCategoryId,
-        category_id: item.find(category => category.mainCategoryId === masterCategoryId && category.cType === ctype).id
+        category_id: item.find(cItem => cItem.mainCategoryId.toString() === masterCategoryId && cItem.cType.toString() === ctype).id
       } : {
         user_id: user.ID,
         status_id: {
