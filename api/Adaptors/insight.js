@@ -82,206 +82,203 @@ class InsightAdaptor {
     const sevenDayDifference = new Date() - (7 * 24 * 60 * 60 * 1000);
     const monthDifference = new Date() - (30 * 24 * 60 * 60 * 1000);
     const yearDifference = new Date() - (365 * 24 * 60 * 60 * 1000);
-    return new Promise((resolve, reject) => {
-      const promiseQuery = !(minDate || maxDate) ? Promise.all([this.modals.categories
-          .findAll({
+    return !(minDate || maxDate) ? Promise.all([this.modals.categories
+        .findAll({
+          where: {
+            category_level: 1,
+            status_id: {
+              $ne: 3
+            }
+          },
+          include: [{
+            model: this.modals.productBills,
+            as: 'products',
             where: {
-              category_level: 1,
+              user_id: user.ID,
               status_id: {
                 $ne: 3
               }
             },
             include: [{
-              model: this.modals.productBills,
-              as: 'products',
+              model: this.modals.consumerBillDetails,
+              as: 'consumerBill',
               where: {
-                user_id: user.ID,
                 status_id: {
                   $ne: 3
+                },
+                purchase_date: {
+                  $gte: new Date(sevenDayDifference),
+                  $lte: new Date()
                 }
               },
-              include: [{
-                model: this.modals.consumerBillDetails,
-                as: 'consumerBill',
-                where: {
-                  status_id: {
-                    $ne: 3
+              include: [
+                {
+                  model: this.modals.consumerBills,
+                  as: 'bill',
+                  where: {
+                    $and: [
+                      this.modals.sequelize.where(this.modals.sequelize.col("`products->consumerBill->bill->billMapping`.`bill_ref_type`"), 1),
+                      {
+                        user_status: 5,
+                        admin_status: 5
+                      }
+                    ]
                   },
-                  purchase_date: {
-                    $gte: new Date(sevenDayDifference),
-                    $lte: new Date()
-                  }
-                },
-                include: [
-                  {
-                    model: this.modals.consumerBills,
-                    as: 'bill',
-                    where: {
-                      $and: [
-                        this.modals.sequelize.where(this.modals.sequelize.col("`products->consumerBill->bill->billMapping`.`bill_ref_type`"), 1),
-                        {
-                          user_status: 5,
-                          admin_status: 5
-                        }
-                      ]
-                    },
-                    attributes: []
-                  }
-                ],
-                attributes: [],
-                required: true
-              }],
+                  attributes: []
+                }
+              ],
               attributes: [],
-              required: false,
-              group: '`products`.`master_category_id`'
+              required: true
             }],
-            attributes: [['category_name', 'cName'], ['display_id', 'cType'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`categories`.`category_id`'), '/insights?pageno=1'), 'cURL'], [this.modals.sequelize.fn('SUM', this.modals.sequelize.col('`products`.`value_of_purchase`')), 'totalAmount'], [this.modals.sequelize.fn('SUM', this.modals.sequelize.col('`products`.`taxes`')), 'totalTax']],
-            group: '`categories`.`category_id`',
-            order: ['display_id']
-          }), this.modals.categories
-          .findAll({
+            attributes: [],
+            required: false,
+            group: '`products`.`master_category_id`'
+          }],
+          attributes: [['category_name', 'cName'], ['display_id', 'cType'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`categories`.`category_id`'), '/insights?pageno=1'), 'cURL'], [this.modals.sequelize.fn('SUM', this.modals.sequelize.col('`products`.`value_of_purchase`')), 'totalAmount'], [this.modals.sequelize.fn('SUM', this.modals.sequelize.col('`products`.`taxes`')), 'totalTax']],
+          group: '`categories`.`category_id`',
+          order: ['display_id']
+        }), this.modals.categories
+        .findAll({
+          where: {
+            category_level: 1,
+            status_id: {
+              $ne: 3
+            }
+          },
+          include: [{
+            model: this.modals.productBills,
+            as: 'products',
             where: {
-              category_level: 1,
+              user_id: user.ID,
               status_id: {
                 $ne: 3
               }
             },
             include: [{
-              model: this.modals.productBills,
-              as: 'products',
+              model: this.modals.consumerBillDetails,
+              as: 'consumerBill',
               where: {
-                user_id: user.ID,
                 status_id: {
                   $ne: 3
+                },
+                purchase_date: {
+                  $gte: new Date(monthDifference),
+                  $lte: new Date()
                 }
               },
-              include: [{
-                model: this.modals.consumerBillDetails,
-                as: 'consumerBill',
-                where: {
-                  status_id: {
-                    $ne: 3
-                  },
-                  purchase_date: {
-                    $gte: new Date(monthDifference),
-                    $lte: new Date()
-                  }
-                },
-                attributes: [],
-                required: true
-              }, {
-                model: this.modals.consumerBills,
-                as: 'productBillMaps',
-                where: {
-                  user_status: 5,
-                  admin_status: 5
-                },
-                attributes: []
-              }],
               attributes: [],
-              required: false,
-              group: '`products`.`master_category_id`'
+              required: true
+            }, {
+              model: this.modals.consumerBills,
+              as: 'productBillMaps',
+              where: {
+                user_status: 5,
+                admin_status: 5
+              },
+              attributes: []
             }],
-            attributes: [['category_name', 'cName'], ['display_id', 'cType'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`categories`.`category_id`'), '/insights?pageno=1'), 'cURL'], [this.modals.sequelize.fn('SUM', this.modals.sequelize.col('`products`.`value_of_purchase`')), 'totalAmount'], [this.modals.sequelize.fn('SUM', this.modals.sequelize.col('`products`.`taxes`')), 'totalTax']],
-            group: '`categories`.`category_id`',
-            order: ['display_id']
-          }), this.modals.categories
-          .findAll({
+            attributes: [],
+            required: false,
+            group: '`products`.`master_category_id`'
+          }],
+          attributes: [['category_name', 'cName'], ['display_id', 'cType'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`categories`.`category_id`'), '/insights?pageno=1'), 'cURL'], [this.modals.sequelize.fn('SUM', this.modals.sequelize.col('`products`.`value_of_purchase`')), 'totalAmount'], [this.modals.sequelize.fn('SUM', this.modals.sequelize.col('`products`.`taxes`')), 'totalTax']],
+          group: '`categories`.`category_id`',
+          order: ['display_id']
+        }), this.modals.categories
+        .findAll({
+          where: {
+            category_level: 1,
+            status_id: {
+              $ne: 3
+            }
+          },
+          include: [{
+            model: this.modals.productBills,
+            as: 'products',
             where: {
-              category_level: 1,
+              user_id: user.ID,
               status_id: {
                 $ne: 3
               }
             },
             include: [{
-              model: this.modals.productBills,
-              as: 'products',
+              model: this.modals.consumerBillDetails,
+              as: 'consumerBill',
               where: {
-                user_id: user.ID,
                 status_id: {
                   $ne: 3
+                },
+                purchase_date: {
+                  $gte: new Date(yearDifference),
+                  $lte: new Date()
                 }
               },
-              include: [{
-                model: this.modals.consumerBillDetails,
-                as: 'consumerBill',
-                where: {
-                  status_id: {
-                    $ne: 3
-                  },
-                  purchase_date: {
-                    $gte: new Date(yearDifference),
-                    $lte: new Date()
-                  }
-                },
-                attributes: [],
-                required: true
-              }, {
-                model: this.modals.consumerBills,
-                as: 'productBillMaps',
-                where: {
-                  user_status: 5,
-                  admin_status: 5
-                },
-                attributes: []
-              }],
               attributes: [],
-              required: false,
-              group: '`products`.`master_category_id`'
+              required: true
+            }, {
+              model: this.modals.consumerBills,
+              as: 'productBillMaps',
+              where: {
+                user_status: 5,
+                admin_status: 5
+              },
+              attributes: []
             }],
-            attributes: [['category_name', 'cName'], ['display_id', 'cType'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`categories`.`category_id`'), '/insights'), 'cURL'], [this.modals.sequelize.fn('SUM', this.modals.sequelize.col('`products`.`value_of_purchase`')), 'totalAmount'], [this.modals.sequelize.fn('SUM', this.modals.sequelize.col('`products`.`taxes`')), 'totalTax']],
-            group: '`categories`.`category_id`',
-            order: ['display_id']
-          })]) : this.modals.categories
-          .findAll({
+            attributes: [],
+            required: false,
+            group: '`products`.`master_category_id`'
+          }],
+          attributes: [['category_name', 'cName'], ['display_id', 'cType'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`categories`.`category_id`'), '/insights'), 'cURL'], [this.modals.sequelize.fn('SUM', this.modals.sequelize.col('`products`.`value_of_purchase`')), 'totalAmount'], [this.modals.sequelize.fn('SUM', this.modals.sequelize.col('`products`.`taxes`')), 'totalTax']],
+          group: '`categories`.`category_id`',
+          order: ['display_id']
+        })]) : this.modals.categories
+        .findAll({
+          where: {
+            category_level: 1,
+            status_id: {
+              $ne: 3
+            }
+          },
+          include: [{
+            model: this.modals.productBills,
+            as: 'products',
             where: {
-              category_level: 1,
+              user_id: user.ID,
               status_id: {
                 $ne: 3
               }
             },
             include: [{
-              model: this.modals.productBills,
-              as: 'products',
+              model: this.modals.consumerBillDetails,
+              as: 'consumerBill',
               where: {
-                user_id: user.ID,
                 status_id: {
                   $ne: 3
+                },
+                purchase_date: {
+                  $gte: minDate ? new Date(minDate) : new Date(sevenDayDifference),
+                  $lte: maxDate ? new Date(maxDate) : new Date()
                 }
               },
-              include: [{
-                model: this.modals.consumerBillDetails,
-                as: 'consumerBill',
-                where: {
-                  status_id: {
-                    $ne: 3
-                  },
-                  purchase_date: {
-                    $gte: minDate ? new Date(minDate) : new Date(sevenDayDifference),
-                    $lte: maxDate ? new Date(maxDate) : new Date()
-                  }
-                },
-                attributes: [],
-                required: true
-              }, {
-                model: this.modals.consumerBills,
-                as: 'productBillMaps',
-                where: {
-                  user_status: 5,
-                  admin_status: 5
-                },
-                attributes: []
-              }],
               attributes: [],
-              required: false,
-              group: '`products`.`master_category_id`'
+              required: true
+            }, {
+              model: this.modals.consumerBills,
+              as: 'productBillMaps',
+              where: {
+                user_status: 5,
+                admin_status: 5
+              },
+              attributes: []
             }],
-            attributes: [['category_name', 'cName'], ['display_id', 'cType'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`categories`.`category_id`'), '/insights'), 'cURL'], [this.modals.sequelize.fn('SUM', this.modals.sequelize.col('`products`.`value_of_purchase`')), 'totalAmount'], [this.modals.sequelize.fn('SUM', this.modals.sequelize.col('`products`.`taxes`')), 'totalTax']],
-            group: '`categories`.`category_id`',
-            order: ['display_id']
-          });
-      promiseQuery.then(resolve).catch(reject);
-    });
+            attributes: [],
+            required: false,
+            group: '`products`.`master_category_id`'
+          }],
+          attributes: [['category_name', 'cName'], ['display_id', 'cType'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`categories`.`category_id`'), '/insights'), 'cURL'], [this.modals.sequelize.fn('SUM', this.modals.sequelize.col('`products`.`value_of_purchase`')), 'totalAmount'], [this.modals.sequelize.fn('SUM', this.modals.sequelize.col('`products`.`taxes`')), 'totalTax']],
+          group: '`categories`.`category_id`',
+          order: ['display_id']
+        });
   }
 
   prepareCategoryInsight(user, masterCategoryId, pageNo) {
@@ -352,20 +349,20 @@ class InsightAdaptor {
       });
 
       const productCostDetails = result[0].map((item) => {
-          let product = item.toJSON();
-          return {
-            value: product.value,
-            date: product.consumerBill.purchaseDate,
-            totalCost: product.consumerBill.totalCost,
-            totalTax: product.consumerBill.taxes,
-            tax: product.taxes
-          };
-        });
+        let product = item.toJSON();
+        return {
+          value: product.value,
+          date: product.consumerBill.purchaseDate,
+          totalCost: product.consumerBill.totalCost,
+          totalTax: product.consumerBill.taxes,
+          tax: product.taxes
+        };
+      });
       const listIndex = (pageNo * 10) - 10;
       return pageNo > 1 ? {
         status: true,
         productList: productList.slice((pageNo * 10) - 10, 10),
-        categoryName: result[5  ],
+        categoryName: result[5],
         nextPageUrl: productList.length > listIndex + 10 ? `categories/${masterCategoryId}/insights?pageno=${pageNo + 1}` : ''
 
       } : {

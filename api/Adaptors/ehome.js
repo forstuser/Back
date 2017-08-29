@@ -60,111 +60,105 @@ class EHomeAdaptor {
   }
 
   retrieveUnProcessedBills(user) {
-    return new Promise((resolve, reject) => {
-      this.modals.consumerBills.findAll({
-        attributes: [['created_on', 'uploadedDate'], ['bill_id', 'docId']],
-        where: {
-          user_id: user.ID,
-          user_status: {
-            $notIn: [3, 5]
-          },
-          admin_status: {
-            $notIn: [3, 5]
-          }
+    return this.modals.consumerBills.findAll({
+      attributes: [['created_on', 'uploadedDate'], ['bill_id', 'docId']],
+      where: {
+        user_id: user.ID,
+        user_status: {
+          $notIn: [3, 5]
         },
-        include: [{
-          model: this.modals.billCopies,
-          as: 'billCopies',
-          attributes: [['bill_copy_id', 'billCopyId'], ['bill_copy_type', 'billCopyType'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('bill_copy_id'), '/files'), 'fileUrl']],
-          where: {
-            status_id: {
-              $ne: 3
-            }
+        admin_status: {
+          $notIn: [3, 5]
+        }
+      },
+      include: [{
+        model: this.modals.billCopies,
+        as: 'billCopies',
+        attributes: [['bill_copy_id', 'billCopyId'], ['bill_copy_type', 'billCopyType'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('bill_copy_id'), '/files'), 'fileUrl']],
+        where: {
+          status_id: {
+            $ne: 3
           }
-        }]
-      }).then(resolve).catch(reject);
+        }
+      }]
     });
   }
 
   prepareCategoryData(user) {
-    return new Promise((resolve, reject) => {
-      this.modals.categories.findAll({
-        where: {
-          category_level: 1,
-          status_id: {
-            $ne: 3
-          }
-        },
-        include: [
-          {
-            model: this.modals.categories,
-            on: {
-              $or: [
-                this.modals.sequelize.where(this.modals.sequelize.col("`subCategories`.`ref_id`"), this.modals.sequelize.col("`categories`.`category_id`"))
-              ]
-            },
-            where: {
-              display_id: 1
-            },
-            as: 'subCategories',
-            attributes: [['display_id', 'categoryType'], ['category_id', 'categoryId'], ['category_name', 'categoryName']],
-            order: [['display_id', 'ASC']],
-            required: false
+    return this.modals.categories.findAll({
+      where: {
+        category_level: 1,
+        status_id: {
+          $ne: 3
+        }
+      },
+      include: [
+        {
+          model: this.modals.categories,
+          on: {
+            $or: [
+              this.modals.sequelize.where(this.modals.sequelize.col("`subCategories`.`ref_id`"), this.modals.sequelize.col("`categories`.`category_id`"))
+            ]
           },
-          {
-            model: this.modals.productBills,
-            as: 'products',
+          where: {
+            display_id: 1
+          },
+          as: 'subCategories',
+          attributes: [['display_id', 'categoryType'], ['category_id', 'categoryId'], ['category_name', 'categoryName']],
+          order: [['display_id', 'ASC']],
+          required: false
+        },
+        {
+          model: this.modals.productBills,
+          as: 'products',
+          where: {
+            user_id: user.ID,
+            status_id: {
+              $ne: 3
+            }
+          },
+          include: [{
+            model: this.modals.consumerBillDetails,
+            as: 'consumerBill',
             where: {
-              user_id: user.ID,
               status_id: {
                 $ne: 3
               }
             },
-            include: [{
-              model: this.modals.consumerBillDetails,
-              as: 'consumerBill',
-              where: {
-                status_id: {
-                  $ne: 3
-                }
-              },
-              attributes: [],
-              include: [
-                {
-                  model: this.modals.consumerBills,
-                  as: 'bill',
-                  where: {
-                    $and: [
-                      this.modals.sequelize.where(this.modals.sequelize.col("`products->consumerBill->bill->billMapping`.`bill_ref_type`"), 1),
-                      {
-                        user_status: 5,
-                        admin_status: 5
-                      }
-                    ]
-                  },
-                  attributes: []
-                }
-              ]
-            }],
             attributes: [],
-            required: false
+            include: [
+              {
+                model: this.modals.consumerBills,
+                as: 'bill',
+                where: {
+                  $and: [
+                    this.modals.sequelize.where(this.modals.sequelize.col("`products->consumerBill->bill->billMapping`.`bill_ref_type`"), 1),
+                    {
+                      user_status: 5,
+                      admin_status: 5
+                    }
+                  ]
+                },
+                attributes: []
+              }
+            ]
           }],
-        attributes: [['category_name', 'cName'], ['display_id', 'cType'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`categories`.`category_id`'), '/products?pageno=1&ctype='), 'cURL'], [this.modals.sequelize.fn('MAX', this.modals.sequelize.col('`products->consumerBill->bill`.`updated_on`')), 'cLastUpdate'], [this.modals.sequelize.fn('COUNT', this.modals.sequelize.col('`products`.`product_name`')), 'productCounts']],
-        order: ['display_id'],
-        group: '`categories`.`category_id`'
-      }).then(resolve).catch(reject);
+          attributes: [],
+          required: false
+        }],
+      attributes: [['category_name', 'cName'], ['display_id', 'cType'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`categories`.`category_id`'), '/products?pageno=1&ctype='), 'cURL'], [this.modals.sequelize.fn('MAX', this.modals.sequelize.col('`products->consumerBill->bill`.`updated_on`')), 'cLastUpdate'], [this.modals.sequelize.fn('COUNT', this.modals.sequelize.col('`products`.`product_name`')), 'productCounts']],
+      order: ['display_id'],
+      group: '`categories`.`category_id`'
     });
   }
 
   retrieveRecentSearch(user) {
-    return new Promise((resolve, reject) => {
-      this.modals.recentSearches.findAll({
-        where: {
-          user_id: user.ID
-        },
-        order: [['searchDate', 'DESC']],
-        attributes: ['searchValue']
-      }).then(resolve).catch(reject);
+    return this.modals.recentSearches.findAll({
+      where: {
+        user_id: user.ID
+      },
+      order: [['searchDate', 'DESC']],
+      attributes: ['searchValue']
     });
   }
 

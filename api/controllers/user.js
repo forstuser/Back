@@ -35,10 +35,10 @@ class UserController {
 
   static dispatchOTP(request, reply) {
     totp.options = {
-      step: 180
+      step: 900
     };
     otplib.authenticator.options = {
-      step: 180
+      step: 900
     };
 
     const secret = otplib.authenticator.generateSecret();
