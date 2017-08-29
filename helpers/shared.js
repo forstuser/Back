@@ -11,8 +11,7 @@ const { stringify } = require('querystring');
 const _ = require('lodash');
 const path = require('path');
 
-const langfilePath = 'lang/';
-const hyphenString = '-';
+const filePath = '';
 const jsonFileType = '.json';
 const utfFormatting = 'utf8';
 const spaceString = ' ';
@@ -20,8 +19,8 @@ const basicStringConst = 'basic';
 const emptyObject = {};
 const emptyString = '';
 const authorizationParamConst = 'authorization';
-const readJSONFile = (fileName, lang, next) => new Promise((resolve, reject) => {
-  const completeFilePath = path.resolve(__dirname, `${langfilePath}${fileName}${hyphenString}${lang}${jsonFileType}`);
+const readJSONFile = (fileName, lang) => new Promise((resolve, reject) => {
+  const completeFilePath = path.resolve(__dirname, `${filePath}${fileName}${jsonFileType}`);
   readFile(completeFilePath, utfFormatting, (err, data) => {
     if (err) {
       reject(err);
@@ -32,8 +31,7 @@ const readJSONFile = (fileName, lang, next) => new Promise((resolve, reject) => 
       reject(ex);
     }
   });
-}).catch(
-  err => next(err));
+});
 
 /**
  *

@@ -171,6 +171,17 @@ class UploadController {
   }
 
   static deleteFile(request, reply) {
+    Promise.all([modals.consumerBills.findOne({
+      include: [{
+        model: modals.billCopies,
+        as: 'billCopies',
+        where: {
+          bill_copy_id: request.params.id
+        },
+        attributes: []
+      }],
+      attributes: { exclude: ['tableUserID'] }
+    }),
     modals.billCopies.update({
       status_id: 3
     }, {
@@ -178,8 +189,15 @@ class UploadController {
         bill_copy_id: request.params.id
       },
       attributes: { exclude: ['BillID'] }
-    }).then(() => {
-      reply({ status: true, message: 'File deleted successfully' }).code(204);
+    })]).then((result) => {
+      result[0].updateAttributes({
+        bill_reference_id: uuid.v4(),
+        user_status: 8,
+        admin_status: 4,
+        updated_on: shared.formatDate(new Date(), 'yyyy-mm-dd HH:MM:ss')
+      });
+      const billDetail = result[0].toJSON();
+      reply({status: true, message: 'File deleted successfully'});
     }).catch((err) => {
       reply({ status: false, err });
     });

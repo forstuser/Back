@@ -15,12 +15,6 @@ module.exports = (sequelize, Sequelize) => sequelize.define('billSellerMapping',
   ref_type: {
     type: Sequelize.INTEGER
   },
-  offlineSellerID: {
-    type: Sequelize.INTEGER
-  },
-  onlineSellerID: {
-    type: Sequelize.INTEGER
-  },
   seller_ref_id: {
     type: Sequelize.STRING,
     notEmpty: false
