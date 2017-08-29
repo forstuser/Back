@@ -120,7 +120,13 @@ class ProductAdaptor {
         include: [{
           model: this.modals.billDetailCopies,
           as: 'billDetailCopies',
-          attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('bill_copy_id'), '/files'), 'fileUrl']]
+          include: [{
+            model: this.modals.billCopies,
+            as: 'billCopies',
+            attributes: []
+          }],
+          attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', '`consumerBill->billDetailCopies->billCopies`.`bill_copy_type`'), 'billCopyType'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('`consumerBill->billDetailCopies->billCopies`.`bill_copy_id`'), '/files'), 'fileUrl']],
+          required: false
         },
           {
             model: this.modals.consumerBills,
@@ -147,7 +153,8 @@ class ProductAdaptor {
           include: [{
             model: this.modals.offlineSellerDetails,
             as: 'sellerDetails',
-            attributes: [['display_name', 'displayName'], 'details']
+            attributes: [['display_name', 'displayName'], 'details'],
+            required: false
           }, {
             model: this.modals.sellerReviews,
             as: 'sellerReviews',
@@ -165,13 +172,15 @@ class ProductAdaptor {
           include: [{
             model: this.modals.onlineSellerDetails,
             as: 'sellerDetails',
-            attributes: [['display_name', 'displayName'], 'details']
+            attributes: [['display_name', 'displayName'], 'details'],
+            required: false
           }, {
             model: this.modals.sellerReviews,
             as: 'sellerReviews',
             attributes: [['review_ratings', 'ratings'], ['review_feedback', 'feedback'], ['review_comments', 'comments']],
             required: false
-          }]
+          }],
+            required: false
         }],
         required: true
       },
@@ -203,10 +212,19 @@ class ProductAdaptor {
             $ne: 3
           },
           expiryDate: {
-            $gt: new Date(),
-            $lte: new Date(new Date() + (dueDays[this.modals.sequelize.col('premiumType')] * 24 * 60 * 60 * 1000))
+            $gt: new Date()
           }
         },
+          include: [{
+            model: this.modals.amcBillCopies,
+            as: 'amcCopies',
+            include: [{
+              model: this.modals.billCopies,
+              as: 'billCopies',
+              attributes: []
+            }],
+            attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', '`amcDetails->amcCopies->billCopies`.`bill_copy_type`'), 'billCopyType'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('`amcDetails->amcCopies->billCopies`.`bill_copy_id`'), '/files'), 'fileUrl']]
+          }],
         required: false
       },
         {
@@ -219,10 +237,19 @@ class ProductAdaptor {
             $ne: 3
           },
           expiryDate: {
-            $gt: new Date(),
-            $lte: new Date(new Date() + (dueDays[this.modals.sequelize.col('premiumType')] * 24 * 60 * 60 * 1000))
+            $gt: new Date()
           }
         },
+          include: [{
+            model: this.modals.insuranceBillCopies,
+            as: 'insuranceCopies',
+            include: [{
+              model: this.modals.billCopies,
+              as: 'billCopies',
+              attributes: []
+            }],
+            attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', '`insuranceDetails->insuranceCopies->billCopies`.`bill_copy_type`'), 'billCopyType'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('`insuranceDetails->insuranceCopies->billCopies`.`bill_copy_id`'), '/files'), 'fileUrl']]
+          }],
         required: false
       },
         {
@@ -235,10 +262,19 @@ class ProductAdaptor {
             $ne: 3
           },
           expiryDate: {
-            $gt: new Date(),
-            $lte: new Date(new Date() + (dueDays[this.modals.sequelize.col('premiumType')] * 24 * 60 * 60 * 1000))
+            $gt: new Date()
           }
         },
+          include: [{
+            model: this.modals.warrantyCopies,
+            as: 'warrantyCopies',
+            include: [{
+              model: this.modals.billCopies,
+              as: 'billCopies',
+              attributes: []
+            }],
+            attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', '`warrantyDetails->warrantyCopies->billCopies`.`bill_copy_type`'), 'billCopyType'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('`warrantyDetails->warrantyCopies->billCopies`.`bill_copy_id`'), '/files'), 'fileUrl']]
+          }],
         required: false
       },
         {
@@ -271,11 +307,13 @@ class ProductAdaptor {
         as: 'productReviews',
         attributes: [['review_ratings', 'ratings'], ['review_feedback', 'feedback'], ['review_comments', 'comments']],
         required: false
-      }, {
+      },
+        {
         model: this.modals.categories,
         as: 'masterCategory',
         attributes: []
-      }, {
+      },
+        {
         model: this.modals.categories,
         as: 'category',
         attributes: []

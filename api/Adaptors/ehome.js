@@ -246,7 +246,10 @@ class EHomeAdaptor {
             onlineSellers: result[4]
           }
         },
-        recentSearches: result[5],
+        recentSearches: result[5].map((item) => {
+          const search = item.toJSON();
+          return search.searchValue
+        }),
         categoryName: result[6],
         nextPageUrl: productList.length > listIndex + 10 ? `categories/${masterCategoryId}/products?pageno=${pageNo + 1}&ctype=${ctype}` : ''
       };
@@ -287,7 +290,12 @@ class EHomeAdaptor {
             include: [{
               model: this.modals.billDetailCopies,
               as: 'billDetailCopies',
-              attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('bill_copy_id'), '/files'), 'fileUrl']]
+              include: [{
+                model: this.modals.billCopies,
+                as: 'billCopies',
+                attributes: []
+              }],
+              attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', '`consumerBill->billDetailCopies->billCopies`.`bill_copy_type`'), 'billCopyType'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('`consumerBill->billDetailCopies->billCopies`.`bill_copy_id`'), '/files'), 'fileUrl']]
             },
               {
                 model: this.modals.consumerBills,

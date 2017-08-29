@@ -18,6 +18,13 @@ class InsightController {
       .prepareInsightData(user, request.query.mindate, request.query.maxdate))
       .code(200);
   }
+
+  static retrieveInsightForSelectedCategory(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    reply(insightAdaptor
+        .prepareCategoryInsight(user, request.params.id, request.query.pageno))
+        .code(200);
+  }
 }
 
 module.exports = InsightController;

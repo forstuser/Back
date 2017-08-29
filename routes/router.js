@@ -91,6 +91,10 @@ function associateModals(modals) {
   });
   modals.productBills.hasMany(modals.warranty, { foreignKey: 'bill_product_id', as: 'warrantyDetails' });
   modals.warranty.belongsTo(modals.productBills, { foreignKey: 'bill_product_id', as: 'warrantyProduct' });
+  modals.warrantyCopies.belongsTo(modals.billCopies, { foreignKey: 'bill_copy_id', as: 'billCopies'});
+  modals.amcBillCopies.belongsTo(modals.billCopies, { foreignKey: 'bill_copy_id', as: 'billCopies'});
+  modals.insuranceBillCopies.belongsTo(modals.billCopies, { foreignKey: 'bill_copy_id', as: 'billCopies'});
+  modals.billDetailCopies.belongsTo(modals.billCopies, { foreignKey: 'bill_copy_id', as: 'billCopies'});
   modals.warranty.hasMany(modals.warrantyCopies, { foreignKey: 'bill_warranty_id', as: 'warrantyCopies' });
   modals.amcBills.hasMany(modals.amcBillCopies, { foreignKey: 'bill_amc_id', as: 'amcCopies' });
   modals.insuranceBills.hasMany(modals.insuranceBillCopies, {
@@ -1497,6 +1501,26 @@ function prepareInsightRoutes(insightController, insightRoutes) {
       config: {
         auth: 'jwt',
         handler: InsightController.retrieveCategorywiseInsight,
+        description: 'Get Insight Data.',
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              { code: 200, message: 'Successful' },
+              { code: 400, message: 'Bad Request' },
+              { code: 401, message: 'Invalid Credentials' },
+              { code: 404, message: 'Not Found' },
+              { code: 500, message: 'Internal Server Error' }
+            ]
+          }
+        }
+      }
+    });
+    insightRoutes.push({
+      method: 'GET',
+      path: '/categories/{id}/insights',
+      config: {
+        auth: 'jwt',
+        handler: InsightController.retrieveInsightForSelectedCategory,
         description: 'Get Insight Data.',
         plugins: {
           'hapi-swagger': {
