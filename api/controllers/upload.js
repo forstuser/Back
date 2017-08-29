@@ -118,8 +118,12 @@ class UploadController {
 
                 if (promisedQuery.length === Object.keys(fileData).length) {
                   Promise.all(promisedQuery)
-                    .then(reply).catch((err) => {
-                      reply({ status: false, message: 'Upload Failed', err });
+                    .then(billResult => reply({
+                      status: true,
+                      message: 'Uploaded Successfully',
+                      billResult
+                    })).catch((err) => {
+                      reply({ status: false, message: 'Data Updation Failed', err });
                     });
                 }
               }).catch(err => reply({ status: false, message: 'Upload Failed', err: JSON.stringify(err) }).code(500));
@@ -148,7 +152,7 @@ class UploadController {
                 message: 'Uploaded Successfully',
                 billResult
               })).catch((err) => {
-                reply({ status: false, message: 'Upload Failed', err });
+                reply({ status: false, message: 'Data Update Failed', err });
               });
           }).catch(err => reply({ status: false, message: 'Upload Failed', err }));
       }
