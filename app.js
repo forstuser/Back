@@ -4315,3 +4315,56 @@ server.route({
         }
     }
 });
+
+//Add Brand CSV
+server.route({
+    method: 'POST',
+        path: '/Services/AddBrandCSV',
+    handler: function (request, reply) {
+        const TokenNo = request.payload.TokenNo;
+        const List = request.payload.List;
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+            if (error) throw error;
+            if(token.length > 0){
+                var UserID = token[0]['user_id'];
+                for(var i = 0; i < List.length; i++) {
+                    var BrandName = List[i].Name;
+                    var CategoryID = List[i].CategoryID
+                    var DisplayTypeID = List[i].DisplayTypeID
+                    var DisplayName = List[i].DisplayName
+                    var Details = List[i].Details
+                    connection.query('SELECT brand_id FROM table_brands WHERE brand_name = "'+BrandName+'" and status_id=1', function (error, brand, fields) {
+                        if (error) throw error;
+                        if(brand.length > 0){
+                            connection.query('INSERT INTO table_brand_details (brand_id,category_id,contactdetails_type_id,display_name,details,status_id) VALUES ("'+brand[0]['brand_id']+'","'+CategoryID+'","'+DisplayTypeID+'","'+DisplayName+'","'+Details+'",1)', function (error, detail, fields) {
+                                if (error) throw error;
+                            });
+                        } else {
+                            connection.query('INSERT INTO table_brands (brand_name,brand_description,created_on,updated_on,updated_by_user_id,status_id) VALUES ("' + BrandName + '"," ","' + getDateTime() + '","' + getDateTime() + '","' + UserID + '",1)', function (error, results, fields) {
+                                if (error) throw error;
+                                connection.query('INSERT INTO table_brand_details (brand_id,category_id,contactdetails_type_id,display_name,details,status_id) VALUES ("'+results['insertId']+'","'+CategoryID+'","'+DisplayTypeID+'","'+DisplayName+'","'+Details+'",1)', function (error, detail, fields) {
+                                    if (error) throw error;
+                                });
+                            });
+                        }
+                    });
+                }
+                var data = '{"statusCode": 100}';
+                reply(data);
+            } else {
+                var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+                reply(data);
+            }
+        });
+    },
+    config:{
+        validate: {
+            payload: {
+                TokenNo: Joi.string().required(),
+                List: Joi.array().required(),
+                output: 'data',
+                parse:true
+            }
+        }
+    }
+});
