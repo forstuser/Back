@@ -1,3 +1,5 @@
+const shared = require('../../helpers/shared');
+
 function sumProps(arrayItem, prop) {
   let total = 0;
   for (let i = 0; i < arrayItem.length; i += 1) {
@@ -5,6 +7,18 @@ function sumProps(arrayItem, prop) {
   }
   return total;
 }
+
+const date = new Date();
+const monthStartDay = new Date(date.getFullYear(), date.getMonth(), 1);
+const monthLastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+const yearStartDay = new Date(date.getFullYear(), 0, 1);
+const yearLastDay = new Date(date.getFullYear() + 1, 0, 0);
+const first = date.getDate() - date.getDay();
+// First day is the day of the month - the day of the week
+const last = first + 6; // last day is the first day + 6
+
+const firstday = new Date(date.setDate(first)).toUTCString();
+const lastday = new Date(date.setDate(last)).toUTCString();
 
 class InsightAdaptor {
   constructor(modals) {
@@ -64,6 +78,11 @@ class InsightAdaptor {
             message: 'Insight restore successful',
             notificationCount: 0,
             categoryData,
+            weekStartDate: shared.formatDate(firstday, 'yyyy-mm-dd'),
+            monthStartDate: shared.formatDate(monthStartDay, 'yyyy-mm-dd'),
+            yearStartDate: shared.formatDate(monthLastDay, 'yyyy-mm-dd'),
+            startDate: minDate,
+            endDate: maxDate || shared.formatDate(lastday, 'yyyy-mm-dd'),
             totalYearlySpend: totalYearlyAmounts + totalYearlyTaxes,
             totalWeeklySpend: totalWeeklyAmounts + totalWeeklyTaxes,
             totalWeeklyTaxes,
@@ -79,9 +98,6 @@ class InsightAdaptor {
   }
 
   prepareCategoryData(user, minDate, maxDate) {
-    const sevenDayDifference = new Date() - (7 * 24 * 60 * 60 * 1000);
-    const monthDifference = new Date() - (30 * 24 * 60 * 60 * 1000);
-    const yearDifference = new Date() - (365 * 24 * 60 * 60 * 1000);
     return !(minDate || maxDate) ? Promise.all([this.modals.categories
         .findAll({
           where: {
@@ -107,8 +123,8 @@ class InsightAdaptor {
                   $ne: 3
                 },
                 purchase_date: {
-                  $gte: new Date(sevenDayDifference),
-                  $lte: new Date()
+                  $gte: firstday,
+                  $lte: lastday
                 }
               },
               include: [
@@ -162,8 +178,8 @@ class InsightAdaptor {
                   $ne: 3
                 },
                 purchase_date: {
-                  $gte: new Date(monthDifference),
-                  $lte: new Date()
+                  $gte: monthStartDay,
+                  $lte: monthLastDay
                 }
               },
               attributes: [],
@@ -209,8 +225,8 @@ class InsightAdaptor {
                   $ne: 3
                 },
                 purchase_date: {
-                  $gte: new Date(yearDifference),
-                  $lte: new Date()
+                  $gte: yearStartDay,
+                  $lte: yearLastDay
                 }
               },
               attributes: [],
@@ -256,8 +272,8 @@ class InsightAdaptor {
                   $ne: 3
                 },
                 purchase_date: {
-                  $gte: minDate ? new Date(minDate) : new Date(sevenDayDifference),
-                  $lte: maxDate ? new Date(maxDate) : new Date()
+                  $gte: minDate ? new Date(minDate) : monthStartDay,
+                  $lte: maxDate ? new Date(maxDate) : monthLastDay
                 }
               },
               attributes: [],
@@ -281,9 +297,9 @@ class InsightAdaptor {
         });
   }
 
-  prepareCategoryInsight(user, masterCategoryId, pageNo, minDate, maxDate) {
+  prepareCategoryInsight(user, masterCategoryId, pageNo, minDate, maxDate, isYear, isMonth) {
     const promisedQuery = Promise
-        .all([this.fetchProductDetails(user, masterCategoryId, minDate, maxDate),
+        .all([this.fetchProductDetails(user, masterCategoryId, minDate, maxDate, isYear, isMonth),
           this.modals.categories.findAll({
             where: {
               ref_id: masterCategoryId,
@@ -352,16 +368,27 @@ class InsightAdaptor {
         return product;
       });
 
-      const productCostDetails = result[0].map((item) => {
+      let distinctInsight = [];
+      result[0].map((item) => {
         let product = item.toJSON();
-        return {
-          value: product.value,
-          date: product.consumerBill.purchaseDate,
-          totalCost: product.consumerBill.totalCost,
-          totalTax: product.consumerBill.taxes,
-          tax: product.taxes
-        };
+        const index = distinctInsight.findIndex(distinctItem => (new Date(distinctItem.date).getTime() === new Date(product.consumerBill.purchaseDate).getTime()));
+        if (index === -1) {
+          distinctInsight.push({
+            value: product.value,
+            date: product.consumerBill.purchaseDate,
+            totalCost: product.consumerBill.totalCost,
+            totalTax: product.consumerBill.taxes,
+            tax: product.taxes
+          });
+        } else {
+          distinctInsight[index].value += product.value;
+          distinctInsight[index].totalCost += product.consumerBill.totalCost;
+          distinctInsight[index].totalTax += product.consumerBill.taxes;
+          distinctInsight[index].tax += product.taxes;
+        }
       });
+
+      distinctInsight.sort((a, b) => new Date(b.date) - new Date(a.date));
       const listIndex = (pageNo * 10) - 10;
       return pageNo > 1 ? {
         status: true,
@@ -380,7 +407,19 @@ class InsightAdaptor {
             onlineSellers: result[4]
           }
         },
-        productCostDetails,
+        insight: distinctInsight && distinctInsight.length > 0 ? {
+          startDate: distinctInsight[0].date,
+          endDate: distinctInsight[distinctInsight.length - 1].date,
+          totalSpend: sumProps(distinctInsight, 'value'),
+          totalDays: distinctInsight.length,
+          insightData: distinctInsight
+        } : {
+          startDate: '',
+          endDate: '',
+          totalSpend: 0,
+          totalDays: 0,
+        insightData: distinctInsight
+        },
         categoryName: result[5],
         nextPageUrl: productList.length > listIndex + 10 ? `categories/${masterCategoryId}/insights?pageno=${pageNo + 1}` : ''
       };
@@ -390,14 +429,26 @@ class InsightAdaptor {
     }));
   }
 
-  fetchProductDetails(user, masterCategoryId, minDate, maxDate) {
-    const yearDifference = new Date() - (365 * 24 * 60 * 60 * 1000);
+  fetchProductDetails(user, masterCategoryId, minDate, maxDate, isYear, isMonth) {
     const whereClause = {
       user_id: user.ID,
       status_id: {
         $ne: 3
       },
       master_category_id: masterCategoryId
+    };
+    const dateWhereClause = (minDate && maxDate) ? {
+      $gte: new Date(minDate),
+      $lte: new Date(maxDate)
+    } : isYear === "true" ? {
+      $gte: yearStartDay,
+      $lte: yearLastDay
+    } : isMonth === "true" ? {
+      $gte: monthStartDay,
+      $lte: monthLastDay
+    } : {
+      $gte: firstday,
+      $lte: lastday
     };
     return this.modals.productBills.findAll({
       where: whereClause,
@@ -409,10 +460,7 @@ class InsightAdaptor {
             status_id: {
               $ne: 3
             },
-            purchase_date: {
-              $gte: minDate ? new Date(minDate) : new Date(yearDifference),
-              $lte: maxDate ? new Date(maxDate) : new Date()
-            }
+            purchase_date: dateWhereClause
           },
           attributes: [['invoice_number', 'invoiceNo'], ['total_purchase_value', 'totalCost'], 'taxes', ['purchase_date', 'purchaseDate']],
           include: [{
