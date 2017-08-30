@@ -1551,7 +1551,7 @@ function prepareProductRoutes(productController, productRoutes) {
         description: 'Update User Review.',
         validate: {
           payload: {
-            ratings: joi.number(),
+            ratings: [joi.number(), joi.allow(null)],
             feedback: [joi.string(), joi.allow(null)],
             comments: [joi.string(), joi.allow(null)],
             output: 'data',
