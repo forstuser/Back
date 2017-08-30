@@ -872,7 +872,7 @@ server.route({
             if (error) throw error;
             if(token.length > 0){
                 var UserID = token[0]['user_id'];
-                if(OffSet != '' && Limit != ''){
+                if(OffSet != null && Limit != null  ){
                     var LimitCondition = 'LIMIT '+Limit+' OFFSET '+OffSet+'';
                 } else {
                     var LimitCondition = '';
@@ -1140,7 +1140,7 @@ server.route({
             if (error) throw error;
             if(token.length > 0){
                 var UserID = token[0]['user_id'];
-                if(OffSet != '' && Limit != ''){
+                if(OffSet != null && Limit != null  ){
                     var LimitCondition = 'LIMIT '+Limit+' OFFSET '+OffSet+'';
                 } else {
                     var LimitCondition = '';
@@ -1406,7 +1406,7 @@ server.route({
             if (error) throw error;
             if(token.length > 0){
                 var UserID = token[0]['user_id'];
-                if(OffSet != '' && Limit != ''){
+                if(OffSet != null && Limit != null  ){
                     var LimitCondition = 'LIMIT '+Limit+' OFFSET '+OffSet+'';
                 } else {
                     var LimitCondition = '';
@@ -2101,7 +2101,7 @@ server.route({
             if (error) throw error;
             if(token.length > 0){
                 var UserID = token[0]['user_id'];
-                if(OffSet != '' && Limit != ''){
+                if(OffSet != null && Limit != null  ){
                     var LimitCondition = 'LIMIT '+Limit+' OFFSET '+OffSet+'';
                 } else {
                     var LimitCondition = '';
@@ -2362,7 +2362,7 @@ server.route({
                         reply(data);
                 }
                 if(status == true){
-                    if(OffSet != '' && Limit != ''){
+                    if(OffSet != null && Limit != null  ){
                         var LimitCondition = 'LIMIT '+Limit+' OFFSET '+OffSet+'';
                     } else {
                         var LimitCondition = '';
@@ -2425,7 +2425,7 @@ server.route({
                         reply(data);
                 }
                 if(status == true){
-                    if(OffSet != '' && Limit != ''){
+                    if(OffSet != null && Limit != null  ){
                         var LimitCondition = 'LIMIT '+Limit+' OFFSET '+OffSet+'';
                     } else {
                         var LimitCondition = '';
@@ -4227,7 +4227,7 @@ server.route({
             if (error) throw error;
             if(token.length > 0){
                 var UserID = token[0]['user_id'];
-                if(OffSet != '' && Limit != ''){
+                if(OffSet != null && Limit != null  ){
                     var LimitCondition = 'LIMIT '+Limit+' OFFSET '+OffSet+'';
                 } else {
                     var LimitCondition = '';
