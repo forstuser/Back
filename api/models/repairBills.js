@@ -8,16 +8,13 @@ module.exports = (sequelize, DataTypes) => sequelize.define('repairBills', {
     autoIncrement: true
   },
   user_id: {
-    type: DataTypes.INTEGER(11),
-    allowNull: false
+    type: DataTypes.INTEGER(11)
   },
   bill_product_id: {
-    type: DataTypes.INTEGER(11),
-    allowNull: false
+    type: DataTypes.INTEGER(11)
   },
   seller_type: {
-    type: DataTypes.INTEGER(11),
-    allowNull: false
+    type: DataTypes.INTEGER(11)
   },
   seller_id: {
     type: DataTypes.INTEGER(11),

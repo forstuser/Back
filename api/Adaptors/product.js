@@ -153,7 +153,7 @@ class ProductAdaptor {
             include: [{
               model: this.modals.offlineSellerDetails,
               as: 'sellerDetails',
-              attributes: [['display_name', 'displayName'], 'details'],
+              attributes: [['display_name', 'displayName'], 'details', ['contactdetail_type_id', 'typeId']],
               required: false
             }, {
               model: this.modals.sellerReviews,
@@ -172,7 +172,7 @@ class ProductAdaptor {
             include: [{
               model: this.modals.onlineSellerDetails,
               as: 'sellerDetails',
-              attributes: [['display_name', 'displayName'], 'details'],
+              attributes: [['display_name', 'displayName'], 'details', ['contactdetail_type_id', 'typeId']],
               required: false
             }, {
               model: this.modals.sellerReviews,
@@ -351,6 +351,29 @@ class ProductAdaptor {
       attributes: [['bill_product_id', 'id'], ['product_name', 'productName'], ['value_of_purchase', 'value'], 'taxes', ['category_id', 'categoryId'], [this.modals.sequelize.col('`masterCategory`.`category_name`'), 'masterCategoryName'], [this.modals.sequelize.col('`category`.`category_name`'), 'categoryName'], ['brand_id', 'brandId'], ['color_id', 'colorId'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`productBills`.`bill_product_id`'), '/reviews'), 'reviewUrl']]
     }).then((result) => {
       const product = result.toJSON();
+      product.consumerBill.productOfflineSeller = product.consumerBill.productOfflineSeller.map((seller) => {
+        seller.sellerDetails.map((sellerDetail) => {
+          if(sellerDetail.typeId.toString() === '3'){
+            seller.contactNo = seller.contactNo ? `${seller.contactNo}\\${sellerDetail.details}` : sellerDetail.details;
+          }
+          
+          return sellerDetail;
+        });
+        
+        return seller;
+      });
+
+      product.consumerBill.productOnlineSeller = product.consumerBill.productOnlineSeller.map((seller) => {
+        seller.sellerDetails.map((sellerDetail) => {
+          if(sellerDetail.typeId.toString() === '3'){
+            seller.contactNo = seller.contactNo ? `${seller.contactNo}\\${sellerDetail.details}` : sellerDetail.details;
+          }
+
+          return sellerDetail;
+        });
+
+        return seller;
+      });
       const productMetaData = product.productMetaData.map((metaData) => {
         if (metaData.type === "2" && metaData.selectedValue) {
           metaData.value = metaData.selectedValue.value;

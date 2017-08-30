@@ -3,19 +3,16 @@
  */
 
 module.exports = (sequelize, Sequelize) => sequelize.define('insuranceBillCopies', {
-  ID: {
+  id: {
     type: Sequelize.INTEGER,
     autoIncrement: true,
-    primaryKey: true,
-    field: 'id'
+    primaryKey: true
   },
-  InsuranceID: {
-    type: Sequelize.INTEGER,
-    field: 'bill_insurance_id'
+  bill_insurance_id: {
+    type: Sequelize.INTEGER
   },
   bill_copy_id: {
-    type: Sequelize.INTEGER(11),
-    allowNull: false
+    type: Sequelize.INTEGER(11)
   }
 }, {
   freezeTableName: true,

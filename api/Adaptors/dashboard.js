@@ -1,3 +1,4 @@
+const shared = require('../../helpers/shared');
 function sumProps(arrayItem, prop) {
   let total = 0;
   for (let i = 0; i < arrayItem.length; i += 1) {
@@ -151,13 +152,13 @@ class DashboardAdaptor {
   filterUpcomingService(user) {
     return new Promise((resolve, reject) => {
       Promise.all([this.modals.productBills.findAll({
-        attributes: [['bill_product_id', 'id'], ['product_name', 'productName'], ['value_of_purchase', 'value'], 'taxes', [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`productBills`.`bill_product_id`')), 'productURL']],
+        attributes: [['bill_product_id', 'id'], ['master_category_id', 'masterCatId'], ['product_name', 'productName'], ['value_of_purchase', 'value'], 'taxes', [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`productBills`.`bill_product_id`')), 'productURL']],
         where: {
           user_id: user.ID,
           status_id: {
             $ne: 3
           },
-          master_category_id: 8
+          master_category_id: [6,8]
         },
         include: [{
           model: this.modals.consumerBillDetails,
@@ -269,33 +270,57 @@ class DashboardAdaptor {
               metaData.value = metaData.selectedValue.value;
             }
 
+            if (metaData.name.toLowerCase().includes('due') && metaData.name.toLowerCase().includes('date')) {
+              const dueDateTime = new Date(metaData.value).getTime();
+              if(dueDateTime >= new Date().getTime()) {
+                product.dueDate = shared.formatDate(metaData.value, 'dd mmm');
+                product.dueIn = Math.floor((dueDateTime - new Date().getTime())/(24 * 60 * 60 * 1000));
+                if(product.masterCatId.toString() === '6') {
+                  product.productType = 5;
+                } else {
+                product.productType =  1;
+                }
+
+              }
+            }
+
             return metaData;
           });
 
           return product;
         });
-        const amcs = result[1].map(item => item.toJSON());
-        const insurances = result[2].map(item => item.toJSON());
-        const warranties = result[3].map(item => item.toJSON());
-        products.forEach((e) => {
-          if (typeof e === 'object') {
-            e.productType = 1;
-          }
+        const amcs = result[1].map((item) => {
+          const amc = item.toJSON();
+            const dueDateTime = new Date(amc.expiryDate).getTime();
+            if(dueDateTime >= new Date().getTime()) {
+              amc.dueDate = shared.formatDate(amc.expiryDate, 'dd mmm');
+              amc.dueIn = Math.floor((dueDateTime - new Date().getTime())/(24 * 60 * 60 * 1000));
+              amc.productType =  4;
+            }
+            
+            return amc;
         });
-        amcs.forEach((e) => {
-          if (typeof e === 'object') {
-            e.productType = 4;
+        const insurances = result[2].map((item) => {
+          const insurance = item.toJSON();
+          const dueDateTime = new Date(insurance.expiryDate).getTime();
+          if(dueDateTime >= new Date().getTime()) {
+            insurance.dueDate = shared.formatDate(insurance.expiryDate, 'dd mmm');
+            insurance.dueIn = Math.floor((dueDateTime - new Date().getTime())/(24 * 60 * 60 * 1000));
+            insurance.productType = 3;
           }
+
+          return insurance;
         });
-        insurances.forEach((e) => {
-          if (typeof e === 'object') {
-            e.productType = 3;
+        const warranties = result[3].map((item) => {
+          const warranty = item.toJSON();
+          const dueDateTime = new Date(warranty.expiryDate).getTime();
+          if(dueDateTime >= new Date().getTime()) {
+            warranty.dueDate = shared.formatDate(warranty.expiryDate, 'dd mmm');
+            warranty.dueIn = Math.floor((dueDateTime - new Date().getTime())/(24 * 60 * 60 * 1000));
+            warranty.productType =  2;
           }
-        });
-        warranties.forEach((e) => {
-          if (typeof e === 'object') {
-            e.productType = 2;
-          }
+
+          return warranty;
         });
 
         resolve([...products, ...warranties, ...insurances, ...amcs]);
