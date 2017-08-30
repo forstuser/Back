@@ -5,14 +5,17 @@ const shared = require('../../helpers/shared');
 
 const DashboardAdaptor = require('../Adaptors/dashboard');
 const EHomeAdaptor = require('../Adaptors/ehome');
+const NotificationAdaptor = require('../Adaptors/notification');
 
 let dashboardAdaptor;
 let ehomeAdaptor;
+let notificationAdaptor;
 
 class DashboardController {
   constructor(modal) {
     dashboardAdaptor = new DashboardAdaptor(modal);
     ehomeAdaptor = new EHomeAdaptor(modal);
+    notificationAdaptor = new NotificationAdaptor(modal);
   }
 
   static getDashboard(request, reply) {
@@ -38,6 +41,12 @@ class DashboardController {
     reply(ehomeAdaptor
       .prepareProductDetail(user, request.params.id, request.query.ctype, request.query.pageno))
       .code(200);
+  }
+
+  static getMailbox(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    reply(notificationAdaptor.retrieveNotifications(user))
+        .code(200);
   }
 }
 

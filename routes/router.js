@@ -1525,6 +1525,14 @@ function prepareDashboardRoutes(dashboardController, dashboardRoutes) {
         handler: DashboardController.getProductsInCategory
       }
     });
+    dashboardRoutes.push({
+      method: 'GET',
+      path: '/consumer/mailbox',
+      config: {
+        auth: 'jwt',
+        handler: DashboardController.getMailbox
+      }
+    });
   }
 }
 

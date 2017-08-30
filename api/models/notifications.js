@@ -40,7 +40,7 @@ module.exports = (sequelize, DataTypes) => sequelize.define('mailBox', {
   },
   status_id: {
     type: DataTypes.INTEGER(11),
-    allowNull: false
+    defaultValue: 4
   }
 }, {
   freezeTableName: true,

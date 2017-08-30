@@ -262,7 +262,7 @@ class DashboardAdaptor {
             attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('bill_copy_id'), '/files'), 'fileUrl']]
           }]
         })]).then((result) => {
-        const products = result[0].map((item) => {
+        let products = result[0].map((item) => {
           const product = item.toJSON();
 
           product.productMetaData.map((metaData) => {
@@ -289,7 +289,10 @@ class DashboardAdaptor {
 
           return product;
         });
-        const amcs = result[1].map((item) => {
+
+        products = products.filter(product => product.dueIn && product.dueIn <= 30 && product.dueIn >= 0);
+
+        let amcs = result[1].map((item) => {
           const amc = item.toJSON();
             const dueDateTime = new Date(amc.expiryDate).getTime();
             if(dueDateTime >= new Date().getTime()) {
@@ -300,7 +303,9 @@ class DashboardAdaptor {
             
             return amc;
         });
-        const insurances = result[2].map((item) => {
+        amcs = amcs.filter(item => item.dueIn && item.dueIn <= 30 && item.dueIn >= 0);
+
+        let insurances = result[2].map((item) => {
           const insurance = item.toJSON();
           const dueDateTime = new Date(insurance.expiryDate).getTime();
           if(dueDateTime >= new Date().getTime()) {
@@ -311,7 +316,10 @@ class DashboardAdaptor {
 
           return insurance;
         });
-        const warranties = result[3].map((item) => {
+
+        insurances = insurances.filter(item => item.dueIn && item.dueIn <= 30 && item.dueIn >= 0);
+
+        let warranties = result[3].map((item) => {
           const warranty = item.toJSON();
           const dueDateTime = new Date(warranty.expiryDate).getTime();
           if(dueDateTime >= new Date().getTime()) {
@@ -322,6 +330,8 @@ class DashboardAdaptor {
 
           return warranty;
         });
+
+        warranties = warranties.filter(item => item.dueIn && item.dueIn <= 30 && item.dueIn >= 0);
 
         resolve([...products, ...warranties, ...insurances, ...amcs]);
       }).catch((err) => {
