@@ -38,7 +38,7 @@ class DashboardAdaptor {
         endDate: distinctInsight[distinctInsight.length - 1].purchaseDate,
         totalSpend: sumProps(distinctInsight, 'value'),
         totalDays: distinctInsight.length,
-        distinctInsight
+        insightData: distinctInsight
       } : {
         startDate: '',
         endDate: '',
@@ -117,7 +117,7 @@ class DashboardAdaptor {
               notificationCount: 0,
               recentSearches,
               upcomingServices: result[0],
-              insight: insightResult
+              insight: distinctInsight
             };
           }).catch(err => ({
             status: false,
@@ -132,7 +132,7 @@ class DashboardAdaptor {
           notificationCount: 0,
           recentSearches: [],
           upcomingServices: [],
-          insight: insightResult
+          insight: []
         };
       }).catch(err => ({
         status: false,
