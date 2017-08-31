@@ -1,12 +1,15 @@
 const shared = require('../../helpers/shared');
 
 const date = new Date();
+
 const first = date.getDate() - date.getDay();
 // First day is the day of the month - the day of the week
-const last = first + 6; // last day is the first day + 6
+const last = first + 6;// last day is the first day + 6
+const lastDate = new Date(date.setDate(last));
 
-const firstday = new Date(date.setDate(first)).toUTCString();
-const lastday = new Date(date.setDate(last)).toUTCString();
+const firstDay = new Date(date.setDate(first));
+const lastDay = date.getDate() > lastDate.getDate() ? new Date(date
+  .getFullYear(), date.getMonth() + 1, lastDate.getDate()) : lastDate;
 
 function sumProps(arrayItem, prop) {
   let total = 0;
@@ -391,8 +394,8 @@ class DashboardAdaptor {
           $ne: 3
         },
         purchase_date: {
-          $lte: new Date(lastday),
-          $gte: new Date(firstday)
+          $lte: new Date(lastDay),
+          $gte: new Date(firstDay)
         }
       },
       order: [['purchase_date', 'ASC']],
