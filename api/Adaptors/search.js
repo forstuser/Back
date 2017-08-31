@@ -18,7 +18,8 @@ class SearchAdaptor {
     ]).then((result) => {
       const productList = result[0].map((item) => {
         const product = item.toJSON();
-        product.productMetaData.map((metaData) => {
+        product.productMetaData.map((metaItem) => {
+          const metaData = metaItem;
           if (metaData.type === '2' && metaData.selectedValue) {
             metaData.value = metaData.selectedValue.value;
           }
@@ -30,7 +31,8 @@ class SearchAdaptor {
       const categoryList = result[1].map((item) => {
         const category = item.toJSON();
         category.products.map((productItem) => {
-          productItem.productMetaData.map((metaData) => {
+          productItem.productMetaData.map((metaItem) => {
+            const metaData = metaItem;
             if (metaData.type === '2' && metaData.selectedValue) {
               metaData.value = metaData.selectedValue.value;
             }
@@ -229,7 +231,7 @@ class SearchAdaptor {
             as: 'category',
             attributes: []
           }],
-        attributes: [['bill_product_id', 'id'], ['product_name', 'productName'], ['value_of_purchase', 'value'], 'taxes', ['category_id', 'categoryId'], ['brand_id', 'brandId'], ['color_id', 'colorId'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`products`.`bill_product_id`')), 'productURL']],
+        attributes: [['bill_product_id', 'id'], ['product_name', 'productName'], ['value_of_purchase', 'value'], 'taxes', ['category_id', 'categoryId'], ['master_category_id', 'masterCategoryId'], ['brand_id', 'brandId'], ['color_id', 'colorId'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`products`.`bill_product_id`')), 'productURL']],
         order: [['bill_product_id', 'DESC']],
         required: false
       }],
@@ -417,7 +419,7 @@ class SearchAdaptor {
           as: 'category',
           attributes: []
         }],
-      attributes: [['bill_product_id', 'id'], ['product_name', 'productName'], ['value_of_purchase', 'value'], 'taxes', ['category_id', 'categoryId'], [this.modals.sequelize.col('`masterCategory`.`category_name`'), 'masterCategoryName'], [this.modals.sequelize.col('`category`.`category_name`'), 'categoryName'], ['brand_id', 'brandId'], ['color_id', 'colorId'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`productBills`.`bill_product_id`')), 'productURL']],
+      attributes: [['bill_product_id', 'id'], ['product_name', 'productName'], ['value_of_purchase', 'value'], 'taxes', ['category_id', 'categoryId'], [this.modals.sequelize.col('`masterCategory`.`category_name`'), 'masterCategoryName'], ['master_category_id', 'masterCategoryId'], [this.modals.sequelize.col('`category`.`category_name`'), 'categoryName'], ['brand_id', 'brandId'], ['color_id', 'colorId'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`productBills`.`bill_product_id`')), 'productURL']],
       order: [['bill_product_id', 'DESC']]
     });
   }
