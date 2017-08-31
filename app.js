@@ -873,7 +873,11 @@ server.route({
             if(token.length > 0){
                 var UserID = token[0]['user_id'];
                 if(OffSet != null && Limit != null  ){
-                    var LimitCondition = 'LIMIT '+Limit+' OFFSET '+OffSet+'';
+                    if(!isNaN(OffSet) && !isNaN(OffSet)){
+                        var LimitCondition = 'LIMIT '+Limit+' OFFSET '+OffSet+'';
+                    } else {
+                        var LimitCondition = '';
+                    }
                 } else {
                     var LimitCondition = '';
                 }
@@ -941,6 +945,45 @@ server.route({
             payload: {
                 TokenNo: Joi.string().required(),
                 ID: Joi.number().integer().required(),
+                output: 'data',
+                parse:true
+            }
+        }
+    }
+});
+
+//Search Brand List
+server.route({
+    method: 'POST',
+    path: '/Services/SearchBrand',
+    handler: function (request, reply) {
+        const TokenNo = request.payload.TokenNo;
+        const Search = request.payload.Search;
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+            if (error) throw error;
+            if(token.length > 0){
+                var UserID = token[0]['user_id'];
+                connection.query('SELECT brand_id as ID,brand_name as Name,brand_description as Description FROM table_brands WHERE status_id!=3 AND brand_name LIKE "%'+Search+'%" ORDER BY brand_name ', function (error, brand, fields) {
+                    if (error) throw error;
+                    if(brand.length > 0){
+                        var data = '{"statusCode": 100,"BrandList": '+ JSON.stringify(brand) +'}';
+                        reply(data);
+                    } else {
+                        var data = '{"statusCode": 105,"error": "Not Found","message": "Data not Available."}';
+                        reply(data);
+                    }
+                });
+            } else {
+                var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+                reply(data);
+            }
+        });
+    },
+    config:{
+        validate: {
+            payload: {
+                TokenNo: Joi.string().required(),
+                Search: Joi.string().required(),
                 output: 'data',
                 parse:true
             }
@@ -1141,7 +1184,11 @@ server.route({
             if(token.length > 0){
                 var UserID = token[0]['user_id'];
                 if(OffSet != null && Limit != null  ){
-                    var LimitCondition = 'LIMIT '+Limit+' OFFSET '+OffSet+'';
+                    if(!isNaN(OffSet) && !isNaN(OffSet)){
+                        var LimitCondition = 'LIMIT '+Limit+' OFFSET '+OffSet+'';
+                    } else {
+                        var LimitCondition = '';
+                    }
                 } else {
                     var LimitCondition = '';
                 }
@@ -1167,6 +1214,44 @@ server.route({
                 TokenNo: Joi.string().required(),
                 OffSet: [Joi.string(), Joi.allow(null)],
                 Limit: [Joi.string(), Joi.allow(null)],
+                output: 'data',
+                parse:true
+            }
+        }
+    }
+});
+//Search Online Seller List
+server.route({
+    method: 'POST',
+    path: '/Services/SearchOnlineSellerList',
+    handler: function (request, reply) {
+        const TokenNo = request.payload.TokenNo;
+        const Search = request.payload.Search;
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+            if (error) throw error;
+            if(token.length > 0){
+                var UserID = token[0]['user_id'];
+                connection.query('SELECT seller_id as ID,seller_name as Name,seller_url as URL,seller_gstin_no as GstinNo FROM table_online_seller WHERE status_id!=3 and (seller_url LIKE "%'+Search+'%" OR seller_name LIKE "%'+Search+'%" OR seller_gstin_no LIKE "%'+Search+'%") ORDER BY seller_name  ', function (error, seller, fields) {
+                    if (error) throw error;
+                    if(seller.length > 0){
+                        var data = '{"statusCode": 100,"SellerList": '+ JSON.stringify(seller) +'}';
+                        reply(data);
+                    } else {
+                        var data = '{"statusCode": 105,"error": "Not Found","message": "Data not Available."}';
+                        reply(data);
+                    }
+                });
+            } else {
+                var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+                reply(data);
+            }
+        });
+    },
+    config:{
+        validate: {
+            payload: {
+                TokenNo: Joi.string().required(),
+                Search: Joi.string().required(),
                 output: 'data',
                 parse:true
             }
@@ -1407,7 +1492,11 @@ server.route({
             if(token.length > 0){
                 var UserID = token[0]['user_id'];
                 if(OffSet != null && Limit != null  ){
-                    var LimitCondition = 'LIMIT '+Limit+' OFFSET '+OffSet+'';
+                    if(!isNaN(OffSet) && !isNaN(OffSet)){
+                        var LimitCondition = 'LIMIT '+Limit+' OFFSET '+OffSet+'';
+                    } else {
+                        var LimitCondition = '';
+                    }
                 } else {
                     var LimitCondition = '';
                 }
@@ -2102,7 +2191,11 @@ server.route({
             if(token.length > 0){
                 var UserID = token[0]['user_id'];
                 if(OffSet != null && Limit != null  ){
-                    var LimitCondition = 'LIMIT '+Limit+' OFFSET '+OffSet+'';
+                    if(!isNaN(OffSet) && !isNaN(OffSet)){
+                        var LimitCondition = 'LIMIT '+Limit+' OFFSET '+OffSet+'';
+                    } else {
+                        var LimitCondition = '';
+                    }
                 } else {
                     var LimitCondition = '';
                 }
@@ -2128,6 +2221,44 @@ server.route({
                 TokenNo: Joi.string().required(),
                 OffSet: [Joi.string(), Joi.allow(null)],
                 Limit: [Joi.string(), Joi.allow(null)],
+                output: 'data',
+                parse:true
+            }
+        }
+    }
+});
+//Search Offline Seller List
+server.route({
+    method: 'POST',
+    path: '/Services/SearchOfflineSellerList',
+    handler: function (request, reply) {
+        const TokenNo = request.payload.TokenNo;
+        const Search = request.payload.Search;
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+            if (error) throw error;
+            if(token.length > 0){
+                var UserID = token[0]['user_id'];
+                connection.query('SELECT offline_seller_id as ID,offline_seller_name as Name,offline_seller_owner_name as OwnerName,offline_seller_gstin_no as GstinNo,offline_seller_pan_number as PanNo,offline_seller_registration_no as RegNo,is_service_provider as ServiceProvider,is_onboarded as Onboarded,address_house_no as HouseNo,address_block as Block,address_street as Street,address_sector as Sector,address_city as City,address_state as State,address_pin_code as PinCode,address_nearby as NearBy,latitude as Lattitude,longitude as Longitude FROM table_offline_seller WHERE status_id!=3 and (offline_seller_name LIKE "%'+Search+'%" OR offline_seller_owner_name LIKE "%'+Search+'%" OR offline_seller_gstin_no LIKE "%'+Search+'%" OR offline_seller_pan_number LIKE "%'+Search+'%" OR offline_seller_registration_no LIKE "%'+Search+'%") ORDER BY offline_seller_name ', function (error, service_center, fields) {
+                    if (error) throw error;
+                    if(service_center.length > 0){
+                        var data = '{"statusCode": 100,"OfflineSellerList": '+ JSON.stringify(service_center) +'}';
+                        reply(data);
+                    } else {
+                        var data = '{"statusCode": 105,"error": "Not Found","message": "Data not Available."}';
+                        reply(data);
+                    }
+                });
+            } else {
+                var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+                reply(data);
+            }
+        });
+    },
+    config:{
+        validate: {
+            payload: {
+                TokenNo: Joi.string().required(),
+                Search: Joi.string().required(),
                 output: 'data',
                 parse:true
             }
@@ -2183,13 +2314,24 @@ server.route({
     handler: function (request, reply) {
         const TokenNo = request.payload.TokenNo;
         const Status = request.payload.Status;
+        const OffSet = request.payload.OffSet;
+        const Limit = request.payload.Limit;
         connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
             if (error) throw error;
             if(token.length > 0){
                 var UserID = token[0]['user_id'];
                 switch (Status) {
                     case 4:
-                        connection.query('SELECT b.bill_id as BID,b.bill_reference_id as BillNo,u.fullname as Name,u.email_id as EmailID,u.mobile_no as PhoneNo,b.created_on as BillDate FROM table_consumer_bills as b LEFT JOIN table_users as u on u.user_id=b.user_id WHERE b.admin_status=4 and b.user_status!=3 ORDER BY b.updated_on DESC', function (error, bill, fields) {
+                        if(OffSet != null && Limit != null  ){
+                            if(!isNaN(OffSet) && !isNaN(OffSet)){
+                                var LimitCondition = 'LIMIT '+Limit+' OFFSET '+OffSet+'';
+                            } else {
+                                var LimitCondition = '';
+                            }
+                        } else {
+                            var LimitCondition = '';
+                        }
+                        connection.query('SELECT b.bill_id as BID,b.bill_reference_id as BillNo,u.fullname as Name,u.email_id as EmailID,u.mobile_no as PhoneNo,b.created_on as BillDate FROM table_consumer_bills as b LEFT JOIN table_users as u on u.user_id=b.user_id WHERE b.admin_status=4 and b.user_status!=3 ORDER BY b.updated_on DESC '+LimitCondition+' ', function (error, bill, fields) {
                             if (error) throw error;
                             if(bill.length > 0){
                                 var data = '{"statusCode": 100,"BillList": '+ JSON.stringify(bill) +'}';
@@ -2201,7 +2343,16 @@ server.route({
                         });
                         break;
                     case 8:
-                        connection.query('SELECT b.bill_id as BID,b.user_id as UID,b.bill_reference_id as BillNo,u.fullname as Name,u.email_id as EmailID,u.mobile_no as PhoneNo,b.created_on as BillDate,ceu.fullname as CE_Name,ceu.email_id as CE_EmailID,ce.created_on as CE_TaskDate,ces.status_name as CE_Status,ces.status_id as CE_StatusID,qeu.fullname as QE_Name,qeu.email_id as QE_EmailID,qe.created_on as QE_TaskDate,qes.status_name as QE_Status,qes.status_id as QE_StatusID FROM table_consumer_bills as b LEFT JOIN table_users as u on u.user_id=b.user_id LEFT JOIN table_cust_executive_tasks as ce on ce.bill_id=b.bill_id LEFT JOIN table_users as ceu on ceu.user_id=ce.user_id LEFT JOIN table_status as ces on ce.status_id=ces.status_id LEFT JOIN table_qual_executive_tasks as qe on qe.bill_id=b.bill_id LEFT JOIN table_users as qeu on qe.user_id=qeu.user_id LEFT JOIN table_status as qes on qes.status_id=qe.status_id WHERE b.admin_status=8 and b.user_status!=3 ORDER BY b.updated_on DESC', function (error, bill, fields) {
+                        if(OffSet != null && Limit != null  ){
+                            if(!isNaN(OffSet) && !isNaN(OffSet)){
+                                var LimitCondition = 'LIMIT '+Limit+' OFFSET '+OffSet+'';
+                            } else {
+                                var LimitCondition = '';
+                            }
+                        } else {
+                            var LimitCondition = '';
+                        }
+                        connection.query('SELECT b.bill_id as BID,b.user_id as UID,b.bill_reference_id as BillNo,u.fullname as Name,u.email_id as EmailID,u.mobile_no as PhoneNo,b.created_on as BillDate,ceu.fullname as CE_Name,ceu.email_id as CE_EmailID,ce.created_on as CE_TaskDate,ces.status_name as CE_Status,ces.status_id as CE_StatusID,qeu.fullname as QE_Name,qeu.email_id as QE_EmailID,qe.created_on as QE_TaskDate,qes.status_name as QE_Status,qes.status_id as QE_StatusID FROM table_consumer_bills as b LEFT JOIN table_users as u on u.user_id=b.user_id LEFT JOIN table_cust_executive_tasks as ce on ce.bill_id=b.bill_id LEFT JOIN table_users as ceu on ceu.user_id=ce.user_id LEFT JOIN table_status as ces on ce.status_id=ces.status_id LEFT JOIN table_qual_executive_tasks as qe on qe.bill_id=b.bill_id LEFT JOIN table_users as qeu on qe.user_id=qeu.user_id LEFT JOIN table_status as qes on qes.status_id=qe.status_id WHERE b.admin_status=8 and b.user_status!=3 ORDER BY b.updated_on DESC '+LimitCondition+' ', function (error, bill, fields) {
                             if (error) throw error;
                             if(bill.length > 0){
                                 var data = '{"statusCode": 100,"BillList": '+ JSON.stringify(bill) +'}';
@@ -2213,7 +2364,16 @@ server.route({
                         });
                         break;
                     case 5:
-                        connection.query('SELECT b.bill_id as BID,b.user_id as UID,b.bill_reference_id as BillNo,u.fullname as Name,u.email_id as EmailID,u.mobile_no as PhoneNo,b.created_on as BillDate,ceu.fullname as CE_Name,ceu.email_id as CE_EmailID,ce.created_on as CE_TaskDate,ces.status_name as CE_Status,ces.status_id as CE_StatusID,qeu.fullname as QE_Name,qeu.email_id as QE_EmailID,qe.created_on as QE_TaskDate,qes.status_name as QE_Status,qes.status_id as QE_StatusID FROM table_consumer_bills as b LEFT JOIN table_users as u on u.user_id=b.user_id LEFT JOIN table_cust_executive_tasks as ce on ce.bill_id=b.bill_id LEFT JOIN table_users as ceu on ceu.user_id=ce.user_id LEFT JOIN table_status as ces on ce.status_id=ces.status_id LEFT JOIN table_qual_executive_tasks as qe on qe.bill_id=b.bill_id LEFT JOIN table_users as qeu on qe.user_id=qeu.user_id LEFT JOIN table_status as qes on qes.status_id=qe.status_id WHERE b.admin_status=5 and b.user_status!=3 ORDER BY b.updated_on DESC', function (error, bill, fields) {
+                        if(OffSet != null && Limit != null  ){
+                            if(!isNaN(OffSet) && !isNaN(OffSet)){
+                                var LimitCondition = 'LIMIT '+Limit+' OFFSET '+OffSet+'';
+                            } else {
+                                var LimitCondition = '';
+                            }
+                        } else {
+                            var LimitCondition = '';
+                        }
+                        connection.query('SELECT b.bill_id as BID,b.user_id as UID,b.bill_reference_id as BillNo,u.fullname as Name,u.email_id as EmailID,u.mobile_no as PhoneNo,b.created_on as BillDate,ceu.fullname as CE_Name,ceu.email_id as CE_EmailID,ce.created_on as CE_TaskDate,ces.status_name as CE_Status,ces.status_id as CE_StatusID,qeu.fullname as QE_Name,qeu.email_id as QE_EmailID,qe.created_on as QE_TaskDate,qes.status_name as QE_Status,qes.status_id as QE_StatusID FROM table_consumer_bills as b LEFT JOIN table_users as u on u.user_id=b.user_id LEFT JOIN table_cust_executive_tasks as ce on ce.bill_id=b.bill_id LEFT JOIN table_users as ceu on ceu.user_id=ce.user_id LEFT JOIN table_status as ces on ce.status_id=ces.status_id LEFT JOIN table_qual_executive_tasks as qe on qe.bill_id=b.bill_id LEFT JOIN table_users as qeu on qe.user_id=qeu.user_id LEFT JOIN table_status as qes on qes.status_id=qe.status_id WHERE b.admin_status=5 and b.user_status!=3 ORDER BY b.updated_on DESC '+LimitCondition+' ', function (error, bill, fields) {
                             if (error) throw error;
                             if(bill.length > 0){
                                 var data = '{"statusCode": 100,"BillList": '+ JSON.stringify(bill) +'}';
@@ -2239,6 +2399,80 @@ server.route({
             payload: {
                 TokenNo: Joi.string().required(),
                 Status: Joi.number().required(),
+                OffSet: [Joi.string(), Joi.allow(null)],
+                Limit: [Joi.string(), Joi.allow(null)],
+                output: 'data',
+                parse:true
+            }
+        }
+    }
+});
+
+//Search Admin Consumer Bills List
+server.route({
+    method: 'POST',
+    path: '/Services/SearchAdminConsumerBillsList',
+    handler: function (request, reply) {
+        const TokenNo = request.payload.TokenNo;
+        const Status = request.payload.Status;
+        const Search = request.payload.Search;
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+            if (error) throw error;
+            if(token.length > 0){
+                var UserID = token[0]['user_id'];
+                switch (Status) {
+                    case 4:
+                        connection.query('SELECT b.bill_id as BID,b.bill_reference_id as BillNo,u.fullname as Name,u.email_id as EmailID,u.mobile_no as PhoneNo,b.created_on as BillDate FROM table_consumer_bills as b LEFT JOIN table_users as u on u.user_id=b.user_id WHERE b.admin_status=4 and b.user_status!=3 AND (u.fullname LIKE "%'+Search+'%" OR u.email_id LIKE "%'+Search+'%" OR u.mobile_no LIKE "%'+Search+'%") ORDER BY b.updated_on DESC ', function (error, bill, fields) {
+                            if (error) throw error;
+                            if(bill.length > 0){
+                                var data = '{"statusCode": 100,"BillList": '+ JSON.stringify(bill) +'}';
+                                reply(data);
+                            } else {
+                                var data = '{"statusCode": 105,"error": "Not Found","message": "Data not Available."}';
+                                reply(data);
+                            }
+                        });
+                        break;
+                    case 8:
+                        connection.query('SELECT b.bill_id as BID,b.user_id as UID,b.bill_reference_id as BillNo,u.fullname as Name,u.email_id as EmailID,u.mobile_no as PhoneNo,b.created_on as BillDate,ceu.fullname as CE_Name,ceu.email_id as CE_EmailID,ce.created_on as CE_TaskDate,ces.status_name as CE_Status,ces.status_id as CE_StatusID,qeu.fullname as QE_Name,qeu.email_id as QE_EmailID,qe.created_on as QE_TaskDate,qes.status_name as QE_Status,qes.status_id as QE_StatusID FROM table_consumer_bills as b LEFT JOIN table_users as u on u.user_id=b.user_id LEFT JOIN table_cust_executive_tasks as ce on ce.bill_id=b.bill_id LEFT JOIN table_users as ceu on ceu.user_id=ce.user_id LEFT JOIN table_status as ces on ce.status_id=ces.status_id LEFT JOIN table_qual_executive_tasks as qe on qe.bill_id=b.bill_id LEFT JOIN table_users as qeu on qe.user_id=qeu.user_id LEFT JOIN table_status as qes on qes.status_id=qe.status_id WHERE b.admin_status=8 and b.user_status!=3 AND (u.fullname LIKE "%'+Search+'%" OR u.email_id LIKE "%'+Search+'%" OR u.mobile_no LIKE "%'+Search+'%") ORDER BY b.updated_on DESC ', function (error, bill, fields) {
+                            if (error) throw error;
+                            if(bill.length > 0){
+                                var data = '{"statusCode": 100,"BillList": '+ JSON.stringify(bill) +'}';
+                                reply(data);
+                            } else {
+                                var data = '{"statusCode": 105,"error": "Not Found","message": "Data not Available."}';
+                                reply(data);
+                            }
+                        });
+                        break;
+                    case 5:
+                        connection.query('SELECT b.bill_id as BID,b.user_id as UID,b.bill_reference_id as BillNo,u.fullname as Name,u.email_id as EmailID,u.mobile_no as PhoneNo,b.created_on as BillDate,ceu.fullname as CE_Name,ceu.email_id as CE_EmailID,ce.created_on as CE_TaskDate,ces.status_name as CE_Status,ces.status_id as CE_StatusID,qeu.fullname as QE_Name,qeu.email_id as QE_EmailID,qe.created_on as QE_TaskDate,qes.status_name as QE_Status,qes.status_id as QE_StatusID FROM table_consumer_bills as b LEFT JOIN table_users as u on u.user_id=b.user_id LEFT JOIN table_cust_executive_tasks as ce on ce.bill_id=b.bill_id LEFT JOIN table_users as ceu on ceu.user_id=ce.user_id LEFT JOIN table_status as ces on ce.status_id=ces.status_id LEFT JOIN table_qual_executive_tasks as qe on qe.bill_id=b.bill_id LEFT JOIN table_users as qeu on qe.user_id=qeu.user_id LEFT JOIN table_status as qes on qes.status_id=qe.status_id WHERE b.admin_status=5 and b.user_status!=3 AND (u.fullname LIKE "%'+Search+'%" OR u.email_id LIKE "%'+Search+'%" OR u.mobile_no LIKE "%'+Search+'%") ORDER BY b.updated_on DESC ', function (error, bill, fields) {
+                            if (error) throw error;
+                            if(bill.length > 0){
+                                var data = '{"statusCode": 100,"BillList": '+ JSON.stringify(bill) +'}';
+                                reply(data);
+                            } else {
+                                var data = '{"statusCode": 105,"error": "Not Found","message": "Data not Available."}';
+                                reply(data);
+                            }
+                        });
+                        break;
+                    default:
+                        var data = '{"statusCode": 100,"error": "Invalid Status","message": "Invalid Status."}';
+                        reply(data);
+                }
+            } else {
+                var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+                reply(data);
+            }
+        });
+    },
+    config:{
+        validate: {
+            payload: {
+                TokenNo: Joi.string().required(),
+                Status: Joi.number().required(),
+                Search: Joi.string().required(),
                 output: 'data',
                 parse:true
             }
@@ -2363,7 +2597,11 @@ server.route({
                 }
                 if(status == true){
                     if(OffSet != null && Limit != null  ){
-                        var LimitCondition = 'LIMIT '+Limit+' OFFSET '+OffSet+'';
+                        if(!isNaN(OffSet) && !isNaN(OffSet)){
+                            var LimitCondition = 'LIMIT '+Limit+' OFFSET '+OffSet+'';
+                        } else {
+                            var LimitCondition = '';
+                        }
                     } else {
                         var LimitCondition = '';
                     }
@@ -2391,6 +2629,62 @@ server.route({
                 Status: Joi.number().required(),
                 OffSet: [Joi.string(), Joi.allow(null)],
                 Limit: [Joi.string(), Joi.allow(null)],
+                output: 'data',
+                parse:true
+            }
+        }
+    }
+});
+//Search CE Consumer Bills List
+server.route({
+    method: 'POST',
+    path: '/Services/SearchCEConsumerBillsList',
+    handler: function (request, reply) {
+        const TokenNo = request.payload.TokenNo;
+        const Status = request.payload.Status;
+        const Search = request.payload.Search;
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+            if (error) throw error;
+            if(token.length > 0){
+                var UserID = token[0]['user_id'];
+                switch (Status) {
+                    case 4:
+                        var status = true;
+                        var condition = 'WHERE ce.status_id IN (6,7) and  b.user_status!=3 and ce.user_id='+UserID+' and (u.fullname LIKE "%'+Search+'%" OR u.email_id LIKE "%'+Search+'%" OR u.mobile_no LIKE "%'+Search+'%")';
+                        break;
+                    case 5:
+                        var status = true;
+                        var condition = 'WHERE ce.status_id=5 and ce.user_id='+UserID+' and (u.fullname LIKE "%'+Search+'%" OR u.email_id LIKE "%'+Search+'%" OR u.mobile_no LIKE "%'+Search+'%")';
+                        break;
+                    default:
+                        var status = false;
+                        var data = '{"statusCode": 100,"error": "Invalid Status","message": "Invalid Status."}';
+                        reply(data);
+                }
+                if(status == true){
+                    connection.query('SELECT b.bill_id as BID,b.user_id as UID,b.bill_reference_id as BillNo,u.fullname as Name,u.email_id as EmailID,u.mobile_no as PhoneNo,b.created_on as BillDate,assu.fullname as AssignedBy,ce.created_on as AssignedDate,status_name as Status FROM table_cust_executive_tasks as ce INNER JOIN table_consumer_bills as b on b.bill_id=ce.bill_id LEFT JOIN table_users as u on u.user_id=b.user_id  LEFT JOIN table_users as assu on ce.updated_by_user_id=assu.user_id LEFT JOIN table_status as s on s.status_id=ce.status_id '+condition+' ORDER BY ce.updated_on DESC ', function (error, bill, fields) {
+                        if (error) throw error;
+                        if(bill.length > 0){
+                            var data = '{"statusCode": 100,"BillList": '+ JSON.stringify(bill) +'}';
+                            reply(data);
+                        } else {
+                            var data = '{"statusCode": 105,"error": "Not Found","message": "Data not Available."}';
+                            reply(data);
+                        }
+                    });
+                }
+            } else {
+                var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+                reply(data);
+            }
+        });
+    },
+    config:{
+        validate: {
+            payload: {
+                TokenNo: Joi.string().required(),
+                Status: Joi.number().required(),
+                Search: Joi.string().required(),
                 output: 'data',
                 parse:true
             }
@@ -2426,7 +2720,11 @@ server.route({
                 }
                 if(status == true){
                     if(OffSet != null && Limit != null  ){
-                        var LimitCondition = 'LIMIT '+Limit+' OFFSET '+OffSet+'';
+                        if(!isNaN(OffSet) && !isNaN(OffSet)){
+                            var LimitCondition = 'LIMIT '+Limit+' OFFSET '+OffSet+'';
+                        } else {
+                            var LimitCondition = '';
+                        }
                     } else {
                         var LimitCondition = '';
                     }
@@ -2454,6 +2752,62 @@ server.route({
                 Status: Joi.number().required(),
                 OffSet: [Joi.string(), Joi.allow(null)],
                 Limit: [Joi.string(), Joi.allow(null)],
+                output: 'data',
+                parse:true
+            }
+        }
+    }
+});
+//Search QE Consumer Bills List
+server.route({
+    method: 'POST',
+    path: '/Services/SearchQEConsumerBillsList',
+    handler: function (request, reply) {
+        const TokenNo = request.payload.TokenNo;
+        const Status = request.payload.Status;
+        const Search = request.payload.Search;
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+            if (error) throw error;
+            if(token.length > 0){
+                var UserID = token[0]['user_id'];
+                switch (Status) {
+                    case 4:
+                        var status = true;
+                        var condition = 'WHERE qe.status_id=6 and  b.user_status!=3 and qe.user_id='+UserID+' and (u.fullname LIKE "%'+Search+'%" OR u.email_id LIKE "%'+Search+'%" OR u.mobile_no LIKE "%'+Search+'%")';
+                        break;
+                    case 5:
+                        var status = true;
+                        var condition = 'WHERE qe.status_id=5 and qe.user_id='+UserID+' and (u.fullname LIKE "%'+Search+'%" OR u.email_id LIKE "%'+Search+'%" OR u.mobile_no LIKE "%'+Search+'%")';
+                        break;
+                    default:
+                        var status = false;
+                        var data = '{"statusCode": 100,"error": "Invalid Status","message": "Invalid Status."}';
+                        reply(data);
+                }
+                if(status == true){
+                    connection.query('SELECT b.bill_id as BID,b.user_id as UID,b.bill_reference_id as BillNo,u.fullname as Name,u.email_id as EmailID,u.mobile_no as PhoneNo,b.created_on as BillDate,assu.fullname as AssignedBy,qe.created_on as AssignedDate,ceu.user_id as CE_ID,ceu.fullname as CE_Name,s.status_name as Status FROM table_qual_executive_tasks as qe INNER JOIN table_consumer_bills as b on b.bill_id=qe.bill_id LEFT JOIN table_users as u on u.user_id=b.user_id  LEFT JOIN table_users as assu on qe.updated_by_user_id=assu.user_id LEFT JOIN table_status as s on s.status_id=qe.status_id LEFT JOIN table_cust_executive_tasks as ce on ce.bill_id=b.bill_id LEFT JOIN table_users as ceu on ce.user_id=ceu.user_id '+condition+' ORDER BY qe.updated_on DESC ', function (error, bill, fields) {
+                        if (error) throw error;
+                        if(bill.length > 0){
+                            var data = '{"statusCode": 100,"BillList": '+ JSON.stringify(bill) +'}';
+                            reply(data);
+                        } else {
+                            var data = '{"statusCode": 105,"error": "Not Found","message": "Data not Available."}';
+                            reply(data);
+                        }
+                    });
+                }
+            } else {
+                var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+                reply(data);
+            }
+        });
+    },
+    config:{
+        validate: {
+            payload: {
+                TokenNo: Joi.string().required(),
+                Status: Joi.number().required(),
+                Search: Joi.string().required(),
                 output: 'data',
                 parse:true
             }
@@ -4228,7 +4582,11 @@ server.route({
             if(token.length > 0){
                 var UserID = token[0]['user_id'];
                 if(OffSet != null && Limit != null  ){
-                    var LimitCondition = 'LIMIT '+Limit+' OFFSET '+OffSet+'';
+                    if(!isNaN(OffSet) && !isNaN(OffSet)){
+                        var LimitCondition = 'LIMIT '+Limit+' OFFSET '+OffSet+'';
+                    } else {
+                        var LimitCondition = '';
+                    }
                 } else {
                     var LimitCondition = '';
                 }
