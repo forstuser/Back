@@ -241,33 +241,52 @@ class ServiceCenterController {
   }
 
   static retrieveServiceCenters(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
     const payload = request.payload || {
       location: '',
+      city: '',
       searchValue: '',
       longitude: '',
-      latitude: ''
-    };
-    const location = payload.location;
-    const brandId = request.query.brandid || '';
-    const searchValue = `%${payload.searchValue || ''}%`;
-    const whereClause = brandId ? {
-      status_id: {
-        $ne: 3
-      },
-      brand_id: brandId,
-      $or: []
-    } : {
-      status_id: {
-        $ne: 3
-      },
-      $or: []
+      latitude: '',
+      categoryId: '',
+      masterCategoryId: '',
+      brandId: ''
     };
 
-    whereClause.$or.push(modals.sequelize.where(modals.sequelize.fn('lower', modals.sequelize.col('center_name')), { $like: modals.sequelize.fn('lower', searchValue) }));
-    whereClause.$or.push(modals.sequelize.where(modals.sequelize.fn('lower', modals.sequelize.col('address_street')), { $like: modals.sequelize.fn('lower', searchValue) }));
-    whereClause.$or.push(modals.sequelize.where(modals.sequelize.fn('lower', modals.sequelize.col('address_city')), { $like: modals.sequelize.fn('lower', searchValue) }));
-    whereClause.$or.push(modals.sequelize.where(modals.sequelize.fn('lower', modals.sequelize.col('address_state')), { $like: modals.sequelize.fn('lower', searchValue) }));
-    whereClause.$or.push(modals.sequelize.where(modals.sequelize.fn('lower', modals.sequelize.col('`brand`.`brand_name`')), { $like: modals.sequelize.fn('lower', searchValue) }));
+    const latitude = payload.latitude || user.latitude || '';
+    const longitude = payload.longitude || user.longitude || '';
+    const location = payload.location || user.location || '';
+    const city = payload.city || '';
+    const latlong = latitude && longitude ? `${latitude}, ${longitude}` : '';
+    const categoryId = request.query.categoryid || payload.categoryId || '';
+    const brandId = request.query.brandid || payload.brandId || '';
+    const whereClause = {
+      status_id: {
+        $ne: 3
+      }
+    };
+    const brandWhereClause = {
+      status_id: {
+        $ne: 3
+      }
+    };
+    const detailWhereClause = {
+      status_id: {
+        $ne: 3
+      }
+    };
+    if (brandId) {
+      whereClause.brand_id = brandId;
+      brandWhereClause.brand_id = brandId;
+    }
+
+    if (categoryId) {
+      detailWhereClause.category_id = categoryId;
+    }
+
+    if (city) {
+      whereClause.address_city = city;
+    }
     modals.authorizedServiceCenter.findAll({
       where: whereClause,
       include: [
@@ -275,18 +294,14 @@ class ServiceCenterController {
           model: modals.table_brands,
           as: 'brand',
           attributes: [['brand_name', 'name'], ['brand_description', 'description'], ['brand_id', 'id']],
-          where: whereClause,
+          where: brandWhereClause,
           required: true
         },
         {
           model: modals.authorizeServiceCenterDetail,
           as: 'centerDetails',
           attributes: [['display_name', 'name'], 'details', ['contactdetail_type_id', 'detailType']],
-          where: {
-            status_id: {
-              $ne: 3
-            }
-          },
+          where: detailWhereClause,
           required: false
         }
       ],
@@ -297,15 +312,42 @@ class ServiceCenterController {
         const center = item.toJSON();
         center.centerAddress = `${center.centerName}, ${center.sector} ${center.street}, ${center.city}-${center.pinCode}, ${center.state}, India`;
         center.geoLocation = `${center.latitude}, ${center.longitude}`;
+        const origins = [];
+        const destinations = [];
+
+        if (latlong) {
+          origins.push(latlong);
+        }
 
         if (location) {
+          origins.push(location);
+        }
+
+        if (city) {
+          origins.push(city);
+        }
+
+        if (center.geoLocation) {
+          destinations.push(center.geoLocation);
+        }
+
+        if (center.centerAddress) {
+          destinations.push(center.centerAddress);
+        }
+
+        if (city) {
+          destinations.push(center.city);
+        }
+
+        if (origins.length > 0 && destinations.length > 0) {
           googleMapsClient.distanceMatrix({
-            origins: [location],
-            destinations: [center.centerAddress, center.geoLocation]
+            origins,
+            destinations
           }).asPromise().then((matrix) => {
-            const tempMatrix = matrix.status === 200 && matrix.json ? matrix.json.rows[0] : [];
-            center.distanceMetrics = tempMatrix.elements[1].distance ? tempMatrix.elements[1].distance.text.split(' ')[1] : 'km';
-            center.distance = parseFloat(tempMatrix.elements[1].distance ? tempMatrix.elements[1].distance.text.split(' ')[0] : 0);
+            const tempMatrix = matrix.status === 200 && matrix.json ? matrix.json.rows[0]
+              .elements.find(matrixItem => matrixItem.status === 'OK') : [];
+            center.distanceMetrics = tempMatrix.distance ? tempMatrix.distance.text.split(' ')[1] : 'km';
+            center.distance = parseFloat(tempMatrix.distance ? tempMatrix.distance.text.split(' ')[0] : 0);
             serviceCentersWithLocation.push(center);
             if (serviceCentersWithLocation.length === result.length) {
               serviceCentersWithLocation.sort((a, b) => a.distance - b.distance);
@@ -355,6 +397,55 @@ class ServiceCenterController {
       reply(result).code(200);
     }).catch((err) => {
       reply(err);
+    });
+  }
+
+  static retrieveServiceCenterFilters(request, reply) {
+    Promise.all([
+      modals.categories.findAll({
+        where: {
+          display_id: [2, 3],
+          category_level: 1,
+          status_id: {
+            $ne: 3
+          }
+        },
+        include: [{
+          model: this.modals.categories,
+          on: {
+            $or: [
+              this.modals.sequelize.where(this.modals.sequelize.col('`subCategories`.`ref_id`'), this.modals.sequelize.col('`categories`.`category_id`'))
+            ]
+          },
+          as: 'subCategories',
+          where: {
+            status_id: {
+              $ne: 3
+            }
+          },
+          attributes: [['category_id', 'id'], ['category_name', 'name']],
+          required: false
+        }],
+        attributes: [['category_id', 'id'], ['display_id', 'cType'], ['category_name', 'name']]
+      }),
+      modals.authorizedServiceCenter
+        .aggregate('address_city', 'DISTINCT', { plain: false, order: [['address_city']] }),
+      modals.table_brands.findAll({
+        where: {
+          status_id: {
+            $ne: 3
+          }
+        },
+        include: [{ model: modals.authorizedServiceCenter, as: 'center', attributes: [] }],
+        attributes: [['brand_name', 'name'], ['brand_id', 'id']]
+      })
+    ]).then((result) => {
+      reply({
+        status: true,
+        categories: result[0],
+        cities: result[1],
+        brands: result[2]
+      });
     });
   }
 }

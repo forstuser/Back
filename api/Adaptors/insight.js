@@ -323,7 +323,8 @@ class InsightAdaptor {
     return promisedQuery.then((result) => {
       const productList = result[0].map((item) => {
         const product = item.toJSON();
-        product.productMetaData.map((metaData) => {
+        product.productMetaData.map((metaItem) => {
+          const metaData = metaItem;
           if (metaData.type === '2' && metaData.selectedValue) {
             metaData.value = metaData.selectedValue.value;
           }
@@ -365,6 +366,7 @@ class InsightAdaptor {
       });
 
       distinctInsight.map((item) => {
+        const dayItem = item;
         const monthIndex = distinctInsightMonthly
           .findIndex(distinctItem => (distinctItem.month === item.month));
         const weekIndex = distinctInsightWeekly
@@ -386,33 +388,44 @@ class InsightAdaptor {
           distinctInsightMonthly[monthIndex].totalTax += item.totalTax;
           distinctInsightMonthly[monthIndex].tax += item.tax;
         }
+
+        return dayItem;
       });
 
       distinctInsightMonthly.sort((a, b) => new Date(b.date) - new Date(a.date));
       distinctInsightWeekly.sort((a, b) => new Date(b.date) - new Date(a.date));
       distinctInsight.sort((a, b) => new Date(b.date) - new Date(a.date));
+      const insightData = distinctInsight
+        .filter(item => new Date(item.date) >= firstDay && new Date(item.date) <= lastDay);
+
+      const insightWeekly = distinctInsightWeekly
+        .filter(item => new Date(item
+          .date) >= monthStartDay && new Date(item
+            .date) <= monthLastDay);
+      const insightMonthly = distinctInsightMonthly
+        .filter(item => new Date(item
+          .date) >= yearStartDay && new Date(item
+            .date) <= yearLastDay);
       return {
         status: true,
         productList,
         insight: distinctInsight && distinctInsight.length > 0 ? {
           startDate: shared.formatDate(firstDay, 'yyyy-mm-dd'),
           endDate: shared.formatDate(lastDay, 'yyyy-mm-dd'),
+          currentMonthId: new Date().getMonth() + 1,
+          currentWeek: weekAndDay(new Date()).monthWeek,
+          currentDay: weekAndDay(new Date()).day,
           monthStartDate: shared.formatDate(monthStartDay, 'yyyy-mm-dd'),
           monthEndDate: shared.formatDate(monthLastDay, 'yyyy-mm-dd'),
           yearStartDate: shared.formatDate(yearStartDay, 'yyyy-mm-dd'),
           yearEndDate: shared.formatDate(yearLastDay, 'yyyy-mm-dd'),
-          totalSpend: sumProps(distinctInsight, 'value'),
-          totalDays: distinctInsight.length,
-          insightData: distinctInsight
-            .filter(item => new Date(item.date) >= firstDay && new Date(item.date) <= lastDay),
-          insightWeekly: distinctInsightWeekly
-            .filter(item => new Date(item
-              .date) >= monthStartDay && new Date(item
-                .date) <= monthLastDay),
-          insightMonthly: distinctInsightMonthly
-            .filter(item => new Date(item
-              .date) >= yearStartDay && new Date(item
-                .date) <= yearLastDay)
+          totalSpend: sumProps(insightData, 'value'),
+          totalYearlySpend: sumProps(insightWeekly, 'value'),
+          totalMonthlySpend: sumProps(insightMonthly, 'value'),
+          totalDays: insightData.length,
+          insightData,
+          insightWeekly,
+          insightMonthly
         } : {
           startDate: '',
           endDate: '',

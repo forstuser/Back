@@ -631,6 +631,9 @@ function prepareServiceCenterRoutes(serviceCenterController, serviceCenterRoutes
             searchValue: [joi.string(), joi.allow(null)],
             longitude: [joi.string(), joi.allow(null)],
             latitude: [joi.string(), joi.allow(null)],
+            categoryId: [joi.number(), joi.allow(null)],
+            masterCategoryId: [joi.number(), joi.allow(null)],
+            brandId: [joi.number(), joi.allow(null)],
             output: 'data',
             parse: true
           }
@@ -646,6 +649,15 @@ function prepareServiceCenterRoutes(serviceCenterController, serviceCenterRoutes
         handler: ServiceCenterController.retrieveServiceCenters
       }
     });
+    serviceCenterRoutes.push({
+      method: 'GET',
+      path: '/consumer/servicecenters/filters',
+      config: {
+        auth: 'jwt',
+        handler: ServiceCenterController.retrieveServiceCenterFilters
+      }
+    });
+
     // Get Authorized Service Center By ID
     serviceCenterRoutes.push({
       method: 'GET',
