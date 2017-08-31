@@ -29,7 +29,8 @@ class DashboardAdaptor {
     return Promise.all([
       this.filterUpcomingService(user),
       this.prepareInsightData(user),
-      this.retrieveRecentSearch(user)
+      this.retrieveRecentSearch(user),
+      this.modals.mailBox.count({ where: { user_id: user.ID, status_id: 4 } })
     ]).then((result) => {
       const distinctInsight = [];
       const insightData = result[1].map((item) => {
@@ -44,6 +45,8 @@ class DashboardAdaptor {
         } else {
           distinctInsight[index].value += insightItem.value;
         }
+
+        return insightItem;
       });
       const insightResult = distinctInsight && distinctInsight.length > 0 ? {
         startDate: distinctInsight[0].purchaseDate,
@@ -61,7 +64,7 @@ class DashboardAdaptor {
       return {
         status: true,
         message: 'Dashboard restore Successful',
-        notificationCount: 0,
+        notificationCount: result[3],
         recentSearches: result[2].map((item) => {
           const search = item.toJSON();
           return search.searchValue;
@@ -91,7 +94,8 @@ class DashboardAdaptor {
           return Promise.all([
             this.filterUpcomingService(user),
             this.prepareInsightData(user),
-            this.retrieveRecentSearch(user)
+            this.retrieveRecentSearch(user),
+            this.modals.mailBox.count({ where: { user_id: user.ID, status_id: 4 } })
           ]).then((result) => {
             const distinctInsight = [];
             const insightData = result[1].map((item) => {
@@ -106,6 +110,8 @@ class DashboardAdaptor {
               } else {
                 distinctInsight[index].value += insightItem.value;
               }
+
+              return insightItem;
             });
             const insightResult = distinctInsight && distinctInsight.length > 0 ? {
               startDate: distinctInsight[0].purchaseDate,
@@ -123,7 +129,7 @@ class DashboardAdaptor {
             return {
               status: true,
               message: 'Dashboard restore Successful',
-              notificationCount: 0,
+              notificationCount: result[3],
               recentSearches: result[2].map((item) => {
                 const search = item.toJSON();
                 return search.searchValue;
@@ -294,7 +300,8 @@ class DashboardAdaptor {
         let products = result[0].map((item) => {
           const product = item.toJSON();
 
-          product.productMetaData.map((metaData) => {
+          product.productMetaData.map((metaItem) => {
+            const metaData = metaItem;
             if (metaData.type === '2' && metaData.selectedValue) {
               metaData.value = metaData.selectedValue.value;
             }
@@ -303,7 +310,8 @@ class DashboardAdaptor {
               const dueDateTime = new Date(metaData.value).getTime();
               if (dueDateTime >= new Date().getTime()) {
                 product.dueDate = shared.formatDate(metaData.value, 'dd mmm');
-                product.dueIn = Math.floor((dueDateTime - new Date().getTime()) / (24 * 60 * 60 * 1000));
+                product.dueIn = Math.floor((dueDateTime - new Date()
+                  .getTime()) / (24 * 60 * 60 * 1000));
                 if (product.masterCatId.toString() === '6') {
                   product.productType = 5;
                 } else {
@@ -312,13 +320,18 @@ class DashboardAdaptor {
               }
             }
 
+            if (metaData.name.toLowerCase().includes('address')) {
+              product.address = metaData.value;
+            }
+
             return metaData;
           });
 
           return product;
         });
 
-        products = products.filter(product => product.dueIn && product.dueIn <= 30 && product.dueIn >= 0);
+        products = products.filter(product => product.dueIn && product
+          .dueIn <= 30 && product.dueIn >= 0);
 
         let amcs = result[1].map((item) => {
           const amc = item.toJSON();
@@ -338,7 +351,8 @@ class DashboardAdaptor {
           const dueDateTime = new Date(insurance.expiryDate).getTime();
           if (dueDateTime >= new Date().getTime()) {
             insurance.dueDate = shared.formatDate(insurance.expiryDate, 'dd mmm');
-            insurance.dueIn = Math.floor((dueDateTime - new Date().getTime()) / (24 * 60 * 60 * 1000));
+            insurance.dueIn = Math.floor((dueDateTime - new Date()
+              .getTime()) / (24 * 60 * 60 * 1000));
             insurance.productType = 3;
           }
 
@@ -352,7 +366,8 @@ class DashboardAdaptor {
           const dueDateTime = new Date(warranty.expiryDate).getTime();
           if (dueDateTime >= new Date().getTime()) {
             warranty.dueDate = shared.formatDate(warranty.expiryDate, 'dd mmm');
-            warranty.dueIn = Math.floor((dueDateTime - new Date().getTime()) / (24 * 60 * 60 * 1000));
+            warranty.dueIn = Math.floor((dueDateTime - new Date()
+              .getTime()) / (24 * 60 * 60 * 1000));
             warranty.productType = 2;
           }
 
@@ -376,8 +391,8 @@ class DashboardAdaptor {
           $ne: 3
         },
         purchase_date: {
-          $lte: lastday,
-          $gte: firstday
+          $lte: new Date(lastday),
+          $gte: new Date(firstday)
         }
       },
       order: [['purchase_date', 'ASC']],
