@@ -2,30 +2,23 @@
  * Created by arpit on 6/30/2017.
  */
 
-module.exports = (sequelize, Sequelize) => sequelize.define('table_authorized_service_center_details', {
-  DetailID: {
+module.exports = (sequelize, Sequelize) => sequelize.define('authorizeServiceCenterDetail', {
+  center_detail_id: {
     type: Sequelize.INTEGER,
     autoIncrement: true,
-    primaryKey: true,
-    field: 'center_detail_id'
+    primaryKey: true
   },
-  CenterID: {
-    type: Sequelize.INTEGER,
-    notEmpty: true,
-    field: 'center_id'
+  center_id: {
+    type: Sequelize.INTEGER
   },
-  DetailTypeID: {
-    type: Sequelize.INTEGER,
-    field: 'contactdetail_type_id'
+  contactdetail_type_id: {
+    type: Sequelize.INTEGER
   },
-  DisplayName: {
-    type: Sequelize.STRING,
-    notEmpty: false,
-    field: 'display_name'
+  display_name: {
+    type: Sequelize.STRING
   },
-  Detail: {
-    type: Sequelize.STRING,
-    field: 'details'
+  details: {
+    type: Sequelize.STRING
   },
   status_id: {
     type: Sequelize.INTEGER
@@ -33,5 +26,6 @@ module.exports = (sequelize, Sequelize) => sequelize.define('table_authorized_se
 }, {
   freezeTableName: true,
   defaultPrimaryKey: false,
-  timestamps: false
+  timestamps: false,
+  tableName: 'table_authorized_service_center_details'
 });

@@ -2,69 +2,53 @@
  * Created by arpit on 6/30/2017.
  */
 
-module.exports = (sequelize, Sequelize) => sequelize.define('table_authorized_service_center', {
-  ID: {
+module.exports = (sequelize, Sequelize) => sequelize.define('authorizedServiceCenter', {
+  center_id: {
     type: Sequelize.INTEGER,
     autoIncrement: true,
-    primaryKey: true,
-    field: 'center_id'
+    primaryKey: true
   },
-  BrandID: {
-    type: Sequelize.INTEGER,
-    field: 'brand_id'
+  brand_id: {
+    type: Sequelize.INTEGER
   },
-  Name: {
-    type: Sequelize.STRING,
-    notEmpty: false,
-    field: 'center_name'
+  center_name: {
+    type: Sequelize.STRING
   },
-  HouseNo: {
-    type: Sequelize.STRING,
-    field: 'address_house_no'
+  address_house_no: {
+    type: Sequelize.STRING
   },
-  Block: {
-    type: Sequelize.STRING,
-    field: 'address_block'
+  address_block: {
+    type: Sequelize.STRING
   },
-  Street: {
-    type: Sequelize.STRING,
-    field: 'address_street'
+  address_street: {
+    type: Sequelize.STRING
   },
-  Sector: {
-    type: Sequelize.STRING,
-    field: 'address_sector'
+  address_sector: {
+    type: Sequelize.STRING
   },
-  City: {
-    type: Sequelize.STRING,
-    field: 'address_city'
+  address_city: {
+    type: Sequelize.STRING
   },
-  State: {
-    type: Sequelize.STRING,
-    field: 'address_state'
+  address_state: {
+    type: Sequelize.STRING
   },
-  PinCode: {
-    type: Sequelize.STRING,
-    field: 'address_pin_code'
+  address_pin_code: {
+    type: Sequelize.STRING
   },
-  NearBy: {
-    type: Sequelize.STRING,
-    field: 'address_nearby'
+  address_nearby: {
+    type: Sequelize.STRING
   },
-  Latitude: {
-    type: Sequelize.STRING,
-    field: 'latitude'
+  latitude: {
+    type: Sequelize.STRING
   },
-  Longitude: {
-    type: Sequelize.STRING,
-    field: 'longitude'
+  longitude: {
+    type: Sequelize.STRING
   },
-  Timings: {
-    type: Sequelize.STRING,
-    field: 'timings'
+  timings: {
+    type: Sequelize.STRING
   },
-  OpenDays: {
-    type: Sequelize.STRING,
-    field: 'open_days'
+  open_days: {
+    type: Sequelize.STRING
   },
   updated_on: {
     type: Sequelize.DATE(6),
@@ -79,5 +63,6 @@ module.exports = (sequelize, Sequelize) => sequelize.define('table_authorized_se
 }, {
   freezeTableName: true,
   defaultPrimaryKey: false,
-  timestamps: false
+  timestamps: false,
+  tableName: 'table_authorized_service_center'
 });

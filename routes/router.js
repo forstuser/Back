@@ -22,6 +22,12 @@ const SearchController = require('../api/controllers/search');
 let User;
 
 function associateModals(modals) {
+  modals.authorizedServiceCenter.belongsTo(modals.table_brands, { foreignKey: 'brand_id', as: 'brand' });
+  modals.table_brands.hasMany(modals.authorizedServiceCenter, { foreignKey: 'brand_id', as: 'center' });
+
+  modals.authorizeServiceCenterDetail.belongsTo(modals.authorizedServiceCenter, { foreignKey: 'center_id', as: 'center' });
+  modals.authorizedServiceCenter.hasMany(modals.authorizeServiceCenterDetail, { foreignKey: 'center_id', as: 'centerDetails' });
+
   modals.productMetaData.hasOne(modals.categoryFormMapping, { as: 'selectedValue', foreignKey: 'category_form_id' });
   modals.offlineSeller.hasMany(modals.offlineSellerDetails, { as: 'sellerDetails', foreignKey: 'offline_seller_id' });
   modals.onlineSeller.hasMany(modals.onlineSellerDetails, { as: 'sellerDetails', foreignKey: 'seller_id' });
@@ -607,6 +613,34 @@ function prepareServiceCenterRoutes(serviceCenterController, serviceCenterRoutes
     serviceCenterRoutes.push({
       method: 'GET',
       path: '/admin/servicecenters',
+      config: {
+        auth: 'jwt',
+        handler: ServiceCenterController.retrieveServiceCenters
+      }
+    });
+
+    serviceCenterRoutes.push({
+      method: 'POST',
+      path: '/consumer/servicecenters',
+      config: {
+        auth: 'jwt',
+        handler: ServiceCenterController.retrieveServiceCenters,
+        validate: {
+          payload: {
+            location: [joi.string(), joi.allow(null)],
+            searchValue: [joi.string(), joi.allow(null)],
+            longitude: [joi.string(), joi.allow(null)],
+            latitude: [joi.string(), joi.allow(null)],
+            output: 'data',
+            parse: true
+          }
+        }
+      }
+    });
+
+    serviceCenterRoutes.push({
+      method: 'GET',
+      path: '/consumer/servicecenters',
       config: {
         auth: 'jwt',
         handler: ServiceCenterController.retrieveServiceCenters

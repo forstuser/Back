@@ -1,5 +1,8 @@
-
 const shared = require('../../helpers/shared');
+const googleMapsClient = require('@google/maps').createClient({
+  Promise,
+  key: 'AIzaSyAMXMlAmejtAvSay9FgfU7AO0rTiydifnY'
+});
 
 let modals;
 const excludedAttributes = { exclude: ['tableBrandID', 'display_id', 'created_on', 'updated_on', 'updated_by_user_id', 'status_id', 'tableAuthorizedServiceCenterID'] };
@@ -7,11 +10,6 @@ const excludedAttributes = { exclude: ['tableBrandID', 'display_id', 'created_on
 class ServiceCenterController {
   constructor(modal) {
     modals = modal;
-    modals.table_authorized_service_center.belongsTo(modals.table_brands, { foreignKey: 'BrandID', as: 'Brand' });
-    modals.table_brands.hasMany(modals.table_authorized_service_center);
-
-    modals.table_authorized_service_center_details.belongsTo(modals.table_authorized_service_center, { foreignKey: 'CenterID', as: 'Details' });
-    modals.table_authorized_service_center.hasMany(modals.table_authorized_service_center_details, { foreignKey: 'CenterID', as: 'Details' });
   }
 
   // Add Authorized Service Center
@@ -32,7 +30,7 @@ class ServiceCenterController {
     const OpenDays = request.payload.OpenDays;
     const Timings = request.payload.Timings;
     const Details = request.payload.Details;
-    modals.table_authorized_service_center.findOrCreate({
+    modals.authorizedServiceCenter.findOrCreate({
       where: {
         Name,
         BrandID,
@@ -62,7 +60,7 @@ class ServiceCenterController {
         createdServiceCenter = serviceCenter[0];
         const CenterID = createdServiceCenter.ID;
         for (let i = 0; i < Details.length; i += 1) {
-          detailPromise.push(modals.table_authorized_service_center_details.create({
+          detailPromise.push(modals.authorizeServiceCenterDetail.create({
             CenterID,
             DetailTypeID: Details[i].DetailTypeID,
             DisplayName: Details[i].DisplayName,
@@ -92,7 +90,7 @@ class ServiceCenterController {
     const DisplayName = request.payload.DisplayName;
     const Detail = request.payload.Details;
     if (user.accessLevel.toLowerCase() === 'premium') {
-      modals.table_authorized_service_center_details.findOrCreate({
+      modals.authorizeServiceCenterDetail.findOrCreate({
         where: {
           DetailTypeID,
           DisplayName,
@@ -132,7 +130,7 @@ class ServiceCenterController {
     const OpenDays = request.payload.OpenDays;
     const Timings = request.payload.Timings;
     const Details = request.payload.Details;
-    modals.table_authorized_service_center.update({
+    modals.authorizedServiceCenter.update({
       Name,
       BrandID,
       OpenDays,
@@ -157,7 +155,7 @@ class ServiceCenterController {
       const CenterID = request.params.id;
       for (let i = 0; i < Details.length; i += 1) {
         if (Details[i].DetailID) {
-          detailPromise.push(modals.table_authorized_service_center_details.update({
+          detailPromise.push(modals.authorizeServiceCenterDetail.update({
             DetailTypeID: Details[i].DetailTypeID,
             DisplayName: Details[i].DisplayName,
             Detail: Details[i].Details,
@@ -193,7 +191,7 @@ class ServiceCenterController {
     const DisplayName = request.payload.DisplayName;
     const Detail = request.payload.Details;
     if (user.accessLevel.toLowerCase() === 'premium') {
-      modals.table_authorized_service_center_details.update({
+      modals.authorizeServiceCenterDetail.update({
         DetailTypeID,
         DisplayName,
         Detail
@@ -210,14 +208,14 @@ class ServiceCenterController {
 
   static deleteServiceCenter(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    Promise.all([modals.table_authorized_service_center.update({
+    Promise.all([modals.authorizedServiceCenter.update({
       status_id: 3,
       updated_by_user_id: user.userId
     }, {
       where: {
         ID: request.params.id
       }
-    }), modals.table_authorized_service_center_details.update({
+    }), modals.authorizeServiceCenterDetail.update({
       status_id: 3
     }, {
       where: {
@@ -229,7 +227,7 @@ class ServiceCenterController {
   static deleteServiceCenterDetail(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (user.accessLevel.toLowerCase() === 'premium') {
-      modals.table_authorized_service_center_details.update({
+      modals.authorizeServiceCenterDetail.update({
         status_id: 3
       }, {
         where: {
@@ -243,29 +241,114 @@ class ServiceCenterController {
   }
 
   static retrieveServiceCenters(request, reply) {
-    modals.table_authorized_service_center.findAll({
-      where: { status_id: 1 },
+    const payload = request.payload || {
+      location: '',
+      searchValue: '',
+      longitude: '',
+      latitude: ''
+    };
+    const location = payload.location;
+    const brandId = request.query.brandid || '';
+    const searchValue = `%${payload.searchValue || ''}%`;
+    const whereClause = brandId ? {
+      status_id: {
+        $ne: 3
+      },
+      brand_id: brandId,
+      $or: []
+    } : {
+      status_id: {
+        $ne: 3
+      },
+      $or: []
+    };
+
+    whereClause.$or.push(modals.sequelize.where(modals.sequelize.fn('lower', modals.sequelize.col('center_name')), { $like: modals.sequelize.fn('lower', searchValue) }));
+    whereClause.$or.push(modals.sequelize.where(modals.sequelize.fn('lower', modals.sequelize.col('address_street')), { $like: modals.sequelize.fn('lower', searchValue) }));
+    whereClause.$or.push(modals.sequelize.where(modals.sequelize.fn('lower', modals.sequelize.col('address_city')), { $like: modals.sequelize.fn('lower', searchValue) }));
+    whereClause.$or.push(modals.sequelize.where(modals.sequelize.fn('lower', modals.sequelize.col('address_state')), { $like: modals.sequelize.fn('lower', searchValue) }));
+    whereClause.$or.push(modals.sequelize.where(modals.sequelize.fn('lower', modals.sequelize.col('`brand`.`brand_name`')), { $like: modals.sequelize.fn('lower', searchValue) }));
+    modals.authorizedServiceCenter.findAll({
+      where: whereClause,
       include: [
-        { model: modals.table_brands, as: 'Brand', attributes: ['Name'] }
+        {
+          model: modals.table_brands,
+          as: 'brand',
+          attributes: [['brand_name', 'name'], ['brand_description', 'description'], ['brand_id', 'id']],
+          where: whereClause,
+          required: true
+        },
+        {
+          model: modals.authorizeServiceCenterDetail,
+          as: 'centerDetails',
+          attributes: [['display_name', 'name'], 'details', ['contactdetail_type_id', 'detailType']],
+          where: {
+            status_id: {
+              $ne: 3
+            }
+          },
+          required: false
+        }
       ],
-      attributes: excludedAttributes
+      attributes: [['center_name', 'centerName'], ['address_house_no', 'houseNo'], ['address_block', 'block'], ['address_street', 'street'], ['address_sector', 'sector'], ['address_city', 'city'], ['address_state', 'state'], ['address_pin_code', 'pinCode'], ['address_nearby', 'nearBy'], 'latitude', 'longitude', 'timings', ['open_days', 'openingDays']]
     }).then((result) => {
-      reply(result).code(200);
+      const serviceCentersWithLocation = [];
+      const serviceCenters = result.map((item) => {
+        const center = item.toJSON();
+        center.centerAddress = `${center.centerName}, ${center.sector} ${center.street}, ${center.city}-${center.pinCode}, ${center.state}, India`;
+        center.geoLocation = `${center.latitude}, ${center.longitude}`;
+
+        if (location) {
+          googleMapsClient.distanceMatrix({
+            origins: [location],
+            destinations: [center.centerAddress, center.geoLocation]
+          }).asPromise().then((matrix) => {
+            const tempMatrix = matrix.status === 200 && matrix.json ? matrix.json.rows[0] : [];
+            center.distanceMetrics = tempMatrix.elements[1].distance ? tempMatrix.elements[1].distance.text.split(' ')[1] : 'km';
+            center.distance = parseFloat(tempMatrix.elements[1].distance ? tempMatrix.elements[1].distance.text.split(' ')[0] : 0);
+            serviceCentersWithLocation.push(center);
+            if (serviceCentersWithLocation.length === result.length) {
+              serviceCentersWithLocation.sort((a, b) => a.distance - b.distance);
+              reply({
+                status: true,
+                serviceCenters: serviceCentersWithLocation
+              }).code(200);
+            }
+          }).catch(err => reply({
+            status: false,
+            err
+          }));
+        }
+
+        return center;
+      });
+
+      if (!location) {
+        reply({
+          status: true,
+          serviceCenters
+        });
+      }
     }).catch((err) => {
-      reply(err);
+      reply({
+        status: false,
+        err
+      });
     });
   }
 
   static retrieveServiceCenterById(request, reply) {
-    modals.table_authorized_service_center.findOne({
+    modals.authorizedServiceCenter.findOne({
       where: {
         ID: request.params.id
       },
       include: [
         { model: modals.table_brands, as: 'Brand', attributes: ['Name'] },
-        { model: modals.table_authorized_service_center_details,
+        {
+          model: modals.authorizeServiceCenterDetail,
           as: 'Details',
-          attributes: excludedAttributes }
+          attributes: excludedAttributes
+        }
       ],
       attributes: excludedAttributes
     }).then((result) => {
