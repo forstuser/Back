@@ -254,7 +254,7 @@ class EHomeAdaptor {
           }
         },
         categoryName: result[5],
-        nextPageUrl: productList.length > listIndex + 10 ? `categories/${masterCategoryId}/products?pageno=${parseInt(pageNo, 10) + 1}&ctype=${ctype}&categoryids=${categoryIds}&brandids=${brandIds}&offlinesellerids=${offlineSellerIds}&onlinesellerids=${onlineSellerIds}&sortby=${sortBy}` : ''
+        nextPageUrl: productList.length > listIndex + 10 ? `categories/${masterCategoryId}/products?pageno=${parseInt(pageNo, 10) + 1}&ctype=${ctype}&categoryids=${categoryIds}&brandids=${brandIds}&offlinesellerids=${offlineSellerIds}&onlinesellerids=${onlineSellerIds}&sortby=${sortBy}&searchvalue=${searchValue}` : ''
       };
     }).catch(err => ({
       status: false,

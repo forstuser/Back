@@ -47,7 +47,7 @@ class DashboardController {
 
   static getMailbox(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    reply(notificationAdaptor.retrieveNotifications(user))
+    reply(notificationAdaptor.retrieveNotifications(user, request.query.pageno))
       .code(200);
   }
 }

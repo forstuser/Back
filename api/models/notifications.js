@@ -1,6 +1,12 @@
 /* jshint indent: 2 */
 
 module.exports = (sequelize, DataTypes) => sequelize.define('mailBox', {
+  notification_id: {
+    type: DataTypes.INTEGER(11),
+    allowNull: false,
+    primaryKey: true,
+    autoIncrement: true
+  },
   user_id: {
     type: DataTypes.INTEGER(11),
     allowNull: false

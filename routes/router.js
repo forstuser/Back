@@ -22,7 +22,7 @@ const SearchController = require('../api/controllers/search');
 let User;
 
 function associateModals(modals) {
-  modals.productMetaData.hasOne(modals.categoryFormMapping, { as: 'selectedValue', foreignKey: 'category_form_id'});
+  modals.productMetaData.hasOne(modals.categoryFormMapping, { as: 'selectedValue', foreignKey: 'category_form_id' });
   modals.offlineSeller.hasMany(modals.offlineSellerDetails, { as: 'sellerDetails', foreignKey: 'offline_seller_id' });
   modals.onlineSeller.hasMany(modals.onlineSellerDetails, { as: 'sellerDetails', foreignKey: 'seller_id' });
   modals.table_brands.hasOne(modals.brandReviews, { as: 'brandReviews', foreignKey: 'brand_id' });
@@ -55,7 +55,7 @@ function associateModals(modals) {
   modals.table_users.hasMany(modals.userImages, { foreignKey: 'user_id', as: 'userImages' });
   modals.consumerBills.belongsTo(modals.table_users, { foreignKey: 'user_id', as: 'consumer' });
   modals.table_users.hasMany(modals.consumerBills);
-  modals.consumerBills.belongsToMany(modals.consumerBillDetails, { foreignKey: 'bill_id', through: modals.billMapping, otherKey: 'ref_id',as: 'billDetails' });
+  modals.consumerBills.belongsToMany(modals.consumerBillDetails, { foreignKey: 'bill_id', through: modals.billMapping, otherKey: 'ref_id', as: 'billDetails' });
   modals.consumerBillDetails.belongsToMany(modals.consumerBills, { foreignKey: 'ref_id', as: 'bill', through: modals.billMapping, where: { bill_ref_type: 1 }, otherKey: 'bill_id' });
   modals.consumerBillDetails.belongsToMany(modals.offlineSeller, {
     through: modals.billSellerMapping,
@@ -108,6 +108,17 @@ function associateModals(modals) {
     as: 'offlineSeller'
   });
 
+  modals.productBills.hasMany(modals.mailBox, {
+    foreignKey: 'bill_product_id',
+    as: 'mails'
+  });
+  modals.mailBox.belongsTo(modals.productBills, {
+    foreignKey: 'bill_product_id',
+    as: 'product'
+  });
+  modals.mailBox.belongsToMany(modals.billCopies, { foreignKey: 'notification_id', through: modals.mailboxCopies, as: 'copies', otherKey: 'bill_copy_id' });
+
+
   modals.productBills.hasMany(modals.repairBills, {
     foreignKey: 'bill_product_id',
     as: 'repairBills'
@@ -135,7 +146,7 @@ function associateModals(modals) {
     as: 'offlineSeller'
   });
 
-  modals.repairBillCopies.belongsTo(modals.billCopies, { foreignKey: 'bill_copy_id', as: 'billCopies'});
+  modals.repairBillCopies.belongsTo(modals.billCopies, { foreignKey: 'bill_copy_id', as: 'billCopies' });
   modals.repairBills.hasMany(modals.repairBillCopies, { foreignKey: 'bill_repair_id', as: 'copies' });
 
   modals.productBills.hasMany(modals.warranty, { foreignKey: 'bill_product_id', as: 'warrantyDetails' });
@@ -189,10 +200,10 @@ function associateModals(modals) {
   });
 
   modals.warranty.belongsTo(modals.productBills, { foreignKey: 'bill_product_id', as: 'warrantyProduct' });
-  modals.warrantyCopies.belongsTo(modals.billCopies, { foreignKey: 'bill_copy_id', as: 'billCopies'});
-  modals.amcBillCopies.belongsTo(modals.billCopies, { foreignKey: 'bill_copy_id', as: 'billCopies'});
-  modals.insuranceBillCopies.belongsTo(modals.billCopies, { foreignKey: 'bill_copy_id', as: 'billCopies'});
-  modals.billDetailCopies.belongsTo(modals.billCopies, { foreignKey: 'bill_copy_id', as: 'billCopies'});
+  modals.warrantyCopies.belongsTo(modals.billCopies, { foreignKey: 'bill_copy_id', as: 'billCopies' });
+  modals.amcBillCopies.belongsTo(modals.billCopies, { foreignKey: 'bill_copy_id', as: 'billCopies' });
+  modals.insuranceBillCopies.belongsTo(modals.billCopies, { foreignKey: 'bill_copy_id', as: 'billCopies' });
+  modals.billDetailCopies.belongsTo(modals.billCopies, { foreignKey: 'bill_copy_id', as: 'billCopies' });
   modals.warranty.hasMany(modals.warrantyCopies, { foreignKey: 'bill_warranty_id', as: 'warrantyCopies' });
   modals.amcBills.hasMany(modals.amcBillCopies, { foreignKey: 'bill_amc_id', as: 'amcCopies' });
   modals.insuranceBills.hasMany(modals.insuranceBillCopies, {
@@ -1705,7 +1716,7 @@ module.exports = (app, modals) => {
 
   prepareInsightRoutes(insightController, insightRoutes);
 
-  if(searchController){
+  if (searchController) {
     searchRoutes.push({
       method: 'GET',
       path: '/search',
@@ -1725,7 +1736,7 @@ module.exports = (app, modals) => {
           }
         }
       }
-    })
+    });
   }
 
   app.route([
