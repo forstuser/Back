@@ -94,7 +94,7 @@ server.route({
         const EmailID = request.payload.EmailID;
         const Password = request.payload.Password;
         //console.log(request);
-        connection.query('SELECT user_id as ID,fullname as Name,email_id as EmailID,image as Image,user_type_id as UserType FROM table_users WHERE email_id = "' + EmailID + '" and password = md5("' + Password + '") and status_id=1', function (error, admin, fields) {
+        connection.query('SELECT user_id as ID,fullname as Name,email_id as EmailID,image as Image,user_type_id as UserType FROM table_users WHERE email_id = "' + EmailID + '" and password = md5("' + Password + '") and status_id=1 and user_type_id IN(1,2,3,4,6)', function (error, admin, fields) {
             if (error) throw error;
             if(admin.length > 0){
                 const tokenNo=random(25);
