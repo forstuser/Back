@@ -139,8 +139,8 @@ class InsightAdaptor {
                 $ne: 3
               },
               purchase_date: {
-                $gte: firstDay,
-                $lte: lastDay
+                $gte: new Date(firstDay),
+                $lte: new Date(lastDay)
               }
             },
             include: [
@@ -194,8 +194,8 @@ class InsightAdaptor {
                 $ne: 3
               },
               purchase_date: {
-                $gte: monthStartDay,
-                $lte: monthLastDay
+                $gte: new Date(monthStartDay),
+                $lte: new Date(monthLastDay)
               }
             },
             attributes: [],
@@ -241,8 +241,8 @@ class InsightAdaptor {
                 $ne: 3
               },
               purchase_date: {
-                $gte: yearStartDay,
-                $lte: yearLastDay
+                $gte: new Date(yearStartDay),
+                $lte: new Date(yearLastDay)
               }
             },
             attributes: [],
