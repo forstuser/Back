@@ -17,9 +17,9 @@ class SearchAdaptor {
       this.retrieveRecentSearch(user)
     ]).then((result) => {
       const productList = result[0].map((item) => {
-        let product = item.toJSON();
+        const product = item.toJSON();
         product.productMetaData.map((metaData) => {
-          if (metaData.type === "2" && metaData.selectedValue) {
+          if (metaData.type === '2' && metaData.selectedValue) {
             metaData.value = metaData.selectedValue.value;
           }
 
@@ -28,10 +28,10 @@ class SearchAdaptor {
         return product;
       });
       const categoryList = result[1].map((item) => {
-        let category = item.toJSON();
+        const category = item.toJSON();
         category.products.map((productItem) => {
           productItem.productMetaData.map((metaData) => {
-            if (metaData.type === "2" && metaData.selectedValue) {
+            if (metaData.type === '2' && metaData.selectedValue) {
               metaData.value = metaData.selectedValue.value;
             }
 
@@ -71,7 +71,7 @@ class SearchAdaptor {
               $ne: 3
             }
           },
-          this.modals.sequelize.where(this.modals.sequelize.fn('lower', this.modals.sequelize.col('categories.category_name')), {$like: this.modals.sequelize.fn('lower', searchValue)})]
+          this.modals.sequelize.where(this.modals.sequelize.fn('lower', this.modals.sequelize.col('categories.category_name')), { $like: this.modals.sequelize.fn('lower', searchValue) })]
       },
       include: [{
         model: this.modals.productBills,
@@ -84,7 +84,7 @@ class SearchAdaptor {
         },
         on: {
           $or: {
-            category_id: this.modals.sequelize.where(this.modals.sequelize.col("categories.category_id"), "=", this.modals.sequelize.col("products.category_id"))
+            category_id: this.modals.sequelize.where(this.modals.sequelize.col('categories.category_id'), '=', this.modals.sequelize.col('products.category_id'))
           }
         },
         include: [
@@ -102,38 +102,38 @@ class SearchAdaptor {
               as: 'billDetailCopies',
               attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('bill_copy_id'), '/files'), 'fileUrl']]
             },
-              {
-                model: this.modals.consumerBills,
-                as: 'bill',
-                where: {
-                  $and: [
-                    this.modals.sequelize.where(this.modals.sequelize.col("`products->consumerBill->bill->billMapping`.`bill_ref_type`"), 1),
-                    {
-                      user_status: 5,
-                      admin_status: 5
-                    }
-                  ]
-                },
-                attributes: []
+            {
+              model: this.modals.consumerBills,
+              as: 'bill',
+              where: {
+                $and: [
+                  this.modals.sequelize.where(this.modals.sequelize.col('`products->consumerBill->bill->billMapping`.`bill_ref_type`'), 1),
+                  {
+                    user_status: 5,
+                    admin_status: 5
+                  }
+                ]
               },
-              {
-                model: this.modals.offlineSeller,
-                as: 'productOfflineSeller',
-                where: {
-                  $and: [this.modals.sequelize.where(this.modals.sequelize.col('`products->consumerBill->productOfflineSeller->billSellerMapping`.`ref_type`'), 2)]
-                },
-                attributes: ['ID', ['offline_seller_name', 'sellerName'], ['seller_url', 'url']],
-                required: false
+              attributes: []
+            },
+            {
+              model: this.modals.offlineSeller,
+              as: 'productOfflineSeller',
+              where: {
+                $and: [this.modals.sequelize.where(this.modals.sequelize.col('`products->consumerBill->productOfflineSeller->billSellerMapping`.`ref_type`'), 2)]
               },
-              {
-                model: this.modals.onlineSeller,
-                as: 'productOnlineSeller',
-                where: {
-                  $and: [this.modals.sequelize.where(this.modals.sequelize.col('`products->consumerBill->productOnlineSeller->billSellerMapping`.`ref_type`'), 1)]
-                },
-                attributes: ['ID', ['seller_name', 'sellerName'], ['seller_url', 'url']],
-                required: false
-              }],
+              attributes: ['ID', ['offline_seller_name', 'sellerName'], ['seller_url', 'url']],
+              required: false
+            },
+            {
+              model: this.modals.onlineSeller,
+              as: 'productOnlineSeller',
+              where: {
+                $and: [this.modals.sequelize.where(this.modals.sequelize.col('`products->consumerBill->productOnlineSeller->billSellerMapping`.`ref_type`'), 1)]
+              },
+              attributes: ['ID', ['seller_name', 'sellerName'], ['seller_url', 'url']],
+              required: false
+            }],
             required: true
           },
           {
@@ -203,22 +203,22 @@ class SearchAdaptor {
             include: [{
               model: this.modals.categoryForm, as: 'categoryForm', attributes: []
             },
-              {
-                model: this.modals.categoryFormMapping,
-                as: 'selectedValue',
-                on: {
-                  $or: [
-                    this.modals.sequelize.where(this.modals.sequelize.col("`products->productMetaData`.`category_form_id`"), this.modals.sequelize.col("`products->productMetaData->categoryForm`.`category_form_id`"))
-                  ]
-                },
-                where: {
-                  $and: [
-                    this.modals.sequelize.where(this.modals.sequelize.col("`products->productMetaData`.`form_element_value`"), this.modals.sequelize.col("`products->productMetaData->selectedValue`.`mapping_id`")),
-                    this.modals.sequelize.where(this.modals.sequelize.col("`products->productMetaData->categoryForm`.`form_element_type`"), 2)]
-                },
-                attributes: [['dropdown_name', 'value']],
-                required: false
-              }],
+            {
+              model: this.modals.categoryFormMapping,
+              as: 'selectedValue',
+              on: {
+                $or: [
+                  this.modals.sequelize.where(this.modals.sequelize.col('`products->productMetaData`.`category_form_id`'), this.modals.sequelize.col('`products->productMetaData->categoryForm`.`category_form_id`'))
+                ]
+              },
+              where: {
+                $and: [
+                  this.modals.sequelize.where(this.modals.sequelize.col('`products->productMetaData`.`form_element_value`'), this.modals.sequelize.col('`products->productMetaData->selectedValue`.`mapping_id`')),
+                  this.modals.sequelize.where(this.modals.sequelize.col('`products->productMetaData->categoryForm`.`form_element_type`'), 2)]
+              },
+              attributes: [['dropdown_name', 'value']],
+              required: false
+            }],
             required: false
           }, {
             model: this.modals.categories,
@@ -273,7 +273,7 @@ class SearchAdaptor {
               $ne: 3
             }
           },
-          this.modals.sequelize.where(this.modals.sequelize.fn('lower', this.modals.sequelize.col('product_name')), {$like: this.modals.sequelize.fn('lower', searchValue)})]
+          this.modals.sequelize.where(this.modals.sequelize.fn('lower', this.modals.sequelize.col('product_name')), { $like: this.modals.sequelize.fn('lower', searchValue) })]
       },
       include: [
         {
@@ -290,38 +290,38 @@ class SearchAdaptor {
             as: 'billDetailCopies',
             attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('bill_copy_id'), '/files'), 'fileUrl']]
           },
-            {
-              model: this.modals.consumerBills,
-              as: 'bill',
-              where: {
-                $and: [
-                  this.modals.sequelize.where(this.modals.sequelize.col("`consumerBill->bill->billMapping`.`bill_ref_type`"), 1),
-                  {
-                    user_status: 5,
-                    admin_status: 5
-                  }
-                ]
-              },
-              attributes: []
+          {
+            model: this.modals.consumerBills,
+            as: 'bill',
+            where: {
+              $and: [
+                this.modals.sequelize.where(this.modals.sequelize.col('`consumerBill->bill->billMapping`.`bill_ref_type`'), 1),
+                {
+                  user_status: 5,
+                  admin_status: 5
+                }
+              ]
             },
-            {
-              model: this.modals.offlineSeller,
-              as: 'productOfflineSeller',
-              where: {
-                $and: [this.modals.sequelize.where(this.modals.sequelize.col('`consumerBill->productOfflineSeller->billSellerMapping`.`ref_type`'), 2)]
-              },
-              attributes: ['ID', ['offline_seller_name', 'sellerName'], ['seller_url', 'url']],
-              required: false
+            attributes: []
+          },
+          {
+            model: this.modals.offlineSeller,
+            as: 'productOfflineSeller',
+            where: {
+              $and: [this.modals.sequelize.where(this.modals.sequelize.col('`consumerBill->productOfflineSeller->billSellerMapping`.`ref_type`'), 2)]
             },
-            {
-              model: this.modals.onlineSeller,
-              as: 'productOnlineSeller',
-              where: {
-                $and: [this.modals.sequelize.where(this.modals.sequelize.col('`consumerBill->productOnlineSeller->billSellerMapping`.`ref_type`'), 1)]
-              },
-              attributes: ['ID', ['seller_name', 'sellerName'], ['seller_url', 'url']],
-              required: false
-            }],
+            attributes: ['ID', ['offline_seller_name', 'sellerName'], ['seller_url', 'url']],
+            required: false
+          },
+          {
+            model: this.modals.onlineSeller,
+            as: 'productOnlineSeller',
+            where: {
+              $and: [this.modals.sequelize.where(this.modals.sequelize.col('`consumerBill->productOnlineSeller->billSellerMapping`.`ref_type`'), 1)]
+            },
+            attributes: ['ID', ['seller_name', 'sellerName'], ['seller_url', 'url']],
+            required: false
+          }],
           required: true
         },
         {
@@ -391,22 +391,22 @@ class SearchAdaptor {
           include: [{
             model: this.modals.categoryForm, as: 'categoryForm', attributes: []
           },
-            {
-              model: this.modals.categoryFormMapping,
-              as: 'selectedValue',
-              on: {
-                $or: [
-                  this.modals.sequelize.where(this.modals.sequelize.col("`productMetaData`.`category_form_id`"), this.modals.sequelize.col("`productMetaData->categoryForm`.`category_form_id`"))
-                ]
-              },
-              where: {
-                $and: [
-                  this.modals.sequelize.where(this.modals.sequelize.col("`productMetaData`.`form_element_value`"), this.modals.sequelize.col("`productMetaData->selectedValue`.`mapping_id`")),
-                  this.modals.sequelize.where(this.modals.sequelize.col("`productMetaData->categoryForm`.`form_element_type`"), 2)]
-              },
-              attributes: [['dropdown_name', 'value']],
-              required: false
-            }],
+          {
+            model: this.modals.categoryFormMapping,
+            as: 'selectedValue',
+            on: {
+              $or: [
+                this.modals.sequelize.where(this.modals.sequelize.col('`productMetaData`.`category_form_id`'), this.modals.sequelize.col('`productMetaData->categoryForm`.`category_form_id`'))
+              ]
+            },
+            where: {
+              $and: [
+                this.modals.sequelize.where(this.modals.sequelize.col('`productMetaData`.`form_element_value`'), this.modals.sequelize.col('`productMetaData->selectedValue`.`mapping_id`')),
+                this.modals.sequelize.where(this.modals.sequelize.col('`productMetaData->categoryForm`.`form_element_type`'), 2)]
+            },
+            attributes: [['dropdown_name', 'value']],
+            required: false
+          }],
           required: false
         }, {
           model: this.modals.categories,

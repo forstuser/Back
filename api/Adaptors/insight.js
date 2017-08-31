@@ -394,14 +394,6 @@ class InsightAdaptor {
       return {
         status: true,
         productList,
-        filterData: {
-          categories: result[1],
-          brands: result[2],
-          sellers: {
-            offlineSellers: result[3],
-            onlineSellers: result[4]
-          }
-        },
         insight: distinctInsight && distinctInsight.length > 0 ? {
           startDate: shared.formatDate(firstDay, 'yyyy-mm-dd'),
           endDate: shared.formatDate(lastDay, 'yyyy-mm-dd'),
