@@ -24,10 +24,12 @@ const yearStartDay = new Date(date.getFullYear(), 0, 1);
 const yearLastDay = new Date(date.getFullYear() + 1, 0, 0);
 const first = date.getDate() - date.getDay();
 // First day is the day of the month - the day of the week
-const last = first + 6; // last day is the first day + 6
+const last = first + 6;// last day is the first day + 6
+const lastDate = new Date(date.setDate(last));
 
 const firstDay = new Date(date.setDate(first));
-const lastDay = new Date(date.setDate(last));
+const lastDay = date.getDate() > lastDate.getDate() ? new Date(date
+  .getFullYear(), date.getMonth() + 1, lastDate.getDate()) : lastDate;
 
 class InsightAdaptor {
   constructor(modals) {
@@ -334,7 +336,6 @@ class InsightAdaptor {
         return product;
       });
 
-
       const distinctInsightWeekly = [];
       const distinctInsightMonthly = [];
       const distinctInsight = [];
@@ -365,17 +366,28 @@ class InsightAdaptor {
         return product;
       });
 
-      distinctInsight.map((item) => {
-        const dayItem = item;
+      const distinctInsightTemp = distinctInsight.map((item) => {
+        const dayItem = {
+          value: item.value,
+          month: item.month,
+          monthId: item.monthId,
+          date: item.date,
+          week: item.week,
+          day: item.day,
+          totalCost: item.totalCost,
+          totalTax: item.totalTax,
+          tax: item.tax
+        };
         const monthIndex = distinctInsightMonthly
           .findIndex(distinctItem => (distinctItem.month === item.month));
         const weekIndex = distinctInsightWeekly
           .findIndex(distinctItem => (distinctItem.week === item.week));
         if (weekIndex !== -1 && monthIndex !== -1) {
-          distinctInsightWeekly[weekIndex].value += item.value;
-          distinctInsightWeekly[weekIndex].totalCost += item.totalCost;
-          distinctInsightWeekly[weekIndex].totalTax += item.totalTax;
-          distinctInsightWeekly[weekIndex].tax += item.tax;
+          const currentWeekInsight = distinctInsightWeekly[weekIndex];
+          currentWeekInsight.value += item.value;
+          currentWeekInsight.totalCost += item.totalCost;
+          currentWeekInsight.totalTax += item.totalTax;
+          currentWeekInsight.tax += item.tax;
         } else {
           distinctInsightWeekly.push(item);
         }
@@ -383,45 +395,63 @@ class InsightAdaptor {
         if (monthIndex === -1) {
           distinctInsightMonthly.push(item);
         } else {
-          distinctInsightMonthly[monthIndex].value += item.value;
-          distinctInsightMonthly[monthIndex].totalCost += item.totalCost;
-          distinctInsightMonthly[monthIndex].totalTax += item.totalTax;
-          distinctInsightMonthly[monthIndex].tax += item.tax;
+          const currentMonthInsight = distinctInsightMonthly[monthIndex];
+          currentMonthInsight.value += item.value;
+          currentMonthInsight.totalCost += item.totalCost;
+          currentMonthInsight.totalTax += item.totalTax;
+          currentMonthInsight.tax += item.tax;
         }
 
         return dayItem;
       });
 
+      productList.sort((a, b) => new Date(b
+        .consumerBill.purchaseDate) - new Date(a
+          .consumerBill.purchaseDate));
+      const productListWeekly = productList
+        .filter(item => new Date(item
+          .consumerBill.purchaseDate).getTime() >= new Date(shared.formatDate(monthStartDay, 'yyyy-mm-dd')).getTime() && new Date(item
+            .consumerBill.purchaseDate).getTime() <= new Date(shared.formatDate(monthLastDay, 'yyyy-mm-dd')).getTime()).slice(0, 10);
+      const productListMonthly = productList
+        .filter(item => new Date(item
+          .consumerBill.purchaseDate).getTime() >= new Date(shared.formatDate(yearStartDay, 'yyyy-mm-dd')) && new Date(item
+            .consumerBill.purchaseDate).getTime() <= new Date(shared.formatDate(yearLastDay, 'yyyy-mm-dd')).getTime()).slice(0, 10);
       distinctInsightMonthly.sort((a, b) => new Date(b.date) - new Date(a.date));
       distinctInsightWeekly.sort((a, b) => new Date(b.date) - new Date(a.date));
-      distinctInsight.sort((a, b) => new Date(b.date) - new Date(a.date));
-      const insightData = distinctInsight
-        .filter(item => new Date(item.date) >= firstDay && new Date(item.date) <= lastDay);
+
+      const insightData = distinctInsightTemp
+        .filter(item => new Date(item.date).getTime() >= new Date(shared.formatDate(firstDay, 'yyyy-mm-dd')).getTime() && new Date(item.date).getTime() <= new Date(shared.formatDate(lastDay, 'yyyy-mm-dd')).getTime());
+      insightData.sort((a, b) => new Date(b.date) - new Date(a.date));
 
       const insightWeekly = distinctInsightWeekly
         .filter(item => new Date(item
-          .date) >= monthStartDay && new Date(item
-            .date) <= monthLastDay);
+          .date).getTime() >= new Date(shared.formatDate(monthStartDay, 'yyyy-mm-dd')).getTime() && new Date(item
+            .date).getTime() <= new Date(shared.formatDate(monthLastDay, 'yyyy-mm-dd')).getTime());
       const insightMonthly = distinctInsightMonthly
         .filter(item => new Date(item
-          .date) >= yearStartDay && new Date(item
-            .date) <= yearLastDay);
+          .date).getTime() >= new Date(shared.formatDate(yearStartDay, 'yyyy-mm-dd')).getTime() && new Date(item
+            .date) <= new Date(shared.formatDate(yearLastDay, 'yyyy-mm-dd')).getTime());
       return {
         status: true,
-        productList,
+        productList: productList
+          .filter(item => new Date(item
+            .consumerBill.purchaseDate).getTime() >= new Date(shared.formatDate(firstDay, 'yyyy-mm-dd')).getTime() && new Date(item
+              .consumerBill.purchaseDate).getTime() <= new Date(shared.formatDate(lastDay, 'yyyy-mm-dd')).getTime()).slice(0, 10),
+        productListWeekly,
+        productListMonthly,
         insight: distinctInsight && distinctInsight.length > 0 ? {
-          startDate: shared.formatDate(firstDay, 'yyyy-mm-dd'),
-          endDate: shared.formatDate(lastDay, 'yyyy-mm-dd'),
+          startDate: new Date(shared.formatDate(firstDay, 'yyyy-mm-dd')),
+          endDate: new Date(shared.formatDate(lastDay, 'yyyy-mm-dd')),
           currentMonthId: new Date().getMonth() + 1,
           currentWeek: weekAndDay(new Date()).monthWeek,
           currentDay: weekAndDay(new Date()).day,
-          monthStartDate: shared.formatDate(monthStartDay, 'yyyy-mm-dd'),
-          monthEndDate: shared.formatDate(monthLastDay, 'yyyy-mm-dd'),
-          yearStartDate: shared.formatDate(yearStartDay, 'yyyy-mm-dd'),
-          yearEndDate: shared.formatDate(yearLastDay, 'yyyy-mm-dd'),
+          monthStartDate: new Date(shared.formatDate(monthStartDay, 'yyyy-mm-dd')),
+          monthEndDate: new Date(shared.formatDate(monthLastDay, 'yyyy-mm-dd')),
+          yearStartDate: new Date(shared.formatDate(yearStartDay, 'yyyy-mm-dd')),
+          yearEndDate: new Date(shared.formatDate(yearLastDay, 'yyyy-mm-dd')),
           totalSpend: sumProps(insightData, 'value'),
-          totalYearlySpend: sumProps(insightWeekly, 'value'),
-          totalMonthlySpend: sumProps(insightMonthly, 'value'),
+          totalYearlySpend: sumProps(insightMonthly, 'value'),
+          totalMonthlySpend: sumProps(insightWeekly, 'value'),
           totalDays: insightData.length,
           insightData,
           insightWeekly,
