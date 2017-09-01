@@ -45,9 +45,11 @@ class DashboardAdaptor {
     this.cLastDay.setHours(0, 0, 0, 0);
 
     let s = new Date(this.cFirstDay.getFullYear(),
-      this.cFirstDay.getMonth(), this.cFirstDay.getDate()).setHours(0, 0, 0, 0);
+      this.cFirstDay.getMonth(), this.cFirstDay.getDate());
+    s.setHours(0, 0, 0, 0);
     const e = new Date(this.cLastDay.getFullYear(),
-      this.cLastDay.getMonth(), this.cLastDay.getDate()).setHours(0, 0, 0, 0);
+      this.cLastDay.getMonth(), this.cLastDay.getDate());
+    e.setHours(0, 0, 0, 0);
     const a = [];
     while (s.getTime() < e.getTime()) {
       a.push({
