@@ -37,13 +37,12 @@ class DashboardAdaptor {
   }
 
   getAllDays() {
-    const cDate = this.date;
     const cFirst = this.cFirst;
     const cLast = this.cLast;// last day is the first day + 6
-    const cLastDate = new Date(cDate.setDate(cLast));
-    const cFirstDay = new Date(cDate.setDate(cFirst));
-    const cLastDay = cDate.getDate() > cLastDate.getDate() ? new Date(cDate
-      .getFullYear(), cDate.getMonth() + 1, cLastDate.getDate()) : cLastDate;
+    const cLastDate = new Date(this.date.setDate(cLast));
+    const cFirstDay = new Date(this.date.setDate(cFirst));
+    const cLastDay = this.date.getDate() > cLastDate.getDate() ? new Date(this.date
+      .getFullYear(), this.date.getMonth() + 1, cLastDate.getDate()) : cLastDate;
 
     cFirstDay.setHours(0, 0, 0, 0);
     cLastDay.setHours(0, 0, 0, 0);

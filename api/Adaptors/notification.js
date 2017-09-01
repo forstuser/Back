@@ -258,16 +258,6 @@ class NotificationAdaptor {
     });
   }
 
-  retrieveRecentSearch(user) {
-    return this.modals.recentSearches.findAll({
-      where: {
-        user_id: user.ID
-      },
-      order: [['searchDate', 'DESC']],
-      attributes: ['searchValue']
-    });
-  }
-
   notifyUser(userId, payload, reply) {
     const whereClause = userId ? {
       ID: userId,
