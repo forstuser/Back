@@ -138,12 +138,14 @@ class UserController {
             },
             defaults: {
               mobile_no: trueObject.PhoneNo,
-              status_id: 1
+              status_id: 1,
+              gcm_id: trueObject.fcmId
             },
-            attributes: ['ID', ['fullname', 'name'], ['mobile_no', 'phoneNo'], ['email_id', 'email'], 'location', 'longitude', 'latitude', ['is_enrolled_professional', 'isEnrolled'], ['professional_category_id', 'categoryId'], ['share_mobile', 'isPhoneAllowed'], ['share_email', 'isEmailAllowed'], ['email_verified', 'isEmailVerified'], ['professional_description', 'description']]
+            attributes: ['ID', ['fullname', 'name'], ['mobile_no', 'phoneNo'], ['email_id', 'email'], 'location', 'longitude', 'latitude', ['is_enrolled_professional', 'isEnrolled'], ['professional_category_id', 'categoryId'], ['share_mobile', 'isPhoneAllowed'], ['share_email', 'isEmailAllowed'], ['email_verified', 'isEmailVerified'], ['professional_description', 'description'], ['gcm_id', 'fcmId']]
           }).then((userData) => {
             userData[0].updateAttributes({
-              last_login: shared.formatDate(new Date(), 'yyyy-mm-dd HH:MM:ss')
+              last_login: shared.formatDate(new Date(), 'yyyy-mm-dd HH:MM:ss'),
+              gcm_id: trueObject.fcmId
             });
             reply(dashboardAdaptor.prepareDashboardResult(userData[1], userData[0], `bearer ${authentication.generateToken(userData[0]).token}`)).code(201).header('authorization', `bearer ${authentication.generateToken(userData[0]).token}`);
           }).catch((err) => {
@@ -169,7 +171,8 @@ class UserController {
         accessLevel: trueObject.accessLevel ? trueObject.accessLevel : roles.ROLE_MEMBER,
         last_login: shared.formatDate(new Date(), 'yyyy-mm-dd HH:MM:ss'),
         mobile_no: trueObject.PhoneNo,
-        status_id: 1
+        status_id: 1,
+        gcm_id: trueObject.fcmId
       };
 
       userModel.findOrCreate({ where: {
@@ -184,7 +187,8 @@ class UserController {
             userData[0].updateAttributes({
               email_id: trueObject.EmailAddress,
               fullname: trueObject.Name,
-              last_login: shared.formatDate(new Date(), 'yyyy-mm-dd HH:MM:ss')
+              last_login: shared.formatDate(new Date(), 'yyyy-mm-dd HH:MM:ss'),
+              gcm_id: trueObject.fcmId
             });
           }
 

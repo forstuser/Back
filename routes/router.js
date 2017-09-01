@@ -22,6 +22,9 @@ const SearchController = require('../api/controllers/search');
 let User;
 
 function associateModals(modals) {
+  modals.brandDetails.belongsTo(modals.table_brands, { foreignKey: 'brand_id', as: 'brand' });
+  modals.table_brands.hasMany(modals.brandDetails, { foreignKey: 'brand_id', as: 'details' });
+
   modals.authorizedServiceCenter.belongsTo(modals.table_brands, { foreignKey: 'brand_id', as: 'brand' });
   modals.table_brands.hasMany(modals.authorizedServiceCenter, { foreignKey: 'brand_id', as: 'center' });
 
@@ -1433,7 +1436,8 @@ function prepareAuthRoutes(userController, authRoutes) {
               EmailAddress: joi.string().email(),
               PhoneNo: joi.string().required(),
               Name: joi.string(),
-              ImageLink: joi.string()
+              ImageLink: joi.string(),
+              fcmId: joi.string()
             },
             TruePayload: joi.string(),
             BBLogin_Type: joi.number().required(),

@@ -287,7 +287,7 @@ class ServiceCenterController {
     if (city) {
       whereClause.address_city = city;
     }
-    modals.authorizedServiceCenter.findAll({
+    Promise.all([modals.authorizedServiceCenter.findAll({
       where: whereClause,
       include: [
         {
@@ -302,13 +302,32 @@ class ServiceCenterController {
           as: 'centerDetails',
           attributes: [['display_name', 'name'], 'details', ['contactdetail_type_id', 'detailType']],
           where: detailWhereClause,
-          required: false
+          required: true
         }
       ],
       attributes: [['center_name', 'centerName'], ['address_house_no', 'houseNo'], ['address_block', 'block'], ['address_street', 'street'], ['address_sector', 'sector'], ['address_city', 'city'], ['address_state', 'state'], ['address_pin_code', 'pinCode'], ['address_nearby', 'nearBy'], 'latitude', 'longitude', 'timings', ['open_days', 'openingDays']]
-    }).then((result) => {
+    }),
+    modals.table_brands.findAll({
+      where: {
+        status_id: {
+          $ne: 3
+        }
+      },
+      include: [{
+        model: modals.brandDetails,
+        as: 'details',
+        where: {
+          status_id: {
+            $ne: 3
+          },
+          category_id: categoryId
+        },
+        attributes: []
+      }],
+      attributes: [['brand_id', 'id'], ['brand_name', 'name']]
+    })]).then((result) => {
       const serviceCentersWithLocation = [];
-      const serviceCenters = result.map((item) => {
+      const serviceCenters = result[0].map((item) => {
         const center = item.toJSON();
         center.centerAddress = `${center.centerName}, ${center.sector} ${center.street}, ${center.city}-${center.pinCode}, ${center.state}, India`;
         center.geoLocation = `${center.latitude}, ${center.longitude}`;
@@ -345,21 +364,26 @@ class ServiceCenterController {
             destinations
           }).asPromise().then((matrix) => {
             const tempMatrix = matrix.status === 200 && matrix.json ? matrix.json.rows[0]
-              .elements.find(matrixItem => matrixItem.status === 'OK') : [];
-            center.distanceMetrics = tempMatrix.distance ? tempMatrix.distance.text.split(' ')[1] : 'km';
-            center.distance = parseFloat(tempMatrix.distance ? tempMatrix.distance.text.split(' ')[0] : 0);
+              .elements.find(matrixItem => matrixItem.status === 'OK') : { };
+            center.distanceMetrics = tempMatrix && tempMatrix.distance ? tempMatrix.distance.text.split(' ')[1] : 'km';
+            center.distance = parseFloat(tempMatrix && tempMatrix.distance ? tempMatrix.distance.text.split(' ')[0] : 0);
             serviceCentersWithLocation.push(center);
-            if (serviceCentersWithLocation.length === result.length) {
+            if (serviceCentersWithLocation.length === result[0].length) {
               serviceCentersWithLocation.sort((a, b) => a.distance - b.distance);
               reply({
                 status: true,
-                serviceCenters: serviceCentersWithLocation
+                serviceCenters: serviceCentersWithLocation,
+                filterData: {
+                  brands: result[1]
+                }
               }).code(200);
             }
           }).catch(err => reply({
             status: false,
             err
           }));
+        } else {
+          serviceCentersWithLocation.push(center);
         }
 
         return center;
@@ -368,6 +392,9 @@ class ServiceCenterController {
       if (!location) {
         reply({
           status: true,
+          filterData: {
+            brands: result[1]
+          },
           serviceCenters
         });
       }

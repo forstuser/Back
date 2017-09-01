@@ -440,6 +440,7 @@ class InsightAdaptor {
         productListWeekly,
         productListMonthly,
         insight: distinctInsight && distinctInsight.length > 0 ? {
+          categoryName: result[1].name,
           startDate: new Date(shared.formatDate(firstDay, 'yyyy-mm-dd')),
           endDate: new Date(shared.formatDate(lastDay, 'yyyy-mm-dd')),
           currentMonthId: new Date().getMonth() + 1,
@@ -457,8 +458,8 @@ class InsightAdaptor {
           insightWeekly,
           insightMonthly
         } : {
-          startDate: '',
-          endDate: '',
+          startDate: new Date(),
+          endDate: new Date(),
           totalSpend: 0,
           totalDays: 0,
           insightData: distinctInsight

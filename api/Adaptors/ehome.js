@@ -180,22 +180,6 @@ class EHomeAdaptor {
             $ne: 3
           }
         },
-        include: [{
-          model: this.modals.categories,
-          on: {
-            $or: [
-              this.modals.sequelize.where(this.modals.sequelize.col('`subCategories`.`ref_id`'), this.modals.sequelize.col('`categories`.`category_id`'))
-            ]
-          },
-          as: 'subCategories',
-          where: {
-            status_id: {
-              $ne: 3
-            }
-          },
-          attributes: [['category_id', 'id'], ['category_name', 'name']],
-          required: false
-        }],
         attributes: [['category_id', 'id'], [this.modals.sequelize.fn('CONCAT', 'categories/', masterCategoryId, '/products?pageno=1&ctype=', this.modals.sequelize.col('`categories`.`display_id`')), 'cURL'], ['display_id', 'cType'], ['category_name', 'name']]
       }),
       this.modals.table_brands.findAll({
@@ -204,6 +188,16 @@ class EHomeAdaptor {
             $ne: 3
           }
         },
+        include: [{
+          model: this.modals.brandDetails,
+          as: 'details',
+          where: {
+            status_id: {
+              $ne: 3
+            }
+          },
+          attributes: [['category_id', 'categoryId']]
+        }],
         attributes: [['brand_id', 'id'], ['brand_name', 'name']]
       }),
       this.modals.offlineSeller.findAll({
@@ -212,6 +206,16 @@ class EHomeAdaptor {
             $ne: 3
           }
         },
+        include: [{
+          model: this.modals.offlineSellerDetails,
+          as: 'sellerDetails',
+          where: {
+            status_id: {
+              $ne: 3
+            }
+          },
+          attributes: [['category_id', 'categoryId']]
+        }],
         attributes: ['ID', ['offline_seller_name', 'name']]
       }),
       this.modals.onlineSeller.findAll({
@@ -220,6 +224,16 @@ class EHomeAdaptor {
             $ne: 3
           }
         },
+        include: [{
+          model: this.modals.onlineSellerDetails,
+          as: 'sellerDetails',
+          where: {
+            status_id: {
+              $ne: 3
+            }
+          },
+          attributes: [['category_id', 'categoryId']]
+        }],
         attributes: ['ID', ['seller_name', 'name']]
       }),
       this.modals.categories.findOne({
@@ -242,15 +256,50 @@ class EHomeAdaptor {
         return product;
       });
       const listIndex = (pageNo * 10) - 10;
+      const categoryIdList = result[1].map((item) => {
+        const category = item.toJSON();
+        return category.id;
+      });
+
+      const brands = result[2].map((item) => {
+        const brandItem = item.toJSON();
+        const brandDetail = brandItem.details
+          .find(detailItem => categoryIdList.indexOf(detailItem.categoryId) > -1);
+        return brandDetail ? {
+          id: brandItem.id,
+          name: brandItem.name
+        } : { id: 0 };
+      });
+
+      const offlineSellers = result[3].map((item) => {
+        const offlineItem = item.toJSON();
+        const offlineDetail = offlineItem.sellerDetails
+          .find(detailItem => categoryIdList.indexOf(detailItem.categoryId) > -1);
+        return offlineDetail ? {
+          id: offlineItem.ID,
+          name: offlineItem.name
+        } : { id: 0 };
+      });
+
+
+      const onlineSellers = result[4].map((item) => {
+        const onlineItem = item.toJSON();
+        const onlineDetail = onlineItem.sellerDetails
+          .find(detailItem => categoryIdList.indexOf(detailItem.categoryId) > -1);
+        return onlineDetail ? {
+          id: onlineItem.ID,
+          name: onlineItem.name
+        } : { id: 0 };
+      });
       return {
         status: true,
         productList: productList.slice((pageNo * 10) - 10, 10),
         filterData: {
           categories: result[1],
-          brands: result[2],
+          brands: brands.filter(item => item.id !== 0),
           sellers: {
-            offlineSellers: result[3],
-            onlineSellers: result[4]
+            offlineSellers: offlineSellers.filter(item => item.id !== 0),
+            onlineSellers: onlineSellers.filter(item => item.id !== 0)
           }
         },
         categoryName: result[5],
