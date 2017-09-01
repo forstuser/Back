@@ -16,24 +16,6 @@ const lastDay = date.getDate() > lastDate.getDate() ? new Date(date
 firstDay.setHours(0, 0, 0, 0);
 lastDay.setHours(0, 0, 0, 0);
 
-function getAllDays() {
-  let s = firstDay;
-  const e = lastDay;
-  const a = [];
-  while (s.getTime() < e.getTime()) {
-    a.push({
-      value: 0,
-      purchaseDate: new Date(s.getTime())
-    });
-    s = new Date(shared.formatDate(new Date(s.setDate(
-      s.getDate() + 1
-    )), 'yyyy-mm-dd'));
-    s.setHours(0, 0, 0, 0);
-  }
-
-  return a;
-}
-
 function sumProps(arrayItem, prop) {
   let total = 0;
   for (let i = 0; i < arrayItem.length; i += 1) {
@@ -49,6 +31,39 @@ const dueDays = {
 class DashboardAdaptor {
   constructor(modals) {
     this.modals = modals;
+    this.date = new Date();
+  }
+
+  getAllDays() {
+    const cDate = this.date;
+    const cFirst = cDate.getDate() - 6;
+    const cLast = cFirst + 7;// last day is the first day + 6
+    const cLastDate = new Date(cDate.setDate(cLast));
+    const cFirstDate = new Date(cDate.setDate(cFirst));
+
+
+    const cFirstDay = cFirstDate;
+    const cLastDay = cDate.getDate() > cLastDate.getDate() ? new Date(cDate
+      .getFullYear(), cDate.getMonth() + 1, cLastDate.getDate()) : cLastDate;
+
+    cFirstDay.setHours(0, 0, 0, 0);
+    cLastDay.setHours(0, 0, 0, 0);
+
+    let s = cFirstDay;
+    const e = cLastDay;
+    const a = [];
+    while (s.getTime() < e.getTime()) {
+      a.push({
+        value: 0,
+        purchaseDate: new Date(s.getTime())
+      });
+      s = new Date(shared.formatDate(new Date(s.setDate(
+        s.getDate() + 1
+      )), 'yyyy-mm-dd'));
+      s.setHours(0, 0, 0, 0);
+    }
+
+    return a;
   }
 
   retrieveDashboardResult(user) {
@@ -75,7 +90,7 @@ class DashboardAdaptor {
         return insightItem;
       });
 
-      const insightItems = DashboardAdaptor.retrieveDaysInsight(distinctInsight);
+      const insightItems = this.retrieveDaysInsight(distinctInsight);
 
       const insightResult = insightItems && insightItems.length > 0 ? {
         startDate: insightItems[0].purchaseDate,
@@ -143,7 +158,7 @@ class DashboardAdaptor {
               return insightItem;
             });
 
-            const insightItems = DashboardAdaptor.retrieveDaysInsight(distinctInsight);
+            const insightItems = this.retrieveDaysInsight(distinctInsight);
             const insightResult = insightItems && insightItems.length > 0 ? {
               startDate: insightItems[0].purchaseDate,
               endDate: insightItems[insightItems.length - 1].purchaseDate,
@@ -431,8 +446,8 @@ class DashboardAdaptor {
     });
   }
 
-  static retrieveDaysInsight(distinctInsight) {
-    const allDaysInWeek = getAllDays();
+  retrieveDaysInsight(distinctInsight) {
+    const allDaysInWeek = this.getAllDays();
     distinctInsight.map((item) => {
       const currentDate = new Date(shared.formatDate(new Date(item.purchaseDate), 'yyyy-mm-dd'));
       currentDate.setHours(0, 0, 0, 0);
