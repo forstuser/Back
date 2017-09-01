@@ -10,18 +10,20 @@ class NotificationAdaptor {
     this.modals = modals;
   }
 
-  retrieveNotifications(user, pageNo) {
+  retrieveNotifications(user) {
     return Promise.all([
       this.filterUpcomingService(user),
       this.prepareNotificationData(user)
     ]).then((result) => {
-      const listIndex = (parseInt(pageNo || 1, 10) * 10) - 10;
+      /* const listIndex = (parseInt(pageNo || 1, 10) * 10) - 10; */
       const notifications = [...result[0], ...result[1]];
       return {
         status: true,
         message: 'Mailbox restore Successful',
-        notifications: notifications.slice(listIndex, 10),
-        nextPageUrl: notifications.length > listIndex + 10 ? `consumer/mailbox?pageno=${parseInt(pageNo, 10) + 1}` : ''
+        notifications
+        /* .slice(listIndex, 10), */
+        /* nextPageUrl: notifications.length >
+         listIndex + 10 ? `consumer/mailbox?pageno=${parseInt(pageNo, 10) + 1}` : '' */
       };
     }).catch(err => ({
       status: false,

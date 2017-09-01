@@ -52,7 +52,7 @@ class EHomeAdaptor {
         message: 'EHome restore successful',
         notificationCount: 0,
         categories: result[3],
-        recentSearches: recentSearches.map(item => item.searchValue),
+        recentSearches: recentSearches.map(item => item.searchValue).slice(0, 5),
         unProcessedBills: result[0],
         categoryList
       };

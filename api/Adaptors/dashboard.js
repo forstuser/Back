@@ -32,17 +32,16 @@ class DashboardAdaptor {
   constructor(modals) {
     this.modals = modals;
     this.date = new Date();
+    this.cFirst = this.date.getDate() - 6;
+    this.cLast = this.cFirst + 7;
   }
 
   getAllDays() {
     const cDate = this.date;
-    const cFirst = cDate.getDate() - 6;
-    const cLast = cFirst + 7;// last day is the first day + 6
+    const cFirst = this.cFirst;
+    const cLast = this.cLast;// last day is the first day + 6
     const cLastDate = new Date(cDate.setDate(cLast));
-    const cFirstDate = new Date(cDate.setDate(cFirst));
-
-
-    const cFirstDay = cFirstDate;
+    const cFirstDay = new Date(cDate.setDate(cFirst));
     const cLastDay = cDate.getDate() > cLastDate.getDate() ? new Date(cDate
       .getFullYear(), cDate.getMonth() + 1, cLastDate.getDate()) : cLastDate;
 
@@ -112,7 +111,7 @@ class DashboardAdaptor {
         recentSearches: result[2].map((item) => {
           const search = item.toJSON();
           return search.searchValue;
-        }),
+        }).slice(0, 5),
         upcomingServices: result[0],
         insight: insightResult
       };
