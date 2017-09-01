@@ -2,14 +2,37 @@ const shared = require('../../helpers/shared');
 
 const date = new Date();
 
-const first = date.getDate() - date.getDay();
+const first = date.getDate() - 6;
 // First day is the day of the month - the day of the week
-const last = first + 6;// last day is the first day + 6
+const last = first + 7;// last day is the first day + 6
 const lastDate = new Date(date.setDate(last));
+const firstDate = new Date(date.setDate(first));
 
-const firstDay = new Date(date.setDate(first));
+
+const firstDay = firstDate;
 const lastDay = date.getDate() > lastDate.getDate() ? new Date(date
   .getFullYear(), date.getMonth() + 1, lastDate.getDate()) : lastDate;
+
+firstDay.setHours(0, 0, 0, 0);
+lastDay.setHours(0, 0, 0, 0);
+
+function getAllDays() {
+  let s = firstDay;
+  const e = lastDay;
+  const a = [];
+  while (s.getTime() < e.getTime()) {
+    a.push({
+      value: 0,
+      purchaseDate: new Date(s.getTime())
+    });
+    s = new Date(shared.formatDate(new Date(s.setDate(
+      s.getDate() + 1
+    )), 'yyyy-mm-dd'));
+    s.setHours(0, 0, 0, 0);
+  }
+
+  return a;
+}
 
 function sumProps(arrayItem, prop) {
   let total = 0;
@@ -51,15 +74,18 @@ class DashboardAdaptor {
 
         return insightItem;
       });
-      const insightResult = distinctInsight && distinctInsight.length > 0 ? {
-        startDate: distinctInsight[0].purchaseDate,
-        endDate: distinctInsight[distinctInsight.length - 1].purchaseDate,
-        totalSpend: sumProps(distinctInsight, 'value'),
-        totalDays: distinctInsight.length,
-        insightData: distinctInsight
+
+      const insightItems = DashboardAdaptor.retrieveDaysInsight(distinctInsight);
+
+      const insightResult = insightItems && insightItems.length > 0 ? {
+        startDate: insightItems[0].purchaseDate,
+        endDate: insightItems[insightItems.length - 1].purchaseDate,
+        totalSpend: sumProps(insightItems, 'value'),
+        totalDays: insightItems.length,
+        insightData: insightItems
       } : {
-        startDate: '',
-        endDate: '',
+        startDate: new Date(),
+        endDate: new Date(),
         totalSpend: 0,
         totalDays: 0,
         insightData
@@ -116,15 +142,17 @@ class DashboardAdaptor {
 
               return insightItem;
             });
-            const insightResult = distinctInsight && distinctInsight.length > 0 ? {
-              startDate: distinctInsight[0].purchaseDate,
-              endDate: distinctInsight[distinctInsight.length - 1].purchaseDate,
-              totalSpend: sumProps(distinctInsight, 'value'),
-              totalDays: distinctInsight.length,
-              insightData: distinctInsight
+
+            const insightItems = DashboardAdaptor.retrieveDaysInsight(distinctInsight);
+            const insightResult = insightItems && insightItems.length > 0 ? {
+              startDate: insightItems[0].purchaseDate,
+              endDate: insightItems[insightItems.length - 1].purchaseDate,
+              totalSpend: sumProps(insightItems, 'value'),
+              totalDays: insightItems.length,
+              insightData: insightItems
             } : {
-              startDate: '',
-              endDate: '',
+              startDate: new Date(),
+              endDate: new Date(),
               totalSpend: 0,
               totalDays: 0,
               insightData
@@ -156,8 +184,8 @@ class DashboardAdaptor {
           authorization: token,
           upcomingServices: [],
           insight: {
-            startDate: '',
-            endDate: '',
+            startDate: new Date(),
+            endDate: new Date(),
             totalSpend: 0,
             totalDays: 0,
             insightData: []
@@ -394,13 +422,33 @@ class DashboardAdaptor {
           $ne: 3
         },
         purchase_date: {
-          $lte: new Date(lastDay),
-          $gte: new Date(firstDay)
+          $lte: lastDay,
+          $gte: firstDay
         }
       },
       order: [['purchase_date', 'ASC']],
       attributes: [['total_purchase_value', 'value'], ['purchase_date', 'purchaseDate']]
     });
+  }
+
+  static retrieveDaysInsight(distinctInsight) {
+    const allDaysInWeek = getAllDays();
+    distinctInsight.map((item) => {
+      const currentDate = new Date(shared.formatDate(new Date(item.purchaseDate), 'yyyy-mm-dd'));
+      currentDate.setHours(0, 0, 0, 0);
+      for (let i = 0; i < allDaysInWeek.length; i += 1) {
+        const weekData = allDaysInWeek[i];
+        if (weekData.purchaseDate.getTime() === currentDate.getTime()) {
+          weekData.value = item.value;
+          weekData.purchaseDate = new Date(shared.formatDate(new Date(weekData.purchaseDate), 'yyyy-mm-dd'));
+          break;
+        }
+      }
+
+      return item;
+    });
+
+    return allDaysInWeek.map(weekItem => ({ value: weekItem.value, purchaseDate: new Date(shared.formatDate(new Date(weekItem.purchaseDate), 'yyyy-mm-dd')) }));
   }
 
   retrieveRecentSearch(user) {
