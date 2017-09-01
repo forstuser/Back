@@ -2385,6 +2385,27 @@ server.route({
                             }
                         });
                         break;
+                    case 10:
+                        if(OffSet != null && Limit != null  ){
+                            if(!isNaN(OffSet) && !isNaN(OffSet)){
+                                var LimitCondition = 'LIMIT '+Limit+' OFFSET '+OffSet+'';
+                            } else {
+                                var LimitCondition = '';
+                            }
+                        } else {
+                            var LimitCondition = '';
+                        }
+                        connection.query('SELECT b.bill_id as BID,b.bill_reference_id as BillNo,u.fullname as Name,u.email_id as EmailID,u.mobile_no as PhoneNo,b.created_on as BillDate,b.comments as Comments FROM table_consumer_bills as b LEFT JOIN table_users as u on u.user_id=b.user_id WHERE b.admin_status=10 and b.user_status!=3 ORDER BY b.updated_on DESC '+LimitCondition+' ', function (error, bill, fields) {
+                            if (error) throw error;
+                            if(bill.length > 0){
+                                var data = '{"statusCode": 100,"BillList": '+ JSON.stringify(bill) +'}';
+                                reply(data);
+                            } else {
+                                var data = '{"statusCode": 105,"error": "Not Found","message": "Data not Available."}';
+                                reply(data);
+                            }
+                        });
+                        break;
                     default:
                         var data = '{"statusCode": 100,"error": "Invalid Status","message": "Invalid Status."}';
                         reply(data);
@@ -2585,7 +2606,7 @@ server.route({
                 switch (Status) {
                     case 4:
                         var status = true;
-                        var condition = 'WHERE ce.status_id IN (6,7) and  b.user_status!=3 and ce.user_id='+UserID+'';
+                        var condition = 'WHERE ce.status_id IN (6,7) and  b.user_status NOT IN (3,10) and ce.user_id='+UserID+'';
                         break;
                     case 5:
                         var status = true;
@@ -2651,7 +2672,7 @@ server.route({
                 switch (Status) {
                     case 4:
                         var status = true;
-                        var condition = 'WHERE ce.status_id IN (6,7) and  b.user_status!=3 and ce.user_id='+UserID+' and (u.fullname LIKE "%'+Search+'%" OR u.email_id LIKE "%'+Search+'%" OR u.mobile_no LIKE "%'+Search+'%")';
+                        var condition = 'WHERE ce.status_id IN (6,7) and  b.user_status NOT IN (3,10) and ce.user_id='+UserID+' and (u.fullname LIKE "%'+Search+'%" OR u.email_id LIKE "%'+Search+'%" OR u.mobile_no LIKE "%'+Search+'%")';
                         break;
                     case 5:
                         var status = true;
@@ -3777,6 +3798,93 @@ server.route({
         }
     }
 });
+
+//Discard Consumer Bill
+server.route({
+    method: 'POST',
+    path: '/Services/DiscardConsumerBill',
+    handler: function (request, reply) {
+        const TokenNo = request.payload.TokenNo;
+        const BID = request.payload.BID;
+        const UID = request.payload.UID;
+        const Comments = request.payload.Comments;
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+            if (error) throw error;
+            if(token.length > 0){
+                var UserID = token[0]['user_id'];
+                connection.query('UPDATE table_consumer_bills SET user_status=10,admin_status=10,comments="'+Comments+'" WHERE bill_id="'+BID +'" and user_id="'+UID +'"', function (error, results, fields) {
+                    if (error) throw error;
+                    connection.query('INSERT INTO table_inbox_notification (user_id,notification_type,title,description,status_id,createdAt,updatedAt,bill_id) VALUES ("'+UID+'",2,"Invoice Rejected","'+Comments+'",4,"'+getDateTime()+'","'+getDateTime()+'","'+BID+'")', function (error, notification, fields) {
+                        if (error) throw error;
+                        var data = '{"statusCode": 100,"error": "","message": "Job Discard successfully."}';
+                        reply(data);
+                    });
+                });
+            } else {
+                var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+                reply(data);
+            }
+        });
+    },
+    config:{
+        validate: {
+            payload: {
+                TokenNo: Joi.string().required(),
+                BID: Joi.number().integer().required(),
+                UID: Joi.number().integer().required(),
+                Comments: Joi.string().required(),
+                output: 'data',
+                parse:true
+            }
+        }
+    }
+});
+//Discard Consumer Bill Image
+server.route({
+    method: 'POST',
+    path: '/Services/DiscardConsumerBillImage',
+    handler: function (request, reply) {
+        const TokenNo = request.payload.TokenNo;
+        const BID = request.payload.BID;
+        const UID = request.payload.UID;
+        const ImageID = request.payload.ImageID;
+        const Comments = request.payload.Comments;
+        connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', function (error, token, fields) {
+            if (error) throw error;
+            if(token.length > 0){
+                var UserID = token[0]['user_id'];
+                connection.query('UPDATE table_consumer_bill_copies SET status_id=10,comments="'+Comments+'" WHERE bill_id="'+BID +'" and bill_copy_id="'+ImageID +'"', function (error, results, fields) {
+                    if (error) throw error;
+                    connection.query('INSERT INTO table_inbox_notification (user_id,notification_type,title,description,status_id,createdAt,updatedAt,bill_id) VALUES ("'+UID+'",2,"Bill Copy Rejected","'+Comments+'",4,"'+getDateTime()+'","'+getDateTime()+'","'+BID+'")', function (error, notification, fields) {
+                        if (error) throw error;
+                        connection.query('INSERT INTO table_notification_copies (notification_id,bill_copy_id) VALUES ("'+notification['insertId']+'","'+ImageID+'")', function (error, notification, fields) {
+                            if (error) throw error;
+                            var data = '{"statusCode": 100,"error": "","message": "Image Discard successfully."}';
+                            reply(data);
+                        });
+                    });
+                });
+            } else {
+                var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+                reply(data);
+            }
+        });
+    },
+    config:{
+        validate: {
+            payload: {
+                TokenNo: Joi.string().required(),
+                BID: Joi.number().integer().required(),
+                UID: Joi.number().integer().required(),
+                ImageID: Joi.number().integer().required(),
+                Comments: Joi.string().required(),
+                output: 'data',
+                parse:true
+            }
+        }
+    }
+});
+
 //Get Exclusions List By Category ID
 server.route({
     method: 'POST',
@@ -3852,7 +3960,7 @@ server.route({
             }
         }
     }
-})
+});
 
 //Add Task Complete To QE
 server.route({
