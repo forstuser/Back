@@ -34,21 +34,18 @@ class DashboardAdaptor {
     this.date = new Date();
     this.cFirst = this.date.getDate() - 6;
     this.cLast = this.cFirst + 7;
+    this.cLastDate = new Date(this.date.setDate(this.cLast));
+    this.cFirstDay = new Date(this.date.setDate(this.cFirst));
+    this.cLastDay = this.date.getDate() > this.cLastDate.getDate() ? new Date(this.date
+      .getFullYear(), this.date.getMonth() + 1, this.cLastDate.getDate()) : this.cLastDate;
   }
 
   getAllDays() {
-    const cFirst = this.cFirst;
-    const cLast = this.cLast;// last day is the first day + 6
-    const cLastDate = new Date(this.date.setDate(cLast));
-    const cFirstDay = new Date(this.date.setDate(cFirst));
-    const cLastDay = this.date.getDate() > cLastDate.getDate() ? new Date(this.date
-      .getFullYear(), this.date.getMonth() + 1, cLastDate.getDate()) : cLastDate;
+    this.cFirstDay.setHours(0, 0, 0, 0);
+    this.cLastDay.setHours(0, 0, 0, 0);
 
-    cFirstDay.setHours(0, 0, 0, 0);
-    cLastDay.setHours(0, 0, 0, 0);
-
-    let s = cFirstDay;
-    const e = cLastDay;
+    let s = this.cFirstDay;
+    const e = this.cLastDay;
     const a = [];
     while (s.getTime() < e.getTime()) {
       a.push({
