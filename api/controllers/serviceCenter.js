@@ -438,10 +438,10 @@ class ServiceCenterController {
           }
         },
         include: [{
-          model: this.modals.categories,
+          model: modals.categories,
           on: {
             $or: [
-              this.modals.sequelize.where(this.modals.sequelize.col('`subCategories`.`ref_id`'), this.modals.sequelize.col('`categories`.`category_id`'))
+              modals.sequelize.where(modals.sequelize.col('`subCategories`.`ref_id`'), modals.sequelize.col('`categories`.`category_id`'))
             ]
           },
           as: 'subCategories',
