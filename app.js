@@ -1014,7 +1014,7 @@ server.route({
                         connection.query('INSERT INTO table_online_seller (seller_name,seller_url,seller_gstin_no,status_id) VALUES ("' + Name + '","' + URL + '","' + GstinNo + '",1)', function (error, results, fields) {
                             if (error) throw error;
                             for(var i = 0; i < Details.length; i++) {
-                                connection.query('INSERT INTO table_online_seller_details (seller_id,contactdetail_type_id,display_name,details,status_id) VALUES ("'+results['insertId']+'","'+Details[i].DetailTypeID+'","'+Details[i].DisplayName+'","'+Details[i].Details+'",1)', function (error, detail, fields) {
+                                connection.query('INSERT INTO table_online_seller_details (seller_id,category_id,contactdetail_type_id,display_name,details,status_id) VALUES ("'+results['insertId']+'",'+Details[i].CategoryID+',"'+Details[i].DetailTypeID+'","'+Details[i].DisplayName+'","'+Details[i].Details+'",1)', function (error, detail, fields) {
                                     if (error) throw error;
                                 });
                             }
@@ -1069,10 +1069,10 @@ server.route({
                             if (error) throw error;
                             for(var i = 0; i < Details.length; i++) {
                                 if(Details[i].DetailID != null && Details[i].DetailID != ''){
-                                    connection.query('UPDATE table_online_seller_details SET contactdetail_type_id="' + Details[i].DetailTypeID + '",display_name="' + Details[i].DisplayName + '",details="' + Details[i].Details + '"WHERE seller_detail_id="' + Details[i].DetailID + '"', function (error, detail, fields) {
+                                    connection.query('UPDATE table_online_seller_details SET category_id='+Details[i].CategoryID+',contactdetail_type_id="' + Details[i].DetailTypeID + '",display_name="' + Details[i].DisplayName + '",details="' + Details[i].Details + '"WHERE seller_detail_id="' + Details[i].DetailID + '"', function (error, detail, fields) {
                                     });
                                 } else {
-                                    connection.query('INSERT INTO table_online_seller_details (seller_id,contactdetail_type_id,display_name,details,status_id) VALUES ("'+ID+'","'+Details[i].DetailTypeID+'","'+Details[i].DisplayName+'","'+Details[i].Details+'",1)', function (error, detail, fields) {
+                                    connection.query('INSERT INTO table_online_seller_details (seller_id,category_id,contactdetail_type_id,display_name,details,status_id) VALUES ("'+ID+'",'+Details[i].CategoryID+',"'+Details[i].DetailTypeID+'","'+Details[i].DisplayName+'","'+Details[i].Details+'",1)', function (error, detail, fields) {
                                     });
                                 }
 
@@ -1272,7 +1272,7 @@ server.route({
                 connection.query('SELECT seller_id as ID,seller_name as Name,seller_url as URL,seller_gstin_no as GstinNo FROM table_online_seller WHERE seller_id = "' + ID + '"', function (error, seller, fields) {
                     if (error) throw error;
                     if(seller.length > 0){
-                        connection.query('SELECT seller_detail_id as DetailID,contactdetail_type_id as DetailTypeID,display_name as DisplayName,details as Details FROM table_online_seller_details WHERE seller_id = "' + ID + '" and status_id!=3', function (error, detail, fields) {
+                        connection.query('SELECT seller_detail_id as DetailID,category_id as CategoryID,contactdetail_type_id as DetailTypeID,display_name as DisplayName,details as Details FROM table_online_seller_details WHERE seller_id = "' + ID + '" and status_id!=3', function (error, detail, fields) {
                             if (error) throw error;
                             var data = '{"statusCode": 100,"ID":'+seller[0]['ID']+',"Name":"'+seller[0]['Name']+'","URL":"'+seller[0]['URL']+'","GstinNo":"'+seller[0]['GstinNo']+'","Details": '+ JSON.stringify(detail) +'}';
                             reply(data);
@@ -1314,7 +1314,7 @@ server.route({
                 connection.query('INSERT INTO table_authorized_service_center (brand_id,center_name,address_house_no,address_block,address_street,address_sector,address_city,address_state,address_pin_code,address_nearby,latitude,longitude,open_days,timings,status_id) VALUES ("'+request.payload.BrandID+'","'+request.payload.Name+'","'+request.payload.HouseNo+'","'+request.payload.Block+'","'+request.payload.Street+'","'+request.payload.Sector+'","'+request.payload.City+'","'+request.payload.State+'","'+request.payload.PinCode+'","'+request.payload.NearBy+'","'+request.payload.Lattitude+'","'+request.payload.Longitude+'","'+request.payload.OpenDays+'","'+request.payload.Timings+'",1)', function (error, results, fields) {
                     if (error) throw error;
                     for(var i = 0; i < Details.length; i++) {
-                        connection.query('INSERT INTO table_authorized_service_center_details (center_id,contactdetail_type_id,display_name,details,status_id) VALUES ("'+results['insertId']+'","'+Details[i].DetailTypeID+'","'+Details[i].DisplayName+'","'+Details[i].Details+'",1)', function (error, detail, fields) {
+                        connection.query('INSERT INTO table_authorized_service_center_details (center_id,category_id,contactdetail_type_id,display_name,details,status_id) VALUES ("'+results['insertId']+'",'+Details[i].CategoryID+',"'+Details[i].DetailTypeID+'","'+Details[i].DisplayName+'","'+Details[i].Details+'",1)', function (error, detail, fields) {
                         });
                     }
                     var data = '{"statusCode": 100,"error": "","message": "Authorized service center add successfully."}';
@@ -1369,10 +1369,10 @@ server.route({
                     if (error) throw error;
                     for(var i = 0; i < Details.length; i++) {
                         if(Details[i].DetailID != null && Details[i].DetailID != ''){
-                            connection.query('UPDATE table_authorized_service_center_details SET contactdetail_type_id="' + Details[i].DetailTypeID + '",display_name="' + Details[i].DisplayName + '",details="' + Details[i].Details + '"WHERE center_detail_id="' + Details[i].DetailID + '"', function (error, detail, fields) {
+                            connection.query('UPDATE table_authorized_service_center_details SET category_id='+Details[i].CategoryID+',contactdetail_type_id="' + Details[i].DetailTypeID + '",display_name="' + Details[i].DisplayName + '",details="' + Details[i].Details + '"WHERE center_detail_id="' + Details[i].DetailID + '"', function (error, detail, fields) {
                             });
                         } else {
-                            connection.query('INSERT INTO table_authorized_service_center_details (center_id,contactdetail_type_id,display_name,details,status_id) VALUES ("'+ID+'","'+Details[i].DetailTypeID+'","'+Details[i].DisplayName+'","'+Details[i].Details+'",1)', function (error, detail, fields) {
+                            connection.query('INSERT INTO table_authorized_service_center_details (center_id,category_id,contactdetail_type_id,display_name,details,status_id) VALUES ("'+ID+'",'+Details[i].CategoryID+',"'+Details[i].DetailTypeID+'","'+Details[i].DisplayName+'","'+Details[i].Details+'",1)', function (error, detail, fields) {
                             });
                         }
 
@@ -1542,9 +1542,9 @@ server.route({
                 connection.query('SELECT a.center_id as ID,a.brand_id as BrandID,b.brand_name as BrandName,a.center_name as Name,a.address_house_no as HouseNo,a.address_block as Block,a.address_street as Street,a.address_sector as Sector,a.address_city as City,a.address_state as State,a.address_pin_code as PinCode,a.address_nearby as NearBy,a.latitude as Lattitude,a.longitude as Longitude,a.open_days as OpenDays,a.timings as Timings FROM table_authorized_service_center as a inner join table_brands as b on a.brand_id=b.brand_id WHERE a.center_id = "' + ID + '"', function (error, service, fields) {
                     if (error) throw error;
                     if(service.length > 0){
-                        connection.query('SELECT center_detail_id as DetailID,contactdetail_type_id as DetailTypeID,display_name as DisplayName,details as Details FROM table_authorized_service_center_details WHERE center_id = "' + ID + '" and status_id!=3', function (error, detail, fields) {
+                        connection.query('SELECT center_detail_id as DetailID,category_id as CategoryID,contactdetail_type_id as DetailTypeID,display_name as DisplayName,details as Details FROM table_authorized_service_center_details WHERE center_id = "' + ID + '" and status_id!=3', function (error, detail, fields) {
                             if (error) throw error;
-                            var data = '{"statusCode": 100,"ID":'+service[0]['ID']+',"BrandID":'+service[0]['BrandID']+',"BrandName":"'+service[0]['BrandName']+'","Name":"'+service[0]['Name']+'","HouseNo":"'+service[0]['HouseNo']+'","Block":"'+service[0]['Block']+'","Street":"'+service[0]['Street']+'","Sector":"'+service[0]['Sector']+'","City":"'+service[0]['City']+'","State":"'+service[0]['State']+'","PinCode":'+service[0]['PinCode']+',"NearBy":"'+service[0]['NearBy']+'","Lattitude":"'+service[0]['Lattitude']+'","Longitude":"'+service[0]['Longitude']+'","OpenDays":"'+service[0]['OpenDays']+'","Timings":"'+service[0]['Timings']+'","Details": '+ JSON.stringify(detail) +'}';
+                            var data = '{"statusCode": 100,"ID":'+service[0]['ID']+',"BrandID":'+service[0]['BrandID']+',"BrandName":"'+service[0]['BrandName']+'","Name":"'+service[0]['Name']+'","HouseNo":"'+service[0]['HouseNo']+'","Block":"'+service[0]['Block']+'","Street":"'+service[0]['Street']+'","Sector":"'+service[0]['Sector']+'","City":"'+service[0]['City']+'","State":"'+service[0]['State']+'","PinCode":"'+service[0]['PinCode']+'","NearBy":"'+service[0]['NearBy']+'","Lattitude":"'+service[0]['Lattitude']+'","Longitude":"'+service[0]['Longitude']+'","OpenDays":"'+service[0]['OpenDays']+'","Timings":"'+service[0]['Timings']+'","Details": '+ JSON.stringify(detail) +'}';
                             reply(data);
                         });
 
@@ -2006,7 +2006,8 @@ server.route({
                 connection.query('INSERT INTO table_offline_seller (offline_seller_name,offline_seller_owner_name,offline_seller_gstin_no,offline_seller_pan_number,offline_seller_registration_no,is_service_provider,is_onboarded,address_house_no,address_block,address_street,address_sector,address_city,address_state,address_pin_code,address_nearby,latitude,longitude,status_id) VALUES ("'+request.payload.Name+'","'+request.payload.OwnerName+'","'+request.payload.GstinNo+'","'+request.payload.PanNo+'","'+request.payload.RegNo+'","'+request.payload.ServiceProvider+'","'+request.payload.Onboarded+'","'+request.payload.HouseNo+'","'+request.payload.Block+'","'+request.payload.Street+'","'+request.payload.Sector+'","'+request.payload.City+'","'+request.payload.State+'","'+request.payload.PinCode+'","'+request.payload.NearBy+'","'+request.payload.Lattitude+'","'+request.payload.Longitude+'",1)', function (error, results, fields) {
                     if (error) throw error;
                     for(var i = 0; i < Details.length; i++) {
-                        connection.query('INSERT INTO table_offline_seller_details (offline_seller_id,contactdetail_type_id,display_name,details,status_id) VALUES ("'+results['insertId']+'","'+Details[i].DetailTypeID+'","'+Details[i].DisplayName+'","'+Details[i].Details+'",1)', function (error, detail, fields) {
+                        connection.query('INSERT INTO table_offline_seller_details (offline_seller_id,category_id,contactdetail_type_id,display_name,details,status_id) VALUES ("'+results['insertId']+'",'+Details[i].CategoryID+',"'+Details[i].DetailTypeID+'","'+Details[i].DisplayName+'","'+Details[i].Details+'",1)', function (error, detail, fields) {
+                            if (error) throw error;
                         });
                     }
                     var data = '{"statusCode": 100,"error": "","message": "Offline Seller add successfully.","ID": '+results['insertId']+',"Name": "'+request.payload.Name+'"}';
@@ -2064,10 +2065,10 @@ server.route({
                     if (error) throw error;
                     for(var i = 0; i < Details.length; i++) {
                         if(Details[i].DetailID != null && Details[i].DetailID != ''){
-                            connection.query('UPDATE table_offline_seller_details SET contactdetail_type_id="' + Details[i].DetailTypeID + '",display_name="' + Details[i].DisplayName + '",details="' + Details[i].Details + '"WHERE seller_detail_id="' + Details[i].DetailID + '"', function (error, detail, fields) {
+                            connection.query('UPDATE table_offline_seller_details SET category_id="'+Details[i].CategoryID+'",contactdetail_type_id="' + Details[i].DetailTypeID + '",display_name="' + Details[i].DisplayName + '",details="' + Details[i].Details + '"WHERE seller_detail_id="' + Details[i].DetailID + '"', function (error, detail, fields) {
                             });
                         } else {
-                            connection.query('INSERT INTO table_offline_seller_details (offline_seller_id,contactdetail_type_id,display_name,details,status_id) VALUES ("'+ID+'","'+Details[i].DetailTypeID+'","'+Details[i].DisplayName+'","'+Details[i].Details+'",1)', function (error, detail, fields) {
+                            connection.query('INSERT INTO table_offline_seller_details (offline_seller_id,category_id,contactdetail_type_id,display_name,details,status_id) VALUES ("'+ID+'","'+Details[i].CategoryID+'","'+Details[i].DetailTypeID+'","'+Details[i].DisplayName+'","'+Details[i].Details+'",1)', function (error, detail, fields) {
                             });
                         }
 
@@ -2279,7 +2280,7 @@ server.route({
                 connection.query('SELECT offline_seller_id as ID,offline_seller_name as Name,offline_seller_owner_name as OwnerName,offline_seller_gstin_no as GstinNo,offline_seller_pan_number as PanNo,offline_seller_registration_no as RegNo,is_service_provider as ServiceProvider,is_onboarded as Onboarded,address_house_no as HouseNo,address_block as Block,address_street as Street,address_sector as Sector,address_city as City,address_state as State,address_pin_code as PinCode,address_nearby as NearBy,latitude as Lattitude,longitude as Longitude FROM table_offline_seller WHERE offline_seller_id = "' + ID + '"', function (error, offline_seller, fields) {
                     if (error) throw error;
                     if(offline_seller.length > 0){
-                        connection.query('SELECT seller_detail_id as DetailID,contactdetail_type_id as DetailTypeID,display_name as DisplayName,details as Details FROM table_offline_seller_details WHERE offline_seller_id = "' + ID + '" and status_id!=3', function (error, detail, fields) {
+                        connection.query('SELECT seller_detail_id as DetailID,category_id as CategoryID,contactdetail_type_id as DetailTypeID,display_name as DisplayName,details as Details FROM table_offline_seller_details WHERE offline_seller_id = "' + ID + '" and status_id!=3', function (error, detail, fields) {
                             if (error) throw error;
                             var data = '{"statusCode": 100,"ID":'+offline_seller[0]['ID']+',"Name":"'+offline_seller[0]['Name']+'","OwnerName":"'+offline_seller[0]['OwnerName']+'","GstinNo":"'+offline_seller[0]['GstinNo']+'","PanNo":"'+offline_seller[0]['PanNo']+'","RegNo":"'+offline_seller[0]['RegNo']+'","ServiceProvider":"'+offline_seller[0]['ServiceProvider']+'","Onboarded":"'+offline_seller[0]['Onboarded']+'","HouseNo":"'+offline_seller[0]['HouseNo']+'","Block":"'+offline_seller[0]['Block']+'","Street":"'+offline_seller[0]['Street']+'","Sector":"'+offline_seller[0]['Sector']+'","City":"'+offline_seller[0]['City']+'","State":"'+offline_seller[0]['State']+'","PinCode":"'+offline_seller[0]['PinCode']+'","NearBy":"'+offline_seller[0]['NearBy']+'","Lattitude":"'+offline_seller[0]['Lattitude']+'","Longitude":"'+offline_seller[0]['Longitude']+'","Details": '+ JSON.stringify(detail) +'}';
                             reply(data);
