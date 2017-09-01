@@ -1594,6 +1594,22 @@ function prepareDashboardRoutes(dashboardController, dashboardRoutes) {
         handler: DashboardController.getMailbox
       }
     });
+    dashboardRoutes.push({
+      method: 'POST',
+      path: '/consumer/notify',
+      config: {
+        auth: 'jwt',
+        handler: DashboardController.notifyUser,
+        validate: {
+          payload: {
+            userId: [joi.number(), joi.allow(null)],
+            data: joi.object(),
+            output: 'data',
+            parse: true
+          }
+        }
+      }
+    });
   }
 }
 

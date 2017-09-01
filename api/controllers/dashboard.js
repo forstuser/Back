@@ -50,6 +50,11 @@ class DashboardController {
     reply(notificationAdaptor.retrieveNotifications(user, request.query.pageno))
       .code(200);
   }
+
+  static notifyUser(request, reply) {
+    const payload = request.payload || { userId: '', data: { title: '', description: '' } };
+    notificationAdaptor.notifyUser(payload.userId || '', payload.data, reply);
+  }
 }
 
 module.exports = DashboardController;

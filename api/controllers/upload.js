@@ -53,7 +53,8 @@ class UploadController {
             defaults: ret
           }).then((userResult) => {
             if (!userResult[1]) {
-              userResult[0].updateAttributes({ user_image_name: fileName,
+              userResult[0].updateAttributes({
+                user_image_name: fileName,
                 user_image_type: fileType,
                 status_id: 1,
                 updated_by_user_id: user.ID,
@@ -194,14 +195,27 @@ class UploadController {
       },
       attributes: { exclude: ['BillID'] }
     })]).then((result) => {
-      result[0].updateAttributes({
-        bill_reference_id: uuid.v4(),
-        user_status: 8,
-        admin_status: 4,
-        updated_on: shared.formatDate(new Date(), 'yyyy-mm-dd HH:MM:ss')
+      modals.billCopies.count({
+        where: {
+          bill_id: result[0].bill_id,
+          status_id: {
+            $ne: 3
+          }
+        }
+      }).then((count) => {
+        const attributes = count > 0 ? {
+          bill_reference_id: uuid.v4(),
+          user_status: 8,
+          admin_status: 4,
+          updated_on: shared.formatDate(new Date(), 'yyyy-mm-dd HH:MM:ss')
+        } : {
+          user_status: 3,
+          admin_status: 3,
+          updated_on: shared.formatDate(new Date(), 'yyyy-mm-dd HH:MM:ss')
+        };
+        result[0].updateAttributes(attributes);
+        reply({ status: true, message: 'File deleted successfully' });
       });
-      const billDetail = result[0].toJSON();
-      reply({status: true, message: 'File deleted successfully'});
     }).catch((err) => {
       reply({ status: false, err });
     });

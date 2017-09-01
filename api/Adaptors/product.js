@@ -190,6 +190,16 @@ class ProductAdaptor {
           as: 'brandReviews',
           attributes: [['review_ratings', 'ratings'], ['review_feedback', 'feedback'], ['review_comments', 'comments']],
           required: false
+        },
+        {
+          model: this.modals.brandDetails,
+          as: 'details',
+          where: {
+            status_id: {
+              $ne: 3
+            }
+          },
+          attributes: [['category_id', 'categoryId'], ['display_name', 'displayName'], 'details', ['contactdetail_type_id', 'typeId']]
         }]
       },
       {
@@ -344,7 +354,7 @@ class ProductAdaptor {
         as: 'category',
         attributes: []
       }],
-      attributes: [['bill_product_id', 'id'], ['product_name', 'productName'], ['value_of_purchase', 'value'], 'taxes', ['category_id', 'categoryId'], [this.modals.sequelize.col('`masterCategory`.`category_name`'), 'masterCategoryName'], [this.modals.sequelize.col('`category`.`category_name`'), 'categoryName'], ['brand_id', 'brandId'], ['color_id', 'colorId'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`productBills`.`bill_product_id`'), '/reviews'), 'reviewUrl']]
+      attributes: [['bill_product_id', 'id'], ['product_name', 'productName'], ['value_of_purchase', 'value'], 'taxes', ['category_id', 'categoryId'], [this.modals.sequelize.col('`masterCategory`.`category_name`'), 'masterCategoryName'], ['master_category_id', 'masterCategoryId'], [this.modals.sequelize.col('`category`.`category_name`'), 'categoryName'], ['brand_id', 'brandId'], ['color_id', 'colorId'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`productBills`.`bill_product_id`'), '/reviews'), 'reviewUrl']]
     }).then((result) => {
       const product = result.toJSON();
       product.serviceCenterUrl = `/consumer/servicecenters?brandid=${product.brandId}&categoryid=${product.categoryId}`;

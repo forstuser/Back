@@ -1,4 +1,5 @@
 const shared = require('../../helpers/shared');
+const request = require('request');
 
 const dueDays = {
   Yearly: 365, HalfYearly: 180, Quarterly: 90, Monthly: 30, Weekly: 7, Daily: 1
@@ -262,6 +263,60 @@ class NotificationAdaptor {
       },
       order: [['searchDate', 'DESC']],
       attributes: ['searchValue']
+    });
+  }
+
+  notifyUser(userId, payload, reply) {
+    const whereClause = userId ? {
+      ID: userId,
+      status_id: {
+        $ne: 3
+      }
+    } : {
+      status_id: {
+        $ne: 3
+      }
+    };
+    return this.modals.table_users.findAll({
+      where: whereClause
+    }).then((result) => {
+      const options = {
+        uri: 'https://fcm.googleapis.com/fcm/send',
+        method: 'POST',
+        headers: { Authorization: 'key=AAAAx4_n95E:APA91bE8ZnA83WXrHVdiB31D87eqCGedieYmvfzabLTMyyPdXdWIf3ZWko1EWd1dPwqtlTgxr0YF4tX1ksdsd4LxUnXMyOLF3u9szv3u_yMTWvwOTf64SPnvszmnK5IU8Tc_4apGf78x' },
+        json: {
+          // note that Sequelize returns token object array, we map it with token value only
+          registration_ids: result.map(user => user.gcm_id),
+          // iOS requires priority to be set as 'high' for message to be received in background
+          priority: 'high',
+          data: payload
+        }
+      };
+      request(options, (error, response, body) => {
+        if (!error && response.statusCode === 200) {
+          // request was success, should early return response to client
+          reply({
+            status: true
+          }).code(200);
+        } else {
+          reply({
+            status: false,
+            error
+          }).code(500);
+        }
+        // extract invalid registration for removal
+        if (body.failure > 0 && Array.isArray(body.results) && body
+          .results.length === result.length) {
+          const results = body.results;
+          for (let i = 0; i < result.length; i += 1) {
+            if (results[i].error === 'InvalidRegistration') {
+              result[i].updateAttributes({
+                gcm_id: ''
+              });
+            }
+          }
+        }
+      });
     });
   }
 }

@@ -1,7 +1,7 @@
 const shared = require('../../helpers/shared');
 const googleMapsClient = require('@google/maps').createClient({
   Promise,
-  key: 'AIzaSyAMXMlAmejtAvSay9FgfU7AO0rTiydifnY'
+  key: 'AIzaSyCT60FOMjGxPjOQjyk9ewP5l9VkmMcTWmE'
 });
 
 let modals;

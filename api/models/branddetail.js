@@ -6,8 +6,7 @@ module.exports = (sequelize, Sequelize) => sequelize.define('brandDetails', {
   brand_detail_id: {
     type: Sequelize.INTEGER,
     autoIncrement: true,
-    primaryKey: true,
-    field: 'brand_detail_id'
+    primaryKey: true
   },
   brand_id: {
     type: Sequelize.INTEGER,
