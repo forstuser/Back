@@ -287,6 +287,20 @@ class ServiceCenterController {
     if (city) {
       whereClause.address_city = city;
     }
+    const origins = [];
+    if (latlong) {
+      origins.push(latlong);
+    }
+
+    if (location) {
+      origins.push(location);
+    }
+
+    if (city) {
+      origins.push(city);
+    }
+
+
     Promise.all([modals.authorizedServiceCenter.findAll({
       where: whereClause,
       include: [
@@ -331,21 +345,7 @@ class ServiceCenterController {
         const center = item.toJSON();
         center.centerAddress = `${center.centerName}, ${center.sector} ${center.street}, ${center.city}-${center.pinCode}, ${center.state}, India`;
         center.geoLocation = `${center.latitude}, ${center.longitude}`;
-        const origins = [];
         const destinations = [];
-
-        if (latlong) {
-          origins.push(latlong);
-        }
-
-        if (location) {
-          origins.push(location);
-        }
-
-        if (city) {
-          origins.push(city);
-        }
-
         if (center.geoLocation) {
           destinations.push(center.geoLocation);
         }
@@ -354,7 +354,7 @@ class ServiceCenterController {
           destinations.push(center.centerAddress);
         }
 
-        if (city) {
+        if (center.city) {
           destinations.push(center.city);
         }
 
@@ -389,7 +389,7 @@ class ServiceCenterController {
         return center;
       });
 
-      if (!location) {
+      if (origins.length <= 0) {
         reply({
           status: true,
           filterData: {
@@ -470,7 +470,7 @@ class ServiceCenterController {
       reply({
         status: true,
         categories: result[0],
-        cities: result[1],
+        cities: result[1].map(item => item.DISTINCT),
         brands: result[2]
       });
     });

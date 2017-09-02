@@ -1421,6 +1421,25 @@ function prepareAuthRoutes(userController, authRoutes) {
       }
     });
 
+    authRoutes.push({
+      method: 'GET',
+      path: '/consumer/nearby',
+      config: {
+        handler: UserController.retrieveNearBy,
+        description: 'Get User Profile.',
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              { code: 200, message: 'Successful' },
+              { code: 400, message: 'Bad Request' },
+              { code: 401, message: 'Invalid Credentials' },
+              { code: 404, message: 'Not Found' },
+              { code: 500, message: 'Internal Server Error' }
+            ]
+          }
+        }
+      }
+    });
     // Login route
     authRoutes.push({
       method: 'POST',

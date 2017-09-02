@@ -13,12 +13,14 @@ const requestPromise = require('request-promise');
 
 const DashboardAdaptor = require('../Adaptors/dashboard');
 const UserAdaptor = require('../Adaptors/user');
+const NearByAdaptor = require('../Adaptors/nearby');
 
 let userModel;
 let userRelationModel;
 let modals;
 let dashboardAdaptor;
 let userAdaptor;
+let nearByAdaptor;
 function isValidPassword(userpass, passwordValue) {
   return bCrypt.compareSync(passwordValue, userpass);
 }
@@ -31,6 +33,7 @@ class UserController {
     modals = modal;
     dashboardAdaptor = new DashboardAdaptor(modals);
     userAdaptor = new UserAdaptor(modals);
+    nearByAdaptor = new NearByAdaptor(modals);
   }
 
   static dispatchOTP(request, reply) {
@@ -99,7 +102,6 @@ class UserController {
             }).code(201);
           }
         }).catch((err) => {
-          console.log(err);
           reply({
             status: false,
             err
@@ -149,15 +151,13 @@ class UserController {
             });
             reply(dashboardAdaptor.prepareDashboardResult(userData[1], userData[0], `bearer ${authentication.generateToken(userData[0]).token}`)).code(201).header('authorization', `bearer ${authentication.generateToken(userData[0]).token}`);
           }).catch((err) => {
-            console.log(err);
-            reply({ message: 'Issue in updation', status: false });
+            reply({ message: 'Issue in updating data', status: false, err });
           });
         } else {
           reply({ message: 'Invalid OTP' }).code(401);
         }
       }).catch((err) => {
-        console.log(err);
-        reply({ message: 'Issue in updation', status: false });
+        reply({ message: 'Issue in updating data', status: false, err });
       });
     } else if (request.payload.BBLogin_Type === 2) {
       const userItem = {
@@ -258,6 +258,12 @@ class UserController {
     } else {
       reply({ message: 'Invalid Token' }).code(401);
     }
+  }
+
+  static retrieveNearBy(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    nearByAdaptor.retrieveNearBy(request.query.location || user.location, request.query.geolocation || `${user.latitude},${user.longitude}`,
+      request.query.professionids || '[]', reply, user.ID);
   }
 }
 
