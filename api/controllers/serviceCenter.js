@@ -263,7 +263,8 @@ class ServiceCenterController {
     const whereClause = {
       status_id: {
         $ne: 3
-      }
+      },
+      $and: []
     };
     const brandWhereClause = {
       status_id: {
@@ -285,7 +286,7 @@ class ServiceCenterController {
     }
 
     if (city) {
-      whereClause.address_city = city;
+      whereClause.$and.push(modals.sequelize.where(modals.sequelize.fn('lower', modals.sequelize.col('address_city')), modals.sequelize.fn('lower', city)));
     }
     const origins = [];
     if (latlong) {
