@@ -1,9 +1,4 @@
-const shared = require('../../helpers/shared');
 const request = require('request');
-
-const dueDays = {
-  Yearly: 365, HalfYearly: 180, Quarterly: 90, Monthly: 30, Weekly: 7, Daily: 1
-};
 
 class NotificationAdaptor {
   constructor(modals) {
@@ -80,15 +75,14 @@ class NotificationAdaptor {
         }]
       }),
       this.modals.amcBills.findAll({
-        attributes: [['bill_amc_id', 'id'], 'policyNo', 'premiumType', 'premiumAmount', 'effectiveDate', 'expiryDate'],
+        attributes: [['bill_amc_id', 'id'], 'policyNo', 'premiumType', 'premiumAmount', 'effectiveDate', 'expiryDate', [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`amcProduct`.`bill_product_id`')), 'productURL']],
         where: {
           user_id: user.ID,
           status_id: {
             $ne: 3
           },
           expiryDate: {
-            $gt: new Date(),
-            $lt: new Date(new Date() + (dueDays[this.modals.sequelize.col('premiumType')] * 24 * 60 * 60 * 1000))
+            $gt: new Date()
           }
         },
         include: [{
@@ -102,15 +96,14 @@ class NotificationAdaptor {
         }]
       }),
       this.modals.insuranceBills.findAll({
-        attributes: [['bill_insurance_id', 'id'], 'policyNo', 'premiumType', 'premiumAmount', 'effectiveDate', 'expiryDate', 'amountInsured', 'plan'],
+        attributes: [['bill_insurance_id', 'id'], 'policyNo', 'premiumType', 'premiumAmount', 'effectiveDate', 'expiryDate', 'amountInsured', 'plan', [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`insuredProduct`.`bill_product_id`')), 'productURL']],
         where: {
           user_id: user.ID,
           status_id: {
             $ne: 3
           },
           expiryDate: {
-            $gt: new Date(),
-            $lt: new Date(new Date() + (dueDays[this.modals.sequelize.col('premiumType')] * 24 * 60 * 60 * 1000))
+            $gt: new Date()
           }
         },
         include: [{
@@ -124,15 +117,14 @@ class NotificationAdaptor {
         }]
       }),
       this.modals.warranty.findAll({
-        attributes: [['bill_warranty_id', 'id'], 'warrantyType', 'policyNo', 'premiumType', 'premiumAmount', 'effectiveDate', 'expiryDate'],
+        attributes: [['bill_warranty_id', 'id'], 'warrantyType', 'policyNo', 'premiumType', 'premiumAmount', 'effectiveDate', 'expiryDate', [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`warrantyProduct`.`bill_product_id`')), 'productURL']],
         where: {
           user_id: user.ID,
           status_id: {
             $ne: 3
           },
           expiryDate: {
-            $gt: new Date(),
-            $lt: new Date(new Date() + (dueDays[this.modals.sequelize.col('premiumType')] * 24 * 60 * 60 * 1000))
+            $gt: new Date()
           }
         },
         include: [{
@@ -157,7 +149,7 @@ class NotificationAdaptor {
             if (metaData.name.toLowerCase().includes('due') && metaData.name.toLowerCase().includes('date')) {
               const dueDateTime = new Date(metaData.value).getTime();
               if (dueDateTime >= new Date().getTime()) {
-                product.dueDate = shared.formatDate(metaData.value, 'dd mmm');
+                product.dueDate = metaData.value;
                 product.dueIn = Math.floor((dueDateTime - new Date()
                   .getTime()) / (24 * 60 * 60 * 1000));
                 if (product.masterCatId.toString() === '6') {
@@ -182,7 +174,7 @@ class NotificationAdaptor {
           const amc = item.toJSON();
           const dueDateTime = new Date(amc.expiryDate).getTime();
           if (dueDateTime >= new Date().getTime()) {
-            amc.dueDate = shared.formatDate(amc.expiryDate, 'dd mmm');
+            amc.dueDate = amc.expiryDate;
             amc.dueIn = Math.floor((dueDateTime - new Date().getTime()) / (24 * 60 * 60 * 1000));
             amc.productType = 3;
             amc.title = 'AMC Renewal Pending';
@@ -197,7 +189,7 @@ class NotificationAdaptor {
           const insurance = item.toJSON();
           const dueDateTime = new Date(insurance.expiryDate).getTime();
           if (dueDateTime >= new Date().getTime()) {
-            insurance.dueDate = shared.formatDate(insurance.expiryDate, 'dd mmm');
+            insurance.dueDate = insurance.expiryDate;
             insurance.dueIn = Math.floor((dueDateTime - new Date()
               .getTime()) / (24 * 60 * 60 * 1000));
             insurance.productType = 3;
@@ -214,7 +206,7 @@ class NotificationAdaptor {
           const warranty = item.toJSON();
           const dueDateTime = new Date(warranty.expiryDate).getTime();
           if (dueDateTime >= new Date().getTime()) {
-            warranty.dueDate = shared.formatDate(warranty.expiryDate, 'dd mmm');
+            warranty.dueDate = warranty.expiryDate;
             warranty.dueIn = Math.floor((dueDateTime - new Date()
               .getTime()) / (24 * 60 * 60 * 1000));
             warranty.productType = 3;
@@ -254,7 +246,7 @@ class NotificationAdaptor {
         required: false
       }],
       order: [['updatedAt', 'DESC']],
-      attributes: [['due_amount', 'dueAmount'], ['due_date', 'dueDate'], 'taxes', ['total_amount', 'totalAmount'], ['notification_type', 'productType'], 'title', 'description', ['status_id', 'statusId']]
+      attributes: [['due_amount', 'dueAmount'], ['due_date', 'dueDate'], 'taxes', ['total_amount', 'totalAmount'], ['notification_type', 'productType'], 'title', 'description', ['status_id', 'statusId'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`product`.`bill_product_id`')), 'productURL']]
     });
   }
 

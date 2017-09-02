@@ -69,10 +69,10 @@ class EHomeAdaptor {
       where: {
         user_id: user.ID,
         user_status: {
-          $notIn: [3, 5]
+          $notIn: [3, 5, 10]
         },
         admin_status: {
-          $notIn: [3, 5]
+          $notIn: [3, 5, 10] // 3=Delete, 5=Complete, 10=Discard
         }
       },
       include: [{
