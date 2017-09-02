@@ -631,6 +631,7 @@ function prepareServiceCenterRoutes(serviceCenterController, serviceCenterRoutes
         validate: {
           payload: {
             location: [joi.string(), joi.allow(null)],
+            city: [joi.string(), joi.allow(null)],
             searchValue: [joi.string(), joi.allow(null)],
             longitude: [joi.string(), joi.allow(null)],
             latitude: [joi.string(), joi.allow(null)],
