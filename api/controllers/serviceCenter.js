@@ -389,7 +389,7 @@ class ServiceCenterController {
         return center;
       });
 
-      if (origins.length <= 0) {
+      if (origins.length <= 0 || result[0].length === 0) {
         reply({
           status: true,
           filterData: {
