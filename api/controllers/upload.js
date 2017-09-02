@@ -15,6 +15,12 @@ const fsImplUser = new S3FS('binbillbucket/userimages', {
   region: 'ap-south-1'
 });
 
+const fsImplCategory = new S3FS('binbillbucket/categoryimages', {
+  accessKeyId: 'AKIAJWC3NVWYOO6YFVVQ',
+  secretAccessKey: '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',
+  region: 'ap-south-1'
+});
+
 const shared = require('../../helpers/shared');
 
 let modals;
@@ -218,6 +224,28 @@ class UploadController {
       });
     }).catch((err) => {
       reply({ status: false, err });
+    });
+  }
+
+  static retrieveCategoryImage(request, reply) {
+    modals.categories.findOne({
+      where: {
+        category_id: request.params.id
+      }
+    }).then((result) => {
+      fsImplCategory.readFile(result.category_image_name, 'utf8').then(fileResult => reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${result.CopyName}`)).catch((err) => {
+        reply({
+          status: false,
+          message: 'Unable to retrieve image',
+          err
+        });
+      });
+    }).catch((err) => {
+      reply({
+        status: false,
+        message: 'Unable to retrieve image',
+        err
+      });
     });
   }
 

@@ -199,7 +199,7 @@ class ProductAdaptor {
               $ne: 3
             }
           },
-          attributes: [['category_id', 'categoryId'], ['display_name', 'displayName'], 'details', ['contactdetail_type_id', 'typeId']]
+          attributes: [['category_id', 'categoryId'], ['display_name', 'displayName'], 'details', ['contactdetails_type_id', 'typeId']]
         }]
       },
       {

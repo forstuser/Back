@@ -1,3 +1,6 @@
+const NotificationAdaptor = require('./notification');
+const uuid = require('uuid');
+
 class UserAdaptor {
   constructor(modals) {
     this.modals = modals;
@@ -45,15 +48,32 @@ class UserAdaptor {
       share_mobile: payload.isPhoneAllowed,
       share_email: payload.isEmailAllowed,
       professional_description: payload.description,
-      updated_by_user_id: user.ID
+      updated_by_user_id: user.ID,
+      email_secret: uuid.v4()
     }, {
       where: {
         ID: user.ID
       }
-    }).then(reply({
-      status: true,
-      message: 'User Details Updated Successfully'
-    }).code(200)).catch(err => reply({
+    }).then(() => {
+      if (payload.email) {
+        this.modals.table_users.findOne({
+          where: {
+            status_id: {
+              $ne: 3
+            },
+            ID: user.ID
+          },
+          attributes: {
+            exclude: ['UserTypeID']
+          }
+        }).then(result => NotificationAdaptor.sendVerificationMail(payload.email, result.toJSON()));
+      }
+
+      reply({
+        status: true,
+        message: 'User Details Updated Successfully'
+      }).code(200);
+    }).catch(err => reply({
       status: false,
       message: 'User Detail Update failed',
       err

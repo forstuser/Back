@@ -34,6 +34,12 @@ module.exports = (sequelize, Sequelize) => sequelize.define('categories', {
   },
   status_id: {
     type: Sequelize.INTEGER
+  },
+  category_image_name: {
+    type: Sequelize.STRING(255)
+  },
+  category_image_type: {
+    type: Sequelize.STRING(45)
   }
 }, {
   freezeTableName: true,

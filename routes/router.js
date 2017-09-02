@@ -1363,8 +1363,8 @@ function prepareAuthRoutes(userController, authRoutes) {
       method: 'PUT',
       path: '/consumer/profile',
       config: {
+        auth: 'jwt',
         handler: UserController.updateUserProfile,
-        auth: false,
         description: 'Update User Profile.',
         validate: {
           payload: {
@@ -1406,6 +1406,7 @@ function prepareAuthRoutes(userController, authRoutes) {
       method: 'GET',
       path: '/consumer/profile',
       config: {
+        auth: 'jwt',
         handler: UserController.retrieveUserProfile,
         description: 'Get User Profile.',
         plugins: {
@@ -1424,8 +1425,29 @@ function prepareAuthRoutes(userController, authRoutes) {
 
     authRoutes.push({
       method: 'GET',
+      path: '/verify/{token}',
+      config: {
+        handler: UserController.verifyEmailAddress,
+        description: 'Verify Email Address.',
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              { code: 200, message: 'Successful' },
+              { code: 400, message: 'Bad Request' },
+              { code: 401, message: 'Invalid Credentials' },
+              { code: 404, message: 'Not Found' },
+              { code: 500, message: 'Internal Server Error' }
+            ]
+          }
+        }
+      }
+    });
+
+    authRoutes.push({
+      method: 'GET',
       path: '/consumer/nearby',
       config: {
+        auth: 'jwt',
         handler: UserController.retrieveNearBy,
         description: 'Get User Profile.',
         plugins: {
@@ -1575,6 +1597,13 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
       path: '/consumer/{id}/images',
       config: {
         handler: UploadController.retrieveUserImage
+      }
+    });
+    uploadFileRoute.push({
+      method: 'GET',
+      path: '/categories/{id}/image',
+      config: {
+        handler: UploadController.retrieveCategoryImage
       }
     });
   }

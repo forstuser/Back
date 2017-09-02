@@ -8,7 +8,6 @@ const excludedAttributes = { exclude: ['tableBrandID', 'tableUserID', 'display_i
 class UserManagementController {
   constructor(modal) {
     modals = modal;
-    modals.table_users.belongsTo(modals.table_user_type, { foreignKey: 'UserTypeID', as: 'UserType' });
   }
 
   // Add Exclusions

@@ -14,6 +14,7 @@ const requestPromise = require('request-promise');
 const DashboardAdaptor = require('../Adaptors/dashboard');
 const UserAdaptor = require('../Adaptors/user');
 const NearByAdaptor = require('../Adaptors/nearby');
+const NotificationAdaptor = require('../Adaptors/notification');
 
 let userModel;
 let userRelationModel;
@@ -21,6 +22,7 @@ let modals;
 let dashboardAdaptor;
 let userAdaptor;
 let nearByAdaptor;
+let notificationAdaptor;
 function isValidPassword(userpass, passwordValue) {
   return bCrypt.compareSync(passwordValue, userpass);
 }
@@ -34,6 +36,7 @@ class UserController {
     dashboardAdaptor = new DashboardAdaptor(modals);
     userAdaptor = new UserAdaptor(modals);
     nearByAdaptor = new NearByAdaptor(modals);
+    notificationAdaptor = new NotificationAdaptor(modals);
   }
 
   static dispatchOTP(request, reply) {
@@ -264,6 +267,11 @@ class UserController {
     const user = shared.verifyAuthorization(request.headers);
     nearByAdaptor.retrieveNearBy(request.query.location || user.location, request.query.geolocation || `${user.latitude},${user.longitude}`,
       request.query.professionids || '[]', reply, user.ID);
+  }
+
+  static verifyEmailAddress(request, reply) {
+    const emailSecret = request.params.token;
+    reply(notificationAdaptor.verifyEmailAddress(emailSecret));
   }
 }
 

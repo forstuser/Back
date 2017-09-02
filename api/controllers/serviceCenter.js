@@ -1,7 +1,7 @@
 const shared = require('../../helpers/shared');
 const googleMapsClient = require('@google/maps').createClient({
   Promise,
-  key: 'AIzaSyDxcHyc3dEaf4Kht3Pai3pRAz3AT8tritQ'
+  key: 'AIzaSyCT60FOMjGxPjOQjyk9ewP5l9VkmMcTWmE'
 });
 
 let modals;
@@ -320,7 +320,7 @@ class ServiceCenterController {
           required: true
         }
       ],
-      attributes: [['center_name', 'centerName'], ['address_house_no', 'houseNo'], ['address_block', 'block'], ['address_street', 'street'], ['address_sector', 'sector'], ['address_city', 'city'], ['address_state', 'state'], ['address_pin_code', 'pinCode'], ['address_nearby', 'nearBy'], 'latitude', 'longitude', 'timings', ['open_days', 'openingDays']]
+      attributes: [['center_name', 'centerName'], ['address_house_no', 'houseNo'], ['address_block', 'block'], ['address_street', 'street'], ['address_sector', 'sector'], ['address_city', 'city'], ['address_state', 'state'], ['address_pin_code', 'pinCode'], ['address_nearby', 'nearBy'], 'latitude', 'longitude', 'timings', ['open_days', 'openingDays'], [modals.sequelize.fn('CONCAT', 'categories/', categoryId, '/image'), 'cImageURL']]
     }),
     modals.table_brands.findAll({
       where: {
@@ -345,6 +345,7 @@ class ServiceCenterController {
       if (result[0].length > 0) {
         const serviceCenters = result[0].map((item) => {
           const center = item.toJSON();
+          center.mobileDetails = center.centerDetails.filter(detail => detail.detailType === 3);
           center.centerAddress = `${center.centerName}, ${center.sector} ${center.street}, ${center.city}-${center.pinCode}, ${center.state}, India`;
           center.geoLocation = `${center.latitude}, ${center.longitude}`;
           const destinations = [];

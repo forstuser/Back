@@ -1,4 +1,7 @@
 const request = require('request');
+const nodemailer = require('nodemailer');
+const smtpTransport = require('nodemailer-smtp-transport');
+const config = require('../../config/main');
 
 class NotificationAdaptor {
   constructor(modals) {
@@ -302,6 +305,50 @@ class NotificationAdaptor {
         }
       });
     });
+  }
+
+  verifyEmailAddress(emailSecret) {
+    return this.modals.table_users.findOne({
+      where: {
+        status_id: {
+          $ne: 3
+        },
+        email_secret: emailSecret
+      },
+      attributes: {
+        exclude: ['UserTypeID']
+      }
+    }).then((result) => {
+      result.updateAttributes({
+        email_verified: 1
+      });
+
+      return 'Thanks for registering with BinBill.';
+    }).catch(() => '');
+  }
+
+  static sendVerificationMail(email, user) {
+    const smtpTransporter = nodemailer.createTransport(smtpTransport({
+      service: 'gmail',
+      auth: {
+        user: config.EMAIL.USER,
+        pass: config.EMAIL.PASSWORD
+      },
+      secure: true,
+      port: 465
+    }));
+
+
+    // setup email data with unicode symbols
+    const mailOptions = {
+      from: '"BinBill" <arpit.gupta@binbill.com>', // sender address
+      to: email, // list of receivers
+      subject: 'SAFER Email Verification',
+      html: `Hi ${user.fullname},<br /><br /> <a href='${config.SERVER_HOST}verify/${user.email_secret}' >Click here</a> to verify your email account -<br /><br /> Welcome to the safe and connected world!<br /><br />Regards,<br />BinBill`
+    };
+
+    // send mail with defined transport object
+    smtpTransporter.sendMail(mailOptions);
   }
 }
 

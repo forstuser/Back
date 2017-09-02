@@ -5,6 +5,11 @@
 const fs = require('fs');
 
 module.exports = {
+  SERVER_HOST: 'http://localhost:3000/',
+  EMAIL: {
+    USER: 'support@binbill.com',
+    PASSWORD: 'binbill@123'
+  },
   // Secret key for JWT signing and encryption
   secret: fs.readFileSync(`${__dirname}/rsa-private.pem`),
   // Database connection information

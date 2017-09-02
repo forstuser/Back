@@ -150,7 +150,7 @@ class EHomeAdaptor {
           attributes: [],
           required: false
         }],
-      attributes: [['category_name', 'cName'], ['display_id', 'cType'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`categories`.`category_id`'), '/products?pageno=1&ctype='), 'cURL'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`categories`.`category_id`'), '/products?pageno=1&ctype='), 'genericURL'], [this.modals.sequelize.fn('MAX', this.modals.sequelize.col('`products->consumerBill->bill`.`updated_on`')), 'cLastUpdate'], [this.modals.sequelize.fn('COUNT', this.modals.sequelize.col('`products`.`product_name`')), 'productCounts']],
+      attributes: [['category_name', 'cName'], ['display_id', 'cType'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`categories`.`category_id`'), '/products?pageno=1&ctype='), 'cURL'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`categories`.`category_id`'), '/products?pageno=1&ctype='), 'genericURL'], [this.modals.sequelize.fn('MAX', this.modals.sequelize.col('`products->consumerBill->bill`.`updated_on`')), 'cLastUpdate'], [this.modals.sequelize.fn('COUNT', this.modals.sequelize.col('`products`.`product_name`')), 'productCounts'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`categories`.`category_id`'), '/image'), 'cImageURL']],
       order: ['display_id'],
       group: '`categories`.`category_id`'
     });

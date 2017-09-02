@@ -113,6 +113,9 @@ module.exports = (sequelize, Sequelize) => sequelize.define('table_users', {
   },
   professional_description: {
     type: Sequelize.STRING
+  },
+  email_secret: {
+    type: Sequelize.STRING(2000)
   }
 }, {
   freezeTableName: true,
