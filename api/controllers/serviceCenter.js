@@ -341,61 +341,68 @@ class ServiceCenterController {
       attributes: [['brand_id', 'id'], ['brand_name', 'name']]
     })]).then((result) => {
       const serviceCentersWithLocation = [];
-      const serviceCenters = result[0].map((item) => {
-        const center = item.toJSON();
-        center.centerAddress = `${center.centerName}, ${center.sector} ${center.street}, ${center.city}-${center.pinCode}, ${center.state}, India`;
-        center.geoLocation = `${center.latitude}, ${center.longitude}`;
-        const destinations = [];
-        if (center.geoLocation) {
-          destinations.push(center.geoLocation);
-        }
+      if (result[0].length > 0) {
+        const serviceCenters = result[0].map((item) => {
+          const center = item.toJSON();
+          center.centerAddress = `${center.centerName}, ${center.sector} ${center.street}, ${center.city}-${center.pinCode}, ${center.state}, India`;
+          center.geoLocation = `${center.latitude}, ${center.longitude}`;
+          const destinations = [];
+          if (center.geoLocation) {
+            destinations.push(center.geoLocation);
+          }
 
-        if (center.centerAddress) {
-          destinations.push(center.centerAddress);
-        }
+          if (center.centerAddress) {
+            destinations.push(center.centerAddress);
+          }
 
-        if (center.city) {
-          destinations.push(center.city);
-        }
+          if (center.city) {
+            destinations.push(center.city);
+          }
 
-        if (origins.length > 0 && destinations.length > 0) {
-          googleMapsClient.distanceMatrix({
-            origins,
-            destinations
-          }).asPromise().then((matrix) => {
-            const tempMatrix = matrix.status === 200 && matrix.json ? matrix.json.rows[0]
-              .elements.find(matrixItem => matrixItem.status === 'OK') : { };
-            center.distanceMetrics = tempMatrix && tempMatrix.distance ? tempMatrix.distance.text.split(' ')[1] : 'km';
-            center.distance = parseFloat(tempMatrix && tempMatrix.distance ? tempMatrix.distance.text.split(' ')[0] : 0);
+          if (origins.length > 0 && destinations.length > 0) {
+            googleMapsClient.distanceMatrix({
+              origins,
+              destinations
+            }).asPromise().then((matrix) => {
+              const tempMatrix = matrix.status === 200 && matrix.json ? matrix.json.rows[0]
+                .elements.find(matrixItem => matrixItem.status === 'OK') : {};
+              center.distanceMetrics = tempMatrix && tempMatrix.distance ? tempMatrix.distance.text.split(' ')[1] : 'km';
+              center.distance = parseFloat(tempMatrix && tempMatrix.distance ? tempMatrix.distance.text.split(' ')[0] : 0);
+              serviceCentersWithLocation.push(center);
+              if (serviceCentersWithLocation.length === result[0].length) {
+                serviceCentersWithLocation.sort((a, b) => a.distance - b.distance);
+                reply({
+                  status: true,
+                  serviceCenters: serviceCentersWithLocation,
+                  filterData: {
+                    brands: result[1]
+                  }
+                }).code(200);
+              }
+            }).catch(err => reply({
+              status: false,
+              err
+            }));
+          } else {
             serviceCentersWithLocation.push(center);
-            if (serviceCentersWithLocation.length === result[0].length) {
-              serviceCentersWithLocation.sort((a, b) => a.distance - b.distance);
-              reply({
-                status: true,
-                serviceCenters: serviceCentersWithLocation,
-                filterData: {
-                  brands: result[1]
-                }
-              }).code(200);
-            }
-          }).catch(err => reply({
-            status: false,
-            err
-          }));
-        } else {
-          serviceCentersWithLocation.push(center);
+          }
+
+          return center;
+        });
+
+        if (origins.length <= 0) {
+          reply({
+            status: true,
+            filterData: {
+              brands: result[1]
+            },
+            serviceCenters
+          });
         }
-
-        return center;
-      });
-
-      if (origins.length <= 0 || result[0].length === 0) {
+      } else {
         reply({
-          status: true,
-          filterData: {
-            brands: result[1]
-          },
-          serviceCenters
+          status: false,
+          message: 'No Data Found for mentioned search'
         });
       }
     }).catch((err) => {
