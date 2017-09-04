@@ -7,8 +7,8 @@ const fs = require('fs');
 module.exports = {
   SERVER_HOST: {
     dev: 'http://localhost:3000/',
-    prod: '52.66.17.137:3000',
-    qa: '52.66.17.137:3000'
+    prod: 'http://13.126.5.210:3000/',
+    qa: 'http://13.126.5.210:3000/'
   },
   EMAIL: {
     USER: 'support@binbill.com',
