@@ -1,6 +1,7 @@
 const request = require('request');
 const nodemailer = require('nodemailer');
 const smtpTransport = require('nodemailer-smtp-transport');
+const env = require('../../config/env');
 const config = require('../../config/main');
 
 class NotificationAdaptor {
@@ -341,10 +342,10 @@ class NotificationAdaptor {
 
     // setup email data with unicode symbols
     const mailOptions = {
-      from: '"BinBill" <arpit.gupta@binbill.com>', // sender address
+      from: '"BinBill" <noreply@binbill.com>', // sender address
       to: email, // list of receivers
       subject: 'SAFER Email Verification',
-      html: `Hi ${user.fullname},<br /><br /> <a href='${config.SERVER_HOST}verify/${user.email_secret}' >Click here</a> to verify your email account -<br /><br /> Welcome to the safe and connected world!<br /><br />Regards,<br />BinBill`
+      html: `Hi ${user.fullname},<br /><br /> <a href='${config.SERVER_HOST[env]}verify/${user.email_secret}' >Click here</a> to verify your email account -<br /><br /> Welcome to the safe and connected world!<br /><br />Regards,<br />BinBill`
     };
 
     // send mail with defined transport object

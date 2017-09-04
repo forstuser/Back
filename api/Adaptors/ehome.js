@@ -101,7 +101,8 @@ class EHomeAdaptor {
           model: this.modals.categories,
           on: {
             $or: [
-              this.modals.sequelize.where(this.modals.sequelize.col('`subCategories`.`ref_id`'), this.modals.sequelize.col('`categories`.`category_id`'))
+              this.modals.sequelize.where(this.modals.sequelize.col('`subCategories`.`ref_id`'),
+                this.modals.sequelize.col('`categories`.`category_id`'))
             ]
           },
           where: {
@@ -166,7 +167,7 @@ class EHomeAdaptor {
     });
   }
 
-  prepareProductDetail(user, masterCategoryId, ctype, pageNo, brandIds,
+  prepareProductDetail(user, masterCategoryId, ctype, /* pageNo, */ brandIds,
     categoryIds, offlineSellerIds, onlineSellerIds, sortBy, searchValue) {
     const promisedQuery = Promise
       .all([this.fetchProductDetails(user, masterCategoryId, ctype || undefined,
@@ -255,7 +256,7 @@ class EHomeAdaptor {
         });
         return product;
       });
-      const listIndex = (pageNo * 10) - 10;
+      /* const listIndex = (pageNo * 10) - 10; */
       const categoryIdList = result[1].map((item) => {
         const category = item.toJSON();
         return category.id;
@@ -293,7 +294,7 @@ class EHomeAdaptor {
       });
       return {
         status: true,
-        productList: productList.slice((pageNo * 10) - 10, 10),
+        productList /* :productList.slice((pageNo * 10) - 10, 10) */,
         filterData: {
           categories: result[1],
           brands: brands.filter(item => item.id !== 0),
@@ -302,8 +303,13 @@ class EHomeAdaptor {
             onlineSellers: onlineSellers.filter(item => item.id !== 0)
           }
         },
-        categoryName: result[5],
-        nextPageUrl: productList.length > listIndex + 10 ? `categories/${masterCategoryId}/products?pageno=${parseInt(pageNo, 10) + 1}&ctype=${ctype}&categoryids=${categoryIds}&brandids=${brandIds}&offlinesellerids=${offlineSellerIds}&onlinesellerids=${onlineSellerIds}&sortby=${sortBy}&searchvalue=${searchValue}` : ''
+        categoryName: result[5]
+        /* ,
+        nextPageUrl: productList.length > listIndex + 10 ?
+         `categories/${masterCategoryId}/products?pageno=${parseInt(pageNo, 10) + 1}
+         &ctype=${ctype}&categoryids=${categoryIds}&brandids=${brandIds}
+         &offlinesellerids=${offlineSellerIds}&onlinesellerids=
+         ${onlineSellerIds}&sortby=${sortBy}&searchvalue=${searchValue}` : '' */
       };
     }).catch(err => ({
       status: false,

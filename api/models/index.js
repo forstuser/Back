@@ -5,13 +5,15 @@
 const fs = require('fs');
 const path = require('path');
 const Sequelize = require('sequelize');
+const env = require('../../config/env');
 const config = require('../../config/main');
 
+const database = config.database[env];
 const sequelize = new Sequelize(
-  config.database.database,
-  config.database.username,
-  config.database.password,
-  config.database
+  database.database,
+  database.username,
+  database.password,
+  database
 );
 /* const tediousSequelize = new Sequelize(
   config.msSQLDatabase.database,

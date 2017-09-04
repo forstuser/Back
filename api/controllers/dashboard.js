@@ -39,7 +39,8 @@ class DashboardController {
   static getProductsInCategory(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     reply(ehomeAdaptor
-      .prepareProductDetail(user, request.params.id, request.query.ctype, request.query.pageno,
+      .prepareProductDetail(user, request.params.id, request.query.ctype,
+        /* request.query.pageno, */
         request.query.brandids || '[]', request.query.categoryids || '[]', request.query.offlinesellerids || '[]',
         request.query.onlinesellerids || '[]', request.query.sortby, request.query.searchvalue))
       .code(200);
