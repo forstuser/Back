@@ -2,19 +2,18 @@
  * Created by arpit on 7/3/2017.
  */
 const bCrypt = require('bcrypt-nodejs');
+const crypto = require('crypto');
 // const fs = require('fs');
 const authentication = require('./authentication');
 const shared = require('../../helpers/shared');
 const roles = require('../constants');
-
-const otplib = require('otplib').default;
-const totp = require('otplib/totp').default;
 const requestPromise = require('request-promise');
 
 const DashboardAdaptor = require('../Adaptors/dashboard');
 const UserAdaptor = require('../Adaptors/user');
 const NearByAdaptor = require('../Adaptors/nearby');
 const NotificationAdaptor = require('../Adaptors/notification');
+const moment = require('moment');
 
 let userModel;
 let userRelationModel;
@@ -26,6 +25,29 @@ let notificationAdaptor;
 function isValidPassword(userpass, passwordValue) {
   return bCrypt.compareSync(passwordValue, userpass);
 }
+
+const generateRandomString = (len, charArray = null) => {
+  const choice = charArray || [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+
+  const round = crypto.randomBytes(len);
+  const value = new Array(len);
+  const arrLen = choice.length;
+
+  for (let i = 0; i < len; i += 1) {
+    value[i] = choice[round[i] % arrLen];
+  }
+
+  return value.join('');
+};
+
+const isValid = (tokenDb, token) => {
+  const now = moment.utc();
+  const otpCreatedAt = moment(tokenDb.token_updated).utc();
+
+  const diff = now.diff(otpCreatedAt, 'minutes');
+
+  return (tokenDb.OTP === token.toString() && diff <= 3 && tokenDb.valid_turns < 4);
+};
 
 class UserController {
   constructor(modal) {
@@ -40,15 +62,7 @@ class UserController {
   }
 
   static dispatchOTP(request, reply) {
-    totp.options = {
-      step: 180
-    };
-    otplib.authenticator.options = {
-      step: 180
-    };
-
-    const secret = otplib.authenticator.generateSecret();
-    const otp = totp.generate(secret);
+    const otp = generateRandomString(6);
     const options = {
       uri: 'http://login.smsgatewayhub.com/api/mt/SendSMS',
       qs: {
@@ -80,23 +94,26 @@ class UserController {
           },
           defaults: {
             OTP: otp,
-            secret
+            token_updated: shared.formatDate(moment.utc(), 'yyyy-mm-dd HH:MM:ss'),
+            valid_turns: 0
           }
         }).then((result) => {
           if (!result[1]) {
             result[0].updateAttributes({
               OTP: otp,
-              secret
+              token_updated: shared.formatDate(moment.utc(), 'yyyy-mm-dd HH:MM:ss'),
+              valid_turns: 0
             });
           }
 
           if (response[1] && response[1][1]) {
             response[1][0].updateAttributes({
-              LastLoginOn: shared.formatDate(new Date(), 'yyyy-mm-dd HH:MM:ss')
+              last_login: shared.formatDate(moment.utc(), 'yyyy-mm-dd HH:MM:ss')
             });
             reply({
               Status: true,
-              Name: response[1][0].Name
+              Name: response[1][0].Name,
+              PhoneNo: request.payload.PhoneNo
             }).code(201);
           } else {
             reply({
@@ -122,12 +139,6 @@ class UserController {
   }
 
   static validateOTP(request, reply) {
-    totp.options = {
-      step: 180
-    };
-    otplib.authenticator.options = {
-      step: 180
-    };
     const trueObject = request.payload.TrueObject;
     if (request.payload.BBLogin_Type === 1) {
       userRelationModel.findOne({
@@ -135,7 +146,11 @@ class UserController {
           mobile_no: trueObject.PhoneNo
         }
       }).then((tokenResult) => {
-        if (totp.check(request.payload.Token, tokenResult.secret)) {
+        const tokenData = tokenResult.toJSON();
+        tokenResult.updateAttributes({
+          valid_turns: tokenData.valid_turns + 1
+        });
+        if (isValid(tokenData, request.payload.Token)) {
           userModel.findOrCreate({
             where: {
               mobile_no: trueObject.PhoneNo,
@@ -149,7 +164,7 @@ class UserController {
             attributes: ['ID', ['fullname', 'name'], ['mobile_no', 'phoneNo'], ['email_id', 'email'], 'location', 'longitude', 'latitude', ['is_enrolled_professional', 'isEnrolled'], ['professional_category_id', 'categoryId'], ['share_mobile', 'isPhoneAllowed'], ['share_email', 'isEmailAllowed'], ['email_verified', 'isEmailVerified'], ['professional_description', 'description'], ['gcm_id', 'fcmId']]
           }).then((userData) => {
             userData[0].updateAttributes({
-              last_login: shared.formatDate(new Date(), 'yyyy-mm-dd HH:MM:ss'),
+              last_login: shared.formatDate(moment.utc(), 'yyyy-mm-dd HH:MM:ss'),
               gcm_id: trueObject.fcmId
             });
             reply(dashboardAdaptor.prepareDashboardResult(userData[1], userData[0], `bearer ${authentication.generateToken(userData[0]).token}`)).code(201).header('authorization', `bearer ${authentication.generateToken(userData[0]).token}`);
@@ -172,7 +187,7 @@ class UserController {
         longitude: trueObject.Longitude,
         image: trueObject.ImageLink,
         accessLevel: trueObject.accessLevel ? trueObject.accessLevel : roles.ROLE_MEMBER,
-        last_login: shared.formatDate(new Date(), 'yyyy-mm-dd HH:MM:ss'),
+        last_login: shared.formatDate(moment.utc(), 'yyyy-mm-dd HH:MM:ss'),
         mobile_no: trueObject.PhoneNo,
         status_id: 1,
         gcm_id: trueObject.fcmId
@@ -190,7 +205,7 @@ class UserController {
             userData[0].updateAttributes({
               email_id: trueObject.EmailAddress,
               fullname: trueObject.Name,
-              last_login: shared.formatDate(new Date(), 'yyyy-mm-dd HH:MM:ss'),
+              last_login: shared.formatDate(moment.utc(), 'yyyy-mm-dd HH:MM:ss'),
               gcm_id: trueObject.fcmId
             });
           }
