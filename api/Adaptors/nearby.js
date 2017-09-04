@@ -68,6 +68,11 @@ class NearByAdaptor {
             status: true,
             users
           });
+        } else {
+          reply({
+            status: false,
+            message: 'No Data Found for mentioned search'
+          });
         }
       }).catch(err => reply({
         status: false,
