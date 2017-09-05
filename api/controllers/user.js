@@ -192,7 +192,7 @@ class UserController {
             const TruePayload = request.payload.TruePayload;
 
             if (!validatePayloadSignature(TruePayload, TrueSecret)) {
-                reply({message: 'Issue in updating data', status: false, err});
+                reply({message: 'Payload verification failed', status: false});
             } else {
                 const userItem = {
                     email_id: trueObject.EmailAddress,
