@@ -9,10 +9,17 @@ const authentication = require('./authentication');
 const shared = require('../../helpers/shared');
 const roles = require('../constants');
 const requestPromise = require('request-promise');
-
+const S3FS = require('s3fs');
+const mime = require('mime-types');
 const RSA = require("node-rsa");
 
 const PUBLIC_KEY = new RSA(config.TRUECALLER_PUBLIC_KEY, {signingScheme: 'sha512'});
+
+const fsImplUser = new S3FS('binbillbucket/userimages', {
+  accessKeyId: 'AKIAJWC3NVWYOO6YFVVQ',
+  secretAccessKey: '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',
+  region: 'ap-south-1'
+});
 
 const DashboardAdaptor = require('../Adaptors/dashboard');
 const UserAdaptor = require('../Adaptors/user');
@@ -209,7 +216,7 @@ class UserController {
                     gcm_id: trueObject.fcmId
                 };
 
-                userModel.findOrCreate({
+              userModel.findOrCreate({
                     where: {
                         mobile_no: trueObject.PhoneNo,
                         status_id: 1
@@ -226,6 +233,8 @@ class UserController {
                                 gcm_id: trueObject.fcmId
                             });
                         }
+
+                        UserController.uploadTrueCallerImage(trueObject, userData[0]);
 
                         reply(dashboardAdaptor.prepareDashboardResult(userData[1], userData[0], `bearer ${authentication.generateToken(userData[0]).token}`)).code(201).header('authorization', `bearer ${authentication.generateToken(userData[0]).token}`);
                     });
@@ -306,6 +315,68 @@ class UserController {
         const emailSecret = request.params.token;
         reply(notificationAdaptor.verifyEmailAddress(emailSecret));
     }
+
+    static uploadTrueCallerImage(trueObject, userData){
+      if(trueObject.ImageLink){
+        var magic = {
+          jpg: 'ffd8ffe0',
+          png: '89504e47',
+          gif: '47494638'
+        };
+        const options = {
+          uri: trueObject.ImageLink,
+          timeout: 170000,
+          resolveWithFullResponse: true,
+          encoding: null
+        };
+        requestPromise(options).then((result) => {
+          UserController.uploadUserImage(userData, result);
+        })
+      }
+    }
+
+  static uploadUserImage(user, result) {
+    const fileType = result.headers['content-type'].split('/')[1];
+    const fileName = `${user.ID}-${new Date().getTime()}.${fileType}`;
+    // const file = fs.createReadStream();
+    fsImplUser.writeFile(fileName, result.body, {ContentType: result.headers['content-type']})
+        .then((fileResult) => {
+          const ret = {
+            user_id: user.ID,
+            user_image_name: fileName,
+            user_image_type: fileType,
+            status_id: 1,
+            updated_by_user_id: user.ID,
+            uploaded_by_id: user.ID
+          };
+          modals.userImages.findOrCreate({
+            where: {
+              user_id: user.ID
+            },
+            defaults: ret
+          }).then((userResult) => {
+            if (!userResult[1]) {
+              userResult[0].updateAttributes({
+                user_image_name: fileName,
+                user_image_type: fileType,
+                status_id: 1,
+                updated_by_user_id: user.ID,
+                uploaded_by_id: user.ID
+              });
+            }
+
+            return ({
+              status: true,
+              message: 'Uploaded Successfully',
+              userResult: userResult[0]
+            });
+          }).catch((err) => {
+            throw new Error('Upload Failed', err);
+          });
+        }).catch(err => {
+      throw new Error('Upload Failed', err);
+    });
+  }
 }
 
 module.exports = UserController;
