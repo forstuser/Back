@@ -124,7 +124,7 @@ class DashboardAdaptor {
 
   prepareDashboardResult(isNewUser, user, token) {
     if (!isNewUser) {
-      return this.modals.consumerBills.findOne({
+      return this.modals.consumerBills.count({
         attributes: { exclude: ['tableUserID'] },
         where: {
           user_id: user.ID,
@@ -132,100 +132,38 @@ class DashboardAdaptor {
             $ne: 3
           }
         }
-      }).then((bill) => {
-        if (bill) {
-          return Promise.all([
-            this.filterUpcomingService(user),
-            this.prepareInsightData(user),
-            this.retrieveRecentSearch(user),
-            this.modals.mailBox.count({ where: { user_id: user.ID, status_id: 4 } })
-          ]).then((result) => {
-            const distinctInsight = [];
-            const insightData = result[1].map((item) => {
-              const insightItem = item.toJSON();
-              const index = distinctInsight
-                .findIndex(distinctItem => (new Date(distinctItem.purchaseDate)
-                  .getTime() === new Date(insightItem.purchaseDate)
-                    .getTime()));
-
-              if (index === -1) {
-                distinctInsight.push(insightItem);
-              } else {
-                distinctInsight[index].value += insightItem.value;
-              }
-
-              return insightItem;
-            });
-
-            const insightItems = this.retrieveDaysInsight(distinctInsight);
-            const insightResult = insightItems && insightItems.length > 0 ? {
-              startDate: insightItems[0].purchaseDate,
-              endDate: insightItems[insightItems.length - 1].purchaseDate,
-              totalSpend: sumProps(insightItems, 'value'),
-              totalDays: insightItems.length,
-              insightData: insightItems
-            } : {
-              startDate: new Date(),
-              endDate: new Date(),
-              totalSpend: 0,
-              totalDays: 0,
-              insightData
-            };
-            return {
-              status: true,
-              message: 'Dashboard restore Successful',
-              notificationCount: result[3],
-              recentSearches: result[2].map((item) => {
-                const search = item.toJSON();
-                return search.searchValue;
-              }),
-              authorization: token,
-              upcomingServices: result[0],
-              insight: insightResult
-            };
-          }).catch(err => ({
-            status: false,
-            message: 'Dashboard restore failed',
-            err
-          }));
+      }).then((billCounts) => {
+        if (billCounts) {
+          return {
+            status: true,
+            message: 'User Exist',
+            billCounts,
+            isExistingUser: !isNewUser,
+            authorization: token
+          };
         }
 
         return {
           status: true,
-          message: 'Dashboard restore Successful',
-          notificationCount: 0,
-          recentSearches: [],
+          message: 'Existing User',
           authorization: token,
-          upcomingServices: [],
-          insight: {
-            startDate: new Date(),
-            endDate: new Date(),
-            totalSpend: 0,
-            totalDays: 0,
-            insightData: []
-          }
+          billCounts,
+          isExistingUser: !isNewUser,
         };
       }).catch(err => ({
         status: false,
         authorization: token,
-        message: 'Dashboard restore failed',
+        message: 'Unable to Login User',
         err
       }));
     }
+
     return {
       status: true,
-      message: 'Dashboard restore Successful',
-      notificationCount: 0,
-      recentSearches: [],
+      message: 'New User',
       authorization: token,
-      upcomingServices: [],
-      insight: {
-        startDate: '',
-        endDate: '',
-        totalSpend: 0,
-        totalDays: 0,
-        insightData: []
-      }
+      billCounts:0,
+      isExistingUser: !isNewUser,
     };
   }
 
