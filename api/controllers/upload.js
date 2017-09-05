@@ -99,12 +99,17 @@ class UploadController {
             const fieldNameHere = request.payload.fieldNameHere;
             const fileData = fieldNameHere || request.payload.filesName;
 
-            const filteredFileData = fileData.filter((datum) => {
-                const name = datum.hapi.filename;
-                const fileType = name.split('.')[name.split('.').length - 1];
+            let filteredFileData = fileData;
 
-                return isFileTypeAllowed(fileType);
-            });
+            if (Array.isArray(filteredFileData)) {
+                filteredFileData = fileData.filter((datum) => {
+                    const name = datum.hapi.filename;
+                    const fileType = name.split('.')[name.split('.').length - 1];
+
+                    return isFileTypeAllowed(fileType);
+                });
+            }
+
             UploadController.uploadFileGeneric(user, filteredFileData, reply);
         }
     }
@@ -161,29 +166,33 @@ class UploadController {
             } else {
                 const name = fileData.hapi.filename;
                 const fileType = name.split('.')[name.split('.').length - 1];
-                const fileName = `${user.ID}-${result.bill_id}-${new Date().getTime()}.${fileType}`;
-                // const file = fs.createReadStream();
-                fsImpl.writeFile(fileName, fileData._data, {ContentType: mime.lookup(fileName)})
-                    .then((fileResult) => {
-                        const ret = {
-                            bill_id: result.bill_id,
-                            bill_copy_name: fileName,
-                            bill_copy_type: fileType,
-                            status_id: 6,
-                            updated_by_user_id: user.ID,
-                            uploaded_by_id: user.ID
-                        };
+                if (!isFileTypeAllowed(fileType)) {
+                    reply({status: false, message: 'Data Upload Failed'});
+                } else {
+                    const fileName = `${user.ID}-${result.bill_id}-${new Date().getTime()}.${fileType}`;
+                    // const file = fs.createReadStream();
+                    fsImpl.writeFile(fileName, fileData._data, {ContentType: mime.lookup(fileName)})
+                        .then((fileResult) => {
+                            const ret = {
+                                bill_id: result.bill_id,
+                                bill_copy_name: fileName,
+                                bill_copy_type: fileType,
+                                status_id: 6,
+                                updated_by_user_id: user.ID,
+                                uploaded_by_id: user.ID
+                            };
 
-                        console.log(fileResult);
-                        modals.billCopies.create(ret)
-                            .then(billResult => reply({
-                                status: true,
-                                message: 'Uploaded Successfully',
-                                billResult
-                            })).catch((err) => {
-                            reply({status: false, message: 'Data Update Failed', err});
-                        });
-                    }).catch(err => reply({status: false, message: 'Upload Failed', err}));
+                            console.log(fileResult);
+                            modals.billCopies.create(ret)
+                                .then(billResult => reply({
+                                    status: true,
+                                    message: 'Uploaded Successfully',
+                                    billResult
+                                })).catch((err) => {
+                                reply({status: false, message: 'Data Update Failed', err});
+                            });
+                        }).catch(err => reply({status: false, message: 'Upload Failed', err}));
+                }
             }
         }).catch((err) => {
             reply({status: false, message: 'Upload Failed', err});
