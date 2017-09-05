@@ -12,7 +12,7 @@ const requestPromise = require('request-promise');
 
 const RSA = require("node-rsa");
 
-const PUBLIC_KEY = new RSA(config.TRUECALLER_PUBLIC_KEY);
+const PUBLIC_KEY = new RSA(config.TRUECALLER_PUBLIC_KEY, {signingScheme: 'sha512'});
 
 const DashboardAdaptor = require('../Adaptors/dashboard');
 const UserAdaptor = require('../Adaptors/user');
