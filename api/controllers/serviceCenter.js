@@ -289,15 +289,12 @@ class ServiceCenterController {
       whereClause.$and.push(modals.sequelize.where(modals.sequelize.fn('lower', modals.sequelize.col('address_city')), modals.sequelize.fn('lower', city)));
     }
     const origins = [];
+    const destinations = [];
     if (latlong) {
       origins.push(latlong);
-    }
-
-    if (location) {
+    } else if (location) {
       origins.push(location);
-    }
-
-    if (city) {
+    } else if (city) {
       origins.push(city);
     }
 
@@ -342,56 +339,69 @@ class ServiceCenterController {
       attributes: [['brand_id', 'id'], ['brand_name', 'name']]
     })]).then((result) => {
       const serviceCentersWithLocation = [];
+      const finalResult = [];
       if (result[0].length > 0) {
         const serviceCenters = result[0].map((item) => {
           const center = item.toJSON();
           center.mobileDetails = center.centerDetails.filter(detail => detail.detailType === 3);
           center.centerAddress = `${center.centerName}, ${center.sector} ${center.street}, ${center.city}-${center.pinCode}, ${center.state}, India`;
-          center.geoLocation = `${center.latitude}, ${center.longitude}`;
-          const destinations = [];
+          center.geoLocation = center.latitude && center.longitude && center.latitude.toString() !== '0' && center.longitude.toString() !== '0' ? `${center.latitude}, ${center.longitude}` : '';
           if (center.geoLocation) {
             destinations.push(center.geoLocation);
-          }
-
-          if (center.centerAddress) {
+          } else if (center.city) {
+            destinations.push(center.city);
+          } else if (center.centerAddress) {
             destinations.push(center.centerAddress);
           }
 
-          if (center.city) {
-            destinations.push(center.city);
-          }
-
           if (origins.length > 0 && destinations.length > 0) {
-            googleMapsClient.distanceMatrix({
-              origins,
-              destinations
-            }).asPromise().then((matrix) => {
-              const tempMatrix = matrix.status === 200 && matrix.json ? matrix.json.rows[0]
-                .elements.find(matrixItem => matrixItem.status === 'OK') : {};
-              center.distanceMetrics = tempMatrix && tempMatrix.distance ? tempMatrix.distance.text.split(' ')[1] : 'km';
-              center.distance = parseFloat(tempMatrix && tempMatrix.distance ? tempMatrix.distance.text.split(' ')[0] : 0);
-              serviceCentersWithLocation.push(center);
-              if (serviceCentersWithLocation.length === result[0].length) {
-                serviceCentersWithLocation.sort((a, b) => a.distance - b.distance);
-                reply({
-                  status: true,
-                  serviceCenters: serviceCentersWithLocation,
-                  filterData: {
-                    brands: result[1]
-                  }
-                }).code(200);
-              }
-            }).catch(err => reply({
-              status: false,
-              err
-            }));
-          } else {
+            if (origins.length < destinations.length) {
+              origins.push(origins[0]);
+            }
             serviceCentersWithLocation.push(center);
+          } else {
+            center.distanceMetrics = 'km';
+            center.distance = parseFloat(500.001);
+            finalResult.push(center);
           }
 
           return center;
         });
+        if (origins.length > 0 && destinations.length > 0) {
+          googleMapsClient.distanceMatrix({
+            origins,
+            destinations
+          }).asPromise().then((matrix) => {
+            for (let i = 0; i < serviceCentersWithLocation.length; i += 1) {
+              const tempMatrix = matrix.status === 200 && matrix.json ? matrix.json.rows[0]
+                .elements[i] : {};
+              if (tempMatrix && tempMatrix.status.toLowerCase() === 'ok') {
+                serviceCentersWithLocation[i].distanceMetrics = tempMatrix.distance ? tempMatrix.distance.text.split(' ')[1] : 'km';
+                serviceCentersWithLocation[i].distance = parseFloat(tempMatrix.distance ? tempMatrix.distance.text.split(' ')[0] : 500.001);
+                serviceCentersWithLocation[i].distance = serviceCentersWithLocation[i].distanceMetrics !== 'km' ? serviceCentersWithLocation[i].distance / 1000 : serviceCentersWithLocation[i].distance;
+              } else {
+                serviceCentersWithLocation[i].distanceMetrics = 'km';
+                serviceCentersWithLocation[i].distance = parseFloat(500.001);
+              }
 
+              finalResult.push(serviceCentersWithLocation[i]);
+            }
+
+            if (finalResult.length === result[0].length) {
+              serviceCentersWithLocation.sort((a, b) => a.distance - b.distance);
+              reply({
+                status: true,
+                serviceCenters: serviceCentersWithLocation,
+                filterData: {
+                  brands: result[1]
+                }
+              }).code(200);
+            }
+          }).catch(err => reply({
+            status: false,
+            err
+          }));
+        }
         if (origins.length <= 0) {
           reply({
             status: true,
