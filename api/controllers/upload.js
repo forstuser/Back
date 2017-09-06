@@ -2,24 +2,16 @@
 const uuid = require('uuid');
 const S3FS = require('s3fs');
 const mime = require('mime-types');
+const moment = require('moment');
 
-const fsImpl = new S3FS('binbillbucket', {
-    accessKeyId: 'AKIAJWC3NVWYOO6YFVVQ',
-    secretAccessKey: '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',
-    region: 'ap-south-1'
-});
+const {S3_BUCKET, AWS_ACCESS_DETAILS} = require('../../config/main');
+const env = require('../../config/env');
 
-const fsImplUser = new S3FS('binbillbucket/userimages', {
-    accessKeyId: 'AKIAJWC3NVWYOO6YFVVQ',
-    secretAccessKey: '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',
-    region: 'ap-south-1'
-});
+const fsImpl = new S3FS(S3_BUCKET.BUCKET_NAME[env], AWS_ACCESS_DETAILS[env]);
 
-const fsImplCategory = new S3FS('binbillbucket/categoryimages', {
-    accessKeyId: 'AKIAJWC3NVWYOO6YFVVQ',
-    secretAccessKey: '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',
-    region: 'ap-south-1'
-});
+const fsImplUser = new S3FS(`${S3_BUCKET.BUCKET_NAME[env]}/${S3_BUCKET.USER_IMAGE[env]}`, AWS_ACCESS_DETAILS[env]);
+
+const fsImplCategory = new S3FS(`${S3_BUCKET.BUCKET_NAME[env]}/${S3_BUCKET.CATEGORY_IMAGE[env]}`, AWS_ACCESS_DETAILS[env]);
 
 const ALLOWED_FILE_TYPES = ["txt", "pdf", "doc", "docx", "rtf", "xls", "xlsx", "png", "bmp", "jpg", "jpeg"];
 
@@ -129,7 +121,7 @@ class UploadController {
                     if (Object.prototype.hasOwnProperty.call(fileData, i)) {
                         const name = fileData[i].hapi.filename;
                         const fileType = name.split('.')[name.split('.').length - 1];
-                        const fileName = `${user.ID}-${result.bill_id}-${new Date().getTime()}.${fileType}`;
+                        const fileName = `${user.ID}-${result.bill_id}-${moment().valueOf()}.${fileType}`;
                         // const file = fs.createReadStream();
                         fsImpl.writeFile(fileName, fileData[i]._data, {ContentType: mime.lookup(fileName)})
                             .then((fileResult) => {
@@ -169,7 +161,7 @@ class UploadController {
                 if (!isFileTypeAllowed(fileType)) {
                     reply({status: false, message: 'Data Upload Failed'});
                 } else {
-                    const fileName = `${user.ID}-${result.bill_id}-${new Date().getTime()}.${fileType}`;
+                    const fileName = `${user.ID}-${result.bill_id}-${moment().valueOf()}.${fileType}`;
                     // const file = fs.createReadStream();
                     fsImpl.writeFile(fileName, fileData._data, {ContentType: mime.lookup(fileName)})
                         .then((fileResult) => {
@@ -244,11 +236,11 @@ class UploadController {
                     bill_reference_id: uuid.v4(),
                     user_status: 8,
                     admin_status: 4,
-                    updated_on: shared.formatDate(new Date(), 'yyyy-mm-dd HH:MM:ss')
+                    updated_on: shared.formatDate(moment.utc(), 'yyyy-mm-dd HH:MM:ss')
                 } : {
                     user_status: 3,
                     admin_status: 3,
-                    updated_on: shared.formatDate(new Date(), 'yyyy-mm-dd HH:MM:ss')
+                    updated_on: shared.formatDate(moment.utc(), 'yyyy-mm-dd HH:MM:ss')
                 };
                 result[0].updateAttributes(attributes);
                 reply({status: true, message: 'File deleted successfully'});

@@ -10,22 +10,20 @@ const shared = require('../../helpers/shared');
 const roles = require('../constants');
 const requestPromise = require('request-promise');
 const S3FS = require('s3fs');
-const mime = require('mime-types');
 const RSA = require("node-rsa");
+const moment = require('moment');
 
 const PUBLIC_KEY = new RSA(config.TRUECALLER_PUBLIC_KEY, {signingScheme: 'sha512'});
-
-const fsImplUser = new S3FS('binbillbucket/userimages', {
-  accessKeyId: 'AKIAJWC3NVWYOO6YFVVQ',
-  secretAccessKey: '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',
-  region: 'ap-south-1'
-});
 
 const DashboardAdaptor = require('../Adaptors/dashboard');
 const UserAdaptor = require('../Adaptors/user');
 const NearByAdaptor = require('../Adaptors/nearby');
 const NotificationAdaptor = require('../Adaptors/notification');
-const moment = require('moment');
+
+const {S3_BUCKET, AWS_ACCESS_DETAILS} = require('../../config/main');
+const env = require('../../config/env');
+
+const fsImplUser = new S3FS(`${S3_BUCKET.BUCKET_NAME[env]}/${S3_BUCKET.USER_IMAGE[env]}`, AWS_ACCESS_DETAILS[env]);
 
 let userModel;
 let userRelationModel;
@@ -111,7 +109,7 @@ class UserController {
                     },
                     defaults: {
                         OTP: otp,
-                        token_updated: shared.formatDate(moment.utc(), 'yyyy-mm-dd HH:MM:ss'),
+                        token_updated: shared.formatDate(moment().utc(), 'yyyy-mm-dd HH:MM:ss'),
                         valid_turns: 0
                     }
                 }).then((result) => {
@@ -164,8 +162,9 @@ class UserController {
                 }
             }).then((tokenResult) => {
                 const tokenData = tokenResult.toJSON();
+                const validTurn = tokenData.valid_turns + 1;
                 tokenResult.updateAttributes({
-                    valid_turns: tokenData.valid_turns + 1
+                    valid_turns: validTurn
                 });
                 if (isValid(tokenData, request.payload.Token)) {
                     userModel.findOrCreate({
@@ -189,7 +188,7 @@ class UserController {
                         reply({message: 'Issue in updating data', status: false, err});
                     });
                 } else {
-                    reply({message: 'Invalid OTP'}).code(401);
+                    reply({status: false, message: validTurn < 4 ? 'Invalid OTP' : 'This is your 4th Attempt, Please Retry', attemptCount: validTurn}).code(401);
                 }
             }).catch((err) => {
                 reply({message: 'Issue in updating data', status: false, err});
@@ -318,20 +317,23 @@ class UserController {
 
     static uploadTrueCallerImage(trueObject, userData){
       if(trueObject.ImageLink){
-        var magic = {
-          jpg: 'ffd8ffe0',
-          png: '89504e47',
-          gif: '47494638'
-        };
         const options = {
           uri: trueObject.ImageLink,
           timeout: 170000,
           resolveWithFullResponse: true,
           encoding: null
         };
-        requestPromise(options).then((result) => {
-          UserController.uploadUserImage(userData, result);
-        })
+        modals.userImages.count({
+          where: {
+            user_id: user.ID
+          }
+        }).then((imageCount) => {
+          if(imageCount <= 0) {
+            requestPromise(options).then((result) => {
+              UserController.uploadUserImage(userData, result);
+            });
+          }
+        });
       }
     }
 

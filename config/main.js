@@ -5,6 +5,40 @@
 const fs = require('fs');
 
 module.exports = {
+    S3_BUCKET: {
+        BUCKET_NAME: {
+          dev: 'binbillbucket',
+          qa: 'binbillbucket',
+          prod: 'binbillbucket'
+        },
+        USER_IMAGE: {
+          dev: 'userimages',
+          qa: 'userimages',
+          prod: 'userimages'
+        },
+      CATEGORY_IMAGE: {
+        dev: 'categoryimages',
+        qa: 'categoryimages',
+        prod: 'categoryimages'
+      }
+    },
+    AWS_ACCESS_DETAILS: {
+        dev: {
+          accessKeyId: 'AKIAJWC3NVWYOO6YFVVQ',
+          secretAccessKey: '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',
+          region: 'ap-south-1'
+        },
+      qa: {
+        accessKeyId: 'AKIAJWC3NVWYOO6YFVVQ',
+        secretAccessKey: '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',
+        region: 'ap-south-1'
+      },
+      prod: {
+        accessKeyId: 'AKIAJWC3NVWYOO6YFVVQ',
+        secretAccessKey: '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',
+        region: 'ap-south-1'
+      }
+    },
     SERVER_HOST: {
         dev: 'http://localhost:3000/',
         prod: 'http://13.126.5.210:3000/',
