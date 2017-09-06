@@ -44,18 +44,21 @@ class InsightAdaptor {
             const categoryPeriodItem = periodItem.toJSON();
             categoryPeriodItem.totalAmount = categoryPeriodItem.totalAmount || 0;
             categoryPeriodItem.totalTax = categoryPeriodItem.totalTax || 0;
+            categoryPeriodItem.totalAmount += categoryPeriodItem.totalTax;
             return categoryPeriodItem;
           }),
           monthlyData: result[1].map((periodItem) => {
             const categoryPeriodItem = periodItem.toJSON();
             categoryPeriodItem.totalAmount = categoryPeriodItem.totalAmount || 0;
             categoryPeriodItem.totalTax = categoryPeriodItem.totalTax || 0;
+            categoryPeriodItem.totalAmount += categoryPeriodItem.totalTax;
             return categoryPeriodItem;
           }),
           yearlyData: result[2].map((periodItem) => {
             const categoryPeriodItem = periodItem.toJSON();
             categoryPeriodItem.totalAmount = categoryPeriodItem.totalAmount || 0;
             categoryPeriodItem.totalTax = categoryPeriodItem.totalTax || 0;
+            categoryPeriodItem.totalAmount += categoryPeriodItem.totalTax;
             return categoryPeriodItem;
           })
         } : {
@@ -63,6 +66,7 @@ class InsightAdaptor {
             const categoryItem = item.toJSON();
             categoryItem.totalAmount = categoryItem.totalAmount || 0;
             categoryItem.totalTax = categoryItem.totalTax || 0;
+            categoryItem.totalAmount += categoryItem.totalTax;
             return categoryItem;
           })
         };
@@ -75,7 +79,7 @@ class InsightAdaptor {
             message: 'Insight restore successful',
             notificationCount: '2',
             categoryData,
-            totalSpend: totalAmounts + totalTaxes,
+            totalSpend: totalAmounts,
             totalTaxes,
             startDate: minDate,
             endDate: maxDate
@@ -99,11 +103,11 @@ class InsightAdaptor {
           monthLastDate: shared.formatDate(monthLastDay, 'yyyy-mm-dd'),
           yearStartDate: shared.formatDate(yearStartDay, 'yyyy-mm-dd'),
           yearEndDate: shared.formatDate(yearLastDay, 'yyyy-mm-dd'),
-          totalYearlySpend: totalYearlyAmounts + totalYearlyTaxes,
-          totalWeeklySpend: totalWeeklyAmounts + totalWeeklyTaxes,
+          totalYearlySpend: totalYearlyAmounts,
+          totalWeeklySpend: totalWeeklyAmounts,
           totalWeeklyTaxes,
           totalYearlyTaxes,
-          totalMonthlySpend: totalMonthlyAmounts + totalMonthlyTaxes,
+          totalMonthlySpend: totalMonthlyAmounts,
           totalMonthlyTaxes
         };
       }).catch(err => ({
