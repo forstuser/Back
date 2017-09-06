@@ -1375,6 +1375,7 @@ function prepareAuthRoutes(userController, authRoutes) {
             osTypeId: [joi.string(), joi.allow(null)],
             gcmId: [joi.string(), joi.allow(null)],
             email: [joi.string(), joi.allow(null)],
+            oldEmail: [joi.string(), joi.allow(null)],
             deviceId: [joi.string(), joi.allow(null)],
             deviceModel: [joi.string(), joi.allow(null)],
             apkVersion: [joi.string(), joi.allow(null)],

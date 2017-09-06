@@ -49,7 +49,7 @@ class UserAdaptor {
       share_email: payload.isEmailAllowed,
       professional_description: payload.description,
       updated_by_user_id: user.ID,
-      email_secret: uuid.v4()
+      email_secret: payload.email !== payload.oldEmail ? uuid.v4() : undefined
     }, {
       where: {
         ID: user.ID
@@ -66,7 +66,19 @@ class UserAdaptor {
           attributes: {
             exclude: ['UserTypeID']
           }
-        }).then(result => NotificationAdaptor.sendVerificationMail(payload.email, result.toJSON()));
+        }).then((result) => {
+          const updatedUser = result.toJSON();
+          if (!updatedUser.email_verified) {
+            NotificationAdaptor.sendVerificationMail(payload.email, updatedUser);
+          } else if (updatedUser.email !== payload.oldEmail) {
+            updatedUser.email_secret = uuid.v4();
+            result.updateAttributes({
+              email_verified: 0,
+              email_secret: updatedUser.email_secret
+            });
+            NotificationAdaptor.sendVerificationMail(payload.email, updatedUser);
+          }
+        });
       }
 
       reply({
