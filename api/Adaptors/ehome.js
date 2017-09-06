@@ -2,8 +2,6 @@ const dueDays = {
   Yearly: 365, HalfYearly: 180, Quarterly: 90, Monthly: 30, Weekly: 7, Daily: 1
 };
 
-const { readJSONFile } = require('../../helpers/shared');
-
 class EHomeAdaptor {
   constructor(modals) {
     this.modals = modals;
@@ -320,7 +318,12 @@ class EHomeAdaptor {
   fetchProductDetails(user,
     masterCategoryId, ctype, brandIds, categoryIds,
     offlineSellerIds, onlineSellerIds, sortBy, searchValue) {
-    return readJSONFile('categories', '').then((item) => {
+    return this.modals.categories.findOne({
+      where: {
+        ref_id: masterCategoryId,
+        display_id: ctype
+      }
+    }).then((item) => {
       const offlineSellerWhereClause = {
         $and: [this.modals.sequelize.where(this.modals.sequelize.col('`consumerBill->productOfflineSeller->billSellerMapping`.`ref_type`'), 2)]
       };
@@ -335,8 +338,7 @@ class EHomeAdaptor {
           $ne: 3
         },
         master_category_id: masterCategoryId,
-        category_id: item.find(cItem => cItem.mainCategoryId
-          .toString() === masterCategoryId && cItem.cType.toString() === ctype).id,
+        category_id: ctype ? item.category_id : undefined,
         $and: [this.modals.sequelize.where(this.modals.sequelize.fn('lower', this.modals.sequelize.col('product_name')), { $like: this.modals.sequelize.fn('lower', searchValue) })]
       } : {
         user_id: user.ID,

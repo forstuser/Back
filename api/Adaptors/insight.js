@@ -198,16 +198,23 @@ class InsightAdaptor {
                 $lte: new Date(monthLastDay)
               }
             },
+            include: [
+              {
+                model: this.modals.consumerBills,
+                as: 'bill',
+                where: {
+                  $and: [
+                    this.modals.sequelize.where(this.modals.sequelize.col('`products->consumerBill->bill->billMapping`.`bill_ref_type`'), 1),
+                    {
+                      user_status: 5,
+                      admin_status: 5
+                    }
+                  ]
+                },
+                attributes: []
+              }],
             attributes: [],
             required: true
-          }, {
-            model: this.modals.consumerBills,
-            as: 'productBillMaps',
-            where: {
-              user_status: 5,
-              admin_status: 5
-            },
-            attributes: []
           }],
           attributes: [],
           required: false,
@@ -216,54 +223,61 @@ class InsightAdaptor {
         attributes: [['category_name', 'cName'], ['display_id', 'cType'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`categories`.`category_id`'), '/insights?pageno=1'), 'cURL'], [this.modals.sequelize.fn('SUM', this.modals.sequelize.col('`products`.`value_of_purchase`')), 'totalAmount'], [this.modals.sequelize.fn('SUM', this.modals.sequelize.col('`products`.`taxes`')), 'totalTax']],
         group: '`categories`.`category_id`',
         order: ['display_id']
-      }), this.modals.categories
-      .findAll({
+      }),
+    this.modals.categories.findAll({
+      where: {
+        category_level: 1,
+        status_id: {
+          $ne: 3
+        }
+      },
+      include: [{
+        model: this.modals.productBills,
+        as: 'products',
         where: {
-          category_level: 1,
+          user_id: user.ID,
           status_id: {
             $ne: 3
           }
         },
         include: [{
-          model: this.modals.productBills,
-          as: 'products',
+          model: this.modals.consumerBillDetails,
+          as: 'consumerBill',
           where: {
-            user_id: user.ID,
             status_id: {
               $ne: 3
+            },
+            purchase_date: {
+              $gte: new Date(yearStartDay),
+              $lte: new Date(yearLastDay)
             }
           },
-          include: [{
-            model: this.modals.consumerBillDetails,
-            as: 'consumerBill',
-            where: {
-              status_id: {
-                $ne: 3
-              },
-              purchase_date: {
-                $gte: new Date(yearStartDay),
-                $lte: new Date(yearLastDay)
-              }
-            },
-            attributes: [],
-            required: true
-          }, {
-            model: this.modals.consumerBills,
-            as: 'productBillMaps',
-            where: {
-              user_status: 5,
-              admin_status: 5
-            },
-            attributes: []
-          }],
           attributes: [],
-          required: false,
-          group: '`products`.`master_category_id`'
+          include: [
+            {
+              model: this.modals.consumerBills,
+              as: 'bill',
+              where: {
+                $and: [
+                  this.modals.sequelize.where(this.modals.sequelize.col('`products->consumerBill->bill->billMapping`.`bill_ref_type`'), 1),
+                  {
+                    user_status: 5,
+                    admin_status: 5
+                  }
+                ]
+              },
+              attributes: []
+            }],
+          required: true
         }],
-        attributes: [['category_name', 'cName'], ['display_id', 'cType'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`categories`.`category_id`'), '/insights'), 'cURL'], [this.modals.sequelize.fn('SUM', this.modals.sequelize.col('`products`.`value_of_purchase`')), 'totalAmount'], [this.modals.sequelize.fn('SUM', this.modals.sequelize.col('`products`.`taxes`')), 'totalTax']],
-        group: '`categories`.`category_id`',
-        order: ['display_id']
-      })]) : this.modals.categories
+        attributes: [],
+        required: false,
+        group: '`products`.`master_category_id`'
+      }],
+      attributes: [['category_name', 'cName'], ['display_id', 'cType'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`categories`.`category_id`'), '/insights'), 'cURL'], [this.modals.sequelize.fn('SUM', this.modals.sequelize.col('`products`.`value_of_purchase`')), 'totalAmount'], [this.modals.sequelize.fn('SUM', this.modals.sequelize.col('`products`.`taxes`')), 'totalTax']],
+      group: '`categories`.`category_id`',
+      order: ['display_id']
+    })]) : this.modals.categories
       .findAll({
         where: {
           category_level: 1,
@@ -293,15 +307,22 @@ class InsightAdaptor {
               }
             },
             attributes: [],
+            include: [
+              {
+                model: this.modals.consumerBills,
+                as: 'bill',
+                where: {
+                  $and: [
+                    this.modals.sequelize.where(this.modals.sequelize.col('`products->consumerBill->bill->billMapping`.`bill_ref_type`'), 1),
+                    {
+                      user_status: 5,
+                      admin_status: 5
+                    }
+                  ]
+                },
+                attributes: []
+              }],
             required: true
-          }, {
-            model: this.modals.consumerBills,
-            as: 'productBillMaps',
-            where: {
-              user_status: 5,
-              admin_status: 5
-            },
-            attributes: []
           }],
           attributes: [],
           required: false,
