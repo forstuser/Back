@@ -94,23 +94,23 @@ models.sequelize.sync().then(() => {
         method: "GET",
         path: "/bill-copies/{billCopyId}/files",
         handler: function (request, reply) {
-            if (!request.headers.authorization) {
-                return reply("Unauthorized").code(401);
-            } else {
-                const TokenNo = request.headers.authorization;
-                connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', (error, token, fields) => {
-                    if (error) throw error;
-                    if (token.length > 0) {
-                        return FileUtil.getFile(request.params.billCopyId, models).then((data) => {
-                            reply(data.Body).header('Content-Type', data.ContentType).code(200);
-                        }).catch((err) => {
-                            reply("Not found").code(404);
-                        });
-                    } else {
-                        return reply("Unauthorized").code(401);
-                    }
-                });
-            }
+            // if (!request.headers.authorization) {
+            //     return reply("Unauthorized").code(401);
+            // } else {
+            //     const TokenNo = request.headers.authorization;
+            //     connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', (error, token, fields) => {
+            //         if (error) throw error;
+            //         if (token.length > 0) {
+            return FileUtil.getFile(request.params.billCopyId, models).then((data) => {
+                reply(data.Body).header('Content-Type', data.ContentType).code(200);
+            }).catch((err) => {
+                reply("Not found").code(404);
+            });
+            //     } else {
+            //         return reply("Unauthorized").code(401);
+            //     }
+            // });
+            // }
         }
     });
 //Admin Login
