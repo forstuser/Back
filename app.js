@@ -8,6 +8,7 @@ const FileUtil = require('./fileUtil');
 const models = require('./models');
 // Create a server with a host and port
 const server = new Hapi.Server();
+
 const connection = MySQL.createConnection({
     host: 'binbilldbinstancetest.cpnnj7xlkrir.ap-south-1.rds.amazonaws.com',
     user: 'binbillDB',
@@ -19,7 +20,7 @@ server.connection({port: 3000});
 server.register({
     register: require('hapi-cors'),
     options: {
-        origins: ['http://localhost:4200']
+        // origins: ['http://localhost:4200']
     }
 }, () => {
     server.start(() => {
