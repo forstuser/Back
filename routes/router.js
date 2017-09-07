@@ -1634,7 +1634,7 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
             method: 'GET',
             path: '/bills/{id}/files',
             config: {
-                auth: 'jwt',
+                // auth: 'jwt',
                 handler: UploadController.retrieveFiles
             }
         });
@@ -1650,7 +1650,7 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
             method: 'GET',
             path: '/consumer/{id}/images',
             config: {
-                auth: 'jwt',
+                // auth: 'jwt',
                 handler: UploadController.retrieveUserImage
             }
         });

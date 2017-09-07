@@ -206,16 +206,16 @@ class UploadController {
     }
 
     static retrieveFiles(request, reply) {
-        const user = shared.verifyAuthorization(request.headers);
-        if (!user) {
-            reply({
-                status: false,
-                message: 'Unauthorized'
-            });
-        } else {
+        // const user = shared.verifyAuthorization(request.headers);
+        // if (!user) {
+        //     reply({
+        //         status: false,
+        //         message: 'Unauthorized'
+        //     });
+        // } else {
             modals.billCopies.findOne({
                 where: {
-                    uploaded_by_id: user.ID,
+                    // uploaded_by_id: user.ID,
                     bill_copy_id: request.params.id
                 },
                 attributes: {exclude: ['BillID']}
@@ -228,7 +228,7 @@ class UploadController {
             }).catch((err) => {
                 reply(err);
             });
-        }
+        // }
     }
 
     static deleteFile(request, reply) {
@@ -300,17 +300,17 @@ class UploadController {
     }
 
     static retrieveUserImage(request, reply) {
-        const user = shared.verifyAuthorization(request.headers);
-        if (!user) {
-            reply({
-                status: false,
-                message: 'Unauthorized'
-            });
-        } else {
+        // const user = shared.verifyAuthorization(request.headers);
+        // if (!user) {
+        //     reply({
+        //         status: false,
+        //         message: 'Unauthorized'
+        //     });
+        // } else {
             modals.userImages.findOne({
                 where: {
                     user_image_id: request.params.id,
-                    user_id: user.ID
+                    // user_id: user.ID
                 }
             }).then((result) => {
                 if (result && result.user_image_name) {
@@ -331,7 +331,7 @@ class UploadController {
                     err
                 });
             });
-        }
+        // }
     }
 }
 
