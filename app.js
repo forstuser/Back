@@ -106,6 +106,8 @@ models.sequelize.sync().then(() => {
                         }).catch((err) => {
                             reply("Not found").code(404);
                         });
+                    } else {
+                        return reply("Unauthorized").code(401);
                     }
                 });
             }
