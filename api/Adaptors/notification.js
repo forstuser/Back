@@ -254,6 +254,20 @@ class NotificationAdaptor {
         });
     }
 
+    updateNotificationStatus(user, notificationIds) {
+        return this.modals.mailBox.update({
+            status_id: 9
+        }, {
+            where: {
+                user_id: user.ID,
+                status_id: {
+                    $ne: 3
+                },
+                notification_id: notificationIds
+            }
+        });
+    }
+
     notifyUser(userId, payload, reply) {
         const whereClause = userId ? {
             ID: userId,

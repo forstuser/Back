@@ -53,6 +53,24 @@ class DashboardController {
         }
     }
 
+    static updateNotificationStatus(request, reply) {
+        const user = shared.verifyAuthorization(request.headers);
+        if (!user) {
+            reply({
+                status: false,
+                message: 'Unauthorized'
+            });
+        } else {
+            notificationAdaptor.updateNotificationStatus(user, request.payload.notificationIds).then((count) => {
+                console.log("UPDATE COUNT: ", count);
+
+                reply({status: true}).code(201);
+            }).catch((err) => {
+                reply({status: false}).code(500);
+            });
+        }
+    }
+
     static getMailbox(request, reply) {
         const user = shared.verifyAuthorization(request.headers);
         if (!user) {
