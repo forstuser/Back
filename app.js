@@ -4936,64 +4936,93 @@ models.sequelize.sync().then(() => {
 
                 if (token.length > 0) {
                     const userID = token[0]['user_id'];
-                    const brandDetailPromise = [];
-                    for (let i = 0; i < brandList.length; i++) {
-                        models.table_brands.findOrCreate({
+                    const brandWiseList = [];
+                    brandList.forEach((elem) => {
+                        const index = brandWiseList.findIndex(item => (item.Name === elem.Name));
+                        if (index === -1) {
+                            brandWiseList.push({Name: elem.Name, BrandDetails: [elem]});
+                        } else {
+                            brandWiseList[index].BrandDetails.push(elem);
+                        }
+                    });
+
+                    const brandPromise = brandWiseList.map((elem) => {
+                        return models.table_brands.findOrCreate({
                             where: {
-                                brand_name: brandList[i].Name,
+                                brand_name: elem.Name,
                                 status_id: 1
                             },
                             defaults: {
-                                brand_name: brandList[i].Name,
-                                created_on: getDateTime(),
-                                updated_on: getDateTime(),
+                                brand_name: elem.Name,
+                                created_on: Date.now(),
+                                updated_on: Date.now(),
                                 updated_by_user_id: userID,
                                 status_id: 1
                             }
-                        }).then((result) => {
-                            const brand = result[0];
-                            brandDetailPromise.push(
-                                models.brandDetails.findOrCreate({
+                        })
+                    });
+
+                    return Promise.all(brandPromise).then((result) => {
+                        let brandDetailPromises = [];
+                        result.forEach((elem, index) => {
+                            brandWiseList[index].BrandDetails.forEach((detail) => {
+                                brandDetailPromises.push(models.brandDetails.findOrCreate({
                                     where: {
-                                        brand_id: brand.brand_id,
-                                        category_id: brandList[i].CategoryID,
-                                        contactdetails_type_id: brandList[i].DisplayTypeID,
-                                        display_name: brandList[i].DisplayName,
-                                        details: brandList[i].Details,
+                                        brand_id: elem.brand_id,
+                                        category_id: detail.CategoryID,
+                                        contactdetails_type_id: detail.DisplayTypeID,
+                                        display_name: detail.DisplayName,
+                                        details: detail.Details,
                                         status_id: 1
                                     },
                                     defaults: {
-                                        brand_id: brand.brand_id,
-                                        category_id: brandList[i].CategoryID,
-                                        contactdetails_type_id: brandList[i].DisplayTypeID,
-                                        display_name: brandList[i].DisplayName,
-                                        details: brandList[i].Details,
+                                        brand_id: elem.brand_id,
+                                        category_id: detail.CategoryID,
+                                        contactdetails_type_id: detail.DisplayTypeID,
+                                        display_name: detail.DisplayName,
+                                        details: detail.Details,
                                         status_id: 1
                                     }
-                                }));
-                            if (brandDetailPromise.length === brandList.length) {
-                                Promise.all(brandDetailPromise).then(() => reply({statusCode: 100})).catch(err => reply({
-                                    statusCode: 400,
-                                    err
-                                }));
-                            }
-                        }).catch(err => reply({statusCode: 400, err}));
-                    }
-                } else {
+                                }))
+                            });
+                        });
+
+                        return Promise.all(brandDetailPromises);
+
+                        // if (brandDetailPromise.length === brandList.length) {
+                        //     Promise.all(brandDetailPromise).then(() => reply({statusCode: 100})).catch(err => reply({
+                        //         statusCode: 400,
+                        //         err
+                        //     }));
+                        // }
+                    }).then((result) => {
+                        console.log(result);
+                        return reply({statusCode: 100});
+                    }).catch(err => reply({statusCode: 400, err}));
+                }
+
+                else {
                     data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
                     reply(data);
                 }
-            });
+            })
+
         },
-        config: {
-            validate: {
-                payload: {
-                    TokenNo: Joi.string().required(),
-                    List: Joi.array().required(),
-                    output: 'data',
-                    parse: true
+        config:
+            {
+                validate: {
+                    payload: {
+                        TokenNo: Joi.string().required(),
+                        List:
+                            Joi.array().required(),
+                        output:
+                            'data',
+                        parse:
+                            true
+                    }
                 }
             }
-        }
-    });
-});
+    })
+    ;
+})
+;
