@@ -49,7 +49,7 @@ module.exports = {
             password: 'Binbill5#',
             database: 'binbill',
             autoReconnect: true,
-            host: 'binbilldbinstanceprod.cpnnj7xlkrir.ap-south-1.rds.amazonaws.com',
+            host: 'binbill-db-production.cpnnj7xlkrir.ap-south-1.rds.amazonaws.com',
             dialect: 'mysql',
             port: 3306
         },
@@ -63,11 +63,11 @@ module.exports = {
             port: 3306
         },
         dev: {
-            username: 'binbillDB',
-            password: 'devbindb1!#',
+            username: 'abhyuditjain',
+            password: '25111992',
             database: 'binbill',
             autoReconnect: true,
-            host: 'binbilldbinstancetest.cpnnj7xlkrir.ap-south-1.rds.amazonaws.com',
+            host: 'localhost',
             dialect: 'mysql',
             port: 3306
         }
