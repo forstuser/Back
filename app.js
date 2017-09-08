@@ -3533,7 +3533,37 @@ models.sequelize.sync().then(() => {
                                                                                                     }
                                                                                                     connection.query('SELECT bill_repair_id as RepairID,bill_copy_id as ImageID FROM table_consumer_bill_repair_copies WHERE bill_repair_id IN (' + RepairIDList + ')', (error, repairimage, fields) => {
                                                                                                         if (error) throw error;
-                                                                                                        const data = '{"statusCode": 100,"BillDetail": ' + JSON.stringify(bill) + ',"BillOnlineSeller": ' + JSON.stringify(billonlineseller) + ',"BillOfflineSeller": ' + JSON.stringify(billofflineseller) + ',"BillImage": ' + JSON.stringify(image) + ',"ProductList": ' + JSON.stringify(product) + ',"ProductForm":' + JSON.stringify(productform) + ',"InsuranceList":' + JSON.stringify(insurance) + ',"InsuranceImage":' + JSON.stringify(insuranceimage) + ',"InsuranceInclusions":' + JSON.stringify(insuranceinclusions) + ',"InsuranceExclusions":' + JSON.stringify(insuranceexclusions) + ',"WarrantyList":' + JSON.stringify(warranty) + ',"WarrantyImage":' + JSON.stringify(warrantyimage) + ',"WarrantyExclusions":' + JSON.stringify(warrantyexclusions) + ',"WarrantyInclusions":' + JSON.stringify(warrantyinclusions) + ',"AMCList":' + JSON.stringify(amc) + ',"AMCImage":' + JSON.stringify(amcimage) + ',"AMCExclusions":' + JSON.stringify(amcexclusions) + ',"AMCInclusions":' + JSON.stringify(amcinclusions) + ',"RepairList":' + JSON.stringify(repair) + ',"RepairImage":' + JSON.stringify(repairimage) + '}';
+                                                                                                        const formattedProductForms = [];
+                                                                                                        let productElem = {};
+                                                                                                        productform.forEach((elem) => {
+                                                                                                            if (!productElem.ProductID) {
+                                                                                                                productElem.ProductID = elem.ProductID;
+                                                                                                            }
+
+                                                                                                            if (productElem.ProductID !== elem.ProductID) {
+                                                                                                                formattedProductForms.push(productElem);
+                                                                                                                productElem = {
+                                                                                                                    ProductID: elem.ProductID
+                                                                                                                }
+                                                                                                            }
+
+                                                                                                            if (!productElem.forms) {
+                                                                                                                productElem.forms = [];
+                                                                                                            }
+
+                                                                                                            productElem.forms.push({
+                                                                                                                ProductID: elem.ProductID,
+                                                                                                                CatFormID: elem.CatFormID,
+                                                                                                                value: elem.value,
+                                                                                                                CatFormName: elem.CatFormName,
+                                                                                                                ElementType: elem.ElementType,
+                                                                                                                DropdownValue: elem.DropdownValue
+                                                                                                            });
+                                                                                                        });
+
+                                                                                                        formattedProductForms.push(productElem);
+
+                                                                                                        const data = '{"statusCode": 100,"BillDetail": ' + JSON.stringify(bill) + ',"BillOnlineSeller": ' + JSON.stringify(billonlineseller) + ',"BillOfflineSeller": ' + JSON.stringify(billofflineseller) + ',"BillImage": ' + JSON.stringify(image) + ',"ProductList": ' + JSON.stringify(product) + ',"ProductForm":' + JSON.stringify(formattedProductForms) + ',"InsuranceList":' + JSON.stringify(insurance) + ',"InsuranceImage":' + JSON.stringify(insuranceimage) + ',"InsuranceInclusions":' + JSON.stringify(insuranceinclusions) + ',"InsuranceExclusions":' + JSON.stringify(insuranceexclusions) + ',"WarrantyList":' + JSON.stringify(warranty) + ',"WarrantyImage":' + JSON.stringify(warrantyimage) + ',"WarrantyExclusions":' + JSON.stringify(warrantyexclusions) + ',"WarrantyInclusions":' + JSON.stringify(warrantyinclusions) + ',"AMCList":' + JSON.stringify(amc) + ',"AMCImage":' + JSON.stringify(amcimage) + ',"AMCExclusions":' + JSON.stringify(amcexclusions) + ',"AMCInclusions":' + JSON.stringify(amcinclusions) + ',"RepairList":' + JSON.stringify(repair) + ',"RepairImage":' + JSON.stringify(repairimage) + '}';
                                                                                                         reply(data);
                                                                                                     });
                                                                                                 });
@@ -4505,7 +4535,35 @@ models.sequelize.sync().then(() => {
 
                                                                                     connection.query('SELECT bill_repair_id as RepairID,bill_copy_id as ImageID FROM table_consumer_bill_repair_copies WHERE bill_repair_id IN (' + RepairIDList + ')', (error, repairimage, fields) => {
                                                                                         if (error) throw error;
-                                                                                        const data = '{"statusCode": 100,"ProductList": ' + JSON.stringify(product) + ',"ProductForm":' + JSON.stringify(productform) + ',"InsuranceList":' + JSON.stringify(insurance) + ',"InsuranceImage":' + JSON.stringify(insuranceimage) + ',"InsuranceInclusions":' + JSON.stringify(insuranceinclusions) + ',"InsuranceExclusions":' + JSON.stringify(insuranceexclusions) + ',"WarrantyList":' + JSON.stringify(warranty) + ',"WarrantyImage":' + JSON.stringify(warrantyimage) + ',"WarrantyExclusions":' + JSON.stringify(warrantyexclusions) + ',"WarrantyInclusions":' + JSON.stringify(warrantyinclusions) + ',"AMCList":' + JSON.stringify(amc) + ',"AMCImage":' + JSON.stringify(amcimage) + ',"AMCExclusions":' + JSON.stringify(amcexclusions) + ',"AMCInclusions":' + JSON.stringify(amcinclusions) + ',"RepairList":' + JSON.stringify(repair) + ',"RepairImage":' + JSON.stringify(repairimage) + '}';
+                                                                                        const formattedProductForms = [];
+                                                                                        let productElem = {};
+                                                                                        productform.forEach((elem) => {
+                                                                                            if (!productElem.ProductID) {
+                                                                                                productElem.ProductID = elem.ProductID;
+                                                                                            }
+
+                                                                                            if (productElem.ProductID !== elem.ProductID) {
+                                                                                                formattedProductForms.push(productElem);
+                                                                                                productElem = {
+                                                                                                    ProductID: elem.ProductID
+                                                                                                }
+                                                                                            }
+
+                                                                                            if (!productElem.forms) {
+                                                                                                productElem.forms = [];
+                                                                                            }
+
+                                                                                            productElem.forms.push({
+                                                                                                ProductID: elem.ProductID,
+                                                                                                CatFormID: elem.CatFormID,
+                                                                                                value: elem.value,
+                                                                                                CatFormName: elem.CatFormName,
+                                                                                                ElementType: elem.ElementType,
+                                                                                                DropdownValue: elem.DropdownValue
+                                                                                            });
+                                                                                        });
+                                                                                        formattedProductForms.push(productElem);
+                                                                                        const data = '{"statusCode": 100,"ProductList": ' + JSON.stringify(product) + ',"ProductForm":' + JSON.stringify(formattedProductForms) + ',"InsuranceList":' + JSON.stringify(insurance) + ',"InsuranceImage":' + JSON.stringify(insuranceimage) + ',"InsuranceInclusions":' + JSON.stringify(insuranceinclusions) + ',"InsuranceExclusions":' + JSON.stringify(insuranceexclusions) + ',"WarrantyList":' + JSON.stringify(warranty) + ',"WarrantyImage":' + JSON.stringify(warrantyimage) + ',"WarrantyExclusions":' + JSON.stringify(warrantyexclusions) + ',"WarrantyInclusions":' + JSON.stringify(warrantyinclusions) + ',"AMCList":' + JSON.stringify(amc) + ',"AMCImage":' + JSON.stringify(amcimage) + ',"AMCExclusions":' + JSON.stringify(amcexclusions) + ',"AMCInclusions":' + JSON.stringify(amcinclusions) + ',"RepairList":' + JSON.stringify(repair) + ',"RepairImage":' + JSON.stringify(repairimage) + '}';
                                                                                         reply(data);
                                                                                     });
                                                                                 });
