@@ -66,6 +66,9 @@ const validatePayloadSignature = function (payload, signature) {
 };
 
 const insertFcmDetails = function (userId, fcmId) {
+    if (!fcmId || fcmId === "") {
+        return Promise.resolve("NULL FCMID");
+    }
     return fcmModel.create({
         user_id: userId,
         fcm_id: fcmId
@@ -211,7 +214,7 @@ class UserController {
                         });
 
                         insertFcmDetails(userData[0].ID, request.payload.fcmId).then((data) => {
-                            console.log("FCM ID INSERTED SUCCESSFULLY");
+                            console.log(data);
                         });
 
                         reply(dashboardAdaptor.prepareDashboardResult(userData[1], userData[0], `bearer ${authentication.generateToken(userData[0]).token}`)).code(201).header('authorization', `bearer ${authentication.generateToken(userData[0]).token}`);
@@ -271,7 +274,7 @@ class UserController {
                         UserController.uploadTrueCallerImage(trueObject, userData[0]);
 
                         insertFcmDetails(userData[0].ID, request.payload.fcmId).then((data) => {
-                            console.log("FCM ID INSERTED SUCCESSFULLY");
+                            console.log(data);
                         });
 
                         reply(dashboardAdaptor.prepareDashboardResult(userData[1], userData[0], `bearer ${authentication.generateToken(userData[0]).token}`)).code(201).header('authorization', `bearer ${authentication.generateToken(userData[0]).token}`);
