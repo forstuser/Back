@@ -72,8 +72,8 @@ class InsightAdaptor {
         };
 
         if (minDate || maxDate) {
-          const totalAmounts = sumProps(categoryData, 'totalAmount');
-          const totalTaxes = sumProps(categoryData, 'totalTax');
+          const totalAmounts = sumProps(categoryData.customDateData, 'totalAmount');
+          const totalTaxes = sumProps(categoryData.customDateData, 'totalTax');
           return {
             status: true,
             message: 'Insight restore successful',
