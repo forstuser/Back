@@ -6,14 +6,19 @@ const Joi = require('joi');
 const crypto = require('crypto');
 const FileUtil = require('./fileUtil');
 const models = require('./models');
+const config = require("./config/main");
+const env = require("./config/env");
 // Create a server with a host and port
 const server = new Hapi.Server();
 
+const options = config.database[env];
+
 const connection = MySQL.createConnection({
-    host: 'binbilldbinstancetest.cpnnj7xlkrir.ap-south-1.rds.amazonaws.com',
-    user: 'binbillDB',
-    password: 'devbindb1!#',
-    database: 'binbill'
+    host: options.host,
+    user: options.username,
+    password: options.password,
+    database: options.database,
+    port: options.port
 });
 //server.connection({ port: 3000});
 server.connection({port: 3000});
