@@ -5019,11 +5019,16 @@ models.sequelize.sync().then(() => {
                                         details: detail.Details,
                                         status_id: 1
                                     }
+                                }).catch((err) => {
+                                    console.log(err);
                                 }))
                             });
                         });
 
-                        return Promise.all(brandDetailPromises);
+                        return Promise.all(brandDetailPromises).catch((err) => {
+                            console.log(err);
+                            return reply({statusCode: 500}).code(500);
+                        });
 
                         // if (brandDetailPromise.length === brandList.length) {
                         //     Promise.all(brandDetailPromise).then(() => reply({statusCode: 100})).catch(err => reply({
@@ -5034,7 +5039,10 @@ models.sequelize.sync().then(() => {
                     }).then((result) => {
                         console.log(result);
                         return reply({statusCode: 100});
-                    }).catch(err => reply({statusCode: 400, err}));
+                    }).catch((err) => {
+                        console.log(err);
+                        reply({statusCode: 400, err})
+                    });
                 }
 
                 else {
