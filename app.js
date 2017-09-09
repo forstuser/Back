@@ -7,11 +7,12 @@ const crypto = require('crypto');
 const FileUtil = require('./fileUtil');
 const models = require('./models');
 const config = require("./config/main");
-const env = require("./config/env");
+const request = require("request-promise");
 // Create a server with a host and port
 const server = new Hapi.Server();
 
-const options = config.database[env];
+const options = config.DATABASE;
+const PORT = config.APP.PORT;
 
 const connection = MySQL.createConnection({
     host: options.host,
@@ -21,7 +22,7 @@ const connection = MySQL.createConnection({
     port: options.port
 });
 //server.connection({ port: 3000});
-server.connection({port: 3000});
+server.connection({port: PORT});
 server.register({
     register: require('hapi-cors'),
     options: {
@@ -3876,10 +3877,23 @@ models.sequelize.sync().then(() => {
                     const UserID = token[0]['user_id'];
                     connection.query('UPDATE table_consumer_bills SET user_status=10,admin_status=10,comments="' + Comments + '" WHERE bill_id="' + BID + '" and user_id="' + UID + '"', (error, results, fields) => {
                         if (error) throw error;
-                        connection.query('INSERT INTO table_inbox_notification (user_id,notification_type,title,description,status_id,createdAt,updatedAt,bill_id) VALUES ("' + UID + '",2,"Invoice Rejected","' + Comments + '",4,"' + getDateTime() + '","' + getDateTime() + '","' + BID + '")', (error, notification, fields) => {
+                        const nowDate = getDateTime();
+                        connection.query('INSERT INTO table_inbox_notification (user_id,notification_type,title,description,status_id,createdAt,updatedAt,bill_id) VALUES ("' + UID + '",2,"Invoice Rejected","' + Comments + '",4,"' + nowDate + '","' + nowDate + '","' + BID + '")', (error, notification, fields) => {
                             if (error) throw error;
                             const data = '{"statusCode": 100,"error": "","message": "Job Discard successfully."}';
                             reply(data);
+
+                            const notificationData = {
+                                notificationType: 2,
+                                title: "Invoice rejected",
+                                description: Comments,
+                                statusId: 4,
+                                createdAt: nowDate,
+                                updatedAt: nowDate,
+                                billId: BID
+                            };
+
+                            notifyUser(UID, notificationData);
                         });
                     });
                 } else {
@@ -3917,12 +3931,29 @@ models.sequelize.sync().then(() => {
                     const UserID = token[0]['user_id'];
                     connection.query('UPDATE table_consumer_bill_copies SET status_id=10,comments="' + Comments + '" WHERE bill_id="' + BID + '" and bill_copy_id="' + ImageID + '"', (error, results, fields) => {
                         if (error) throw error;
-                        connection.query('INSERT INTO table_inbox_notification (user_id,notification_type,title,description,status_id,createdAt,updatedAt,bill_id) VALUES ("' + UID + '",2,"Bill Copy Rejected","' + Comments + '",4,"' + getDateTime() + '","' + getDateTime() + '","' + BID + '")', (error, notification, fields) => {
+                        const nowDate = getDateTime();
+                        connection.query('INSERT INTO table_inbox_notification (user_id,notification_type,title,description,status_id,createdAt,updatedAt,bill_id) VALUES ("' + UID + '",2,"Bill Copy Rejected","' + Comments + '",4,"' + nowDate + '","' + nowDate + '","' + BID + '")', (error, notification, fields) => {
                             if (error) throw error;
                             connection.query('INSERT INTO table_notification_copies (notification_id,bill_copy_id) VALUES ("' + notification['insertId'] + '","' + ImageID + '")', (error, notification, fields) => {
                                 if (error) throw error;
                                 const data = '{"statusCode": 100,"error": "","message": "Image Discard successfully."}';
                                 reply(data);
+
+                                const notificationData = {
+                                    notificationType: 2,
+                                    title: "Invoice rejected",
+                                    description: Comments,
+                                    statusId: 4,
+                                    createdAt: nowDate,
+                                    updatedAt: nowDate,
+                                    billId: BID,
+                                    copies: [{
+                                        billCopyId: ImageID,
+                                        fileUrl: `bills/${ImageID}/files`
+                                    }]
+                                };
+
+                                notifyUser(UID, notificationData);
                             });
                         });
                     });
@@ -5029,5 +5060,47 @@ models.sequelize.sync().then(() => {
             }
     })
     ;
-})
-;
+});
+
+function notifyUser(userId, payload) {
+
+    return models.fcmDetails.findAll({
+        where: {
+            user_id: userId
+        }
+    }).then((result) => {
+        const options = {
+            uri: 'https://fcm.googleapis.com/fcm/send',
+            method: 'POST',
+            headers: {Authorization: 'key=' + config.FCM_KEY},
+            json: {
+                // note that Sequelize returns token object array, we map it with token value only
+                registration_ids: result.map(user => user.fcm_id),
+                // iOS requires priority to be set as 'high' for message to be received in background
+                priority: 'high',
+                data: payload
+            }
+        };
+        request(options, (error, response, body) => {
+            if (!error && response.statusCode === 200) {
+                // request was success, should early return response to client
+                console.log(`NOTIFICATION SENT TO USER: ${userId} with RESULTS: ${body.results}`);
+            } else {
+                console.log(`NOTIFICATION FAILED TO USER: ${userId} with RESULTS: ${body.results}`);
+            }
+
+            // extract invalid registration for removal
+            if (body.failure > 0 && Array.isArray(body.results) && body
+                    .results.length === result.length) {
+                const results = body.results;
+                for (let i = 0; i < result.length; i += 1) {
+                    if (results[i].error === 'InvalidRegistration') {
+                        result[i].destroy().then((rows) => {
+                            console.log("FCM ID's DELETED: ", rows);
+                        });
+                    }
+                }
+            }
+        });
+    });
+}

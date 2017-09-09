@@ -1,7 +1,6 @@
-const {S3_BUCKET, AWS_ACCESS_DETAILS} = require('./config/main');
-const env = require('./config/env');
+const AWS = require('./config/main').AWS;
 const S3FS = require("s3fs");
-const fsImpl = new S3FS(S3_BUCKET.BUCKET_NAME[env], AWS_ACCESS_DETAILS[env]);
+const fsImpl = new S3FS(AWS.S3.BUCKET, AWS.ACCESS_DETAILS);
 
 function getFile(billCopyId, models) {
     return models.billCopies.findOne({
