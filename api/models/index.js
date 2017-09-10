@@ -5,10 +5,9 @@
 const fs = require('fs');
 const path = require('path');
 const Sequelize = require('sequelize');
-const env = require('../../config/env');
 const config = require('../../config/main');
 
-const database = config.database[env];
+const database = config.DATABASE;
 const sequelize = new Sequelize(
   database.database,
   database.username,

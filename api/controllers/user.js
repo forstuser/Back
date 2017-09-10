@@ -20,10 +20,9 @@ const UserAdaptor = require('../Adaptors/user');
 const NearByAdaptor = require('../Adaptors/nearby');
 const NotificationAdaptor = require('../Adaptors/notification');
 
-const {S3_BUCKET, AWS_ACCESS_DETAILS} = require('../../config/main');
-const env = require('../../config/env');
+const AWS = require('../../config/main').AWS;
 
-const fsImplUser = new S3FS(`${S3_BUCKET.BUCKET_NAME[env]}/${S3_BUCKET.USER_IMAGE[env]}`, AWS_ACCESS_DETAILS[env]);
+const fsImplUser = new S3FS(`${AWS.S3.BUCKET}/${AWS.S3.USER_IMAGE}`, AWS.ACCESS_DETAILS);
 
 let userModel;
 let userRelationModel;
@@ -108,16 +107,18 @@ class UserController {
     static dispatchOTP(request, reply) {
         const otp = generateRandomString(6);
         const options = {
-            uri: 'http://login.smsgatewayhub.com/api/mt/SendSMS',
+            uri: 'http://api.msg91.com/api/sendhttp.php',
             qs: {
-                APIKey: 'yoCgEiWDwkChKkOTQh3MDg',
-                senderid: 'BinBil',
-                channel: 2,
-                DCS: 0,
-                flashsms: 0,
-                number: request.payload.PhoneNo,
-                text: `Your verification code is "${otp}". Please enter this code to login your account.`,
-                route: 1
+                authkey: config.SMS.AUTH_KEY,
+                sender: 'BinBill',
+                // channel: 2,
+                // DCS: 0,
+                flash: 0,
+                mobiles: request.payload.PhoneNo,
+                message: `Your verification code is "${otp}". Please enter this code to login your account.`,
+                route: 4,
+                country: 91,
+                response: 'json'
             },
             timeout: 170000,
             json: true // Automatically parses the JSON string in the response
@@ -131,17 +132,24 @@ class UserController {
                 exclude: ['UserTypeID']
             }
         })]).then((response) => {
-            if (response[0].ErrorMessage === 'Success') {
+            // console.log(response);
+            if (response[0].type === 'success') {
+                console.log("SMS SENT WITH ID: ", response[0].message);
                 userRelationModel.findOrCreate({
                     where: {
                         PhoneNo: request.payload.PhoneNo
                     },
                     defaults: {
+                        PhoneNo: request.payload.PhoneNo,
                         OTP: otp,
                         token_updated: shared.formatDate(moment().utc(), 'yyyy-mm-dd HH:MM:ss'),
                         valid_turns: 0
                     }
                 }).then((result) => {
+                    // console.log("RESULT 0: ", result[0]);
+                    // console.log("RESULT 1: ", result[1]);
+
+
                     if (!result[1]) {
                         result[0].updateAttributes({
                             OTP: otp,
@@ -166,6 +174,7 @@ class UserController {
                         }).code(201);
                     }
                 }).catch((err) => {
+                    console.log(err);
                     reply({
                         status: false,
                         err
@@ -175,6 +184,7 @@ class UserController {
                 reply({error: response.ErrorMessage}).code(403);
             }
         }).catch((err) => {
+            console.log(err);
             reply({
                 status: false,
                 err

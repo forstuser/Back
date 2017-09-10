@@ -5,83 +5,40 @@
 const fs = require('fs');
 
 module.exports = {
-  S3_BUCKET: {
-    BUCKET_NAME: {
-      dev: 'binbillbucket',
-      qa: 'binbillbucket',
-      prod: 'binbillbucket'
+    SMS: {
+        AUTH_KEY: process.env.SMS_AUTH_KEY,
     },
-    USER_IMAGE: {
-      dev: 'userimages',
-      qa: 'userimages',
-      prod: 'userimages'
+    AWS: {
+        S3: {
+            BUCKET: process.env.AWS_S3_BUCKET,
+            USER_IMAGE: "userimages",
+            CATEGORY_IMAGE: "categoryimages"
+        },
+        ACCESS_DETAILS: {
+            accessKeyId: process.env.AWS_ACCESS_KEY,
+            secretAccessKey: process.env.AWS_SECRET_KEY,
+            region: process.env.AWS_REGION
+        }
     },
-    CATEGORY_IMAGE: {
-      dev: 'categoryimages',
-      qa: 'categoryimages',
-      prod: 'categoryimages'
-    }
-  },
-  AWS_ACCESS_DETAILS: {
-    dev: {
-      accessKeyId: 'AKIAJWC3NVWYOO6YFVVQ',
-      secretAccessKey: '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',
-      region: 'ap-south-1'
+    SERVER_HOST: process.env.SERVER_HOST,
+    EMAIL: {
+        USER: process.env.EMAIL_ID,
+        PASSWORD: process.env.EMAIL_PASSWORD
     },
-    qa: {
-      accessKeyId: 'AKIAJWC3NVWYOO6YFVVQ',
-      secretAccessKey: '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',
-      region: 'ap-south-1'
+    // Secret key for JWT signing and encryption
+    JWT_SECRET: fs.readFileSync(`${__dirname}/rsa-private.pem`),
+    // Database connection information
+    DATABASE: {
+        username: process.env.DATABASE_USERNAME,
+        password: process.env.DATABASE_PASSWORD,
+        database: process.env.DATABASE_DATABASE,
+        autoReconnect: true,
+        host: process.env.DATABASE_HOST,
+        dialect: 'mysql',
+        port: 3306
     },
-    prod: {
-      accessKeyId: 'AKIAJWC3NVWYOO6YFVVQ',
-      secretAccessKey: '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',
-      region: 'ap-south-1'
-    }
-  },
-  SERVER_HOST: {
-    dev: 'http://localhost:3000/',
-    prod: 'http://13.126.5.210:3000/',
-    qa: 'http://13.126.5.210:3000/'
-  },
-  EMAIL: {
-    USER: 'support@binbill.com',
-    PASSWORD: 'binbill@123'
-  },
-  // Secret key for JWT signing and encryption
-  secret: fs.readFileSync(`${__dirname}/rsa-private.pem`),
-  // Database connection information
-  database: {
-    prod: {
-      username: 'binbill',
-      password: 'Binbill5#',
-      database: 'binbill',
-      autoReconnect: true,
-      host: 'binbilldbinstanceprod.cpnnj7xlkrir.ap-south-1.rds.amazonaws.com',
-      dialect: 'mysql',
-      port: 3306
+    APP: {
+        PORT: process.env.APP_PORT || 3000
     },
-    qa: {
-      username: 'binbillDB',
-      password: 'devbindb1!#',
-      database: 'binbill',
-      autoReconnect: true,
-      host: 'binbilldbinstancetest.cpnnj7xlkrir.ap-south-1.rds.amazonaws.com',
-      dialect: 'mysql',
-      port: 3306
-    },
-    dev: {
-      username: 'binbillDB',
-      password: 'devbindb1!#',
-      database: 'binbill',
-      autoReconnect: true,
-      host: 'binbilldbinstancetest.cpnnj7xlkrir.ap-south-1.rds.amazonaws.com',
-      dialect: 'mysql',
-      port: 3306
-    }
-  },
-  // Setting port for server
-  port: 3001,
-  test_port: 3001,
-  TRUECALLER_PUBLIC_KEY: '-----BEGIN PUBLIC KEY-----\nMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDEpFwIarbm48m6ueG+jhpt2vCGaqXZlwR/HPuL4zH1DQ/eWFbgQtVnrta8QhQz3ywLnbX6s7aecxUzzNJsTtS8VxKAYll4E1lJUqrNdWt8CU+TaUQuFm8vzLoPiYKEXl4bX5rzMQUMqA228gWuYmRFQnpduQTgnYIMO8XVUQXl5wIDAQAB\n-----END PUBLIC KEY-----'
+    TRUECALLER_PUBLIC_KEY: '-----BEGIN PUBLIC KEY-----\nMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDEpFwIarbm48m6ueG+jhpt2vCGaqXZlwR/HPuL4zH1DQ/eWFbgQtVnrta8QhQz3ywLnbX6s7aecxUzzNJsTtS8VxKAYll4E1lJUqrNdWt8CU+TaUQuFm8vzLoPiYKEXl4bX5rzMQUMqA228gWuYmRFQnpduQTgnYIMO8XVUQXl5wIDAQAB\n-----END PUBLIC KEY-----'
 };

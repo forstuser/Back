@@ -14,7 +14,7 @@ const jwtOptions = {
   // Telling Passport to check authorization headers for JWT
   jwtFromRequest: ExtractJwt.fromAuthHeader(),
   // Telling Passport where to find the secret
-  secretOrKey: config.secret
+  secretOrKey: config.JWT_SECRET
 
   // TO-DO: Add issuer and audience checks
 };

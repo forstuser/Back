@@ -5,14 +5,12 @@ const mime = require('mime-types');
 const moment = require('moment');
 const fileType = require("file-type");
 
-const {S3_BUCKET, AWS_ACCESS_DETAILS} = require('../../config/main');
-const env = require('../../config/env');
+const AWS = require('../../config/main').AWS;
+const fsImpl = new S3FS(AWS.S3.BUCKET, AWS.ACCESS_DETAILS);
 
-const fsImpl = new S3FS(S3_BUCKET.BUCKET_NAME[env], AWS_ACCESS_DETAILS[env]);
+const fsImplUser = new S3FS(`${AWS.S3.BUCKET}/${AWS.S3.USER_IMAGE}`, AWS.ACCESS_DETAILS);
 
-const fsImplUser = new S3FS(`${S3_BUCKET.BUCKET_NAME[env]}/${S3_BUCKET.USER_IMAGE[env]}`, AWS_ACCESS_DETAILS[env]);
-
-const fsImplCategory = new S3FS(`${S3_BUCKET.BUCKET_NAME[env]}/${S3_BUCKET.CATEGORY_IMAGE[env]}`, AWS_ACCESS_DETAILS[env]);
+const fsImplCategory = new S3FS(`${AWS.S3.BUCKET}/${AWS.S3.CATEGORY_IMAGE}`, AWS.ACCESS_DETAILS);
 
 const ALLOWED_FILE_TYPES = ['txt', 'pdf', 'doc', 'docx', 'rtf', 'xls', 'xlsx', 'png', 'bmp', 'jpg', 'jpeg'];
 
