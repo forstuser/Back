@@ -1344,7 +1344,7 @@ models.sequelize.sync().then(() => {
                 if (error) throw error;
                 if (token.length > 0) {
                     const UserID = token[0]['user_id'];
-                    connection.query('INSERT INTO table_authorized_service_center (brand_id,center_name,address_house_no,address_block,address_street,address_sector,address_city,address_state,address_pin_code,address_nearby,latitude,longitude,open_days,timings,status_id) VALUES ("' + request.payload.BrandID + '","' + request.payload.Name + '","' + request.payload.HouseNo + '","' + request.payload.Block + '","' + request.payload.Street + '","' + request.payload.Sector + '","' + request.payload.City + '","' + request.payload.State + '","' + request.payload.PinCode + '","' + request.payload.NearBy + '","' + request.payload.Lattitude + '","' + request.payload.Longitude + '","' + request.payload.OpenDays + '","' + request.payload.Timings + '",1)', (error, results, fields) => {
+                    connection.query('INSERT INTO table_authorized_service_center (brand_id,center_name,address_house_no,address_block,address_street,address_sector,address_city,address_state,address_pin_code,address_nearby,latitude,longitude,open_days,timings,status_id, address) VALUES ("' + request.payload.BrandID + '","' + request.payload.Name + '","' + request.payload.HouseNo + '","' + request.payload.Block + '","' + request.payload.Street + '","' + request.payload.Sector + '","' + request.payload.City + '","' + request.payload.State + '","' + request.payload.PinCode + '","' + request.payload.NearBy + '","' + request.payload.Lattitude + '","' + request.payload.Longitude + '","' + request.payload.OpenDays + '","' + request.payload.Timings + '",1' + request.payload.Adress + '")', (error, results, fields) => {
                         if (error) throw error;
                         for (let i = 0; i < Details.length; i++) {
                             connection.query('INSERT INTO table_authorized_service_center_details (center_id,category_id,contactdetail_type_id,display_name,details,status_id) VALUES ("' + results['insertId'] + '",' + Details[i].CategoryID + ',"' + Details[i].DetailTypeID + '","' + Details[i].DisplayName + '","' + Details[i].Details + '",1)', (error, detail, fields) => {
@@ -1374,6 +1374,7 @@ models.sequelize.sync().then(() => {
                     State: Joi.string().required(),
                     PinCode: Joi.allow(null),
                     NearBy: Joi.allow(null),
+                    Address: Joi.allow(null),
                     Lattitude: Joi.allow(null),
                     Longitude: Joi.allow(null),
                     OpenDays: Joi.string(),
@@ -1398,7 +1399,7 @@ models.sequelize.sync().then(() => {
                 if (error) throw error;
                 if (token.length > 0) {
                     const UserID = token[0]['user_id'];
-                    connection.query('UPDATE table_authorized_service_center SET brand_id="' + request.payload.BrandID + '",center_name="' + request.payload.Name + '",address_house_no="' + request.payload.HouseNo + '",address_block="' + request.payload.Block + '",address_street="' + request.payload.Street + '",address_sector="' + request.payload.Sector + '",address_city="' + request.payload.City + '",address_state="' + request.payload.State + '",address_pin_code="' + request.payload.PinCode + '",address_nearby="' + request.payload.NearBy + '",latitude="' + request.payload.Lattitude + '",longitude="' + request.payload.Longitude + '",open_days="' + request.payload.OpenDays + '",timings="' + request.payload.Timings + '" WHERE center_id="' + ID + '"', (error, results, fields) => {
+                    connection.query('UPDATE table_authorized_service_center SET brand_id="' + request.payload.BrandID + '",center_name="' + request.payload.Name + '",address_house_no="' + request.payload.HouseNo + '",address_block="' + request.payload.Block + '",address_street="' + request.payload.Street + '",address_sector="' + request.payload.Sector + '",address_city="' + request.payload.City + '",address_state="' + request.payload.State + '",address_pin_code="' + request.payload.PinCode + '",address_nearby="' + request.payload.NearBy + '",address="' + request.payload.Adress + '",latitude="' + request.payload.Lattitude + '",longitude="' + request.payload.Longitude + '",open_days="' + request.payload.OpenDays + '",timings="' + request.payload.Timings + '" WHERE center_id="' + ID + '"', (error, results, fields) => {
                         if (error) throw error;
                         for (let i = 0; i < Details.length; i++) {
                             if (Details[i].DetailID != null && Details[i].DetailID != '') {
@@ -1434,6 +1435,7 @@ models.sequelize.sync().then(() => {
                     State: Joi.string().required(),
                     PinCode: Joi.allow(null),
                     NearBy: Joi.allow(null),
+                    Address: Joi.allow(null),
                     Lattitude: Joi.allow(null),
                     Longitude: Joi.allow(null),
                     OpenDays: Joi.string(),
@@ -1533,7 +1535,7 @@ models.sequelize.sync().then(() => {
                     } else {
                         var LimitCondition = '';
                     }
-                    connection.query('SELECT a.center_id as ID,a.brand_id as BrandID,b.brand_name as BrandName,a.center_name as Name,a.address_house_no as HouseNo,a.address_block as Block,a.address_street as Street,a.address_sector as Sector,a.address_city as City,a.address_state as State,a.address_pin_code as PinCode,a.address_nearby as NearBy,a.latitude as Lattitude,a.longitude as Longitude,a.open_days as OpenDays,a.timings as Timings FROM table_authorized_service_center as a inner join table_brands as b on a.brand_id=b.brand_id WHERE a.status_id!=3 ORDER BY b.brand_name ' + LimitCondition + ' ', (error, service_center, fields) => {
+                    connection.query('SELECT a.center_id as ID,a.brand_id as BrandID,b.brand_name as BrandName,a.center_name as Name,a.address_house_no as HouseNo,a.address_block as Block,a.address_street as Street,a.address_sector as Sector,a.address_city as City,a.address_state as State,a.address_pin_code as PinCode,a.address_nearby as NearBy, a.address as Address, a.latitude as Lattitude,a.longitude as Longitude,a.open_days as OpenDays,a.timings as Timings FROM table_authorized_service_center as a inner join table_brands as b on a.brand_id=b.brand_id WHERE a.status_id!=3 ORDER BY b.brand_name ' + LimitCondition + ' ', (error, service_center, fields) => {
                         if (error) throw error;
                         if (service_center.length > 0) {
                             var data = '{"statusCode": 100,"AuthorizedList": ' + JSON.stringify(service_center) + '}';
@@ -1572,7 +1574,7 @@ models.sequelize.sync().then(() => {
                 if (error) throw error;
                 if (token.length > 0) {
                     const UserID = token[0]['user_id'];
-                    connection.query('SELECT a.center_id as ID,a.brand_id as BrandID,b.brand_name as BrandName,a.center_name as Name,a.address_house_no as HouseNo,a.address_block as Block,a.address_street as Street,a.address_sector as Sector,a.address_city as City,a.address_state as State,a.address_pin_code as PinCode,a.address_nearby as NearBy,a.latitude as Lattitude,a.longitude as Longitude,a.open_days as OpenDays,a.timings as Timings FROM table_authorized_service_center as a inner join table_brands as b on a.brand_id=b.brand_id WHERE a.center_id = "' + ID + '"', (error, service, fields) => {
+                    connection.query('SELECT a.center_id as ID,a.brand_id as BrandID,b.brand_name as BrandName,a.center_name as Name,a.address_house_no as HouseNo,a.address_block as Block,a.address_street as Street,a.address_sector as Sector,a.address_city as City,a.address_state as State,a.address_pin_code as PinCode,a.address_nearby as NearBy, a.address as Address, a.latitude as Lattitude,a.longitude as Longitude,a.open_days as OpenDays,a.timings as Timings FROM table_authorized_service_center as a inner join table_brands as b on a.brand_id=b.brand_id WHERE a.center_id = "' + ID + '"', (error, service, fields) => {
                         if (error) throw error;
                         if (service.length > 0) {
                             connection.query('SELECT center_detail_id as DetailID,category_id as CategoryID,contactdetail_type_id as DetailTypeID,display_name as DisplayName,details as Details FROM table_authorized_service_center_details WHERE center_id = "' + ID + '" and status_id!=3', (error, detail, fields) => {
@@ -5029,13 +5031,6 @@ models.sequelize.sync().then(() => {
                             console.log(err);
                             return reply({statusCode: 500}).code(500);
                         });
-
-                        // if (brandDetailPromise.length === brandList.length) {
-                        //     Promise.all(brandDetailPromise).then(() => reply({statusCode: 100})).catch(err => reply({
-                        //         statusCode: 400,
-                        //         err
-                        //     }));
-                        // }
                     }).then((result) => {
                         console.log(result);
                         return reply({statusCode: 100});
@@ -5052,22 +5047,101 @@ models.sequelize.sync().then(() => {
             })
 
         },
-        config:
-            {
-                validate: {
-                    payload: {
-                        TokenNo: Joi.string().required(),
-                        List:
-                            Joi.array().required(),
-                        output:
-                            'data',
-                        parse:
-                            true
-                    }
+        config: {
+            validate: {
+                payload: {
+                    TokenNo: Joi.string().required(),
+                    List:
+                        Joi.array().required(),
+                    output:
+                        'data',
+                    parse:
+                        true
                 }
             }
+        }
+    });
+
+    server.route({
+        method: 'POST',
+        path: '/Services/AddASCCSV',
+        handler: (request, reply) => {
+            const TokenNo = request.payload.TokenNo;
+            const ascList = request.payload.List;
+            connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', (error, token, fields) => {
+                let data;
+                if (error) {
+                    throw error;
+                }
+                if (token.length > 0) {
+                    const userID = token[0]['user_id'];
+
+                    const ascDetailsList = ascList.map((elem) => {
+                        return elem.Details;
+                    });
+
+
+                    const ascPromise = ascList.map((elem) => {
+                        return models.authorizedServiceCenter.create({
+                            center_name: elem.Name,
+                            brand_id: elem.BrandID,
+                            address: elem.Address,
+                            address_city: elem.City,
+                            address_state: elem.State,
+                            address_pin_code: elem.PinCode,
+                            latitude: elem.Lattitude,
+                            longitude: elem.Longitude,
+                            timings: elem.Timings,
+                            open_days: elem.OpenDays,
+                            created_on: Date.now(),
+                            updated_on: Date.now(),
+                            updated_by_user_id: userID,
+                            status_id: 1
+                        });
+                    });
+
+                    return Promise.all(ascPromise).then((result) => {
+                        const ascDetailsPromise = ascDetailsList.map((elem, index) => {
+                            return models.authorizeServiceCenterDetail.create({
+                                center_id: result[index].center_id,
+                                contactdetail_type_id: elem.DetailTypeID,
+                                display_name: elem.DisplayName,
+                                details: elem.Details,
+                                status_id: 1
+                            });
+                        });
+
+                        return Promise.all(ascDetailsPromise).catch((err) => {
+                            console.log(err);
+                            return reply({statusCode: 500}).code(500);
+                        });
+                    }).then((result) => {
+                        console.log(result);
+                        return reply({statusCode: 100});
+                    }).catch((err) => {
+                        console.log(err);
+                        reply({statusCode: 400, err})
+                    });
+                } else {
+                    data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+                    reply(data);
+                }
+            });
+        },
+        config: {
+            validate: {
+                payload: {
+                    TokenNo: Joi.string().required(),
+                    List:
+                        Joi.array().required(),
+                    output:
+                        'data',
+                    parse:
+                        true
+                }
+            }
+        }
     })
-    ;
 });
 
 function notifyUser(userId, payload) {
