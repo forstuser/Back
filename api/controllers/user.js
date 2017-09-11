@@ -93,7 +93,6 @@ const deleteFcmDetails = function (userId, fcmId) {
 
 class UserController {
     constructor(modal) {
-        this.User = modal.users;
         userModel = modal.table_users;
         userRelationModel = modal.table_users_temp;
         modals = modal;

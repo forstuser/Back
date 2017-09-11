@@ -18,6 +18,7 @@ const DashboardController = require('../api/controllers/dashboard');
 const ProductController = require('../api/controllers/product');
 const InsightController = require('../api/controllers/insight');
 const SearchController = require('../api/controllers/search');
+const GeneralController = require('../api/controllers/general');
 
 let User;
 
@@ -1871,6 +1872,27 @@ function prepareInsightRoutes(insightController, insightRoutes) {
     }
 }
 
+function prepareGeneralRoutes(generalController, generalRoutes) {
+    if (generalController) {
+        generalRoutes.push({
+            method: "POST",
+            path: "/contact-us",
+            config: {
+                handler: GeneralController.contactUs,
+                description: "Post Contact Us",
+                validate: {
+                    payload: {
+                        name: joi.string().required(),
+                        email: joi.string().email().required(),
+                        phone: joi.string().required(),
+                        message: joi.string().required()
+                    }
+                }
+            }
+        })
+    }
+}
+
 module.exports = (app, modals) => {
     User = modals.users;
     // Middleware to require login/auth
@@ -1889,6 +1911,7 @@ module.exports = (app, modals) => {
     const productRoutes = [];
     const insightRoutes = [];
     const searchRoutes = [];
+    const generalRoutes = [];
     const userController = new UserController(modals);
     const categoryController = new CategoryController(modals);
     const brandController = new BrandController(modals);
@@ -1903,6 +1926,7 @@ module.exports = (app, modals) => {
     const insightController = new InsightController(modals);
     const userManagementController = new UserManagementController(modals);
     const searchController = new SearchController(modals);
+    const generalController = new GeneralController(modals);
 
     prepareAuthRoutes(userController, authRoutes);
 
@@ -1931,6 +1955,7 @@ module.exports = (app, modals) => {
     prepareProductRoutes(productController, productRoutes);
 
     prepareInsightRoutes(insightController, insightRoutes);
+    prepareGeneralRoutes(generalController, generalRoutes);
 
     if (searchController) {
         searchRoutes.push({
@@ -1967,6 +1992,7 @@ module.exports = (app, modals) => {
         ...dashboardRoutes,
         ...productRoutes,
         ...insightRoutes,
-        ...searchRoutes
+        ...searchRoutes,
+        ...generalRoutes
     ]);
 };
