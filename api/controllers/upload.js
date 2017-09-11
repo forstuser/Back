@@ -12,9 +12,9 @@ const fsImpl = new S3FS(AWS.S3.BUCKET, AWS.ACCESS_DETAILS);
 
 const fsImplUser = new S3FS(`${AWS.S3.BUCKET}/${AWS.S3.USER_IMAGE}`, AWS.ACCESS_DETAILS);
 
-const fsImplCategory = new S3FS(`${AWS.S3.BUCKET}/${AWS.S3.CATEGORY_IMAGE}`, AWS.ACCESS_DETAILS);
-
 const ALLOWED_FILE_TYPES = ['txt', 'pdf', 'doc', 'docx', 'rtf', 'xls', 'xlsx', 'png', 'bmp', 'jpg', 'jpeg'];
+
+const categoryImageType = ['xxhdpi', 'xxhdpi-small'];
 
 const isFileTypeAllowed = function (fileTypeData) {
 	// console.log("FILE TYPE DATA: " + fileTypeData);
@@ -309,6 +309,7 @@ class UploadController {
 	}
 
 	static retrieveCategoryImage(request, reply) {
+        const fsImplCategory = new S3FS(`${AWS.S3.BUCKET}/${AWS.S3.CATEGORY_IMAGE}/${categoryImageType[request.params.type || 0 ]}`, AWS.ACCESS_DETAILS);
 		modals.categories.findOne({
 			where: {
 				category_id: request.params.id

@@ -1689,7 +1689,7 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
 		});
 		uploadFileRoute.push({
 			method: 'GET',
-			path: '/categories/{id}/image',
+			path: '/categories/{id}/image/{type}',
 			config: {
 				handler: UploadController.retrieveCategoryImage
 			}
