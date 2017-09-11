@@ -4974,57 +4974,58 @@ models.sequelize.sync().then(() => {
 
                 if (token.length > 0) {
                     const userID = token[0]['user_id'];
-                    const brandWiseList = [];
+                    const brandNamesFound = {};
+                    const newBrandList = [];
+                    let newBrandListIndex = -1;
                     brandList.forEach((elem) => {
-                        const index = brandWiseList.findIndex(item => (item.Name === elem.Name));
-                        if (index === -1) {
-                            brandWiseList.push({Name: elem.Name, BrandDetails: [elem]});
+                        if (brandNamesFound[elem.brand_name]) {
+                            // console.log("BRAND NAME FOUND");
+                            newBrandList[newBrandListIndex].details.push({
+                                category_id: elem.category_id,
+                                contactdetails_type_id: elem.contactdetails_type_id,
+                                display_name: elem.display_name,
+                                details: elem.details
+                            })
                         } else {
-                            brandWiseList[index].BrandDetails.push(elem);
+                            // console.log("NAME NOT FOUND!");
+                            newBrandList.push({
+                                brand_name: elem.brand_name,
+                                details: [{
+                                    category_id: elem.category_id,
+                                    contactdetails_type_id: elem.contactdetails_type_id,
+                                    display_name: elem.display_name,
+                                    details: elem.details
+                                }]
+                            });
+                            newBrandListIndex += 1;
+                            brandNamesFound[elem.brand_name] = true;
                         }
                     });
 
-                    const brandPromise = brandWiseList.map((elem) => {
-                        return models.table_brands.findOrCreate({
-                            where: {
-                                brand_name: elem.Name,
-                                status_id: 1
-                            },
-                            defaults: {
-                                brand_name: elem.Name,
-                                created_on: Date.now(),
-                                updated_on: Date.now(),
-                                updated_by_user_id: userID,
-                                status_id: 1
-                            }
-                        })
+                    const brandPromise = newBrandList.map((elem) => {
+                        return models.table_brands.create({
+                            brand_name: elem.brand_name,
+                            updated_by_user_id: userID,
+                            status_id: 1
+                        });
                     });
 
+                    // console.log(JSON.stringify(newBrandList));
+
                     return Promise.all(brandPromise).then((result) => {
-                        let brandDetailPromises = [];
-                        result.forEach((elem, index) => {
-                            brandWiseList[index].BrandDetails.forEach((detail) => {
-                                brandDetailPromises.push(models.brandDetails.findOrCreate({
-                                    where: {
-                                        brand_id: elem.brand_id,
-                                        category_id: detail.CategoryID,
-                                        contactdetails_type_id: detail.DisplayTypeID,
-                                        display_name: detail.DisplayName,
-                                        details: detail.Details,
-                                        status_id: 1
-                                    },
-                                    defaults: {
-                                        brand_id: elem.brand_id,
-                                        category_id: detail.CategoryID,
-                                        contactdetails_type_id: detail.DisplayTypeID,
-                                        display_name: detail.DisplayName,
-                                        details: detail.Details,
-                                        status_id: 1
-                                    }
-                                }).catch((err) => {
-                                    console.log(err);
+                        const brandDetailPromises = [];
+                        newBrandList.forEach((elem, index) => {
+                            elem.details.forEach((detail) => {
+                                brandDetailPromises.push(models.brandDetails.create({
+                                    brand_id: result[index].brand_id,
+                                    category_id: detail.category_id,
+                                    contactdetails_type_id: detail.contactdetails_type_id,
+                                    display_name: detail.display_name,
+                                    details: detail.details,
+                                    status_id: 1
                                 }))
                             });
+
                         });
 
                         return Promise.all(brandDetailPromises).catch((err) => {
@@ -5032,7 +5033,7 @@ models.sequelize.sync().then(() => {
                             return reply({statusCode: 500}).code(500);
                         });
                     }).then((result) => {
-                        console.log(result);
+                        // console.log(result);
                         return reply({statusCode: 100});
                     }).catch((err) => {
                         console.log(err);
