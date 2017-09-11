@@ -1,6 +1,5 @@
-/**
- * Created by arpit on 6/30/2017.
- */
+/*jshint esversion: 6 */
+'use strict';
 
 module.exports = (sequelize, Sequelize) => sequelize.define('table_users', {
 	ID: {
@@ -25,10 +24,7 @@ module.exports = (sequelize, Sequelize) => sequelize.define('table_users', {
 	},
 	email_id: {
 		type: Sequelize.STRING,
-		unique: true,
-		validate: {
-			isEmail: false
-		}
+		unique: false
 	},
 	mobile_no: {
 		type: Sequelize.STRING,

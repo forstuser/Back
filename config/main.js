@@ -1,6 +1,5 @@
-/**
- * Created by arpit on 7/3/2017.
- */
+/*jshint esversion: 6 */
+'use strict';
 
 const fs = require('fs');
 

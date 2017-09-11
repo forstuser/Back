@@ -1,3 +1,6 @@
+/*jshint esversion: 6 */
+'use strict';
+
 const shared = require('../../helpers/shared');
 
 const date = new Date();

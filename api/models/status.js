@@ -1,20 +1,19 @@
-/**
- * Created by arpit on 6/30/2017.
- */
+/*jshint esversion: 6 */
+'use strict';
 
 module.exports = (sequelize, Sequelize) => sequelize.define('table_status', {
-  ID: {
-    type: Sequelize.INTEGER,
-    autoIncrement: true,
-    primaryKey: true,
-    field: 'status_id'
-  },
-  Name: {
-    type: Sequelize.STRING,
-    field: 'status_name'
-  }
+	ID: {
+		type: Sequelize.INTEGER,
+		autoIncrement: true,
+		primaryKey: true,
+		field: 'status_id'
+	},
+	Name: {
+		type: Sequelize.STRING,
+		field: 'status_name'
+	}
 }, {
-  freezeTableName: true,
-  defaultPrimaryKey: false,
-  timestamps: false
+	freezeTableName: true,
+	defaultPrimaryKey: false,
+	timestamps: false
 });

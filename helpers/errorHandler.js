@@ -1,8 +1,7 @@
-/**
- * Created by arpit on 7/4/2017.
- */
+/*jshint esversion: 6 */
+'use strict';
 
-const { logger } = require('./shared');
+const {logger} = require('./shared');
 
 const curlyBrace = '{';
 const bigBrace = '[';
@@ -12,9 +11,9 @@ const bigBrace = '[';
  * @param {string} err error in callback.
  */
 function handleError(err) {
-  if (err) {
-    logger.info(err);
-  }
+	if (err) {
+		logger.info(err);
+	}
 }
 
 /**
@@ -23,23 +22,23 @@ function handleError(err) {
  * @returns {object} body Body contain fields required to be added or updated by service.
  */
 function parseStringToJson(body) {
-  if (body && typeof body === 'string' && (body.indexOf(curlyBrace) === 0 || body.indexOf(bigBrace) === 0)) {
-    return JSON.parse(body);
-  }
+	if (body && typeof body === 'string' && (body.indexOf(curlyBrace) === 0 || body.indexOf(bigBrace) === 0)) {
+		return JSON.parse(body);
+	}
 
-  return body;
+	return body;
 }
 
 module.exports = (err, req, res, next) => {
-  if (err) {
-    try {
-      res.status(err.status || 500).send(parseStringToJson(err.message));
-      handleError(err.message);
-    } catch (ex) {
-      res.status(500).send(parseStringToJson(ex));
-      handleError(ex);
-    }
-  }
+	if (err) {
+		try {
+			res.status(err.status || 500).send(parseStringToJson(err.message));
+			handleError(err.message);
+		} catch (ex) {
+			res.status(500).send(parseStringToJson(ex));
+			handleError(ex);
+		}
+	}
 
-  return next();
+	return next();
 };

@@ -1,13 +1,12 @@
-/**
- * Created by arpit on 7/4/2017.
- */
+/*jshint esversion: 6 */
+'use strict';
 
-const { verify } = require('jsonwebtoken');
-const { readFileSync, readFile } = require('fs');
+const {verify} = require('jsonwebtoken');
+const {readFileSync, readFile} = require('fs');
 const url = require('url-join');
 const dateFormat = require('dateformat');
 const uuid = require('uuid');
-const { stringify } = require('querystring');
+const {stringify} = require('querystring');
 const _ = require('lodash');
 const path = require('path');
 
@@ -20,17 +19,17 @@ const emptyObject = {};
 const emptyString = '';
 const authorizationParamConst = 'authorization';
 const readJSONFile = (fileName, lang) => new Promise((resolve, reject) => {
-  const completeFilePath = path.resolve(__dirname, `${filePath}${fileName}${jsonFileType}`);
-  readFile(completeFilePath, utfFormatting, (err, data) => {
-    if (err) {
-      reject(err);
-    }
-    try {
-      resolve(JSON.parse(data));
-    } catch (ex) {
-      reject(ex);
-    }
-  });
+	const completeFilePath = path.resolve(__dirname, `${filePath}${fileName}${jsonFileType}`);
+	readFile(completeFilePath, utfFormatting, (err, data) => {
+		if (err) {
+			reject(err);
+		}
+		try {
+			resolve(JSON.parse(data));
+		} catch (ex) {
+			reject(ex);
+		}
+	});
 });
 
 /**
@@ -39,17 +38,17 @@ const readJSONFile = (fileName, lang) => new Promise((resolve, reject) => {
  * @returns {object} The Empty String
  */
 function validateAccessToken(authorization) {
-  if (!authorization) {
-    return null;
-  }
-  // noinspection Eslint
-  const data = readFileSync(`${__dirname}/rsa-public-key.pem`);
-  const auth = authorization.split(spaceString)[1];
-  try {
-    return verify(auth, data.toString());
-  } catch (e) {
-    return null;
-  }
+	if (!authorization) {
+		return null;
+	}
+	// noinspection Eslint
+	const data = readFileSync(`${__dirname}/rsa-public-key.pem`);
+	const auth = authorization.split(spaceString)[1];
+	try {
+		return verify(auth, data.toString());
+	} catch (e) {
+		return null;
+	}
 }
 
 /**
@@ -58,11 +57,11 @@ function validateAccessToken(authorization) {
  * @returns {string} The Empty String
  */
 function isAccessTokenBasic(authorization) {
-  if (authorization.indexOf(basicStringConst) >= 0) {
-    return emptyObject;
-  }
+	if (authorization.indexOf(basicStringConst) >= 0) {
+		return emptyObject;
+	}
 
-  return validateAccessToken(authorization);
+	return validateAccessToken(authorization);
 }
 
 /**
@@ -73,7 +72,7 @@ function isAccessTokenBasic(authorization) {
  * @returns {*}
  */
 function verifyParameters(rootNode, currentField, defaultValue) {
-  return _.get(rootNode, currentField, defaultValue);
+	return _.get(rootNode, currentField, defaultValue);
 }
 
 /**
@@ -82,32 +81,32 @@ function verifyParameters(rootNode, currentField, defaultValue) {
  * @returns {string}
  */
 function verifyAuthorization(headers) {
-  return isAccessTokenBasic(verifyParameters(headers, authorizationParamConst, emptyString));
+	return isAccessTokenBasic(verifyParameters(headers, authorizationParamConst, emptyString));
 }
 
 const formatDate = (actualValue, dateFormatString) => dateFormat(actualValue, dateFormatString);
 const prepareUrl = (basePath, ...relPath) => url(basePath, ...relPath);
 const queryStringFromObject = queryObject => stringify(queryObject);
 const retrieveHeaderValue = headers => ({
-  authorization: verifyParameters(headers, authorizationParamConst, emptyString),
-  CorrelationId: uuid.v4()
+	authorization: verifyParameters(headers, authorizationParamConst, emptyString),
+	CorrelationId: uuid.v4()
 });
 const iterateToCollection = (collection, callback, ...relativeItems) => {
-  const result = [];
-  _.forEach(collection, item => result.push(callback(item, relativeItems[0])));
+	const result = [];
+	_.forEach(collection, item => result.push(callback(item, relativeItems[0])));
 
-  return result;
+	return result;
 };
 const stringHasSubString = (stringItem, subString) => _.includes(stringItem, subString);
 
 module.exports = {
-  readJSONFile,
-  formatDate,
-  prepareUrl,
-  verifyParameters,
-  queryStringFromObject,
-  verifyAuthorization,
-  retrieveHeaderValue,
-  iterateToCollection,
-  stringHasSubString
+	readJSONFile,
+	formatDate,
+	prepareUrl,
+	verifyParameters,
+	queryStringFromObject,
+	verifyAuthorization,
+	retrieveHeaderValue,
+	iterateToCollection,
+	stringHasSubString
 };
