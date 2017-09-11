@@ -158,7 +158,7 @@ class NotificationAdaptor {
                             metaData.value = metaData.selectedValue.value;
                         }
 
-                        if (metaData.name.toLowerCase().includes('due') && metaData.name.toLowerCase().includes('date')) {
+                        if (metaData.name.toLowerCase().includes('due') && metaData.name.toLowerCase().includes('date') && moment(metaData.value).isValid()) {
                             const dueDateTime = moment(metaData.value).unix();
                             product.dueDate = metaData.value;
                             product.dueIn = Math.floor((dueDateTime - moment.utc()
@@ -182,12 +182,14 @@ class NotificationAdaptor {
                     .dueIn <= 30 && product.dueIn >= -1);
                 let amcs = result[1].map((item) => {
                     const amc = item.toJSON();
-                    const dueDateTime = moment(amc.expiryDate).unix();
-                    amc.dueDate = amc.expiryDate;
-                    amc.dueIn = Math.floor((dueDateTime - moment.utc().unix()) / (24 * 60 * 60 * 1000));
-                    amc.productType = 3;
-                    amc.title = 'AMC Renewal Pending';
-                    amc.description = amc.amcProduct ? amc.amcProduct.productName : '';
+                    if(moment(amc.expiryDate).isValid()) {
+                        const dueDateTime = moment(amc.expiryDate).unix();
+                        amc.dueDate = amc.expiryDate;
+                        amc.dueIn = Math.floor((dueDateTime - moment.utc().unix()) / (24 * 60 * 60 * 1000));
+                        amc.productType = 3;
+                        amc.title = 'AMC Renewal Pending';
+                        amc.description = amc.amcProduct ? amc.amcProduct.productName : '';
+                    }
 
                     return amc;
                 });
@@ -195,14 +197,15 @@ class NotificationAdaptor {
 
                 let insurances = result[2].map((item) => {
                     const insurance = item.toJSON();
-                    const dueDateTime = moment(insurance.expiryDate).unix();
-                    insurance.dueDate = insurance.expiryDate;
-                    insurance.dueIn = Math.floor((dueDateTime - moment.utc()
-                        .unix()) / (24 * 60 * 60 * 1000));
-                    insurance.productType = 3;
-                    insurance.title = 'Insurance Renewal Pending';
-                    insurance.description = insurance.insuredProduct ? insurance.insuredProduct.productName : '';
-
+                    if(moment(insurance.expiryDate).isValid()) {
+                        const dueDateTime = moment(insurance.expiryDate).unix();
+                        insurance.dueDate = insurance.expiryDate;
+                        insurance.dueIn = Math.floor((dueDateTime - moment.utc()
+                            .unix()) / (24 * 60 * 60 * 1000));
+                        insurance.productType = 3;
+                        insurance.title = 'Insurance Renewal Pending';
+                        insurance.description = insurance.insuredProduct ? insurance.insuredProduct.productName : '';
+                    }
                     return insurance;
                 });
 
@@ -210,15 +213,16 @@ class NotificationAdaptor {
 
                 let warranties = result[3].map((item) => {
                     const warranty = item.toJSON();
-                    const dueDateTime = moment(warranty.expiryDate).unix();
+                    if(moment(warranty.expiryDate).isValid()) {
+                        const dueDateTime = moment(warranty.expiryDate).unix();
 
-                    warranty.dueDate = warranty.expiryDate;
-                    warranty.dueIn = Math.floor((dueDateTime - moment.utc()
-                        .unix()) / (24 * 60 * 60 * 1000));
-                    warranty.productType = 3;
-                    warranty.title = 'Warranty Renewal Pending';
-                    warranty.description = warranty.warrantyProduct ? warranty.warrantyProduct.productName : '';
-
+                        warranty.dueDate = warranty.expiryDate;
+                        warranty.dueIn = Math.floor((dueDateTime - moment.utc()
+                            .unix()) / (24 * 60 * 60 * 1000));
+                        warranty.productType = 3;
+                        warranty.title = 'Warranty Renewal Pending';
+                        warranty.description = warranty.warrantyProduct ? warranty.warrantyProduct.productName : '';
+                    }
 
                     return warranty;
                 });
