@@ -1,6 +1,8 @@
 /*jshint esversion: 6 */
 'use strict';
 
+const moment = require('moment');
+
 const shared = require('../../helpers/shared');
 
 const date = new Date();
@@ -342,17 +344,15 @@ class DashboardAdaptor {
 						}
 
 						if (metaData.name.toLowerCase().includes('due') && metaData.name.toLowerCase().includes('date')) {
-							const dueDateTime = new Date(metaData.value).getTime();
-							if (dueDateTime >= new Date().getTime()) {
+							const dueDateTime = moment(metaData.value).unix();
 								product.dueDate = shared.formatDate(metaData.value, 'dd mmm');
-								product.dueIn = Math.floor((dueDateTime - new Date()
-									.getTime()) / (24 * 60 * 60 * 1000));
+								product.dueIn = Math.floor((dueDateTime - moment.utc()
+									.unix()) / (24 * 60 * 60 * 1000));
 								if (product.masterCatId.toString() === '6') {
 									product.productType = 5;
 								} else {
 									product.productType = 1;
 								}
-							}
 						}
 
 						if (metaData.name.toLowerCase().includes('address')) {
@@ -366,50 +366,41 @@ class DashboardAdaptor {
 				});
 
 				products = products.filter(product => product.dueIn && product
-					.dueIn <= 30 && product.dueIn >= 0);
+					.dueIn <= 30 && product.dueIn >= -1);
 
 				let amcs = result[1].map((item) => {
 					const amc = item.toJSON();
-					const dueDateTime = new Date(amc.expiryDate).getTime();
-					if (dueDateTime >= new Date().getTime()) {
-						amc.dueDate = shared.formatDate(amc.expiryDate, 'dd mmm');
-						amc.dueIn = Math.floor((dueDateTime - new Date().getTime()) / (24 * 60 * 60 * 1000));
-						amc.productType = 4;
-					}
-
+					const dueDateTime = moment(amc.expiryDate).unix();
+					amc.dueDate = shared.formatDate(amc.expiryDate, 'dd mmm');
+					amc.dueIn = Math.floor((dueDateTime - moment.utc().unix()) / (24 * 60 * 60 * 1000));
+					amc.productType = 4;
 					return amc;
 				});
-				amcs = amcs.filter(item => item.dueIn && item.dueIn <= 30 && item.dueIn >= 0);
+				amcs = amcs.filter(item => item.dueIn && item.dueIn <= 30 && item.dueIn >= -1);
 
 				let insurances = result[2].map((item) => {
 					const insurance = item.toJSON();
-					const dueDateTime = new Date(insurance.expiryDate).getTime();
-					if (dueDateTime >= new Date().getTime()) {
+					const dueDateTime = moment(insurance.expiryDate).unix();
 						insurance.dueDate = shared.formatDate(insurance.expiryDate, 'dd mmm');
-						insurance.dueIn = Math.floor((dueDateTime - new Date()
-							.getTime()) / (24 * 60 * 60 * 1000));
+						insurance.dueIn = Math.floor((dueDateTime - moment.utc().unix()) / (24 * 60 * 60 * 1000));
 						insurance.productType = 3;
-					}
-
 					return insurance;
 				});
 
-				insurances = insurances.filter(item => item.dueIn && item.dueIn <= 30 && item.dueIn >= 0);
+				insurances = insurances.filter(item => item.dueIn && item.dueIn <= 30 && item.dueIn >= -1);
 
 				let warranties = result[3].map((item) => {
 					const warranty = item.toJSON();
-					const dueDateTime = new Date(warranty.expiryDate).getTime();
-					if (dueDateTime >= new Date().getTime()) {
+					const dueDateTime = moment(warranty.expiryDate).unix();
 						warranty.dueDate = shared.formatDate(warranty.expiryDate, 'dd mmm');
-						warranty.dueIn = Math.floor((dueDateTime - new Date()
-							.getTime()) / (24 * 60 * 60 * 1000));
+						warranty.dueIn = Math.floor((dueDateTime - moment
+							.utc().unix()) / (24 * 60 * 60 * 1000));
 						warranty.productType = 2;
-					}
 
 					return warranty;
 				});
 
-				warranties = warranties.filter(item => item.dueIn && item.dueIn <= 30 && item.dueIn >= 0);
+				warranties = warranties.filter(item => item.dueIn && item.dueIn <= 30 && item.dueIn >= -1);
 
 				resolve([...products, ...warranties, ...insurances, ...amcs]);
 			}).catch((err) => {
