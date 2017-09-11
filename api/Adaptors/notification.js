@@ -1,6 +1,7 @@
 /*jshint esversion: 6 */
 'use strict';
 
+const moment = require('moment');
 const request = require('request');
 const nodemailer = require('nodemailer');
 const smtpTransport = require('nodemailer-smtp-transport');
@@ -52,7 +53,21 @@ class NotificationAdaptor {
                         model: this.modals.billDetailCopies,
                         as: 'billDetailCopies',
                         attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('bill_copy_id'), '/files'), 'fileUrl']]
-                    }]
+                    },
+                        {
+                            model: this.modals.consumerBills,
+                            as: 'bill',
+                            where: {
+                                $and: [
+                                    this.modals.sequelize.where(this.modals.sequelize.col('`consumerBill->bill->billMapping`.`bill_ref_type`'), 1),
+                                    {
+                                        user_status: 5,
+                                        admin_status: 5
+                                    }
+                                ]
+                            },
+                            attributes: []
+                        }]
                 },
                     {
                         model: this.modals.productMetaData,
@@ -86,9 +101,6 @@ class NotificationAdaptor {
                         user_id: user.ID,
                         status_id: {
                             $ne: 3
-                        },
-                        expiryDate: {
-                            $gt: new Date()
                         }
                     },
                     include: [{
@@ -107,9 +119,6 @@ class NotificationAdaptor {
                         user_id: user.ID,
                         status_id: {
                             $ne: 3
-                        },
-                        expiryDate: {
-                            $gt: new Date()
                         }
                     },
                     include: [{
@@ -128,9 +137,6 @@ class NotificationAdaptor {
                         user_id: user.ID,
                         status_id: {
                             $ne: 3
-                        },
-                        expiryDate: {
-                            $gt: new Date()
                         }
                     },
                     include: [{
@@ -153,10 +159,10 @@ class NotificationAdaptor {
                         }
 
                         if (metaData.name.toLowerCase().includes('due') && metaData.name.toLowerCase().includes('date')) {
-                            const dueDateTime = new Date(metaData.value).getTime();
+                            const dueDateTime = moment(metaData.value).unix();
                             product.dueDate = metaData.value;
-                            product.dueIn = Math.floor((dueDateTime - new Date()
-                                .getTime()) / (24 * 60 * 60 * 1000));
+                            product.dueIn = Math.floor((dueDateTime - moment.utc()
+                                .unix()) / (24 * 60 * 60 * 1000));
                             if (product.masterCatId.toString() === '6') {
                                 product.productType = 5;
                             } else {
@@ -176,23 +182,23 @@ class NotificationAdaptor {
                     .dueIn <= 30 && product.dueIn >= -1);
                 let amcs = result[1].map((item) => {
                     const amc = item.toJSON();
-                    const dueDateTime = new Date(amc.expiryDate).getTime();
+                    const dueDateTime = moment(amc.expiryDate).unix();
                     amc.dueDate = amc.expiryDate;
-                    amc.dueIn = Math.floor((dueDateTime - new Date().getTime()) / (24 * 60 * 60 * 1000));
+                    amc.dueIn = Math.floor((dueDateTime - moment.utc().unix()) / (24 * 60 * 60 * 1000));
                     amc.productType = 3;
                     amc.title = 'AMC Renewal Pending';
                     amc.description = amc.amcProduct ? amc.amcProduct.productName : '';
 
                     return amc;
                 });
-
                 amcs = amcs.filter(amc => amc.dueIn && amc.dueIn <= 30 && amc.dueIn >= -1);
+
                 let insurances = result[2].map((item) => {
                     const insurance = item.toJSON();
-                    const dueDateTime = new Date(insurance.expiryDate).getTime();
+                    const dueDateTime = moment(insurance.expiryDate).unix();
                     insurance.dueDate = insurance.expiryDate;
-                    insurance.dueIn = Math.floor((dueDateTime - new Date()
-                        .getTime()) / (24 * 60 * 60 * 1000));
+                    insurance.dueIn = Math.floor((dueDateTime - moment.utc()
+                        .unix()) / (24 * 60 * 60 * 1000));
                     insurance.productType = 3;
                     insurance.title = 'Insurance Renewal Pending';
                     insurance.description = insurance.insuredProduct ? insurance.insuredProduct.productName : '';
@@ -204,11 +210,11 @@ class NotificationAdaptor {
 
                 let warranties = result[3].map((item) => {
                     const warranty = item.toJSON();
-                    const dueDateTime = new Date(warranty.expiryDate).getTime();
+                    const dueDateTime = moment(warranty.expiryDate).unix();
 
                     warranty.dueDate = warranty.expiryDate;
-                    warranty.dueIn = Math.floor((dueDateTime - new Date()
-                        .getTime()) / (24 * 60 * 60 * 1000));
+                    warranty.dueIn = Math.floor((dueDateTime - moment.utc()
+                        .unix()) / (24 * 60 * 60 * 1000));
                     warranty.productType = 3;
                     warranty.title = 'Warranty Renewal Pending';
                     warranty.description = warranty.warrantyProduct ? warranty.warrantyProduct.productName : '';

@@ -274,10 +274,6 @@ class DashboardAdaptor {
 						user_id: user.ID,
 						status_id: {
 							$ne: 3
-						},
-						expiryDate: {
-							$gt: new Date(),
-							$lt: new Date(new Date() + (dueDays[this.modals.sequelize.col('premiumType')] * 24 * 60 * 60 * 1000))
 						}
 					},
 					include: [{
@@ -296,10 +292,6 @@ class DashboardAdaptor {
 						user_id: user.ID,
 						status_id: {
 							$ne: 3
-						},
-						expiryDate: {
-							$gt: new Date(),
-							$lt: new Date(new Date() + (dueDays[this.modals.sequelize.col('premiumType')] * 24 * 60 * 60 * 1000))
 						}
 					},
 					include: [{
@@ -318,10 +310,6 @@ class DashboardAdaptor {
 						user_id: user.ID,
 						status_id: {
 							$ne: 3
-						},
-						expiryDate: {
-							$gt: new Date(),
-							$lt: new Date(new Date() + (dueDays[this.modals.sequelize.col('premiumType')] * 24 * 60 * 60 * 1000))
 						}
 					},
 					include: [{
