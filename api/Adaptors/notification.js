@@ -159,10 +159,9 @@ class NotificationAdaptor {
                         }
 
                         if (metaData.name.toLowerCase().includes('due') && metaData.name.toLowerCase().includes('date') && moment(metaData.value).isValid()) {
-                            const dueDateTime = moment(metaData.value).unix();
+                            const dueDateTime = moment(metaData.value);
                             product.dueDate = metaData.value;
-                            product.dueIn = Math.floor((dueDateTime - moment.utc()
-                                .unix()) / (24 * 60 * 60 * 1000));
+                            product.dueIn = dueDateTime.diff(moment.utc(), 'days');
                             if (product.masterCatId.toString() === '6') {
                                 product.productType = 5;
                             } else {
@@ -183,9 +182,9 @@ class NotificationAdaptor {
                 let amcs = result[1].map((item) => {
                     const amc = item.toJSON();
                     if(moment(amc.expiryDate).isValid()) {
-                        const dueDateTime = moment(amc.expiryDate).unix();
+                        const dueDateTime = moment(amc.expiryDate);
                         amc.dueDate = amc.expiryDate;
-                        amc.dueIn = Math.floor((dueDateTime - moment.utc().unix()) / (24 * 60 * 60 * 1000));
+                        amc.dueIn = dueDateTime.diff(moment.utc(), 'days');
                         amc.productType = 3;
                         amc.title = 'AMC Renewal Pending';
                         amc.description = amc.amcProduct ? amc.amcProduct.productName : '';
@@ -198,10 +197,9 @@ class NotificationAdaptor {
                 let insurances = result[2].map((item) => {
                     const insurance = item.toJSON();
                     if(moment(insurance.expiryDate).isValid()) {
-                        const dueDateTime = moment(insurance.expiryDate).unix();
+                        const dueDateTime = moment(insurance.expiryDate);
                         insurance.dueDate = insurance.expiryDate;
-                        insurance.dueIn = Math.floor((dueDateTime - moment.utc()
-                            .unix()) / (24 * 60 * 60 * 1000));
+                        insurance.dueIn = dueDateTime.diff(moment.utc(), 'days');
                         insurance.productType = 3;
                         insurance.title = 'Insurance Renewal Pending';
                         insurance.description = insurance.insuredProduct ? insurance.insuredProduct.productName : '';
@@ -214,11 +212,10 @@ class NotificationAdaptor {
                 let warranties = result[3].map((item) => {
                     const warranty = item.toJSON();
                     if(moment(warranty.expiryDate).isValid()) {
-                        const dueDateTime = moment(warranty.expiryDate).unix();
+                        const dueDateTime = moment(warranty.expiryDate);
 
                         warranty.dueDate = warranty.expiryDate;
-                        warranty.dueIn = Math.floor((dueDateTime - moment.utc()
-                            .unix()) / (24 * 60 * 60 * 1000));
+                        warranty.dueIn = dueDateTime.diff(moment.utc(), 'days');
                         warranty.productType = 3;
                         warranty.title = 'Warranty Renewal Pending';
                         warranty.description = warranty.warrantyProduct ? warranty.warrantyProduct.productName : '';

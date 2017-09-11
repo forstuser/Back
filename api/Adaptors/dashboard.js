@@ -332,10 +332,9 @@ class DashboardAdaptor {
 						}
 
 						if (metaData.name.toLowerCase().includes('due') && metaData.name.toLowerCase().includes('date') && moment(metaData.value).isValid()) {
-							const dueDateTime = moment(metaData.value).unix();
+							const dueDateTime = moment(metaData.value);
 								product.dueDate = shared.formatDate(metaData.value, 'dd mmm');
-								product.dueIn = Math.floor((dueDateTime - moment.utc()
-									.unix()) / (24 * 60 * 60 * 1000));
+								product.dueIn = dueDateTime.diff(moment.utc(), 'days');
 								if (product.masterCatId.toString() === '6') {
 									product.productType = 5;
 								} else {
@@ -359,9 +358,9 @@ class DashboardAdaptor {
 				let amcs = result[1].map((item) => {
 					const amc = item.toJSON();
 					if(moment(amc.expiryDate).isValid()) {
-                        const dueDateTime = moment(amc.expiryDate).unix();
+                        const dueDateTime = moment(amc.expiryDate);
                         amc.dueDate = shared.formatDate(amc.expiryDate, 'dd mmm');
-                        amc.dueIn = Math.floor((dueDateTime - moment.utc().unix()) / (24 * 60 * 60 * 1000));
+                        amc.dueIn = dueDateTime.diff(moment.utc(), 'days');
                         amc.productType = 4;
                     }
 
@@ -372,9 +371,9 @@ class DashboardAdaptor {
 				let insurances = result[2].map((item) => {
 					const insurance = item.toJSON();
 					if(moment(insurance.expiryDate).isValid()) {
-                        const dueDateTime = moment(insurance.expiryDate).unix();
+                        const dueDateTime = moment(insurance.expiryDate);
                         insurance.dueDate = shared.formatDate(insurance.expiryDate, 'dd mmm');
-                        insurance.dueIn = Math.floor((dueDateTime - moment.utc().unix()) / (24 * 60 * 60 * 1000));
+                        insurance.dueIn = dueDateTime.diff(moment.utc(), 'days');
                         insurance.productType = 3;
                     }
 					return insurance;
@@ -385,10 +384,9 @@ class DashboardAdaptor {
 				let warranties = result[3].map((item) => {
 					const warranty = item.toJSON();
 					if(moment(warranty.expiryDate).isValid()) {
-                        const dueDateTime = moment(warranty.expiryDate).unix();
+                        const dueDateTime = moment(warranty.expiryDate);
                         warranty.dueDate = shared.formatDate(warranty.expiryDate, 'dd mmm');
-                        warranty.dueIn = Math.floor((dueDateTime - moment
-                            .utc().unix()) / (24 * 60 * 60 * 1000));
+                        warranty.dueIn = dueDateTime.diff(moment.utc(), 'days');
                         warranty.productType = 2;
                     }
 					return warranty;
