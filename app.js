@@ -10,7 +10,7 @@ const routers = require('./routes/router');
 const hapiSwagger = require('hapi-swagger');
 const inert = require('inert');
 const vision = require('vision');
-const {readFileSync} = require('fs');
+const config = require("./config/main");
 // Create a server with a host and port
 const server = new Hapi.Server();
 server.connection({port: 3000});
@@ -85,7 +85,7 @@ models.sequelize.sync().then(() => {
 		if (!err) {
 			server.register(hapiJWT, (jwtErr) => {
 				if (!jwtErr) {
-					const jwtKey = readFileSync(`${__dirname}/helpers/rsa-public-key.pem`);
+					const jwtKey = config.JWT_SECRET;
 					server.auth.strategy('jwt', 'jwt',
 						{
 							key: jwtKey.toString(),
@@ -96,7 +96,7 @@ models.sequelize.sync().then(() => {
 
 								return callback(null, true);
 							},
-							verifyOptions: {algorithms: ['RS256']} // pick a strong algorithm
+							verifyOptions: {algorithms: ['HS512']} // pick a strong algorithm
 						});
 					server.start(() => {
 						console.log(server.info.uri);

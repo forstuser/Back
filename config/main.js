@@ -25,7 +25,7 @@ module.exports = {
 		PASSWORD: process.env.EMAIL_PASSWORD
 	},
 	// Secret key for JWT signing and encryption
-	JWT_SECRET: fs.readFileSync(`${__dirname}/rsa-private.pem`),
+	JWT_SECRET: process.env.JWT_SECRET,
 	// Database connection information
 	DATABASE: {
 		username: process.env.DATABASE_USERNAME,

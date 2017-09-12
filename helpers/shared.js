@@ -9,7 +9,7 @@ const uuid = require('uuid');
 const {stringify} = require('querystring');
 const _ = require('lodash');
 const path = require('path');
-
+const config = require("../config/main");
 const filePath = '';
 const jsonFileType = '.json';
 const utfFormatting = 'utf8';
@@ -42,10 +42,10 @@ function validateAccessToken(authorization) {
 		return null;
 	}
 	// noinspection Eslint
-	const data = readFileSync(`${__dirname}/rsa-public-key.pem`);
+	const data = config.JWT_SECRET;
 	const auth = authorization.split(spaceString)[1];
 	try {
-		return verify(auth, data.toString());
+		return verify(auth, data, {algorithms: ["HS512"]});
 	} catch (e) {
 		return null;
 	}
