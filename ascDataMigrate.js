@@ -83,7 +83,8 @@ connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo 
 						contactdetail_type_id: 3,
 						display_name: "Contact",
 						details: elem.phone1,
-						status_id: 1
+						status_id: 1,
+						category_id: elem.category_id
 					}));
 				}
 
@@ -93,7 +94,8 @@ connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo 
 						contactdetail_type_id: 3,
 						display_name: "Contact",
 						details: elem.phone2,
-						status_id: 1
+						status_id: 1,
+						category_id: elem.category_id
 					}));
 				}
 
@@ -103,7 +105,8 @@ connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo 
 						contactdetail_type_id: 2,
 						display_name: "Email",
 						details: elem.email,
-						status_id: 1
+						status_id: 1,
+						category_id: elem.category_id
 					}));
 				}
 
