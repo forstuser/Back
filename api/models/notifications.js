@@ -15,12 +15,6 @@ module.exports = (sequelize, DataTypes) => sequelize.define('mailBox', {
 	bill_product_id: {
 		type: DataTypes.INTEGER(11)
 	},
-	seller_type: {
-		type: DataTypes.INTEGER(11)
-	},
-	seller_id: {
-		type: DataTypes.INTEGER(11)
-	},
 	total_amount: {
 		type: DataTypes.FLOAT
 	},
@@ -42,9 +36,6 @@ module.exports = (sequelize, DataTypes) => sequelize.define('mailBox', {
 	description: {
 		type: DataTypes.STRING(2000)
 	},
-	bill_copy_id: {
-		type: DataTypes.INTEGER(11)
-	},
 	status_id: {
 		type: DataTypes.INTEGER(11),
 		defaultValue: 4
@@ -58,6 +49,9 @@ module.exports = (sequelize, DataTypes) => sequelize.define('mailBox', {
 		type: DataTypes.DATE(6),
 		default: DataTypes.NOW,
 		field: 'updatedAt'
+	},
+	bill_id: {
+		type: DataTypes.INTEGER
 	}
 }, {
 	freezeTableName: true,

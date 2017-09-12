@@ -24,6 +24,9 @@ module.exports = (sequelize, Sequelize) => sequelize.define('billCopies', {
 	},
 	status_id: {
 		type: Sequelize.INTEGER
+	},
+	comments: {
+		type: Sequelize.STRING
 	}
 }, {
 	freezeTableName: true,

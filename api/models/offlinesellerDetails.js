@@ -23,6 +23,9 @@ module.exports = (sequelize, Sequelize) => sequelize.define('offlineSellerDetail
 	},
 	status_id: {
 		type: Sequelize.INTEGER
+	},
+	category_id: {
+		type: Sequelize.INTEGER
 	}
 }, {
 	freezeTableName: true,
