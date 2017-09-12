@@ -47,21 +47,21 @@ class InsightAdaptor {
 						const categoryPeriodItem = periodItem.toJSON();
 						categoryPeriodItem.totalAmount = categoryPeriodItem.totalAmount || 0;
 						categoryPeriodItem.totalTax = categoryPeriodItem.totalTax || 0;
-						categoryPeriodItem.totalAmount += categoryPeriodItem.totalTax;
+						// categoryPeriodItem.totalAmount += categoryPeriodItem.totalTax;
 						return categoryPeriodItem;
 					}),
 					monthlyData: result[1].map((periodItem) => {
 						const categoryPeriodItem = periodItem.toJSON();
 						categoryPeriodItem.totalAmount = categoryPeriodItem.totalAmount || 0;
 						categoryPeriodItem.totalTax = categoryPeriodItem.totalTax || 0;
-						categoryPeriodItem.totalAmount += categoryPeriodItem.totalTax;
+						// categoryPeriodItem.totalAmount += categoryPeriodItem.totalTax;
 						return categoryPeriodItem;
 					}),
 					yearlyData: result[2].map((periodItem) => {
 						const categoryPeriodItem = periodItem.toJSON();
 						categoryPeriodItem.totalAmount = categoryPeriodItem.totalAmount || 0;
 						categoryPeriodItem.totalTax = categoryPeriodItem.totalTax || 0;
-						categoryPeriodItem.totalAmount += categoryPeriodItem.totalTax;
+						// categoryPeriodItem.totalAmount += categoryPeriodItem.totalTax;
 						return categoryPeriodItem;
 					})
 				} : {
@@ -69,7 +69,7 @@ class InsightAdaptor {
 						const categoryItem = item.toJSON();
 						categoryItem.totalAmount = categoryItem.totalAmount || 0;
 						categoryItem.totalTax = categoryItem.totalTax || 0;
-						categoryItem.totalAmount += categoryItem.totalTax;
+						// categoryItem.totalAmount += categoryItem.totalTax;
 						return categoryItem;
 					})
 				};
