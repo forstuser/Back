@@ -423,10 +423,6 @@ class EHomeAdaptor {
 							user_id: user.ID,
 							status_id: {
 								$ne: 3
-							},
-							expiryDate: {
-								$gt: new Date(new Date() + ((this.modals.sequelize.col('premiumType') ? (dueDays[this.modals.sequelize.col('premiumType')] - 30) : 7) * 24 * 60 * 60 * 1000)),
-								$lte: new Date(new Date() + ((this.modals.sequelize.col('premiumType') ? dueDays[this.modals.sequelize.col('premiumType')] : 7) * 24 * 60 * 60 * 1000))
 							}
 						},
 						required: false
@@ -439,10 +435,6 @@ class EHomeAdaptor {
 							user_id: user.ID,
 							status_id: {
 								$ne: 3
-							},
-							expiryDate: {
-								$gt: new Date(new Date() + (7 * 24 * 60 * 60 * 1000)),
-								$lte: new Date(new Date() + ((this.modals.sequelize.col('premiumType') ? dueDays[this.modals.sequelize.col('premiumType')] : 7) * 24 * 60 * 60 * 1000))
 							}
 						},
 						required: false
@@ -455,10 +447,6 @@ class EHomeAdaptor {
 							user_id: user.ID,
 							status_id: {
 								$ne: 3
-							},
-							expiryDate: {
-								$gt: new Date(new Date() + (7 * 24 * 60 * 60 * 1000)),
-								$lte: new Date(new Date() + ((this.modals.sequelize.col('premiumType') ? dueDays[this.modals.sequelize.col('premiumType')] : 7) * 24 * 60 * 60 * 1000))
 							}
 						},
 						required: false
@@ -496,7 +484,7 @@ class EHomeAdaptor {
 						as: 'category',
 						attributes: []
 					}],
-				attributes: [['bill_product_id', 'id'], ['product_name', 'productName'], ['value_of_purchase', 'value'], 'taxes', ['category_id', 'categoryId'], ['master_category_id', 'masterCategoryId'], [this.modals.sequelize.col('`masterCategory`.`category_name`'), 'masterCategoryName'], [this.modals.sequelize.col('`category`.`category_name`'), 'categoryName'], ['brand_id', 'brandId'], ['color_id', 'colorId'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`productBills`.`bill_product_id`')), 'productURL']],
+				attributes: [['bill_product_id', 'id'], ['product_name', 'productName'], ['value_of_purchase', 'value'], 'taxes', ['category_id', 'categoryId'], ['master_category_id', 'masterCategoryId'], [this.modals.sequelize.col('`masterCategory`.`category_name`'), 'masterCategoryName'], [this.modals.sequelize.col('`category`.`category_name`'), 'categoryName'], ['brand_id', 'brandId'], ['color_id', 'colorId'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`productBills`.`bill_product_id`')), 'productURL'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`productBills`.`category_id`'), '/image/'), 'cImageURL'], [this.modals.sequelize.literal('`consumerBill`.`total_purchase_value`'), 'totalCost'], [this.modals.sequelize.literal('`consumerBill`.`taxes`'), 'totalTaxes'], [this.modals.sequelize.literal('`consumerBill`.`purchase_date`'), 'purchaseDate']],
 				order: [[this.modals.sequelize.literal('`consumerbill.purchaseDate`'), sortBy || 'DESC']]
 			});
 		});
