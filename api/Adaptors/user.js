@@ -95,10 +95,11 @@ class UserAdaptor {
 						exclude: ['UserTypeID']
 					}
 				}).then((result) => {
+					// console.log("EMAIL: ", payload.email);
 					const updatedUser = result.toJSON();
 					if (!updatedUser.email_verified) {
 						NotificationAdaptor.sendVerificationMail(payload.email, updatedUser);
-					} else if (updatedUser.email !== payload.oldEmail) {
+					} else if (updatedUser.email_id !== payload.oldEmail) {
 						updatedUser.email_secret = uuid.v4();
 						result.updateAttributes({
 							email_verified: 0,
