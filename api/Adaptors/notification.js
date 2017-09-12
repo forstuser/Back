@@ -177,8 +177,7 @@ class NotificationAdaptor {
                     return product;
                 });
 
-                products = products.filter(product => product.dueIn && product
-                    .dueIn <= 30 && product.dueIn >= -1);
+                products = products.filter(item => (item.dueIn !== undefined && item.dueIn !== null)  && item.dueIn <= 30 && item.dueIn >= 0);
                 let amcs = result[1].map((item) => {
                     const amc = item.toJSON();
                     if(moment(amc.expiryDate).isValid()) {
@@ -192,7 +191,7 @@ class NotificationAdaptor {
 
                     return amc;
                 });
-                amcs = amcs.filter(amc => amc.dueIn && amc.dueIn <= 30 && amc.dueIn >= -1);
+                amcs = amcs.filter(item => (item.dueIn !== undefined && item.dueIn !== null)  && item.dueIn <= 30 && item.dueIn >= 0);
 
                 let insurances = result[2].map((item) => {
                     const insurance = item.toJSON();
@@ -207,7 +206,7 @@ class NotificationAdaptor {
                     return insurance;
                 });
 
-                insurances = insurances.filter(item => item.dueIn && item.dueIn <= 30 && item.dueIn >= -1);
+                insurances = insurances.filter(item => (item.dueIn !== undefined && item.dueIn !== null)  && item.dueIn <= 30 && item.dueIn >= 0);
 
                 let warranties = result[3].map((item) => {
                     const warranty = item.toJSON();
@@ -224,7 +223,7 @@ class NotificationAdaptor {
                     return warranty;
                 });
 
-                warranties = warranties.filter(item => item.dueIn && item.dueIn <= 30 && item.dueIn >= -1);
+                warranties = warranties.filter(item => (item.dueIn !== undefined && item.dueIn !== null)  && item.dueIn <= 30 && item.dueIn >= 0);
 
                 resolve([...products, ...warranties, ...insurances, ...amcs]);
             }).catch((err) => {
