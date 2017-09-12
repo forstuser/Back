@@ -44,20 +44,23 @@ class UserAdaptor {
 	}
 
 	updateUser(user, payload, reply) {
-		const emailID = validateEmail(payload.email);
+		let emailID = null;
 
-		if (emailID === undefined) {
-			return reply({status: false}).code(400);
+		if (payload.email !== undefined) {
+			emailID = validateEmail(payload.email);
+
+			if (emailID === undefined) {
+				return reply({status: false}).code(400);
+			}
 		}
 
-		return this.modals.table_users.update({
+		const userUpdates = {
 			mobile_no: payload.phoneNo,
 			location: payload.location,
 			longitude: payload.longitude,
 			latitude: payload.latitude,
 			os_type_id: payload.osTypeId,
 			gcm_id: payload.gcmId,
-			email_id: payload.email,
 			device_id: payload.deviceId,
 			device_model: payload.deviceModel,
 			apk_version: payload.apkVersion,
@@ -69,7 +72,13 @@ class UserAdaptor {
 			professional_description: payload.description,
 			updated_by_user_id: user.ID,
 			email_secret: payload.email !== payload.oldEmail ? uuid.v4() : undefined
-		}, {
+		};
+
+		if (emailID !== null) {
+			userUpdates.email_id = emailID;
+		}
+
+		return this.modals.table_users.update(userUpdates, {
 			where: {
 				ID: user.ID
 			}
