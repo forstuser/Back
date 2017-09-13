@@ -19,8 +19,10 @@ class SearchAdaptor {
 			this.updateRecentSearch(user, searchValue),
 			this.retrieveRecentSearch(user)
 		]).then((result) => {
+			const productIds = [];
 			const productList = result[0].map((item) => {
 				const product = item.toJSON();
+				productIds.push(product.id);
 				product.productMetaData.map((metaItem) => {
 					const metaData = metaItem;
 					if (metaData.type === '2' && metaData.selectedValue) {
@@ -33,6 +35,10 @@ class SearchAdaptor {
 			});
 			const categoryList = result[1].map((item) => {
 				const category = item.toJSON();
+				category.products = category.products.filter((elem) => {
+					return (productIds.indexOf(elem.id) < 0);
+				});
+
 				category.products.map((productItem) => {
 					productItem.productMetaData.map((metaItem) => {
 						const metaData = metaItem;
@@ -47,6 +53,8 @@ class SearchAdaptor {
 				});
 				return category;
 			});
+
+
 			result[2][0].updateAttributes({
 				resultCount: productList.length + categoryList.length,
 				searchDate: shared.formatDate(new Date(), 'yyyy-mm-dd HH:MM:ss')
