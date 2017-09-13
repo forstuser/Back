@@ -19,6 +19,8 @@ const DashboardAdaptor = require('../Adaptors/dashboard');
 const UserAdaptor = require('../Adaptors/user');
 const NearByAdaptor = require('../Adaptors/nearby');
 const NotificationAdaptor = require('../Adaptors/notification');
+const OTPHelper = require("../../helpers/otp");
+const Bluebird = require("bluebird");
 
 const AWS = require('../../config/main').AWS;
 
@@ -57,7 +59,7 @@ const isValid = (tokenDb, token) => {
 
 	const diff = now.diff(otpCreatedAt, 'minutes');
 
-	return (tokenDb.OTP === token.toString() && diff <= 3 && tokenDb.valid_turns < 4);
+	return (tokenDb.OTP === token.toString() && diff <= 5 && tokenDb.valid_turns < 4);
 };
 
 const validatePayloadSignature = function (payload, signature) {
@@ -104,26 +106,26 @@ class UserController {
 	}
 
 	static dispatchOTP(request, reply) {
-		const otp = generateRandomString(6);
-		const options = {
-			uri: 'http://api.msg91.com/api/sendhttp.php',
-			qs: {
-				authkey: config.SMS.AUTH_KEY,
-				sender: 'BinBill',
-				// channel: 2,
-				// DCS: 0,
-				flash: 0,
-				mobiles: request.payload.PhoneNo,
-				message: `Your verification code is "${otp}". Please enter this code to login your account.`,
-				route: 4,
-				country: 91,
-				response: 'json'
-			},
-			timeout: 170000,
-			json: true // Automatically parses the JSON string in the response
-		};
+		// const otp = generateRandomString(6);
+		// const options = {
+		// 	uri: 'http://api.msg91.com/api/sendhttp.php',
+		// 	qs: {
+		// 		authkey: config.SMS.AUTH_KEY,
+		// 		sender: 'BinBill',
+		// 		// channel: 2,
+		// 		// DCS: 0,
+		// 		flash: 0,
+		// 		mobiles: request.payload.PhoneNo,
+		// 		message: `Your verification code is "${otp}". Please enter this code to login your account.`,
+		// 		route: 4,
+		// 		country: 91,
+		// 		response: 'json'
+		// 	},
+		// 	timeout: 170000,
+		// 	json: true // Automatically parses the JSON string in the response
+		// };
 
-		Promise.all([requestPromise(options), userModel.findOne({
+		Promise.all([OTPHelper.sendOTPToUser(request.payload.PhoneNo), userModel.findOne({
 			where: {
 				mobile_no: request.payload.PhoneNo
 			},
@@ -131,54 +133,55 @@ class UserController {
 				exclude: ['UserTypeID']
 			}
 		})]).then((response) => {
-			// console.log(response);
+			console.log(response);
 			if (response[0].type === 'success') {
 				console.log("SMS SENT WITH ID: ", response[0].message);
-				userRelationModel.findOrCreate({
-					where: {
-						PhoneNo: request.payload.PhoneNo
-					},
-					defaults: {
-						PhoneNo: request.payload.PhoneNo,
-						OTP: otp,
-						token_updated: shared.formatDate(moment().utc(), 'yyyy-mm-dd HH:MM:ss'),
-						valid_turns: 0
-					}
-				}).then((result) => {
-					// console.log("RESULT 0: ", result[0]);
-					// console.log("RESULT 1: ", result[1]);
-
-
-					if (!result[1]) {
-						result[0].updateAttributes({
-							OTP: otp,
-							token_updated: shared.formatDate(moment.utc(), 'yyyy-mm-dd HH:MM:ss'),
-							valid_turns: 0
-						});
-					}
-
-					if (response[1] && response[1][1]) {
-						response[1][0].updateAttributes({
-							last_login: shared.formatDate(moment.utc(), 'yyyy-mm-dd HH:MM:ss')
-						});
-						reply({
-							Status: true,
-							Name: response[1][0].Name,
-							PhoneNo: request.payload.PhoneNo
-						}).code(201);
-					} else {
-						reply({
-							Status: true,
-							PhoneNo: request.payload.PhoneNo
-						}).code(201);
-					}
-				}).catch((err) => {
-					console.log(err);
-					reply({
-						status: false,
-						err
+				if (response[1] && response[1][1]) {
+					response[1][0].updateAttributes({
+						last_login: shared.formatDate(moment.utc(), 'yyyy-mm-dd HH:MM:ss')
 					});
-				});
+					reply({
+						Status: true,
+						Name: response[1][0].Name,
+						PhoneNo: request.payload.PhoneNo
+					}).code(201);
+				} else {
+					reply({
+						Status: true,
+						PhoneNo: request.payload.PhoneNo
+					}).code(201);
+				}
+				// userRelationModel.findOrCreate({
+				// 	where: {
+				// 		PhoneNo: request.payload.PhoneNo
+				// 	},
+				// 	defaults: {
+				// 		PhoneNo: request.payload.PhoneNo,
+				// 		OTP: otp,
+				// 		token_updated: shared.formatDate(moment().utc(), 'yyyy-mm-dd HH:MM:ss'),
+				// 		valid_turns: 0
+				// 	}
+				// }).then((result) => {
+				// 	// console.log("RESULT 0: ", result[0]);
+				// 	// console.log("RESULT 1: ", result[1]);
+				//
+				//
+				// 	if (!result[1]) {
+				// 		result[0].updateAttributes({
+				// 			OTP: otp,
+				// 			token_updated: shared.formatDate(moment.utc(), 'yyyy-mm-dd HH:MM:ss'),
+				// 			valid_turns: 0
+				// 		});
+				// 	}
+
+
+				// }).catch((err) => {
+				// 	console.log(err);
+				// 	reply({
+				// 		status: false,
+				// 		err
+				// 	});
+				// });
 			} else {
 				reply({error: response.ErrorMessage}).code(403);
 			}
@@ -194,17 +197,11 @@ class UserController {
 	static validateOTP(request, reply) {
 		const trueObject = request.payload.TrueObject;
 		if (request.payload.BBLogin_Type === 1) {
-			userRelationModel.findOne({
-				where: {
-					mobile_no: trueObject.PhoneNo
-				}
-			}).then((tokenResult) => {
-				const tokenData = tokenResult.toJSON();
-				const validTurn = tokenData.valid_turns + 1;
-				tokenResult.updateAttributes({
-					valid_turns: validTurn
-				});
-				if (isValid(tokenData, request.payload.Token)) {
+			return Bluebird.try(() => {
+				return OTPHelper.verifyOTPForUser(trueObject.PhoneNo, request.payload.Token);
+			}).then((data) => {
+				console.log("VALIDATE OTP RESPONSE: ", data);
+				if (data.type === "success") {
 					userModel.findOrCreate({
 						where: {
 							mobile_no: trueObject.PhoneNo,
@@ -233,11 +230,11 @@ class UserController {
 				} else {
 					reply({
 						status: false,
-						message: validTurn < 4 ? 'Invalid OTP' : 'This is your 4th Attempt, Please Retry',
-						attemptCount: validTurn
+						message: 'Invalid/Expired OTP',
 					}).code(401);
 				}
 			}).catch((err) => {
+				console.log(err);
 				reply({message: 'Issue in updating data', status: false, err});
 			});
 		} else if (request.payload.BBLogin_Type === 2) {
