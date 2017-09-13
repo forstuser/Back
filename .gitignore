@@ -59,8 +59,9 @@ typings/
 .yarn-integrity
 
 # dotenv environment variables file
-.env
+.env*
 .idea/*
 
+.elasticbeanstalk/
 
 # End of https://www.gitignore.io/api/node
