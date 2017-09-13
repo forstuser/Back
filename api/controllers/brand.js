@@ -11,6 +11,40 @@ class BrandController {
 		modals = modal;
 	}
 
+	static getBrands(request, reply) {
+		const user = shared.verifyAuthorization(request.headers);
+		if (!user) {
+			reply({status: false, message: "Unauthorized"});
+		} else {
+			const categoryId = request.query.categoryid || undefined;
+
+			modals.table_brands.findAll({
+				where: {
+					status_id: {
+						$ne: 3
+					}
+				},
+				include: [
+					{
+						model: modals.brandDetails,
+						as: 'details',
+						attributes: [],
+						where: {
+							category_id: categoryId
+						},
+						required: true
+					}
+				],
+				attributes: [['brand_name', 'brandName'], ['brand_id', 'id']]
+			}).then((results) => {
+				reply({status: true, brands: results});
+			}).catch((err) => {
+				console.log(err);
+				reply({status: false, message: "Something wrong"}).code(500);
+			});
+		}
+	}
+
 	static addBrand(request, reply) {
 		const user = shared.verifyAuthorization(request.headers);
 		const Name = request.payload.Name;

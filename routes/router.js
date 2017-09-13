@@ -732,6 +732,16 @@ function prepareServiceCenterRoutes(serviceCenterController, serviceCenterRoutes
 
 function prepareBrandRoutes(brandController, brandRoutes) {
 	if (brandController) {
+		// Get brands
+		brandRoutes.push({
+			method: "GET",
+			path: "/brands",
+			config: {
+				auth: 'jwt',
+				handler: BrandController.getBrands,
+			}
+		});
+
 		// Add Brand
 		brandRoutes.push({
 			method: 'POST',
