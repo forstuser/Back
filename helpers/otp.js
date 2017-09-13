@@ -8,7 +8,7 @@ const crypto = require("crypto");
 
 const OTP_CHAR_ARRAY = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
 
-const sendOTP = new SendOTP(config.SMS.AUTH_KEY, 'Your verification code is {{otp}}. Please enter this code to login your account.');
+const sendOTP = new SendOTP(config.SMS.AUTH_KEY, 'Your verification code is "{{otp}}". Please enter this code to login your account.');
 
 Bluebird.promisifyAll(sendOTP);
 
