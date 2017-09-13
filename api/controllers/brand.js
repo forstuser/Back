@@ -18,6 +18,12 @@ class BrandController {
 		} else {
 			const categoryId = request.query.categoryid || undefined;
 
+			const options = {};
+
+			if (categoryId) {
+				options.category_id = categoryId;
+			}
+
 			modals.table_brands.findAll({
 				where: {
 					status_id: {
@@ -29,9 +35,7 @@ class BrandController {
 						model: modals.brandDetails,
 						as: 'details',
 						attributes: [],
-						where: {
-							category_id: categoryId
-						},
+						where: options,
 						required: true
 					}
 				],
