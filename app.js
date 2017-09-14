@@ -8,11 +8,19 @@ const FileUtil = require('./fileUtil');
 const models = require('./models');
 const config = require("./config/main");
 const request = require("request-promise");
+const fs = require("fs");
+const path = require("path");
 // Create a server with a host and port
 const server = new Hapi.Server();
 
 const options = config.DATABASE;
 const PORT = config.APP.PORT;
+
+const options = {
+	key: fs.readFileSync(path.resolve(__dirname, 'cert/key.key')),
+	cert: fs.readFileSync(path.resolve(__dirname, 'cert/cert.crt')),
+	ca: fs.readFileSync(path.resolve(__dirname, 'cert/bundle.crt')) //, fs.readFileSync(path.resolve(__dirname, 'cert/bundle2.crt')), fs.readFileSync(path.resolve(__dirname, 'cert/bundle3.crt'))]
+};
 
 const connection = MySQL.createConnection({
 	host: options.host,
@@ -22,7 +30,7 @@ const connection = MySQL.createConnection({
 	port: options.port
 });
 //server.connection({ port: 3000});
-server.connection({port: PORT});
+server.connection({port: PORT, tls: options});
 server.register({
 	register: require('hapi-cors'),
 	options: {

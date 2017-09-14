@@ -64,4 +64,7 @@ typings/
 
 .elasticbeanstalk/
 
+.DS_Store
+cert/
+
 # End of https://www.gitignore.io/api/node
