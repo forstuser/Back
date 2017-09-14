@@ -484,6 +484,7 @@ class ServiceCenterController {
 								$ne: 3
 							}
 						},
+						order: ['category_name'],
 						attributes: [['category_id', 'id'], ['category_name', 'name']],
 						required: false
 					}],
