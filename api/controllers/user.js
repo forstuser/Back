@@ -127,80 +127,80 @@ class UserController {
 		// 	json: true // Automatically parses the JSON string in the response
 		// };
 
-		if (!request.pre.forceUpdate) {
-			Promise.all([OTPHelper.sendOTPToUser(request.payload.PhoneNo), userModel.findOne({
-				where: {
-					mobile_no: request.payload.PhoneNo
-				},
-				attributes: {
-					exclude: ['UserTypeID']
-				}
-			})]).then((response) => {
-				console.log(response);
-				if (response[0].type === 'success') {
-					console.log("SMS SENT WITH ID: ", response[0].message);
-					if (response[1] && response[1][1]) {
-						response[1][0].updateAttributes({
-							last_login: shared.formatDate(moment.utc(), 'yyyy-mm-dd HH:MM:ss')
-						});
-						reply({
-							Status: true,
-							Name: response[1][0].Name,
-							PhoneNo: request.payload.PhoneNo,
-							forceUpdate: request.pre.forceUpdate
-						}).code(201);
-					} else {
-						reply({
-							Status: true,
-							PhoneNo: request.payload.PhoneNo,
-							forceUpdate: request.pre.forceUpdate
-						}).code(201);
-					}
-					// userRelationModel.findOrCreate({
-					// 	where: {
-					// 		PhoneNo: request.payload.PhoneNo
-					// 	},
-					// 	defaults: {
-					// 		PhoneNo: request.payload.PhoneNo,
-					// 		OTP: otp,
-					// 		token_updated: shared.formatDate(moment().utc(), 'yyyy-mm-dd HH:MM:ss'),
-					// 		valid_turns: 0
-					// 	}
-					// }).then((result) => {
-					// 	// console.log("RESULT 0: ", result[0]);
-					// 	// console.log("RESULT 1: ", result[1]);
-					//
-					//
-					// 	if (!result[1]) {
-					// 		result[0].updateAttributes({
-					// 			OTP: otp,
-					// 			token_updated: shared.formatDate(moment.utc(), 'yyyy-mm-dd HH:MM:ss'),
-					// 			valid_turns: 0
-					// 		});
-					// 	}
-
-
-					// }).catch((err) => {
-					// 	console.log(err);
-					// 	reply({
-					// 		status: false,
-					// 		err
-					// 	});
-					// });
+		// if (!request.pre.forceUpdate) {
+		Promise.all([OTPHelper.sendOTPToUser(request.payload.PhoneNo), userModel.findOne({
+			where: {
+				mobile_no: request.payload.PhoneNo
+			},
+			attributes: {
+				exclude: ['UserTypeID']
+			}
+		})]).then((response) => {
+			console.log(response);
+			if (response[0].type === 'success') {
+				console.log("SMS SENT WITH ID: ", response[0].message);
+				if (response[1] && response[1][1]) {
+					response[1][0].updateAttributes({
+						last_login: shared.formatDate(moment.utc(), 'yyyy-mm-dd HH:MM:ss')
+					});
+					reply({
+						Status: true,
+						Name: response[1][0].Name,
+						PhoneNo: request.payload.PhoneNo,
+						// forceUpdate: request.pre.forceUpdate
+					}).code(201);
 				} else {
-					reply({error: response.ErrorMessage, forceUpdate: request.pre.forceUpdate}).code(403);
+					reply({
+						Status: true,
+						PhoneNo: request.payload.PhoneNo,
+						// forceUpdate: request.pre.forceUpdate
+					}).code(201);
 				}
-			}).catch((err) => {
-				console.log(err);
-				reply({
-					status: false,
-					err,
-					forceUpdate: request.pre.forceUpdate
-				});
+				// userRelationModel.findOrCreate({
+				// 	where: {
+				// 		PhoneNo: request.payload.PhoneNo
+				// 	},
+				// 	defaults: {
+				// 		PhoneNo: request.payload.PhoneNo,
+				// 		OTP: otp,
+				// 		token_updated: shared.formatDate(moment().utc(), 'yyyy-mm-dd HH:MM:ss'),
+				// 		valid_turns: 0
+				// 	}
+				// }).then((result) => {
+				// 	// console.log("RESULT 0: ", result[0]);
+				// 	// console.log("RESULT 1: ", result[1]);
+				//
+				//
+				// 	if (!result[1]) {
+				// 		result[0].updateAttributes({
+				// 			OTP: otp,
+				// 			token_updated: shared.formatDate(moment.utc(), 'yyyy-mm-dd HH:MM:ss'),
+				// 			valid_turns: 0
+				// 		});
+				// 	}
+
+
+				// }).catch((err) => {
+				// 	console.log(err);
+				// 	reply({
+				// 		status: false,
+				// 		err
+				// 	});
+				// });
+			} else {
+				reply({error: response.ErrorMessage}).code(403);  //, forceUpdate: request.pre.forceUpdate}).code(403);
+			}
+		}).catch((err) => {
+			console.log(err);
+			reply({
+				status: false,
+				err,
+				// forceUpdate: request.pre.forceUpdate
 			});
-		} else {
-			reply({status: false, message: "Forbidden", forceUpdate: request.pre.forceUpdate});
-		}
+		});
+		// } else {
+		// 	reply({status: false, message: "Forbidden", forceUpdate: request.pre.forceUpdate});
+		// }
 	}
 
 	static validateOTP(request, reply) {

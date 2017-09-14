@@ -52,65 +52,61 @@ class UploadController {
 			reply({
 				status: false,
 				message: 'Unauthorized',
-				forceUpdate: request.pre.forceUpdate
+				// forceUpdate: request.pre.forceUpdate
 			});
-		} else {
-			if (!request.pre.forceUpdate && request.payload) {
-				const fieldNameHere = request.payload.fieldNameHere;
-				const fileData = fieldNameHere || request.payload.filesName;
+		} else if (request.payload) {
+			const fieldNameHere = request.payload.fieldNameHere;
+			const fileData = fieldNameHere || request.payload.filesName;
 
-				const name = fileData.hapi.filename;
-				const fileType = name.split('.')[name.split('.').length - 1];
-				const fileName = `${user.ID}-${new Date().getTime()}.${fileType}`;
-				// const file = fs.createReadStream();
-				fsImplUser.writeFile(fileName, fileData._data, {ContentType: mime.lookup(fileName)})
-					.then((fileResult) => {
-						const ret = {
-							user_id: user.ID,
-							user_image_name: fileName,
-							user_image_type: fileType,
-							status_id: 1,
-							updated_by_user_id: user.ID,
-							uploaded_by_id: user.ID
-						};
+			const name = fileData.hapi.filename;
+			const fileType = name.split('.')[name.split('.').length - 1];
+			const fileName = `${user.ID}-${new Date().getTime()}.${fileType}`;
+			// const file = fs.createReadStream();
+			fsImplUser.writeFile(fileName, fileData._data, {ContentType: mime.lookup(fileName)})
+				.then((fileResult) => {
+					const ret = {
+						user_id: user.ID,
+						user_image_name: fileName,
+						user_image_type: fileType,
+						status_id: 1,
+						updated_by_user_id: user.ID,
+						uploaded_by_id: user.ID
+					};
 
-						console.log(fileResult);
-						modals.userImages.findOrCreate({
-							where: {
-								user_id: user.ID
-							},
-							defaults: ret
-						}).then((userResult) => {
-							if (!userResult[1]) {
-								userResult[0].updateAttributes({
-									user_image_name: fileName,
-									user_image_type: fileType,
-									status_id: 1,
-									updated_by_user_id: user.ID,
-									uploaded_by_id: user.ID
-								});
-							}
-
-							reply({
-								status: true,
-								message: 'Uploaded Successfully',
-								userResult: userResult[0],
-								forceUpdate: request.pre.forceUpdate
+					console.log(fileResult);
+					modals.userImages.findOrCreate({
+						where: {
+							user_id: user.ID
+						},
+						defaults: ret
+					}).then((userResult) => {
+						if (!userResult[1]) {
+							userResult[0].updateAttributes({
+								user_image_name: fileName,
+								user_image_type: fileType,
+								status_id: 1,
+								updated_by_user_id: user.ID,
+								uploaded_by_id: user.ID
 							});
-						}).catch((err) => {
-							reply({status: false, message: 'Upload Failed', err, forceUpdate: request.pre.forceUpdate});
+						}
+
+						reply({
+							status: true,
+							message: 'Uploaded Successfully',
+							userResult: userResult[0],
+							// forceUpdate: request.pre.forceUpdate
 						});
-					}).catch(err => reply({
-					status: false,
-					message: 'Upload Failed',
-					err,
-					forceUpdate: request.pre.forceUpdate
-				}));
-			} else if (!request.payload) {
-				reply({status: false, message: "No documents in request", forceUpdate: request.pre.forceUpdate});
-			} else {
-				reply({status: false, message: "Forbidden", forceUpdate: request.pre.forceUpdate});
-			}
+					}).catch((err) => {
+						reply({status: false, message: 'Upload Failed', err}); //, forceUpdate: request.pre.forceUpdate});
+					});
+				}).catch(err => reply({
+				status: false,
+				message: 'Upload Failed',
+				err,
+				// forceUpdate: request.pre.forceUpdate
+			}));
+		} else {
+			reply({status: false, message: "No documents in request"}); //, forceUpdate: request.pre.forceUpdate});
 		}
 	}
 
@@ -121,36 +117,34 @@ class UploadController {
 				status: false,
 				message: 'Unauthorized'
 			});
-		} else {
-			if (!request.pre.forceUpdate && request.payload) {
-				const fieldNameHere = request.payload.fieldNameHere;
-				const fileData = fieldNameHere || request.payload.filesName || request.payload.file;
+		} else if (request.payload) {
+			// if (!request.pre.forceUpdate && request.payload) {
+			const fieldNameHere = request.payload.fieldNameHere;
+			const fileData = fieldNameHere || request.payload.filesName || request.payload.file;
 
-				let filteredFileData = fileData;
-				// console.log("BEFORE FILTERING: ", filteredFileData);
-				if (filteredFileData) {
-					if (Array.isArray(filteredFileData)) {
-						filteredFileData = fileData.filter((datum) => {
-							const name = datum.hapi.filename;
-							const fileType = (/[.]/.exec(name)) ? /[^.]+$/.exec(name) : undefined;
-							if (fileType && !isFileTypeAllowed(fileType)) {
-								return false;
-							} else if (!fileType && !isFileTypeAllowedMagicNumber(datum._data)) {
-								return false;
-							}
+			let filteredFileData = fileData;
+			// console.log("BEFORE FILTERING: ", filteredFileData);
+			if (filteredFileData) {
+				if (Array.isArray(filteredFileData)) {
+					filteredFileData = fileData.filter((datum) => {
+						const name = datum.hapi.filename;
+						const fileType = (/[.]/.exec(name)) ? /[^.]+$/.exec(name) : undefined;
+						if (fileType && !isFileTypeAllowed(fileType)) {
+							return false;
+						} else if (!fileType && !isFileTypeAllowedMagicNumber(datum._data)) {
+							return false;
+						}
 
-							return true;
-						});
-					}
-
-					UploadController.uploadFileGeneric(user, filteredFileData, reply, request);
-				} else {
-					reply({status: false, message: 'No File', forceUpdate: request.pre.forceUpdate}).code(400);
+						return true;
+					});
 				}
-			} else if (!request.payload) {
-				reply({status: false, message: "No documents in request", forceUpdate: request.pre.forceUpdate});
+
+				UploadController.uploadFileGeneric(user, filteredFileData, reply, request);
+				// } else {
+				// 	reply({status: false, message: 'No File', forceUpdate: request.pre.forceUpdate}).code(400);
+				// }
 			} else {
-				reply({status: false, message: "Forbidden", forceUpdate: request.pre.forceUpdate});
+				reply({status: false, message: "No documents in request"}); //, forceUpdate: request.pre.forceUpdate});
 			}
 		}
 	}
@@ -201,12 +195,12 @@ class UploadController {
 					status: true,
 					message: 'Uploaded Successfully',
 					billResult,
-					forceUpdate: request.pre.forceUpdate
+					// forceUpdate: request.pre.forceUpdate
 				})).catch(err => reply({
 					status: false,
 					message: 'Upload Failed',
 					err: JSON.stringify(err),
-					forceUpdate: request.pre.forceUpdate
+					// forceUpdate: request.pre.forceUpdate
 				}).code(500));
 			} else {
 				const name = fileData.hapi.filename;
@@ -240,25 +234,25 @@ class UploadController {
 									status: true,
 									message: 'Uploaded Successfully',
 									billResult,
-									forceUpdate: request.pre.forceUpdate
+									// forceUpdate: request.pre.forceUpdate
 								})).catch((err) => {
 								reply({
 									status: false,
 									message: 'Data Update Failed',
 									err,
-									forceUpdate: request.pre.forceUpdate
+									// forceUpdate: request.pre.forceUpdate
 								});
 							});
 						}).catch((err) => {
 						console.log(err);
-						reply({status: false, message: 'Upload Failed', err, forceUpdate: request.pre.forceUpdate});
+						reply({status: false, message: 'Upload Failed', err}); //forceUpdate: request.pre.forceUpdate});
 					});
 
 				}
 			}
 		}).catch((err) => {
 			console.log("ERR", err);
-			reply({status: false, message: 'Upload Failed', err, forceUpdate: request.pre.forceUpdate});
+			reply({status: false, message: 'Upload Failed', err});// , forceUpdate: request.pre.forceUpdate});
 		});
 	}
 

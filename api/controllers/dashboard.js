@@ -67,17 +67,18 @@ class DashboardController {
 				status: false,
 				message: 'Unauthorized'
 			});
-		} else if (user && !request.pre.forceUpdate) {
+		} else { //if (user && !request.pre.forceUpdate) {
 			notificationAdaptor.updateNotificationStatus(user, request.payload.notificationIds).then((count) => {
 				console.log("UPDATE COUNT: ", count);
 
-				reply({status: true, forceUpdate: request.pre.forceUpdate}).code(201);
+				reply({status: true}).code(201); //, forceUpdate: request.pre.forceUpdate}).code(201);
 			}).catch((err) => {
-				reply({status: false, forceUpdate: request.pre.forceUpdate}).code(500);
+				reply({status: false}).code(500); //, forceUpdate: request.pre.forceUpdate}).code(500);
 			});
-		} else {
-			reply({status: false, message: "Forbidden", forceUpdate: request.pre.forceUpdate});
 		}
+		// } else {
+		// 	reply({status: false, message: "Forbidden", forceUpdate: request.pre.forceUpdate});
+		// }
 	}
 
 	static getMailbox(request, reply) {
