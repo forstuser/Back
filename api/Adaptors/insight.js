@@ -77,6 +77,10 @@ class InsightAdaptor {
 				};
 
 				if (minDate || maxDate) {
+					categoryData.customDateData.sort(function (a, b) {
+						return b.totalAmount - a.totalAmount;
+					});
+
 					const totalAmounts = sumProps(categoryData.customDateData, 'totalAmount');
 					const totalTaxes = sumProps(categoryData.customDateData, 'totalTax');
 					return {
@@ -91,6 +95,19 @@ class InsightAdaptor {
 						forceUpdate: request.pre.forceUpdate
 					};
 				}
+
+				categoryData.weeklyData.sort(function (a, b) {
+					return b.totalAmount - a.totalAmount;
+				});
+
+				categoryData.monthlyData.sort(function (a, b) {
+					return b.totalAmount - a.totalAmount;
+				});
+
+				categoryData.yearlyData.sort(function (a, b) {
+					return b.totalAmount - a.totalAmount;
+				});
+
 
 				const totalWeeklyAmounts = sumProps(categoryData.weeklyData, 'totalAmount');
 				const totalWeeklyTaxes = sumProps(categoryData.weeklyData, 'totalTax');
