@@ -223,9 +223,6 @@ class ProductAdaptor {
 						user_id: user.ID,
 						status_id: {
 							$ne: 3
-						},
-						expiryDate: {
-							$gt: new Date()
 						}
 					},
 					include: [{
@@ -258,9 +255,6 @@ class ProductAdaptor {
 						user_id: user.ID,
 						status_id: {
 							$ne: 3
-						},
-						expiryDate: {
-							$gt: new Date()
 						}
 					},
 					include: [{
@@ -293,9 +287,6 @@ class ProductAdaptor {
 						user_id: user.ID,
 						status_id: {
 							$ne: 3
-						},
-						expiryDate: {
-							$gt: new Date()
 						}
 					},
 					include: [{
