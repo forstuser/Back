@@ -17,12 +17,15 @@ class InsightController {
 		if (!user) {
 			reply({
 				status: false,
-				message: 'Unauthorized'
+				message: 'Unauthorized',
+				forceUpdate: request.pre.forceUpdate
 			});
-		} else {
+		} else if (user && !request.pre.forceUpdate) {
 			reply(insightAdaptor
-				.prepareInsightData(user, request.query.mindate, request.query.maxdate))
+				.prepareInsightData(user, request))
 				.code(200);
+		} else {
+			reply({status: false, message: "Forbidden", forceUpdate: request.pre.forceUpdate})
 		}
 	}
 
@@ -31,14 +34,15 @@ class InsightController {
 		if (!user) {
 			reply({
 				status: false,
-				message: 'Unauthorized'
+				message: 'Unauthorized',
+				forceUpdate: request.pre.forceUpdate
 			});
-		} else {
+		} else if (user && !request.pre.forceUpdate) {
 			reply(insightAdaptor
-				.prepareCategoryInsight(user, request.params.id, request.query.pageno,
-					request.query.mindate, request.query.maxdate,
-					request.query.isyear, request.query.ismonth))
+				.prepareCategoryInsight(user, request))
 				.code(200);
+		} else {
+			reply({status: false, message: "Forbidden", forceUpdate: request.pre.forceUpdate});
 		}
 	}
 }

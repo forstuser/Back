@@ -17,20 +17,23 @@ class ProductController {
 		if (!user) {
 			reply({
 				status: false,
-				message: 'Unauthorized'
+				message: 'Unauthorized',
+				forceUpdate: request.pre.forceUpdate
 			});
-		} else {
+		} else if (user && !request.pre.forceUpdate) {
 			const id = request.params.id;
 			if (request.params.reviewfor === 'brands') {
 				reply(productAdaptor
-					.updateBrandReview(user, id, request.payload));
+					.updateBrandReview(user, id, request));
 			} else if (request.params.reviewfor === 'sellers') {
 				reply(productAdaptor
-					.updateSellerReview(user, id, request.query.isonlineseller, request.payload));
+					.updateSellerReview(user, id, request.query.isonlineseller, request));
 			} else {
 				reply(productAdaptor
-					.updateProductReview(user, id, request.payload));
+					.updateProductReview(user, id, request));
 			}
+		} else {
+			reply({status: false, message: "Forbidden", forceUpdate: request.pre.forceUpdate});
 		}
 	}
 
@@ -39,10 +42,13 @@ class ProductController {
 		if (!user) {
 			reply({
 				status: false,
-				message: 'Unauthorized'
+				message: 'Unauthorized',
+				forceUpdate: request.pre.forceUpdate
 			});
+		} else if (user && !request.pre.forceUpdate) {
+			reply(productAdaptor.prepareProductDetail(user, request)).code(200);
 		} else {
-			reply(productAdaptor.prepareProductDetail(user, request.params.id)).code(200);
+			reply({status: false, message: "Forbidden", forceUpdate: request.pre.forceUpdate});
 		}
 	}
 }

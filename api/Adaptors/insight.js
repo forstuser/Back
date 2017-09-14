@@ -39,7 +39,9 @@ class InsightAdaptor {
 		this.modals = modals;
 	}
 
-	prepareInsightData(user, minDate, maxDate) {
+	prepareInsightData(user, request) {
+		const minDate = request.query.mindate;
+		const maxDate = request.query.maxdate;
 		return this.prepareCategoryData(user, minDate, maxDate)
 			.then((result) => {
 				const categoryData = !(minDate || maxDate) ? {
@@ -85,7 +87,8 @@ class InsightAdaptor {
 						totalSpend: totalAmounts,
 						totalTaxes,
 						startDate: minDate,
-						endDate: maxDate
+						endDate: maxDate,
+						forceUpdate: request.pre.forceUpdate
 					};
 				}
 
@@ -111,12 +114,14 @@ class InsightAdaptor {
 					totalWeeklyTaxes,
 					totalYearlyTaxes,
 					totalMonthlySpend: totalMonthlyAmounts,
-					totalMonthlyTaxes
+					totalMonthlyTaxes,
+					forceUpdate: request.pre.forceUpdate
 				};
 			}).catch(err => ({
 				status: false,
 				message: 'Insight restore failed',
-				err
+				err,
+				forceUpdate: request.pre.forceUpdate
 			}));
 	}
 
@@ -341,7 +346,10 @@ class InsightAdaptor {
 			});
 	}
 
-	prepareCategoryInsight(user, masterCategoryId, minDate, maxDate) {
+	prepareCategoryInsight(user, request) {
+		const masterCategoryId = request.params.id;
+		const minDate = request.query.mindate;
+		const maxDate = request.query.maxdate;
 		const promisedQuery = Promise
 			.all([this.fetchProductDetails(user, masterCategoryId, minDate, maxDate),
 				this.modals.categories.findOne({
@@ -490,13 +498,15 @@ class InsightAdaptor {
 					endDate: new Date(),
 					totalSpend: 0,
 					totalDays: 0,
-					insightData: distinctInsight
+					insightData: distinctInsight,
 				},
-				categoryName: result[5]
+				categoryName: result[5],
+				forceUpdate: request.pre.forceUpdate
 			};
 		}).catch(err => ({
 			status: false,
-			err
+			err,
+			forceUpdate: request.pre.forceUpdate
 		}));
 	}
 

@@ -11,7 +11,7 @@ class NearByAdaptor {
 		this.modals = modals;
 	}
 
-	retrieveNearBy(location, geoLocation, professionIds, reply, userId) {
+	retrieveNearBy(location, geoLocation, professionIds, reply, userId, request) {
 		const origins = [];
 		const destinations = [];
 		if (geoLocation) {
@@ -72,13 +72,15 @@ class NearByAdaptor {
 									finalResult.sort((a, b) => a.distance - b.distance);
 									reply({
 										status: true,
-										sortedUsers: finalResult
+										sortedUsers: finalResult,
+										forceUpdate: request.pre.forceUpdate
 									}).code(200);
 								}
 							}
 						}).catch(err => reply({
 							status: false,
-							err
+							err,
+							forceUpdate: request.pre.forceUpdate
 						}));
 					}
 
@@ -86,19 +88,22 @@ class NearByAdaptor {
 					if (origins.length <= 0) {
 						reply({
 							status: true,
-							users
+							users,
+							forceUpdate: request.pre.forceUpdate
 						});
 					}
 				} else {
 					reply({
 						status: false,
-						message: 'No Data Found for mentioned search'
+						message: 'No Data Found for mentioned search',
+						forceUpdate: request.pre.forceUpdate
 					});
 				}
 			}).catch(err => reply({
 			status: false,
 			message: 'Unable to get near by professional',
-			err
+			err,
+			forceUpdate: request.pre.forceUpdate
 		}));
 	}
 

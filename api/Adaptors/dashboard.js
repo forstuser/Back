@@ -70,7 +70,7 @@ class DashboardAdaptor {
 		return a;
 	}
 
-	retrieveDashboardResult(user) {
+	retrieveDashboardResult(user, request) {
 		return Promise.all([
 			this.filterUpcomingService(user),
 			this.prepareInsightData(user),
@@ -118,16 +118,18 @@ class DashboardAdaptor {
 					return search.searchValue;
 				}).slice(0, 5),
 				upcomingServices: result[0],
-				insight: insightResult
+				insight: insightResult,
+				forceUpdate: request.pre.forceUpdate
 			};
 		}).catch(err => ({
 			status: false,
 			message: 'Dashboard restore failed',
-			err
+			err,
+			forceUpdate: request.pre.forceUpdate
 		}));
 	}
 
-	prepareDashboardResult(isNewUser, user, token) {
+	prepareDashboardResult(isNewUser, user, token, request) {
 		if (!isNewUser) {
 			return this.modals.productBills.count({
 				where: {
@@ -175,7 +177,8 @@ class DashboardAdaptor {
 						showDashboard: billCounts >= 2,
 						isExistingUser: !isNewUser,
 						authorization: token,
-						userId: user.ID
+						userId: user.ID,
+						forceUpdate: request.pre.forceUpdate
 					};
 				}
 
@@ -186,13 +189,15 @@ class DashboardAdaptor {
 					billCounts: 0,
 					showDashboard: false,
 					isExistingUser: !isNewUser,
-					userId: user.ID
+					userId: user.ID,
+					forceUpdate: request.pre.forceUpdate
 				};
 			}).catch(err => ({
 				status: false,
 				authorization: token,
 				message: 'Unable to Login User',
-				err
+				err,
+				forceUpdate: request.pre.forceUpdate
 			}));
 		}
 
@@ -203,7 +208,8 @@ class DashboardAdaptor {
 			billCounts: 0,
 			showDashboard: false,
 			isExistingUser: !isNewUser,
-			userId: user.ID
+			userId: user.ID,
+			forceUpdate: request.pre.forceUpdate
 		};
 	}
 
@@ -333,13 +339,13 @@ class DashboardAdaptor {
 
 						if (metaData.name.toLowerCase().includes('due') && metaData.name.toLowerCase().includes('date') && moment(metaData.value).isValid()) {
 							const dueDateTime = moment(metaData.value);
-								product.dueDate = shared.formatDate(metaData.value, 'dd mmm');
-								product.dueIn = dueDateTime.diff(moment.utc(), 'days');
-								if (product.masterCatId.toString() === '6') {
-									product.productType = 5;
-								} else {
-									product.productType = 1;
-								}
+							product.dueDate = shared.formatDate(metaData.value, 'dd mmm');
+							product.dueIn = dueDateTime.diff(moment.utc(), 'days');
+							if (product.masterCatId.toString() === '6') {
+								product.productType = 5;
+							} else {
+								product.productType = 1;
+							}
 						}
 
 						if (metaData.name.toLowerCase().includes('address')) {
@@ -352,46 +358,46 @@ class DashboardAdaptor {
 					return product;
 				});
 
-				products = products.filter(item => (item.dueIn !== undefined && item.dueIn !== null)  && item.dueIn <= 30 && item.dueIn >= 0);
+				products = products.filter(item => (item.dueIn !== undefined && item.dueIn !== null) && item.dueIn <= 30 && item.dueIn >= 0);
 
 				let amcs = result[1].map((item) => {
 					const amc = item.toJSON();
-					if(moment(amc.expiryDate).isValid()) {
-                        const dueDateTime = moment(amc.expiryDate);
-                        amc.dueDate = shared.formatDate(amc.expiryDate, 'dd mmm');
-                        amc.dueIn = dueDateTime.diff(moment.utc(), 'days');
-                        amc.productType = 4;
-                    }
+					if (moment(amc.expiryDate).isValid()) {
+						const dueDateTime = moment(amc.expiryDate);
+						amc.dueDate = shared.formatDate(amc.expiryDate, 'dd mmm');
+						amc.dueIn = dueDateTime.diff(moment.utc(), 'days');
+						amc.productType = 4;
+					}
 
-                    return amc;
+					return amc;
 				});
-				amcs = amcs.filter(item => (item.dueIn !== undefined && item.dueIn !== null)  && item.dueIn <= 30 && item.dueIn >= 0);
+				amcs = amcs.filter(item => (item.dueIn !== undefined && item.dueIn !== null) && item.dueIn <= 30 && item.dueIn >= 0);
 
 				let insurances = result[2].map((item) => {
 					const insurance = item.toJSON();
-					if(moment(insurance.expiryDate).isValid()) {
-                        const dueDateTime = moment(insurance.expiryDate);
-                        insurance.dueDate = shared.formatDate(insurance.expiryDate, 'dd mmm');
-                        insurance.dueIn = dueDateTime.diff(moment.utc(), 'days');
-                        insurance.productType = 3;
-                    }
+					if (moment(insurance.expiryDate).isValid()) {
+						const dueDateTime = moment(insurance.expiryDate);
+						insurance.dueDate = shared.formatDate(insurance.expiryDate, 'dd mmm');
+						insurance.dueIn = dueDateTime.diff(moment.utc(), 'days');
+						insurance.productType = 3;
+					}
 					return insurance;
 				});
 
-				insurances = insurances.filter(item => (item.dueIn !== undefined && item.dueIn !== null)  && item.dueIn <= 30 && item.dueIn >= 0);
+				insurances = insurances.filter(item => (item.dueIn !== undefined && item.dueIn !== null) && item.dueIn <= 30 && item.dueIn >= 0);
 
 				let warranties = result[3].map((item) => {
 					const warranty = item.toJSON();
-					if(moment(warranty.expiryDate).isValid()) {
-                        const dueDateTime = moment(warranty.expiryDate);
-                        warranty.dueDate = shared.formatDate(warranty.expiryDate, 'dd mmm');
-                        warranty.dueIn = dueDateTime.diff(moment.utc(), 'days');
-                        warranty.productType = 2;
-                    }
+					if (moment(warranty.expiryDate).isValid()) {
+						const dueDateTime = moment(warranty.expiryDate);
+						warranty.dueDate = shared.formatDate(warranty.expiryDate, 'dd mmm');
+						warranty.dueIn = dueDateTime.diff(moment.utc(), 'days');
+						warranty.productType = 2;
+					}
 					return warranty;
 				});
 
-				warranties = warranties.filter(item => (item.dueIn !== undefined && item.dueIn !== null)  && item.dueIn <= 30 && item.dueIn >= 0);
+				warranties = warranties.filter(item => (item.dueIn !== undefined && item.dueIn !== null) && item.dueIn <= 30 && item.dueIn >= 0);
 
 				resolve([...products, ...warranties, ...insurances, ...amcs]);
 			}).catch((err) => {

@@ -10,7 +10,7 @@ class EHomeAdaptor {
 		this.modals = modals;
 	}
 
-	prepareEHomeResult(user) {
+	prepareEHomeResult(user, request) {
 		return Promise.all([
 			this.retrieveUnProcessedBills(user),
 			this.prepareCategoryData(user),
@@ -30,14 +30,16 @@ class EHomeAdaptor {
 				// categories: result[3],
 				recentSearches: recentSearches.map(item => item.searchValue).slice(0, 5),
 				unProcessedBills: result[0],
-				categoryList
+				categoryList,
+				forceUpdate: request.pre.forceUpdate
 			};
 		}).catch((err) => {
 			console.log(err);
 			return {
 				status: false,
 				message: 'EHome restore failed',
-				err
+				err,
+				forceUpdate: request.pre.forceUpdate
 			};
 		});
 	}
@@ -150,7 +152,7 @@ class EHomeAdaptor {
 	}
 
 	prepareProductDetail(user, masterCategoryId, ctype, /* pageNo, */ brandIds,
-						 categoryIds, offlineSellerIds, onlineSellerIds, sortBy, searchValue) {
+						 categoryIds, offlineSellerIds, onlineSellerIds, sortBy, searchValue, request) {
 		const promisedQuery = Promise
 			.all([this.fetchProductDetails(user, masterCategoryId, ctype || undefined,
 				brandIds.split('[')[1].split(']')[0].split(',').filter(Boolean), categoryIds.split('[')[1].split(']')[0].split(',').filter(Boolean),
@@ -285,7 +287,8 @@ class EHomeAdaptor {
 						onlineSellers: onlineSellers.filter(item => item.id !== 0)
 					}
 				},
-				categoryName: result[5]
+				categoryName: result[5],
+				forceUpdate: request.pre.forceUpdate
 				/* ,
 						nextPageUrl: productList.length > listIndex + 10 ?
 						 `categories/${masterCategoryId}/products?pageno=${parseInt(pageNo, 10) + 1}
@@ -295,7 +298,8 @@ class EHomeAdaptor {
 			};
 		}).catch(err => ({
 			status: false,
-			err
+			err,
+			forceUpdate: request.pre.forceUpdate
 		}));
 	}
 

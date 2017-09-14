@@ -15,7 +15,7 @@ class BrandController {
 		const user = shared.verifyAuthorization(request.headers);
 		if (!user) {
 			reply({status: false, message: "Unauthorized"});
-		} else {
+		} else if (!request.pre.forceUpdate) {
 			const categoryId = request.query.categoryid || undefined;
 
 			const options = {};
@@ -41,11 +41,13 @@ class BrandController {
 				],
 				attributes: [['brand_name', 'brandName'], ['brand_id', 'id']]
 			}).then((results) => {
-				reply({status: true, brands: results});
+				reply({status: true, brands: results, forceUpdate: request.pre.forceUpdate});
 			}).catch((err) => {
 				console.log(err);
-				reply({status: false, message: "Something wrong"}).code(500);
+				reply({status: false, message: "Something wrong", forceUpdate: request.pre.forceUpdate}).code(500);
 			});
+		} else {
+			reply({status: false, message: "Forbidden", forceUpdate: request.pre.forceUpdate});
 		}
 	}
 

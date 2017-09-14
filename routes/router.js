@@ -22,8 +22,10 @@ const ProductController = require('../api/controllers/product');
 const InsightController = require('../api/controllers/insight');
 const SearchController = require('../api/controllers/search');
 const GeneralController = require('../api/controllers/general');
+const AppVersionHelper = require('../helpers/appVersion');
 
 let User;
+let appVersionHelper;
 
 function associateModals(modals) {
 	modals.brandDetails.belongsTo(modals.table_brands, {foreignKey: 'brand_id', as: 'brand'});
@@ -285,6 +287,7 @@ function associateModals(modals) {
 	});
 }
 
+// NO APP VERSION CHECK
 function prepareSellerRoutes(sellerController, sellerRoutes) {
 	if (sellerController) {
 		// Add Online Seller
@@ -293,6 +296,9 @@ function prepareSellerRoutes(sellerController, sellerRoutes) {
 			path: '/admin/sellers',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: SellerController.addSeller,
 				validate: {
 					payload: {
@@ -313,6 +319,9 @@ function prepareSellerRoutes(sellerController, sellerRoutes) {
 			path: '/admin/sellers/{id}/details',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: SellerController.addSellerDetail,
 				validate: {
 					payload: {
@@ -332,6 +341,9 @@ function prepareSellerRoutes(sellerController, sellerRoutes) {
 			path: '/admin/sellers/{id}',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: SellerController.updateSeller,
 				validate: {
 					payload: {
@@ -350,6 +362,9 @@ function prepareSellerRoutes(sellerController, sellerRoutes) {
 			path: '/admin/sellers/{id}/details/{detailid}',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: SellerController.updateSellerDetail,
 				validate: {
 					payload: {
@@ -369,6 +384,9 @@ function prepareSellerRoutes(sellerController, sellerRoutes) {
 			path: '/admin/sellers/{id}',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: SellerController.deleteSeller
 			}
 		});
@@ -379,6 +397,9 @@ function prepareSellerRoutes(sellerController, sellerRoutes) {
 			path: '/admin/sellers/{id}/details/{detailid}',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: SellerController.deleteSellerDetail
 			}
 		});
@@ -389,6 +410,9 @@ function prepareSellerRoutes(sellerController, sellerRoutes) {
 			path: '/admin/sellers',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: SellerController.retrieveSeller
 			}
 		});
@@ -398,6 +422,9 @@ function prepareSellerRoutes(sellerController, sellerRoutes) {
 			path: '/admin/sellers/{id}',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: SellerController.retrieveSellerById
 			}
 		});
@@ -408,6 +435,9 @@ function prepareSellerRoutes(sellerController, sellerRoutes) {
 			path: '/admin/sellers/offline',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: SellerController.addOfflineSeller,
 				validate: {
 					payload: {
@@ -442,6 +472,9 @@ function prepareSellerRoutes(sellerController, sellerRoutes) {
 			path: '/admin/sellers/offline/{id}/details',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: SellerController.addOfflineSellerDetail,
 				validate: {
 					payload: {
@@ -461,6 +494,9 @@ function prepareSellerRoutes(sellerController, sellerRoutes) {
 			path: '/admin/sellers/offline',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: SellerController.updateOfflineSeller,
 				validate: {
 					payload: {
@@ -496,6 +532,9 @@ function prepareSellerRoutes(sellerController, sellerRoutes) {
 			path: '/admin/sellers/offline/{id}/details/{detailid}',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: SellerController.updateOfflineSellerDetail,
 				validate: {
 					payload: {
@@ -515,6 +554,9 @@ function prepareSellerRoutes(sellerController, sellerRoutes) {
 			path: '/admin/sellers/offline/{id}',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: SellerController.deleteOfflineSeller
 			}
 		});
@@ -524,6 +566,9 @@ function prepareSellerRoutes(sellerController, sellerRoutes) {
 			path: '/admin/sellers/offline/{id}/details/{detailid}',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: SellerController.deleteOfflineSellerDetail
 			}
 		});
@@ -534,6 +579,9 @@ function prepareSellerRoutes(sellerController, sellerRoutes) {
 			path: '/admin/sellers/offline',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: SellerController.retrieveOfflineSeller
 			}
 		});
@@ -543,6 +591,9 @@ function prepareSellerRoutes(sellerController, sellerRoutes) {
 			path: '/admin/sellers/offline/{id}',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: SellerController.retrieveOfflineSellerById
 			}
 		});
@@ -557,6 +608,9 @@ function prepareServiceCenterRoutes(serviceCenterController, serviceCenterRoutes
 			path: '/admin/servicecenters',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: ServiceCenterController.addServiceCenter,
 				validate: {
 					payload: {
@@ -587,6 +641,9 @@ function prepareServiceCenterRoutes(serviceCenterController, serviceCenterRoutes
 			path: '/admin/servicecenters/{id}/details',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: ServiceCenterController.addServiceCenterDetail,
 				validate: {
 					payload: {
@@ -606,6 +663,9 @@ function prepareServiceCenterRoutes(serviceCenterController, serviceCenterRoutes
 			path: '/admin/servicecenters/{id}',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: ServiceCenterController.updateServiceCenter,
 				validate: {
 					payload: {
@@ -636,6 +696,9 @@ function prepareServiceCenterRoutes(serviceCenterController, serviceCenterRoutes
 			path: '/admin/servicecenters/{id}/details/{detailid}',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: ServiceCenterController.updateServiceCenterDetail,
 				validate: {
 					payload: {
@@ -655,6 +718,9 @@ function prepareServiceCenterRoutes(serviceCenterController, serviceCenterRoutes
 			path: '/admin/servicecenters/{id}',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: ServiceCenterController.deleteServiceCenter
 			}
 		});
@@ -665,6 +731,9 @@ function prepareServiceCenterRoutes(serviceCenterController, serviceCenterRoutes
 			path: '/admin/servicecenters/{id}/details/{detailid}',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: ServiceCenterController.deleteServiceCenterDetail
 			}
 		});
@@ -674,6 +743,9 @@ function prepareServiceCenterRoutes(serviceCenterController, serviceCenterRoutes
 			path: '/admin/servicecenters',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: ServiceCenterController.retrieveServiceCenters
 			}
 		});
@@ -683,6 +755,9 @@ function prepareServiceCenterRoutes(serviceCenterController, serviceCenterRoutes
 			path: '/consumer/servicecenters',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: ServiceCenterController.retrieveServiceCenters,
 				validate: {
 					payload: {
@@ -706,6 +781,9 @@ function prepareServiceCenterRoutes(serviceCenterController, serviceCenterRoutes
 			path: '/consumer/servicecenters',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: ServiceCenterController.retrieveServiceCenters
 			}
 		});
@@ -714,6 +792,9 @@ function prepareServiceCenterRoutes(serviceCenterController, serviceCenterRoutes
 			path: '/consumer/servicecenters/filters',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: ServiceCenterController.retrieveServiceCenterFilters
 			}
 		});
@@ -724,6 +805,9 @@ function prepareServiceCenterRoutes(serviceCenterController, serviceCenterRoutes
 			path: '/admin/servicecenters/{id}',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: ServiceCenterController.retrieveServiceCenterById
 			}
 		});
@@ -738,6 +822,9 @@ function prepareBrandRoutes(brandController, brandRoutes) {
 			path: "/brands",
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: BrandController.getBrands,
 			}
 		});
@@ -748,6 +835,9 @@ function prepareBrandRoutes(brandController, brandRoutes) {
 			path: '/admin/brands',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: BrandController.addBrand,
 				validate: {
 					payload: {
@@ -766,6 +856,9 @@ function prepareBrandRoutes(brandController, brandRoutes) {
 			path: '/admin/brands/{id}/details',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: BrandController.addBrandDetail,
 				validate: {
 					payload: {
@@ -785,6 +878,9 @@ function prepareBrandRoutes(brandController, brandRoutes) {
 			path: '/admin/brands/{id}',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: BrandController.updateBrand,
 				validate: {
 					payload: {
@@ -803,6 +899,9 @@ function prepareBrandRoutes(brandController, brandRoutes) {
 			path: '/admin/brands/{id}/details/{detailid}',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: BrandController.updateBrandDetail,
 				validate: {
 					payload: {
@@ -821,6 +920,9 @@ function prepareBrandRoutes(brandController, brandRoutes) {
 			path: '/admin/brands/{id}',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: BrandController.deleteBrand
 			}
 		});
@@ -831,6 +933,9 @@ function prepareBrandRoutes(brandController, brandRoutes) {
 			path: '/admin/brands/{id}/details/{detailid}',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: BrandController.deleteBrandDetail
 			}
 		});
@@ -841,6 +946,9 @@ function prepareBrandRoutes(brandController, brandRoutes) {
 			path: '/admin/brands',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: BrandController.retrieveBrand
 			}
 		});
@@ -850,12 +958,16 @@ function prepareBrandRoutes(brandController, brandRoutes) {
 			path: '/admin/brands/{id}',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: BrandController.retrieveBrandById
 			}
 		});
 	}
 }
 
+// NO APP VERSION CHECK
 function prepareCategoryRoutes(categoryController, categoryRoutes) {
 	if (categoryController) {
 		// Add Category
@@ -864,6 +976,9 @@ function prepareCategoryRoutes(categoryController, categoryRoutes) {
 			path: '/admin/categories',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: CategoryController.addCategory,
 				validate: {
 					payload: {
@@ -895,6 +1010,9 @@ function prepareCategoryRoutes(categoryController, categoryRoutes) {
 			config: {
 				handler: CategoryController.updateCategory,
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				validate: {
 					params: {
 						id: joi.number().integer().required()
@@ -924,6 +1042,9 @@ function prepareCategoryRoutes(categoryController, categoryRoutes) {
 			path: '/admin/categories',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: CategoryController.retrieveCategory
 			}
 		});
@@ -933,12 +1054,16 @@ function prepareCategoryRoutes(categoryController, categoryRoutes) {
 			path: '/admin/categories/{id}',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: CategoryController.retrieveCategoryById
 			}
 		});
 	}
 }
 
+// NO APP VERSION CHECK
 function prepareUserManagementRoutes(userManagementController, authRoutes) {
 	if (userManagementController) {
 		// Add Category
@@ -947,6 +1072,9 @@ function prepareUserManagementRoutes(userManagementController, authRoutes) {
 			path: '/admin/user/management',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: UserManagementController.addUser,
 				validate: {
 					payload: {
@@ -996,6 +1124,9 @@ function prepareUserManagementRoutes(userManagementController, authRoutes) {
 			config: {
 				handler: UserManagementController.updateUsers,
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				validate: {
 					params: {
 						id: joi.number().integer().required()
@@ -1043,6 +1174,9 @@ function prepareUserManagementRoutes(userManagementController, authRoutes) {
 			path: '/admin/user/management',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: UserManagementController.retrieveUsers
 			}
 		});
@@ -1052,12 +1186,16 @@ function prepareUserManagementRoutes(userManagementController, authRoutes) {
 			path: '/admin/user/management/{id}',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: UserManagementController.retrieveUserByID
 			}
 		});
 	}
 }
 
+// NO APP VERSION CHECK
 function prepareBillManagementRoutes(billManagementController, billManagementRoutes) {
 	if (billManagementController) {
 		billManagementRoutes.push({
@@ -1065,6 +1203,9 @@ function prepareBillManagementRoutes(billManagementController, billManagementRou
 			path: '/admin/billtoce',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: BillManagementController.assignTaskTOCE,
 				validate: {
 					payload: {
@@ -1094,6 +1235,9 @@ function prepareBillManagementRoutes(billManagementController, billManagementRou
 			path: '/admin/billtoqe',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: BillManagementController.assignTaskTOQE,
 				validate: {
 					payload: {
@@ -1123,6 +1267,9 @@ function prepareBillManagementRoutes(billManagementController, billManagementRou
 			path: '/qe/billtoce',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: BillManagementController.qeAssignTaskTOCE,
 				validate: {
 					payload: {
@@ -1152,6 +1299,9 @@ function prepareBillManagementRoutes(billManagementController, billManagementRou
 			path: '/admin/bills',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: BillManagementController.retrieveAdminConsumerBillList
 			}
 		});
@@ -1161,6 +1311,9 @@ function prepareBillManagementRoutes(billManagementController, billManagementRou
 			path: '/ce/bills',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: BillManagementController.retrieveCEBills
 			}
 		});
@@ -1170,12 +1323,16 @@ function prepareBillManagementRoutes(billManagementController, billManagementRou
 			path: '/qe/bills',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: BillManagementController.retrieveQEBills
 			}
 		});
 	}
 }
 
+// NO APP VERSION CHECK
 function prepareExclusionInclusionRoutes(exclusionInclusionController, categoryRoutes) {
 	if (exclusionInclusionController) {
 		// Add Exclusions
@@ -1184,6 +1341,9 @@ function prepareExclusionInclusionRoutes(exclusionInclusionController, categoryR
 			path: '/admin/exclusions',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: ExclusionInclusionController.addExclusions,
 				validate: {
 					payload: {
@@ -1201,6 +1361,9 @@ function prepareExclusionInclusionRoutes(exclusionInclusionController, categoryR
 			path: '/admin/inclusions',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: ExclusionInclusionController.addInclusions,
 				validate: {
 					payload: {
@@ -1219,6 +1382,9 @@ function prepareExclusionInclusionRoutes(exclusionInclusionController, categoryR
 			path: '/admin/exclusions/{id}',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: ExclusionInclusionController.updateExclusions,
 				validate: {
 					payload: {
@@ -1236,6 +1402,9 @@ function prepareExclusionInclusionRoutes(exclusionInclusionController, categoryR
 			path: '/admin/inclusions/{id}',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: ExclusionInclusionController.updateInclusions,
 				validate: {
 					payload: {
@@ -1253,6 +1422,9 @@ function prepareExclusionInclusionRoutes(exclusionInclusionController, categoryR
 			path: '/admin/exclusions/{id}',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: ExclusionInclusionController.deleteExclusions
 			}
 		});
@@ -1263,6 +1435,9 @@ function prepareExclusionInclusionRoutes(exclusionInclusionController, categoryR
 			path: '/admin/inclusions/{id}',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: ExclusionInclusionController.deleteInclusions
 			}
 		});
@@ -1272,6 +1447,9 @@ function prepareExclusionInclusionRoutes(exclusionInclusionController, categoryR
 			path: '/admin/exclusions',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: ExclusionInclusionController.retrieveExclusions
 			}
 		});
@@ -1281,12 +1459,16 @@ function prepareExclusionInclusionRoutes(exclusionInclusionController, categoryR
 			path: '/admin/inclusions',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: ExclusionInclusionController.retrieveInclusions
 			}
 		});
 	}
 }
 
+// NO APP VERSION CHECK
 function prepareReferenceData(referenceDataController, referenceDataRoutes) {
 	if (referenceDataController) {
 		referenceDataRoutes.push({
@@ -1294,6 +1476,9 @@ function prepareReferenceData(referenceDataController, referenceDataRoutes) {
 			path: '/admin/colors',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: ReferenceDataController.addColors,
 				validate: {
 					payload: {
@@ -1310,6 +1495,9 @@ function prepareReferenceData(referenceDataController, referenceDataRoutes) {
 			path: '/admin/colors/{id}',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: ReferenceDataController.updateColors,
 				validate: {
 					payload: {
@@ -1326,6 +1514,9 @@ function prepareReferenceData(referenceDataController, referenceDataRoutes) {
 			path: '/admin/colors/{id}',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: ReferenceDataController.deleteColors
 			}
 		});
@@ -1335,6 +1526,9 @@ function prepareReferenceData(referenceDataController, referenceDataRoutes) {
 			path: '/admin/colors',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: ReferenceDataController.retrieveColors
 			}
 		});
@@ -1344,6 +1538,9 @@ function prepareReferenceData(referenceDataController, referenceDataRoutes) {
 			path: '/admin/colors/{id}',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: ReferenceDataController.retrieveColorsById
 			}
 		});
@@ -1353,6 +1550,9 @@ function prepareReferenceData(referenceDataController, referenceDataRoutes) {
 			path: '/admin/usertypes',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: ReferenceDataController.retrieveUserTypes
 			}
 		});
@@ -1401,6 +1601,9 @@ function prepareAuthRoutes(userController, authRoutes) {
 			method: 'POST',
 			path: '/consumer/getotp',
 			config: {
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: UserController.dispatchOTP,
 				description: 'Generate OTP.',
 				tags: ['api', 'User', 'Authentication'],
@@ -1430,6 +1633,9 @@ function prepareAuthRoutes(userController, authRoutes) {
 			path: '/consumer/profile',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: UserController.updateUserProfile,
 				description: 'Update User Profile.',
 				validate: {
@@ -1474,6 +1680,9 @@ function prepareAuthRoutes(userController, authRoutes) {
 			path: '/consumer/profile',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: UserController.retrieveUserProfile,
 				description: 'Get User Profile.',
 				plugins: {
@@ -1515,6 +1724,9 @@ function prepareAuthRoutes(userController, authRoutes) {
 			path: '/consumer/nearby',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: UserController.retrieveNearBy,
 				description: 'Get User Profile.',
 				plugins: {
@@ -1606,6 +1818,9 @@ function prepareAuthRoutes(userController, authRoutes) {
 			config: {
 				handler: UserController.logout,
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				description: 'Logout User.',
 				tags: ['api', 'User', 'Authentication'],
 				validate: {
@@ -1628,6 +1843,20 @@ function prepareAuthRoutes(userController, authRoutes) {
 				}
 			}
 		});
+
+		// authRoutes.push({
+		// 	method: 'POST',
+		// 	path: '/test',
+		// 	config: {
+		// 		pre: [
+		// 			{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+		// 		],
+		// 		handler: function (request, reply) {
+		// 			console.log(request.pre);
+		// 			return reply({status: true});
+		// 		}
+		// 	}
+		// });
 	}
 }
 
@@ -1638,6 +1867,9 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
 			path: '/consumer/upload/selfie',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				files: {
 					relativeTo: Path.join(__dirname, '../static/src')
 				},
@@ -1658,6 +1890,9 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
 			path: '/consumer/upload',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				files: {
 					relativeTo: Path.join(__dirname, '../static/src')
 				},
@@ -1678,6 +1913,9 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
 			path: '/bills/{id}/files',
 			config: {
 				// auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: UploadController.retrieveFiles
 			}
 		});
@@ -1686,6 +1924,9 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
 			path: '/bills/{id}/files',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: UploadController.deleteFile
 			}
 		});
@@ -1694,6 +1935,9 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
 			path: '/consumer/{id}/images',
 			config: {
 				// auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: UploadController.retrieveUserImage
 			}
 		});
@@ -1714,6 +1958,9 @@ function prepareDashboardRoutes(dashboardController, dashboardRoutes) {
 			path: '/consumer/dashboard',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: DashboardController.getDashboard
 			}
 		});
@@ -1722,6 +1969,9 @@ function prepareDashboardRoutes(dashboardController, dashboardRoutes) {
 			path: '/consumer/ehome',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: DashboardController.getEHome
 			}
 		});
@@ -1730,6 +1980,9 @@ function prepareDashboardRoutes(dashboardController, dashboardRoutes) {
 			path: '/categories/{id}/products',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: DashboardController.getProductsInCategory
 			}
 		});
@@ -1738,6 +1991,9 @@ function prepareDashboardRoutes(dashboardController, dashboardRoutes) {
 			path: '/consumer/mailbox',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: DashboardController.getMailbox
 			}
 		});
@@ -1747,6 +2003,9 @@ function prepareDashboardRoutes(dashboardController, dashboardRoutes) {
 			path: '/consumer/mailbox/read',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: DashboardController.updateNotificationStatus,
 				validate: {
 					payload: {
@@ -1763,6 +2022,9 @@ function prepareDashboardRoutes(dashboardController, dashboardRoutes) {
 			path: '/consumer/notify',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: DashboardController.notifyUser,
 				validate: {
 					payload: joi.object({
@@ -1789,6 +2051,9 @@ function prepareProductRoutes(productController, productRoutes) {
 			config: {
 				handler: ProductController.updateUserReview,
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				description: 'Update User Review.',
 				validate: {
 					payload: {
@@ -1818,6 +2083,9 @@ function prepareProductRoutes(productController, productRoutes) {
 			path: '/products/{id}',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: ProductController.retrieveProductDetail,
 				description: 'Get Product Details.',
 				plugins: {
@@ -1847,6 +2115,9 @@ function prepareInsightRoutes(insightController, insightRoutes) {
 			path: '/insight',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: InsightController.retrieveCategorywiseInsight,
 				description: 'Get Insight Data.',
 				plugins: {
@@ -1867,6 +2138,9 @@ function prepareInsightRoutes(insightController, insightRoutes) {
 			path: '/categories/{id}/insights',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: InsightController.retrieveInsightForSelectedCategory,
 				description: 'Get Insight Data.',
 				plugins: {
@@ -1902,11 +2176,12 @@ function prepareGeneralRoutes(generalController, generalRoutes) {
 					}
 				}
 			}
-		})
+		});
 	}
 }
 
 module.exports = (app, modals) => {
+	appVersionHelper = AppVersionHelper(modals)
 	User = modals.users;
 	// Middleware to require login/auth
 	associateModals(modals);
@@ -1976,6 +2251,9 @@ module.exports = (app, modals) => {
 			path: '/search',
 			config: {
 				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
 				handler: SearchController.retrieveSearch,
 				description: 'Get Search Data.',
 				plugins: {

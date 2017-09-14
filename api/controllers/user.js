@@ -106,6 +106,8 @@ class UserController {
 	}
 
 	static dispatchOTP(request, reply) {
+		// console.log("PREEEEE");
+		// console.log(request.pre);
 		// const otp = generateRandomString(6);
 		// const options = {
 		// 	uri: 'http://api.msg91.com/api/sendhttp.php',
@@ -125,167 +127,193 @@ class UserController {
 		// 	json: true // Automatically parses the JSON string in the response
 		// };
 
-		Promise.all([OTPHelper.sendOTPToUser(request.payload.PhoneNo), userModel.findOne({
-			where: {
-				mobile_no: request.payload.PhoneNo
-			},
-			attributes: {
-				exclude: ['UserTypeID']
-			}
-		})]).then((response) => {
-			console.log(response);
-			if (response[0].type === 'success') {
-				console.log("SMS SENT WITH ID: ", response[0].message);
-				if (response[1] && response[1][1]) {
-					response[1][0].updateAttributes({
-						last_login: shared.formatDate(moment.utc(), 'yyyy-mm-dd HH:MM:ss')
-					});
-					reply({
-						Status: true,
-						Name: response[1][0].Name,
-						PhoneNo: request.payload.PhoneNo
-					}).code(201);
-				} else {
-					reply({
-						Status: true,
-						PhoneNo: request.payload.PhoneNo
-					}).code(201);
+		if (!request.pre.forceUpdate) {
+			Promise.all([OTPHelper.sendOTPToUser(request.payload.PhoneNo), userModel.findOne({
+				where: {
+					mobile_no: request.payload.PhoneNo
+				},
+				attributes: {
+					exclude: ['UserTypeID']
 				}
-				// userRelationModel.findOrCreate({
-				// 	where: {
-				// 		PhoneNo: request.payload.PhoneNo
-				// 	},
-				// 	defaults: {
-				// 		PhoneNo: request.payload.PhoneNo,
-				// 		OTP: otp,
-				// 		token_updated: shared.formatDate(moment().utc(), 'yyyy-mm-dd HH:MM:ss'),
-				// 		valid_turns: 0
-				// 	}
-				// }).then((result) => {
-				// 	// console.log("RESULT 0: ", result[0]);
-				// 	// console.log("RESULT 1: ", result[1]);
-				//
-				//
-				// 	if (!result[1]) {
-				// 		result[0].updateAttributes({
-				// 			OTP: otp,
-				// 			token_updated: shared.formatDate(moment.utc(), 'yyyy-mm-dd HH:MM:ss'),
-				// 			valid_turns: 0
-				// 		});
-				// 	}
+			})]).then((response) => {
+				console.log(response);
+				if (response[0].type === 'success') {
+					console.log("SMS SENT WITH ID: ", response[0].message);
+					if (response[1] && response[1][1]) {
+						response[1][0].updateAttributes({
+							last_login: shared.formatDate(moment.utc(), 'yyyy-mm-dd HH:MM:ss')
+						});
+						reply({
+							Status: true,
+							Name: response[1][0].Name,
+							PhoneNo: request.payload.PhoneNo,
+							forceUpdate: request.pre.forceUpdate
+						}).code(201);
+					} else {
+						reply({
+							Status: true,
+							PhoneNo: request.payload.PhoneNo,
+							forceUpdate: request.pre.forceUpdate
+						}).code(201);
+					}
+					// userRelationModel.findOrCreate({
+					// 	where: {
+					// 		PhoneNo: request.payload.PhoneNo
+					// 	},
+					// 	defaults: {
+					// 		PhoneNo: request.payload.PhoneNo,
+					// 		OTP: otp,
+					// 		token_updated: shared.formatDate(moment().utc(), 'yyyy-mm-dd HH:MM:ss'),
+					// 		valid_turns: 0
+					// 	}
+					// }).then((result) => {
+					// 	// console.log("RESULT 0: ", result[0]);
+					// 	// console.log("RESULT 1: ", result[1]);
+					//
+					//
+					// 	if (!result[1]) {
+					// 		result[0].updateAttributes({
+					// 			OTP: otp,
+					// 			token_updated: shared.formatDate(moment.utc(), 'yyyy-mm-dd HH:MM:ss'),
+					// 			valid_turns: 0
+					// 		});
+					// 	}
 
 
-				// }).catch((err) => {
-				// 	console.log(err);
-				// 	reply({
-				// 		status: false,
-				// 		err
-				// 	});
-				// });
-			} else {
-				reply({error: response.ErrorMessage}).code(403);
-			}
-		}).catch((err) => {
-			console.log(err);
-			reply({
-				status: false,
-				err
+					// }).catch((err) => {
+					// 	console.log(err);
+					// 	reply({
+					// 		status: false,
+					// 		err
+					// 	});
+					// });
+				} else {
+					reply({error: response.ErrorMessage, forceUpdate: request.pre.forceUpdate}).code(403);
+				}
+			}).catch((err) => {
+				console.log(err);
+				reply({
+					status: false,
+					err,
+					forceUpdate: request.pre.forceUpdate
+				});
 			});
-		});
+		} else {
+			reply({status: false, message: "Forbidden", forceUpdate: request.pre.forceUpdate});
+		}
 	}
 
 	static validateOTP(request, reply) {
-		const trueObject = request.payload.TrueObject;
-		if (request.payload.BBLogin_Type === 1) {
-			return Bluebird.try(() => {
-				return OTPHelper.verifyOTPForUser(trueObject.PhoneNo, request.payload.Token);
-			}).then((data) => {
-				console.log("VALIDATE OTP RESPONSE: ", data);
-				if (data.type === "success") {
+		if (!request.pre.forceUpdate) {
+			const trueObject = request.payload.TrueObject;
+			if (request.payload.BBLogin_Type === 1) {
+				return Bluebird.try(() => {
+					return OTPHelper.verifyOTPForUser(trueObject.PhoneNo, request.payload.Token);
+				}).then((data) => {
+					console.log("VALIDATE OTP RESPONSE: ", data);
+					if (data.type === "success") {
+						userModel.findOrCreate({
+							where: {
+								mobile_no: trueObject.PhoneNo,
+								status_id: 1
+							},
+							defaults: {
+								mobile_no: trueObject.PhoneNo,
+								status_id: 1,
+								// gcm_id: request.payload.fcmId
+							},
+							attributes: ['ID', ['fullname', 'name'], ['mobile_no', 'phoneNo'], ['email_id', 'email'], 'location', 'longitude', 'latitude', ['is_enrolled_professional', 'isEnrolled'], ['professional_category_id', 'categoryId'], ['share_mobile', 'isPhoneAllowed'], ['share_email', 'isEmailAllowed'], ['email_verified', 'isEmailVerified'], ['professional_description', 'description'], ['gcm_id', 'fcmId']]
+						}).then((userData) => {
+							userData[0].updateAttributes({
+								last_login: shared.formatDate(moment.utc(), 'yyyy-mm-dd HH:MM:ss'),
+								// gcm_id: request.payload.fcmId
+							});
+
+							insertFcmDetails(userData[0].ID, request.payload.fcmId).then((data) => {
+								console.log(data);
+							});
+
+							reply(dashboardAdaptor.prepareDashboardResult(userData[1], userData[0], `bearer ${authentication.generateToken(userData[0]).token}`, request)).code(201).header('authorization', `bearer ${authentication.generateToken(userData[0]).token}`);
+						}).catch((err) => {
+							reply({
+								message: 'Issue in updating data',
+								status: false,
+								err,
+								forceUpdate: request.pre.forceUpdate
+							});
+						});
+					} else {
+						reply({
+							status: false,
+							message: 'Invalid/Expired OTP',
+							forceUpdate: request.pre.forceUpdate
+						}).code(401);
+					}
+				}).catch((err) => {
+					console.log(err);
+					reply({
+						message: 'Issue in updating data',
+						status: false,
+						err,
+						forceUpdate: request.pre.forceUpdate
+					});
+				});
+			} else if (request.payload.BBLogin_Type === 2) {
+				const TrueSecret = request.payload.TrueSecret;
+				const TruePayload = request.payload.TruePayload;
+
+				if (!validatePayloadSignature(TruePayload, TrueSecret)) {
+					reply({
+						message: 'Payload verification failed',
+						status: false,
+						forceUpdate: request.pre.forceUpdate
+					});
+				} else {
+					const userItem = {
+						email_id: trueObject.EmailAddress,
+						fullname: trueObject.Name,
+						Password: bCrypt.hashSync(trueObject.Password, bCrypt.genSaltSync(8), null),
+						location: trueObject.Location,
+						latitude: trueObject.Latitude,
+						longitude: trueObject.Longitude,
+						image: trueObject.ImageLink,
+						accessLevel: trueObject.accessLevel ? trueObject.accessLevel : roles.ROLE_MEMBER,
+						last_login: shared.formatDate(moment.utc(), 'yyyy-mm-dd HH:MM:ss'),
+						mobile_no: trueObject.PhoneNo,
+						status_id: 1,
+						// gcm_id: trueObject.fcmId
+					};
+
 					userModel.findOrCreate({
 						where: {
 							mobile_no: trueObject.PhoneNo,
 							status_id: 1
 						},
-						defaults: {
-							mobile_no: trueObject.PhoneNo,
-							status_id: 1,
-							// gcm_id: request.payload.fcmId
-						},
-						attributes: ['ID', ['fullname', 'name'], ['mobile_no', 'phoneNo'], ['email_id', 'email'], 'location', 'longitude', 'latitude', ['is_enrolled_professional', 'isEnrolled'], ['professional_category_id', 'categoryId'], ['share_mobile', 'isPhoneAllowed'], ['share_email', 'isEmailAllowed'], ['email_verified', 'isEmailVerified'], ['professional_description', 'description'], ['gcm_id', 'fcmId']]
-					}).then((userData) => {
-						userData[0].updateAttributes({
-							last_login: shared.formatDate(moment.utc(), 'yyyy-mm-dd HH:MM:ss'),
-							// gcm_id: request.payload.fcmId
-						});
+						defaults: userItem,
+						attributes: ['ID', ['fullname', 'name'], ['mobile_no', 'phoneNo'], ['email_id', 'email'], 'location', 'longitude', 'latitude', ['is_enrolled_professional', 'isEnrolled'], ['professional_category_id', 'categoryId'], ['share_mobile', 'isPhoneAllowed'], ['share_email', 'isEmailAllowed'], ['email_verified', 'isEmailVerified'], ['professional_description', 'description']]
+					})
+						.then((userData) => {
+							if (!userData[1]) {
+								userData[0].updateAttributes({
+									email_id: trueObject.EmailAddress,
+									fullname: trueObject.Name,
+									last_login: shared.formatDate(moment.utc(), 'yyyy-mm-dd HH:MM:ss'),
+									// gcm_id: trueObject.fcmId
+								});
+							}
 
-						insertFcmDetails(userData[0].ID, request.payload.fcmId).then((data) => {
-							console.log(data);
-						});
+							UserController.uploadTrueCallerImage(trueObject, userData[0]);
 
-						reply(dashboardAdaptor.prepareDashboardResult(userData[1], userData[0], `bearer ${authentication.generateToken(userData[0]).token}`)).code(201).header('authorization', `bearer ${authentication.generateToken(userData[0]).token}`);
-					}).catch((err) => {
-						reply({message: 'Issue in updating data', status: false, err});
-					});
-				} else {
-					reply({
-						status: false,
-						message: 'Invalid/Expired OTP',
-					}).code(401);
-				}
-			}).catch((err) => {
-				console.log(err);
-				reply({message: 'Issue in updating data', status: false, err});
-			});
-		} else if (request.payload.BBLogin_Type === 2) {
-			const TrueSecret = request.payload.TrueSecret;
-			const TruePayload = request.payload.TruePayload;
-
-			if (!validatePayloadSignature(TruePayload, TrueSecret)) {
-				reply({message: 'Payload verification failed', status: false});
-			} else {
-				const userItem = {
-					email_id: trueObject.EmailAddress,
-					fullname: trueObject.Name,
-					Password: bCrypt.hashSync(trueObject.Password, bCrypt.genSaltSync(8), null),
-					location: trueObject.Location,
-					latitude: trueObject.Latitude,
-					longitude: trueObject.Longitude,
-					image: trueObject.ImageLink,
-					accessLevel: trueObject.accessLevel ? trueObject.accessLevel : roles.ROLE_MEMBER,
-					last_login: shared.formatDate(moment.utc(), 'yyyy-mm-dd HH:MM:ss'),
-					mobile_no: trueObject.PhoneNo,
-					status_id: 1,
-					// gcm_id: trueObject.fcmId
-				};
-
-				userModel.findOrCreate({
-					where: {
-						mobile_no: trueObject.PhoneNo,
-						status_id: 1
-					},
-					defaults: userItem,
-					attributes: ['ID', ['fullname', 'name'], ['mobile_no', 'phoneNo'], ['email_id', 'email'], 'location', 'longitude', 'latitude', ['is_enrolled_professional', 'isEnrolled'], ['professional_category_id', 'categoryId'], ['share_mobile', 'isPhoneAllowed'], ['share_email', 'isEmailAllowed'], ['email_verified', 'isEmailVerified'], ['professional_description', 'description']]
-				})
-					.then((userData) => {
-						if (!userData[1]) {
-							userData[0].updateAttributes({
-								email_id: trueObject.EmailAddress,
-								fullname: trueObject.Name,
-								last_login: shared.formatDate(moment.utc(), 'yyyy-mm-dd HH:MM:ss'),
-								// gcm_id: trueObject.fcmId
+							insertFcmDetails(userData[0].ID, request.payload.fcmId).then((data) => {
+								console.log(data);
 							});
-						}
 
-						UserController.uploadTrueCallerImage(trueObject, userData[0]);
-
-						insertFcmDetails(userData[0].ID, request.payload.fcmId).then((data) => {
-							console.log(data);
+							reply(dashboardAdaptor.prepareDashboardResult(userData[1], userData[0], `bearer ${authentication.generateToken(userData[0]).token}`, request)).code(201).header('authorization', `bearer ${authentication.generateToken(userData[0]).token}`);
 						});
-
-						reply(dashboardAdaptor.prepareDashboardResult(userData[1], userData[0], `bearer ${authentication.generateToken(userData[0]).token}`)).code(201).header('authorization', `bearer ${authentication.generateToken(userData[0]).token}`);
-					});
+				}
 			}
+		} else {
+			reply({status: false, message: "Forbidden", forceUpdate: request.pre.forceUpdate});
 		}
 	}
 
@@ -339,34 +367,41 @@ class UserController {
 		if (!user) {
 			reply({
 				status: false,
-				message: 'Unauthorized'
+				message: 'Unauthorized',
+				forceUpdate: request.pre.forceUpdate
 			});
-		} else {
+		} else if (user && !request.pre.forceUpdate) {
 			if (request.payload && request.payload.fcmId) {
 				deleteFcmDetails(user.ID, request.payload.fcmId).then((rows) => {
 					console.log("TOTAL FCM ID's DELETED: ", rows);
 				});
 			}
 
-			reply({status: true}).code(201);
+			reply({status: true, forceUpdate: request.pre.forceUpdate}).code(201);
+		} else {
+			reply({status: false, message: "Forbidden", forceUpdate: request.pre.forceUpdate});
 		}
 	}
 
 	static retrieveUserProfile(request, reply) {
 		const user = shared.verifyAuthorization(request.headers);
-		if (user) {
-			reply(userAdaptor.retrieveUserProfile(user));
+		if (user && !request.pre.forceUpdate) {
+			reply(userAdaptor.retrieveUserProfile(user, request));
+		} else if (!user) {
+			reply({message: 'Invalid Token', forceUpdate: request.pre.forceUpdate}).code(401);
 		} else {
-			reply({message: 'Invalid Token'}).code(401);
+			reply({message: "Forbidden", status: false, forceUpdate: request.pre.forceUpdate});
 		}
 	}
 
 	static updateUserProfile(request, reply) {
 		const user = shared.verifyAuthorization(request.headers);
-		if (user) {
-			userAdaptor.updateUser(user, request.payload, reply);
+		if (user && !request.pre.forceUpdate) {
+			userAdaptor.updateUser(user, request, reply);
+		} else if (!user) {
+			reply({message: 'Invalid Token', forceUpdate: request.pre.forceUpdate}).code(401);
 		} else {
-			reply({message: 'Invalid Token'}).code(401);
+			reply({status: false, message: "Forbidden", forceUpdate: request.pre.forceUpdate});
 		}
 	}
 
@@ -375,11 +410,14 @@ class UserController {
 		if (!user) {
 			reply({
 				status: false,
-				message: 'Unauthorized'
+				message: 'Unauthorized',
+				forceUpdate: request.pre.forceUpdate
 			});
-		} else {
+		} else if (user && !request.pre.forceUpdate) {
 			nearByAdaptor.retrieveNearBy(request.query.location || user.location, request.query.geolocation || `${user.latitude},${user.longitude}`,
-				request.query.professionids || '[]', reply, user.ID);
+				request.query.professionids || '[]', reply, user.ID, request);
+		} else {
+			reply({status: false, message: "Forbidden", forceUpdate: request.pre.forceUpdate});
 		}
 	}
 

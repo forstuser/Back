@@ -17,7 +17,7 @@ class UserAdaptor {
 		this.modals = modals;
 	}
 
-	retrieveUserProfile(user) {
+	retrieveUserProfile(user, request) {
 		return this.modals.table_users.findById(user.ID, {
 			attributes: [['fullname', 'name'], ['mobile_no', 'phoneNo'], ['email_id', 'email'], 'location', 'longitude', 'latitude', ['is_enrolled_professional', 'isEnrolled'], ['professional_category_id', 'categoryId'], ['share_mobile', 'isPhoneAllowed'], ['share_email', 'isEmailAllowed'], ['email_verified', 'isEmailVerified'], ['professional_description', 'description']],
 			include: [{
@@ -35,15 +35,18 @@ class UserAdaptor {
 				reportAnErrorOn: 'support@binbill.com',
 				faqUrl: 'http://www.binbill.com/faqs'
 			},
-			userProfile: result
+			userProfile: result,
+			forceUpdate: request.pre.forceUpdate
 		})).catch(err => ({
 			status: false,
 			message: 'User Data Retrieval Failed',
-			err
+			err,
+			forceUpdate: request.pre.forceUpdate
 		}));
 	}
 
-	updateUser(user, payload, reply) {
+	updateUser(user, request, reply) {
+		const payload = request.payload;
 		let emailID = null;
 
 		if (payload.email !== undefined) {
@@ -112,12 +115,14 @@ class UserAdaptor {
 
 			reply({
 				status: true,
-				message: 'User Details Updated Successfully'
+				message: 'User Details Updated Successfully',
+				forceUpdate: request.pre.forceUpdate
 			}).code(200);
 		}).catch(err => reply({
 			status: false,
 			message: 'User Detail Update failed',
-			err
+			err,
+			forceUpdate: request.pre.forceUpdate
 		}));
 	}
 }

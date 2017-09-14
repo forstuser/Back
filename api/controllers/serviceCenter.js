@@ -245,187 +245,198 @@ class ServiceCenterController {
 
 	static retrieveServiceCenters(request, reply) {
 		const user = shared.verifyAuthorization(request.headers);
-		const payload = request.payload || {
-			location: '',
-			city: '',
-			searchValue: '',
-			longitude: '',
-			latitude: '',
-			categoryId: '',
-			masterCategoryId: '',
-			brandId: ''
-		};
+		if (user && !request.pre.forceUpdate) {
+			const payload = request.payload || {
+				location: '',
+				city: '',
+				searchValue: '',
+				longitude: '',
+				latitude: '',
+				categoryId: '',
+				masterCategoryId: '',
+				brandId: ''
+			};
 
-		const latitude = payload.latitude || user.latitude || '';
-		const longitude = payload.longitude || user.longitude || '';
-		const location = payload.location || user.location || '';
-		const city = payload.city || '';
-		const latlong = latitude && longitude ? `${latitude}, ${longitude}` : '';
-		const categoryId = request.query.categoryid || payload.categoryId || '';
-		const brandId = request.query.brandid || payload.brandId || '';
-		const whereClause = {
-			status_id: {
-				$ne: 3
-			},
-			$and: []
-		};
-		const brandWhereClause = {
-			status_id: {
-				$ne: 3
-			}
-		};
-		const detailWhereClause = {
-			status_id: {
-				$ne: 3
-			}
-		};
-		if (brandId) {
-			whereClause.brand_id = brandId;
-			brandWhereClause.brand_id = brandId;
-		}
-
-		if (categoryId) {
-			detailWhereClause.category_id = categoryId;
-		}
-
-		if (city) {
-			whereClause.$and.push(modals.sequelize.where(modals.sequelize.fn('lower', modals.sequelize.col('address_city')), modals.sequelize.fn('lower', city)));
-		}
-		const origins = [];
-		const destinations = [];
-		if (latlong) {
-			origins.push(latlong);
-		} else if (location) {
-			origins.push(location);
-		} else if (city) {
-			origins.push(city);
-		}
-
-
-		Promise.all([modals.authorizedServiceCenter.findAll({
-			where: whereClause,
-			include: [
-				{
-					model: modals.table_brands,
-					as: 'brand',
-					attributes: [['brand_name', 'name'], ['brand_description', 'description'], ['brand_id', 'id']],
-					where: brandWhereClause,
-					required: true
+			const latitude = payload.latitude || user.latitude || '';
+			const longitude = payload.longitude || user.longitude || '';
+			const location = payload.location || user.location || '';
+			const city = payload.city || '';
+			const latlong = latitude && longitude ? `${latitude}, ${longitude}` : '';
+			const categoryId = request.query.categoryid || payload.categoryId || '';
+			const brandId = request.query.brandid || payload.brandId || '';
+			const whereClause = {
+				status_id: {
+					$ne: 3
 				},
-				{
-					model: modals.authorizeServiceCenterDetail,
-					as: 'centerDetails',
-					attributes: [['display_name', 'name'], 'details', ['contactdetail_type_id', 'detailType']],
-					where: detailWhereClause,
-					required: true
+				$and: []
+			};
+			const brandWhereClause = {
+				status_id: {
+					$ne: 3
 				}
-			],
-			attributes: [['center_name', 'centerName'], ['address_house_no', 'houseNo'], ['address_block', 'block'], ['address_street', 'street'], ['address_sector', 'sector'], ['address_city', 'city'], ['address_state', 'state'], ['address_pin_code', 'pinCode'], ['address_nearby', 'nearBy'], 'latitude', 'longitude', 'timings', ['open_days', 'openingDays'], [modals.sequelize.fn('CONCAT', 'categories/', categoryId, '/image'), 'cImageURL']]
-		}),
-			modals.table_brands.findAll({
-				where: {
-					status_id: {
-						$ne: 3
+			};
+			const detailWhereClause = {
+				status_id: {
+					$ne: 3
+				}
+			};
+			if (brandId) {
+				whereClause.brand_id = brandId;
+				brandWhereClause.brand_id = brandId;
+			}
+
+			if (categoryId) {
+				detailWhereClause.category_id = categoryId;
+			}
+
+			if (city) {
+				whereClause.$and.push(modals.sequelize.where(modals.sequelize.fn('lower', modals.sequelize.col('address_city')), modals.sequelize.fn('lower', city)));
+			}
+			const origins = [];
+			const destinations = [];
+			if (latlong) {
+				origins.push(latlong);
+			} else if (location) {
+				origins.push(location);
+			} else if (city) {
+				origins.push(city);
+			}
+
+
+			Promise.all([modals.authorizedServiceCenter.findAll({
+				where: whereClause,
+				include: [
+					{
+						model: modals.table_brands,
+						as: 'brand',
+						attributes: [['brand_name', 'name'], ['brand_description', 'description'], ['brand_id', 'id']],
+						where: brandWhereClause,
+						required: true
+					},
+					{
+						model: modals.authorizeServiceCenterDetail,
+						as: 'centerDetails',
+						attributes: [['display_name', 'name'], 'details', ['contactdetail_type_id', 'detailType']],
+						where: detailWhereClause,
+						required: true
 					}
-				},
-				include: [{
-					model: modals.brandDetails,
-					as: 'details',
+				],
+				attributes: [['center_name', 'centerName'], ['address_house_no', 'houseNo'], ['address_block', 'block'], ['address_street', 'street'], ['address_sector', 'sector'], ['address_city', 'city'], ['address_state', 'state'], ['address_pin_code', 'pinCode'], ['address_nearby', 'nearBy'], 'latitude', 'longitude', 'timings', ['open_days', 'openingDays'], [modals.sequelize.fn('CONCAT', 'categories/', categoryId, '/image'), 'cImageURL']]
+			}),
+				modals.table_brands.findAll({
 					where: {
 						status_id: {
 							$ne: 3
-						},
-						category_id: categoryId
-					},
-					attributes: []
-				}],
-				attributes: [['brand_id', 'id'], ['brand_name', 'name']]
-			})]).then((result) => {
-			const serviceCentersWithLocation = [];
-			const finalResult = [];
-			if (result[0].length > 0) {
-				const serviceCenters = result[0].map((item) => {
-					const center = item.toJSON();
-					center.mobileDetails = center.centerDetails.filter(detail => detail.detailType === 3);
-					center.centerAddress = `${center.centerName}, ${center.sector} ${center.street}, ${center.city}-${center.pinCode}, ${center.state}, India`;
-					center.geoLocation = center.latitude && center.longitude && center.latitude.toString() !== '0' && center.longitude.toString() !== '0' ? `${center.latitude}, ${center.longitude}` : '';
-					if (center.geoLocation) {
-						destinations.push(center.geoLocation);
-					} else if (center.city) {
-						destinations.push(center.city);
-					} else if (center.centerAddress) {
-						destinations.push(center.centerAddress);
-					}
-
-					if (origins.length > 0 && destinations.length > 0) {
-						if (origins.length < destinations.length) {
-							origins.push(origins[0]);
 						}
-						serviceCentersWithLocation.push(center);
-					} else {
-						center.distanceMetrics = 'km';
-						center.distance = parseFloat(500.001);
-						finalResult.push(center);
-					}
+					},
+					include: [{
+						model: modals.brandDetails,
+						as: 'details',
+						where: {
+							status_id: {
+								$ne: 3
+							},
+							category_id: categoryId
+						},
+						attributes: []
+					}],
+					attributes: [['brand_id', 'id'], ['brand_name', 'name']]
+				})]).then((result) => {
+				const serviceCentersWithLocation = [];
+				const finalResult = [];
+				if (result[0].length > 0) {
+					const serviceCenters = result[0].map((item) => {
+						const center = item.toJSON();
+						center.mobileDetails = center.centerDetails.filter(detail => detail.detailType === 3);
+						center.centerAddress = `${center.centerName}, ${center.sector} ${center.street}, ${center.city}-${center.pinCode}, ${center.state}, India`;
+						center.geoLocation = center.latitude && center.longitude && center.latitude.toString() !== '0' && center.longitude.toString() !== '0' ? `${center.latitude}, ${center.longitude}` : '';
+						if (center.geoLocation) {
+							destinations.push(center.geoLocation);
+						} else if (center.city) {
+							destinations.push(center.city);
+						} else if (center.centerAddress) {
+							destinations.push(center.centerAddress);
+						}
 
-					return center;
-				});
-				if (origins.length > 0 && destinations.length > 0) {
-					googleMapsClient.distanceMatrix({
-						origins,
-						destinations
-					}).asPromise().then((matrix) => {
-						for (let i = 0; i < serviceCentersWithLocation.length; i += 1) {
-							const tempMatrix = matrix.status === 200 && matrix.json ? matrix.json.rows[0]
-								.elements[i] : {};
-							if (tempMatrix && tempMatrix.status.toLowerCase() === 'ok') {
-								serviceCentersWithLocation[i].distanceMetrics = tempMatrix.distance ? tempMatrix.distance.text.split(' ')[1] : 'km';
-								serviceCentersWithLocation[i].distance = parseFloat(tempMatrix.distance ? tempMatrix.distance.text.split(' ')[0] : 500.001);
-								serviceCentersWithLocation[i].distance = serviceCentersWithLocation[i].distanceMetrics !== 'km' ? serviceCentersWithLocation[i].distance / 1000 : serviceCentersWithLocation[i].distance;
-							} else {
-								serviceCentersWithLocation[i].distanceMetrics = 'km';
-								serviceCentersWithLocation[i].distance = parseFloat(500.001);
+						if (origins.length > 0 && destinations.length > 0) {
+							if (origins.length < destinations.length) {
+								origins.push(origins[0]);
+							}
+							serviceCentersWithLocation.push(center);
+						} else {
+							center.distanceMetrics = 'km';
+							center.distance = parseFloat(500.001);
+							finalResult.push(center);
+						}
+
+						return center;
+					});
+					if (origins.length > 0 && destinations.length > 0) {
+						googleMapsClient.distanceMatrix({
+							origins,
+							destinations
+						}).asPromise().then((matrix) => {
+							for (let i = 0; i < serviceCentersWithLocation.length; i += 1) {
+								const tempMatrix = matrix.status === 200 && matrix.json ? matrix.json.rows[0]
+									.elements[i] : {};
+								if (tempMatrix && tempMatrix.status.toLowerCase() === 'ok') {
+									serviceCentersWithLocation[i].distanceMetrics = tempMatrix.distance ? tempMatrix.distance.text.split(' ')[1] : 'km';
+									serviceCentersWithLocation[i].distance = parseFloat(tempMatrix.distance ? tempMatrix.distance.text.split(' ')[0] : 500.001);
+									serviceCentersWithLocation[i].distance = serviceCentersWithLocation[i].distanceMetrics !== 'km' ? serviceCentersWithLocation[i].distance / 1000 : serviceCentersWithLocation[i].distance;
+								} else {
+									serviceCentersWithLocation[i].distanceMetrics = 'km';
+									serviceCentersWithLocation[i].distance = parseFloat(500.001);
+								}
+
+								finalResult.push(serviceCentersWithLocation[i]);
 							}
 
-							finalResult.push(serviceCentersWithLocation[i]);
-						}
-
-						if (finalResult.length === result[0].length) {
-							serviceCentersWithLocation.sort((a, b) => a.distance - b.distance);
-							reply({
-								status: true,
-								serviceCenters: serviceCentersWithLocation,
-								filterData: {
-									brands: result[1]
-								}
-							}).code(200);
-						}
-					}).catch(err => reply({
-						status: false,
-						err
-					}));
-				}
-				if (origins.length <= 0) {
+							if (finalResult.length === result[0].length) {
+								serviceCentersWithLocation.sort((a, b) => a.distance - b.distance);
+								reply({
+									status: true,
+									serviceCenters: serviceCentersWithLocation,
+									filterData: {
+										brands: result[1]
+									},
+									forceUpdate: request.pre.forceUpdate
+								}).code(200);
+							}
+						}).catch(err => reply({
+							status: false,
+							err,
+							forceUpdate: request.pre.forceUpdate
+						}));
+					}
+					if (origins.length <= 0) {
+						reply({
+							status: true,
+							filterData: {
+								brands: result[1]
+							},
+							serviceCenters,
+							forceUpdate: request.pre.forceUpdate
+						});
+					}
+				} else {
 					reply({
-						status: true,
-						filterData: {
-							brands: result[1]
-						},
-						serviceCenters
+						status: false,
+						message: 'No Data Found for mentioned search',
+						forceUpdate: request.pre.forceUpdate
 					});
 				}
-			} else {
+			}).catch((err) => {
 				reply({
 					status: false,
-					message: 'No Data Found for mentioned search'
+					err,
+					forceUpdate: request.pre.forceUpdate
 				});
-			}
-		}).catch((err) => {
-			reply({
-				status: false,
-				err
 			});
-		});
+		} else if (!user) {
+			reply({status: false, message: "Unauthorized", forceUpdate: request.pre.forceUpdate});
+		} else {
+			reply({status: false, message: "Forbidden", forceUpdate: request.pre.forceUpdate});
+		}
 	}
 
 	static retrieveServiceCenterById(request, reply) {
@@ -450,52 +461,57 @@ class ServiceCenterController {
 	}
 
 	static retrieveServiceCenterFilters(request, reply) {
-		Promise.all([
-			modals.categories.findAll({
-				where: {
-					display_id: [2, 3],
-					category_level: 1,
-					status_id: {
-						$ne: 3
-					}
-				},
-				include: [{
-					model: modals.categories,
-					on: {
-						$or: [
-							modals.sequelize.where(modals.sequelize.col('`subCategories`.`ref_id`'), modals.sequelize.col('`categories`.`category_id`'))
-						]
+		if (!request.pre.forceUpdate) {
+			Promise.all([
+				modals.categories.findAll({
+					where: {
+						display_id: [2, 3],
+						category_level: 1,
+						status_id: {
+							$ne: 3
+						}
 					},
-					as: 'subCategories',
+					include: [{
+						model: modals.categories,
+						on: {
+							$or: [
+								modals.sequelize.where(modals.sequelize.col('`subCategories`.`ref_id`'), modals.sequelize.col('`categories`.`category_id`'))
+							]
+						},
+						as: 'subCategories',
+						where: {
+							status_id: {
+								$ne: 3
+							}
+						},
+						attributes: [['category_id', 'id'], ['category_name', 'name']],
+						required: false
+					}],
+					attributes: [['category_id', 'id'], ['display_id', 'cType'], ['category_name', 'name']]
+				}),
+				modals.authorizedServiceCenter
+					.aggregate('address_city', 'DISTINCT', {plain: false, order: [['address_city']]}),
+				modals.table_brands.findAll({
 					where: {
 						status_id: {
 							$ne: 3
 						}
 					},
-					attributes: [['category_id', 'id'], ['category_name', 'name']],
-					required: false
-				}],
-				attributes: [['category_id', 'id'], ['display_id', 'cType'], ['category_name', 'name']]
-			}),
-			modals.authorizedServiceCenter
-				.aggregate('address_city', 'DISTINCT', {plain: false, order: [['address_city']]}),
-			modals.table_brands.findAll({
-				where: {
-					status_id: {
-						$ne: 3
-					}
-				},
-				include: [{model: modals.authorizedServiceCenter, as: 'center', attributes: []}],
-				attributes: [['brand_name', 'name'], ['brand_id', 'id']]
-			})
-		]).then((result) => {
-			reply({
-				status: true,
-				categories: result[0],
-				cities: result[1].map(item => item.DISTINCT),
-				brands: result[2]
+					include: [{model: modals.authorizedServiceCenter, as: 'center', attributes: []}],
+					attributes: [['brand_name', 'name'], ['brand_id', 'id']]
+				})
+			]).then((result) => {
+				reply({
+					status: true,
+					categories: result[0],
+					cities: result[1].map(item => item.DISTINCT),
+					brands: result[2],
+					forceUpdate: request.pre.forceUpdate
+				});
 			});
-		});
+		} else {
+			reply({status: false, message: "Forbidden", forceUpdate: request.pre.forceUpdate});
+		}
 	}
 }
 

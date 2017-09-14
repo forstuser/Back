@@ -20,19 +20,23 @@ class DashboardController {
 
 	static getDashboard(request, reply) {
 		const user = shared.verifyAuthorization(request.headers);
-		if (user) {
-			reply(dashboardAdaptor.retrieveDashboardResult(user)).code(200);
+		if (user && !request.pre.forceUpdate) {
+			reply(dashboardAdaptor.retrieveDashboardResult(user, request)).code(200);
+		} else if (!user) {
+			reply({message: 'Token Expired or Invalid', forceUpdate: request.pre.forceUpdate}).code(401);
 		} else {
-			reply({message: 'Token Expired or Invalid'}).code(401);
+			reply({status: false, message: "Forbidden", forceUpdate: request.pre.forceUpdate});
 		}
 	}
 
 	static getEHome(request, reply) {
 		const user = shared.verifyAuthorization(request.headers);
-		if (user) {
-			reply(ehomeAdaptor.prepareEHomeResult(user)).code(200);
+		if (user && !request.pre.forceUpdate) {
+			reply(ehomeAdaptor.prepareEHomeResult(user, request)).code(200);
+		} else if (!user) {
+			reply({status: false, message: 'Token Expired or Invalid', forceUpdate: request.pre.forceUpdate}).code(401);
 		} else {
-			reply({message: 'Token Expired or Invalid'}).code(401);
+			reply({status: false, message: "Forbidden", forceUpdate: request.pre.forceUpdate});
 		}
 	}
 
@@ -41,15 +45,18 @@ class DashboardController {
 		if (!user) {
 			reply({
 				status: false,
-				message: 'Unauthorized'
+				message: 'Unauthorized',
+				forceUpdate: request.pre.forceUpdate
 			});
-		} else {
+		} else if (user && !request.pre.forceUpdate) {
 			reply(ehomeAdaptor
 				.prepareProductDetail(user, request.params.id, request.query.ctype,
 					/* request.query.pageno, */
 					request.query.brandids || '[]', request.query.categoryids || '[]', request.query.offlinesellerids || '[]',
-					request.query.onlinesellerids || '[]', request.query.sortby, request.query.searchvalue))
+					request.query.onlinesellerids || '[]', request.query.sortby, request.query.searchvalue, request))
 				.code(200);
+		} else {
+			reply({status: false, message: "Forbidden", forceUpdate: request.pre.forceUpdate});
 		}
 	}
 
@@ -60,14 +67,16 @@ class DashboardController {
 				status: false,
 				message: 'Unauthorized'
 			});
-		} else {
+		} else if (user && !request.pre.forceUpdate) {
 			notificationAdaptor.updateNotificationStatus(user, request.payload.notificationIds).then((count) => {
 				console.log("UPDATE COUNT: ", count);
 
-				reply({status: true}).code(201);
+				reply({status: true, forceUpdate: request.pre.forceUpdate}).code(201);
 			}).catch((err) => {
-				reply({status: false}).code(500);
+				reply({status: false, forceUpdate: request.pre.forceUpdate}).code(500);
 			});
+		} else {
+			reply({status: false, message: "Forbidden", forceUpdate: request.pre.forceUpdate});
 		}
 	}
 
@@ -76,11 +85,14 @@ class DashboardController {
 		if (!user) {
 			reply({
 				status: false,
-				message: 'Unauthorized'
+				message: 'Unauthorized',
+				forceUpdate: request.pre.forceUpdate
 			});
-		} else {
-			reply(notificationAdaptor.retrieveNotifications(user, request.query.pageno))
+		} else if (!request.pre.forceUpdate && user) {
+			reply(notificationAdaptor.retrieveNotifications(user, request))
 				.code(200);
+		} else {
+			reply({status: false, message: "Forbidden", forceUpdate: request.pre.forceUpdate});
 		}
 	}
 

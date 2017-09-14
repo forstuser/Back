@@ -6,7 +6,8 @@ class ProductAdaptor {
 		this.modals = modals;
 	}
 
-	updateBrandReview(user, brandId, payload) {
+	updateBrandReview(user, brandId, request) {
+		const payload = request.payload;
 		return this.modals.brandReviews.findOrCreate({
 			where: {
 				user_id: user.ID,
@@ -30,11 +31,12 @@ class ProductAdaptor {
 				});
 			}
 
-			return {status: true, message: 'Review Updated Successfully'};
-		}).catch(err => ({status: true, message: 'Review Update Failed', err}));
+			return {status: true, message: 'Review Updated Successfully', forceUpdate: request.pre.forceUpdate};
+		}).catch(err => ({status: true, message: 'Review Update Failed', err, forceUpdate: request.pre.forceUpdate}));
 	}
 
-	updateSellerReview(user, sellerId, isOnlineSeller, payload) {
+	updateSellerReview(user, sellerId, isOnlineSeller, request) {
+		const payload = request.payload;
 		const whereClause = isOnlineSeller ? {
 			user_id: user.ID,
 			seller_id: sellerId,
@@ -73,11 +75,12 @@ class ProductAdaptor {
 				});
 			}
 
-			return {status: true, message: 'Review Updated Successfully'};
-		}).catch(err => ({status: true, message: 'Review Update Failed', err}));
+			return {status: true, message: 'Review Updated Successfully', forceUpdate: request.pre.forceUpdate};
+		}).catch(err => ({status: true, message: 'Review Update Failed', err, forceUpdate: request.pre.forceUpdate}));
 	}
 
-	updateProductReview(user, productId, payload) {
+	updateProductReview(user, productId, request) {
+		const payload = request.payload;
 		const whereClause = {
 			user_id: user.ID,
 			bill_product_id: productId,
@@ -103,11 +106,12 @@ class ProductAdaptor {
 				});
 			}
 
-			return {status: true, message: 'Review Updated Successfully'};
-		}).catch(err => ({status: true, message: 'Review Update Failed', err}));
+			return {status: true, message: 'Review Updated Successfully', forceUpdate: request.pre.forceUpdate};
+		}).catch(err => ({status: true, message: 'Review Update Failed', err, forceUpdate: request.pre.forceUpdate}));
 	}
 
-	prepareProductDetail(user, productId) {
+	prepareProductDetail(user, request) {
+		const productId = request.params.id;
 		return this.modals.productBills.findOne({
 			where: {
 				bill_product_id: productId
@@ -425,11 +429,13 @@ class ProductAdaptor {
 			product.amcDetails = amcDetails;
 			return ({
 				status: true,
-				product
+				product,
+				forceUpdate: request.pre.forceUpdate
 			});
 		}).catch(err => ({
 			status: false,
-			err
+			err,
+			forceUpdate: request.pre.forceUpdate
 		}));
 	}
 }
