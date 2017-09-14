@@ -119,13 +119,15 @@ class DashboardAdaptor {
 				}).slice(0, 5),
 				upcomingServices: result[0],
 				insight: insightResult,
-				forceUpdate: request.pre.forceUpdate
+				forceUpdate: request.pre.forceUpdate,
+				showDashboard: insightItems && insightItems.length > 0
 			};
 		}).catch(err => ({
 			status: false,
 			message: 'Dashboard restore failed',
 			err,
-			forceUpdate: request.pre.forceUpdate
+			forceUpdate: request.pre.forceUpdate,
+			showDashboard: false
 		}));
 	}
 
