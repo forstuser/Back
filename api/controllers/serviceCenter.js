@@ -321,7 +321,7 @@ class ServiceCenterController {
 						required: true
 					}
 				],
-				attributes: [['center_name', 'centerName'], ['address_house_no', 'houseNo'], ['address_block', 'block'], ['address_street', 'street'], ['address_sector', 'sector'], ['address_city', 'city'], ['address_state', 'state'], ['address_pin_code', 'pinCode'], ['address_nearby', 'nearBy'], 'latitude', 'longitude', 'timings', ['open_days', 'openingDays'], [modals.sequelize.fn('CONCAT', 'categories/', categoryId, '/image'), 'cImageURL']]
+				attributes: [['center_name', 'centerName'], ['address_house_no', 'houseNo'], ['address_block', 'block'], ['address_street', 'street'], ['address_sector', 'sector'], ['address_city', 'city'], ['address_state', 'state'], ['address_pin_code', 'pinCode'], ['address_nearby', 'nearBy'], 'latitude', 'longitude', 'timings', ['open_days', 'openingDays'], [modals.sequelize.fn('CONCAT', 'categories/', categoryId, '/image/'), 'cImageURL']]
 			}),
 				modals.table_brands.findAll({
 					where: {
