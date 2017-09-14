@@ -16,7 +16,7 @@ const server = new Hapi.Server();
 const options = config.DATABASE;
 const PORT = config.APP.PORT;
 
-const options = {
+const TLS_OPTIONS = {
 	key: fs.readFileSync(path.resolve(__dirname, 'cert/key.key')),
 	cert: fs.readFileSync(path.resolve(__dirname, 'cert/cert.crt')),
 	ca: fs.readFileSync(path.resolve(__dirname, 'cert/bundle.crt')) //, fs.readFileSync(path.resolve(__dirname, 'cert/bundle2.crt')), fs.readFileSync(path.resolve(__dirname, 'cert/bundle3.crt'))]
@@ -30,7 +30,7 @@ const connection = MySQL.createConnection({
 	port: options.port
 });
 //server.connection({ port: 3000});
-server.connection({port: PORT, tls: options});
+server.connection({port: PORT, tls: TLS_OPTIONS});
 server.register({
 	register: require('hapi-cors'),
 	options: {
