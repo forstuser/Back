@@ -11,9 +11,18 @@ const hapiSwagger = require('hapi-swagger');
 const inert = require('inert');
 const vision = require('vision');
 const config = require("./config/main");
+const fs = require('fs');
+const path = require("path");
 // Create a server with a host and port
 const server = new Hapi.Server();
-server.connection({port: 3000});
+
+const options = {
+	key: fs.readFileSync(path.resolve(__dirname, 'cert/key.key')),
+	cert: fs.readFileSync(path.resolve(__dirname, 'cert/cert.crt')),
+	ca: fs.readFileSync(path.resolve(__dirname, 'cert/bundle.crt')) //, fs.readFileSync(path.resolve(__dirname, 'cert/bundle2.crt')), fs.readFileSync(path.resolve(__dirname, 'cert/bundle3.crt'))]
+};
+
+server.connection({port: 3000, tls: options});
 
 const goodLoggingOption = {
 	ops: {
