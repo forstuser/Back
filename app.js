@@ -16,13 +16,15 @@ const path = require("path");
 // Create a server with a host and port
 const server = new Hapi.Server();
 
+const PORT = config.APP.PORT || 8443;
+
 const options = {
 	key: fs.readFileSync(path.resolve(__dirname, 'cert/key.key')),
 	cert: fs.readFileSync(path.resolve(__dirname, 'cert/cert.crt')),
 	ca: fs.readFileSync(path.resolve(__dirname, 'cert/bundle.crt')) //, fs.readFileSync(path.resolve(__dirname, 'cert/bundle2.crt')), fs.readFileSync(path.resolve(__dirname, 'cert/bundle3.crt'))]
 };
 
-server.connection({port: 3000, tls: options});
+server.connection({port: PORT, tls: options});
 
 const goodLoggingOption = {
 	ops: {
