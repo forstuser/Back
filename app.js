@@ -26,7 +26,7 @@ server.connection({port: PORT});
 server.register({
 	register: require('hapi-cors'),
 	options: {
-		// origins: ['http://localhost:4200']
+		origins: ["*"]
 	}
 }, () => {
 	server.start(() => {
