@@ -14,7 +14,8 @@ class EHomeAdaptor {
 		return Promise.all([
 			this.retrieveUnProcessedBills(user),
 			this.prepareCategoryData(user),
-			this.retrieveRecentSearch(user)
+			this.retrieveRecentSearch(user),
+			this.modals.mailBox.count({where: {user_id: user.ID, status_id: 4}})
 		]).then((result) => {
 			const categoryList = result[1].map((item) => {
 				const categoryData = item.toJSON();
@@ -26,7 +27,7 @@ class EHomeAdaptor {
 			return {
 				status: true,
 				message: 'EHome restore successful',
-				notificationCount: 0,
+				notificationCount: result[3],
 				// categories: result[3],
 				recentSearches: recentSearches.map(item => item.searchValue).slice(0, 5),
 				unProcessedBills: result[0],
