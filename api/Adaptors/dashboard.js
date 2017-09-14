@@ -176,7 +176,7 @@ class DashboardAdaptor {
 						status: true,
 						message: 'User Exist',
 						billCounts,
-						showDashboard: billCounts >= 2,
+						showDashboard: billCounts > 0,
 						isExistingUser: !isNewUser,
 						authorization: token,
 						userId: user.ID,
