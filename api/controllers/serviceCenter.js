@@ -484,11 +484,11 @@ class ServiceCenterController {
 								$ne: 3
 							}
 						},
-						order: ['category_name'],
 						attributes: [['category_id', 'id'], ['category_name', 'name']],
 						required: false
 					}],
-					attributes: [['category_id', 'id'], ['display_id', 'cType'], ['category_name', 'name']]
+					attributes: [['category_id', 'id'], ['display_id', 'cType'], ['category_name', 'name']],
+					order: ['category_name', modals.sequelize.literal('subCategories.category_name')]
 				}),
 				modals.authorizedServiceCenter
 					.aggregate('address_city', 'DISTINCT', {plain: false, order: [['address_city']]}),
