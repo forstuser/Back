@@ -2553,6 +2553,9 @@ models.sequelize.sync().then(() => {
 			const UID = request.payload.UID;
 			const BID = request.payload.BID;
 			const Comments = request.payload.Comments;
+
+			console.log("COMMENTS: ", Comments);
+
 			connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', (error, token, fields) => {
 				if (error) throw error;
 				if (token.length > 0) {
@@ -2566,7 +2569,7 @@ models.sequelize.sync().then(() => {
 								reply(data);
 							});
 						} else {
-							connection.query('INSERT INTO table_cust_executive_tasks (user_id,bill_id,created_on,updated_on,updated_by_user_id,status_id) VALUES ("' + UID + '","' + BID + '","' + getDateTime() + '","' + getDateTime() + '","' + UserID + '",6)', (error, results, fields) => {
+							connection.query('INSERT INTO table_cust_executive_tasks (user_id,bill_id,created_on,updated_on,updated_by_user_id,status_id,comments) VALUES ("' + UID + '","' + BID + '","' + getDateTime() + '","' + getDateTime() + '","' + UserID + '",6' + Comments + '")', (error, results, fields) => {
 								if (error) throw error;
 								connection.query('UPDATE table_consumer_bills SET admin_status=8 WHERE bill_id="' + BID + '"', (error, results, fields) => {
 									if (error) throw error;
@@ -2670,7 +2673,7 @@ models.sequelize.sync().then(() => {
 						} else {
 							var LimitCondition = '';
 						}
-						connection.query('SELECT b.bill_id as BID,b.user_id as UID,b.bill_reference_id as BillNo,u.fullname as Name,u.email_id as EmailID,u.mobile_no as PhoneNo,b.created_on as BillDate,assu.fullname as AssignedBy,ce.created_on as AssignedDate,status_name as Status FROM table_cust_executive_tasks as ce INNER JOIN table_consumer_bills as b on b.bill_id=ce.bill_id LEFT JOIN table_users as u on u.user_id=b.user_id  LEFT JOIN table_users as assu on ce.updated_by_user_id=assu.user_id LEFT JOIN table_status as s on s.status_id=ce.status_id ' + condition + ' ORDER BY ce.updated_on DESC ' + LimitCondition + '', (error, bill, fields) => {
+						connection.query('SELECT b.bill_id as BID,b.user_id as UID,b.bill_reference_id as BillNo,u.fullname as Name,u.email_id as EmailID,u.mobile_no as PhoneNo,b.created_on as BillDate,assu.fullname as AssignedBy,ce.created_on as AssignedDate,status_name as Status, ce.comments as Comments FROM table_cust_executive_tasks as ce INNER JOIN table_consumer_bills as b on b.bill_id=ce.bill_id LEFT JOIN table_users as u on u.user_id=b.user_id  LEFT JOIN table_users as assu on ce.updated_by_user_id=assu.user_id LEFT JOIN table_status as s on s.status_id=ce.status_id ' + condition + ' ORDER BY ce.updated_on DESC ' + LimitCondition + '', (error, bill, fields) => {
 							if (error) throw error;
 							if (bill.length > 0) {
 								var data = '{"statusCode": 100,"BillList": ' + JSON.stringify(bill) + '}';
