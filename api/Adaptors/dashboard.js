@@ -277,7 +277,7 @@ class DashboardAdaptor {
 					}]
 			}),
 				this.modals.amcBills.findAll({
-					attributes: [['bill_amc_id', 'id'], 'policyNo', 'premiumType', 'premiumAmount', 'effectiveDate', 'expiryDate'],
+					attributes: [['bill_amc_id', 'id'], 'policyNo', 'premiumType', 'premiumAmount', 'effectiveDate', [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`amcProduct`.`bill_product_id`')), 'productURL'], 'expiryDate'],
 					where: {
 						user_id: user.ID,
 						status_id: {
@@ -295,7 +295,7 @@ class DashboardAdaptor {
 					}]
 				}),
 				this.modals.insuranceBills.findAll({
-					attributes: [['bill_insurance_id', 'id'], 'policyNo', 'premiumType', 'premiumAmount', 'effectiveDate', 'expiryDate', 'amountInsured', 'plan'],
+					attributes: [['bill_insurance_id', 'id'], 'policyNo', 'premiumType', 'premiumAmount', 'effectiveDate', 'expiryDate', 'amountInsured', [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`insuredProduct`.`bill_product_id`')), 'productURL'], 'plan'],
 					where: {
 						user_id: user.ID,
 						status_id: {
@@ -313,7 +313,7 @@ class DashboardAdaptor {
 					}]
 				}),
 				this.modals.warranty.findAll({
-					attributes: [['bill_warranty_id', 'id'], 'warrantyType', 'policyNo', 'premiumType', 'premiumAmount', 'effectiveDate', 'expiryDate'],
+					attributes: [['bill_warranty_id', 'id'], 'warrantyType', 'policyNo', 'premiumType', 'premiumAmount', 'effectiveDate', [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`warrantyProduct`.`bill_product_id`')), 'productURL'], 'expiryDate'],
 					where: {
 						user_id: user.ID,
 						status_id: {
