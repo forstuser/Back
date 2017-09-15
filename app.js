@@ -3002,7 +3002,23 @@ models.sequelize.sync().then(() => {
 								const FormIDList = id.join();
 								connection.query('SELECT category_form_id as FormID,mapping_id as DropdownID,dropdown_name as DropdownName FROM table_category_form_mapping WHERE category_form_id IN (' + FormIDList + ')  and status_id=1 ', (error, droupdown, fields) => {
 									//console.log(droupdown);
-									const data = '{"statusCode": 100,"Category": ' + JSON.stringify(category) + ',"FormList": ' + JSON.stringify(form) + ',"List": ' + JSON.stringify(droupdown) + '}';
+
+									// console.log(form);
+
+									const finalData = form.map((elem) => {
+										// let newElem = elem;
+										elem.List = [];
+
+										droupdown.forEach((dropdownElem) => {
+											if (dropdownElem.FormID === elem.FormID) {
+												elem.List.push(dropdownElem);
+											}
+										});
+
+										return elem;
+									});
+
+									const data = '{"statusCode": 100,"Category": ' + JSON.stringify(category) + ',"FormList": ' + JSON.stringify(finalData) + '}';//'  + ',"List": ' + JSON.stringify(droupdown) + '}';
 									reply(data);
 								});
 							});
