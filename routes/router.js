@@ -2182,10 +2182,10 @@ function prepareGeneralRoutes(generalController, generalRoutes) {
 				description: "Post Contact Us",
 				validate: {
 					payload: {
-						name: joi.string().required(),
-						email: joi.string().email().required(),
+						name: [joi.string(), joi.allow(null)],
+						email: [joi.string().email(), joi.allow(null)],
 						phone: joi.string().required(),
-						message: joi.string().required()
+						message: [joi.string(), joi.allow(null)]
 					}
 				}
 			}

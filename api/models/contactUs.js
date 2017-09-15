@@ -7,9 +7,6 @@ module.exports = (sequelize, Sequelize) => sequelize.define('contactUs', {
 	},
 	email: {
 		type: Sequelize.STRING,
-		validate: {
-			isEmail: true
-		}
 	},
 	phone: {
 		type: Sequelize.STRING
