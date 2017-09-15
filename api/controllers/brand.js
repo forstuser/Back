@@ -2,6 +2,7 @@
 'use strict';
 
 const shared = require('../../helpers/shared');
+const Bluebird = require("bluebird");
 
 let modals;
 const excludedAttributes = {exclude: ['display_id', 'created_on', 'updated_on', 'updated_by_user_id', 'status_id']};
@@ -24,22 +25,35 @@ class BrandController {
 				options.category_id = categoryId;
 			}
 
-			modals.table_brands.findAll({
-				where: {
-					status_id: {
-						$ne: 3
-					}
-				},
-				include: [
-					{
-						model: modals.brandDetails,
-						as: 'details',
-						attributes: [],
-						where: options,
-						required: true
-					}
-				],
-				attributes: [['brand_name', 'brandName'], ['brand_id', 'id']]
+			return Bluebird.try(() => {
+				if (categoryId) {
+					return modals.table_brands.findAll({
+						where: {
+							status_id: {
+								$ne: 3
+							}
+						},
+						include: [
+							{
+								model: modals.brandDetails,
+								as: 'details',
+								attributes: [],
+								where: options,
+								required: true
+							}
+						],
+						attributes: [['brand_name', 'brandName'], ['brand_id', 'id']]
+					});
+				} else {
+					return modals.table_brands.findAll({
+						where: {
+							status_id: {
+								$ne: 3
+							}
+						},
+						attributes: [['brand_name', 'brandName'], ['brand_id', 'id']]
+					});
+				}
 			}).then((results) => {
 				reply({status: true, brands: results, forceUpdate: request.pre.forceUpdate});
 			}).catch((err) => {

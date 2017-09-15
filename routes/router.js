@@ -29,6 +29,7 @@ let appVersionHelper;
 
 function associateModals(modals) {
 	modals.brandDetails.belongsTo(modals.table_brands, {foreignKey: 'brand_id', as: 'brand'});
+	modals.categories.hasMany(modals.brandDetails, {foreignKey: 'category_id', as: 'details'});
 	modals.table_brands.hasMany(modals.brandDetails, {foreignKey: 'brand_id', as: 'details'});
 
 	modals.authorizedServiceCenter.belongsTo(modals.table_brands, {foreignKey: 'brand_id', as: 'brand'});
@@ -1060,6 +1061,18 @@ function prepareCategoryRoutes(categoryController, categoryRoutes) {
 				handler: CategoryController.retrieveCategoryById
 			}
 		});
+
+		categoryRoutes.push({
+			method: 'GET',
+			path: '/categories',
+			config: {
+				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
+				handler: CategoryController.getCategories
+			}
+		})
 	}
 }
 
