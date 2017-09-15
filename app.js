@@ -2563,13 +2563,16 @@ models.sequelize.sync().then(() => {
 					connection.query('SELECT id FROM table_cust_executive_tasks WHERE user_id = "' + UID + '" and bill_id = "' + BID + '"', (error, data, fields) => {
 						if (error) throw error;
 						if (data.length > 0) {
+
 							connection.query('UPDATE table_cust_executive_tasks SET comments="' + Comments + '",updated_on="' + getDateTime() + '",updated_by_user_id="' + UserID + '",status_id=7 WHERE id="' + data[0]['id'] + '"', (error, results, fields) => {
 								if (error) throw error;
 								const data = '{"statusCode": 100,"error": "","message": "Task Assigned successfully."}';
 								reply(data);
 							});
 						} else {
-							connection.query('INSERT INTO table_cust_executive_tasks (user_id,bill_id,created_on,updated_on,updated_by_user_id,status_id,comments) VALUES ("' + UID + '","' + BID + '","' + getDateTime() + '","' + getDateTime() + '","' + UserID + '",6' + Comments + '")', (error, results, fields) => {
+							connection.query('INSERT INTO table_cust_executive_tasks (user_id, bill_id, created_on, updated_on,updated_by_user_id,status_id,comments) VALUES (?, ?, ?, ?, ?, ?, ?)', [UID, BID, getDateTime(), getDateTime(), UserID, 6, Comments], (error, results, fields) => {
+								/*connection.query('INSERT INTO table_cust_executive_tasks (user_id,bill_id,created_on,updated_on,updated_by_user_id,status_id,comments) VALUES ("' + UID + '","' + BID + '","' + getDateTime() + '","' + getDateTime() + '","' + UserID + '",6"' + Comments + '")', (error, results, fields) => {*/
+
 								if (error) throw error;
 								connection.query('UPDATE table_consumer_bills SET admin_status=8 WHERE bill_id="' + BID + '"', (error, results, fields) => {
 									if (error) throw error;
