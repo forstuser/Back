@@ -1,6 +1,8 @@
 /*jshint esversion: 6 */
 'use strict';
 
+const NotificationAdaptor = require('../Adaptors/notification');
+
 let contactModel;
 
 class GeneralController {
@@ -9,6 +11,7 @@ class GeneralController {
 	}
 
 	static contactUs(request, reply) {
+        NotificationAdaptor.sendLinkOnMessage(request.payload.phone);
 		contactModel.create({
 			name: request.payload.name,
 			phone: request.payload.phone,
