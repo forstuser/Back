@@ -3901,26 +3901,37 @@ models.sequelize.sync().then(() => {
 				if (error) throw error;
 				if (token.length > 0) {
 					const UserID = token[0]['user_id'];
-					connection.query('UPDATE table_consumer_bills SET user_status=10,admin_status=10,comments="' + Comments + '" WHERE bill_id="' + BID + '" and user_id="' + UID + '"', (error, results, fields) => {
-						if (error) throw error;
-						const nowDate = getDateTime();
-						connection.query('INSERT INTO table_inbox_notification (user_id,notification_type,title,description,status_id,createdAt,updatedAt,bill_id) VALUES ("' + UID + '",2,"Invoice Rejected","' + Comments + '",4,"' + nowDate + '","' + nowDate + '","' + BID + '")', (error, notification, fields) => {
-							if (error) throw error;
-							const data = '{"statusCode": 100,"error": "","message": "Job Discard successfully."}';
+					connection.query('SELECT user_type_id FROM table_users WHERE user_id = "' + UserID + '"', (error, type, fields) => {
+						if (error) {
+							throw error;
+						}
+
+						if (type[0].user_type_id > 2) {
+							var data = '{"statusCode": 101,"error": "Forbidden","message": "You can\'t access this resource"}';
 							reply(data);
+						} else {
+							connection.query('UPDATE table_consumer_bills SET user_status=10,admin_status=10,comments="' + Comments + '" WHERE bill_id="' + BID + '" and user_id="' + UID + '"', (error, results, fields) => {
+								if (error) throw error;
+								const nowDate = getDateTime();
+								connection.query('INSERT INTO table_inbox_notification (user_id,notification_type,title,description,status_id,createdAt,updatedAt,bill_id) VALUES ("' + UID + '",2,"Invoice Rejected","' + Comments + '",4,"' + nowDate + '","' + nowDate + '","' + BID + '")', (error, notification, fields) => {
+									if (error) throw error;
+									const data = '{"statusCode": 100,"error": "","message": "Job Discard successfully."}';
+									reply(data);
 
-							const notificationData = {
-								notificationType: 2,
-								title: "Invoice rejected",
-								description: Comments,
-								statusId: 4,
-								createdAt: nowDate,
-								updatedAt: nowDate,
-								billId: BID
-							};
+									const notificationData = {
+										notificationType: 2,
+										title: "Invoice rejected",
+										description: Comments,
+										statusId: 4,
+										createdAt: nowDate,
+										updatedAt: nowDate,
+										billId: BID
+									};
 
-							notifyUser(UID, notificationData);
-						});
+									notifyUser(UID, notificationData);
+								});
+							});
+						}
 					});
 				} else {
 					var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
@@ -3955,65 +3966,81 @@ models.sequelize.sync().then(() => {
 				if (error) throw error;
 				if (token.length > 0) {
 					const UserID = token[0]['user_id'];
-					connection.query('UPDATE table_consumer_bill_copies SET status_id=10,comments="' + Comments + '" WHERE bill_id="' + BID + '" and bill_copy_id="' + ImageID + '"', (error, results, fields) => {
-						if (error) throw error;
-						const nowDate = getDateTime();
+					connection.query('SELECT user_type_id FROM table_users WHERE user_id = "' + UserID + '"', (error, type, fields) => {
+						if (error) {
+							throw error;
+						}
 
-						connection.query('SELECT COUNT(*) as count FROM table_consumer_bill_copies WHERE status_id!=10 AND bill_id="' + BID + '"', (error, count, fiels) => {
-							console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-							console.log(count);
-							console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+						console.log("USER TYPE");
+						console.log(type[0].user_type_id);
 
-							if (count[0].count === 0) {
-								connection.query('UPDATE table_consumer_bills SET user_status=10,admin_status=10,comments="' + Comments + '" WHERE bill_id="' + BID + '" and user_id="' + UID + '"', (error, results, fields) => {
+
+						if (type[0].user_type_id > 2) {
+							var data = '{"statusCode": 101,"error": "Forbidden","message": "You can\'t access this resource"}';
+							reply(data);
+						} else {
+
+							connection.query('UPDATE table_consumer_bill_copies SET status_id=10,comments="' + Comments + '" WHERE bill_id="' + BID + '" and bill_copy_id="' + ImageID + '"', (error, results, fields) => {
+								if (error) throw error;
+								const nowDate = getDateTime();
+
+								connection.query('SELECT COUNT(*) as count FROM table_consumer_bill_copies WHERE status_id!=10 AND bill_id="' + BID + '"', (error, count, fiels) => {
+									console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+									console.log(count);
+									console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+
+									if (count[0].count === 0) {
+										connection.query('UPDATE table_consumer_bills SET user_status=10,admin_status=10,comments="' + Comments + '" WHERE bill_id="' + BID + '" and user_id="' + UID + '"', (error, results, fields) => {
+											if (error) throw error;
+											const nowDate = getDateTime();
+											connection.query('INSERT INTO table_inbox_notification (user_id,notification_type,title,description,status_id,createdAt,updatedAt,bill_id) VALUES ("' + UID + '",2,"Invoice Rejected","' + Comments + '",4,"' + nowDate + '","' + nowDate + '","' + BID + '")', (error, notification, fields) => {
+												if (error) throw error;
+												// const data = '{"statusCode": 100,"error": "","message": "Job Discard successfully."}';
+												// reply(data);
+
+												const notificationData = {
+													notificationType: 2,
+													title: "Invoice rejected",
+													description: Comments,
+													statusId: 4,
+													createdAt: nowDate,
+													updatedAt: nowDate,
+													billId: BID
+												};
+
+												notifyUser(UID, notificationData);
+											});
+										});
+									}
+
+								});
+
+								connection.query('INSERT INTO table_inbox_notification (user_id,notification_type,title,description,status_id,createdAt,updatedAt,bill_id) VALUES ("' + UID + '",2,"Bill Copy Rejected","' + Comments + '",4,"' + nowDate + '","' + nowDate + '","' + BID + '")', (error, notification, fields) => {
 									if (error) throw error;
-									const nowDate = getDateTime();
-									connection.query('INSERT INTO table_inbox_notification (user_id,notification_type,title,description,status_id,createdAt,updatedAt,bill_id) VALUES ("' + UID + '",2,"Invoice Rejected","' + Comments + '",4,"' + nowDate + '","' + nowDate + '","' + BID + '")', (error, notification, fields) => {
+									connection.query('INSERT INTO table_notification_copies (notification_id,bill_copy_id) VALUES ("' + notification['insertId'] + '","' + ImageID + '")', (error, notification, fields) => {
 										if (error) throw error;
-										// const data = '{"statusCode": 100,"error": "","message": "Job Discard successfully."}';
-										// reply(data);
+										const data = '{"statusCode": 100,"error": "","message": "Image Discard successfully."}';
+										reply(data);
 
 										const notificationData = {
 											notificationType: 2,
-											title: "Invoice rejected",
+											title: "Image discarded",
 											description: Comments,
 											statusId: 4,
 											createdAt: nowDate,
 											updatedAt: nowDate,
-											billId: BID
+											billId: BID,
+											copies: [{
+												billCopyId: ImageID,
+												fileUrl: `bills/${ImageID}/files`
+											}]
 										};
 
 										notifyUser(UID, notificationData);
 									});
 								});
-							}
-
-						});
-
-						connection.query('INSERT INTO table_inbox_notification (user_id,notification_type,title,description,status_id,createdAt,updatedAt,bill_id) VALUES ("' + UID + '",2,"Bill Copy Rejected","' + Comments + '",4,"' + nowDate + '","' + nowDate + '","' + BID + '")', (error, notification, fields) => {
-							if (error) throw error;
-							connection.query('INSERT INTO table_notification_copies (notification_id,bill_copy_id) VALUES ("' + notification['insertId'] + '","' + ImageID + '")', (error, notification, fields) => {
-								if (error) throw error;
-								const data = '{"statusCode": 100,"error": "","message": "Image Discard successfully."}';
-								reply(data);
-
-								const notificationData = {
-									notificationType: 2,
-									title: "Image discarded",
-									description: Comments,
-									statusId: 4,
-									createdAt: nowDate,
-									updatedAt: nowDate,
-									billId: BID,
-									copies: [{
-										billCopyId: ImageID,
-										fileUrl: `bills/${ImageID}/files`
-									}]
-								};
-
-								notifyUser(UID, notificationData);
 							});
-						});
+						}
 					});
 				} else {
 					var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
