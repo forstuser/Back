@@ -3202,7 +3202,7 @@ models.sequelize.sync().then(() => {
 					connection.query('SELECT b.bill_id as BillID,b.bill_reference_id BillNo,u.user_id as UserID,u.fullname as Name,u.email_id as EmailID,u.mobile_no as PhoneNo FROM table_consumer_bills as b left join table_users as u on b.user_id=u.user_id WHERE b.bill_id = "' + ID + '"', (error, bill, fields) => {
 						if (error) throw error;
 						if (bill.length > 0) {
-							connection.query('SELECT bill_copy_id as ImageID FROM table_consumer_bill_copies WHERE bill_id = "' + ID + '" and status_id!=3', (error, image, fields) => {
+							connection.query('SELECT bill_copy_id as ImageID FROM table_consumer_bill_copies WHERE bill_id = "' + ID + '" and status_id!=3 and status_id!=10', (error, image, fields) => {
 								if (error) throw error;
 								connection.query('SELECT d.bill_detail_id as DetailID,d.consumer_name as Name,d.consumer_email_id as EmailID,d.consumer_phone_no as PhoneNo,d.invoice_number as Invoice, d.total_purchase_value as TotalAmount,d.taxes as Tex,d.purchase_date as PurchaseDate FROM table_consumer_bill_details as d LEFT JOIN table_consumer_bill_mapping as m on (m.ref_id=d.bill_detail_id and m.bill_ref_type=1) WHERE m.bill_id = "' + ID + '" and d.status_id!=3', (error, detail, fields) => {
 									if (error) throw error;
@@ -3958,6 +3958,38 @@ models.sequelize.sync().then(() => {
 					connection.query('UPDATE table_consumer_bill_copies SET status_id=10,comments="' + Comments + '" WHERE bill_id="' + BID + '" and bill_copy_id="' + ImageID + '"', (error, results, fields) => {
 						if (error) throw error;
 						const nowDate = getDateTime();
+
+						connection.query('SELECT COUNT(*) as count FROM table_consumer_bill_copies WHERE status_id!=10 AND bill_id="' + BID + '"', (error, count, fiels) => {
+							console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+							console.log(count);
+							console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+
+							if (count[0].count === 0) {
+								connection.query('UPDATE table_consumer_bills SET user_status=10,admin_status=10,comments="' + Comments + '" WHERE bill_id="' + BID + '" and user_id="' + UID + '"', (error, results, fields) => {
+									if (error) throw error;
+									const nowDate = getDateTime();
+									connection.query('INSERT INTO table_inbox_notification (user_id,notification_type,title,description,status_id,createdAt,updatedAt,bill_id) VALUES ("' + UID + '",2,"Invoice Rejected","' + Comments + '",4,"' + nowDate + '","' + nowDate + '","' + BID + '")', (error, notification, fields) => {
+										if (error) throw error;
+										// const data = '{"statusCode": 100,"error": "","message": "Job Discard successfully."}';
+										// reply(data);
+
+										const notificationData = {
+											notificationType: 2,
+											title: "Invoice rejected",
+											description: Comments,
+											statusId: 4,
+											createdAt: nowDate,
+											updatedAt: nowDate,
+											billId: BID
+										};
+
+										notifyUser(UID, notificationData);
+									});
+								});
+							}
+
+						});
+
 						connection.query('INSERT INTO table_inbox_notification (user_id,notification_type,title,description,status_id,createdAt,updatedAt,bill_id) VALUES ("' + UID + '",2,"Bill Copy Rejected","' + Comments + '",4,"' + nowDate + '","' + nowDate + '","' + BID + '")', (error, notification, fields) => {
 							if (error) throw error;
 							connection.query('INSERT INTO table_notification_copies (notification_id,bill_copy_id) VALUES ("' + notification['insertId'] + '","' + ImageID + '")', (error, notification, fields) => {
@@ -3967,7 +3999,7 @@ models.sequelize.sync().then(() => {
 
 								const notificationData = {
 									notificationType: 2,
-									title: "Invoice rejected",
+									title: "Image discarded",
 									description: Comments,
 									statusId: 4,
 									createdAt: nowDate,
@@ -5214,7 +5246,9 @@ function notifyUser(userId, payload) {
 				// request was success, should early return response to client
 				console.log(`NOTIFICATION SENT TO USER: ${userId} with RESULTS: ${body.results}`);
 			} else {
-				console.log(`NOTIFICATION FAILED TO USER: ${userId} with RESULTS: ${body.results}`);
+				console.log(error);
+				console.log(response);
+				console.log(`NOTIFICATION FAILED TO USER: ${userId}`);
 			}
 
 			// extract invalid registration for removal
