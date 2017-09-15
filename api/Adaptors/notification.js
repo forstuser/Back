@@ -367,9 +367,9 @@ class NotificationAdaptor {
             uri: 'http://api.msg91.com/api/sendhttp.php',
             qs: {
                 authkey: config.SMS.AUTH_KEY,
-                sender: 'BinBill',
+                sender: 'BINBIL',
                 flash: 0,
-                mobiles: phoneNo,
+                mobiles: `91${phoneNo}`,
                 message: `Hi User, \n Thanks for visiting. Please follow link to download our app http://play.google.com/store/apps/details?id=com.bin.binbillcustomer.`,
                 route: 4,
                 country: 91,
