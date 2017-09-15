@@ -17,11 +17,42 @@ class EHomeAdaptor {
 			this.retrieveRecentSearch(user),
 			this.modals.mailBox.count({where: {user_id: user.ID, status_id: 4}})
 		]).then((result) => {
+
+			let OtherCategory = null;
+
 			const categoryList = result[1].map((item) => {
 				const categoryData = item.toJSON();
+
 				categoryData.cURL += categoryData.subCategories.length > 0 && categoryData.subCategories[0].categoryType > 0 ? categoryData.subCategories[0].categoryType : '';
+
+				if (categoryData.cType === 9) {
+					OtherCategory = categoryData;
+				}
+
 				return categoryData;
 			});
+
+			const categoryDataWithoutOthers = categoryList.filter((elem) => {
+				return (elem.cType !== 9);
+			});
+
+			const newCategoryData = [];
+
+			let pushed = false;
+
+			categoryDataWithoutOthers.forEach((elem, index) => {
+				if (OtherCategory.productCounts > elem.productCounts && !pushed) {
+					newCategoryData.push(OtherCategory);
+					pushed = true;
+
+				}
+				newCategoryData.push(elem);
+			});
+
+			if (OtherCategory.productCounts === 0 && newCategoryData.length === categoryDataWithoutOthers.length) {
+				newCategoryData.push(OtherCategory);
+			}
+
 			const recentSearches = result[2].map(item => item.toJSON());
 
 			return {
@@ -31,7 +62,7 @@ class EHomeAdaptor {
 				// categories: result[3],
 				recentSearches: recentSearches.map(item => item.searchValue).slice(0, 5),
 				unProcessedBills: result[0],
-				categoryList,
+				categoryList: newCategoryData,
 				forceUpdate: request.pre.forceUpdate
 			};
 		}).catch((err) => {
@@ -137,7 +168,7 @@ class EHomeAdaptor {
 					required: false
 				}],
 			attributes: [['category_name', 'cName'], ['display_id', 'cType'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`categories`.`category_id`'), '/products?pageno=1&ctype='), 'cURL'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`categories`.`category_id`'), '/products?pageno=1&ctype='), 'genericURL'], [this.modals.sequelize.fn('MAX', this.modals.sequelize.col('`products->consumerBill->bill`.`updated_on`')), 'cLastUpdate'], [this.modals.sequelize.fn('COUNT', this.modals.sequelize.col('`products`.`product_name`')), 'productCounts'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`categories`.`category_id`'), '/image/'), 'cImageURL']],
-			order: [[this.modals.sequelize.fn('COUNT', this.modals.sequelize.col('`products`.`product_name`')), 'DESC']],
+			order: [[this.modals.sequelize.fn('COUNT', this.modals.sequelize.col('`products`.`product_name`')), 'DESC'], ['category_name']],
 			group: '`categories`.`category_id`'
 		});
 	}
