@@ -44,12 +44,11 @@ class EHomeAdaptor {
 				if (OtherCategory.productCounts > elem.productCounts && !pushed) {
 					newCategoryData.push(OtherCategory);
 					pushed = true;
-
 				}
 				newCategoryData.push(elem);
 			});
 
-			if (OtherCategory.productCounts === 0 && newCategoryData.length === categoryDataWithoutOthers.length) {
+			if (!pushed) {
 				newCategoryData.push(OtherCategory);
 			}
 

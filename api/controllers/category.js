@@ -99,6 +99,42 @@ class CategoryController {
 			reply(err);
 		});
 	}
+
+	static getCategories(request, reply) {
+		const user = shared.verifyAuthorization(request.headers);
+		if (!user) {
+			reply({status: false, message: "Unauthorized", forceUpdate: request.pre.forceUpdate});
+		} else if (!request.pre.forceUpdate) {
+			return modals.categories.findAll({
+				where: {
+					status_id: {
+						$ne: 3
+					}
+				},
+				include: request.query.brandid ? [{
+					model: modals.brandDetails,
+					as: 'details',
+					where: {
+						status_id: {
+							$ne: 3
+						},
+						brand_id: request.query.brandid
+					},
+					attributes: []
+				}] : [],
+				attributes: [['category_id', 'id'], ['display_id', 'cType'], ['category_name', 'name']],
+				order: ['category_name']
+			}).then((results) => {
+				console.log(results);
+				reply({status: true, categories: results, forceUpdate: request.pre.forceUpdate});
+			}).catch((err) => {
+				console.log(err);
+				reply({status: false, message: "bhakk chutiye"});
+			});
+		} else {
+			reply({status: false, message: "Forbidden", forceUpdate: request.pre.forceUpdate});
+		}
+	}
 }
 
 module.exports = CategoryController;
