@@ -3912,23 +3912,57 @@ models.sequelize.sync().then(() => {
 						} else {
 							connection.query('UPDATE table_consumer_bills SET user_status=10,admin_status=10,comments="' + Comments + '" WHERE bill_id="' + BID + '" and user_id="' + UID + '"', (error, results, fields) => {
 								if (error) throw error;
-								const nowDate = getDateTime();
-								connection.query('INSERT INTO table_inbox_notification (user_id,notification_type,title,description,status_id,createdAt,updatedAt,bill_id) VALUES ("' + UID + '",2,"Invoice Rejected","' + Comments + '",4,"' + nowDate + '","' + nowDate + '","' + BID + '")', (error, notification, fields) => {
+
+								connection.query('UPDATE table_consumer_bill_copies SET status_id=10,comments="' + Comments + '" WHERE bill_id="' + BID + '"', (error, results, fields) => {
 									if (error) throw error;
-									const data = '{"statusCode": 100,"error": "","message": "Job Discard successfully."}';
-									reply(data);
+									const nowDate = getDateTime();
 
-									const notificationData = {
-										notificationType: 2,
-										title: "Invoice rejected",
-										description: Comments,
-										statusId: 4,
-										createdAt: nowDate,
-										updatedAt: nowDate,
-										billId: BID
-									};
+									connection.query('SELECT bill_copy_id FROM table_consumer_bill_copies WHERE bill_id = "' + BID + '"', (error, results, fields) => {
 
-									notifyUser(UID, notificationData);
+										const billCopyIds = results.map((elem) => {
+											return elem.bill_copy_id;
+										});
+
+										console.log("BILL COPY IDS: ", billCopyIds);
+
+										billCopyIds.forEach((elem, index) => {
+											connection.query('INSERT INTO table_inbox_notification (user_id,notification_type,title,description,status_id,createdAt,updatedAt,bill_id) VALUES ("' + UID + '",2,"Document Rejected","' + Comments + '",4,"' + nowDate + '","' + nowDate + '","' + BID + '")', (error, notification, fields) => {
+												if (error) throw error;
+
+												if (index === billCopyIds.length - 1) {
+													const data = '{"statusCode": 100,"error": "","message": "Job Discard successfully."}';
+													reply(data);
+												}
+
+												// const notificationData = {
+												// 	notificationType: 2,
+												// 	title: "Invoice rejected",
+												// 	description: Comments,
+												// 	statusId: 4,
+												// 	createdAt: nowDate,
+												// 	updatedAt: nowDate,
+												// 	billId: BID
+												// };
+											});
+
+											const notificationData = {
+												notificationType: 2,
+												title: "Document Rejected",
+												description: Comments,
+												statusId: 4,
+												createdAt: nowDate,
+												updatedAt: nowDate,
+												billId: BID,
+												copies: [{
+													billCopyId: elem,
+													fileUrl: `bills/${elem}/files`
+												}]
+											};
+
+											notifyUser(UID, notificationData);
+										});
+
+									});
 								});
 							});
 						}
@@ -3992,31 +4026,36 @@ models.sequelize.sync().then(() => {
 									if (count[0].count === 0) {
 										connection.query('UPDATE table_consumer_bills SET user_status=10,admin_status=10,comments="' + Comments + '" WHERE bill_id="' + BID + '" and user_id="' + UID + '"', (error, results, fields) => {
 											if (error) throw error;
-											const nowDate = getDateTime();
-											connection.query('INSERT INTO table_inbox_notification (user_id,notification_type,title,description,status_id,createdAt,updatedAt,bill_id) VALUES ("' + UID + '",2,"Invoice Rejected","' + Comments + '",4,"' + nowDate + '","' + nowDate + '","' + BID + '")', (error, notification, fields) => {
-												if (error) throw error;
-												// const data = '{"statusCode": 100,"error": "","message": "Job Discard successfully."}';
-												// reply(data);
-
-												const notificationData = {
-													notificationType: 2,
-													title: "Invoice rejected",
-													description: Comments,
-													statusId: 4,
-													createdAt: nowDate,
-													updatedAt: nowDate,
-													billId: BID
-												};
-
-												notifyUser(UID, notificationData);
-											});
+											// const nowDate = getDateTime();
+											// connection.query('INSERT INTO table_inbox_notification (user_id,notification_type,title,description,status_id,createdAt,updatedAt,bill_id) VALUES ("' + UID + '",2,"Invoice Rejected","' + Comments + '",4,"' + nowDate + '","' + nowDate + '","' + BID + '")', (error, notification, fields) => {
+											// 	if (error) throw error;
+											// 	// const data = '{"statusCode": 100,"error": "","message": "Job Discard successfully."}';
+											// 	// reply(data);
+											//
+											// 	console.log("INVOICE REJECTED:!!!! SENDING GCM");
+											//
+											// 	const notificationData = {
+											// 		notificationType: 2,
+											// 		title: "Invoice rejected",
+											// 		description: Comments,
+											// 		statusId: 4,
+											// 		createdAt: nowDate,
+											// 		updatedAt: nowDate,
+											// 		billId: BID
+											// 	};
+											//
+											// 	notifyUser(UID, notificationData);
+											// });
 										});
 									}
 
 								});
 
-								connection.query('INSERT INTO table_inbox_notification (user_id,notification_type,title,description,status_id,createdAt,updatedAt,bill_id) VALUES ("' + UID + '",2,"Bill Copy Rejected","' + Comments + '",4,"' + nowDate + '","' + nowDate + '","' + BID + '")', (error, notification, fields) => {
+								connection.query('INSERT INTO table_inbox_notification (user_id,notification_type,title,description,status_id,createdAt,updatedAt,bill_id) VALUES ("' + UID + '",2,"Document Rejected","' + Comments + '",4,"' + nowDate + '","' + nowDate + '","' + BID + '")', (error, notification, fields) => {
 									if (error) throw error;
+
+									console.log("INSERT SUCCESSFUL!!!!")
+
 									connection.query('INSERT INTO table_notification_copies (notification_id,bill_copy_id) VALUES ("' + notification['insertId'] + '","' + ImageID + '")', (error, notification, fields) => {
 										if (error) throw error;
 										const data = '{"statusCode": 100,"error": "","message": "Image Discard successfully."}';
@@ -4024,7 +4063,7 @@ models.sequelize.sync().then(() => {
 
 										const notificationData = {
 											notificationType: 2,
-											title: "Image discarded",
+											title: "Document Rejected",
 											description: Comments,
 											statusId: 4,
 											createdAt: nowDate,
