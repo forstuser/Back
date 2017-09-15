@@ -105,31 +105,56 @@ class CategoryController {
 		if (!user) {
 			reply({status: false, message: "Unauthorized", forceUpdate: request.pre.forceUpdate});
 		} else if (!request.pre.forceUpdate) {
-			return modals.categories.findAll({
-				where: {
-					status_id: {
-						$ne: 3
-					}
-				},
-				include: request.query.brandid ? [{
-					model: modals.brandDetails,
-					as: 'details',
-					where: {
-						status_id: {
-							$ne: 3
-						},
-						brand_id: request.query.brandid
-					},
-					attributes: []
-				}] : [],
-				attributes: [['category_id', 'id'], ['display_id', 'cType'], ['category_name', 'name']],
-				order: ['category_name']
-			}).then((results) => {
-				console.log(results);
-				reply({status: true, categories: results, forceUpdate: request.pre.forceUpdate});
+			// const includes = [{
+			// 		modal: modals.authorizedServiceCenter,
+			// 		as: 'center',
+			// 		where: {brand_id: request.query.brandid},
+			// 		attributes: []
+			// }];
+			//
+			// if (request.query.brandid) {
+			// 	includes.push({
+			// 		model: modals.brandDetails,
+			// 		as: 'details',
+			// 		where: {
+			// 			status_id: {
+			// 				$ne: 3
+			// 			},
+			// 			brand_id: request.query.brandid
+			// 		},
+			// 		attributes: [],
+			// 		required: true
+			// 	});
+			// }
+
+			// return modals.categories.findAll({
+			// 	where: {
+			// 		status_id: {
+			// 			$ne: 3
+			// 		}
+			// 	},
+			// 	include: includes,
+			// 	attributes: [['category_id', 'id'], ['display_id', 'cType'], ['category_name', 'name']],
+			// 	order: ['category_name']
+			// })
+
+			let condition;
+
+			if (request.query.brandid) {
+				condition = `= ${request.query.brandid}`;
+			} else {
+				condition = "IS NOT NULL";
+			}
+
+			return modals.sequelize.query(`SELECT category_id, category_name from table_categories where category_id in (SELECT DISTINCT category_id from table_authorized_service_center_details where center_id in (SELECT center_id from table_authorized_service_center where brand_id ${condition}));`).then((results) => {
+				if (results.length === 0) {
+					reply({status: true, categories: [], forceUpdate: request.pre.forceUpdate});
+				} else {
+					reply({status: true, categories: results[0], forceUpdate: request.pre.forceUpdate});
+				}
 			}).catch((err) => {
 				console.log(err);
-				reply({status: false, message: "bhakk chutiye"});
+				reply({status: false, message: "ISE"});
 			});
 		} else {
 			reply({status: false, message: "Forbidden", forceUpdate: request.pre.forceUpdate});
