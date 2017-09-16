@@ -2,10 +2,7 @@
 'use strict';
 
 const shared = require('../../helpers/shared');
-const googleMapsClient = require('@google/maps').createClient({
-	Promise,
-	key: 'AIzaSyCT60FOMjGxPjOQjyk9ewP5l9VkmMcTWmE'
-});
+const google = require("../../helpers/google");
 
 let modals;
 const excludedAttributes = {exclude: ['tableBrandID', 'display_id', 'created_on', 'updated_on', 'updated_by_user_id', 'status_id', 'tableAuthorizedServiceCenterID']};
@@ -359,9 +356,6 @@ class ServiceCenterController {
 						}
 
 						if (origins.length > 0 && destinations.length > 0) {
-							if (origins.length < destinations.length) {
-								origins.push(origins[0]);
-							}
 							serviceCentersWithLocation.push(center);
 						} else {
 							center.distanceMetrics = 'km';
@@ -372,14 +366,10 @@ class ServiceCenterController {
 						return center;
 					});
 					if (origins.length > 0 && destinations.length > 0) {
-						googleMapsClient.distanceMatrix({
-							origins,
-							destinations
-						}).asPromise().then((matrix) => {
+						return google.distanceMatrix(origins, destinations).then((result) => {
 							for (let i = 0; i < serviceCentersWithLocation.length; i += 1) {
-								const tempMatrix = matrix.status === 200 && matrix.json ? matrix.json.rows[0]
-									.elements[i] : {};
-								if (tempMatrix && tempMatrix.status.toLowerCase() === 'ok') {
+								if (result.length > 0) {
+									const tempMatrix = result[0].elements[i];
 									serviceCentersWithLocation[i].distanceMetrics = tempMatrix.distance ? tempMatrix.distance.text.split(' ')[1] : 'km';
 									serviceCentersWithLocation[i].distance = parseFloat(tempMatrix.distance ? tempMatrix.distance.text.split(' ')[0] : 500.001);
 									serviceCentersWithLocation[i].distance = serviceCentersWithLocation[i].distanceMetrics !== 'km' ? serviceCentersWithLocation[i].distance / 1000 : serviceCentersWithLocation[i].distance;
@@ -391,17 +381,17 @@ class ServiceCenterController {
 								finalResult.push(serviceCentersWithLocation[i]);
 							}
 
-							if (finalResult.length === result[0].length) {
-								serviceCentersWithLocation.sort((a, b) => a.distance - b.distance);
-								reply({
-									status: true,
-									serviceCenters: serviceCentersWithLocation,
-									filterData: {
-										brands: result[1]
-									},
-									forceUpdate: request.pre.forceUpdate
-								}).code(200);
-							}
+							// if (finalResult.length === result[0].length) {
+							serviceCentersWithLocation.sort((a, b) => a.distance - b.distance);
+							reply({
+								status: true,
+								serviceCenters: serviceCentersWithLocation,
+								filterData: {
+									brands: result[1]
+								},
+								forceUpdate: request.pre.forceUpdate
+							}).code(200);
+							// }
 						}).catch(err => reply({
 							status: false,
 							err,
