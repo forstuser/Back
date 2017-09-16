@@ -3901,7 +3901,7 @@ models.sequelize.sync().then(() => {
 		handler: (request, reply) => {
 			const TokenNo = request.payload.TokenNo;
 			const BID = request.payload.BID;
-			const UID = request.payload.UID;
+			// const UID = request.payload.UID;
 			const Comments = request.payload.Comments;
 			connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', (error, token, fields) => {
 				if (error) throw error;
@@ -3916,58 +3916,63 @@ models.sequelize.sync().then(() => {
 							var data = '{"statusCode": 101,"error": "Forbidden","message": "You can\'t access this resource"}';
 							reply(data);
 						} else {
-							connection.query('UPDATE table_consumer_bills SET user_status=10,admin_status=10,comments="' + Comments + '" WHERE bill_id="' + BID + '" and user_id="' + UID + '"', (error, results, fields) => {
+							connection.query('UPDATE table_consumer_bills SET user_status=10,admin_status=10,comments="' + Comments + '" WHERE bill_id="' + BID + '"', (error, results, fields) => {
 								if (error) throw error;
 
 								connection.query('UPDATE table_consumer_bill_copies SET status_id=10,comments="' + Comments + '" WHERE bill_id="' + BID + '"', (error, results, fields) => {
 									if (error) throw error;
 									const nowDate = getDateTime();
 
-									connection.query('SELECT bill_copy_id FROM table_consumer_bill_copies WHERE bill_id = "' + BID + '"', (error, results, fields) => {
+									connection.query('SELECT user_id AS UID FROM table_consumer_bills WHERE bill_id = ?', [BID], (error, result, fields) => {
 
-										const billCopyIds = results.map((elem) => {
-											return elem.bill_copy_id;
-										});
+										const UID = result[0].UID;
 
-										console.log("BILL COPY IDS: ", billCopyIds);
+										connection.query('SELECT bill_copy_id FROM table_consumer_bill_copies WHERE bill_id = "' + BID + '"', (error, results, fields) => {
 
-										billCopyIds.forEach((elem, index) => {
-											connection.query('INSERT INTO table_inbox_notification (user_id,notification_type,title,description,status_id,createdAt,updatedAt,bill_id) VALUES ("' + UID + '",2,"Document Rejected","' + Comments + '",4,"' + nowDate + '","' + nowDate + '","' + BID + '")', (error, notification, fields) => {
-												if (error) throw error;
-
-												if (index === billCopyIds.length - 1) {
-													const data = '{"statusCode": 100,"error": "","message": "Job Discard successfully."}';
-													reply(data);
-												}
-
-												// const notificationData = {
-												// 	notificationType: 2,
-												// 	title: "Invoice rejected",
-												// 	description: Comments,
-												// 	statusId: 4,
-												// 	createdAt: nowDate,
-												// 	updatedAt: nowDate,
-												// 	billId: BID
-												// };
+											const billCopyIds = results.map((elem) => {
+												return elem.bill_copy_id;
 											});
 
-											const notificationData = {
-												notificationType: 2,
-												title: "Document Rejected",
-												description: Comments,
-												statusId: 4,
-												createdAt: nowDate,
-												updatedAt: nowDate,
-												billId: BID,
-												copies: [{
-													billCopyId: elem,
-													fileUrl: `bills/${elem}/files`
-												}]
-											};
+											console.log("BILL COPY IDS: ", billCopyIds);
 
-											notifyUser(UID, notificationData);
+											billCopyIds.forEach((elem, index) => {
+												connection.query('INSERT INTO table_inbox_notification (user_id,notification_type,title,description,status_id,createdAt,updatedAt,bill_id) VALUES ("' + UID + '",2,"Document Rejected","' + Comments + '",4,"' + nowDate + '","' + nowDate + '","' + BID + '")', (error, notification, fields) => {
+													if (error) throw error;
+
+													if (index === billCopyIds.length - 1) {
+														const data = '{"statusCode": 100,"error": "","message": "Job Discard successfully."}';
+														reply(data);
+													}
+
+													// const notificationData = {
+													// 	notificationType: 2,
+													// 	title: "Invoice rejected",
+													// 	description: Comments,
+													// 	statusId: 4,
+													// 	createdAt: nowDate,
+													// 	updatedAt: nowDate,
+													// 	billId: BID
+													// };
+												});
+
+												const notificationData = {
+													notificationType: 2,
+													title: "Document Rejected",
+													description: Comments,
+													statusId: 4,
+													createdAt: nowDate,
+													updatedAt: nowDate,
+													billId: BID,
+													copies: [{
+														billCopyId: elem,
+														fileUrl: `bills/${elem}/files`
+													}]
+												};
+
+												notifyUser(UID, notificationData);
+											});
+
 										});
-
 									});
 								});
 							});
@@ -3984,7 +3989,7 @@ models.sequelize.sync().then(() => {
 				payload: {
 					TokenNo: Joi.string().required(),
 					BID: Joi.number().integer().required(),
-					UID: Joi.number().integer().required(),
+					// UID: Joi.number().integer().required(),
 					Comments: Joi.string().required(),
 					output: 'data',
 					parse: true
