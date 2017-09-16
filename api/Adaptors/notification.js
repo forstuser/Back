@@ -232,9 +232,14 @@ class NotificationAdaptor {
                                 product.productType = 5;
                             } else {
                                 product.title = `${product.productName} Reminder`;
-                                product.description = product.description && metaData.name.toLowerCase().includes('address') ? `For ${metaData.value}` : '';
+                                product.description = metaData.name.toLowerCase().includes('address') ? `${metaData.value}` : '';
                                 product.productType = 4;
                             }
+                        }
+
+
+                        if (metaData.name.toLowerCase().includes('address')) {
+                            product.description = metaData.value;
                         }
 
                         return metaData;

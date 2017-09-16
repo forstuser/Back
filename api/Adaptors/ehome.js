@@ -340,7 +340,10 @@ class EHomeAdaptor {
 		return this.modals.categories.findOne({
 			where: {
 				ref_id: masterCategoryId,
-				display_id: ctype
+				display_id: ctype,
+				status_id: {
+					$ne: 3
+				}
 			}
 		}).then((item) => {
 			const offlineSellerWhereClause = {
