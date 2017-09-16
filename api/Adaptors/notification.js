@@ -18,6 +18,7 @@ class NotificationAdaptor {
             this.prepareNotificationData(user)
         ]).then((result) => {
             /* const listIndex = (parseInt(pageNo || 1, 10) * 10) - 10; */
+            result[0].sort((a, b) => a.dueIn - b.dueIn);
             const notifications = [...result[0], ...result[1]];
             return {
                 status: true,
@@ -108,7 +109,28 @@ class NotificationAdaptor {
                     include: [{
                         model: this.modals.productBills,
                         as: 'amcProduct',
-                        attributes: [['product_name', 'productName'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`amcProduct`.`bill_product_id`')), 'productURL']]
+                        attributes: [['product_name', 'productName'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`amcProduct`.`bill_product_id`')), 'productURL']],
+                        include: [{
+                            model: this.modals.consumerBillDetails,
+                            as: 'consumerBill',
+                            attributes: [['document_id', 'docId'], ['invoice_number', 'invoiceNo'], ['total_purchase_value', 'totalCost'], 'taxes', ['purchase_date', 'purchaseDate']],
+                            include: [
+                                {
+                                    model: this.modals.consumerBills,
+                                    as: 'bill',
+                                    where: {
+                                        $and: [
+                                            this.modals.sequelize.where(this.modals.sequelize.col('`amcProduct->consumerBill->bill->billMapping`.`bill_ref_type`'), 1),
+                                            {
+                                                user_status: 5,
+                                                admin_status: 5
+                                            }
+                                        ]
+                                    },
+                                    attributes: []
+                                }
+                            ]
+                        }]
                     }, {
                         model: this.modals.amcBillCopies,
                         as: 'amcCopies',
@@ -126,7 +148,28 @@ class NotificationAdaptor {
                     include: [{
                         model: this.modals.productBills,
                         as: 'insuredProduct',
-                        attributes: [['product_name', 'productName'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`insuredProduct`.`bill_product_id`')), 'productURL']]
+                        attributes: [['product_name', 'productName'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`insuredProduct`.`bill_product_id`')), 'productURL']],
+                        include: [{
+                            model: this.modals.consumerBillDetails,
+                            as: 'consumerBill',
+                            attributes: [['document_id', 'docId'], ['invoice_number', 'invoiceNo'], ['total_purchase_value', 'totalCost'], 'taxes', ['purchase_date', 'purchaseDate']],
+                            include: [
+                                {
+                                    model: this.modals.consumerBills,
+                                    as: 'bill',
+                                    where: {
+                                        $and: [
+                                            this.modals.sequelize.where(this.modals.sequelize.col('`insuredProduct->consumerBill->bill->billMapping`.`bill_ref_type`'), 1),
+                                            {
+                                                user_status: 5,
+                                                admin_status: 5
+                                            }
+                                        ]
+                                    },
+                                    attributes: []
+                                }
+                            ]
+                        }]
                     }, {
                         model: this.modals.insuranceBillCopies,
                         as: 'insuranceCopies',
@@ -144,7 +187,28 @@ class NotificationAdaptor {
                     include: [{
                         model: this.modals.productBills,
                         as: 'warrantyProduct',
-                        attributes: [['product_name', 'productName'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`warrantyProduct`.`bill_product_id`')), 'productURL']]
+                        attributes: [['product_name', 'productName'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`warrantyProduct`.`bill_product_id`')), 'productURL']],
+                        include: [{
+                            model: this.modals.consumerBillDetails,
+                            as: 'consumerBill',
+                            attributes: [['document_id', 'docId'], ['invoice_number', 'invoiceNo'], ['total_purchase_value', 'totalCost'], 'taxes', ['purchase_date', 'purchaseDate']],
+                            include: [
+                                {
+                                    model: this.modals.consumerBills,
+                                    as: 'bill',
+                                    where: {
+                                        $and: [
+                                            this.modals.sequelize.where(this.modals.sequelize.col('`warrantyProduct->consumerBill->bill->billMapping`.`bill_ref_type`'), 1),
+                                            {
+                                                user_status: 5,
+                                                admin_status: 5
+                                            }
+                                        ]
+                                    },
+                                    attributes: []
+                                }
+                            ]
+                        }]
                     }, {
                         model: this.modals.warrantyCopies,
                         as: 'warrantyCopies',
