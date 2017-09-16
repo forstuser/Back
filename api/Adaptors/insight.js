@@ -6,9 +6,9 @@ const shared = require('../../helpers/shared');
 function sumProps(arrayItem, prop) {
 	let total = 0;
 	for (let i = 0; i < arrayItem.length; i += 1) {
-		total += arrayItem[i][prop] || 0;
+		total += parseFloat(arrayItem[i][prop] || 0);
 	}
-	return total;
+	return total.toFixed(2);
 }
 
 function weekAndDay(d) {
@@ -47,30 +47,30 @@ class InsightAdaptor {
 				const categoryData = !(minDate || maxDate) ? {
 					weeklyData: result[0].map((periodItem) => {
 						const categoryPeriodItem = periodItem.toJSON();
-						categoryPeriodItem.totalAmount = categoryPeriodItem.totalAmount || 0;
-						categoryPeriodItem.totalTax = categoryPeriodItem.totalTax || 0;
+						categoryPeriodItem.totalAmount = (categoryPeriodItem.totalAmount || 0).toFixed(2);
+						categoryPeriodItem.totalTax = (categoryPeriodItem.totalTax || 0).toFixed(2);
 						// categoryPeriodItem.totalAmount += categoryPeriodItem.totalTax;
 						return categoryPeriodItem;
 					}),
 					monthlyData: result[1].map((periodItem) => {
 						const categoryPeriodItem = periodItem.toJSON();
-						categoryPeriodItem.totalAmount = categoryPeriodItem.totalAmount || 0;
-						categoryPeriodItem.totalTax = categoryPeriodItem.totalTax || 0;
+                        categoryPeriodItem.totalAmount = (categoryPeriodItem.totalAmount || 0).toFixed(2);
+                        categoryPeriodItem.totalTax = (categoryPeriodItem.totalTax || 0).toFixed(2);
 						// categoryPeriodItem.totalAmount += categoryPeriodItem.totalTax;
 						return categoryPeriodItem;
 					}),
 					yearlyData: result[2].map((periodItem) => {
 						const categoryPeriodItem = periodItem.toJSON();
-						categoryPeriodItem.totalAmount = categoryPeriodItem.totalAmount || 0;
-						categoryPeriodItem.totalTax = categoryPeriodItem.totalTax || 0;
-						// categoryPeriodItem.totalAmount += categoryPeriodItem.totalTax;
+                        categoryPeriodItem.totalAmount = (categoryPeriodItem.totalAmount || 0).toFixed(2);
+                        categoryPeriodItem.totalTax = (categoryPeriodItem.totalTax || 0).toFixed(2);
+                        // categoryPeriodItem.totalAmount += categoryPeriodItem.totalTax;
 						return categoryPeriodItem;
 					})
 				} : {
 					customDateData: result.map((item) => {
 						const categoryItem = item.toJSON();
-						categoryItem.totalAmount = categoryItem.totalAmount || 0;
-						categoryItem.totalTax = categoryItem.totalTax || 0;
+                        categoryItem.totalAmount = (categoryItem.totalAmount || 0).toFixed(2);
+                        categoryItem.totalTax = (categoryItem.totalTax || 0).toFixed(2);
 						// categoryItem.totalAmount += categoryItem.totalTax;
 						return categoryItem;
 					})
@@ -134,12 +134,15 @@ class InsightAdaptor {
 					totalMonthlyTaxes,
 					forceUpdate: request.pre.forceUpdate
 				};
-			}).catch(err => ({
-				status: false,
-				message: 'Insight restore failed',
-				err,
-				forceUpdate: request.pre.forceUpdate
-			}));
+			}).catch(err => {
+                console.log(err);
+                return ({
+                    status: false,
+                    message: 'Insight restore failed',
+                    err,
+                    forceUpdate: request.pre.forceUpdate
+                })
+            });
 	}
 
 	prepareCategoryData(user, minDate, maxDate) {
