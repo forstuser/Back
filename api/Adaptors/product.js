@@ -370,6 +370,8 @@ class ProductAdaptor {
 					return seller;
 				});
 
+			product.brand.details = product.brand.details.filter((elem) => elem.categoryId === product.categoryId);
+
 			product.consumerBill.productOnlineSeller = product
 				.consumerBill.productOnlineSeller.map((sellerItem) => {
 					const seller = sellerItem;
