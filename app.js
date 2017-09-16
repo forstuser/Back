@@ -18,13 +18,22 @@ const server = new Hapi.Server();
 
 const PORT = config.APP.PORT || 8443;
 
-const options = {
-	key: fs.readFileSync(path.resolve(__dirname, 'cert/key.key')),
-	cert: fs.readFileSync(path.resolve(__dirname, 'cert/cert.crt')),
-	ca: fs.readFileSync(path.resolve(__dirname, 'cert/bundle.crt')) //, fs.readFileSync(path.resolve(__dirname, 'cert/bundle2.crt')), fs.readFileSync(path.resolve(__dirname, 'cert/bundle3.crt'))]
+const SERVER_OPTIONS = {
+	port: PORT
 };
 
-server.connection({port: PORT, tls: options});
+// Remove local reading of certificates from production environment as we use ElasticBeanstalk for that
+if (process.env.NODE_ENV !== "production") {
+	const TLS_OPTIONS = {
+		key: fs.readFileSync(path.resolve(__dirname, 'cert/key.key')),
+		cert: fs.readFileSync(path.resolve(__dirname, 'cert/cert.crt')),
+		ca: fs.readFileSync(path.resolve(__dirname, 'cert/bundle.crt')) //, fs.readFileSync(path.resolve(__dirname, 'cert/bundle2.crt')), fs.readFileSync(path.resolve(__dirname, 'cert/bundle3.crt'))]
+	};
+
+	SERVER_OPTIONS.tls = TLS_OPTIONS;
+}
+
+server.connection(SERVER_OPTIONS);
 
 const goodLoggingOption = {
 	ops: {
