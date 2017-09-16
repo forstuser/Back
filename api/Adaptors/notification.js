@@ -439,7 +439,7 @@ class NotificationAdaptor {
                 sender: 'BINBIL',
                 flash: 0,
                 mobiles: `91${phoneNo}`,
-                message: `Hi User, \n Thanks for visiting. Please follow link to download our app http://play.google.com/store/apps/details?id=com.bin.binbillcustomer.`,
+                message: `Hey there, \nPlease click on the link to download BinBill App and start building your eHome : http://play.google.com/store/apps/details?id=com.bin.binbillcustomer \nWhere there is a Bill,there is BinBill.`,
                 route: 4,
                 country: 91,
                 response: 'json'
