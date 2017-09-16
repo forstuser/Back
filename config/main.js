@@ -19,6 +19,9 @@ module.exports = {
 			region: process.env.AWS_REGION
 		}
 	},
+	GOOGLE: {
+		API_KEY: process.env.GOOGLE_API_KEY
+	},
 	SERVER_HOST: process.env.SERVER_HOST,
 	EMAIL: {
 		USER: process.env.EMAIL_ID,
