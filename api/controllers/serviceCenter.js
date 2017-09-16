@@ -369,10 +369,10 @@ class ServiceCenterController {
 						return google.distanceMatrix(origins, destinations).then((result) => {
 							for (let i = 0; i < serviceCentersWithLocation.length; i += 1) {
 								if (result.length > 0) {
-									const tempMatrix = result[0].elements[i];
-									serviceCentersWithLocation[i].distanceMetrics = tempMatrix.distance ? tempMatrix.distance.text.split(' ')[1] : 'km';
-									serviceCentersWithLocation[i].distance = parseFloat(tempMatrix.distance ? tempMatrix.distance.text.split(' ')[0] : 500.001);
-									serviceCentersWithLocation[i].distance = serviceCentersWithLocation[i].distanceMetrics !== 'km' ? serviceCentersWithLocation[i].distance / 1000 : serviceCentersWithLocation[i].distance;
+									const tempMatrix = result[i];
+									serviceCentersWithLocation[i].distanceMetrics = "km";
+									serviceCentersWithLocation[i].distance = (tempMatrix.distance) ? (tempMatrix.distance.value / 1000).toFixed(2) : null;
+									// serviceCentersWithLocation[i].distance = serviceCentersWithLocation[i].distanceMetrics !== 'km' ? serviceCentersWithLocation[i].distance / 1000 : serviceCentersWithLocation[i].distance;
 								} else {
 									serviceCentersWithLocation[i].distanceMetrics = 'km';
 									serviceCentersWithLocation[i].distance = parseFloat(500.001);
@@ -381,22 +381,32 @@ class ServiceCenterController {
 								finalResult.push(serviceCentersWithLocation[i]);
 							}
 
-							// if (finalResult.length === result[0].length) {
-							serviceCentersWithLocation.sort((a, b) => a.distance - b.distance);
+							const finalFilteredList = serviceCentersWithLocation.filter((elem) => {
+								return (elem.distance !== null && parseFloat(elem.distance) <= 40);
+							});
+
+							finalFilteredList.sort((a, b) => {
+								return a.distance - b.distance;
+							});
+
 							reply({
 								status: true,
-								serviceCenters: serviceCentersWithLocation,
+								serviceCenters: finalFilteredList,
 								filterData: {
 									brands: result[1]
 								},
 								forceUpdate: request.pre.forceUpdate
 							}).code(200);
 							// }
-						}).catch(err => reply({
-							status: false,
-							err,
-							forceUpdate: request.pre.forceUpdate
-						}));
+						}).catch((err) => {
+							console.log(err);
+
+							reply({
+								status: false,
+								err,
+								forceUpdate: request.pre.forceUpdate
+							})
+						});
 					}
 					if (origins.length <= 0) {
 						reply({

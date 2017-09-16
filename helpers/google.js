@@ -8,15 +8,34 @@ const googleMapsClient = require('@google/maps').createClient({
 	key: config.GOOGLE.API_KEY
 });
 
+const _ = require("lodash");
+
 Bluebird.promisifyAll(googleMapsClient);
 
 const distanceMatrix = function (origins, destinations) {
-	return googleMapsClient.distanceMatrixAsync({
-		origins: origins,
-		destinations: destinations
-	}).then((result) => {
-		return result.json.rows;
-		// console.log(util.inspect(result.json.rows, false, null));
+	if (destinations.length > 25) {
+		destinations = _.chunk(destinations, 25);
+	}
+
+	const promises = destinations.map((destinationsElem) => {
+		return googleMapsClient.distanceMatrixAsync({
+			origins: origins,
+			destinations: destinationsElem
+		});
+	});
+
+	return Bluebird.all(promises).then((result) => {
+		const rows = result.map((elem) => {
+			// console.log(util.inspect(elem, false, null));
+			return elem.json.rows;
+		});
+		const flattenedRows = _.chain(rows).flatten().map((elem) => {
+			return elem.elements;
+		}).flatten().value();
+		// console.log("~~~~~~~~");
+		// console.log(util.inspect(flattenedRows, false, null));
+
+		return flattenedRows;
 	});
 };
 
