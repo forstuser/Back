@@ -40,7 +40,9 @@ class BrandController {
 								attributes: [],
 								where: options,
 								required: true
-							}
+							},
+
+							{model: modals.authorizedServiceCenter, as: 'center', attributes: []}
 						],
 						attributes: [['brand_name', 'brandName'], ['brand_id', 'id']]
 					});

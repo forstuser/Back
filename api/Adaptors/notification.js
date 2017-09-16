@@ -232,9 +232,14 @@ class NotificationAdaptor {
                                 product.productType = 5;
                             } else {
                                 product.title = `${product.productName} Reminder`;
-                                product.description = product.description && metaData.name.toLowerCase().includes('address') ? `For ${metaData.value}` : '';
+                                product.description = metaData.name.toLowerCase().includes('address') ? `${metaData.value}` : '';
                                 product.productType = 4;
                             }
+                        }
+
+
+                        if (metaData.name.toLowerCase().includes('address')) {
+                            product.description = metaData.value;
                         }
 
                         return metaData;
@@ -257,7 +262,7 @@ class NotificationAdaptor {
 
                     return amc;
                 });
-                amcs = amcs.filter(item => (item.dueIn !== undefined && item.dueIn !== null) && item.dueIn <= 30 && item.dueIn >= 0);
+                amcs = amcs.filter(item => item.amcProduct.consumerBill && (item.dueIn !== undefined && item.dueIn !== null) && item.dueIn <= 30 && item.dueIn >= 0);
 
                 let insurances = result[2].map((item) => {
                     const insurance = item.toJSON();
@@ -272,7 +277,7 @@ class NotificationAdaptor {
                     return insurance;
                 });
 
-                insurances = insurances.filter(item => (item.dueIn !== undefined && item.dueIn !== null) && item.dueIn <= 30 && item.dueIn >= 0);
+                insurances = insurances.filter(item => item.insuredProduct.consumerBill && (item.dueIn !== undefined && item.dueIn !== null) && item.dueIn <= 30 && item.dueIn >= 0);
 
                 let warranties = result[3].map((item) => {
                     const warranty = item.toJSON();
@@ -289,7 +294,7 @@ class NotificationAdaptor {
                     return warranty;
                 });
 
-                warranties = warranties.filter(item => (item.dueIn !== undefined && item.dueIn !== null) && item.dueIn <= 30 && item.dueIn >= 0);
+                warranties = warranties.filter(item => item.warrantyProduct.consumerBill && (item.dueIn !== undefined && item.dueIn !== null) && item.dueIn <= 30 && item.dueIn >= 0);
 
                 resolve([...products, ...warranties, ...insurances, ...amcs]);
             }).catch((err) => {
