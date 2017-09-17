@@ -42,7 +42,12 @@ class BrandController {
                                 required: true
                             },
 
-                            {model: modals.authorizedServiceCenter, as: 'center', attributes: []}
+                            {
+                                model: modals.authorizedServiceCenter,
+                                as: 'center',
+                                attributes: [],
+                                required: true
+                            }
                         ],
                         attributes: [['brand_name', 'brandName'], ['brand_id', 'id']]
                     });
@@ -58,7 +63,8 @@ class BrandController {
                             {
                                 model: modals.authorizedServiceCenter,
                                 as: 'center',
-                                attributes: []
+                                attributes: [],
+                                required: true
                             }
                         ]
                     });
