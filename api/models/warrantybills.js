@@ -45,12 +45,12 @@ module.exports = (sequelize, Sequelize) => sequelize.define('warranty', {
 	},
 	effectiveDate: {
 		type: Sequelize.DATE,
-		defaultValue: sequelize.literal('NOW()'),
+		defaultValue: sequelize.literal('NULL'),
 		field: 'policy_effective_date'
 	},
 	expiryDate: {
 		type: Sequelize.DATE,
-		defaultValue: sequelize.literal('NOW()'),
+		defaultValue: sequelize.literal('NULL'),
 		field: 'policy_expiry_date'
 	},
 	status_id: {

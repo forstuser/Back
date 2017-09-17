@@ -86,7 +86,7 @@ module.exports = (sequelize, Sequelize) => sequelize.define('table_users', {
 	},
 	last_login: {
 		type: Sequelize.DATE,
-		defaultValue: sequelize.literal('NOW()')
+		defaultValue: sequelize.literal('NULL')
 	},
 	status_id: {
 		defaultValue: 1,

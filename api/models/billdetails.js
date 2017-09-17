@@ -37,7 +37,7 @@ module.exports = (sequelize, Sequelize) => sequelize.define('consumerBillDetails
 	},
 	purchase_date: {
 		type: Sequelize.DATE,
-		defaultValue: sequelize.literal('NOW()')
+		defaultValue: sequelize.literal('NULL')
 	},
 	created_on: {
 		type: Sequelize.DATE,
