@@ -16,12 +16,12 @@ module.exports = (sequelize, Sequelize) => sequelize.define('fcmDetails', {
 		unique: true
 	},
 	createdAt: {
-		type: Sequelize.DATE(6),
-		defaultValue: Sequelize.NOW
+		type: Sequelize.DATE,
+		defaultValue: sequelize.literal('NOW()')
 	},
 	updatedAt: {
-		type: Sequelize.DATE(6),
-		defaultValue: Sequelize.NOW
+		type: Sequelize.DATE,
+		defaultValue: sequelize.literal('NOW()')
 	}
 }, {
 	freezeTableName: true,

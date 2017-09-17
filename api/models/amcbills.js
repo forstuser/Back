@@ -34,13 +34,13 @@ module.exports = (sequelize, Sequelize) => sequelize.define('amcBills', {
 		field: 'premium_amount'
 	},
 	effectiveDate: {
-		type: Sequelize.DATE(6),
-		default: Sequelize.NOW,
+		type: Sequelize.DATE,
+		defaultValue: sequelize.literal('NOW()'),
 		field: 'policy_effective_date'
 	},
 	expiryDate: {
-		type: Sequelize.DATE(6),
-		default: Sequelize.NOW,
+		type: Sequelize.DATE,
+		defaultValue: sequelize.literal('NOW()'),
 		field: 'policy_expiry_date'
 	},
 	user_id: {
@@ -50,13 +50,13 @@ module.exports = (sequelize, Sequelize) => sequelize.define('amcBills', {
 		type: Sequelize.INTEGER
 	},
 	createdAt: {
-		type: Sequelize.DATE(6),
-		default: Sequelize.NOW,
+		type: Sequelize.DATE,
+		defaultValue: sequelize.literal('NOW()'),
 		field: 'createdAt'
 	},
 	updatedAt: {
-		type: Sequelize.DATE(6),
-		default: Sequelize.NOW,
+		type: Sequelize.DATE,
+		defaultValue: sequelize.literal('NOW()'),
 		field: 'updatedAt'
 	}
 }, {

@@ -15,12 +15,12 @@ module.exports = (sequelize, Sequelize) => sequelize.define('table_brands', {
 		type: Sequelize.STRING
 	},
 	created_on: {
-		type: Sequelize.DATE(6),
-		defaultValue: Sequelize.NOW
+		type: Sequelize.DATE,
+		defaultValue: sequelize.literal('NOW()')
 	},
 	updated_on: {
-		type: Sequelize.DATE(6),
-		defaultValue: Sequelize.NOW
+		type: Sequelize.DATE,
+		defaultValue: sequelize.literal('NOW()')
 	},
 	updated_by_user_id: {
 		type: Sequelize.INTEGER

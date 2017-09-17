@@ -56,8 +56,8 @@ module.exports = (sequelize, Sequelize) => sequelize.define('table_users', {
 		defaultValue: 'user'
 	},
 	created_on: {
-		type: Sequelize.DATE(6),
-		defaultValue: Sequelize.NOW
+		type: Sequelize.DATE,
+		defaultValue: sequelize.literal('NOW()')
 	},
 	gcm_id: {
 		type: Sequelize.STRING
@@ -72,8 +72,8 @@ module.exports = (sequelize, Sequelize) => sequelize.define('table_users', {
 		type: Sequelize.BIGINT
 	},
 	updated_on: {
-		type: Sequelize.DATE(6),
-		defaultValue: Sequelize.NOW
+		type: Sequelize.DATE,
+		defaultValue: sequelize.literal('NOW()')
 	},
 	device_id: {
 		type: Sequelize.STRING
@@ -85,8 +85,8 @@ module.exports = (sequelize, Sequelize) => sequelize.define('table_users', {
 		type: Sequelize.STRING
 	},
 	last_login: {
-		type: Sequelize.DATE(6),
-		defaultValue: Sequelize.NOW
+		type: Sequelize.DATE,
+		defaultValue: sequelize.literal('NOW()')
 	},
 	status_id: {
 		defaultValue: 1,

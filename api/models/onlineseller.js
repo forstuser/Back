@@ -20,8 +20,8 @@ module.exports = (sequelize, Sequelize) => sequelize.define('onlineSeller', {
 		field: 'seller_gstin_no'
 	},
 	updated_on: {
-		type: Sequelize.DATE(6),
-		defaultValue: Sequelize.NOW
+		type: Sequelize.DATE,
+		defaultValue: sequelize.literal('NOW()')
 	},
 	updated_by_user_id: {
 		type: Sequelize.INTEGER

@@ -25,8 +25,8 @@ module.exports = (sequelize, Sequelize) => sequelize.define('recentSearches', {
 		field: 'result_count'
 	},
 	searchDate: {
-		type: Sequelize.DATE(6),
-		default: Sequelize.NOW,
+		type: Sequelize.DATE,
+		defaultValue: sequelize.literal('NOW()'),
 		field: 'search_date'
 	}
 }, {

@@ -15,12 +15,12 @@ module.exports = (sequelize, Sequelize) => sequelize.define('contactUs', {
 		type: Sequelize.STRING
 	},
 	createdAt: {
-		type: Sequelize.DATE(6),
-		defaultValue: Sequelize.NOW
+		type: Sequelize.DATE,
+		defaultValue: sequelize.literal('NOW()')
 	},
 	updatedAt: {
-		type: Sequelize.DATE(6),
-		defaultValue: Sequelize.NOW
+		type: Sequelize.DATE,
+		defaultValue: sequelize.literal('NOW()')
 	},
 	resolved: {
 		type: Sequelize.BOOLEAN,

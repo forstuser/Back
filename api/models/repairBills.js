@@ -42,13 +42,13 @@ module.exports = (sequelize, DataTypes) => sequelize.define('repairBills', {
 		allowNull: false
 	},
 	createdAt: {
-		type: DataTypes.DATE(6),
-		default: DataTypes.NOW,
+		type: DataTypes.DATE,
+		defaultValue: sequelize.literal('NOW()'),
 		field: 'createdAt'
 	},
 	updatedAt: {
-		type: DataTypes.DATE(6),
-		default: DataTypes.NOW,
+		type: DataTypes.DATE,
+		defaultValue: sequelize.literal('NOW()'),
 		field: 'updatedAt'
 	}
 }, {
