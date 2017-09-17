@@ -28,7 +28,15 @@ module.exports = (sequelize, Sequelize) => sequelize.define('sellerReviews', {
 	},
 	user_id: {
 		type: Sequelize.INTEGER
-	}
+	},
+    createdAt: {
+        type: Sequelize.DATE,
+        defaultValue: sequelize.literal('NOW()')
+    },
+    updatedAt: {
+        type: Sequelize.DATE,
+        defaultValue: sequelize.literal('NOW()')
+    }
 }, {
 	freezeTableName: true,
 	defaultPrimaryKey: false,

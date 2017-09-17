@@ -28,7 +28,15 @@ module.exports = (sequelize, Sequelize) => sequelize.define('recentSearches', {
 		type: Sequelize.DATE,
 		defaultValue: sequelize.literal('NOW()'),
 		field: 'search_date'
-	}
+	},
+	createdAt: {
+        type: Sequelize.DATE,
+        defaultValue: sequelize.literal('NOW()')
+    },
+    updatedAt: {
+        type: Sequelize.DATE,
+        defaultValue: sequelize.literal('NOW()')
+    }
 }, {
 	freezeTableName: true,
 	defaultPrimaryKey: false,

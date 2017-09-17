@@ -28,10 +28,12 @@ module.exports = (sequelize, Sequelize) => sequelize.define('table_users_temp', 
 			defaultValue: sequelize.literal('NOW()')
 		},
 		createdAt: {
-			type: Sequelize.DATE
+			type: Sequelize.DATE,
+            defaultValue: sequelize.literal('NOW()')
 		},
 		token_updated: {
-			type: Sequelize.DATE
+			type: Sequelize.DATE,
+            defaultValue: sequelize.literal('NOW()')
 		}
 	},
 	{
