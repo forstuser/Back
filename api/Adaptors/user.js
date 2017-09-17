@@ -30,7 +30,7 @@ class UserAdaptor {
 			message: 'User Data retrieved',
 			binBillDetail: {
 				callUs: '+91-124-4343177',
-				emailUs: 'info@binbill.com',
+				emailUs: 'support@binbill.com',
 				aboutUs: 'http://www.binbill.com/homes/about',
 				reportAnErrorOn: 'support@binbill.com',
 				faqUrl: 'http://www.binbill.com/faqs'
