@@ -349,10 +349,10 @@ class ServiceCenterController {
 						center.geoLocation = center.latitude && center.longitude && center.latitude.toString() !== '0' && center.longitude.toString() !== '0' ? `${center.latitude}, ${center.longitude}` : '';
 						if (center.geoLocation) {
 							destinations.push(center.geoLocation);
-						} else if (center.city) {
-							destinations.push(center.city);
 						} else if (center.centerAddress) {
 							destinations.push(center.centerAddress);
+						} else if (center.city) {
+							destinations.push(center.city);
 						}
 
 						if (origins.length > 0 && destinations.length > 0) {
