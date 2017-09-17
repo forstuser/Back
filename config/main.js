@@ -20,7 +20,8 @@ module.exports = {
 		}
 	},
 	GOOGLE: {
-		API_KEY: process.env.GOOGLE_API_KEY
+		API_KEY: process.env.GOOGLE_API_KEY,
+		FCM_KEY: process.env.FCM_KEY
 	},
 	SERVER_HOST: process.env.SERVER_HOST,
 	EMAIL: {
