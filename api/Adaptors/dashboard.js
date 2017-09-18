@@ -159,7 +159,7 @@ class DashboardAdaptor {
                 upcomingServices: result[0],
                 insight: insightResult,
                 forceUpdate: request.pre.forceUpdate,
-                showDashboard: result[4] && result[4] > 0
+                showDashboard: !!(result[4] && result[4] > 0)
             };
         }).catch(err => ({
             status: false,
