@@ -75,7 +75,45 @@ class DashboardAdaptor {
             this.filterUpcomingService(user),
             this.prepareInsightData(user),
             this.retrieveRecentSearch(user),
-            this.modals.mailBox.count({where: {user_id: user.ID, status_id: 4}})
+            this.modals.mailBox.count({where: {user_id: user.ID, status_id: 4}}),
+            this.modals.productBills.count({
+                where: {
+                    user_id: user.ID,
+                    status_id: {
+                        $ne: 3
+                    },
+                    master_category_id: {
+                        $notIn: [9, 10]
+                    }
+                },
+                include: [
+                    {
+                        model: this.modals.consumerBillDetails,
+                        as: 'consumerBill',
+                        where: {
+                            status_id: {
+                                $ne: 3
+                            }
+                        },
+                        attributes: [],
+                        include: [
+                            {
+                                model: this.modals.consumerBills,
+                                as: 'bill',
+                                where: {
+                                    $and: [
+                                        this.modals.sequelize.where(this.modals.sequelize.col('`consumerBill->bill->billMapping`.`bill_ref_type`'), 1),
+                                        {
+                                            user_status: 5,
+                                            admin_status: 5
+                                        }
+                                    ]
+                                },
+                                attributes: []
+                            }],
+                        required: true
+                    }]
+            })
         ]).then((result) => {
             const distinctInsight = [];
             const insightData = result[1].map((item) => {
@@ -121,7 +159,7 @@ class DashboardAdaptor {
                 upcomingServices: result[0],
                 insight: insightResult,
                 forceUpdate: request.pre.forceUpdate,
-                showDashboard: insightItems && insightItems.length > 0
+                showDashboard: result[4] && result[4] > 0
             };
         }).catch(err => ({
             status: false,
