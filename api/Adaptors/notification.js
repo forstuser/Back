@@ -403,7 +403,7 @@ class NotificationAdaptor {
 				email_verified: 1
 			});
 
-			return 'Thanks for registering with BinBill.';
+			return 'Thanks for registering with <a href="https://www.binbill.com">BinBill</a>.';
 		}).catch(() => '');
 	}
 
@@ -421,9 +421,9 @@ class NotificationAdaptor {
 
 		// setup email data with unicode symbols
 		const mailOptions = {
-			from: '"BinBill" <noreply@binbill.com>', // sender address
+			from: `"BinBill" <${config.EMAIL.USER}>`, // sender address
 			to: email, // list of receivers
-			subject: 'SAFER Email Verification',
+			subject: 'BinBill Email Verification',
 			html: `Hi ${user.fullname},<br /><br /> <a href='${config.SERVER_HOST}/verify/${user.email_secret}' >Click here</a> to verify your email account -<br /><a href='${config.SERVER_HOST}/verify/${user.email_secret}' >${config.SERVER_HOST}/verify/${user.email_secret}</a><br /> Welcome to the safe and connected world!<br /><br />Regards,<br />BinBill`
 		};
 
