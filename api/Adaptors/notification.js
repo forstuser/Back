@@ -423,7 +423,7 @@ class NotificationAdaptor {
 		const mailOptions = {
 			from: '"BinBill" <noreply@binbill.com>', // sender address
 			to: email, // list of receivers
-			subject: 'SAFER Email Verification',
+			subject: 'BinBill Email Verification',
 			html: `Hi ${user.fullname},<br /><br /> <a href='${config.SERVER_HOST}/verify/${user.email_secret}' >Click here</a> to verify your email account -<br /><a href='${config.SERVER_HOST}/verify/${user.email_secret}' >${config.SERVER_HOST}/verify/${user.email_secret}</a><br /> Welcome to the safe and connected world!<br /><br />Regards,<br />BinBill`
 		};
 
