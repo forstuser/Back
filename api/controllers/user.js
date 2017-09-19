@@ -337,7 +337,7 @@ class UserController {
 									console.log("SUCCESSFULLY SENT ICUBESWIRE POSTBACK");
 									console.log(response);
 								}).catch((err) => {
-									console.log("Error in sending iCUBESWIRE POSTBACK");
+									console.log("Error in sending ICUBESWIRE POSTBACK");
 									console.log(err);
 								});
 							}

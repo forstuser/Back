@@ -345,7 +345,7 @@ class ServiceCenterController {
 					const serviceCenters = result[0].map((item) => {
 						const center = item.toJSON();
 						center.mobileDetails = center.centerDetails.filter(detail => detail.detailType === 3);
-						center.address = `${center.address}, ${center.city}-${center.pinCode}, ${center.state}`;
+						center.address = `${center.address}, ${center.city} -${center.pinCode}, ${center.state}`;
 						center.centerAddress = `${center.centerName}, ${center.city}-${center.pinCode}, ${center.state}, India`;
 						center.geoLocation = center.latitude && center.longitude && center.latitude.toString() !== '0' && center.longitude.toString() !== '0' ? `${center.latitude}, ${center.longitude}` : '';
 						if (center.geoLocation) {
