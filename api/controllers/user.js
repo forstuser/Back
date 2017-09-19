@@ -21,6 +21,8 @@ const NearByAdaptor = require('../Adaptors/nearby');
 const NotificationAdaptor = require('../Adaptors/notification');
 const OTPHelper = require("../../helpers/otp");
 const Bluebird = require("bluebird");
+const trackingHelper = require('../../helpers/tracking');
+
 
 const AWS = require('../../config/main').AWS;
 
@@ -234,6 +236,16 @@ class UserController {
 							});
 
 							reply(dashboardAdaptor.prepareDashboardResult(userData[1], userData[0], `bearer ${authentication.generateToken(userData[0]).token}`, request)).code(201).header('authorization', `bearer ${authentication.generateToken(userData[0]).token}`);
+
+							if (request.payload.advSub && request.payload.transactionId) {
+								trackingHelper.postbackTracking(request.payload.transactionId, request.payload.advSub).then((response) => {
+									console.log("SUCCESSFULLY SENT ICUBESWIRE POSTBACK");
+									console.log(response);
+								}).catch((err) => {
+									console.log("Error in sending iCUBESWIRE POSTBACK");
+									console.log(err);
+								});
+							}
 						}).catch((err) => {
 							reply({
 								message: 'Issue in updating data',
@@ -309,6 +321,16 @@ class UserController {
 							});
 
 							reply(dashboardAdaptor.prepareDashboardResult(userData[1], userData[0], `bearer ${authentication.generateToken(userData[0]).token}`, request)).code(201).header('authorization', `bearer ${authentication.generateToken(userData[0]).token}`);
+
+							if (request.payload.advSub && request.payload.transactionId) {
+								trackingHelper.postbackTracking(request.payload.transactionId, request.payload.advSub).then((response) => {
+									console.log("SUCCESSFULLY SENT ICUBESWIRE POSTBACK");
+									console.log(response);
+								}).catch((err) => {
+									console.log("Error in sending iCUBESWIRE POSTBACK");
+									console.log(err);
+								});
+							}
 						});
 				}
 			}
