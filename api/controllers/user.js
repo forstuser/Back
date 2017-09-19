@@ -12,6 +12,7 @@ const requestPromise = require('request-promise');
 const S3FS = require('s3fs');
 const RSA = require('node-rsa');
 const moment = require('moment');
+const uuid = require('uuid');
 
 const PUBLIC_KEY = new RSA(config.TRUECALLER_PUBLIC_KEY, {signingScheme: 'sha512'});
 
@@ -220,6 +221,7 @@ class UserController {
 								status_id: 1
 							},
 							defaults: {
+								user_type_id: 5,
 								mobile_no: trueObject.PhoneNo,
 								status_id: 1,
 								// gcm_id: request.payload.fcmId
@@ -282,6 +284,7 @@ class UserController {
 					});
 				} else {
 					const userItem = {
+                        user_type_id: 5,
 						email_id: trueObject.EmailAddress,
 						fullname: trueObject.Name,
 						Password: bCrypt.hashSync(trueObject.Password, bCrypt.genSaltSync(8), null),
@@ -290,6 +293,7 @@ class UserController {
 						longitude: trueObject.Longitude,
 						image: trueObject.ImageLink,
 						accessLevel: trueObject.accessLevel ? trueObject.accessLevel : roles.ROLE_MEMBER,
+                        email_secret : uuid.v4(),
 						last_login: shared.formatDate(moment.utc(), 'yyyy-mm-dd HH:MM:ss'),
 						mobile_no: trueObject.PhoneNo,
 						status_id: 1,
@@ -307,12 +311,18 @@ class UserController {
 						.then((userData) => {
 							if (!userData[1]) {
 								userData[0].updateAttributes({
+                                    email_secret : uuid.v4(),
 									email_id: trueObject.EmailAddress,
 									fullname: trueObject.Name,
 									last_login: shared.formatDate(moment.utc(), 'yyyy-mm-dd HH:MM:ss'),
 									// gcm_id: trueObject.fcmId
 								});
 							}
+
+                            const updatedUser = userData[0].toJSON();
+                            if (!updatedUser.email_verified) {
+                                NotificationAdaptor.sendVerificationMail(trueObject.EmailAddress, updatedUser);
+                            }
 
 							UserController.uploadTrueCallerImage(trueObject, userData[0]);
 
