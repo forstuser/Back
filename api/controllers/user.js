@@ -157,14 +157,14 @@ class UserController {
 						last_login: shared.formatDate(moment.utc(), 'yyyy-mm-dd HH:MM:ss')
 					});
 					reply({
-						Status: true,
+						status: true,
 						Name: response[1][0].Name,
 						PhoneNo: request.payload.PhoneNo,
 						// forceUpdate: request.pre.forceUpdate
 					}).code(201);
 				} else {
 					reply({
-						Status: true,
+						status: true,
 						PhoneNo: request.payload.PhoneNo,
 						// forceUpdate: request.pre.forceUpdate
 					}).code(201);
