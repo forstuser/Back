@@ -152,6 +152,12 @@ class InsightAdaptor {
 					category_level: 1,
 					status_id: {
 						$ne: 3
+					},
+					category_id: {
+						$ne: 10
+					},
+					display_id: {
+						$ne: 10
 					}
 				},
 				include: [{
@@ -207,6 +213,12 @@ class InsightAdaptor {
 					category_level: 1,
 					status_id: {
 						$ne: 3
+					},
+					category_id: {
+						$ne: 10
+					},
+					display_id: {
+						$ne: 10
 					}
 				},
 				include: [{
@@ -261,6 +273,12 @@ class InsightAdaptor {
 					category_level: 1,
 					status_id: {
 						$ne: 3
+					},
+					category_id: {
+						$ne: 10
+					},
+					display_id: {
+						$ne: 10
 					}
 				},
 				include: [{
@@ -315,6 +333,12 @@ class InsightAdaptor {
 					category_level: 1,
 					status_id: {
 						$ne: 3
+					},
+					category_id: {
+						$ne: 10
+					},
+					display_id: {
+						$ne: 10
 					}
 				},
 				include: [{
