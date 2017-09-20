@@ -38,6 +38,7 @@ module.exports = {
 		autoReconnect: true,
 		host: process.env.DATABASE_HOST,
 		dialect: 'mysql',
+		logging: (process.env.NODE_ENV !== "production"),
 		port: 3306
 	},
 	APP: {

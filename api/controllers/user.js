@@ -249,6 +249,7 @@ class UserController {
 								});
 							}
 						}).catch((err) => {
+							console.log(err);
 							reply({
 								message: 'Issue in updating data',
 								status: false,
@@ -387,6 +388,7 @@ class UserController {
 
 			return reply({statusCode: 201}).header('authorization', `bearer ${tokenDetail.token}`).header('expiresIn', tokenDetail.expiresIn);
 		}).catch((err) => {
+			console.log(err);
 			error.status = 401;
 			error.message = 'Something went wrong, please try again.';
 			error.raw = err;

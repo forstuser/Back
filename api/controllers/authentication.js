@@ -82,6 +82,7 @@ class AuthenticationController {
 
 				return res.status(401).json({error: 'You are not authorized to view this content.'});
 			}).catch((err) => {
+				console.log(err);
 				res.status(422).json({error: 'No user was found.'});
 				return next(err);
 			});

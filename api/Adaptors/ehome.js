@@ -327,11 +327,14 @@ class EHomeAdaptor {
 						 &offlinesellerids=${offlineSellerIds}&onlinesellerids=
 						 ${onlineSellerIds}&sortby=${sortBy}&searchvalue=${searchValue}` : '' */
 			};
-		}).catch(err => ({
-			status: false,
-			err,
-			forceUpdate: request.pre.forceUpdate
-		}));
+		}).catch((err) => {
+			console.log(err);
+			return {
+				status: false,
+				err,
+				forceUpdate: request.pre.forceUpdate
+			};
+		});
 	}
 
 	fetchProductDetails(user,

@@ -29,12 +29,15 @@ class NotificationAdaptor {
 				/* nextPageUrl: notifications.length >
 						 listIndex + 10 ? `consumer/mailbox?pageno=${parseInt(pageNo, 10) + 1}` : '' */
 			};
-		}).catch(err => ({
-			status: false,
-			message: 'Mailbox restore failed',
-			err,
-			forceUpdate: request.pre.forceUpdate
-		}));
+		}).catch((err) => {
+			console.log(err);
+			return {
+				status: false,
+				message: 'Mailbox restore failed',
+				err,
+				forceUpdate: request.pre.forceUpdate
+			};
+		});
 	}
 
 	filterUpcomingService(user) {
@@ -298,6 +301,7 @@ class NotificationAdaptor {
 
 				resolve([...products, ...warranties, ...insurances, ...amcs]);
 			}).catch((err) => {
+				console.log(err);
 				reject(err);
 			});
 		});
@@ -404,7 +408,10 @@ class NotificationAdaptor {
 			});
 
 			return 'Thanks for registering with <a href="https://www.binbill.com">BinBill</a>.';
-		}).catch(() => '');
+		}).catch((err) => {
+			console.log(err);
+			return '';
+		});
 	}
 
 	static sendVerificationMail(email, user) {

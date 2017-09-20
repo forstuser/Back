@@ -77,11 +77,14 @@ class NearByAdaptor {
 									}).code(200);
 								}
 							}
-						}).catch(err => reply({
-							status: false,
-							err,
-							forceUpdate: request.pre.forceUpdate
-						}));
+						}).catch((err) => {
+							console.log(err);
+							reply({
+								status: false,
+								err,
+								forceUpdate: request.pre.forceUpdate
+							});
+						});
 					}
 
 
@@ -99,12 +102,15 @@ class NearByAdaptor {
 						forceUpdate: request.pre.forceUpdate
 					});
 				}
-			}).catch(err => reply({
-			status: false,
-			message: 'Unable to get near by professional',
-			err,
-			forceUpdate: request.pre.forceUpdate
-		}));
+			}).catch((err) => {
+			console.log(err);
+			reply({
+				status: false,
+				message: 'Unable to get near by professional',
+				err,
+				forceUpdate: request.pre.forceUpdate
+			});
+		});
 	}
 
 	filterNearByProfessional(professionIds, userId) {

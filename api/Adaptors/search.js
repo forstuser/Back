@@ -68,11 +68,14 @@ class SearchAdaptor {
 				productDetails: productList,
 				categoryList
 			};
-		}).catch(err => ({
-			status: false,
-			message: 'EHome restore failed',
-			err
-		}));
+		}).catch((err) => {
+			console.log(err);
+			return {
+				status: false,
+				message: 'EHome restore failed',
+				err
+			};
+		});
 	}
 
 	prepareCategoryData(user, searchValue) {
@@ -113,12 +116,12 @@ class SearchAdaptor {
 						include: [{
 							model: this.modals.billDetailCopies,
 							as: 'billDetailCopies',
-                            include: [{
-                                model: this.modals.billCopies,
-                                as: 'billCopies',
-                                attributes: []
-                            }],
-							attributes: [ [this.modals.sequelize.fn('CONCAT', this.modals.sequelize.col('`products->consumerBill->billDetailCopies->billCopies`.`bill_copy_type`')), 'billCopyType'], ['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('`products->consumerBill->billDetailCopies`.bill_copy_id'), '/files'), 'fileUrl']]
+							include: [{
+								model: this.modals.billCopies,
+								as: 'billCopies',
+								attributes: []
+							}],
+							attributes: [[this.modals.sequelize.fn('CONCAT', this.modals.sequelize.col('`products->consumerBill->billDetailCopies->billCopies`.`bill_copy_type`')), 'billCopyType'], ['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('`products->consumerBill->billDetailCopies`.bill_copy_id'), '/files'), 'fileUrl']]
 						},
 							{
 								model: this.modals.consumerBills,
@@ -306,11 +309,11 @@ class SearchAdaptor {
 					include: [{
 						model: this.modals.billDetailCopies,
 						as: 'billDetailCopies',
-                        include: [{
-                            model: this.modals.billCopies,
-                            as: 'billCopies',
-                            attributes: []
-                        }],
+						include: [{
+							model: this.modals.billCopies,
+							as: 'billCopies',
+							attributes: []
+						}],
 						attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', this.modals.sequelize.col('`consumerBill->billDetailCopies->billCopies`.`bill_copy_type`')), 'billCopyType'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('`consumerBill->billDetailCopies`.bill_copy_id'), '/files'), 'fileUrl']]
 					},
 						{

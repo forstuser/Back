@@ -122,12 +122,15 @@ class InsightAdaptor {
 					totalMonthlyTaxes,
 					forceUpdate: request.pre.forceUpdate
 				};
-			}).catch(err => ({
-				status: false,
-				message: 'Insight restore failed',
-				err,
-				forceUpdate: request.pre.forceUpdate
-			}));
+			}).catch((err) => {
+				console.log(err);
+				return {
+					status: false,
+					message: 'Insight restore failed',
+					err,
+					forceUpdate: request.pre.forceUpdate
+				};
+			});
 	}
 
 	prepareCategoryData(user, minDate, maxDate) {
@@ -501,11 +504,14 @@ class InsightAdaptor {
 				categoryName: result[5],
 				forceUpdate: request.pre.forceUpdate
 			};
-		}).catch(err => ({
-			status: false,
-			err,
-			forceUpdate: request.pre.forceUpdate
-		}));
+		}).catch((err) => {
+			console.log(err);
+			return {
+				status: false,
+				err,
+				forceUpdate: request.pre.forceUpdate
+			};
+		});
 	}
 
 	fetchProductDetails(user, masterCategoryId) {

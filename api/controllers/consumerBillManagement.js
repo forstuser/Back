@@ -76,7 +76,10 @@ class BillManagementController {
 								$ne: UserID
 							}
 						}
-					})]).then(() => reply(ceTask[0]).header('TaskID', ceTask[0].ID).code(201)).catch(reply);
+					})]).then(() => reply(ceTask[0]).header('TaskID', ceTask[0].ID).code(201)).catch((err) => {
+					console.log(err);
+					reply(err);
+				});
 			} else {
 				modals.table_cust_executive_tasks.update({
 					Comments,
@@ -86,7 +89,10 @@ class BillManagementController {
 					where: {
 						ID: ceTask[0].ID
 					}
-				}).then(() => reply(ceTask[0]).header('TaskID', ceTask[0].ID).code(204)).catch(reply);
+				}).then(() => reply(ceTask[0]).header('TaskID', ceTask[0].ID).code(204)).catch((err) => {
+					console.log(err);
+					reply(err);
+				});
 			}
 		});
 	}
@@ -141,7 +147,10 @@ class BillManagementController {
 				}
 			})]).then(() => {
 			reply().code(204);
-		}).catch(reply);
+		}).catch((err) => {
+			console.log(err);
+			reply(err);
+		});
 	}
 
 	static updateServiceCenter(request, reply) {
@@ -208,7 +217,10 @@ class BillManagementController {
 			}
 
 			if (detailPromise.length > 0) {
-				Promise.all(detailPromise).then(() => reply().code(204)).catch(err => reply(err));
+				Promise.all(detailPromise).then(() => reply().code(204)).catch((err) => {
+					console.log(err);
+					reply(err);
+				});
 			} else {
 				reply().code(422);
 			}
@@ -231,7 +243,10 @@ class BillManagementController {
 					CenterID,
 					DetailID: request.params.detailid
 				}
-			}).then(() => reply().code(204)).catch(err => reply(err));
+			}).then(() => reply().code(204)).catch((err) => {
+				console.log(err);
+				reply(err);
+			});
 		} else {
 			reply().code(401);
 		}
@@ -252,7 +267,10 @@ class BillManagementController {
 			where: {
 				SellerID: request.params.id
 			}
-		})]).then(() => reply().code(204)).catch(err => reply(err));
+		})]).then(() => reply().code(204)).catch((err) => {
+			console.log(err);
+			reply(err);
+		});
 	}
 
 	static deleteServiceCenterDetail(request, reply) {
@@ -265,7 +283,10 @@ class BillManagementController {
 					CenterID: request.params.id,
 					DetailID: request.params.detailid
 				}
-			}).then(() => reply().code(204)).catch(err => reply(err));
+			}).then(() => reply().code(204)).catch((err) => {
+				console.log(err);
+				reply(err);
+			});
 		} else {
 			reply().code(401);
 		}
@@ -352,6 +373,7 @@ class BillManagementController {
 		}).then((result) => {
 			reply(result).code(200);
 		}).catch((err) => {
+			console.log(err);
 			reply(err);
 		});
 	}
@@ -414,7 +436,10 @@ class BillManagementController {
 			order: ['updated_on', 'DESC']
 		}).then((result) => {
 			reply(result).code(200);
-		}).catch(reply);
+		}).catch((err) => {
+			console.log(err);
+			reply(err);
+		});
 	}
 
 	static retrieveQEBills(request, reply) {
@@ -475,7 +500,10 @@ class BillManagementController {
 			order: ['updated_on', 'DESC']
 		}).then((result) => {
 			reply(result).code(200);
-		}).catch(reply);
+		}).catch((err) => {
+			console.log(err);
+			reply(err);
+		});
 	}
 }
 

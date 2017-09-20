@@ -51,6 +51,7 @@ class SellerController {
 					createdSeller.Details = result;
 					reply(createdSeller).header('SellerID', seller.ID).code(201);
 				}).catch((err) => {
+					console.log(err);
 					reply(err);
 				});
 			} else {
@@ -131,7 +132,10 @@ class SellerController {
 			}
 
 			if (detailPromise.length > 0) {
-				Promise.all(detailPromise).then(() => reply().code(204)).catch(err => reply(err));
+				Promise.all(detailPromise).then(() => reply().code(204)).catch((err) => {
+					console.log(err);
+					reply(err);
+				});
 			} else {
 				reply().code(422);
 			}

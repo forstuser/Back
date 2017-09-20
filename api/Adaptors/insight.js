@@ -54,23 +54,23 @@ class InsightAdaptor {
 					}),
 					monthlyData: result[1].map((periodItem) => {
 						const categoryPeriodItem = periodItem.toJSON();
-                        categoryPeriodItem.totalAmount = (categoryPeriodItem.totalAmount || 0).toFixed(2);
-                        categoryPeriodItem.totalTax = (categoryPeriodItem.totalTax || 0).toFixed(2);
+						categoryPeriodItem.totalAmount = (categoryPeriodItem.totalAmount || 0).toFixed(2);
+						categoryPeriodItem.totalTax = (categoryPeriodItem.totalTax || 0).toFixed(2);
 						// categoryPeriodItem.totalAmount += categoryPeriodItem.totalTax;
 						return categoryPeriodItem;
 					}),
 					yearlyData: result[2].map((periodItem) => {
 						const categoryPeriodItem = periodItem.toJSON();
-                        categoryPeriodItem.totalAmount = (categoryPeriodItem.totalAmount || 0).toFixed(2);
-                        categoryPeriodItem.totalTax = (categoryPeriodItem.totalTax || 0).toFixed(2);
-                        // categoryPeriodItem.totalAmount += categoryPeriodItem.totalTax;
+						categoryPeriodItem.totalAmount = (categoryPeriodItem.totalAmount || 0).toFixed(2);
+						categoryPeriodItem.totalTax = (categoryPeriodItem.totalTax || 0).toFixed(2);
+						// categoryPeriodItem.totalAmount += categoryPeriodItem.totalTax;
 						return categoryPeriodItem;
 					})
 				} : {
 					customDateData: result.map((item) => {
 						const categoryItem = item.toJSON();
-                        categoryItem.totalAmount = (categoryItem.totalAmount || 0).toFixed(2);
-                        categoryItem.totalTax = (categoryItem.totalTax || 0).toFixed(2);
+						categoryItem.totalAmount = (categoryItem.totalAmount || 0).toFixed(2);
+						categoryItem.totalTax = (categoryItem.totalTax || 0).toFixed(2);
 						// categoryItem.totalAmount += categoryItem.totalTax;
 						return categoryItem;
 					})
@@ -135,14 +135,14 @@ class InsightAdaptor {
 					forceUpdate: request.pre.forceUpdate
 				};
 			}).catch(err => {
-                console.log(err);
-                return ({
-                    status: false,
-                    message: 'Insight restore failed',
-                    err,
-                    forceUpdate: request.pre.forceUpdate
-                });
-            });
+				console.log(err);
+				return ({
+					status: false,
+					message: 'Insight restore failed',
+					err,
+					forceUpdate: request.pre.forceUpdate
+				});
+			});
 	}
 
 	prepareCategoryData(user, minDate, maxDate) {
@@ -522,11 +522,14 @@ class InsightAdaptor {
 				categoryName: result[5],
 				forceUpdate: request.pre.forceUpdate
 			};
-		}).catch(err => ({
-			status: false,
-			err,
-			forceUpdate: request.pre.forceUpdate
-		}));
+		}).catch((err) => {
+			console.log(err);
+			return {
+				status: false,
+				err,
+				forceUpdate: request.pre.forceUpdate
+			};
+		});
 	}
 
 	fetchProductDetails(user, masterCategoryId) {
