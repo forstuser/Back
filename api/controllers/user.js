@@ -21,6 +21,7 @@ const UserAdaptor = require('../Adaptors/user');
 const NearByAdaptor = require('../Adaptors/nearby');
 const NotificationAdaptor = require('../Adaptors/notification');
 const OTPHelper = require("../../helpers/otp");
+const GoogleHelper = require("../../helpers/google");
 const Bluebird = require("bluebird");
 const trackingHelper = require('../../helpers/tracking');
 
@@ -131,6 +132,15 @@ class UserController {
 		// };
 
 		// if (!request.pre.forceUpdate) {
+
+		if (!GoogleHelper.isValidPhoneNumber(request.payload.PhoneNo)) {
+			console.log(`Phone number: ${request.payload.PhoneNo} is not a valid phone number`);
+			return reply({
+				status: false,
+				message: "Invalid Phone number"
+			});
+		}
+		
 		Promise.all([OTPHelper.sendOTPToUser(request.payload.PhoneNo), userModel.findOne({
 			where: {
 				mobile_no: request.payload.PhoneNo
