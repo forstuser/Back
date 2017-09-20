@@ -1775,7 +1775,6 @@ function prepareAuthRoutes(userController, authRoutes) {
 						TruePayload: joi.string(),
 						fcmId: joi.string(),
 						BBLogin_Type: joi.number().required(),
-						advSub: joi.string(),
 						transactionId: joi.string(),
 						TrueSecret: joi.string(),
 						output: 'data',

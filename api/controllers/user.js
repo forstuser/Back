@@ -239,8 +239,8 @@ class UserController {
 
 							reply(dashboardAdaptor.prepareDashboardResult(userData[1], userData[0], `bearer ${authentication.generateToken(userData[0]).token}`, request)).code(201).header('authorization', `bearer ${authentication.generateToken(userData[0]).token}`);
 
-							if (request.payload.advSub && request.payload.transactionId) {
-								trackingHelper.postbackTracking(request.payload.transactionId, request.payload.advSub).then((response) => {
+							if (request.payload.transactionId && request.payload.transactionId !== '') {
+								trackingHelper.postbackTracking(request.payload.transactionId, userData[0].ID).then((response) => {
 									console.log("SUCCESSFULLY SENT ICUBESWIRE POSTBACK");
 									console.log(response);
 								}).catch((err) => {
@@ -285,7 +285,7 @@ class UserController {
 					});
 				} else {
 					const userItem = {
-                        user_type_id: 5,
+						user_type_id: 5,
 						email_id: trueObject.EmailAddress,
 						fullname: trueObject.Name,
 						Password: bCrypt.hashSync(trueObject.Password, bCrypt.genSaltSync(8), null),
@@ -294,7 +294,7 @@ class UserController {
 						longitude: trueObject.Longitude,
 						image: trueObject.ImageLink,
 						accessLevel: trueObject.accessLevel ? trueObject.accessLevel : roles.ROLE_MEMBER,
-                        email_secret : uuid.v4(),
+						email_secret: uuid.v4(),
 						last_login: shared.formatDate(moment.utc(), 'yyyy-mm-dd HH:MM:ss'),
 						mobile_no: trueObject.PhoneNo,
 						status_id: 1,
@@ -312,7 +312,7 @@ class UserController {
 						.then((userData) => {
 							if (!userData[1]) {
 								userData[0].updateAttributes({
-                                    email_secret : uuid.v4(),
+									email_secret: uuid.v4(),
 									email_id: trueObject.EmailAddress,
 									fullname: trueObject.Name,
 									last_login: shared.formatDate(moment.utc(), 'yyyy-mm-dd HH:MM:ss'),
@@ -320,10 +320,10 @@ class UserController {
 								});
 							}
 
-                            const updatedUser = userData[0].toJSON();
-                            if (!updatedUser.email_verified) {
-                                NotificationAdaptor.sendVerificationMail(trueObject.EmailAddress, updatedUser);
-                            }
+							const updatedUser = userData[0].toJSON();
+							if (!updatedUser.email_verified) {
+								NotificationAdaptor.sendVerificationMail(trueObject.EmailAddress, updatedUser);
+							}
 
 							UserController.uploadTrueCallerImage(trueObject, userData[0]);
 
@@ -333,12 +333,12 @@ class UserController {
 
 							reply(dashboardAdaptor.prepareDashboardResult(userData[1], userData[0], `bearer ${authentication.generateToken(userData[0]).token}`, request)).code(201).header('authorization', `bearer ${authentication.generateToken(userData[0]).token}`);
 
-							if (request.payload.advSub && request.payload.transactionId) {
-								trackingHelper.postbackTracking(request.payload.transactionId, request.payload.advSub).then((response) => {
+							if (request.payload.transactionId && request.payload.transactionId !== '') {
+								trackingHelper.postbackTracking(request.payload.transactionId, userData[0].ID).then((response) => {
 									console.log("SUCCESSFULLY SENT ICUBESWIRE POSTBACK");
 									console.log(response);
 								}).catch((err) => {
-									console.log("Error in sending ICUBESWIRE POSTBACK");
+									console.log("Error in sending iCUBESWIRE POSTBACK");
 									console.log(err);
 								});
 							}
