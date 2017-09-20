@@ -37,34 +37,21 @@ class DashboardAdaptor {
     constructor(modals) {
         this.modals = modals;
         this.date = new Date();
-        this.cFirst = this.date.getDate() - 6;
-        this.cLast = this.cFirst + 7;
-        this.cLastDate = new Date(this.date.setDate(this.cLast));
-        this.cFirstDay = new Date(this.date.setDate(this.cFirst));
-        this.cLastDay = this.date.getDate() > this.cLastDate.getDate() ? new Date(this.date
-            .getFullYear(), this.date.getMonth() + 1, this.cLastDate.getDate()) : this.cLastDate;
+        this.cFirstDay = moment.utc().subtract(6, 'd').startOf('d');
+        this.cLastDay = moment.utc();
     }
 
     getAllDays() {
-        this.cFirstDay.setHours(0, 0, 0, 0);
-        this.cLastDay.setHours(0, 0, 0, 0);
 
-        let s = new Date(this.cFirstDay.getFullYear(),
-            this.cFirstDay.getMonth(), this.cFirstDay.getDate());
-        s.setHours(0, 0, 0, 0);
-        const e = new Date(this.cLastDay.getFullYear(),
-            this.cLastDay.getMonth(), this.cLastDay.getDate());
-        e.setHours(0, 0, 0, 0);
+        let s = moment(this.cFirstDay).utc();
+        const e = moment(this.cLastDay).utc();
         const a = [];
-        while (s.getTime() < e.getTime()) {
+        while (s.unix() < e.unix()) {
             a.push({
                 value: 0,
-                purchaseDate: new Date(s.getTime())
+                purchaseDate: moment(s).utc()
             });
-            s = new Date(shared.formatDate(new Date(s.setDate(
-                s.getDate() + 1
-            )), 'yyyy-mm-dd'));
-            s.setHours(0, 0, 0, 0);
+            s = moment(s).utc().add(1, 'd').startOf('d');
         }
 
         return a;
@@ -135,16 +122,16 @@ class DashboardAdaptor {
             const insightItems = this.retrieveDaysInsight(distinctInsight);
 
             const insightResult = insightItems && insightItems.length > 0 ? {
-                startDate: insightItems[0].purchaseDate,
-                endDate: insightItems[insightItems.length - 1].purchaseDate,
+                startDate: moment.utc().subtract(6, 'd').startOf('d'),
+                endDate: moment.utc(),
                 totalSpend: sumProps(insightItems, 'value'),
-                totalDays: insightItems.length,
+                totalDays: 7,
                 insightData: insightItems
             } : {
-                startDate: new Date(),
-                endDate: new Date(),
+                startDate: moment.utc().subtract(6, 'd').startOf('d'),
+                endDate: moment.utc(),
                 totalSpend: 0,
-                totalDays: 0,
+                totalDays: 7,
                 insightData
             };
             result[0].sort((a, b) => a.dueIn - b.dueIn);
@@ -512,32 +499,56 @@ class DashboardAdaptor {
     }
 
     prepareInsightData(user) {
-        return this.modals.consumerBillDetails.findAll({
+        return this.modals.productBills.findAll({
             where: {
                 user_id: user.ID,
                 status_id: {
                     $ne: 3
-                },
-                purchase_date: {
-                    $lte: lastDay,
-                    $gte: firstDay
                 }
             },
-            order: [['purchase_date', 'ASC']],
-            attributes: [['total_purchase_value', 'value'], ['purchase_date', 'purchaseDate']]
+            include: [{
+                model: this.modals.consumerBillDetails,
+                as: 'consumerBill',
+                where: {
+                    status_id: {
+                        $ne: 3
+                    },
+                    purchase_date: {
+                        $lte: moment.utc(),
+                        $gte: moment.utc().subtract(6, 'd').startOf('d')
+                    }
+                },
+                include: [
+                    {
+                        model: this.modals.consumerBills,
+                        as: 'bill',
+                        where: {
+                            $and: [
+                                this.modals.sequelize.where(this.modals.sequelize.literal('`bill_ref_type`'), 1),
+                                {
+                                    user_status: 5,
+                                    admin_status: 5
+                                }
+                            ]
+                        },
+                        attributes: []
+                    }
+                ]
+            }],
+            attributes: [['bill_product_id', 'id'], ['product_name', 'productName'], ['value_of_purchase', 'value'], 'taxes', ['category_id', 'categoryId'], ['master_category_id', 'masterCategoryId'], ['brand_id', 'brandId'], ['color_id', 'colorId'], [this.modals.sequelize.literal('`purchase_date`'), 'purchaseDate']],
+            order: [[this.modals.sequelize.literal('`purchase_date`'), 'ASC']]
         });
     }
 
     retrieveDaysInsight(distinctInsight) {
         const allDaysInWeek = this.getAllDays();
         distinctInsight.map((item) => {
-            const currentDate = new Date(shared.formatDate(new Date(item.purchaseDate), 'yyyy-mm-dd'));
-            currentDate.setHours(0, 0, 0, 0);
+            const currentDate = moment(item.purchaseDate);
             for (let i = 0; i < allDaysInWeek.length; i += 1) {
                 const weekData = allDaysInWeek[i];
-                if (weekData.purchaseDate.getTime() === currentDate.getTime()) {
+                if (weekData.purchaseDate.unix() === currentDate.unix()) {
                     weekData.value = item.value;
-                    weekData.purchaseDate = new Date(shared.formatDate(new Date(weekData.purchaseDate), 'yyyy-mm-dd'));
+                    weekData.purchaseDate = moment(weekData.purchaseDate);
                     break;
                 }
             }
@@ -547,7 +558,7 @@ class DashboardAdaptor {
 
         return allDaysInWeek.map(weekItem => ({
             value: weekItem.value,
-            purchaseDate: new Date(shared.formatDate(new Date(weekItem.purchaseDate), 'yyyy-mm-dd'))
+            purchaseDate: moment(weekItem.purchaseDate)
         }));
     }
 
