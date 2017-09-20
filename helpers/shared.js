@@ -2,6 +2,7 @@
 'use strict';
 
 const {verify} = require('jsonwebtoken');
+const moment = require('moment');
 const {readFileSync, readFile} = require('fs');
 const url = require('url-join');
 const dateFormat = require('dateformat');
@@ -84,6 +85,53 @@ function verifyAuthorization(headers) {
 	return isAccessTokenBasic(verifyParameters(headers, authorizationParamConst, emptyString));
 }
 
+function sumProps(arrayItem, prop) {
+    let total = 0;
+    for (let i = 0; i < arrayItem.length; i += 1) {
+        total += parseFloat(arrayItem[i][prop] || 0);
+    }
+    return total.toFixed(2);
+}
+
+const getAllDays = function() {
+    let s = moment(moment.utc().subtract(6, 'd')).utc().startOf('d');
+    const e = moment.utc();
+    const a = [];
+    while (s.valueOf() < e.valueOf()) {
+        a.push({
+            value: 0,
+            purchaseDate: moment(s).utc()
+        });
+        s = moment(s).utc().add(1, 'd').startOf('d');
+    }
+
+    return a;
+};
+
+
+function retrieveDaysInsight(distinctInsight) {
+    const allDaysInWeek = getAllDays();
+    distinctInsight.map((item) => {
+        const currentDate = moment(item.purchaseDate);
+        for (let i = 0; i < allDaysInWeek.length; i += 1) {
+            const weekData = allDaysInWeek[i];
+            if (weekData.purchaseDate.valueOf() === currentDate.valueOf()) {
+                weekData.value = item.value;
+                weekData.purchaseDate = moment(weekData.purchaseDate);
+                break;
+            }
+        }
+
+        return item;
+    });
+
+    return allDaysInWeek.map(weekItem => ({
+        value: weekItem.value,
+        purchaseDate: moment(weekItem.purchaseDate),
+        purchaseDay: moment(weekItem.purchaseDate).format('ddd')
+    }));
+}
+
 const formatDate = (actualValue, dateFormatString) => dateFormat(actualValue, dateFormatString);
 const prepareUrl = (basePath, ...relPath) => url(basePath, ...relPath);
 const queryStringFromObject = queryObject => stringify(queryObject);
@@ -108,5 +156,8 @@ module.exports = {
 	verifyAuthorization,
 	retrieveHeaderValue,
 	iterateToCollection,
-	stringHasSubString
+	stringHasSubString,
+    getAllDays,
+    sumProps,
+    retrieveDaysInsight
 };

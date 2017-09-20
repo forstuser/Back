@@ -388,7 +388,7 @@ class InsightAdaptor {
 				const product = item.toJSON();
 				const index = distinctInsight
 					.findIndex(distinctItem => (moment(distinctItem.date)
-						.unix() === moment(product.consumerBill.purchaseDate).utc().endOf('day').unix()));
+						.valueOf() === moment(product.consumerBill.purchaseDate).utc().endOf('day').valueOf()));
 				if (index === -1) {
 					distinctInsight.push({
 						value: product.value,
@@ -454,26 +454,26 @@ class InsightAdaptor {
 				.consumerBill.purchaseDate) - new Date(a
 				.consumerBill.purchaseDate));
 			const productListWeekly = productList
-				.filter(item => moment(item.consumerBill.purchaseDate).endOf('day').unix() >= moment.utc().startOf('week').startOf('month').unix() && moment(item.consumerBill.purchaseDate).endOf('day').unix() <= moment.utc().startOf('week').endOf('month').unix()).slice(0, 10);
+				.filter(item => moment(item.consumerBill.purchaseDate).endOf('day').valueOf() >= moment.utc().startOf('week').startOf('month').valueOf() && moment(item.consumerBill.purchaseDate).endOf('day').valueOf() <= moment.utc().startOf('week').endOf('month').valueOf()).slice(0, 10);
 			const productListMonthly = productList
-				.filter(item => moment(item.consumerBill.purchaseDate).endOf('day').unix() >= moment.utc().startOf('week').startOf('year').unix() && moment(item.consumerBill.purchaseDate).endOf('day').unix() <= moment.utc().startOf('week').endOf('year').unix()).slice(0, 10);
+				.filter(item => moment(item.consumerBill.purchaseDate).endOf('day').valueOf() >= moment.utc().startOf('week').startOf('year').valueOf() && moment(item.consumerBill.purchaseDate).endOf('day').valueOf() <= moment.utc().startOf('week').endOf('year').valueOf()).slice(0, 10);
 			distinctInsightMonthly.sort((a, b) => new Date(b.date) - new Date(a.date));
 			distinctInsightWeekly.sort((a, b) => new Date(b.date) - new Date(a.date));
 
 			const insightData = distinctInsightTemp
-				.filter(item => moment(item.consumerBill.purchaseDate).endOf('day').unix() >= moment.utc().startOf('week').startOf('week').unix() && moment(item.consumerBill.purchaseDate).endOf('day').unix() <= moment.utc().startOf('week').endOf('week').unix());
+				.filter(item => moment(item.consumerBill.purchaseDate).endOf('day').valueOf() >= moment.utc().startOf('week').startOf('week').valueOf() && moment(item.consumerBill.purchaseDate).endOf('day').valueOf() <= moment.utc().startOf('week').endOf('week').valueOf());
 			insightData.sort((a, b) => new Date(b.date) - new Date(a.date));
 
 			const insightWeekly = distinctInsightWeekly
-				.filter(item => moment(item.date).endOf('day').unix() >= moment.utc().startOf('week').startOf('month').unix() && moment(item.date).endOf('day').unix() <= moment.utc().startOf('week').endOf('month').unix());
+				.filter(item => moment(item.date).endOf('day').valueOf() >= moment.utc().startOf('week').startOf('month').valueOf() && moment(item.date).endOf('day').valueOf() <= moment.utc().startOf('week').endOf('month').valueOf());
 			const insightMonthly = distinctInsightMonthly
-				.filter(item => moment(item.date).endOf('day').unix() >= moment.utc().startOf('week').startOf('year').unix() && moment(item.date).endOf('day').unix() <= moment.utc().startOf('week').endOf('year').unix());
+				.filter(item => moment(item.date).endOf('day').valueOf() >= moment.utc().startOf('week').startOf('year').valueOf() && moment(item.date).endOf('day').valueOf() <= moment.utc().startOf('week').endOf('year').valueOf());
 			return {
 				status: true,
 				productList: productList
 					.filter(item => moment(item
-						.consumerBill.purchaseDate).endOf('day').unix() >= moment.utc().startOf('week').startOf('week').unix() && moment(item
-						.consumerBill.purchaseDate).endOf('day').unix() <= moment.utc().startOf('week').endOf('week').unix()).slice(0, 10),
+						.consumerBill.purchaseDate).endOf('day').valueOf() >= moment.utc().startOf('week').startOf('week').valueOf() && moment(item
+						.consumerBill.purchaseDate).endOf('day').valueOf() <= moment.utc().startOf('week').endOf('week').valueOf()).slice(0, 10),
 				productListWeekly,
 				productListMonthly,
 				insight: distinctInsight && distinctInsight.length > 0 ? {
