@@ -1,38 +1,23 @@
 /*jshint esversion: 6 */
 'use strict';
 
+const moment = require('moment');
 const shared = require('../../helpers/shared');
-
-function sumProps(arrayItem, prop) {
-	let total = 0;
-	for (let i = 0; i < arrayItem.length; i += 1) {
-		total += parseFloat(arrayItem[i][prop] || 0);
-	}
-	return total.toFixed(2);
-}
 
 function weekAndDay(d) {
 	const days = [1, 2, 3, 4, 5, 6, 7];
 	const prefixes = [1, 2, 3, 4, 5];
 
-	return {monthWeek: prefixes[Math.round(d.getDate() / 7)], day: days[d.getDay()]};
+	return {monthWeek: prefixes[Math.round(d.date() / 7)], day: days[d.day()]};
 }
 
-
+const dateFormatString = 'yyyy-mm-dd';
 const monthArray = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const date = new Date();
 const monthStartDay = new Date(date.getFullYear(), date.getMonth(), 1);
 const monthLastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
 const yearStartDay = new Date(date.getFullYear(), 0, 1);
 const yearLastDay = new Date(date.getFullYear() + 1, 0, 0);
-const first = date.getDate() - date.getDay();
-// First day is the day of the month - the day of the week
-const last = first + 6;// last day is the first day + 6
-const lastDate = new Date(date.setDate(last));
-
-const firstDay = new Date(date.setDate(first));
-const lastDay = date.getDate() > lastDate.getDate() ? new Date(date
-	.getFullYear(), date.getMonth() + 1, lastDate.getDate()) : lastDate;
 
 class InsightAdaptor {
 	constructor(modals) {
@@ -81,8 +66,8 @@ class InsightAdaptor {
 						return b.totalAmount - a.totalAmount;
 					});
 
-					const totalAmounts = sumProps(categoryData.customDateData, 'totalAmount');
-					const totalTaxes = sumProps(categoryData.customDateData, 'totalTax');
+					const totalAmounts = shared.sumProps(categoryData.customDateData, 'totalAmount');
+					const totalTaxes = shared.sumProps(categoryData.customDateData, 'totalTax');
 					return {
 						status: true,
 						message: 'Insight restore successful',
@@ -109,23 +94,23 @@ class InsightAdaptor {
 				});
 
 
-				const totalWeeklyAmounts = sumProps(categoryData.weeklyData, 'totalAmount');
-				const totalWeeklyTaxes = sumProps(categoryData.weeklyData, 'totalTax');
-				const totalYearlyAmounts = sumProps(categoryData.yearlyData, 'totalAmount');
-				const totalYearlyTaxes = sumProps(categoryData.yearlyData, 'totalTax');
-				const totalMonthlyAmounts = sumProps(categoryData.monthlyData, 'totalAmount');
-				const totalMonthlyTaxes = sumProps(categoryData.monthlyData, 'totalTax');
-				return {
+				const totalWeeklyAmounts = shared.sumProps(categoryData.weeklyData, 'totalAmount');
+				const totalWeeklyTaxes = shared.sumProps(categoryData.weeklyData, 'totalTax');
+				const totalYearlyAmounts = shared.sumProps(categoryData.yearlyData, 'totalAmount');
+				const totalYearlyTaxes = shared.sumProps(categoryData.yearlyData, 'totalTax');
+				const totalMonthlyAmounts = shared.sumProps(categoryData.monthlyData, 'totalAmount');
+				const totalMonthlyTaxes = shared.sumProps(categoryData.monthlyData, 'totalTax');
+                return {
 					status: true,
 					message: 'Insight restore successful',
 					notificationCount: 0,
 					categoryData,
-					weekStartDate: shared.formatDate(firstDay, 'yyyy-mm-dd'),
-					monthStartDate: shared.formatDate(monthStartDay, 'yyyy-mm-dd'),
-					weekEndDate: shared.formatDate(lastDay, 'yyyy-mm-dd'),
-					monthLastDate: shared.formatDate(monthLastDay, 'yyyy-mm-dd'),
-					yearStartDate: shared.formatDate(yearStartDay, 'yyyy-mm-dd'),
-					yearEndDate: shared.formatDate(yearLastDay, 'yyyy-mm-dd'),
+					weekStartDate: shared.formatDate(moment.utc().subtract(6, 'd').startOf('d'), dateFormatString),
+					monthStartDate: shared.formatDate(monthStartDay, dateFormatString),
+					weekEndDate: shared.formatDate(moment.utc(), dateFormatString),
+					monthLastDate: shared.formatDate(monthLastDay, dateFormatString),
+					yearStartDate: shared.formatDate(yearStartDay, dateFormatString),
+					yearEndDate: shared.formatDate(yearLastDay, dateFormatString),
 					totalYearlySpend: totalYearlyAmounts,
 					totalWeeklySpend: totalWeeklyAmounts,
 					totalWeeklyTaxes,
@@ -177,8 +162,8 @@ class InsightAdaptor {
 								$ne: 3
 							},
 							purchase_date: {
-								$gte: new Date(firstDay),
-								$lte: new Date(lastDay)
+                                $lte: moment.utc(),
+                                $gte: moment.utc().subtract(6, 'd').startOf('d')
 							}
 						},
 						include: [
@@ -405,6 +390,7 @@ class InsightAdaptor {
 		return promisedQuery.then((result) => {
 			const productList = result[0].map((item) => {
 				const product = item.toJSON();
+				product.purchaseDate = product.consumerBill.purchaseDate;
 				product.productMetaData.map((metaItem) => {
 					const metaData = metaItem;
 					if (metaData.type === '2' && metaData.selectedValue) {
@@ -426,11 +412,11 @@ class InsightAdaptor {
 				if (index === -1) {
 					distinctInsight.push({
 						value: product.value,
-						month: monthArray[new Date(product.consumerBill.purchaseDate).getMonth()],
-						monthId: new Date(product.consumerBill.purchaseDate).getMonth() + 1,
-						date: new Date(product.consumerBill.purchaseDate),
-						week: weekAndDay(new Date(product.consumerBill.purchaseDate)).monthWeek,
-						day: weekAndDay(new Date(product.consumerBill.purchaseDate)).day,
+						month: monthArray[moment(product.consumerBill.purchaseDate).month()],
+						monthId: moment(product.consumerBill.purchaseDate).month() + 1,
+                        purchaseDate: moment(product.consumerBill.purchaseDate),
+						week: weekAndDay(moment(product.consumerBill.purchaseDate)).monthWeek,
+						day: weekAndDay(moment(product.consumerBill.purchaseDate)).day,
 						totalCost: product.consumerBill.totalCost,
 						totalTax: product.consumerBill.taxes,
 						tax: product.taxes
@@ -450,7 +436,7 @@ class InsightAdaptor {
 					value: item.value,
 					month: item.month,
 					monthId: item.monthId,
-					date: item.date,
+                    purchaseDate: item.purchaseDate,
 					week: item.week,
 					day: item.day,
 					totalCost: item.totalCost,
@@ -484,61 +470,55 @@ class InsightAdaptor {
 				return dayItem;
 			});
 
-			productList.sort((a, b) => new Date(b
-				.consumerBill.purchaseDate) - new Date(a
-				.consumerBill.purchaseDate));
+			productList.sort((a, b) => moment(b
+				.purchaseDate) - moment(a
+				.purchaseDate));
 			const productListWeekly = productList
-				.filter(item => new Date(item
-					.consumerBill.purchaseDate).getTime() >= new Date(shared.formatDate(monthStartDay, 'yyyy-mm-dd')).getTime() && new Date(item
-					.consumerBill.purchaseDate).getTime() <= new Date(shared.formatDate(monthLastDay, 'yyyy-mm-dd')).getTime()).slice(0, 10);
+				.filter(item => moment(item
+					.purchaseDate).valueOf() >= moment.utc().startOf('month').valueOf() && moment(item
+					.purchaseDate).valueOf() <= moment.utc().valueOf()).slice(0, 10);
 			const productListMonthly = productList
-				.filter(item => new Date(item
-					.consumerBill.purchaseDate).getTime() >= new Date(shared.formatDate(yearStartDay, 'yyyy-mm-dd')) && new Date(item
-					.consumerBill.purchaseDate).getTime() <= new Date(shared.formatDate(yearLastDay, 'yyyy-mm-dd')).getTime()).slice(0, 10);
-			distinctInsightMonthly.sort((a, b) => new Date(b.date) - new Date(a.date));
-			distinctInsightWeekly.sort((a, b) => new Date(b.date) - new Date(a.date));
+				.filter(item => moment(item
+                    .purchaseDate).valueOf() >= moment(moment.utc().startOf('year').valueOf()) && moment(item
+                    .purchaseDate).valueOf() <= moment(moment.utc()).valueOf()).slice(0, 10);
+			distinctInsightMonthly.sort((a, b) => moment(b.purchaseDate) - moment(a.purchaseDate));
+			distinctInsightWeekly.sort((a, b) => moment(b.purchaseDate) - moment(a.purchaseDate));
 
-			const insightData = distinctInsightTemp
-				.filter(item => new Date(item.date).getTime() >= new Date(shared.formatDate(firstDay, 'yyyy-mm-dd')).getTime() && new Date(item.date).getTime() <= new Date(shared.formatDate(lastDay, 'yyyy-mm-dd')).getTime());
-			insightData.sort((a, b) => new Date(b.date) - new Date(a.date));
+			const insightData = shared.retrieveDaysInsight(distinctInsightTemp
+				.filter(item => moment(item.purchaseDate).valueOf() >= moment.utc().subtract(6, 'd').startOf('d').valueOf() && moment(item.purchaseDate).valueOf() <= moment.utc().valueOf()));
+			insightData.sort((a, b) => moment(a.purchaseDate) - moment(b.purchaseDate));
 
 			const insightWeekly = distinctInsightWeekly
-				.filter(item => new Date(item
-					.date).getTime() >= new Date(shared.formatDate(monthStartDay, 'yyyy-mm-dd')).getTime() && new Date(item
-					.date).getTime() <= new Date(shared.formatDate(monthLastDay, 'yyyy-mm-dd')).getTime());
+				.filter(item => moment(item.purchaseDate).valueOf() >= moment.utc().startOf('month').valueOf() && moment(item.purchaseDate).valueOf() <= moment.utc().valueOf());
 			const insightMonthly = distinctInsightMonthly
-				.filter(item => new Date(item
-					.date).getTime() >= new Date(shared.formatDate(yearStartDay, 'yyyy-mm-dd')).getTime() && new Date(item
-					.date) <= new Date(shared.formatDate(yearLastDay, 'yyyy-mm-dd')).getTime());
+				.filter(item => moment(item.purchaseDate).valueOf() >= moment.utc().startOf('year').valueOf() && moment(item.purchaseDate).valueOf() <= moment.utc().valueOf());
 			return {
 				status: true,
 				productList: productList
-					.filter(item => new Date(item
-						.consumerBill.purchaseDate).getTime() >= new Date(shared.formatDate(firstDay, 'yyyy-mm-dd')).getTime() && new Date(item
-						.consumerBill.purchaseDate).getTime() <= new Date(shared.formatDate(lastDay, 'yyyy-mm-dd')).getTime()).slice(0, 10),
+					.filter(item => moment(item.purchaseDate).valueOf() >= moment.utc().subtract(6, 'd').startOf('d').valueOf() && moment(item.purchaseDate).valueOf() <= moment.utc().valueOf()).slice(0, 10),
 				productListWeekly,
 				productListMonthly,
 				insight: distinctInsight && distinctInsight.length > 0 ? {
 					categoryName: result[1].name,
-					startDate: new Date(shared.formatDate(firstDay, 'yyyy-mm-dd')),
-					endDate: new Date(shared.formatDate(lastDay, 'yyyy-mm-dd')),
-					currentMonthId: new Date().getMonth() + 1,
-					currentWeek: weekAndDay(new Date()).monthWeek,
-					currentDay: weekAndDay(new Date()).day,
-					monthStartDate: new Date(shared.formatDate(monthStartDay, 'yyyy-mm-dd')),
-					monthEndDate: new Date(shared.formatDate(monthLastDay, 'yyyy-mm-dd')),
-					yearStartDate: new Date(shared.formatDate(yearStartDay, 'yyyy-mm-dd')),
-					yearEndDate: new Date(shared.formatDate(yearLastDay, 'yyyy-mm-dd')),
-					totalSpend: sumProps(insightData, 'value'),
-					totalYearlySpend: sumProps(insightMonthly, 'value'),
-					totalMonthlySpend: sumProps(insightWeekly, 'value'),
+					startDate: moment.utc().subtract(6, 'd').startOf('d'),
+					endDate: moment.utc(),
+					currentMonthId: moment.utc().month() + 1,
+					currentWeek: weekAndDay(moment.utc()).monthWeek,
+					currentDay: weekAndDay(moment.utc()).day,
+					monthStartDate: moment.utc().startOf('month'),
+					monthEndDate: moment.utc(),
+					yearStartDate: moment.utc().startOf('year'),
+					yearEndDate: moment.utc(),
+					totalSpend: shared.sumProps(insightData, 'value'),
+					totalYearlySpend: shared.sumProps(insightMonthly, 'value'),
+					totalMonthlySpend: shared.sumProps(insightWeekly, 'value'),
 					totalDays: insightData.length,
 					insightData,
 					insightWeekly,
 					insightMonthly
 				} : {
-					startDate: new Date(),
-					endDate: new Date(),
+                    startDate: moment.utc().subtract(6, 'd').startOf('d'),
+                    endDate: moment.utc(),
 					totalSpend: 0,
 					totalDays: 0,
 					insightData: distinctInsight,
@@ -565,8 +545,8 @@ class InsightAdaptor {
 			master_category_id: masterCategoryId
 		};
 		const dateWhereClause = {
-			$gte: yearStartDay,
-			$lte: yearLastDay
+			$gte: moment.utc().startOf('year'),
+			$lte: moment.utc()
 		};
 		return this.modals.productBills.findAll({
 			where: whereClause,

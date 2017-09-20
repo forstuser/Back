@@ -3,41 +3,11 @@
 const moment = require('moment');
 const shared = require('../../helpers/shared');
 
-function sumProps(arrayItem, prop) {
-	let total = 0;
-	for (let i = 0; i < arrayItem.length; i += 1) {
-		total += arrayItem[i][prop];
-	}
-	return total;
-}
-
-const dueDays = {
-	Yearly: 365, HalfYearly: 180, Quarterly: 90, Monthly: 30, Weekly: 7, Daily: 1
-};
-
 class DashboardAdaptor {
     constructor(modals) {
         this.modals = modals;
         this.date = new Date();
-        this.cFirstDay = moment.utc().subtract(6, 'd').startOf('d');
-        this.cLastDay = moment.utc();
     }
-
-    getAllDays() {
-
-        let s = moment(this.cFirstDay).utc();
-        const e = moment(this.cLastDay).utc();
-        const a = [];
-        while (s.unix() < e.unix()) {
-            a.push({
-                value: 0,
-                purchaseDate: moment(s).utc()
-            });
-            s = moment(s).utc().add(1, 'd').startOf('d');
-        }
-
-		return a;
-	}
 
 	retrieveDashboardResult(user, request) {
 		return Promise.all([
@@ -101,12 +71,12 @@ class DashboardAdaptor {
 				return insightItem;
 			});
 
-			const insightItems = this.retrieveDaysInsight(distinctInsight);
+			const insightItems = shared.retrieveDaysInsight(distinctInsight);
 
             const insightResult = insightItems && insightItems.length > 0 ? {
                 startDate: moment.utc().subtract(6, 'd').startOf('d'),
                 endDate: moment.utc(),
-                totalSpend: sumProps(insightItems, 'value'),
+                totalSpend: shared.sumProps(insightItems, 'value'),
                 totalDays: 7,
                 insightData: insightItems
             } : {
@@ -524,28 +494,6 @@ class DashboardAdaptor {
             attributes: [['bill_product_id', 'id'], ['product_name', 'productName'], ['value_of_purchase', 'value'], 'taxes', ['category_id', 'categoryId'], ['master_category_id', 'masterCategoryId'], ['brand_id', 'brandId'], ['color_id', 'colorId'], [this.modals.sequelize.literal('`purchase_date`'), 'purchaseDate']],
             order: [[this.modals.sequelize.literal('`purchase_date`'), 'ASC']]
         });
-    }
-
-    retrieveDaysInsight(distinctInsight) {
-        const allDaysInWeek = this.getAllDays();
-        distinctInsight.map((item) => {
-            const currentDate = moment(item.purchaseDate);
-            for (let i = 0; i < allDaysInWeek.length; i += 1) {
-                const weekData = allDaysInWeek[i];
-                if (weekData.purchaseDate.unix() === currentDate.unix()) {
-                    weekData.value = item.value;
-                    weekData.purchaseDate = moment(weekData.purchaseDate);
-                    break;
-                }
-            }
-
-			return item;
-		});
-
-        return allDaysInWeek.map(weekItem => ({
-            value: weekItem.value,
-            purchaseDate: moment(weekItem.purchaseDate)
-        }));
     }
 
 	retrieveRecentSearch(user) {
