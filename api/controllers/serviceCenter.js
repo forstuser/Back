@@ -180,7 +180,7 @@ class ServiceCenterController {
 			if (detailPromise.length > 0) {
 				Promise.all(detailPromise).then(() => reply().code(204)).catch((err) => {
 					console.log(err);
-					reply(err)
+					reply(err);
 				});
 			} else {
 				reply().code(422);
@@ -206,7 +206,7 @@ class ServiceCenterController {
 				}
 			}).then(() => reply().code(204)).catch((err) => {
 				console.log(err);
-				reply(err)
+				reply(err);
 			});
 		} else {
 			reply().code(401);
@@ -230,7 +230,7 @@ class ServiceCenterController {
 			}
 		})]).then(() => reply().code(204)).catch((err) => {
 			console.log(err);
-			reply(err)
+			reply(err);
 		});
 	}
 
@@ -419,7 +419,7 @@ class ServiceCenterController {
 								status: false,
 								err,
 								forceUpdate: request.pre.forceUpdate
-							})
+							});
 						});
 					}
 					if (origins.length <= 0) {
@@ -436,6 +436,7 @@ class ServiceCenterController {
 					reply({
 						status: false,
 						message: 'No Data Found for mentioned search',
+						serviceCenters: [],
 						forceUpdate: request.pre.forceUpdate
 					});
 				}
