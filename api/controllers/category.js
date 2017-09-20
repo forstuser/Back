@@ -34,6 +34,7 @@ class CategoryController {
 
 			return reply(category[0]).header('categoryId', category.category_id).code(422);
 		}).catch((err) => {
+			console.log(err);
 			reply(err);
 		});
 	}
@@ -50,7 +51,10 @@ class CategoryController {
 			where: {
 				category_id: request.params.id
 			}
-		}).then(() => reply().code(204)).catch(err => reply(err));
+		}).then(() => reply().code(204)).catch((err) => {
+			console.log(err);
+			reply(err);
+		});
 	}
 
 	static deleteCategory(request, reply) {
@@ -62,7 +66,10 @@ class CategoryController {
 			where: {
 				category_id: request.params.id
 			}
-		}).then(() => reply().code(204)).catch(err => reply(err));
+		}).then(() => reply().code(204)).catch((err) => {
+			console.log(err);
+			reply(err);
+		});
 	}
 
 	static retrieveCategory(request, reply) {
@@ -84,7 +91,10 @@ class CategoryController {
 			attributes: excludedAttributes
 		}).then((result) => {
 			reply(result).code(200);
-		}).catch(err => reply(err));
+		}).catch((err) => {
+			console.log(err);
+			reply(err);
+		});
 	}
 
 	static retrieveCategoryById(request, reply) {
@@ -96,6 +106,7 @@ class CategoryController {
 		}).then((result) => {
 			reply(result).code(200);
 		}).catch((err) => {
+			console.log(err);
 			reply(err);
 		});
 	}

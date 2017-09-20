@@ -37,12 +37,15 @@ class UserAdaptor {
 			},
 			userProfile: result,
 			forceUpdate: request.pre.forceUpdate
-		})).catch(err => ({
-			status: false,
-			message: 'User Data Retrieval Failed',
-			err,
-			forceUpdate: request.pre.forceUpdate
-		}));
+		})).catch((err) => {
+			console.log(err);
+			return {
+				status: false,
+				message: 'User Data Retrieval Failed',
+				err,
+				forceUpdate: request.pre.forceUpdate
+			};
+		});
 	}
 
 	updateUser(user, request, reply) {
@@ -118,12 +121,15 @@ class UserAdaptor {
 				message: 'User Details Updated Successfully',
 				forceUpdate: request.pre.forceUpdate
 			}).code(200);
-		}).catch(err => reply({
-			status: false,
-			message: 'User Detail Update failed',
-			err,
-			forceUpdate: request.pre.forceUpdate
-		}));
+		}).catch((err) => {
+			console.log(err);
+			reply({
+				status: false,
+				message: 'User Detail Update failed',
+				err,
+				forceUpdate: request.pre.forceUpdate
+			});
+		});
 	}
 }
 

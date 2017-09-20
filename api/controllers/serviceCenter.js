@@ -75,6 +75,7 @@ class ServiceCenterController {
 					createdServiceCenter.Details = result;
 					reply(createdServiceCenter).header('CenterID', createdServiceCenter.ID).code(201);
 				}).catch((err) => {
+					console.log(err);
 					reply(err);
 				});
 			} else {
@@ -177,7 +178,10 @@ class ServiceCenterController {
 			}
 
 			if (detailPromise.length > 0) {
-				Promise.all(detailPromise).then(() => reply().code(204)).catch(err => reply(err));
+				Promise.all(detailPromise).then(() => reply().code(204)).catch((err) => {
+					console.log(err);
+					reply(err)
+				});
 			} else {
 				reply().code(422);
 			}
@@ -200,7 +204,10 @@ class ServiceCenterController {
 					CenterID,
 					DetailID: request.params.detailid
 				}
-			}).then(() => reply().code(204)).catch(err => reply(err));
+			}).then(() => reply().code(204)).catch((err) => {
+				console.log(err);
+				reply(err)
+			});
 		} else {
 			reply().code(401);
 		}
@@ -221,7 +228,10 @@ class ServiceCenterController {
 			where: {
 				SellerID: request.params.id
 			}
-		})]).then(() => reply().code(204)).catch(err => reply(err));
+		})]).then(() => reply().code(204)).catch((err) => {
+			console.log(err);
+			reply(err)
+		});
 	}
 
 	static deleteServiceCenterDetail(request, reply) {
@@ -234,7 +244,10 @@ class ServiceCenterController {
 					CenterID: request.params.id,
 					DetailID: request.params.detailid
 				}
-			}).then(() => reply().code(204)).catch(err => reply(err));
+			}).then(() => reply().code(204)).catch((err) => {
+				console.log(err);
+				reply(err);
+			});
 		} else {
 			reply().code(401);
 		}
@@ -427,6 +440,7 @@ class ServiceCenterController {
 					});
 				}
 			}).catch((err) => {
+				console.log(err);
 				reply({
 					status: false,
 					err,
@@ -457,6 +471,7 @@ class ServiceCenterController {
 		}).then((result) => {
 			reply(result).code(200);
 		}).catch((err) => {
+			console.log(err);
 			reply(err);
 		});
 	}

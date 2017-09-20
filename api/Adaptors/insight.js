@@ -54,23 +54,23 @@ class InsightAdaptor {
 					}),
 					monthlyData: result[1].map((periodItem) => {
 						const categoryPeriodItem = periodItem.toJSON();
-                        categoryPeriodItem.totalAmount = (categoryPeriodItem.totalAmount || 0).toFixed(2);
-                        categoryPeriodItem.totalTax = (categoryPeriodItem.totalTax || 0).toFixed(2);
+						categoryPeriodItem.totalAmount = (categoryPeriodItem.totalAmount || 0).toFixed(2);
+						categoryPeriodItem.totalTax = (categoryPeriodItem.totalTax || 0).toFixed(2);
 						// categoryPeriodItem.totalAmount += categoryPeriodItem.totalTax;
 						return categoryPeriodItem;
 					}),
 					yearlyData: result[2].map((periodItem) => {
 						const categoryPeriodItem = periodItem.toJSON();
-                        categoryPeriodItem.totalAmount = (categoryPeriodItem.totalAmount || 0).toFixed(2);
-                        categoryPeriodItem.totalTax = (categoryPeriodItem.totalTax || 0).toFixed(2);
-                        // categoryPeriodItem.totalAmount += categoryPeriodItem.totalTax;
+						categoryPeriodItem.totalAmount = (categoryPeriodItem.totalAmount || 0).toFixed(2);
+						categoryPeriodItem.totalTax = (categoryPeriodItem.totalTax || 0).toFixed(2);
+						// categoryPeriodItem.totalAmount += categoryPeriodItem.totalTax;
 						return categoryPeriodItem;
 					})
 				} : {
 					customDateData: result.map((item) => {
 						const categoryItem = item.toJSON();
-                        categoryItem.totalAmount = (categoryItem.totalAmount || 0).toFixed(2);
-                        categoryItem.totalTax = (categoryItem.totalTax || 0).toFixed(2);
+						categoryItem.totalAmount = (categoryItem.totalAmount || 0).toFixed(2);
+						categoryItem.totalTax = (categoryItem.totalTax || 0).toFixed(2);
 						// categoryItem.totalAmount += categoryItem.totalTax;
 						return categoryItem;
 					})
@@ -135,14 +135,14 @@ class InsightAdaptor {
 					forceUpdate: request.pre.forceUpdate
 				};
 			}).catch(err => {
-                console.log(err);
-                return ({
-                    status: false,
-                    message: 'Insight restore failed',
-                    err,
-                    forceUpdate: request.pre.forceUpdate
-                })
-            });
+				console.log(err);
+				return ({
+					status: false,
+					message: 'Insight restore failed',
+					err,
+					forceUpdate: request.pre.forceUpdate
+				});
+			});
 	}
 
 	prepareCategoryData(user, minDate, maxDate) {
@@ -152,6 +152,12 @@ class InsightAdaptor {
 					category_level: 1,
 					status_id: {
 						$ne: 3
+					},
+					category_id: {
+						$ne: 10
+					},
+					display_id: {
+						$ne: 10
 					}
 				},
 				include: [{
@@ -207,6 +213,12 @@ class InsightAdaptor {
 					category_level: 1,
 					status_id: {
 						$ne: 3
+					},
+					category_id: {
+						$ne: 10
+					},
+					display_id: {
+						$ne: 10
 					}
 				},
 				include: [{
@@ -261,6 +273,12 @@ class InsightAdaptor {
 					category_level: 1,
 					status_id: {
 						$ne: 3
+					},
+					category_id: {
+						$ne: 10
+					},
+					display_id: {
+						$ne: 10
 					}
 				},
 				include: [{
@@ -315,6 +333,12 @@ class InsightAdaptor {
 					category_level: 1,
 					status_id: {
 						$ne: 3
+					},
+					category_id: {
+						$ne: 10
+					},
+					display_id: {
+						$ne: 10
 					}
 				},
 				include: [{
@@ -391,7 +415,6 @@ class InsightAdaptor {
 				});
 				return product;
 			});
-
 			const distinctInsightWeekly = [];
 			const distinctInsightMonthly = [];
 			const distinctInsight = [];
@@ -523,11 +546,14 @@ class InsightAdaptor {
 				categoryName: result[5],
 				forceUpdate: request.pre.forceUpdate
 			};
-		}).catch(err => ({
-			status: false,
-			err,
-			forceUpdate: request.pre.forceUpdate
-		}));
+		}).catch((err) => {
+			console.log(err);
+			return {
+				status: false,
+				err,
+				forceUpdate: request.pre.forceUpdate
+			};
+		});
 	}
 
 	fetchProductDetails(user, masterCategoryId) {
@@ -689,7 +715,7 @@ class InsightAdaptor {
 					as: 'category',
 					attributes: []
 				}],
-			attributes: [['bill_product_id', 'id'], ['product_name', 'productName'], ['value_of_purchase', 'value'], 'taxes', ['category_id', 'categoryId'], ['master_category_id', 'masterCategoryId'], [this.modals.sequelize.col('`masterCategory`.`category_name`'), 'masterCategoryName'], [this.modals.sequelize.col('`category`.`category_name`'), 'categoryName'], ['brand_id', 'brandId'], ['color_id', 'colorId'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`productBills`.`bill_product_id`')), 'productURL']],
+			attributes: [['bill_product_id', 'id'], ['product_name', 'productName'], ['value_of_purchase', 'value'], 'taxes', ['category_id', 'categoryId'], ['master_category_id', 'masterCategoryId'], [this.modals.sequelize.col('`masterCategory`.`category_name`'), 'masterCategoryName'], [this.modals.sequelize.col('`category`.`category_name`'), 'categoryName'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col(`category.category_id`), '/image/'), 'cImageURL'], ['brand_id', 'brandId'], ['color_id', 'colorId'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`productBills`.`bill_product_id`')), 'productURL']],
 			order: [['bill_product_id', 'DESC']]
 		});
 	}

@@ -109,7 +109,10 @@ class UserManagementController {
 			where: {
 				ID: request.params.id
 			}
-		}).then(reply().code(204)).catch(err => reply(err));
+		}).then(reply().code(204)).catch((err) => {
+			console.log(err);
+			reply(err);
+		});
 	}
 
 	static deleteUsers(request, reply) {
@@ -121,7 +124,10 @@ class UserManagementController {
 			where: {
 				ID: request.params.id
 			}
-		}).then(() => reply().code(204)).catch(err => reply(err));
+		}).then(() => reply().code(204)).catch((err) => {
+			console.log(err);
+			reply(err);
+		});
 	}
 
 	static retrieveUsers(request, reply) {
@@ -137,6 +143,7 @@ class UserManagementController {
 		}).then((result) => {
 			reply(result).code(200);
 		}).catch((err) => {
+			console.log(err);
 			reply(err);
 		});
 	}
@@ -151,6 +158,7 @@ class UserManagementController {
 		}).then((result) => {
 			reply(result).code(200);
 		}).catch((err) => {
+			console.log(err);
 			reply(err);
 		});
 	}
