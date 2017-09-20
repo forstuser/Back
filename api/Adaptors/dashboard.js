@@ -1,25 +1,7 @@
 /*jshint esversion: 6 */
 'use strict';
-
 const moment = require('moment');
-
 const shared = require('../../helpers/shared');
-
-const date = new Date();
-
-const first = date.getDate() - 6;
-// First day is the day of the month - the day of the week
-const last = first + 7;// last day is the first day + 6
-const lastDate = new Date(date.setDate(last));
-const firstDate = new Date(date.setDate(first));
-
-
-const firstDay = firstDate;
-const lastDay = date.getDate() > lastDate.getDate() ? new Date(date
-	.getFullYear(), date.getMonth() + 1, lastDate.getDate()) : lastDate;
-
-firstDay.setHours(0, 0, 0, 0);
-lastDay.setHours(0, 0, 0, 0);
 
 function sumProps(arrayItem, prop) {
 	let total = 0;

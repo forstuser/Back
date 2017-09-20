@@ -49,6 +49,6 @@ const verifyOTPForUser = function (mobileNo, otp) {
 };
 
 module.exports = {
-	sendOTPToUser: sendOTPToUser,
-	verifyOTPForUser: verifyOTPForUser
+	sendOTPToUser,
+	verifyOTPForUser
 };
