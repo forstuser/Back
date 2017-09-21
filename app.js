@@ -3668,6 +3668,32 @@ models.sequelize.sync().then(() => {
 							});
 						}
 					}
+					if (request.payload.OnlineSellerID != null && request.payload.OnlineSellerID != '') {
+						connection.query('UPDATE table_consumer_bill_details_copies SET seller_ref_id = "' + request.payload.OnlineSellerID + '" WHERE ref_type = 1 and bill_detail_id = "' + request.payload.DetailID + '"', (error, list, fields) => {
+						});
+					}
+
+					if (request.payload.SellerList.length > 0) {
+						const SellerList = request.payload.SellerList;
+						//console.log(SellerList, 'SellerList')
+
+						connection.query('DELETE FROM table_consumer_bill_details_copies WHERE ref_type = 2 and bill_detail_id = "' + request.payload.DetailID + '"', (error, results, fields) => {
+							if (error) throw error;
+
+							SellerList.forEach((elem) => {
+								connection.query('INSERT INTO table_consumer_bill_seller_mapping (bill_detail_id,ref_type,seller_ref_id) VALUES ("' + request.payload.DetailID + '",2,"' + elem + '")', (error, list, fields) => {
+									if (error) throw error;
+								});
+							});
+						});
+						for (let s = 0; s < SellerList.length; s++) {
+							connection.query('INSERT INTO table_consumer_bill_seller_mapping (bill_detail_id,ref_type,seller_ref_id) VALUES ("' + BillDetailID + '",2,"' + SellerList[s] + '")', (error, list, fields) => {
+								if (error) throw error;
+							});
+						}
+					}
+
+
 					if (request.payload.ProductList.length > 0) {
 						const ProductList = request.payload.ProductList;
 						for (let p = 0; p < ProductList.length; p++) {
@@ -3886,6 +3912,8 @@ models.sequelize.sync().then(() => {
 					Taxes: [Joi.string(), Joi.allow(null)],
 					DateofPurchase: [Joi.string(), Joi.allow(null)],
 					BillImage: Joi.array(),
+					OnlineSellerID: [Joi.string(), Joi.allow(null)],
+					SellerList: Joi.array(),
 					ProductList: Joi.array(),
 					output: 'data',
 					parse: true
@@ -3935,14 +3963,33 @@ models.sequelize.sync().then(() => {
 
 											console.log("BILL COPY IDS: ", billCopyIds);
 
+											const notificationIDS = [];
+
 											billCopyIds.forEach((elem, index) => {
 												connection.query('INSERT INTO table_inbox_notification (user_id,notification_type,title,description,status_id,createdAt,updatedAt,bill_id) VALUES ("' + UID + '",2,"Document Rejected","' + Comments + '",4,"' + nowDate + '","' + nowDate + '","' + BID + '")', (error, notification, fields) => {
 													if (error) throw error;
 
+													// console.log("NOTIFSSSSSSSSS");
+													// console.log(notification);
+
+													notificationIDS.push(notification['insertId']);
+
+													// console.log("NOTIFICATION IDS: ", notificationIDS);
+
 													if (index === billCopyIds.length - 1) {
+														notificationIDS.forEach((elem, index) => {
+															connection.query('INSERT INTO table_notification_copies (notification_id,bill_copy_id) VALUES ("' + elem + '","' + billCopyIds[index] + '")', (error, notification, fields) => {
+																if (error) throw error;
+																// const data = '{"statusCode": 100,"error": "","message": "Image Discard successfully."}';
+																// reply(data);
+															});
+														});
+
 														const data = '{"statusCode": 100,"error": "","message": "Job Discard successfully."}';
 														reply(data);
 													}
+
+													console.log(notification);
 
 													// const notificationData = {
 													// 	notificationType: 2,
@@ -3968,6 +4015,9 @@ models.sequelize.sync().then(() => {
 														fileUrl: `bills/${elem}/files`
 													}]
 												};
+
+												console.log("NOTIFICATION: ");
+												console.log(notificationData);
 
 												notifyUser(UID, notificationData);
 											});
@@ -4088,6 +4138,9 @@ models.sequelize.sync().then(() => {
 													fileUrl: `bills/${ImageID}/files`
 												}]
 											};
+
+											console.log("NOTIFICATION: ");
+											console.log(notificationData);
 
 											notifyUser(UID, notificationData);
 										});
