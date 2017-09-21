@@ -386,7 +386,7 @@ class DashboardAdaptor {
 
 						if (metaData.name.toLowerCase().includes('due') && metaData.name.toLowerCase().includes('date') && moment(metaData.value).isValid()) {
 							const dueDateTime = moment(metaData.value);
-							product.dueDate = shared.formatDate(metaData.value, 'dd mmm');
+							product.dueDate = metaData.value;
 							product.dueIn = dueDateTime.diff(moment.utc(), 'days');
 							if (product.masterCatId.toString() === '6') {
 								product.productType = 5;
@@ -405,13 +405,13 @@ class DashboardAdaptor {
 					return product;
 				});
 
-				products = products.filter(item => (item.dueIn !== undefined && item.dueIn !== null) && item.dueIn <= 30 && item.dueIn >= 0);
+				products = products.filter(item => item.consumerBill && ((item.dueIn !== undefined && item.dueIn !== null) && item.dueIn <= 30 && item.dueIn >= 0));
 
 				let amcs = result[1].map((item) => {
 					const amc = item.toJSON();
 					if (moment(amc.expiryDate).isValid()) {
 						const dueDateTime = moment(amc.expiryDate);
-						amc.dueDate = shared.formatDate(amc.expiryDate, 'dd mmm');
+						amc.dueDate = amc.expiryDate;
 						amc.dueIn = dueDateTime.diff(moment.utc(), 'days');
 						amc.productType = 4;
 					}
@@ -424,7 +424,7 @@ class DashboardAdaptor {
 					const insurance = item.toJSON();
 					if (moment(insurance.expiryDate).isValid()) {
 						const dueDateTime = moment(insurance.expiryDate);
-						insurance.dueDate = shared.formatDate(insurance.expiryDate, 'dd mmm');
+						insurance.dueDate = insurance.expiryDate;
 						insurance.dueIn = dueDateTime.diff(moment.utc(), 'days');
 						insurance.productType = 3;
 					}
@@ -437,7 +437,7 @@ class DashboardAdaptor {
 					const warranty = item.toJSON();
 					if (moment(warranty.expiryDate).isValid()) {
 						const dueDateTime = moment(warranty.expiryDate);
-						warranty.dueDate = shared.formatDate(warranty.expiryDate, 'dd mmm');
+						warranty.dueDate = warranty.expiryDate;
 						warranty.dueIn = dueDateTime.diff(moment.utc(), 'days');
 						warranty.productType = 2;
 					}

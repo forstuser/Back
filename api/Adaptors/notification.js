@@ -251,7 +251,7 @@ class NotificationAdaptor {
 					return product;
 				});
 
-				products = products.filter(item => (item.dueIn !== undefined && item.dueIn !== null) && item.dueIn <= 30 && item.dueIn >= 0);
+				products = products.filter(item => item.consumerBill && ((item.dueIn !== undefined && item.dueIn !== null) && item.dueIn <= 30 && item.dueIn >= 0));
 				let amcs = result[1].map((item) => {
 					const amc = item.toJSON();
 					if (moment(amc.expiryDate).isValid()) {
