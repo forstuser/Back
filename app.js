@@ -12,7 +12,7 @@ const fs = require("fs");
 const path = require("path");
 // Create a server with a host and port
 const server = new Hapi.Server();
-
+const Bluebird = require('bluebird');
 const options = config.DATABASE;
 const PORT = config.APP.PORT;
 
@@ -48,6 +48,8 @@ server.start((err) => {
 	console.log(`Server running at: ${server.info.uri}`);
 });
 connection.connect();
+
+Bluebird.promisifyAll(connection);
 
 function random(howMany, chars) {
 	chars = chars
@@ -2890,6 +2892,8 @@ models.sequelize.sync().then(() => {
 		method: 'POST',
 		path: '/Services/QEAssignedCE',
 		handler: (request, reply) => {
+			console.log("REQUEST PAYLOAD: ");
+			console.log(request.payload);
 			const TokenNo = request.payload.TokenNo;
 			const UID = request.payload.UID;
 			const BID = request.payload.BID;
@@ -3246,6 +3250,8 @@ models.sequelize.sync().then(() => {
 		method: 'POST',
 		path: '/Services/AddConsumerBill',
 		handler: (request, reply) => {
+			console.log("REQUEST PAYLOAD: ");
+			console.log(request.payload);
 			const TokenNo = request.payload.TokenNo;
 			const BillID = request.payload.BillID;
 			const BillUserID = request.payload.UserID;
@@ -3649,9 +3655,14 @@ models.sequelize.sync().then(() => {
 		method: 'POST',
 		path: '/Services/EditConsumerBill',
 		handler: (request, reply) => {
+			console.log("REQUEST PAYLOAD: ");
+			console.log(request.payload);
 			const TokenNo = request.payload.TokenNo;
 			const BillID = request.payload.BillID;
 			const UserID = request.payload.UserID;
+			const BillUserID = request.payload.UserID;
+			const BillDetailID = request.payload.DetailID;
+
 			connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', (error, token, fields) => {
 				if (error) throw error;
 				if (token.length > 0) {
@@ -3668,7 +3679,7 @@ models.sequelize.sync().then(() => {
 							});
 						}
 					}
-					if (request.payload.OnlineSellerID != null && request.payload.OnlineSellerID != '') {
+					if (request.payload.OnlineSellerID && request.payload.OnlineSellerID != '') {
 						connection.query('UPDATE table_consumer_bill_details_copies SET seller_ref_id = "' + request.payload.OnlineSellerID + '" WHERE ref_type = 1 and bill_detail_id = "' + request.payload.DetailID + '"', (error, list, fields) => {
 						});
 					}
@@ -3697,191 +3708,338 @@ models.sequelize.sync().then(() => {
 					if (request.payload.ProductList.length > 0) {
 						const ProductList = request.payload.ProductList;
 						for (let p = 0; p < ProductList.length; p++) {
+
 							const ProductForm = ProductList[p].ProductForm;
 							const InsuranceList = ProductList[p].InsuranceList;
 							const WarrantyList = ProductList[p].WarrantyList;
 							const AMCList = ProductList[p].AMCList;
 							const RepairList = ProductList[p].RepairList;
-							connection.query('UPDATE table_consumer_bill_products SET product_name = "' + ProductList[p].ProductName + '",master_category_id = "' + ProductList[p].MasterCatID + '",category_id = "' + ProductList[p].CatID + '",brand_id = "' + ProductList[p].BrandID + '",color_id = "' + ProductList[p].ColorID + '",value_of_purchase = "' + ProductList[p].Value + '",taxes = "' + ProductList[p].Taxes + '",tag = "' + ProductList[p].Tag + '" WHERE bill_product_id = "' + ProductList[p].ProductID + '"', (error, product, fields) => {
-								if (error) throw error;
-							});
-							if (ProductForm.length > 0) {
-								connection.query('DELETE FROM table_consumer_bill_product_meta_data WHERE bill_product_id="' + request.payload.DetailID + '"', (error, results, fields) => {
+							if (ProductList[p].ProductID !== null && ProductList[p].ProductID !== undefined) {
+								connection.query('UPDATE table_consumer_bill_products SET product_name = "' + ProductList[p].ProductName + '",master_category_id = "' + ProductList[p].MasterCatID + '",category_id = "' + ProductList[p].CatID + '",brand_id = "' + ProductList[p].BrandID + '",color_id = "' + ProductList[p].ColorID + '",value_of_purchase = "' + ProductList[p].Value + '",taxes = "' + ProductList[p].Taxes + '",tag = "' + ProductList[p].Tag + '" WHERE bill_product_id = "' + ProductList[p].ProductID + '"', (error, product, fields) => {
 									if (error) throw error;
 								});
-								for (var i = 0; i < ProductForm.length; i++) {
-									connection.query('INSERT INTO table_consumer_bill_product_meta_data (bill_product_id,category_form_id,form_element_value) VALUES ("' + ProductList[p].ProductName + '","' + ProductForm[i].CatFormID + '","' + ProductForm[i].value + '")', (error, detail, fields) => {
-									});
-								}
-							}
-							// Update Insurance
-							if (InsuranceList.length > 0) {
-								for (var i = 0; i < InsuranceList.length; i++) {
-									const Insurance = InsuranceList[i];
-									//var InsuranceSellerInfo = InsuranceList[i].SellerInfo;
-									const InsuranceInclusions = InsuranceList[i].Inclusions;
-									const InsuranceExclusions = InsuranceList[i].Exclusions;
-									const InsuranceImage = InsuranceList[i].InsuranceImage;
-									if (InsuranceList[i].BrandID != null && InsuranceList[i].BrandID != '') {
-										var SellerType = 1;
-										var SellerID = InsuranceList[i].BrandID;
-									} else {
-										var SellerType = 2;
-										var SellerID = InsuranceList[i].SellerInfo;
-									}
-									connection.query('UPDATE table_consumer_bill_insurance SET seller_type = "' + SellerType + '",seller_id = "' + SellerID + '",insurance_plan = "' + InsuranceList[i].Plan + '",policy_number = "' + InsuranceList[i].PolicyNo + '",amount_insured = "' + InsuranceList[i].AmountInsured + '",premium_type = "' + InsuranceList[i].PremiumType + '",premium_amount = "' + InsuranceList[i].PremiumAmount + '",policy_effective_date = "' + InsuranceList[i].PolicyEffectiveDate + '",policy_expiry_date = "' + InsuranceList[i].PolicyExpiryDate + '" WHERE bill_insurance_id = "' + InsuranceList[i].InsuranceID + '" ', (error, insurance, fields) => {
+								if (ProductForm.length > 0) {
+									connection.query('DELETE FROM table_consumer_bill_product_meta_data WHERE bill_product_id="' + request.payload.DetailID + '"', (error, results, fields) => {
 										if (error) throw error;
 									});
-									const InsuranceID = InsuranceList[i].InsuranceID;
-									if (InsuranceImage.length > 0) {
-										connection.query('DELETE FROM table_consumer_bill_insurance_copies WHERE bill_insurance_id="' + InsuranceID + '"', (error, results, fields) => {
+									for (var i = 0; i < ProductForm.length; i++) {
+										connection.query('INSERT INTO table_consumer_bill_product_meta_data (bill_product_id,category_form_id,form_element_value) VALUES ("' + ProductList[p].ProductName + '","' + ProductForm[i].CatFormID + '","' + ProductForm[i].value + '")', (error, detail, fields) => {
+										});
+									}
+								}
+								// Update Insurance
+								if (InsuranceList.length > 0) {
+									for (var i = 0; i < InsuranceList.length; i++) {
+										const Insurance = InsuranceList[i];
+										//var InsuranceSellerInfo = InsuranceList[i].SellerInfo;
+										const InsuranceInclusions = InsuranceList[i].Inclusions;
+										const InsuranceExclusions = InsuranceList[i].Exclusions;
+										const InsuranceImage = InsuranceList[i].InsuranceImage;
+										if (InsuranceList[i].BrandID != null && InsuranceList[i].BrandID != '') {
+											var SellerType = 1;
+											var SellerID = InsuranceList[i].BrandID;
+										} else {
+											var SellerType = 2;
+											var SellerID = InsuranceList[i].SellerInfo;
+										}
+										connection.query('UPDATE table_consumer_bill_insurance SET seller_type = "' + SellerType + '",seller_id = "' + SellerID + '",insurance_plan = "' + InsuranceList[i].Plan + '",policy_number = "' + InsuranceList[i].PolicyNo + '",amount_insured = "' + InsuranceList[i].AmountInsured + '",premium_type = "' + InsuranceList[i].PremiumType + '",premium_amount = "' + InsuranceList[i].PremiumAmount + '",policy_effective_date = "' + InsuranceList[i].PolicyEffectiveDate + '",policy_expiry_date = "' + InsuranceList[i].PolicyExpiryDate + '" WHERE bill_insurance_id = "' + InsuranceList[i].InsuranceID + '" ', (error, insurance, fields) => {
 											if (error) throw error;
 										});
-										for (var i = 0; i < InsuranceImage.length; i++) {
-											connection.query('INSERT INTO table_consumer_bill_insurance_copies (bill_insurance_id,bill_copy_id) VALUES ("' + InsuranceID + '","' + InsuranceImage[i] + '")', (error, list, fields) => {
+										const InsuranceID = InsuranceList[i].InsuranceID;
+										if (InsuranceImage.length > 0) {
+											connection.query('DELETE FROM table_consumer_bill_insurance_copies WHERE bill_insurance_id="' + InsuranceID + '"', (error, results, fields) => {
+												if (error) throw error;
 											});
+											for (var i = 0; i < InsuranceImage.length; i++) {
+												connection.query('INSERT INTO table_consumer_bill_insurance_copies (bill_insurance_id,bill_copy_id) VALUES ("' + InsuranceID + '","' + InsuranceImage[i] + '")', (error, list, fields) => {
+												});
+											}
 										}
-									}
-									if (InsuranceInclusions.length > 0) {
-										connection.query('DELETE FROM table_consumer_bill_insurance_inclusions WHERE bill_insurance_id="' + InsuranceID + '"', (error, results, fields) => {
-											if (error) throw error;
-										});
-										for (var i = 0; i < InsuranceInclusions.length; i++) {
-											connection.query('INSERT INTO table_consumer_bill_insurance_inclusions (bill_insurance_id,inclusions_id) VALUES ("' + InsuranceID + '","' + InsuranceInclusions[i] + '")', (error, list, fields) => {
+										if (InsuranceInclusions.length > 0) {
+											connection.query('DELETE FROM table_consumer_bill_insurance_inclusions WHERE bill_insurance_id="' + InsuranceID + '"', (error, results, fields) => {
+												if (error) throw error;
 											});
+											for (var i = 0; i < InsuranceInclusions.length; i++) {
+												connection.query('INSERT INTO table_consumer_bill_insurance_inclusions (bill_insurance_id,inclusions_id) VALUES ("' + InsuranceID + '","' + InsuranceInclusions[i] + '")', (error, list, fields) => {
+												});
+											}
 										}
-									}
-									if (InsuranceExclusions.length > 0) {
-										connection.query('DELETE FROM table_consumer_bill_insurance_exclusions WHERE bill_insurance_id="' + InsuranceID + '"', (error, results, fields) => {
-											if (error) throw error;
-										});
-										for (var i = 0; i < InsuranceExclusions.length; i++) {
-											connection.query('INSERT INTO table_consumer_bill_insurance_exclusions (bill_insurance_id,exclusions_id) VALUES ("' + InsuranceID + '","' + InsuranceExclusions[i] + '")', (error, list, fields) => {
+										if (InsuranceExclusions.length > 0) {
+											connection.query('DELETE FROM table_consumer_bill_insurance_exclusions WHERE bill_insurance_id="' + InsuranceID + '"', (error, results, fields) => {
+												if (error) throw error;
 											});
+											for (var i = 0; i < InsuranceExclusions.length; i++) {
+												connection.query('INSERT INTO table_consumer_bill_insurance_exclusions (bill_insurance_id,exclusions_id) VALUES ("' + InsuranceID + '","' + InsuranceExclusions[i] + '")', (error, list, fields) => {
+												});
+											}
 										}
-									}
 
-								}
-							}
-							//Update Warranty
-							if (WarrantyList.length > 0) {
-								for (let w = 0; w < WarrantyList.length; w++) {
-									const Warranty = WarrantyList[w];
-									const WarrantySellerInfo = WarrantyList[w].SellerInfo;
-									const WarrantyInclusions = WarrantyList[w].Inclusions;
-									const WarrantyExclusions = WarrantyList[w].Exclusions;
-									const WarrantyImage = WarrantyList[w].WarrantyImage;
-									if (WarrantyList[w].BrandID != null && WarrantyList[w].BrandID != '') {
-										var SellerType = 1;
-										var SellerID = WarrantyList[w].BrandID;
-									} else {
-										var SellerType = 2;
-										var SellerID = WarrantyList[w].SellerInfo;
-									}
-									connection.query('UPDATE table_consumer_bill_warranty SET seller_type = "' + SellerType + '",seller_id = "' + SellerID + '",warranty_type = "' + WarrantyList[w].WarrantyType + '",policy_number = "' + WarrantyList[w].PolicyNo + '",premium_type = "' + WarrantyList[w].PremiumType + '",premium_amount = "' + WarrantyList[w].PremiumAmount + '",policy_effective_date = "' + WarrantyList[w].PolicyEffectiveDate + '",policy_expiry_date = "' + WarrantyList[w].PolicyExpiryDate + '" WHERE bill_warranty_id = "' + WarrantyList[w].WarrantyID + '" ', (error, warranty, fields) => {
-										if (error) throw error;
-									});
-									if (WarrantyImage.length > 0) {
-										connection.query('DELETE FROM table_consumer_bill_warranty_copies WHERE bill_warranty_id="' + WarrantyList[w].WarrantyID + '"', (error, results, fields) => {
-											if (error) throw error;
-										});
-										for (var i = 0; i < WarrantyImage.length; i++) {
-											connection.query('INSERT INTO table_consumer_bill_warranty_copies (bill_warranty_id,bill_copy_id) VALUES ("' + WarrantyList[w].WarrantyID + '","' + WarrantyImage[i] + '")', (error, list, fields) => {
-											});
-										}
-									}
-									if (WarrantyInclusions.length > 0) {
-										connection.query('DELETE FROM table_consumer_bill_warranty_inclusions WHERE bill_warranty_id="' + WarrantyList[w].WarrantyID + '"', (error, results, fields) => {
-											if (error) throw error;
-										});
-										for (var i = 0; i < WarrantyInclusions.length; i++) {
-											connection.query('INSERT INTO table_consumer_bill_warranty_inclusions ( bill_warranty_id,inclusions_id) VALUES ("' + WarrantyList[w].WarrantyID + '","' + WarrantyInclusions[i] + '")', (error, list, fields) => {
-											});
-										}
-									}
-									if (WarrantyExclusions.length > 0) {
-										connection.query('DELETE FROM table_consumer_bill_warranty_exclusions WHERE bill_warranty_id="' + WarrantyList[w].WarrantyID + '"', (error, results, fields) => {
-											if (error) throw error;
-										});
-										for (var i = 0; i < WarrantyExclusions.length; i++) {
-											connection.query('INSERT INTO table_consumer_bill_warranty_exclusions (bill_warranty_id,exclusions_id) VALUES ("' + WarrantyList[w].WarrantyID + '","' + WarrantyExclusions[i] + '")', (error, list, fields) => {
-											});
-										}
 									}
 								}
-							}
-							//Update AMC
-							if (AMCList.length > 0) {
-								for (let a = 0; a < AMCList.length; a++) {
-									const AMC = AMCList[a];
-									const AMCSellerInfo = AMCList[a].SellerInfo;
-									const AMCInclusions = AMCList[a].Inclusions;
-									const AMCExclusions = AMCList[a].Exclusions;
-									const AMCImage = AMCList[a].AMCImage;
+								//Update Warranty
+								if (WarrantyList.length > 0) {
+									for (let w = 0; w < WarrantyList.length; w++) {
+										const Warranty = WarrantyList[w];
+										const WarrantySellerInfo = WarrantyList[w].SellerInfo;
+										const WarrantyInclusions = WarrantyList[w].Inclusions;
+										const WarrantyExclusions = WarrantyList[w].Exclusions;
+										const WarrantyImage = WarrantyList[w].WarrantyImage;
+										if (WarrantyList[w].BrandID != null && WarrantyList[w].BrandID != '') {
+											var SellerType = 1;
+											var SellerID = WarrantyList[w].BrandID;
+										} else {
+											var SellerType = 2;
+											var SellerID = WarrantyList[w].SellerInfo;
+										}
+										connection.query('UPDATE table_consumer_bill_warranty SET seller_type = "' + SellerType + '",seller_id = "' + SellerID + '",warranty_type = "' + WarrantyList[w].WarrantyType + '",policy_number = "' + WarrantyList[w].PolicyNo + '",premium_type = "' + WarrantyList[w].PremiumType + '",premium_amount = "' + WarrantyList[w].PremiumAmount + '",policy_effective_date = "' + WarrantyList[w].PolicyEffectiveDate + '",policy_expiry_date = "' + WarrantyList[w].PolicyExpiryDate + '" WHERE bill_warranty_id = "' + WarrantyList[w].WarrantyID + '" ', (error, warranty, fields) => {
+											if (error) throw error;
+										});
+										if (WarrantyImage.length > 0) {
+											connection.query('DELETE FROM table_consumer_bill_warranty_copies WHERE bill_warranty_id="' + WarrantyList[w].WarrantyID + '"', (error, results, fields) => {
+												if (error) throw error;
+											});
+											for (var i = 0; i < WarrantyImage.length; i++) {
+												connection.query('INSERT INTO table_consumer_bill_warranty_copies (bill_warranty_id,bill_copy_id) VALUES ("' + WarrantyList[w].WarrantyID + '","' + WarrantyImage[i] + '")', (error, list, fields) => {
+												});
+											}
+										}
+										if (WarrantyInclusions.length > 0) {
+											connection.query('DELETE FROM table_consumer_bill_warranty_inclusions WHERE bill_warranty_id="' + WarrantyList[w].WarrantyID + '"', (error, results, fields) => {
+												if (error) throw error;
+											});
+											for (var i = 0; i < WarrantyInclusions.length; i++) {
+												connection.query('INSERT INTO table_consumer_bill_warranty_inclusions ( bill_warranty_id,inclusions_id) VALUES ("' + WarrantyList[w].WarrantyID + '","' + WarrantyInclusions[i] + '")', (error, list, fields) => {
+												});
+											}
+										}
+										if (WarrantyExclusions.length > 0) {
+											connection.query('DELETE FROM table_consumer_bill_warranty_exclusions WHERE bill_warranty_id="' + WarrantyList[w].WarrantyID + '"', (error, results, fields) => {
+												if (error) throw error;
+											});
+											for (var i = 0; i < WarrantyExclusions.length; i++) {
+												connection.query('INSERT INTO table_consumer_bill_warranty_exclusions (bill_warranty_id,exclusions_id) VALUES ("' + WarrantyList[w].WarrantyID + '","' + WarrantyExclusions[i] + '")', (error, list, fields) => {
+												});
+											}
+										}
+									}
+								}
+								//Update AMC
+								if (AMCList.length > 0) {
+									for (let a = 0; a < AMCList.length; a++) {
+										const AMC = AMCList[a];
+										const AMCSellerInfo = AMCList[a].SellerInfo;
+										const AMCInclusions = AMCList[a].Inclusions;
+										const AMCExclusions = AMCList[a].Exclusions;
+										const AMCImage = AMCList[a].AMCImage;
 
-									if (AMCList[a].BrandID != null && AMCList[a].BrandID != '') {
-										var SellerType = 1;
-										var SellerID = AMCList[a].BrandID;
-									} else {
-										var SellerType = 2;
-										var SellerID = AMCList[a].SellerInfo;
-									}
-									connection.query('UPDATE table_consumer_bill_amc SET seller_type = "' + SellerType + '",seller_id = "' + SellerID + '",policy_number = "' + AMCList[a].PolicyNo + '",premium_type = "' + AMCList[a].PremiumType + '",premium_amount = "' + AMCList[a].PremiumAmount + '",policy_effective_date = "' + AMCList[a].PolicyEffectiveDate + '",policy_expiry_date = "' + AMCList[a].PolicyExpiryDate + '" WHERE bill_amc_id = "' + AMCList[a].AmcID + '" ', (error, amc, fields) => {
-										if (error) throw error;
-									});
-									if (AMCImage.length > 0) {
-										connection.query('DELETE FROM table_consumer_bill_amc_copies WHERE bill_amc_id = "' + AMCList[a].AmcID + '"', (error, results, fields) => {
-											if (error) throw error;
-										});
-										for (var i = 0; i < AMCImage.length; i++) {
-											connection.query('INSERT INTO table_consumer_bill_amc_copies (bill_amc_id,bill_copy_id) VALUES ("' + AMCList[a].AmcID + '","' + AMCImage[i] + '")', (error, list, fields) => {
-											});
+										if (AMCList[a].BrandID != null && AMCList[a].BrandID != '') {
+											var SellerType = 1;
+											var SellerID = AMCList[a].BrandID;
+										} else {
+											var SellerType = 2;
+											var SellerID = AMCList[a].SellerInfo;
 										}
-									}
-									if (AMCInclusions.length > 0) {
-										connection.query('DELETE FROM table_consumer_bill_amc_inclusions WHERE bill_amc_id = "' + AMCList[a].AmcID + '"', (error, results, fields) => {
+										connection.query('UPDATE table_consumer_bill_amc SET seller_type = "' + SellerType + '",seller_id = "' + SellerID + '",policy_number = "' + AMCList[a].PolicyNo + '",premium_type = "' + AMCList[a].PremiumType + '",premium_amount = "' + AMCList[a].PremiumAmount + '",policy_effective_date = "' + AMCList[a].PolicyEffectiveDate + '",policy_expiry_date = "' + AMCList[a].PolicyExpiryDate + '" WHERE bill_amc_id = "' + AMCList[a].AmcID + '" ', (error, amc, fields) => {
 											if (error) throw error;
 										});
-										for (var i = 0; i < AMCInclusions.length; i++) {
-											connection.query('INSERT INTO table_consumer_bill_amc_inclusions (bill_amc_id,inclusions_id) VALUES ("' + AMCList[a].AmcID + '","' + AMCInclusions[i] + '")', (error, list, fields) => {
+										if (AMCImage.length > 0) {
+											connection.query('DELETE FROM table_consumer_bill_amc_copies WHERE bill_amc_id = "' + AMCList[a].AmcID + '"', (error, results, fields) => {
+												if (error) throw error;
 											});
+											for (var i = 0; i < AMCImage.length; i++) {
+												connection.query('INSERT INTO table_consumer_bill_amc_copies (bill_amc_id,bill_copy_id) VALUES ("' + AMCList[a].AmcID + '","' + AMCImage[i] + '")', (error, list, fields) => {
+												});
+											}
 										}
-									}
-									if (AMCInclusions.length > 0) {
-										connection.query('DELETE FROM table_consumer_bill_amc_exclusions WHERE bill_amc_id = "' + AMCList[a].AmcID + '"', (error, results, fields) => {
-											if (error) throw error;
-										});
-										for (var i = 0; i < AMCInclusions.length; i++) {
-											connection.query('INSERT INTO table_consumer_bill_amc_exclusions (bill_amc_id,exclusions_id) VALUES ("' + AMCList[a].AmcID + '","' + AMCExclusions[i] + '")', (error, list, fields) => {
+										if (AMCInclusions.length > 0) {
+											connection.query('DELETE FROM table_consumer_bill_amc_inclusions WHERE bill_amc_id = "' + AMCList[a].AmcID + '"', (error, results, fields) => {
+												if (error) throw error;
 											});
+											for (var i = 0; i < AMCInclusions.length; i++) {
+												connection.query('INSERT INTO table_consumer_bill_amc_inclusions (bill_amc_id,inclusions_id) VALUES ("' + AMCList[a].AmcID + '","' + AMCInclusions[i] + '")', (error, list, fields) => {
+												});
+											}
 										}
-									}
-								}
-							}
-							//Update Repair
-							if (RepairList.length > 0) {
-								for (let r = 0; r < RepairList.length; r++) {
-									const RepairImage = RepairList[r].RepairImage;
-									if (RepairList[r].BrandID != null && RepairList[r].BrandID != '') {
-										var SellerType = 1;
-										var SellerID = RepairList[r].BrandID;
-									} else {
-										var SellerType = 2;
-										var SellerID = RepairList[r].SellerInfo;
-									}
-									connection.query('UPDATE table_consumer_bill_repair SET seller_type = "' + SellerType + '",seller_id = "' + SellerID + '",value_of_repair = "' + RepairList[r].RepairValue + '",taxes = "' + RepairList[r].Taxes + '",repair_invoice_number = "' + RepairList[r].RepairInvoiceNumber + '",repair_date = "' + RepairList[r].RepairDate + '" WHERE bill_repair_id = "' + RepairList[r].RepairID + '" ', (error, repair, fields) => {
-										if (error) throw error;
-									});
-									if (RepairImage.length > 0) {
-										connection.query('DELETE FROM table_consumer_bill_repair_copies WHERE bill_repair_id = "' + RepairList[r].RepairID + '"', (error, results, fields) => {
-											if (error) throw error;
-										});
-										for (var i = 0; i < RepairImage.length; i++) {
-											connection.query('INSERT INTO table_consumer_bill_repair_copies (bill_repair_id,bill_copy_id) VALUES ("' + RepairList[r].RepairID + '","' + RepairImage[i] + '")', (error, list, fields) => {
+										if (AMCInclusions.length > 0) {
+											connection.query('DELETE FROM table_consumer_bill_amc_exclusions WHERE bill_amc_id = "' + AMCList[a].AmcID + '"', (error, results, fields) => {
+												if (error) throw error;
 											});
+											for (var i = 0; i < AMCInclusions.length; i++) {
+												connection.query('INSERT INTO table_consumer_bill_amc_exclusions (bill_amc_id,exclusions_id) VALUES ("' + AMCList[a].AmcID + '","' + AMCExclusions[i] + '")', (error, list, fields) => {
+												});
+											}
 										}
 									}
 								}
+								//Update Repair
+								if (RepairList.length > 0) {
+									for (let r = 0; r < RepairList.length; r++) {
+										const RepairImage = RepairList[r].RepairImage;
+										if (RepairList[r].BrandID != null && RepairList[r].BrandID != '') {
+											var SellerType = 1;
+											var SellerID = RepairList[r].BrandID;
+										} else {
+											var SellerType = 2;
+											var SellerID = RepairList[r].SellerInfo;
+										}
+										connection.query('UPDATE table_consumer_bill_repair SET seller_type = "' + SellerType + '",seller_id = "' + SellerID + '",value_of_repair = "' + RepairList[r].RepairValue + '",taxes = "' + RepairList[r].Taxes + '",repair_invoice_number = "' + RepairList[r].RepairInvoiceNumber + '",repair_date = "' + RepairList[r].RepairDate + '" WHERE bill_repair_id = "' + RepairList[r].RepairID + '" ', (error, repair, fields) => {
+											if (error) throw error;
+										});
+										if (RepairImage.length > 0) {
+											connection.query('DELETE FROM table_consumer_bill_repair_copies WHERE bill_repair_id = "' + RepairList[r].RepairID + '"', (error, results, fields) => {
+												if (error) throw error;
+											});
+											for (var i = 0; i < RepairImage.length; i++) {
+												connection.query('INSERT INTO table_consumer_bill_repair_copies (bill_repair_id,bill_copy_id) VALUES ("' + RepairList[r].RepairID + '","' + RepairImage[i] + '")', (error, list, fields) => {
+												});
+											}
+										}
+									}
+								}
+							} else {
+								connection.query('INSERT INTO table_consumer_bill_products (bill_detail_id,user_id,product_name,master_category_id,category_id,brand_id,color_id,value_of_purchase,taxes,tag,status_id) VALUES ("' + BillDetailID + '","' + BillUserID + '","' + ProductList[p].ProductName + '","' + ProductList[p].MasterCatID + '","' + ProductList[p].CatID + '","' + ProductList[p].BrandID + '","' + ProductList[p].ColorID + '","' + ProductList[p].Value + '","' + ProductList[p].Taxes + '","' + ProductList[p].Tag + '",1)', (error, product, fields) => {
+									if (error) throw error;
+									const ProductID = product['insertId'];
+									/* connection.query('INSERT INTO table_consumer_bill_mapping (bill_id,bill_ref_type,ref_id) VALUES ("'+BillID+'",2,"'+ProductID+'")', function (error, list, fields) {
+                              });*/
+									if (ProductForm.length > 0) {
+										for (var i = 0; i < ProductForm.length; i++) {
+											connection.query('INSERT INTO table_consumer_bill_product_meta_data (bill_product_id,category_form_id,form_element_value) VALUES ("' + product['insertId'] + '","' + ProductForm[i].CatFormID + '","' + ProductForm[i].value + '")', (error, detail, fields) => {
+											});
+										}
+									}
+									// Add Insurance
+									if (InsuranceList.length > 0) {
+										for (var i = 0; i < InsuranceList.length; i++) {
+											const Insurance = InsuranceList[i];
+											const InsuranceSellerInfo = InsuranceList[i].SellerInfo;
+											const InsuranceInclusions = InsuranceList[i].Inclusions;
+											const InsuranceExclusions = InsuranceList[i].Exclusions;
+											const InsuranceImage = InsuranceList[i].InsuranceImage;
+											if (InsuranceList[i].BrandID != null && InsuranceList[i].BrandID != '') {
+												var SellerType = 1;
+												var SellerID = InsuranceList[i].BrandID;
+											} else {
+												var SellerType = 2;
+												var SellerID = InsuranceList[i].SellerInfo;
+											}
+											connection.query('INSERT INTO table_consumer_bill_insurance (user_id,bill_product_id,seller_type,seller_id,insurance_plan,policy_number,amount_insured,premium_type,premium_amount,policy_effective_date,policy_expiry_date,status_id) VALUES ("' + BillUserID + '","' + ProductID + '","' + SellerType + '","' + SellerID + '","' + InsuranceList[i].Plan + '","' + InsuranceList[i].PolicyNo + '","' + InsuranceList[i].AmountInsured + '","' + InsuranceList[i].PremiumType + '","' + InsuranceList[i].PremiumAmount + '","' + InsuranceList[i].PolicyEffectiveDate + '","' + InsuranceList[i].PolicyExpiryDate + '",1)', (error, insurance, fields) => {
+												if (InsuranceImage.length > 0) {
+													for (var i = 0; i < InsuranceImage.length; i++) {
+														connection.query('INSERT INTO table_consumer_bill_insurance_copies (bill_insurance_id,bill_copy_id) VALUES ("' + insurance['insertId'] + '","' + InsuranceImage[i] + '")', (error, list, fields) => {
+														});
+													}
+												}
+												if (InsuranceInclusions.length > 0) {
+													for (var i = 0; i < InsuranceInclusions.length; i++) {
+														connection.query('INSERT INTO table_consumer_bill_insurance_inclusions (bill_insurance_id,inclusions_id) VALUES ("' + insurance['insertId'] + '","' + InsuranceInclusions[i] + '")', (error, list, fields) => {
+														});
+													}
+												}
+												if (InsuranceExclusions.length > 0) {
+													for (var i = 0; i < InsuranceExclusions.length; i++) {
+														connection.query('INSERT INTO table_consumer_bill_insurance_exclusions (bill_insurance_id,exclusions_id) VALUES ("' + insurance['insertId'] + '","' + InsuranceExclusions[i] + '")', (error, list, fields) => {
+														});
+													}
+												}
+											});
+										}
+									}                                //Add Warranty
+									if (WarrantyList.length > 0) {
+										for (let w = 0; w < WarrantyList.length; w++) {
+											const Warranty = WarrantyList[w];
+											const WarrantySellerInfo = WarrantyList[w].SellerInfo;
+											const WarrantyInclusions = WarrantyList[w].Inclusions;
+											const WarrantyExclusions = WarrantyList[w].Exclusions;
+											const WarrantyImage = WarrantyList[w].WarrantyImage;
+											if (WarrantyList[w].BrandID != null && WarrantyList[w].BrandID != '') {
+												var SellerType = 1;
+												var SellerID = WarrantyList[w].BrandID;
+											} else {
+												var SellerType = 2;
+												var SellerID = WarrantyList[w].SellerInfo;
+											}
+											connection.query('INSERT INTO table_consumer_bill_warranty (user_id,bill_product_id,seller_type,seller_id,warranty_type,policy_number,premium_type,premium_amount,policy_effective_date,policy_expiry_date,status_id) VALUES ("' + BillUserID + '","' + ProductID + '","' + SellerType + '","' + SellerID + '","' + WarrantyList[w].WarrantyType + '","' + WarrantyList[w].PolicyNo + '","' + WarrantyList[w].PremiumType + '","' + WarrantyList[w].PremiumAmount + '","' + WarrantyList[w].PolicyEffectiveDate + '","' + WarrantyList[w].PolicyExpiryDate + '",1)', (error, warranty, fields) => {
+												if (WarrantyImage.length > 0) {
+													for (var i = 0; i < WarrantyImage.length; i++) {
+														connection.query('INSERT INTO table_consumer_bill_warranty_copies (bill_warranty_id,bill_copy_id) VALUES ("' + warranty['insertId'] + '","' + WarrantyImage[i] + '")', (error, list, fields) => {
+														});
+													}
+												}
+												if (WarrantyInclusions.length > 0) {
+													for (var i = 0; i < WarrantyInclusions.length; i++) {
+														connection.query('INSERT INTO table_consumer_bill_warranty_inclusions ( bill_warranty_id,inclusions_id) VALUES ("' + warranty['insertId'] + '","' + WarrantyInclusions[i] + '")', (error, list, fields) => {
+														});
+													}
+												}
+												if (WarrantyExclusions.length > 0) {
+													for (var i = 0; i < WarrantyExclusions.length; i++) {
+														connection.query('INSERT INTO table_consumer_bill_warranty_exclusions (bill_warranty_id,exclusions_id) VALUES ("' + warranty['insertId'] + '","' + WarrantyExclusions[i] + '")', (error, list, fields) => {
+														});
+													}
+												}
+											});
+										}
+									}
+									//Add AMC
+									if (AMCList.length > 0) {
+										for (let a = 0; a < AMCList.length; a++) {
+											const AMC = AMCList[a];
+											const AMCSellerInfo = AMCList[a].SellerInfo;
+											const AMCInclusions = AMCList[a].Inclusions;
+											const AMCExclusions = AMCList[a].Exclusions;
+											const AMCImage = AMCList[a].AMCImage;
+											if (AMCList[a].BrandID != null && AMCList[a].BrandID != '') {
+												var SellerType = 1;
+												var SellerID = AMCList[a].BrandID;
+											} else {
+												var SellerType = 2;
+												var SellerID = AMCList[a].SellerInfo;
+											}
+											connection.query('INSERT INTO table_consumer_bill_amc (user_id,bill_product_id,seller_type,seller_id,policy_number,premium_type,premium_amount,policy_effective_date,policy_expiry_date,status_id) VALUES ("' + BillUserID + '","' + ProductID + '","' + SellerType + '","' + SellerID + '","' + AMCList[a].PolicyNo + '","' + AMCList[a].PremiumType + '","' + AMCList[a].PremiumAmount + '","' + AMCList[a].PolicyEffectiveDate + '","' + AMCList[a].PolicyExpiryDate + '",1)', (error, amc, fields) => {
+												if (AMCImage.length > 0) {
+													for (var i = 0; i < AMCImage.length; i++) {
+														connection.query('INSERT INTO table_consumer_bill_amc_copies (bill_amc_id,bill_copy_id) VALUES ("' + amc['insertId'] + '","' + AMCImage[i] + '")', (error, list, fields) => {
+														});
+													}
+												}
+												if (AMCInclusions.length > 0) {
+													for (var i = 0; i < AMCInclusions.length; i++) {
+														connection.query('INSERT INTO table_consumer_bill_amc_inclusions (bill_amc_id,inclusions_id) VALUES ("' + amc['insertId'] + '","' + AMCInclusions[i] + '")', (error, list, fields) => {
+														});
+													}
+												}
+												if (AMCInclusions.length > 0) {
+													for (var i = 0; i < AMCInclusions.length; i++) {
+														connection.query('INSERT INTO table_consumer_bill_amc_exclusions (bill_amc_id,exclusions_id) VALUES ("' + amc['insertId'] + '","' + AMCExclusions[i] + '")', (error, list, fields) => {
+														});
+													}
+												}
+											});
+										}
+									}
+									//Add Repair
+									if (RepairList.length > 0) {
+										for (let r = 0; r < RepairList.length; r++) {
+											const RepairImage = RepairList[r].RepairImage;
+											if (RepairList[r].BrandID != null && RepairList[r].BrandID != '') {
+												var SellerType = 1;
+												var SellerID = RepairList[r].BrandID;
+											} else {
+												var SellerType = 2;
+												var SellerID = RepairList[r].SellerInfo;
+											}
+											connection.query('INSERT INTO table_consumer_bill_repair (user_id,bill_product_id,seller_type,seller_id,value_of_repair,taxes,repair_invoice_number,repair_date,status_id) VALUES ("' + BillUserID + '","' + ProductID + '","' + SellerType + '","' + SellerID + '","' + RepairList[r].RepairValue + '","' + RepairList[r].Taxes + '","' + RepairList[r].RepairInvoiceNumber + '","' + RepairList[r].RepairDate + '",1)', (error, repair, fields) => {
+												if (RepairImage.length > 0) {
+													for (let i = 0; i < RepairImage.length; i++) {
+														connection.query('INSERT INTO table_consumer_bill_repair_copies (bill_repair_id,bill_copy_id) VALUES ("' + repair['insertId'] + '","' + RepairImage[i] + '")', (error, list, fields) => {
+														});
+													}
+												}
+											});
+										}
+									}
+								});
 							}
 						}
 					}
