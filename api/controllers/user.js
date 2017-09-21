@@ -217,6 +217,8 @@ class UserController {
 	}
 
 	static validateOTP(request, reply) {
+		console.log("REQUEST PAYLOAD FOR VALIDATE OTP: ");
+		console.log(request.payload);
 		if (!request.pre.forceUpdate) {
 			const trueObject = request.payload.TrueObject;
 			if (request.payload.BBLogin_Type === 1) {
