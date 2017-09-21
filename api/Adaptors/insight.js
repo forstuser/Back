@@ -443,6 +443,18 @@ class InsightAdaptor {
 					totalTax: item.totalTax,
 					tax: item.tax
 				};
+
+                const monthItem = {
+                    value: item.value,
+                    month: item.month,
+                    monthId: item.monthId,
+                    purchaseDate: item.purchaseDate,
+                    week: item.week,
+                    day: item.day,
+                    totalCost: item.totalCost,
+                    totalTax: item.totalTax,
+                    tax: item.tax
+                };
 				const monthIndex = distinctInsightMonthly
 					.findIndex(distinctItem => (distinctItem.month === item.month));
 				const weekIndex = distinctInsightWeekly
@@ -458,13 +470,13 @@ class InsightAdaptor {
 				}
 
 				if (monthIndex === -1) {
-					distinctInsightMonthly.push(item);
+					distinctInsightMonthly.push(monthItem);
 				} else {
 					const currentMonthInsight = distinctInsightMonthly[monthIndex];
-					currentMonthInsight.value += item.value;
-					currentMonthInsight.totalCost += item.totalCost;
-					currentMonthInsight.totalTax += item.totalTax;
-					currentMonthInsight.tax += item.tax;
+					currentMonthInsight.value += monthItem.value;
+					currentMonthInsight.totalCost += monthItem.totalCost;
+					currentMonthInsight.totalTax += monthItem.totalTax;
+					currentMonthInsight.tax += monthItem.tax;
 				}
 
 				return dayItem;
