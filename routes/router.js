@@ -1765,7 +1765,7 @@ function prepareAuthRoutes(userController, authRoutes) {
 				tags: ['api', 'User', 'Authentication'],
 				validate: {
 					payload: {
-						Token: joi.number(),
+						Token: joi.string(),
 						TrueObject: {
 							EmailAddress: joi.string().email(),
 							PhoneNo: joi.string().required(),
