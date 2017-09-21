@@ -4,10 +4,12 @@
 const NotificationAdaptor = require('../Adaptors/notification');
 
 let contactModel;
+let modals;
 
 class GeneralController {
 	constructor(modal) {
 		contactModel = modal.contactUs;
+		modals = modal;
 	}
 
 	static contactUs(request, reply) {
@@ -24,6 +26,21 @@ class GeneralController {
 			reply({status: false}).code(500);
 		});
 	}
+
+    static retrieveFAQs(request, reply) {
+        modals.faqs.findAll({
+            where: {
+                status_id:{
+                    $ne: 3
+                }
+            }
+        }).then((faq) => {
+            reply({status: true, faq}).code(200);
+        }).catch((err) => {
+            console.log(err);
+            reply({status: false}).code(200);
+        });
+    }
 }
 
 module.exports = GeneralController;

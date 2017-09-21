@@ -2191,6 +2191,15 @@ function prepareGeneralRoutes(generalController, generalRoutes) {
 				}
 			}
 		});
+
+		generalRoutes.push({
+			method: "GET",
+			path: "/faqs",
+			config: {
+				handler: GeneralController.retrieveFAQs,
+				description: "Retrieve FAQ's"
+			}
+		});
 	}
 }
 
