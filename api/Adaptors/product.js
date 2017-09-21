@@ -257,6 +257,28 @@ class ProductAdaptor {
 					required: false
 				},
 				{
+                    model: this.modals.repairBills,
+                    as: 'repairBills',
+                    attributes: [['bill_repair_id', 'id'], ['value_of_repair', 'premiumAmount'], 'taxes', ['repair_invoice_number', 'invoiceNumber'], ['repair_date','repairDate']],
+                    where: {
+                        user_id: user.ID,
+                        status_id: {
+                            $ne: 3
+                        }
+                    },
+                    include: [{
+                        model: this.modals.repairBillCopies,
+                        as: 'copies',
+                        include: [{
+                            model: this.modals.billCopies,
+                            as: 'billCopies',
+                            attributes: []
+                        }],
+                        attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.literal('`repairBills->copies->billCopies`.`bill_copy_type`'), 'billCopyType'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.literal('`repairBills->copies->billCopies`.`bill_copy_id`'), '/files'), 'fileUrl']]
+                    }],
+                    required: false
+                },
+				{
 					model: this.modals.insuranceBills,
 					as: 'insuranceDetails',
 					attributes: [['bill_insurance_id', 'id'], 'policyNo', 'premiumType', 'premiumAmount', 'effectiveDate', 'expiryDate', 'amountInsured', 'plan'],
