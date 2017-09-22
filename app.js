@@ -3496,7 +3496,7 @@ models.sequelize.sync().then(() => {
 								if (error) throw error;
 								connection.query('SELECT m.bill_detail_id as DetailID,m.seller_ref_id as SellerID,s.offline_seller_name as SellerName FROM table_consumer_bill_seller_mapping as m left join table_offline_seller as s on s.offline_seller_id=m.seller_ref_id WHERE m.bill_detail_id = "' + ID + '" AND m.ref_type=2 ', (error, billofflineseller, fields) => {
 									if (error) throw error;
-									connection.query('SELECT bill_copy_id as ImageID FROM table_consumer_bill_copies WHERE bill_id = "' + ID + '" and status_id!=3', (error, image, fields) => {
+									connection.query('SELECT bill_copy_id as ImageID FROM table_consumer_bill_details_copies WHERE bill_detail_id = "' + ID + '"', (error, image, fields) => {
 										if (error) throw error;
 										connection.query('SELECT p.bill_product_id as ProductID,p.bill_detail_id as DetailID,p.product_name as ProductName,p.master_category_id as MasterCatID,p.category_id as ColorID,p.brand_id as BrandID,p.color_id as ColorID,p.value_of_purchase as Value,p.taxes as Taxes,p.tag as Tag,mc.category_name as MasterCatName, c.category_id as CatID, c.category_name as CatName, b.brand_name as BrandName, cl.color_name ColorName FROM table_consumer_bill_products as p left join table_categories as mc on p.master_category_id=mc.category_id left join table_categories as c on c.category_id=p.category_id left join table_brands as b on b.brand_id=p.brand_id left join table_color as cl on cl.color_id=p.color_id WHERE p.bill_detail_id = "' + ID + '" and p.status_id!=3', (error, product, fields) => {
 											if (error) throw error;
@@ -3670,14 +3670,18 @@ models.sequelize.sync().then(() => {
 					connection.query('UPDATE table_consumer_bill_details SET consumer_name = "' + request.payload.Name + '", consumer_email_id = "' + request.payload.EmailID + '", consumer_phone_no = "' + request.payload.PhoneNo + '", invoice_number = "' + request.payload.InvoiceNo + '", total_purchase_value = "' + request.payload.TotalValue + '", taxes = "' + request.payload.Taxes + '", purchase_date = "' + request.payload.DateofPurchase + '", updated_on = "' + getDateTime() + '",updated_by_user_id = "' + request.payload.UserID + '" WHERE bill_detail_id="' + request.payload.DetailID + '" ', (error, bildetail, fields) => {
 						if (error) throw error;
 					});
-					if (request.payload.BillImage.length > 0) {
+					if (request.payload.BillImage && request.payload.BillImage.length > 0) {
 						connection.query('DELETE FROM table_consumer_bill_details_copies WHERE bill_detail_id="' + request.payload.DetailID + '"', (error, results, fields) => {
 							if (error) throw error;
-						});
-						for (var i = 0; i < request.payload.BillImage.length; i++) {
-							connection.query('INSERT INTO table_consumer_bill_details_copies (bill_detail_id,bill_copy_id) VALUES ("' + request.payload.DetailID + '","' + request.payload.BillImage[i] + '")', (error, list, fields) => {
+							console.log("BILL IMAGES DELETED");
+
+							request.payload.BillImage.forEach((elem) => {
+								connection.query('INSERT INTO table_consumer_bill_details_copies (bill_detail_id, bill_copy_id) VALUES (?, ?)', [BillDetailID, elem], (error, results) => {
+									if (error) throw error;
+									console.log("BILL IMAGE INSERTED");
+								});
 							});
-						}
+						});
 					}
 					if (request.payload.OnlineSellerID && request.payload.OnlineSellerID != '') {
 						connection.query('DELETE FROM table_consumer_bill_seller_mapping WHERE ref_type = 1 AND bill_detail_id = ?', [request.payload.DetailID], (error, results) => {
