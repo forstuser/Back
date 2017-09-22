@@ -387,8 +387,8 @@ class InsightAdaptor {
 								$ne: 3
 							},
 							purchase_date: {
-								$gte: minDate ? new Date(minDate) : monthStartDay,
-								$lte: maxDate ? new Date(maxDate) : monthLastDay
+								$gte: minDate ? moment.utc(minDate, "YYYY-MM-DD").format() : monthStartDay,
+								$lte: maxDate ? moment.utc(maxDate, "YYYY-MM-DD").format() : monthLastDay
 							}
 						},
 						attributes: [],
