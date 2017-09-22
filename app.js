@@ -3680,7 +3680,12 @@ models.sequelize.sync().then(() => {
 						}
 					}
 					if (request.payload.OnlineSellerID && request.payload.OnlineSellerID != '') {
-						connection.query('UPDATE table_consumer_bill_details_copies SET seller_ref_id = "' + request.payload.OnlineSellerID + '" WHERE ref_type = 1 and bill_detail_id = "' + request.payload.DetailID + '"', (error, list, fields) => {
+						connection.query('DELETE FROM table_consumer_bill_seller_mapping WHERE ref_type = 1 AND bill_detail_id = ?', [request.payload.DetailID], (error, results) => {
+							if (error) throw error;
+
+							connection.query('INSERT INTO table_consumer_bill_seller_mapping (bill_detail_id, ref_type, seller_ref_id) VALUES (?, 1, ?)', [request.payload.DetailID, request.payload.OnlineSellerID], (error, results) => {
+								if (error) throw error;
+							});
 						});
 					}
 
@@ -3688,20 +3693,14 @@ models.sequelize.sync().then(() => {
 						const SellerList = request.payload.SellerList;
 						//console.log(SellerList, 'SellerList')
 
-						connection.query('DELETE FROM table_consumer_bill_details_copies WHERE ref_type = 2 and bill_detail_id = "' + request.payload.DetailID + '"', (error, results, fields) => {
+						connection.query('DELETE FROM table_consumer_bill_seller_mapping WHERE ref_type = 2 AND bill_detail_id = ?', [request.payload.DetailID], (error, results) => {
 							if (error) throw error;
-
 							SellerList.forEach((elem) => {
-								connection.query('INSERT INTO table_consumer_bill_seller_mapping (bill_detail_id,ref_type,seller_ref_id) VALUES ("' + request.payload.DetailID + '",2,"' + elem + '")', (error, list, fields) => {
+								connection.query('INSERT INTO table_consumer_bill_seller_mapping (bill_detail_id,ref_type,seller_ref_id) VALUES (?, ?, ?)', [request.payload.DetailID, 2, elem.SellerID], (error, list, fields) => {
 									if (error) throw error;
 								});
 							});
 						});
-						for (let s = 0; s < SellerList.length; s++) {
-							connection.query('INSERT INTO table_consumer_bill_seller_mapping (bill_detail_id,ref_type,seller_ref_id) VALUES ("' + BillDetailID + '",2,"' + SellerList[s] + '")', (error, list, fields) => {
-								if (error) throw error;
-							});
-						}
 					}
 
 
@@ -4071,7 +4070,7 @@ models.sequelize.sync().then(() => {
 					DateofPurchase: [Joi.string(), Joi.allow(null)],
 					BillImage: Joi.array(),
 					OnlineSellerID: [Joi.string(), Joi.allow(null)],
-					SellerList: Joi.array(),
+					SellerList: Joi.array().required(),
 					ProductList: Joi.array(),
 					output: 'data',
 					parse: true
