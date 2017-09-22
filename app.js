@@ -2997,6 +2997,7 @@ models.sequelize.sync().then(() => {
 			const TokenNo = request.payload.TokenNo;
 			const FormID = request.payload.FormID;
 			const DropdownID = request.payload.DropdownID;
+			const DeleteAll = request.payload.DeleteAll;
 			connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', (error, token, fields) => {
 				if (error) throw error;
 				if (token.length > 0) {
@@ -3006,19 +3007,36 @@ models.sequelize.sync().then(() => {
 
 						const formType = result[0].type;
 
-						if (formType === 2 && !DropdownID) {
+						if (formType === 2 && !DropdownID && !DeleteAll) {
 							var data = '{"statusCode": 101,"error": "DropdownID not supplied","message": "DropdownID not supplied"}';
 							reply(data);
 						} else {
-							if (formType === 2) {
+							if (formType === 2 && !DeleteAll) {
 								connection.query('UPDATE table_category_form_mapping SET status_id = 3 WHERE category_form_id = ? AND mapping_id = ?', [FormID, DropdownID], (error, result) => {
 									if (error) throw error;
+
+									connection.query('SELECT COUNT(*) as Count FROM table_category_form_mapping WHERE status_id != 3 AND category_form_id = ?', [FormID], (error, result) => {
+										if (error) throw error;
+
+										if (result[0].Count === 0) {
+											connection.query('UPDATE table_category_form SET status_id = 3 WHERE category_form_id = ?', [FormID], (error, result) => {
+												if (error) throw error;
+											});
+										}
+									});
+
 									var data = '{"statusCode": 100,"message": "Form deleted"}';
 									reply(data);
 								});
 							} else {
 								connection.query('UPDATE table_category_form SET status_id = 3 WHERE category_form_id = ?', [FormID], (error, result) => {
 									if (error) throw error;
+									if (formType === 2) {
+										connection.query('UPDATE table_category_form_mapping SET status_id = 3 WHERE category_form_id = ?', [FormID], (error, result) => {
+											if (error) throw error;
+										});
+									}
+
 								});
 								var data = '{"statusCode": 100,"message": "Form deleted"}';
 								reply(data);
@@ -3038,6 +3056,7 @@ models.sequelize.sync().then(() => {
 					TokenNo: Joi.string().required(),
 					FormID: Joi.number().integer().required(),
 					DropdownID: Joi.number().allow(null),
+					DeleteAll: Joi.boolean(),
 					output: 'data',
 					parse: true
 				}
