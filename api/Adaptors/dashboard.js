@@ -4,10 +4,10 @@ const moment = require('moment');
 const shared = require('../../helpers/shared');
 
 class DashboardAdaptor {
-    constructor(modals) {
-        this.modals = modals;
-        this.date = new Date();
-    }
+	constructor(modals) {
+		this.modals = modals;
+		this.date = new Date();
+	}
 
 	retrieveDashboardResult(user, request) {
 		return Promise.all([
@@ -54,6 +54,25 @@ class DashboardAdaptor {
 					}]
 			})
 		]).then((result) => {
+			console.log(require('util').inspect(result[0], false, null));
+
+			const upcomingServices = result[0].map((elem) => {
+				if (elem.productType === 1) {
+					console.log("found 1");
+					console.log(elem);
+					const dueAmountArr = elem.productMetaData.filter((e) => {
+						return e.name.toLowerCase() === "due amount";
+					});
+
+					if (dueAmountArr.length > 0) {
+						elem.value = dueAmountArr[0].value;
+					}
+				}
+
+				return elem;
+			});
+
+
 			const distinctInsight = [];
 			const insightData = result[1].map((item) => {
 				const insightItem = item.toJSON();
@@ -73,41 +92,41 @@ class DashboardAdaptor {
 
 			const insightItems = shared.retrieveDaysInsight(distinctInsight);
 
-            const insightResult = insightItems && insightItems.length > 0 ? {
-                startDate: moment.utc().subtract(6, 'd').startOf('d'),
-                endDate: moment.utc(),
-                totalSpend: shared.sumProps(insightItems, 'value'),
-                totalDays: 7,
-                insightData: insightItems
-            } : {
-                startDate: moment.utc().subtract(6, 'd').startOf('d'),
-                endDate: moment.utc(),
-                totalSpend: 0,
-                totalDays: 7,
-                insightData
-            };
-            result[0].sort((a, b) => a.dueIn - b.dueIn);
-            return {
-                status: true,
-                message: 'Dashboard restore Successful',
-                notificationCount: result[3],
-                recentSearches: result[2].map((item) => {
-                    const search = item.toJSON();
-                    return search.searchValue;
-                }).slice(0, 5),
-                upcomingServices: result[0],
-                insight: insightResult,
-                forceUpdate: request.pre.forceUpdate,
-                showDashboard: !!(result[4] && result[4] > 0)
-            };
-        }).catch(err => ({
-            status: false,
-            message: 'Dashboard restore failed',
-            err,
-            forceUpdate: request.pre.forceUpdate,
-            showDashboard: false
-        }));
-    }
+			const insightResult = insightItems && insightItems.length > 0 ? {
+				startDate: moment.utc().subtract(6, 'd').startOf('d'),
+				endDate: moment.utc(),
+				totalSpend: shared.sumProps(insightItems, 'value'),
+				totalDays: 7,
+				insightData: insightItems
+			} : {
+				startDate: moment.utc().subtract(6, 'd').startOf('d'),
+				endDate: moment.utc(),
+				totalSpend: 0,
+				totalDays: 7,
+				insightData
+			};
+			result[0].sort((a, b) => a.dueIn - b.dueIn);
+			return {
+				status: true,
+				message: 'Dashboard restore Successful',
+				notificationCount: result[3],
+				recentSearches: result[2].map((item) => {
+					const search = item.toJSON();
+					return search.searchValue;
+				}).slice(0, 5),
+				upcomingServices: upcomingServices,
+				insight: insightResult,
+				forceUpdate: request.pre.forceUpdate,
+				showDashboard: !!(result[4] && result[4] > 0)
+			};
+		}).catch(err => ({
+			status: false,
+			message: 'Dashboard restore failed',
+			err,
+			forceUpdate: request.pre.forceUpdate,
+			showDashboard: false
+		}));
+	}
 
 	prepareDashboardResult(isNewUser, user, token, request) {
 		if (!isNewUser) {
@@ -454,47 +473,47 @@ class DashboardAdaptor {
 		});
 	}
 
-    prepareInsightData(user) {
-        return this.modals.productBills.findAll({
-            where: {
-                user_id: user.ID,
-                status_id: {
-                    $ne: 3
-                }
-            },
-            include: [{
-                model: this.modals.consumerBillDetails,
-                as: 'consumerBill',
-                where: {
-                    status_id: {
-                        $ne: 3
-                    },
-                    purchase_date: {
-                        $lte: moment.utc(),
-                        $gte: moment.utc().subtract(6, 'd').startOf('d')
-                    }
-                },
-                include: [
-                    {
-                        model: this.modals.consumerBills,
-                        as: 'bill',
-                        where: {
-                            $and: [
-                                this.modals.sequelize.where(this.modals.sequelize.literal('`bill_ref_type`'), 1),
-                                {
-                                    user_status: 5,
-                                    admin_status: 5
-                                }
-                            ]
-                        },
-                        attributes: []
-                    }
-                ]
-            }],
-            attributes: [['bill_product_id', 'id'], ['product_name', 'productName'], ['value_of_purchase', 'value'], 'taxes', ['category_id', 'categoryId'], ['master_category_id', 'masterCategoryId'], ['brand_id', 'brandId'], ['color_id', 'colorId'], [this.modals.sequelize.literal('`purchase_date`'), 'purchaseDate']],
-            order: [[this.modals.sequelize.literal('`purchase_date`'), 'ASC']]
-        });
-    }
+	prepareInsightData(user) {
+		return this.modals.productBills.findAll({
+			where: {
+				user_id: user.ID,
+				status_id: {
+					$ne: 3
+				}
+			},
+			include: [{
+				model: this.modals.consumerBillDetails,
+				as: 'consumerBill',
+				where: {
+					status_id: {
+						$ne: 3
+					},
+					purchase_date: {
+						$lte: moment.utc(),
+						$gte: moment.utc().subtract(6, 'd').startOf('d')
+					}
+				},
+				include: [
+					{
+						model: this.modals.consumerBills,
+						as: 'bill',
+						where: {
+							$and: [
+								this.modals.sequelize.where(this.modals.sequelize.literal('`bill_ref_type`'), 1),
+								{
+									user_status: 5,
+									admin_status: 5
+								}
+							]
+						},
+						attributes: []
+					}
+				]
+			}],
+			attributes: [['bill_product_id', 'id'], ['product_name', 'productName'], ['value_of_purchase', 'value'], 'taxes', ['category_id', 'categoryId'], ['master_category_id', 'masterCategoryId'], ['brand_id', 'brandId'], ['color_id', 'colorId'], [this.modals.sequelize.literal('`purchase_date`'), 'purchaseDate']],
+			order: [[this.modals.sequelize.literal('`purchase_date`'), 'ASC']]
+		});
+	}
 
 	retrieveRecentSearch(user) {
 		return this.modals.recentSearches.findAll({
