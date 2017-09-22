@@ -3011,7 +3011,7 @@ models.sequelize.sync().then(() => {
 							var data = '{"statusCode": 101,"error": "DropdownID not supplied","message": "DropdownID not supplied"}';
 							reply(data);
 						} else {
-							if (formType === 2 && !DeleteAll) {
+							if (formType === 2 && !DeleteAll && DropdownID) {
 								connection.query('UPDATE table_category_form_mapping SET status_id = 3 WHERE category_form_id = ? AND mapping_id = ?', [FormID, DropdownID], (error, result) => {
 									if (error) throw error;
 
