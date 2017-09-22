@@ -2990,6 +2990,61 @@ models.sequelize.sync().then(() => {
 		}
 	});
 
+	server.route({
+		method: 'POST',
+		path: '/Services/DeleteCategoryForm',
+		handler: (request, reply) => {
+			const TokenNo = request.payload.TokenNo;
+			const FormID = request.payload.FormID;
+			const DropdownID = request.payload.DropdownID;
+			connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', (error, token, fields) => {
+				if (error) throw error;
+				if (token.length > 0) {
+					const UserID = token[0]['user_id'];
+					connection.query('SELECT form_element_type AS type FROM table_category_form WHERE category_form_id = ?', [FormID], (error, result) => {
+						if (error) throw error;
+
+						const formType = result[0].type;
+
+						if (formType === 2 && !DropdownID) {
+							var data = '{"statusCode": 101,"error": "DropdownID not supplied","message": "DropdownID not supplied"}';
+							reply(data);
+						} else {
+							if (formType === 2) {
+								connection.query('UPDATE table_category_form_mapping SET status_id = 3 WHERE category_form_id = ? AND mapping_id = ?', [FormID, DropdownID], (error, result) => {
+									if (error) throw error;
+									var data = '{"statusCode": 100,"message": "Form deleted"}';
+									reply(data);
+								});
+							} else {
+								connection.query('UPDATE table_category_form SET status_id = 3 WHERE category_form_id = ?', [FormID], (error, result) => {
+									if (error) throw error;
+								});
+								var data = '{"statusCode": 100,"message": "Form deleted"}';
+								reply(data);
+							}
+						}
+					});
+
+				} else {
+					var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
+					reply(data);
+				}
+			});
+		},
+		config: {
+			validate: {
+				payload: {
+					TokenNo: Joi.string().required(),
+					FormID: Joi.number().integer().required(),
+					DropdownID: Joi.number().allow(null),
+					output: 'data',
+					parse: true
+				}
+			}
+		}
+	});
+
 //Get Category By ID
 	server.route({
 		method: 'POST',
