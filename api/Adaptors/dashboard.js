@@ -106,8 +106,28 @@ class DashboardAdaptor {
 				insightData
 			};
 
-			upcomingServices.sort((a, b) => a.dueIn - b.dueIn);
-			
+			upcomingServices.sort((a, b) => {
+				let aDate;
+				let bDate;
+
+				aDate = a.expiryDate;
+				bDate = b.expiryDate;
+
+				if (a.productType === 1) {
+					aDate = a.dueDate;
+				}
+
+				if (b.productType === 1) {
+					aDate = a.dueDate;
+				}
+				
+				if (moment.utc(aDate, "YYYY-MM-DD").isBefore(moment.utc(bDate, 'YYYY-MM-DD'))) {
+					return -1;
+				}
+
+				return 1;
+			});
+
 			return {
 				status: true,
 				message: 'Dashboard restore Successful',
