@@ -3676,7 +3676,7 @@ models.sequelize.sync().then(() => {
 							console.log("BILL IMAGES DELETED");
 
 							request.payload.BillImage.forEach((elem) => {
-								connection.query('INSERT INTO table_consumer_bill_details_copies (bill_detail_id, bill_copy_id) VALUES (?, ?)', [BillDetailID, elem], (error, results) => {
+								connection.query('INSERT INTO table_consumer_bill_details_copies (bill_detail_id, bill_copy_id) VALUES (?, ?)', [BillDetailID, elem.ImageID], (error, results) => {
 									if (error) throw error;
 									console.log("BILL IMAGE INSERTED");
 								});
@@ -3722,11 +3722,11 @@ models.sequelize.sync().then(() => {
 									if (error) throw error;
 								});
 								if (ProductForm.length > 0) {
-									connection.query('DELETE FROM table_consumer_bill_product_meta_data WHERE bill_product_id="' + request.payload.DetailID + '"', (error, results, fields) => {
+									connection.query('DELETE FROM table_consumer_bill_product_meta_data WHERE bill_product_id="' + ProductList[p].ProductID + '"', (error, results, fields) => {
 										if (error) throw error;
 									});
 									for (var i = 0; i < ProductForm.length; i++) {
-										connection.query('INSERT INTO table_consumer_bill_product_meta_data (bill_product_id,category_form_id,form_element_value) VALUES ("' + ProductList[p].ProductName + '","' + ProductForm[i].CatFormID + '","' + ProductForm[i].value + '")', (error, detail, fields) => {
+										connection.query('INSERT INTO table_consumer_bill_product_meta_data (bill_product_id,category_form_id,form_element_value) VALUES ("' + ProductList[p].ProductID + '","' + ProductForm[i].CatFormID + '","' + ProductForm[i].value + '")', (error, detail, fields) => {
 										});
 									}
 								}
@@ -3794,35 +3794,61 @@ models.sequelize.sync().then(() => {
 											var SellerType = 2;
 											var SellerID = WarrantyList[w].SellerInfo;
 										}
-										connection.query('UPDATE table_consumer_bill_warranty SET seller_type = "' + SellerType + '",seller_id = "' + SellerID + '",warranty_type = "' + WarrantyList[w].WarrantyType + '",policy_number = "' + WarrantyList[w].PolicyNo + '",premium_type = "' + WarrantyList[w].PremiumType + '",premium_amount = "' + WarrantyList[w].PremiumAmount + '",policy_effective_date = "' + WarrantyList[w].PolicyEffectiveDate + '",policy_expiry_date = "' + WarrantyList[w].PolicyExpiryDate + '" WHERE bill_warranty_id = "' + WarrantyList[w].WarrantyID + '" ', (error, warranty, fields) => {
-											if (error) throw error;
-										});
-										if (WarrantyImage.length > 0) {
-											connection.query('DELETE FROM table_consumer_bill_warranty_copies WHERE bill_warranty_id="' + WarrantyList[w].WarrantyID + '"', (error, results, fields) => {
+
+										if (WarrantyList[w].WarrantyID) {
+											connection.query('UPDATE table_consumer_bill_warranty SET seller_type = "' + SellerType + '",seller_id = "' + SellerID + '",warranty_type = "' + WarrantyList[w].WarrantyType + '",policy_number = "' + WarrantyList[w].PolicyNo + '",premium_type = "' + WarrantyList[w].PremiumType + '",premium_amount = "' + WarrantyList[w].PremiumAmount + '",policy_effective_date = "' + WarrantyList[w].PolicyEffectiveDate + '",policy_expiry_date = "' + WarrantyList[w].PolicyExpiryDate + '" WHERE bill_warranty_id = "' + WarrantyList[w].WarrantyID + '" ', (error, warranty, fields) => {
 												if (error) throw error;
 											});
-											for (var i = 0; i < WarrantyImage.length; i++) {
-												connection.query('INSERT INTO table_consumer_bill_warranty_copies (bill_warranty_id,bill_copy_id) VALUES ("' + WarrantyList[w].WarrantyID + '","' + WarrantyImage[i] + '")', (error, list, fields) => {
+											if (WarrantyImage.length > 0) {
+												connection.query('DELETE FROM table_consumer_bill_warranty_copies WHERE bill_warranty_id="' + WarrantyList[w].WarrantyID + '"', (error, results, fields) => {
+													if (error) throw error;
 												});
+												for (var i = 0; i < WarrantyImage.length; i++) {
+													connection.query('INSERT INTO table_consumer_bill_warranty_copies (bill_warranty_id,bill_copy_id) VALUES ("' + WarrantyList[w].WarrantyID + '","' + WarrantyImage[i] + '")', (error, list, fields) => {
+													});
+												}
 											}
-										}
-										if (WarrantyInclusions.length > 0) {
-											connection.query('DELETE FROM table_consumer_bill_warranty_inclusions WHERE bill_warranty_id="' + WarrantyList[w].WarrantyID + '"', (error, results, fields) => {
+											if (WarrantyInclusions && WarrantyInclusions.length > 0) {
+												connection.query('DELETE FROM table_consumer_bill_warranty_inclusions WHERE bill_warranty_id="' + WarrantyList[w].WarrantyID + '"', (error, results, fields) => {
+													if (error) throw error;
+												});
+												for (var i = 0; i < WarrantyInclusions.length; i++) {
+													connection.query('INSERT INTO table_consumer_bill_warranty_inclusions ( bill_warranty_id,inclusions_id) VALUES ("' + WarrantyList[w].WarrantyID + '","' + WarrantyInclusions[i] + '")', (error, list, fields) => {
+													});
+												}
+											}
+											if (WarrantyExclusions && WarrantyExclusions.length > 0) {
+												connection.query('DELETE FROM table_consumer_bill_warranty_exclusions WHERE bill_warranty_id="' + WarrantyList[w].WarrantyID + '"', (error, results, fields) => {
+													if (error) throw error;
+												});
+												for (var i = 0; i < WarrantyExclusions.length; i++) {
+													connection.query('INSERT INTO table_consumer_bill_warranty_exclusions (bill_warranty_id,exclusions_id) VALUES ("' + WarrantyList[w].WarrantyID + '","' + WarrantyExclusions[i] + '")', (error, list, fields) => {
+													});
+												}
+											}
+										} else {
+											connection.query('INSERT INTO table_consumer_bill_warranty (user_id,bill_product_id,seller_type,seller_id,warranty_type,policy_number,premium_type,premium_amount,policy_effective_date,policy_expiry_date,status_id) VALUES ("' + BillUserID + '","' + ProductList[p].ProductID + '","' + SellerType + '","' + SellerID + '","' + WarrantyList[w].WarrantyType + '","' + WarrantyList[w].PolicyNo + '","' + WarrantyList[w].PremiumType + '","' + WarrantyList[w].PremiumAmount + '","' + WarrantyList[w].PolicyEffectiveDate + '","' + WarrantyList[w].PolicyExpiryDate + '",1)', (error, warranty, fields) => {
 												if (error) throw error;
+
+												if (WarrantyImage.length > 0) {
+													for (var i = 0; i < WarrantyImage.length; i++) {
+														connection.query('INSERT INTO table_consumer_bill_warranty_copies (bill_warranty_id,bill_copy_id) VALUES ("' + warranty['insertId'] + '","' + WarrantyImage[i] + '")', (error, list, fields) => {
+														});
+													}
+												}
+												if (WarrantyInclusions && WarrantyInclusions.length > 0) {
+													for (var i = 0; i < WarrantyInclusions.length; i++) {
+														connection.query('INSERT INTO table_consumer_bill_warranty_inclusions ( bill_warranty_id,inclusions_id) VALUES ("' + warranty['insertId'] + '","' + WarrantyInclusions[i] + '")', (error, list, fields) => {
+														});
+													}
+												}
+												if (WarrantyExclusions && WarrantyExclusions.length > 0) {
+													for (var i = 0; i < WarrantyExclusions.length; i++) {
+														connection.query('INSERT INTO table_consumer_bill_warranty_exclusions (bill_warranty_id,exclusions_id) VALUES ("' + warranty['insertId'] + '","' + WarrantyExclusions[i] + '")', (error, list, fields) => {
+														});
+													}
+												}
 											});
-											for (var i = 0; i < WarrantyInclusions.length; i++) {
-												connection.query('INSERT INTO table_consumer_bill_warranty_inclusions ( bill_warranty_id,inclusions_id) VALUES ("' + WarrantyList[w].WarrantyID + '","' + WarrantyInclusions[i] + '")', (error, list, fields) => {
-												});
-											}
-										}
-										if (WarrantyExclusions.length > 0) {
-											connection.query('DELETE FROM table_consumer_bill_warranty_exclusions WHERE bill_warranty_id="' + WarrantyList[w].WarrantyID + '"', (error, results, fields) => {
-												if (error) throw error;
-											});
-											for (var i = 0; i < WarrantyExclusions.length; i++) {
-												connection.query('INSERT INTO table_consumer_bill_warranty_exclusions (bill_warranty_id,exclusions_id) VALUES ("' + WarrantyList[w].WarrantyID + '","' + WarrantyExclusions[i] + '")', (error, list, fields) => {
-												});
-											}
 										}
 									}
 								}
@@ -3907,7 +3933,7 @@ models.sequelize.sync().then(() => {
                               });*/
 									if (ProductForm.length > 0) {
 										for (var i = 0; i < ProductForm.length; i++) {
-											connection.query('INSERT INTO table_consumer_bill_product_meta_data (bill_product_id,category_form_id,form_element_value) VALUES ("' + product['insertId'] + '","' + ProductForm[i].CatFormID + '","' + ProductForm[i].value + '")', (error, detail, fields) => {
+											connection.query('INSERT INTO table_consumer_bill_product_meta_data (bill_product_id,category_form_id,form_element_value) VALUES ("' + ProductID + '","' + ProductForm[i].CatFormID + '","' + ProductForm[i].value + '")', (error, detail, fields) => {
 											});
 										}
 									}
@@ -3969,13 +3995,13 @@ models.sequelize.sync().then(() => {
 														});
 													}
 												}
-												if (WarrantyInclusions.length > 0) {
+												if (WarrantyInclusions && WarrantyInclusions.length > 0) {
 													for (var i = 0; i < WarrantyInclusions.length; i++) {
 														connection.query('INSERT INTO table_consumer_bill_warranty_inclusions ( bill_warranty_id,inclusions_id) VALUES ("' + warranty['insertId'] + '","' + WarrantyInclusions[i] + '")', (error, list, fields) => {
 														});
 													}
 												}
-												if (WarrantyExclusions.length > 0) {
+												if (WarrantyExclusions && WarrantyExclusions.length > 0) {
 													for (var i = 0; i < WarrantyExclusions.length; i++) {
 														connection.query('INSERT INTO table_consumer_bill_warranty_exclusions (bill_warranty_id,exclusions_id) VALUES ("' + warranty['insertId'] + '","' + WarrantyExclusions[i] + '")', (error, list, fields) => {
 														});
