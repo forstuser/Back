@@ -105,7 +105,9 @@ class DashboardAdaptor {
 				totalDays: 7,
 				insightData
 			};
-			result[0].sort((a, b) => a.dueIn - b.dueIn);
+
+			upcomingServices.sort((a, b) => a.dueIn - b.dueIn);
+			
 			return {
 				status: true,
 				message: 'Dashboard restore Successful',
