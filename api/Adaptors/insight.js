@@ -3,6 +3,7 @@
 
 const moment = require('moment');
 const shared = require('../../helpers/shared');
+const _ = require('lodash');
 
 function weekAndDay(d) {
 	const days = [1, 2, 3, 4, 5, 6, 7];
@@ -18,6 +19,34 @@ const monthStartDay = new Date(date.getFullYear(), date.getMonth(), 1);
 const monthLastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
 const yearStartDay = new Date(date.getFullYear(), 0, 1);
 const yearLastDay = new Date(date.getFullYear() + 1, 0, 0);
+
+function customSortCategories(categoryData) {
+	const OtherCategory = categoryData.find((elem) => {
+		return elem.cType === 9;
+	});
+
+	const categoryDataWithoutOthers = categoryData.filter((elem) => {
+		return (elem.cType !== 9);
+	});
+
+	const newCategoryData = [];
+
+	let pushed = false;
+
+	categoryDataWithoutOthers.forEach((elem) => {
+		if (parseFloat(OtherCategory.totalAmount) > parseFloat(elem.totalAmount) && !pushed) {
+			newCategoryData.push(OtherCategory);
+			pushed = true;
+		}
+		newCategoryData.push(elem);
+	});
+
+	if (!pushed) {
+		newCategoryData.push(OtherCategory);
+	}
+
+	return newCategoryData;
+}
 
 class InsightAdaptor {
 	constructor(modals) {
@@ -63,7 +92,7 @@ class InsightAdaptor {
 
 				if (minDate || maxDate) {
 					categoryData.customDateData.sort(function (a, b) {
-						return b.totalAmount - a.totalAmount;
+						return b.totalAmount - a.totalAmount || a.cName < b.cName;
 					});
 
 					const totalAmounts = shared.sumProps(categoryData.customDateData, 'totalAmount');
@@ -81,18 +110,33 @@ class InsightAdaptor {
 					};
 				}
 
-				categoryData.weeklyData.sort(function (a, b) {
-					return b.totalAmount - a.totalAmount;
-				});
+				categoryData.weeklyData = _.chain(categoryData.weeklyData).map((elem) => {
+					elem.totalAmount = parseFloat(elem.totalAmount);
+					return elem;
+				}).orderBy(['totalAmount', 'cName'], ['desc', 'asc']).map((elem) => {
+					elem.totalAmount = elem.totalAmount.toString();
+					return elem;
+				}).value();
 
-				categoryData.monthlyData.sort(function (a, b) {
-					return b.totalAmount - a.totalAmount;
-				});
+				categoryData.monthlyData = _.chain(categoryData.monthlyData).map((elem) => {
+					elem.totalAmount = parseFloat(elem.totalAmount);
+					return elem;
+				}).orderBy(['totalAmount', 'cName'], ['desc', 'asc']).map((elem) => {
+					elem.totalAmount = elem.totalAmount.toString();
+					return elem;
+				}).value();
 
-				categoryData.yearlyData.sort(function (a, b) {
-					return b.totalAmount - a.totalAmount;
-				});
+				categoryData.yearlyData = _.chain(categoryData.yearlyData).map((elem) => {
+					elem.totalAmount = parseFloat(elem.totalAmount);
+					return elem;
+				}).orderBy(['totalAmount', 'cName'], ['desc', 'asc']).map((elem) => {
+					elem.totalAmount = elem.totalAmount.toString();
+					return elem;
+				}).value();
 
+				categoryData.weeklyData = customSortCategories(categoryData.weeklyData, 'totalAmount');
+				categoryData.monthlyData = customSortCategories(categoryData.monthlyData, 'totalAmount');
+				categoryData.yearlyData = customSortCategories(categoryData.yearlyData, 'totalAmount');
 
 				const totalWeeklyAmounts = shared.sumProps(categoryData.weeklyData, 'totalAmount');
 				const totalWeeklyTaxes = shared.sumProps(categoryData.weeklyData, 'totalTax');
@@ -100,7 +144,7 @@ class InsightAdaptor {
 				const totalYearlyTaxes = shared.sumProps(categoryData.yearlyData, 'totalTax');
 				const totalMonthlyAmounts = shared.sumProps(categoryData.monthlyData, 'totalAmount');
 				const totalMonthlyTaxes = shared.sumProps(categoryData.monthlyData, 'totalTax');
-                return {
+				return {
 					status: true,
 					message: 'Insight restore successful',
 					notificationCount: 0,
@@ -162,8 +206,8 @@ class InsightAdaptor {
 								$ne: 3
 							},
 							purchase_date: {
-                                $lte: moment.utc(),
-                                $gte: moment.utc().subtract(6, 'd').startOf('d')
+								$lte: moment.utc(),
+								$gte: moment.utc().subtract(6, 'd').startOf('d')
 							}
 						},
 						include: [
@@ -414,7 +458,7 @@ class InsightAdaptor {
 						value: product.value,
 						month: monthArray[moment(product.consumerBill.purchaseDate).month()],
 						monthId: moment(product.consumerBill.purchaseDate).month() + 1,
-                        purchaseDate: moment(product.consumerBill.purchaseDate),
+						purchaseDate: moment(product.consumerBill.purchaseDate),
 						week: weekAndDay(moment(product.consumerBill.purchaseDate)).monthWeek,
 						day: weekAndDay(moment(product.consumerBill.purchaseDate)).day,
 						totalCost: product.consumerBill.totalCost,
@@ -436,7 +480,7 @@ class InsightAdaptor {
 					value: item.value,
 					month: item.month,
 					monthId: item.monthId,
-                    purchaseDate: item.purchaseDate,
+					purchaseDate: item.purchaseDate,
 					week: item.week,
 					day: item.day,
 					totalCost: item.totalCost,
@@ -444,17 +488,17 @@ class InsightAdaptor {
 					tax: item.tax
 				};
 
-                const monthItem = {
-                    value: item.value,
-                    month: item.month,
-                    monthId: item.monthId,
-                    purchaseDate: item.purchaseDate,
-                    week: item.week,
-                    day: item.day,
-                    totalCost: item.totalCost,
-                    totalTax: item.totalTax,
-                    tax: item.tax
-                };
+				const monthItem = {
+					value: item.value,
+					month: item.month,
+					monthId: item.monthId,
+					purchaseDate: item.purchaseDate,
+					week: item.week,
+					day: item.day,
+					totalCost: item.totalCost,
+					totalTax: item.totalTax,
+					tax: item.tax
+				};
 				const monthIndex = distinctInsightMonthly
 					.findIndex(distinctItem => (distinctItem.month === item.month));
 				const weekIndex = distinctInsightWeekly
@@ -491,8 +535,8 @@ class InsightAdaptor {
 					.purchaseDate).valueOf() <= moment.utc().valueOf()).slice(0, 10);
 			const productListMonthly = productList
 				.filter(item => moment(item
-                    .purchaseDate).valueOf() >= moment(moment.utc().startOf('year').valueOf()) && moment(item
-                    .purchaseDate).valueOf() <= moment(moment.utc()).valueOf()).slice(0, 10);
+					.purchaseDate).valueOf() >= moment(moment.utc().startOf('year').valueOf()) && moment(item
+					.purchaseDate).valueOf() <= moment(moment.utc()).valueOf()).slice(0, 10);
 			distinctInsightMonthly.sort((a, b) => moment(b.purchaseDate) - moment(a.purchaseDate));
 			distinctInsightWeekly.sort((a, b) => moment(b.purchaseDate) - moment(a.purchaseDate));
 
@@ -529,8 +573,8 @@ class InsightAdaptor {
 					insightWeekly,
 					insightMonthly
 				} : {
-                    startDate: moment.utc().subtract(6, 'd').startOf('d'),
-                    endDate: moment.utc(),
+					startDate: moment.utc().subtract(6, 'd').startOf('d'),
+					endDate: moment.utc(),
 					totalSpend: 0,
 					totalDays: 0,
 					insightData: distinctInsight,
