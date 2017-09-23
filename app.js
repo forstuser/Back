@@ -3750,7 +3750,7 @@ models.sequelize.sync().then(() => {
 							console.log("BILL IMAGES DELETED");
 
 							request.payload.BillImage.forEach((elem) => {
-								connection.query('INSERT INTO table_consumer_bill_details_copies (bill_detail_id, bill_copy_id) VALUES (?, ?)', [BillDetailID, elem.ImageID], (error, results) => {
+								connection.query('INSERT INTO table_consumer_bill_details_copies (bill_detail_id, bill_copy_id) VALUES (?, ?)', [BillDetailID, elem], (error, results) => {
 									if (error) throw error;
 									console.log("BILL IMAGE INSERTED");
 								});
@@ -3791,7 +3791,7 @@ models.sequelize.sync().then(() => {
 							const WarrantyList = ProductList[p].WarrantyList;
 							const AMCList = ProductList[p].AMCList;
 							const RepairList = ProductList[p].RepairList;
-							if (ProductList[p].ProductID !== null && ProductList[p].ProductID !== undefined) {
+							if (ProductList[p].ProductID !== null && ProductList[p].ProductID !== undefined && ProductList[p].ProductID !== '') {
 								connection.query('UPDATE table_consumer_bill_products SET product_name = "' + ProductList[p].ProductName + '",master_category_id = "' + ProductList[p].MasterCatID + '",category_id = "' + ProductList[p].CatID + '",brand_id = "' + ProductList[p].BrandID + '",color_id = "' + ProductList[p].ColorID + '",value_of_purchase = "' + ProductList[p].Value + '",taxes = "' + ProductList[p].Taxes + '",tag = "' + ProductList[p].Tag + '" WHERE bill_product_id = "' + ProductList[p].ProductID + '"', (error, product, fields) => {
 									if (error) throw error;
 								});
