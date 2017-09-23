@@ -27,9 +27,15 @@ class UserAdaptor {
 			}]
 		}).then((result) => {
 
-			if (result.userImages.length === 0) {
-				delete result.userImages;
+			const userProfile = result.toJSON();
+
+			// console.log(require('util').inspect(userProfile, false, null));
+
+			if (userProfile.userImages.length === 0) {
+				delete userProfile.userImages;
 			}
+
+			// console.log(require('util').inspect(userProfile, false, null));
 
 			return {
 				status: true,
@@ -41,7 +47,7 @@ class UserAdaptor {
 					reportAnErrorOn: 'support@binbill.com',
 					faqUrl: 'http://www.binbill.com/faqs'
 				},
-				userProfile: result,
+				userProfile: userProfile,
 				forceUpdate: request.pre.forceUpdate
 			}
 		}).catch((err) => {

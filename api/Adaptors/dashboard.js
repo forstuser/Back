@@ -54,7 +54,7 @@ class DashboardAdaptor {
 					}]
 			})
 		]).then((result) => {
-			console.log(require('util').inspect(result[0], false, null));
+			// console.log(require('util').inspect(result[0], false, null));
 
 			const upcomingServices = result[0].map((elem) => {
 				if (elem.productType === 1) {
