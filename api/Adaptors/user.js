@@ -25,19 +25,26 @@ class UserAdaptor {
 				as: 'userImages',
 				attributes: [[this.modals.sequelize.fn('CONCAT', 'consumer/', this.modals.sequelize.col('user_image_id'), '/images'), 'imageUrl']]
 			}]
-		}).then(result => ({
-			status: true,
-			message: 'User Data retrieved',
-			binBillDetail: {
-				callUs: '+91-124-4343177',
-				emailUs: 'support@binbill.com',
-				aboutUs: 'http://www.binbill.com/homes/about',
-				reportAnErrorOn: 'support@binbill.com',
-				faqUrl: 'http://www.binbill.com/faqs'
-			},
-			userProfile: result,
-			forceUpdate: request.pre.forceUpdate
-		})).catch((err) => {
+		}).then((result) => {
+
+			if (result.userImages.length === 0) {
+				delete result.userImages;
+			}
+
+			return {
+				status: true,
+				message: 'User Data retrieved',
+				binBillDetail: {
+					callUs: '+91-124-4343177',
+					emailUs: 'support@binbill.com',
+					aboutUs: 'http://www.binbill.com/homes/about',
+					reportAnErrorOn: 'support@binbill.com',
+					faqUrl: 'http://www.binbill.com/faqs'
+				},
+				userProfile: result,
+				forceUpdate: request.pre.forceUpdate
+			}
+		}).catch((err) => {
 			console.log(err);
 			return {
 				status: false,
