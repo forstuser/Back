@@ -28,19 +28,17 @@ class CategoryController {
             },
             attributes: excludedAttributes,
             order: [['category_name', 'ASC']]
-        }).then((category) = > {
-            if(category[1]
-    )
-        {
-            return reply(category[0]).header('categoryId', category.category_id).code(201);
-        }
+        }).then((category) => {
+            if (category[1]
+            ) {
+                return reply(category[0]).header('categoryId', category.category_id).code(201);
+            }
 
-        return reply(category[0]).header('categoryId', category.category_id).code(422);
-    }).
-        catch((err) = > {
+            return reply(category[0]).header('categoryId', category.category_id).code(422);
+        }).catch((err) => {
             console.log(err);
-        reply(err);
-    })
+            reply(err);
+        })
         ;
     }
 
@@ -56,9 +54,9 @@ class CategoryController {
             where: {
                 category_id: request.params.id
             }
-        }).then(() = > reply().code(204)
+        }).then(() => reply().code(204)
     ).
-        catch((err) = > {
+        catch((err) => {
             console.log(err);
         reply(err);
     })
@@ -74,9 +72,9 @@ class CategoryController {
             where: {
                 category_id: request.params.id
             }
-        }).then(() = > reply().code(204)
+        }).then(() => reply().code(204)
     ).
-        catch((err) = > {
+        catch((err) => {
             console.log(err);
         reply(err);
     })
@@ -100,10 +98,10 @@ class CategoryController {
                     }]
             },
             attributes: excludedAttributes
-        }).then((result) = > {
+        }).then((result) => {
             reply(result).code(200);
     }).
-        catch((err) = > {
+        catch((err) => {
             console.log(err);
         reply(err);
     })
@@ -116,10 +114,10 @@ class CategoryController {
                 category_id: request.params.id
             },
             attributes: excludedAttributes
-        }).then((result) = > {
+        }).then((result) => {
             reply(result).code(200);
     }).
-        catch((err) = > {
+        catch((err) => {
             console.log(err);
         reply(err);
     })
@@ -172,7 +170,7 @@ class CategoryController {
                 condition = "IS NOT NULL";
             }
 
-            return modals.sequelize.query(`SELECT category_id, category_name from table_categories where category_id in (SELECT DISTINCT category_id from table_authorized_service_center_details where center_id in (SELECT center_id from table_authorized_service_center where brand_id ${condition}));`).then((results) = > {
+            return modals.sequelize.query(`SELECT category_id, category_name from table_categories where category_id in (SELECT DISTINCT category_id from table_authorized_service_center_details where center_id in (SELECT center_id from table_authorized_service_center where brand_id ${condition}));`).then((results) => {
                 if(results.length === 0
         )
             {
@@ -183,7 +181,7 @@ class CategoryController {
                 reply({status: true, categories: results[0], forceUpdate: request.pre.forceUpdate});
             }
         }).
-            catch((err) = > {
+            catch((err) => {
                 console.log(err);
             reply({status: false, message: "ISE"});
         })
