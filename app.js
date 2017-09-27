@@ -1348,13 +1348,14 @@ models.sequelize.sync().then(() => {
 		method: 'POST',
 		path: '/Services/AddAuthorizedServiceCenter',
 		handler: (request, reply) => {
+			console.log(request.payload);
 			const TokenNo = request.payload.TokenNo;
 			const Details = request.payload.Details;
 			connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', (error, token, fields) => {
 				if (error) throw error;
 				if (token.length > 0) {
 					const UserID = token[0]['user_id'];
-					connection.query('INSERT INTO table_authorized_service_center (brand_id,center_name,address_house_no,address_block,address_street,address_sector,address_city,address_state,address_pin_code,address_nearby,latitude,longitude,open_days,timings,status_id, address) VALUES ("' + request.payload.BrandID + '","' + request.payload.Name + '","' + request.payload.HouseNo + '","' + request.payload.Block + '","' + request.payload.Street + '","' + request.payload.Sector + '","' + request.payload.City + '","' + request.payload.State + '","' + request.payload.PinCode + '","' + request.payload.NearBy + '","' + request.payload.Lattitude + '","' + request.payload.Longitude + '","' + request.payload.OpenDays + '","' + request.payload.Timings + '",1' + request.payload.Adress + '")', (error, results, fields) => {
+					connection.query('INSERT INTO table_authorized_service_center (brand_id,center_name,address_house_no,address_block,address_street,address_sector,address_city,address_state,address_pin_code,address_nearby,latitude,longitude,open_days,timings,status_id, address) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [request.payload.BrandID, request.payload.Name, request.payload.HouseNo, request.payload.Block, request.payload.Street, request.payload.Sector, request.payload.City, request.payload.State, request.payload.PinCode, request.payload.NearBy, request.payload.Lattitude, request.payload.Longitude, request.payload.OpenDays, request.payload.Timings, 1, request.payload.Address], (error, results, fields) => {
 						if (error) throw error;
 						for (let i = 0; i < Details.length; i++) {
 							connection.query('INSERT INTO table_authorized_service_center_details (center_id,category_id,contactdetail_type_id,display_name,details,status_id) VALUES ("' + results['insertId'] + '",' + Details[i].CategoryID + ',"' + Details[i].DetailTypeID + '","' + Details[i].DisplayName + '","' + Details[i].Details + '",1)', (error, detail, fields) => {
