@@ -141,9 +141,23 @@ class UploadController {
 
 						return true;
 					});
+				} else {
+					const name = filteredFileData.hapi.filename;
+					const fileType = (/[.]/.exec(name)) ? /[^.]+$/.exec(name) : undefined;
+					// console.log("OUTSIDE FILE ALLOWED: ", fileType);
+					if (fileType && !isFileTypeAllowed(fileType)) {
+						filteredFileData = [];
+					} else if (!fileType && !isFileTypeAllowedMagicNumber(filteredFileData._data)) {
+						filteredFileData = [];
+					}
 				}
 
-				UploadController.uploadFileGeneric(user, filteredFileData, reply, request);
+				if (filteredFileData.length === 0) {
+					console.log("No valid documents in request");
+					reply({status: false, message: "No valid documents in request"});
+				} else {
+					UploadController.uploadFileGeneric(user, filteredFileData, reply, request);
+				}
 				// } else {
 				// 	reply({status: false, message: 'No File', forceUpdate: request.pre.forceUpdate}).code(400);
 				// }
