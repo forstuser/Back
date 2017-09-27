@@ -26,7 +26,8 @@ class CategoryController {
 				status_id: 1,
 				ref_id: request.payload.RefID
 			},
-			attributes: excludedAttributes
+			attributes: excludedAttributes,
+            order: [['category_name', 'ASC']]
 		}).then((category) => {
 			if (category[1]) {
 				return reply(category[0]).header('categoryId', category.category_id).code(201);
