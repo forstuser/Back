@@ -196,7 +196,8 @@ class EHomeAdaptor {
 							$ne: 3
 						}
 					},
-					attributes: [['category_id', 'id'], [this.modals.sequelize.fn('CONCAT', 'categories/', masterCategoryId, '/products?pageno=1&ctype=', this.modals.sequelize.col('`categories`.`display_id`')), 'cURL'], ['display_id', 'cType'], ['category_name', 'name']]
+					attributes: [['category_id', 'id'], [this.modals.sequelize.fn('CONCAT', 'categories/', masterCategoryId, '/products?pageno=1&ctype=', this.modals.sequelize.col('`categories`.`display_id`')), 'cURL'], ['display_id', 'cType'], ['category_name', 'name']],
+                    order: [['category_name', 'ASC']]
 				}),
 				this.modals.table_brands.findAll({
 					where: {
@@ -214,7 +215,8 @@ class EHomeAdaptor {
 						},
 						attributes: [['category_id', 'categoryId']]
 					}],
-					attributes: [['brand_id', 'id'], ['brand_name', 'name']]
+					attributes: [['brand_id', 'id'], ['brand_name', 'name']],
+                    order: [['brand_name', 'ASC']]
 				}),
 				this.modals.offlineSeller.findAll({
 					where: {
@@ -232,7 +234,8 @@ class EHomeAdaptor {
 						},
 						attributes: [['category_id', 'categoryId']]
 					}],
-					attributes: ['ID', ['offline_seller_name', 'name']]
+					attributes: ['ID', ['offline_seller_name', 'name']],
+                    order: [['offline_seller_name', 'ASC']]
 				}),
 				this.modals.onlineSeller.findAll({
 					where: {
@@ -250,7 +253,8 @@ class EHomeAdaptor {
 						},
 						attributes: [['category_id', 'categoryId']]
 					}],
-					attributes: ['ID', ['seller_name', 'name']]
+					attributes: ['ID', ['seller_name', 'name']],
+                    order: [['seller_name', 'ASC']]
 				}),
 				this.modals.categories.findOne({
 					where: {
