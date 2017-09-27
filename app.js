@@ -59,7 +59,7 @@ function random(howMany, chars) {
 		len = chars.length;
 
 	for (let i = 0; i < howMany; i++) {
-		value[i] = chars[rnd[i] % len]
+		value[i] = chars[rnd[i] % len];
 	}
 	return value.join('');
 }
@@ -5102,6 +5102,7 @@ models.sequelize.sync().then(() => {
 		method: 'POST',
 		path: '/Services/ConsumerProductSearch',
 		handler: (request, reply) => {
+			console.log(request.payload);
 			const TokenNo = request.payload.TokenNo;
 			const ConsumerID = request.payload.ConsumerID;
 			const Search = request.payload.Search;
@@ -5109,7 +5110,7 @@ models.sequelize.sync().then(() => {
 				if (error) throw error;
 				if (token.length > 0) {
 					const UserID = token[0]['user_id'];
-					connection.query('SELECT p.bill_product_id as ProductID,p.product_name as ProductName,p.value_of_purchase as Value,p.taxes as Taxes,p.tag as Tag,mc.category_name as MasterCatName,c.category_name as CatName, b.brand_name,co.color_name FROM table_consumer_bill_products as p LEFT JOIN table_categories as mc on mc.category_id=p.master_category_id LEFT JOIN table_categories as c on c.category_id=p.category_id LEFT JOIN table_brands as b on b.brand_id=p.brand_id LEFT JOIN table_color as co on co.color_id=p.color_id WHERE p.user_id = ' + ConsumerID + ' AND (p.product_name LIKE "%' + Search + '%" OR mc.category_name LIKE "%' + Search + '%" OR c.category_name LIKE "%' + Search + '%" OR b.brand_name LIKE "%' + Search + '%")', (error, product, fields) => {
+					connection.query('SELECT p.bill_product_id as ProductID,p.product_name as ProductName,p.value_of_purchase as Value,p.taxes as Taxes,p.tag as Tag,mc.category_name as MasterCatName,c.category_name as CatName, b.brand_name,co.color_name FROM table_consumer_bill_products as p LEFT JOIN table_categories as mc on mc.category_id=p.master_category_id LEFT JOIN table_categories as c on c.category_id=p.category_id LEFT JOIN table_brands as b on b.brand_id=p.brand_id LEFT JOIN table_color as co on co.color_id=p.color_id WHERE p.user_id = ? AND (p.product_name LIKE "%?%" OR mc.category_name LIKE "%?%" OR c.category_name LIKE "%?%" OR b.brand_name LIKE "%?%")', [ConsumerID, Search, Search, Search, Search], (error, product, fields) => {
 						if (error) throw error;
 						if (product.length > 0) {
 							var data = '{"statusCode": 100,"ProductList":' + JSON.stringify(product) + '}';
