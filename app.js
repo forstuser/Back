@@ -3134,6 +3134,7 @@ models.sequelize.sync().then(() => {
 		method: 'POST',
 		path: '/Services/EditCategoryForm',
 		handler: (request, reply) => {
+			console.log(request.payload);
 			const TokenNo = request.payload.TokenNo;
 			const ID = request.payload.ID;
 			const Name = request.payload.Name;
@@ -3155,14 +3156,17 @@ models.sequelize.sync().then(() => {
 									const CatType = FormList[i].Type;
 									const List = FormList[i].List;
 									if (FormList[i].FormID != null && FormList[i].FormID != '') {
-										connection.query('UPDATE table_category_form SET form_element_name="' + FormList[i].ElementName + '" "WHERE category_form_id="' + FormList[i].FormID + '"', (error, detail, fields) => {
+										connection.query('UPDATE table_category_form SET form_element_name="' + FormList[i].ElementName + '" WHERE category_form_id="' + FormList[i].FormID + '"', (error, detail, fields) => {
+											if (error) throw error;
 											if (CatType == 2) {
 												for (let a = 0; a < List.length; a++) {
 													if (List[a].DropdownID != null && List[a].DropdownID != '') {
 														connection.query('UPDATE table_category_form_mapping SET dropdown_name="' + List[a].DropdownName + '" "WHERE mapping_id="' + List[a].DropdownID + '"', (error, detail, fields) => {
+															if (error) throw error;
 														});
 													} else {
 														connection.query('INSERT INTO table_category_form_mapping (category_form_id,dropdown_name,status_id) VALUES ("' + FormList[i].FormID + '","' + List[a].DropdownName + '",1)', (error, list, fields) => {
+															if (error) throw error;
 														});
 													}
 												}
@@ -3174,6 +3178,7 @@ models.sequelize.sync().then(() => {
 											if (CatType == 2) {
 												for (let a = 0; a < List.length; a++) {
 													connection.query('INSERT INTO table_category_form_mapping (category_form_id,dropdown_name,status_id) VALUES ("' + formlist['insertId'] + '","' + List[a].DropdownName + '",1)', (error, list, fields) => {
+														if (error) throw error;
 													});
 												}
 											}
