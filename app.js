@@ -1358,7 +1358,8 @@ models.sequelize.sync().then(() => {
 					connection.query('INSERT INTO table_authorized_service_center (brand_id,center_name,address_house_no,address_block,address_street,address_sector,address_city,address_state,address_pin_code,address_nearby,latitude,longitude,open_days,timings,status_id, address) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [request.payload.BrandID, request.payload.Name, request.payload.HouseNo, request.payload.Block, request.payload.Street, request.payload.Sector, request.payload.City, request.payload.State, request.payload.PinCode, request.payload.NearBy, request.payload.Lattitude, request.payload.Longitude, request.payload.OpenDays, request.payload.Timings, 1, request.payload.Address], (error, results, fields) => {
 						if (error) throw error;
 						for (let i = 0; i < Details.length; i++) {
-							connection.query('INSERT INTO table_authorized_service_center_details (center_id,category_id,contactdetail_type_id,display_name,details,status_id) VALUES ("' + results['insertId'] + '",' + Details[i].CategoryID + ',"' + Details[i].DetailTypeID + '","' + Details[i].DisplayName + '","' + Details[i].Details + '",1)', (error, detail, fields) => {
+							connection.query('INSERT INTO table_authorized_service_center_details (center_id,category_id,contactdetail_type_id,display_name,details,status_id) VALUES (?, ?, ?, ?, ?, ?)', [results['insertId'], Details[i].CategoryID, Details[i].DetailTypeID, Details[i].DisplayName, Details[i].Details, 1], (error, detail, fields) => {
+								if (error) throw error;
 							});
 						}
 						const data = '{"statusCode": 100,"error": "","message": "Authorized service center add successfully."}';
