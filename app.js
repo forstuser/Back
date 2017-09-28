@@ -134,6 +134,7 @@ models.sequelize.sync().then(() => {
 		method: 'POST',
 		path: '/Services/Management/Login',
 		handler: (request, reply) => {
+			console.log(request.payload);
 			const EmailID = request.payload.EmailID;
 			const Password = request.payload.Password;
 			//console.log(request);
@@ -181,6 +182,7 @@ models.sequelize.sync().then(() => {
 		method: 'POST',
 		path: '/Services/AddCategory',
 		handler: (request, reply) => {
+			console.log(request.payload);
 			const TokenNo = request.payload.TokenNo;
 			const Level = request.payload.Level;
 			const RefID = request.payload.RefID;
@@ -227,6 +229,7 @@ models.sequelize.sync().then(() => {
 		method: 'POST',
 		path: '/Services/EditCategory',
 		handler: (request, reply) => {
+			console.log(request.payload);
 			const TokenNo = request.payload.TokenNo;
 			const ID = request.payload.ID;
 			const Name = request.payload.Name;
@@ -272,6 +275,7 @@ models.sequelize.sync().then(() => {
 		method: 'POST',
 		path: '/Services/DeleteCategory',
 		handler: (request, reply) => {
+			console.log(request.payload);
 			const TokenNo = request.payload.TokenNo;
 			const ID = request.payload.ID;
 			connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', (error, token, fields) => {
@@ -305,6 +309,7 @@ models.sequelize.sync().then(() => {
 		method: 'POST',
 		path: '/Services/CategoryList',
 		handler: (request, reply) => {
+			console.log(request.payload);
 			const TokenNo = request.payload.TokenNo;
 			const RefID = request.payload.RefID;
 			connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', (error, token, fields) => {
@@ -350,6 +355,7 @@ models.sequelize.sync().then(() => {
 		method: 'POST',
 		path: '/Services/CategoryLevelList',
 		handler: (request, reply) => {
+			console.log(request.payload);
 			const TokenNo = request.payload.TokenNo;
 			const Level = request.payload.Level;
 			connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', (error, token, fields) => {
@@ -418,6 +424,7 @@ models.sequelize.sync().then(() => {
 		method: 'POST',
 		path: '/Services/CategoryByID',
 		handler: (request, reply) => {
+			console.log(request.payload);
 			const TokenNo = request.payload.TokenNo;
 			const ID = request.payload.ID;
 			connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', (error, token, fields) => {
@@ -458,6 +465,7 @@ models.sequelize.sync().then(() => {
 		method: 'POST',
 		path: '/Services/UserTypeList',
 		handler: (request, reply) => {
+			console.log(request.payload);
 			const TokenNo = request.payload.TokenNo;
 			const UserType = request.payload.UserType;
 			connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', (error, token, fields) => {
@@ -508,6 +516,7 @@ models.sequelize.sync().then(() => {
 		method: 'POST',
 		path: '/Services/AddManagementUser',
 		handler: (request, reply) => {
+			console.log(request.payload);
 			const TokenNo = request.payload.TokenNo;
 			const Name = request.payload.Name;
 			const EmailID = request.payload.EmailID;
@@ -557,6 +566,7 @@ models.sequelize.sync().then(() => {
 		method: 'POST',
 		path: '/Services/ManagementUserList',
 		handler: (request, reply) => {
+			console.log(request.payload);
 			const TokenNo = request.payload.TokenNo;
 			const UserType = request.payload.UserType;
 			connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', (error, token, fields) => {
@@ -596,6 +606,7 @@ models.sequelize.sync().then(() => {
 		method: 'POST',
 		path: '/Services/ManagementUserByID',
 		handler: (request, reply) => {
+			console.log(request.payload);
 			const TokenNo = request.payload.TokenNo;
 			const ID = request.payload.ID;
 			connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', (error, token, fields) => {
@@ -1039,6 +1050,7 @@ models.sequelize.sync().then(() => {
 		method: 'POST',
 		path: '/Services/AddOnlineSeller',
 		handler: (request, reply) => {
+			console.log(request.payload);
 			const TokenNo = request.payload.TokenNo;
 			const Name = request.payload.Name;
 			const URL = request.payload.URL;
@@ -1092,6 +1104,7 @@ models.sequelize.sync().then(() => {
 		method: 'POST',
 		path: '/Services/EditOnlineSeller',
 		handler: (request, reply) => {
+			console.log(request.payload);
 			const TokenNo = request.payload.TokenNo;
 			const ID = request.payload.ID;
 			const Name = request.payload.Name;
@@ -1113,9 +1126,11 @@ models.sequelize.sync().then(() => {
 								for (let i = 0; i < Details.length; i++) {
 									if (Details[i].DetailID != null && Details[i].DetailID != '') {
 										connection.query('UPDATE table_online_seller_details SET category_id=' + Details[i].CategoryID + ',contactdetail_type_id="' + Details[i].DetailTypeID + '",display_name="' + Details[i].DisplayName + '",details="' + Details[i].Details + '"WHERE seller_detail_id="' + Details[i].DetailID + '"', (error, detail, fields) => {
+											if (error) throw error;
 										});
 									} else {
 										connection.query('INSERT INTO table_online_seller_details (seller_id,category_id,contactdetail_type_id,display_name,details,status_id) VALUES ("' + ID + '",' + Details[i].CategoryID + ',"' + Details[i].DetailTypeID + '","' + Details[i].DisplayName + '","' + Details[i].Details + '",1)', (error, detail, fields) => {
+											if (error) throw error;
 										});
 									}
 
@@ -1306,6 +1321,7 @@ models.sequelize.sync().then(() => {
 		method: 'POST',
 		path: '/Services/OnlineSellerByID',
 		handler: (request, reply) => {
+			console.log(request.payload);
 			const TokenNo = request.payload.TokenNo;
 			const ID = request.payload.ID;
 			connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', (error, token, fields) => {
