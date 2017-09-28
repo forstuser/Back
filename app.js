@@ -5671,6 +5671,8 @@ function notifyUser(userId, payload) {
 			user_id: userId
 		}
 	}).then((result) => {
+		console.log("FCM IDs: ");
+		console.log(result);
 		const options = {
 			uri: 'https://fcm.googleapis.com/fcm/send',
 			method: 'POST',
@@ -5686,7 +5688,8 @@ function notifyUser(userId, payload) {
 		request(options, (error, response, body) => {
 			if (!error && response.statusCode === 200) {
 				// request was success, should early return response to client
-				console.log(`NOTIFICATION SENT TO USER: ${userId} with RESULTS: ${body.results}`);
+				console.log(`NOTIFICATION SENT TO USER: ${userId} with RESULTS:`);
+				console.log(body.results);
 			} else {
 				console.log(error);
 				console.log(response);
