@@ -2636,11 +2636,25 @@ models.sequelize.sync().then(() => {
 				if (error) throw error;
 				if (token.length > 0) {
 					const UserID = token[0]['user_id'];
-					connection.query('INSERT INTO table_qual_executive_tasks (user_id,bill_id,created_on,updated_on,updated_by_user_id,status_id) VALUES ("' + UID + '","' + BID + '","' + getDateTime() + '","' + getDateTime() + '","' + UserID + '",6)', (error, results, fields) => {
+					connection.query('SELECT COUNT(*) AS QETaskCount FROM table_qual_executive_tasks WHERE user_id = ? AND bill_id = ?', [UID, BID], (error, result) => {
 						if (error) throw error;
-						const data = '{"statusCode": 100,"error": "","message": "Task Assigned successfully."}';
-						reply(data);
+
+						const count = result[0].QETaskCount;
+						if (count > 0) {
+							connection.query('UPDATE table_qual_executive_tasks SET updated_on = ?, status_id = ?, updated_by_user_id = ? WHERE user_id = ? AND bill_id = ?', [getDateTime(), 6, UserID, UID, BID], (error, result) => {
+								if (error) throw error;
+								const data = '{"statusCode": 100,"error": "","message": "Task Assigned successfully."}';
+								reply(data);
+							})
+						} else {
+							connection.query('INSERT INTO table_qual_executive_tasks (user_id,bill_id,created_on,updated_on,updated_by_user_id,status_id) VALUES (?, ?, ?, ?, ?, ?)', [UID, BID, getDateTime(), getDateTime(), UserID, 6], (error, results, fields) => {
+								if (error) throw error;
+								const data = '{"statusCode": 100,"error": "","message": "Task Assigned successfully."}';
+								reply(data);
+							});
+						}
 					});
+
 				} else {
 					var data = '{"statusCode": 101,"error": "Invalid Token","message": "Invalid Token."}';
 					reply(data);
