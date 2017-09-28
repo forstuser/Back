@@ -4242,87 +4242,96 @@ models.sequelize.sync().then(() => {
 							var data = '{"statusCode": 101,"error": "Forbidden","message": "You can\'t access this resource"}';
 							reply(data);
 						} else {
-							connection.query('UPDATE table_consumer_bills SET user_status=10,admin_status=10,comments="' + Comments + '" WHERE bill_id="' + BID + '"', (error, results, fields) => {
+							connection.query('SELECT COUNT(*) AS complete_count FROM table_consumer_bills WHERE bill_id = ? AND user_status=10 AND admin_status=10', [BID], (error, result) => {
 								if (error) throw error;
 
-								connection.query('UPDATE table_consumer_bill_copies SET status_id=10,comments="' + Comments + '" WHERE bill_id="' + BID + '"', (error, results, fields) => {
-									if (error) throw error;
-									const nowDate = getDateTime();
+								if (result[0].complete_count === 0) {
+									connection.query('UPDATE table_consumer_bills SET user_status=10,admin_status=10,comments="' + Comments + '" WHERE bill_id="' + BID + '"', (error, results, fields) => {
+										if (error) throw error;
 
-									connection.query('SELECT user_id AS UID FROM table_consumer_bills WHERE bill_id = ?', [BID], (error, result, fields) => {
+										connection.query('UPDATE table_consumer_bill_copies SET status_id=10,comments="' + Comments + '" WHERE bill_id="' + BID + '"', (error, results, fields) => {
+											if (error) throw error;
+											const nowDate = getDateTime();
 
-										const UID = result[0].UID;
+											connection.query('SELECT user_id AS UID FROM table_consumer_bills WHERE bill_id = ?', [BID], (error, result, fields) => {
 
-										connection.query('SELECT bill_copy_id FROM table_consumer_bill_copies WHERE bill_id = "' + BID + '"', (error, results, fields) => {
+												const UID = result[0].UID;
 
-											const billCopyIds = results.map((elem) => {
-												return elem.bill_copy_id;
-											});
+												connection.query('SELECT bill_copy_id FROM table_consumer_bill_copies WHERE bill_id = "' + BID + '"', (error, results, fields) => {
 
-											console.log("BILL COPY IDS: ", billCopyIds);
+													const billCopyIds = results.map((elem) => {
+														return elem.bill_copy_id;
+													});
 
-											const notificationIDS = [];
+													console.log("BILL COPY IDS: ", billCopyIds);
 
-											billCopyIds.forEach((elem, index) => {
-												connection.query('INSERT INTO table_inbox_notification (user_id,notification_type,title,description,status_id,createdAt,updatedAt,bill_id) VALUES ("' + UID + '",2,"Document Rejected","' + Comments + '",4,"' + nowDate + '","' + nowDate + '","' + BID + '")', (error, notification, fields) => {
-													if (error) throw error;
+													const notificationIDS = [];
 
-													// console.log("NOTIFSSSSSSSSS");
-													// console.log(notification);
+													billCopyIds.forEach((elem, index) => {
+														connection.query('INSERT INTO table_inbox_notification (user_id,notification_type,title,description,status_id,createdAt,updatedAt,bill_id) VALUES ("' + UID + '",2,"Document Rejected","' + Comments + '",4,"' + nowDate + '","' + nowDate + '","' + BID + '")', (error, notification, fields) => {
+															if (error) throw error;
 
-													notificationIDS.push(notification['insertId']);
+															// console.log("NOTIFSSSSSSSSS");
+															// console.log(notification);
 
-													// console.log("NOTIFICATION IDS: ", notificationIDS);
+															notificationIDS.push(notification['insertId']);
 
-													if (index === billCopyIds.length - 1) {
-														notificationIDS.forEach((elem, index) => {
-															connection.query('INSERT INTO table_notification_copies (notification_id,bill_copy_id) VALUES ("' + elem + '","' + billCopyIds[index] + '")', (error, notification, fields) => {
-																if (error) throw error;
-																// const data = '{"statusCode": 100,"error": "","message": "Image Discard successfully."}';
-																// reply(data);
-															});
+															// console.log("NOTIFICATION IDS: ", notificationIDS);
+
+															if (index === billCopyIds.length - 1) {
+																notificationIDS.forEach((elem, index) => {
+																	connection.query('INSERT INTO table_notification_copies (notification_id,bill_copy_id) VALUES ("' + elem + '","' + billCopyIds[index] + '")', (error, notification, fields) => {
+																		if (error) throw error;
+																		// const data = '{"statusCode": 100,"error": "","message": "Image Discard successfully."}';
+																		// reply(data);
+																	});
+																});
+
+																const data = '{"statusCode": 100,"error": "","message": "Job Discard successfully."}';
+																reply(data);
+															}
+
+															console.log(notification);
+
+															// const notificationData = {
+															// 	notificationType: 2,
+															// 	title: "Invoice rejected",
+															// 	description: Comments,
+															// 	statusId: 4,
+															// 	createdAt: nowDate,
+															// 	updatedAt: nowDate,
+															// 	billId: BID
+															// };
 														});
 
-														const data = '{"statusCode": 100,"error": "","message": "Job Discard successfully."}';
-														reply(data);
-													}
+														const notificationData = {
+															notificationType: 2,
+															title: "Document Rejected",
+															description: Comments,
+															statusId: 4,
+															createdAt: nowDate,
+															updatedAt: nowDate,
+															billId: BID,
+															copies: [{
+																billCopyId: elem,
+																fileUrl: `bills/${elem}/files`
+															}]
+														};
 
-													console.log(notification);
+														console.log("NOTIFICATION: ");
+														console.log(notificationData);
 
-													// const notificationData = {
-													// 	notificationType: 2,
-													// 	title: "Invoice rejected",
-													// 	description: Comments,
-													// 	statusId: 4,
-													// 	createdAt: nowDate,
-													// 	updatedAt: nowDate,
-													// 	billId: BID
-													// };
+														notifyUser(UID, notificationData);
+													});
+
 												});
-
-												const notificationData = {
-													notificationType: 2,
-													title: "Document Rejected",
-													description: Comments,
-													statusId: 4,
-													createdAt: nowDate,
-													updatedAt: nowDate,
-													billId: BID,
-													copies: [{
-														billCopyId: elem,
-														fileUrl: `bills/${elem}/files`
-													}]
-												};
-
-												console.log("NOTIFICATION: ");
-												console.log(notificationData);
-
-												notifyUser(UID, notificationData);
 											});
-
 										});
 									});
-								});
+								} else {
+									const data = '{"statusCode": 100,"error": "","message": "Job Discard successfully."}';
+									reply(data);
+								}
 							});
 						}
 					});
