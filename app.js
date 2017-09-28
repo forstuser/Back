@@ -1017,7 +1017,7 @@ models.sequelize.sync().then(() => {
 				if (error) throw error;
 				if (token.length > 0) {
 					const UserID = token[0]['user_id'];
-					connection.query('SELECT brand_id as ID,brand_name as Name,brand_description as Description FROM table_brands WHERE status_id!=3 AND brand_name LIKE "%' + Search + '%" ORDER BY brand_name ', (error, brand, fields) => {
+					connection.query('SELECT brand_id as ID,brand_name as Name,brand_description as Description FROM table_brands WHERE status_id!=3 AND brand_name LIKE "%?%" ORDER BY brand_name', [Search], (error, brand, fields) => {
 						if (error) throw error;
 						if (brand.length > 0) {
 							var data = '{"statusCode": 100,"BrandList": ' + JSON.stringify(brand) + '}';
