@@ -6,6 +6,7 @@ const request = require('request');
 const nodemailer = require('nodemailer');
 const smtpTransport = require('nodemailer-smtp-transport');
 const config = require('../../config/main');
+const shared = require('../../helpers/shared');
 
 class NotificationAdaptor {
 	constructor(modals) {
@@ -431,7 +432,7 @@ class NotificationAdaptor {
 			from: `"BinBill" <${config.EMAIL.USER}>`, // sender address
 			to: email, // list of receivers
 			subject: 'BinBill Email Verification',
-			html: `Hi ${user.fullname},<br /><br /> <a href='${config.SERVER_HOST}/verify/${user.email_secret}' >Click here</a> to verify your email account -<br /><a href='${config.SERVER_HOST}/verify/${user.email_secret}' >${config.SERVER_HOST}/verify/${user.email_secret}</a><br /> Welcome to the safe and connected world!<br /><br />Regards,<br />BinBill`
+			html: shared.retrieveMailTemplate(user, 1)
 		};
 
 		// send mail with defined transport object
