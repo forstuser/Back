@@ -33,7 +33,9 @@ if (process.env.NODE_ENV !== "production") {
 	SERVER_OPTIONS.tls = TLS_OPTIONS;
 }
 
-// server.connection(SERVER_OPTIONS);
+if (process.env.NODE_ENV !== 'production') {
+	server.connection(SERVER_OPTIONS);
+}
 
 const goodLoggingOption = {
 	ops: {
