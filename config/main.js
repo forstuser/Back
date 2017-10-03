@@ -39,7 +39,8 @@ module.exports = {
 		host: process.env.DATABASE_HOST,
 		dialect: 'mysql',
 		logging: (process.env.NODE_ENV !== "production"),
-		port: 3306
+		port: 3306,
+        operatorsAliases: {}
 	},
 	APP: {
 		PORT: process.env.APP_PORT || 3000
