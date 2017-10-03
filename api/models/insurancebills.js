@@ -57,6 +57,10 @@ module.exports = (sequelize, Sequelize) => sequelize.define('insuranceBills', {
 	status_id: {
 		type: Sequelize.INTEGER
 	},
+    paid_on: {
+        type: Sequelize.DATE,
+        defaultValue: sequelize.literal('NOW()')
+    },
 	createdAt: {
 		type: Sequelize.DATE,
 		defaultValue: sequelize.literal('NOW()'),

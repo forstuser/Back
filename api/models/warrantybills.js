@@ -57,6 +57,10 @@ module.exports = (sequelize, Sequelize) => sequelize.define('warranty', {
 		type: Sequelize.INTEGER(11),
 		allowNull: false
 	},
+    paid_on: {
+        type: Sequelize.DATE,
+        defaultValue: sequelize.literal('NOW()')
+    },
 	createdAt: {
 		type: Sequelize.DATE,
 		defaultValue: sequelize.literal('NOW()'),

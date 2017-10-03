@@ -29,13 +29,18 @@ module.exports = (sequelize, DataTypes) => sequelize.define('repairBills', {
 		type: DataTypes.FLOAT,
 		allowNull: false
 	},
+    paid_on: {
+        type: Sequelize.DATE,
+        defaultValue: sequelize.literal('NOW()')
+    },
 	repair_invoice_number: {
 		type: DataTypes.STRING(100),
 		allowNull: false
 	},
 	repair_date: {
 		type: DataTypes.DATE,
-		allowNull: false
+		allowNull: false,
+        defaultValue: sequelize.literal('NOW()')
 	},
 	status_id: {
 		type: DataTypes.INTEGER(11),

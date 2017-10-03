@@ -43,6 +43,10 @@ module.exports = (sequelize, Sequelize) => sequelize.define('amcBills', {
 		defaultValue: sequelize.literal('NULL'),
 		field: 'policy_expiry_date'
 	},
+    paid_on: {
+        type: Sequelize.DATE,
+        defaultValue: sequelize.literal('NOW()')
+    },
 	user_id: {
 		type: Sequelize.INTEGER
 	},
