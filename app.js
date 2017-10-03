@@ -33,7 +33,7 @@ if (process.env.NODE_ENV !== "production") {
 	SERVER_OPTIONS.tls = TLS_OPTIONS;
 }
 
-server.connection(SERVER_OPTIONS);
+// server.connection(SERVER_OPTIONS);
 
 const goodLoggingOption = {
 	ops: {
@@ -127,3 +127,8 @@ models.sequelize.sync().then(() => {
 		}
 	});
 }).catch(err => console.log(err, 'Something went wrong with the Database Update!'));
+
+module.exports = {
+	server: server,
+	options: SERVER_OPTIONS
+};
