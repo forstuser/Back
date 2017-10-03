@@ -4246,10 +4246,10 @@ models.sequelize.sync().then(() => {
 								if (error) throw error;
 
 								if (result[0].complete_count === 0) {
-									connection.query('UPDATE table_consumer_bills SET user_status=10,admin_status=10,comments="' + Comments + '" WHERE bill_id="' + BID + '"', (error, results, fields) => {
+									connection.query('UPDATE table_consumer_bills SET user_status=10,admin_status=10,comments = ? WHERE bill_id = ?', [Comments, BID], (error, results, fields) => {
 										if (error) throw error;
 
-										connection.query('UPDATE table_consumer_bill_copies SET status_id=10,comments="' + Comments + '" WHERE bill_id="' + BID + '"', (error, results, fields) => {
+										connection.query('UPDATE table_consumer_bill_copies SET status_id=10,comments = ? WHERE bill_id= ?', [Comments, BID], (error, results, fields) => {
 											if (error) throw error;
 											const nowDate = getDateTime();
 
@@ -4257,7 +4257,7 @@ models.sequelize.sync().then(() => {
 
 												const UID = result[0].UID;
 
-												connection.query('SELECT bill_copy_id FROM table_consumer_bill_copies WHERE bill_id = "' + BID + '"', (error, results, fields) => {
+												connection.query('SELECT bill_copy_id FROM table_consumer_bill_copies WHERE bill_id = ?', [BID], (error, results, fields) => {
 
 													const billCopyIds = results.map((elem) => {
 														return elem.bill_copy_id;
@@ -4268,7 +4268,7 @@ models.sequelize.sync().then(() => {
 													const notificationIDS = [];
 
 													billCopyIds.forEach((elem, index) => {
-														connection.query('INSERT INTO table_inbox_notification (user_id,notification_type,title,description,status_id,createdAt,updatedAt,bill_id) VALUES ("' + UID + '",2,"Document Rejected","' + Comments + '",4,"' + nowDate + '","' + nowDate + '","' + BID + '")', (error, notification, fields) => {
+														connection.query('INSERT INTO table_inbox_notification (user_id,notification_type,title,description,status_id,createdAt,updatedAt,bill_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [UID, 2, 'Document Rejected', Comments, 4, nowDate, nowDate, BID], (error, notification, fields) => {
 															if (error) throw error;
 
 															// console.log("NOTIFSSSSSSSSS");
@@ -4280,7 +4280,7 @@ models.sequelize.sync().then(() => {
 
 															if (index === billCopyIds.length - 1) {
 																notificationIDS.forEach((elem, index) => {
-																	connection.query('INSERT INTO table_notification_copies (notification_id,bill_copy_id) VALUES ("' + elem + '","' + billCopyIds[index] + '")', (error, notification, fields) => {
+																	connection.query('INSERT INTO table_notification_copies (notification_id,bill_copy_id) VALUES (?, ?)', [elem, billCopyIds[index]], (error, notification, fields) => {
 																		if (error) throw error;
 																		// const data = '{"statusCode": 100,"error": "","message": "Image Discard successfully."}';
 																		// reply(data);
@@ -4385,17 +4385,17 @@ models.sequelize.sync().then(() => {
 
 								const UID = result[0].UID;
 
-								connection.query('UPDATE table_consumer_bill_copies SET status_id=10,comments="' + Comments + '" WHERE bill_id="' + BID + '" and bill_copy_id="' + ImageID + '"', (error, results, fields) => {
+								connection.query('UPDATE table_consumer_bill_copies SET status_id=10,comments= ? WHERE bill_id = ? and bill_copy_id= ?', [Comments, BID, ImageID], (error, results, fields) => {
 									if (error) throw error;
 									const nowDate = getDateTime();
 
-									connection.query('SELECT COUNT(*) as count FROM table_consumer_bill_copies WHERE status_id!=10 AND bill_id="' + BID + '"', (error, count, fiels) => {
+									connection.query('SELECT COUNT(*) as count FROM table_consumer_bill_copies WHERE status_id!=10 AND bill_id= ?', [BID], (error, count, fiels) => {
 										console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
 										console.log(count);
 										console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
 
 										if (count[0].count === 0) {
-											connection.query('UPDATE table_consumer_bills SET user_status=10,admin_status=10,comments="' + Comments + '" WHERE bill_id="' + BID + '"', (error, results, fields) => {
+											connection.query('UPDATE table_consumer_bills SET user_status=10,admin_status=10,comments= ? WHERE bill_id= ?', [Comments, BID], (error, results, fields) => {
 												if (error) throw error;
 												// const nowDate = getDateTime();
 												// connection.query('INSERT INTO table_inbox_notification (user_id,notification_type,title,description,status_id,createdAt,updatedAt,bill_id) VALUES ("' + UID + '",2,"Invoice Rejected","' + Comments + '",4,"' + nowDate + '","' + nowDate + '","' + BID + '")', (error, notification, fields) => {
@@ -4422,12 +4422,12 @@ models.sequelize.sync().then(() => {
 
 									});
 
-									connection.query('INSERT INTO table_inbox_notification (user_id,notification_type,title,description,status_id,createdAt,updatedAt,bill_id) VALUES ("' + UID + '",2,"Document Rejected","' + Comments + '",4,"' + nowDate + '","' + nowDate + '","' + BID + '")', (error, notification, fields) => {
+									connection.query('INSERT INTO table_inbox_notification (user_id,notification_type,title,description,status_id,createdAt,updatedAt,bill_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [UID, 2, 'Document Rejected', Comments, 4, nowDate, nowDate, BID], (error, notification, fields) => {
 										if (error) throw error;
 
 										console.log("INSERT SUCCESSFUL!!!!")
 
-										connection.query('INSERT INTO table_notification_copies (notification_id,bill_copy_id) VALUES ("' + notification['insertId'] + '","' + ImageID + '")', (error, notification, fields) => {
+										connection.query('INSERT INTO table_notification_copies (notification_id,bill_copy_id) VALUES (?, ?)', [notification['insertId'], ImageID], (error, notification, fields) => {
 											if (error) throw error;
 											const data = '{"statusCode": 100,"error": "","message": "Image Discard successfully."}';
 											reply(data);
