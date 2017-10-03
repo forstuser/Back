@@ -1,3 +1,6 @@
+/* jshint esversion: 6 */
+'use strict';
+
 const MySQL = require('mysql');
 const config = require("./config/main");
 const options = config.DATABASE;
@@ -50,66 +53,125 @@ connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo 
 		throw error;
 	}
 	if (token.length > 0) {
-		const userID = token[0]['user_id'];
+		const userID = token[0].user_id;
 		const nowDate = getDateTime();
 
 		console.log("TOTAL ENTRIES: ", ascList.length);
 
-		const ascPromise = ascList.map((elem) => {
-			return models.authorizedServiceCenter.create({
-				center_name: elem.center_name,
-				brand_id: elem.brand_id,
-				address: elem.address,
-				address_city: elem.address_city,
-				address_state: elem.address_state,
-				address_pin_code: elem.address_pin_code,
-				latitude: elem.latitude,
-				longitude: elem.longitude,
-				timings: elem.timings ? elem.timings : null,
-				open_days: elem.open_days ? elem.open_days : null,
-				created_on: Date.now(),
-				updated_on: Date.now(),
-				updated_by_user_id: userID,
-				status_id: 1
-			});
+		const ascPromises = [] ;
+		ascList.forEach((elem) => {
+			if (elem.brand_id) {
+				ascPromises.push(models.authorizedServiceCenter.create({
+					center_name: elem.center_name,
+					brand_id: elem.brand_id,
+					address: elem.address,
+					address_city: elem.address_city,
+					address_state: elem.address_state,
+					address_pin_code: elem.address_pin_code,
+					latitude: elem.latitude,
+					longitude: elem.longitude,
+					timings: elem.timings ? elem.timings : null,
+					open_days: elem.open_days ? elem.open_days : null,
+					created_on: Date.now(),
+					updated_on: Date.now(),
+					updated_by_user_id: userID,
+					status_id: 1
+				}));
+			}
 		});
 
-		return Promise.all(ascPromise).then((result) => {
+		return Promise.all(ascPromises).then((result) => {
 			const ascDetailsPromise = [];
 			ascList.forEach((elem, index) => {
-				if (elem.phone1 !== '' && elem.phone1 !== null && elem.phone1 !== undefined) {
-					ascDetailsPromise.push(models.authorizeServiceCenterDetail.create({
-						center_id: result[index].center_id,
-						contactdetail_type_id: 3,
-						display_name: "Contact",
-						details: elem.phone1,
-						status_id: 1,
-						category_id: elem.category_id
-					}));
-				}
+				if (elem.brand_id) {
+					if (elem.phone1 !== '' && elem.phone1 !== null && elem.phone1 !== undefined) {
+						ascDetailsPromise.push(models.authorizeServiceCenterDetail.create({
+							center_id: result[index].center_id,
+							contactdetail_type_id: 3,
+							display_name: "Contact",
+							details: elem.phone1,
+							status_id: 1,
+							category_id: elem.category_id
+						}));
+					}
 
-				if (elem.phone2 !== '' && elem.phone2 !== undefined && elem.phone2 !== null) {
-					ascDetailsPromise.push(models.authorizeServiceCenterDetail.create({
-						center_id: result[index].center_id,
-						contactdetail_type_id: 3,
-						display_name: "Contact",
-						details: elem.phone2,
-						status_id: 1,
-						category_id: elem.category_id
-					}));
-				}
+					if (elem.phone2 !== '' && elem.phone2 !== undefined && elem.phone2 !== null) {
+						ascDetailsPromise.push(models.authorizeServiceCenterDetail.create({
+							center_id: result[index].center_id,
+							contactdetail_type_id: 3,
+							display_name: "Contact",
+							details: elem.phone2,
+							status_id: 1,
+							category_id: elem.category_id
+						}));
+					}
 
-				if (elem.email !== '' && elem.email !== null && elem.email !== undefined) {
-					ascDetailsPromise.push(models.authorizeServiceCenterDetail.create({
-						center_id: result[index].center_id,
-						contactdetail_type_id: 2,
-						display_name: "Email",
-						details: elem.email,
-						status_id: 1,
-						category_id: elem.category_id
-					}));
-				}
+					if (elem.phone3 !== '' && elem.phone3 !== undefined && elem.phone3 !== null) {
+						ascDetailsPromise.push(models.authorizeServiceCenterDetail.create({
+							center_id: result[index].center_id,
+							contactdetail_type_id: 3,
+							display_name: "Contact",
+							details: elem.phone3,
+							status_id: 1,
+							category_id: elem.category_id
+						}));
+					}
 
+					if (elem.email1 !== '' && elem.email1 !== null && elem.email1 !== undefined) {
+						ascDetailsPromise.push(models.authorizeServiceCenterDetail.create({
+							center_id: result[index].center_id,
+							contactdetail_type_id: 2,
+							display_name: "Email",
+							details: elem.email1,
+							status_id: 1,
+							category_id: elem.category_id
+						}));
+					}
+
+					if (elem.email2 !== '' && elem.email2 !== null && elem.email2 !== undefined) {
+						ascDetailsPromise.push(models.authorizeServiceCenterDetail.create({
+							center_id: result[index].center_id,
+							contactdetail_type_id: 2,
+							display_name: "Email",
+							details: elem.email2,
+							status_id: 1,
+							category_id: elem.category_id
+						}));
+					}
+
+					if (elem.email3 !== '' && elem.email3 !== null && elem.email3 !== undefined) {
+						ascDetailsPromise.push(models.authorizeServiceCenterDetail.create({
+							center_id: result[index].center_id,
+							contactdetail_type_id: 2,
+							display_name: "Email",
+							details: elem.email3,
+							status_id: 1,
+							category_id: elem.category_id
+						}));
+					}
+
+					if (!elem.phone1 && !elem.phone2 && !elem.phone3) {
+						ascDetailsPromise.push(models.authorizeServiceCenterDetail.create({
+							center_id: result[index].center_id,
+							contactdetail_type_id: 3,
+							display_name: "Contact",
+							details: '',
+							status_id: 1,
+							category_id: elem.category_id
+						}));
+					}
+
+					if (!elem.email1 && !elem.email2 && !elem.email3) {
+						ascDetailsPromise.push(models.authorizeServiceCenterDetail.create({
+							center_id: result[index].center_id,
+							contactdetail_type_id: 2,
+							display_name: "Email",
+							details: '',
+							status_id: 1,
+							category_id: elem.category_id
+						}));
+					}
+				}
 			});
 
 			return Promise.all(ascDetailsPromise).catch((err) => {
