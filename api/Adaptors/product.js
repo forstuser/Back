@@ -385,78 +385,60 @@ class ProductAdaptor {
 				}],
 			attributes: [['bill_product_id', 'id'], ['product_name', 'productName'], ['value_of_purchase', 'value'], 'taxes', ['category_id', 'categoryId'], [this.modals.sequelize.col('`masterCategory`.`category_name`'), 'masterCategoryName'], ['master_category_id', 'masterCategoryId'], [this.modals.sequelize.col('`category`.`category_name`'), 'categoryName'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`productBills`.`category_id`'), '/image/'), 'cImageURL'], ['brand_id', 'brandId'], ['color_id', 'colorId'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`productBills`.`bill_product_id`'), '/reviews'), 'reviewUrl'], [this.modals.sequelize.literal('`consumerBill`.`total_purchase_value`'), 'totalCost'], [this.modals.sequelize.literal('`consumerBill`.`taxes`'), 'totalTaxes'], [this.modals.sequelize.literal('`consumerBill`.`purchase_date`'), 'purchaseDate']]
 		}).then((result) => {
-			const product = result.toJSON();
-			product.serviceCenterUrl = `/consumer/servicecenters?brandid=${product.brandId}&categoryid=${product.categoryId}`;
-			product.consumerBill.productOfflineSeller = product.consumerBill
-				.productOfflineSeller.map((sellerItem) => {
-					const seller = sellerItem;
-					seller.sellerDetails.map((sellerDetail) => {
-						if (sellerDetail.typeId.toString() === '3') {
-							seller.contactNo = seller.contactNo ? `${seller.contactNo}\\${sellerDetail.details}` : sellerDetail.details;
-						}
+			if(result) {
+                const product = result.toJSON();
+                product.serviceCenterUrl = `/consumer/servicecenters?brandid=${product.brandId}&categoryid=${product.categoryId}`;
 
-						return sellerDetail;
-					});
+                if (product.brand) {
+                    product.brand.details = product.brand.details.filter((elem) => elem.categoryId === product.categoryId);
+                }
 
-					return seller;
-				});
-			if (product.brand) {
-				product.brand.details = product.brand.details.filter((elem) => elem.categoryId === product.categoryId);
+                const productMetaData = product.productMetaData.map((metaItem) => {
+                    const metaData = metaItem;
+                    if (metaData.type === '2' && metaData.selectedValue) {
+                        metaData.value = metaData.selectedValue.value;
+                    }
+
+                    return metaData;
+                });
+
+                const amcDetails = product.amcDetails.map((amcItem) => {
+                    const amcDetail = amcItem;
+                    amcDetail.exclusions = amcDetail.exclusions.map(item => item.value);
+                    amcDetail.inclusions = amcDetail.inclusions.map(item => item.value);
+
+                    return amcDetail;
+                });
+
+                const warrantyDetails = product.warrantyDetails.map((warrantyItem) => {
+                    const warrantyCopy = warrantyItem;
+                    warrantyCopy.exclusions = warrantyCopy.exclusions.map(item => item.value);
+                    warrantyCopy.inclusions = warrantyCopy.inclusions.map(item => item.value);
+                    return warrantyCopy;
+                });
+
+                product.insuranceDetails = product.insuranceDetails.map((insuranceItem) => {
+                    const insuranceDetail = insuranceItem;
+                    insuranceDetail.exclusions = insuranceDetail.exclusions.map(item => item.value);
+                    insuranceDetail.inclusions = insuranceDetail.inclusions.map(item => item.value);
+                    return insuranceDetail;
+                });
+                product.warrantyDetails = warrantyDetails;
+                product.productMetaData = productMetaData;
+                product.amcDetails = amcDetails;
+                return ({
+                    status: true,
+                    product,
+                    forceUpdate: request.pre.forceUpdate
+                });
+            } else {
+                return ({
+                    status: false,
+                    product: {},
+					message: 'No Data Found',
+                    forceUpdate: request.pre.forceUpdate
+                });
 			}
-
-			product.consumerBill.productOnlineSeller = product
-				.consumerBill.productOnlineSeller.map((sellerItem) => {
-					const seller = sellerItem;
-					seller.sellerDetails.map((sellerDetail) => {
-						if (sellerDetail.typeId.toString() === '3') {
-							seller.contactNo = seller.contactNo ? `${seller.contactNo}\\${sellerDetail.details}` : sellerDetail.details;
-						}
-
-						return sellerDetail;
-					});
-
-					return seller;
-				});
-			const productMetaData = product.productMetaData.map((metaItem) => {
-				const metaData = metaItem;
-				if (metaData.type === '2' && metaData.selectedValue) {
-					metaData.value = metaData.selectedValue.value;
-				}
-
-				return metaData;
-			});
-
-			const amcDetails = product.amcDetails.map((amcItem) => {
-				const amcDetail = amcItem;
-				amcDetail.exclusions = amcDetail.exclusions.map(item => item.value);
-				amcDetail.inclusions = amcDetail.inclusions.map(item => item.value);
-
-				return amcDetail;
-			});
-
-			const warrantyDetails = product.warrantyDetails.map((warrantyItem) => {
-				const warrantyCopy = warrantyItem;
-				warrantyCopy.exclusions = warrantyCopy.exclusions.map(item => item.value);
-				warrantyCopy.inclusions = warrantyCopy.inclusions.map(item => item.value);
-				return warrantyCopy;
-			});
-
-			const insuranceDetails = product.insuranceDetails.map((insuranceItem) => {
-				const insuranceDetail = insuranceItem;
-				insuranceDetail.exclusions = insuranceDetail.exclusions.map(item => item.value);
-				insuranceDetail.inclusions = insuranceDetail.inclusions.map(item => item.value);
-				return insuranceDetail;
-			});
-
-			product.insuranceDetails = insuranceDetails;
-			product.warrantyDetails = warrantyDetails;
-			product.productMetaData = productMetaData;
-			product.amcDetails = amcDetails;
-			return ({
-				status: true,
-				product,
-				forceUpdate: request.pre.forceUpdate
-			});
 		}).catch((err) => {
 			console.log(err);
 			return {
