@@ -1017,7 +1017,7 @@ models.sequelize.sync().then(() => {
 				if (error) throw error;
 				if (token.length > 0) {
 					const UserID = token[0]['user_id'];
-					connection.query('SELECT brand_id as ID,brand_name as Name,brand_description as Description FROM table_brands WHERE status_id!=3 AND brand_name LIKE "%?%" ORDER BY brand_name', [Search], (error, brand, fields) => {
+					connection.query('SELECT brand_id as ID,brand_name as Name,brand_description as Description FROM table_brands WHERE status_id!=3 AND brand_name LIKE ? ORDER BY brand_name', ['%' + Search + '%'], (error, brand, fields) => {
 						if (error) throw error;
 						if (brand.length > 0) {
 							var data = '{"statusCode": 100,"BrandList": ' + JSON.stringify(brand) + '}';
@@ -5151,7 +5151,7 @@ models.sequelize.sync().then(() => {
 				if (error) throw error;
 				if (token.length > 0) {
 					const UserID = token[0]['user_id'];
-					connection.query('SELECT p.bill_product_id as ProductID,p.product_name as ProductName,p.value_of_purchase as Value,p.taxes as Taxes,p.tag as Tag,mc.category_name as MasterCatName,c.category_name as CatName, b.brand_name,co.color_name FROM table_consumer_bill_products as p LEFT JOIN table_categories as mc on mc.category_id=p.master_category_id LEFT JOIN table_categories as c on c.category_id=p.category_id LEFT JOIN table_brands as b on b.brand_id=p.brand_id LEFT JOIN table_color as co on co.color_id=p.color_id WHERE p.user_id = ? AND (p.product_name LIKE "%?%" OR mc.category_name LIKE "%?%" OR c.category_name LIKE "%?%" OR b.brand_name LIKE "%?%")', [ConsumerID, Search, Search, Search, Search], (error, product, fields) => {
+					connection.query('SELECT p.bill_product_id as ProductID,p.product_name as ProductName,p.value_of_purchase as Value,p.taxes as Taxes,p.tag as Tag,mc.category_name as MasterCatName,c.category_name as CatName, b.brand_name,co.color_name FROM table_consumer_bill_products as p LEFT JOIN table_categories as mc on mc.category_id=p.master_category_id LEFT JOIN table_categories as c on c.category_id=p.category_id LEFT JOIN table_brands as b on b.brand_id=p.brand_id LEFT JOIN table_color as co on co.color_id=p.color_id WHERE p.user_id = ? AND (p.product_name LIKE ? OR mc.category_name LIKE ? OR c.category_name LIKE ? OR b.brand_name LIKE ?)', [ConsumerID, '%' + Search + '%', '%' + Search + '%', '%' + Search + '%', '%' + Search + '%'], (error, product, fields) => {
 						if (error) throw error;
 						if (product.length > 0) {
 							var data = '{"statusCode": 100,"ProductList":' + JSON.stringify(product) + '}';
