@@ -34,7 +34,7 @@ module.exports = (sequelize, Sequelize) => sequelize.define('consumerBills', {
 		type: Sequelize.INTEGER
 	},
 	comments: {
-		type: Sequelize.STRING
+		type: Sequelize.STRING(2000)
 	}
 }, {
 	freezeTableName: true,
