@@ -4225,10 +4225,11 @@ models.sequelize.sync().then(() => {
 		method: 'POST',
 		path: '/Services/DiscardConsumerBill',
 		handler: (request, reply) => {
+			console.log(request.payload);
 			const TokenNo = request.payload.TokenNo;
 			const BID = request.payload.BID;
 			// const UID = request.payload.UID;
-			const Comments = request.payload.Comments;
+			const Comments = request.payload.Comments.replace(/[^\x00-\x7F]/g, '');
 			connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', (error, token, fields) => {
 				if (error) throw error;
 				if (token.length > 0) {
@@ -4246,6 +4247,8 @@ models.sequelize.sync().then(() => {
 								if (error) throw error;
 
 								if (result[0].complete_count === 0) {
+									// console.log("COMMENTS:");
+									// console.log(Comments);
 									connection.query('UPDATE table_consumer_bills SET user_status=10,admin_status=10,comments = ? WHERE bill_id = ?', [Comments, BID], (error, results, fields) => {
 										if (error) throw error;
 
@@ -4273,6 +4276,7 @@ models.sequelize.sync().then(() => {
 
 															// console.log("NOTIFSSSSSSSSS");
 															// console.log(notification);
+
 
 															notificationIDS.push(notification['insertId']);
 
@@ -4363,7 +4367,7 @@ models.sequelize.sync().then(() => {
 			const BID = request.payload.BID;
 			// const UID = request.payload.UID;
 			const ImageID = request.payload.ImageID;
-			const Comments = request.payload.Comments;
+			const Comments = request.payload.Comments.replace(/[^\x00-\x7F]/g, '');
 			connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo + '"', (error, token, fields) => {
 				if (error) throw error;
 				if (token.length > 0) {
