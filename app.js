@@ -3869,7 +3869,7 @@ models.sequelize.sync().then(() => {
 												});
 											}
 										}
-										if (InsuranceInclusions.length > 0) {
+										if (InsuranceInclusions && InsuranceInclusions.length > 0) {
 											connection.query('DELETE FROM table_consumer_bill_insurance_inclusions WHERE bill_insurance_id="' + InsuranceID + '"', (error, results, fields) => {
 												if (error) throw error;
 											});
@@ -3878,7 +3878,7 @@ models.sequelize.sync().then(() => {
 												});
 											}
 										}
-										if (InsuranceExclusions.length > 0) {
+										if (InsuranceExclusions && InsuranceExclusions.length > 0) {
 											connection.query('DELETE FROM table_consumer_bill_insurance_exclusions WHERE bill_insurance_id="' + InsuranceID + '"', (error, results, fields) => {
 												if (error) throw error;
 											});
@@ -3991,7 +3991,7 @@ models.sequelize.sync().then(() => {
 												});
 											}
 										}
-										if (AMCInclusions.length > 0) {
+										if (AMCInclusions && AMCInclusions.length > 0) {
 											connection.query('DELETE FROM table_consumer_bill_amc_inclusions WHERE bill_amc_id = "' + AMCList[a].AmcID + '"', (error, results, fields) => {
 												if (error) throw error;
 											});
@@ -4000,11 +4000,11 @@ models.sequelize.sync().then(() => {
 												});
 											}
 										}
-										if (AMCInclusions.length > 0) {
+										if (AMCExclusions && AMCExclusions.length > 0) {
 											connection.query('DELETE FROM table_consumer_bill_amc_exclusions WHERE bill_amc_id = "' + AMCList[a].AmcID + '"', (error, results, fields) => {
 												if (error) throw error;
 											});
-											for (var i = 0; i < AMCInclusions.length; i++) {
+											for (var i = 0; i < AMCExclusions.length; i++) {
 												connection.query('INSERT INTO table_consumer_bill_amc_exclusions (bill_amc_id,exclusions_id) VALUES ("' + AMCList[a].AmcID + '","' + AMCExclusions[i] + '")', (error, list, fields) => {
 												});
 											}
@@ -4070,13 +4070,13 @@ models.sequelize.sync().then(() => {
 														});
 													}
 												}
-												if (InsuranceInclusions.length > 0) {
+												if (InsuranceInclusions && InsuranceInclusions.length > 0) {
 													for (var i = 0; i < InsuranceInclusions.length; i++) {
 														connection.query('INSERT INTO table_consumer_bill_insurance_inclusions (bill_insurance_id,inclusions_id) VALUES ("' + insurance['insertId'] + '","' + InsuranceInclusions[i] + '")', (error, list, fields) => {
 														});
 													}
 												}
-												if (InsuranceExclusions.length > 0) {
+												if (InsuranceExclusions && InsuranceExclusions.length > 0) {
 													for (var i = 0; i < InsuranceExclusions.length; i++) {
 														connection.query('INSERT INTO table_consumer_bill_insurance_exclusions (bill_insurance_id,exclusions_id) VALUES ("' + insurance['insertId'] + '","' + InsuranceExclusions[i] + '")', (error, list, fields) => {
 														});
@@ -4143,14 +4143,14 @@ models.sequelize.sync().then(() => {
 														});
 													}
 												}
-												if (AMCInclusions.length > 0) {
+												if (AMCInclusions && AMCInclusions.length > 0) {
 													for (var i = 0; i < AMCInclusions.length; i++) {
 														connection.query('INSERT INTO table_consumer_bill_amc_inclusions (bill_amc_id,inclusions_id) VALUES ("' + amc['insertId'] + '","' + AMCInclusions[i] + '")', (error, list, fields) => {
 														});
 													}
 												}
-												if (AMCInclusions.length > 0) {
-													for (var i = 0; i < AMCInclusions.length; i++) {
+												if (AMCExclusions && AMCExclusions.length > 0) {
+													for (var i = 0; i < AMCExclusions.length; i++) {
 														connection.query('INSERT INTO table_consumer_bill_amc_exclusions (bill_amc_id,exclusions_id) VALUES ("' + amc['insertId'] + '","' + AMCExclusions[i] + '")', (error, list, fields) => {
 														});
 													}
