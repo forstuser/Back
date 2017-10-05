@@ -213,16 +213,17 @@ class ProductAdaptor {
 							$ne: 3
 						}
 					},
-					include: [{
-						model: this.modals.amcBillCopies,
-						as: 'amcCopies',
-						include: [{
-							model: this.modals.billCopies,
-							as: 'billCopies',
-							attributes: []
-						}],
-						attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', this.modals.sequelize.col('`amcDetails->amcCopies->billCopies`.`bill_copy_type`')), 'billCopyType'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('`amcDetails->amcCopies->billCopies`.`bill_copy_id`'), '/files'), 'fileUrl']]
-					},
+					include: [
+						{
+							model: this.modals.amcBillCopies,
+							as: 'amcCopies',
+							include: [{
+								model: this.modals.billCopies,
+								as: 'billCopies',
+								attributes: []
+							}],
+							attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', this.modals.sequelize.col('`amcDetails->amcCopies->billCopies`.`bill_copy_type`')), 'billCopyType'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('`amcDetails->amcCopies->billCopies`.`bill_copy_id`'), '/files'), 'fileUrl']]
+						},
 						{
 							model: this.modals.exclusions,
 							as: 'exclusions',
@@ -232,7 +233,9 @@ class ProductAdaptor {
 							model: this.modals.inclusions,
 							as: 'inclusions',
 							attributes: [['inclusions_name', 'value']]
-						}],
+						}
+					],
+					order: [['policy_expiry_date', 'DESC']],
 					required: false
 				},
 				{
@@ -245,16 +248,18 @@ class ProductAdaptor {
 							$ne: 3
 						}
 					},
-					include: [{
-						model: this.modals.repairBillCopies,
-						as: 'copies',
-						include: [{
-							model: this.modals.billCopies,
-							as: 'billCopies',
-							attributes: []
-						}],
-						attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.literal('`repairBills->copies->billCopies`.`bill_copy_type`'), 'billCopyType'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.literal('`repairBills->copies->billCopies`.`bill_copy_id`'), '/files'), 'fileUrl']]
-					}],
+					include: [
+						{
+							model: this.modals.repairBillCopies,
+							as: 'copies',
+							include: [{
+								model: this.modals.billCopies,
+								as: 'billCopies',
+								attributes: []
+							}],
+							attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.literal('`repairBills->copies->billCopies`.`bill_copy_type`'), 'billCopyType'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.literal('`repairBills->copies->billCopies`.`bill_copy_id`'), '/files'), 'fileUrl']]
+						}
+					],
 					required: false
 				},
 				{
@@ -267,16 +272,17 @@ class ProductAdaptor {
 							$ne: 3
 						}
 					},
-					include: [{
-						model: this.modals.insuranceBillCopies,
-						as: 'insuranceCopies',
-						include: [{
-							model: this.modals.billCopies,
-							as: 'billCopies',
-							attributes: []
-						}],
-						attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', this.modals.sequelize.col('`insuranceDetails->insuranceCopies->billCopies`.`bill_copy_type`')), 'billCopyType'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('`insuranceDetails->insuranceCopies->billCopies`.`bill_copy_id`'), '/files'), 'fileUrl']]
-					},
+					include: [
+						{
+							model: this.modals.insuranceBillCopies,
+							as: 'insuranceCopies',
+							include: [{
+								model: this.modals.billCopies,
+								as: 'billCopies',
+								attributes: []
+							}],
+							attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', this.modals.sequelize.col('`insuranceDetails->insuranceCopies->billCopies`.`bill_copy_type`')), 'billCopyType'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('`insuranceDetails->insuranceCopies->billCopies`.`bill_copy_id`'), '/files'), 'fileUrl']]
+						},
 						{
 							model: this.modals.exclusions,
 							as: 'exclusions',
@@ -286,7 +292,9 @@ class ProductAdaptor {
 							model: this.modals.inclusions,
 							as: 'inclusions',
 							attributes: [['inclusions_name', 'value']]
-						}],
+						}
+					],
+					order: [['policy_expiry_date', 'DESC']],
 					required: false
 				},
 				{
@@ -299,16 +307,17 @@ class ProductAdaptor {
 							$ne: 3
 						}
 					},
-					include: [{
-						model: this.modals.warrantyCopies,
-						as: 'warrantyCopies',
-						include: [{
-							model: this.modals.billCopies,
-							as: 'billCopies',
-							attributes: []
-						}],
-						attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', this.modals.sequelize.col('`warrantyDetails->warrantyCopies->billCopies`.`bill_copy_type`')), 'billCopyType'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('`warrantyDetails->warrantyCopies->billCopies`.`bill_copy_id`'), '/files'), 'fileUrl']]
-					},
+					include: [
+						{
+							model: this.modals.warrantyCopies,
+							as: 'warrantyCopies',
+							include: [{
+								model: this.modals.billCopies,
+								as: 'billCopies',
+								attributes: []
+							}],
+							attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', this.modals.sequelize.col('`warrantyDetails->warrantyCopies->billCopies`.`bill_copy_type`')), 'billCopyType'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('`warrantyDetails->warrantyCopies->billCopies`.`bill_copy_id`'), '/files'), 'fileUrl']]
+						},
 						{
 							model: this.modals.exclusions,
 							as: 'exclusions',
@@ -318,7 +327,9 @@ class ProductAdaptor {
 							model: this.modals.inclusions,
 							as: 'inclusions',
 							attributes: [['inclusions_name', 'value']]
-						}],
+						}
+					],
+					order: [['policy_expiry_date', 'DESC']],
 					required: false
 				},
 				{

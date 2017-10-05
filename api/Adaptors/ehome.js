@@ -470,6 +470,7 @@ class EHomeAdaptor {
 								$ne: 3
 							}
 						},
+						order: [['policy_expiry_date', 'DESC']],
 						required: false
 					},
 					{
@@ -482,6 +483,7 @@ class EHomeAdaptor {
 								$ne: 3
 							}
 						},
+						order: [['policy_expiry_date', 'DESC']],
 						required: false
 					},
 					{
@@ -494,6 +496,7 @@ class EHomeAdaptor {
 								$ne: 3
 							}
 						},
+						order: [['policy_expiry_date', 'DESC']],
 						required: false
 					},
 					{
