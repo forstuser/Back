@@ -2812,7 +2812,7 @@ models.sequelize.sync().then(() => {
 					switch (Status) {
 						case 4:
 							var status = true;
-							var condition = 'WHERE qe.status_id=6 and  b.user_status!=3 and qe.user_id=' + UserID + '';
+							var condition = 'WHERE qe.status_id=6 and  b.user_status NOT IN (3,10) and qe.user_id=' + UserID + '';
 							break;
 						case 5:
 							var status = true;
