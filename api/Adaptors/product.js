@@ -123,7 +123,8 @@ class ProductAdaptor {
 		const productId = request.params.id;
 		return this.modals.productBills.findOne({
 			where: {
-				bill_product_id: productId
+				bill_product_id: productId,
+				user_id: user.ID
 			},
 			include: [{
 				model: this.modals.consumerBillDetails,
@@ -352,7 +353,7 @@ class ProductAdaptor {
 					},
 					attributes: [['category_id', 'categoryId'], ['display_name', 'displayName'], 'details', ['contactdetails_type_id', 'typeId']]
 				}),
-					this.modals.brandReviews.findAll({
+					this.modals.brandReviews.findOne({
 						where: {
 							status_id: {
 								$ne: 3
@@ -409,7 +410,7 @@ class ProductAdaptor {
 				]).then((mappableResult) => {
 					if (product.brand) {
 						product.brand.details = mappableResult[0].map(item => item.toJSON());
-						product.brand.brandReviews = mappableResult[1].map(item => item.toJSON());
+						product.brand.brandReviews = mappableResult[1] ? mappableResult[1].toJSON() : null;
 					}
 
 
