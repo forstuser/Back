@@ -49,6 +49,7 @@ class BrandController {
 								required: true
 							}
 						],
+						order: [['brand_name', 'ASC']],
 						attributes: [['brand_name', 'brandName'], ['brand_id', 'id']]
 					});
 				} else {
@@ -58,6 +59,7 @@ class BrandController {
 								$ne: 3
 							}
 						},
+						order: [['brand_name', 'ASC']],
 						attributes: [['brand_name', 'brandName'], ['brand_id', 'id']],
 						include: [
 							{
