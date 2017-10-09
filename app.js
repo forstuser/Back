@@ -3320,7 +3320,7 @@ models.sequelize.sync().then(() => {
 				if (error) throw error;
 				if (token.length > 0) {
 					const UserID = token[0]['user_id'];
-					connection.query('SELECT b.bill_id as BillID,b.bill_reference_id BillNo,u.user_id as UserID,u.fullname as Name,u.email_id as EmailID,u.mobile_no as PhoneNo FROM table_consumer_bills as b left join table_users as u on b.user_id=u.user_id WHERE b.bill_id = "' + ID + '"', (error, bill, fields) => {
+					connection.query('SELECT b.bill_id as BillID,b.bill_reference_id as BillNo, b.created_on as createdAt,u.user_id as UserID,u.fullname as Name,u.email_id as EmailID,u.mobile_no as PhoneNo FROM table_consumer_bills as b left join table_users as u on b.user_id=u.user_id WHERE b.bill_id = "' + ID + '"', (error, bill, fields) => {
 						if (error) throw error;
 						if (bill.length > 0) {
 							connection.query('SELECT bill_copy_id as ImageID FROM table_consumer_bill_copies WHERE bill_id = "' + ID + '" and status_id!=3 and status_id!=10', (error, image, fields) => {
@@ -3329,7 +3329,7 @@ models.sequelize.sync().then(() => {
 									if (error) throw error;
 									connection.query('SELECT p.bill_product_id as ProductID,p.product_name as ProductName,p.value_of_purchase as Value,p.taxes as Taxes,p.tag as Tag,mc.category_name as MasterCatName,c.category_name as CatName, b.brand_name,co.color_name FROM table_consumer_bill_products as p LEFT JOIN table_consumer_bill_mapping as m on (m.ref_id=p.bill_product_id and m.bill_ref_type=2) LEFT JOIN table_categories as mc on mc.category_id=p.master_category_id LEFT JOIN table_categories as c on c.category_id=p.category_id LEFT JOIN table_brands as b on b.brand_id=p.brand_id LEFT JOIN table_color as co on co.color_id=p.color_id WHERE m.bill_id = "' + ID + '" and p.status_id!=3', (error, productdetail, fields) => {
 										if (error) throw error;
-										const data = '{"statusCode": 100,"BillID":' + bill[0]['BillID'] + ',"BillNo":"' + bill[0]['BillNo'] + '","UserID":"' + bill[0]['UserID'] + '","Name":"' + bill[0]['Name'] + '","EmailID":"' + bill[0]['EmailID'] + '","PhoneNo":"' + bill[0]['PhoneNo'] + '","ImageList": ' + JSON.stringify(image) + ',"Detail": ' + JSON.stringify(detail) + ',"ProductDetail": ' + JSON.stringify(productdetail) + '}';
+										const data = '{"statusCode": 100,"BillID":' + bill[0]['BillID'] + ',"BillNo":"' + bill[0]['BillNo'] + '", "createdAt":"' + bill[0]['createdAt'] + '","UserID":"' + bill[0]['UserID'] + '","Name":"' + bill[0]['Name'] + '","EmailID":"' + bill[0]['EmailID'] + '","PhoneNo":"' + bill[0]['PhoneNo'] + '","ImageList": ' + JSON.stringify(image) + ',"Detail": ' + JSON.stringify(detail) + ',"ProductDetail": ' + JSON.stringify(productdetail) + '}';
 										reply(data);
 									});
 								});
