@@ -1643,6 +1643,37 @@ function prepareAuthRoutes(userController, authRoutes) {
 
 		authRoutes.push({
 			method: 'PUT',
+			path: '/consumer/subscribe',
+			config: {
+				auth: 'jwt',
+				pre: [
+					{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}
+				],
+				handler: UserController.subscribeUser,
+				description: 'Update User FCM Server ID.',
+				validate: {
+					payload: {
+						fcmId: [joi.string(), joi.allow(null)],
+						output: 'data',
+						parse: true
+					}
+				},
+				plugins: {
+					'hapi-swagger': {
+						responseMessages: [
+							{code: 202, message: 'Authenticated'},
+							{code: 400, message: 'Bad Request'},
+							{code: 401, message: 'Invalid Credentials'},
+							{code: 404, message: 'Not Found'},
+							{code: 500, message: 'Internal Server Error'}
+						]
+					}
+				}
+			}
+		});
+
+		authRoutes.push({
+			method: 'PUT',
 			path: '/consumer/profile',
 			config: {
 				auth: 'jwt',
@@ -1658,7 +1689,7 @@ function prepareAuthRoutes(userController, authRoutes) {
 						longitude: [joi.string(), joi.allow(null)],
 						latitude: [joi.string(), joi.allow(null)],
 						osTypeId: [joi.string(), joi.allow(null)],
-						gcmId: [joi.string(), joi.allow(null)],
+						fcmId: [joi.string(), joi.allow(null)],
 						email: [joi.string(), joi.allow(null, '')],
 						oldEmail: [joi.string(), joi.allow(null, '')],
 						deviceId: [joi.string(), joi.allow(null)],

@@ -297,7 +297,7 @@ class UploadController {
 				if (result && result.bill_copy_name) {
 					fsImpl.readFile(result.bill_copy_name, 'utf8').then(fileResult => reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${result.bill_copy_name}`)).catch((err) => {
 						console.log(err);
-						reply(err);
+						reply({status: false, message: 'No Result Found', forceUpdate: request.pre.forceUpdate, err}).code(404);
 					});
 				} else {
 					reply({status: false, message: 'No Result Found', forceUpdate: request.pre.forceUpdate}).code(404);
