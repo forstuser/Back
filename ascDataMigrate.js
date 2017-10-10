@@ -58,7 +58,7 @@ connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo 
 
 		console.log("TOTAL ENTRIES: ", ascList.length);
 
-		const ascPromises = [] ;
+		const ascPromises = [];
 		ascList.forEach((elem) => {
 			if (elem.brand_id) {
 				ascPromises.push(models.authorizedServiceCenter.create({
@@ -116,6 +116,93 @@ connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo 
 							category_id: elem.category_id
 						}));
 					}
+					if (elem.phone4 !== '' && elem.phone4 !== undefined && elem.phone4 !== null) {
+						ascDetailsPromise.push(models.authorizeServiceCenterDetail.create({
+							center_id: result[index].center_id,
+							contactdetail_type_id: 3,
+							display_name: "Contact",
+							details: elem.phone4,
+							status_id: 1,
+							category_id: elem.category_id
+						}));
+					}
+
+					if (elem.phone5 !== '' && elem.phone5 !== undefined && elem.phone5 !== null) {
+						ascDetailsPromise.push(models.authorizeServiceCenterDetail.create({
+							center_id: result[index].center_id,
+							contactdetail_type_id: 3,
+							display_name: "Contact",
+							details: elem.phone5,
+							status_id: 1,
+							category_id: elem.category_id
+						}));
+					}
+
+					if (elem.phone6 !== '' && elem.phone6 !== undefined && elem.phone6 !== null) {
+						ascDetailsPromise.push(models.authorizeServiceCenterDetail.create({
+							center_id: result[index].center_id,
+							contactdetail_type_id: 3,
+							display_name: "Contact",
+							details: elem.phone6,
+							status_id: 1,
+							category_id: elem.category_id
+						}));
+					}
+
+					if (elem.phone7 !== '' && elem.phone7 !== undefined && elem.phone7 !== null) {
+						ascDetailsPromise.push(models.authorizeServiceCenterDetail.create({
+							center_id: result[index].center_id,
+							contactdetail_type_id: 3,
+							display_name: "Contact",
+							details: elem.phone7,
+							status_id: 1,
+							category_id: elem.category_id
+						}));
+					}
+
+					if (elem.phone8 !== '' && elem.phone8 !== undefined && elem.phone8 !== null) {
+						ascDetailsPromise.push(models.authorizeServiceCenterDetail.create({
+							center_id: result[index].center_id,
+							contactdetail_type_id: 3,
+							display_name: "Contact",
+							details: elem.phone8,
+							status_id: 1,
+							category_id: elem.category_id
+						}));
+					}
+
+					if (elem.phone9 !== '' && elem.phone9 !== undefined && elem.phone9 !== null) {
+						ascDetailsPromise.push(models.authorizeServiceCenterDetail.create({
+							center_id: result[index].center_id,
+							contactdetail_type_id: 3,
+							display_name: "Contact",
+							details: elem.phone9,
+							status_id: 1,
+							category_id: elem.category_id
+						}));
+					}
+
+					if (elem.phone10 !== '' && elem.phone10 !== undefined && elem.phone10 !== null) {
+						ascDetailsPromise.push(models.authorizeServiceCenterDetail.create({
+							center_id: result[index].center_id,
+							contactdetail_type_id: 3,
+							display_name: "Contact",
+							details: elem.phone10,
+							status_id: 1,
+							category_id: elem.category_id
+						}));
+					}
+
+					if (elem.phone11 !== '' && elem.phone11 !== undefined && elem.phone11 !== null) {
+						ascDetailsPromise.push(models.authorizeServiceCenterDetail.create({
+							center_id: result[index].center_id,
+							contactdetail_type_id: 3,
+							display_name: "Contact",
+							details: elem.phone11,
+							status_id: 1,
+							category_id: elem.category_id
+						}));
+					}
 
 					if (elem.email1 !== '' && elem.email1 !== null && elem.email1 !== undefined) {
 						ascDetailsPromise.push(models.authorizeServiceCenterDetail.create({
@@ -150,7 +237,18 @@ connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo 
 						}));
 					}
 
-					if (!elem.phone1 && !elem.phone2 && !elem.phone3) {
+					if (elem.email4 !== '' && elem.email4 !== null && elem.email4 !== undefined) {
+						ascDetailsPromise.push(models.authorizeServiceCenterDetail.create({
+							center_id: result[index].center_id,
+							contactdetail_type_id: 2,
+							display_name: "Email",
+							details: elem.email4,
+							status_id: 1,
+							category_id: elem.category_id
+						}));
+					}
+
+					if (!elem.phone1 && !elem.phone2 && !elem.phone3 && !elem.phone4 && !elem.phone5 && !elem.phone6 && !elem.phone7 && !elem.phone8 && !elem.phone9 && !elem.phone10 && !elem.phone11) {
 						ascDetailsPromise.push(models.authorizeServiceCenterDetail.create({
 							center_id: result[index].center_id,
 							contactdetail_type_id: 3,
@@ -161,7 +259,7 @@ connection.query('SELECT user_id FROM table_token WHERE token_id = "' + TokenNo 
 						}));
 					}
 
-					if (!elem.email1 && !elem.email2 && !elem.email3) {
+					if (!elem.email1 && !elem.email2 && !elem.email3 && !elem.email4) {
 						ascDetailsPromise.push(models.authorizeServiceCenterDetail.create({
 							center_id: result[index].center_id,
 							contactdetail_type_id: 2,
