@@ -436,7 +436,13 @@ class EHomeAdaptor {
 								model: this.modals.offlineSeller,
 								as: 'productOfflineSeller',
 								where: offlineSellerWhereClause,
-								attributes: ['ID', ['offline_seller_name', 'sellerName'], ['seller_url', 'url']],
+								attributes: ['ID', ['offline_seller_name', 'sellerName'], ['seller_url', 'url'], ['address_house_no', 'houseNo'], ['address_block', 'block'], ['address_street', 'street'], ['address_sector', 'sector'], ['address_city', 'city'], ['address_state', 'state'], ['address_pin_code', 'pinCode'], ['address_nearby', 'nearBy'], 'latitude', 'longitude'],
+								include: [{
+									model: this.modals.offlineSellerDetails,
+									as: 'sellerDetails',
+									attributes: [['display_name', 'displayName'], 'details', ['contactdetail_type_id', 'typeId']],
+									required: false
+								}],
 								required: offlineSellerRequired
 							},
 							{
