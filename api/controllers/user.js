@@ -109,6 +109,29 @@ class UserController {
 		notificationAdaptor = new NotificationAdaptor(modals);
 	}
 
+	static subscribeUser(request, reply) {
+		const user = shared.verifyAuthorization(request.headers);
+		if (!user) {
+			reply({
+				status: false,
+				message: 'Unauthorized',
+				forceUpdate: request.pre.forceUpdate
+			});
+		} else if (user && !request.pre.forceUpdate) {
+			if (request.payload && request.payload.fcmId) {
+				insertFcmDetails(user.ID, request.payload.fcmId).then((data) => {
+					console.log(data);
+				}).catch((err) => {
+					console.log(err);
+				});
+			}
+
+			reply({status: true, forceUpdate: request.pre.forceUpdate}).code(201);
+		} else {
+			reply({status: false, message: "Forbidden", forceUpdate: request.pre.forceUpdate});
+		}
+	}
+
 	static dispatchOTP(request, reply) {
 		// console.log("PREEEEE");
 		// console.log(request.pre);
@@ -140,7 +163,7 @@ class UserController {
 				message: "Invalid Phone number"
 			});
 		}
-		
+
 		Promise.all([OTPHelper.sendOTPToUser(request.payload.PhoneNo), userModel.findOne({
 			where: {
 				mobile_no: request.payload.PhoneNo
