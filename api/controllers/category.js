@@ -184,8 +184,7 @@ class CategoryController {
             catch((err) => {
                 console.log(err);
             reply({status: false, message: "ISE"});
-        })
-            ;
+        });
         } else {
             reply({status: false, message: "Forbidden", forceUpdate: request.pre.forceUpdate});
         }

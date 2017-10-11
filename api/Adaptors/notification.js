@@ -408,10 +408,10 @@ class NotificationAdaptor {
 				email_verified: 1
 			});
 
-			return 'Thanks for registering with <a href="https://www.binbill.com">BinBill</a>.';
+			return true;
 		}).catch((err) => {
 			console.log(err);
-			return '';
+			return false;
 		});
 	}
 
