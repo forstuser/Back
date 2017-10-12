@@ -18,6 +18,20 @@ class NotificationAdaptor {
 			this.filterUpcomingService(user),
 			this.prepareNotificationData(user)
 		]).then((result) => {
+			const upcomingServices = result[0].map((elem) => {
+				if (elem.productType === 4) {
+					console.log(elem);
+					const dueAmountArr = elem.productMetaData.filter((e) => {
+						return e.name.toLowerCase() === "due amount";
+					});
+
+					if (dueAmountArr.length > 0) {
+						elem.value = dueAmountArr[0].value;
+					}
+				}
+
+				return elem;
+			});
 			/* const listIndex = (parseInt(pageNo || 1, 10) * 10) - 10; */
 			result[0].sort((a, b) => a.dueIn - b.dueIn);
 			const notifications = [...result[0], ...result[1]];
