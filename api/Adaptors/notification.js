@@ -59,7 +59,12 @@ class NotificationAdaptor {
 					include: [{
 						model: this.modals.billDetailCopies,
 						as: 'billDetailCopies',
-						attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('bill_copy_id'), '/files'), 'fileUrl']]
+						include: [{
+							model: this.modals.billCopies,
+							as: 'billCopies',
+							attributes: []
+						}],
+						attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', this.modals.sequelize.col('`consumerBill->billDetailCopies->billCopies`.`bill_copy_type`')), 'billCopyType'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('`consumerBill->billDetailCopies->billCopies`.`bill_copy_id`'), '/files'), 'fileUrl']],
 					},
 						{
 							model: this.modals.consumerBills,
@@ -432,7 +437,32 @@ class NotificationAdaptor {
 			from: `"BinBill" <${config.EMAIL.USER}>`, // sender address
 			to: email, // list of receivers
 			subject: 'BinBill Email Verification',
-			html: shared.retrieveMailTemplate(user, 5)
+			html: shared.retrieveMailTemplate(user, 0)
+		};
+
+		// send mail with defined transport object
+		smtpTransporter.sendMail(mailOptions);
+	}
+
+
+	static sendMailOnDifferentSteps(subject, email, user, stepId) {
+		const smtpTransporter = nodemailer.createTransport(smtpTransport({
+			service: 'gmail',
+			auth: {
+				user: config.EMAIL.USER,
+				pass: config.EMAIL.PASSWORD
+			},
+			secure: true,
+			port: 465
+		}));
+
+
+		// setup email data with unicode symbols
+		const mailOptions = {
+			from: `"BinBill" <${config.EMAIL.USER}>`, // sender address
+			to: email, // list of receivers
+			subject,
+			html: shared.retrieveMailTemplate(user, stepId)
 		};
 
 		// send mail with defined transport object

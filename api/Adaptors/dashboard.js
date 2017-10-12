@@ -2,6 +2,7 @@
 'use strict';
 const moment = require('moment');
 const shared = require('../../helpers/shared');
+const notificationAdaptor = require('./notification');
 
 class DashboardAdaptor {
 	constructor(modals) {
@@ -120,7 +121,7 @@ class DashboardAdaptor {
 				if (b.productType === 1) {
 					aDate = a.dueDate;
 				}
-				
+
 				if (moment.utc(aDate, "YYYY-MM-DD").isBefore(moment.utc(bDate, 'YYYY-MM-DD'))) {
 					return -1;
 				}
@@ -190,6 +191,7 @@ class DashboardAdaptor {
 						required: true
 					}]
 			}).then((billCounts) => {
+				notificationAdaptor.sendMailOnDifferentSteps('Welcome to BinBill!', user.email_id, user, 1);
 				if (billCounts) {
 					return {
 						status: true,
@@ -252,11 +254,17 @@ class DashboardAdaptor {
 					model: this.modals.consumerBillDetails,
 					as: 'consumerBill',
 					attributes: [['document_id', 'docId'], ['invoice_number', 'invoiceNo'], ['total_purchase_value', 'totalCost'], 'taxes', ['purchase_date', 'purchaseDate']],
-					include: [{
-						model: this.modals.billDetailCopies,
-						as: 'billDetailCopies',
-						attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('bill_copy_id'), '/files'), 'fileUrl']]
-					},
+					include: [
+						{
+							model: this.modals.billDetailCopies,
+							as: 'billDetailCopies',
+							include: [{
+								model: this.modals.billCopies,
+								as: 'billCopies',
+								attributes: []
+							}],
+							attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', this.modals.sequelize.col('`consumerBill->billDetailCopies->billCopies`.`bill_copy_type`')), 'billCopyType'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('`consumerBill->billDetailCopies->billCopies`.`bill_copy_id`'), '/files'), 'fileUrl']],
+						},
 						{
 							model: this.modals.consumerBills,
 							as: 'bill',
@@ -498,6 +506,9 @@ class DashboardAdaptor {
 	prepareInsightData(user) {
 		return this.modals.productBills.findAll({
 			where: {
+				master_category_id: {
+					$ne: 10
+				},
 				user_id: user.ID,
 				status_id: {
 					$ne: 3
