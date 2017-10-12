@@ -492,7 +492,7 @@ class UserController {
 
 	static verifyEmailAddress(request, reply) {
 		const emailSecret = request.params.token;
-		reply({status: notificationAdaptor.verifyEmailAddress(emailSecret)});
+		notificationAdaptor.verifyEmailAddress(emailSecret, reply);
 	}
 
 	static uploadTrueCallerImage(trueObject, userData) {

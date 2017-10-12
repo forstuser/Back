@@ -397,7 +397,7 @@ class NotificationAdaptor {
 		});
 	}
 
-	verifyEmailAddress(emailSecret) {
+	verifyEmailAddress(emailSecret, reply) {
 		return this.modals.table_users.findOne({
 			where: {
 				status_id: {
@@ -413,10 +413,10 @@ class NotificationAdaptor {
 				email_verified: 1
 			});
 
-			return true;
+			return reply({status: true});
 		}).catch((err) => {
 			console.log(err);
-			return false;
+			return reply({status: false});
 		});
 	}
 
