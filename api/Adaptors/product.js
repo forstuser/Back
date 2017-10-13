@@ -1,6 +1,8 @@
 /*jshint esversion: 6 */
 'use strict';
 
+const moment = require('moment');
+
 const sortAmcWarrantyInsuranceRepair = (a, b) => {
 	let aDate;
 	let bDate;
