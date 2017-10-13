@@ -211,7 +211,7 @@ class UploadController {
 					return Promise.all(promisedQuery);
 					// }
 				}).then(billResult => {
-					/*if(user.email_id) {
+					if(user.email_id) {
 						modals.consumerBills.count({
 							where: {
 								uploaded_by: user.ID
@@ -223,7 +223,7 @@ class UploadController {
 								notificationAdaptor.sendMailOnDifferentSteps('We have received your bill, soon it will be available in your eHome', user.email_id, user, 3);
 							}
 						});
-					}*/
+					}
 
 					return reply({
 						status: true,
@@ -269,7 +269,7 @@ class UploadController {
 							console.log(fileResult);
 							modals.billCopies.create(ret)
 								.then(billResult => {
-									/*if(user.email_id) {
+									if(user.email_id) {
 										modals.consumerBills.count({
 											where: {
 												uploaded_by: user.ID
@@ -281,7 +281,7 @@ class UploadController {
 												notificationAdaptor.sendMailOnDifferentSteps('We have received your bill, soon it will be available in your eHome', user.email_id, user, 3);
 											}
 										});
-									}*/
+									}
 									return reply({
 										status: true,
 										message: 'Uploaded Successfully',

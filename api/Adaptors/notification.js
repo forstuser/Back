@@ -46,7 +46,7 @@ class NotificationAdaptor {
 				}
 
 				if (b.productType === 1) {
-					aDate = a.dueDate;
+					bDate = b.dueDate;
 				}
 
 				if (moment.utc(aDate, "YYYY-MM-DD").isBefore(moment.utc(bDate, 'YYYY-MM-DD'))) {
@@ -473,7 +473,7 @@ class NotificationAdaptor {
 			from: `"BinBill" <${config.EMAIL.USER}>`, // sender address
 			to: email, // list of receivers
 			subject: 'BinBill Email Verification',
-			html: shared.retrieveMailTemplate(user, 0)
+			html: shared.retrieveMailTemplate(user, 5)
 		};
 
 		// send mail with defined transport object

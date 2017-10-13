@@ -119,7 +119,7 @@ class DashboardAdaptor {
 				}
 
 				if (b.productType === 1) {
-					aDate = a.dueDate;
+					bDate = b.dueDate;
 				}
 
 				if (moment.utc(aDate, "YYYY-MM-DD").isBefore(moment.utc(bDate, 'YYYY-MM-DD'))) {
