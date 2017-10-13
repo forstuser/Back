@@ -22,7 +22,7 @@ class GeneralController {
 		}).then((data) => {
 			reply({status: true}).code(201);
 		}).catch((err) => {
-			console.log(err);
+			console.log({API_Logs: err});
 			reply({status: false}).code(500);
 		});
 	}
@@ -37,7 +37,7 @@ class GeneralController {
         }).then((faq) => {
             reply({status: true, faq}).code(200);
         }).catch((err) => {
-            console.log(err);
+            console.log({API_Logs: err});
             reply({status: false}).code(200);
         });
     }

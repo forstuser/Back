@@ -37,7 +37,7 @@ class ReferenceDataController {
 				ID: request.params.id
 			}
 		}).then(reply().code(204)).catch((err) => {
-			console.log(err);
+			console.log({API_Logs: err});
 			reply(err);
 		});
 	}
@@ -50,7 +50,7 @@ class ReferenceDataController {
 				ID: request.params.id
 			}
 		}).then(() => reply().code(204)).catch((err) => {
-			console.log(err);
+			console.log({API_Logs: err});
 			reply(err);
 		});
 	}
@@ -64,7 +64,7 @@ class ReferenceDataController {
 		}).then((result) => {
 			reply(result).code(200);
 		}).catch((err) => {
-			console.log(err);
+			console.log({API_Logs: err});
 			reply(err);
 		});
 	}
@@ -92,7 +92,7 @@ class ReferenceDataController {
 				reply().code(404);
 			}
 		}).catch((err) => {
-			console.log(err);
+			console.log({API_Logs: err});
 			reply(err);
 		});
 	}
@@ -107,7 +107,7 @@ class ReferenceDataController {
 		}).then((result) => {
 			reply(result).code(200);
 		}).catch((err) => {
-			console.log(err);
+			console.log({API_Logs: err});
 			reply(err);
 		});
 	}

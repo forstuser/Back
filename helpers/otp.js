@@ -33,7 +33,7 @@ const sendOTPToUser = function (mobileNo) {
 		const phone = `91${mobileNo}`;
 		const otp = generateOTP(6); // OTP of length = 6
 		return sendOTP.sendAsync(phone, "BINBILL", otp).catch((err) => {
-			console.log(err);
+			console.log({API_Logs: err});
 
 			return sendOTP.retryAsync(phone, true);
 		});

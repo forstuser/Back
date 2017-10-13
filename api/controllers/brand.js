@@ -74,7 +74,7 @@ class BrandController {
 			}).then((results) => {
 				reply({status: true, brands: results, forceUpdate: request.pre.forceUpdate});
 			}).catch((err) => {
-				console.log(err);
+				console.log({API_Logs: err});
 				reply({status: false, message: "Something wrong", forceUpdate: request.pre.forceUpdate}).code(500);
 			});
 		} else {
@@ -119,7 +119,7 @@ class BrandController {
 					createdBrand.Details = result;
 					reply(createdBrand).header('brandId', brand.ID).code(201);
 				}).catch((err) => {
-					console.log(err);
+					console.log({API_Logs: err});
 					reply(err);
 				});
 			} else {
@@ -199,7 +199,7 @@ class BrandController {
 
 			if (detailPromise.length > 0) {
 				Promise.all(detailPromise).then(() => reply().code(204)).catch((err) => {
-					console.log(err);
+					console.log({API_Logs: err});
 					reply(err);
 				});
 			} else {
@@ -225,7 +225,7 @@ class BrandController {
 					DetailID: request.params.detailid
 				}
 			}).then(() => reply().code(204)).catch((err) => {
-				console.log(err);
+				console.log({API_Logs: err});
 				reply(err);
 			});
 		} else {
@@ -249,7 +249,7 @@ class BrandController {
 				BrandID: request.params.id
 			}
 		})]).then(() => reply().code(204)).catch((err) => {
-			console.log(err);
+			console.log({API_Logs: err});
 			reply(err);
 		});
 	}
@@ -265,7 +265,7 @@ class BrandController {
 					DetailID: request.params.detailid
 				}
 			}).then(() => reply().code(204)).catch((err) => {
-				console.log(err);
+				console.log({API_Logs: err});
 				reply(err);
 			});
 		} else {
@@ -280,7 +280,7 @@ class BrandController {
 		}).then((result) => {
 			reply(result).code(200);
 		}).catch((err) => {
-			console.log(err);
+			console.log({API_Logs: err});
 			reply(err);
 		});
 	}
@@ -305,7 +305,7 @@ class BrandController {
 
 			return reply().code(404);
 		}).catch((err) => {
-			console.log(err);
+			console.log({API_Logs: err});
 			reply(err);
 		});
 	}

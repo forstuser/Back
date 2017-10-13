@@ -69,7 +69,7 @@ class SearchAdaptor {
 				categoryList
 			};
 		}).catch((err) => {
-			console.log(err);
+			console.log({API_Logs: err});
 			return {
 				status: false,
 				message: 'EHome restore failed',

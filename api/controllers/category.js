@@ -35,7 +35,7 @@ class CategoryController {
 
 			return reply(category[0]).header('categoryId', category.category_id).code(422);
 		}).catch((err) => {
-			console.log(err);
+			console.log({API_Logs: err});
 			reply(err);
 		})
 		;
@@ -55,7 +55,7 @@ class CategoryController {
 			}
 		}).then(() => reply().code(204)
 		).catch((err) => {
-			console.log(err);
+			console.log({API_Logs: err});
 			reply(err);
 		})
 		;
@@ -72,7 +72,7 @@ class CategoryController {
 			}
 		}).then(() => reply().code(204)
 		).catch((err) => {
-			console.log(err);
+			console.log({API_Logs: err});
 			reply(err);
 		})
 		;
@@ -98,7 +98,7 @@ class CategoryController {
 		}).then((result) => {
 			reply(result).code(200);
 		}).catch((err) => {
-			console.log(err);
+			console.log({API_Logs: err});
 			reply(err);
 		})
 		;
@@ -113,7 +113,7 @@ class CategoryController {
 		}).then((result) => {
 			reply(result).code(200);
 		}).catch((err) => {
-			console.log(err);
+			console.log({API_Logs: err});
 			reply(err);
 		});
 	}
@@ -172,7 +172,7 @@ class CategoryController {
 					reply({status: true, categories: results[0], forceUpdate: request.pre.forceUpdate});
 				}
 			}).catch((err) => {
-				console.log(err);
+				console.log({API_Logs: err});
 				reply({status: false, message: "ISE"});
 			});
 		} else {

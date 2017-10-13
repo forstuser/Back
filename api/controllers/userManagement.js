@@ -110,7 +110,7 @@ class UserManagementController {
 				ID: request.params.id
 			}
 		}).then(reply().code(204)).catch((err) => {
-			console.log(err);
+			console.log({API_Logs: err});
 			reply(err);
 		});
 	}
@@ -125,7 +125,7 @@ class UserManagementController {
 				ID: request.params.id
 			}
 		}).then(() => reply().code(204)).catch((err) => {
-			console.log(err);
+			console.log({API_Logs: err});
 			reply(err);
 		});
 	}
@@ -143,7 +143,7 @@ class UserManagementController {
 		}).then((result) => {
 			reply(result).code(200);
 		}).catch((err) => {
-			console.log(err);
+			console.log({API_Logs: err});
 			reply(err);
 		});
 	}
@@ -158,7 +158,7 @@ class UserManagementController {
 		}).then((result) => {
 			reply(result).code(200);
 		}).catch((err) => {
-			console.log(err);
+			console.log({API_Logs: err});
 			reply(err);
 		});
 	}

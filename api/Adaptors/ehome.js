@@ -65,7 +65,7 @@ class EHomeAdaptor {
 				forceUpdate: request.pre.forceUpdate
 			};
 		}).catch((err) => {
-			console.log(err);
+			console.log({API_Logs: err});
 			return {
 				status: false,
 				message: 'EHome restore failed',
@@ -332,7 +332,7 @@ class EHomeAdaptor {
 						 ${onlineSellerIds}&sortby=${sortBy}&searchvalue=${searchValue}` : '' */
 			};
 		}).catch((err) => {
-			console.log(err);
+			console.log({API_Logs: err});
 			return {
 				status: false,
 				err,

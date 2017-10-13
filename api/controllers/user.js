@@ -80,7 +80,7 @@ const insertFcmDetails = function (userId, fcmId) {
 	}).then((data) => {
 		return data;
 	}).catch((err) => {
-		console.log(err);
+		console.log({API_Logs: err});
 	});
 };
 
@@ -93,7 +93,7 @@ const deleteFcmDetails = function (userId, fcmId) {
 	}).then((rows) => {
 		return rows;
 	}).catch((err) => {
-		console.log(err);
+		console.log({API_Logs: err});
 	});
 };
 
@@ -122,7 +122,7 @@ class UserController {
 				insertFcmDetails(user.ID, request.payload.fcmId).then((data) => {
 					console.log(data);
 				}).catch((err) => {
-					console.log(err);
+					console.log({API_Logs: err});
 				});
 			}
 
@@ -217,7 +217,7 @@ class UserController {
 
 
 				// }).catch((err) => {
-				// 	console.log(err);
+				// 	console.log({API_Logs: err});
 				// 	reply({
 				// 		status: false,
 				// 		err
@@ -227,7 +227,7 @@ class UserController {
 				reply({error: response.ErrorMessage}).code(403);  //, forceUpdate: request.pre.forceUpdate}).code(403);
 			}
 		}).catch((err) => {
-			console.log(err);
+			console.log({API_Logs: err});
 			reply({
 				status: false,
 				err,
@@ -269,7 +269,7 @@ class UserController {
 							});
 
 							const updatedUser = userData[0].toJSON();
-							if (!updatedUser.isEmailVerified) {
+							if ((!updatedUser.isEmailVerified && !updatedUser.email_verified) && (updatedUser.email || updatedUser.email_id)) {
 								NotificationAdaptor.sendVerificationMail(updatedUser.email || updatedUser.email_id, updatedUser);
 							}
 							insertFcmDetails(updatedUser.ID, request.payload.fcmId).then((data) => {
@@ -284,11 +284,11 @@ class UserController {
 									console.log(response);
 								}).catch((err) => {
 									console.log("Error in sending iCUBESWIRE POSTBACK");
-									console.log(err);
+									console.log({API_Logs: err});
 								});
 							}
 						}).catch((err) => {
-							console.log(err);
+							console.log({API_Logs: err});
 							reply({
 								message: 'Issue in updating data',
 								status: false,
@@ -304,7 +304,7 @@ class UserController {
 						}).code(401);
 					}
 				}).catch((err) => {
-					console.log(err);
+					console.log({API_Logs: err});
 					reply({
 						message: 'Issue in updating data',
 						status: false,
@@ -347,8 +347,7 @@ class UserController {
 						},
 						defaults: userItem,
 						attributes: ['ID', ['fullname', 'name'], ['mobile_no', 'phoneNo'], ['email_id', 'email'], 'location', 'longitude', 'latitude', ['is_enrolled_professional', 'isEnrolled'], ['professional_category_id', 'categoryId'], ['share_mobile', 'isPhoneAllowed'], ['share_email', 'isEmailAllowed'], ['email_verified', 'isEmailVerified'], ['professional_description', 'description']]
-					})
-						.then((userData) => {
+					}).then((userData) => {
 							if (!userData[1]) {
 								userData[0].updateAttributes({
 									email_secret: uuid.v4(),
@@ -360,7 +359,7 @@ class UserController {
 							}
 
 							const updatedUser = userData[0].toJSON();
-							if (!updatedUser.isEmailVerified) {
+							if (!updatedUser.isEmailVerified && !updatedUser.email_verified) {
 								NotificationAdaptor.sendVerificationMail(trueObject.EmailAddress, updatedUser);
 							}
 
@@ -368,7 +367,7 @@ class UserController {
 
 							insertFcmDetails(updatedUser.ID, request.payload.fcmId).then((data) => {
 								console.log(data);
-							}).catch(console.log);
+							}).catch((err) => console.log({API_Logs: err}));
 
 							reply(dashboardAdaptor.prepareDashboardResult(userData[1], updatedUser, `bearer ${authentication.generateToken(userData[0]).token}`, request)).code(201).header('authorization', `bearer ${authentication.generateToken(userData[0]).token}`);
 
@@ -378,10 +377,10 @@ class UserController {
 									console.log(response);
 								}).catch((err) => {
 									console.log("Error in sending iCUBESWIRE POSTBACK");
-									console.log(err);
+									console.log({API_Logs: err});
 								});
 							}
-						});
+						}).catch((err) => console.log({API_Logs: err}));
 				}
 			}
 		} else {
@@ -427,7 +426,7 @@ class UserController {
 
 			return reply({statusCode: 201}).header('authorization', `bearer ${tokenDetail.token}`).header('expiresIn', tokenDetail.expiresIn);
 		}).catch((err) => {
-			console.log(err);
+			console.log({API_Logs: err});
 			error.status = 401;
 			error.message = 'Something went wrong, please try again.';
 			error.raw = err;

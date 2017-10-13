@@ -215,7 +215,7 @@ class DashboardAdaptor {
 					forceUpdate: request.pre.forceUpdate
 				};
 			}).catch((err) => {
-				console.log(err);
+				console.log({API_Logs: err});
 				return {
 					status: false,
 					authorization: token,
@@ -498,7 +498,7 @@ class DashboardAdaptor {
 
 				resolve([...products, ...warranties, ...insurances, ...amcs]);
 			}).catch((err) => {
-				console.log(err);
+				console.log({API_Logs: err});
 				reject(err);
 			});
 		});

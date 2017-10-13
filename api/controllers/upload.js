@@ -98,11 +98,11 @@ class UploadController {
 							// forceUpdate: request.pre.forceUpdate
 						});
 					}).catch((err) => {
-						console.log(err);
+						console.log({API_Logs: err});
 						reply({status: false, message: 'Upload Failed', err}); //, forceUpdate: request.pre.forceUpdate});
 					});
 				}).catch((err) => {
-				console.log(err);
+				console.log({API_Logs: err});
 				reply({
 					status: false,
 					message: 'Upload Failed',
@@ -211,7 +211,7 @@ class UploadController {
 					return Promise.all(promisedQuery);
 					// }
 				}).then(billResult => {
-					if(user.email) {
+					if(user.email || user.email_id) {
 						modals.consumerBills.count({
 							where: {
 								uploaded_by: user.ID
@@ -232,7 +232,7 @@ class UploadController {
 						// forceUpdate: request.pre.forceUpdate
 					})
 				}).catch((err) => {
-					console.log(err);
+					console.log({API_Logs: err});
 					return reply({
 						status: false,
 						message: 'Upload Failed',
@@ -269,7 +269,7 @@ class UploadController {
 							console.log(fileResult);
 							modals.billCopies.create(ret)
 								.then(billResult => {
-									if(user.email) {
+									if(user.email || user.email_id) {
 										modals.consumerBills.count({
 											where: {
 												uploaded_by: user.ID
@@ -289,7 +289,7 @@ class UploadController {
 										// forceUpdate: request.pre.forceUpdate
 									})
 								}).catch((err) => {
-								console.log(err);
+								console.log({API_Logs: err});
 								return reply({
 									status: false,
 									message: 'Data Update Failed',
@@ -298,7 +298,7 @@ class UploadController {
 								});
 							});
 						}).catch((err) => {
-						console.log(err);
+						console.log({API_Logs: err});
 						return reply({status: false, message: 'Upload Failed', err}); //forceUpdate: request.pre.forceUpdate});
 					});
 
@@ -328,14 +328,14 @@ class UploadController {
 			}).then((result) => {
 				if (result && result.bill_copy_name) {
 					fsImpl.readFile(result.bill_copy_name, 'utf8').then(fileResult => reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${result.bill_copy_name}`)).catch((err) => {
-						console.log(err);
+						console.log({API_Logs: err});
 						reply({status: false, message: 'No Result Found', forceUpdate: request.pre.forceUpdate, err}).code(404);
 					});
 				} else {
 					reply({status: false, message: 'No Result Found', forceUpdate: request.pre.forceUpdate}).code(404);
 				}
 			}).catch((err) => {
-				console.log(err);
+				console.log({API_Logs: err});
 				reply({status: false, err, forceUpdate: request.pre.forceUpdate});
 			});
 		} else {
@@ -387,7 +387,7 @@ class UploadController {
 					reply({status: true, message: 'File deleted successfully', forceUpdate: request.pre.forceUpdate});
 				});
 			}).catch((err) => {
-				console.log(err);
+				console.log({API_Logs: err});
 				reply({status: false, err, forceUpdate: request.pre.forceUpdate});
 			});
 		} else {
@@ -404,7 +404,7 @@ class UploadController {
 				}
 			}).then((result) => {
 				fsImplCategory.readFile(result.category_image_name, 'utf8').then(fileResult => reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${result.CopyName}`)).catch((err) => {
-					console.log(err);
+					console.log({API_Logs: err});
 					reply({
 						status: false,
 						message: 'Unable to retrieve image',
@@ -413,7 +413,7 @@ class UploadController {
 					});
 				});
 			}).catch((err) => {
-				console.log(err);
+				console.log({API_Logs: err});
 				reply({
 					status: false,
 					message: 'Unable to retrieve image',
@@ -443,7 +443,7 @@ class UploadController {
 			}).then((result) => {
 				if (result && result.user_image_name) {
 					fsImplUser.readFile(result.user_image_name, 'utf8').then(fileResult => reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${result.CopyName}`)).catch((err) => {
-						console.log(err);
+						console.log({API_Logs: err});
 						reply({
 							status: false,
 							message: 'Unable to retrieve image',
@@ -454,7 +454,7 @@ class UploadController {
 					reply({status: false, message: 'No Result Found', forceUpdate: request.pre.forceUpdate}).code(404);
 				}
 			}).catch((err) => {
-				console.log(err);
+				console.log({API_Logs: err});
 				reply({
 					status: false,
 					message: 'Unable to retrieve image',

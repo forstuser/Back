@@ -77,7 +77,7 @@ class BillManagementController {
 							}
 						}
 					})]).then(() => reply(ceTask[0]).header('TaskID', ceTask[0].ID).code(201)).catch((err) => {
-					console.log(err);
+					console.log({API_Logs: err});
 					reply(err);
 				});
 			} else {
@@ -90,7 +90,7 @@ class BillManagementController {
 						ID: ceTask[0].ID
 					}
 				}).then(() => reply(ceTask[0]).header('TaskID', ceTask[0].ID).code(204)).catch((err) => {
-					console.log(err);
+					console.log({API_Logs: err});
 					reply(err);
 				});
 			}
@@ -148,7 +148,7 @@ class BillManagementController {
 			})]).then(() => {
 			reply().code(204);
 		}).catch((err) => {
-			console.log(err);
+			console.log({API_Logs: err});
 			reply(err);
 		});
 	}
@@ -218,7 +218,7 @@ class BillManagementController {
 
 			if (detailPromise.length > 0) {
 				Promise.all(detailPromise).then(() => reply().code(204)).catch((err) => {
-					console.log(err);
+					console.log({API_Logs: err});
 					reply(err);
 				});
 			} else {
@@ -244,7 +244,7 @@ class BillManagementController {
 					DetailID: request.params.detailid
 				}
 			}).then(() => reply().code(204)).catch((err) => {
-				console.log(err);
+				console.log({API_Logs: err});
 				reply(err);
 			});
 		} else {
@@ -268,7 +268,7 @@ class BillManagementController {
 				SellerID: request.params.id
 			}
 		})]).then(() => reply().code(204)).catch((err) => {
-			console.log(err);
+			console.log({API_Logs: err});
 			reply(err);
 		});
 	}
@@ -284,7 +284,7 @@ class BillManagementController {
 					DetailID: request.params.detailid
 				}
 			}).then(() => reply().code(204)).catch((err) => {
-				console.log(err);
+				console.log({API_Logs: err});
 				reply(err);
 			});
 		} else {
@@ -373,7 +373,7 @@ class BillManagementController {
 		}).then((result) => {
 			reply(result).code(200);
 		}).catch((err) => {
-			console.log(err);
+			console.log({API_Logs: err});
 			reply(err);
 		});
 	}
@@ -437,7 +437,7 @@ class BillManagementController {
 		}).then((result) => {
 			reply(result).code(200);
 		}).catch((err) => {
-			console.log(err);
+			console.log({API_Logs: err});
 			reply(err);
 		});
 	}
@@ -501,7 +501,7 @@ class BillManagementController {
 		}).then((result) => {
 			reply(result).code(200);
 		}).catch((err) => {
-			console.log(err);
+			console.log({API_Logs: err});
 			reply(err);
 		});
 	}

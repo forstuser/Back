@@ -50,7 +50,7 @@ class ProductAdaptor {
 
 			return {status: true, message: 'Review Updated Successfully', forceUpdate: request.pre.forceUpdate};
 		}).catch((err) => {
-			console.log(err);
+			console.log({API_Logs: err});
 			return {status: true, message: 'Review Update Failed', err, forceUpdate: request.pre.forceUpdate};
 		});
 	}
@@ -97,7 +97,7 @@ class ProductAdaptor {
 
 			return {status: true, message: 'Review Updated Successfully', forceUpdate: request.pre.forceUpdate};
 		}).catch((err) => {
-			console.log(err);
+			console.log({API_Logs: err});
 			return {status: true, message: 'Review Update Failed', err, forceUpdate: request.pre.forceUpdate};
 		});
 	}
@@ -131,7 +131,7 @@ class ProductAdaptor {
 
 			return {status: true, message: 'Review Updated Successfully', forceUpdate: request.pre.forceUpdate};
 		}).catch((err) => {
-			console.log(err);
+			console.log({API_Logs: err});
 			return {status: true, message: 'Review Update Failed', err, forceUpdate: request.pre.forceUpdate};
 		});
 	}
@@ -574,7 +574,7 @@ class ProductAdaptor {
 						forceUpdate: request.pre.forceUpdate
 					});
 				}).catch((err) => {
-					console.log(err);
+					console.log({API_Logs: err});
 					return {
 						status: false,
 						err,
@@ -590,7 +590,7 @@ class ProductAdaptor {
 				});
 			}
 		}).catch((err) => {
-			console.log(err);
+			console.log({API_Logs: err});
 			return {
 				status: false,
 				err,

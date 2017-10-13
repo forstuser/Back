@@ -73,7 +73,7 @@ class DashboardController {
 
 				reply({status: true}).code(201); //, forceUpdate: request.pre.forceUpdate}).code(201);
 			}).catch((err) => {
-				console.log(err);
+				console.log({API_Logs: err});
 				reply({status: false}).code(500); //, forceUpdate: request.pre.forceUpdate}).code(500);
 			});
 		}

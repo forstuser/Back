@@ -51,7 +51,7 @@ class UserAdaptor {
 				forceUpdate: request.pre.forceUpdate
 			}
 		}).catch((err) => {
-			console.log(err);
+			console.log({API_Logs: err});
 			return {
 				status: false,
 				message: 'User Data Retrieval Failed',
@@ -135,7 +135,7 @@ class UserAdaptor {
 				forceUpdate: request.pre.forceUpdate
 			}).code(200);
 		}).catch((err) => {
-			console.log(err);
+			console.log({API_Logs: err});
 			reply({
 				status: false,
 				message: 'User Detail Update failed',

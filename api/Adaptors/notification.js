@@ -67,7 +67,7 @@ class NotificationAdaptor {
 						 listIndex + 10 ? `consumer/mailbox?pageno=${parseInt(pageNo, 10) + 1}` : '' */
 			};
 		}).catch((err) => {
-			console.log(err);
+			console.log({API_Logs: err});
 			return {
 				status: false,
 				message: 'Mailbox restore failed',
@@ -343,7 +343,7 @@ class NotificationAdaptor {
 
 				resolve([...products, ...warranties, ...insurances, ...amcs]);
 			}).catch((err) => {
-				console.log(err);
+				console.log({API_Logs: err});
 				reject(err);
 			});
 		});
@@ -451,7 +451,7 @@ class NotificationAdaptor {
 
 			return reply({status: true});
 		}).catch((err) => {
-			console.log(err);
+			console.log({API_Logs: err});
 			return reply({status: false});
 		});
 	}

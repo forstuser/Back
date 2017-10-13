@@ -78,7 +78,7 @@ class NearByAdaptor {
 								}
 							}
 						}).catch((err) => {
-							console.log(err);
+							console.log({API_Logs: err});
 							reply({
 								status: false,
 								err,
@@ -103,7 +103,7 @@ class NearByAdaptor {
 					});
 				}
 			}).catch((err) => {
-			console.log(err);
+			console.log({API_Logs: err});
 			reply({
 				status: false,
 				message: 'Unable to get near by professional',
