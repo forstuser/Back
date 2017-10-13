@@ -268,14 +268,18 @@ class UserController {
 								// gcm_id: request.payload.fcmId
 							});
 
-							insertFcmDetails(userData[0].ID, request.payload.fcmId).then((data) => {
+							const updatedUser = userData[0].toJSON();
+							if (!updatedUser.isEmailVerified) {
+								NotificationAdaptor.sendVerificationMail(trueObject.EmailAddress, updatedUser);
+							}
+							insertFcmDetails(updatedUser.ID, request.payload.fcmId).then((data) => {
 								console.log(data);
 							});
 
-							reply(dashboardAdaptor.prepareDashboardResult(userData[1], userData[0], `bearer ${authentication.generateToken(userData[0]).token}`, request)).code(201).header('authorization', `bearer ${authentication.generateToken(userData[0]).token}`);
+							reply(dashboardAdaptor.prepareDashboardResult(userData[1], updatedUser, `bearer ${authentication.generateToken(updatedUser).token}`, request)).code(201).header('authorization', `bearer ${authentication.generateToken(updatedUser).token}`);
 
 							if (request.payload.transactionId && request.payload.transactionId !== '') {
-								trackingHelper.postbackTracking(request.payload.transactionId, userData[0].ID).then((response) => {
+								trackingHelper.postbackTracking(request.payload.transactionId, updatedUser.ID).then((response) => {
 									console.log("SUCCESSFULLY SENT ICUBESWIRE POSTBACK");
 									console.log(response);
 								}).catch((err) => {
@@ -356,20 +360,20 @@ class UserController {
 							}
 
 							const updatedUser = userData[0].toJSON();
-							if (!updatedUser.email_verified) {
+							if (!updatedUser.isEmailVerified) {
 								NotificationAdaptor.sendVerificationMail(trueObject.EmailAddress, updatedUser);
 							}
 
-							UserController.uploadTrueCallerImage(trueObject, userData[0]);
+							UserController.uploadTrueCallerImage(trueObject, updatedUser);
 
-							insertFcmDetails(userData[0].ID, request.payload.fcmId).then((data) => {
+							insertFcmDetails(updatedUser.ID, request.payload.fcmId).then((data) => {
 								console.log(data);
 							});
 
-							reply(dashboardAdaptor.prepareDashboardResult(userData[1], userData[0], `bearer ${authentication.generateToken(userData[0]).token}`, request)).code(201).header('authorization', `bearer ${authentication.generateToken(userData[0]).token}`);
+							reply(dashboardAdaptor.prepareDashboardResult(userData[1], updatedUser, `bearer ${authentication.generateToken(updatedUser).token}`, request)).code(201).header('authorization', `bearer ${authentication.generateToken(updatedUser).token}`);
 
 							if (request.payload.transactionId && request.payload.transactionId !== '') {
-								trackingHelper.postbackTracking(request.payload.transactionId, userData[0].ID).then((response) => {
+								trackingHelper.postbackTracking(request.payload.transactionId, updatedUser.ID).then((response) => {
 									console.log("SUCCESSFULLY SENT ICUBESWIRE POSTBACK");
 									console.log(response);
 								}).catch((err) => {

@@ -473,7 +473,7 @@ class NotificationAdaptor {
 			from: `"BinBill" <${config.EMAIL.USER}>`, // sender address
 			to: email, // list of receivers
 			subject: 'BinBill Email Verification',
-			html: shared.retrieveMailTemplate(user, 5)
+			html: shared.retrieveMailTemplate(user, 0)
 		};
 
 		// send mail with defined transport object
