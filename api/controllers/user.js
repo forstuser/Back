@@ -274,9 +274,9 @@ class UserController {
 							}
 							insertFcmDetails(updatedUser.ID, request.payload.fcmId).then((data) => {
 								console.log(data);
-							});
+							}).catch(console.log);
 
-							reply(dashboardAdaptor.prepareDashboardResult(userData[1], updatedUser, `bearer ${authentication.generateToken(updatedUser).token}`, request)).code(201).header('authorization', `bearer ${authentication.generateToken(updatedUser).token}`);
+							reply(dashboardAdaptor.prepareDashboardResult(userData[1], updatedUser, `bearer ${authentication.generateToken(userData[0]).token}`, request)).code(201).header('authorization', `bearer ${authentication.generateToken(userData[0]).token}`);
 
 							if (request.payload.transactionId && request.payload.transactionId !== '') {
 								trackingHelper.postbackTracking(request.payload.transactionId, updatedUser.ID).then((response) => {
@@ -368,9 +368,9 @@ class UserController {
 
 							insertFcmDetails(updatedUser.ID, request.payload.fcmId).then((data) => {
 								console.log(data);
-							});
+							}).catch(console.log);
 
-							reply(dashboardAdaptor.prepareDashboardResult(userData[1], updatedUser, `bearer ${authentication.generateToken(updatedUser).token}`, request)).code(201).header('authorization', `bearer ${authentication.generateToken(updatedUser).token}`);
+							reply(dashboardAdaptor.prepareDashboardResult(userData[1], updatedUser, `bearer ${authentication.generateToken(userData[0]).token}`, request)).code(201).header('authorization', `bearer ${authentication.generateToken(userData[0]).token}`);
 
 							if (request.payload.transactionId && request.payload.transactionId !== '') {
 								trackingHelper.postbackTracking(request.payload.transactionId, updatedUser.ID).then((response) => {

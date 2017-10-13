@@ -47,7 +47,7 @@ class AuthenticationController {
 
 	static generateToken(user) {
 		const expiresIn = new Date().getTime() + 647000;
-		const token = jwt.sign(JSON.parse(JSON.stringify(user, replacer)), config.JWT_SECRET,
+		const token = jwt.sign(JSON.parse(JSON.stringify(user.toJSON(), replacer)), config.JWT_SECRET,
 			{
 				algorithm: 'HS512',
 				expiresIn
