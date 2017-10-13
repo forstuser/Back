@@ -117,14 +117,14 @@ class UserAdaptor {
 					// console.log("EMAIL: ", payload.email);
 					const updatedUser = result.toJSON();
 					if (!updatedUser.email_verified) {
-						NotificationAdaptor.sendVerificationMail(payload.email, updatedUser);
+						NotificationAdaptor.sendVerificationMail(payload.email || payload.email_id, updatedUser);
 					} else if (updatedUser.email_id !== payload.oldEmail) {
 						updatedUser.email_secret = uuid.v4();
 						result.updateAttributes({
 							email_verified: 0,
 							email_secret: updatedUser.email_secret
 						});
-						NotificationAdaptor.sendVerificationMail(payload.email, updatedUser);
+						NotificationAdaptor.sendVerificationMail(payload.email || payload.email_id, updatedUser);
 					}
 				});
 			}

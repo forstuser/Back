@@ -218,9 +218,9 @@ class UploadController {
 							}
 						}).then((billCount) => {
 							if(billCount === 1) {
-								notificationAdaptor.sendMailOnDifferentSteps('It’s good to see you start building your eHome', user.email, user, 2);
+								notificationAdaptor.sendMailOnDifferentSteps('It’s good to see you start building your eHome', user.email || user.email_id, user, 2);
 							} else {
-								notificationAdaptor.sendMailOnDifferentSteps('We have received your bill, soon it will be available in your eHome', user.email, user, 3);
+								notificationAdaptor.sendMailOnDifferentSteps('We have received your bill, soon it will be available in your eHome', user.email || user.email_id, user, 3);
 							}
 						});
 					}
@@ -276,9 +276,9 @@ class UploadController {
 											}
 										}).then((billCount) => {
 											if(billCount === 1) {
-												notificationAdaptor.sendMailOnDifferentSteps('It’s good to see you start building your eHome', user.email, user, 2);
+												notificationAdaptor.sendMailOnDifferentSteps('It’s good to see you start building your eHome', user.email || user.email_id, user, 2);
 											} else {
-												notificationAdaptor.sendMailOnDifferentSteps('We have received your bill, soon it will be available in your eHome', user.email, user, 3);
+												notificationAdaptor.sendMailOnDifferentSteps('We have received your bill, soon it will be available in your eHome', user.email || user.email_id, user, 3);
 											}
 										});
 									}

@@ -270,7 +270,7 @@ class UserController {
 
 							const updatedUser = userData[0].toJSON();
 							if (!updatedUser.isEmailVerified) {
-								NotificationAdaptor.sendVerificationMail(trueObject.EmailAddress, updatedUser);
+								NotificationAdaptor.sendVerificationMail(updatedUser.email || updatedUser.email_id, updatedUser);
 							}
 							insertFcmDetails(updatedUser.ID, request.payload.fcmId).then((data) => {
 								console.log(data);

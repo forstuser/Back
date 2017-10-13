@@ -227,7 +227,7 @@ class DashboardAdaptor {
 		}
 
 
-		notificationAdaptor.sendMailOnDifferentSteps('Welcome to BinBill!', user.email, user, 1);
+		notificationAdaptor.sendMailOnDifferentSteps('Welcome to BinBill!', user.email || user.email_id, user, 1);
 		return {
 			status: true,
 			message: 'New User',
