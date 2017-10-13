@@ -33,8 +33,30 @@ class NotificationAdaptor {
 				return elem;
 			});
 			/* const listIndex = (parseInt(pageNo || 1, 10) * 10) - 10; */
-			result[0].sort((a, b) => a.dueIn - b.dueIn);
-			const notifications = [...result[0], ...result[1]];
+
+			upcomingServices.sort((a, b) => {
+				let aDate;
+				let bDate;
+
+				aDate = a.expiryDate;
+				bDate = b.expiryDate;
+
+				if (a.productType === 1) {
+					aDate = a.dueDate;
+				}
+
+				if (b.productType === 1) {
+					aDate = a.dueDate;
+				}
+
+				if (moment.utc(aDate, "YYYY-MM-DD").isBefore(moment.utc(bDate, 'YYYY-MM-DD'))) {
+					return -1;
+				}
+
+				return 1;
+			});
+
+			const notifications = [...upcomingServices, ...result[1]];
 			return {
 				status: true,
 				message: 'Mailbox restore Successful',
