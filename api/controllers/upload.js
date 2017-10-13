@@ -7,7 +7,7 @@ const mime = require('mime-types');
 const moment = require('moment');
 const fileType = require("file-type");
 
-// const notificationAdaptor = require('../Adaptors/notification');
+const notificationAdaptor = require('../Adaptors/notification');
 const AWS = require('../../config/main').AWS;
 const fsImpl = new S3FS(AWS.S3.BUCKET, AWS.ACCESS_DETAILS);
 
@@ -211,16 +211,16 @@ class UploadController {
 					return Promise.all(promisedQuery);
 					// }
 				}).then(billResult => {
-					if(user.email_id) {
+					if(user.email) {
 						modals.consumerBills.count({
 							where: {
 								uploaded_by: user.ID
 							}
 						}).then((billCount) => {
 							if(billCount === 1) {
-								notificationAdaptor.sendMailOnDifferentSteps('It’s good to see you start building your eHome', user.email_id, user, 2);
+								notificationAdaptor.sendMailOnDifferentSteps('It’s good to see you start building your eHome', user.email, user, 2);
 							} else {
-								notificationAdaptor.sendMailOnDifferentSteps('We have received your bill, soon it will be available in your eHome', user.email_id, user, 3);
+								notificationAdaptor.sendMailOnDifferentSteps('We have received your bill, soon it will be available in your eHome', user.email, user, 3);
 							}
 						});
 					}
@@ -269,16 +269,16 @@ class UploadController {
 							console.log(fileResult);
 							modals.billCopies.create(ret)
 								.then(billResult => {
-									if(user.email_id) {
+									if(user.email) {
 										modals.consumerBills.count({
 											where: {
 												uploaded_by: user.ID
 											}
 										}).then((billCount) => {
 											if(billCount === 1) {
-												notificationAdaptor.sendMailOnDifferentSteps('It’s good to see you start building your eHome', user.email_id, user, 2);
+												notificationAdaptor.sendMailOnDifferentSteps('It’s good to see you start building your eHome', user.email, user, 2);
 											} else {
-												notificationAdaptor.sendMailOnDifferentSteps('We have received your bill, soon it will be available in your eHome', user.email_id, user, 3);
+												notificationAdaptor.sendMailOnDifferentSteps('We have received your bill, soon it will be available in your eHome', user.email, user, 3);
 											}
 										});
 									}
