@@ -6,6 +6,7 @@ const request = require('request');
 const nodemailer = require('nodemailer');
 const smtpTransport = require('nodemailer-smtp-transport');
 const config = require('../../config/main');
+const shared = require('../../helpers/shared');
 
 class NotificationAdaptor {
 	constructor(modals) {
@@ -17,9 +18,45 @@ class NotificationAdaptor {
 			this.filterUpcomingService(user),
 			this.prepareNotificationData(user)
 		]).then((result) => {
+			const upcomingServices = result[0].map((elem) => {
+				if (elem.productType === 4) {
+					console.log(elem);
+					const dueAmountArr = elem.productMetaData.filter((e) => {
+						return e.name.toLowerCase() === "due amount";
+					});
+
+					if (dueAmountArr.length > 0) {
+						elem.value = dueAmountArr[0].value;
+					}
+				}
+
+				return elem;
+			});
 			/* const listIndex = (parseInt(pageNo || 1, 10) * 10) - 10; */
-			result[0].sort((a, b) => a.dueIn - b.dueIn);
-			const notifications = [...result[0], ...result[1]];
+
+			upcomingServices.sort((a, b) => {
+				let aDate;
+				let bDate;
+
+				aDate = a.expiryDate;
+				bDate = b.expiryDate;
+
+				if (a.productType === 1) {
+					aDate = a.dueDate;
+				}
+
+				if (b.productType === 1) {
+					bDate = b.dueDate;
+				}
+
+				if (moment.utc(aDate, "YYYY-MM-DD").isBefore(moment.utc(bDate, 'YYYY-MM-DD'))) {
+					return -1;
+				}
+
+				return 1;
+			});
+
+			const notifications = [...upcomingServices, ...result[1]];
 			return {
 				status: true,
 				message: 'Mailbox restore Successful',
@@ -58,7 +95,12 @@ class NotificationAdaptor {
 					include: [{
 						model: this.modals.billDetailCopies,
 						as: 'billDetailCopies',
-						attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('bill_copy_id'), '/files'), 'fileUrl']]
+						include: [{
+							model: this.modals.billCopies,
+							as: 'billCopies',
+							attributes: []
+						}],
+						attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', this.modals.sequelize.col('`consumerBill->billDetailCopies->billCopies`.`bill_copy_type`')), 'billCopyType'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('`consumerBill->billDetailCopies->billCopies`.`bill_copy_id`'), '/files'), 'fileUrl']],
 					},
 						{
 							model: this.modals.consumerBills,
@@ -391,7 +433,7 @@ class NotificationAdaptor {
 		});
 	}
 
-	verifyEmailAddress(emailSecret) {
+	verifyEmailAddress(emailSecret, reply) {
 		return this.modals.table_users.findOne({
 			where: {
 				status_id: {
@@ -407,10 +449,10 @@ class NotificationAdaptor {
 				email_verified: 1
 			});
 
-			return 'Thanks for registering with <a href="https://www.binbill.com">BinBill</a>.';
+			return reply({status: true});
 		}).catch((err) => {
 			console.log(err);
-			return '';
+			return reply({status: false});
 		});
 	}
 
@@ -431,7 +473,32 @@ class NotificationAdaptor {
 			from: `"BinBill" <${config.EMAIL.USER}>`, // sender address
 			to: email, // list of receivers
 			subject: 'BinBill Email Verification',
-			html: `Hi ${user.fullname},<br /><br /> <a href='${config.SERVER_HOST}/verify/${user.email_secret}' >Click here</a> to verify your email account -<br /><a href='${config.SERVER_HOST}/verify/${user.email_secret}' >${config.SERVER_HOST}/verify/${user.email_secret}</a><br /> Welcome to the safe and connected world!<br /><br />Regards,<br />BinBill`
+			html: shared.retrieveMailTemplate(user, 5)
+		};
+
+		// send mail with defined transport object
+		smtpTransporter.sendMail(mailOptions);
+	}
+
+
+	static sendMailOnDifferentSteps(subject, email, user, stepId) {
+		const smtpTransporter = nodemailer.createTransport(smtpTransport({
+			service: 'gmail',
+			auth: {
+				user: config.EMAIL.USER,
+				pass: config.EMAIL.PASSWORD
+			},
+			secure: true,
+			port: 465
+		}));
+
+
+		// setup email data with unicode symbols
+		const mailOptions = {
+			from: `"BinBill" <${config.EMAIL.USER}>`, // sender address
+			to: email, // list of receivers
+			subject,
+			html: shared.retrieveMailTemplate(user, stepId)
 		};
 
 		// send mail with defined transport object

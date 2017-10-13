@@ -1,6 +1,23 @@
 /*jshint esversion: 6 */
 'use strict';
 
+const moment = require('moment');
+
+const sortAmcWarrantyInsuranceRepair = (a, b) => {
+	let aDate;
+	let bDate;
+
+	aDate = a.expiryDate;
+	bDate = b.expiryDate;
+
+	if (moment.utc(aDate).isBefore(moment.utc(bDate))) {
+		return 1;
+	}
+
+	return -1;
+};
+
+
 class ProductAdaptor {
 	constructor(modals) {
 		this.modals = modals;
@@ -484,7 +501,7 @@ class ProductAdaptor {
 
 					const onlineSellers = mappableResult[5].map(item => item.toJSON());
 					const offlineSellers = mappableResult[6].map(item => item.toJSON());
-
+					product.amcDetails = product.amcDetails.sort(sortAmcWarrantyInsuranceRepair);
 					product.amcDetails = product.amcDetails.map((amcItem) => {
 						const amcDetail = amcItem;
 						const seller = amcDetail.sellerType === 1 ? onlineSellers.find(item => item.ID === amcDetail.sellerID) : offlineSellers.find(item => item.ID === amcDetail.sellerID);
@@ -501,6 +518,7 @@ class ProductAdaptor {
 						return amcDetail;
 					});
 
+					product.warrantyDetails = product.warrantyDetails.sort(sortAmcWarrantyInsuranceRepair);
 					product.warrantyDetails = product.warrantyDetails.map((warrantyItem) => {
 						const warrantyCopy = warrantyItem;
 						const seller = warrantyCopy.sellerType === 1 ? onlineSellers.find(item => item.ID === warrantyCopy.sellerID) : offlineSellers.find(item => item.ID === warrantyCopy.sellerID);
@@ -517,6 +535,7 @@ class ProductAdaptor {
 						return warrantyCopy;
 					});
 
+					product.insuranceDetails = product.insuranceDetails.sort(sortAmcWarrantyInsuranceRepair);
 					product.insuranceDetails = product.insuranceDetails.map((insuranceItem) => {
 						const insuranceDetail = insuranceItem;
 						const seller = insuranceDetail.sellerType === 1 ? onlineSellers.find(item => item.ID === insuranceDetail.sellerID) : offlineSellers.find(item => item.ID === insuranceDetail.sellerID);

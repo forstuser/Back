@@ -7,6 +7,7 @@ const mime = require('mime-types');
 const moment = require('moment');
 const fileType = require("file-type");
 
+const notificationAdaptor = require('../Adaptors/notification');
 const AWS = require('../../config/main').AWS;
 const fsImpl = new S3FS(AWS.S3.BUCKET, AWS.ACCESS_DETAILS);
 
@@ -154,7 +155,7 @@ class UploadController {
 
 				if (filteredFileData.length === 0) {
 					console.log("No valid documents in request");
-					reply({status: false, message: "No valid documents in request"});
+					return reply({status: false, message: "No valid documents in request"});
 				} else {
 					UploadController.uploadFileGeneric(user, filteredFileData, reply, request);
 				}
@@ -162,7 +163,7 @@ class UploadController {
 				// 	reply({status: false, message: 'No File', forceUpdate: request.pre.forceUpdate}).code(400);
 				// }
 			} else {
-				reply({status: false, message: "No documents in request"}); //, forceUpdate: request.pre.forceUpdate});
+				return reply({status: false, message: "No documents in request"}); //, forceUpdate: request.pre.forceUpdate});
 			}
 		}
 	}
@@ -209,14 +210,30 @@ class UploadController {
 					// if (promisedQuery.length === Object.keys(fileData).length) {
 					return Promise.all(promisedQuery);
 					// }
-				}).then(billResult => reply({
-					status: true,
-					message: 'Uploaded Successfully',
-					billResult,
-					// forceUpdate: request.pre.forceUpdate
-				})).catch((err) => {
+				}).then(billResult => {
+					if(user.email) {
+						modals.consumerBills.count({
+							where: {
+								uploaded_by: user.ID
+							}
+						}).then((billCount) => {
+							if(billCount === 1) {
+								notificationAdaptor.sendMailOnDifferentSteps('It’s good to see you start building your eHome', user.email, user, 2);
+							} else {
+								notificationAdaptor.sendMailOnDifferentSteps('We have received your bill, soon it will be available in your eHome', user.email, user, 3);
+							}
+						});
+					}
+
+					return reply({
+						status: true,
+						message: 'Uploaded Successfully',
+						billResult,
+						// forceUpdate: request.pre.forceUpdate
+					})
+				}).catch((err) => {
 					console.log(err);
-					reply({
+					return reply({
 						status: false,
 						message: 'Upload Failed',
 						err: JSON.stringify(err),
@@ -228,9 +245,9 @@ class UploadController {
 				const fileType = (/[.]/.exec(name)) ? /[^.]+$/.exec(name) : undefined;
 				// console.log("OUTSIDE FILE ALLOWED: ", fileType);
 				if (fileType && !isFileTypeAllowed(fileType)) {
-					reply({status: false, message: 'Data Upload Failed'});
+					return reply({status: false, message: 'Data Upload Failed'});
 				} else if (!fileType && !isFileTypeAllowedMagicNumber(fileData._data)) {
-					reply({status: false, message: 'Data Upload Failed'});
+					return reply({status: false, message: 'Data Upload Failed'});
 				} else {
 					const fileTypeData = getTypeFromBuffer(fileData._data);
 					const fileName = `${user.ID}-${result.bill_id}-${moment().valueOf()}.${(fileType) ? fileType.toString() : fileTypeData.ext}`;
@@ -251,14 +268,29 @@ class UploadController {
 
 							console.log(fileResult);
 							modals.billCopies.create(ret)
-								.then(billResult => reply({
-									status: true,
-									message: 'Uploaded Successfully',
-									billResult,
-									// forceUpdate: request.pre.forceUpdate
-								})).catch((err) => {
+								.then(billResult => {
+									if(user.email) {
+										modals.consumerBills.count({
+											where: {
+												uploaded_by: user.ID
+											}
+										}).then((billCount) => {
+											if(billCount === 1) {
+												notificationAdaptor.sendMailOnDifferentSteps('It’s good to see you start building your eHome', user.email, user, 2);
+											} else {
+												notificationAdaptor.sendMailOnDifferentSteps('We have received your bill, soon it will be available in your eHome', user.email, user, 3);
+											}
+										});
+									}
+									return reply({
+										status: true,
+										message: 'Uploaded Successfully',
+										billResult,
+										// forceUpdate: request.pre.forceUpdate
+									})
+								}).catch((err) => {
 								console.log(err);
-								reply({
+								return reply({
 									status: false,
 									message: 'Data Update Failed',
 									err,
@@ -267,14 +299,14 @@ class UploadController {
 							});
 						}).catch((err) => {
 						console.log(err);
-						reply({status: false, message: 'Upload Failed', err}); //forceUpdate: request.pre.forceUpdate});
+						return reply({status: false, message: 'Upload Failed', err}); //forceUpdate: request.pre.forceUpdate});
 					});
 
 				}
 			}
 		}).catch((err) => {
 			console.log("ERR", err);
-			reply({status: false, message: 'Upload Failed', err});// , forceUpdate: request.pre.forceUpdate});
+			return reply({status: false, message: 'Upload Failed', err});// , forceUpdate: request.pre.forceUpdate});
 		});
 	}
 
