@@ -450,6 +450,12 @@ class EHomeAdaptor {
 								as: 'productOnlineSeller',
 								where: onlineSellerWhereClause,
 								attributes: ['ID', ['seller_name', 'sellerName'], ['seller_url', 'url']],
+								include: [{
+									model: this.modals.onlineSellerDetails,
+									as: 'sellerDetails',
+									attributes: [['display_name', 'displayName'], 'details', ['contactdetail_type_id', 'typeId']],
+									required: false
+								}],
 								required: onlineSellerRequired
 							}],
 						required: true
