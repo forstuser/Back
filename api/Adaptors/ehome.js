@@ -197,7 +197,7 @@ class EHomeAdaptor {
 						}
 					},
 					attributes: [['category_id', 'id'], [this.modals.sequelize.fn('CONCAT', 'categories/', masterCategoryId, '/products?pageno=1&ctype=', this.modals.sequelize.col('`categories`.`display_id`')), 'cURL'], ['display_id', 'cType'], ['category_name', 'name']],
-					order: [['category_name', 'ASC']]
+                    order: [['category_name', 'ASC']]
 				}),
 				this.modals.table_brands.findAll({
 					where: {
@@ -216,7 +216,7 @@ class EHomeAdaptor {
 						attributes: [['category_id', 'categoryId']]
 					}],
 					attributes: [['brand_id', 'id'], ['brand_name', 'name']],
-					order: [['brand_name', 'ASC']]
+                    order: [['brand_name', 'ASC']]
 				}),
 				this.modals.offlineSeller.findAll({
 					where: {
@@ -436,7 +436,13 @@ class EHomeAdaptor {
 								model: this.modals.offlineSeller,
 								as: 'productOfflineSeller',
 								where: offlineSellerWhereClause,
-								attributes: ['ID', ['offline_seller_name', 'sellerName'], ['seller_url', 'url']],
+								attributes: ['ID', ['offline_seller_name', 'sellerName'], ['seller_url', 'url'], ['address_house_no', 'houseNo'], ['address_block', 'block'], ['address_street', 'street'], ['address_sector', 'sector'], ['address_city', 'city'], ['address_state', 'state'], ['address_pin_code', 'pinCode'], ['address_nearby', 'nearBy'], 'latitude', 'longitude'],
+								include: [{
+									model: this.modals.offlineSellerDetails,
+									as: 'sellerDetails',
+									attributes: [['display_name', 'displayName'], 'details', ['contactdetail_type_id', 'typeId']],
+									required: false
+								}],
 								required: offlineSellerRequired
 							},
 							{
@@ -470,6 +476,7 @@ class EHomeAdaptor {
 								$ne: 3
 							}
 						},
+						order: [['policy_expiry_date', 'DESC']],
 						required: false
 					},
 					{
@@ -482,6 +489,7 @@ class EHomeAdaptor {
 								$ne: 3
 							}
 						},
+						order: [['policy_expiry_date', 'DESC']],
 						required: false
 					},
 					{
@@ -494,6 +502,7 @@ class EHomeAdaptor {
 								$ne: 3
 							}
 						},
+						order: [['policy_expiry_date', 'DESC']],
 						required: false
 					},
 					{
