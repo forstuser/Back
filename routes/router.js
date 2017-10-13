@@ -1642,7 +1642,7 @@ function prepareAuthRoutes(userController, authRoutes) {
 		});
 
 		authRoutes.push({
-			method: 'PUT',
+			method: 'POST',
 			path: '/consumer/subscribe',
 			config: {
 				auth: 'jwt',
