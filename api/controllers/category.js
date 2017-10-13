@@ -164,7 +164,7 @@ class CategoryController {
 				condition = "IS NOT NULL";
 			}
 
-			return modals.sequelize.query(`SELECT category_id, category_name from table_categories where category_id in (SELECT DISTINCT category_id from table_authorized_service_center_details where center_id in (SELECT center_id from table_authorized_service_center where brand_id ${condition}));`).then((results) => {
+			return modals.sequelize.query(`SELECT category_id, category_name from table_categories where category_id in (SELECT DISTINCT category_id from table_authorized_service_center_details where center_id in (SELECT center_id from table_authorized_service_center where brand_id ${condition})) order by category_name;`).then((results) => {
 				if (results.length === 0) {
 					reply({status: true, categories: [], forceUpdate: request.pre.forceUpdate});
 				}
