@@ -440,6 +440,12 @@ class EHomeAdaptor {
 								include: [{
 									model: this.modals.offlineSellerDetails,
 									as: 'sellerDetails',
+									where: {
+										status_id: {
+											$ne: 3
+										},
+										$and: this.modals.sequelize.where(this.modals.sequelize.literal("`consumerBill->productOfflineSeller->sellerDetails`.`category_id`"), this.modals.sequelize.literal(`productBills.category_id`))
+									},
 									attributes: [['display_name', 'displayName'], 'details', ['contactdetail_type_id', 'typeId']],
 									required: false
 								}],
@@ -453,6 +459,12 @@ class EHomeAdaptor {
 								include: [{
 									model: this.modals.onlineSellerDetails,
 									as: 'sellerDetails',
+									where: {
+										status_id: {
+											$ne: 3
+										},
+										$and: this.modals.sequelize.where(this.modals.sequelize.literal("`consumerBill->productOfflineSeller->sellerDetails`.`category_id`"), this.modals.sequelize.literal(`productBills.category_id`))
+									},
 									attributes: [['display_name', 'displayName'], 'details', ['contactdetail_type_id', 'typeId']],
 									required: false
 								}],
