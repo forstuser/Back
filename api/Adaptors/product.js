@@ -411,7 +411,6 @@ class ProductAdaptor {
 							status_id: {
 								$ne: 3
 							},
-							category_id: product.categoryId,
 							seller_id: onlineSellerId,
 						},
 						attributes: [['display_name', 'displayName'], 'details', ['contactdetail_type_id', 'typeId'], ['seller_id', 'sellerId']]
@@ -421,7 +420,6 @@ class ProductAdaptor {
 							status_id: {
 								$ne: 3
 							},
-							category_id: product.categoryId,
 							offline_seller_id: offlineSellerId,
 						},
 						attributes: [['display_name', 'displayName'], 'details', ['contactdetail_type_id', 'typeId'], ['offline_seller_id', 'sellerId']]
