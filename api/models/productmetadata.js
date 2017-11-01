@@ -1,4 +1,3 @@
-/*jshint esversion: 6 */
 'use strict';
 
 module.exports = (sequelize, Sequelize) => sequelize.define('productMetaData', {
