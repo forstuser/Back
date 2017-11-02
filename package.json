@@ -11,8 +11,6 @@
   },
   "dependencies": {
     "@google/maps": "^0.4.5",
-    "bcrypt": "latest",
-    "bcrypt-nodejs": "0.0.3",
     "bluebird": "^3.5.1",
     "busboy": "^0.2.14",
     "dateformat": "^2.2.0",

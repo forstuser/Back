@@ -61,6 +61,8 @@ export default (sequelize, DataTypes) => {
         {foreignKey: 'user_id', as: 'consumer'});
     jobs.belongsTo(models.users,
         {foreignKey: 'uploaded_by', as: 'user'});
+    jobs.belongsTo(models.users,
+        {foreignKey: 'updated_by', as: 'updatedByUser'});
     jobs.belongsTo(models.statuses,
         {foreignKey: 'user_status', targetKey: 'status_type'});
     jobs.belongsTo(models.users,

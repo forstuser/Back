@@ -36,6 +36,9 @@ export default (sequelize, DataTypes) => {
 		email_secret: {
 			type: DataTypes.STRING(2000),
 		},
+    image_name: {
+      type: DataTypes.STRING,
+    },
 		last_login_at: {
 			type: DataTypes.DATE
 		},
@@ -52,7 +55,7 @@ export default (sequelize, DataTypes) => {
     updated_at: {
       type: DataTypes.DATE,
       defaultValue: sequelize.literal('NOW()'),
-    }
+    },
 	}, {
 		freezeTableName: true,
 		defaultPrimaryKey: true,
@@ -72,7 +75,7 @@ export default (sequelize, DataTypes) => {
 	});
 
 	users.associate= (models) => {
-		users.hasMany(models.userAddress);
+		users.hasMany(models.userAddress, { as: 'addresses'});
 		users.hasMany(models.jobs,
 			{foreignKey: 'user_id', onDelete: 'cascade', hooks: true});
 		users.hasMany(models.fcmDetails,

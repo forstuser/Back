@@ -434,19 +434,16 @@ class NotificationAdaptor {
 	}
 
 	verifyEmailAddress(emailSecret, reply) {
-		return this.modals.table_users.findOne({
+		return this.modals.users.findOne({
 			where: {
-				status_id: {
+        user_status_type: {
 					$ne: 3
 				},
 				email_secret: emailSecret
-			},
-			attributes: {
-				exclude: ['UserTypeID']
 			}
 		}).then((result) => {
 			result.updateAttributes({
-				email_verified: 1
+				email_verified: true
 			});
 
 			return reply({status: true});

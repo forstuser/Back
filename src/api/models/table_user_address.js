@@ -6,6 +6,7 @@ export default (sequelize, DataTypes) => {
   const userAddress = sequelize.define('userAddress', {
     address_type: {
       type: DataTypes.INTEGER,
+      defaultValue: 1
     },
     address_line_1: {
       type: DataTypes.STRING,
@@ -49,13 +50,15 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.DATE,
       defaultValue: sequelize.literal('NOW()'),
     },
+    updated_by: {
+      type: DataTypes.INTEGER,
+    },
   }, {
     freezeTableName: true,
     defaultPrimaryKey: true,
     timestamps: true,
-    paranoid: true,
     underscored: true,
-    tableName: 'user_address',
+    tableName: 'user_addresses',
     hooks: {
       afterCreate: (user) => {
         user.updateAttributes({
@@ -68,6 +71,10 @@ export default (sequelize, DataTypes) => {
   userAddress.associate= (models) => {
     userAddress.belongsTo(models.users,
         {onDelete: 'cascade', hooks: true});
+    userAddress.belongsTo(models.users,
+        {foreignKey: 'updated_by', as: 'updatedByUser'});
+    userAddress.belongsTo(models.statuses,
+        {foreignKey: 'status_type', targetKey: 'status_type'});
   };
 
   return userAddress;

@@ -6,6 +6,7 @@ import S3FS from 's3fs';
 import config from '../../config/main';
 import shared from '../../helpers/shared';
 import notificationAdaptor from '../Adaptors/notification';
+import UserAdaptor from '../Adaptors/user';
 
 const fsImpl = new S3FS(config.AWS.S3.BUCKET, config.AWS.ACCESS_DETAILS);
 
@@ -45,10 +46,12 @@ const getTypeFromBuffer = function(buffer) {
   return fileType(buffer);
 };
 let modals;
+let userAdaptor;
 
 class UploadController {
   constructor(modal) {
     modals = modal;
+    userAdaptor = new UserAdaptor(modals);
   }
 
   static uploadUserImage(request, reply) {
@@ -65,19 +68,27 @@ class UploadController {
 
       const name = fileData.hapi.filename;
       const fileType = name.split('.')[name.split('.').length - 1];
-      const fileName = `${user.id}/active-${user.id}-${new Date().getTime()}.${fileType}`;
+      const fileName = `active-${user.id}-${new Date().getTime()}.${fileType}`;
       // const file = fs.createReadStream();
-      fsImpl.writeFile(fileName, fileData._data,
+      return fsImpl.writeFile(fileName, fileData._data,
           {ContentType: mime.lookup(fileName)}).then((fileResult) => {
+
         console.log(fileResult);
-        reply({
+        return userAdaptor.updateUserDetail({
+          image_name: fileName,
+        }, {
+          where: {
+            id: user.id,
+          },
+        });
+      }).then(() => {
+        return reply({
           status: true,
           message: 'Uploaded Successfully',
-          // forceUpdate: request.pre.forceUpdate
         });
       }).catch((err) => {
         console.log({API_Logs: err});
-        reply({
+        return reply({
           status: false,
           message: 'Upload Failed',
           err,
@@ -85,7 +96,7 @@ class UploadController {
         });
       });
     } else {
-      reply({status: false, message: 'No documents in request'}); //, forceUpdate: request.pre.forceUpdate});
+      return reply({status: false, message: 'No documents in request'}); //, forceUpdate: request.pre.forceUpdate});
     }
   }
 
@@ -389,7 +400,7 @@ class UploadController {
           modals.jobCopies.count({
             where: {
               id: {
-                $ne: request.params.copyid
+                $ne: request.params.copyid,
               },
               job_id: request.params.id,
               status_type: {
@@ -399,7 +410,9 @@ class UploadController {
           })]).then((result) => {
           const count = result[2];
           const attributes = count > 0 ? {
-            job_id: `${Math.random().toString(36).substr(2, 9)}${user.id.toString(
+            job_id: `${Math.random().
+                toString(36).
+                substr(2, 9)}${user.id.toString(
                 36)}`,
             user_status: 8,
             admin_status: 4,
@@ -472,58 +485,40 @@ class UploadController {
   }
 
   static retrieveUserImage(request, reply) {
-    // const user = shared.verifyAuthorization(request.headers);
-    // if (!user) {
-    //     reply({
-    //         status: false,
-    //         message: 'Unauthorized'
-    //     });
-    // } else {
-    if (!request.pre.forceUpdate) {
-      modals.userImages.findOne({
-        where: {
-          user_image_id: request.params.id,
-          // user_id: user.id
-        },
-      }).then((result) => {
-        if (result && result.user_image_name) {
-          fsImplUser.readFile(result.user_image_name, 'utf8').
-              then(fileResult => reply(fileResult.Body).
-                  header('Content-Type', fileResult.ContentType).
-                  header('Content-Disposition',
-                      `attachment; filename=${result.CopyName}`)).
-              catch((err) => {
-                console.log({API_Logs: err});
-                reply({
-                  status: false,
-                  message: 'Unable to retrieve image',
-                  err,
-                });
-              });
-        } else {
-          reply({
-            status: false,
-            message: 'No Result Found',
-            forceUpdate: request.pre.forceUpdate,
-          }).code(404);
-        }
-      }).catch((err) => {
-        console.log({API_Logs: err});
-        reply({
-          status: false,
-          message: 'Unable to retrieve image',
-          err,
-          forceUpdate: request.pre.forceUpdate,
-        });
+    const user = shared.verifyAuthorization(request.headers);
+    if (!user) {
+      return reply({
+        status: false,
+        message: 'Unauthorized',
       });
     } else {
-      reply({
-        status: false,
-        message: 'Forbidden',
-        forceUpdate: request.pre.forceUpdate,
-      });
+      if (!request.pre.forceUpdate) {
+        return userAdaptor.retrieveUserImageNameById(user).
+            then((userDetail) => {
+              return fsImpl.readFile(userDetail.image_name);
+            }).
+            then((fileResult) => {
+              return reply(fileResult.Body).
+                  header('Content-Type', fileResult.ContentType).
+                  header('Content-Disposition',
+                      `attachment; filename=${fileResult.CopyName}`);
+            }).
+            catch((err) => {
+              console.log({API_Logs: err});
+              return reply({
+                status: false,
+                message: 'No Result Found',
+                forceUpdate: request.pre.forceUpdate,
+              }).code(404);
+            });
+      } else {
+        return reply({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate,
+        });
+      }
     }
-    // }
   }
 }
 
