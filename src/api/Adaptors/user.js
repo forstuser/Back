@@ -67,7 +67,7 @@ class UserAdaptor {
         this.modals.sequelize.fn('CONCAT', 'consumer/',
             this.modals.sequelize.col('id'), '/images'), 'imageUrl'],
     ];
-    return this.modals.users.findOne(filterObject).then(item => item.toJSON());
+    return this.modals.users.findOne(filterObject).then(item => item ? item.toJSON() : item);
   }
 
   /**
