@@ -68,7 +68,7 @@ var UserAdaptor = function () {
     value: function retrieveSingleUser(filterObject) {
       filterObject.attributes = ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', [this.modals.sequelize.fn('CONCAT', 'consumer/', this.modals.sequelize.col('id'), '/images'), 'imageUrl']];
       return this.modals.users.findOne(filterObject).then(function (item) {
-        return item.toJSON();
+        return item ? item.toJSON() : item;
       });
     }
 
