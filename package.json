@@ -4,8 +4,8 @@
   "description": "Bin Bill Server",
   "scripts": {
     "setup": "[ -d uploads ] || mkdir uploads",
-    "build": "rimraf dist/ && babel src -d dist/",
-    "start": "npm run build ; babel-node dist/index.js --max_old_space_size=2048",
+    "build": "rm -rf dist/ && ./node_modules/.bin/babel src -d dist/",
+    "start": "node dist/index.js --max_old_space_size=2048",
     "dev": " export $(cat .env | grep -v ^# | xargs) && babel-node  ./src/index.js",
     "test": "mocha --recursive --compilers js:babel-core/register"
   },
@@ -52,7 +52,6 @@
     "url-join": "^2.0.2",
     "uuid": "^3.1.0",
     "validator": "^8.2.0",
-    "babel-cli": "^6.26.0",
     "vision": "^4.1.1"
   },
   "devDependencies": {
