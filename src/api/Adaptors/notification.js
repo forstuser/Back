@@ -1,12 +1,12 @@
 /*jshint esversion: 6 */
 'use strict';
 
-const moment = require('moment');
-const request = require('request');
-const nodemailer = require('nodemailer');
-const smtpTransport = require('nodemailer-smtp-transport');
-const config = require('../../config/main');
-const shared = require('../../helpers/shared');
+import shared from '../../helpers/shared';
+import config from '../../config/main';
+import smtpTransport from 'nodemailer-smtp-transport';
+import nodemailer from 'nodemailer';
+import request from 'request';
+import moment from 'moment';
 
 class NotificationAdaptor {
 	constructor(modals) {
@@ -531,4 +531,4 @@ class NotificationAdaptor {
 	}
 }
 
-module.exports = NotificationAdaptor;
+export default NotificationAdaptor;

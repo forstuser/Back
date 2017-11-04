@@ -1,11 +1,19 @@
 /*jshint esversion: 6 */
 'use strict';
 
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+var _shared = require('../../helpers/shared');
 
-var shared = require('../../helpers/shared');
+var _shared2 = _interopRequireDefault(_shared);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var modals = void 0;
 var excludedAttributes = { exclude: ['tableBrandID', 'tableUserID', 'display_id', 'created_on', 'updated_on', 'updated_by_user_id', 'status_id', 'tableAuthorizedServiceCenterID'] };
@@ -86,7 +94,7 @@ var ReferenceDataController = function () {
 	}, {
 		key: 'retrieveUserTypes',
 		value: function retrieveUserTypes(request, reply) {
-			var user = shared.verifyAuthorization(request.headers);
+			var user = _shared2.default.verifyAuthorization(request.headers);
 			var userFilter = void 0;
 			if (user.UserTypeID === 2) {
 				userFilter = [3, 4, 6];
@@ -135,4 +143,4 @@ var ReferenceDataController = function () {
 	return ReferenceDataController;
 }();
 
-module.exports = ReferenceDataController;
+exports.default = ReferenceDataController;

@@ -1,5 +1,9 @@
 'use strict';
 
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 var _fileType4 = require('file-type');
@@ -269,7 +273,7 @@ var UploadController = function () {
               };
 
               console.log(fileResult);
-              modals.jobCopies.create(ret).then(function (billResult) {
+              modals.jobCopies.create(ret).then(function () {
                 if (user.email) {
                   modals.jobs.count({
                     where: {
@@ -496,4 +500,4 @@ var UploadController = function () {
   return UploadController;
 }();
 
-module.exports = UploadController;
+exports.default = UploadController;

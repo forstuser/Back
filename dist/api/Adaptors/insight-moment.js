@@ -1,12 +1,19 @@
 /*jshint esversion: 6 */
 'use strict';
 
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+var _moment = require('moment');
 
-var shared = require('../../helpers/shared');
-var moment = require('moment');
+var _moment2 = _interopRequireDefault(_moment);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function sumProps(arrayItem, prop) {
 	var total = 0;
@@ -113,12 +120,12 @@ var InsightAdaptor = function () {
 					message: 'Insight restore successful',
 					notificationCount: 0,
 					categoryData: categoryData,
-					weekStartDate: moment.utc().startOf('week').startOf('week').format('YYYY-MM-DD'),
-					monthStartDate: moment.utc().startOf('week').startOf('month').format('YYYY-MM-DD'),
-					weekEndDate: moment.utc().startOf('week').endOf('week').format('YYYY-MM-DD'),
-					monthLastDate: moment.utc().startOf('week').endOf('month').format('YYYY-MM-DD'),
-					yearStartDate: moment.utc().startOf('week').startOf('year').format('YYYY-MM-DD'),
-					yearEndDate: moment.utc().startOf('week').endOf('year').format('YYYY-MM-DD'),
+					weekStartDate: _moment2.default.utc().startOf('week').startOf('week').format('YYYY-MM-DD'),
+					monthStartDate: _moment2.default.utc().startOf('week').startOf('month').format('YYYY-MM-DD'),
+					weekEndDate: _moment2.default.utc().startOf('week').endOf('week').format('YYYY-MM-DD'),
+					monthLastDate: _moment2.default.utc().startOf('week').endOf('month').format('YYYY-MM-DD'),
+					yearStartDate: _moment2.default.utc().startOf('week').startOf('year').format('YYYY-MM-DD'),
+					yearEndDate: _moment2.default.utc().startOf('week').endOf('year').format('YYYY-MM-DD'),
 					totalYearlySpend: totalYearlyAmounts,
 					totalWeeklySpend: totalWeeklyAmounts,
 					totalWeeklyTaxes: totalWeeklyTaxes,
@@ -164,8 +171,8 @@ var InsightAdaptor = function () {
 								$ne: 3
 							},
 							purchase_date: {
-								$gte: moment.utc().startOf('week').startOf('week'),
-								$lte: moment.utc().startOf('week').endOf('week')
+								$gte: _moment2.default.utc().startOf('week').startOf('week'),
+								$lte: _moment2.default.utc().startOf('week').endOf('week')
 							}
 						},
 						include: [{
@@ -213,8 +220,8 @@ var InsightAdaptor = function () {
 								$ne: 3
 							},
 							purchase_date: {
-								$gte: moment.utc().startOf('week').startOf('month'),
-								$lte: moment.utc().startOf('week').endOf('month')
+								$gte: _moment2.default.utc().startOf('week').startOf('month'),
+								$lte: _moment2.default.utc().startOf('week').endOf('month')
 							}
 						},
 						include: [{
@@ -262,8 +269,8 @@ var InsightAdaptor = function () {
 								$ne: 3
 							},
 							purchase_date: {
-								$gte: moment.utc().startOf('week').startOf('year'),
-								$lte: moment.utc().startOf('week').endOf('year')
+								$gte: _moment2.default.utc().startOf('week').startOf('year'),
+								$lte: _moment2.default.utc().startOf('week').endOf('year')
 							}
 						},
 						attributes: [],
@@ -311,8 +318,8 @@ var InsightAdaptor = function () {
 								$ne: 3
 							},
 							purchase_date: {
-								$gte: minDate ? moment(minDate).utc().startOf('day') : moment.utc().startOf('week').startOf('month'),
-								$lte: maxDate ? moment(maxDate).utc().endOf('day') : moment.utc().startOf('week').endOf('month')
+								$gte: minDate ? (0, _moment2.default)(minDate).utc().startOf('day') : _moment2.default.utc().startOf('week').startOf('month'),
+								$lte: maxDate ? (0, _moment2.default)(maxDate).utc().endOf('day') : _moment2.default.utc().startOf('week').endOf('month')
 							}
 						},
 						attributes: [],
@@ -370,16 +377,16 @@ var InsightAdaptor = function () {
 				result[0].map(function (item) {
 					var product = item.toJSON();
 					var index = distinctInsight.findIndex(function (distinctItem) {
-						return moment(distinctItem.date).valueOf() === moment(product.consumerBill.purchaseDate).utc().endOf('day').valueOf();
+						return (0, _moment2.default)(distinctItem.date).valueOf() === (0, _moment2.default)(product.consumerBill.purchaseDate).utc().endOf('day').valueOf();
 					});
 					if (index === -1) {
 						distinctInsight.push({
 							value: product.value,
-							month: monthArray[moment(product.consumerBill.purchaseDate).utc().month()],
-							monthId: moment(product.consumerBill.purchaseDate).utc().month() + 1,
-							date: moment(product.consumerBill.purchaseDate).utc().endOf('day'),
-							week: weekAndDay(moment(product.consumerBill.purchaseDate).utc().endOf('day')).monthWeek,
-							day: weekAndDay(moment(product.consumerBill.purchaseDate).utc().endOf('day')).day,
+							month: monthArray[(0, _moment2.default)(product.consumerBill.purchaseDate).utc().month()],
+							monthId: (0, _moment2.default)(product.consumerBill.purchaseDate).utc().month() + 1,
+							date: (0, _moment2.default)(product.consumerBill.purchaseDate).utc().endOf('day'),
+							week: weekAndDay((0, _moment2.default)(product.consumerBill.purchaseDate).utc().endOf('day')).monthWeek,
+							day: weekAndDay((0, _moment2.default)(product.consumerBill.purchaseDate).utc().endOf('day')).day,
 							totalCost: product.consumerBill.totalCost,
 							totalTax: product.consumerBill.taxes,
 							tax: product.taxes
@@ -439,10 +446,10 @@ var InsightAdaptor = function () {
 					return new Date(b.consumerBill.purchaseDate) - new Date(a.consumerBill.purchaseDate);
 				});
 				var productListWeekly = productList.filter(function (item) {
-					return moment(item.consumerBill.purchaseDate).endOf('day').valueOf() >= moment.utc().startOf('week').startOf('month').valueOf() && moment(item.consumerBill.purchaseDate).endOf('day').valueOf() <= moment.utc().startOf('week').endOf('month').valueOf();
+					return (0, _moment2.default)(item.consumerBill.purchaseDate).endOf('day').valueOf() >= _moment2.default.utc().startOf('week').startOf('month').valueOf() && (0, _moment2.default)(item.consumerBill.purchaseDate).endOf('day').valueOf() <= _moment2.default.utc().startOf('week').endOf('month').valueOf();
 				}).slice(0, 10);
 				var productListMonthly = productList.filter(function (item) {
-					return moment(item.consumerBill.purchaseDate).endOf('day').valueOf() >= moment.utc().startOf('week').startOf('year').valueOf() && moment(item.consumerBill.purchaseDate).endOf('day').valueOf() <= moment.utc().startOf('week').endOf('year').valueOf();
+					return (0, _moment2.default)(item.consumerBill.purchaseDate).endOf('day').valueOf() >= _moment2.default.utc().startOf('week').startOf('year').valueOf() && (0, _moment2.default)(item.consumerBill.purchaseDate).endOf('day').valueOf() <= _moment2.default.utc().startOf('week').endOf('year').valueOf();
 				}).slice(0, 10);
 				distinctInsightMonthly.sort(function (a, b) {
 					return new Date(b.date) - new Date(a.date);
@@ -452,36 +459,36 @@ var InsightAdaptor = function () {
 				});
 
 				var insightData = distinctInsightTemp.filter(function (item) {
-					return moment(item.consumerBill.purchaseDate).endOf('day').valueOf() >= moment.utc().startOf('week').startOf('week').valueOf() && moment(item.consumerBill.purchaseDate).endOf('day').valueOf() <= moment.utc().startOf('week').endOf('week').valueOf();
+					return (0, _moment2.default)(item.consumerBill.purchaseDate).endOf('day').valueOf() >= _moment2.default.utc().startOf('week').startOf('week').valueOf() && (0, _moment2.default)(item.consumerBill.purchaseDate).endOf('day').valueOf() <= _moment2.default.utc().startOf('week').endOf('week').valueOf();
 				});
 				insightData.sort(function (a, b) {
 					return new Date(b.date) - new Date(a.date);
 				});
 
 				var insightWeekly = distinctInsightWeekly.filter(function (item) {
-					return moment(item.date).endOf('day').valueOf() >= moment.utc().startOf('week').startOf('month').valueOf() && moment(item.date).endOf('day').valueOf() <= moment.utc().startOf('week').endOf('month').valueOf();
+					return (0, _moment2.default)(item.date).endOf('day').valueOf() >= _moment2.default.utc().startOf('week').startOf('month').valueOf() && (0, _moment2.default)(item.date).endOf('day').valueOf() <= _moment2.default.utc().startOf('week').endOf('month').valueOf();
 				});
 				var insightMonthly = distinctInsightMonthly.filter(function (item) {
-					return moment(item.date).endOf('day').valueOf() >= moment.utc().startOf('week').startOf('year').valueOf() && moment(item.date).endOf('day').valueOf() <= moment.utc().startOf('week').endOf('year').valueOf();
+					return (0, _moment2.default)(item.date).endOf('day').valueOf() >= _moment2.default.utc().startOf('week').startOf('year').valueOf() && (0, _moment2.default)(item.date).endOf('day').valueOf() <= _moment2.default.utc().startOf('week').endOf('year').valueOf();
 				});
 				return {
 					status: true,
 					productList: productList.filter(function (item) {
-						return moment(item.consumerBill.purchaseDate).endOf('day').valueOf() >= moment.utc().startOf('week').startOf('week').valueOf() && moment(item.consumerBill.purchaseDate).endOf('day').valueOf() <= moment.utc().startOf('week').endOf('week').valueOf();
+						return (0, _moment2.default)(item.consumerBill.purchaseDate).endOf('day').valueOf() >= _moment2.default.utc().startOf('week').startOf('week').valueOf() && (0, _moment2.default)(item.consumerBill.purchaseDate).endOf('day').valueOf() <= _moment2.default.utc().startOf('week').endOf('week').valueOf();
 					}).slice(0, 10),
 					productListWeekly: productListWeekly,
 					productListMonthly: productListMonthly,
 					insight: distinctInsight && distinctInsight.length > 0 ? {
 						categoryName: result[1].name,
-						startDate: moment.utc().startOf('week').startOf('week'),
-						endDate: moment.utc().startOf('week').endOf('week'),
+						startDate: _moment2.default.utc().startOf('week').startOf('week'),
+						endDate: _moment2.default.utc().startOf('week').endOf('week'),
 						currentMonthId: new Date().getMonth() + 1,
 						currentWeek: weekAndDay(new Date()).monthWeek,
 						currentDay: weekAndDay(new Date()).day,
-						monthStartDate: moment.utc().startOf('week').startOf('month'),
-						monthEndDate: moment.utc().startOf('week').endOf('month'),
-						yearStartDate: moment.utc().startOf('week').startOf('year'),
-						yearEndDate: moment.utc().startOf('week').endOf('year'),
+						monthStartDate: _moment2.default.utc().startOf('week').startOf('month'),
+						monthEndDate: _moment2.default.utc().startOf('week').endOf('month'),
+						yearStartDate: _moment2.default.utc().startOf('week').startOf('year'),
+						yearEndDate: _moment2.default.utc().startOf('week').endOf('year'),
 						totalSpend: sumProps(insightData, 'value'),
 						totalYearlySpend: sumProps(insightMonthly, 'value'),
 						totalMonthlySpend: sumProps(insightWeekly, 'value'),
@@ -490,8 +497,8 @@ var InsightAdaptor = function () {
 						insightWeekly: insightWeekly,
 						insightMonthly: insightMonthly
 					} : {
-						startDate: moment.utc().startOf('week').startOf('day'),
-						endDate: moment.endOf('day'),
+						startDate: _moment2.default.utc().startOf('week').startOf('day'),
+						endDate: _moment2.default.endOf('day'),
 						totalSpend: 0,
 						totalDays: 0,
 						insightData: distinctInsight
@@ -519,8 +526,8 @@ var InsightAdaptor = function () {
 				master_category_id: masterCategoryId
 			};
 			var dateWhereClause = {
-				$gte: moment.utc().startOf('week').startOf('year'),
-				$lte: moment.utc().startOf('week').endOf('year')
+				$gte: _moment2.default.utc().startOf('week').startOf('year'),
+				$lte: _moment2.default.utc().startOf('week').endOf('year')
 			};
 			return this.modals.productBills.findAll({
 				where: whereClause,
@@ -660,4 +667,4 @@ var InsightAdaptor = function () {
 	return InsightAdaptor;
 }();
 
-module.exports = InsightAdaptor;
+exports.default = InsightAdaptor;

@@ -1,18 +1,41 @@
 /*jshint esversion: 6 */
 'use strict';
 
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _shared = require('../../helpers/shared');
+
+var _shared2 = _interopRequireDefault(_shared);
+
+var _main = require('../../config/main');
+
+var _main2 = _interopRequireDefault(_main);
+
+var _nodemailerSmtpTransport = require('nodemailer-smtp-transport');
+
+var _nodemailerSmtpTransport2 = _interopRequireDefault(_nodemailerSmtpTransport);
+
+var _nodemailer = require('nodemailer');
+
+var _nodemailer2 = _interopRequireDefault(_nodemailer);
+
+var _request = require('request');
+
+var _request2 = _interopRequireDefault(_request);
+
+var _moment = require('moment');
+
+var _moment2 = _interopRequireDefault(_moment);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var moment = require('moment');
-var request = require('request');
-var nodemailer = require('nodemailer');
-var smtpTransport = require('nodemailer-smtp-transport');
-var config = require('../../config/main');
-var shared = require('../../helpers/shared');
 
 var NotificationAdaptor = function () {
 	function NotificationAdaptor(modals) {
@@ -56,7 +79,7 @@ var NotificationAdaptor = function () {
 						bDate = b.dueDate;
 					}
 
-					if (moment.utc(aDate, "YYYY-MM-DD").isBefore(moment.utc(bDate, 'YYYY-MM-DD'))) {
+					if (_moment2.default.utc(aDate, "YYYY-MM-DD").isBefore(_moment2.default.utc(bDate, 'YYYY-MM-DD'))) {
 						return -1;
 					}
 
@@ -251,10 +274,10 @@ var NotificationAdaptor = function () {
 								metaData.value = metaData.selectedValue.value;
 							}
 
-							if (metaData.name.toLowerCase().includes('due') && metaData.name.toLowerCase().includes('date') && moment(metaData.value).isValid()) {
-								var dueDateTime = moment(metaData.value);
+							if (metaData.name.toLowerCase().includes('due') && metaData.name.toLowerCase().includes('date') && (0, _moment2.default)(metaData.value).isValid()) {
+								var dueDateTime = (0, _moment2.default)(metaData.value);
 								product.dueDate = metaData.value;
-								product.dueIn = dueDateTime.diff(moment.utc(), 'days');
+								product.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
 								if (product.masterCatId.toString() === '6') {
 									product.productType = 5;
 								} else {
@@ -279,10 +302,10 @@ var NotificationAdaptor = function () {
 					});
 					var amcs = result[1].map(function (item) {
 						var amc = item.toJSON();
-						if (moment(amc.expiryDate).isValid()) {
-							var dueDateTime = moment(amc.expiryDate);
+						if ((0, _moment2.default)(amc.expiryDate).isValid()) {
+							var dueDateTime = (0, _moment2.default)(amc.expiryDate);
 							amc.dueDate = amc.expiryDate;
-							amc.dueIn = dueDateTime.diff(moment.utc(), 'days');
+							amc.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
 							amc.productType = 3;
 							amc.title = 'AMC Renewal Pending';
 							amc.description = amc.amcProduct ? amc.amcProduct.productName : '';
@@ -296,10 +319,10 @@ var NotificationAdaptor = function () {
 
 					var insurances = result[2].map(function (item) {
 						var insurance = item.toJSON();
-						if (moment(insurance.expiryDate).isValid()) {
-							var dueDateTime = moment(insurance.expiryDate);
+						if ((0, _moment2.default)(insurance.expiryDate).isValid()) {
+							var dueDateTime = (0, _moment2.default)(insurance.expiryDate);
 							insurance.dueDate = insurance.expiryDate;
-							insurance.dueIn = dueDateTime.diff(moment.utc(), 'days');
+							insurance.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
 							insurance.productType = 3;
 							insurance.title = 'Insurance Renewal Pending';
 							insurance.description = insurance.insuredProduct ? insurance.insuredProduct.productName : '';
@@ -313,11 +336,11 @@ var NotificationAdaptor = function () {
 
 					var warranties = result[3].map(function (item) {
 						var warranty = item.toJSON();
-						if (moment(warranty.expiryDate).isValid()) {
-							var dueDateTime = moment(warranty.expiryDate);
+						if ((0, _moment2.default)(warranty.expiryDate).isValid()) {
+							var dueDateTime = (0, _moment2.default)(warranty.expiryDate);
 
 							warranty.dueDate = warranty.expiryDate;
-							warranty.dueIn = dueDateTime.diff(moment.utc(), 'days');
+							warranty.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
 							warranty.productType = 3;
 							warranty.title = 'Warranty Renewal Pending';
 							warranty.description = warranty.warrantyProduct ? warranty.warrantyProduct.productName : '';
@@ -388,7 +411,7 @@ var NotificationAdaptor = function () {
 				var options = {
 					uri: 'https://fcm.googleapis.com/fcm/send',
 					method: 'POST',
-					headers: { Authorization: 'key=' + config.GOOGLE.FCM_KEY },
+					headers: { Authorization: 'key=' + _main2.default.GOOGLE.FCM_KEY },
 					json: {
 						// note that Sequelize returns token object array, we map it with token value only
 						registration_ids: result.map(function (user) {
@@ -399,7 +422,7 @@ var NotificationAdaptor = function () {
 						data: payload
 					}
 				};
-				request(options, function (error, response, body) {
+				(0, _request2.default)(options, function (error, response, body) {
 					if (!error && response.statusCode === 200) {
 						// request was success, should early return response to client
 						reply({
@@ -449,11 +472,11 @@ var NotificationAdaptor = function () {
 	}], [{
 		key: 'sendVerificationMail',
 		value: function sendVerificationMail(email, user) {
-			var smtpTransporter = nodemailer.createTransport(smtpTransport({
+			var smtpTransporter = _nodemailer2.default.createTransport((0, _nodemailerSmtpTransport2.default)({
 				service: 'gmail',
 				auth: {
-					user: config.EMAIL.USER,
-					pass: config.EMAIL.PASSWORD
+					user: _main2.default.EMAIL.USER,
+					pass: _main2.default.EMAIL.PASSWORD
 				},
 				secure: true,
 				port: 465
@@ -461,10 +484,10 @@ var NotificationAdaptor = function () {
 
 			// setup email data with unicode symbols
 			var mailOptions = {
-				from: '"BinBill" <' + config.EMAIL.USER + '>', // sender address
+				from: '"BinBill" <' + _main2.default.EMAIL.USER + '>', // sender address
 				to: email, // list of receivers
 				subject: 'BinBill Email Verification',
-				html: shared.retrieveMailTemplate(user, 0)
+				html: _shared2.default.retrieveMailTemplate(user, 0)
 			};
 
 			// send mail with defined transport object
@@ -473,11 +496,11 @@ var NotificationAdaptor = function () {
 	}, {
 		key: 'sendMailOnDifferentSteps',
 		value: function sendMailOnDifferentSteps(subject, email, user, stepId) {
-			var smtpTransporter = nodemailer.createTransport(smtpTransport({
+			var smtpTransporter = _nodemailer2.default.createTransport((0, _nodemailerSmtpTransport2.default)({
 				service: 'gmail',
 				auth: {
-					user: config.EMAIL.USER,
-					pass: config.EMAIL.PASSWORD
+					user: _main2.default.EMAIL.USER,
+					pass: _main2.default.EMAIL.PASSWORD
 				},
 				secure: true,
 				port: 465
@@ -485,10 +508,10 @@ var NotificationAdaptor = function () {
 
 			// setup email data with unicode symbols
 			var mailOptions = {
-				from: '"BinBill" <' + config.EMAIL.USER + '>', // sender address
+				from: '"BinBill" <' + _main2.default.EMAIL.USER + '>', // sender address
 				to: email, // list of receivers
 				subject: subject,
-				html: shared.retrieveMailTemplate(user, stepId)
+				html: _shared2.default.retrieveMailTemplate(user, stepId)
 			};
 
 			// send mail with defined transport object
@@ -500,7 +523,7 @@ var NotificationAdaptor = function () {
 			var options = {
 				uri: 'http://api.msg91.com/api/sendhttp.php',
 				qs: {
-					authkey: config.SMS.AUTH_KEY,
+					authkey: _main2.default.SMS.AUTH_KEY,
 					sender: 'BINBIL',
 					flash: 0,
 					mobiles: '91' + phoneNo,
@@ -512,7 +535,7 @@ var NotificationAdaptor = function () {
 				timeout: 170000,
 				json: true // Automatically parses the JSON string in the response
 			};
-			request(options, function (error, response, body) {
+			(0, _request2.default)(options, function (error, response, body) {
 				if (!error && response.statusCode === 200) {
 					// request was success, should early return response to client
 					return {
@@ -528,4 +551,4 @@ var NotificationAdaptor = function () {
 	return NotificationAdaptor;
 }();
 
-module.exports = NotificationAdaptor;
+exports.default = NotificationAdaptor;

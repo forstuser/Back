@@ -1,5 +1,9 @@
 'use strict';
 
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
 var _fs = require('fs');
 
 var _fs2 = _interopRequireDefault(_fs);
@@ -155,7 +159,7 @@ _models2.default.sequelize.sync().then(function () {
 	return console.log(err, 'Something went wrong with the Database Update!');
 });
 
-module.exports = {
+exports.default = {
 	server: server,
 	options: SERVER_OPTIONS
 };

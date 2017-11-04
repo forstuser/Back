@@ -1,5 +1,9 @@
 'use strict';
 
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 var _moment = require('moment');
@@ -72,9 +76,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var PUBLIC_KEY = new _nodeRsa2.default(_main2.default.TRUECALLER_PUBLIC_KEY, { signingScheme: 'sha512' });
 var AWS = _main2.default.AWS;
-
-var fsImplUser = new _s3fs2.default(AWS.S3.BUCKET + '/' + AWS.S3.USER_IMAGE, AWS.ACCESS_DETAILS);
-
 var replyObject = {
   status: true,
   message: 'success'
@@ -326,7 +327,7 @@ var UserController = function () {
           }
         }).then(function () {
           return reply(replyObject).code(201);
-        }).catch(function (err) {
+        }).catch(function () {
           replyObject.status = false;
           replyObject.message = 'Forbidden';
           return reply(replyObject);
@@ -442,4 +443,4 @@ var UserController = function () {
   return UserController;
 }();
 
-module.exports = UserController;
+exports.default = UserController;

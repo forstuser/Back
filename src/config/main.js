@@ -1,9 +1,7 @@
 /*jshint esversion: 6 */
 'use strict';
 
-const fs = require('fs');
-
-module.exports = {
+export default {
 	SMS: {
 		AUTH_KEY: process.env.SMS_AUTH_KEY
 	},

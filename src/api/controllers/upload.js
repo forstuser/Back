@@ -274,7 +274,7 @@ class UploadController {
             };
 
             console.log(fileResult);
-            modals.jobCopies.create(ret).then(billResult => {
+            modals.jobCopies.create(ret).then(() => {
               if (user.email) {
                 modals.jobs.count({
                   where: {
@@ -522,4 +522,4 @@ class UploadController {
   }
 }
 
-module.exports = UploadController;
+export default UploadController;

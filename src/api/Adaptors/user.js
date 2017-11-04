@@ -97,9 +97,13 @@ class UserAdaptor {
           user_id: user.id,
         },
       })]).then((result) => {
-      const user = result[0].toJSON();
-      user.addresses = result[1].map(item => item.toJSON());
-      return user;
+      if(result[0]) {
+          const user = result[0].toJSON();
+          user.addresses = result[1].map(item => item.toJSON());
+          return user;
+      }
+      
+      return result[0];
     });
   }
 
@@ -117,7 +121,7 @@ class UserAdaptor {
    * Retrieve User Profile.
    * @param user
    * @param request
-   * @returns {User Profile response}
+   * @returns {Object}
    */
   retrieveUserProfile(user, request) {
     return this.retrieveUserById(user).then((result) => {
@@ -281,4 +285,4 @@ class UserAdaptor {
   }
 }
 
-module.exports = UserAdaptor;
+export default UserAdaptor;

@@ -1,15 +1,29 @@
 /*jshint esversion: 6 */
 'use strict';
 
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _notification = require('./notification');
+
+var _notification2 = _interopRequireDefault(_notification);
+
+var _shared = require('../../helpers/shared');
+
+var _shared2 = _interopRequireDefault(_shared);
+
+var _moment = require('moment');
+
+var _moment2 = _interopRequireDefault(_moment);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var moment = require('moment');
-var shared = require('../../helpers/shared');
-var notificationAdaptor = require('./notification');
 
 var DashboardAdaptor = function () {
 	function DashboardAdaptor(modals) {
@@ -89,17 +103,17 @@ var DashboardAdaptor = function () {
 					return insightItem;
 				});
 
-				var insightItems = shared.retrieveDaysInsight(distinctInsight);
+				var insightItems = _shared2.default.retrieveDaysInsight(distinctInsight);
 
 				var insightResult = insightItems && insightItems.length > 0 ? {
-					startDate: moment.utc().subtract(6, 'd').startOf('d'),
-					endDate: moment.utc(),
-					totalSpend: shared.sumProps(insightItems, 'value'),
+					startDate: _moment2.default.utc().subtract(6, 'd').startOf('d'),
+					endDate: _moment2.default.utc(),
+					totalSpend: _shared2.default.sumProps(insightItems, 'value'),
 					totalDays: 7,
 					insightData: insightItems
 				} : {
-					startDate: moment.utc().subtract(6, 'd').startOf('d'),
-					endDate: moment.utc(),
+					startDate: _moment2.default.utc().subtract(6, 'd').startOf('d'),
+					endDate: _moment2.default.utc(),
 					totalSpend: 0,
 					totalDays: 7,
 					insightData: insightData
@@ -120,7 +134,7 @@ var DashboardAdaptor = function () {
 						bDate = b.dueDate;
 					}
 
-					if (moment.utc(aDate, "YYYY-MM-DD").isBefore(moment.utc(bDate, 'YYYY-MM-DD'))) {
+					if (_moment2.default.utc(aDate, "YYYY-MM-DD").isBefore(_moment2.default.utc(bDate, 'YYYY-MM-DD'))) {
 						return -1;
 					}
 
@@ -222,7 +236,7 @@ var DashboardAdaptor = function () {
 				});
 			}
 
-			notificationAdaptor.sendMailOnDifferentSteps('Welcome to BinBill!', user.email || user.email_id, user, 1);
+			_notification2.default.sendMailOnDifferentSteps('Welcome to BinBill!', user.email || user.email_id, user, 1);
 			return {
 				status: true,
 				message: 'New User',
@@ -402,10 +416,10 @@ var DashboardAdaptor = function () {
 								metaData.value = metaData.selectedValue.value;
 							}
 
-							if (metaData.name.toLowerCase().includes('due') && metaData.name.toLowerCase().includes('date') && moment(metaData.value).isValid()) {
-								var dueDateTime = moment(metaData.value);
+							if (metaData.name.toLowerCase().includes('due') && metaData.name.toLowerCase().includes('date') && (0, _moment2.default)(metaData.value).isValid()) {
+								var dueDateTime = (0, _moment2.default)(metaData.value);
 								product.dueDate = metaData.value;
-								product.dueIn = dueDateTime.diff(moment.utc(), 'days');
+								product.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
 								if (product.masterCatId.toString() === '6') {
 									product.productType = 5;
 								} else {
@@ -429,10 +443,10 @@ var DashboardAdaptor = function () {
 
 					var amcs = result[1].map(function (item) {
 						var amc = item.toJSON();
-						if (moment(amc.expiryDate).isValid()) {
-							var dueDateTime = moment(amc.expiryDate);
+						if ((0, _moment2.default)(amc.expiryDate).isValid()) {
+							var dueDateTime = (0, _moment2.default)(amc.expiryDate);
 							amc.dueDate = amc.expiryDate;
-							amc.dueIn = dueDateTime.diff(moment.utc(), 'days');
+							amc.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
 							amc.productType = 4;
 						}
 
@@ -444,10 +458,10 @@ var DashboardAdaptor = function () {
 
 					var insurances = result[2].map(function (item) {
 						var insurance = item.toJSON();
-						if (moment(insurance.expiryDate).isValid()) {
-							var dueDateTime = moment(insurance.expiryDate);
+						if ((0, _moment2.default)(insurance.expiryDate).isValid()) {
+							var dueDateTime = (0, _moment2.default)(insurance.expiryDate);
 							insurance.dueDate = insurance.expiryDate;
-							insurance.dueIn = dueDateTime.diff(moment.utc(), 'days');
+							insurance.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
 							insurance.productType = 3;
 						}
 						return insurance;
@@ -459,10 +473,10 @@ var DashboardAdaptor = function () {
 
 					var warranties = result[3].map(function (item) {
 						var warranty = item.toJSON();
-						if (moment(warranty.expiryDate).isValid()) {
-							var dueDateTime = moment(warranty.expiryDate);
+						if ((0, _moment2.default)(warranty.expiryDate).isValid()) {
+							var dueDateTime = (0, _moment2.default)(warranty.expiryDate);
 							warranty.dueDate = warranty.expiryDate;
-							warranty.dueIn = dueDateTime.diff(moment.utc(), 'days');
+							warranty.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
 							warranty.productType = 2;
 						}
 						return warranty;
@@ -500,8 +514,8 @@ var DashboardAdaptor = function () {
 							$ne: 3
 						},
 						purchase_date: {
-							$lte: moment.utc(),
-							$gte: moment.utc().subtract(6, 'd').startOf('d')
+							$lte: _moment2.default.utc(),
+							$gte: _moment2.default.utc().subtract(6, 'd').startOf('d')
 						}
 					},
 					include: [{
@@ -536,4 +550,4 @@ var DashboardAdaptor = function () {
 	return DashboardAdaptor;
 }();
 
-module.exports = DashboardAdaptor;
+exports.default = DashboardAdaptor;

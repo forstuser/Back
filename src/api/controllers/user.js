@@ -2,7 +2,6 @@
 import moment from 'moment';
 import RSA from 'node-rsa';
 import requestPromise from 'request-promise';
-import S3FS from 's3fs';
 import uuid from 'uuid';
 import config from '../../config/main';
 import GoogleHelper from '../../helpers/google';
@@ -19,10 +18,6 @@ import authentication from './authentication';
 const PUBLIC_KEY = new RSA(config.TRUECALLER_PUBLIC_KEY,
     {signingScheme: 'sha512'});
 const AWS = config.AWS;
-
-const fsImplUser = new S3FS(`${AWS.S3.BUCKET}/${AWS.S3.USER_IMAGE}`,
-    AWS.ACCESS_DETAILS);
-
 let replyObject = {
   status: true,
   message: 'success',
@@ -284,7 +279,7 @@ class UserController {
         },
       }).then(() => {
         return reply(replyObject).code(201);
-      }).catch((err) => {
+      }).catch(() => {
         replyObject.status = false;
         replyObject.message = 'Forbidden';
         return reply(replyObject);
@@ -400,4 +395,4 @@ class UserController {
   }
 }
 
-module.exports = UserController;
+export default UserController;

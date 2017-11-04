@@ -1,7 +1,9 @@
 /*jshint esversion: 6 */
 'use strict';
 
-const googleMapsClient = require('@google/maps').createClient({
+import {createClient} from '@google/maps';
+
+const googleMapsClient = createClient({
 	Promise,
 	key: 'AIzaSyCT60FOMjGxPjOQjyk9ewP5l9VkmMcTWmE'
 });
@@ -143,4 +145,4 @@ class NearByAdaptor {
 	}
 }
 
-module.exports = NearByAdaptor;
+export default NearByAdaptor;

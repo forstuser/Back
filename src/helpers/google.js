@@ -1,9 +1,9 @@
 /*jshint esversion: 6 */
 'use strict';
 
-import { createClient } from '@google/maps';
+import {createClient} from '@google/maps';
 import Bluebird from 'bluebird';
-import { PhoneNumberUtil } from 'google-libphonenumber';
+import {PhoneNumberUtil} from 'google-libphonenumber';
 import _ from 'lodash';
 import config from '../config/main';
 
@@ -13,7 +13,7 @@ const googleMapsClient = createClient({
 });
 Bluebird.promisifyAll(googleMapsClient);
 
-const distanceMatrix = function (origins, destinations) {
+const distanceMatrix = (origins, destinations) => {
 	if (destinations.length > 25) {
 		destinations = _.chunk(destinations, 25);
 	}
@@ -30,17 +30,16 @@ const distanceMatrix = function (origins, destinations) {
 			// console.log(util.inspect(elem, false, null));
 			return elem.json.rows;
 		});
-		const flattenedRows = _.chain(rows).flatten().map((elem) => {
-			return elem.elements;
-		}).flatten().value();
-		// console.log("~~~~~~~~");
+    // console.log("~~~~~~~~");
 		// console.log(util.inspect(flattenedRows, false, null));
 
-		return flattenedRows;
+		return _.chain(rows).flatten().map((elem) => {
+      return elem.elements;
+    }).flatten().value();
 	});
 };
 
-const isValidPhoneNumber = function (phone) {
+const isValidPhoneNumber = phone => {
 	const regionCode = phoneUtil.getRegionCodeForCountryCode('91');
 	if (regionCode.toUpperCase() === 'ZZ') {
 		return false;

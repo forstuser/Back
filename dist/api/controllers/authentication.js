@@ -1,33 +1,44 @@
 /*jshint esversion: 6 */
 'use strict';
 
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+var _constants = require('../constants');
+
+var _shared = require('../../helpers/shared');
+
+var _shared2 = _interopRequireDefault(_shared);
+
+var _main = require('../../config/main');
+
+var _main2 = _interopRequireDefault(_main);
+
+var _jsonwebtoken = require('jsonwebtoken');
+
+var _jsonwebtoken2 = _interopRequireDefault(_jsonwebtoken);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var jwt = require('jsonwebtoken');
-var config = require('../../config/main');
-var shared = require('../../helpers/shared');
-
-var ROLE_MEMBER = require('../constants').ROLE_MEMBER;
-var ROLE_CLIENT = require('../constants').ROLE_CLIENT;
-var ROLE_OWNER = require('../constants').ROLE_OWNER;
-var ROLE_ADMIN = require('../constants').ROLE_ADMIN;
 
 var getRole = function getRole(checkRole) {
 	var role = void 0;
 
 	switch (checkRole) {
-		case ROLE_ADMIN:
+		case _constants.ROLE_ADMIN:
 			role = 4;
 			break;
-		case ROLE_OWNER:
+		case _constants.ROLE_OWNER:
 			role = 3;
 			break;
-		case ROLE_CLIENT:
+		case _constants.ROLE_CLIENT:
 			role = 2;
 			break;
-		case ROLE_MEMBER:
+		case _constants.ROLE_MEMBER:
 			role = 1;
 			break;
 		default:
@@ -56,8 +67,8 @@ var AuthenticationController = function () {
 		key: 'generateToken',
 		value: function generateToken(user) {
 			var expiresIn = new Date().getTime() + 647000;
-			console.log(config.JWT_SECRET);
-			var token = jwt.sign(JSON.parse(JSON.stringify(user.toJSON(), replacer)), config.JWT_SECRET, {
+			console.log(_main2.default.JWT_SECRET);
+			var token = _jsonwebtoken2.default.sign(JSON.parse(JSON.stringify(user.toJSON(), replacer)), _main2.default.JWT_SECRET, {
 				algorithm: 'HS512',
 				expiresIn: expiresIn
 			});
@@ -74,7 +85,7 @@ var AuthenticationController = function () {
 	}, {
 		key: 'expireToken',
 		value: function expireToken(user) {
-			return jwt.sign(user, config.JWT_SECRET, {
+			return _jsonwebtoken2.default.sign(user, _main2.default.JWT_SECRET, {
 				expiresIn: 0, // in seconds
 				algorithm: "HS512"
 			});
@@ -83,7 +94,7 @@ var AuthenticationController = function () {
 		key: 'roleAuthorization',
 		value: function roleAuthorization(User, requiredRole) {
 			return function (req, res, next) {
-				var user = shared.verifyAuthorization(req.headers);
+				var user = _shared2.default.verifyAuthorization(req.headers);
 
 				User.findById(user.id).then(function (foundUser) {
 					// If user is found, check role.
@@ -104,4 +115,4 @@ var AuthenticationController = function () {
 	return AuthenticationController;
 }();
 
-module.exports = AuthenticationController;
+exports.default = AuthenticationController;

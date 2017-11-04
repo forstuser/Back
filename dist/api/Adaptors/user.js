@@ -1,6 +1,10 @@
 /*jshint esversion: 6 */
 'use strict';
 
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 var _uuid = require('uuid');
@@ -88,11 +92,15 @@ var UserAdaptor = function () {
           user_id: user.id
         }
       })]).then(function (result) {
-        var user = result[0].toJSON();
-        user.addresses = result[1].map(function (item) {
-          return item.toJSON();
-        });
-        return user;
+        if (result[0]) {
+          var _user = result[0].toJSON();
+          _user.addresses = result[1].map(function (item) {
+            return item.toJSON();
+          });
+          return _user;
+        }
+
+        return result[0];
       });
     }
   }, {
@@ -109,7 +117,7 @@ var UserAdaptor = function () {
      * Retrieve User Profile.
      * @param user
      * @param request
-     * @returns {User Profile response}
+     * @returns {Object}
      */
 
   }, {
@@ -285,4 +293,4 @@ var UserAdaptor = function () {
   return UserAdaptor;
 }();
 
-module.exports = UserAdaptor;
+exports.default = UserAdaptor;

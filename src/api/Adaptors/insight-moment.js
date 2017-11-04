@@ -1,8 +1,7 @@
 /*jshint esversion: 6 */
 'use strict';
 
-const shared = require('../../helpers/shared');
-const moment = require('moment');
+import moment from 'moment';
 
 function sumProps(arrayItem, prop) {
 	let total = 0;
@@ -678,4 +677,4 @@ class InsightAdaptor {
 	}
 }
 
-module.exports = InsightAdaptor;
+export default InsightAdaptor;

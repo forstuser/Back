@@ -1,3 +1,6 @@
 'use strict';
 
-module.exports = 'dev';
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = 'dev';

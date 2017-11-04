@@ -1,9 +1,9 @@
 /*jshint esversion: 6 */
 'use strict';
 
-const moment = require('moment');
-const shared = require('../../helpers/shared');
-const _ = require('lodash');
+import _ from 'lodash';
+import shared from '../../helpers/shared';
+import moment from 'moment';
 
 function weekAndDay(d) {
 	const days = [1, 2, 3, 4, 5, 6, 7];
@@ -757,4 +757,4 @@ class InsightAdaptor {
 	}
 }
 
-module.exports = InsightAdaptor;
+export default InsightAdaptor;

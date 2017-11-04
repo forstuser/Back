@@ -1,14 +1,10 @@
 /*jshint esversion: 6 */
 'use strict';
 
-const jwt = require('jsonwebtoken');
-const config = require('../../config/main');
-const shared = require('../../helpers/shared');
-
-const ROLE_MEMBER = require('../constants').ROLE_MEMBER;
-const ROLE_CLIENT = require('../constants').ROLE_CLIENT;
-const ROLE_OWNER = require('../constants').ROLE_OWNER;
-const ROLE_ADMIN = require('../constants').ROLE_ADMIN;
+import {ROLE_ADMIN, ROLE_CLIENT, ROLE_MEMBER, ROLE_OWNER} from '../constants';
+import shared from '../../helpers/shared';
+import config from '../../config/main';
+import jwt from 'jsonwebtoken';
 
 const getRole = (checkRole) => {
 	let role;
@@ -91,4 +87,4 @@ class AuthenticationController {
 	}
 }
 
-module.exports = AuthenticationController;
+export default AuthenticationController;

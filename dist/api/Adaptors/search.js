@@ -1,17 +1,21 @@
 /*jshint esversion: 6 */
 'use strict';
 
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _shared = require('../../helpers/shared');
+
+var _shared2 = _interopRequireDefault(_shared);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var shared = require('../../helpers/shared');
-
-var dueDays = {
-	Yearly: 365, HalfYearly: 180, Quarterly: 90, Monthly: 30, Weekly: 7, Daily: 1
-};
 
 function uniqueBy(a, cond) {
 	return a.filter(function (e, i) {
@@ -113,7 +117,7 @@ var SearchAdaptor = function () {
 
 				result[2][0].updateAttributes({
 					resultCount: productList.length + categoryList.length,
-					searchDate: shared.formatDate(new Date(), 'yyyy-mm-dd HH:MM:ss')
+					searchDate: _shared2.default.formatDate(new Date(), 'yyyy-mm-dd HH:MM:ss')
 				});
 				var recentSearches = result[3].map(function (item) {
 					return item.toJSON();
@@ -321,7 +325,7 @@ var SearchAdaptor = function () {
 					user_id: user.ID,
 					searchValue: searchValue,
 					resultCount: 0,
-					searchDate: shared.formatDate(new Date(), 'yyyy-mm-dd HH:MM:ss')
+					searchDate: _shared2.default.formatDate(new Date(), 'yyyy-mm-dd HH:MM:ss')
 				}
 			});
 		}
@@ -964,4 +968,4 @@ var SearchAdaptor = function () {
 	return SearchAdaptor;
 }();
 
-module.exports = SearchAdaptor;
+exports.default = SearchAdaptor;

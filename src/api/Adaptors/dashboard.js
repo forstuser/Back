@@ -1,8 +1,8 @@
 /*jshint esversion: 6 */
 'use strict';
-const moment = require('moment');
-const shared = require('../../helpers/shared');
-const notificationAdaptor = require('./notification');
+import notificationAdaptor from './notification';
+import shared from '../../helpers/shared';
+import moment from 'moment';
 
 class DashboardAdaptor {
 	constructor(modals) {
@@ -560,4 +560,4 @@ class DashboardAdaptor {
 	}
 }
 
-module.exports = DashboardAdaptor;
+export default DashboardAdaptor;

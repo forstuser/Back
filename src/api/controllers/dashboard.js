@@ -1,11 +1,10 @@
 /*jshint esversion: 6 */
 'use strict';
 
-const shared = require('../../helpers/shared');
-
-const DashboardAdaptor = require('../Adaptors/dashboard');
-const EHomeAdaptor = require('../Adaptors/ehome');
-const NotificationAdaptor = require('../Adaptors/notification');
+import NotificationAdaptor from '../Adaptors/notification';
+import EHomeAdaptor from '../Adaptors/ehome';
+import DashboardAdaptor from '../Adaptors/dashboard';
+import shared from '../../helpers/shared';
 
 let dashboardAdaptor;
 let ehomeAdaptor;
@@ -104,4 +103,4 @@ class DashboardController {
 	}
 }
 
-module.exports = DashboardController;
+export default DashboardController;

@@ -2,7 +2,7 @@
 'use strict';
 let MODAL;
 
-const checkAppVersion = function (request, reply) {
+const checkAppVersion = (request, reply) => {
 	// console.log("here");
 	// console.log(request.headers);
 	if (request.headers.app_version !== undefined) {

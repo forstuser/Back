@@ -1,12 +1,23 @@
 /*jshint esversion: 6 */
 'use strict';
 
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+var _bluebird = require('bluebird');
 
-var shared = require('../../helpers/shared');
-var Bluebird = require("bluebird");
+var _bluebird2 = _interopRequireDefault(_bluebird);
+
+var _shared = require('../../helpers/shared');
+
+var _shared2 = _interopRequireDefault(_shared);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var modals = void 0;
 var excludedAttributes = { exclude: ['display_id', 'created_on', 'updated_on', 'updated_by_user_id', 'status_id'] };
@@ -21,7 +32,7 @@ var BrandController = function () {
 	_createClass(BrandController, null, [{
 		key: 'getBrands',
 		value: function getBrands(request, reply) {
-			var user = shared.verifyAuthorization(request.headers);
+			var user = _shared2.default.verifyAuthorization(request.headers);
 			if (!user) {
 				reply({ status: false, message: "Unauthorized" });
 			} else if (!request.pre.forceUpdate) {
@@ -33,7 +44,7 @@ var BrandController = function () {
 					options.category_id = categoryId;
 				}
 
-				return Bluebird.try(function () {
+				return _bluebird2.default.try(function () {
 					if (categoryId) {
 						return modals.table_brands.findAll({
 							where: {
@@ -86,7 +97,7 @@ var BrandController = function () {
 	}, {
 		key: 'addBrand',
 		value: function addBrand(request, reply) {
-			var user = shared.verifyAuthorization(request.headers);
+			var user = _shared2.default.verifyAuthorization(request.headers);
 			var Name = request.payload.Name;
 			var Description = request.payload.Description;
 			var Details = request.payload.Details;
@@ -133,7 +144,7 @@ var BrandController = function () {
 	}, {
 		key: 'addBrandDetail',
 		value: function addBrandDetail(request, reply) {
-			var user = shared.verifyAuthorization(request.headers);
+			var user = _shared2.default.verifyAuthorization(request.headers);
 			var BrandID = request.params.id;
 			var DetailTypeID = request.payload.DetailTypeID;
 			var DisplayName = request.payload.DisplayName;
@@ -164,7 +175,7 @@ var BrandController = function () {
 	}, {
 		key: 'updateBrand',
 		value: function updateBrand(request, reply) {
-			var user = shared.verifyAuthorization(request.headers);
+			var user = _shared2.default.verifyAuthorization(request.headers);
 			var Name = request.payload.Name;
 			var Description = request.payload.Description;
 			var Details = request.payload.Details;
@@ -217,7 +228,7 @@ var BrandController = function () {
 	}, {
 		key: 'updateBrandDetail',
 		value: function updateBrandDetail(request, reply) {
-			var user = shared.verifyAuthorization(request.headers);
+			var user = _shared2.default.verifyAuthorization(request.headers);
 			var BrandID = request.params.id;
 			var DetailTypeID = request.payload.DetailTypeID;
 			var DisplayName = request.payload.DisplayName;
@@ -245,7 +256,7 @@ var BrandController = function () {
 	}, {
 		key: 'deleteBrand',
 		value: function deleteBrand(request, reply) {
-			var user = shared.verifyAuthorization(request.headers);
+			var user = _shared2.default.verifyAuthorization(request.headers);
 			Promise.all([modals.table_brands.update({
 				status_id: 3,
 				updated_by_user_id: user.userId
@@ -269,7 +280,7 @@ var BrandController = function () {
 	}, {
 		key: 'deleteBrandDetail',
 		value: function deleteBrandDetail(request, reply) {
-			var user = shared.verifyAuthorization(request.headers);
+			var user = _shared2.default.verifyAuthorization(request.headers);
 			if (user.accessLevel.toLowerCase() === 'premium') {
 				modals.table_brand_details.update({
 					status_id: 3
@@ -332,4 +343,4 @@ var BrandController = function () {
 	return BrandController;
 }();
 
-module.exports = BrandController;
+exports.default = BrandController;

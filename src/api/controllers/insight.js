@@ -1,9 +1,8 @@
 /*jshint esversion: 6 */
 'use strict';
 
-const shared = require('../../helpers/shared');
-
-const InsightAdaptor = require('../Adaptors/insight');
+import InsightAdaptor from '../Adaptors/insight';
+import shared from '../../helpers/shared';
 
 let insightAdaptor;
 
@@ -47,4 +46,4 @@ class InsightController {
 	}
 }
 
-module.exports = InsightController;
+export default InsightController;

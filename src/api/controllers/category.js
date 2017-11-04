@@ -1,7 +1,7 @@
 /*jshint esversion: 6 */
 'use strict';
 
-const shared = require('../../helpers/shared');
+import shared from '../../helpers/shared';
 
 let modals;
 const excludedAttributes = {exclude: ['display_id', 'created_on', 'updated_on', 'updated_by_user_id', 'status_id']};
@@ -181,4 +181,4 @@ class CategoryController {
 	}
 }
 
-module.exports = CategoryController;
+export default CategoryController;

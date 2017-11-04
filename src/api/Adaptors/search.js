@@ -1,11 +1,7 @@
 /*jshint esversion: 6 */
 'use strict';
 
-const shared = require('../../helpers/shared');
-
-const dueDays = {
-	Yearly: 365, HalfYearly: 180, Quarterly: 90, Monthly: 30, Weekly: 7, Daily: 1
-};
+import shared from '../../helpers/shared';
 
 function uniqueBy(a, cond) {
 	return a.filter((e, i) => a.findIndex(e2 => cond(e, e2)) === i);
@@ -1050,4 +1046,4 @@ class SearchAdaptor {
 	}
 }
 
-module.exports = SearchAdaptor;
+export default SearchAdaptor;

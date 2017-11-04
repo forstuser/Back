@@ -1,13 +1,23 @@
 /*jshint esversion: 6 */
 'use strict';
 
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+var _insight = require('../Adaptors/insight');
+
+var _insight2 = _interopRequireDefault(_insight);
+
+var _shared = require('../../helpers/shared');
+
+var _shared2 = _interopRequireDefault(_shared);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var shared = require('../../helpers/shared');
-
-var InsightAdaptor = require('../Adaptors/insight');
 
 var insightAdaptor = void 0;
 
@@ -15,13 +25,13 @@ var InsightController = function () {
 	function InsightController(modal) {
 		_classCallCheck(this, InsightController);
 
-		insightAdaptor = new InsightAdaptor(modal);
+		insightAdaptor = new _insight2.default(modal);
 	}
 
 	_createClass(InsightController, null, [{
 		key: 'retrieveCategorywiseInsight',
 		value: function retrieveCategorywiseInsight(request, reply) {
-			var user = shared.verifyAuthorization(request.headers);
+			var user = _shared2.default.verifyAuthorization(request.headers);
 			if (!user) {
 				reply({
 					status: false,
@@ -37,7 +47,7 @@ var InsightController = function () {
 	}, {
 		key: 'retrieveInsightForSelectedCategory',
 		value: function retrieveInsightForSelectedCategory(request, reply) {
-			var user = shared.verifyAuthorization(request.headers);
+			var user = _shared2.default.verifyAuthorization(request.headers);
 			if (!user) {
 				reply({
 					status: false,
@@ -55,4 +65,4 @@ var InsightController = function () {
 	return InsightController;
 }();
 
-module.exports = InsightController;
+exports.default = InsightController;

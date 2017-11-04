@@ -1285,4 +1285,4 @@ class ProductAdaptor {
   }
 }
 
-module.exports = ProductAdaptor;
+export default ProductAdaptor;

@@ -1,9 +1,8 @@
 /*jshint esversion: 6 */
 'use strict';
 
-const shared = require('../../helpers/shared');
-
-const ProductAdaptor = require('../Adaptors/product');
+import ProductAdaptor from '../Adaptors/product';
+import shared from '../../helpers/shared';
 
 let productAdaptor;
 
@@ -53,4 +52,4 @@ class ProductController {
 	}
 }
 
-module.exports = ProductController;
+export default ProductController;

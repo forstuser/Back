@@ -1,11 +1,19 @@
 /*jshint esversion: 6 */
 'use strict';
 
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+var _shared = require('../../helpers/shared');
 
-var shared = require('../../helpers/shared');
+var _shared2 = _interopRequireDefault(_shared);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var modals = void 0;
 var excludedAttributes = { exclude: ['display_id', 'created_on', 'updated_on', 'updated_by_user_id', 'status_id'] };
@@ -20,7 +28,7 @@ var CategoryController = function () {
 	_createClass(CategoryController, null, [{
 		key: 'addCategory',
 		value: function addCategory(request, reply) {
-			var user = shared.verifyAuthorization(request.headers);
+			var user = _shared2.default.verifyAuthorization(request.headers);
 			modals.table_categories.findOrCreate({
 				where: {
 					category_name: request.payload.Name,
@@ -50,7 +58,7 @@ var CategoryController = function () {
 	}, {
 		key: 'updateCategory',
 		value: function updateCategory(request, reply) {
-			var user = shared.verifyAuthorization(request.headers);
+			var user = _shared2.default.verifyAuthorization(request.headers);
 			modals.table_categories.update({
 				category_level: request.payload.Level,
 				updated_by_user_id: user.ID,
@@ -71,7 +79,7 @@ var CategoryController = function () {
 	}, {
 		key: 'deleteCategory',
 		value: function deleteCategory(request, reply) {
-			var user = shared.verifyAuthorization(request.headers);
+			var user = _shared2.default.verifyAuthorization(request.headers);
 			modals.table_categories.update({
 				status_id: 3,
 				updated_by_user_id: user.userId
@@ -92,9 +100,9 @@ var CategoryController = function () {
 			modals.table_categories.findAll({
 				where: {
 					$or: [{ status_id: 1 }, {
-						$and: [{ status_id: 1 }, { ref_id: shared.verifyParameters(request.query, 'refid', '') }]
+						$and: [{ status_id: 1 }, { ref_id: _shared2.default.verifyParameters(request.query, 'refid', '') }]
 					}, {
-						$and: [{ status_id: 1 }, { category_level: shared.verifyParameters(request.query, 'level', '') }]
+						$and: [{ status_id: 1 }, { category_level: _shared2.default.verifyParameters(request.query, 'level', '') }]
 					}]
 				},
 				attributes: excludedAttributes
@@ -123,7 +131,7 @@ var CategoryController = function () {
 	}, {
 		key: 'getCategories',
 		value: function getCategories(request, reply) {
-			var user = shared.verifyAuthorization(request.headers);
+			var user = _shared2.default.verifyAuthorization(request.headers);
 			if (!user) {
 				reply({ status: false, message: "Unauthorized", forceUpdate: request.pre.forceUpdate });
 			} else if (!request.pre.forceUpdate) {
@@ -187,4 +195,4 @@ var CategoryController = function () {
 	return CategoryController;
 }();
 
-module.exports = CategoryController;
+exports.default = CategoryController;

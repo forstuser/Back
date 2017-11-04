@@ -1,8 +1,8 @@
 /*jshint esversion: 6 */
 'use strict';
 
-const SearchAdaptor = require('../Adaptors/search');
-const shared = require('../../helpers/shared');
+import shared from '../../helpers/shared';
+import SearchAdaptor from '../Adaptors/search';
 
 let modals;
 let searchAdaptor;
@@ -26,4 +26,4 @@ class SearchController {
 	}
 }
 
-module.exports = SearchController;
+export default SearchController;

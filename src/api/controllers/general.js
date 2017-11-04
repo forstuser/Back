@@ -1,7 +1,7 @@
 /*jshint esversion: 6 */
 'use strict';
 
-const NotificationAdaptor = require('../Adaptors/notification');
+import NotificationAdaptor from '../Adaptors/notification';
 
 let contactModel;
 let modals;
@@ -19,7 +19,7 @@ class GeneralController {
 			phone: request.payload.phone,
 			email: request.payload.email,
 			message: request.payload.message
-		}).then((data) => {
+    }).then(() => {
 			reply({status: true}).code(201);
 		}).catch((err) => {
 			console.log({API_Logs: err});
@@ -43,4 +43,4 @@ class GeneralController {
     }
 }
 
-module.exports = GeneralController;
+export default GeneralController;

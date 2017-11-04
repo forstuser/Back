@@ -46,13 +46,12 @@ var distanceMatrix = function distanceMatrix(origins, destinations) {
 			// console.log(util.inspect(elem, false, null));
 			return elem.json.rows;
 		});
-		var flattenedRows = _lodash2.default.chain(rows).flatten().map(function (elem) {
-			return elem.elements;
-		}).flatten().value();
 		// console.log("~~~~~~~~");
 		// console.log(util.inspect(flattenedRows, false, null));
 
-		return flattenedRows;
+		return _lodash2.default.chain(rows).flatten().map(function (elem) {
+			return elem.elements;
+		}).flatten().value();
 	});
 };
 

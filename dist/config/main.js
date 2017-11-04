@@ -1,9 +1,10 @@
 /*jshint esversion: 6 */
 'use strict';
 
-var fs = require('fs');
-
-module.exports = {
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+exports.default = {
 	SMS: {
 		AUTH_KEY: process.env.SMS_AUTH_KEY
 	},

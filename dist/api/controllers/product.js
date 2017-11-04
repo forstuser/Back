@@ -1,13 +1,23 @@
 /*jshint esversion: 6 */
 'use strict';
 
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+var _product = require('../Adaptors/product');
+
+var _product2 = _interopRequireDefault(_product);
+
+var _shared = require('../../helpers/shared');
+
+var _shared2 = _interopRequireDefault(_shared);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var shared = require('../../helpers/shared');
-
-var ProductAdaptor = require('../Adaptors/product');
 
 var productAdaptor = void 0;
 
@@ -15,13 +25,13 @@ var ProductController = function () {
 	function ProductController(modal) {
 		_classCallCheck(this, ProductController);
 
-		productAdaptor = new ProductAdaptor(modal);
+		productAdaptor = new _product2.default(modal);
 	}
 
 	_createClass(ProductController, null, [{
 		key: 'updateUserReview',
 		value: function updateUserReview(request, reply) {
-			var user = shared.verifyAuthorization(request.headers);
+			var user = _shared2.default.verifyAuthorization(request.headers);
 			if (!user) {
 				reply({
 					status: false,
@@ -44,7 +54,7 @@ var ProductController = function () {
 	}, {
 		key: 'retrieveProductDetail',
 		value: function retrieveProductDetail(request, reply) {
-			var user = shared.verifyAuthorization(request.headers);
+			var user = _shared2.default.verifyAuthorization(request.headers);
 			if (!user) {
 				reply({
 					status: false,
@@ -62,4 +72,4 @@ var ProductController = function () {
 	return ProductController;
 }();
 
-module.exports = ProductController;
+exports.default = ProductController;

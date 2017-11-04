@@ -1,10 +1,5 @@
 /*jshint esversion: 6 */
 'use strict';
-
-const dueDays = {
-  Yearly: 365, HalfYearly: 180, Quarterly: 90, Monthly: 30, Weekly: 7, Daily: 1,
-};
-
 class EHomeAdaptor {
   constructor(modals) {
     this.modals = modals;
@@ -43,7 +38,7 @@ class EHomeAdaptor {
 
       let pushed = false;
 
-      categoryDataWithoutOthers.forEach((elem, index) => {
+      categoryDataWithoutOthers.forEach((elem) => {
         if (OtherCategory.productCounts > elem.productCounts && !pushed) {
           newCategoryData.push(OtherCategory);
           pushed = true;
@@ -847,4 +842,4 @@ class EHomeAdaptor {
   }
 }
 
-module.exports = EHomeAdaptor;
+export default EHomeAdaptor;

@@ -2,7 +2,7 @@
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
-	value: true
+  value: true
 });
 
 var _bluebird = require('bluebird');
@@ -18,23 +18,23 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 var URL_ICUBES = 'http://tracking.icubeswire.com/aff_lsr';
 
 var postbackTracking = function postbackTracking(transactionId, uniqueUserId) {
-	return _bluebird2.default.try(function () {
-		var query = {
-			transaction_id: transactionId,
-			adv_sub: uniqueUserId
-		};
+  return _bluebird2.default.try(function () {
+    var query = {
+      transaction_id: transactionId,
+      adv_sub: uniqueUserId
+    };
 
-		var options = {
-			method: 'GET',
-			uri: URL_ICUBES,
-			qs: query,
-			json: true
-		};
+    var options = {
+      method: 'GET',
+      uri: URL_ICUBES,
+      qs: query,
+      json: true
+    };
 
-		return (0, _requestPromise2.default)(options);
-	});
+    return (0, _requestPromise2.default)(options);
+  });
 };
 
 exports.default = {
-	postbackTracking: postbackTracking
+  postbackTracking: postbackTracking
 };

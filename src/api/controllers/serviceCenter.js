@@ -1,8 +1,8 @@
 /*jshint esversion: 6 */
 'use strict';
 
-const shared = require('../../helpers/shared');
-const google = require("../../helpers/google");
+import google from '../../helpers/google';
+import shared from '../../helpers/shared';
 
 let modals;
 const excludedAttributes = {exclude: ['tableBrandID', 'display_id', 'created_on', 'updated_on', 'updated_by_user_id', 'status_id', 'tableAuthorizedServiceCenterID']};
@@ -533,4 +533,4 @@ class ServiceCenterController {
 	}
 }
 
-module.exports = ServiceCenterController;
+export default ServiceCenterController;

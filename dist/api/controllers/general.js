@@ -1,11 +1,19 @@
 /*jshint esversion: 6 */
 'use strict';
 
+Object.defineProperty(exports, "__esModule", {
+				value: true
+});
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+var _notification = require('../Adaptors/notification');
 
-var NotificationAdaptor = require('../Adaptors/notification');
+var _notification2 = _interopRequireDefault(_notification);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var contactModel = void 0;
 var modals = void 0;
@@ -21,13 +29,13 @@ var GeneralController = function () {
 				_createClass(GeneralController, null, [{
 								key: 'contactUs',
 								value: function contactUs(request, reply) {
-												NotificationAdaptor.sendLinkOnMessage(request.payload.phone);
+												_notification2.default.sendLinkOnMessage(request.payload.phone);
 												contactModel.create({
 																name: request.payload.name,
 																phone: request.payload.phone,
 																email: request.payload.email,
 																message: request.payload.message
-												}).then(function (data) {
+												}).then(function () {
 																reply({ status: true }).code(201);
 												}).catch(function (err) {
 																console.log({ API_Logs: err });
@@ -55,4 +63,4 @@ var GeneralController = function () {
 				return GeneralController;
 }();
 
-module.exports = GeneralController;
+exports.default = GeneralController;

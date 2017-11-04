@@ -1,12 +1,23 @@
 /*jshint esversion: 6 */
 'use strict';
 
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+var _google = require('../../helpers/google');
 
-var shared = require('../../helpers/shared');
-var google = require("../../helpers/google");
+var _google2 = _interopRequireDefault(_google);
+
+var _shared = require('../../helpers/shared');
+
+var _shared2 = _interopRequireDefault(_shared);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var modals = void 0;
 var excludedAttributes = { exclude: ['tableBrandID', 'display_id', 'created_on', 'updated_on', 'updated_by_user_id', 'status_id', 'tableAuthorizedServiceCenterID'] };
@@ -24,7 +35,7 @@ var ServiceCenterController = function () {
 	_createClass(ServiceCenterController, null, [{
 		key: 'addServiceCenter',
 		value: function addServiceCenter(request, reply) {
-			var user = shared.verifyAuthorization(request.headers);
+			var user = _shared2.default.verifyAuthorization(request.headers);
 			var BrandID = request.payload.BrandID;
 			var Name = request.payload.Name;
 			var HouseNo = request.payload.HouseNo;
@@ -96,7 +107,7 @@ var ServiceCenterController = function () {
 	}, {
 		key: 'addServiceCenterDetail',
 		value: function addServiceCenterDetail(request, reply) {
-			var user = shared.verifyAuthorization(request.headers);
+			var user = _shared2.default.verifyAuthorization(request.headers);
 			var CenterID = request.params.id;
 			var DetailTypeID = request.payload.DetailTypeID;
 			var DisplayName = request.payload.DisplayName;
@@ -127,7 +138,7 @@ var ServiceCenterController = function () {
 	}, {
 		key: 'updateServiceCenter',
 		value: function updateServiceCenter(request, reply) {
-			var user = shared.verifyAuthorization(request.headers);
+			var user = _shared2.default.verifyAuthorization(request.headers);
 			var BrandID = request.payload.BrandID;
 			var Name = request.payload.Name;
 			var HouseNo = request.payload.HouseNo;
@@ -204,7 +215,7 @@ var ServiceCenterController = function () {
 	}, {
 		key: 'updateServiceCenterDetail',
 		value: function updateServiceCenterDetail(request, reply) {
-			var user = shared.verifyAuthorization(request.headers);
+			var user = _shared2.default.verifyAuthorization(request.headers);
 			var CenterID = request.params.id;
 			var DetailTypeID = request.payload.DetailTypeID;
 			var DisplayName = request.payload.DisplayName;
@@ -232,7 +243,7 @@ var ServiceCenterController = function () {
 	}, {
 		key: 'deleteServiceCenter',
 		value: function deleteServiceCenter(request, reply) {
-			var user = shared.verifyAuthorization(request.headers);
+			var user = _shared2.default.verifyAuthorization(request.headers);
 			Promise.all([modals.authorizedServiceCenter.update({
 				status_id: 3,
 				updated_by_user_id: user.userId
@@ -256,7 +267,7 @@ var ServiceCenterController = function () {
 	}, {
 		key: 'deleteServiceCenterDetail',
 		value: function deleteServiceCenterDetail(request, reply) {
-			var user = shared.verifyAuthorization(request.headers);
+			var user = _shared2.default.verifyAuthorization(request.headers);
 			if (user.accessLevel.toLowerCase() === 'premium') {
 				modals.authorizeServiceCenterDetail.update({
 					status_id: 3
@@ -278,7 +289,7 @@ var ServiceCenterController = function () {
 	}, {
 		key: 'retrieveServiceCenters',
 		value: function retrieveServiceCenters(request, reply) {
-			var user = shared.verifyAuthorization(request.headers);
+			var user = _shared2.default.verifyAuthorization(request.headers);
 			if (user && !request.pre.forceUpdate) {
 				var payload = request.payload || {
 					location: '',
@@ -401,7 +412,7 @@ var ServiceCenterController = function () {
 							return center;
 						});
 						if (origins.length > 0 && destinations.length > 0) {
-							return google.distanceMatrix(origins, destinations).then(function (result) {
+							return _google2.default.distanceMatrix(origins, destinations).then(function (result) {
 								for (var i = 0; i < serviceCentersWithLocation.length; i += 1) {
 									if (result.length > 0) {
 										var tempMatrix = result[i];
@@ -551,4 +562,4 @@ var ServiceCenterController = function () {
 	return ServiceCenterController;
 }();
 
-module.exports = ServiceCenterController;
+exports.default = ServiceCenterController;

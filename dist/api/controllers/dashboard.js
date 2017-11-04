@@ -1,15 +1,31 @@
 /*jshint esversion: 6 */
 'use strict';
 
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+var _notification = require('../Adaptors/notification');
+
+var _notification2 = _interopRequireDefault(_notification);
+
+var _ehome = require('../Adaptors/ehome');
+
+var _ehome2 = _interopRequireDefault(_ehome);
+
+var _dashboard = require('../Adaptors/dashboard');
+
+var _dashboard2 = _interopRequireDefault(_dashboard);
+
+var _shared = require('../../helpers/shared');
+
+var _shared2 = _interopRequireDefault(_shared);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var shared = require('../../helpers/shared');
-
-var DashboardAdaptor = require('../Adaptors/dashboard');
-var EHomeAdaptor = require('../Adaptors/ehome');
-var NotificationAdaptor = require('../Adaptors/notification');
 
 var dashboardAdaptor = void 0;
 var ehomeAdaptor = void 0;
@@ -19,15 +35,15 @@ var DashboardController = function () {
 	function DashboardController(modal) {
 		_classCallCheck(this, DashboardController);
 
-		dashboardAdaptor = new DashboardAdaptor(modal);
-		ehomeAdaptor = new EHomeAdaptor(modal);
-		notificationAdaptor = new NotificationAdaptor(modal);
+		dashboardAdaptor = new _dashboard2.default(modal);
+		ehomeAdaptor = new _ehome2.default(modal);
+		notificationAdaptor = new _notification2.default(modal);
 	}
 
 	_createClass(DashboardController, null, [{
 		key: 'getDashboard',
 		value: function getDashboard(request, reply) {
-			var user = shared.verifyAuthorization(request.headers);
+			var user = _shared2.default.verifyAuthorization(request.headers);
 			if (user && !request.pre.forceUpdate) {
 				reply(dashboardAdaptor.retrieveDashboardResult(user, request)).code(200);
 			} else if (!user) {
@@ -39,7 +55,7 @@ var DashboardController = function () {
 	}, {
 		key: 'getEHome',
 		value: function getEHome(request, reply) {
-			var user = shared.verifyAuthorization(request.headers);
+			var user = _shared2.default.verifyAuthorization(request.headers);
 			if (user && !request.pre.forceUpdate) {
 				reply(ehomeAdaptor.prepareEHomeResult(user, request)).code(200);
 			} else if (!user) {
@@ -51,7 +67,7 @@ var DashboardController = function () {
 	}, {
 		key: 'getProductsInCategory',
 		value: function getProductsInCategory(request, reply) {
-			var user = shared.verifyAuthorization(request.headers);
+			var user = _shared2.default.verifyAuthorization(request.headers);
 			if (!user) {
 				reply({
 					status: false,
@@ -69,7 +85,7 @@ var DashboardController = function () {
 	}, {
 		key: 'updateNotificationStatus',
 		value: function updateNotificationStatus(request, reply) {
-			var user = shared.verifyAuthorization(request.headers);
+			var user = _shared2.default.verifyAuthorization(request.headers);
 			if (!user) {
 				reply({
 					status: false,
@@ -93,7 +109,7 @@ var DashboardController = function () {
 	}, {
 		key: 'getMailbox',
 		value: function getMailbox(request, reply) {
-			var user = shared.verifyAuthorization(request.headers);
+			var user = _shared2.default.verifyAuthorization(request.headers);
 			if (!user) {
 				reply({
 					status: false,
@@ -117,4 +133,4 @@ var DashboardController = function () {
 	return DashboardController;
 }();
 
-module.exports = DashboardController;
+exports.default = DashboardController;
