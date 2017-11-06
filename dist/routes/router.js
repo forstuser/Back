@@ -653,7 +653,7 @@ function prepareGeneralRoutes(generalController, generalRoutes) {
       config: {
         handler: _general2.default.retrieveReferenceData,
         description: 'Retrieve Reference data',
-      },
+      }
     });
   }
 }

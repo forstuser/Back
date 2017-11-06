@@ -388,7 +388,7 @@ var ProductAdaptor = function () {
 
         return products;
       });
-    },
+    }
   }, {
     key: 'retrieveProductMetadata',
     value: function retrieveProductMetadata(options) {
