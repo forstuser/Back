@@ -721,6 +721,15 @@ function prepareGeneralRoutes(generalController, generalRoutes) {
         description: 'Retrieve FAQ\'s',
       },
     });
+
+    generalRoutes.push({
+      method: 'GET',
+      path: '/referencedata',
+      config: {
+        handler: GeneralController.retrieveReferenceData,
+        description: 'Retrieve Reference data',
+      },
+    });
   }
 }
 
@@ -737,7 +746,6 @@ export default (app, modals) => {
   const sellerRoutes = [];
   const serviceCenterRoutes = [];
   const billManagementRoutes = [];
-  const referenceDataRoutes = [];
   const dashboardRoutes = [];
   const productRoutes = [];
   const insightRoutes = [];
@@ -806,7 +814,6 @@ export default (app, modals) => {
     ...sellerRoutes,
     ...serviceCenterRoutes,
     ...billManagementRoutes,
-    ...referenceDataRoutes,
     ...uploadFileRoute,
     ...dashboardRoutes,
     ...productRoutes,

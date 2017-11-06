@@ -1,8 +1,12 @@
 /*jshint esversion: 6 */
 'use strict';
+
+import ProductAdaptor from './product';
+
 class EHomeAdaptor {
   constructor(modals) {
     this.modals = modals;
+    this.productAdaptor = new ProductAdaptor(modals);
   }
 
   prepareEHomeResult(user, request) {

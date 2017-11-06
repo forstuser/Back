@@ -42,7 +42,6 @@ export default (sequelize, DataTypes) => {
         freezeTableName: true,
         defaultPrimaryKey: false,
         timestamps: true,
-        paranoid: true,
         underscored: true,
         tableName: 'online_sellers',
       });

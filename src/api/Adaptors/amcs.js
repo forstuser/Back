@@ -24,14 +24,11 @@ class AmcAdaptor {
   }
 
   retrieveAmcs(options) {
-    options.status_type = {
-      $notIn: [3, 9]
-    };
+    options.status_type = 5;
     return this.modals.amcs.findAll({
       where: options,
       include: [{
         model: this.modals.renewalTypes,
-        as: 'type',
         attributes: []
       },
         {
@@ -46,7 +43,36 @@ class AmcAdaptor {
           attributes: [['seller_name', 'sellerName'], ['owner_name', 'ownerName'], ['pan_no', 'panNo'], ['reg_no', 'regNo'], ['is_service', 'isService'], 'url', 'gstin', 'contact', 'email', 'address', 'city', 'state', 'pincode', 'latitude', 'longitude'],
           required: false
         }],
-      attributes: ['id', ['product_id', 'productId'], ['job_id', 'jobId'], ['document_number', 'policyNo'], [this.modals.sequelize.literal('`type`.`title`'), 'premiumType'], ['renewal_cost', 'premiumAmount'], ['renewal_taxes', 'taxes'], ['effective_date', 'effectiveDate'], ['expiry_date', 'expiryDate'], ['document_date', 'documentDate'], 'copies'],
+      attributes: [
+        'id',
+        [
+          'product_id',
+          'productId'],
+        [
+          'job_id',
+          'jobId'],
+        [
+          'document_number',
+          'policyNo'],
+        [
+          this.modals.sequelize.literal('`renewalTypes`.`title`'),
+          'premiumType'],
+        [
+          'renewal_cost',
+          'premiumAmount'],
+        [
+          'renewal_taxes',
+          'taxes'],
+        [
+          'effective_date',
+          'effectiveDate'],
+        [
+          'expiry_date',
+          'expiryDate'],
+        [
+          'document_date',
+          'documentDate'],
+        'copies'],
       order:[['expiry_date', 'DESC']],
     }).then((amcResult) => amcResult.map((item) => item.toJSON()).sort(sortAmcWarrantyInsuranceRepair));
   }

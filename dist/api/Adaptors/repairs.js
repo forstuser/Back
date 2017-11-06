@@ -39,9 +39,7 @@ var RepairAdaptor = function () {
   _createClass(RepairAdaptor, [{
     key: 'retrieveRepairs',
     value: function retrieveRepairs(options) {
-      options.status_type = {
-        $notIn: [3, 9]
-      };
+      options.status_type = 5;
       return this.modals.repairs.findAll({
         where: options,
         include: [{

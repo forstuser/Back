@@ -53,7 +53,6 @@ export default (sequelize, DataTypes) => {
         freezeTableName: true,
         defaultPrimaryKey: true,
         timestamps: true,
-        paranoid: true,
         underscored: true,
         tableName: 'consumer_repairs',
       });
