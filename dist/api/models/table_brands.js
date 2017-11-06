@@ -36,7 +36,6 @@ exports.default = function (sequelize, DataTypes) {
     freezeTableName: true,
     defaultPrimaryKey: false,
     timestamps: true,
-    paranoid: true,
     underscored: true,
     tableName: 'brands'
   });

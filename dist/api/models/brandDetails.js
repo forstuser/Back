@@ -36,7 +36,6 @@ exports.default = function (sequelize, DataTypes) {
     freezeTableName: true,
     defaultPrimaryKey: true,
     timestamps: true,
-    paranoid: true,
     underscored: true,
     tableName: 'brand_details'
   });
@@ -48,7 +47,8 @@ exports.default = function (sequelize, DataTypes) {
 
     brandDetails.belongsTo(models.categories, { foreignKey: 'category_id', targetKey: 'category_id' });
 
-    brandDetails.belongsTo(models.detailTypes, { foreignKey: 'detail_type', targetKey: 'type' });
+    brandDetails.belongsTo(models.detailTypes,
+        {foreignKey: 'detail_type', targetKey: 'id'});
 
     brandDetails.belongsTo(models.statuses, { foreignKey: 'status_type', targetKey: 'status_type' });
   };

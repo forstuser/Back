@@ -646,6 +646,15 @@ function prepareGeneralRoutes(generalController, generalRoutes) {
         description: 'Retrieve FAQ\'s'
       }
     });
+
+    generalRoutes.push({
+      method: 'GET',
+      path: '/referencedata',
+      config: {
+        handler: _general2.default.retrieveReferenceData,
+        description: 'Retrieve Reference data',
+      },
+    });
   }
 }
 
@@ -662,7 +671,6 @@ exports.default = function (app, modals) {
   var sellerRoutes = [];
   var serviceCenterRoutes = [];
   var billManagementRoutes = [];
-  var referenceDataRoutes = [];
   var dashboardRoutes = [];
   var productRoutes = [];
   var insightRoutes = [];
@@ -716,5 +724,8 @@ exports.default = function (app, modals) {
     });
   }
 
-  app.route([].concat(authRoutes, categoryRoutes, brandRoutes, sellerRoutes, serviceCenterRoutes, billManagementRoutes, referenceDataRoutes, uploadFileRoute, dashboardRoutes, productRoutes, insightRoutes, searchRoutes, generalRoutes));
+  app.route([].concat(authRoutes, categoryRoutes, brandRoutes, sellerRoutes,
+      serviceCenterRoutes, billManagementRoutes, uploadFileRoute,
+      dashboardRoutes, productRoutes, insightRoutes, searchRoutes,
+      generalRoutes));
 };

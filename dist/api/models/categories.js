@@ -42,7 +42,6 @@ exports.default = function (sequelize, DataTypes) {
     freezeTableName: true,
     defaultPrimaryKey: false,
     timestamps: true,
-    paranoid: true,
     underscored: true,
     tableName: 'categories'
   });
@@ -50,6 +49,8 @@ exports.default = function (sequelize, DataTypes) {
   categories.associate = function (models) {
     categories.belongsTo(models.users, { foreignKey: 'updated_by' });
     categories.belongsTo(models.categories, { foreignKey: 'ref_id' });
+    categories.hasMany(models.categories,
+        {foreignKey: 'ref_id', as: 'subCategories'});
 
     categories.belongsTo(models.statuses, { foreignKey: 'status_type', targetKey: 'status_type' });
   };

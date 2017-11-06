@@ -18,10 +18,6 @@ var _requestPromise = require('request-promise');
 
 var _requestPromise2 = _interopRequireDefault(_requestPromise);
 
-var _s3fs = require('s3fs');
-
-var _s3fs2 = _interopRequireDefault(_s3fs);
-
 var _uuid = require('uuid');
 
 var _uuid2 = _interopRequireDefault(_uuid);
