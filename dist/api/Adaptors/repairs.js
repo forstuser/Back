@@ -40,6 +40,9 @@ var RepairAdaptor = function () {
     key: 'retrieveRepairs',
     value: function retrieveRepairs(options) {
       options.status_type = 5;
+      var productOptions = options.main_category_id ? {
+        main_category_id: options.main_category_id,
+      } : undefined;
       return this.modals.repairs.findAll({
         where: options,
         include: [{
@@ -48,12 +51,50 @@ var RepairAdaptor = function () {
           attributes: [['seller_name', 'sellerName'], 'url', 'gstin', 'contact', 'email'],
           required: false
         }, {
+          model: this.modals.products,
+          where: productOptions,
+          attributes: [],
+          required: productOptions !== undefined,
+        }, {
           model: this.modals.offlineSellers,
           as: 'sellers',
           attributes: [['seller_name', 'sellerName'], ['owner_name', 'ownerName'], ['pan_no', 'panNo'], ['reg_no', 'regNo'], ['is_service', 'isService'], 'url', 'gstin', 'contact', 'email', 'address', 'city', 'state', 'pincode', 'latitude', 'longitude'],
           required: false
         }],
-        attributes: ['id', ['product_id', 'productId'], ['job_id', 'jobId'], ['document_number', 'policyNo'], ['renewal_cost', 'premiumAmount'], ['renewal_taxes', 'taxes'], ['document_date', 'documentDate'], 'copies'],
+        attributes: [
+          'id',
+          [
+            'product_id',
+            'productId'],
+          [
+            'job_id',
+            'jobId'],
+          [
+            this.modals.sequelize.literal('"product"."main_category_id"'),
+            'masterCategoryId'],
+          [
+            'document_number',
+            'policyNo'],
+          [
+            'repair_cost',
+            'premiumAmount'],
+          [
+            this.modals.sequelize.literal('"product"."product_name"'),
+            'productName'],
+          [
+            'repair_cost',
+            'value'],
+          [
+            'repair_taxes',
+            'taxes'],
+          [
+            'document_date',
+            'purchaseDate'],
+          [
+            this.modals.sequelize.fn('CONCAT', 'products/',
+                this.modals.sequelize.literal('"product_id"')),
+            'productURL'],
+          'copies'],
         order: [['document_date', 'DESC']]
       }).then(function (repairResult) {
         return repairResult.map(function (item) {

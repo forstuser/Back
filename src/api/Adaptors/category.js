@@ -20,7 +20,7 @@ export default class CategoryAdaptor {
               'id'],
             [
               'category_name',
-              'categoryName'],
+              'name'],
             [
               'ref_id',
               'refId'],
@@ -48,7 +48,10 @@ export default class CategoryAdaptor {
           'id'],
         [
           'category_name',
-          'categoryName'],
+          'name'],
+        [
+          'category_name',
+          'name'],
         [
           'ref_id',
           'refId'],
@@ -68,7 +71,7 @@ export default class CategoryAdaptor {
         [
           this.modals.sequelize.fn('CONCAT', 'categories/',
               this.modals.sequelize.literal('"categories"."category_id"'),
-              'image'),
+              'images'),
           'categoryImageUrl']],
     }).then(result => result.map(item => item.toJSON()));
   }

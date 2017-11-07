@@ -55,7 +55,7 @@ var CategoryAdaptor = function() {
                   'id'],
                 [
                   'category_name',
-                  'categoryName'],
+                  'name'],
                 [
                   'ref_id',
                   'refId'],
@@ -84,7 +84,10 @@ var CategoryAdaptor = function() {
               'id'],
             [
               'category_name',
-              'categoryName'],
+              'name'],
+            [
+              'category_name',
+              'name'],
             [
               'ref_id',
               'refId'],
@@ -104,7 +107,7 @@ var CategoryAdaptor = function() {
             [
               this.modals.sequelize.fn('CONCAT', 'categories/',
                   this.modals.sequelize.literal('"categories"."category_id"'),
-                  'image'),
+                  'images'),
               'categoryImageUrl']],
         }).then(function(result) {
           return result.map(function(item) {

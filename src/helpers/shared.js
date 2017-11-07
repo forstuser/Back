@@ -2,12 +2,12 @@
 'use strict';
 
 import dateFormat from 'dateformat';
-import { readFile } from 'fs';
-import { verify } from 'jsonwebtoken';
+import {readFile} from 'fs';
+import {verify} from 'jsonwebtoken';
 import _ from 'lodash';
 import moment from 'moment';
 import path from 'path';
-import { stringify } from 'querystring';
+import {stringify} from 'querystring';
 import url from 'url-join';
 import uuid from 'uuid';
 import config from '../config/main';
@@ -187,5 +187,5 @@ export default {
 	getAllDays,
 	sumProps,
 	retrieveDaysInsight,
-	retrieveMailTemplate
+  retrieveMailTemplate,
 };

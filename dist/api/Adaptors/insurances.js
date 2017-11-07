@@ -40,11 +40,19 @@ var InsuranceAdaptor = function () {
     key: 'retrieveInsurances',
     value: function retrieveInsurances(options) {
       options.status_type = 5;
+      var productOptions = options.main_category_id ? {
+        main_category_id: options.main_category_id,
+      } : undefined;
       return this.modals.insurances.findAll({
         where: options,
         include: [{
           model: this.modals.renewalTypes,
           attributes: []
+        }, {
+          model: this.modals.products,
+          where: productOptions,
+          attributes: [],
+          required: productOptions !== undefined,
         }, {
           model: this.modals.onlineSellers,
           as: 'onlineSellers',
@@ -62,17 +70,26 @@ var InsuranceAdaptor = function () {
             'product_id',
             'productId'],
           [
+            this.modals.sequelize.literal('"product"."main_category_id"'),
+            'masterCategoryId'],
+          [
             'job_id',
             'jobId'],
           [
             'document_number',
             'policyNo'],
           [
-            this.modals.sequelize.literal('`renewalTypes`.`title`'),
+            this.modals.sequelize.literal('"renewalTypes"."title"'),
             'premiumType'],
+          [
+            this.modals.sequelize.literal('"product"."product_name"'),
+            'productName'],
           [
             'renewal_cost',
             'premiumAmount'],
+          [
+            'renewal_cost',
+            'value'],
           [
             'renewal_taxes',
             'taxes'],
@@ -84,7 +101,11 @@ var InsuranceAdaptor = function () {
             'expiryDate'],
           [
             'document_date',
-            'documentDate'],
+            'purchaseDate'],
+          [
+            this.modals.sequelize.fn('CONCAT', 'products/',
+                this.modals.sequelize.literal('"product_id"')),
+            'productURL'],
           'copies'],
         order: [['expiry_date', 'DESC']]
       }).then(function (insuranceResult) {

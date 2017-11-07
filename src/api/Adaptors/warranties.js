@@ -25,6 +25,9 @@ class WarrantyAdaptor {
 
   retrieveWarranties(options) {
     options.status_type = 5;
+    const productOptions = options.main_category_id ? {
+      main_category_id: options.main_category_id,
+    } : undefined;
     return this.modals.warranties.findAll({
       where: options,
       include: [{
@@ -32,11 +35,17 @@ class WarrantyAdaptor {
         attributes: []
       },
         {
+          model: this.modals.products,
+          where: productOptions,
+          attributes: [],
+          required: productOptions !== undefined,
+        },
+        {
           model: this.modals.onlineSellers,
           as: 'onlineSellers',
           attributes: [['seller_name', 'sellerName'], 'url', 'gstin', 'contact', 'email'],
           required: false
-      },
+        },
         {
           model: this.modals.offlineSellers,
           as: 'sellers',
@@ -55,11 +64,20 @@ class WarrantyAdaptor {
           'document_number',
           'policyNo'],
         [
+          this.modals.sequelize.literal('"product"."product_name"'),
+          'productName'],
+        [
           this.modals.sequelize.literal('`renewalTypes`.`title`'),
           'premiumType'],
         [
+          this.modals.sequelize.literal('"product"."main_category_id"'),
+          'masterCategoryId'],
+        [
           'renewal_cost',
           'premiumAmount'],
+        [
+          'renewal_cost',
+          'value'],
         [
           'renewal_taxes',
           'taxes'],
@@ -71,7 +89,11 @@ class WarrantyAdaptor {
           'expiryDate'],
         [
           'document_date',
-          'documentDate'],
+          'purchaseDate'],
+        [
+          this.modals.sequelize.fn('CONCAT', 'products/',
+              this.modals.sequelize.literal('"product_id"')),
+          'productURL'],
         'copies'],
       order:[['expiry_date', 'DESC']],
     }).then((warrantyResult) => warrantyResult.map((item) => item.toJSON()).sort(sortAmcWarrantyInsuranceRepair));
