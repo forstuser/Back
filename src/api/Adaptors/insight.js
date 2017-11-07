@@ -360,7 +360,7 @@ class InsightAdaptor {
               ...warranties] || [];
 
             return category;
-          })[0];
+          });
         });
   }
 
@@ -371,8 +371,7 @@ class InsightAdaptor {
           const distinctInsightWeekly = [];
           const distinctInsightMonthly = [];
           const distinctInsight = [];
-          console.log(result);
-          result.expenses.map((item) => {
+          result[0].expenses.map((item) => {
             const expense = item.orderBy(['purchaseDate'], ['asc']);
             const index = distinctInsight.findIndex(
                 distinctItem => (moment(distinctItem.date).valueOf() ===
@@ -448,7 +447,8 @@ class InsightAdaptor {
             return dayItem;
           });
 
-          const productList = _.chain(result.expenses).orderBy(['purchaseDate'],
+          const productList = _.chain(result[0].expenses).
+              orderBy(['purchaseDate'],
               ['asc']);
           productList.sort(
               (a, b) => moment(b.purchaseDate) - moment(a.purchaseDate));
@@ -498,7 +498,7 @@ class InsightAdaptor {
             productListWeekly,
             productListMonthly,
             insight: distinctInsight && distinctInsight.length > 0 ? {
-              categoryName: result.name,
+              categoryName: result[0].name,
               startDate: moment.utc().subtract(6, 'd').startOf('d'),
               endDate: moment.utc(),
               currentMonthId: moment.utc().month() + 1,
@@ -516,7 +516,7 @@ class InsightAdaptor {
               insightWeekly,
               insightMonthly,
             } : {
-              categoryName: result.name,
+              categoryName: result[0].name,
               startDate: moment.utc().subtract(6, 'd').startOf('d'),
               endDate: moment.utc(),
               currentMonthId: moment.utc().month() + 1,
@@ -534,7 +534,7 @@ class InsightAdaptor {
               insightWeekly: [],
               insightMonthly: [],
             },
-            categoryName: result.name,
+            categoryName: result[0].name,
             forceUpdate: request.pre.forceUpdate,
           };
         }).

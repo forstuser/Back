@@ -406,7 +406,7 @@ var InsightAdaptor = function () {
                     _toConsumableArray(warranties)) || [];
 
                 return category;
-              })[0];
+              });
             });
       }
     }, {
@@ -418,8 +418,7 @@ var InsightAdaptor = function () {
               var distinctInsightWeekly = [];
               var distinctInsightMonthly = [];
               var distinctInsight = [];
-              console.log(result);
-              result.expenses.map(function(item) {
+              result[0].expenses.map(function(item) {
                 var expense = item.orderBy(['purchaseDate'], ['asc']);
                 var index = distinctInsight.findIndex(function(distinctItem) {
                   return (0, _moment2.default)(distinctItem.date).valueOf() ===
@@ -502,7 +501,7 @@ var InsightAdaptor = function () {
                 return dayItem;
               });
 
-              var productList = _lodash2.default.chain(result.expenses).
+              var productList = _lodash2.default.chain(result[0].expenses).
                   orderBy(['purchaseDate'], ['asc']);
               productList.sort(function(a, b) {
                 return (0, _moment2.default)(b.purchaseDate) -
@@ -572,7 +571,7 @@ var InsightAdaptor = function () {
                 productListWeekly: productListWeekly,
                 productListMonthly: productListMonthly,
                 insight: distinctInsight && distinctInsight.length > 0 ? {
-                  categoryName: result.name,
+                  categoryName: result[0].name,
                   startDate: _moment2.default.utc().
                       subtract(6, 'd').
                       startOf('d'),
@@ -594,7 +593,7 @@ var InsightAdaptor = function () {
                   insightWeekly: insightWeekly,
                   insightMonthly: insightMonthly,
                 } : {
-                  categoryName: result.name,
+                  categoryName: result[0].name,
                   startDate: _moment2.default.utc().
                       subtract(6, 'd').
                       startOf('d'),
@@ -614,7 +613,7 @@ var InsightAdaptor = function () {
                   insightWeekly: [],
                   insightMonthly: [],
                 },
-                categoryName: result.name,
+                categoryName: result[0].name,
                 forceUpdate: request.pre.forceUpdate,
               };
             }).
