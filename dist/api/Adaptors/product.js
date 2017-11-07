@@ -197,9 +197,7 @@ var ProductAdaptor = function () {
             },
           })]);
       }).then(function(results) {
-        var metaData = results[0].map(function(item) {
-          return item.toJSON();
-        });
+        var metaData = results[0];
 
         return products.map(function (productItem) {
           productItem.productMetaData = metaData.filter(function(item) {

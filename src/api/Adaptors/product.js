@@ -185,7 +185,7 @@ class ProductAdaptor {
           },
         })]);
     }).then((results) => {
-      const metaData = results[0].map((item) => item.toJSON());
+      const metaData = results[0];
 
       return products.map((productItem) => {
         productItem.productMetaData = metaData.filter(
