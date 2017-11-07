@@ -19,10 +19,10 @@ exports.default = function (sequelize, DataTypes) {
     document_number: {
       type: DataTypes.STRING
     },
-    renewal_cost: {
+    repair_cost: {
       type: DataTypes.FLOAT
     },
-    renewal_taxes: {
+    repair_taxes: {
       type: DataTypes.FLOAT
     },
     user_id: {

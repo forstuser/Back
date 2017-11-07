@@ -97,16 +97,16 @@ class RepairAdaptor {
           'document_number',
           'policyNo'],
         [
-          'renewal_cost',
+          'repair_cost',
           'premiumAmount'],
         [
           this.modals.sequelize.literal('"product"."product_name"'),
           'productName'],
         [
-          'renewal_cost',
+          'repair_cost',
           'value'],
         [
-          'renewal_taxes',
+          'repair_taxes',
           'taxes'],
         [
           'document_date',
