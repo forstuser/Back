@@ -96,7 +96,7 @@ class InsightAdaptor {
             totalAmount, totalTax,
           });
           return {
-            cName: item.categoryName,
+            cName: item.name,
             cURL: item.categoryInsightUrl,
             cImageURl: item.categoryImageUrl,
             totalAmount: parseFloat(totalAmount ||
@@ -114,7 +114,7 @@ class InsightAdaptor {
           const totalTax = shared.sumProps(expenses,
               'taxes');
           return {
-            cName: item.categoryName,
+            cName: item.name,
             cURL: item.categoryInsightUrl,
             cImageURl: item.categoryImageUrl,
             totalAmount: parseFloat(totalAmount ||
@@ -132,7 +132,7 @@ class InsightAdaptor {
           const totalTax = shared.sumProps(expenses,
               'taxes');
           return {
-            cName: item.categoryName,
+            cName: item.name,
             cURL: item.categoryInsightUrl,
             cImageURl: item.categoryImageUrl,
             totalAmount: parseFloat(totalAmount ||
@@ -372,7 +372,7 @@ class InsightAdaptor {
           const distinctInsightMonthly = [];
           const distinctInsight = [];
           result[0].expenses.map((item) => {
-            const expense = item.orderBy(['purchaseDate'], ['asc']);
+            const expense = item;
             const index = distinctInsight.findIndex(
                 distinctItem => (moment(distinctItem.date).valueOf() ===
                     moment(expense.purchaseDate).valueOf()));

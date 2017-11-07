@@ -138,7 +138,7 @@ var InsightAdaptor = function () {
                 totalAmount: totalAmount, totalTax: totalTax,
               });
               return {
-                cName: item.categoryName,
+                cName: item.name,
                 cURL: item.categoryInsightUrl,
                 cImageURl: item.categoryImageUrl,
                 totalAmount: parseFloat(totalAmount || 0).toFixed(2),
@@ -154,7 +154,7 @@ var InsightAdaptor = function () {
               var totalAmount = _shared2.default.sumProps(expenses, 'value');
               var totalTax = _shared2.default.sumProps(expenses, 'taxes');
               return {
-                cName: item.categoryName,
+                cName: item.name,
                 cURL: item.categoryInsightUrl,
                 cImageURl: item.categoryImageUrl,
                 totalAmount: parseFloat(totalAmount || 0).toFixed(2),
@@ -170,7 +170,7 @@ var InsightAdaptor = function () {
               var totalAmount = _shared2.default.sumProps(expenses, 'value');
               var totalTax = _shared2.default.sumProps(expenses, 'taxes');
               return {
-                cName: item.categoryName,
+                cName: item.name,
                 cURL: item.categoryInsightUrl,
                 cImageURl: item.categoryImageUrl,
                 totalAmount: parseFloat(totalAmount || 0).toFixed(2),
@@ -419,7 +419,7 @@ var InsightAdaptor = function () {
               var distinctInsightMonthly = [];
               var distinctInsight = [];
               result[0].expenses.map(function(item) {
-                var expense = item.orderBy(['purchaseDate'], ['asc']);
+                var expense = item;
                 var index = distinctInsight.findIndex(function(distinctItem) {
                   return (0, _moment2.default)(distinctItem.date).valueOf() ===
                       (0, _moment2.default)(expense.purchaseDate).valueOf();
