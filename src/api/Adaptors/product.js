@@ -348,7 +348,7 @@ class ProductAdaptor {
       }
     }).then((results) => {
       if (products) {
-        products.metaData = results[0].map((item) => item.toJSON());
+        products.metaData = results[0];
         products.brand = results[1];
         products.insuranceDetails = results[3];
         products.warrantyDetails = results[4];

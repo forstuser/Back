@@ -375,9 +375,7 @@ var ProductAdaptor = function () {
         }
       }).then(function(results) {
         if (products) {
-          products.metaData = results[0].map(function(item) {
-            return item.toJSON();
-          });
+          products.metaData = results[0];
           products.brand = results[1];
           products.insuranceDetails = results[3];
           products.warrantyDetails = results[4];
