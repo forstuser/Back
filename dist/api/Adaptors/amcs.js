@@ -81,7 +81,7 @@ var AmcAdaptor = function () {
             this.modals.sequelize.literal('"product"."main_category_id"'),
             'masterCategoryId'],
           [
-            this.modals.sequelize.literal('`renewalTypes`.`title`'),
+            this.modals.sequelize.literal('"renewalTypes"."title"'),
             'premiumType'],
           [
             this.modals.sequelize.literal('"product"."product_name"'),

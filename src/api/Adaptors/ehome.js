@@ -14,7 +14,7 @@ class EHomeAdaptor {
       this.retrieveUnProcessedBills(user),
       this.prepareCategoryData(user),
       this.retrieveRecentSearch(user),
-      this.modals.mailBox.count({where: {user_id: user.ID, status_id: 4}}),
+      this.modals.mailBox.count({where: {user_id: user.ID, status_type: 4}}),
     ]).then((result) => {
 
       let OtherCategory = null;
@@ -79,40 +79,41 @@ class EHomeAdaptor {
   }
 
   retrieveUnProcessedBills(user) {
-    return this.modals.consumerBills.findAll({
-      attributes: [['created_on', 'uploadedDate'], ['bill_id', 'docId']],
+    return this.modals.jobs.findAll({
+      attributes: [['created_at', 'uploadedDate'], ['id', 'docId']],
       where: {
-        user_id: user.ID,
+        user_id: user.id,
         user_status: {
-          $notIn: [3, 5, 10],
+          $notIn: [3, 5, 9],
         },
         admin_status: {
-          $notIn: [3, 5, 10] // 3=Delete, 5=Complete, 10=Discard
+          $notIn: [3, 5, 9] // 3=Delete, 5=Complete, 9=Discard
         },
       },
       include: [
         {
-          model: this.modals.billCopies,
-          as: 'billCopies',
+          model: this.modals.jobCopies,
+          as: 'copies',
           attributes: [
             [
-              'bill_copy_id',
+              'id',
               'billCopyId'],
             [
-              'bill_copy_type',
+              'file_type',
               'billCopyType'],
             [
-              this.modals.sequelize.fn('CONCAT', 'bills/',
-                  this.modals.sequelize.col('bill_copy_id'), '/files'),
+              this.modals.sequelize.fn('CONCAT', 'jobs/',
+                  this.modals.sequelize.literal('"jobs"."id"'), '/files/',
+                  this.modals.sequelize.literal('"copies"."id"')),
               'fileUrl']],
           where: {
-            status_id: {
-              $ne: 3,
+            status_type: {
+              $notIn: [3, 5, 9],
             },
           },
         }],
       order: [
-        ['created_on', 'DESC'],
+        ['created_at', 'DESC'],
       ],
     });
   }
@@ -121,7 +122,7 @@ class EHomeAdaptor {
     return this.modals.categories.findAll({
       where: {
         category_level: 1,
-        status_id: {
+        status_type: {
           $ne: 3,
         },
       },
@@ -157,7 +158,7 @@ class EHomeAdaptor {
           as: 'products',
           where: {
             user_id: user.ID,
-            status_id: {
+            status_type: {
               $ne: 3,
             },
           },
@@ -166,7 +167,7 @@ class EHomeAdaptor {
               model: this.modals.consumerBillDetails,
               as: 'consumerBill',
               where: {
-                status_id: {
+                status_type: {
                   $ne: 3,
                 },
               },
@@ -258,7 +259,7 @@ class EHomeAdaptor {
       this.modals.categories.findAll({
         where: {
           ref_id: masterCategoryId,
-          status_id: {
+          status_type: {
             $ne: 3,
           },
         },
@@ -281,7 +282,7 @@ class EHomeAdaptor {
       }),
       this.modals.table_brands.findAll({
         where: {
-          status_id: {
+          status_type: {
             $ne: 3,
           },
         },
@@ -290,7 +291,7 @@ class EHomeAdaptor {
             model: this.modals.brandDetails,
             as: 'details',
             where: {
-              status_id: {
+              status_type: {
                 $ne: 3,
               },
             },
@@ -301,7 +302,7 @@ class EHomeAdaptor {
       }),
       this.modals.offlineSeller.findAll({
         where: {
-          status_id: {
+          status_type: {
             $ne: 3,
           },
         },
@@ -310,7 +311,7 @@ class EHomeAdaptor {
             model: this.modals.offlineSellerDetails,
             as: 'sellerDetails',
             where: {
-              status_id: {
+              status_type: {
                 $ne: 3,
               },
             },
@@ -321,7 +322,7 @@ class EHomeAdaptor {
       }),
       this.modals.onlineSeller.findAll({
         where: {
-          status_id: {
+          status_type: {
             $ne: 3,
           },
         },
@@ -330,7 +331,7 @@ class EHomeAdaptor {
             model: this.modals.onlineSellerDetails,
             as: 'sellerDetails',
             where: {
-              status_id: {
+              status_type: {
                 $ne: 3,
               },
             },
@@ -430,7 +431,7 @@ class EHomeAdaptor {
       where: {
         ref_id: masterCategoryId,
         display_id: ctype,
-        status_id: {
+        status_type: {
           $ne: 3,
         },
       },
@@ -451,7 +452,7 @@ class EHomeAdaptor {
       let onlineSellerRequired = false;
       const whereClause = ctype ? {
         user_id: user.ID,
-        status_id: {
+        status_type: {
           $ne: 3,
         },
         master_category_id: masterCategoryId,
@@ -462,7 +463,7 @@ class EHomeAdaptor {
               {$like: this.modals.sequelize.fn('lower', searchValue)})],
       } : {
         user_id: user.ID,
-        status_id: {
+        status_type: {
           $ne: 3,
         },
         master_category_id: masterCategoryId,
@@ -496,7 +497,7 @@ class EHomeAdaptor {
             model: this.modals.consumerBillDetails,
             as: 'consumerBill',
             where: {
-              status_id: {
+              status_type: {
                 $ne: 3,
               },
             },
@@ -596,7 +597,7 @@ class EHomeAdaptor {
                     model: this.modals.offlineSellerDetails,
                     as: 'sellerDetails',
                     where: {
-                      status_id: {
+                      status_type: {
                         $ne: 3,
                       },
                     },
@@ -629,7 +630,7 @@ class EHomeAdaptor {
                     model: this.modals.onlineSellerDetails,
                     as: 'sellerDetails',
                     where: {
-                      status_id: {
+                      status_type: {
                         $ne: 3,
                       },
                     },
@@ -682,7 +683,7 @@ class EHomeAdaptor {
               'expiryDate'],
             where: {
               user_id: user.ID,
-              status_id: {
+              status_type: {
                 $ne: 3,
               },
             },
@@ -705,7 +706,7 @@ class EHomeAdaptor {
               'plan'],
             where: {
               user_id: user.ID,
-              status_id: {
+              status_type: {
                 $ne: 3,
               },
             },
@@ -727,7 +728,7 @@ class EHomeAdaptor {
               'expiryDate'],
             where: {
               user_id: user.ID,
-              status_id: {
+              status_type: {
                 $ne: 3,
               },
             },
