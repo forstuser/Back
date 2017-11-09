@@ -59,17 +59,6 @@ function _interopRequireDefault(obj) {
   return obj && obj.__esModule ? obj : {default: obj};
 }
 
-function _toConsumableArray(arr) {
-  if (Array.isArray(arr)) {
-    for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) {
-      arr2[i] = arr[i];
-    }
-    return arr2;
-  } else {
-    return Array.from(arr);
-  }
-}
-
 function _classCallCheck(instance, Constructor) {
   if (!(instance instanceof Constructor)) {
     throw new TypeError('Cannot call a class as a function');
@@ -243,11 +232,12 @@ var EHomeAdaptor = function() {
                     find(function(warrantyItem) {
                       return warrantyItem.masterCategoryId === category.id;
                     });
-                category.expenses = _lodash2.default.chain([].concat(
-                    _toConsumableArray(products), _toConsumableArray(amcs),
-                    _toConsumableArray(insurances), _toConsumableArray(repairs),
-                    _toConsumableArray(warranties)) || []).
-                    orderBy(['lastUpdatedAt'], ['desc']);
+                category.expenses = _lodash2.default.chain([
+                  products,
+                  amcs,
+                  insurances,
+                  repairs,
+                  warranties] || []).orderBy(['lastUpdatedAt'], ['desc']);
                 category.cLastUpdate = category.expenses &&
                 category.expenses.length > 0 ?
                     category.expenses[0].lastUpdatedAt :

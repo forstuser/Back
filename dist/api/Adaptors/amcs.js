@@ -187,7 +187,7 @@ var AmcAdaptor = function () {
           return item.toJSON();
         });
       });
-    },
+    }
   }]);
 
   return AmcAdaptor;

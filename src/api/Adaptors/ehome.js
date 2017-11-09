@@ -172,11 +172,11 @@ class EHomeAdaptor {
                     (warrantyItem) => warrantyItem.masterCategoryId ===
                         category.id);
             category.expenses = _.chain([
-              ...products,
-              ...amcs,
-              ...insurances,
-              ...repairs,
-              ...warranties] || []).orderBy(['lastUpdatedAt'],
+              products,
+              amcs,
+              insurances,
+              repairs,
+              warranties] || []).orderBy(['lastUpdatedAt'],
                 ['desc']);
             category.cLastUpdate = category.expenses &&
             category.expenses.length > 0 ?

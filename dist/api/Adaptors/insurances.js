@@ -183,7 +183,7 @@ var InsuranceAdaptor = function () {
           return item.toJSON();
         });
       });
-    },
+    }
   }]);
 
   return InsuranceAdaptor;

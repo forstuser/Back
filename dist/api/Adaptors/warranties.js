@@ -185,7 +185,7 @@ var WarrantyAdaptor = function () {
           return item.toJSON();
         });
       });
-    },
+    }
   }]);
 
   return WarrantyAdaptor;

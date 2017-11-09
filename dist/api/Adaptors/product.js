@@ -256,7 +256,7 @@ var ProductAdaptor = function () {
           return item.toJSON();
         });
       });
-    },
+    }
   }, {
     key: 'retrieveProductById',
     value: function retrieveProductById(id, options) {

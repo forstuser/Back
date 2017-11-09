@@ -172,7 +172,7 @@ var RepairAdaptor = function () {
           return item.toJSON();
         });
       });
-    },
+    }
   }]);
 
   return RepairAdaptor;
