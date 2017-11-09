@@ -18,7 +18,6 @@ const sortAmcWarrantyInsuranceRepair = (a, b) => {
   return -1;
 };
 
-
 class InsuranceAdaptor {
   constructor(modals) {
     this.modals = modals;
@@ -33,10 +32,11 @@ class InsuranceAdaptor {
     options = _.omit(options, 'product_status_type');
     return this.modals.insurances.findAll({
       where: options,
-      include: [{
-        model: this.modals.renewalTypes,
-        attributes: []
-      },
+      include: [
+        {
+          model: this.modals.renewalTypes,
+          attributes: [],
+        },
         {
           model: this.modals.products,
           where: productOptions,
@@ -46,8 +46,15 @@ class InsuranceAdaptor {
         {
           model: this.modals.onlineSellers,
           as: 'onlineSellers',
-          attributes: [['seller_name', 'sellerName'], 'url', 'gstin', 'contact', 'email'],
-          required: false
+          attributes: [
+            [
+              'seller_name',
+              'sellerName'],
+            'url',
+            'gstin',
+            'contact',
+            'email'],
+          required: false,
         },
         {
           model: this.modals.offlineSellers,
@@ -78,7 +85,7 @@ class InsuranceAdaptor {
             'pincode',
             'latitude',
             'longitude'],
-          required: false
+          required: false,
         }],
       attributes: [
         'id',
@@ -124,8 +131,39 @@ class InsuranceAdaptor {
               this.modals.sequelize.literal('"product_id"')),
           'productURL'],
         'copies'],
-      order:[['expiry_date', 'DESC']],
-    }).then((insuranceResult) => insuranceResult.map((item) => item.toJSON()).sort(sortAmcWarrantyInsuranceRepair));
+      order: [['expiry_date', 'DESC']],
+    }).
+        then((insuranceResult) => insuranceResult.map((item) => item.toJSON()).
+            sort(sortAmcWarrantyInsuranceRepair));
+  }
+
+  retrieveInsuranceCount(options) {
+    options.status_type = options.product_status_type || 5;
+    const productOptions = options.main_category_id ? {
+      main_category_id: options.main_category_id,
+    } : undefined;
+    options = _.omit(options, 'main_category_id');
+    options = _.omit(options, 'product_status_type');
+    return this.modals.insurances.findAll({
+      where: options,
+      include: [
+        {
+          model: this.modals.products,
+          where: productOptions,
+          attributes: [],
+          required: productOptions !== undefined,
+        }],
+
+      attributes: [
+        [this.modals.sequelize.literal('COUNT(*)'), 'productCounts'],
+        [
+          this.modals.sequelize.literal('"product"."main_category_id"'),
+          'masterCategoryId'],
+        [
+          this.modals.sequelize.literal('max("insurances"."updated_at")'),
+          'lastUpdatedAt']],
+      group: this.modals.sequelize.literal('"product"."main_category_id"'),
+    }).then((insuranceResult) => insuranceResult.map((item) => item.toJSON()));
   }
 }
 

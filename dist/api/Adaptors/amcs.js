@@ -41,7 +41,7 @@ var AmcAdaptor = function () {
   }
 
   _createClass(AmcAdaptor, [{
-    key: 'retrieveAmcs',
+    key: 'retrieveAMCs',
     value: function retrieveAmcs(options) {
       options.status_type = options.product_status_type || 5;
 

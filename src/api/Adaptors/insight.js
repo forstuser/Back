@@ -300,7 +300,7 @@ class InsightAdaptor {
     return Promise.all([
       this.categoryAdaptor.retrieveCategories(categoryOption),
       this.productAdaptor.retrieveProducts(productOptions),
-      this.amcAdaptor.retrieveAmcs(productOptions),
+      this.amcAdaptor.retrieveAMCs(productOptions),
       this.insuranceAdaptor.retrieveInsurances(productOptions),
       this.repairAdaptor.retrieveRepairs(productOptions),
       this.warrantyAdaptor.retrieveWarranties(productOptions)]).

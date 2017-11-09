@@ -150,6 +150,9 @@ var ProductAdaptor = function () {
             'document_number',
             'documentNo'],
           [
+            'updated_at',
+            'updatedDate'],
+          [
             'bill_id',
             'billId'],
           [
@@ -189,7 +192,7 @@ var ProductAdaptor = function () {
                 return item.id;
               }),
             },
-          }), _this.amcAdaptor.retrieveAmcs({
+          }), _this.amcAdaptor.retrieveAMCs({
             product_id: {
               $in: products.map(function(item) {
                 return item.id;
@@ -376,7 +379,7 @@ var ProductAdaptor = function () {
               product_id: products.id,
             }), _this2.warrantyAdaptor.retrieveWarranties({
               product_id: products.id,
-            }), _this2.amcAdaptor.retrieveAmcs({
+            }), _this2.amcAdaptor.retrieveAMCs({
               product_id: products.id,
             }), _this2.repairAdaptor.retrieveRepairs({
               product_id: products.id,

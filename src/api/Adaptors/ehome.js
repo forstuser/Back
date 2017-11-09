@@ -8,6 +8,7 @@ import AMCAdaptor from './amcs';
 import WarrantyAdaptor from './warranties';
 import RepairAdaptor from './repairs';
 import _ from 'lodash';
+import shared from '../../helpers/shared';
 
 class EHomeAdaptor {
   constructor(modals) {
@@ -143,55 +144,31 @@ class EHomeAdaptor {
     }
     return Promise.all([
       this.categoryAdaptor.retrieveCategories(categoryOption),
-      this.productAdaptor.retrieveProducts(productOptions),
-      this.amcAdaptor.retrieveAmcs(productOptions),
+      this.productAdaptor.retrieveProductCounts(productOptions),
+      this.amcAdaptor.retrieveAMCCounts(productOptions),
       this.insuranceAdaptor.retrieveInsurances(productOptions),
       this.repairAdaptor.retrieveRepairs(productOptions),
       this.warrantyAdaptor.retrieveWarranties(productOptions)]).
         then((results) => {
           return results[0].map((categoryItem) => {
             const category = categoryItem;
+            console.log({amc: results[2]});
             const products = _.chain(results[1]).
-                map((productItem) => {
-                  const product = productItem;
-                  product.dataIndex = 1;
-                  return product;
-                }).
-                filter(
+                find(
                     (productItem) => productItem.masterCategoryId ===
                         category.id);
             const amcs = _.chain(results[2]).
-                map((amcItem) => {
-                  const amc = amcItem;
-                  amc.dataIndex = 2;
-                  return amc;
-                }).
-                filter((amcItem) => amcItem.masterCategoryId === category.id);
+                find((amcItem) => amcItem.masterCategoryId === category.id);
             const insurances = _.chain(results[3]).
-                map((insuranceItem) => {
-                  const insurance = insuranceItem;
-                  insurance.dataIndex = 3;
-                  return insurance;
-                }).
-                filter(
+                find(
                     (insuranceItem) => insuranceItem.masterCategoryId ===
                         category.id);
             const repairs = _.chain(results[4]).
-                map((repairItem) => {
-                  const repair = repairItem;
-                  repair.dataIndex = 4;
-                  return repair;
-                }).
-                filter(
+                find(
                     (repairItem) => repairItem.masterCategoryId ===
                         category.id);
             const warranties = _.chain(results[5]).
-                map((warrantyItem) => {
-                  const warranty = warrantyItem;
-                  warranty.dataIndex = 5;
-                  return warranty;
-                }).
-                filter(
+                find(
                     (warrantyItem) => warrantyItem.masterCategoryId ===
                         category.id);
             category.expenses = _.chain([
@@ -199,14 +176,14 @@ class EHomeAdaptor {
               ...amcs,
               ...insurances,
               ...repairs,
-              ...warranties] || []).orderBy(['updatedDate'],
+              ...warranties] || []).orderBy(['lastUpdatedAt'],
                 ['desc']);
             category.cLastUpdate = category.expenses &&
             category.expenses.length > 0 ?
-                category.expenses[0].updatedDate :
+                category.expenses[0].lastUpdatedAt :
                 null;
-            category.productCounts = category.expenses &&
-            category.expenses.length > 0 ? category.expenses.length : 0;
+            category.productCounts = shared.sumProps(category.expenses,
+                'productCounts');
             return category;
           });
         });
@@ -404,12 +381,12 @@ class EHomeAdaptor {
   }
 
   fetchProductDetails(user,
-                      masterCategoryId, ctype, brandIds, categoryIds,
+                      masterCategoryId, subCategoryId, brandIds, categoryIds,
                       offlineSellerIds, onlineSellerIds, sortBy, searchValue) {
     return this.modals.categories.findOne({
       where: {
         ref_id: masterCategoryId,
-        display_id: ctype,
+        display_id: subCategoryId,
         status_type: {
           $ne: 3,
         },
@@ -429,13 +406,13 @@ class EHomeAdaptor {
       };
       let offlineSellerRequired = false;
       let onlineSellerRequired = false;
-      const whereClause = ctype ? {
+      const whereClause = subCategoryId ? {
         user_id: user.ID,
         status_type: {
           $ne: 3,
         },
         master_category_id: masterCategoryId,
-        category_id: ctype ? item.category_id : undefined,
+        category_id: subCategoryId ? item.category_id : undefined,
         $and: [
           this.modals.sequelize.where(this.modals.sequelize.fn('lower',
               this.modals.sequelize.col('product_name')),

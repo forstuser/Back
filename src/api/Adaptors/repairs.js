@@ -123,6 +123,36 @@ class RepairAdaptor {
         then((repairResult) => repairResult.map((item) => item.toJSON()).
             sort(sortAmcWarrantyInsuranceRepair));
   }
+
+  retrieveRepairCount(options) {
+    options.status_type = options.product_status_type || 5;
+    const productOptions = options.main_category_id ? {
+      main_category_id: options.main_category_id,
+    } : undefined;
+
+    options = _.omit(options, 'main_category_id');
+    options = _.omit(options, 'product_status_type');
+    return this.modals.repairs.findAll({
+      where: options,
+      include: [
+        {
+          model: this.modals.products,
+          where: productOptions,
+          attributes: [],
+          required: productOptions !== undefined,
+        }],
+
+      attributes: [
+        [this.modals.sequelize.literal('COUNT(*)'), 'productCounts'],
+        [
+          this.modals.sequelize.literal('"product"."main_category_id"'),
+          'masterCategoryId'],
+        [
+          this.modals.sequelize.literal('max("repairs"."updated_at")'),
+          'lastUpdatedAt']],
+      group: this.modals.sequelize.literal('"product"."main_category_id"'),
+    }).then((repairResult) => repairResult.map((item) => item.toJSON()));
+  }
 }
 
 export default RepairAdaptor;

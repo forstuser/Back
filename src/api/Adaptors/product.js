@@ -147,6 +147,7 @@ class ProductAdaptor {
           'document_date',
           'purchaseDate'],
         ['document_number', 'documentNo'],
+        ['updated_at', 'updatedDate'],
         [
           'bill_id',
           'billId'],
@@ -178,7 +179,7 @@ class ProductAdaptor {
           product_id: {
             $in: products.map((item) => item.id),
           },
-        }), this.amcAdaptor.retrieveAmcs({
+        }), this.amcAdaptor.retrieveAMCs({
           product_id: {
             $in: products.map((item) => item.id),
           },
@@ -204,6 +205,28 @@ class ProductAdaptor {
         return productItem;
       });
     });
+  }
+
+  retrieveProductCounts(options) {
+    if (!options.status_type) {
+      options.status_type = {
+        $notIn: [3, 9],
+      };
+    }
+
+    options = _.omit(options, 'product_status_type');
+    return this.modals.products.findAll({
+      where: options,
+      attributes: [
+        [this.modals.sequelize.literal('COUNT(*)'), 'productCounts'],
+        [
+          'main_category_id',
+          'masterCategoryId'],
+        [
+          this.modals.sequelize.literal('max("updated_at")'),
+          'lastUpdatedAt']],
+      group: 'main_category_id',
+    }).then((productItems) => productItems.map((item) => item.toJSON()));
   }
 
   retrieveProductById(id, options) {
@@ -344,7 +367,7 @@ class ProductAdaptor {
             product_id: products.id,
           }), this.warrantyAdaptor.retrieveWarranties({
             product_id: products.id,
-          }), this.amcAdaptor.retrieveAmcs({
+          }), this.amcAdaptor.retrieveAMCs({
             product_id: products.id,
           }), this.repairAdaptor.retrieveRepairs({
             product_id: products.id,
