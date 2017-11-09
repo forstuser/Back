@@ -24,8 +24,6 @@ class EHomeAdaptor {
     return Promise.all([
       this.retrieveUnProcessedBills(user),
       this.prepareCategoryData(user, {}),
-      /*this.retrieveRecentSearch(user),
-      this.modals.mailBox.count({where: {user_id: user.ID, status_type: 4}}),*/
     ]).then((result) => {
 
       let OtherCategory = null;

@@ -91,8 +91,7 @@ var EHomeAdaptor = function() {
       value: function prepareEHomeResult(user, request) {
         return Promise.all([
           this.retrieveUnProcessedBills(user),
-          this.prepareCategoryData(user, {})],
-        ).then(function(result) {
+          this.prepareCategoryData(user, {})]).then(function(result) {
 
           var OtherCategory = null;
 
