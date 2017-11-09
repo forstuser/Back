@@ -62,7 +62,10 @@ function weekAndDay(d) {
   var days = [1, 2, 3, 4, 5, 6, 7];
   var prefixes = [1, 2, 3, 4, 5];
 
-  return {monthWeek: prefixes[Math.round(d.date() / 7)], day: days[d.day()]};
+  return {
+    monthWeek: prefixes[Math.round(d.getDate() / 7)],
+    day: days[d.getDay()],
+  };
 }
 
 var dateFormatString = 'yyyy-mm-dd';
@@ -408,7 +411,7 @@ var InsightAdaptor = function () {
                 return category;
               });
             });
-      }
+      },
     }, {
       key: 'prepareCategoryInsight',
       value: function prepareCategoryInsight(user, request) {
@@ -454,8 +457,6 @@ var InsightAdaptor = function () {
                   purchaseDate: item.purchaseDate,
                   week: item.week,
                   day: item.day,
-                  totalCost: item.totalCost,
-                  totalTax: item.totalTax,
                   tax: item.tax,
                 };
 
@@ -466,8 +467,6 @@ var InsightAdaptor = function () {
                   purchaseDate: item.purchaseDate,
                   week: item.week,
                   day: item.day,
-                  totalCost: item.totalCost,
-                  totalTax: item.totalTax,
                   tax: item.tax,
                 };
                 var monthIndex = distinctInsightMonthly.findIndex(
@@ -481,8 +480,6 @@ var InsightAdaptor = function () {
                 if (weekIndex !== -1 && monthIndex !== -1) {
                   var currentWeekInsight = distinctInsightWeekly[weekIndex];
                   currentWeekInsight.value += item.value;
-                  currentWeekInsight.totalCost += item.totalCost;
-                  currentWeekInsight.totalTax += item.totalTax;
                   currentWeekInsight.tax += item.tax;
                 } else {
                   distinctInsightWeekly.push(item);
@@ -493,8 +490,6 @@ var InsightAdaptor = function () {
                 } else {
                   var currentMonthInsight = distinctInsightMonthly[monthIndex];
                   currentMonthInsight.value += monthItem.value;
-                  currentMonthInsight.totalCost += monthItem.totalCost;
-                  currentMonthInsight.totalTax += monthItem.totalTax;
                   currentMonthInsight.tax += monthItem.tax;
                 }
 
@@ -625,7 +620,7 @@ var InsightAdaptor = function () {
                 forceUpdate: request.pre.forceUpdate,
               };
             });
-      }
+      },
     }]);
 
   return InsightAdaptor;

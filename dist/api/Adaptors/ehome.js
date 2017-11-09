@@ -11,8 +11,43 @@ var _product = require('./product');
 
 var _product2 = _interopRequireDefault(_product);
 
+var _category = require('./category');
+
+var _category2 = _interopRequireDefault(_category);
+
+var _insurances = require('./insurances');
+
+var _insurances2 = _interopRequireDefault(_insurances);
+
+var _amcs = require('./amcs');
+
+var _amcs2 = _interopRequireDefault(_amcs);
+
+var _warranties = require('./warranties');
+
+var _warranties2 = _interopRequireDefault(_warranties);
+
+var _repairs = require('./repairs');
+
+var _repairs2 = _interopRequireDefault(_repairs);
+
+var _lodash = require('lodash');
+
+var _lodash2 = _interopRequireDefault(_lodash);
+
 function _interopRequireDefault(obj) {
   return obj && obj.__esModule ? obj : {default: obj};
+}
+
+function _toConsumableArray(arr) {
+  if (Array.isArray(arr)) {
+    for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) {
+      arr2[i] = arr[i];
+    }
+    return arr2;
+  } else {
+    return Array.from(arr);
+  }
 }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -23,27 +58,28 @@ var EHomeAdaptor = function () {
 
     this.modals = modals;
     this.productAdaptor = new _product2.default(modals);
+    this.categoryAdaptor = new _category2.default(modals);
+    this.insuranceAdaptor = new _insurances2.default(modals);
+    this.amcAdaptor = new _amcs2.default(modals);
+    this.warrantyAdaptor = new _warranties2.default(modals);
+    this.repairAdaptor = new _repairs2.default(modals);
   }
 
   _createClass(EHomeAdaptor, [{
     key: 'prepareEHomeResult',
     value: function prepareEHomeResult(user, request) {
       return Promise.all([
-        this.retrieveUnProcessedBills(user),
-        this.prepareCategoryData(user),
-        this.retrieveRecentSearch(user),
-        this.modals.mailBox.count(
-            {where: {user_id: user.ID, status_type: 4}})]).
-          then(function(result) {
+            this.retrieveUnProcessedBills(user),
+            this.prepareCategoryData(user, {})],
+          /*this.retrieveRecentSearch(user),
+          this.modals.mailBox.count({where: {user_id: user.ID, status_type: 4}}),*/
+      ).then(function(result) {
 
         var OtherCategory = null;
 
         var categoryList = result[1].map(function (item) {
-          var categoryData = item.toJSON();
-
-          categoryData.cURL += categoryData.subCategories.length > 0 && categoryData.subCategories[0].categoryType > 0 ? categoryData.subCategories[0].categoryType : '';
-
-          if (categoryData.cType === 9) {
+          var categoryData = item;
+          if (categoryData.id === 9) {
             OtherCategory = categoryData;
           }
 
@@ -51,37 +87,36 @@ var EHomeAdaptor = function () {
         });
 
         var categoryDataWithoutOthers = categoryList.filter(function (elem) {
-          return elem.cType !== 9;
+          return elem.id !== 9;
         });
 
-        var newCategoryData = [];
+        var newCategoryData = categoryDataWithoutOthers;
 
         var pushed = false;
 
-        categoryDataWithoutOthers.forEach(function (elem) {
-          if (OtherCategory.productCounts > elem.productCounts && !pushed) {
-            newCategoryData.push(OtherCategory);
-            pushed = true;
-          }
-          newCategoryData.push(elem);
-        });
+        if (OtherCategory) {
+          newCategoryData = [];
+          categoryDataWithoutOthers.forEach(function(elem) {
+            if (OtherCategory.productCounts > elem.productCounts && !pushed) {
+              newCategoryData.push(OtherCategory);
+              pushed = true;
+            }
+            newCategoryData.push(elem);
+          });
 
-        if (!pushed) {
-          newCategoryData.push(OtherCategory);
+          if (!pushed) {
+            newCategoryData.push(OtherCategory);
+          }
         }
 
-        var recentSearches = result[2].map(function (item) {
-          return item.toJSON();
-        });
+        // const recentSearches = result[2].map(item => item.toJSON());
 
         return {
           status: true,
           message: 'EHome restore successful',
           notificationCount: result[3],
           // categories: result[3],
-          recentSearches: recentSearches.map(function (item) {
-            return item.searchValue;
-          }).slice(0, 5),
+          // recentSearches: recentSearches.map(item => item.searchValue).slice(0, 5),
           unProcessedBills: result[0],
           categoryList: newCategoryData,
           forceUpdate: request.pre.forceUpdate
@@ -136,62 +171,92 @@ var EHomeAdaptor = function () {
     }
   }, {
     key: 'prepareCategoryData',
-    value: function prepareCategoryData(user) {
-      return this.modals.categories.findAll({
-        where: {
-          category_level: 1,
-          status_type: {
-            $ne: 3
-          }
+    value: function prepareCategoryData(user, options) {
+      var categoryOption = {
+        category_level: 1,
+        status_type: 1,
+      };
+
+      var productOptions = {
+        status_type: 5,
+        user_id: user.id,
+        product_status_type: {
+          $ne: 8,
         },
-        include: [{
-          model: this.modals.categories,
-          on: {
-            $or: [this.modals.sequelize.where(this.modals.sequelize.col('`subCategories`.`ref_id`'), this.modals.sequelize.col('`categories`.`category_id`'))]
-          },
-          where: {
-            display_id: 1
-          },
-          as: 'subCategories',
-          attributes: [['display_id', 'categoryType'], ['category_id', 'categoryId'], ['category_name', 'categoryName']],
-          order: [['display_id', 'ASC']],
-          required: false
-        }, {
-          model: this.modals.productBills,
-          as: 'products',
-          where: {
-            user_id: user.ID,
-            status_type: {
-              $ne: 3
-            }
-          },
-          include: [{
-            model: this.modals.consumerBillDetails,
-            as: 'consumerBill',
-            where: {
-              status_type: {
-                $ne: 3
-              }
-            },
-            attributes: [],
-            include: [{
-              model: this.modals.consumerBills,
-              as: 'bill',
-              where: {
-                $and: [this.modals.sequelize.where(this.modals.sequelize.col('`products->consumerBill->bill->billMapping`.`bill_ref_type`'), 1), {
-                  user_status: 5,
-                  admin_status: 5
-                }]
-              },
-              attributes: []
-            }]
-          }],
-          attributes: [],
-          required: false
-        }],
-        attributes: [['category_name', 'cName'], ['display_id', 'cType'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`categories`.`category_id`'), '/products?pageno=1&ctype='), 'cURL'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`categories`.`category_id`'), '/products?pageno=1&ctype='), 'genericURL'], [this.modals.sequelize.fn('MAX', this.modals.sequelize.col('`products->consumerBill->bill`.`updated_on`')), 'cLastUpdate'], [this.modals.sequelize.fn('COUNT', this.modals.sequelize.col('`products`.`product_name`')), 'productCounts'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`categories`.`category_id`'), '/image/'), 'cImageURL']],
-        order: [[this.modals.sequelize.fn('COUNT', this.modals.sequelize.col('`products`.`product_name`')), 'DESC'], ['category_name']],
-        group: '`categories`.`category_id`'
+      };
+
+      if (options.category_id) {
+        categoryOption.category_id = options.category_id;
+        productOptions.main_category_id = options.category_id;
+      }
+      return Promise.all([
+        this.categoryAdaptor.retrieveCategories(categoryOption),
+        this.productAdaptor.retrieveProducts(productOptions),
+        this.amcAdaptor.retrieveAmcs(productOptions),
+        this.insuranceAdaptor.retrieveInsurances(productOptions),
+        this.repairAdaptor.retrieveRepairs(productOptions),
+        this.warrantyAdaptor.retrieveWarranties(productOptions)]).
+          then(function(results) {
+            return results[0].map(function(categoryItem) {
+              var category = categoryItem;
+              var products = _lodash2.default.chain(results[1]).
+                  map(function(productItem) {
+                    var product = productItem;
+                    product.dataIndex = 1;
+                    return product;
+                  }).
+                  filter(function(productItem) {
+                    return productItem.masterCategoryId === category.id;
+                  });
+              var amcs = _lodash2.default.chain(results[2]).
+                  map(function(amcItem) {
+                    var amc = amcItem;
+                    amc.dataIndex = 2;
+                    return amc;
+                  }).
+                  filter(function(amcItem) {
+                    return amcItem.masterCategoryId === category.id;
+                  });
+              var insurances = _lodash2.default.chain(results[3]).
+                  map(function(insuranceItem) {
+                    var insurance = insuranceItem;
+                    insurance.dataIndex = 3;
+                    return insurance;
+                  }).
+                  filter(function(insuranceItem) {
+                    return insuranceItem.masterCategoryId === category.id;
+                  });
+              var repairs = _lodash2.default.chain(results[4]).
+                  map(function(repairItem) {
+                    var repair = repairItem;
+                    repair.dataIndex = 4;
+                    return repair;
+                  }).
+                  filter(function(repairItem) {
+                    return repairItem.masterCategoryId === category.id;
+                  });
+              var warranties = _lodash2.default.chain(results[5]).
+                  map(function(warrantyItem) {
+                    var warranty = warrantyItem;
+                    warranty.dataIndex = 5;
+                    return warranty;
+                  }).
+                  filter(function(warrantyItem) {
+                    return warrantyItem.masterCategoryId === category.id;
+                  });
+              category.expenses = _lodash2.default.chain([].concat(
+                  _toConsumableArray(products), _toConsumableArray(amcs),
+                  _toConsumableArray(insurances), _toConsumableArray(repairs),
+                  _toConsumableArray(warranties)) || []).
+                  orderBy(['updatedDate'], ['desc']);
+              category.cLastUpdate = category.expenses &&
+              category.expenses.length > 0 ?
+                  category.expenses[0].updatedDate :
+                  null;
+              category.productCounts = category.expenses &&
+              category.expenses.length > 0 ? category.expenses.length : 0;
+              return category;
+            });
       });
     }
   }, {

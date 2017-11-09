@@ -6,6 +6,7 @@ import InsuranceAdaptor from './insurances';
 import WarrantyAdaptor from './warranties';
 import AMCAdaptor from './amcs';
 import RepairAdaptor from './repairs';
+import _ from 'lodash';
 
 class ProductAdaptor {
   constructor(modals) {
@@ -23,6 +24,8 @@ class ProductAdaptor {
         $notIn: [3, 9],
       };
     }
+
+    options = _.omit(options, 'product_status_type');
 
     let products;
     return this.modals.products.findAll({
@@ -322,6 +325,7 @@ class ProductAdaptor {
         [
           'seller_id',
           'sellerId'],
+        ['updated_at', 'updatedDate'],
         'copies', [
           this.modals.sequelize.fn('CONCAT',
               '/consumer/servicecenters?brandid=',
@@ -564,15 +568,15 @@ class ProductAdaptor {
     return this.retrieveProductById(productId, {
       where: {
         user_id: user.ID,
-      }
+      },
     }).then((result) => {
       if (result) {
-          return ({
-            status: true,
-            message: 'Successful',
-            product: result,
-            forceUpdate: request.pre.forceUpdate,
-          });
+        return ({
+          status: true,
+          message: 'Successful',
+          product: result,
+          forceUpdate: request.pre.forceUpdate,
+        });
       } else {
         return ({
           status: false,

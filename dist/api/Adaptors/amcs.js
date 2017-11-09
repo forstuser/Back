@@ -43,12 +43,13 @@ var AmcAdaptor = function () {
   _createClass(AmcAdaptor, [{
     key: 'retrieveAmcs',
     value: function retrieveAmcs(options) {
-      options.status_type = 5;
+      options.status_type = options.product_status_type || 5;
 
       var productOptions = options.main_category_id ? {
         main_category_id: options.main_category_id,
       } : undefined;
       options = _lodash2.default.omit(options, 'main_category_id');
+      options = _lodash2.default.omit(options, 'product_status_type');
 
       return this.modals.amcs.findAll({
         where: options,
@@ -134,6 +135,9 @@ var AmcAdaptor = function () {
           [
             'document_date',
             'purchaseDate'],
+          [
+            'updated_at',
+            'updatedDate'],
           [
             this.modals.sequelize.fn('CONCAT', 'products/',
                 this.modals.sequelize.literal('"product_id"')),

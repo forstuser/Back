@@ -2,32 +2,37 @@
 'use strict';
 
 import ProductAdaptor from './product';
+import CategoryAdaptor from './category';
+import InsuranceAdaptor from './insurances';
+import AMCAdaptor from './amcs';
+import WarrantyAdaptor from './warranties';
+import RepairAdaptor from './repairs';
+import _ from 'lodash';
 
 class EHomeAdaptor {
   constructor(modals) {
     this.modals = modals;
     this.productAdaptor = new ProductAdaptor(modals);
+    this.categoryAdaptor = new CategoryAdaptor(modals);
+    this.insuranceAdaptor = new InsuranceAdaptor(modals);
+    this.amcAdaptor = new AMCAdaptor(modals);
+    this.warrantyAdaptor = new WarrantyAdaptor(modals);
+    this.repairAdaptor = new RepairAdaptor(modals);
   }
 
   prepareEHomeResult(user, request) {
     return Promise.all([
       this.retrieveUnProcessedBills(user),
-      this.prepareCategoryData(user),
-      this.retrieveRecentSearch(user),
-      this.modals.mailBox.count({where: {user_id: user.ID, status_type: 4}}),
+      this.prepareCategoryData(user, {}),
+      /*this.retrieveRecentSearch(user),
+      this.modals.mailBox.count({where: {user_id: user.ID, status_type: 4}}),*/
     ]).then((result) => {
 
       let OtherCategory = null;
 
       const categoryList = result[1].map((item) => {
-        const categoryData = item.toJSON();
-
-        categoryData.cURL += categoryData.subCategories.length > 0 &&
-        categoryData.subCategories[0].categoryType > 0
-            ? categoryData.subCategories[0].categoryType
-            : '';
-
-        if (categoryData.cType === 9) {
+        const categoryData = item;
+        if (categoryData.id === 9) {
           OtherCategory = categoryData;
         }
 
@@ -35,34 +40,36 @@ class EHomeAdaptor {
       });
 
       const categoryDataWithoutOthers = categoryList.filter((elem) => {
-        return (elem.cType !== 9);
+        return (elem.id !== 9);
       });
 
-      const newCategoryData = [];
+      let newCategoryData = categoryDataWithoutOthers;
 
       let pushed = false;
 
-      categoryDataWithoutOthers.forEach((elem) => {
-        if (OtherCategory.productCounts > elem.productCounts && !pushed) {
-          newCategoryData.push(OtherCategory);
-          pushed = true;
-        }
-        newCategoryData.push(elem);
-      });
+      if (OtherCategory) {
+        newCategoryData = [];
+        categoryDataWithoutOthers.forEach((elem) => {
+          if (OtherCategory.productCounts > elem.productCounts && !pushed) {
+            newCategoryData.push(OtherCategory);
+            pushed = true;
+          }
+          newCategoryData.push(elem);
+        });
 
-      if (!pushed) {
-        newCategoryData.push(OtherCategory);
+        if (!pushed) {
+          newCategoryData.push(OtherCategory);
+        }
       }
 
-      const recentSearches = result[2].map(item => item.toJSON());
+      // const recentSearches = result[2].map(item => item.toJSON());
 
       return {
         status: true,
         message: 'EHome restore successful',
         notificationCount: result[3],
         // categories: result[3],
-        recentSearches: recentSearches.map(item => item.searchValue).
-            slice(0, 5),
+        // recentSearches: recentSearches.map(item => item.searchValue).slice(0, 5),
         unProcessedBills: result[0],
         categoryList: newCategoryData,
         forceUpdate: request.pre.forceUpdate,
@@ -118,121 +125,95 @@ class EHomeAdaptor {
     });
   }
 
-  prepareCategoryData(user) {
-    return this.modals.categories.findAll({
-      where: {
-        category_level: 1,
-        status_type: {
-          $ne: 3,
-        },
+  prepareCategoryData(user, options) {
+    const categoryOption = {
+      category_level: 1,
+      status_type: 1,
+    };
+
+    const productOptions = {
+      status_type: 5,
+      user_id: user.id,
+      product_status_type: {
+        $ne: 8,
       },
-      include: [
-        {
-          model: this.modals.categories,
-          on: {
-            $or: [
-              this.modals.sequelize.where(
-                  this.modals.sequelize.col('`subCategories`.`ref_id`'),
-                  this.modals.sequelize.col('`categories`.`category_id`')),
-            ],
-          },
-          where: {
-            display_id: 1,
-          },
-          as: 'subCategories',
-          attributes: [
-            [
-              'display_id',
-              'categoryType'],
-            [
-              'category_id',
-              'categoryId'],
-            [
-              'category_name',
-              'categoryName']],
-          order: [['display_id', 'ASC']],
-          required: false,
-        },
-        {
-          model: this.modals.productBills,
-          as: 'products',
-          where: {
-            user_id: user.ID,
-            status_type: {
-              $ne: 3,
-            },
-          },
-          include: [
-            {
-              model: this.modals.consumerBillDetails,
-              as: 'consumerBill',
-              where: {
-                status_type: {
-                  $ne: 3,
-                },
-              },
-              attributes: [],
-              include: [
-                {
-                  model: this.modals.consumerBills,
-                  as: 'bill',
-                  where: {
-                    $and: [
-                      this.modals.sequelize.where(this.modals.sequelize.col(
-                          '`products->consumerBill->bill->billMapping`.`bill_ref_type`'),
-                          1),
-                      {
-                        user_status: 5,
-                        admin_status: 5,
-                      },
-                    ],
-                  },
-                  attributes: [],
-                },
-              ],
-            }],
-          attributes: [],
-          required: false,
-        }],
-      attributes: [
-        [
-          'category_name',
-          'cName'],
-        [
-          'display_id',
-          'cType'],
-        [
-          this.modals.sequelize.fn('CONCAT', 'categories/',
-              this.modals.sequelize.col('`categories`.`category_id`'),
-              '/products?pageno=1&ctype='),
-          'cURL'],
-        [
-          this.modals.sequelize.fn('CONCAT', 'categories/',
-              this.modals.sequelize.col('`categories`.`category_id`'),
-              '/products?pageno=1&ctype='),
-          'genericURL'],
-        [
-          this.modals.sequelize.fn('MAX', this.modals.sequelize.col(
-              '`products->consumerBill->bill`.`updated_on`')),
-          'cLastUpdate'],
-        [
-          this.modals.sequelize.fn('COUNT',
-              this.modals.sequelize.col('`products`.`product_name`')),
-          'productCounts'],
-        [
-          this.modals.sequelize.fn('CONCAT', 'categories/',
-              this.modals.sequelize.col('`categories`.`category_id`'),
-              '/image/'),
-          'cImageURL']],
-      order: [
-        [
-          this.modals.sequelize.fn('COUNT',
-              this.modals.sequelize.col('`products`.`product_name`')),
-          'DESC'],
-        ['category_name']],
-      group: '`categories`.`category_id`',
-    });
+    };
+
+    if (options.category_id) {
+      categoryOption.category_id = options.category_id;
+      productOptions.main_category_id = options.category_id;
+    }
+    return Promise.all([
+      this.categoryAdaptor.retrieveCategories(categoryOption),
+      this.productAdaptor.retrieveProducts(productOptions),
+      this.amcAdaptor.retrieveAmcs(productOptions),
+      this.insuranceAdaptor.retrieveInsurances(productOptions),
+      this.repairAdaptor.retrieveRepairs(productOptions),
+      this.warrantyAdaptor.retrieveWarranties(productOptions)]).
+        then((results) => {
+          return results[0].map((categoryItem) => {
+            const category = categoryItem;
+            const products = _.chain(results[1]).
+                map((productItem) => {
+                  const product = productItem;
+                  product.dataIndex = 1;
+                  return product;
+                }).
+                filter(
+                    (productItem) => productItem.masterCategoryId ===
+                        category.id);
+            const amcs = _.chain(results[2]).
+                map((amcItem) => {
+                  const amc = amcItem;
+                  amc.dataIndex = 2;
+                  return amc;
+                }).
+                filter((amcItem) => amcItem.masterCategoryId === category.id);
+            const insurances = _.chain(results[3]).
+                map((insuranceItem) => {
+                  const insurance = insuranceItem;
+                  insurance.dataIndex = 3;
+                  return insurance;
+                }).
+                filter(
+                    (insuranceItem) => insuranceItem.masterCategoryId ===
+                        category.id);
+            const repairs = _.chain(results[4]).
+                map((repairItem) => {
+                  const repair = repairItem;
+                  repair.dataIndex = 4;
+                  return repair;
+                }).
+                filter(
+                    (repairItem) => repairItem.masterCategoryId ===
+                        category.id);
+            const warranties = _.chain(results[5]).
+                map((warrantyItem) => {
+                  const warranty = warrantyItem;
+                  warranty.dataIndex = 5;
+                  return warranty;
+                }).
+                filter(
+                    (warrantyItem) => warrantyItem.masterCategoryId ===
+                        category.id);
+            category.expenses = _.chain([
+              ...products,
+              ...amcs,
+              ...insurances,
+              ...repairs,
+              ...warranties] || []).orderBy(['updatedDate'],
+                ['desc']);
+            category.cLastUpdate = category.expenses &&
+            category.expenses.length > 0 ?
+                category.expenses[0].updatedDate :
+                null;
+            category.productCounts = category.expenses &&
+            category.expenses.length > 0 ? category.expenses.length : 0;
+            return category;
+          });
+        });
   }
+
 
   retrieveRecentSearch(user) {
     return this.modals.recentSearches.findAll({

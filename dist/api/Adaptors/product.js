@@ -27,6 +27,10 @@ var _repairs = require('./repairs');
 
 var _repairs2 = _interopRequireDefault(_repairs);
 
+var _lodash = require('lodash');
+
+var _lodash2 = _interopRequireDefault(_lodash);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -53,6 +57,8 @@ var ProductAdaptor = function () {
           $notIn: [3, 9],
         };
       }
+
+      options = _lodash2.default.omit(options, 'product_status_type');
 
       var products = void 0;
       return this.modals.products.findAll({
@@ -348,6 +354,9 @@ var ProductAdaptor = function () {
           [
             'seller_id',
             'sellerId'],
+          [
+            'updated_at',
+            'updatedDate'],
           'copies',
           [
             this.modals.sequelize.fn('CONCAT',

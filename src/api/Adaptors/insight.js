@@ -15,7 +15,10 @@ function weekAndDay(d) {
   const days = [1, 2, 3, 4, 5, 6, 7];
   const prefixes = [1, 2, 3, 4, 5];
 
-  return {monthWeek: prefixes[Math.round(d.date() / 7)], day: days[d.day()]};
+  return {
+    monthWeek: prefixes[Math.round(d.getDate() / 7)],
+    day: days[d.getDay()],
+  };
 }
 
 const dateFormatString = 'yyyy-mm-dd';
@@ -404,8 +407,6 @@ class InsightAdaptor {
               purchaseDate: item.purchaseDate,
               week: item.week,
               day: item.day,
-              totalCost: item.totalCost,
-              totalTax: item.totalTax,
               tax: item.tax,
             };
 
@@ -416,8 +417,6 @@ class InsightAdaptor {
               purchaseDate: item.purchaseDate,
               week: item.week,
               day: item.day,
-              totalCost: item.totalCost,
-              totalTax: item.totalTax,
               tax: item.tax,
             };
             const monthIndex = distinctInsightMonthly.findIndex(
@@ -427,8 +426,6 @@ class InsightAdaptor {
             if (weekIndex !== -1 && monthIndex !== -1) {
               const currentWeekInsight = distinctInsightWeekly[weekIndex];
               currentWeekInsight.value += item.value;
-              currentWeekInsight.totalCost += item.totalCost;
-              currentWeekInsight.totalTax += item.totalTax;
               currentWeekInsight.tax += item.tax;
             } else {
               distinctInsightWeekly.push(item);
@@ -439,8 +436,6 @@ class InsightAdaptor {
             } else {
               const currentMonthInsight = distinctInsightMonthly[monthIndex];
               currentMonthInsight.value += monthItem.value;
-              currentMonthInsight.totalCost += monthItem.totalCost;
-              currentMonthInsight.totalTax += monthItem.totalTax;
               currentMonthInsight.tax += monthItem.tax;
             }
 
