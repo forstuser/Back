@@ -51,6 +51,10 @@ var _lodash = require('lodash');
 
 var _lodash2 = _interopRequireDefault(_lodash);
 
+var _shared = require('../../helpers/shared');
+
+var _shared2 = _interopRequireDefault(_shared);
+
 function _interopRequireDefault(obj) {
   return obj && obj.__esModule ? obj : {default: obj};
 }
@@ -210,70 +214,46 @@ var EHomeAdaptor = function() {
         }
         return Promise.all([
           this.categoryAdaptor.retrieveCategories(categoryOption),
-          this.productAdaptor.retrieveProducts(productOptions),
-          this.amcAdaptor.retrieveAMCs(productOptions),
-          this.insuranceAdaptor.retrieveInsurances(productOptions),
-          this.repairAdaptor.retrieveRepairs(productOptions),
-          this.warrantyAdaptor.retrieveWarranties(productOptions)]).
+          this.productAdaptor.retrieveProductCounts(productOptions),
+          this.amcAdaptor.retrieveAMCCounts(productOptions),
+          this.insuranceAdaptor.retrieveInsuranceCount(productOptions),
+          this.repairAdaptor.retrieveRepairCount(productOptions),
+          this.warrantyAdaptor.retrieveWarrantyCount(productOptions)]).
             then(function(results) {
               return results[0].map(function(categoryItem) {
                 var category = categoryItem;
+                console.log({amc: results[2]});
                 var products = _lodash2.default.chain(results[1]).
-                    map(function(productItem) {
-                      var product = productItem;
-                      product.dataIndex = 1;
-                      return product;
-                    }).
-                    filter(function(productItem) {
+                    find(function(productItem) {
                       return productItem.masterCategoryId === category.id;
                     });
                 var amcs = _lodash2.default.chain(results[2]).
-                    map(function(amcItem) {
-                      var amc = amcItem;
-                      amc.dataIndex = 2;
-                      return amc;
-                    }).
-                    filter(function(amcItem) {
+                    find(function(amcItem) {
                       return amcItem.masterCategoryId === category.id;
                     });
                 var insurances = _lodash2.default.chain(results[3]).
-                    map(function(insuranceItem) {
-                      var insurance = insuranceItem;
-                      insurance.dataIndex = 3;
-                      return insurance;
-                    }).
-                    filter(function(insuranceItem) {
+                    find(function(insuranceItem) {
                       return insuranceItem.masterCategoryId === category.id;
                     });
                 var repairs = _lodash2.default.chain(results[4]).
-                    map(function(repairItem) {
-                      var repair = repairItem;
-                      repair.dataIndex = 4;
-                      return repair;
-                    }).
-                    filter(function(repairItem) {
+                    find(function(repairItem) {
                       return repairItem.masterCategoryId === category.id;
                     });
                 var warranties = _lodash2.default.chain(results[5]).
-                    map(function(warrantyItem) {
-                      var warranty = warrantyItem;
-                      warranty.dataIndex = 5;
-                      return warranty;
-                    }).
-                    filter(function(warrantyItem) {
+                    find(function(warrantyItem) {
                       return warrantyItem.masterCategoryId === category.id;
                     });
                 category.expenses = _lodash2.default.chain([].concat(
                     _toConsumableArray(products), _toConsumableArray(amcs),
                     _toConsumableArray(insurances), _toConsumableArray(repairs),
                     _toConsumableArray(warranties)) || []).
-                    orderBy(['updatedDate'], ['desc']);
+                    orderBy(['lastUpdatedAt'], ['desc']);
                 category.cLastUpdate = category.expenses &&
                 category.expenses.length > 0 ?
-                    category.expenses[0].updatedDate :
+                    category.expenses[0].lastUpdatedAt :
                     null;
-                category.productCounts = category.expenses &&
-                category.expenses.length > 0 ? category.expenses.length : 0;
+                category.productCounts = _shared2.default.sumProps(
+                    category.expenses, 'productCounts');
                 return category;
               });
             });
@@ -484,14 +464,14 @@ var EHomeAdaptor = function() {
     }, {
       key: 'fetchProductDetails',
       value: function fetchProductDetails(
-          user, masterCategoryId, ctype, brandIds, categoryIds,
+          user, masterCategoryId, subCategoryId, brandIds, categoryIds,
           offlineSellerIds, onlineSellerIds, sortBy, searchValue) {
         var _this = this;
 
         return this.modals.categories.findOne({
           where: {
             ref_id: masterCategoryId,
-            display_id: ctype,
+            display_id: subCategoryId,
             status_type: {
               $ne: 3,
             },
@@ -511,13 +491,13 @@ var EHomeAdaptor = function() {
           };
           var offlineSellerRequired = false;
           var onlineSellerRequired = false;
-          var whereClause = ctype ? {
+          var whereClause = subCategoryId ? {
             user_id: user.ID,
             status_type: {
               $ne: 3,
             },
             master_category_id: masterCategoryId,
-            category_id: ctype ? item.category_id : undefined,
+            category_id: subCategoryId ? item.category_id : undefined,
             $and: [
               _this.modals.sequelize.where(_this.modals.sequelize.fn('lower',
                   _this.modals.sequelize.col('product_name')),

@@ -229,6 +229,35 @@ var ProductAdaptor = function () {
       });
     }
   }, {
+    key: 'retrieveProductCounts',
+    value: function retrieveProductCounts(options) {
+      if (!options.status_type) {
+        options.status_type = {
+          $notIn: [3, 9],
+        };
+      }
+
+      options = _lodash2.default.omit(options, 'product_status_type');
+      return this.modals.products.findAll({
+        where: options,
+        attributes: [
+          [
+            this.modals.sequelize.literal('COUNT(*)'),
+            'productCounts'],
+          [
+            'main_category_id',
+            'masterCategoryId'],
+          [
+            this.modals.sequelize.literal('max("updated_at")'),
+            'lastUpdatedAt']],
+        group: 'main_category_id',
+      }).then(function(productItems) {
+        return productItems.map(function(item) {
+          return item.toJSON();
+        });
+      });
+    },
+  }, {
     key: 'retrieveProductById',
     value: function retrieveProductById(id, options) {
       var _this2 = this;

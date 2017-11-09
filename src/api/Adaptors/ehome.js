@@ -146,9 +146,9 @@ class EHomeAdaptor {
       this.categoryAdaptor.retrieveCategories(categoryOption),
       this.productAdaptor.retrieveProductCounts(productOptions),
       this.amcAdaptor.retrieveAMCCounts(productOptions),
-      this.insuranceAdaptor.retrieveInsurances(productOptions),
-      this.repairAdaptor.retrieveRepairs(productOptions),
-      this.warrantyAdaptor.retrieveWarranties(productOptions)]).
+      this.insuranceAdaptor.retrieveInsuranceCount(productOptions),
+      this.repairAdaptor.retrieveRepairCount(productOptions),
+      this.warrantyAdaptor.retrieveWarrantyCount(productOptions)]).
         then((results) => {
           return results[0].map((categoryItem) => {
             const category = categoryItem;

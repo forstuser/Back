@@ -148,6 +148,42 @@ var InsuranceAdaptor = function () {
         }).sort(sortAmcWarrantyInsuranceRepair);
       });
     }
+  }, {
+    key: 'retrieveInsuranceCount',
+    value: function retrieveInsuranceCount(options) {
+      options.status_type = options.product_status_type || 5;
+      var productOptions = options.main_category_id ? {
+        main_category_id: options.main_category_id,
+      } : undefined;
+      options = _lodash2.default.omit(options, 'main_category_id');
+      options = _lodash2.default.omit(options, 'product_status_type');
+      return this.modals.insurances.findAll({
+        where: options,
+        include: [
+          {
+            model: this.modals.products,
+            where: productOptions,
+            attributes: [],
+            required: productOptions !== undefined,
+          }],
+
+        attributes: [
+          [
+            this.modals.sequelize.literal('COUNT(*)'),
+            'productCounts'],
+          [
+            this.modals.sequelize.literal('"product"."main_category_id"'),
+            'masterCategoryId'],
+          [
+            this.modals.sequelize.literal('max("insurances"."updated_at")'),
+            'lastUpdatedAt']],
+        group: this.modals.sequelize.literal('"product"."main_category_id"'),
+      }).then(function(insuranceResult) {
+        return insuranceResult.map(function(item) {
+          return item.toJSON();
+        });
+      });
+    },
   }]);
 
   return InsuranceAdaptor;

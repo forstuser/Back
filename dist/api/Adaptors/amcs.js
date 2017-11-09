@@ -42,7 +42,7 @@ var AmcAdaptor = function () {
 
   _createClass(AmcAdaptor, [{
     key: 'retrieveAMCs',
-    value: function retrieveAmcs(options) {
+    value: function retrieveAMCs(options) {
       options.status_type = options.product_status_type || 5;
 
       var productOptions = options.main_category_id ? {
@@ -150,6 +150,44 @@ var AmcAdaptor = function () {
         }).sort(sortAmcWarrantyInsuranceRepair);
       });
     }
+  }, {
+    key: 'retrieveAMCCounts',
+    value: function retrieveAMCCounts(options) {
+      options.status_type = options.product_status_type || 5;
+
+      var productOptions = options.main_category_id ? {
+        main_category_id: options.main_category_id,
+      } : undefined;
+      options = _lodash2.default.omit(options, 'main_category_id');
+      options = _lodash2.default.omit(options, 'product_status_type');
+
+      return this.modals.amcs.findAll({
+        where: options,
+        include: [
+          {
+            model: this.modals.products,
+            where: productOptions,
+            attributes: [],
+            required: productOptions !== undefined,
+          }],
+
+        attributes: [
+          [
+            this.modals.sequelize.literal('COUNT(*)'),
+            'productCounts'],
+          [
+            this.modals.sequelize.literal('"product"."main_category_id"'),
+            'masterCategoryId'],
+          [
+            this.modals.sequelize.literal('max("amcs"."updated_at")'),
+            'lastUpdatedAt']],
+        group: this.modals.sequelize.literal('"product"."main_category_id"'),
+      }).then(function(amcResult) {
+        return amcResult.map(function(item) {
+          return item.toJSON();
+        });
+      });
+    },
   }]);
 
   return AmcAdaptor;
