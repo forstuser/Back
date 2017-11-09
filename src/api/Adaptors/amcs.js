@@ -2,6 +2,7 @@
 'use strict';
 
 import moment from 'moment';
+import _ from 'lodash';
 
 const sortAmcWarrantyInsuranceRepair = (a, b) => {
   let aDate;
@@ -29,6 +30,7 @@ class AmcAdaptor {
     const productOptions = options.main_category_id ? {
       main_category_id: options.main_category_id,
     } : undefined;
+    options = _.omit(options, 'main_category_id');
 
     return this.modals.amcs.findAll({
       where: options,
@@ -51,7 +53,32 @@ class AmcAdaptor {
         {
           model: this.modals.offlineSellers,
           as: 'sellers',
-          attributes: [['seller_name', 'sellerName'], ['owner_name', 'ownerName'], ['pan_no', 'panNo'], ['reg_no', 'regNo'], ['is_service', 'isService'], 'url', 'gstin', 'contact', 'email', 'address', 'city', 'state', 'pincode', 'latitude', 'longitude'],
+          attributes: [
+            [
+              'seller_name',
+              'sellerName'],
+            [
+              'owner_name',
+              'ownerName'],
+            [
+              'pan_no',
+              'panNo'],
+            [
+              'reg_no',
+              'regNo'],
+            [
+              'is_service',
+              'isService'],
+            'url',
+            'gstin',
+            'contact_no',
+            'email',
+            'address',
+            'city',
+            'state',
+            'pincode',
+            'latitude',
+            'longitude'],
           required: false
         }],
       attributes: [
@@ -69,7 +96,7 @@ class AmcAdaptor {
           this.modals.sequelize.literal('"product"."main_category_id"'),
           'masterCategoryId'],
         [
-          this.modals.sequelize.literal('"renewalTypes"."title"'),
+          this.modals.sequelize.literal('"renewalType"."title"'),
           'premiumType'],
         [
           this.modals.sequelize.literal('"product"."product_name"'),

@@ -40,11 +40,11 @@ const yearLastDay = new Date(date.getFullYear() + 1, 0, 0);
 
 function customSortCategories(categoryData) {
   const OtherCategory = categoryData.find((elem) => {
-    return elem.cType === 9;
+    return elem.id === 9;
   });
 
   const categoryDataWithoutOthers = categoryData.filter((elem) => {
-    return (elem.cType !== 9);
+    return (elem.id !== 9);
   });
 
   const newCategoryData = [];
@@ -52,7 +52,8 @@ function customSortCategories(categoryData) {
   let pushed = false;
 
   categoryDataWithoutOthers.forEach((elem) => {
-    if (parseFloat(OtherCategory.totalAmount) > parseFloat(elem.totalAmount) &&
+    if ((OtherCategory && elem) && (parseFloat(OtherCategory.totalAmount) >
+            parseFloat(elem.totalAmount)) &&
         !pushed) {
       newCategoryData.push(OtherCategory);
       pushed = true;
@@ -60,7 +61,7 @@ function customSortCategories(categoryData) {
     newCategoryData.push(elem);
   });
 
-  if (!pushed) {
+  if (!pushed && OtherCategory) {
     newCategoryData.push(OtherCategory);
   }
 
@@ -91,13 +92,16 @@ class InsightAdaptor {
               'value');
           const totalTax = shared.sumProps(expenses,
               'taxes');
+          console.log({
+            totalAmount, totalTax,
+          });
           return {
             cName: item.categoryName,
             cURL: item.categoryInsightUrl,
             cImageURl: item.categoryImageUrl,
-            totalAmount: (totalAmount ||
+            totalAmount: parseFloat(totalAmount ||
                 0).toFixed(2),
-            totalTax: (totalTax ||
+            totalTax: parseFloat(totalTax ||
                 0).toFixed(2),
           };
         }),
@@ -113,9 +117,9 @@ class InsightAdaptor {
             cName: item.categoryName,
             cURL: item.categoryInsightUrl,
             cImageURl: item.categoryImageUrl,
-            totalAmount: (totalAmount ||
+            totalAmount: parseFloat(totalAmount ||
                 0).toFixed(2),
-            totalTax: (totalTax ||
+            totalTax: parseFloat(totalTax ||
                 0).toFixed(2),
           };
         }),
@@ -131,9 +135,9 @@ class InsightAdaptor {
             cName: item.categoryName,
             cURL: item.categoryInsightUrl,
             cImageURl: item.categoryImageUrl,
-            totalAmount: (totalAmount ||
+            totalAmount: parseFloat(totalAmount ||
                 0).toFixed(2),
-            totalTax: (totalTax ||
+            totalTax: parseFloat(totalTax ||
                 0).toFixed(2),
           };
         }),
@@ -188,7 +192,7 @@ class InsightAdaptor {
           forceUpdate: request.pre.forceUpdate,
         };
       }
-
+      console.log(categoryData);
       categoryData.weeklyData = _.chain(categoryData.weeklyData).map((elem) => {
         elem.totalAmount = parseFloat(elem.totalAmount);
         return elem;
@@ -224,6 +228,9 @@ class InsightAdaptor {
       categoryData.yearlyData = customSortCategories(categoryData.yearlyData,
           'totalAmount');
 
+      console.log({
+        categoryData,
+      });
       const totalWeeklyAmounts = shared.sumProps(categoryData.weeklyData,
           'totalAmount');
       const totalWeeklyTaxes = shared.sumProps(categoryData.weeklyData,
@@ -247,17 +254,17 @@ class InsightAdaptor {
         monthLastDate: shared.formatDate(monthLastDay, dateFormatString),
         yearStartDate: shared.formatDate(yearStartDay, dateFormatString),
         yearEndDate: shared.formatDate(yearLastDay, dateFormatString),
-        totalYearlySpend: (totalYearlyAmounts ||
+        totalYearlySpend: parseFloat(totalYearlyAmounts ||
             0).toFixed(2),
-        totalWeeklySpend: (totalWeeklyAmounts ||
+        totalWeeklySpend: parseFloat(totalWeeklyAmounts ||
             0).toFixed(2),
-        totalWeeklyTaxes: (totalWeeklyTaxes ||
+        totalWeeklyTaxes: parseFloat(totalWeeklyTaxes ||
             0).toFixed(2),
-        totalYearlyTaxes: (totalYearlyTaxes ||
+        totalYearlyTaxes: parseFloat(totalYearlyTaxes ||
             0).toFixed(2),
-        totalMonthlySpend: (totalMonthlyAmounts ||
+        totalMonthlySpend: parseFloat(totalMonthlyAmounts ||
             0).toFixed(2),
-        totalMonthlyTaxes: (totalMonthlyTaxes ||
+        totalMonthlyTaxes: parseFloat(totalMonthlyTaxes ||
             0).toFixed(2),
         forceUpdate: request.pre.forceUpdate,
       };
@@ -296,7 +303,7 @@ class InsightAdaptor {
       this.warrantyAdaptor.retrieveWarranties(productOptions)]).
         then((results) => {
           return results[0].map((categoryItem) => {
-            const category = categoryItem.toJSON();
+            const category = categoryItem;
             const products = _.chain(results[1]).
                 map((productItem) => {
                   const product = productItem.toJSON();
@@ -312,8 +319,7 @@ class InsightAdaptor {
                   amc.dataIndex = 2;
                   return amc;
                 }).
-                filter(
-                    (amcItem) => amcItem.masterCategoryId === category.id);
+                filter((amcItem) => amcItem.masterCategoryId === category.id);
             const insurances = _.chain(results[3]).
                 map((insuranceItem) => {
                   const insurance = insuranceItem.toJSON();
@@ -351,10 +357,10 @@ class InsightAdaptor {
               ...amcs,
               ...insurances,
               ...repairs,
-              ...warranties];
+              ...warranties] || [];
 
             return category;
-          });
+          })[0];
         });
   }
 
@@ -365,6 +371,7 @@ class InsightAdaptor {
           const distinctInsightWeekly = [];
           const distinctInsightMonthly = [];
           const distinctInsight = [];
+          console.log(result);
           result.expenses.map((item) => {
             const expense = item.orderBy(['purchaseDate'], ['asc']);
             const index = distinctInsight.findIndex(
@@ -441,7 +448,7 @@ class InsightAdaptor {
             return dayItem;
           });
 
-          const productList = result.expenses.orderBy(['purchaseDate'],
+          const productList = _.chain(result.expenses).orderBy(['purchaseDate'],
               ['asc']);
           productList.sort(
               (a, b) => moment(b.purchaseDate) - moment(a.purchaseDate));
@@ -491,7 +498,7 @@ class InsightAdaptor {
             productListWeekly,
             productListMonthly,
             insight: distinctInsight && distinctInsight.length > 0 ? {
-              categoryName: result[1].name,
+              categoryName: result.name,
               startDate: moment.utc().subtract(6, 'd').startOf('d'),
               endDate: moment.utc(),
               currentMonthId: moment.utc().month() + 1,
@@ -509,11 +516,23 @@ class InsightAdaptor {
               insightWeekly,
               insightMonthly,
             } : {
+              categoryName: result.name,
               startDate: moment.utc().subtract(6, 'd').startOf('d'),
               endDate: moment.utc(),
-              totalSpend: 0,
+              currentMonthId: moment.utc().month() + 1,
+              currentWeek: weekAndDay(moment.utc()).monthWeek,
+              currentDay: weekAndDay(moment.utc()).day,
+              monthStartDate: moment.utc().startOf('month'),
+              monthEndDate: moment.utc(),
+              yearStartDate: moment.utc().startOf('year'),
+              yearEndDate: moment.utc(),
+              totalSpend: 0.00,
+              totalYearlySpend: 0.00,
+              totalMonthlySpend: 0.00,
               totalDays: 0,
-              insightData: distinctInsight,
+              insightData: [],
+              insightWeekly: [],
+              insightMonthly: [],
             },
             categoryName: result.name,
             forceUpdate: request.pre.forceUpdate,

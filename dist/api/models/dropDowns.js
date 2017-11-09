@@ -36,7 +36,6 @@ exports.default = function (sequelize, DataTypes) {
     freezeTableName: true,
     defaultPrimaryKey: true,
     timestamps: true,
-    paranoid: true,
     underscored: true,
     tableName: 'category_form_drop_downs'
   });

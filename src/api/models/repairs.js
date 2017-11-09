@@ -15,10 +15,10 @@ export default (sequelize, DataTypes) => {
         document_number: {
           type: DataTypes.STRING,
         },
-        repair_cost: {
+        renewal_cost: {
           type: DataTypes.FLOAT
         },
-        repair_taxes: {
+        renewal_taxes: {
           type: DataTypes.FLOAT
         },
         user_id: {

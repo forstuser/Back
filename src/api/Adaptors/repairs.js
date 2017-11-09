@@ -2,6 +2,7 @@
 'use strict';
 
 import moment from 'moment';
+import _ from 'lodash';
 
 const sortAmcWarrantyInsuranceRepair = (a, b) => {
   let aDate;
@@ -27,6 +28,7 @@ class RepairAdaptor {
     const productOptions = options.main_category_id ? {
       main_category_id: options.main_category_id,
     } : undefined;
+    options = _.omit(options, 'main_category_id');
     return this.modals.repairs.findAll({
       where: options,
       include: [
@@ -70,7 +72,7 @@ class RepairAdaptor {
               'isService'],
             'url',
             'gstin',
-            'contact',
+            'contact_no',
             'email',
             'address',
             'city',
@@ -95,16 +97,16 @@ class RepairAdaptor {
           'document_number',
           'policyNo'],
         [
-          'repair_cost',
+          'renewal_cost',
           'premiumAmount'],
         [
           this.modals.sequelize.literal('"product"."product_name"'),
           'productName'],
         [
-          'repair_cost',
+          'renewal_cost',
           'value'],
         [
-          'repair_taxes',
+          'renewal_taxes',
           'taxes'],
         [
           'document_date',

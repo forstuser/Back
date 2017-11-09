@@ -11,6 +11,10 @@ var _moment = require('moment');
 
 var _moment2 = _interopRequireDefault(_moment);
 
+var _lodash = require('lodash');
+
+var _lodash2 = _interopRequireDefault(_lodash);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -43,6 +47,8 @@ var WarrantyAdaptor = function () {
       var productOptions = options.main_category_id ? {
         main_category_id: options.main_category_id,
       } : undefined;
+
+      options = _lodash2.default.omit(options, 'main_category_id');
       return this.modals.warranties.findAll({
         where: options,
         include: [{
@@ -61,7 +67,32 @@ var WarrantyAdaptor = function () {
         }, {
           model: this.modals.offlineSellers,
           as: 'sellers',
-          attributes: [['seller_name', 'sellerName'], ['owner_name', 'ownerName'], ['pan_no', 'panNo'], ['reg_no', 'regNo'], ['is_service', 'isService'], 'url', 'gstin', 'contact', 'email', 'address', 'city', 'state', 'pincode', 'latitude', 'longitude'],
+          attributes: [
+            [
+              'seller_name',
+              'sellerName'],
+            [
+              'owner_name',
+              'ownerName'],
+            [
+              'pan_no',
+              'panNo'],
+            [
+              'reg_no',
+              'regNo'],
+            [
+              'is_service',
+              'isService'],
+            'url',
+            'gstin',
+            'contact_no',
+            'email',
+            'address',
+            'city',
+            'state',
+            'pincode',
+            'latitude',
+            'longitude'],
           required: false
         }],
         attributes: [
@@ -79,7 +110,7 @@ var WarrantyAdaptor = function () {
             this.modals.sequelize.literal('"product"."product_name"'),
             'productName'],
           [
-            this.modals.sequelize.literal('"renewalTypes"."title"'),
+            this.modals.sequelize.literal('"renewalType"."title"'),
             'premiumType'],
           [
             this.modals.sequelize.literal('"product"."main_category_id"'),

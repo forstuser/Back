@@ -156,8 +156,9 @@ var ProductAdaptor = function () {
           [
             this.modals.sequelize.fn('CONCAT',
                 '/consumer/servicecenters?brandid=',
-                this.modals.sequelize.col('brand_id'), '&categoryid=',
-                this.modals.sequelize.col('category_id')),
+                this.modals.sequelize.literal('"products"."brand_id"'),
+                '&categoryid=',
+                this.modals.sequelize.col('"products"."category_id"')),
             'serviceCenterUrl']],
       }).then(function (productResult) {
         products = productResult.map(function (item) {
@@ -407,8 +408,8 @@ var ProductAdaptor = function () {
           as: 'dropDown',
           where: {
             $and: [
-              this.modals.sequelize.where(
-                  this.modals.sequelize.literal('"metaData"."form_value"'),
+              this.modals.sequelize.where(this.modals.sequelize.literal(
+                  'cast("metaData"."form_value" as integer)'),
                   this.modals.sequelize.literal('"dropDown"."id"')),
               this.modals.sequelize.where(
                   this.modals.sequelize.literal('"categoryForm"."form_type"'),
@@ -426,7 +427,7 @@ var ProductAdaptor = function () {
             'form_value',
             'value'],
           [
-            this.modals.sequelize.literal('categoryForm.title'),
+            this.modals.sequelize.literal('"categoryForm"."title"'),
             'name'],
           [
             this.modals.sequelize.literal('"categoryForm"."display_index"'),

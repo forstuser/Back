@@ -36,7 +36,6 @@ export default (sequelize, DataTypes) => {
         freezeTableName: true,
         defaultPrimaryKey: true,
         timestamps: true,
-        paranoid: true,
         underscored: true,
         tableName: 'category_forms',
       });
