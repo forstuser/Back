@@ -306,7 +306,7 @@ class InsightAdaptor {
             const category = categoryItem;
             const products = _.chain(results[1]).
                 map((productItem) => {
-                  const product = productItem.toJSON();
+                  const product = productItem;
                   product.dataIndex = 1;
                   return product;
                 }).
@@ -315,14 +315,14 @@ class InsightAdaptor {
                         category.id);
             const amcs = _.chain(results[2]).
                 map((amcItem) => {
-                  const amc = amcItem.toJSON();
+                  const amc = amcItem;
                   amc.dataIndex = 2;
                   return amc;
                 }).
                 filter((amcItem) => amcItem.masterCategoryId === category.id);
             const insurances = _.chain(results[3]).
                 map((insuranceItem) => {
-                  const insurance = insuranceItem.toJSON();
+                  const insurance = insuranceItem;
                   insurance.dataIndex = 3;
                   return insurance;
                 }).
@@ -331,7 +331,7 @@ class InsightAdaptor {
                         category.id);
             const repairs = _.chain(results[4]).
                 map((repairItem) => {
-                  const repair = repairItem.toJSON();
+                  const repair = repairItem;
                   repair.dataIndex = 4;
                   return repair;
                 }).
@@ -340,7 +340,7 @@ class InsightAdaptor {
                         category.id);
             const warranties = _.chain(results[5]).
                 map((warrantyItem) => {
-                  const warranty = warrantyItem.toJSON();
+                  const warranty = warrantyItem;
                   warranty.dataIndex = 5;
                   return warranty;
                 }).

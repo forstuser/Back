@@ -352,7 +352,7 @@ var InsightAdaptor = function () {
                 var category = categoryItem;
                 var products = _lodash2.default.chain(results[1]).
                     map(function(productItem) {
-                      var product = productItem.toJSON();
+                      var product = productItem;
                       product.dataIndex = 1;
                       return product;
                     }).
@@ -361,7 +361,7 @@ var InsightAdaptor = function () {
                     });
                 var amcs = _lodash2.default.chain(results[2]).
                     map(function(amcItem) {
-                      var amc = amcItem.toJSON();
+                      var amc = amcItem;
                       amc.dataIndex = 2;
                       return amc;
                     }).
@@ -370,7 +370,7 @@ var InsightAdaptor = function () {
                     });
                 var insurances = _lodash2.default.chain(results[3]).
                     map(function(insuranceItem) {
-                      var insurance = insuranceItem.toJSON();
+                      var insurance = insuranceItem;
                       insurance.dataIndex = 3;
                       return insurance;
                     }).
@@ -379,7 +379,7 @@ var InsightAdaptor = function () {
                     });
                 var repairs = _lodash2.default.chain(results[4]).
                     map(function(repairItem) {
-                      var repair = repairItem.toJSON();
+                      var repair = repairItem;
                       repair.dataIndex = 4;
                       return repair;
                     }).
@@ -388,7 +388,7 @@ var InsightAdaptor = function () {
                     });
                 var warranties = _lodash2.default.chain(results[5]).
                     map(function(warrantyItem) {
-                      var warranty = warrantyItem.toJSON();
+                      var warranty = warrantyItem;
                       warranty.dataIndex = 5;
                       return warranty;
                     }).
