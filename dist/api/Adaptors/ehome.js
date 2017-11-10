@@ -365,7 +365,10 @@ var EHomeAdaptor = function() {
           productOptions.main_category_id = masterCategoryId;
         }
 
-        productOptions.category_id = subCategoryId;
+        if (subCategoryId) {
+          productOptions.category_id = subCategoryId;
+        }
+
         if (searchValue) {
           productOptions.product_name = {
             $iLike: searchValue,
@@ -388,14 +391,23 @@ var EHomeAdaptor = function() {
           productOptions.online_seller_id = onlineSellerIds;
         }
 
-        var inProgressProductOption = productOptions;
+        var inProgressProductOption = {};
+        _lodash2.default.assignIn(inProgressProductOption, productOptions);
         inProgressProductOption.status_type = 8;
+
+        console.log({
+          productOptions: productOptions,
+          inProgressProductOption: inProgressProductOption,
+        });
 
         return Promise.all([
           this.categoryAdaptor.retrieveCategories(categoryOption),
           this.productAdaptor.retrieveProducts(productOptions),
           this.productAdaptor.retrieveProducts(inProgressProductOption)]).
             then(function(results) {
+              console.log({
+                results: results,
+              });
               return results[0].map(function(categoryItem) {
                 var category = categoryItem;
                 var products = _lodash2.default.chain(results[1]).
@@ -430,7 +442,7 @@ var EHomeAdaptor = function() {
                 return category;
               })[0];
             });
-      },
+      }
     }]);
 
   return EHomeAdaptor;

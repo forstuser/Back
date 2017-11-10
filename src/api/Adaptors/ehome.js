@@ -205,12 +205,12 @@ class EHomeAdaptor {
                        categoryIds, offlineSellerIds, onlineSellerIds, sortBy,
                        searchValue, request) {
     return this.fetchProductDetails(user, masterCategoryId, ctype || undefined,
-          brandIds.split('[')[1].split(']')[0].split(',').filter(Boolean),
-          categoryIds.split('[')[1].split(']')[0].split(',').filter(Boolean),
-          offlineSellerIds.split('[')[1].split(']')[0].split(',').
-              filter(Boolean),
-          onlineSellerIds.split('[')[1].split(']')[0].split(',').
-              filter(Boolean),
+        brandIds.split('[')[1].split(']')[0].split(',').filter(Boolean),
+        categoryIds.split('[')[1].split(']')[0].split(',').filter(Boolean),
+        offlineSellerIds.split('[')[1].split(']')[0].split(',').
+            filter(Boolean),
+        onlineSellerIds.split('[')[1].split(']')[0].split(',').
+            filter(Boolean),
         sortBy, `%${searchValue || ''}%`).then((result) => {
       const productList = result.productList;
       /* const listIndex = (pageNo * 10) - 10; */
@@ -272,7 +272,10 @@ class EHomeAdaptor {
       productOptions.main_category_id = masterCategoryId;
     }
 
-    productOptions.category_id = subCategoryId;
+    if (subCategoryId) {
+      productOptions.category_id = subCategoryId;
+    }
+
     if (searchValue) {
       productOptions.product_name = {
         $iLike: searchValue,
@@ -295,14 +298,23 @@ class EHomeAdaptor {
       productOptions.online_seller_id = onlineSellerIds;
     }
 
-    const inProgressProductOption = productOptions;
+    const inProgressProductOption = {};
+    _.assignIn(inProgressProductOption, productOptions);
     inProgressProductOption.status_type = 8;
+
+    console.log({
+      productOptions
+      , inProgressProductOption,
+    });
 
     return Promise.all([
       this.categoryAdaptor.retrieveCategories(categoryOption),
       this.productAdaptor.retrieveProducts(productOptions),
       this.productAdaptor.retrieveProducts(inProgressProductOption),]).
         then((results) => {
+          console.log({
+            results,
+          });
           return results[0].map((categoryItem) => {
             const category = categoryItem;
             const products = _.chain(results[1]).
