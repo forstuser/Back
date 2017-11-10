@@ -58,6 +58,12 @@ var ProductAdaptor = function () {
         };
       }
 
+      var billOption = {
+        status_type: 5,
+        seller_id: options.online_seller_id,
+      };
+
+      options = _lodash2.default.omit(options, 'online_seller_id');
       options = _lodash2.default.omit(options, 'product_status_type');
 
       var products = void 0;
@@ -75,6 +81,7 @@ var ProductAdaptor = function () {
           required: false
         }, {
           model: this.modals.bills,
+          where: billOption,
           attributes: [['consumer_name', 'consumerName'], ['consumer_email', 'consumerEmail'], ['consumer_phone_no', 'consumerPhoneNo'], ['document_number', 'invoiceNo']],
           include: [{
             model: this.modals.onlineSellers,
@@ -82,7 +89,7 @@ var ProductAdaptor = function () {
             attributes: [['seller_name', 'sellerName'], 'url', 'gstin', 'contact', 'email'],
             required: false
           }],
-          required: false
+          required: true,
         }, {
           model: this.modals.offlineSellers,
           as: 'sellers',
@@ -208,7 +215,7 @@ var ProductAdaptor = function () {
       }).then(function(results) {
         var metaData = results[0];
 
-        return products.map(function (productItem) {
+        products = products.map(function(productItem) {
           productItem.productMetaData = metaData.filter(function(item) {
             return item.productId === productItem.id;
           });
@@ -224,8 +231,19 @@ var ProductAdaptor = function () {
           productItem.repairBills = results[4].filter(function(item) {
             return item.productId === productItem.id;
           });
+
+          productItem.requiredCount = productItem.insuranceDetails.length +
+              productItem.warrantyDetails.length +
+              productItem.amcDetails.length + productItem.repairBills.length;
+
           return productItem;
         });
+
+        return options.status_type && options.status_type === 8 ?
+            products.filter(function(item) {
+              return item.requiredCount > 0;
+            }) :
+            products;
       });
     }
   }, {

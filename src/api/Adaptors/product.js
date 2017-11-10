@@ -25,6 +25,12 @@ class ProductAdaptor {
       };
     }
 
+    const billOption = {
+      status_type: 5,
+      seller_id: options.online_seller_id,
+    };
+
+    options = _.omit(options, 'online_seller_id');
     options = _.omit(options, 'product_status_type');
 
     let products;
@@ -54,6 +60,7 @@ class ProductAdaptor {
         },
         {
           model: this.modals.bills,
+          where: billOption,
           attributes: [
             [
               'consumer_name',
@@ -81,7 +88,7 @@ class ProductAdaptor {
                 'email'],
               required: false,
             }],
-          required: false,
+          required: true,
         },
         {
           model: this.modals.offlineSellers,
@@ -191,7 +198,7 @@ class ProductAdaptor {
     }).then((results) => {
       const metaData = results[0];
 
-      return products.map((productItem) => {
+      products = products.map((productItem) => {
         productItem.productMetaData = metaData.filter(
             (item) => item.productId === productItem.id);
         productItem.insuranceDetails = results[1].filter(
@@ -202,8 +209,17 @@ class ProductAdaptor {
             (item) => item.productId === productItem.id);
         productItem.repairBills = results[4].filter(
             (item) => item.productId === productItem.id);
+
+        productItem.requiredCount = productItem.insuranceDetails.length +
+            productItem.warrantyDetails.length + productItem.amcDetails.length +
+            productItem.repairBills.length;
+
         return productItem;
       });
+
+      return options.status_type && options.status_type === 8 ?
+          products.filter((item) => item.requiredCount > 0) :
+          products;
     });
   }
 
