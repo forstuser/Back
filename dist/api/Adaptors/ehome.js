@@ -59,6 +59,17 @@ function _interopRequireDefault(obj) {
   return obj && obj.__esModule ? obj : {default: obj};
 }
 
+function _toConsumableArray(arr) {
+  if (Array.isArray(arr)) {
+    for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) {
+      arr2[i] = arr[i];
+    }
+    return arr2;
+  } else {
+    return Array.from(arr);
+  }
+}
+
 function _classCallCheck(instance, Constructor) {
   if (!(instance instanceof Constructor)) {
     throw new TypeError('Cannot call a class as a function');
@@ -192,9 +203,7 @@ var EHomeAdaptor = function() {
         var productOptions = {
           status_type: 5,
           user_id: user.id,
-          product_status_type: {
-            $ne: 8,
-          },
+          product_status_type: 8,
         };
 
         if (options.category_id) {
@@ -213,37 +222,35 @@ var EHomeAdaptor = function() {
                 var category = categoryItem;
                 console.log({amc: results[2]});
                 var products = _lodash2.default.chain(results[1]).
-                    find(function(productItem) {
+                    filter(function(productItem) {
                       return productItem.masterCategoryId === category.id;
                     });
                 var amcs = _lodash2.default.chain(results[2]).
-                    find(function(amcItem) {
+                    filter(function(amcItem) {
                       return amcItem.masterCategoryId === category.id;
                     });
                 var insurances = _lodash2.default.chain(results[3]).
-                    find(function(insuranceItem) {
+                    filter(function(insuranceItem) {
                       return insuranceItem.masterCategoryId === category.id;
                     });
                 var repairs = _lodash2.default.chain(results[4]).
-                    find(function(repairItem) {
+                    filter(function(repairItem) {
                       return repairItem.masterCategoryId === category.id;
                     });
                 var warranties = _lodash2.default.chain(results[5]).
-                    find(function(warrantyItem) {
+                    filter(function(warrantyItem) {
                       return warrantyItem.masterCategoryId === category.id;
                     });
-                category.expenses = _lodash2.default.chain([
-                  products,
-                  amcs,
-                  insurances,
-                  repairs,
-                  warranties] || []).orderBy(['lastUpdatedAt'], ['desc']);
-                category.cLastUpdate = category.expenses &&
-                category.expenses.length > 0 ?
-                    category.expenses[0].lastUpdatedAt :
+                var expenses = _lodash2.default.chain([].concat(
+                    _toConsumableArray(products), _toConsumableArray(amcs),
+                    _toConsumableArray(insurances), _toConsumableArray(repairs),
+                    _toConsumableArray(warranties)) || []).
+                    orderBy(['lastUpdatedAt'], ['desc']);
+                category.cLastUpdate = expenses && expenses.length > 0 ?
+                    expenses[0].lastUpdatedAt :
                     null;
-                category.productCounts = _shared2.default.sumProps(
-                    category.expenses, 'productCounts');
+                category.productCounts = parseInt(
+                    _shared2.default.sumProps(expenses, 'productCounts'));
                 return category;
               });
             });

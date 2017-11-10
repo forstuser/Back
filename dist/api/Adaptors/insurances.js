@@ -43,9 +43,11 @@ var InsuranceAdaptor = function () {
   _createClass(InsuranceAdaptor, [{
     key: 'retrieveInsurances',
     value: function retrieveInsurances(options) {
-      options.status_type = options.product_status_type || 5;
-      var productOptions = options.main_category_id ? {
+      options.status_type = 5;
+      var productOptions = options.main_category_id ||
+      options.product_status_type ? {
         main_category_id: options.main_category_id,
+        status_type: options.product_status_type,
       } : undefined;
       options = _lodash2.default.omit(options, 'main_category_id');
       options = _lodash2.default.omit(options, 'product_status_type');
@@ -151,9 +153,11 @@ var InsuranceAdaptor = function () {
   }, {
     key: 'retrieveInsuranceCount',
     value: function retrieveInsuranceCount(options) {
-      options.status_type = options.product_status_type || 5;
-      var productOptions = options.main_category_id ? {
+      options.status_type = 5;
+      var productOptions = options.main_category_id ||
+      options.product_status_type ? {
         main_category_id: options.main_category_id,
+        status_type: options.product_status_type,
       } : undefined;
       options = _lodash2.default.omit(options, 'main_category_id');
       options = _lodash2.default.omit(options, 'product_status_type');

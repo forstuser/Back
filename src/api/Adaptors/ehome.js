@@ -133,9 +133,7 @@ class EHomeAdaptor {
     const productOptions = {
       status_type: 5,
       user_id: user.id,
-      product_status_type: {
-        $ne: 8,
-      },
+      product_status_type: 8,
     };
 
     if (options.category_id) {
@@ -154,36 +152,37 @@ class EHomeAdaptor {
             const category = categoryItem;
             console.log({amc: results[2]});
             const products = _.chain(results[1]).
-                find(
+                filter(
                     (productItem) => productItem.masterCategoryId ===
                         category.id);
             const amcs = _.chain(results[2]).
-                find((amcItem) => amcItem.masterCategoryId === category.id);
+                filter((amcItem) => amcItem.masterCategoryId === category.id);
             const insurances = _.chain(results[3]).
-                find(
+                filter(
                     (insuranceItem) => insuranceItem.masterCategoryId ===
                         category.id);
             const repairs = _.chain(results[4]).
-                find(
+                filter(
                     (repairItem) => repairItem.masterCategoryId ===
                         category.id);
             const warranties = _.chain(results[5]).
-                find(
+                filter(
                     (warrantyItem) => warrantyItem.masterCategoryId ===
                         category.id);
-            category.expenses = _.chain([
-              products,
-              amcs,
-              insurances,
-              repairs,
-              warranties] || []).orderBy(['lastUpdatedAt'],
+            const expenses = _.chain([
+              ...products,
+              ...amcs,
+              ...insurances,
+              ...repairs,
+              ...warranties
+            ] || []).orderBy(['lastUpdatedAt'],
                 ['desc']);
-            category.cLastUpdate = category.expenses &&
-            category.expenses.length > 0 ?
-                category.expenses[0].lastUpdatedAt :
+            category.cLastUpdate = expenses &&
+            expenses.length > 0 ?
+                expenses[0].lastUpdatedAt :
                 null;
-            category.productCounts = shared.sumProps(category.expenses,
-                'productCounts');
+            category.productCounts = parseInt(shared.sumProps(expenses,
+                'productCounts'));
             return category;
           });
         });

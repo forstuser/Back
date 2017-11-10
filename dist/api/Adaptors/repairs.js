@@ -139,9 +139,11 @@ var RepairAdaptor = function () {
   }, {
     key: 'retrieveRepairCount',
     value: function retrieveRepairCount(options) {
-      options.status_type = options.product_status_type || 5;
-      var productOptions = options.main_category_id ? {
+      options.status_type = 5;
+      var productOptions = options.main_category_id ||
+      options.product_status_type ? {
         main_category_id: options.main_category_id,
+        status_type: options.product_status_type,
       } : undefined;
 
       options = _lodash2.default.omit(options, 'main_category_id');
