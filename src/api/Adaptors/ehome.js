@@ -274,7 +274,9 @@ class EHomeAdaptor {
 
     productOptions.category_id = subCategoryId;
     if (searchValue) {
-      productOptions.product_name = searchValue;
+      productOptions.product_name = {
+        $iLike: searchValue,
+      };
     }
 
     if (brandIds && brandIds.length > 0) {

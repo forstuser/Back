@@ -27,8 +27,11 @@ class ProductAdaptor {
 
     const billOption = {
       status_type: 5,
-      seller_id: options.online_seller_id,
     };
+
+    if (options.online_seller_id) {
+      billOption.seller_id = options.online_seller_id;
+    }
 
     options = _.omit(options, 'online_seller_id');
     options = _.omit(options, 'product_status_type');

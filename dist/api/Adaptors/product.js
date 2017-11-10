@@ -60,8 +60,11 @@ var ProductAdaptor = function () {
 
       var billOption = {
         status_type: 5,
-        seller_id: options.online_seller_id,
       };
+
+      if (options.online_seller_id) {
+        billOption.seller_id = options.online_seller_id;
+      }
 
       options = _lodash2.default.omit(options, 'online_seller_id');
       options = _lodash2.default.omit(options, 'product_status_type');
