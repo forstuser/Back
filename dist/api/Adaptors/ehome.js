@@ -245,7 +245,8 @@ var EHomeAdaptor = function() {
                     _toConsumableArray(products), _toConsumableArray(amcs),
                     _toConsumableArray(insurances), _toConsumableArray(repairs),
                     _toConsumableArray(warranties)) || []).
-                    orderBy(['lastUpdatedAt'], ['desc']);
+                    orderBy(['lastUpdatedAt'], ['desc']).
+                    value();
                 category.cLastUpdate = expenses && expenses.length > 0 ?
                     expenses[0].lastUpdatedAt :
                     null;

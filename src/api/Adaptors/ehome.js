@@ -176,7 +176,8 @@ class EHomeAdaptor {
               ...repairs,
               ...warranties
             ] || []).orderBy(['lastUpdatedAt'],
-                ['desc']);
+                ['desc']).value();
+            category.expenses = expenses;
             category.cLastUpdate = expenses &&
             expenses.length > 0 ?
                 expenses[0].lastUpdatedAt :
