@@ -26,6 +26,7 @@ class EHomeAdaptor {
     return Promise.all([
       this.retrieveUnProcessedBills(user),
       this.prepareCategoryData(user, {}),
+      this.retrieveRecentSearch(user),
     ]).then((result) => {
 
       let OtherCategory = null;
@@ -62,14 +63,17 @@ class EHomeAdaptor {
         }
       }
 
-      // const recentSearches = result[2].map(item => item.toJSON());
+      const recentSearches = result[2].map(item => {
+        const searches = item.toJSON();
+        return searches.searchValue;
+      }).slice(0, 5);
 
       return {
         status: true,
         message: 'EHome restore successful',
         notificationCount: result[3],
         // categories: result[3],
-        // recentSearches: recentSearches.map(item => item.searchValue).slice(0, 5),
+        recentSearches,
         unProcessedBills: result[0],
         categoryList: newCategoryData,
         forceUpdate: request.pre.forceUpdate,
@@ -151,7 +155,6 @@ class EHomeAdaptor {
         then((results) => {
           return results[0].map((categoryItem) => {
             const category = categoryItem;
-            console.log({amc: results[2]});
             const products = _.chain(results[1]).
                 filter(
                     (productItem) => productItem.masterCategoryId ===
@@ -194,7 +197,7 @@ class EHomeAdaptor {
   retrieveRecentSearch(user) {
     return this.modals.recentSearches.findAll({
       where: {
-        user_id: user.ID,
+        user_id: user.id,
       },
       order: [['searchDate', 'DESC']],
       attributes: ['searchValue'],

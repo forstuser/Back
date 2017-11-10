@@ -99,7 +99,8 @@ var EHomeAdaptor = function() {
       value: function prepareEHomeResult(user, request) {
         return Promise.all([
           this.retrieveUnProcessedBills(user),
-          this.prepareCategoryData(user, {})]).then(function(result) {
+          this.prepareCategoryData(user, {}),
+          this.retrieveRecentSearch(user)]).then(function(result) {
 
           var OtherCategory = null;
 
@@ -135,14 +136,17 @@ var EHomeAdaptor = function() {
             }
           }
 
-          // const recentSearches = result[2].map(item => item.toJSON());
+          var recentSearches = result[2].map(function(item) {
+            var searches = item.toJSON();
+            return searches.searchValue;
+          }).slice(0, 5);
 
           return {
             status: true,
             message: 'EHome restore successful',
             notificationCount: result[3],
             // categories: result[3],
-            // recentSearches: recentSearches.map(item => item.searchValue).slice(0, 5),
+            recentSearches: recentSearches,
             unProcessedBills: result[0],
             categoryList: newCategoryData,
             forceUpdate: request.pre.forceUpdate,
@@ -224,7 +228,6 @@ var EHomeAdaptor = function() {
             then(function(results) {
               return results[0].map(function(categoryItem) {
                 var category = categoryItem;
-                console.log({amc: results[2]});
                 var products = _lodash2.default.chain(results[1]).
                     filter(function(productItem) {
                       return productItem.masterCategoryId === category.id;
@@ -269,7 +272,7 @@ var EHomeAdaptor = function() {
       value: function retrieveRecentSearch(user) {
         return this.modals.recentSearches.findAll({
           where: {
-            user_id: user.ID,
+            user_id: user.id,
           },
           order: [['searchDate', 'DESC']],
           attributes: ['searchValue'],
@@ -442,7 +445,7 @@ var EHomeAdaptor = function() {
                 return category;
               })[0];
             });
-      }
+      },
     }]);
 
   return EHomeAdaptor;
