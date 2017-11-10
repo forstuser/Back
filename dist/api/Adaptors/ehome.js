@@ -360,7 +360,7 @@ var EHomeAdaptor = function() {
           user_id: user.id,
         };
 
-        if (options.category_id) {
+        if (masterCategoryId) {
           categoryOption.category_id = masterCategoryId;
           productOptions.main_category_id = masterCategoryId;
         }
