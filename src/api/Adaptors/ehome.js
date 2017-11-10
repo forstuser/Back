@@ -327,8 +327,8 @@ class EHomeAdaptor {
             }).reverse().value();
 
             return category;
-          });
-        })[0];
+          })[0];
+        });
   }
 }
 

@@ -426,9 +426,9 @@ var EHomeAdaptor = function() {
                     value();
 
                 return category;
-        });
-            })[0];
-      }
+              })[0];
+            });
+      },
     }]);
 
   return EHomeAdaptor;
