@@ -27,6 +27,12 @@ class EHomeAdaptor {
       this.retrieveUnProcessedBills(user),
       this.prepareCategoryData(user, {}),
       this.retrieveRecentSearch(user),
+      this.modals.mailBox.count({
+        where: {
+          user_id: user.id,
+          status_id: 4,
+        },
+      }),
     ]).then((result) => {
 
       let OtherCategory = null;
@@ -145,13 +151,15 @@ class EHomeAdaptor {
       categoryOption.category_id = options.category_id;
       productOptions.main_category_id = options.category_id;
     }
+
+    const inProgressProductOption = {};
+    _.assignIn(inProgressProductOption, productOptions);
+    inProgressProductOption.status_type = 8;
+
     return Promise.all([
       this.categoryAdaptor.retrieveCategories(categoryOption),
       this.productAdaptor.retrieveProductCounts(productOptions),
-      this.amcAdaptor.retrieveAMCCounts(productOptions),
-      this.insuranceAdaptor.retrieveInsuranceCount(productOptions),
-      this.repairAdaptor.retrieveRepairCount(productOptions),
-      this.warrantyAdaptor.retrieveWarrantyCount(productOptions)]).
+      this.productAdaptor.retrieveProductCounts(inProgressProductOption)]).
         then((results) => {
           return results[0].map((categoryItem) => {
             const category = categoryItem;
@@ -159,26 +167,11 @@ class EHomeAdaptor {
                 filter(
                     (productItem) => productItem.masterCategoryId ===
                         category.id);
-            const amcs = _.chain(results[2]).
+            const inProgressProduct = _.chain(results[2]).
                 filter((amcItem) => amcItem.masterCategoryId === category.id);
-            const insurances = _.chain(results[3]).
-                filter(
-                    (insuranceItem) => insuranceItem.masterCategoryId ===
-                        category.id);
-            const repairs = _.chain(results[4]).
-                filter(
-                    (repairItem) => repairItem.masterCategoryId ===
-                        category.id);
-            const warranties = _.chain(results[5]).
-                filter(
-                    (warrantyItem) => warrantyItem.masterCategoryId ===
-                        category.id);
             const expenses = _.chain([
               ...products,
-              ...amcs,
-              ...insurances,
-              ...repairs,
-              ...warranties
+              ...inProgressProduct,
             ] || []).sortBy((item) => {
               return moment(item.lastUpdatedAt);
             }).reverse().value();

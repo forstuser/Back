@@ -100,7 +100,13 @@ var EHomeAdaptor = function() {
         return Promise.all([
           this.retrieveUnProcessedBills(user),
           this.prepareCategoryData(user, {}),
-          this.retrieveRecentSearch(user)]).then(function(result) {
+          this.retrieveRecentSearch(user),
+          this.modals.mailBox.count({
+            where: {
+              user_id: user.id,
+              status_id: 4,
+            },
+          })]).then(function(result) {
 
           var OtherCategory = null;
 
@@ -218,13 +224,15 @@ var EHomeAdaptor = function() {
           categoryOption.category_id = options.category_id;
           productOptions.main_category_id = options.category_id;
         }
+
+        var inProgressProductOption = {};
+        _lodash2.default.assignIn(inProgressProductOption, productOptions);
+        inProgressProductOption.status_type = 8;
+
         return Promise.all([
           this.categoryAdaptor.retrieveCategories(categoryOption),
           this.productAdaptor.retrieveProductCounts(productOptions),
-          this.amcAdaptor.retrieveAMCCounts(productOptions),
-          this.insuranceAdaptor.retrieveInsuranceCount(productOptions),
-          this.repairAdaptor.retrieveRepairCount(productOptions),
-          this.warrantyAdaptor.retrieveWarrantyCount(productOptions)]).
+          this.productAdaptor.retrieveProductCounts(inProgressProductOption)]).
             then(function(results) {
               return results[0].map(function(categoryItem) {
                 var category = categoryItem;
@@ -232,26 +240,13 @@ var EHomeAdaptor = function() {
                     filter(function(productItem) {
                       return productItem.masterCategoryId === category.id;
                     });
-                var amcs = _lodash2.default.chain(results[2]).
+                var inProgressProduct = _lodash2.default.chain(results[2]).
                     filter(function(amcItem) {
                       return amcItem.masterCategoryId === category.id;
                     });
-                var insurances = _lodash2.default.chain(results[3]).
-                    filter(function(insuranceItem) {
-                      return insuranceItem.masterCategoryId === category.id;
-                    });
-                var repairs = _lodash2.default.chain(results[4]).
-                    filter(function(repairItem) {
-                      return repairItem.masterCategoryId === category.id;
-                    });
-                var warranties = _lodash2.default.chain(results[5]).
-                    filter(function(warrantyItem) {
-                      return warrantyItem.masterCategoryId === category.id;
-                    });
                 var expenses = _lodash2.default.chain([].concat(
-                    _toConsumableArray(products), _toConsumableArray(amcs),
-                    _toConsumableArray(insurances), _toConsumableArray(repairs),
-                    _toConsumableArray(warranties)) || []).
+                    _toConsumableArray(products),
+                    _toConsumableArray(inProgressProduct)) || []).
                     sortBy(function(item) {
                       return (0, _moment2.default)(item.lastUpdatedAt);
                     }).

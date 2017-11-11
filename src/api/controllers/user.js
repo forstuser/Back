@@ -78,13 +78,30 @@ let loginOrRegisterUser = function(
     }
 
     trackTransaction(request.payload.transactionId, updatedUser.id);
-
     replyObject.authorization = `bearer ${authentication.generateToken(
         userData[0]).token}`;
-    replyObject.isExistingUser = !(userData[1]);
-    replyObject.userId = updatedUser.id;
-    return reply(replyObject).
+    return dashboardAdaptor.prepareDashboardResult(userData[1],
+        userData[0].toJSON(), replyObject.authorization, request);
+  }).then((result) => {
+    return reply(result).
         code(201).
+        header('authorization', replyObject.authorization);
+  }).catch((err) => {
+    if (err.authorization) {
+      return reply(err).
+          code(401).
+          header('authorization', replyObject.authorization);
+    }
+
+    return reply({
+      status: false,
+      authorization: token,
+      message: 'Unable to Login User',
+      showDashboard: false,
+      err,
+      forceUpdate: request.pre.forceUpdate,
+    }).
+        code(401).
         header('authorization', replyObject.authorization);
   });
 };

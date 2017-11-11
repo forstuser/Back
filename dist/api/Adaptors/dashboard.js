@@ -11,6 +11,26 @@ var _notification = require('./notification');
 
 var _notification2 = _interopRequireDefault(_notification);
 
+var _product = require('./product');
+
+var _product2 = _interopRequireDefault(_product);
+
+var _amcs = require('./amcs');
+
+var _amcs2 = _interopRequireDefault(_amcs);
+
+var _insurances = require('./insurances');
+
+var _insurances2 = _interopRequireDefault(_insurances);
+
+var _repairs = require('./repairs');
+
+var _repairs2 = _interopRequireDefault(_repairs);
+
+var _warranties = require('./warranties');
+
+var _warranties2 = _interopRequireDefault(_warranties);
+
 var _shared = require('../../helpers/shared');
 
 var _shared2 = _interopRequireDefault(_shared);
@@ -30,42 +50,35 @@ var DashboardAdaptor = function () {
 		_classCallCheck(this, DashboardAdaptor);
 
 		this.modals = modals;
+    this.productAdaptor = new _product2.default(modals);
+    this.amcAdaptor = new _amcs2.default(modals);
+    this.insuranceAdaptor = new _insurances2.default(modals);
+    this.repairAdaptor = new _repairs2.default(modals);
+    this.warrantyAdaptor = new _warranties2.default(modals);
 		this.date = new Date();
 	}
 
 	_createClass(DashboardAdaptor, [{
 		key: 'retrieveDashboardResult',
 		value: function retrieveDashboardResult(user, request) {
-			return Promise.all([this.filterUpcomingService(user), this.prepareInsightData(user), this.retrieveRecentSearch(user), this.modals.mailBox.count({ where: { user_id: user.ID, status_id: 4 } }), this.modals.productBills.count({
+      return Promise.all([
+        this.filterUpcomingService(user),
+        this.prepareInsightData(user),
+        this.retrieveRecentSearch(user),
+        this.modals.mailBox.count({where: {user_id: user.id, status_id: 4}}),
+        this.modals.products.count({
 				where: {
-					user_id: user.ID,
-					status_id: {
-						$ne: 3
-					},
-					master_category_id: {
+          user_id: user.id,
+          status_type: [5, 8],
+          main_category_id: {
 						$notIn: [9, 10]
 					}
 				},
 				include: [{
-					model: this.modals.consumerBillDetails,
-					as: 'consumerBill',
+          model: this.modals.bills,
 					where: {
-						status_id: {
-							$ne: 3
-						}
+            status_type: 5,
 					},
-					attributes: [],
-					include: [{
-						model: this.modals.consumerBills,
-						as: 'bill',
-						where: {
-							$and: [this.modals.sequelize.where(this.modals.sequelize.col('`consumerBill->bill->billMapping`.`bill_ref_type`'), 1), {
-								user_status: 5,
-								admin_status: 5
-							}]
-						},
-						attributes: []
-					}],
 					required: true
 				}]
 			})]).then(function (result) {
@@ -89,9 +102,11 @@ var DashboardAdaptor = function () {
 
 				var distinctInsight = [];
 				var insightData = result[1].map(function (item) {
-					var insightItem = item.toJSON();
+          var insightItem = item;
 					var index = distinctInsight.findIndex(function (distinctItem) {
-						return new Date(distinctItem.purchaseDate).getTime() === new Date(insightItem.purchaseDate).getTime();
+            return (0, _moment2.default)(distinctItem.purchaseDate).
+                    valueOf() ===
+                (0, _moment2.default)(insightItem.purchaseDate).valueOf();
 					});
 
 					if (index === -1) {
@@ -102,7 +117,6 @@ var DashboardAdaptor = function () {
 
 					return insightItem;
 				});
-
 				var insightItems = _shared2.default.retrieveDaysInsight(distinctInsight);
 
 				var insightResult = insightItems && insightItems.length > 0 ? {
@@ -168,36 +182,19 @@ var DashboardAdaptor = function () {
 		key: 'prepareDashboardResult',
 		value: function prepareDashboardResult(isNewUser, user, token, request) {
 			if (!isNewUser) {
-				return this.modals.productBills.count({
+        return this.modals.products.count({
 					where: {
-						user_id: user.ID,
-						status_id: {
-							$ne: 3
-						},
-						master_category_id: {
+            user_id: user.id,
+            status_type: [5, 8],
+            main_category_id: {
 							$notIn: [9, 10]
 						}
 					},
 					include: [{
-						model: this.modals.consumerBillDetails,
-						as: 'consumerBill',
+            model: this.modals.bills,
 						where: {
-							status_id: {
-								$ne: 3
-							}
+              status_type: 5,
 						},
-						attributes: [],
-						include: [{
-							model: this.modals.consumerBills,
-							as: 'bill',
-							where: {
-								$and: [this.modals.sequelize.where(this.modals.sequelize.col('`consumerBill->bill->billMapping`.`bill_ref_type`'), 1), {
-									user_status: 5,
-									admin_status: 5
-								}]
-							},
-							attributes: []
-						}],
 						required: true
 					}]
 				}).then(function (billCounts) {
@@ -206,10 +203,10 @@ var DashboardAdaptor = function () {
 							status: true,
 							message: 'User Exist',
 							billCounts: billCounts,
-							showDashboard: billCounts > 0,
+              showDashboard: !!(billCounts && billCounts > 0),
 							isExistingUser: !isNewUser,
 							authorization: token,
-							userId: user.ID,
+              userId: user.id,
 							forceUpdate: request.pre.forceUpdate
 						};
 					}
@@ -221,7 +218,7 @@ var DashboardAdaptor = function () {
 						billCounts: 0,
 						showDashboard: false,
 						isExistingUser: !isNewUser,
-						userId: user.ID,
+            userId: user.id,
 						forceUpdate: request.pre.forceUpdate
 					};
 				}).catch(function (err) {
@@ -230,308 +227,173 @@ var DashboardAdaptor = function () {
 						status: false,
 						authorization: token,
 						message: 'Unable to Login User',
+            showDashboard: false,
 						err: err,
 						forceUpdate: request.pre.forceUpdate
 					};
 				});
 			}
 
-			_notification2.default.sendMailOnDifferentSteps('Welcome to BinBill!', user.email || user.email_id, user, 1);
+      _notification2.default.sendMailOnDifferentSteps('Welcome to BinBill!',
+          user.email, user, 1);
 			return {
 				status: true,
 				message: 'New User',
 				authorization: token,
 				billCounts: 0,
 				showDashboard: false,
-				isExistingUser: !isNewUser,
-				userId: user.ID,
+        isExistingUser: false,
+        userId: user.id,
 				forceUpdate: request.pre.forceUpdate
 			};
 		}
 	}, {
 		key: 'filterUpcomingService',
 		value: function filterUpcomingService(user) {
-			var _this = this;
+      return Promise.all([
+        this.productAdaptor.retrieveProducts({
+          user_id: user.id,
+          status_type: 5,
+          main_category_id: [6, 8],
+        }), this.amcAdaptor.retrieveAMCs({
+          user_id: user.id,
+          status_type: 5,
+        }), this.insuranceAdaptor.retrieveInsurances({
+          user_id: user.id,
+          status_type: 5,
+        }), this.warrantyAdaptor.retrieveWarranties({
+          user_id: user.id,
+          status_type: 5,
+        })]).then(function(result) {
+        var products = result[0].map(function(item) {
+          var product = item;
 
-			return new Promise(function (resolve, reject) {
-				Promise.all([_this.modals.productBills.findAll({
-					attributes: [['bill_product_id', 'id'], ['master_category_id', 'masterCatId'], ['product_name', 'productName'], ['value_of_purchase', 'value'], 'taxes', [_this.modals.sequelize.fn('CONCAT', 'products/', _this.modals.sequelize.col('`productBills`.`bill_product_id`')), 'productURL']],
-					where: {
-						user_id: user.ID,
-						status_id: {
-							$ne: 3
-						},
-						master_category_id: [6, 8]
-					},
-					include: [{
-						model: _this.modals.consumerBillDetails,
-						as: 'consumerBill',
-						attributes: [['document_id', 'docId'], ['invoice_number', 'invoiceNo'], ['total_purchase_value', 'totalCost'], 'taxes', ['purchase_date', 'purchaseDate']],
-						include: [{
-							model: _this.modals.billDetailCopies,
-							as: 'billDetailCopies',
-							include: [{
-								model: _this.modals.billCopies,
-								as: 'billCopies',
-								attributes: []
-							}],
-							attributes: [['bill_copy_id', 'billCopyId'], [_this.modals.sequelize.fn('CONCAT', _this.modals.sequelize.col('`consumerBill->billDetailCopies->billCopies`.`bill_copy_type`')), 'billCopyType'], [_this.modals.sequelize.fn('CONCAT', 'bills/', _this.modals.sequelize.col('`consumerBill->billDetailCopies->billCopies`.`bill_copy_id`'), '/files'), 'fileUrl']]
-						}, {
-							model: _this.modals.consumerBills,
-							as: 'bill',
-							where: {
-								$and: [_this.modals.sequelize.where(_this.modals.sequelize.col('`consumerBill->bill->billMapping`.`bill_ref_type`'), 1), {
-									user_status: 5,
-									admin_status: 5
-								}]
-							},
-							attributes: []
-						}]
-					}, {
-						model: _this.modals.productMetaData,
-						as: 'productMetaData',
-						attributes: [['form_element_value', 'value'], [_this.modals.sequelize.fn('CONCAT', _this.modals.sequelize.col('`productMetaData->categoryForm`.`form_element_type`')), 'type'], [_this.modals.sequelize.fn('CONCAT', _this.modals.sequelize.col('`productMetaData->categoryForm`.`form_element_name`')), 'name']],
-						include: [{
-							model: _this.modals.categoryForm, as: 'categoryForm', attributes: []
-						}, {
-							model: _this.modals.categoryFormMapping,
-							as: 'selectedValue',
-							on: {
-								$or: [_this.modals.sequelize.where(_this.modals.sequelize.col('`productMetaData`.`category_form_id`'), _this.modals.sequelize.col('`productMetaData->categoryForm`.`category_form_id`'))]
-							},
-							where: {
-								$and: [_this.modals.sequelize.where(_this.modals.sequelize.col('`productMetaData`.`form_element_value`'), _this.modals.sequelize.col('`productMetaData->selectedValue`.`mapping_id`')), _this.modals.sequelize.where(_this.modals.sequelize.col('`productMetaData->categoryForm`.`form_element_type`'), 2)]
-							},
-							attributes: [['dropdown_name', 'value']],
-							required: false
-						}],
-						required: false
-					}]
-				}), _this.modals.amcBills.findAll({
-					attributes: [['bill_amc_id', 'id'], 'policyNo', 'premiumType', 'premiumAmount', 'effectiveDate', [_this.modals.sequelize.fn('CONCAT', 'products/', _this.modals.sequelize.col('`amcProduct`.`bill_product_id`')), 'productURL'], 'expiryDate'],
-					where: {
-						user_id: user.ID,
-						status_id: {
-							$ne: 3
-						}
-					},
-					include: [{
-						model: _this.modals.productBills,
-						as: 'amcProduct',
-						attributes: [['product_name', 'productName'], [_this.modals.sequelize.fn('CONCAT', 'products/', _this.modals.sequelize.col('`amcProduct`.`bill_product_id`')), 'productURL']],
-						include: [{
-							model: _this.modals.consumerBillDetails,
-							as: 'consumerBill',
-							attributes: [['document_id', 'docId'], ['invoice_number', 'invoiceNo'], ['total_purchase_value', 'totalCost'], 'taxes', ['purchase_date', 'purchaseDate']],
-							include: [{
-								model: _this.modals.consumerBills,
-								as: 'bill',
-								where: {
-									$and: [_this.modals.sequelize.where(_this.modals.sequelize.col('`amcProduct->consumerBill->bill->billMapping`.`bill_ref_type`'), 1), {
-										user_status: 5,
-										admin_status: 5
-									}]
-								},
-								attributes: []
-							}]
-						}]
-					}, {
-						model: _this.modals.amcBillCopies,
-						as: 'amcCopies',
-						attributes: [['bill_copy_id', 'billCopyId'], [_this.modals.sequelize.fn('CONCAT', 'bills/', _this.modals.sequelize.col('bill_copy_id'), '/files'), 'fileUrl']]
-					}]
-				}), _this.modals.insuranceBills.findAll({
-					attributes: [['bill_insurance_id', 'id'], 'policyNo', 'premiumType', 'premiumAmount', 'effectiveDate', 'expiryDate', 'amountInsured', [_this.modals.sequelize.fn('CONCAT', 'products/', _this.modals.sequelize.col('`insuredProduct`.`bill_product_id`')), 'productURL'], 'plan'],
-					where: {
-						user_id: user.ID,
-						status_id: {
-							$ne: 3
-						}
-					},
-					include: [{
-						model: _this.modals.productBills,
-						as: 'insuredProduct',
-						attributes: [['product_name', 'productName'], [_this.modals.sequelize.fn('CONCAT', 'products/', _this.modals.sequelize.col('`insuredProduct`.`bill_product_id`')), 'productURL']],
-						include: [{
-							model: _this.modals.consumerBillDetails,
-							as: 'consumerBill',
-							attributes: [['document_id', 'docId'], ['invoice_number', 'invoiceNo'], ['total_purchase_value', 'totalCost'], 'taxes', ['purchase_date', 'purchaseDate']],
-							include: [{
-								model: _this.modals.consumerBills,
-								as: 'bill',
-								where: {
-									$and: [_this.modals.sequelize.where(_this.modals.sequelize.col('`insuredProduct->consumerBill->bill->billMapping`.`bill_ref_type`'), 1), {
-										user_status: 5,
-										admin_status: 5
-									}]
-								},
-								attributes: []
-							}]
-						}]
-					}, {
-						model: _this.modals.insuranceBillCopies,
-						as: 'insuranceCopies',
-						attributes: [['bill_copy_id', 'billCopyId'], [_this.modals.sequelize.fn('CONCAT', 'bills/', _this.modals.sequelize.col('bill_copy_id'), '/files'), 'fileUrl']]
-					}]
-				}), _this.modals.warranty.findAll({
-					attributes: [['bill_warranty_id', 'id'], 'warrantyType', 'policyNo', 'premiumType', 'premiumAmount', 'effectiveDate', [_this.modals.sequelize.fn('CONCAT', 'products/', _this.modals.sequelize.col('`warrantyProduct`.`bill_product_id`')), 'productURL'], 'expiryDate'],
-					where: {
-						user_id: user.ID,
-						status_id: {
-							$ne: 3
-						}
-					},
-					include: [{
-						model: _this.modals.productBills,
-						as: 'warrantyProduct',
-						attributes: [['product_name', 'productName'], [_this.modals.sequelize.fn('CONCAT', 'products/', _this.modals.sequelize.col('`warrantyProduct`.`bill_product_id`')), 'productURL']],
-						include: [{
-							model: _this.modals.consumerBillDetails,
-							as: 'consumerBill',
-							attributes: [['document_id', 'docId'], ['invoice_number', 'invoiceNo'], ['total_purchase_value', 'totalCost'], 'taxes', ['purchase_date', 'purchaseDate']],
-							include: [{
-								model: _this.modals.consumerBills,
-								as: 'bill',
-								where: {
-									$and: [_this.modals.sequelize.where(_this.modals.sequelize.col('`warrantyProduct->consumerBill->bill->billMapping`.`bill_ref_type`'), 1), {
-										user_status: 5,
-										admin_status: 5
-									}]
-								},
-								attributes: []
-							}]
-						}]
-					}, {
-						model: _this.modals.warrantyCopies,
-						as: 'warrantyCopies',
-						attributes: [['bill_copy_id', 'billCopyId'], [_this.modals.sequelize.fn('CONCAT', 'bills/', _this.modals.sequelize.col('bill_copy_id'), '/files'), 'fileUrl']]
-					}]
-				})]).then(function (result) {
-					var products = result[0].map(function (item) {
-						var product = item.toJSON();
+          product.metaData.map(function(metaItem) {
+            var metaData = metaItem;
+            if (metaData.name.toLowerCase().includes('due') &&
+                metaData.name.toLowerCase().includes('date') &&
+                (0, _moment2.default)(metaData.value).isValid()) {
+              var dueDateTime = (0, _moment2.default)(metaData.value);
+              product.dueDate = metaData.value;
+              product.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
+            }
 
-						product.productMetaData.map(function (metaItem) {
-							var metaData = metaItem;
-							if (metaData.type === '2' && metaData.selectedValue) {
-								metaData.value = metaData.selectedValue.value;
-							}
+            if (metaData.name.toLowerCase().includes('address')) {
+              product.address = metaData.value;
+            }
 
-							if (metaData.name.toLowerCase().includes('due') && metaData.name.toLowerCase().includes('date') && (0, _moment2.default)(metaData.value).isValid()) {
-								var dueDateTime = (0, _moment2.default)(metaData.value);
-								product.dueDate = metaData.value;
-								product.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
-								if (product.masterCatId.toString() === '6') {
-									product.productType = 5;
-								} else {
-									product.productType = 1;
-								}
-							}
+            return metaData;
+          });
 
-							if (metaData.name.toLowerCase().includes('address')) {
-								product.address = metaData.value;
-							}
+          if (product.masterCategoryId.toString() === '6') {
+            product.productType = 5;
+          } else {
+            product.productType = 1;
+          }
+          return product;
+        });
 
-							return metaData;
-						});
+        products = products.filter(function(item) {
+          return item.bill && item.dueIn !== undefined && item.dueIn !== null &&
+              item.dueIn <= 30 && item.dueIn >= 0;
+        });
 
-						return product;
-					});
+        var amcs = result[1].map(function(item) {
+          var amc = item;
+          if ((0, _moment2.default)(amc.expiryDate).isValid()) {
+            var dueDateTime = (0, _moment2.default)(amc.expiryDate);
+            amc.dueDate = amc.expiryDate;
+            amc.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
+            amc.productType = 4;
+          }
 
-					products = products.filter(function (item) {
-						return item.consumerBill && item.dueIn !== undefined && item.dueIn !== null && item.dueIn <= 30 && item.dueIn >= 0;
-					});
+          return amc;
+        });
+        amcs = amcs.filter(function(item) {
+          return item.dueIn !== undefined && item.dueIn !== null &&
+              item.dueIn <= 30 && item.dueIn >= 0;
+        });
 
-					var amcs = result[1].map(function (item) {
-						var amc = item.toJSON();
-						if ((0, _moment2.default)(amc.expiryDate).isValid()) {
-							var dueDateTime = (0, _moment2.default)(amc.expiryDate);
-							amc.dueDate = amc.expiryDate;
-							amc.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
-							amc.productType = 4;
-						}
+        var insurances = result[2].map(function(item) {
+          var insurance = item;
+          if ((0, _moment2.default)(insurance.expiryDate).isValid()) {
+            var dueDateTime = (0, _moment2.default)(insurance.expiryDate);
+            insurance.dueDate = insurance.expiryDate;
+            insurance.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
+            insurance.productType = 3;
+          }
+          return insurance;
+        });
 
-						return amc;
-					});
-					amcs = amcs.filter(function (item) {
-						return item.amcProduct && item.amcProduct.consumerBill && item.dueIn !== undefined && item.dueIn !== null && item.dueIn <= 30 && item.dueIn >= 0;
-					});
+        insurances = insurances.filter(function(item) {
+          return item.dueIn !== undefined && item.dueIn !== null &&
+              item.dueIn <= 30 && item.dueIn >= 0;
+        });
 
-					var insurances = result[2].map(function (item) {
-						var insurance = item.toJSON();
-						if ((0, _moment2.default)(insurance.expiryDate).isValid()) {
-							var dueDateTime = (0, _moment2.default)(insurance.expiryDate);
-							insurance.dueDate = insurance.expiryDate;
-							insurance.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
-							insurance.productType = 3;
-						}
-						return insurance;
-					});
+        var warranties = result[3].map(function(item) {
+          var warranty = item;
+          if ((0, _moment2.default)(warranty.expiryDate).isValid()) {
+            var dueDateTime = (0, _moment2.default)(warranty.expiryDate);
+            warranty.dueDate = warranty.expiryDate;
+            warranty.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
+            warranty.productType = 2;
+          }
+          return warranty;
+        });
 
-					insurances = insurances.filter(function (item) {
-						return item.insuredProduct && item.insuredProduct.consumerBill && item.dueIn !== undefined && item.dueIn !== null && item.dueIn <= 30 && item.dueIn >= 0;
-					});
+        warranties = warranties.filter(function(item) {
+          return item.dueIn !== undefined && item.dueIn !== null &&
+              item.dueIn <= 30 && item.dueIn >= 0;
+        });
 
-					var warranties = result[3].map(function (item) {
-						var warranty = item.toJSON();
-						if ((0, _moment2.default)(warranty.expiryDate).isValid()) {
-							var dueDateTime = (0, _moment2.default)(warranty.expiryDate);
-							warranty.dueDate = warranty.expiryDate;
-							warranty.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
-							warranty.productType = 2;
-						}
-						return warranty;
-					});
-
-					warranties = warranties.filter(function (item) {
-						return item.warrantyProduct && item.warrantyProduct.consumerBill && item.dueIn !== undefined && item.dueIn !== null && item.dueIn <= 30 && item.dueIn >= 0;
-					});
-
-					resolve([].concat(_toConsumableArray(products), _toConsumableArray(warranties), _toConsumableArray(insurances), _toConsumableArray(amcs)));
-				}).catch(function (err) {
-					console.log({ API_Logs: err });
-					reject(err);
-				});
+        return [].concat(_toConsumableArray(products),
+            _toConsumableArray(warranties), _toConsumableArray(insurances),
+            _toConsumableArray(amcs));
 			});
 		}
 	}, {
 		key: 'prepareInsightData',
 		value: function prepareInsightData(user) {
-			return this.modals.productBills.findAll({
-				where: {
-					master_category_id: {
-						$ne: 10
-					},
-					user_id: user.ID,
-					status_id: {
-						$ne: 3
-					}
-				},
-				include: [{
-					model: this.modals.consumerBillDetails,
-					as: 'consumerBill',
-					where: {
-						status_id: {
-							$ne: 3
-						},
-						purchase_date: {
-							$lte: _moment2.default.utc(),
-							$gte: _moment2.default.utc().subtract(6, 'd').startOf('d')
-						}
-					},
-					include: [{
-						model: this.modals.consumerBills,
-						as: 'bill',
-						where: {
-							$and: [this.modals.sequelize.where(this.modals.sequelize.literal('`bill_ref_type`'), 1), {
-								user_status: 5,
-								admin_status: 5
-							}]
-						},
-						attributes: []
-					}]
-				}],
-				attributes: [['bill_product_id', 'id'], ['product_name', 'productName'], ['value_of_purchase', 'value'], 'taxes', ['category_id', 'categoryId'], ['master_category_id', 'masterCategoryId'], ['brand_id', 'brandId'], ['color_id', 'colorId'], [this.modals.sequelize.literal('`purchase_date`'), 'purchaseDate']],
-				order: [[this.modals.sequelize.literal('`purchase_date`'), 'ASC']]
+      return Promise.all([
+        this.productAdaptor.retrieveProducts({
+          status_type: 5,
+          user_id: user.id,
+          document_date: {
+            $lte: _moment2.default.utc(),
+            $gte: _moment2.default.utc().subtract(6, 'd').startOf('d'),
+          },
+        }), this.amcAdaptor.retrieveAMCs({
+          status_type: 5,
+          user_id: user.id,
+          document_date: {
+            $lte: _moment2.default.utc(),
+            $gte: _moment2.default.utc().subtract(6, 'd').startOf('d'),
+          },
+        }), this.insuranceAdaptor.retrieveInsurances({
+          status_type: 5,
+          user_id: user.id,
+          document_date: {
+            $lte: _moment2.default.utc(),
+            $gte: _moment2.default.utc().subtract(6, 'd').startOf('d'),
+          },
+        }), this.repairAdaptor.retrieveRepairs({
+          status_type: 5,
+          user_id: user.id,
+          document_date: {
+            $lte: _moment2.default.utc(),
+            $gte: _moment2.default.utc().subtract(6, 'd').startOf('d'),
+          },
+        }), this.warrantyAdaptor.retrieveWarranties({
+          status_type: 5,
+          user_id: user.id,
+          document_date: {
+            $lte: _moment2.default.utc(),
+            $gte: _moment2.default.utc().subtract(6, 'd').startOf('d'),
+          },
+        })]).then(function(results) {
+        return [].concat(_toConsumableArray(results[0]),
+            _toConsumableArray(results[1]), _toConsumableArray(results[2]),
+            _toConsumableArray(results[3]), _toConsumableArray(results[4]));
 			});
 		}
 	}, {
@@ -539,7 +401,7 @@ var DashboardAdaptor = function () {
 		value: function retrieveRecentSearch(user) {
 			return this.modals.recentSearches.findAll({
 				where: {
-					user_id: user.ID
+          user_id: user.id,
 				},
 				order: [['searchDate', 'DESC']],
 				attributes: ['searchValue']

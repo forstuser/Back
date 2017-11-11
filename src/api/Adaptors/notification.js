@@ -80,13 +80,31 @@ class NotificationAdaptor {
 	filterUpcomingService(user) {
 		return new Promise((resolve, reject) => {
 			Promise.all([this.modals.productBills.findAll({
-				attributes: [['bill_product_id', 'id'], ['master_category_id', 'masterCatId'], ['product_name', 'productName'], ['value_of_purchase', 'value'], 'taxes', [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`productBills`.`bill_product_id`')), 'productURL'], 'createdAt'],
+        attributes: [
+          [
+            'bill_product_id',
+            'id'],
+          [
+            'main_category_id',
+            'masterCatId'],
+          [
+            'product_name',
+            'productName'],
+          [
+            'value_of_purchase',
+            'value'],
+          'taxes',
+          [
+            this.modals.sequelize.fn('CONCAT', 'products/',
+                this.modals.sequelize.col('`productBills`.`bill_product_id`')),
+            'productURL'],
+          'createdAt'],
 				where: {
 					user_id: user.ID,
 					status_id: {
 						$ne: 3
 					},
-					master_category_id: [6, 8]
+          main_category_id: [6, 8],
 				},
 				include: [{
 					model: this.modals.consumerBillDetails,

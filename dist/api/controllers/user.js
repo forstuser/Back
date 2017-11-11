@@ -127,11 +127,28 @@ var loginOrRegisterUser = function loginOrRegisterUser(userWhere, userInput, tru
     }
 
     trackTransaction(request.payload.transactionId, updatedUser.id);
-
     replyObject.authorization = 'bearer ' + _authentication2.default.generateToken(userData[0]).token;
-    replyObject.isExistingUser = !userData[1];
-    replyObject.userId = updatedUser.id;
-    return reply(replyObject).code(201).header('authorization', replyObject.authorization);
+    return dashboardAdaptor.prepareDashboardResult(userData[1],
+        userData[0].toJSON(), replyObject.authorization, request);
+  }).then(function(result) {
+    return reply(result).
+        code(201).
+        header('authorization', replyObject.authorization);
+  }).catch(function(err) {
+    if (err.authorization) {
+      return reply(err).
+          code(401).
+          header('authorization', replyObject.authorization);
+    }
+
+    return reply({
+      status: false,
+      authorization: token,
+      message: 'Unable to Login User',
+      showDashboard: false,
+      err: err,
+      forceUpdate: request.pre.forceUpdate,
+    }).code(401).header('authorization', replyObject.authorization);
   });
 };
 

@@ -304,7 +304,38 @@ class SearchAdaptor {
 						as: 'category',
 						attributes: []
 					}],
-				attributes: [['bill_product_id', 'id'], ['product_name', 'productName'], ['value_of_purchase', 'value'], 'taxes', ['category_id', 'categoryId'], ['master_category_id', 'masterCategoryId'], ['brand_id', 'brandId'], ['color_id', 'colorId'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`products`.`bill_product_id`')), 'productURL'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`products`.`category_id`'), '/image/'), 'cImageURL']],
+        attributes: [
+          [
+            'bill_product_id',
+            'id'],
+          [
+            'product_name',
+            'productName'],
+          [
+            'value_of_purchase',
+            'value'],
+          'taxes',
+          [
+            'category_id',
+            'categoryId'],
+          [
+            'main_category_id',
+            'masterCategoryId'],
+          [
+            'brand_id',
+            'brandId'],
+          [
+            'color_id',
+            'colorId'],
+          [
+            this.modals.sequelize.fn('CONCAT', 'products/',
+                this.modals.sequelize.col('`products`.`bill_product_id`')),
+            'productURL'],
+          [
+            this.modals.sequelize.fn('CONCAT', 'categories/',
+                this.modals.sequelize.col('`products`.`category_id`'),
+                '/image/'),
+            'cImageURL']],
 				order: [['bill_product_id', 'DESC']],
 				required: false
 			}],
@@ -328,15 +359,16 @@ class SearchAdaptor {
 		});
 	}
 
-	retrieveRecentSearch(user) {
-		return this.modals.recentSearches.findAll({
-			where: {
-				user_id: user.ID
-			},
-			order: [['searchDate', 'DESC']],
-			attributes: ['searchValue']
-		});
-	}
+  retrieveRecentSearch(user) {
+    return this.modals.recentSearches.findAll({
+      where: {
+        user_id: user.id,
+      },
+      order: [['searchDate', 'DESC']],
+      attributes: ['searchValue'],
+    });
+  }
+
 
 	fetchProductDetails(user, searchValue) {
 		return this.modals.productBills.findAll({
@@ -507,7 +539,44 @@ class SearchAdaptor {
 					as: 'category',
 					attributes: []
 				}],
-			attributes: [['bill_product_id', 'id'], ['product_name', 'productName'], ['value_of_purchase', 'value'], 'taxes', ['category_id', 'categoryId'], [this.modals.sequelize.col('`masterCategory`.`category_name`'), 'masterCategoryName'], ['master_category_id', 'masterCategoryId'], [this.modals.sequelize.col('`category`.`category_name`'), 'categoryName'], ['brand_id', 'brandId'], ['color_id', 'colorId'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`productBills`.`bill_product_id`')), 'productURL'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`productBills`.`category_id`'), '/image/'), 'cImageURL']],
+      attributes: [
+        [
+          'bill_product_id',
+          'id'],
+        [
+          'product_name',
+          'productName'],
+        [
+          'value_of_purchase',
+          'value'],
+        'taxes',
+        [
+          'category_id',
+          'categoryId'],
+        [
+          this.modals.sequelize.col('`masterCategory`.`category_name`'),
+          'masterCategoryName'],
+        [
+          'main_category_id',
+          'masterCategoryId'],
+        [
+          this.modals.sequelize.col('`category`.`category_name`'),
+          'categoryName'],
+        [
+          'brand_id',
+          'brandId'],
+        [
+          'color_id',
+          'colorId'],
+        [
+          this.modals.sequelize.fn('CONCAT', 'products/',
+              this.modals.sequelize.col('`productBills`.`bill_product_id`')),
+          'productURL'],
+        [
+          this.modals.sequelize.fn('CONCAT', 'categories/',
+              this.modals.sequelize.col('`productBills`.`category_id`'),
+              '/image/'),
+          'cImageURL']],
 			order: [['bill_product_id', 'DESC']]
 		});
 	}
@@ -684,7 +753,44 @@ class SearchAdaptor {
 					as: 'category',
 					attributes: []
 				}],
-			attributes: [['bill_product_id', 'id'], ['product_name', 'productName'], ['value_of_purchase', 'value'], 'taxes', ['category_id', 'categoryId'], [this.modals.sequelize.col('`masterCategory`.`category_name`'), 'masterCategoryName'], ['master_category_id', 'masterCategoryId'], [this.modals.sequelize.col('`category`.`category_name`'), 'categoryName'], ['brand_id', 'brandId'], ['color_id', 'colorId'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`productBills`.`bill_product_id`')), 'productURL'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`productBills`.`category_id`'), '/image/'), 'cImageURL']],
+      attributes: [
+        [
+          'bill_product_id',
+          'id'],
+        [
+          'product_name',
+          'productName'],
+        [
+          'value_of_purchase',
+          'value'],
+        'taxes',
+        [
+          'category_id',
+          'categoryId'],
+        [
+          this.modals.sequelize.col('`masterCategory`.`category_name`'),
+          'masterCategoryName'],
+        [
+          'main_category_id',
+          'masterCategoryId'],
+        [
+          this.modals.sequelize.col('`category`.`category_name`'),
+          'categoryName'],
+        [
+          'brand_id',
+          'brandId'],
+        [
+          'color_id',
+          'colorId'],
+        [
+          this.modals.sequelize.fn('CONCAT', 'products/',
+              this.modals.sequelize.col('`productBills`.`bill_product_id`')),
+          'productURL'],
+        [
+          this.modals.sequelize.fn('CONCAT', 'categories/',
+              this.modals.sequelize.col('`productBills`.`category_id`'),
+              '/image/'),
+          'cImageURL']],
 			order: [['bill_product_id', 'DESC']]
 		});
 	}
@@ -861,7 +967,44 @@ class SearchAdaptor {
 					as: 'category',
 					attributes: []
 				}],
-			attributes: [['bill_product_id', 'id'], ['product_name', 'productName'], ['value_of_purchase', 'value'], 'taxes', ['category_id', 'categoryId'], [this.modals.sequelize.col('`masterCategory`.`category_name`'), 'masterCategoryName'], ['master_category_id', 'masterCategoryId'], [this.modals.sequelize.col('`category`.`category_name`'), 'categoryName'], ['brand_id', 'brandId'], ['color_id', 'colorId'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`productBills`.`bill_product_id`')), 'productURL'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`productBills`.`category_id`'), '/image/'), 'cImageURL']],
+      attributes: [
+        [
+          'bill_product_id',
+          'id'],
+        [
+          'product_name',
+          'productName'],
+        [
+          'value_of_purchase',
+          'value'],
+        'taxes',
+        [
+          'category_id',
+          'categoryId'],
+        [
+          this.modals.sequelize.col('`masterCategory`.`category_name`'),
+          'masterCategoryName'],
+        [
+          'main_category_id',
+          'masterCategoryId'],
+        [
+          this.modals.sequelize.col('`category`.`category_name`'),
+          'categoryName'],
+        [
+          'brand_id',
+          'brandId'],
+        [
+          'color_id',
+          'colorId'],
+        [
+          this.modals.sequelize.fn('CONCAT', 'products/',
+              this.modals.sequelize.col('`productBills`.`bill_product_id`')),
+          'productURL'],
+        [
+          this.modals.sequelize.fn('CONCAT', 'categories/',
+              this.modals.sequelize.col('`productBills`.`category_id`'),
+              '/image/'),
+          'cImageURL']],
 			order: [['bill_product_id', 'DESC']]
 		});
 	}
@@ -1040,7 +1183,44 @@ class SearchAdaptor {
 					as: 'category',
 					attributes: []
 				}],
-			attributes: [['bill_product_id', 'id'], ['product_name', 'productName'], ['value_of_purchase', 'value'], 'taxes', ['category_id', 'categoryId'], [this.modals.sequelize.col('`masterCategory`.`category_name`'), 'masterCategoryName'], ['master_category_id', 'masterCategoryId'], [this.modals.sequelize.col('`category`.`category_name`'), 'categoryName'], ['brand_id', 'brandId'], ['color_id', 'colorId'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`productBills`.`bill_product_id`')), 'productURL'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.col('`productBills`.`category_id`'), '/image/'), 'cImageURL']],
+      attributes: [
+        [
+          'bill_product_id',
+          'id'],
+        [
+          'product_name',
+          'productName'],
+        [
+          'value_of_purchase',
+          'value'],
+        'taxes',
+        [
+          'category_id',
+          'categoryId'],
+        [
+          this.modals.sequelize.col('`masterCategory`.`category_name`'),
+          'masterCategoryName'],
+        [
+          'main_category_id',
+          'masterCategoryId'],
+        [
+          this.modals.sequelize.col('`category`.`category_name`'),
+          'categoryName'],
+        [
+          'brand_id',
+          'brandId'],
+        [
+          'color_id',
+          'colorId'],
+        [
+          this.modals.sequelize.fn('CONCAT', 'products/',
+              this.modals.sequelize.col('`productBills`.`bill_product_id`')),
+          'productURL'],
+        [
+          this.modals.sequelize.fn('CONCAT', 'categories/',
+              this.modals.sequelize.col('`productBills`.`category_id`'),
+              '/image/'),
+          'cImageURL']],
 			order: [['bill_product_id', 'DESC']]
 		});
 	}

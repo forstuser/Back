@@ -523,7 +523,7 @@ var InsightAdaptor = function () {
 				status_id: {
 					$ne: 3
 				},
-				master_category_id: masterCategoryId
+        main_category_id: masterCategoryId,
 			};
 			var dateWhereClause = {
 				$gte: _moment2.default.utc().startOf('week').startOf('year'),
@@ -658,7 +658,39 @@ var InsightAdaptor = function () {
 					as: 'category',
 					attributes: []
 				}],
-				attributes: [['bill_product_id', 'id'], ['product_name', 'productName'], ['value_of_purchase', 'value'], 'taxes', ['category_id', 'categoryId'], ['master_category_id', 'masterCategoryId'], [this.modals.sequelize.col('`masterCategory`.`category_name`'), 'masterCategoryName'], [this.modals.sequelize.col('`category`.`category_name`'), 'categoryName'], ['brand_id', 'brandId'], ['color_id', 'colorId'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`productBills`.`bill_product_id`')), 'productURL']],
+        attributes: [
+          [
+            'bill_product_id',
+            'id'],
+          [
+            'product_name',
+            'productName'],
+          [
+            'value_of_purchase',
+            'value'],
+          'taxes',
+          [
+            'category_id',
+            'categoryId'],
+          [
+            'main_category_id',
+            'masterCategoryId'],
+          [
+            this.modals.sequelize.col('`masterCategory`.`category_name`'),
+            'masterCategoryName'],
+          [
+            this.modals.sequelize.col('`category`.`category_name`'),
+            'categoryName'],
+          [
+            'brand_id',
+            'brandId'],
+          [
+            'color_id',
+            'colorId'],
+          [
+            this.modals.sequelize.fn('CONCAT', 'products/',
+                this.modals.sequelize.col('`productBills`.`bill_product_id`')),
+            'productURL']],
 				order: [['bill_product_id', 'DESC']]
 			});
 		}

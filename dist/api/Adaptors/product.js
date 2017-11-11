@@ -261,6 +261,15 @@ var ProductAdaptor = function () {
       options = _lodash2.default.omit(options, 'product_status_type');
       return this.modals.products.findAll({
         where: options,
+        include: [
+          {
+            model: this.modals.bills,
+            where: {
+              status_type: 5,
+            },
+            attributes: [],
+            required: true,
+          }],
         attributes: [
           [
             this.modals.sequelize.literal('COUNT(*)'),
@@ -269,7 +278,7 @@ var ProductAdaptor = function () {
             'main_category_id',
             'masterCategoryId'],
           [
-            this.modals.sequelize.literal('max("updated_at")'),
+            this.modals.sequelize.literal('max("products"."updated_at")'),
             'lastUpdatedAt']],
         group: 'main_category_id',
       }).then(function(productItems) {
@@ -484,6 +493,9 @@ var ProductAdaptor = function () {
           [
             'form_value',
             'value'],
+          [
+            'category_form_id',
+            'categoryFormId'],
           [
             this.modals.sequelize.literal('"categoryForm"."title"'),
             'name'],

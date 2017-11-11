@@ -1,12 +1,22 @@
 /*jshint esversion: 6 */
 'use strict';
 import notificationAdaptor from './notification';
+import ProductAdaptor from './product';
+import AMCAdaptor from './amcs';
+import InsuranceAdaptor from './insurances';
+import RepairAdaptor from './repairs';
+import WarrantyAdaptor from './warranties';
 import shared from '../../helpers/shared';
 import moment from 'moment';
 
 class DashboardAdaptor {
 	constructor(modals) {
 		this.modals = modals;
+    this.productAdaptor = new ProductAdaptor(modals);
+    this.amcAdaptor = new AMCAdaptor(modals);
+    this.insuranceAdaptor = new InsuranceAdaptor(modals);
+    this.repairAdaptor = new RepairAdaptor(modals);
+    this.warrantyAdaptor = new WarrantyAdaptor(modals);
 		this.date = new Date();
 	}
 
@@ -15,44 +25,23 @@ class DashboardAdaptor {
 			this.filterUpcomingService(user),
 			this.prepareInsightData(user),
 			this.retrieveRecentSearch(user),
-			this.modals.mailBox.count({where: {user_id: user.ID, status_id: 4}}),
-			this.modals.productBills.count({
+      this.modals.mailBox.count({where: {user_id: user.id, status_id: 4}}),
+      this.modals.products.count({
 				where: {
-					user_id: user.ID,
-					status_id: {
-						$ne: 3
-					},
-					master_category_id: {
+          user_id: user.id,
+          status_type: [5, 8],
+          main_category_id: {
 						$notIn: [9, 10]
 					}
 				},
-				include: [
-					{
-						model: this.modals.consumerBillDetails,
-						as: 'consumerBill',
-						where: {
-							status_id: {
-								$ne: 3
-							}
-						},
-						attributes: [],
-						include: [
-							{
-								model: this.modals.consumerBills,
-								as: 'bill',
-								where: {
-									$and: [
-										this.modals.sequelize.where(this.modals.sequelize.col('`consumerBill->bill->billMapping`.`bill_ref_type`'), 1),
-										{
-											user_status: 5,
-											admin_status: 5
-										}
-									]
-								},
-								attributes: []
-							}],
-						required: true
-					}]
+        include: [
+          {
+            model: this.modals.bills,
+            where: {
+              status_type: 5,
+            },
+            required: true,
+          }],
 			})
 		]).then((result) => {
 			// console.log(require('util').inspect(result[0], false, null));
@@ -73,14 +62,12 @@ class DashboardAdaptor {
 				return elem;
 			});
 
-
 			const distinctInsight = [];
 			const insightData = result[1].map((item) => {
-				const insightItem = item.toJSON();
-				const index = distinctInsight
-					.findIndex(distinctItem => (new Date(distinctItem.purchaseDate)
-						.getTime() === new Date(insightItem.purchaseDate)
-						.getTime()));
+        const insightItem = item;
+				const index = distinctInsight.findIndex(
+            distinctItem => (moment(distinctItem.purchaseDate).valueOf() ===
+                moment(insightItem.purchaseDate).valueOf()));
 
 				if (index === -1) {
 					distinctInsight.push(insightItem);
@@ -90,7 +77,6 @@ class DashboardAdaptor {
 
 				return insightItem;
 			});
-
 			const insightItems = shared.retrieveDaysInsight(distinctInsight);
 
 			const insightResult = insightItems && insightItems.length > 0 ? {
@@ -153,53 +139,32 @@ class DashboardAdaptor {
 
 	prepareDashboardResult(isNewUser, user, token, request) {
 		if (!isNewUser) {
-			return this.modals.productBills.count({
-				where: {
-					user_id: user.ID,
-					status_id: {
-						$ne: 3
-					},
-					master_category_id: {
-						$notIn: [9, 10]
-					}
-				},
-				include: [
-					{
-						model: this.modals.consumerBillDetails,
-						as: 'consumerBill',
-						where: {
-							status_id: {
-								$ne: 3
-							}
-						},
-						attributes: [],
-						include: [
-							{
-								model: this.modals.consumerBills,
-								as: 'bill',
-								where: {
-									$and: [
-										this.modals.sequelize.where(this.modals.sequelize.col('`consumerBill->bill->billMapping`.`bill_ref_type`'), 1),
-										{
-											user_status: 5,
-											admin_status: 5
-										}
-									]
-								},
-								attributes: []
-							}],
-						required: true
-					}]
-			}).then((billCounts) => {
+      return this.modals.products.count({
+        where: {
+          user_id: user.id,
+          status_type: [5, 8],
+          main_category_id: {
+            $notIn: [9, 10],
+          },
+        },
+        include: [
+          {
+            model: this.modals.bills,
+            where: {
+              status_type: 5,
+            },
+            required: true,
+          }],
+      }).then((billCounts) => {
 				if (billCounts) {
 					return {
 						status: true,
 						message: 'User Exist',
 						billCounts,
-						showDashboard: billCounts > 0,
+            showDashboard: !!(billCounts && billCounts > 0),
 						isExistingUser: !isNewUser,
 						authorization: token,
-						userId: user.ID,
+            userId: user.id,
 						forceUpdate: request.pre.forceUpdate
 					};
 				}
@@ -211,7 +176,7 @@ class DashboardAdaptor {
 					billCounts: 0,
 					showDashboard: false,
 					isExistingUser: !isNewUser,
-					userId: user.ID,
+          userId: user.id,
 					forceUpdate: request.pre.forceUpdate
 				};
 			}).catch((err) => {
@@ -220,229 +185,55 @@ class DashboardAdaptor {
 					status: false,
 					authorization: token,
 					message: 'Unable to Login User',
+          showDashboard: false,
 					err,
 					forceUpdate: request.pre.forceUpdate
 				};
 			});
 		}
 
-
-		notificationAdaptor.sendMailOnDifferentSteps('Welcome to BinBill!', user.email || user.email_id, user, 1);
+    notificationAdaptor.sendMailOnDifferentSteps('Welcome to BinBill!',
+        user.email, user, 1);
 		return {
 			status: true,
 			message: 'New User',
 			authorization: token,
 			billCounts: 0,
 			showDashboard: false,
-			isExistingUser: !isNewUser,
-			userId: user.ID,
+      isExistingUser: false,
+      userId: user.id,
 			forceUpdate: request.pre.forceUpdate
 		};
 	}
 
 	filterUpcomingService(user) {
-		return new Promise((resolve, reject) => {
-			Promise.all([this.modals.productBills.findAll({
-				attributes: [['bill_product_id', 'id'], ['master_category_id', 'masterCatId'], ['product_name', 'productName'], ['value_of_purchase', 'value'], 'taxes', [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`productBills`.`bill_product_id`')), 'productURL']],
-				where: {
-					user_id: user.ID,
-					status_id: {
-						$ne: 3
-					},
-					master_category_id: [6, 8]
-				},
-				include: [{
-					model: this.modals.consumerBillDetails,
-					as: 'consumerBill',
-					attributes: [['document_id', 'docId'], ['invoice_number', 'invoiceNo'], ['total_purchase_value', 'totalCost'], 'taxes', ['purchase_date', 'purchaseDate']],
-					include: [
-						{
-							model: this.modals.billDetailCopies,
-							as: 'billDetailCopies',
-							include: [{
-								model: this.modals.billCopies,
-								as: 'billCopies',
-								attributes: []
-							}],
-							attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', this.modals.sequelize.col('`consumerBill->billDetailCopies->billCopies`.`bill_copy_type`')), 'billCopyType'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('`consumerBill->billDetailCopies->billCopies`.`bill_copy_id`'), '/files'), 'fileUrl']],
-						},
-						{
-							model: this.modals.consumerBills,
-							as: 'bill',
-							where: {
-								$and: [
-									this.modals.sequelize.where(this.modals.sequelize.col('`consumerBill->bill->billMapping`.`bill_ref_type`'), 1),
-									{
-										user_status: 5,
-										admin_status: 5
-									}
-								]
-							},
-							attributes: []
-						}
-					]
-				},
-					{
-						model: this.modals.productMetaData,
-						as: 'productMetaData',
-						attributes: [['form_element_value', 'value'], [this.modals.sequelize.fn('CONCAT', this.modals.sequelize.col('`productMetaData->categoryForm`.`form_element_type`')), 'type'], [this.modals.sequelize.fn('CONCAT', this.modals.sequelize.col('`productMetaData->categoryForm`.`form_element_name`')), 'name']],
-						include: [{
-							model: this.modals.categoryForm, as: 'categoryForm', attributes: []
-						},
-							{
-								model: this.modals.categoryFormMapping,
-								as: 'selectedValue',
-								on: {
-									$or: [
-										this.modals.sequelize.where(this.modals.sequelize.col('`productMetaData`.`category_form_id`'), this.modals.sequelize.col('`productMetaData->categoryForm`.`category_form_id`'))
-									]
-								},
-								where: {
-									$and: [
-										this.modals.sequelize.where(this.modals.sequelize.col('`productMetaData`.`form_element_value`'), this.modals.sequelize.col('`productMetaData->selectedValue`.`mapping_id`')),
-										this.modals.sequelize.where(this.modals.sequelize.col('`productMetaData->categoryForm`.`form_element_type`'), 2)]
-								},
-								attributes: [['dropdown_name', 'value']],
-								required: false
-							}],
-						required: false
-					}]
-			}),
-				this.modals.amcBills.findAll({
-					attributes: [['bill_amc_id', 'id'], 'policyNo', 'premiumType', 'premiumAmount', 'effectiveDate', [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`amcProduct`.`bill_product_id`')), 'productURL'], 'expiryDate'],
-					where: {
-						user_id: user.ID,
-						status_id: {
-							$ne: 3
-						}
-					},
-					include: [{
-						model: this.modals.productBills,
-						as: 'amcProduct',
-						attributes: [['product_name', 'productName'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`amcProduct`.`bill_product_id`')), 'productURL']],
-						include: [{
-							model: this.modals.consumerBillDetails,
-							as: 'consumerBill',
-							attributes: [['document_id', 'docId'], ['invoice_number', 'invoiceNo'], ['total_purchase_value', 'totalCost'], 'taxes', ['purchase_date', 'purchaseDate']],
-							include: [
-								{
-									model: this.modals.consumerBills,
-									as: 'bill',
-									where: {
-										$and: [
-											this.modals.sequelize.where(this.modals.sequelize.col('`amcProduct->consumerBill->bill->billMapping`.`bill_ref_type`'), 1),
-											{
-												user_status: 5,
-												admin_status: 5
-											}
-										]
-									},
-									attributes: []
-								}
-							]
-						}]
-					}, {
-						model: this.modals.amcBillCopies,
-						as: 'amcCopies',
-						attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('bill_copy_id'), '/files'), 'fileUrl']]
-					}]
-				}),
-				this.modals.insuranceBills.findAll({
-					attributes: [['bill_insurance_id', 'id'], 'policyNo', 'premiumType', 'premiumAmount', 'effectiveDate', 'expiryDate', 'amountInsured', [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`insuredProduct`.`bill_product_id`')), 'productURL'], 'plan'],
-					where: {
-						user_id: user.ID,
-						status_id: {
-							$ne: 3
-						}
-					},
-					include: [{
-						model: this.modals.productBills,
-						as: 'insuredProduct',
-						attributes: [['product_name', 'productName'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`insuredProduct`.`bill_product_id`')), 'productURL']],
-						include: [{
-							model: this.modals.consumerBillDetails,
-							as: 'consumerBill',
-							attributes: [['document_id', 'docId'], ['invoice_number', 'invoiceNo'], ['total_purchase_value', 'totalCost'], 'taxes', ['purchase_date', 'purchaseDate']],
-							include: [
-								{
-									model: this.modals.consumerBills,
-									as: 'bill',
-									where: {
-										$and: [
-											this.modals.sequelize.where(this.modals.sequelize.col('`insuredProduct->consumerBill->bill->billMapping`.`bill_ref_type`'), 1),
-											{
-												user_status: 5,
-												admin_status: 5
-											}
-										]
-									},
-									attributes: []
-								}
-							]
-						}]
-					}, {
-						model: this.modals.insuranceBillCopies,
-						as: 'insuranceCopies',
-						attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('bill_copy_id'), '/files'), 'fileUrl']]
-					}]
-				}),
-				this.modals.warranty.findAll({
-					attributes: [['bill_warranty_id', 'id'], 'warrantyType', 'policyNo', 'premiumType', 'premiumAmount', 'effectiveDate', [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`warrantyProduct`.`bill_product_id`')), 'productURL'], 'expiryDate'],
-					where: {
-						user_id: user.ID,
-						status_id: {
-							$ne: 3
-						}
-					},
-					include: [{
-						model: this.modals.productBills,
-						as: 'warrantyProduct',
-						attributes: [['product_name', 'productName'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.col('`warrantyProduct`.`bill_product_id`')), 'productURL']],
-						include: [{
-							model: this.modals.consumerBillDetails,
-							as: 'consumerBill',
-							attributes: [['document_id', 'docId'], ['invoice_number', 'invoiceNo'], ['total_purchase_value', 'totalCost'], 'taxes', ['purchase_date', 'purchaseDate']],
-							include: [
-								{
-									model: this.modals.consumerBills,
-									as: 'bill',
-									where: {
-										$and: [
-											this.modals.sequelize.where(this.modals.sequelize.col('`warrantyProduct->consumerBill->bill->billMapping`.`bill_ref_type`'), 1),
-											{
-												user_status: 5,
-												admin_status: 5
-											}
-										]
-									},
-									attributes: []
-								}
-							]
-						}]
-					}, {
-						model: this.modals.warrantyCopies,
-						as: 'warrantyCopies',
-						attributes: [['bill_copy_id', 'billCopyId'], [this.modals.sequelize.fn('CONCAT', 'bills/', this.modals.sequelize.col('bill_copy_id'), '/files'), 'fileUrl']]
-					}]
+    return Promise.all([
+      this.productAdaptor.retrieveProducts({
+        user_id: user.id,
+        status_type: 5,
+        main_category_id: [6, 8],
+      }),
+      this.amcAdaptor.retrieveAMCs({
+        user_id: user.id,
+        status_type: 5,
+      }),
+      this.insuranceAdaptor.retrieveInsurances({
+        user_id: user.id,
+        status_type: 5,
+      }),
+      this.warrantyAdaptor.retrieveWarranties({
+        user_id: user.id,
+        status_type: 5,
 				})]).then((result) => {
 				let products = result[0].map((item) => {
-					const product = item.toJSON();
+          const product = item;
 
-					product.productMetaData.map((metaItem) => {
+          product.metaData.map((metaItem) => {
 						const metaData = metaItem;
-						if (metaData.type === '2' && metaData.selectedValue) {
-							metaData.value = metaData.selectedValue.value;
-						}
-
 						if (metaData.name.toLowerCase().includes('due') && metaData.name.toLowerCase().includes('date') && moment(metaData.value).isValid()) {
 							const dueDateTime = moment(metaData.value);
 							product.dueDate = metaData.value;
 							product.dueIn = dueDateTime.diff(moment.utc(), 'days');
-							if (product.masterCatId.toString() === '6') {
-								product.productType = 5;
-							} else {
-								product.productType = 1;
-							}
 						}
 
 						if (metaData.name.toLowerCase().includes('address')) {
@@ -452,13 +243,20 @@ class DashboardAdaptor {
 						return metaData;
 					});
 
+          if (product.masterCategoryId.toString() === '6') {
+            product.productType = 5;
+          } else {
+            product.productType = 1;
+          }
 					return product;
 				});
 
-				products = products.filter(item => item.consumerBill && ((item.dueIn !== undefined && item.dueIn !== null) && item.dueIn <= 30 && item.dueIn >= 0));
+      products = products.filter(item => item.bill &&
+          ((item.dueIn !== undefined && item.dueIn !== null) && item.dueIn <=
+              30 && item.dueIn >= 0));
 
 				let amcs = result[1].map((item) => {
-					const amc = item.toJSON();
+          const amc = item;
 					if (moment(amc.expiryDate).isValid()) {
 						const dueDateTime = moment(amc.expiryDate);
 						amc.dueDate = amc.expiryDate;
@@ -468,10 +266,12 @@ class DashboardAdaptor {
 
 					return amc;
 				});
-				amcs = amcs.filter(item => item.amcProduct && item.amcProduct.consumerBill && (item.dueIn !== undefined && item.dueIn !== null) && item.dueIn <= 30 && item.dueIn >= 0);
+      amcs = amcs.filter(
+          item => (item.dueIn !== undefined && item.dueIn !== null) &&
+              item.dueIn <= 30 && item.dueIn >= 0);
 
 				let insurances = result[2].map((item) => {
-					const insurance = item.toJSON();
+          const insurance = item;
 					if (moment(insurance.expiryDate).isValid()) {
 						const dueDateTime = moment(insurance.expiryDate);
 						insurance.dueDate = insurance.expiryDate;
@@ -481,10 +281,12 @@ class DashboardAdaptor {
 					return insurance;
 				});
 
-				insurances = insurances.filter(item => item.insuredProduct && item.insuredProduct.consumerBill && (item.dueIn !== undefined && item.dueIn !== null) && item.dueIn <= 30 && item.dueIn >= 0);
+      insurances = insurances.filter(
+          item => (item.dueIn !== undefined && item.dueIn !== null) &&
+              item.dueIn <= 30 && item.dueIn >= 0);
 
 				let warranties = result[3].map((item) => {
-					const warranty = item.toJSON();
+          const warranty = item;
 					if (moment(warranty.expiryDate).isValid()) {
 						const dueDateTime = moment(warranty.expiryDate);
 						warranty.dueDate = warranty.expiryDate;
@@ -494,65 +296,68 @@ class DashboardAdaptor {
 					return warranty;
 				});
 
-				warranties = warranties.filter(item => item.warrantyProduct && item.warrantyProduct.consumerBill && (item.dueIn !== undefined && item.dueIn !== null) && item.dueIn <= 30 && item.dueIn >= 0);
+      warranties = warranties.filter(
+          item => (item.dueIn !== undefined && item.dueIn !== null) &&
+              item.dueIn <= 30 && item.dueIn >= 0);
 
-				resolve([...products, ...warranties, ...insurances, ...amcs]);
-			}).catch((err) => {
-				console.log({API_Logs: err});
-				reject(err);
-			});
-		});
+      return [...products, ...warranties, ...insurances, ...amcs];
+    });
 	}
 
 	prepareInsightData(user) {
-		return this.modals.productBills.findAll({
-			where: {
-				master_category_id: {
-					$ne: 10
-				},
-				user_id: user.ID,
-				status_id: {
-					$ne: 3
-				}
-			},
-			include: [{
-				model: this.modals.consumerBillDetails,
-				as: 'consumerBill',
-				where: {
-					status_id: {
-						$ne: 3
-					},
-					purchase_date: {
-						$lte: moment.utc(),
-						$gte: moment.utc().subtract(6, 'd').startOf('d')
-					}
-				},
-				include: [
-					{
-						model: this.modals.consumerBills,
-						as: 'bill',
-						where: {
-							$and: [
-								this.modals.sequelize.where(this.modals.sequelize.literal('`bill_ref_type`'), 1),
-								{
-									user_status: 5,
-									admin_status: 5
-								}
-							]
-						},
-						attributes: []
-					}
-				]
-			}],
-			attributes: [['bill_product_id', 'id'], ['product_name', 'productName'], ['value_of_purchase', 'value'], 'taxes', ['category_id', 'categoryId'], ['master_category_id', 'masterCategoryId'], ['brand_id', 'brandId'], ['color_id', 'colorId'], [this.modals.sequelize.literal('`purchase_date`'), 'purchaseDate']],
-			order: [[this.modals.sequelize.literal('`purchase_date`'), 'ASC']]
-		});
+    return Promise.all([
+      this.productAdaptor.retrieveProducts({
+        status_type: 5,
+        user_id: user.id,
+        document_date: {
+          $lte: moment.utc(),
+          $gte: moment.utc().subtract(6, 'd').startOf('d'),
+        },
+      }),
+      this.amcAdaptor.retrieveAMCs({
+        status_type: 5,
+        user_id: user.id,
+        document_date: {
+          $lte: moment.utc(),
+          $gte: moment.utc().subtract(6, 'd').startOf('d'),
+        },
+      }),
+      this.insuranceAdaptor.retrieveInsurances({
+        status_type: 5,
+        user_id: user.id,
+        document_date: {
+          $lte: moment.utc(),
+          $gte: moment.utc().subtract(6, 'd').startOf('d'),
+        },
+      }),
+      this.repairAdaptor.retrieveRepairs({
+        status_type: 5,
+        user_id: user.id,
+        document_date: {
+          $lte: moment.utc(),
+          $gte: moment.utc().subtract(6, 'd').startOf('d'),
+        },
+      }),
+      this.warrantyAdaptor.retrieveWarranties({
+        status_type: 5,
+        user_id: user.id,
+        document_date: {
+          $lte: moment.utc(),
+          $gte: moment.utc().subtract(6, 'd').startOf('d'),
+        },
+      })]).
+        then((results) => [
+          ...results[0],
+          ...results[1],
+          ...results[2],
+          ...results[3],
+          ...results[4]]);
 	}
 
 	retrieveRecentSearch(user) {
 		return this.modals.recentSearches.findAll({
 			where: {
-				user_id: user.ID
+        user_id: user.id,
 			},
 			order: [['searchDate', 'DESC']],
 			attributes: ['searchValue']

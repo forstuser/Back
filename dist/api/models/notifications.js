@@ -56,6 +56,9 @@ exports.default = function(sequelize, DataTypes) {
       type: DataTypes.DATE,
       defaultValue: sequelize.literal('NOW()'),
     },
+    copies: {
+      type: DataTypes.ARRAY(DataTypes.JSON),
+    },
   }, {
     freezeTableName: true,
     timestamps: true,

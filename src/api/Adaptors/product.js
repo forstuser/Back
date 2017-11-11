@@ -123,7 +123,8 @@ class ProductAdaptor {
             'latitude',
             'longitude'],
           required: false,
-        }],
+        }
+      ],
       attributes: [
         'id',
         [
@@ -173,7 +174,8 @@ class ProductAdaptor {
               this.modals.sequelize.literal('"products"."brand_id"'),
               '&categoryid=',
               this.modals.sequelize.col('"products"."category_id"')),
-          'serviceCenterUrl']],
+          'serviceCenterUrl']
+      ],
     }).then((productResult) => {
       products = productResult.map((item) => item.toJSON());
       return Promise.all([
@@ -236,13 +238,22 @@ class ProductAdaptor {
     options = _.omit(options, 'product_status_type');
     return this.modals.products.findAll({
       where: options,
+      include: [
+        {
+          model: this.modals.bills,
+          where: {
+            status_type: 5,
+          },
+          attributes: [],
+          required: true,
+        }],
       attributes: [
         [this.modals.sequelize.literal('COUNT(*)'), 'productCounts'],
         [
           'main_category_id',
           'masterCategoryId'],
         [
-          this.modals.sequelize.literal('max("updated_at")'),
+          this.modals.sequelize.literal('max("products"."updated_at")'),
           'lastUpdatedAt']],
       group: 'main_category_id',
     }).then((productItems) => productItems.map((item) => item.toJSON()));
@@ -443,6 +454,7 @@ class ProductAdaptor {
         [
           'form_value',
           'value'],
+        ['category_form_id', 'categoryFormId'],
         [
           this.modals.sequelize.literal('"categoryForm"."title"'),
           'name'],
