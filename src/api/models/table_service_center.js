@@ -57,7 +57,6 @@ export default (sequelize, DataTypes) => {
         freezeTableName: true,
         defaultPrimaryKey: false,
         timestamps: true,
-        paranoid: true,
         underscored: true,
         tableName: 'service_centers',
       });
@@ -69,7 +68,14 @@ export default (sequelize, DataTypes) => {
     serviceCenters.belongsTo(models.statuses,
         {foreignKey: 'status_type', targetKey: 'status_type'});
     serviceCenters.belongsToMany(models.brands, {
-      through: 'center_brand_mapping'
+      foreignKey: 'center_id',
+      otherKey: 'brand_id',
+      through: 'center_brand_mapping',
+      as: 'brands',
+    });
+    serviceCenters.hasMany(models.centerDetails, {
+      foreignKey: 'center_id',
+      as: 'centerDetails',
     });
   };
   return serviceCenters;

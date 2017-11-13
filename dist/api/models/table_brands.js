@@ -46,8 +46,13 @@ exports.default = function (sequelize, DataTypes) {
     brands.belongsTo(models.statuses, { foreignKey: 'status_type', targetKey: 'status_type' });
     brands.hasMany(models.brandDetails, { foreignKey: 'brand_id', targetKey: 'brand_id', as: 'details' });
     brands.belongsToMany(models.serviceCenters, {
-      through: 'center_brand_mapping'
+      otherKey: 'center_id',
+      foreignKey: 'brand_id',
+      through: 'center_brand_mapping',
+      as: 'centers',
     });
+    brands.hasMany(models.brandReviews,
+        {foreignKey: 'brand_id', as: 'brandReviews'});
   };
   return brands;
 };

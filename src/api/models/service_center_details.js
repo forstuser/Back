@@ -33,7 +33,6 @@ export default (sequelize, DataTypes) => {
         freezeTableName: true,
         defaultPrimaryKey: true,
         timestamps: true,
-        paranoid: true,
         underscored: true,
         tableName: 'service_center_details',
       });

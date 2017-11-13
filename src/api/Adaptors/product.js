@@ -52,7 +52,11 @@ class ProductAdaptor {
               'name'],
             [
               'brand_description',
-              'description']],
+              'description'],
+            [
+              this.modals.sequelize.fn('CONCAT', 'brands/',
+                  this.modals.sequelize.col('"brand"."brand_id"'), '/reviews'),
+              'reviewUrl']],
           required: false,
         },
         {
@@ -88,7 +92,28 @@ class ProductAdaptor {
                 'url',
                 'gstin',
                 'contact',
-                'email'],
+                'email',
+                [
+                  this.modals.sequelize.fn('CONCAT', 'sellers/',
+                      this.modals.sequelize.literal('"bill->sellers"."sid"'),
+                      '/reviews?isonlineseller=true'), 'reviewUrl']],
+              include: [
+                {
+                  model: this.modals.sellerReviews,
+                  as: 'sellerReviews',
+                  attributes: [
+                    [
+                      'review_ratings',
+                      'ratings'],
+                    [
+                      'review_feedback',
+                      'feedback'],
+                    [
+                      'review_comments',
+                      'comments']],
+                  required: false,
+                },
+              ],
               required: false,
             }],
           required: true,
@@ -121,9 +146,45 @@ class ProductAdaptor {
             'state',
             'pincode',
             'latitude',
-            'longitude'],
+            'longitude',
+            [
+              this.modals.sequelize.fn('CONCAT', 'sellers/',
+                  this.modals.sequelize.literal('"sellers"."sid"'),
+                  '/reviews?isonlineseller=false'), 'reviewUrl']],
+          include: [
+            {
+              model: this.modals.sellerReviews,
+              as: 'sellerReviews',
+              attributes: [
+                [
+                  'review_ratings',
+                  'ratings'],
+                [
+                  'review_feedback',
+                  'feedback'],
+                [
+                  'review_comments',
+                  'comments']],
+              required: false,
+            },
+          ],
           required: false,
-        }
+        },
+        {
+          model: this.modals.productReviews,
+          as: 'productReviews',
+          attributes: [
+            [
+              'review_ratings',
+              'ratings'],
+            [
+              'review_feedback',
+              'feedback'],
+            [
+              'review_comments',
+              'comments']],
+          required: false,
+        },
       ],
       attributes: [
         'id',
@@ -168,7 +229,12 @@ class ProductAdaptor {
         [
           'seller_id',
           'sellerId'],
-        'copies', [
+        'copies',
+        [
+          this.modals.sequelize.fn('CONCAT', 'products/',
+              this.modals.sequelize.literal('"products"."id"'), '/reviews'),
+          'reviewUrl'],
+        [
           this.modals.sequelize.fn('CONCAT',
               '/consumer/servicecenters?brandid=',
               this.modals.sequelize.literal('"products"."brand_id"'),

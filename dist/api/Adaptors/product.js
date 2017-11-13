@@ -75,7 +75,20 @@ var ProductAdaptor = function () {
         include: [{
           model: this.modals.brands,
           as: 'brand',
-          attributes: [['brand_id', 'brandId'], ['brand_name', 'name'], ['brand_description', 'description']],
+          attributes: [
+            [
+              'brand_id',
+              'brandId'],
+            [
+              'brand_name',
+              'name'],
+            [
+              'brand_description',
+              'description'],
+            [
+              this.modals.sequelize.fn('CONCAT', 'brands/',
+                  this.modals.sequelize.col('"brand"."brand_id"'), '/reviews'),
+              'reviewUrl']],
           required: false
         }, {
           model: this.modals.colours,
@@ -89,7 +102,35 @@ var ProductAdaptor = function () {
           include: [{
             model: this.modals.onlineSellers,
             as: 'sellers',
-            attributes: [['seller_name', 'sellerName'], 'url', 'gstin', 'contact', 'email'],
+            attributes: [
+              [
+                'seller_name',
+                'sellerName'],
+              'url',
+              'gstin',
+              'contact',
+              'email',
+              [
+                this.modals.sequelize.fn('CONCAT', 'sellers/',
+                    this.modals.sequelize.literal('"bill->sellers"."sid"'),
+                    '/reviews?isonlineseller=true'),
+                'reviewUrl']],
+            include: [
+              {
+                model: this.modals.sellerReviews,
+                as: 'sellerReviews',
+                attributes: [
+                  [
+                    'review_ratings',
+                    'ratings'],
+                  [
+                    'review_feedback',
+                    'feedback'],
+                  [
+                    'review_comments',
+                    'comments']],
+                required: false,
+              }],
             required: false
           }],
           required: true,
@@ -121,7 +162,42 @@ var ProductAdaptor = function () {
             'state',
             'pincode',
             'latitude',
-            'longitude'],
+            'longitude',
+            [
+              this.modals.sequelize.fn('CONCAT', 'sellers/',
+                  this.modals.sequelize.literal('"sellers"."sid"'),
+                  '/reviews?isonlineseller=false'),
+              'reviewUrl']],
+          include: [
+            {
+              model: this.modals.sellerReviews,
+              as: 'sellerReviews',
+              attributes: [
+                [
+                  'review_ratings',
+                  'ratings'],
+                [
+                  'review_feedback',
+                  'feedback'],
+                [
+                  'review_comments',
+                  'comments']],
+              required: false,
+            }],
+          required: false,
+        }, {
+          model: this.modals.productReviews,
+          as: 'productReviews',
+          attributes: [
+            [
+              'review_ratings',
+              'ratings'],
+            [
+              'review_feedback',
+              'feedback'],
+            [
+              'review_comments',
+              'comments']],
           required: false
         }],
         attributes: [
@@ -172,6 +248,10 @@ var ProductAdaptor = function () {
             'seller_id',
             'sellerId'],
           'copies',
+          [
+            this.modals.sequelize.fn('CONCAT', 'products/',
+                this.modals.sequelize.literal('"products"."id"'), '/reviews'),
+            'reviewUrl'],
           [
             this.modals.sequelize.fn('CONCAT',
                 '/consumer/servicecenters?brandid=',

@@ -87,6 +87,9 @@ exports.default = function (sequelize, DataTypes) {
     products.belongsTo(models.categories, { foreignKey: 'main_category_id', as: 'mainCategory' });
     products.belongsTo(models.categories, { foreignKey: 'category_id', as: 'category' });
     products.belongsTo(models.colours, { foreignKey: 'colour_id', as: 'color' });
+
+    products.hasMany(models.productReviews,
+        {foreignKey: 'bill_product_id', as: 'productReviews'});
   };
 
   return products;

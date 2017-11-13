@@ -58,7 +58,7 @@ exports.default = function(sequelize, DataTypes) {
     },
     copies: {
       type: DataTypes.ARRAY(DataTypes.JSON),
-    },
+    }
   }, {
     freezeTableName: true,
     timestamps: true,
@@ -68,6 +68,9 @@ exports.default = function(sequelize, DataTypes) {
 
   mailBox.associate = function(models) {
     mailBox.belongsTo(models.users, {foreignKey: 'user_id'});
+    mailBox.belongsTo(models.products, {
+      foreignKey: 'bill_product_id', as: 'product',
+    });
   };
 
   return mailBox;
