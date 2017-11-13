@@ -53,7 +53,7 @@ exports.default = function (sequelize, DataTypes) {
     onlineSellers.belongsTo(models.users, { foreignKey: 'updated_by' });
 
     onlineSellers.belongsTo(models.statuses, { foreignKey: 'status_type', targetKey: 'status_type' });
-    onlineSellers.hasMany(models.bills);
+    onlineSellers.hasMany(models.bills, {foreignKey: 'seller_id'});
     onlineSellers.hasMany(models.sellerReviews,
         {foreignKey: 'seller_id', as: 'sellerReviews'});
   };
