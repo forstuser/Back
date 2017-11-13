@@ -81,7 +81,7 @@ export default (sequelize, DataTypes) => {
 
     products.belongsTo(models.statuses,
         {foreignKey: 'status_type', targetKey: 'status_type'});
-    products.belongsTo(models.jobs, {as: 'jobs'});
+    products.belongsTo(models.jobs, {as: 'jobs', foreignKey: 'job_id'});
     products.belongsTo(models.offlineSellers,
         {foreignKey: 'seller_id', as: 'sellers'});
     products.belongsTo(models.brands,

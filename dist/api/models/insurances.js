@@ -72,12 +72,12 @@ exports.default = function (sequelize, DataTypes) {
   });
 
   insurances.associate = function (models) {
-    insurances.belongsTo(models.products);
+    insurances.belongsTo(models.products, {foreignKey: 'product_id'});
     insurances.belongsTo(models.users, { foreignKey: 'user_id', as: 'consumer' });
     insurances.belongsTo(models.users, { foreignKey: 'updated_by', as: 'updatedByUser' });
 
     insurances.belongsTo(models.statuses, { foreignKey: 'status_type', targetKey: 'status_type' });
-    insurances.belongsTo(models.jobs, { as: 'jobs' });
+    insurances.belongsTo(models.jobs, {as: 'jobs', foreignKey: 'job_id'});
     insurances.belongsTo(models.onlineSellers, { foreignKey: 'online_seller_id', as: 'onlineSellers' });
     insurances.belongsTo(models.offlineSellers, { foreignKey: 'seller_id', as: 'sellers' });
     insurances.belongsTo(models.renewalTypes, { foreignKey: 'renewal_type', targetKey: 'type' });

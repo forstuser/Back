@@ -60,7 +60,7 @@ export default (sequelize, DataTypes) => {
 
     bills.belongsTo(models.statuses,
         {foreignKey: 'status_type', targetKey: 'status_type'});
-    bills.belongsTo(models.jobs, {as: 'jobs'});
+    bills.belongsTo(models.jobs, {as: 'jobs', foreignKey: 'job_id'});
     bills.belongsTo(models.onlineSellers,
         {foreignKey: 'seller_id', as: 'sellers'});
   };

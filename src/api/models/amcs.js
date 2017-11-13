@@ -69,7 +69,7 @@ export default (sequelize, DataTypes) => {
       });
 
   amcs.associate = (models) => {
-    amcs.belongsTo(models.products);
+    amcs.belongsTo(models.products, {foreignKey: 'product_id'});
     amcs.belongsTo(models.users,
         {foreignKey: 'user_id', as: 'consumer'});
     amcs.belongsTo(models.users,
@@ -77,7 +77,7 @@ export default (sequelize, DataTypes) => {
 
     amcs.belongsTo(models.statuses,
         {foreignKey: 'status_type', targetKey: 'status_type'});
-    amcs.belongsTo(models.jobs, {as: 'jobs'});
+    amcs.belongsTo(models.jobs, {as: 'jobs', foreignKey: 'job_id'});
     amcs.belongsTo(models.onlineSellers, {foreignKey: 'online_seller_id', as: 'onlineSellers'});
     amcs.belongsTo(models.offlineSellers, {foreignKey: 'seller_id', as: 'sellers'});
     amcs.belongsTo(models.renewalTypes,

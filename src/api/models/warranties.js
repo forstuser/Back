@@ -69,7 +69,7 @@ export default (sequelize, DataTypes) => {
       });
 
   warranties.associate = (models) => {
-    warranties.belongsTo(models.products);
+    warranties.belongsTo(models.products, {foreignKey: 'product_id'});
     warranties.belongsTo(models.users,
         {foreignKey: 'user_id', as: 'consumer'});
     warranties.belongsTo(models.users,
@@ -77,7 +77,7 @@ export default (sequelize, DataTypes) => {
 
     warranties.belongsTo(models.statuses,
         {foreignKey: 'status_type', targetKey: 'status_type'});
-    warranties.belongsTo(models.jobs, {as: 'jobs'});
+    warranties.belongsTo(models.jobs, {as: 'jobs', foreignKey: 'job_id'});
     warranties.belongsTo(models.onlineSellers, {foreignKey: 'online_seller_id', as: 'onlineSellers'});
     warranties.belongsTo(models.offlineSellers, {foreignKey: 'seller_id', as: 'sellers'});
     warranties.belongsTo(models.renewalTypes,

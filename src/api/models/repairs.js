@@ -58,7 +58,7 @@ export default (sequelize, DataTypes) => {
       });
 
   repairs.associate = (models) => {
-    repairs.belongsTo(models.products);
+    repairs.belongsTo(models.products, {foreignKey: 'product_id'});
     repairs.belongsTo(models.users,
         {foreignKey: 'user_id', as: 'consumer'});
     repairs.belongsTo(models.users,
@@ -66,7 +66,7 @@ export default (sequelize, DataTypes) => {
 
     repairs.belongsTo(models.statuses,
         {foreignKey: 'status_type', targetKey: 'status_type'});
-    repairs.belongsTo(models.jobs, {as: 'jobs'});
+    repairs.belongsTo(models.jobs, {as: 'jobs', foreignKey: 'job_id'});
     repairs.belongsTo(models.onlineSellers, {foreignKey: 'online_seller_id', as: 'onlineSellers'});
     repairs.belongsTo(models.offlineSellers, {foreignKey: 'seller_id', as: 'sellers'});
   };
