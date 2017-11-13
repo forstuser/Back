@@ -349,13 +349,19 @@ var ProductAdaptor = function () {
       options = _lodash2.default.omit(options, 'online_seller_id');
       options = _lodash2.default.omit(options, 'product_status_type');
 
-      var products = void 0;
       return this.modals.products.findAll({
         where: options,
         include: [
           {
             model: this.modals.bills,
             where: billOption,
+            include: [
+              {
+                model: this.modals.onlineSellers,
+                as: 'sellers',
+                attributes: [],
+                required: false,
+          }],
             required: true,
           }],
         attributes: ['id'],

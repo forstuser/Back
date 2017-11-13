@@ -240,7 +240,7 @@ class ProductAdaptor {
               this.modals.sequelize.literal('"products"."brand_id"'),
               '&categoryid=',
               this.modals.sequelize.col('"products"."category_id"')),
-          'serviceCenterUrl']
+          'serviceCenterUrl'],
       ],
     }).then((productResult) => {
       products = productResult.map((item) => item.toJSON());
@@ -312,13 +312,19 @@ class ProductAdaptor {
     options = _.omit(options, 'online_seller_id');
     options = _.omit(options, 'product_status_type');
 
-    let products;
     return this.modals.products.findAll({
       where: options,
       include: [
         {
           model: this.modals.bills,
           where: billOption,
+          include: [
+            {
+              model: this.modals.onlineSellers,
+              as: 'sellers',
+              attributes: [],
+              required: false,
+            }],
           required: true,
         },
       ],
