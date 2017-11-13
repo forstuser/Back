@@ -101,7 +101,7 @@ class SearchAdaptor {
 
           productOptions.$or = {
             category_id: categories.map(item => item.id),
-            master_category_id: categories.map(item => item.id),
+            main_category_id: categories.map(item => item.id),
           };
           return this.productAdaptor.retrieveProducts(productOptions);
         }).then((productResult) => {

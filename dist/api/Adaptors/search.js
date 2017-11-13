@@ -154,7 +154,7 @@ var SearchAdaptor = function () {
                 category_id: categories.map(function(item) {
                   return item.id;
                 }),
-                master_category_id: categories.map(function(item) {
+                main_category_id: categories.map(function(item) {
                   return item.id;
                 }),
               };
