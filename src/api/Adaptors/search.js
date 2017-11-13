@@ -23,14 +23,16 @@ class SearchAdaptor {
 
   prepareSearchResult(user, searchValue) {
     return Promise.all([
-      this.fetchProductDetails(user, `%${searchValue}%`),
-      this.prepareCategoryData(user, `%${searchValue}%`),
-      this.updateRecentSearch(user, searchValue),
-      this.retrieveRecentSearch(user),
       this.fetchProductDetailOnline(user, `%${searchValue}%`),
       this.fetchProductDetailOffline(user, `%${searchValue}%`),
       this.fetchProductDetailBrand(user, `%${searchValue}%`),
-    ]).then((result) => {
+    ]).then((results) => Promise.all([
+      this.fetchProductDetails(user, `%${searchValue}%`,
+          [...results[0], ...results[1], ...results[2]]),
+      this.prepareCategoryData(user, `%${searchValue}%`),
+      this.updateRecentSearch(user, searchValue),
+      this.retrieveRecentSearch(user),
+    ])).then((result) => {
       const productIds = [];
       let productList = result[0].map((item) => {
         const product = item;
@@ -38,21 +40,6 @@ class SearchAdaptor {
         return product;
       });
 
-      const productListOnline = result[4].map((item) => {
-        const product = item;
-        productIds.push(product.id);
-        return product;
-      });
-      const productListOffline = result[5].map((item) => {
-        const product = item;
-        productIds.push(product.id);
-        return product;
-      });
-      const productListBrand = result[6].map((item) => {
-        const product = item;
-        productIds.push(product.id);
-        return product;
-      });
       const categoryList = result[1].map((item) => {
         const category = item;
         category.products = category.products.filter((elem) => {
@@ -63,10 +50,7 @@ class SearchAdaptor {
       });
 
       productList = uniqueBy([
-        ...productList,
-        ...productListOnline,
-        ...productListOffline,
-        ...productListBrand], (item1, item2) => item1.id === item2.id);
+        ...productList], (item1, item2) => item1.id === item2.id);
 
       result[2][0].updateAttributes({
         resultCount: productList.length + categoryList.length,
@@ -109,13 +93,21 @@ class SearchAdaptor {
       user_id: user.id,
     };
 
-    return Promise.all([
-      this.categoryAdaptor.retrieveCategories(categoryOption),
-      this.productAdaptor.retrieveProducts(productOptions)]).
+    let categories;
+
+    return this.categoryAdaptor.retrieveCategories(categoryOption).
         then((results) => {
-          return results[0].map((categoryItem) => {
+          categories = results;
+
+          productOptions.$or = {
+            category_id: categories.map(item => item.id),
+            master_category_id: categories.map(item => item.id),
+          };
+          return this.productAdaptor.retrieveProducts(productOptions);
+        }).then((productResult) => {
+          return categories.map((categoryItem) => {
             const category = categoryItem;
-            const products = _.chain(results[1]).
+            const products = _.chain(productResult).
                 filter(
                     (productItem) => productItem.masterCategoryId ===
                         category.id || productItem.categoryId === category.id);
@@ -152,16 +144,18 @@ class SearchAdaptor {
     });
   }
 
-  fetchProductDetails(user, searchValue) {
+  fetchProductDetails(user, searchValue, productIds) {
     return this.productAdaptor.retrieveProducts({
-      $and: [
-        {
-          user_id: user.id,
-          status_type: [5, 8],
-        },
-        this.modals.sequelize.where(this.modals.sequelize.fn('lower',
-            this.modals.sequelize.col('product_name')),
-            {$iLike: this.modals.sequelize.fn('lower', searchValue)})],
+      user_id: user.id,
+      status_type: [5, 8],
+      $or: {
+        id: productIds,
+        $and: [
+          this.modals.sequelize.where(this.modals.sequelize.fn('lower',
+              this.modals.sequelize.col('product_name')),
+              {$iLike: this.modals.sequelize.fn('lower', searchValue)}),
+        ],
+      },
     });
   }
 
@@ -172,7 +166,7 @@ class SearchAdaptor {
             this.modals.sequelize.col('seller_name')),
             {$iLike: this.modals.sequelize.fn('lower', searchValue)})],
     }).then((onlineSellers) => {
-      return this.productAdaptor.retrieveProducts({
+      return this.productAdaptor.retrieveProductIds({
         user_id: user.id,
         status_type: [5, 8],
         online_seller_id: onlineSellers.map(item => item.id),
@@ -187,7 +181,7 @@ class SearchAdaptor {
             this.modals.sequelize.col('seller_name')),
             {$iLike: this.modals.sequelize.fn('lower', searchValue)})],
     }).then((offlineSellers) => {
-      return this.productAdaptor.retrieveProducts({
+      return this.productAdaptor.retrieveProductIds({
         user_id: user.id,
         status_type: [5, 8],
         seller_id: offlineSellers.map(item => item.id),
@@ -202,7 +196,7 @@ class SearchAdaptor {
             this.modals.sequelize.col('brand_name')),
             {$iLike: this.modals.sequelize.fn('lower', searchValue)})],
     }).then((brands) => {
-      return this.productAdaptor.retrieveProducts({
+      return this.productAdaptor.retrieveProductIds({
         user_id: user.id,
         status_type: [5, 8],
         brand_id: brands.map(item => item.id),

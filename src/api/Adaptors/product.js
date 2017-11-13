@@ -294,6 +294,38 @@ class ProductAdaptor {
     });
   }
 
+  retrieveProductIds(options) {
+    if (!options.status_type) {
+      options.status_type = {
+        $notIn: [3, 9],
+      };
+    }
+
+    const billOption = {
+      status_type: 5,
+    };
+
+    if (options.online_seller_id) {
+      billOption.seller_id = options.online_seller_id;
+    }
+
+    options = _.omit(options, 'online_seller_id');
+    options = _.omit(options, 'product_status_type');
+
+    let products;
+    return this.modals.products.findAll({
+      where: options,
+      include: [
+        {
+          model: this.modals.bills,
+          where: billOption,
+          required: true,
+        },
+      ],
+      attributes: ['id'],
+    }).then((productResult) => productResult.map((item) => item.toJSON()));
+  }
+
   retrieveProductCounts(options) {
     if (!options.status_type) {
       options.status_type = {

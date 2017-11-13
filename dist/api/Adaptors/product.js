@@ -330,6 +330,42 @@ var ProductAdaptor = function () {
       });
     }
   }, {
+    key: 'retrieveProductIds',
+    value: function retrieveProductIds(options) {
+      if (!options.status_type) {
+        options.status_type = {
+          $notIn: [3, 9],
+        };
+      }
+
+      var billOption = {
+        status_type: 5,
+      };
+
+      if (options.online_seller_id) {
+        billOption.seller_id = options.online_seller_id;
+      }
+
+      options = _lodash2.default.omit(options, 'online_seller_id');
+      options = _lodash2.default.omit(options, 'product_status_type');
+
+      var products = void 0;
+      return this.modals.products.findAll({
+        where: options,
+        include: [
+          {
+            model: this.modals.bills,
+            where: billOption,
+            required: true,
+          }],
+        attributes: ['id'],
+      }).then(function(productResult) {
+        return productResult.map(function(item) {
+          return item.toJSON();
+        });
+      });
+    }
+  }, {
     key: 'retrieveProductCounts',
     value: function retrieveProductCounts(options) {
       if (!options.status_type) {

@@ -60,14 +60,22 @@ var SearchAdaptor = function () {
     {
       key: 'prepareSearchResult',
       value: function prepareSearchResult(user, searchValue) {
+        var _this = this;
+
         return Promise.all([
-          this.fetchProductDetails(user, '%' + searchValue + '%'),
-          this.prepareCategoryData(user, '%' + searchValue + '%'),
-          this.updateRecentSearch(user, searchValue),
-          this.retrieveRecentSearch(user),
           this.fetchProductDetailOnline(user, '%' + searchValue + '%'),
           this.fetchProductDetailOffline(user, '%' + searchValue + '%'),
           this.fetchProductDetailBrand(user, '%' + searchValue + '%')]).
+            then(function(results) {
+              return Promise.all([
+                _this.fetchProductDetails(user, '%' + searchValue + '%',
+                    [].concat(_toConsumableArray(results[0]),
+                        _toConsumableArray(results[1]),
+                        _toConsumableArray(results[2]))),
+                _this.prepareCategoryData(user, '%' + searchValue + '%'),
+                _this.updateRecentSearch(user, searchValue),
+                _this.retrieveRecentSearch(user)]);
+            }).
             then(function(result) {
               var productIds = [];
               var productList = result[0].map(function(item) {
@@ -76,21 +84,6 @@ var SearchAdaptor = function () {
                 return product;
               });
 
-              var productListOnline = result[4].map(function(item) {
-                var product = item;
-                productIds.push(product.id);
-                return product;
-              });
-              var productListOffline = result[5].map(function(item) {
-                var product = item;
-                productIds.push(product.id);
-                return product;
-              });
-              var productListBrand = result[6].map(function(item) {
-                var product = item;
-                productIds.push(product.id);
-                return product;
-              });
               var categoryList = result[1].map(function(item) {
                 var category = item;
                 category.products = category.products.filter(function(elem) {
@@ -100,10 +93,7 @@ var SearchAdaptor = function () {
                 return category;
               });
 
-              productList = uniqueBy([].concat(_toConsumableArray(productList),
-                  _toConsumableArray(productListOnline),
-                  _toConsumableArray(productListOffline),
-                  _toConsumableArray(productListBrand)),
+              productList = uniqueBy([].concat(_toConsumableArray(productList)),
                   function(item1, item2) {
                     return item1.id === item2.id;
                   });
@@ -138,6 +128,8 @@ var SearchAdaptor = function () {
     }, {
       key: 'prepareCategoryData',
       value: function prepareCategoryData(user, searchValue) {
+        var _this2 = this;
+
         var categoryOption = {
           category_level: 1,
           status_type: 1,
@@ -152,13 +144,26 @@ var SearchAdaptor = function () {
           user_id: user.id,
         };
 
-        return Promise.all([
-          this.categoryAdaptor.retrieveCategories(categoryOption),
-          this.productAdaptor.retrieveProducts(productOptions)]).
+        var categories = void 0;
+
+        return this.categoryAdaptor.retrieveCategories(categoryOption).
             then(function(results) {
-              return results[0].map(function(categoryItem) {
+              categories = results;
+
+              productOptions.$or = {
+                category_id: categories.map(function(item) {
+                  return item.id;
+                }),
+                master_category_id: categories.map(function(item) {
+                  return item.id;
+                }),
+              };
+              return _this2.productAdaptor.retrieveProducts(productOptions);
+            }).
+            then(function(productResult) {
+              return categories.map(function(categoryItem) {
                 var category = categoryItem;
-                var products = _lodash2.default.chain(results[1]).
+                var products = _lodash2.default.chain(productResult).
                     filter(function(productItem) {
                       return productItem.masterCategoryId === category.id ||
                           productItem.categoryId === category.id;
@@ -202,22 +207,23 @@ var SearchAdaptor = function () {
       },
     }, {
       key: 'fetchProductDetails',
-      value: function fetchProductDetails(user, searchValue) {
+      value: function fetchProductDetails(user, searchValue, productIds) {
         return this.productAdaptor.retrieveProducts({
-          $and: [
-            {
-              user_id: user.id,
-              status_type: [5, 8],
-            },
-            this.modals.sequelize.where(this.modals.sequelize.fn('lower',
-                this.modals.sequelize.col('product_name')),
-                {$iLike: this.modals.sequelize.fn('lower', searchValue)})],
+          user_id: user.id,
+          status_type: [5, 8],
+          $or: {
+            id: productIds,
+            $and: [
+              this.modals.sequelize.where(this.modals.sequelize.fn('lower',
+                  this.modals.sequelize.col('product_name')),
+                  {$iLike: this.modals.sequelize.fn('lower', searchValue)})],
+          },
         });
       },
     }, {
       key: 'fetchProductDetailOnline',
       value: function fetchProductDetailOnline(user, searchValue) {
-        var _this = this;
+        var _this3 = this;
 
         return this.sellerAdaptor.retrieveOnlineSellers({
           $and: [
@@ -225,7 +231,7 @@ var SearchAdaptor = function () {
                 this.modals.sequelize.col('seller_name')),
                 {$iLike: this.modals.sequelize.fn('lower', searchValue)})],
         }).then(function(onlineSellers) {
-          return _this.productAdaptor.retrieveProducts({
+          return _this3.productAdaptor.retrieveProductIds({
             user_id: user.id,
             status_type: [5, 8],
             online_seller_id: onlineSellers.map(function(item) {
@@ -237,7 +243,7 @@ var SearchAdaptor = function () {
     }, {
       key: 'fetchProductDetailOffline',
       value: function fetchProductDetailOffline(user, searchValue) {
-        var _this2 = this;
+        var _this4 = this;
 
         return this.sellerAdaptor.retrieveOfflineSellers({
           $and: [
@@ -245,7 +251,7 @@ var SearchAdaptor = function () {
                 this.modals.sequelize.col('seller_name')),
                 {$iLike: this.modals.sequelize.fn('lower', searchValue)})],
         }).then(function(offlineSellers) {
-          return _this2.productAdaptor.retrieveProducts({
+          return _this4.productAdaptor.retrieveProductIds({
             user_id: user.id,
             status_type: [5, 8],
             seller_id: offlineSellers.map(function(item) {
@@ -257,7 +263,7 @@ var SearchAdaptor = function () {
     }, {
       key: 'fetchProductDetailBrand',
       value: function fetchProductDetailBrand(user, searchValue) {
-        var _this3 = this;
+        var _this5 = this;
 
         return this.brandAdaptor.retrieveBrands({
           $and: [
@@ -265,7 +271,7 @@ var SearchAdaptor = function () {
                 this.modals.sequelize.col('brand_name')),
                 {$iLike: this.modals.sequelize.fn('lower', searchValue)})],
         }).then(function(brands) {
-          return _this3.productAdaptor.retrieveProducts({
+          return _this5.productAdaptor.retrieveProductIds({
             user_id: user.id,
             status_type: [5, 8],
             brand_id: brands.map(function(item) {

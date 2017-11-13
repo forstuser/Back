@@ -322,11 +322,11 @@ var NotificationAdaptor = function () {
             user_id: user.ID,
             status_id: {
               $notIn: [3, 9],
-            },
-            notification_id: notificationIds,
           },
+            notification_id: notificationIds,
+          }
         });
-      },
+      }
     }, {
       key: 'notifyUser',
       value: function notifyUser(userId, payload, reply) {
@@ -383,9 +383,9 @@ var NotificationAdaptor = function () {
           where: {
             user_status_type: {
               $ne: 3,
-            },
-            email_secret: emailSecret,
           },
+            email_secret: emailSecret,
+          }
         }).then(function(result) {
           result.updateAttributes({
             email_verified: true,
@@ -396,7 +396,7 @@ var NotificationAdaptor = function () {
           console.log({API_Logs: err});
           return reply({status: false});
         });
-      },
+      }
     }], [
     {
       key: 'sendVerificationMail',

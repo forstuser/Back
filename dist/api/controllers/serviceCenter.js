@@ -25,7 +25,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var modals = void 0;
 var serviceCenterAdaptor = void 0;
-var excludedAttributes = { exclude: ['tableBrandID', 'display_id', 'created_on', 'updated_on', 'updated_by_user_id', 'status_id', 'tableAuthorizedServiceCenterID'] };
 
 var ServiceCenterController = function () {
 	function ServiceCenterController(modal) {
