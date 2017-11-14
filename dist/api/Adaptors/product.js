@@ -155,7 +155,9 @@ var ProductAdaptor = function () {
               'isService'],
             'url',
             'gstin',
-            'contact_no',
+            [
+              'contact_no',
+              'contact'],
             'email',
             'address',
             'city',
@@ -484,7 +486,9 @@ var ProductAdaptor = function () {
                 'isService'],
               'url',
               'gstin',
-              'contact_no',
+              [
+                'contact_no',
+                'contact'],
               'email',
               'address',
               'city',

@@ -87,7 +87,9 @@ var InsuranceAdaptor = function () {
               'isService'],
             'url',
             'gstin',
-            'contact_no',
+            [
+              'contact_no',
+              'contact'],
             'email',
             'address',
             'city',

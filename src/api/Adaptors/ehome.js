@@ -117,7 +117,7 @@ class EHomeAdaptor {
               'copyId'],
               'file_type',
             [
-              this.modals.sequelize.fn('CONCAT', 'jobs/',
+              this.modals.sequelize.fn('CONCAT', '/jobs/',
                   this.modals.sequelize.literal('"jobs"."id"'), '/files/',
                   this.modals.sequelize.literal('"copies"."id"')),
               'copyUrl']],
