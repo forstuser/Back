@@ -222,8 +222,8 @@ var ProductAdaptor = function () {
             'value'],
           'taxes',
           [
-            this.modals.sequelize.fn('CONCAT', 'categories/',
-                this.modals.sequelize.col('category_id'), '/images'),
+            this.modals.sequelize.fn('CONCAT', '/categories/',
+                this.modals.sequelize.col('category_id'), '/images/'),
             'cImageURL'],
           [
             this.modals.sequelize.fn('CONCAT', 'products/',
