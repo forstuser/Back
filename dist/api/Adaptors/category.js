@@ -102,9 +102,9 @@ var CategoryAdaptor = function() {
                   '/insights'),
               'categoryInsightUrl'],
             [
-              this.modals.sequelize.fn('CONCAT', 'categories/',
+              this.modals.sequelize.fn('CONCAT', '/categories/',
                   this.modals.sequelize.literal('"categories"."category_id"'),
-                  '/images'),
+                  '/images/'),
               'categoryImageUrl']],
         }).then(function(result) {
           return result.map(function(item) {

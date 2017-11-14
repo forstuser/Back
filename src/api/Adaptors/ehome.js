@@ -114,15 +114,13 @@ class EHomeAdaptor {
           attributes: [
             [
               'id',
-              'billCopyId'],
-            [
+              'copyId'],
               'file_type',
-              'billCopyType'],
             [
               this.modals.sequelize.fn('CONCAT', 'jobs/',
                   this.modals.sequelize.literal('"jobs"."id"'), '/files/',
                   this.modals.sequelize.literal('"copies"."id"')),
-              'fileUrl']],
+              'copyUrl']],
           where: {
             status_type: {
               $notIn: [3, 5, 9],
