@@ -425,7 +425,7 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
     /*Retrieve Category images*/
     uploadFileRoute.push({
       method: 'GET',
-      path: '/categories/{id}/image/{type}',
+      path: '/categories/{id}/images/{type}',
       config: {
         handler: _upload2.default.retrieveCategoryImage
       }
