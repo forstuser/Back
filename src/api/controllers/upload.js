@@ -445,8 +445,8 @@ class UploadController {
   static retrieveCategoryImage(request, reply) {
     if (!request.pre.forceUpdate) {
       const fsImplCategory = new S3FS(
-          `${AWS.S3.BUCKET}/${AWS.S3.CATEGORY_IMAGE}/${categoryImageType[request.params.type ||
-          0]}`, AWS.ACCESS_DETAILS);
+          `${config.AWS.S3.BUCKET}/${config.AWS.S3.CATEGORY_IMAGE}/${categoryImageType[request.params.type ||
+          0]}`, config.AWS.ACCESS_DETAILS);
       modals.categories.findOne({
         where: {
           category_id: request.params.id,

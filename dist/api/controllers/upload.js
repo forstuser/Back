@@ -429,7 +429,10 @@ var UploadController = function () {
     key: 'retrieveCategoryImage',
     value: function retrieveCategoryImage(request, reply) {
       if (!request.pre.forceUpdate) {
-        var fsImplCategory = new _s3fs2.default(AWS.S3.BUCKET + '/' + AWS.S3.CATEGORY_IMAGE + '/' + categoryImageType[request.params.type || 0], AWS.ACCESS_DETAILS);
+        var fsImplCategory = new _s3fs2.default(_main2.default.AWS.S3.BUCKET +
+            '/' + _main2.default.AWS.S3.CATEGORY_IMAGE + '/' +
+            categoryImageType[request.params.type || 0],
+            _main2.default.AWS.ACCESS_DETAILS);
         modals.categories.findOne({
           where: {
             category_id: request.params.id
