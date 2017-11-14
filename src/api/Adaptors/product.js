@@ -540,14 +540,10 @@ class ProductAdaptor {
           where: {
             $and: [
               this.modals.sequelize.where(
-                  this.modals.sequelize.literal(
-                      'cast("metaData"."form_value" as integer)'),
-                  this.modals.sequelize.literal('"dropDown"."id"')),
-              this.modals.sequelize.where(
                   this.modals.sequelize.literal('"categoryForm"."form_type"'),
-                  2)],
+                  2),]
           },
-          attributes: ['title'],
+          attributes: ['id', 'title'],
           required: false,
         }],
 
@@ -558,7 +554,12 @@ class ProductAdaptor {
         [
           'form_value',
           'value'],
-        ['category_form_id', 'categoryFormId'],
+        [
+          'category_form_id',
+          'categoryFormId'],
+        [
+          this.modals.sequelize.literal('"categoryForm"."form_type"'),
+          'formType'],
         [
           this.modals.sequelize.literal('"categoryForm"."title"'),
           'name'],
@@ -568,9 +569,12 @@ class ProductAdaptor {
     }).then((metaData) => {
       const unOrderedMetaData = metaData.map((item) => {
         const metaDataItem = item.toJSON();
-        metaDataItem.value = metaDataItem.dropDown
-            ? metaDataItem.dropDown.title
-            : metaDataItem.value;
+        if (metaData.formType === 2 && metaDataItem.value) {
+          const dropDown = metaDataItem.dropDown.find(
+              (item) => item.id === parseInt(metaDataItem.value));
+          metaDataItem.value = dropDown ? dropDown.title : metaDataItem.value;
+        }
+
         return metaDataItem;
       });
 

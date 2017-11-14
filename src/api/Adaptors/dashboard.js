@@ -228,7 +228,7 @@ class DashboardAdaptor {
 				let products = result[0].map((item) => {
           const product = item;
 
-          product.metaData.map((metaItem) => {
+          product.productMetaData.map((metaItem) => {
 						const metaData = metaItem;
 						if (metaData.name.toLowerCase().includes('due') && metaData.name.toLowerCase().includes('date') && moment(metaData.value).isValid()) {
 							const dueDateTime = moment(metaData.value);

@@ -45,7 +45,7 @@ exports.default = function (sequelize, DataTypes) {
 
     metaData.belongsTo(models.categoryForms, { foreignKey: 'category_form_id', as: 'categoryForm' });
 
-    metaData.hasOne(models.dropDowns, {
+    metaData.hasMany(models.dropDowns, {
       foreignKey: 'category_form_id', as: 'dropDown', targetKey: 'category_form_id'
     });
 

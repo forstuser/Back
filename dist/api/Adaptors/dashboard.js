@@ -268,7 +268,7 @@ var DashboardAdaptor = function () {
         var products = result[0].map(function(item) {
           var product = item;
 
-          product.metaData.map(function(metaItem) {
+          product.productMetaData.map(function(metaItem) {
             var metaData = metaItem;
             if (metaData.name.toLowerCase().includes('due') &&
                 metaData.name.toLowerCase().includes('date') &&

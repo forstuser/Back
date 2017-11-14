@@ -152,7 +152,7 @@ var NotificationAdaptor = function () {
           var products = result[0].map(function(item) {
             var product = item;
 
-            product.metaData.map(function(metaItem) {
+            product.productMetaData.map(function(metaItem) {
               var metaData = metaItem;
               if (metaData.name.toLowerCase().includes('due') &&
                   metaData.name.toLowerCase().includes('date') &&
@@ -187,7 +187,7 @@ var NotificationAdaptor = function () {
                 item.dueIn <= 30 && item.dueIn >= 0;
           });
           var amcs = result[1].map(function(item) {
-            var amc = item.toJSON();
+            var amc = item;
             if ((0, _moment2.default)(amc.expiryDate).isValid()) {
               var dueDateTime = (0, _moment2.default)(amc.expiryDate);
               amc.dueDate = amc.expiryDate;
@@ -205,7 +205,7 @@ var NotificationAdaptor = function () {
           });
 
           var insurances = result[2].map(function(item) {
-            var insurance = item.toJSON();
+            var insurance = item;
             if ((0, _moment2.default)(insurance.expiryDate).isValid()) {
               var dueDateTime = (0, _moment2.default)(insurance.expiryDate);
               insurance.dueDate = insurance.expiryDate;
@@ -224,7 +224,7 @@ var NotificationAdaptor = function () {
           });
 
           var warranties = result[3].map(function(item) {
-            var warranty = item.toJSON();
+            var warranty = item;
             if ((0, _moment2.default)(warranty.expiryDate).isValid()) {
               var dueDateTime = (0, _moment2.default)(warranty.expiryDate);
 

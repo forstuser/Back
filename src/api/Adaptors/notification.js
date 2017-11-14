@@ -182,7 +182,7 @@ class NotificationAdaptor {
       let products = result[0].map((item) => {
         const product = item;
 
-        product.metaData.map((metaItem) => {
+        product.productMetaData.map((metaItem) => {
           const metaData = metaItem;
           if (metaData.name.toLowerCase().includes('due') &&
               metaData.name.toLowerCase().includes('date') &&
@@ -215,7 +215,7 @@ class NotificationAdaptor {
           item => ((item.dueIn !== undefined && item.dueIn !== null) &&
               item.dueIn <= 30 && item.dueIn >= 0));
       let amcs = result[1].map((item) => {
-        const amc = item.toJSON();
+        const amc = item;
         if (moment(amc.expiryDate).isValid()) {
           const dueDateTime = moment(amc.expiryDate);
           amc.dueDate = amc.expiryDate;
@@ -232,7 +232,7 @@ class NotificationAdaptor {
               item.dueIn <= 30 && item.dueIn >= 0);
 
       let insurances = result[2].map((item) => {
-        const insurance = item.toJSON();
+        const insurance = item;
         if (moment(insurance.expiryDate).isValid()) {
           const dueDateTime = moment(insurance.expiryDate);
           insurance.dueDate = insurance.expiryDate;
@@ -249,7 +249,7 @@ class NotificationAdaptor {
               item.dueIn <= 30 && item.dueIn >= 0);
 
       let warranties = result[3].map((item) => {
-        const warranty = item.toJSON();
+        const warranty = item;
         if (moment(warranty.expiryDate).isValid()) {
           const dueDateTime = moment(warranty.expiryDate);
 
