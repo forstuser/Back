@@ -130,7 +130,10 @@ var InsuranceAdaptor = function () {
             'taxes'],
           [
             'amount_insured',
-            'amountInsured'][('effective_date', 'effectiveDate')],
+            'amountInsured'],
+          [
+            'effective_date',
+            'effectiveDate'],
           [
             'expiry_date',
             'expiryDate'],
