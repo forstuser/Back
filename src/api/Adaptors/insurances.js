@@ -118,9 +118,10 @@ class InsuranceAdaptor {
         [
           'renewal_taxes',
           'taxes'],
-        [
-          'effective_date',
-          'effectiveDate'],
+        ['amount_insured', 'amountInsured']
+            [
+            'effective_date',
+                'effectiveDate'],
         [
           'expiry_date',
           'expiryDate'],

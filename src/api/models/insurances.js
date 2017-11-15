@@ -20,10 +20,13 @@ export default (sequelize, DataTypes) => {
           allowNull: false,
         },
         renewal_cost: {
-          type: DataTypes.FLOAT
+          type: DataTypes.FLOAT,
         },
         renewal_taxes: {
-          type: DataTypes.FLOAT
+          type: DataTypes.FLOAT,
+        },
+        amount_insured: {
+          type: DataTypes.FLOAT,
         },
         user_id: {
           type: DataTypes.INTEGER,
@@ -39,7 +42,7 @@ export default (sequelize, DataTypes) => {
         },
         created_at: {
           type: DataTypes.DATE,
-          defaultValue: sequelize.literal('NOW()')
+          defaultValue: sequelize.literal('NOW()'),
         },
         updated_at: {
           type: DataTypes.DATE,
@@ -47,14 +50,14 @@ export default (sequelize, DataTypes) => {
         },
         effective_date: {
           type: DataTypes.DATE,
-          defaultValue: sequelize.literal('NOW()')
+          defaultValue: sequelize.literal('NOW()'),
         },
         expiry_date: {
           type: DataTypes.DATE,
         },
         document_date: {
           type: DataTypes.DATE,
-          defaultValue: sequelize.literal('NOW()')
+          defaultValue: sequelize.literal('NOW()'),
         },
         copies: {
           type: DataTypes.ARRAY(DataTypes.JSON),
@@ -78,10 +81,12 @@ export default (sequelize, DataTypes) => {
     insurances.belongsTo(models.statuses,
         {foreignKey: 'status_type', targetKey: 'status_type'});
     insurances.belongsTo(models.jobs, {as: 'jobs', foreignKey: 'job_id'});
-    insurances.belongsTo(models.onlineSellers, {foreignKey: 'online_seller_id', as: 'onlineSellers'});
-    insurances.belongsTo(models.offlineSellers, {foreignKey: 'seller_id', as: 'sellers'});
+    insurances.belongsTo(models.onlineSellers,
+        {foreignKey: 'online_seller_id', as: 'onlineSellers'});
+    insurances.belongsTo(models.offlineSellers,
+        {foreignKey: 'seller_id', as: 'sellers'});
     insurances.belongsTo(models.renewalTypes,
-        {foreignKey: 'renewal_type', targetKey:'type'});
+        {foreignKey: 'renewal_type', targetKey: 'type'});
   };
 
   return insurances;

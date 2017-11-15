@@ -29,6 +29,9 @@ exports.default = function (sequelize, DataTypes) {
     renewal_taxes: {
       type: DataTypes.FLOAT
     },
+    amount_insured: {
+      type: DataTypes.FLOAT,
+    },
     user_id: {
       type: DataTypes.INTEGER
     },
