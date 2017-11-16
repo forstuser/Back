@@ -461,10 +461,31 @@ var ProductAdaptor = function () {
                   'url',
                   'gstin',
                   'contact',
-                  'email'],
+                  'email',
+                  [
+                    this.modals.sequelize.fn('CONCAT', 'sellers/',
+                        this.modals.sequelize.literal('"bill->sellers"."sid"'),
+                        '/reviews?isonlineseller=true'),
+                    'reviewUrl']],
+                include: [
+                  {
+                    model: this.modals.sellerReviews,
+                    as: 'sellerReviews',
+                    attributes: [
+                      [
+                        'review_ratings',
+                        'ratings'],
+                      [
+                        'review_feedback',
+                        'feedback'],
+                      [
+                        'review_comments',
+                        'comments']],
+                    required: false,
+                  }],
                 required: false,
               }],
-            required: false,
+            required: true,
           }, {
             model: this.modals.offlineSellers,
             as: 'sellers',
@@ -495,7 +516,42 @@ var ProductAdaptor = function () {
               'state',
               'pincode',
               'latitude',
-              'longitude'],
+              'longitude',
+              [
+                this.modals.sequelize.fn('CONCAT', 'sellers/',
+                    this.modals.sequelize.literal('"sellers"."sid"'),
+                    '/reviews?isonlineseller=false'),
+                'reviewUrl']],
+            include: [
+              {
+                model: this.modals.sellerReviews,
+                as: 'sellerReviews',
+                attributes: [
+                  [
+                    'review_ratings',
+                    'ratings'],
+                  [
+                    'review_feedback',
+                    'feedback'],
+                  [
+                    'review_comments',
+                    'comments']],
+                required: false,
+          }],
+            required: false,
+          }, {
+            model: this.modals.productReviews,
+            as: 'productReviews',
+            attributes: [
+              [
+                'review_ratings',
+                'ratings'],
+              [
+                'review_feedback',
+                'feedback'],
+              [
+                'review_comments',
+                'comments']],
             required: false,
           }],
         attributes: [
@@ -521,7 +577,7 @@ var ProductAdaptor = function () {
           'taxes',
           [
             this.modals.sequelize.fn('CONCAT', '/categories/',
-                this.modals.sequelize.col('main_category_id'), '/images/'),
+                this.modals.sequelize.col('category_id'), '/images/'),
             'cImageURL'],
           [
             this.modals.sequelize.fn('CONCAT', 'products/',
@@ -533,6 +589,9 @@ var ProductAdaptor = function () {
           [
             'document_number',
             'documentNo'],
+          [
+            'updated_at',
+            'updatedDate'],
           [
             'bill_id',
             'billId'],
@@ -547,10 +606,15 @@ var ProductAdaptor = function () {
             'updatedDate'],
           'copies',
           [
+            this.modals.sequelize.fn('CONCAT', 'products/',
+                this.modals.sequelize.literal('"products"."id"'), '/reviews'),
+            'reviewUrl'],
+          [
             this.modals.sequelize.fn('CONCAT',
                 '/consumer/servicecenters?brandid=',
-                this.modals.sequelize.col('brand_id'), '&categoryid=',
-                this.modals.sequelize.col('category_id')),
+                this.modals.sequelize.literal('"products"."brand_id"'),
+                '&categoryid=',
+                this.modals.sequelize.col('"products"."category_id"')),
             'serviceCenterUrl']],
       }).then(function(productResult) {
         products = productResult ? productResult.toJSON() : productResult;

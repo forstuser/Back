@@ -85,7 +85,27 @@ var BrandAdaptor = function() {
                 'name'],
               [
                 'brand_description',
-                'description']],
+                'description'],
+              [
+                this.modals.sequelize.fn('CONCAT', 'brands/',
+                    this.modals.sequelize.col('"brand_id"'), '/reviews'),
+                'reviewUrl']],
+            include: [
+              {
+                model: this.modals.brandReviews,
+                as: 'brandReviews',
+                attributes: [
+                  [
+                    'review_ratings',
+                    'ratings'],
+                  [
+                    'review_feedback',
+                    'feedback'],
+                  [
+                    'review_comments',
+                    'comments']],
+                required: false,
+              }],
           }), this.retrieveBrandDetails(detailOptions)]).
             then(function(results) {
               var brand = results[0] ? results[0].toJSON() : results[0];
