@@ -63,8 +63,8 @@ function weekAndDay(d) {
   var prefixes = [1, 2, 3, 4, 5];
 
   return {
-    monthWeek: prefixes[Math.round(d.getDate() / 7)],
-    day: days[d.getDay()],
+    monthWeek: prefixes[Math.round((0, _moment2.default)(d).date() / 7)],
+    day: days[(0, _moment2.default)(d).day()],
   };
 }
 

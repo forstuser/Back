@@ -16,8 +16,8 @@ function weekAndDay(d) {
   const prefixes = [1, 2, 3, 4, 5];
 
   return {
-    monthWeek: prefixes[Math.round(d.getDate() / 7)],
-    day: days[d.getDay()],
+    monthWeek: prefixes[Math.round(moment(d).date() / 7)],
+    day: days[moment(d).day()],
   };
 }
 
@@ -386,8 +386,7 @@ class InsightAdaptor {
                     month()],
                 monthId: moment(expense.purchaseDate).month() + 1,
                 purchaseDate: moment(expense.purchaseDate),
-                week: weekAndDay(
-                    moment(expense.purchaseDate)).monthWeek,
+                week: weekAndDay(moment(expense.purchaseDate)).monthWeek,
                 day: weekAndDay(moment(expense.purchaseDate)).day,
                 tax: expense.taxes,
               });
