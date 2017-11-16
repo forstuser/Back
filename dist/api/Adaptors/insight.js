@@ -424,8 +424,10 @@ var InsightAdaptor = function () {
               result[0].expenses.map(function(item) {
                 var expense = item;
                 var index = distinctInsight.findIndex(function(distinctItem) {
-                  return (0, _moment2.default)(distinctItem.date).valueOf() ===
-                      (0, _moment2.default)(expense.purchaseDate).valueOf();
+                  return (0, _moment2.default)(distinctItem.purchaseDate).
+                      startOf('day').
+                      diff((0, _moment2.default)(expense.purchaseDate).
+                          startOf('day'), 'days') === 0;
                 });
                 if (index === -1) {
                   distinctInsight.push({
@@ -460,6 +462,16 @@ var InsightAdaptor = function () {
                   tax: item.tax,
                 };
 
+                var weekItem = {
+                  value: item.value,
+                  month: item.month,
+                  monthId: item.monthId,
+                  purchaseDate: item.purchaseDate,
+                  week: item.week,
+                  day: item.day,
+                  tax: item.tax,
+                };
+
                 var monthItem = {
                   value: item.value,
                   month: item.month,
@@ -471,18 +483,18 @@ var InsightAdaptor = function () {
                 };
                 var monthIndex = distinctInsightMonthly.findIndex(
                     function(distinctItem) {
-                      return distinctItem.month === item.month;
+                      return distinctItem.month === monthItem.month;
                     });
                 var weekIndex = distinctInsightWeekly.findIndex(
                     function(distinctItem) {
-                      return distinctItem.week === item.week;
+                      return distinctItem.week === weekItem.week;
                     });
                 if (weekIndex !== -1 && monthIndex !== -1) {
                   var currentWeekInsight = distinctInsightWeekly[weekIndex];
-                  currentWeekInsight.value += item.value;
-                  currentWeekInsight.tax += item.tax;
+                  currentWeekInsight.value += weekItem.value;
+                  currentWeekInsight.tax += weekItem.tax;
                 } else {
-                  distinctInsightWeekly.push(item);
+                  distinctInsightWeekly.push(weekItem);
                 }
 
                 if (monthIndex === -1) {

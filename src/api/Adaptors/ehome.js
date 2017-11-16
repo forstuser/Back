@@ -46,9 +46,10 @@ class EHomeAdaptor {
         return categoryData;
       });
 
-      const categoryDataWithoutOthers = categoryList.filter((elem) => {
+      const categoryDataWithoutOthers = _.orderBy(
+          categoryList.filter((elem) => {
         return (elem.id !== 9);
-      });
+          }), ['productCounts'], ['desc']);
 
       let newCategoryData = categoryDataWithoutOthers;
 

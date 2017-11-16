@@ -377,8 +377,10 @@ class InsightAdaptor {
           result[0].expenses.map((item) => {
             const expense = item;
             const index = distinctInsight.findIndex(
-                distinctItem => (moment(distinctItem.date).valueOf() ===
-                    moment(expense.purchaseDate).valueOf()));
+                distinctItem => (moment(distinctItem.purchaseDate).
+                    startOf('day').
+                    diff(moment(expense.purchaseDate).startOf('day'),
+                        'days') === 0));
             if (index === -1) {
               distinctInsight.push({
                 value: expense.value,
@@ -409,6 +411,16 @@ class InsightAdaptor {
               tax: item.tax,
             };
 
+            const weekItem = {
+              value: item.value,
+              month: item.month,
+              monthId: item.monthId,
+              purchaseDate: item.purchaseDate,
+              week: item.week,
+              day: item.day,
+              tax: item.tax,
+            };
+
             const monthItem = {
               value: item.value,
               month: item.month,
@@ -419,15 +431,15 @@ class InsightAdaptor {
               tax: item.tax,
             };
             const monthIndex = distinctInsightMonthly.findIndex(
-                distinctItem => (distinctItem.month === item.month));
+                distinctItem => (distinctItem.month === monthItem.month));
             const weekIndex = distinctInsightWeekly.findIndex(
-                distinctItem => (distinctItem.week === item.week));
+                distinctItem => (distinctItem.week === weekItem.week));
             if (weekIndex !== -1 && monthIndex !== -1) {
               const currentWeekInsight = distinctInsightWeekly[weekIndex];
-              currentWeekInsight.value += item.value;
-              currentWeekInsight.tax += item.tax;
+              currentWeekInsight.value += weekItem.value;
+              currentWeekInsight.tax += weekItem.tax;
             } else {
-              distinctInsightWeekly.push(item);
+              distinctInsightWeekly.push(weekItem);
             }
 
             if (monthIndex === -1) {

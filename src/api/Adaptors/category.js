@@ -70,6 +70,7 @@ export default class CategoryAdaptor {
               this.modals.sequelize.literal('"categories"."category_id"'),
               '/images/'),
           'categoryImageUrl']],
+      order: ['category_id'],
     }).then(result => result.map(item => item.toJSON()));
   }
 }

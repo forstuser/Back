@@ -119,9 +119,10 @@ var EHomeAdaptor = function() {
             return categoryData;
           });
 
-          var categoryDataWithoutOthers = categoryList.filter(function(elem) {
-            return elem.id !== 9;
-          });
+          var categoryDataWithoutOthers = _lodash2.default.orderBy(
+              categoryList.filter(function(elem) {
+                return elem.id !== 9;
+              }), ['productCounts'], ['desc']);
 
           var newCategoryData = categoryDataWithoutOthers;
 

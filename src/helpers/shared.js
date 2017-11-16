@@ -101,7 +101,7 @@ const getAllDays = function () {
 	while (s.valueOf() < e.valueOf()) {
 		a.push({
 			value: 0,
-			purchaseDate: moment(s).utc()
+			purchaseDate: moment(s).utc().startOf('d')
 		});
 		s = moment(s).utc().add(1, 'd').startOf('d');
 	}
@@ -112,7 +112,7 @@ const getAllDays = function () {
 function retrieveDaysInsight (distinctInsight) {
 	const allDaysInWeek = getAllDays();
 	distinctInsight.map((item) => {
-		const currentDate = moment(item.purchaseDate);
+		const currentDate = moment(item.purchaseDate).startOf('day');
 		for (let i = 0; i < allDaysInWeek.length; i += 1) {
 			const weekData = allDaysInWeek[i];
 			if (weekData.purchaseDate.valueOf() === currentDate.valueOf()) {

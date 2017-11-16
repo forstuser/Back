@@ -339,6 +339,7 @@ class ProductAdaptor {
       };
     }
 
+    let productResult;
     options = _.omit(options, 'product_status_type');
     return this.modals.products.findAll({
       where: options,
@@ -358,9 +359,34 @@ class ProductAdaptor {
           'masterCategoryId'],
         [
           this.modals.sequelize.literal('max("products"."updated_at")'),
-          'lastUpdatedAt']],
+          'lastUpdatedAt']
+      ],
       group: 'main_category_id',
-    }).then((productItems) => productItems.map((item) => item.toJSON()));
+    }).then((productItems) => {
+      productResult = productItems.map((item) => item.toJSON());
+      const inProgressProductOption = {};
+      _.assignIn(inProgressProductOption, options);
+      inProgressProductOption.status_type = 5;
+      return Promise.all([
+        this.amcAdaptor.retrieveAMCCounts(inProgressProductOption),
+        this.insuranceAdaptor.retrieveInsuranceCount(inProgressProductOption),
+        this.warrantyAdaptor.retrieveWarrantyCount(inProgressProductOption),
+        this.repairAdaptor.retrieveRepairCount(inProgressProductOption)]);
+    }).then((results) => {
+      if (options.status_type === 5) {
+        return productResult;
+      }
+      const availableResult = [
+        ...results[0],
+        ...results[1],
+        ...results[2],
+        ...results[3]];
+
+      return productResult.filter((item) => availableResult.includes(
+          (availResult) => availResult.masterCategoryId ===
+              item.masterCategoryId));
+
+    });
   }
 
   retrieveProductById(id, options) {
@@ -497,6 +523,18 @@ class ProductAdaptor {
               'comments']],
           required: false,
         },
+        {
+          model: this.modals.categories,
+          as: 'category',
+          attributes: [],
+          required: false,
+        },
+        {
+          model: this.modals.categories,
+          as: 'mainCategory',
+          attributes: [],
+          required: false,
+        },
       ],
       attributes: [
         'id',
@@ -504,7 +542,7 @@ class ProductAdaptor {
           'product_name',
           'productName'],
         [
-          'category_id',
+          this.modals.sequelize.literal('"category"."category_id"'),
           'categoryId'],
         [
           'main_category_id',
@@ -518,10 +556,17 @@ class ProductAdaptor {
         [
           'purchase_cost',
           'value'],
+        [
+          this.modals.sequelize.literal('"category"."category_name"'),
+          'categoryName'],
+        [
+          this.modals.sequelize.literal('"mainCategory"."category_name"'),
+          'masterCategoryName'],
         'taxes',
         [
           this.modals.sequelize.fn('CONCAT', '/categories/',
-              this.modals.sequelize.col('category_id'), '/images/'),
+              this.modals.sequelize.col('"category"."category_id"'),
+              '/images/'),
           'cImageURL'],
         [
           this.modals.sequelize.fn('CONCAT', 'products/',
@@ -577,10 +622,10 @@ class ProductAdaptor {
       if (products) {
         products.metaData = results[0];
         products.brand = results[1];
-        products.insuranceDetails = results[3];
-        products.warrantyDetails = results[4];
-        products.amcDetails = results[5];
-        products.repairBills = results[6];
+        products.insuranceDetails = results[2];
+        products.warrantyDetails = results[3];
+        products.amcDetails = results[4];
+        products.repairBills = results[5];
       }
 
       return products;
@@ -657,12 +702,12 @@ class ProductAdaptor {
       where: {
         user_id: user.ID,
         brand_id: brandId,
-        status_type: 1,
+        status_id: 1,
       },
       defaults: {
         user_id: user.ID,
         brand_id: brandId,
-        status_type: 1,
+        status_id: 1,
         review_ratings: payload.ratings,
         review_feedback: payload.feedback,
         review_comments: payload.comments,
@@ -697,24 +742,24 @@ class ProductAdaptor {
     const whereClause = isOnlineSeller ? {
       user_id: user.ID,
       seller_id: sellerId,
-      status_type: 1,
+      status_id: 1,
     } : {
       user_id: user.ID,
       offline_seller_id: sellerId,
-      status_type: 1,
+      status_id: 1,
     };
 
     const defaultClause = isOnlineSeller ? {
       user_id: user.ID,
       seller_id: sellerId,
-      status_type: 1,
+      status_id: 1,
       review_ratings: payload.ratings,
       review_feedback: payload.feedback,
       review_comments: payload.comments,
     } : {
       user_id: user.ID,
       offline_seller_id: sellerId,
-      status_type: 1,
+      status_id: 1,
       review_ratings: payload.ratings,
       review_feedback: payload.feedback,
       review_comments: payload.comments,
@@ -753,7 +798,7 @@ class ProductAdaptor {
     const whereClause = {
       user_id: user.ID,
       bill_product_id: productId,
-      status_type: 1,
+      status_id: 1,
     };
 
     return this.modals.productReviews.findOrCreate({
@@ -761,7 +806,7 @@ class ProductAdaptor {
       defaults: {
         user_id: user.ID,
         bill_product_id: productId,
-        status_type: 1,
+        status_id: 1,
         review_ratings: payload.ratings,
         review_feedback: payload.feedback,
         review_comments: payload.comments,
