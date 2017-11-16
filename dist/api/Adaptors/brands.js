@@ -88,7 +88,8 @@ var BrandAdaptor = function() {
                 'description'],
               [
                 this.modals.sequelize.fn('CONCAT', 'brands/',
-                    this.modals.sequelize.col('"brand_id"'), '/reviews'),
+                    this.modals.sequelize.col('"brands"."brand_id"'),
+                    '/reviews'),
                 'reviewUrl']],
             include: [
               {
