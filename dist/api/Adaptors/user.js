@@ -86,7 +86,22 @@ var UserAdaptor = function () {
     key: 'retrieveUserById',
     value: function retrieveUserById(user) {
       return Promise.all([this.modals.users.findById(user.id, {
-        attributes: ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', [this.modals.sequelize.fn('CONCAT', 'consumer/', this.modals.sequelize.col('id'), '/images'), 'imageUrl']]
+        attributes: [
+          'id',
+          [
+            'full_name',
+            'name'],
+          'mobile_no',
+          'email',
+          'email_verified',
+          'email_secret',
+          'location',
+          'latitude',
+          'longitude',
+          [
+            this.modals.sequelize.fn('CONCAT', '/consumer/',
+                this.modals.sequelize.col('id'), '/images'),
+            'imageUrl']],
       }), this.retrieveUserAddress({
         where: {
           user_id: user.id
@@ -124,6 +139,7 @@ var UserAdaptor = function () {
     key: 'retrieveUserProfile',
     value: function retrieveUserProfile(user, request) {
       return this.retrieveUserById(user).then(function (result) {
+        result.email_secret = undefined;
         return {
           status: true,
           message: 'User Data retrieved',
@@ -173,14 +189,19 @@ var UserAdaptor = function () {
       }
 
       var userUpdates = {
-        mobile_no: payload.phoneNo,
-        full_name: payload.name
+        mobile_no: payload.mobile_no,
+        full_name: payload.name,
+        location: payload.location,
+        latitude: payload.latitude,
+        longitude: payload.longitude,
       };
 
-      var userAddresses = payload.addresses.map(function (item) {
+      var userAddresses = payload.addresses ?
+          payload.addresses.map(function(item) {
         item.updated_by = user.id;
         return item;
-      });
+          }) :
+          [];
 
       var filterOptions = {
         where: {
@@ -188,8 +209,8 @@ var UserAdaptor = function () {
         }
       };
       return this.retrieveUserById(user).then(function (result) {
-        var userPromise = void 0;
-        if (userAddresses.length > 0) {
+        var userPromise = [];
+        if (userAddresses && userAddresses.length > 0) {
           userPromise = userAddresses.map(function (item) {
             item.user_id = user.id;
             var existingAddress = result.addresses.find(function (existingItem) {

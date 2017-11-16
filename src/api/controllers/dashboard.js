@@ -48,8 +48,8 @@ class DashboardController {
 				forceUpdate: request.pre.forceUpdate
 			});
 		} else if (user && !request.pre.forceUpdate) {
-			reply(ehomeAdaptor
-				.prepareProductDetail(user, request.params.id, request.query.ctype,
+			reply(ehomeAdaptor.prepareProductDetail(user, request.params.id,
+          request.query.subCategoryId,
 					/* request.query.pageno, */
 					request.query.brandids || '[]', request.query.categoryids || '[]', request.query.offlinesellerids || '[]',
 					request.query.onlinesellerids || '[]', request.query.sortby, request.query.searchvalue, request))

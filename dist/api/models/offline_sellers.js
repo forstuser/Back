@@ -46,10 +46,16 @@ exports.default = function (sequelize, DataTypes) {
       type: DataTypes.STRING
     },
     latitude: {
-      type: DataTypes.FLOAT
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: null,
+      validate: {min: -90, max: 90},
     },
     longitude: {
-      type: DataTypes.STRING
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: null,
+      validate: {min: -180, max: 180},
     },
     url: {
       type: DataTypes.STRING

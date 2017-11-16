@@ -88,8 +88,11 @@ class UserAdaptor {
           'email',
           'email_verified',
           'email_secret',
+          'location',
+          'latitude',
+          'longitude',
           [
-            this.modals.sequelize.fn('CONCAT', 'consumer/',
+            this.modals.sequelize.fn('CONCAT', '/consumer/',
                 this.modals.sequelize.col('id'), '/images'), 'imageUrl'],
         ],
       }), this.retrieveUserAddress({
@@ -125,6 +128,7 @@ class UserAdaptor {
    */
   retrieveUserProfile(user, request) {
     return this.retrieveUserById(user).then((result) => {
+      result.email_secret = undefined;
       return {
         status: true,
         message: 'User Data retrieved',
@@ -169,14 +173,17 @@ class UserAdaptor {
     }
 
     const userUpdates = {
-      mobile_no: payload.phoneNo,
+      mobile_no: payload.mobile_no,
       full_name: payload.name,
+      location: payload.location,
+      latitude: payload.latitude,
+      longitude: payload.longitude,
     };
 
-    const userAddresses = payload.addresses.map((item) => {
+    const userAddresses = payload.addresses ? payload.addresses.map((item) => {
       item.updated_by = user.id;
       return item;
-    });
+    }) : [];
 
     const filterOptions = {
       where: {
@@ -184,8 +191,8 @@ class UserAdaptor {
       },
     };
     return this.retrieveUserById(user).then((result) => {
-      let userPromise;
-      if (userAddresses.length > 0) {
+      let userPromise = [];
+      if (userAddresses && userAddresses.length > 0) {
         userPromise = userAddresses.map((item) => {
           item.user_id = user.id;
           const existingAddress = result.addresses.find(

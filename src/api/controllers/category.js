@@ -28,7 +28,7 @@ class CategoryController {
       }
 
       return modals.sequelize.query(
-          `SELECT category_id, category_name from table_categories where category_id in (SELECT DISTINCT category_id from service_center_details where center_id in (SELECT center_id from center_brand_mapping where brand_id ${condition})) order by category_name;`).
+          `SELECT category_id, category_name from categories where category_id in (SELECT DISTINCT category_id from service_center_details where center_id in (SELECT center_id from center_brand_mapping where brand_id ${condition})) order by category_name;`).
           then((results) => {
             if (results.length === 0) {
               reply({

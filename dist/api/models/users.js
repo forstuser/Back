@@ -25,6 +25,21 @@ exports.default = function (sequelize, DataTypes) {
 				isEmail: true
 			}
 		},
+    location: {
+      type: DataTypes.STRING,
+    },
+    latitude: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: null,
+      validate: {min: -90, max: 90},
+    },
+    longitude: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: null,
+      validate: {min: -180, max: 180},
+    },
 		mobile_no: {
 			type: DataTypes.STRING,
 			unique: true,
