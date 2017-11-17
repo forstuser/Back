@@ -27,10 +27,10 @@ export default (sequelize, DataTypes) => {
           type: DataTypes.STRING
         },
         center_longitude: {
-          type: DataTypes.STRING
+          type: DataTypes.FLOAT,
         },
         center_latitude: {
-          type: DataTypes.STRING
+          type: DataTypes.FLOAT,
         },
         center_timings: {
           type: DataTypes.STRING
