@@ -37,7 +37,7 @@ class ServiceCenterController {
       const brandId = request.query.brandid || payload.brandId || 0;
 			const whereClause = {
         center_city: {
-          $iLike: city,
+          $iLike: `%${city}%`,
         },
         category_id: categoryId,
         $and: [

@@ -698,14 +698,14 @@ class ProductAdaptor {
 
   updateBrandReview(user, brandId, request) {
     const payload = request.payload;
-    return this.modals.brandReviews.findOrCreate({
+    return this.modals.brandReviews.findCreateFind({
       where: {
-        user_id: user.ID,
+        user_id: user.id,
         brand_id: brandId,
         status_id: 1,
       },
       defaults: {
-        user_id: user.ID,
+        user_id: user.id,
         brand_id: brandId,
         status_id: 1,
         review_ratings: payload.ratings,
@@ -740,24 +740,24 @@ class ProductAdaptor {
   updateSellerReview(user, sellerId, isOnlineSeller, request) {
     const payload = request.payload;
     const whereClause = isOnlineSeller ? {
-      user_id: user.ID,
+      user_id: user.id,
       seller_id: sellerId,
       status_id: 1,
     } : {
-      user_id: user.ID,
+      user_id: user.id,
       offline_seller_id: sellerId,
       status_id: 1,
     };
 
     const defaultClause = isOnlineSeller ? {
-      user_id: user.ID,
+      user_id: user.id,
       seller_id: sellerId,
       status_id: 1,
       review_ratings: payload.ratings,
       review_feedback: payload.feedback,
       review_comments: payload.comments,
     } : {
-      user_id: user.ID,
+      user_id: user.id,
       offline_seller_id: sellerId,
       status_id: 1,
       review_ratings: payload.ratings,
@@ -765,7 +765,7 @@ class ProductAdaptor {
       review_comments: payload.comments,
     };
 
-    return this.modals.sellerReviews.findOrCreate({
+    return this.modals.sellerReviews.findCreateFind({
       where: whereClause,
       defaults: defaultClause,
     }).then((result) => {
@@ -796,15 +796,15 @@ class ProductAdaptor {
   updateProductReview(user, productId, request) {
     const payload = request.payload;
     const whereClause = {
-      user_id: user.ID,
+      user_id: user.id,
       bill_product_id: productId,
       status_id: 1,
     };
 
-    return this.modals.productReviews.findOrCreate({
+    return this.modals.productReviews.findCreateFind({
       where: whereClause,
       defaults: {
-        user_id: user.ID,
+        user_id: user.id,
         bill_product_id: productId,
         status_id: 1,
         review_ratings: payload.ratings,
@@ -840,7 +840,7 @@ class ProductAdaptor {
     const productId = request.params.id;
     return this.retrieveProductById(productId, {
       where: {
-        user_id: user.ID,
+        user_id: user.id,
       },
     }).then((result) => {
       if (result) {

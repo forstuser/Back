@@ -332,7 +332,7 @@ class NotificationAdaptor {
       status_id: 10,
     }, {
       where: {
-        user_id: user.ID,
+        user_id: user.id,
         status_id: {
           $notIn: [3, 9],
         },

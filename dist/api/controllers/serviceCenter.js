@@ -59,7 +59,7 @@ var ServiceCenterController = function () {
         var brandId = request.query.brandid || payload.brandId || 0;
 				var whereClause = {
           center_city: {
-            $iLike: city,
+            $iLike: '%' + city + '%',
 					},
           category_id: categoryId,
           $and: [
