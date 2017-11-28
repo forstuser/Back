@@ -499,6 +499,64 @@ class NotificationAdaptor {
     });
   }
 
+  createExpenseNotification(days) {
+    return this.retrieveMissingDocNotification(days).then((result) => {
+
+      const expenseUpdates = result.map((resultItem) => {
+        return {
+          notification_type: days === 1 ? 5 : days === 6 ? 6 : 7,
+          due_amount: resultItem.value,
+          taxes: resultItem.taxes,
+          title: days === 1 ?
+              'Daily Expense' :
+              days === 7 ?
+                  'Last Seven Days Expense' :
+                  'Monthly Expense',
+          description: days === 1 ?
+              'Daily Expense Summary' :
+              days === 7 ?
+                  'Last Seven Days Expense Summary' :
+                  'Monthly Expense Summary',
+          productUrl: days === 1 ?
+              '/insight' :
+              days === 7 ?
+                  '/insight' :
+                  '/insight',
+          user_id: resultItem.user_id,
+        };
+      });
+      const upcomingServices = [];
+
+      expenseUpdates.forEach((item) => {
+        const index = upcomingServices.findIndex(
+            distinctItem => (distinctItem.user_id === item.user_id));
+        if (index === -1) {
+          upcomingServices.push({
+            notification_type: item.notification_type,
+            due_amount: item.due_amount,
+            taxes: item.taxes,
+            title: item.title,
+            description: item.description,
+            productUrl: item.productUrl,
+            user_id: item.user_id,
+          });
+        } else {
+          upcomingServices[index].due_amount += item.due_amount;
+          upcomingServices[index].taxes += item.taxes;
+        }
+      });
+
+      const notificationPromise = upcomingServices.map(
+          (upcomingNotification) => {
+            this.notifyUserCron(upcomingNotification.user_id,
+                upcomingNotification);
+          });
+
+      return Promise.all(notificationPromise);
+
+    });
+  }
+
   retrieveMissingDocNotification(days) {
     return this.productAdaptor.retrieveMissingDocProducts({
       status_type: [5, 8, 11],
@@ -511,6 +569,46 @@ class NotificationAdaptor {
         product.productType = 10;
         return product;
       });
+    });
+  }
+
+  retrieveExpenseCronNotification(days) {
+    const purchaseDateCompare = days === 1 ? {
+      $gte: moment().subtract(days, 'day').startOf('day'),
+      $lte: moment().subtract(days, 'day').endOf('day'),
+    } : days === 7 ? {
+      $lte: moment().subtract(days, 'day').endOf('day'),
+      $gte: moment().subtract(days, 'day').startOf('day'),
+    } : {
+      $gte: moment().startOf('month'),
+      $lte: moment().endOf('month'),
+    };
+    return Promise.all([
+      this.productAdaptor.retrieveNotificationProducts({
+        status_type: [5, 11],
+        document_date: purchaseDateCompare,
+      }),
+      this.amcAdaptor.retrieveNotificationAMCs({
+        status_type: 5,
+        document_date: purchaseDateCompare,
+      }),
+      this.insuranceAdaptor.retrieveNotificationInsurances({
+        status_type: 5,
+        document_date: purchaseDateCompare,
+      }),
+      this.warrantyAdaptor.retrieveNotificationWarranties({
+        status_type: 5,
+        document_date: purchaseDateCompare,
+      })]).then((result) => {
+      let products = result[0];
+
+      let amcs = result[1];
+
+      let insurances = result[2];
+
+      let warranties = result[3];
+
+      return [...products, ...warranties, ...insurances, ...amcs];
     });
   }
 
@@ -527,15 +625,15 @@ class NotificationAdaptor {
         status_type: 5,
         main_category_id: [6, 8],
       }),
-      this.amcAdaptor.retrieveAMCs({
+      this.amcAdaptor.retrieveNotificationAMCs({
         status_type: 5,
         expiry_date: expiryDateCompare,
       }),
-      this.insuranceAdaptor.retrieveInsurances({
+      this.insuranceAdaptor.retrieveNotificationInsurances({
         status_type: 5,
         expiry_date: expiryDateCompare,
       }),
-      this.warrantyAdaptor.retrieveWarranties({
+      this.warrantyAdaptor.retrieveNotificationWarranties({
         status_type: 5,
         expiry_date: expiryDateCompare,
       })]).then((result) => {

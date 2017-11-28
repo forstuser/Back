@@ -24,9 +24,11 @@ class RepairAdaptor {
   }
 
   retrieveRepairs(options) {
-    options.status_type = options.product_status_type || 5;
-    const productOptions = options.main_category_id ? {
+    options.status_type = 5;
+    const productOptions = options.main_category_id ||
+    options.product_status_type ? {
       main_category_id: options.main_category_id,
+      status_type: options.product_status_type,
     } : undefined;
     options = _.omit(options, 'main_category_id');
     options = _.omit(options, 'product_status_type');
@@ -82,6 +84,58 @@ class RepairAdaptor {
             'latitude',
             'longitude'],
           required: false,
+        }],
+      attributes: [
+        'id',
+        [
+          'product_id',
+          'productId'],
+        [
+          'job_id',
+          'jobId'],
+        [
+          this.modals.sequelize.literal('"product"."main_category_id"'),
+          'masterCategoryId'], 'user_id',
+        [
+          'document_number',
+          'policyNo'],
+        [
+          'repair_cost',
+          'premiumAmount'],
+        [
+          this.modals.sequelize.literal('"product"."product_name"'),
+          'productName'],
+        [
+          'repair_cost',
+          'value'],
+        [
+          'repair_taxes',
+          'taxes'],
+        [
+          'document_date',
+          'purchaseDate'],
+        ['updated_at', 'updatedDate'],
+        [
+          this.modals.sequelize.fn('CONCAT', 'products/',
+              this.modals.sequelize.literal('"product_id"')),
+          'productURL'],
+        'copies'],
+      order: [['document_date', 'DESC']],
+    }).
+        then((repairResult) => repairResult.map((item) => item.toJSON()).
+            sort(sortAmcWarrantyInsuranceRepair));
+  }
+
+  retrieveNotificationRepairs(options) {
+    options.status_type = 5;
+    return this.modals.repairs.findAll({
+      where: options,
+      include: [
+        {
+          model: this.modals.products,
+          where: productOptions,
+          attributes: [],
+          required: productOptions !== undefined,
         }],
       attributes: [
         'id',

@@ -121,6 +121,77 @@ var InsuranceAdaptor = function () {
             'productURL'],
           'copies',
           'user_id'],
+        order: [['expiry_date', 'DESC']],
+      }).then(function(insuranceResult) {
+        return insuranceResult.map(function(item) {
+          return item.toJSON();
+        }).sort(sortAmcWarrantyInsuranceRepair);
+      });
+    }
+  }, {
+    key: 'retrieveNotificationInsurances',
+    value: function retrieveNotificationInsurances(options) {
+      options.status_type = 5;
+      return this.modals.insurances.findAll({
+        where: options,
+        include: [
+          {
+            model: this.modals.renewalTypes,
+            attributes: [],
+          }, {
+            model: this.modals.products,
+            attributes: [],
+          }],
+        attributes: [
+          'id',
+          [
+            'product_id',
+            'productId'],
+          [
+            this.modals.sequelize.literal('"product"."main_category_id"'),
+            'masterCategoryId'],
+          [
+            'job_id',
+            'jobId'],
+          [
+            'document_number',
+            'policyNo'],
+          [
+            this.modals.sequelize.literal('"renewalType"."title"'),
+            'premiumType'],
+          [
+            this.modals.sequelize.literal('"product"."product_name"'),
+            'productName'],
+          [
+            'renewal_cost',
+            'premiumAmount'],
+          [
+            'renewal_cost',
+            'value'],
+          [
+            'renewal_taxes',
+            'taxes'],
+          [
+            'amount_insured',
+            'amountInsured'],
+          [
+            'effective_date',
+            'effectiveDate'],
+          [
+            'expiry_date',
+            'expiryDate'],
+          [
+            'document_date',
+            'purchaseDate'],
+          [
+            'updated_at',
+            'updatedDate'],
+          [
+            this.modals.sequelize.fn('CONCAT', 'products/',
+                this.modals.sequelize.literal('"product_id"')),
+            'productURL'],
+          'copies',
+          'user_id'],
         order: [['expiry_date', 'DESC']]
       }).then(function (insuranceResult) {
         return insuranceResult.map(function (item) {

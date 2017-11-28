@@ -27,29 +27,12 @@ class GeneralController {
    * @param reply
    */
   static retrieveReferenceData(request, reply) {
-    return Promise.all([
-      categoryAdaptor.retrieveCategories({category_level: 1}, true),
-      brandAdaptor.retrieveBrands({status_type: 1}),
-      brandAdaptor.retrieveBrandDetails({status_type: 1}),
-      sellerAdaptor.retrieveOfflineSellers({status_type: 1}),
-      sellerAdaptor.retrieveOnlineSellers({status_type: 1})]).
+    return categoryAdaptor.retrieveCategories(
+        {category_level: 1, category_id: [2, 3]}, true).
         then((results) => {
-          const categories = results[0];
-          const brands = results[1].map((item) => {
-            item.details = results[2].filter(
-                (detailItem) => detailItem.brandId === item.id);
-            return item;
-          });
-
-          const offlineSellers = results[3];
-          const onlineSellers = results[4];
-
           return reply({
             status: true,
-            categories,
-            brands,
-            offlineSellers,
-            onlineSellers,
+            categories: results,
             contactType: [
               {
                 id: 1,

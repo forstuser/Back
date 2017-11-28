@@ -1011,14 +1011,6 @@ class ProductAdaptor {
     let products;
     return this.modals.products.findAll({
       where: options,
-      include: [
-        {
-          model: this.modals.bills,
-          where: billOption,
-          required: true,
-          attributes: [],
-        },
-      ],
       attributes: [
         'id',
         [
@@ -1082,6 +1074,46 @@ class ProductAdaptor {
       return products.filter((pItem) => !pItem.hasDocs ||
           (pItem.hasInsurance && pItem.hasInsurance === false) ||
           (pItem.hasWarranty && pItem.hasWarranty === false));
+    });
+  }
+
+  retrieveProductExpenses(options) {
+    if (!options.status_type) {
+      options.status_type = {
+        $notIn: [3, 9],
+      };
+    }
+
+    let products;
+    return this.modals.products.findAll({
+      where: options,
+      attributes: [
+        'id',
+        [
+          'product_name',
+          'productName'],
+        [
+          'purchase_cost',
+          'value'],
+        [
+          'main_category_id',
+          'masterCategoryId'],
+        'taxes',
+        [
+          'document_date',
+          'purchaseDate'],
+        ['document_number', 'documentNo'],
+        ['updated_at', 'updatedDate'],
+        [
+          'bill_id',
+          'billId'],
+        [
+          'job_id',
+          'jobId'],
+        'copies', 'user_id',
+      ],
+    }).then((productResult) => {
+      return productResult.map((item) => item.toJSON());
     });
   }
 

@@ -1124,13 +1124,6 @@ var ProductAdaptor = function () {
       var products = void 0;
       return this.modals.products.findAll({
         where: options,
-        include: [
-          {
-            model: this.modals.bills,
-            where: billOption,
-            required: true,
-            attributes: [],
-          }],
         attributes: [
           'id',
           [
@@ -1208,6 +1201,53 @@ var ProductAdaptor = function () {
         return products.filter(function(pItem) {
           return !pItem.hasDocs || pItem.hasInsurance && pItem.hasInsurance ===
               false || pItem.hasWarranty && pItem.hasWarranty === false;
+        });
+      });
+    }
+  }, {
+    key: 'retrieveProductExpenses',
+    value: function retrieveProductExpenses(options) {
+      if (!options.status_type) {
+        options.status_type = {
+          $notIn: [3, 9],
+        };
+      }
+
+      var products = void 0;
+      return this.modals.products.findAll({
+        where: options,
+        attributes: [
+          'id',
+          [
+            'product_name',
+            'productName'],
+          [
+            'purchase_cost',
+            'value'],
+          [
+            'main_category_id',
+            'masterCategoryId'],
+          'taxes',
+          [
+            'document_date',
+            'purchaseDate'],
+          [
+            'document_number',
+            'documentNo'],
+          [
+            'updated_at',
+            'updatedDate'],
+          [
+            'bill_id',
+            'billId'],
+          [
+            'job_id',
+            'jobId'],
+          'copies',
+          'user_id'],
+      }).then(function(productResult) {
+        return productResult.map(function(item) {
+          return item.toJSON();
         });
       });
     }

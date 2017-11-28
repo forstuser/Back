@@ -39,6 +39,7 @@ class ServiceCenterController {
         center_city: {
           $iLike: `%${city}%`,
         },
+        brand_id: brandId,
         category_id: categoryId,
         $and: [
           modals.sequelize.where(

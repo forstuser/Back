@@ -61,6 +61,7 @@ var ServiceCenterController = function () {
 					center_city: {
 						$iLike: '%' + city + '%'
 					},
+          brand_id: brandId,
 					category_id: categoryId,
 					$and: [modals.sequelize.where(modals.sequelize.col('"centerDetails"."category_id"'), categoryId), modals.sequelize.where(modals.sequelize.col('"brands"."brand_id"'), brandId)]
 				};

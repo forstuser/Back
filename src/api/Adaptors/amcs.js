@@ -25,10 +25,11 @@ class AmcAdaptor {
   }
 
   retrieveAMCs(options) {
-    options.status_type = options.product_status_type || 5;
-
-    const productOptions = options.main_category_id ? {
+    options.status_type = 5;
+    const productOptions = options.main_category_id ||
+    options.product_status_type ? {
       main_category_id: options.main_category_id,
+      status_type: options.product_status_type,
     } : undefined;
     options = _.omit(options, 'main_category_id');
     options = _.omit(options, 'product_status_type');
@@ -130,6 +131,71 @@ class AmcAdaptor {
     }).then((amcResult) => amcResult.map((item) => item.toJSON()).sort(sortAmcWarrantyInsuranceRepair));
   }
 
+  retrieveNotificationAMCs(options) {
+    options.status_type = 5;
+
+    return this.modals.amcs.findAll({
+      where: options,
+      include: [
+        {
+          model: this.modals.renewalTypes,
+          attributes: [],
+        },
+        {
+          model: this.modals.products,
+          attributes: [],
+        },
+      ],
+      attributes: [
+        'id',
+        [
+          'product_id',
+          'productId'],
+        [
+          'job_id',
+          'jobId'],
+        [
+          'document_number',
+          'policyNo'],
+        [
+          this.modals.sequelize.literal('"product"."main_category_id"'),
+          'masterCategoryId'],
+        [
+          this.modals.sequelize.literal('"renewalType"."title"'),
+          'premiumType'],
+        [
+          this.modals.sequelize.literal('"product"."product_name"'),
+          'productName'],
+        [
+          'renewal_cost',
+          'premiumAmount'],
+        [
+          'renewal_cost',
+          'value'],
+        [
+          'renewal_taxes',
+          'taxes'],
+        [
+          'effective_date',
+          'effectiveDate'],
+        [
+          'expiry_date',
+          'expiryDate'],
+        [
+          'document_date',
+          'purchaseDate'],
+        ['updated_at', 'updatedDate'],
+        [
+          this.modals.sequelize.fn('CONCAT', 'products/',
+              this.modals.sequelize.literal('"product_id"')),
+          'productURL'],
+        'copies', 'user_id'],
+      order: [['expiry_date', 'DESC']],
+    }).
+        then((amcResult) => amcResult.map((item) => item.toJSON()).
+            sort(sortAmcWarrantyInsuranceRepair));
+  }
+  
   retrieveAMCCounts(options) {
     options.status_type = 5;
     const productOptions = options.main_category_id ||

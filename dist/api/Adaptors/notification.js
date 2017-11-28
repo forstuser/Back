@@ -436,6 +436,67 @@ var NotificationAdaptor = function () {
       });
     }
   }, {
+    key: 'createExpenseNotification',
+    value: function createExpenseNotification(days) {
+      var _this3 = this;
+
+      return this.retrieveMissingDocNotification(days).then(function(result) {
+
+        var expenseUpdates = result.map(function(resultItem) {
+          return {
+            notification_type: days === 1 ? 5 : days === 6 ? 6 : 7,
+            due_amount: resultItem.value,
+            taxes: resultItem.taxes,
+            title: days === 1 ?
+                'Daily Expense' :
+                days === 7 ?
+                    'Last Seven Days Expense' :
+                    'Monthly Expense',
+            description: days === 1 ?
+                'Daily Expense Summary' :
+                days === 7 ?
+                    'Last Seven Days Expense Summary' :
+                    'Monthly Expense Summary',
+            productUrl: days === 1 ?
+                '/insight' :
+                days === 7 ?
+                    '/insight' :
+                    '/insight',
+            user_id: resultItem.user_id,
+          };
+        });
+        var upcomingServices = [];
+
+        expenseUpdates.forEach(function(item) {
+          var index = upcomingServices.findIndex(function(distinctItem) {
+            return distinctItem.user_id === item.user_id;
+          });
+          if (index === -1) {
+            upcomingServices.push({
+              notification_type: item.notification_type,
+              due_amount: item.due_amount,
+              taxes: item.taxes,
+              title: item.title,
+              description: item.description,
+              productUrl: item.productUrl,
+              user_id: item.user_id,
+            });
+          } else {
+            upcomingServices[index].due_amount += item.due_amount;
+            upcomingServices[index].taxes += item.taxes;
+          }
+        });
+
+        var notificationPromise = upcomingServices.map(
+            function(upcomingNotification) {
+              _this3.notifyUserCron(upcomingNotification.user_id,
+                  upcomingNotification);
+            });
+
+        return Promise.all(notificationPromise);
+      });
+    }
+  }, {
     key: 'retrieveMissingDocNotification',
     value: function retrieveMissingDocNotification(days) {
       return this.productAdaptor.retrieveMissingDocProducts({
@@ -452,6 +513,46 @@ var NotificationAdaptor = function () {
       });
     }
   }, {
+    key: 'retrieveExpenseCronNotification',
+    value: function retrieveExpenseCronNotification(days) {
+      var purchaseDateCompare = days === 1 ? {
+        $gte: (0, _moment2.default)().subtract(days, 'day').startOf('day'),
+        $lte: (0, _moment2.default)().subtract(days, 'day').endOf('day'),
+      } : days === 7 ? {
+        $lte: (0, _moment2.default)().subtract(days, 'day').endOf('day'),
+        $gte: (0, _moment2.default)().subtract(days, 'day').startOf('day'),
+      } : {
+        $gte: (0, _moment2.default)().startOf('month'),
+        $lte: (0, _moment2.default)().endOf('month'),
+      };
+      return Promise.all([
+        this.productAdaptor.retrieveNotificationProducts({
+          status_type: [5, 11],
+          document_date: purchaseDateCompare,
+        }), this.amcAdaptor.retrieveNotificationAMCs({
+          status_type: 5,
+          document_date: purchaseDateCompare,
+        }), this.insuranceAdaptor.retrieveNotificationInsurances({
+          status_type: 5,
+          document_date: purchaseDateCompare,
+        }), this.warrantyAdaptor.retrieveNotificationWarranties({
+          status_type: 5,
+          document_date: purchaseDateCompare,
+        })]).then(function(result) {
+        var products = result[0];
+
+        var amcs = result[1];
+
+        var insurances = result[2];
+
+        var warranties = result[3];
+
+        return [].concat(_toConsumableArray(products),
+            _toConsumableArray(warranties), _toConsumableArray(insurances),
+            _toConsumableArray(amcs));
+      });
+    }
+  }, {
     key: 'retrieveCronNotification',
     value: function retrieveCronNotification(days) {
       var expiryDateCompare = days === 15 ? {
@@ -465,13 +566,13 @@ var NotificationAdaptor = function () {
         this.productAdaptor.retrieveNotificationProducts({
           status_type: 5,
           main_category_id: [6, 8],
-        }), this.amcAdaptor.retrieveAMCs({
+        }), this.amcAdaptor.retrieveNotificationAMCs({
           status_type: 5,
           expiry_date: expiryDateCompare,
-        }), this.insuranceAdaptor.retrieveInsurances({
+        }), this.insuranceAdaptor.retrieveNotificationInsurances({
           status_type: 5,
           expiry_date: expiryDateCompare,
-        }), this.warrantyAdaptor.retrieveWarranties({
+        }), this.warrantyAdaptor.retrieveNotificationWarranties({
           status_type: 5,
           expiry_date: expiryDateCompare,
         })]).then(function(result) {
