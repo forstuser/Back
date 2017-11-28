@@ -103,7 +103,7 @@ class WarrantyAdaptor {
           'masterCategoryId'],
         [
           'renewal_cost',
-          'premiumAmount'],
+          'premiumAmount'], 'user_id',
         [
           'renewal_cost',
           'value'],

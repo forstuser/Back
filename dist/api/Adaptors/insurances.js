@@ -71,7 +71,56 @@ var InsuranceAdaptor = function () {
           attributes: [['seller_name', 'sellerName'], ['owner_name', 'ownerName'], ['pan_no', 'panNo'], ['reg_no', 'regNo'], ['is_service', 'isService'], 'url', 'gstin', ['contact_no', 'contact'], 'email', 'address', 'city', 'state', 'pincode', 'latitude', 'longitude'],
           required: false
         }],
-        attributes: ['id', ['product_id', 'productId'], [this.modals.sequelize.literal('"product"."main_category_id"'), 'masterCategoryId'], ['job_id', 'jobId'], ['document_number', 'policyNo'], [this.modals.sequelize.literal('"renewalType"."title"'), 'premiumType'], [this.modals.sequelize.literal('"product"."product_name"'), 'productName'], ['renewal_cost', 'premiumAmount'], ['renewal_cost', 'value'], ['renewal_taxes', 'taxes'], ['amount_insured', 'amountInsured'], ['effective_date', 'effectiveDate'], ['expiry_date', 'expiryDate'], ['document_date', 'purchaseDate'], ['updated_at', 'updatedDate'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"product_id"')), 'productURL'], 'copies'],
+        attributes: [
+          'id',
+          [
+            'product_id',
+            'productId'],
+          [
+            this.modals.sequelize.literal('"product"."main_category_id"'),
+            'masterCategoryId'],
+          [
+            'job_id',
+            'jobId'],
+          [
+            'document_number',
+            'policyNo'],
+          [
+            this.modals.sequelize.literal('"renewalType"."title"'),
+            'premiumType'],
+          [
+            this.modals.sequelize.literal('"product"."product_name"'),
+            'productName'],
+          [
+            'renewal_cost',
+            'premiumAmount'],
+          [
+            'renewal_cost',
+            'value'],
+          [
+            'renewal_taxes',
+            'taxes'],
+          [
+            'amount_insured',
+            'amountInsured'],
+          [
+            'effective_date',
+            'effectiveDate'],
+          [
+            'expiry_date',
+            'expiryDate'],
+          [
+            'document_date',
+            'purchaseDate'],
+          [
+            'updated_at',
+            'updatedDate'],
+          [
+            this.modals.sequelize.fn('CONCAT', 'products/',
+                this.modals.sequelize.literal('"product_id"')),
+            'productURL'],
+          'copies',
+          'user_id'],
         order: [['expiry_date', 'DESC']]
       }).then(function (insuranceResult) {
         return insuranceResult.map(function (item) {

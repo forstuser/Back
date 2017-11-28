@@ -67,7 +67,8 @@ class UserAdaptor {
         this.modals.sequelize.fn('CONCAT', 'consumer/',
             this.modals.sequelize.col('id'), '/images'), 'imageUrl'],
     ];
-    return this.modals.users.findOne(filterObject).then(item => item ? item.toJSON() : item);
+    return this.modals.users.findOne(filterObject).
+        then(item => item ? item.toJSON() : item);
   }
 
   /**
@@ -91,6 +92,7 @@ class UserAdaptor {
           'location',
           'latitude',
           'longitude',
+          'image_name',
           [
             this.modals.sequelize.fn('CONCAT', '/consumer/',
                 this.modals.sequelize.col('id'), '/images'), 'imageUrl'],
@@ -100,12 +102,12 @@ class UserAdaptor {
           user_id: user.id,
         },
       })]).then((result) => {
-      if(result[0]) {
-          const user = result[0].toJSON();
-          user.addresses = result[1].map(item => item.toJSON());
-          return user;
+      if (result[0]) {
+        let user = result[0].toJSON();
+        user.addresses = result[1].map(item => item.toJSON());
+        return user;
       }
-      
+
       return result[0];
     });
   }

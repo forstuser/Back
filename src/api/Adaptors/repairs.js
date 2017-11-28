@@ -93,7 +93,7 @@ class RepairAdaptor {
           'jobId'],
         [
           this.modals.sequelize.literal('"product"."main_category_id"'),
-          'masterCategoryId'],
+          'masterCategoryId'], 'user_id',
         [
           'document_number',
           'policyNo'],

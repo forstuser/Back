@@ -35,6 +35,10 @@ var _nodemailerSmtpTransport = require('nodemailer-smtp-transport');
 
 var _nodemailerSmtpTransport2 = _interopRequireDefault(_nodemailerSmtpTransport);
 
+var _lodash = require('lodash');
+
+var _lodash2 = _interopRequireDefault(_lodash);
+
 var _nodemailer = require('nodemailer');
 
 var _nodemailer2 = _interopRequireDefault(_nodemailer);
@@ -268,6 +272,337 @@ var NotificationAdaptor = function () {
           },
           notification_id: notificationIds
         }
+      });
+    }
+  }, {
+    key: 'createNotifications',
+    value: function createNotifications(days) {
+      var _this = this;
+
+      return this.retrieveCronNotification(days).then(function(result) {
+        var upcomingServices = result.map(function(elem) {
+          if (elem.productType === 4) {
+            console.log(elem);
+            var dueAmountArr = elem.productMetaData.filter(function(e) {
+              return e.name.toLowerCase() === 'due amount';
+            });
+
+            if (dueAmountArr.length > 0) {
+              elem.value = dueAmountArr[0].value;
+            }
+          }
+          var update = elem;
+          update.bill_product_id = update.productId;
+          update.bill_id = update.jobId;
+          update.due_amount = update.value;
+          update.due_date = update.dueDate;
+          update.notification_type = update.productType;
+
+          update = _lodash2.default.omit(update, 'id');
+          update = _lodash2.default.omit(update, 'productId');
+          update = _lodash2.default.omit(update, 'jobId');
+          update = _lodash2.default.omit(update, 'policyNo');
+          update = _lodash2.default.omit(update, 'premiumType');
+          update = _lodash2.default.omit(update, 'productName');
+          update = _lodash2.default.omit(update, 'premiumAmount');
+          update = _lodash2.default.omit(update, 'dueDate');
+          update = _lodash2.default.omit(update, 'productType');
+          update = _lodash2.default.omit(update, 'sellers');
+          update = _lodash2.default.omit(update, 'onlineSellers');
+          update = _lodash2.default.omit(update, 'dueIn');
+          update = _lodash2.default.omit(update, 'purchaseDate');
+          update = _lodash2.default.omit(update, 'updatedDate');
+          update = _lodash2.default.omit(update, 'effectiveDate');
+          update = _lodash2.default.omit(update, 'expiryDate');
+          update = _lodash2.default.omit(update, 'value');
+          update = _lodash2.default.omit(update, 'taxes');
+          update = _lodash2.default.omit(update, 'categoryId');
+          update = _lodash2.default.omit(update, 'brandId');
+          update = _lodash2.default.omit(update, 'colorId');
+          update = _lodash2.default.omit(update, 'value');
+          update = _lodash2.default.omit(update, 'documentNo');
+          update = _lodash2.default.omit(update, 'billId');
+          update = _lodash2.default.omit(update, 'sellerId');
+          update = _lodash2.default.omit(update, 'reviewUrl');
+          update = _lodash2.default.omit(update, 'color');
+          update = _lodash2.default.omit(update, 'brand');
+          update = _lodash2.default.omit(update, 'bill');
+          update = _lodash2.default.omit(update, 'productReviews');
+          update = _lodash2.default.omit(update, 'productMetaData');
+          update = _lodash2.default.omit(update, 'insuranceDetails');
+          update = _lodash2.default.omit(update, 'warrantyDetails');
+          update = _lodash2.default.omit(update, 'amcDetails');
+          update = _lodash2.default.omit(update, 'repairBills');
+          update = _lodash2.default.omit(update, 'requiredCount');
+          update = _lodash2.default.omit(update, 'dueDate');
+          update = _lodash2.default.omit(update, 'dueIn');
+          return update;
+        });
+        /* const listIndex = (parseInt(pageNo || 1, 10) * 10) - 10; */
+
+        upcomingServices.sort(function(a, b) {
+          var aDate = void 0;
+          var bDate = void 0;
+
+          aDate = a.dueDate;
+          bDate = b.dueDate;
+          if (_moment2.default.utc(aDate, 'YYYY-MM-DD').
+                  isBefore(_moment2.default.utc(bDate, 'YYYY-MM-DD'))) {
+            return -1;
+          }
+
+          return 1;
+        });
+        var notificationPromise = upcomingServices.map(
+            function(upcomingNotification) {
+              _this.notifyUserCron(upcomingNotification.user_id,
+                  upcomingNotification);
+            });
+
+        return Promise.all(notificationPromise);
+      });
+    }
+  }, {
+    key: 'createMissingDocNotification',
+    value: function createMissingDocNotification(days) {
+      var _this2 = this;
+
+      return this.retrieveMissingDocNotification(days).then(function(result) {
+        var upcomingServices = result.map(function(elem) {
+          if (elem.productType === 4) {
+            console.log(elem);
+            var dueAmountArr = elem.productMetaData.filter(function(e) {
+              return e.name.toLowerCase() === 'due amount';
+            });
+
+            if (dueAmountArr.length > 0) {
+              elem.value = dueAmountArr[0].value;
+            }
+          }
+          var update = elem;
+          update.bill_product_id = update.productId;
+          update.bill_id = update.jobId;
+          update.due_amount = update.value;
+          update.notification_type = update.productType;
+
+          update = _lodash2.default.omit(update, 'id');
+          update = _lodash2.default.omit(update, 'productId');
+          update = _lodash2.default.omit(update, 'jobId');
+          update = _lodash2.default.omit(update, 'policyNo');
+          update = _lodash2.default.omit(update, 'premiumType');
+          update = _lodash2.default.omit(update, 'productName');
+          update = _lodash2.default.omit(update, 'premiumAmount');
+          update = _lodash2.default.omit(update, 'dueDate');
+          update = _lodash2.default.omit(update, 'productType');
+          update = _lodash2.default.omit(update, 'sellers');
+          update = _lodash2.default.omit(update, 'onlineSellers');
+          update = _lodash2.default.omit(update, 'dueIn');
+          update = _lodash2.default.omit(update, 'purchaseDate');
+          update = _lodash2.default.omit(update, 'updatedDate');
+          update = _lodash2.default.omit(update, 'effectiveDate');
+          update = _lodash2.default.omit(update, 'expiryDate');
+          update = _lodash2.default.omit(update, 'value');
+          update = _lodash2.default.omit(update, 'taxes');
+          update = _lodash2.default.omit(update, 'categoryId');
+          update = _lodash2.default.omit(update, 'brandId');
+          update = _lodash2.default.omit(update, 'colorId');
+          update = _lodash2.default.omit(update, 'value');
+          update = _lodash2.default.omit(update, 'documentNo');
+          update = _lodash2.default.omit(update, 'billId');
+          update = _lodash2.default.omit(update, 'sellerId');
+          update = _lodash2.default.omit(update, 'reviewUrl');
+          update = _lodash2.default.omit(update, 'color');
+          update = _lodash2.default.omit(update, 'brand');
+          update = _lodash2.default.omit(update, 'bill');
+          update = _lodash2.default.omit(update, 'productReviews');
+          update = _lodash2.default.omit(update, 'productMetaData');
+          update = _lodash2.default.omit(update, 'insuranceDetails');
+          update = _lodash2.default.omit(update, 'warrantyDetails');
+          update = _lodash2.default.omit(update, 'amcDetails');
+          update = _lodash2.default.omit(update, 'repairBills');
+          update = _lodash2.default.omit(update, 'requiredCount');
+          update = _lodash2.default.omit(update, 'dueDate');
+          update = _lodash2.default.omit(update, 'dueIn');
+          return update;
+        });
+
+        var notificationPromise = upcomingServices.map(
+            function(upcomingNotification) {
+              _this2.notifyUserCron(upcomingNotification.user_id,
+                  upcomingNotification);
+            });
+
+        return Promise.all(notificationPromise);
+      });
+    }
+  }, {
+    key: 'retrieveMissingDocNotification',
+    value: function retrieveMissingDocNotification(days) {
+      return this.productAdaptor.retrieveMissingDocProducts({
+        status_type: [5, 8, 11],
+      }).then(function(result) {
+        return result.map(function(item) {
+          var product = item;
+
+          product.title = product.productName + ' Reminder';
+          product.description = 'Some of Documents are missing';
+          product.productType = 10;
+          return product;
+        });
+      });
+    }
+  }, {
+    key: 'retrieveCronNotification',
+    value: function retrieveCronNotification(days) {
+      var expiryDateCompare = days === 15 ? {
+        $gte: (0, _moment2.default)().add(days, 'day').startOf('day'),
+        $lte: (0, _moment2.default)().add(days, 'day').endOf('day'),
+      } : {
+        $gte: (0, _moment2.default)().startOf('day'),
+        $lte: (0, _moment2.default)().add(days, 'day').endOf('day'),
+      };
+      return Promise.all([
+        this.productAdaptor.retrieveNotificationProducts({
+          status_type: 5,
+          main_category_id: [6, 8],
+        }), this.amcAdaptor.retrieveAMCs({
+          status_type: 5,
+          expiry_date: expiryDateCompare,
+        }), this.insuranceAdaptor.retrieveInsurances({
+          status_type: 5,
+          expiry_date: expiryDateCompare,
+        }), this.warrantyAdaptor.retrieveWarranties({
+          status_type: 5,
+          expiry_date: expiryDateCompare,
+        })]).then(function(result) {
+        var products = result[0].map(function(item) {
+          var product = item;
+
+          product.productMetaData.map(function(metaItem) {
+            var metaData = metaItem;
+            if (metaData.name.toLowerCase().includes('due') &&
+                metaData.name.toLowerCase().includes('date') &&
+                (0, _moment2.default)(metaData.value).isValid()) {
+              var dueDateTime = (0, _moment2.default)(metaData.value);
+              product.dueDate = metaData.value;
+              product.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
+            }
+
+            if (metaData.name.toLowerCase().includes('address')) {
+              product.description = metaData.name.toLowerCase().
+                  includes('address') ? '' + metaData.value : '';
+            }
+
+            return metaData;
+          });
+
+          product.title = product.productName + ' Reminder';
+          product.productType = 4;
+          return product;
+        });
+
+        products = products.filter(function(item) {
+          return days === 15 ?
+              item.dueDate <=
+              (0, _moment2.default)().add(days, 'day').endOf('day') &&
+              item.dueDate >=
+              (0, _moment2.default)().add(days, 'day').startOf('day') :
+              item.dueDate <=
+              (0, _moment2.default)().add(days, 'day').endOf('day') &&
+              item.dueDate >= (0, _moment2.default)().startOf('day');
+        });
+        var amcs = result[1].map(function(item) {
+          var amc = item;
+          if ((0, _moment2.default)(amc.expiryDate).isValid()) {
+            var dueDateTime = (0, _moment2.default)(amc.expiryDate);
+            amc.dueDate = amc.expiryDate;
+            amc.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
+            amc.productType = 3;
+            amc.title = 'AMC Renewal Pending';
+            amc.description = 'AMC #' + amc.policyNo + ' of ' + amc.productName;
+          }
+
+          return amc;
+        });
+
+        var insurances = result[2].map(function(item) {
+          var insurance = item;
+          if ((0, _moment2.default)(insurance.expiryDate).isValid()) {
+            var dueDateTime = (0, _moment2.default)(insurance.expiryDate);
+            insurance.dueDate = insurance.expiryDate;
+            insurance.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
+            insurance.productType = 3;
+            insurance.title = 'Insurance Renewal Pending';
+            insurance.description = 'Insurance #' + insurance.policyNo +
+                ' of ' + insurance.productName;
+          }
+          return insurance;
+        });
+
+        var warranties = result[3].map(function(item) {
+          var warranty = item;
+          if ((0, _moment2.default)(warranty.expiryDate).isValid()) {
+            var dueDateTime = (0, _moment2.default)(warranty.expiryDate);
+
+            warranty.dueDate = warranty.expiryDate;
+            warranty.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
+            warranty.productType = 3;
+            warranty.title = 'Warranty Renewal Pending';
+            warranty.description = 'Warranty #' + warranty.policyNo + ' of ' +
+                warranty.productName;
+          }
+
+          return warranty;
+        });
+
+        return [].concat(_toConsumableArray(products),
+            _toConsumableArray(warranties), _toConsumableArray(insurances),
+            _toConsumableArray(amcs));
+      });
+    }
+  }, {
+    key: 'notifyUserCron',
+    value: function notifyUserCron(userId, payload) {
+      return this.modals.fcmDetails.findAll({
+        where: {
+          user_id: userId,
+        }
+      }).then(function(result) {
+        var options = {
+          uri: 'https://fcm.googleapis.com/fcm/send',
+          method: 'POST',
+          headers: {Authorization: 'key=' + _main2.default.GOOGLE.FCM_KEY},
+          json: {
+            // note that Sequelize returns token object array, we map it with token value only
+            registration_ids: result.map(function(user) {
+              return user.fcm_id;
+            }),
+            // iOS requires priority to be set as 'high' for message to be received in background
+            priority: 'high',
+            data: payload,
+          }
+        };
+        (0, _request2.default)(options, function(error, response, body) {
+          if (!(!error && response.statusCode === 200)) {
+            console.log({
+              error: error,
+              userId: userId,
+              user: JSON.stringify(result),
+            });
+          }
+          // extract invalid registration for removal
+          if (body.failure > 0 && Array.isArray(body.results) &&
+              body.results.length === result.length) {
+            var results = body.results;
+            for (var i = 0; i < result.length; i += 1) {
+              if (results[i].error === 'InvalidRegistration') {
+                result[i].destroy().then(function(rows) {
+                  console.log('FCM ID\'s DELETED: ', rows);
+                });
+              }
+            }
+          }
+        });
       });
     }
   }, {

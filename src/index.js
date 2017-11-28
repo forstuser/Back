@@ -9,10 +9,14 @@ import {cpus} from 'os';
  */
 import APP from './app';
 
+import {executeCron} from './cronRunner';
+
 const numCPUs = cpus().length;
 
 const server = APP.server;
 const options = APP.options;
+
+executeCron();
 
 if (cluster.isMaster) {
 	// Fork workers.

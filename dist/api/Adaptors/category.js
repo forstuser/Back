@@ -92,9 +92,35 @@ var CategoryAdaptor = function () {
       var categoryData = void 0;
       return this.modals.categories.findAll({
         where: options,
-        attributes: [['category_id', 'id'], ['category_name', 'name'], ['ref_id', 'refId'], ['category_level', 'level'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.literal('ref_id'), '/products?subCategoryId=',
-                this.modals.sequelize.literal('category_id')), 'categoryProductUrl'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.literal('ref_id'), '/insights?subCategoryId=',
-                this.modals.sequelize.literal('category_id')), 'categoryInsightUrl'], [this.modals.sequelize.fn('CONCAT', '/categories/', this.modals.sequelize.literal('category_id'), '/images/'), 'categoryImageUrl']],
+        attributes: [
+          [
+            'category_id',
+            'id'],
+          [
+            'category_name',
+            'name'],
+          [
+            'ref_id',
+            'refId'],
+          [
+            'category_level',
+            'level'],
+          [
+            this.modals.sequelize.fn('CONCAT', 'categories/',
+                this.modals.sequelize.literal('ref_id'),
+                '/products?subCategoryId=',
+                this.modals.sequelize.literal('category_id')),
+            'categoryProductUrl'],
+          [
+            this.modals.sequelize.fn('CONCAT', 'categories/',
+                this.modals.sequelize.literal('ref_id'),
+                '/insights?subCategoryId=',
+                this.modals.sequelize.literal('category_id')),
+            'categoryInsightUrl'],
+          [
+            this.modals.sequelize.fn('CONCAT', '/categories/',
+                this.modals.sequelize.literal('category_id'), '/images/'),
+            'categoryImageUrl']],
         order: ['category_id']
       }).then(function(result) {
         categoryData = result.map(function(item) {

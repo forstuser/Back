@@ -98,6 +98,7 @@ var UserAdaptor = function () {
           'location',
           'latitude',
           'longitude',
+          'image_name',
           [
             this.modals.sequelize.fn('CONCAT', '/consumer/',
                 this.modals.sequelize.col('id'), '/images'),

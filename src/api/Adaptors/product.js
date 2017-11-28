@@ -930,6 +930,161 @@ class ProductAdaptor {
     });
   }
 
+  retrieveNotificationProducts(options) {
+    if (!options.status_type) {
+      options.status_type = {
+        $notIn: [3, 9],
+      };
+    }
+
+    const billOption = {
+      status_type: 5,
+    };
+
+    let products;
+    return this.modals.products.findAll({
+      where: options,
+      include: [
+        {
+          model: this.modals.bills,
+          where: billOption,
+          required: true,
+        },
+      ],
+      attributes: [
+        'id',
+        [
+          'product_name',
+          'productName'],
+        [
+          'purchase_cost',
+          'value'],
+        [
+          'main_category_id',
+          'masterCategoryId'],
+        'taxes',
+        [
+          'document_date',
+          'purchaseDate'],
+        ['document_number', 'documentNo'],
+        ['updated_at', 'updatedDate'],
+        [
+          'bill_id',
+          'billId'],
+        [
+          'job_id',
+          'jobId'],
+        'copies', 'user_id',
+      ],
+    }).then((productResult) => {
+      products = productResult.map((item) => item.toJSON());
+      return this.retrieveProductMetadata({
+        product_id: {
+          $in: products.map((item) => item.id),
+        },
+      });
+    }).then((results) => {
+      const metaData = results;
+
+      products = products.map((productItem) => {
+        productItem.productMetaData = metaData.filter(
+            (item) => item.productId === productItem.id);
+
+        return productItem;
+      });
+
+      return products;
+    });
+  }
+
+  retrieveMissingDocProducts(options) {
+    if (!options.status_type) {
+      options.status_type = {
+        $notIn: [3, 9],
+      };
+    }
+
+    const billOption = {
+      status_type: 5,
+    };
+
+    let products;
+    return this.modals.products.findAll({
+      where: options,
+      include: [
+        {
+          model: this.modals.bills,
+          where: billOption,
+          required: true,
+          attributes: [],
+        },
+      ],
+      attributes: [
+        'id',
+        [
+          'product_name',
+          'productName'],
+        [
+          'purchase_cost',
+          'value'],
+        [
+          'main_category_id',
+          'masterCategoryId'],
+        'taxes',
+        [
+          'document_date',
+          'purchaseDate'],
+        ['document_number', 'documentNo'],
+        ['updated_at', 'updatedDate'],
+        [
+          'bill_id',
+          'billId'],
+        [
+          'job_id',
+          'jobId'],
+        'copies', 'user_id',
+      ],
+    }).then((productResult) => {
+      products = productResult.map((item) => {
+        const product = item.toJSON();
+        product.hasDocs = product.copies.length > 0;
+        return product;
+      });
+      return Promise.all([
+        this.insuranceAdaptor.retrieveInsurances({
+          product_id: {
+            $in: products.filter((item) => item.masterCategoryId === 2 ||
+                item.masterCategoryId === 3).map((item) => item.id),
+          },
+        }), this.warrantyAdaptor.retrieveWarranties({
+          product_id: {
+            $in: products.filter((item) => item.masterCategoryId === 2 ||
+                item.masterCategoryId === 3).map((item) => item.id),
+          },
+        })]);
+    }).then((results) => {
+      const insurances = results[0];
+      const warranties = results[1];
+
+      products = products.map((productItem) => {
+        if (productItem.masterCategoryId === 2 ||
+            productItem.masterCategoryId === 3) {
+          productItem.hasInsurance = insurances.filter(
+              (item) => item.productId === productItem.id).length > 0;
+
+          productItem.hasWarranty = warranties.filter(
+              (item) => item.productId === productItem.id).length > 0;
+        }
+
+        return productItem;
+      });
+
+      return products.filter((pItem) => !pItem.hasDocs ||
+          (pItem.hasInsurance && pItem.hasInsurance === false) ||
+          (pItem.hasWarranty && pItem.hasWarranty === false));
+    });
+  }
+
   prepareProductDetail(user, request) {
     const productId = request.params.id;
     return this.retrieveProductById(productId, {

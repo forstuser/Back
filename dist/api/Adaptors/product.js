@@ -1029,6 +1029,189 @@ var ProductAdaptor = function () {
       });
     }
   }, {
+    key: 'retrieveNotificationProducts',
+    value: function retrieveNotificationProducts(options) {
+      var _this5 = this;
+
+      if (!options.status_type) {
+        options.status_type = {
+          $notIn: [3, 9],
+        };
+      }
+
+      var billOption = {
+        status_type: 5,
+      };
+
+      var products = void 0;
+      return this.modals.products.findAll({
+        where: options,
+        include: [
+          {
+            model: this.modals.bills,
+            where: billOption,
+            required: true,
+          }],
+        attributes: [
+          'id',
+          [
+            'product_name',
+            'productName'],
+          [
+            'purchase_cost',
+            'value'],
+          [
+            'main_category_id',
+            'masterCategoryId'],
+          'taxes',
+          [
+            'document_date',
+            'purchaseDate'],
+          [
+            'document_number',
+            'documentNo'],
+          [
+            'updated_at',
+            'updatedDate'],
+          [
+            'bill_id',
+            'billId'],
+          [
+            'job_id',
+            'jobId'],
+          'copies',
+          'user_id'],
+      }).then(function(productResult) {
+        products = productResult.map(function(item) {
+          return item.toJSON();
+        });
+        return _this5.retrieveProductMetadata({
+          product_id: {
+            $in: products.map(function(item) {
+              return item.id;
+            })
+          }
+        });
+      }).then(function(results) {
+        var metaData = results;
+
+        products = products.map(function(productItem) {
+          productItem.productMetaData = metaData.filter(function(item) {
+            return item.productId === productItem.id;
+          });
+
+          return productItem;
+        });
+
+        return products;
+      });
+    }
+  }, {
+    key: 'retrieveMissingDocProducts',
+    value: function retrieveMissingDocProducts(options) {
+      var _this6 = this;
+
+      if (!options.status_type) {
+        options.status_type = {
+          $notIn: [3, 9],
+        };
+      }
+
+      var billOption = {
+        status_type: 5,
+      };
+
+      var products = void 0;
+      return this.modals.products.findAll({
+        where: options,
+        include: [
+          {
+            model: this.modals.bills,
+            where: billOption,
+            required: true,
+            attributes: [],
+          }],
+        attributes: [
+          'id',
+          [
+            'product_name',
+            'productName'],
+          [
+            'purchase_cost',
+            'value'],
+          [
+            'main_category_id',
+            'masterCategoryId'],
+          'taxes',
+          [
+            'document_date',
+            'purchaseDate'],
+          [
+            'document_number',
+            'documentNo'],
+          [
+            'updated_at',
+            'updatedDate'],
+          [
+            'bill_id',
+            'billId'],
+          [
+            'job_id',
+            'jobId'],
+          'copies',
+          'user_id'],
+      }).then(function(productResult) {
+        products = productResult.map(function(item) {
+          var product = item.toJSON();
+          product.hasDocs = product.copies.length > 0;
+          return product;
+        });
+        return Promise.all([
+          _this6.insuranceAdaptor.retrieveInsurances({
+            product_id: {
+              $in: products.filter(function(item) {
+                return item.masterCategoryId === 2 || item.masterCategoryId ===
+                    3;
+              }).map(function(item) {
+                return item.id;
+              }),
+            },
+          }), _this6.warrantyAdaptor.retrieveWarranties({
+            product_id: {
+              $in: products.filter(function(item) {
+                return item.masterCategoryId === 2 || item.masterCategoryId ===
+                    3;
+              }).map(function(item) {
+                return item.id;
+              }),
+            },
+          })]);
+      }).then(function(results) {
+        var insurances = results[0];
+        var warranties = results[1];
+
+        products = products.map(function(productItem) {
+          if (productItem.masterCategoryId === 2 ||
+              productItem.masterCategoryId === 3) {
+            productItem.hasInsurance = insurances.filter(function(item) {
+              return item.productId === productItem.id;
+            }).length > 0;
+
+            productItem.hasWarranty = warranties.filter(function(item) {
+              return item.productId === productItem.id;
+            }).length > 0;
+          }
+
+          return productItem;
+        });
+
+        return products.filter(function(pItem) {
+          return !pItem.hasDocs || pItem.hasInsurance && pItem.hasInsurance ===
+              false || pItem.hasWarranty && pItem.hasWarranty === false;
+        });
+      });
+    }
+  }, {
     key: 'prepareProductDetail',
     value: function prepareProductDetail(user, request) {
       var productId = request.params.id;

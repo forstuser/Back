@@ -8,6 +8,7 @@ import AMCAdaptor from './amcs';
 import InsuranceAdaptor from './insurances';
 import WarrantyAdaptor from './warranties';
 import smtpTransport from 'nodemailer-smtp-transport';
+import _ from 'lodash';
 import nodemailer from 'nodemailer';
 import request from 'request';
 import moment from 'moment';
@@ -338,6 +339,323 @@ class NotificationAdaptor {
         },
         notification_id: notificationIds,
       },
+    });
+  }
+
+  createNotifications(days) {
+    return this.retrieveCronNotification(days).then((result) => {
+      const upcomingServices = result.map((elem) => {
+        if (elem.productType === 4) {
+          console.log(elem);
+          const dueAmountArr = elem.productMetaData.filter((e) => {
+            return e.name.toLowerCase() === 'due amount';
+          });
+
+          if (dueAmountArr.length > 0) {
+            elem.value = dueAmountArr[0].value;
+          }
+        }
+        let update = elem;
+        update.bill_product_id = update.productId;
+        update.bill_id = update.jobId;
+        update.due_amount = update.value;
+        update.due_date = update.dueDate;
+        update.notification_type = update.productType;
+
+        update = _.omit(update, 'id');
+        update = _.omit(update, 'productId');
+        update = _.omit(update, 'jobId');
+        update = _.omit(update, 'policyNo');
+        update = _.omit(update, 'premiumType');
+        update = _.omit(update, 'productName');
+        update = _.omit(update, 'premiumAmount');
+        update = _.omit(update, 'dueDate');
+        update = _.omit(update, 'productType');
+        update = _.omit(update, 'sellers');
+        update = _.omit(update, 'onlineSellers');
+        update = _.omit(update, 'dueIn');
+        update = _.omit(update, 'purchaseDate');
+        update = _.omit(update, 'updatedDate');
+        update = _.omit(update, 'effectiveDate');
+        update = _.omit(update, 'expiryDate');
+        update = _.omit(update, 'value');
+        update = _.omit(update, 'taxes');
+        update = _.omit(update, 'categoryId');
+        update = _.omit(update, 'brandId');
+        update = _.omit(update, 'colorId');
+        update = _.omit(update, 'value');
+        update = _.omit(update, 'documentNo');
+        update = _.omit(update, 'billId');
+        update = _.omit(update, 'sellerId');
+        update = _.omit(update, 'reviewUrl');
+        update = _.omit(update, 'color');
+        update = _.omit(update, 'brand');
+        update = _.omit(update, 'bill');
+        update = _.omit(update, 'productReviews');
+        update = _.omit(update, 'productMetaData');
+        update = _.omit(update, 'insuranceDetails');
+        update = _.omit(update, 'warrantyDetails');
+        update = _.omit(update, 'amcDetails');
+        update = _.omit(update, 'repairBills');
+        update = _.omit(update, 'requiredCount');
+        update = _.omit(update, 'dueDate');
+        update = _.omit(update, 'dueIn');
+        return update;
+      });
+      /* const listIndex = (parseInt(pageNo || 1, 10) * 10) - 10; */
+
+      upcomingServices.sort((a, b) => {
+        let aDate;
+        let bDate;
+
+        aDate = a.dueDate;
+        bDate = b.dueDate;
+        if (moment.utc(aDate, 'YYYY-MM-DD').
+                isBefore(moment.utc(bDate, 'YYYY-MM-DD'))) {
+          return -1;
+        }
+
+        return 1;
+      });
+      const notificationPromise = upcomingServices.map(
+          (upcomingNotification) => {
+            this.notifyUserCron(upcomingNotification.user_id,
+                upcomingNotification);
+          });
+
+      return Promise.all(notificationPromise);
+
+    });
+  }
+
+  createMissingDocNotification(days) {
+    return this.retrieveMissingDocNotification(days).then((result) => {
+      const upcomingServices = result.map((elem) => {
+        if (elem.productType === 4) {
+          console.log(elem);
+          const dueAmountArr = elem.productMetaData.filter((e) => {
+            return e.name.toLowerCase() === 'due amount';
+          });
+
+          if (dueAmountArr.length > 0) {
+            elem.value = dueAmountArr[0].value;
+          }
+        }
+        let update = elem;
+        update.bill_product_id = update.productId;
+        update.bill_id = update.jobId;
+        update.due_amount = update.value;
+        update.notification_type = update.productType;
+
+        update = _.omit(update, 'id');
+        update = _.omit(update, 'productId');
+        update = _.omit(update, 'jobId');
+        update = _.omit(update, 'policyNo');
+        update = _.omit(update, 'premiumType');
+        update = _.omit(update, 'productName');
+        update = _.omit(update, 'premiumAmount');
+        update = _.omit(update, 'dueDate');
+        update = _.omit(update, 'productType');
+        update = _.omit(update, 'sellers');
+        update = _.omit(update, 'onlineSellers');
+        update = _.omit(update, 'dueIn');
+        update = _.omit(update, 'purchaseDate');
+        update = _.omit(update, 'updatedDate');
+        update = _.omit(update, 'effectiveDate');
+        update = _.omit(update, 'expiryDate');
+        update = _.omit(update, 'value');
+        update = _.omit(update, 'taxes');
+        update = _.omit(update, 'categoryId');
+        update = _.omit(update, 'brandId');
+        update = _.omit(update, 'colorId');
+        update = _.omit(update, 'value');
+        update = _.omit(update, 'documentNo');
+        update = _.omit(update, 'billId');
+        update = _.omit(update, 'sellerId');
+        update = _.omit(update, 'reviewUrl');
+        update = _.omit(update, 'color');
+        update = _.omit(update, 'brand');
+        update = _.omit(update, 'bill');
+        update = _.omit(update, 'productReviews');
+        update = _.omit(update, 'productMetaData');
+        update = _.omit(update, 'insuranceDetails');
+        update = _.omit(update, 'warrantyDetails');
+        update = _.omit(update, 'amcDetails');
+        update = _.omit(update, 'repairBills');
+        update = _.omit(update, 'requiredCount');
+        update = _.omit(update, 'dueDate');
+        update = _.omit(update, 'dueIn');
+        return update;
+      });
+
+      const notificationPromise = upcomingServices.map(
+          (upcomingNotification) => {
+            this.notifyUserCron(upcomingNotification.user_id,
+                upcomingNotification);
+          });
+
+      return Promise.all(notificationPromise);
+
+    });
+  }
+
+  retrieveMissingDocNotification(days) {
+    return this.productAdaptor.retrieveMissingDocProducts({
+      status_type: [5, 8, 11],
+    }).then((result) => {
+      return result.map((item) => {
+        const product = item;
+
+        product.title = `${product.productName} Reminder`;
+        product.description = 'Some of Documents are missing';
+        product.productType = 10;
+        return product;
+      });
+    });
+  }
+
+  retrieveCronNotification(days) {
+    const expiryDateCompare = days === 15 ? {
+      $gte: moment().add(days, 'day').startOf('day'),
+      $lte: moment().add(days, 'day').endOf('day'),
+    } : {
+      $gte: moment().startOf('day'),
+      $lte: moment().add(days, 'day').endOf('day'),
+    };
+    return Promise.all([
+      this.productAdaptor.retrieveNotificationProducts({
+        status_type: 5,
+        main_category_id: [6, 8],
+      }),
+      this.amcAdaptor.retrieveAMCs({
+        status_type: 5,
+        expiry_date: expiryDateCompare,
+      }),
+      this.insuranceAdaptor.retrieveInsurances({
+        status_type: 5,
+        expiry_date: expiryDateCompare,
+      }),
+      this.warrantyAdaptor.retrieveWarranties({
+        status_type: 5,
+        expiry_date: expiryDateCompare,
+      })]).then((result) => {
+      let products = result[0].map((item) => {
+        const product = item;
+
+        product.productMetaData.map((metaItem) => {
+          const metaData = metaItem;
+          if (metaData.name.toLowerCase().includes('due') &&
+              metaData.name.toLowerCase().includes('date') &&
+              moment(metaData.value).isValid()) {
+            const dueDateTime = moment(metaData.value);
+            product.dueDate = metaData.value;
+            product.dueIn = dueDateTime.diff(moment.utc(), 'days');
+          }
+
+          if (metaData.name.toLowerCase().includes('address')) {
+            product.description = metaData.name.toLowerCase().
+                includes('address') ? `${metaData.value}` : '';
+          }
+
+          return metaData;
+        });
+
+        product.title = `${product.productName} Reminder`;
+        product.productType = 4;
+        return product;
+      });
+
+      products = products.filter(
+          item => days === 15 ?
+              (item.dueDate <= moment().add(days, 'day').endOf('day') &&
+                  item.dueDate >= moment().add(days, 'day').startOf('day')) :
+              (item.dueDate <= moment().add(days, 'day').endOf('day') &&
+                  item.dueDate >= moment().startOf('day')));
+      let amcs = result[1].map((item) => {
+        const amc = item;
+        if (moment(amc.expiryDate).isValid()) {
+          const dueDateTime = moment(amc.expiryDate);
+          amc.dueDate = amc.expiryDate;
+          amc.dueIn = dueDateTime.diff(moment.utc(), 'days');
+          amc.productType = 3;
+          amc.title = 'AMC Renewal Pending';
+          amc.description = `AMC #${amc.policyNo} of ${amc.productName}`;
+        }
+
+        return amc;
+      });
+
+      let insurances = result[2].map((item) => {
+        const insurance = item;
+        if (moment(insurance.expiryDate).isValid()) {
+          const dueDateTime = moment(insurance.expiryDate);
+          insurance.dueDate = insurance.expiryDate;
+          insurance.dueIn = dueDateTime.diff(moment.utc(), 'days');
+          insurance.productType = 3;
+          insurance.title = 'Insurance Renewal Pending';
+          insurance.description = `Insurance #${insurance.policyNo} of ${insurance.productName}`;
+        }
+        return insurance;
+      });
+
+      let warranties = result[3].map((item) => {
+        const warranty = item;
+        if (moment(warranty.expiryDate).isValid()) {
+          const dueDateTime = moment(warranty.expiryDate);
+
+          warranty.dueDate = warranty.expiryDate;
+          warranty.dueIn = dueDateTime.diff(moment.utc(), 'days');
+          warranty.productType = 3;
+          warranty.title = 'Warranty Renewal Pending';
+          warranty.description = `Warranty #${warranty.policyNo} of ${warranty.productName}`;
+        }
+
+        return warranty;
+      });
+
+      return [...products, ...warranties, ...insurances, ...amcs];
+    });
+  }
+
+  notifyUserCron(userId, payload) {
+    return this.modals.fcmDetails.findAll({
+      where: {
+        user_id: userId,
+      },
+    }).then((result) => {
+      const options = {
+        uri: 'https://fcm.googleapis.com/fcm/send',
+        method: 'POST',
+        headers: {Authorization: `key=${config.GOOGLE.FCM_KEY}`},
+        json: {
+          // note that Sequelize returns token object array, we map it with token value only
+          registration_ids: result.map(user => user.fcm_id),
+          // iOS requires priority to be set as 'high' for message to be received in background
+          priority: 'high',
+          data: payload,
+        },
+      };
+      request(options, (error, response, body) => {
+        if (!(!error && response.statusCode === 200)) {
+          console.log({
+            error,
+            userId,
+            user: JSON.stringify(result),
+          });
+        }
+        // extract invalid registration for removal
+        if (body.failure > 0 && Array.isArray(body.results) &&
+            body.results.length === result.length) {
+          const results = body.results;
+          for (let i = 0; i < result.length; i += 1) {
+            if (results[i].error === 'InvalidRegistration') {
+              result[i].destroy().then(rows => {
+                console.log('FCM ID\'s DELETED: ', rows);
+              });
+            }
+          }
+        }
+      });
     });
   }
 

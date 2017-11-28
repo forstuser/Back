@@ -133,7 +133,7 @@ class InsuranceAdaptor {
           this.modals.sequelize.fn('CONCAT', 'products/',
               this.modals.sequelize.literal('"product_id"')),
           'productURL'],
-        'copies'],
+        'copies', 'user_id'],
       order: [['expiry_date', 'DESC']],
     }).
         then((insuranceResult) => insuranceResult.map((item) => item.toJSON()).
