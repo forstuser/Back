@@ -109,11 +109,26 @@ var ProductAdaptor = function () {
         }, {
           model: this.modals.bills,
           where: billOption,
-          attributes: [['consumer_name', 'consumerName'], ['consumer_email', 'consumerEmail'], ['consumer_phone_no', 'consumerPhoneNo'], ['document_number', 'invoiceNo']],
+          attributes: [
+            [
+              'consumer_name',
+              'consumerName'],
+            [
+              'consumer_email',
+              'consumerEmail'],
+            [
+              'consumer_phone_no',
+              'consumerPhoneNo'],
+            [
+              'document_number',
+              'invoiceNo']],
           include: [{
             model: this.modals.onlineSellers,
             as: 'sellers',
             attributes: [
+              [
+                'sid',
+                'id'],
               [
                 'seller_name',
                 'sellerName'],
@@ -149,6 +164,9 @@ var ProductAdaptor = function () {
           model: this.modals.offlineSellers,
           as: 'sellers',
           attributes: [
+            [
+              'sid',
+              'id'],
             [
               'seller_name',
               'sellerName'],

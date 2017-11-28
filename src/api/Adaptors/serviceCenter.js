@@ -11,13 +11,18 @@ class ServiceCenterAdaptor {
   retrieveServiceCenters(options) {
     options.status_type = 1;
     const categoryId = options.category_id;
+    const brand_id = options.brand_id;
     options = _.omit(options, 'category_id');
+    options = _.omit(options, 'brand_id');
     return this.modals.serviceCenters.findAll({
       where: options,
       include: [
         {
           model: this.modals.brands,
           as: 'brands',
+          where: {
+            brand_id,
+          },
           attributes: [
             [
               'brand_id',
@@ -32,6 +37,9 @@ class ServiceCenterAdaptor {
         },
         {
           model: this.modals.centerDetails,
+          where: {
+            category_id: categoryId,
+          },
           include: [
             {
               model: this.modals.detailTypes,
@@ -42,7 +50,7 @@ class ServiceCenterAdaptor {
             [
               this.modals.sequelize.literal(
                   '"centerDetails->detailType"."type"'),
-              'detailType'],
+              'type'],
             [
               this.modals.sequelize.literal(
                   '"centerDetails->detailType"."title"'),

@@ -3,20 +3,15 @@
 
 import Bluebird from 'bluebird';
 import shared from '../../helpers/shared';
+import BrandAdaptor from '../Adaptors/brands';
 
 let modals;
-const excludedAttributes = {
-  exclude: [
-    'display_id',
-    'created_on',
-    'updated_on',
-    'updated_by_user_id',
-    'status_id'],
-};
+let brandAdaptor;
 
 class BrandController {
   constructor(modal) {
     modals = modal;
+    brandAdaptor = new BrandAdaptor(modal);
   }
 
   static getBrands(request, reply) {
@@ -96,6 +91,33 @@ class BrandController {
         forceUpdate: request.pre.forceUpdate,
       });
     }
+  }
+
+  static getBrandASC(request, reply) {
+    return brandAdaptor.retrieveASCBrands(request.query).then((results) => {
+      if (results) {
+        return reply({
+          status: true,
+          message: 'Successful',
+          brands: results,
+          forceUpdate: request.pre.forceUpdate,
+        });
+      }
+
+      return reply({
+        status: false,
+        message: 'No Brand Found',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(404);
+
+    }).catch((err) => {
+      console.log({API_Logs: err});
+      return reply({
+        status: false,
+        message: 'Something wrong',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(500);
+    });
   }
 }
 

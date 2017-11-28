@@ -49,13 +49,13 @@ exports.default = function (sequelize, DataTypes) {
       type: DataTypes.FLOAT,
       allowNull: true,
       defaultValue: null,
-      validate: {min: -90, max: 90},
+      validate: { min: -90, max: 90 }
     },
     longitude: {
       type: DataTypes.FLOAT,
       allowNull: true,
       defaultValue: null,
-      validate: {min: -180, max: 180},
+      validate: { min: -180, max: 180 }
     },
     url: {
       type: DataTypes.STRING
@@ -92,8 +92,7 @@ exports.default = function (sequelize, DataTypes) {
     offlineSellers.belongsTo(models.users, { foreignKey: 'updated_by' });
 
     offlineSellers.belongsTo(models.statuses, { foreignKey: 'status_type', targetKey: 'status_type' });
-    offlineSellers.hasMany(models.sellerReviews,
-        {foreignKey: 'seller_id', as: 'sellerReviews'});
+    offlineSellers.hasMany(models.sellerReviews, { foreignKey: 'seller_id', as: 'sellerReviews' });
   };
   return offlineSellers;
 };

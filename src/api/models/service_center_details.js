@@ -48,7 +48,7 @@ export default (sequelize, DataTypes) => {
         {foreignKey: 'category_id', targetKey:'category_id'});
 
     centerDetails.belongsTo(models.detailTypes,
-        {foreignKey: 'detail_type', targetKey: 'type'});
+        {foreignKey: 'detail_type', targetKey: 'id'});
 
     centerDetails.belongsTo(models.statuses,
         {foreignKey: 'status_type', targetKey: 'status_type'});

@@ -88,6 +88,17 @@ function prepareBrandRoutes(brandController, brandRoutes) {
         handler: BrandController.getBrands,
       },
     });
+
+    brandRoutes.push({
+      method: 'GET',
+      path: '/brandcenter',
+      config: {
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+        ],
+        handler: BrandController.getBrandASC,
+      },
+    });
   }
 }
 
@@ -419,7 +430,6 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
       method: 'GET',
       path: '/jobs/{id}/files/{copyid}',
       config: {
-        auth: 'jwt',
         pre: [
           {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
         ],

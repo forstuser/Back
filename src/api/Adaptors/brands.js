@@ -2,10 +2,12 @@
 'use strict';
 
 import _ from 'lodash';
+import ServiceCenterAdaptor from './serviceCenter';
 
 class BrandAdaptor {
   constructor(modals) {
     this.modals = modals;
+    this.serviceCenterAdaptor = new ServiceCenterAdaptor(modals);
   }
 
   retrieveBrands(options) {
@@ -23,6 +25,55 @@ class BrandAdaptor {
           'brand_description',
           'description']],
     }).then((brandResult) => brandResult.map((item) => item.toJSON()));
+  }
+
+  retrieveASCBrands(options) {
+    let brand;
+    return this.modals.brands.findAll({
+      where: {
+        status_type: 1,
+        brand_name: {
+          $iLike: `${options.brand_name.toLowerCase()}%`,
+        },
+      },
+      attributes: [
+        [
+          'brand_id',
+          'id'],
+        [
+          'brand_name',
+          'name'],
+        [
+          'brand_description',
+          'description']],
+    }).then((brandResults) => {
+      if (brandResults.length > 0) {
+        brand = brandResults.map(item => item.toJSON())[0];
+
+        return Promise.all([
+          this.retrieveBrandDetails({
+            status_type: 1,
+            category_id: 327,
+            brand_id: brand.id,
+          }), this.serviceCenterAdaptor.retrieveServiceCenters({
+            status_type: 1,
+            category_id: 327,
+            brand_id: brand.id,
+          })]);
+      }
+
+      return undefined;
+    }).then((result) => {
+      if (result) {
+        console.log(result[1][0]);
+        brand.details = result[0];
+        brand.serviceCenters = result[1];
+
+        return brand;
+      }
+
+      return undefined;
+    });
   }
 
   retrieveBrandById(id, options) {

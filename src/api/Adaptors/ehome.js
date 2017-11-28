@@ -107,6 +107,9 @@ class EHomeAdaptor {
         admin_status: {
           $notIn: [3, 5, 9] // 3=Delete, 5=Complete, 9=Discard
         },
+        ce_status: {
+          $notIn: [5, 7],
+        },
       },
       include: [
         {

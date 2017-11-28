@@ -45,7 +45,7 @@ var RepairAdaptor = function () {
     value: function retrieveRepairs(options) {
       options.status_type = options.product_status_type || 5;
       var productOptions = options.main_category_id ? {
-        main_category_id: options.main_category_id,
+        main_category_id: options.main_category_id
       } : undefined;
       options = _lodash2.default.omit(options, 'main_category_id');
       options = _lodash2.default.omit(options, 'product_status_type');
@@ -60,77 +60,14 @@ var RepairAdaptor = function () {
           model: this.modals.products,
           where: productOptions,
           attributes: [],
-          required: productOptions !== undefined,
+          required: productOptions !== undefined
         }, {
           model: this.modals.offlineSellers,
           as: 'sellers',
-          attributes: [
-            [
-              'seller_name',
-              'sellerName'],
-            [
-              'owner_name',
-              'ownerName'],
-            [
-              'pan_no',
-              'panNo'],
-            [
-              'reg_no',
-              'regNo'],
-            [
-              'is_service',
-              'isService'],
-            'url',
-            'gstin',
-            [
-              'contact_no',
-              'contact'],
-            'email',
-            'address',
-            'city',
-            'state',
-            'pincode',
-            'latitude',
-            'longitude'],
+          attributes: [['seller_name', 'sellerName'], ['owner_name', 'ownerName'], ['pan_no', 'panNo'], ['reg_no', 'regNo'], ['is_service', 'isService'], 'url', 'gstin', ['contact_no', 'contact'], 'email', 'address', 'city', 'state', 'pincode', 'latitude', 'longitude'],
           required: false
         }],
-        attributes: [
-          'id',
-          [
-            'product_id',
-            'productId'],
-          [
-            'job_id',
-            'jobId'],
-          [
-            this.modals.sequelize.literal('"product"."main_category_id"'),
-            'masterCategoryId'],
-          [
-            'document_number',
-            'policyNo'],
-          [
-            'repair_cost',
-            'premiumAmount'],
-          [
-            this.modals.sequelize.literal('"product"."product_name"'),
-            'productName'],
-          [
-            'repair_cost',
-            'value'],
-          [
-            'repair_taxes',
-            'taxes'],
-          [
-            'document_date',
-            'purchaseDate'],
-          [
-            'updated_at',
-            'updatedDate'],
-          [
-            this.modals.sequelize.fn('CONCAT', 'products/',
-                this.modals.sequelize.literal('"product_id"')),
-            'productURL'],
-          'copies'],
+        attributes: ['id', ['product_id', 'productId'], ['job_id', 'jobId'], [this.modals.sequelize.literal('"product"."main_category_id"'), 'masterCategoryId'], ['document_number', 'policyNo'], ['repair_cost', 'premiumAmount'], [this.modals.sequelize.literal('"product"."product_name"'), 'productName'], ['repair_cost', 'value'], ['repair_taxes', 'taxes'], ['document_date', 'purchaseDate'], ['updated_at', 'updatedDate'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"product_id"')), 'productURL'], 'copies'],
         order: [['document_date', 'DESC']]
       }).then(function (repairResult) {
         return repairResult.map(function (item) {
@@ -142,37 +79,26 @@ var RepairAdaptor = function () {
     key: 'retrieveRepairCount',
     value: function retrieveRepairCount(options) {
       options.status_type = 5;
-      var productOptions = options.main_category_id ||
-      options.product_status_type ? {
+      var productOptions = options.main_category_id || options.product_status_type ? {
         main_category_id: options.main_category_id,
-        status_type: options.product_status_type,
+        status_type: options.product_status_type
       } : undefined;
 
       options = _lodash2.default.omit(options, 'main_category_id');
       options = _lodash2.default.omit(options, 'product_status_type');
       return this.modals.repairs.findAll({
         where: options,
-        include: [
-          {
-            model: this.modals.products,
-            where: productOptions,
-            attributes: [],
-            required: productOptions !== undefined,
-          }],
+        include: [{
+          model: this.modals.products,
+          where: productOptions,
+          attributes: [],
+          required: productOptions !== undefined
+        }],
 
-        attributes: [
-          [
-            this.modals.sequelize.literal('COUNT(*)'),
-            'productCounts'],
-          [
-            this.modals.sequelize.literal('"product"."main_category_id"'),
-            'masterCategoryId'],
-          [
-            this.modals.sequelize.literal('max("repairs"."updated_at")'),
-            'lastUpdatedAt']],
-        group: this.modals.sequelize.literal('"product"."main_category_id"'),
-      }).then(function(repairResult) {
-        return repairResult.map(function(item) {
+        attributes: [[this.modals.sequelize.literal('COUNT(*)'), 'productCounts'], [this.modals.sequelize.literal('"product"."main_category_id"'), 'masterCategoryId'], [this.modals.sequelize.literal('max("repairs"."updated_at")'), 'lastUpdatedAt']],
+        group: this.modals.sequelize.literal('"product"."main_category_id"')
+      }).then(function (repairResult) {
+        return repairResult.map(function (item) {
           return item.toJSON();
         });
       });

@@ -64,7 +64,7 @@ exports.default = function (sequelize, DataTypes) {
       defaultValue: sequelize.literal('NOW()')
     },
     copies: {
-      type: DataTypes.ARRAY(DataTypes.JSON)
+      type: DataTypes.ARRAY(DataTypes.JSONB)
     }
   }, {
     freezeTableName: true,
@@ -81,15 +81,14 @@ exports.default = function (sequelize, DataTypes) {
     products.belongsTo(models.users, { foreignKey: 'updated_by', as: 'updatedByUser' });
 
     products.belongsTo(models.statuses, { foreignKey: 'status_type', targetKey: 'status_type' });
-    products.belongsTo(models.jobs, {as: 'jobs', foreignKey: 'job_id'});
+    products.belongsTo(models.jobs, { as: 'jobs', foreignKey: 'job_id' });
     products.belongsTo(models.offlineSellers, { foreignKey: 'seller_id', as: 'sellers' });
     products.belongsTo(models.brands, { foreignKey: 'brand_id', as: 'brand' });
     products.belongsTo(models.categories, { foreignKey: 'main_category_id', as: 'mainCategory' });
     products.belongsTo(models.categories, { foreignKey: 'category_id', as: 'category' });
     products.belongsTo(models.colours, { foreignKey: 'colour_id', as: 'color' });
 
-    products.hasMany(models.productReviews,
-        {foreignKey: 'bill_product_id', as: 'productReviews'});
+    products.hasMany(models.productReviews, { foreignKey: 'bill_product_id', as: 'productReviews' });
   };
 
   return products;

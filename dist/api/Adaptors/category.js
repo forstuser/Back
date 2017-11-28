@@ -30,35 +30,8 @@ var CategoryAdaptor = function () {
           attributes: [['category_id', 'id'], ['category_name', 'name'], ['ref_id', 'refId'], ['category_level', 'level'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.literal('"categories"."category_id"'), '/products?subCategoryId=', this.modals.sequelize.literal('"subCategories"."category_id"')), 'categoryProductUrl'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.literal('"categories"."category_id"'), '/insights?subCategoryId=', this.modals.sequelize.literal('"subCategories"."category_id"')), 'categoryInsightUrl']],
           required: false
         }],
-        attributes: [
-          [
-            'category_id',
-            'id'],
-          [
-            'category_name',
-            'name'],
-          [
-            'ref_id',
-            'refId'],
-          [
-            'category_level',
-            'level'],
-          [
-            this.modals.sequelize.fn('CONCAT', 'categories/',
-                this.modals.sequelize.literal('"categories"."category_id"'),
-                '/products'),
-            'categoryProductUrl'],
-          [
-            this.modals.sequelize.fn('CONCAT', 'categories/',
-                this.modals.sequelize.literal('"categories"."category_id"'),
-                '/insights'),
-            'categoryInsightUrl'],
-          [
-            this.modals.sequelize.fn('CONCAT', '/categories/',
-                this.modals.sequelize.literal('"categories"."category_id"'),
-                '/images/'),
-            'categoryImageUrl']],
-        order: ['category_id'],
+        attributes: [['category_id', 'id'], ['category_name', 'name'], ['ref_id', 'refId'], ['category_level', 'level'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.literal('"categories"."category_id"'), '/products'), 'categoryProductUrl'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.literal('"categories"."category_id"'), '/insights'), 'categoryInsightUrl'], [this.modals.sequelize.fn('CONCAT', '/categories/', this.modals.sequelize.literal('"categories"."category_id"'), '/images/'), 'categoryImageUrl']],
+        order: ['category_id']
       }).then(function (result) {
         return result.map(function (item) {
           return item.toJSON();

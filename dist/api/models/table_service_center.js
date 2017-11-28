@@ -31,10 +31,10 @@ exports.default = function (sequelize, DataTypes) {
       type: DataTypes.STRING
     },
     center_longitude: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.FLOAT
     },
     center_latitude: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.FLOAT
     },
     center_timings: {
       type: DataTypes.STRING
@@ -72,11 +72,11 @@ exports.default = function (sequelize, DataTypes) {
       foreignKey: 'center_id',
       otherKey: 'brand_id',
       through: 'center_brand_mapping',
-      as: 'brands',
+      as: 'brands'
     });
     serviceCenters.hasMany(models.centerDetails, {
       foreignKey: 'center_id',
-      as: 'centerDetails',
+      as: 'centerDetails'
     });
   };
   return serviceCenters;

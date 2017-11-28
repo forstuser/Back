@@ -49,10 +49,9 @@ exports.default = function (sequelize, DataTypes) {
       otherKey: 'center_id',
       foreignKey: 'brand_id',
       through: 'center_brand_mapping',
-      as: 'centers',
+      as: 'centers'
     });
-    brands.hasMany(models.brandReviews,
-        {foreignKey: 'brand_id', as: 'brandReviews'});
+    brands.hasMany(models.brandReviews, { foreignKey: 'brand_id', as: 'brandReviews' });
   };
   return brands;
 };

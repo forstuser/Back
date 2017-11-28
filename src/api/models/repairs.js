@@ -46,7 +46,7 @@ export default (sequelize, DataTypes) => {
           defaultValue: sequelize.literal('NOW()')
         },
         copies: {
-          type: DataTypes.ARRAY(DataTypes.JSON),
+          type: DataTypes.ARRAY(DataTypes.JSONB),
         },
       },
       {

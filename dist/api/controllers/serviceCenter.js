@@ -31,7 +31,7 @@ var ServiceCenterController = function () {
 		_classCallCheck(this, ServiceCenterController);
 
 		modals = modal;
-    serviceCenterAdaptor = new _serviceCenter2.default(modal);
+		serviceCenterAdaptor = new _serviceCenter2.default(modal);
 	}
 
 	_createClass(ServiceCenterController, null, [{
@@ -55,19 +55,14 @@ var ServiceCenterController = function () {
 				var location = payload.location || user.location || '';
 				var city = payload.city || '';
 				var latlong = latitude && longitude ? latitude + ', ' + longitude : '';
-        var categoryId = request.query.categoryid || payload.categoryId || 0;
-        var brandId = request.query.brandid || payload.brandId || 0;
+				var categoryId = request.query.categoryid || payload.categoryId || 0;
+				var brandId = request.query.brandid || payload.brandId || 0;
 				var whereClause = {
-          center_city: {
-            $iLike: '%' + city + '%',
+					center_city: {
+						$iLike: '%' + city + '%'
 					},
-          category_id: categoryId,
-          $and: [
-            modals.sequelize.where(
-                modals.sequelize.col('"centerDetails"."category_id"'),
-                categoryId),
-            modals.sequelize.where(modals.sequelize.col('"brands"."brand_id"'),
-                brandId)],
+					category_id: categoryId,
+					$and: [modals.sequelize.where(modals.sequelize.col('"centerDetails"."category_id"'), categoryId), modals.sequelize.where(modals.sequelize.col('"brands"."brand_id"'), brandId)]
 				};
 
 				var origins = [];
@@ -80,17 +75,15 @@ var ServiceCenterController = function () {
 					origins.push(city);
 				}
 
-        Promise.all([
-          serviceCenterAdaptor.retrieveServiceCenters(whereClause),
-          modals.brands.findAll({
+				Promise.all([serviceCenterAdaptor.retrieveServiceCenters(whereClause), modals.brands.findAll({
 					where: {
-            status_type: 1,
+						status_type: 1
 					},
 					include: [{
 						model: modals.brandDetails,
 						as: 'details',
 						where: {
-              status_type: 1,
+							status_type: 1,
 							category_id: categoryId
 						},
 						attributes: []
@@ -101,7 +94,7 @@ var ServiceCenterController = function () {
 					var finalResult = [];
 					if (result[0].length > 0) {
 						var serviceCenters = result[0].map(function (item) {
-              var center = item;
+							var center = item;
 							center.mobileDetails = center.centerDetails.filter(function (detail) {
 								return detail.detailType === 3;
 							});
@@ -109,13 +102,13 @@ var ServiceCenterController = function () {
 							center.geoLocation = center.latitude && center.longitude && center.latitude.toString() !== '0' && center.longitude.toString() !== '0' ? center.latitude + ', ' + center.longitude : '';
 							if (center.geoLocation) {
 								destinations.push(center.geoLocation);
-              } else if (center.address) {
-                destinations.push(center.address);
-              } else if (center.centerAddress) {
-                destinations.push(center.centerAddress);
-              } else if (center.city) {
-                destinations.push(center.city);
-              }
+							} else if (center.address) {
+								destinations.push(center.address);
+							} else if (center.centerAddress) {
+								destinations.push(center.centerAddress);
+							} else if (center.city) {
+								destinations.push(center.city);
+							}
 
 							if (origins.length > 0 && destinations.length > 0) {
 								serviceCentersWithLocation.push(center);
@@ -207,7 +200,7 @@ var ServiceCenterController = function () {
 			if (!request.pre.forceUpdate) {
 				Promise.all([modals.categories.findAll({
 					where: {
-            id: [2, 3],
+						id: [2, 3],
 						category_level: 1,
 						status_id: {
 							$ne: 3

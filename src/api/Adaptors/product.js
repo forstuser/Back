@@ -87,6 +87,9 @@ class ProductAdaptor {
               as: 'sellers',
               attributes: [
                 [
+                  'sid',
+                  'id'],
+                [
                   'seller_name',
                   'sellerName'],
                 'url',
@@ -122,6 +125,9 @@ class ProductAdaptor {
           model: this.modals.offlineSellers,
           as: 'sellers',
           attributes: [
+            [
+              'sid',
+              'id'],
             [
               'seller_name',
               'sellerName'],

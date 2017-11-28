@@ -15,25 +15,23 @@ var _shared = require('../../helpers/shared');
 
 var _shared2 = _interopRequireDefault(_shared);
 
+var _brands = require('../Adaptors/brands');
+
+var _brands2 = _interopRequireDefault(_brands);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var modals = void 0;
-var excludedAttributes = {
-  exclude: [
-    'display_id',
-    'created_on',
-    'updated_on',
-    'updated_by_user_id',
-    'status_id'],
-};
+var brandAdaptor = void 0;
 
 var BrandController = function () {
   function BrandController(modal) {
     _classCallCheck(this, BrandController);
 
     modals = modal;
+    brandAdaptor = new _brands2.default(modal);
   }
 
   _createClass(BrandController, null, [
@@ -114,6 +112,35 @@ var BrandController = function () {
             forceUpdate: request.pre.forceUpdate,
           });
         }
+      },
+    }, {
+      key: 'getBrandASC',
+      value: function getBrandASC(request, reply) {
+        return brandAdaptor.retrieveASCBrands(request.query).
+            then(function(results) {
+              if (results) {
+                return reply({
+                  status: true,
+                  message: 'Successful',
+                  brands: results,
+                  forceUpdate: request.pre.forceUpdate,
+                });
+              }
+
+              return reply({
+                status: false,
+                message: 'No Brand Found',
+                forceUpdate: request.pre.forceUpdate,
+              }).code(404);
+            }).
+            catch(function(err) {
+              console.log({API_Logs: err});
+              return reply({
+                status: false,
+                message: 'Something wrong',
+                forceUpdate: request.pre.forceUpdate,
+              }).code(500);
+            });
       },
     }]);
 

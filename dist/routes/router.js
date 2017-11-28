@@ -129,6 +129,15 @@ function prepareBrandRoutes(brandController, brandRoutes) {
         handler: _brand2.default.getBrands
       }
     });
+
+    brandRoutes.push({
+      method: 'GET',
+      path: '/brandcenter',
+      config: {
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        handler: _brand2.default.getBrandASC
+      }
+    });
   }
 }
 
@@ -394,7 +403,6 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
       method: 'GET',
       path: '/jobs/{id}/files/{copyid}',
       config: {
-        auth: 'jwt',
         pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
         handler: _upload2.default.retrieveFiles
       }
@@ -640,7 +648,7 @@ function prepareGeneralRoutes(generalController, generalRoutes) {
       path: '/referencedata',
       config: {
         handler: _general2.default.retrieveReferenceData,
-        description: 'Retrieve Reference data',
+        description: 'Retrieve Reference data'
       }
     });
   }
@@ -712,8 +720,5 @@ exports.default = function (app, modals) {
     });
   }
 
-  app.route([].concat(authRoutes, categoryRoutes, brandRoutes, sellerRoutes,
-      serviceCenterRoutes, billManagementRoutes, uploadFileRoute,
-      dashboardRoutes, productRoutes, insightRoutes, searchRoutes,
-      generalRoutes));
+  app.route([].concat(authRoutes, categoryRoutes, brandRoutes, sellerRoutes, serviceCenterRoutes, billManagementRoutes, uploadFileRoute, dashboardRoutes, productRoutes, insightRoutes, searchRoutes, generalRoutes));
 };
