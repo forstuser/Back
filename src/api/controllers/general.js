@@ -28,7 +28,7 @@ class GeneralController {
    */
   static retrieveReferenceData(request, reply) {
     return Promise.all([
-      categoryAdaptor.retrieveCategories({category_level: 1}),
+      categoryAdaptor.retrieveCategories({category_level: 1}, true),
       brandAdaptor.retrieveBrands({status_type: 1}),
       brandAdaptor.retrieveBrandDetails({status_type: 1}),
       sellerAdaptor.retrieveOfflineSellers({status_type: 1}),

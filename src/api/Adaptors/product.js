@@ -365,7 +365,7 @@ class ProductAdaptor {
           'masterCategoryId'],
         [
           this.modals.sequelize.literal('max("products"."updated_at")'),
-          'lastUpdatedAt']
+          'lastUpdatedAt'],
       ],
       group: 'main_category_id',
     }).then((productItems) => {
@@ -638,6 +638,94 @@ class ProductAdaptor {
     });
   }
 
+  createProduct(productBody, metadataBody) {
+    let product;
+    const dropDownPromise = metadataBody.map((item) => {
+      if (item.new_drop_down) {
+        return this.modals.dropDowns.findCreateFind({
+          where: {
+            title: {
+              $iLike: item.form_value.toLowerCase(),
+            },
+            category_form_id: item.category_form_id,
+          },
+          defaults: {
+            title: item.form_value,
+            category_form_id: item.category_form_id,
+            updated_by: item.updated_by,
+            status_type: 11,
+          },
+        });
+      }
+
+      return '';
+    });
+
+    return Promise.all(dropDownPromise).then((dropDownResult) => {
+      const dropDownRes = dropDownResult.filter((item) => item !== '').
+          map((ddItem) => ddItem[0].toJSON());
+      let product = productBody;
+      product = !product.colour_id ? _.omit(product, 'colour_id') : product;
+      product = !product.purchase_cost ?
+          _.omit(product, 'purchase_cost') :
+          product;
+      product = !product.taxes ? _.omit(product, 'taxes') : product;
+      product = !product.document_number ?
+          _.omit(product, 'document_number') :
+          product;
+      product = !product.document_date ?
+          _.omit(product, 'document_date') :
+          product;
+      product = !product.seller_id ? _.omit(product, 'seller_id') : product;
+      let metadata = metadataBody.map((mdItem) => {
+        const ddResult = dropDownRes.find(
+            (ddItem) => ddItem.category_form_id === mdItem.category_form_id);
+        mdItem.form_value = mdItem.new_drop_down ?
+            ddResult.id.toString() :
+            mdItem.form_value;
+        mdItem = _.omit(mdItem, 'new_drop_down');
+        return mdItem;
+      });
+      return this.modals.products.count({
+        where: product,
+        include: [
+          {
+            model: this.modals.metaData, where: {
+            $and: metadata,
+          }, required: true, as: 'metaData',
+          },
+        ],
+      }).then((count) => {
+        if (count === 0) {
+          return this.modals.products.create(product);
+        }
+
+        return undefined;
+      }).then((productResult) => {
+        if (productResult) {
+          product = productResult.toJSON();
+          const metadataPromise = metadata.map((mdItem) => {
+            mdItem.product_id = product.id;
+            mdItem.status_type = 8;
+
+            return this.modals.metaData.create(mdItem);
+          });
+
+          return Promise.all(metadataPromise);
+        }
+
+        return undefined;
+      }).then((metaData) => {
+        if (metaData) {
+          product.metaData = metaData.map((mdItem) => mdItem.toJSON());
+          return product;
+        }
+
+        return undefined;
+      });
+    });
+  }
+
   retrieveProductMetadata(options) {
     options.status_type = {
       $notIn: [3, 9],
@@ -658,7 +746,7 @@ class ProductAdaptor {
             $and: [
               this.modals.sequelize.where(
                   this.modals.sequelize.literal('"categoryForm"."form_type"'),
-                  2),]
+                  2),],
           },
           attributes: ['id', 'title'],
           required: false,

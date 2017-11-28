@@ -178,7 +178,7 @@ var DashboardAdaptor = function () {
 				return this.modals.products.count({
 					where: {
 						user_id: user.id,
-						status_type: [5, 8],
+						status_type: [5, 8, 11],
 						main_category_id: {
 							$notIn: [9, 10]
 						}

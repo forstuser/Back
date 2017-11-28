@@ -316,54 +316,60 @@ var UploadController = function () {
     key: 'retrieveFiles',
     value: function retrieveFiles(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!user) {
-        reply({
-          status: false,
-          message: 'Unauthorized'
-        });
-      } else {
-        if (!request.pre.forceUpdate) {
-          modals.jobs.findById(request.params.id, {
-            include: [{
+      /* if (!user) {
+         reply({
+           status: false,
+           message: 'Unauthorized',
+         });
+       } else {*/
+      if (!request.pre.forceUpdate) {
+        modals.jobs.findById(request.params.id, {
+          include: [
+            {
               model: modals.jobCopies,
               as: 'copies',
               where: {
-                id: request.params.copyid
+                id: request.params.copyid,
               },
-              required: true
-            }]
-          }).then(function (result) {
-            if (result) {
-              fsImpl.readFile('jobs/' + result.job_id + '/' + result.copies[0].file_name).then(function (fileResult) {
-                reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', 'attachment; filename=' + result.bill_copy_name);
-              }).catch(function (err) {
-                console.log({ API_Logs: err });
-                reply({
-                  status: false,
-                  message: 'No Result Found',
-                  forceUpdate: request.pre.forceUpdate,
-                  err: err
-                }).code(404);
-              });
-            } else {
+              required: true,
+            }],
+        }).then(function(result) {
+          if (result) {
+            fsImpl.readFile('jobs/' + result.job_id + '/' +
+                result.copies[0].file_name).then(function(fileResult) {
+              reply(fileResult.Body).
+                  header('Content-Type', fileResult.ContentType).
+                  header('Content-Disposition', 'attachment; filename=' +
+                      result.bill_copy_name);
+            }).catch(function(err) {
+              console.log({API_Logs: err});
               reply({
                 status: false,
                 message: 'No Result Found',
-                forceUpdate: request.pre.forceUpdate
+                forceUpdate: request.pre.forceUpdate,
+                err: err,
               }).code(404);
-            }
-          }).catch(function (err) {
-            console.log({ API_Logs: err });
-            reply({ status: false, err: err, forceUpdate: request.pre.forceUpdate });
-          });
-        } else {
-          reply({
-            status: false,
-            message: 'Forbidden',
-            forceUpdate: request.pre.forceUpdate
-          });
-        }
+            });
+          } else {
+            reply({
+              status: false,
+              message: 'No Result Found',
+              forceUpdate: request.pre.forceUpdate,
+            }).code(404);
+          }
+        }).catch(function(err) {
+          console.log({API_Logs: err});
+          reply(
+              {status: false, err: err, forceUpdate: request.pre.forceUpdate});
+        });
+      } else {
+        reply({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate,
+        });
       }
+      /*}*/
     }
   }, {
     key: 'deleteFile',

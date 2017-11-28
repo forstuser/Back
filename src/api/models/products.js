@@ -4,7 +4,6 @@ export default (sequelize, DataTypes) => {
   const products = sequelize.define('products', {
         bill_id: {
           type: DataTypes.INTEGER,
-          allowNull: false,
         },
         job_id: {
           type: DataTypes.INTEGER,
@@ -92,6 +91,8 @@ export default (sequelize, DataTypes) => {
         {foreignKey: 'category_id', as: 'category'});
     products.belongsTo(models.colours,
         {foreignKey: 'colour_id', as: 'color'});
+    products.hasMany(models.metaData,
+        {foreignKey: 'product_id', as: 'metaData'});
 
     products.hasMany(models.productReviews,
         {foreignKey: 'bill_product_id', as: 'productReviews'});

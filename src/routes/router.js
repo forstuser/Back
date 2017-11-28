@@ -634,6 +634,34 @@ function prepareProductRoutes(productController, productRoutes) {
         },
       },
     });
+
+    productRoutes.push({
+      method: 'POST',
+      path: '/products',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+        ],
+        handler: ProductController.createProduct,
+        description: 'Create Product.',
+        validate: {
+          payload: {
+            product_name: [joi.string(), joi.allow(null)],
+            main_category_id: [joi.number(), joi.allow(null)],
+            category_id: [joi.number(), joi.allow(null)],
+            brand_id: [joi.number(), joi.allow(null)],
+            colour_id: [joi.number(), joi.allow(null)],
+            purchase_cost: [joi.number(), joi.allow(null)],
+            taxes: [joi.number(), joi.allow(null)],
+            seller_id: [joi.number(), joi.allow(null)],
+            document_number: [joi.string(), joi.allow(null)],
+            document_date: [joi.string(), joi.allow(null)],
+            metadata: [joi.array(), joi.allow(null)],
+          },
+        }
+      },
+    });
   }
 }
 

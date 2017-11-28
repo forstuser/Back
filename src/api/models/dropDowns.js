@@ -3,17 +3,14 @@
 export default (sequelize, DataTypes) => {
   const dropDowns = sequelize.define('dropDowns', {
         title: {
-          type: DataTypes.STRING
-        },
-        type: {
-          type: DataTypes.INTEGER
+          type: DataTypes.STRING,
         },
         description: {
-          type: DataTypes.STRING
+          type: DataTypes.STRING,
         },
-    category_form_id: {
-          type: DataTypes.INTEGER
-    },
+        category_form_id: {
+          type: DataTypes.INTEGER,
+        },
         updated_by: {
           type: DataTypes.INTEGER,
         },
@@ -22,7 +19,7 @@ export default (sequelize, DataTypes) => {
         },
         created_at: {
           type: DataTypes.DATE,
-          defaultValue: sequelize.literal('NOW()')
+          defaultValue: sequelize.literal('NOW()'),
         },
         updated_at: {
           type: DataTypes.DATE,

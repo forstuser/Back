@@ -144,9 +144,14 @@ var EHomeAdaptor = function () {
           admin_status: {
             $notIn: [3, 5, 9] // 3=Delete, 5=Complete, 9=Discard
           },
-          ce_status: {
-            $notIn: [5, 7]
-          }
+          $or: [
+            {
+              ce_status: {
+                $notIn: [5, 7],
+              },
+            }, {
+              ce_status: null,
+            }],
         },
         include: [{
           model: this.modals.jobCopies,
@@ -184,42 +189,66 @@ var EHomeAdaptor = function () {
       _lodash2.default.assignIn(inProgressProductOption, productOptions);
       inProgressProductOption.status_type = 8;
 
-      return Promise.all([this.categoryAdaptor.retrieveCategories(categoryOption), this.productAdaptor.retrieveProductCounts(productOptions), this.productAdaptor.retrieveProductCounts(inProgressProductOption)]).then(function (results) {
-        return results[0].map(function (categoryItem) {
-          var category = categoryItem;
-          var products = _lodash2.default.chain(results[1]).filter(function (productItem) {
-            return productItem.masterCategoryId === category.id;
-          });
-          var inProgressProduct = _lodash2.default.chain(results[2]).filter(function (amcItem) {
-            return amcItem.masterCategoryId === category.id;
-          });
-          var expenses = _lodash2.default.chain([].concat(_toConsumableArray(products), _toConsumableArray(inProgressProduct)) || []).sortBy(function (item) {
-            return (0, _moment2.default)(item.lastUpdatedAt);
-          }).reverse().value();
-          category.expenses = expenses;
-          category.cLastUpdate = expenses && expenses.length > 0 ? expenses[0].lastUpdatedAt : null;
-          category.productCounts = parseInt(_shared2.default.sumProps(expenses, 'productCounts'));
-          return category;
+        return Promise.all([
+          this.categoryAdaptor.retrieveCategories(categoryOption, false),
+          this.productAdaptor.retrieveProductCounts(productOptions),
+          this.productAdaptor.retrieveProductCounts(inProgressProductOption)]).
+            then(function(results) {
+              return results[0].map(function(categoryItem) {
+                var category = categoryItem;
+                var products = _lodash2.default.chain(results[1]).
+                    filter(function(productItem) {
+                      return productItem.masterCategoryId === category.id;
+                    });
+                var inProgressProduct = _lodash2.default.chain(results[2]).
+                    filter(function(amcItem) {
+                      return amcItem.masterCategoryId === category.id;
+                    });
+                var expenses = _lodash2.default.chain([].concat(
+                    _toConsumableArray(products),
+                    _toConsumableArray(inProgressProduct)) || []).
+                    sortBy(function(item) {
+                      return (0, _moment2.default)(item.lastUpdatedAt);
+                    }).
+                    reverse().
+                    value();
+                category.expenses = expenses;
+                category.cLastUpdate = expenses && expenses.length > 0 ?
+                    expenses[0].lastUpdatedAt :
+                    null;
+                category.productCounts = parseInt(
+                    _shared2.default.sumProps(expenses, 'productCounts'));
+                return category;
+              });
+            });
+      }
+    }, {
+      key: 'retrieveRecentSearch',
+      value: function retrieveRecentSearch(user) {
+        return this.modals.recentSearches.findAll({
+          where: {
+            user_id: user.id
+          },
+          order: [['searchDate', 'DESC']],
+          attributes: ['searchValue']
         });
-      });
-    }
-  }, {
-    key: 'retrieveRecentSearch',
-    value: function retrieveRecentSearch(user) {
-      return this.modals.recentSearches.findAll({
-        where: {
-          user_id: user.id
-        },
-        order: [['searchDate', 'DESC']],
-        attributes: ['searchValue']
-      });
-    }
-  }, {
-    key: 'prepareProductDetail',
-    value: function prepareProductDetail(user, masterCategoryId, ctype, /* pageNo, */brandIds, categoryIds, offlineSellerIds, onlineSellerIds, sortBy, searchValue, request) {
-      return this.fetchProductDetails(user, masterCategoryId, ctype || undefined, brandIds.split('[')[1].split(']')[0].split(',').filter(Boolean), categoryIds.split('[')[1].split(']')[0].split(',').filter(Boolean), offlineSellerIds.split('[')[1].split(']')[0].split(',').filter(Boolean), onlineSellerIds.split('[')[1].split(']')[0].split(',').filter(Boolean), sortBy, '%' + (searchValue || '') + '%').then(function (result) {
-        var productList = result.productList;
-        /* const listIndex = (pageNo * 10) - 10; */
+      }
+    }, {
+      key: 'prepareProductDetail',
+      value: function prepareProductDetail(
+          user, masterCategoryId, ctype, /* pageNo, */brandIds, categoryIds,
+          offlineSellerIds, onlineSellerIds, sortBy, searchValue, request) {
+        return this.fetchProductDetails(user, masterCategoryId, ctype ||
+            undefined,
+            brandIds.split('[')[1].split(']')[0].split(',').filter(Boolean),
+            categoryIds.split('[')[1].split(']')[0].split(',').filter(Boolean),
+            offlineSellerIds.split('[')[1].split(']')[0].split(',').
+                filter(Boolean),
+            onlineSellerIds.split('[')[1].split(']')[0].split(',').
+                filter(Boolean), sortBy, '%' + (searchValue || '') + '%').
+            then(function(result) {
+              var productList = result.productList;
+              /* const listIndex = (pageNo * 10) - 10; */
 
         var brands = result.productList.filter(function (item) {
           return item.brand !== null;

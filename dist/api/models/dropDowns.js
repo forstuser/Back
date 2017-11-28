@@ -9,9 +9,6 @@ exports.default = function (sequelize, DataTypes) {
     title: {
       type: DataTypes.STRING
     },
-    type: {
-      type: DataTypes.INTEGER
-    },
     description: {
       type: DataTypes.STRING
     },

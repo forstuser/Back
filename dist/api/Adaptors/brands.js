@@ -208,6 +208,42 @@ var BrandAdaptor = function() {
           });
         });
       },
+    }, {
+      key: 'retrieveCategoryBrands',
+      value: function retrieveCategoryBrands(options) {
+        return this.modals.brands.findAll({
+          where: {
+            status_type: 1,
+          }, include: [
+            {
+              model: this.modals.brandDetails,
+              where: {
+                status_type: 1,
+                category_id: options.category_id,
+              },
+              attributes: [],
+              as: 'details',
+              required: true,
+            }],
+          attributes: [
+            [
+              'brand_id',
+              'id'],
+            [
+              'brand_name',
+              'name'],
+            [
+              'brand_description',
+              'description'],
+            [
+              this.modals.sequelize.literal('"details"."category_id"'),
+              'categoryId']],
+        }).then(function(result) {
+          return result.map(function(item) {
+            return item.toJSON();
+          });
+        });
+      },
     }]);
 
   return BrandAdaptor;

@@ -719,6 +719,108 @@ var ProductAdaptor = function () {
       });
     }
   }, {
+    key: 'createProduct',
+    value: function createProduct(productBody, metadataBody) {
+      var _this4 = this;
+
+      var product = void 0;
+      var dropDownPromise = metadataBody.map(function(item) {
+        if (item.new_drop_down) {
+          return _this4.modals.dropDowns.findCreateFind({
+            where: {
+              title: {
+                $iLike: item.form_value.toLowerCase(),
+              },
+              category_form_id: item.category_form_id,
+            },
+            defaults: {
+              title: item.form_value,
+              category_form_id: item.category_form_id,
+              updated_by: item.updated_by,
+              status_type: 11,
+            }
+          });
+        }
+
+        return '';
+      });
+
+      return Promise.all(dropDownPromise).then(function(dropDownResult) {
+        var dropDownRes = dropDownResult.filter(function(item) {
+          return item !== '';
+        }).map(function(ddItem) {
+          return ddItem[0].toJSON();
+        });
+        var product = productBody;
+        product = !product.colour_id ?
+            _lodash2.default.omit(product, 'colour_id') :
+            product;
+        product = !product.purchase_cost ?
+            _lodash2.default.omit(product, 'purchase_cost') :
+            product;
+        product = !product.taxes ?
+            _lodash2.default.omit(product, 'taxes') :
+            product;
+        product = !product.document_number ?
+            _lodash2.default.omit(product, 'document_number') :
+            product;
+        product = !product.document_date ?
+            _lodash2.default.omit(product, 'document_date') :
+            product;
+        product = !product.seller_id ?
+            _lodash2.default.omit(product, 'seller_id') :
+            product;
+        var metadata = metadataBody.map(function(mdItem) {
+          var ddResult = dropDownRes.find(function(ddItem) {
+            return ddItem.category_form_id === mdItem.category_form_id;
+          });
+          mdItem.form_value = mdItem.new_drop_down ?
+              ddResult.id.toString() :
+              mdItem.form_value;
+          mdItem = _lodash2.default.omit(mdItem, 'new_drop_down');
+          return mdItem;
+        });
+        return _this4.modals.products.count({
+          where: product,
+          include: [
+            {
+              model: _this4.modals.metaData, where: {
+              $and: metadata,
+            }, required: true, as: 'metaData',
+            }],
+        }).then(function(count) {
+          if (count === 0) {
+            return _this4.modals.products.create(product);
+          }
+
+          return undefined;
+        }).then(function(productResult) {
+          if (productResult) {
+            product = productResult.toJSON();
+            var metadataPromise = metadata.map(function(mdItem) {
+              mdItem.product_id = product.id;
+              mdItem.status_type = 8;
+
+              return _this4.modals.metaData.create(mdItem);
+            });
+
+            return Promise.all(metadataPromise);
+          }
+
+          return undefined;
+        }).then(function(metaData) {
+          if (metaData) {
+            product.metaData = metaData.map(function(mdItem) {
+              return mdItem.toJSON();
+            });
+            return product;
+          }
+
+          return undefined;
+        });
+      });
+    }
+  }, {
     key: 'retrieveProductMetadata',
     value: function retrieveProductMetadata(options) {
       options.status_type = {

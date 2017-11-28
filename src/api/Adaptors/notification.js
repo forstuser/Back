@@ -103,7 +103,7 @@ class NotificationAdaptor {
       const upcomingServices = result[0].map((elem) => {
         if (elem.productType === 4) {
           console.log(elem);
-          const dueAmountArr = elem.metaData.filter((e) => {
+          const dueAmountArr = elem.productMetaData.filter((e) => {
             return e.name.toLowerCase() === 'due amount';
           });
 

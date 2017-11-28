@@ -48,7 +48,7 @@ class EHomeAdaptor {
 
       const categoryDataWithoutOthers = _.orderBy(
           categoryList.filter((elem) => {
-        return (elem.id !== 9);
+            return (elem.id !== 9);
           }), ['productCounts'], ['desc']);
 
       let newCategoryData = categoryDataWithoutOthers;
@@ -107,9 +107,15 @@ class EHomeAdaptor {
         admin_status: {
           $notIn: [3, 5, 9] // 3=Delete, 5=Complete, 9=Discard
         },
-        ce_status: {
-          $notIn: [5, 7],
-        },
+        $or: [
+          {
+            ce_status: {
+              $notIn: [5, 7],
+            },
+          }, {
+            ce_status: null,
+          },
+        ],
       },
       include: [
         {
@@ -119,7 +125,7 @@ class EHomeAdaptor {
             [
               'id',
               'copyId'],
-              'file_type',
+            'file_type',
             [
               this.modals.sequelize.fn('CONCAT', '/jobs/',
                   this.modals.sequelize.literal('"jobs"."id"'), '/files/',
@@ -159,7 +165,7 @@ class EHomeAdaptor {
     inProgressProductOption.status_type = 8;
 
     return Promise.all([
-      this.categoryAdaptor.retrieveCategories(categoryOption),
+      this.categoryAdaptor.retrieveCategories(categoryOption, false),
       this.productAdaptor.retrieveProductCounts(productOptions),
       this.productAdaptor.retrieveProductCounts(inProgressProductOption)]).
         then((results) => {

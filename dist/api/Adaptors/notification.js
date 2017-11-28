@@ -71,7 +71,7 @@ var NotificationAdaptor = function () {
         var upcomingServices = result[0].map(function (elem) {
           if (elem.productType === 4) {
             console.log(elem);
-            var dueAmountArr = elem.metaData.filter(function (e) {
+            var dueAmountArr = elem.productMetaData.filter(function (e) {
               return e.name.toLowerCase() === 'due amount';
             });
 

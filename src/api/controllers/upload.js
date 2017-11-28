@@ -320,12 +320,12 @@ class UploadController {
 
   static retrieveFiles(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (!user) {
-      reply({
-        status: false,
-        message: 'Unauthorized',
-      });
-    } else {
+    /* if (!user) {
+       reply({
+         status: false,
+         message: 'Unauthorized',
+       });
+     } else {*/
       if (!request.pre.forceUpdate) {
         modals.jobs.findById(request.params.id, {
           include: [
@@ -374,7 +374,7 @@ class UploadController {
           forceUpdate: request.pre.forceUpdate,
         });
       }
-    }
+    /*}*/
   }
 
   static deleteFile(request, reply) {
