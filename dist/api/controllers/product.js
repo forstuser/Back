@@ -33,6 +33,7 @@ var ProductController = function () {
     key: 'createProduct',
     value: function createProduct(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
+      console.log(user);
       if (!user) {
         return reply({
           status: false,
@@ -42,7 +43,7 @@ var ProductController = function () {
       } else if (user && !request.pre.forceUpdate) {
         var productBody = {
           product_name: request.payload.product_name,
-          user_id: user.id,
+          user_id: user.id || user.userId,
           main_category_id: request.payload.main_category_id,
           category_id: request.payload.category_id,
           brand_id: request.payload.brand_id,

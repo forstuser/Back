@@ -66,12 +66,17 @@ var _authentication = require('./authentication');
 
 var _authentication2 = _interopRequireDefault(_authentication);
 
+var _s3fs = require('s3fs');
+
+var _s3fs2 = _interopRequireDefault(_s3fs);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var PUBLIC_KEY = new _nodeRsa2.default(_main2.default.TRUECALLER_PUBLIC_KEY, { signingScheme: 'sha512' });
 var AWS = _main2.default.AWS;
+var fsImpl = new _s3fs2.default(AWS.S3.BUCKET, AWS.ACCESS_DETAILS);
 var replyObject = {
   status: true,
   message: 'success'
@@ -134,6 +139,7 @@ var loginOrRegisterUser = function loginOrRegisterUser(userWhere, userInput, tru
   }).then(function (result) {
     return reply(result).code(201).header('authorization', replyObject.authorization);
   }).catch(function (err) {
+    console.log(err);
     if (err.authorization) {
       return reply(err).code(401).header('authorization', replyObject.authorization);
     }
@@ -416,12 +422,21 @@ var UserController = function () {
           resolveWithFullResponse: true,
           encoding: null
         };
-        fsImpl.readdirp(userData.id).then(function (images) {
+        console.log(userData.id);
+        fsImpl.readdirp(userData.id.toString()).then(function(images) {
           if (images.length <= 0) {
             (0, _requestPromise2.default)(options).then(function (result) {
               UserController.uploadUserImage(userData, result);
             });
           }
+        }).catch(function(err) {
+          console.log({
+            apiErr: err,
+          });
+
+          (0, _requestPromise2.default)(options).then(function(result) {
+            UserController.uploadUserImage(userData, result);
+          });
         });
       }
     }
@@ -433,19 +448,8 @@ var UserController = function () {
       // const file = fs.createReadStream();
       fsImpl.writeFile(fileName, result.body, { ContentType: result.headers['content-type'] }).then(function (fileResult) {
         console.log(fileResult);
-        reply({
-          status: true,
-          message: 'Uploaded Successfully'
-          // forceUpdate: request.pre.forceUpdate
-        });
       }).catch(function (err) {
-        console.log({ API_Logs: err });
-        reply({
-          status: false,
-          message: 'Upload Failed',
-          err: err
-          // forceUpdate: request.pre.forceUpdate
-        });
+        console.log({API_TC_Upload_Logs: err});
       });
     }
   }]);

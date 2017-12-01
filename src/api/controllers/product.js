@@ -13,6 +13,7 @@ class ProductController {
 
   static createProduct(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
+    console.log(user);
     if (!user) {
       return reply({
         status: false,
@@ -22,7 +23,7 @@ class ProductController {
     } else if (user && !request.pre.forceUpdate) {
       const productBody = {
         product_name: request.payload.product_name,
-        user_id: user.id,
+        user_id: user.id || user.userId,
         main_category_id: request.payload.main_category_id,
         category_id: request.payload.category_id,
         brand_id: request.payload.brand_id,

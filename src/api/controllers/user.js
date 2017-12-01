@@ -14,10 +14,12 @@ import NearByAdaptor from '../Adaptors/nearby';
 import NotificationAdaptor from '../Adaptors/notification';
 import UserAdaptor from '../Adaptors/user';
 import authentication from './authentication';
+import S3FS from 's3fs';
 
 const PUBLIC_KEY = new RSA(config.TRUECALLER_PUBLIC_KEY,
     {signingScheme: 'sha512'});
 const AWS = config.AWS;
+const fsImpl = new S3FS(AWS.S3.BUCKET, AWS.ACCESS_DETAILS);
 let replyObject = {
   status: true,
   message: 'success',
@@ -89,6 +91,7 @@ let loginOrRegisterUser = function(
         code(201).
         header('authorization', replyObject.authorization);
   }).catch((err) => {
+    console.log(err);
     if (err.authorization) {
       return reply(err).
           code(401).
@@ -380,12 +383,21 @@ class UserController {
         resolveWithFullResponse: true,
         encoding: null,
       };
-      fsImpl.readdirp(userData.id).then((images) => {
+      console.log(userData.id);
+      fsImpl.readdirp(userData.id.toString()).then((images) => {
         if (images.length <= 0) {
           requestPromise(options).then((result) => {
             UserController.uploadUserImage(userData, result);
           });
         }
+      }).catch((err) => {
+        console.log({
+          apiErr: err,
+        });
+
+        requestPromise(options).then((result) => {
+          UserController.uploadUserImage(userData, result);
+        });
       });
     }
   }
@@ -397,19 +409,8 @@ class UserController {
     fsImpl.writeFile(fileName, result.body,
         {ContentType: result.headers['content-type']}).then((fileResult) => {
       console.log(fileResult);
-      reply({
-        status: true,
-        message: 'Uploaded Successfully',
-        // forceUpdate: request.pre.forceUpdate
-      });
     }).catch((err) => {
-      console.log({API_Logs: err});
-      reply({
-        status: false,
-        message: 'Upload Failed',
-        err,
-        // forceUpdate: request.pre.forceUpdate
-      });
+      console.log({API_TC_Upload_Logs: err});
     });
   }
 }
