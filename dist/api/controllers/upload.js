@@ -517,17 +517,31 @@ var UploadController = function () {
         });
       } else {
         if (!request.pre.forceUpdate) {
+          var userData = void 0;
           return userAdaptor.retrieveUserImageNameById(user).then(function (userDetail) {
+            userData = userDetail;
             return fsImpl.readFile(userDetail.image_name);
           }).then(function (fileResult) {
             return reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', 'attachment; filename=' + fileResult.CopyName);
           }).catch(function (err) {
             console.log({ API_Logs: err });
-            return reply({
-              status: false,
-              message: 'No Result Found',
-              forceUpdate: request.pre.forceUpdate
-            }).code(404);
+            var fsImplUser = new _s3fs2.default(_main2.default.AWS.S3.BUCKET +
+                '/' + _main2.default.AWS.S3.USER_IMAGE,
+                _main2.default.AWS.ACCESS_DETAILS);
+            return fsImplUser.readFile(userData.image_name).
+                then(function(fileResult) {
+                  return reply(fileResult.Body).
+                      header('Content-Type', fileResult.ContentType).
+                      header('Content-Disposition', 'attachment; filename=' +
+                          fileResult.CopyName);
+                }).
+                catch(function(err) {
+                  return reply({
+                    status: false,
+                    message: 'No Result Found',
+                    forceUpdate: request.pre.forceUpdate,
+                  }).code(404);
+                });
           });
         } else {
           return reply({

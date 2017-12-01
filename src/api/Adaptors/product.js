@@ -327,23 +327,9 @@ class ProductAdaptor {
     }
     options = _.omit(options, 'online_seller_id');
 
-    let inProgressProductOption = {};
-    _.assignIn(inProgressProductOption, options);
     options = _.omit(options, 'product_status_type');
-    if (!inProgressProductOption.product_name) {
-      inProgressProductOption = _.omit(options, 'product_name');
-    }
-    if (!inProgressProductOption.brand_id) {
-      inProgressProductOption = _.omit(options, 'brand_id');
-    }
-    if (!inProgressProductOption.seller_id) {
-      inProgressProductOption = _.omit(options, 'seller_id');
-    }
-    if (!inProgressProductOption.online_seller_id) {
-      inProgressProductOption = _.omit(options, 'online_seller_id');
-    }
 
-    let products;
+    let product;
     return this.modals.products.findAll({
       where: options,
       include: [
@@ -427,7 +413,7 @@ class ProductAdaptor {
               ],
               required: false,
             }],
-          required: options.status_type === 8,
+          required: false,
         },
         {
           model: this.modals.offlineSellers,
@@ -560,50 +546,51 @@ class ProductAdaptor {
       ],
       order: [['updated_at', 'DESC']],
     }).then((productResult) => {
-      products = productResult.length > 0 ?
-          productResult[0].toJSON() :
+      const products = productResult.map(item => item.toJSON()).
+          filter(
+              (producItem) => producItem.status_type !== 8 ||
+                  (producItem.status_type === 8 && producItem.bill &&
+                      producItem.bill.billStatus ===
+                      5));
+      console.log(products);
+      product = products.length > 0 ?
+          products[0] :
           undefined;
-      inProgressProductOption = _.omit(inProgressProductOption, 'product_name');
-      inProgressProductOption.status_type = 5;
-      inProgressProductOption.product_status_type = options.status_type;
-      if (products) {
-        inProgressProductOption.product_id = products.id;
-
+      if (product) {
         return Promise.all([
           this.retrieveProductMetadata({
-            product_id: {
-              $in: products.id,
-            },
+            product_id: product.id,
           }),
-          this.insuranceAdaptor.retrieveInsurances(inProgressProductOption),
-          this.warrantyAdaptor.retrieveWarranties(inProgressProductOption),
-          this.amcAdaptor.retrieveAMCs(inProgressProductOption),
-          this.repairAdaptor.retrieveRepairs(inProgressProductOption)]);
+          this.insuranceAdaptor.retrieveInsurances({
+            product_id: product.id,
+          }),
+          this.warrantyAdaptor.retrieveWarranties({
+            product_id: product.id,
+          }),
+          this.amcAdaptor.retrieveAMCs({
+            product_id: product.id,
+          }),
+          this.repairAdaptor.retrieveRepairs({
+            product_id: product.id,
+          })]);
       }
       return undefined;
     }).then((results) => {
       if (results) {
         const metaData = results[0];
-        products.productMetaData = metaData.filter(
-            (item) => item.productId === products.id);
-        products.insuranceDetails = results[1].filter(
-            (item) => item.productId === products.id);
-        products.warrantyDetails = results[2].filter(
-            (item) => item.productId === products.id);
-        products.amcDetails = results[3].filter(
-            (item) => item.productId === products.id);
-        products.repairBills = results[4].filter(
-            (item) => item.productId === products.id);
+        product.metaData = metaData;
+        product.insuranceDetails = results[1];
+        product.warrantyDetails = results[2];
+        product.amcDetails = results[3];
+        product.repairBills = results[4];
 
-        products.requiredCount = products.insuranceDetails.length +
-            products.warrantyDetails.length +
-            products.amcDetails.length +
-            products.repairBills.length;
+        product.requiredCount = product.insuranceDetails.length +
+            product.warrantyDetails.length +
+            product.amcDetails.length +
+            product.repairBills.length;
       }
 
-      return options.status_type && options.status_type === 8 ?
-          products.filter((item) => item.requiredCount > 0) :
-          products;
+      return product;
     });
   }
 
@@ -1080,18 +1067,6 @@ class ProductAdaptor {
           model: this.modals.categoryForms,
           as: 'categoryForm',
           attributes: [],
-        },
-        {
-          model: this.modals.dropDowns,
-          as: 'dropDown',
-          where: {
-            $and: [
-              this.modals.sequelize.where(
-                  this.modals.sequelize.literal('"categoryForm"."form_type"'),
-                  2),],
-          },
-          attributes: ['id', 'title'],
-          required: false,
         }],
 
       attributes: [
@@ -1113,11 +1088,22 @@ class ProductAdaptor {
         [
           this.modals.sequelize.literal('"categoryForm"."display_index"'),
           'displayIndex']],
-    }).then((metaData) => {
-      const unOrderedMetaData = metaData.map((item) => {
-        const metaDataItem = item.toJSON();
-        if (metaData.formType === 2 && metaDataItem.value) {
-          const dropDown = metaDataItem.dropDown.find(
+    }).then((metaDataResult) => {
+      const metaData = metaDataResult.map((item) => item.toJSON());
+      const categoryFormIds = metaData.map((item) => item.categoryFormId);
+
+      return Promise.all([
+        metaData, this.modals.dropDowns.findAll({
+          where: {
+            category_form_id: categoryFormIds,
+          },
+          attributes: ['id', 'title'],
+        })]);
+    }).then((result) => {
+      const unOrderedMetaData = result[0].map((item) => {
+        const metaDataItem = item;
+        if (metaDataItem.formType === 2 && metaDataItem.value) {
+          const dropDown = result[1].find(
               (item) => item.id === parseInt(metaDataItem.value));
           metaDataItem.value = dropDown ? dropDown.title : metaDataItem.value;
         }

@@ -332,7 +332,7 @@ var EHomeAdaptor = function () {
         productOptions.category_id = categoryIds;
       }
 
-      if (searchValue) {
+      if (searchValue && searchValue !== '%%') {
         productOptions.product_name = {
           $iLike: searchValue
         };

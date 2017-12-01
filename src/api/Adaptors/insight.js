@@ -86,18 +86,18 @@ class InsightAdaptor {
     const minDate = request.query.mindate;
     const maxDate = request.query.maxdate;
     return this.prepareCategoryData(user, {}).then((result) => {
+
       const categoryData = !(minDate || maxDate) ? {
         weeklyData: result.map((item) => {
-          const expenses = item.expenses.filter((item) => item.purchaseDate >=
-              moment(moment.utc().subtract(6, 'd')).utc().startOf('d') &&
-              item.purchaseDate <= moment.utc().endOf('d'));
+          const expenses = item.expenses.filter(
+              (item) => moment(item.purchaseDate).valueOf() >=
+                  moment.utc().subtract(6, 'd').startOf('d').valueOf() &&
+                  moment(item.purchaseDate).valueOf() <=
+                  moment.utc().valueOf());
           const totalAmount = shared.sumProps(expenses,
               'value');
           const totalTax = shared.sumProps(expenses,
               'taxes');
-          console.log({
-            totalAmount, totalTax,
-          });
           return {
             id: item.id,
             cName: item.name,
@@ -110,9 +110,11 @@ class InsightAdaptor {
           };
         }),
         monthlyData: result.map((item) => {
-          const expenses = item.expenses.filter((item) => item.purchaseDate >=
-              moment().utc().startOf('month') &&
-              item.purchaseDate <= moment.utc().endOf('month'));
+          const expenses = item.expenses.filter(
+              (item) => moment(moment(item.purchaseDate).valueOf()) >=
+                  moment(moment.utc().startOf('month').valueOf()) &&
+                  moment(moment(item.purchaseDate).valueOf()) <=
+                  moment(moment.utc().endOf('month').valueOf()));
           const totalAmount = shared.sumProps(expenses,
               'value');
           const totalTax = shared.sumProps(expenses,
@@ -129,9 +131,16 @@ class InsightAdaptor {
           };
         }),
         yearlyData: result.map((item) => {
-          const expenses = item.expenses.filter((item) => item.purchaseDate >=
-              moment().utc().startOf('year') &&
-              item.purchaseDate <= moment.utc().endOf('year'));
+          if (item.id === 3) {
+            console.log({
+              uncalculatedResult: JSON.stringify(item.expenses),
+            });
+          }
+          const expenses = item.expenses.filter(
+              (item) => moment(moment(item.purchaseDate).valueOf()) >=
+                  moment(moment.utc().startOf('year').valueOf()) &&
+                  moment(moment(item.purchaseDate).valueOf()) <=
+                  moment(moment.utc()).valueOf());
           const totalAmount = shared.sumProps(expenses,
               'value');
           const totalTax = shared.sumProps(expenses,
@@ -149,9 +158,11 @@ class InsightAdaptor {
         }),
       } : {
         customDateData: result.map((item) => {
-          const expenses = item.expenses.filter((item) => item.purchaseDate >=
-              moment(minDate).utc().startOf('d') &&
-              item.purchaseDate <= moment(maxDate).utc().endOf('d'));
+          const expenses = item.expenses.filter(
+              (item) => moment(item.purchaseDate).valueOf() >=
+                  moment(minDate).utc().startOf('d').valueOf() &&
+                  moment(item.purchaseDate).valueOf() <=
+                  moment(maxDate).utc().endOf('d').valueOf());
           const totalAmount = shared.sumProps(expenses,
               'value');
           const totalTax = shared.sumProps(expenses,
@@ -199,7 +210,7 @@ class InsightAdaptor {
           forceUpdate: request.pre.forceUpdate,
         };
       }
-      console.log(categoryData);
+
       categoryData.weeklyData = _.chain(categoryData.weeklyData).map((elem) => {
         elem.totalAmount = parseFloat(elem.totalAmount);
         return elem;
@@ -235,9 +246,6 @@ class InsightAdaptor {
       categoryData.yearlyData = customSortCategories(categoryData.yearlyData,
           'totalAmount');
 
-      console.log({
-        categoryData,
-      });
       const totalWeeklyAmounts = shared.sumProps(categoryData.weeklyData,
           'totalAmount');
       const totalWeeklyTaxes = shared.sumProps(categoryData.weeklyData,
@@ -355,11 +363,6 @@ class InsightAdaptor {
                 filter(
                     (warrantyItem) => warrantyItem.masterCategoryId ===
                         category.id);
-            category.products = products;
-            category.amcs = amcs;
-            category.insurances = insurances;
-            category.repairs = repairs;
-            category.warranties = warranties;
             category.expenses = [
               ...products,
               ...amcs,

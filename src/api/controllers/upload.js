@@ -519,8 +519,10 @@ class UploadController {
       });
     } else {
       if (!request.pre.forceUpdate) {
+        let userData;
         return userAdaptor.retrieveUserImageNameById(user).
             then((userDetail) => {
+              userData = userDetail;
               return fsImpl.readFile(userDetail.image_name);
             }).
             then((fileResult) => {
@@ -531,11 +533,23 @@ class UploadController {
             }).
             catch((err) => {
               console.log({API_Logs: err});
-              return reply({
-                status: false,
-                message: 'No Result Found',
-                forceUpdate: request.pre.forceUpdate,
-              }).code(404);
+              const fsImplUser = new S3FS(
+                  `${config.AWS.S3.BUCKET}/${config.AWS.S3.USER_IMAGE}`,
+                  config.AWS.ACCESS_DETAILS);
+              return fsImplUser.readFile(userData.image_name).
+                  then((fileResult) => {
+                    return reply(fileResult.Body).
+                        header('Content-Type', fileResult.ContentType).
+                        header('Content-Disposition',
+                            `attachment; filename=${fileResult.CopyName}`);
+                  }).
+                  catch((err) => {
+                    return reply({
+                      status: false,
+                      message: 'No Result Found',
+                      forceUpdate: request.pre.forceUpdate,
+                    }).code(404);
+                  });
             });
       } else {
         return reply({

@@ -45,20 +45,20 @@ var RepairAdaptor = function () {
     value: function retrieveRepairs(options) {
       options.status_type = [5, 11];
       var productOptions = {};
-      if (options.main_category_id || options.product_status_type) {
-        Object.assign(productOptions, {
-          main_category_id: options.main_category_id,
-          status_type: options.product_status_type,
-          category_id: options.category_id,
-        });
-      } else {
-        productOptions = undefined;
+
+      if (options.main_category_id) {
+        productOptions.main_category_id = options.main_category_id;
       }
-      productOptions = productOptions ?
-          productOptions.category_id ?
-              productOptions :
-              _lodash2.default.omit(productOptions, 'category_id') :
-          undefined;
+
+      if (options.product_status_type) {
+        productOptions.status_type = options.product_status_type;
+      }
+
+      if (options.category_id) {
+        productOptions.category_id = options.category_id;
+      }
+
+      productOptions = productOptions === {} ? undefined : productOptions;
       options = _lodash2.default.omit(options, 'category_id');
       options = _lodash2.default.omit(options, 'main_category_id');
       options = _lodash2.default.omit(options, 'product_status_type');

@@ -120,8 +120,10 @@ var DashboardAdaptor = function () {
             var insightItem = item;
             var index = distinctInsight.findIndex(function(distinctItem) {
               return (0, _moment2.default)(distinctItem.purchaseDate).
-                      valueOf() ===
-                  (0, _moment2.default)(insightItem.purchaseDate).valueOf();
+                  startOf('day').
+                  valueOf() === (0, _moment2.default)(insightItem.purchaseDate).
+                  startOf('day').
+                  valueOf();
             });
 
             if (index === -1) {
@@ -171,6 +173,7 @@ var DashboardAdaptor = function () {
 
             return 1;
           });
+          var product = result[6];
 
           return {
             status: true,
@@ -185,9 +188,10 @@ var DashboardAdaptor = function () {
             forceUpdate: request.pre.forceUpdate,
           showDashboard: !!(result[4] && result[4] > 0),
           hasProducts: !!(result[5] && result[5] > 0),
-            product: !!(result[4] && result[4] > 0) ? result[6] : {},
+            product: !!(result[4] && result[4] > 0) ? product : {},
           };
         }).catch(function(err) {
+          console.log(err);
           return {
             status: false,
             message: 'Dashboard restore failed',
@@ -303,6 +307,7 @@ var DashboardAdaptor = function () {
               var metaData = metaItem;
               if (metaData.name.toLowerCase().includes('due') &&
                   metaData.name.toLowerCase().includes('date') &&
+                  metaData.value &&
                   (0, _moment2.default)(metaData.value).isValid()) {
                 var dueDateTime = (0, _moment2.default)(metaData.value);
                 product.dueDate = metaData.value;

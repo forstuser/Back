@@ -384,25 +384,9 @@ var ProductAdaptor = function () {
       }
       options = _lodash2.default.omit(options, 'online_seller_id');
 
-      var inProgressProductOption = {};
-      _lodash2.default.assignIn(inProgressProductOption, options);
       options = _lodash2.default.omit(options, 'product_status_type');
-      if (!inProgressProductOption.product_name) {
-        inProgressProductOption = _lodash2.default.omit(options,
-            'product_name');
-      }
-      if (!inProgressProductOption.brand_id) {
-        inProgressProductOption = _lodash2.default.omit(options, 'brand_id');
-      }
-      if (!inProgressProductOption.seller_id) {
-        inProgressProductOption = _lodash2.default.omit(options, 'seller_id');
-      }
-      if (!inProgressProductOption.online_seller_id) {
-        inProgressProductOption = _lodash2.default.omit(options,
-            'online_seller_id');
-      }
 
-      var products = void 0;
+      var product = void 0;
       return this.modals.products.findAll({
         where: options,
         include: [
@@ -493,7 +477,7 @@ var ProductAdaptor = function () {
                   }],
                 required: false,
               }],
-            required: options.status_type === 8,
+            required: false,
           }, {
             model: this.modals.offlineSellers,
             as: 'sellers',
@@ -628,57 +612,44 @@ var ProductAdaptor = function () {
           'status_type'],
         order: [['updated_at', 'DESC']],
       }).then(function(productResult) {
-        products = productResult.length > 0 ?
-            productResult[0].toJSON() :
-            undefined;
-        inProgressProductOption = _lodash2.default.omit(inProgressProductOption,
-            'product_name');
-        inProgressProductOption.status_type = 5;
-        inProgressProductOption.product_status_type = options.status_type;
-        if (products) {
-          inProgressProductOption.product_id = products.id;
-
+        var products = productResult.map(function(item) {
+          return item.toJSON();
+        }).filter(function(producItem) {
+          return producItem.status_type !== 8 || producItem.status_type === 8 &&
+              producItem.bill && producItem.bill.billStatus === 5;
+        });
+        console.log(products);
+        product = products.length > 0 ? products[0] : undefined;
+        if (product) {
           return Promise.all([
             _this2.retrieveProductMetadata({
-              product_id: {
-                $in: products.id,
-              },
-            }),
-            _this2.insuranceAdaptor.retrieveInsurances(inProgressProductOption),
-            _this2.warrantyAdaptor.retrieveWarranties(inProgressProductOption),
-            _this2.amcAdaptor.retrieveAMCs(inProgressProductOption),
-            _this2.repairAdaptor.retrieveRepairs(inProgressProductOption)]);
+              product_id: product.id,
+            }), _this2.insuranceAdaptor.retrieveInsurances({
+              product_id: product.id,
+            }), _this2.warrantyAdaptor.retrieveWarranties({
+              product_id: product.id,
+            }), _this2.amcAdaptor.retrieveAMCs({
+              product_id: product.id,
+            }), _this2.repairAdaptor.retrieveRepairs({
+              product_id: product.id,
+            })]);
         }
         return undefined;
       }).then(function(results) {
         if (results) {
           var metaData = results[0];
-          products.productMetaData = metaData.filter(function(item) {
-            return item.productId === products.id;
-          });
-          products.insuranceDetails = results[1].filter(function(item) {
-            return item.productId === products.id;
-          });
-          products.warrantyDetails = results[2].filter(function(item) {
-            return item.productId === products.id;
-          });
-          products.amcDetails = results[3].filter(function(item) {
-            return item.productId === products.id;
-          });
-          products.repairBills = results[4].filter(function(item) {
-            return item.productId === products.id;
-          });
+          product.metaData = metaData;
+          product.insuranceDetails = results[1];
+          product.warrantyDetails = results[2];
+          product.amcDetails = results[3];
+          product.repairBills = results[4];
 
-          products.requiredCount = products.insuranceDetails.length +
-              products.warrantyDetails.length + products.amcDetails.length +
-              products.repairBills.length;
+          product.requiredCount = product.insuranceDetails.length +
+              product.warrantyDetails.length + product.amcDetails.length +
+              product.repairBills.length;
         }
 
-        return options.status_type && options.status_type === 8 ?
-            products.filter(function(item) {
-              return item.requiredCount > 0;
-            }) :
-            products;
+        return product;
       });
     }
   }, {
@@ -1175,6 +1146,8 @@ var ProductAdaptor = function () {
   }, {
     key: 'retrieveProductMetadata',
     value: function retrieveProductMetadata(options) {
+      var _this6 = this;
+
       options.status_type = {
         $notIn: [3, 9]
       };
@@ -1185,17 +1158,6 @@ var ProductAdaptor = function () {
           model: this.modals.categoryForms,
           as: 'categoryForm',
           attributes: []
-        }, {
-          model: this.modals.dropDowns,
-          as: 'dropDown',
-          where: {
-            $and: [
-              this.modals.sequelize.where(
-                  this.modals.sequelize.literal('"categoryForm"."form_type"'),
-                  2)],
-          },
-          attributes: ['id', 'title'],
-          required: false
         }],
 
         attributes: [
@@ -1217,11 +1179,26 @@ var ProductAdaptor = function () {
           [
             this.modals.sequelize.literal('"categoryForm"."display_index"'),
             'displayIndex']],
-      }).then(function (metaData) {
-        var unOrderedMetaData = metaData.map(function (item) {
-          var metaDataItem = item.toJSON();
-          if (metaData.formType === 2 && metaDataItem.value) {
-            var dropDown = metaDataItem.dropDown.find(function(item) {
+      }).then(function(metaDataResult) {
+        var metaData = metaDataResult.map(function(item) {
+          return item.toJSON();
+        });
+        var categoryFormIds = metaData.map(function(item) {
+          return item.categoryFormId;
+        });
+
+        return Promise.all([
+          metaData, _this6.modals.dropDowns.findAll({
+          where: {
+            category_form_id: categoryFormIds,
+          },
+            attributes: ['id', 'title'],
+          })]);
+      }).then(function(result) {
+        var unOrderedMetaData = result[0].map(function(item) {
+          var metaDataItem = item;
+          if (metaDataItem.formType === 2 && metaDataItem.value) {
+            var dropDown = result[1].find(function(item) {
               return item.id === parseInt(metaDataItem.value);
             });
             metaDataItem.value = dropDown ? dropDown.title : metaDataItem.value;
@@ -1383,7 +1360,7 @@ var ProductAdaptor = function () {
   }, {
     key: 'retrieveNotificationProducts',
     value: function retrieveNotificationProducts(options) {
-      var _this6 = this;
+      var _this7 = this;
 
       if (!options.status_type) {
         options.status_type = {
@@ -1437,7 +1414,7 @@ var ProductAdaptor = function () {
         products = productResult.map(function(item) {
           return item.toJSON();
         });
-        return _this6.retrieveProductMetadata({
+        return _this7.retrieveProductMetadata({
           product_id: {
             $in: products.map(function(item) {
               return item.id;
@@ -1461,7 +1438,7 @@ var ProductAdaptor = function () {
   }, {
     key: 'retrieveMissingDocProducts',
     value: function retrieveMissingDocProducts(options) {
-      var _this7 = this;
+      var _this8 = this;
 
       if (!options.status_type) {
         options.status_type = {
@@ -1512,7 +1489,7 @@ var ProductAdaptor = function () {
           return product;
         });
         return Promise.all([
-          _this7.insuranceAdaptor.retrieveInsurances({
+          _this8.insuranceAdaptor.retrieveInsurances({
             product_id: {
               $in: products.filter(function(item) {
                 return item.masterCategoryId === 2 || item.masterCategoryId ===
@@ -1521,7 +1498,7 @@ var ProductAdaptor = function () {
                 return item.id;
               }),
             },
-          }), _this7.warrantyAdaptor.retrieveWarranties({
+          }), _this8.warrantyAdaptor.retrieveWarranties({
             product_id: {
               $in: products.filter(function(item) {
                 return item.masterCategoryId === 2 || item.masterCategoryId ===

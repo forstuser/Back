@@ -79,8 +79,10 @@ class DashboardAdaptor {
       const insightData = result[1].map((item) => {
         const insightItem = item;
         const index = distinctInsight.findIndex(
-            distinctItem => (moment(distinctItem.purchaseDate).valueOf() ===
-                moment(insightItem.purchaseDate).valueOf()));
+            distinctItem => (moment(distinctItem.purchaseDate).
+                    startOf('day').
+                    valueOf() ===
+                moment(insightItem.purchaseDate).startOf('day').valueOf()));
 
         if (index === -1) {
           distinctInsight.push(insightItem);
@@ -128,6 +130,7 @@ class DashboardAdaptor {
 
         return 1;
       });
+      let product = result[6];
 
       return {
         status: true,
@@ -142,15 +145,18 @@ class DashboardAdaptor {
         forceUpdate: request.pre.forceUpdate,
         showDashboard: !!(result[4] && result[4] > 0),
         hasProducts: !!(result[5] && result[5] > 0),
-        product: !!(result[4] && result[4] > 0) ? result[6] : {},
+        product: !!(result[4] && result[4] > 0) ? product : {},
       };
-    }).catch(err => ({
-      status: false,
-      message: 'Dashboard restore failed',
-      err,
-      forceUpdate: request.pre.forceUpdate,
-      showDashboard: false,
-    }));
+    }).catch(err => {
+      console.log(err);
+      return ({
+        status: false,
+        message: 'Dashboard restore failed',
+        err,
+        forceUpdate: request.pre.forceUpdate,
+        showDashboard: false,
+      });
+    });
   }
 
   prepareDashboardResult(isNewUser, user, token, request) {
@@ -259,7 +265,7 @@ class DashboardAdaptor {
           const metaData = metaItem;
           if (metaData.name.toLowerCase().includes('due') &&
               metaData.name.toLowerCase().includes('date') &&
-              moment(metaData.value).isValid()) {
+              metaData.value && moment(metaData.value).isValid()) {
             const dueDateTime = moment(metaData.value);
             product.dueDate = metaData.value;
             product.dueIn = dueDateTime.diff(moment.utc(), 'days');
