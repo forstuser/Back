@@ -53,6 +53,7 @@ const trackTransaction = (transactionId, userId) => {
 
 let loginOrRegisterUser = function(
     userWhere, userInput, trueObject, request, reply) {
+  let token;
   return userAdaptor.loginOrRegister(userWhere,
       userInput).then((userData) => {
     if (!userData[1]) {
@@ -80,6 +81,7 @@ let loginOrRegisterUser = function(
     trackTransaction(request.payload.transactionId, updatedUser.id);
     replyObject.authorization = `bearer ${authentication.generateToken(
         userData[0]).token}`;
+    token = replyObject.authorization;
     return dashboardAdaptor.prepareDashboardResult(userData[1],
         userData[0].toJSON(), replyObject.authorization, request);
   }).then((result) => {

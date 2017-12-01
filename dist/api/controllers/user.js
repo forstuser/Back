@@ -104,6 +104,7 @@ var trackTransaction = function trackTransaction(transactionId, userId) {
 };
 
 var loginOrRegisterUser = function loginOrRegisterUser(userWhere, userInput, trueObject, request, reply) {
+  var token = void 0;
   return userAdaptor.loginOrRegister(userWhere, userInput).then(function (userData) {
     if (!userData[1]) {
       userData[0].updateAttributes(userInput);
@@ -128,6 +129,7 @@ var loginOrRegisterUser = function loginOrRegisterUser(userWhere, userInput, tru
 
     trackTransaction(request.payload.transactionId, updatedUser.id);
     replyObject.authorization = 'bearer ' + _authentication2.default.generateToken(userData[0]).token;
+    token = replyObject.authorization;
     return dashboardAdaptor.prepareDashboardResult(userData[1], userData[0].toJSON(), replyObject.authorization, request);
   }).then(function (result) {
     return reply(result).code(201).header('authorization', replyObject.authorization);
