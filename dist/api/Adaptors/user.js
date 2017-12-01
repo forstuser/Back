@@ -86,7 +86,23 @@ var UserAdaptor = function () {
     key: 'retrieveUserById',
     value: function retrieveUserById(user) {
       return Promise.all([this.modals.users.findById(user.id, {
-          attributes: ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', 'location', 'latitude', 'longitude', 'image_name', [this.modals.sequelize.fn('CONCAT', '/consumer/', this.modals.sequelize.col('id'), '/images'), 'imageUrl']]
+        attributes: [
+          'id',
+          [
+            'full_name',
+            'name'],
+          'mobile_no',
+          'email',
+          'email_verified',
+          'email_secret',
+          'location',
+          'latitude',
+          'longitude',
+          'image_name',
+          [
+            this.modals.sequelize.fn('CONCAT', '/consumer/',
+                this.modals.sequelize.col('id'), '/images'),
+            'imageUrl']],
       }), this.retrieveUserAddress({
         where: {
           user_id: user.id
@@ -178,13 +194,15 @@ var UserAdaptor = function () {
         full_name: payload.name,
         location: payload.location,
         latitude: payload.latitude,
-          longitude: payload.longitude
+        longitude: payload.longitude,
       };
 
-        var userAddresses = payload.addresses ? payload.addresses.map(function (item) {
+      var userAddresses = payload.addresses ?
+          payload.addresses.map(function(item) {
         item.updated_by = user.id;
         return item;
-        }) : [];
+          }) :
+          [];
 
       var filterOptions = {
         where: {

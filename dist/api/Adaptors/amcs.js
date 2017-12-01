@@ -43,7 +43,7 @@ var AmcAdaptor = function () {
   _createClass(AmcAdaptor, [{
     key: 'retrieveAMCs',
     value: function retrieveAMCs(options) {
-      options.status_type = 5;
+      options.status_type = [5, 11];
       var productOptions = {};
       if (options.main_category_id || options.product_status_type) {
         Object.assign(productOptions, {
@@ -62,6 +62,7 @@ var AmcAdaptor = function () {
       options = _lodash2.default.omit(options, 'category_id');
       options = _lodash2.default.omit(options, 'main_category_id');
       options = _lodash2.default.omit(options, 'product_status_type');
+      options = _lodash2.default.omit(options, 'brand_id');
 
       console.log({
         productOptions: productOptions,
@@ -149,14 +150,61 @@ var AmcAdaptor = function () {
 
       return this.modals.amcs.findAll({
         where: options,
-          include: [{
-              model: this.modals.renewalTypes,
-              attributes: []
+        include: [
+          {
+            model: this.modals.renewalTypes,
+            attributes: [],
           }, {
-              model: this.modals.products,
-              attributes: []
+            model: this.modals.products,
+            attributes: [],
           }],
-          attributes: ['id', ['product_id', 'productId'], ['job_id', 'jobId'], ['document_number', 'policyNo'], [this.modals.sequelize.literal('"product"."main_category_id"'), 'masterCategoryId'], [this.modals.sequelize.literal('"renewalType"."title"'), 'premiumType'], [this.modals.sequelize.literal('"product"."product_name"'), 'productName'], ['renewal_cost', 'premiumAmount'], ['renewal_cost', 'value'], ['renewal_taxes', 'taxes'], ['effective_date', 'effectiveDate'], ['expiry_date', 'expiryDate'], ['document_date', 'purchaseDate'], ['updated_at', 'updatedDate'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"product_id"')), 'productURL'], 'copies', 'user_id'],
+        attributes: [
+          'id',
+          [
+            'product_id',
+            'productId'],
+          [
+            'job_id',
+            'jobId'],
+          [
+            'document_number',
+            'policyNo'],
+          [
+            this.modals.sequelize.literal('"product"."main_category_id"'),
+            'masterCategoryId'],
+          [
+            this.modals.sequelize.literal('"renewalType"."title"'),
+            'premiumType'],
+          [
+            this.modals.sequelize.literal('"product"."product_name"'),
+            'productName'],
+          [
+            'renewal_cost',
+            'premiumAmount'],
+          [
+            'renewal_cost',
+            'value'],
+          [
+            'renewal_taxes',
+            'taxes'],
+          [
+            'effective_date',
+            'effectiveDate'],
+          [
+            'expiry_date',
+            'expiryDate'],
+          [
+            'document_date',
+            'purchaseDate'],
+          [
+            'updated_at',
+            'updatedDate'],
+          [
+            this.modals.sequelize.fn('CONCAT', 'products/',
+                this.modals.sequelize.literal('"product_id"')),
+            'productURL'],
+          'copies',
+          'user_id'],
         order: [['expiry_date', 'DESC']]
       }).then(function (amcResult) {
         return amcResult.map(function (item) {
@@ -169,7 +217,7 @@ var AmcAdaptor = function () {
     value: function retrieveAMCCounts(options) {
       options.status_type = 5;
       var productOptions = options.product_status_type ? {
-          status_type: options.product_status_type
+        status_type: options.product_status_type,
       } : undefined;
       options = _lodash2.default.omit(options, 'category_id');
       options = _lodash2.default.omit(options, 'main_category_id');

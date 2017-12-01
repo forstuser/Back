@@ -43,7 +43,7 @@ var RepairAdaptor = function () {
   _createClass(RepairAdaptor, [{
     key: 'retrieveRepairs',
     value: function retrieveRepairs(options) {
-      options.status_type = 5;
+      options.status_type = [5, 11];
       var productOptions = {};
       if (options.main_category_id || options.product_status_type) {
         Object.assign(productOptions, {
@@ -62,6 +62,7 @@ var RepairAdaptor = function () {
       options = _lodash2.default.omit(options, 'category_id');
       options = _lodash2.default.omit(options, 'main_category_id');
       options = _lodash2.default.omit(options, 'product_status_type');
+      options = _lodash2.default.omit(options, 'brand_id');
 
       console.log({
         productOptions: productOptions,

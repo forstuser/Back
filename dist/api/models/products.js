@@ -7,7 +7,7 @@ Object.defineProperty(exports, "__esModule", {
 exports.default = function (sequelize, DataTypes) {
   var products = sequelize.define('products', {
     bill_id: {
-        type: DataTypes.INTEGER
+      type: DataTypes.INTEGER,
     },
     job_id: {
       type: DataTypes.INTEGER
@@ -33,10 +33,12 @@ exports.default = function (sequelize, DataTypes) {
       type: DataTypes.STRING
     },
     purchase_cost: {
-      type: DataTypes.FLOAT
+      type: DataTypes.FLOAT,
+      defaultValue: 0,
     },
     taxes: {
-      type: DataTypes.FLOAT
+      type: DataTypes.FLOAT,
+      defaultValue: 0,
     },
     document_date: {
       type: DataTypes.DATE,
@@ -86,7 +88,8 @@ exports.default = function (sequelize, DataTypes) {
     products.belongsTo(models.categories, { foreignKey: 'main_category_id', as: 'mainCategory' });
     products.belongsTo(models.categories, { foreignKey: 'category_id', as: 'category' });
     products.belongsTo(models.colours, { foreignKey: 'colour_id', as: 'color' });
-      products.hasMany(models.metaData, {foreignKey: 'product_id', as: 'metaData'});
+    products.hasMany(models.metaData,
+        {foreignKey: 'product_id', as: 'metaData'});
 
     products.hasMany(models.productReviews, { foreignKey: 'bill_product_id', as: 'productReviews' });
   };

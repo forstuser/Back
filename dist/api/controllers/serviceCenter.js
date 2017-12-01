@@ -61,7 +61,7 @@ var ServiceCenterController = function () {
 					center_city: {
 						$iLike: '%' + city + '%'
 					},
-                    brand_id: brandId,
+          brand_id: brandId,
 					category_id: categoryId,
 					$and: [modals.sequelize.where(modals.sequelize.col('"centerDetails"."category_id"'), categoryId), modals.sequelize.where(modals.sequelize.col('"brands"."brand_id"'), brandId)]
 				};
@@ -100,6 +100,8 @@ var ServiceCenterController = function () {
 								return detail.detailType === 3;
 							});
 							center.centerAddress = center.centerName + ', ' + center.city + '-' + center.pinCode + ', ' + center.state + ', India';
+              center.address = center.address + ', ' + center.city + '-' +
+                  center.pinCode + ', ' + center.state + ', India';
 							center.geoLocation = center.latitude && center.longitude && center.latitude.toString() !== '0' && center.longitude.toString() !== '0' ? center.latitude + ', ' + center.longitude : '';
 							if (center.geoLocation) {
 								destinations.push(center.geoLocation);

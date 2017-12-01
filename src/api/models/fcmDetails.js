@@ -24,7 +24,8 @@ module.exports = (sequelize, DataTypes) => {
     }
 	}, {
 		freezeTableName: true,
-		tableName: 'fcm_details'
+    tableName: 'fcm_details',
+    underscored: true,
 	});
 
 	fcmDetails.associate= (models) => {

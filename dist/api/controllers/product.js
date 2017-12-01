@@ -145,6 +145,69 @@ var ProductController = function () {
           });
         }
       },
+    }, {
+      key: 'retrieveCenterProducts',
+      value: function retrieveCenterProducts(request, reply) {
+        var user = _shared2.default.verifyAuthorization(request.headers);
+        if (!user) {
+          reply({
+            status: false,
+            message: 'Unauthorized',
+            forceUpdate: request.pre.forceUpdate,
+          });
+        } else if (user && !request.pre.forceUpdate) {
+          var brandId = (request.query.brandids || '[]').split('[')[1].split(
+              ']')[0].split(',').filter(Boolean);
+          var categoryId = (request.query.categoryids || '[]').split(
+              '[')[1].split(']')[0].split(',').filter(Boolean);
+          var options = {
+            main_category_id: [2, 3],
+            status_type: [5, 11],
+            user_id: user.id,
+          };
+
+          if (brandId.length > 0) {
+            options.brand_id = brandId;
+          }
+
+          if (categoryId.length > 0) {
+            options.category_id = categoryId;
+          }
+
+          return productAdaptor.retrieveProducts(options).
+              then(function(result) {
+                return reply({
+                  status: true,
+                  productList: result /* :productList.slice((pageNo * 10) - 10, 10) */
+                  , forceUpdate: request.pre.forceUpdate,
+                  /* ,
+                      nextPageUrl: productList.length > listIndex + 10 ?
+                       `categories/${masterCategoryId}/products?pageno=${parseInt(pageNo, 10) + 1}
+                       &ctype=${ctype}&categoryids=${categoryIds}&brandids=${brandIds}
+                       &offlinesellerids=${offlineSellerIds}&onlinesellerids=
+                       ${onlineSellerIds}&sortby=${sortBy}&searchvalue=${searchValue}` : '' */
+                });
+              }).
+              catch(function(err) {
+
+                console.log({
+                  apiErr: err,
+                });
+
+                return reply({
+                  status: false,
+                  message: 'Unable to fetch product list',
+                  forceUpdate: request.pre.forceUpdate,
+                });
+              });
+        } else {
+          reply({
+            status: false,
+            message: 'Forbidden',
+            forceUpdate: request.pre.forceUpdate,
+          });
+        }
+      },
     }]);
 
   return ProductController;

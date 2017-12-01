@@ -20,10 +20,12 @@ exports.default = function (sequelize, DataTypes) {
       type: DataTypes.STRING
     },
     repair_cost: {
-      type: DataTypes.FLOAT
+      type: DataTypes.FLOAT,
+      defaultValue: 0,
     },
     repair_taxes: {
-      type: DataTypes.FLOAT
+      type: DataTypes.FLOAT,
+      defaultValue: 0,
     },
     user_id: {
       type: DataTypes.INTEGER

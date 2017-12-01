@@ -293,7 +293,8 @@ class InsightAdaptor {
     };
 
     const productOptions = {
-      status_type: 5,
+      status_type: [5, 11],
+      product_status_type: [5, 11],
       user_id: user.id,
     };
 

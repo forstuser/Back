@@ -43,7 +43,7 @@ var InsuranceAdaptor = function () {
   _createClass(InsuranceAdaptor, [{
     key: 'retrieveInsurances',
     value: function retrieveInsurances(options) {
-      options.status_type = 5;
+      options.status_type = [5, 11];
       var productOptions = {};
       if (options.main_category_id || options.product_status_type) {
         Object.assign(productOptions, {
@@ -62,6 +62,7 @@ var InsuranceAdaptor = function () {
       options = _lodash2.default.omit(options, 'category_id');
       options = _lodash2.default.omit(options, 'main_category_id');
       options = _lodash2.default.omit(options, 'product_status_type');
+      options = _lodash2.default.omit(options, 'brand_id');
 
       console.log({
         productOptions: productOptions,

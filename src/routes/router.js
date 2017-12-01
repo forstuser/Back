@@ -640,6 +640,30 @@ function prepareProductRoutes(productController, productRoutes) {
     });
 
     productRoutes.push({
+      method: 'GET',
+      path: '/center/products',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+        ],
+        handler: ProductController.retrieveCenterProducts,
+        description: 'Get Center Products.',
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              {code: 200, message: 'Successful'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
+            ],
+          },
+        },
+      },
+    });
+
+    productRoutes.push({
       method: 'POST',
       path: '/products',
       config: {

@@ -204,6 +204,301 @@ class ProductAdaptor {
               'comments']],
           required: false,
         },
+        {
+          model: this.modals.categories,
+          as: 'category',
+          attributes: [],
+          required: false,
+        },
+      ],
+      attributes: [
+        'id',
+        [
+          'product_name',
+          'productName'],
+        [
+          this.modals.sequelize.literal('"category"."category_id"'),
+          'categoryId'],
+        [
+          'main_category_id',
+          'masterCategoryId'],
+        [
+          'brand_id',
+          'brandId'],
+        [
+          'colour_id',
+          'colorId'],
+        [
+          'purchase_cost',
+          'value'],
+        'taxes',
+        [
+          this.modals.sequelize.fn('CONCAT', '/categories/',
+              this.modals.sequelize.literal('"category"."category_id"'),
+              '/images/'),
+          'cImageURL'],
+        [
+          this.modals.sequelize.fn('CONCAT', 'products/',
+              this.modals.sequelize.literal('"products"."id"')),
+          'productURL'],
+        [
+          'document_date',
+          'purchaseDate'],
+        ['document_number', 'documentNo'],
+        ['updated_at', 'updatedDate'],
+        [
+          'bill_id',
+          'billId'],
+        [
+          'job_id',
+          'jobId'],
+        [
+          'seller_id',
+          'sellerId'],
+        'copies',
+        [
+          this.modals.sequelize.fn('CONCAT', 'products/',
+              this.modals.sequelize.literal('"products"."id"'), '/reviews'),
+          'reviewUrl'],
+        [
+          this.modals.sequelize.literal('"category"."category_name"'),
+          'categoryName'],
+        [
+          this.modals.sequelize.fn('CONCAT',
+              '/consumer/servicecenters?brandid=',
+              this.modals.sequelize.literal('"products"."brand_id"'),
+              '&categoryid=',
+              this.modals.sequelize.col('"products"."category_id"')),
+          'serviceCenterUrl'],
+        'status_type',
+      ],
+    }).then((productResult) => {
+      products = productResult.map((item) => item.toJSON());
+      inProgressProductOption = _.omit(inProgressProductOption, 'product_name');
+      inProgressProductOption.status_type = 5;
+      inProgressProductOption.product_status_type = options.status_type;
+      if (products.length > 0) {
+        inProgressProductOption.product_id = products.map((item) => item.id);
+        return Promise.all([
+          this.retrieveProductMetadata({
+            product_id: {
+              $in: products.map((item) => item.id),
+            },
+          }),
+          this.insuranceAdaptor.retrieveInsurances(inProgressProductOption),
+          this.warrantyAdaptor.retrieveWarranties(inProgressProductOption),
+          this.amcAdaptor.retrieveAMCs(inProgressProductOption),
+          this.repairAdaptor.retrieveRepairs(inProgressProductOption)]);
+      }
+      return undefined;
+    }).then((results) => {
+      if (results) {
+        const metaData = results[0];
+        products = products.map((productItem) => {
+          productItem.productMetaData = metaData.filter(
+              (item) => item.productId === productItem.id);
+          productItem.insuranceDetails = results[1].filter(
+              (item) => item.productId === productItem.id);
+          productItem.warrantyDetails = results[2].filter(
+              (item) => item.productId === productItem.id);
+          productItem.amcDetails = results[3].filter(
+              (item) => item.productId === productItem.id);
+          productItem.repairBills = results[4].filter(
+              (item) => item.productId === productItem.id);
+
+          productItem.requiredCount = productItem.insuranceDetails.length +
+              productItem.warrantyDetails.length +
+              productItem.amcDetails.length +
+              productItem.repairBills.length;
+
+          return productItem;
+        });
+      }
+
+      return products;
+    });
+  }
+
+  retrieveUsersLastProduct(options) {
+    let billOption = {};
+
+    if (options.online_seller_id) {
+      billOption.seller_id = options.online_seller_id;
+    }
+    options = _.omit(options, 'online_seller_id');
+
+    let inProgressProductOption = {};
+    _.assignIn(inProgressProductOption, options);
+    options = _.omit(options, 'product_status_type');
+    if (!inProgressProductOption.product_name) {
+      inProgressProductOption = _.omit(options, 'product_name');
+    }
+    if (!inProgressProductOption.brand_id) {
+      inProgressProductOption = _.omit(options, 'brand_id');
+    }
+    if (!inProgressProductOption.seller_id) {
+      inProgressProductOption = _.omit(options, 'seller_id');
+    }
+    if (!inProgressProductOption.online_seller_id) {
+      inProgressProductOption = _.omit(options, 'online_seller_id');
+    }
+
+    let products;
+    return this.modals.products.findAll({
+      where: options,
+      include: [
+        {
+          model: this.modals.brands,
+          as: 'brand',
+          attributes: [
+            [
+              'brand_id',
+              'brandId'],
+            [
+              'brand_name',
+              'name'],
+            [
+              'brand_description',
+              'description'],
+            [
+              this.modals.sequelize.fn('CONCAT', 'brands/',
+                  this.modals.sequelize.col('"brand"."brand_id"'), '/reviews'),
+              'reviewUrl']],
+          required: false,
+        },
+        {
+          model: this.modals.colours,
+          as: 'color',
+          attributes: [['colour_id', 'colorId'], ['colour_name', 'colorName']],
+          required: false,
+        },
+        {
+          model: this.modals.bills,
+          where: billOption,
+          attributes: [
+            [
+              'consumer_name',
+              'consumerName'],
+            [
+              'consumer_email',
+              'consumerEmail'],
+            [
+              'consumer_phone_no',
+              'consumerPhoneNo'],
+            [
+              'document_number',
+              'invoiceNo'],
+            ['status_type', 'billStatus']],
+          include: [
+            {
+              model: this.modals.onlineSellers,
+              as: 'sellers',
+              attributes: [
+                [
+                  'sid',
+                  'id'],
+                [
+                  'seller_name',
+                  'sellerName'],
+                'url',
+                'gstin',
+                'contact',
+                'email',
+                [
+                  this.modals.sequelize.fn('CONCAT', 'sellers/',
+                      this.modals.sequelize.literal('"bill->sellers"."sid"'),
+                      '/reviews?isonlineseller=true'), 'reviewUrl']],
+              include: [
+                {
+                  model: this.modals.sellerReviews,
+                  as: 'sellerReviews',
+                  attributes: [
+                    [
+                      'review_ratings',
+                      'ratings'],
+                    [
+                      'review_feedback',
+                      'feedback'],
+                    [
+                      'review_comments',
+                      'comments']],
+                  required: false,
+                },
+              ],
+              required: false,
+            }],
+          required: options.status_type === 8,
+        },
+        {
+          model: this.modals.offlineSellers,
+          as: 'sellers',
+          attributes: [
+            [
+              'sid',
+              'id'],
+            [
+              'seller_name',
+              'sellerName'],
+            [
+              'owner_name',
+              'ownerName'],
+            [
+              'pan_no',
+              'panNo'],
+            [
+              'reg_no',
+              'regNo'],
+            [
+              'is_service',
+              'isService'],
+            'url',
+            'gstin',
+            ['contact_no', 'contact'],
+            'email',
+            'address',
+            'city',
+            'state',
+            'pincode',
+            'latitude',
+            'longitude',
+            [
+              this.modals.sequelize.fn('CONCAT', 'sellers/',
+                  this.modals.sequelize.literal('"sellers"."sid"'),
+                  '/reviews?isonlineseller=false'), 'reviewUrl']],
+          include: [
+            {
+              model: this.modals.sellerReviews,
+              as: 'sellerReviews',
+              attributes: [
+                [
+                  'review_ratings',
+                  'ratings'],
+                [
+                  'review_feedback',
+                  'feedback'],
+                [
+                  'review_comments',
+                  'comments']],
+              required: false,
+            },
+          ],
+          required: false,
+        },
+        {
+          model: this.modals.productReviews,
+          as: 'productReviews',
+          attributes: [
+            [
+              'review_ratings',
+              'ratings'],
+            [
+              'review_feedback',
+              'feedback'],
+            [
+              'review_comments',
+              'comments']],
+          required: false,
+        },
       ],
       attributes: [
         'id',
@@ -260,18 +555,24 @@ class ProductAdaptor {
               '&categoryid=',
               this.modals.sequelize.col('"products"."category_id"')),
           'serviceCenterUrl'],
+        'updated_at',
         'status_type',
       ],
+      order: [['updated_at', 'DESC']],
     }).then((productResult) => {
-      products = productResult.map((item) => item.toJSON());
+      products = productResult.length > 0 ?
+          productResult[0].toJSON() :
+          undefined;
       inProgressProductOption = _.omit(inProgressProductOption, 'product_name');
       inProgressProductOption.status_type = 5;
       inProgressProductOption.product_status_type = options.status_type;
-      if (products.length > 0) {
+      if (products) {
+        inProgressProductOption.product_id = products.id;
+
         return Promise.all([
           this.retrieveProductMetadata({
             product_id: {
-              $in: products.map((item) => item.id),
+              $in: products.id,
             },
           }),
           this.insuranceAdaptor.retrieveInsurances(inProgressProductOption),
@@ -283,25 +584,21 @@ class ProductAdaptor {
     }).then((results) => {
       if (results) {
         const metaData = results[0];
-        products = products.map((productItem) => {
-          productItem.productMetaData = metaData.filter(
-              (item) => item.productId === productItem.id);
-          productItem.insuranceDetails = results[1].filter(
-              (item) => item.productId === productItem.id);
-          productItem.warrantyDetails = results[2].filter(
-              (item) => item.productId === productItem.id);
-          productItem.amcDetails = results[3].filter(
-              (item) => item.productId === productItem.id);
-          productItem.repairBills = results[4].filter(
-              (item) => item.productId === productItem.id);
+        products.productMetaData = metaData.filter(
+            (item) => item.productId === products.id);
+        products.insuranceDetails = results[1].filter(
+            (item) => item.productId === products.id);
+        products.warrantyDetails = results[2].filter(
+            (item) => item.productId === products.id);
+        products.amcDetails = results[3].filter(
+            (item) => item.productId === products.id);
+        products.repairBills = results[4].filter(
+            (item) => item.productId === products.id);
 
-          productItem.requiredCount = productItem.insuranceDetails.length +
-              productItem.warrantyDetails.length +
-              productItem.amcDetails.length +
-              productItem.repairBills.length;
-
-          return productItem;
-        });
+        products.requiredCount = products.insuranceDetails.length +
+            products.warrantyDetails.length +
+            products.amcDetails.length +
+            products.repairBills.length;
       }
 
       return options.status_type && options.status_type === 8 ?
@@ -715,60 +1012,60 @@ class ProductAdaptor {
           product.brand_id = newBrand ?
               newBrand.brand_id :
               product.brand_id;
-      product = !product.colour_id ? _.omit(product, 'colour_id') : product;
-      product = !product.purchase_cost ?
-          _.omit(product, 'purchase_cost') :
-          product;
-      product = !product.taxes ? _.omit(product, 'taxes') : product;
-      product = !product.document_number ?
-          _.omit(product, 'document_number') :
-          product;
-      product = !product.document_date ?
-          _.omit(product, 'document_date') :
-          product;
-      product = !product.seller_id ? _.omit(product, 'seller_id') : product;
+          product = !product.colour_id ? _.omit(product, 'colour_id') : product;
+          product = !product.purchase_cost ?
+              _.omit(product, 'purchase_cost') :
+              product;
+          product = !product.taxes ? _.omit(product, 'taxes') : product;
+          product = !product.document_number ?
+              _.omit(product, 'document_number') :
+              product;
+          product = !product.document_date ?
+              _.omit(product, 'document_date') :
+              product;
+          product = !product.seller_id ? _.omit(product, 'seller_id') : product;
           let metadata = metadataBody.map((mdItem) => {
-        mdItem = _.omit(mdItem, 'new_drop_down');
-        return mdItem;
-      });
-      return this.modals.products.count({
-        where: product,
-        include: [
-          {
-            model: this.modals.metaData, where: {
-            $and: metadata,
-          }, required: true, as: 'metaData',
-          },
-        ],
-      }).then((count) => {
-        if (count === 0) {
-          return this.modals.products.create(product);
-        }
-
-        return undefined;
-      }).then((productResult) => {
-        if (productResult) {
-          product = productResult.toJSON();
-          const metadataPromise = metadata.map((mdItem) => {
-            mdItem.product_id = product.id;
-            mdItem.status_type = 8;
-
-            return this.modals.metaData.create(mdItem);
+            mdItem = _.omit(mdItem, 'new_drop_down');
+            return mdItem;
           });
+          return this.modals.products.count({
+            where: product,
+            include: [
+              {
+                model: this.modals.metaData, where: {
+                  $and: metadata,
+                }, required: true, as: 'metaData',
+              },
+            ],
+          }).then((count) => {
+            if (count === 0) {
+              return this.modals.products.create(product);
+            }
 
-          return Promise.all(metadataPromise);
-        }
+            return undefined;
+          }).then((productResult) => {
+            if (productResult) {
+              product = productResult.toJSON();
+              const metadataPromise = metadata.map((mdItem) => {
+                mdItem.product_id = product.id;
+                mdItem.status_type = 8;
 
-        return undefined;
-      }).then((metaData) => {
-        if (metaData) {
-          product.metaData = metaData.map((mdItem) => mdItem.toJSON());
-          return product;
-        }
+                return this.modals.metaData.create(mdItem);
+              });
 
-        return undefined;
-      });
-    });
+              return Promise.all(metadataPromise);
+            }
+
+            return undefined;
+          }).then((metaData) => {
+            if (metaData) {
+              product.metaData = metaData.map((mdItem) => mdItem.toJSON());
+              return product;
+            }
+
+            return undefined;
+          });
+        });
   }
 
   retrieveProductMetadata(options) {

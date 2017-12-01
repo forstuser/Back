@@ -62,21 +62,28 @@ var SearchAdaptor = function () {
       var _this = this;
 
       return Promise.all([this.fetchProductDetailOnline(user, '%' + searchValue + '%'), this.fetchProductDetailOffline(user, '%' + searchValue + '%'), this.fetchProductDetailBrand(user, '%' + searchValue + '%')]).then(function (results) {
-          var onlineSellerProductId = results[0].map(function (item) {
+        var onlineSellerProductId = results[0].map(function(item) {
           return item.id;
         });
-          var offlineSellerProductId = results[1].map(function (item) {
+        var offlineSellerProductId = results[1].map(function(item) {
           return item.id;
         });
-          var brandProductId = results[2].map(function (item) {
+        var brandProductId = results[2].map(function(item) {
           return item.id;
         });
         console.log({
           onlineSellerProductId: onlineSellerProductId,
           offlineSellerProductId: offlineSellerProductId,
-            brandProductId: brandProductId
+          brandProductId: brandProductId,
         });
-          return Promise.all([_this.fetchProductDetails(user, '%' + searchValue + '%', [].concat(_toConsumableArray(onlineSellerProductId), _toConsumableArray(offlineSellerProductId), _toConsumableArray(brandProductId))), _this.prepareCategoryData(user, '%' + searchValue + '%'), _this.updateRecentSearch(user, searchValue), _this.retrieveRecentSearch(user)]);
+        return Promise.all([
+          _this.fetchProductDetails(user, '%' + searchValue + '%',
+              [].concat(_toConsumableArray(onlineSellerProductId),
+                  _toConsumableArray(offlineSellerProductId),
+                  _toConsumableArray(brandProductId))),
+          _this.prepareCategoryData(user, '%' + searchValue + '%'),
+          _this.updateRecentSearch(user, searchValue),
+          _this.retrieveRecentSearch(user)]);
       }).then(function (result) {
         var productIds = [];
         var productList = result[0].map(function (item) {
@@ -204,7 +211,7 @@ var SearchAdaptor = function () {
     value: function fetchProductDetails(user, searchValue, productIds) {
       return this.productAdaptor.retrieveProducts({
         user_id: user.id,
-        status_type: [5, 8],
+        status_type: [5, 8, 11],
         $or: {
           id: productIds,
           $and: [this.modals.sequelize.where(this.modals.sequelize.fn('lower', this.modals.sequelize.col('product_name')), { $iLike: this.modals.sequelize.fn('lower', searchValue) })]

@@ -244,8 +244,327 @@ var ProductAdaptor = function () {
             [
               'review_comments',
               'comments']],
+          required: false,
+        }, {
+          model: this.modals.categories,
+          as: 'category',
+          attributes: [],
           required: false
         }],
+        attributes: [
+          'id',
+          [
+            'product_name',
+            'productName'],
+          [
+            this.modals.sequelize.literal('"category"."category_id"'),
+            'categoryId'],
+          [
+            'main_category_id',
+            'masterCategoryId'],
+          [
+            'brand_id',
+            'brandId'],
+          [
+            'colour_id',
+            'colorId'],
+          [
+            'purchase_cost',
+            'value'],
+          'taxes',
+          [
+            this.modals.sequelize.fn('CONCAT', '/categories/',
+                this.modals.sequelize.literal('"category"."category_id"'),
+                '/images/'),
+            'cImageURL'],
+          [
+            this.modals.sequelize.fn('CONCAT', 'products/',
+                this.modals.sequelize.literal('"products"."id"')),
+            'productURL'],
+          [
+            'document_date',
+            'purchaseDate'],
+          [
+            'document_number',
+            'documentNo'],
+          [
+            'updated_at',
+            'updatedDate'],
+          [
+            'bill_id',
+            'billId'],
+          [
+            'job_id',
+            'jobId'],
+          [
+            'seller_id',
+            'sellerId'],
+          'copies',
+          [
+            this.modals.sequelize.fn('CONCAT', 'products/',
+                this.modals.sequelize.literal('"products"."id"'), '/reviews'),
+            'reviewUrl'],
+          [
+            this.modals.sequelize.literal('"category"."category_name"'),
+            'categoryName'],
+          [
+            this.modals.sequelize.fn('CONCAT',
+                '/consumer/servicecenters?brandid=',
+                this.modals.sequelize.literal('"products"."brand_id"'),
+                '&categoryid=',
+                this.modals.sequelize.col('"products"."category_id"')),
+            'serviceCenterUrl'],
+          'status_type'],
+      }).then(function (productResult) {
+        products = productResult.map(function (item) {
+          return item.toJSON();
+        });
+        inProgressProductOption = _lodash2.default.omit(inProgressProductOption,
+            'product_name');
+        inProgressProductOption.status_type = 5;
+        inProgressProductOption.product_status_type = options.status_type;
+        if (products.length > 0) {
+          inProgressProductOption.product_id = products.map(function(item) {
+            return item.id;
+          });
+          return Promise.all([
+            _this.retrieveProductMetadata({
+              product_id: {
+                $in: products.map(function(item) {
+                  return item.id;
+                }),
+              },
+            }),
+            _this.insuranceAdaptor.retrieveInsurances(inProgressProductOption),
+            _this.warrantyAdaptor.retrieveWarranties(inProgressProductOption),
+            _this.amcAdaptor.retrieveAMCs(inProgressProductOption),
+            _this.repairAdaptor.retrieveRepairs(inProgressProductOption)]);
+        }
+        return undefined;
+      }).then(function(results) {
+        if (results) {
+          var metaData = results[0];
+          products = products.map(function(productItem) {
+            productItem.productMetaData = metaData.filter(function(item) {
+              return item.productId === productItem.id;
+            });
+            productItem.insuranceDetails = results[1].filter(function(item) {
+              return item.productId === productItem.id;
+            });
+            productItem.warrantyDetails = results[2].filter(function(item) {
+              return item.productId === productItem.id;
+            });
+            productItem.amcDetails = results[3].filter(function(item) {
+              return item.productId === productItem.id;
+            });
+            productItem.repairBills = results[4].filter(function(item) {
+              return item.productId === productItem.id;
+            });
+
+            productItem.requiredCount = productItem.insuranceDetails.length +
+                productItem.warrantyDetails.length +
+                productItem.amcDetails.length + productItem.repairBills.length;
+
+            return productItem;
+          });
+        }
+
+        return products;
+      });
+    }
+  }, {
+    key: 'retrieveUsersLastProduct',
+    value: function retrieveUsersLastProduct(options) {
+      var _this2 = this;
+
+      var billOption = {};
+
+      if (options.online_seller_id) {
+        billOption.seller_id = options.online_seller_id;
+      }
+      options = _lodash2.default.omit(options, 'online_seller_id');
+
+      var inProgressProductOption = {};
+      _lodash2.default.assignIn(inProgressProductOption, options);
+      options = _lodash2.default.omit(options, 'product_status_type');
+      if (!inProgressProductOption.product_name) {
+        inProgressProductOption = _lodash2.default.omit(options,
+            'product_name');
+      }
+      if (!inProgressProductOption.brand_id) {
+        inProgressProductOption = _lodash2.default.omit(options, 'brand_id');
+      }
+      if (!inProgressProductOption.seller_id) {
+        inProgressProductOption = _lodash2.default.omit(options, 'seller_id');
+      }
+      if (!inProgressProductOption.online_seller_id) {
+        inProgressProductOption = _lodash2.default.omit(options,
+            'online_seller_id');
+      }
+
+      var products = void 0;
+      return this.modals.products.findAll({
+        where: options,
+        include: [
+          {
+            model: this.modals.brands,
+            as: 'brand',
+            attributes: [
+              [
+                'brand_id',
+                'brandId'],
+              [
+                'brand_name',
+                'name'],
+              [
+                'brand_description',
+                'description'],
+              [
+                this.modals.sequelize.fn('CONCAT', 'brands/',
+                    this.modals.sequelize.col('"brand"."brand_id"'),
+                    '/reviews'),
+                'reviewUrl']],
+            required: false,
+          }, {
+            model: this.modals.colours,
+            as: 'color',
+            attributes: [
+              [
+                'colour_id',
+                'colorId'],
+              [
+                'colour_name',
+                'colorName']],
+            required: false,
+          }, {
+            model: this.modals.bills,
+            where: billOption,
+            attributes: [
+              [
+                'consumer_name',
+                'consumerName'],
+              [
+                'consumer_email',
+                'consumerEmail'],
+              [
+                'consumer_phone_no',
+                'consumerPhoneNo'],
+              [
+                'document_number',
+                'invoiceNo'],
+              [
+                'status_type',
+                'billStatus']],
+            include: [
+              {
+                model: this.modals.onlineSellers,
+                as: 'sellers',
+                attributes: [
+                  [
+                    'sid',
+                    'id'],
+                  [
+                    'seller_name',
+                    'sellerName'],
+                  'url',
+                  'gstin',
+                  'contact',
+                  'email',
+                  [
+                    this.modals.sequelize.fn('CONCAT', 'sellers/',
+                        this.modals.sequelize.literal('"bill->sellers"."sid"'),
+                        '/reviews?isonlineseller=true'),
+                    'reviewUrl']],
+                include: [
+                  {
+                    model: this.modals.sellerReviews,
+                    as: 'sellerReviews',
+                    attributes: [
+                      [
+                        'review_ratings',
+                        'ratings'],
+                      [
+                        'review_feedback',
+                        'feedback'],
+                      [
+                        'review_comments',
+                        'comments']],
+                    required: false,
+                  }],
+                required: false,
+              }],
+            required: options.status_type === 8,
+          }, {
+            model: this.modals.offlineSellers,
+            as: 'sellers',
+            attributes: [
+              [
+                'sid',
+                'id'],
+              [
+                'seller_name',
+                'sellerName'],
+              [
+                'owner_name',
+                'ownerName'],
+              [
+                'pan_no',
+                'panNo'],
+              [
+                'reg_no',
+                'regNo'],
+              [
+                'is_service',
+                'isService'],
+              'url',
+              'gstin',
+              [
+                'contact_no',
+                'contact'],
+              'email',
+              'address',
+              'city',
+              'state',
+              'pincode',
+              'latitude',
+              'longitude',
+              [
+                this.modals.sequelize.fn('CONCAT', 'sellers/',
+                    this.modals.sequelize.literal('"sellers"."sid"'),
+                    '/reviews?isonlineseller=false'),
+                'reviewUrl']],
+            include: [
+              {
+                model: this.modals.sellerReviews,
+                as: 'sellerReviews',
+                attributes: [
+                  [
+                    'review_ratings',
+                    'ratings'],
+                  [
+                    'review_feedback',
+                    'feedback'],
+                  [
+                    'review_comments',
+                    'comments']],
+                required: false,
+              }],
+            required: false,
+          }, {
+            model: this.modals.productReviews,
+            as: 'productReviews',
+            attributes: [
+              [
+                'review_ratings',
+                'ratings'],
+              [
+                'review_feedback',
+                'feedback'],
+              [
+                'review_comments',
+                'comments']],
+            required: false,
+          }],
         attributes: [
           'id',
           [
@@ -305,56 +624,54 @@ var ProductAdaptor = function () {
                 '&categoryid=',
                 this.modals.sequelize.col('"products"."category_id"')),
             'serviceCenterUrl'],
+          'updated_at',
           'status_type'],
-      }).then(function (productResult) {
-        products = productResult.map(function (item) {
-          return item.toJSON();
-        });
+        order: [['updated_at', 'DESC']],
+      }).then(function(productResult) {
+        products = productResult.length > 0 ?
+            productResult[0].toJSON() :
+            undefined;
         inProgressProductOption = _lodash2.default.omit(inProgressProductOption,
             'product_name');
         inProgressProductOption.status_type = 5;
         inProgressProductOption.product_status_type = options.status_type;
-        if (products.length > 0) {
+        if (products) {
+          inProgressProductOption.product_id = products.id;
+
           return Promise.all([
-            _this.retrieveProductMetadata({
+            _this2.retrieveProductMetadata({
               product_id: {
-                $in: products.map(function(item) {
-                  return item.id;
-                }),
+                $in: products.id,
               },
             }),
-            _this.insuranceAdaptor.retrieveInsurances(inProgressProductOption),
-            _this.warrantyAdaptor.retrieveWarranties(inProgressProductOption),
-            _this.amcAdaptor.retrieveAMCs(inProgressProductOption),
-            _this.repairAdaptor.retrieveRepairs(inProgressProductOption)]);
+            _this2.insuranceAdaptor.retrieveInsurances(inProgressProductOption),
+            _this2.warrantyAdaptor.retrieveWarranties(inProgressProductOption),
+            _this2.amcAdaptor.retrieveAMCs(inProgressProductOption),
+            _this2.repairAdaptor.retrieveRepairs(inProgressProductOption)]);
         }
         return undefined;
-      }).then(function (results) {
+      }).then(function(results) {
         if (results) {
           var metaData = results[0];
-          products = products.map(function(productItem) {
-            productItem.productMetaData = metaData.filter(function(item) {
-              return item.productId === productItem.id;
-            });
-            productItem.insuranceDetails = results[1].filter(function(item) {
-              return item.productId === productItem.id;
-            });
-            productItem.warrantyDetails = results[2].filter(function(item) {
-              return item.productId === productItem.id;
-            });
-            productItem.amcDetails = results[3].filter(function(item) {
-              return item.productId === productItem.id;
-            });
-            productItem.repairBills = results[4].filter(function(item) {
-              return item.productId === productItem.id;
-            });
-
-            productItem.requiredCount = productItem.insuranceDetails.length +
-                productItem.warrantyDetails.length +
-                productItem.amcDetails.length + productItem.repairBills.length;
-
-            return productItem;
+          products.productMetaData = metaData.filter(function(item) {
+            return item.productId === products.id;
           });
+          products.insuranceDetails = results[1].filter(function(item) {
+            return item.productId === products.id;
+          });
+          products.warrantyDetails = results[2].filter(function(item) {
+            return item.productId === products.id;
+          });
+          products.amcDetails = results[3].filter(function(item) {
+            return item.productId === products.id;
+          });
+          products.repairBills = results[4].filter(function(item) {
+            return item.productId === products.id;
+          });
+
+          products.requiredCount = products.insuranceDetails.length +
+              products.warrantyDetails.length + products.amcDetails.length +
+              products.repairBills.length;
         }
 
         return options.status_type && options.status_type === 8 ?
@@ -410,7 +727,7 @@ var ProductAdaptor = function () {
   }, {
     key: 'retrieveProductCounts',
     value: function retrieveProductCounts(options) {
-      var _this2 = this;
+      var _this3 = this;
 
       if (!options.status_type) {
         options.status_type = [5, 11];
@@ -452,11 +769,11 @@ var ProductAdaptor = function () {
         inProgressProductOption.status_type = 5;
         inProgressProductOption.product_status_type = options.status_type;
         return Promise.all([
-          _this2.amcAdaptor.retrieveAMCCounts(inProgressProductOption),
-          _this2.insuranceAdaptor.retrieveInsuranceCount(
+          _this3.amcAdaptor.retrieveAMCCounts(inProgressProductOption),
+          _this3.insuranceAdaptor.retrieveInsuranceCount(
               inProgressProductOption),
-          _this2.warrantyAdaptor.retrieveWarrantyCount(inProgressProductOption),
-          _this2.repairAdaptor.retrieveRepairCount(inProgressProductOption)]);
+          _this3.warrantyAdaptor.retrieveWarrantyCount(inProgressProductOption),
+          _this3.repairAdaptor.retrieveRepairCount(inProgressProductOption)]);
       }).then(function (results) {
         if (options.status_type !== 8) {
           return productResult;
@@ -475,7 +792,7 @@ var ProductAdaptor = function () {
   }, {
     key: 'retrieveProductById',
     value: function retrieveProductById(id, options) {
-      var _this3 = this;
+      var _this4 = this;
 
       options.status_type = {
         $notIn: [3, 9],
@@ -699,17 +1016,17 @@ var ProductAdaptor = function () {
         products = productResult ? productResult.toJSON() : productResult;
         if (products) {
           return Promise.all([
-            _this3.retrieveProductMetadata({
+            _this4.retrieveProductMetadata({
               product_id: products.id,
-            }), _this3.brandAdaptor.retrieveBrandById(products.brandId, {
+            }), _this4.brandAdaptor.retrieveBrandById(products.brandId, {
               category_id: products.categoryId,
-            }), _this3.insuranceAdaptor.retrieveInsurances({
+            }), _this4.insuranceAdaptor.retrieveInsurances({
               product_id: products.id,
-            }), _this3.warrantyAdaptor.retrieveWarranties({
+            }), _this4.warrantyAdaptor.retrieveWarranties({
               product_id: products.id,
-            }), _this3.amcAdaptor.retrieveAMCs({
+            }), _this4.amcAdaptor.retrieveAMCs({
               product_id: products.id,
-            }), _this3.repairAdaptor.retrieveRepairs({
+            }), _this4.repairAdaptor.retrieveRepairs({
               product_id: products.id,
             })]);
         }
@@ -729,7 +1046,7 @@ var ProductAdaptor = function () {
   }, {
     key: 'createProduct',
     value: function createProduct(productBody, metadataBody) {
-      var _this4 = this;
+      var _this5 = this;
 
       var brandPromise = productBody.brand_name ?
           this.modals.brands.findCreateFind({
@@ -761,7 +1078,7 @@ var ProductAdaptor = function () {
               brand_id: productBody.brand_id,
             }
           });
-          return _this4.modals.brandDropDown.findCreateFind({
+          return _this5.modals.brandDropDown.findCreateFind({
             where: {
               title: {
                 $iLike: item.form_value.toLowerCase(),
@@ -815,17 +1132,17 @@ var ProductAdaptor = function () {
           mdItem = _lodash2.default.omit(mdItem, 'new_drop_down');
           return mdItem;
         });
-        return _this4.modals.products.count({
+            return _this5.modals.products.count({
           where: product,
-          include: [
-            {
-              model: _this4.modals.metaData, where: {
-                $and: metadata,
-              }, required: true, as: 'metaData',
-            }],
+              include: [
+                {
+                  model: _this5.modals.metaData, where: {
+                    $and: metadata,
+                  }, required: true, as: 'metaData',
+                }],
         }).then(function (count) {
           if (count === 0) {
-            return _this4.modals.products.create(product);
+            return _this5.modals.products.create(product);
           }
 
           return undefined;
@@ -836,7 +1153,7 @@ var ProductAdaptor = function () {
               mdItem.product_id = product.id;
               mdItem.status_type = 8;
 
-              return _this4.modals.metaData.create(mdItem);
+              return _this5.modals.metaData.create(mdItem);
             });
 
             return Promise.all(metadataPromise);
@@ -1066,7 +1383,7 @@ var ProductAdaptor = function () {
   }, {
     key: 'retrieveNotificationProducts',
     value: function retrieveNotificationProducts(options) {
-      var _this5 = this;
+      var _this6 = this;
 
       if (!options.status_type) {
         options.status_type = {
@@ -1120,7 +1437,7 @@ var ProductAdaptor = function () {
         products = productResult.map(function(item) {
           return item.toJSON();
         });
-        return _this5.retrieveProductMetadata({
+        return _this6.retrieveProductMetadata({
           product_id: {
             $in: products.map(function(item) {
               return item.id;
@@ -1144,7 +1461,7 @@ var ProductAdaptor = function () {
   }, {
     key: 'retrieveMissingDocProducts',
     value: function retrieveMissingDocProducts(options) {
-      var _this6 = this;
+      var _this7 = this;
 
       if (!options.status_type) {
         options.status_type = {
@@ -1195,7 +1512,7 @@ var ProductAdaptor = function () {
           return product;
         });
         return Promise.all([
-          _this6.insuranceAdaptor.retrieveInsurances({
+          _this7.insuranceAdaptor.retrieveInsurances({
             product_id: {
               $in: products.filter(function(item) {
                 return item.masterCategoryId === 2 || item.masterCategoryId ===
@@ -1204,7 +1521,7 @@ var ProductAdaptor = function () {
                 return item.id;
               }),
             },
-          }), _this6.warrantyAdaptor.retrieveWarranties({
+          }), _this7.warrantyAdaptor.retrieveWarranties({
             product_id: {
               $in: products.filter(function(item) {
                 return item.masterCategoryId === 2 || item.masterCategoryId ===

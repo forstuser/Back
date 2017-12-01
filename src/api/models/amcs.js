@@ -20,10 +20,12 @@ export default (sequelize, DataTypes) => {
           allowNull: false,
         },
         renewal_cost: {
-          type: DataTypes.FLOAT
+          type: DataTypes.FLOAT,
+          defaultValue: 0,
         },
         renewal_taxes: {
-          type: DataTypes.FLOAT
+          type: DataTypes.FLOAT,
+          defaultValue: 0,
         },
         user_id: {
           type: DataTypes.INTEGER,

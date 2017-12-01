@@ -116,7 +116,7 @@ function retrieveDaysInsight (distinctInsight) {
 		for (let i = 0; i < allDaysInWeek.length; i += 1) {
 			const weekData = allDaysInWeek[i];
 			if (weekData.purchaseDate.valueOf() === currentDate.valueOf()) {
-				weekData.value = item.value;
+        weekData.value = !(item.value) ? 0 : item.value;
 				weekData.purchaseDate = moment(weekData.purchaseDate);
 				break;
 			}

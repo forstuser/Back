@@ -60,7 +60,7 @@ var SERVER_OPTIONS = {
 };
 
 // Remove local reading of certificates from production environment as we use ElasticBeanstalk for that
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
 	var TLS_OPTIONS = {
 		key: _fs2.default.readFileSync(_path2.default.resolve(__dirname, 'cert/key.key')),
 		cert: _fs2.default.readFileSync(_path2.default.resolve(__dirname, 'cert/cert.crt')),

@@ -356,6 +356,13 @@ var UploadController = function () {
             }],
         }).then(function(result) {
           if (result) {
+            console.log({
+              result: result,
+              fileName: _guid2.default.isGuid(result.job_id) ?
+                  '' + result.copies[0].file_name :
+                  'jobs/' + result.job_id + '/' + result.copies[0].file_name,
+            });
+
             fsImpl.readFile(_guid2.default.isGuid(result.job_id) ?
                 '' + result.copies[0].file_name :
                 'jobs/' + result.job_id + '/' + result.copies[0].file_name).
@@ -427,13 +434,16 @@ var UploadController = function () {
           })]).then(function (result) {
             var count = result[2];
             var attributes = count > 0 ? {
-              job_id: '' + Math.random().toString(36).substr(2, 9) + user.id.toString(36),
               user_status: 8,
               admin_status: 4,
+              ce_status: null,
+              qe_status: null,
               updated_by: user.id
             } : {
               user_status: 3,
               admin_status: 3,
+              ce_status: 3,
+              qe_status: 3,
               updated_by: user.id
             };
             result[0].updateAttributes(attributes);

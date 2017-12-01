@@ -25,7 +25,7 @@ class AmcAdaptor {
   }
 
   retrieveAMCs(options) {
-    options.status_type = 5;
+    options.status_type = [5, 11];
     let productOptions = {};
     if (options.main_category_id ||
         options.product_status_type) {
@@ -45,6 +45,7 @@ class AmcAdaptor {
     options = _.omit(options, 'category_id');
     options = _.omit(options, 'main_category_id');
     options = _.omit(options, 'product_status_type');
+    options = _.omit(options, 'brand_id');
 
     console.log({
       productOptions,

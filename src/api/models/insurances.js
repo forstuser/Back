@@ -21,9 +21,11 @@ export default (sequelize, DataTypes) => {
         },
         renewal_cost: {
           type: DataTypes.FLOAT,
+          defaultValue: 0,
         },
         renewal_taxes: {
           type: DataTypes.FLOAT,
+          defaultValue: 0,
         },
         amount_insured: {
           type: DataTypes.FLOAT,

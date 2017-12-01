@@ -49,11 +49,59 @@ var ServiceCenterAdaptor = function () {
             model: this.modals.detailTypes,
             attributes: []
           }],
-            attributes: [[this.modals.sequelize.literal('"centerDetails->detailType"."type"'), 'type'], [this.modals.sequelize.literal('"centerDetails->detailType"."title"'), 'name'], ['value', 'details'], ['category_id', 'categoryId']],
+          attributes: [
+            [
+              this.modals.sequelize.literal(
+                  '"centerDetails->detailType"."type"'),
+              'type'],
+            [
+              this.modals.sequelize.literal(
+                  '"centerDetails->detailType"."title"'),
+              'name'],
+            [
+              'value',
+              'details'],
+            [
+              'category_id',
+              'categoryId']],
           required: true,
           as: 'centerDetails'
         }],
-          attributes: [['center_name', 'centerName'], ['center_city', 'city'], ['center_state', 'state'], ['center_country', 'country'], ['center_pin', 'pinCode'], ['center_latitude', 'latitude'], ['center_longitude', 'longitude'], ['center_timings', 'timings'], ['center_days', 'openingDays'], [this.modals.sequelize.fn('CONCAT', 'categories/', categoryId, '/images/'), 'cImageURL'], ['center_address', 'address']],
+        attributes: [
+          [
+            'center_name',
+            'centerName'],
+          [
+            'center_city',
+            'city'],
+          [
+            'center_state',
+            'state'],
+          [
+            'center_country',
+            'country'],
+          [
+            'center_pin',
+            'pinCode'],
+          [
+            'center_latitude',
+            'latitude'],
+          [
+            'center_longitude',
+            'longitude'],
+          [
+            'center_timings',
+            'timings'],
+          [
+            'center_days',
+            'openingDays'],
+          [
+            this.modals.sequelize.fn('CONCAT', '/categories/', categoryId,
+                '/images/'),
+            'cImageURL'],
+          [
+            'center_address',
+            'address']],
         order: [['center_name', 'ASC']]
       }).then(function (results) {
         return results.map(function (item) {

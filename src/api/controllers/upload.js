@@ -343,54 +343,63 @@ class UploadController {
           message: 'Unauthorized',
         });
      } else {*/
-      if (!request.pre.forceUpdate) {
-        modals.jobs.findById(request.params.id, {
-          include: [
-            {
-              model: modals.jobCopies,
-              as: 'copies',
-              where: {
-                id: request.params.copyid,
-              },
-              required: true,
-            }],
-        }).then((result) => {
-          if (result) {
-            fsImpl.readFile(
-                Guid.isGuid(result.job_id) ? `${result.copies[0].file_name}` : `jobs/${result.job_id}/${result.copies[0].file_name}`).
-                then(fileResult => {
-                  reply(fileResult.Body).
-                      header('Content-Type', fileResult.ContentType).
-                      header('Content-Disposition',
-                          `attachment; filename=${result.bill_copy_name}`);
-                }).
-                catch((err) => {
-                  console.log({API_Logs: err});
-                  reply({
-                    status: false,
-                    message: 'No Result Found',
-                    forceUpdate: request.pre.forceUpdate,
-                    err,
-                  }).code(404);
-                });
-          } else {
-            reply({
-              status: false,
-              message: 'No Result Found',
-              forceUpdate: request.pre.forceUpdate,
-            }).code(404);
-          }
-        }).catch((err) => {
-          console.log({API_Logs: err});
-          reply({status: false, err, forceUpdate: request.pre.forceUpdate});
-        });
-      } else {
-        reply({
-          status: false,
-          message: 'Forbidden',
-          forceUpdate: request.pre.forceUpdate,
-        });
-      }
+    if (!request.pre.forceUpdate) {
+      modals.jobs.findById(request.params.id, {
+        include: [
+          {
+            model: modals.jobCopies,
+            as: 'copies',
+            where: {
+              id: request.params.copyid,
+            },
+            required: true,
+          }],
+      }).then((result) => {
+        if (result) {
+          console.log({
+            result,
+            fileName: Guid.isGuid(result.job_id) ?
+                `${result.copies[0].file_name}` :
+                `jobs/${result.job_id}/${result.copies[0].file_name}`,
+          });
+
+          fsImpl.readFile(
+              Guid.isGuid(result.job_id) ?
+                  `${result.copies[0].file_name}` :
+                  `jobs/${result.job_id}/${result.copies[0].file_name}`).
+              then(fileResult => {
+                reply(fileResult.Body).
+                    header('Content-Type', fileResult.ContentType).
+                    header('Content-Disposition',
+                        `attachment; filename=${result.bill_copy_name}`);
+              }).
+              catch((err) => {
+                console.log({API_Logs: err});
+                reply({
+                  status: false,
+                  message: 'No Result Found',
+                  forceUpdate: request.pre.forceUpdate,
+                  err,
+                }).code(404);
+              });
+        } else {
+          reply({
+            status: false,
+            message: 'No Result Found',
+            forceUpdate: request.pre.forceUpdate,
+          }).code(404);
+        }
+      }).catch((err) => {
+        console.log({API_Logs: err});
+        reply({status: false, err, forceUpdate: request.pre.forceUpdate});
+      });
+    } else {
+      reply({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
     // }
   }
 
@@ -427,16 +436,16 @@ class UploadController {
           })]).then((result) => {
           const count = result[2];
           const attributes = count > 0 ? {
-            job_id: `${Math.random().
-                toString(36).
-                substr(2, 9)}${user.id.toString(
-                36)}`,
             user_status: 8,
             admin_status: 4,
+            ce_status: null,
+            qe_status: null,
             updated_by: user.id,
           } : {
             user_status: 3,
             admin_status: 3,
+            ce_status: 3,
+            qe_status: 3,
             updated_by: user.id,
           };
           result[0].updateAttributes(attributes);

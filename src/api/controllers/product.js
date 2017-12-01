@@ -7,9 +7,9 @@ import shared from '../../helpers/shared';
 let productAdaptor;
 
 class ProductController {
-	constructor(modal) {
-		productAdaptor = new ProductAdaptor(modal);
-	}
+  constructor(modal) {
+    productAdaptor = new ProductAdaptor(modal);
+  }
 
   static createProduct(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
@@ -38,9 +38,9 @@ class ProductController {
       };
       const metaDataBody = request.payload.metadata ?
           request.payload.metadata.map((item) => {
-        item.updated_by = user.id;
+            item.updated_by = user.id;
 
-        return item;
+            return item;
           }) :
           [];
       return productAdaptor.createProduct(productBody, metaDataBody).
@@ -78,45 +78,111 @@ class ProductController {
     }
   }
 
-	static updateUserReview(request, reply) {
-		const user = shared.verifyAuthorization(request.headers);
-		if (!user) {
-			reply({
-				status: false,
-				message: 'Unauthorized',
-				forceUpdate: request.pre.forceUpdate
-			});
-		} else if (user && !request.pre.forceUpdate) {
-			const id = request.params.id;
-			if (request.params.reviewfor === 'brands') {
-				reply(productAdaptor
-					.updateBrandReview(user, id, request));
-			} else if (request.params.reviewfor === 'sellers') {
-				reply(productAdaptor
-					.updateSellerReview(user, id, request.query.isonlineseller, request));
-			} else {
-				reply(productAdaptor
-					.updateProductReview(user, id, request));
-			}
-		} else {
-			reply({status: false, message: "Forbidden", forceUpdate: request.pre.forceUpdate});
-		}
-	}
+  static updateUserReview(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    if (!user) {
+      reply({
+        status: false,
+        message: 'Unauthorized',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    } else if (user && !request.pre.forceUpdate) {
+      const id = request.params.id;
+      if (request.params.reviewfor === 'brands') {
+        reply(productAdaptor.updateBrandReview(user, id, request));
+      } else if (request.params.reviewfor === 'sellers') {
+        reply(productAdaptor.updateSellerReview(user, id,
+            request.query.isonlineseller, request));
+      } else {
+        reply(productAdaptor.updateProductReview(user, id, request));
+      }
+    } else {
+      reply({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
 
-	static retrieveProductDetail(request, reply) {
-		const user = shared.verifyAuthorization(request.headers);
-		if (!user) {
-			reply({
-				status: false,
-				message: 'Unauthorized',
-				forceUpdate: request.pre.forceUpdate
-			});
-		} else if (user && !request.pre.forceUpdate) {
-			reply(productAdaptor.prepareProductDetail(user, request)).code(200);
-		} else {
-			reply({status: false, message: "Forbidden", forceUpdate: request.pre.forceUpdate});
-		}
-	}
+  static retrieveProductDetail(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    if (!user) {
+      reply({
+        status: false,
+        message: 'Unauthorized',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    } else if (user && !request.pre.forceUpdate) {
+      reply(productAdaptor.prepareProductDetail(user, request)).code(200);
+    } else {
+      reply({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
+  static retrieveCenterProducts(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    if (!user) {
+      reply({
+        status: false,
+        message: 'Unauthorized',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    } else if (user && !request.pre.forceUpdate) {
+      const brandId = (request.query.brandids || '[]').split('[')[1].split(
+          ']')[0].split(',').filter(Boolean);
+      const categoryId = (request.query.categoryids || '[]').split(
+          '[')[1].split(']')[0].split(',').filter(Boolean);
+      const options = {
+        main_category_id: [2, 3],
+        status_type: [5, 11],
+        user_id: user.id,
+      };
+
+      if (brandId.length > 0) {
+        options.brand_id = brandId;
+      }
+
+      if (categoryId.length > 0) {
+        options.category_id = categoryId;
+      }
+
+      return productAdaptor.retrieveProducts(options).then((result) => {
+        return reply({
+          status: true,
+          productList: result /* :productList.slice((pageNo * 10) - 10, 10) */,
+          forceUpdate: request.pre.forceUpdate,
+          /* ,
+              nextPageUrl: productList.length > listIndex + 10 ?
+               `categories/${masterCategoryId}/products?pageno=${parseInt(pageNo, 10) + 1}
+               &ctype=${ctype}&categoryids=${categoryIds}&brandids=${brandIds}
+               &offlinesellerids=${offlineSellerIds}&onlinesellerids=
+               ${onlineSellerIds}&sortby=${sortBy}&searchvalue=${searchValue}` : '' */
+        });
+      }).catch((err) => {
+
+        console.log({
+          apiErr: err,
+        });
+
+        return reply({
+          status: false,
+          message: 'Unable to fetch product list',
+          forceUpdate: request.pre.forceUpdate,
+        });
+      });
+    } else {
+      reply({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
 }
 
 export default ProductController;

@@ -30,9 +30,11 @@ export default (sequelize, DataTypes) => {
         },
         purchase_cost: {
           type: DataTypes.FLOAT,
+          defaultValue: 0,
         },
         taxes: {
           type: DataTypes.FLOAT,
+          defaultValue: 0,
         },
         document_date: {
           type: DataTypes.DATE,

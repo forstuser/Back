@@ -84,6 +84,7 @@ class ServiceCenterController {
             const center = item;
 						center.mobileDetails = center.centerDetails.filter(detail => detail.detailType === 3);
 						center.centerAddress = `${center.centerName}, ${center.city}-${center.pinCode}, ${center.state}, India`;
+            center.address = `${center.address}, ${center.city}-${center.pinCode}, ${center.state}, India`;
 						center.geoLocation = center.latitude && center.longitude && center.latitude.toString() !== '0' && center.longitude.toString() !== '0' ? `${center.latitude}, ${center.longitude}` : '';
 						if (center.geoLocation) {
 							destinations.push(center.geoLocation);
