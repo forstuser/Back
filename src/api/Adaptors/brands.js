@@ -182,6 +182,12 @@ class BrandAdaptor {
       ],
     }).then((result) => result.map((item) => item.toJSON()));
   }
+
+  retrieveBrandDropDowns(options) {
+    return this.modals.brandDropDown.findAll({
+      where: options,
+    }).then((result) => result.map((item) => item.toJSON()));
+  }
 }
 
 export default BrandAdaptor;

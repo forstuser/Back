@@ -99,6 +99,7 @@ class InsightAdaptor {
             totalAmount, totalTax,
           });
           return {
+            id: item.id,
             cName: item.name,
             cURL: item.categoryInsightUrl,
             cImageURl: item.categoryImageUrl,
@@ -117,6 +118,7 @@ class InsightAdaptor {
           const totalTax = shared.sumProps(expenses,
               'taxes');
           return {
+            id: item.id,
             cName: item.name,
             cURL: item.categoryInsightUrl,
             cImageURl: item.categoryImageUrl,
@@ -135,6 +137,7 @@ class InsightAdaptor {
           const totalTax = shared.sumProps(expenses,
               'taxes');
           return {
+            id: item.id,
             cName: item.name,
             cURL: item.categoryInsightUrl,
             cImageURl: item.categoryImageUrl,
@@ -154,6 +157,7 @@ class InsightAdaptor {
           const totalTax = shared.sumProps(expenses,
               'taxes');
           return {
+            id: item.id,
             cName: item.name,
             cURL: item.categoryInsightUrl,
             cImageURl: item.categoryImageUrl,

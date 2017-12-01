@@ -208,6 +208,9 @@ function prepareAuthRoutes(userController, authRoutes) {
             email: [joi.string(), joi.allow(null, '')],
             oldEmail: [joi.string(), joi.allow(null, '')],
             name: [joi.string(), joi.allow(null, '')],
+            latitude: [joi.string(), joi.allow(null, '')],
+            longitude: [joi.string(), joi.allow(null, '')],
+            location: [joi.string(), joi.allow(null, '')],
             addresses: joi.array(),
             output: 'data',
             parse: true,
@@ -430,7 +433,7 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
       method: 'GET',
       path: '/jobs/{id}/files/{copyid}',
       config: {
-        auth: 'jwt',
+        // auth: 'jwt',
         pre: [
           {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
         ],
@@ -649,6 +652,7 @@ function prepareProductRoutes(productController, productRoutes) {
         validate: {
           payload: {
             product_name: [joi.string(), joi.allow(null)],
+            brand_name: [joi.string(), joi.allow(null)],
             main_category_id: [joi.number(), joi.allow(null)],
             category_id: [joi.number(), joi.allow(null)],
             brand_id: [joi.number(), joi.allow(null)],

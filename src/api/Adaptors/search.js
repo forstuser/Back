@@ -93,7 +93,6 @@ class SearchAdaptor {
 
   prepareCategoryData(user, searchValue) {
     const categoryOption = {
-      category_level: 1,
       status_type: 1,
       $and: [
         this.modals.sequelize.where(this.modals.sequelize.fn('lower',
@@ -111,11 +110,15 @@ class SearchAdaptor {
     return this.categoryAdaptor.retrieveCategories(categoryOption).
         then((results) => {
           categories = results;
-
-          productOptions.$or = {
-            category_id: categories.map(item => item.id),
-            main_category_id: categories.map(item => item.id),
-          };
+          const categoryIds = categories.filter(item => item.level === 2);
+          const mainCategoryIds = categories.filter(
+              item => item.level === 1);
+          productOptions.category_id = categoryIds.length > 0 ?
+              categoryIds.map(item => item.id) :
+              undefined;
+          productOptions.main_category_id = mainCategoryIds.length > 0 ?
+              mainCategoryIds.map(item => item.id) :
+              undefined;
           return this.productAdaptor.retrieveProducts(productOptions);
         }).then((productResult) => {
           return categories.map((categoryItem) => {

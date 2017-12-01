@@ -45,6 +45,29 @@ class NotificationAdaptor {
     smtpTransporter.sendMail(mailOptions);
   }
 
+  static sendMailOnUpload(subject, email, user, jobId) {
+    const smtpTransporter = nodemailer.createTransport(smtpTransport({
+      service: 'gmail',
+      auth: {
+        user: config.EMAIL.USER,
+        pass: config.EMAIL.PASSWORD,
+      },
+      secure: true,
+      port: 465,
+    }));
+
+    // setup email data with unicode symbols
+    const mailOptions = {
+      from: `"BinBill" <${config.EMAIL.USER}>`, // sender address
+      to: email, // list of receivers
+      subject,
+      html: `<p class="main-class" style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0; font-family: 'Quicksand', sans-serif;font-weight: 500;letter-spacing: 0.3px;text-align: left;color: #3b3b3b; padding: 10px 0;"> Hi Team,</p><p class="main-class" style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0; font-family: 'Quicksand', sans-serif;font-weight: 500;letter-spacing: 0.3px;text-align: left;color: #3b3b3b; padding: 10px 0;"> New Job has been added on Admin.</p>`,
+    };
+
+    // send mail with defined transport object
+    smtpTransporter.sendMail(mailOptions);
+  }
+
   static sendMailOnDifferentSteps(subject, email, user, stepId) {
     const smtpTransporter = nodemailer.createTransport(smtpTransport({
       service: 'gmail',

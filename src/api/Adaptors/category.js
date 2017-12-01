@@ -60,6 +60,7 @@ export default class CategoryAdaptor {
 
   retrieveSubCategories(options, isBrandFormRequired) {
     let categoryData;
+    options.status_type = 1;
     return this.modals.categories.findAll({
       where: options,
       attributes: [

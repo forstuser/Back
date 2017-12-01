@@ -2,7 +2,7 @@
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
-    value: true
+  value: true,
 });
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -28,7 +28,8 @@ var ProductController = function () {
     productAdaptor = new _product2.default(modal);
   }
 
-    _createClass(ProductController, null, [{
+  _createClass(ProductController, null, [
+    {
     key: 'createProduct',
     value: function createProduct(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
@@ -36,7 +37,7 @@ var ProductController = function () {
         return reply({
           status: false,
           message: 'Unauthorized',
-            forceUpdate: request.pre.forceUpdate
+          forceUpdate: request.pre.forceUpdate,
         });
       } else if (user && !request.pre.forceUpdate) {
         var productBody = {
@@ -52,42 +53,47 @@ var ProductController = function () {
           seller_id: request.payload.seller_id,
           status_type: 11,
           document_number: request.payload.document_number,
-            document_date: request.payload.document_date
+          document_date: request.payload.document_date,
+          copies: [],
         };
-          var metaDataBody = request.payload.metadata.map(function (item) {
+        var metaDataBody = request.payload.metadata ?
+            request.payload.metadata.map(function(item) {
           item.updated_by = user.id;
 
           return item;
-        });
-          return productAdaptor.createProduct(productBody, metaDataBody).then(function (result) {
+            }) :
+            [];
+        return productAdaptor.createProduct(productBody, metaDataBody).
+            then(function(result) {
               if (result) {
-                  return reply({
-                      status: true,
-                      message: 'successfull',
-                      product: result,
-                      forceUpdate: request.pre.forceUpdate
-                  });
+                return reply({
+                  status: true,
+                  message: 'successfull',
+                  product: result,
+                  forceUpdate: request.pre.forceUpdate,
+                });
               } else {
-                  return reply({
-                      status: false,
-                      message: 'Product already exist.',
-                      forceUpdate: request.pre.forceUpdate
-                  });
+                return reply({
+                  status: false,
+                  message: 'Product already exist.',
+                  forceUpdate: request.pre.forceUpdate,
+                });
               }
-          }).catch(function (err) {
+            }).
+            catch(function(err) {
               console.log(err);
               return reply({
-                  status: false,
-                  message: 'An error occurred in product creation.',
-                  forceUpdate: request.pre.forceUpdate,
-                  err: err
+                status: false,
+                message: 'An error occurred in product creation.',
+                forceUpdate: request.pre.forceUpdate,
+                err: err,
               });
-          });
+            });
       } else {
         reply({
           status: false,
           message: 'Forbidden',
-            forceUpdate: request.pre.forceUpdate
+          forceUpdate: request.pre.forceUpdate,
         });
       }
     }
@@ -99,37 +105,46 @@ var ProductController = function () {
         reply({
           status: false,
           message: 'Unauthorized',
-            forceUpdate: request.pre.forceUpdate
+          forceUpdate: request.pre.forceUpdate,
         });
       } else if (user && !request.pre.forceUpdate) {
         var id = request.params.id;
         if (request.params.reviewfor === 'brands') {
           reply(productAdaptor.updateBrandReview(user, id, request));
         } else if (request.params.reviewfor === 'sellers') {
-            reply(productAdaptor.updateSellerReview(user, id, request.query.isonlineseller, request));
+          reply(productAdaptor.updateSellerReview(user, id,
+              request.query.isonlineseller, request));
         } else {
           reply(productAdaptor.updateProductReview(user, id, request));
         }
       } else {
-          reply({status: false, message: "Forbidden", forceUpdate: request.pre.forceUpdate});
+        reply({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate,
+        });
       }
     }
   }, {
-        key: 'retrieveProductDetail',
-        value: function retrieveProductDetail(request, reply) {
-            var user = _shared2.default.verifyAuthorization(request.headers);
-            if (!user) {
-                reply({
-                    status: false,
-                    message: 'Unauthorized',
-                    forceUpdate: request.pre.forceUpdate
-                });
-            } else if (user && !request.pre.forceUpdate) {
-                reply(productAdaptor.prepareProductDetail(user, request)).code(200);
-            } else {
-                reply({status: false, message: "Forbidden", forceUpdate: request.pre.forceUpdate});
-            }
+      key: 'retrieveProductDetail',
+      value: function retrieveProductDetail(request, reply) {
+        var user = _shared2.default.verifyAuthorization(request.headers);
+        if (!user) {
+          reply({
+            status: false,
+            message: 'Unauthorized',
+            forceUpdate: request.pre.forceUpdate,
+          });
+        } else if (user && !request.pre.forceUpdate) {
+          reply(productAdaptor.prepareProductDetail(user, request)).code(200);
+        } else {
+          reply({
+            status: false,
+            message: 'Forbidden',
+            forceUpdate: request.pre.forceUpdate,
+          });
         }
+      },
     }]);
 
   return ProductController;

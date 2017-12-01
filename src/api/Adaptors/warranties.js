@@ -18,7 +18,6 @@ const sortAmcWarrantyInsuranceRepair = (a, b) => {
   return -1;
 };
 
-
 class WarrantyAdaptor {
   constructor(modals) {
     this.modals = modals;
@@ -26,12 +25,17 @@ class WarrantyAdaptor {
 
   retrieveWarranties(options) {
     options.status_type = 5;
-    let productOptions = options.main_category_id ||
-    options.product_status_type ? {
-      main_category_id: options.main_category_id,
-      status_type: options.product_status_type,
-      category_id: options.category_id,
-    } : undefined;
+    let productOptions = {};
+    if (options.main_category_id ||
+        options.product_status_type) {
+      Object.assign(productOptions, {
+        main_category_id: options.main_category_id,
+        status_type: options.product_status_type,
+        category_id: options.category_id,
+      });
+    } else {
+      productOptions = undefined;
+    }
     productOptions = productOptions ?
         productOptions.category_id ?
             productOptions :
@@ -40,12 +44,18 @@ class WarrantyAdaptor {
     options = _.omit(options, 'category_id');
     options = _.omit(options, 'main_category_id');
     options = _.omit(options, 'product_status_type');
+
+    console.log({
+      productOptions,
+      options,
+    });
     return this.modals.warranties.findAll({
       where: options,
-      include: [{
-        model: this.modals.renewalTypes,
-        attributes: []
-      },
+      include: [
+        {
+          model: this.modals.renewalTypes,
+          attributes: [],
+        },
         {
           model: this.modals.products,
           where: productOptions,
@@ -55,8 +65,15 @@ class WarrantyAdaptor {
         {
           model: this.modals.onlineSellers,
           as: 'onlineSellers',
-          attributes: [['seller_name', 'sellerName'], 'url', 'gstin', 'contact', 'email'],
-          required: false
+          attributes: [
+            [
+              'seller_name',
+              'sellerName'],
+            'url',
+            'gstin',
+            'contact',
+            'email'],
+          required: false,
         },
         {
           model: this.modals.offlineSellers,
@@ -87,7 +104,7 @@ class WarrantyAdaptor {
             'pincode',
             'latitude',
             'longitude'],
-          required: false
+          required: false,
         }],
       attributes: [
         'id',
@@ -133,8 +150,10 @@ class WarrantyAdaptor {
               this.modals.sequelize.literal('"product_id"')),
           'productURL'],
         'copies'],
-      order:[['expiry_date', 'DESC']],
-    }).then((warrantyResult) => warrantyResult.map((item) => item.toJSON()).sort(sortAmcWarrantyInsuranceRepair));
+      order: [['expiry_date', 'DESC']],
+    }).
+        then((warrantyResult) => warrantyResult.map((item) => item.toJSON()).
+            sort(sortAmcWarrantyInsuranceRepair));
   }
 
   retrieveNotificationWarranties(options) {

@@ -125,6 +125,7 @@ var InsightAdaptor = function () {
               totalAmount: totalAmount, totalTax: totalTax
             });
             return {
+              id: item.id,
               cName: item.name,
               cURL: item.categoryInsightUrl,
               cImageURl: item.categoryImageUrl,
@@ -139,6 +140,7 @@ var InsightAdaptor = function () {
             var totalAmount = _shared2.default.sumProps(expenses, 'value');
             var totalTax = _shared2.default.sumProps(expenses, 'taxes');
             return {
+              id: item.id,
               cName: item.name,
               cURL: item.categoryInsightUrl,
               cImageURl: item.categoryImageUrl,
@@ -153,6 +155,7 @@ var InsightAdaptor = function () {
             var totalAmount = _shared2.default.sumProps(expenses, 'value');
             var totalTax = _shared2.default.sumProps(expenses, 'taxes');
             return {
+              id: item.id,
               cName: item.name,
               cURL: item.categoryInsightUrl,
               cImageURl: item.categoryImageUrl,
@@ -168,6 +171,7 @@ var InsightAdaptor = function () {
             var totalAmount = _shared2.default.sumProps(expenses, 'value');
             var totalTax = _shared2.default.sumProps(expenses, 'taxes');
             return {
+              id: item.id,
               cName: item.name,
               cURL: item.categoryInsightUrl,
               cImageURl: item.categoryImageUrl,

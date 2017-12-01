@@ -217,10 +217,10 @@ class UserAdaptor {
         userUpdates.email = emailID;
         userUpdates.email_secret = uuid.v4();
         userUpdates.email_verified = false;
-      } else {
+      } else if (emailID !== null) {
         userUpdates.email = result.email;
-        userUpdates.email_secret = result.secret;
-        userUpdates.email_verified = result.email_verified;
+        userUpdates.email_secret = result.secret || uuid.v4();
+        userUpdates.email_verified = result.email_verified || false;
       }
 
       userPromise.push(this.updateUserDetail(userUpdates, filterOptions));
@@ -242,6 +242,15 @@ class UserAdaptor {
       }).code(200);
     }).catch((err) => {
       console.log({API_Logs: err});
+      if (err && err.errors && err.errors.findIndex(
+              (item) => item.message === 'email must be unique') !== -1) {
+        return reply({
+          status: false,
+          message: 'The email mentioned is already linked with other account',
+          err,
+          forceUpdate: request.pre.forceUpdate,
+        });
+      }
       return reply({
         status: false,
         message: 'User Detail Update failed',

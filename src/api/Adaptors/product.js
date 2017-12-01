@@ -267,7 +267,7 @@ class ProductAdaptor {
       inProgressProductOption = _.omit(inProgressProductOption, 'product_name');
       inProgressProductOption.status_type = 5;
       inProgressProductOption.product_status_type = options.status_type;
-      if (productResult.length > 0) {
+      if (products.length > 0) {
         return Promise.all([
           this.retrieveProductMetadata({
             product_id: {
@@ -473,7 +473,7 @@ class ProductAdaptor {
               ],
               required: false,
             }],
-          required: true,
+          required: false,
         },
         {
           model: this.modals.offlineSellers,
@@ -653,20 +653,52 @@ class ProductAdaptor {
   }
 
   createProduct(productBody, metadataBody) {
-    let product;
+    const brandPromise = productBody.brand_name ?
+        this.modals.brands.findCreateFind({
+          where: {
+            brand_name: {
+              $iLike: productBody.brand_name,
+            },
+            updated_by: productBody.user_id,
+          },
+          defaults: {
+            brand_name: productBody.brand_name,
+            updated_by: productBody.user_id,
+            status_type: 11,
+          },
+        }) :
+        '';
+    console.log({
+      metadataBody,
+    });
     const dropDownPromise = metadataBody.map((item) => {
       if (item.new_drop_down) {
-        return this.modals.dropDowns.findCreateFind({
+        console.log({
+          testMetadata: {
+            title: {
+              $iLike: item.form_value.toLowerCase(),
+            },
+            category_form_id: item.category_form_id,
+            category_id: productBody.category_id,
+            brand_id: productBody.brand_id,
+          },
+        });
+        return this.modals.brandDropDown.findCreateFind({
           where: {
             title: {
               $iLike: item.form_value.toLowerCase(),
             },
             category_form_id: item.category_form_id,
+            category_id: productBody.category_id,
+            brand_id: productBody.brand_id,
           },
           defaults: {
             title: item.form_value,
             category_form_id: item.category_form_id,
+            category_id: productBody.category_id,
+            brand_id: productBody.brand_id,
             updated_by: item.updated_by,
+            created_by: item.created_by,
             status_type: 11,
           },
         });
@@ -675,10 +707,14 @@ class ProductAdaptor {
       return '';
     });
 
-    return Promise.all(dropDownPromise).then((dropDownResult) => {
-      const dropDownRes = dropDownResult.filter((item) => item !== '').
-          map((ddItem) => ddItem[0].toJSON());
-      let product = productBody;
+    return Promise.all([...dropDownPromise, brandPromise]).
+        then((newItemResult) => {
+          let product = productBody;
+          const newBrand = productBody.brand_name ?
+              newItemResult[newItemResult.length - 1][0] : undefined;
+          product.brand_id = newBrand ?
+              newBrand.brand_id :
+              product.brand_id;
       product = !product.colour_id ? _.omit(product, 'colour_id') : product;
       product = !product.purchase_cost ?
           _.omit(product, 'purchase_cost') :
@@ -691,12 +727,7 @@ class ProductAdaptor {
           _.omit(product, 'document_date') :
           product;
       product = !product.seller_id ? _.omit(product, 'seller_id') : product;
-      let metadata = metadataBody.map((mdItem) => {
-        const ddResult = dropDownRes.find(
-            (ddItem) => ddItem.category_form_id === mdItem.category_form_id);
-        mdItem.form_value = mdItem.new_drop_down ?
-            ddResult.id.toString() :
-            mdItem.form_value;
+          let metadata = metadataBody.map((mdItem) => {
         mdItem = _.omit(mdItem, 'new_drop_down');
         return mdItem;
       });
@@ -1136,6 +1167,7 @@ class ProductAdaptor {
     return this.retrieveProductById(productId, {
       where: {
         user_id: user.id,
+        status_type: [5, 8, 11],
       },
     }).then((result) => {
       if (result) {

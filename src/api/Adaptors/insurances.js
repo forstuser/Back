@@ -25,12 +25,17 @@ class InsuranceAdaptor {
 
   retrieveInsurances(options) {
     options.status_type = 5;
-    let productOptions = options.main_category_id ||
-    options.product_status_type ? {
-      main_category_id: options.main_category_id,
-      status_type: options.product_status_type,
-      category_id: options.category_id,
-    } : undefined;
+    let productOptions = {};
+    if (options.main_category_id ||
+        options.product_status_type) {
+      Object.assign(productOptions, {
+        main_category_id: options.main_category_id,
+        status_type: options.product_status_type,
+        category_id: options.category_id,
+      });
+    } else {
+      productOptions = undefined;
+    }
     productOptions = productOptions ?
         productOptions.category_id ?
             productOptions :
@@ -39,6 +44,11 @@ class InsuranceAdaptor {
     options = _.omit(options, 'category_id');
     options = _.omit(options, 'main_category_id');
     options = _.omit(options, 'product_status_type');
+
+    console.log({
+      productOptions,
+      options,
+    });
     return this.modals.insurances.findAll({
       where: options,
       include: [

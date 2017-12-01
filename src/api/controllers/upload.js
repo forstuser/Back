@@ -172,6 +172,13 @@ class UploadController {
       uploaded_by: user.id,
       user_status: 8,
       admin_status: 4,
+      comments: request.query ?
+          request.query.productId ?
+              `This job is sent for product id ${request.query.productId}` :
+              request.query.productName ?
+                  `This job is sent for product name ${request.query.productName}` :
+                  '' :
+          ``,
     }).then((result) => {
       if (Array.isArray(fileData)) {
         const fileNames = [];
@@ -230,9 +237,13 @@ class UploadController {
             });
           }
 
+          notificationAdaptor.sendMailOnUpload(
+              'New Job has been created with multiple files for consumer',
+              'sagar@binbill.com;pranjal@binbill.com;', user, result.id);
           return reply({
             status: true,
             message: 'Uploaded Successfully',
+            job_id: result.id,
             billResult,
             // forceUpdate: request.pre.forceUpdate
           });
@@ -293,8 +304,13 @@ class UploadController {
                   }
                 });
               }
+
+              notificationAdaptor.sendMailOnUpload(
+                  'New Job has been added with single file for consumer',
+                  'sagar@binbill.com;pranjal@binbill.com;', user, result.id);
               return reply({
                 status: true,
+                job_id: result.id,
                 message: 'Uploaded Successfully',
                 // forceUpdate: request.pre.forceUpdate
               });
@@ -320,13 +336,13 @@ class UploadController {
   }
 
   static retrieveFiles(request, reply) {
-    const user = shared.verifyAuthorization(request.headers);
-    if (!user) {
-       reply({
-         status: false,
-         message: 'Unauthorized',
-       });
-    } else {
+    /* const user = shared.verifyAuthorization(request.headers);
+     if (!user) {
+        reply({
+          status: false,
+          message: 'Unauthorized',
+        });
+     } else {*/
       if (!request.pre.forceUpdate) {
         modals.jobs.findById(request.params.id, {
           include: [
@@ -375,7 +391,7 @@ class UploadController {
           forceUpdate: request.pre.forceUpdate,
         });
       }
-    }
+    // }
   }
 
   static deleteFile(request, reply) {

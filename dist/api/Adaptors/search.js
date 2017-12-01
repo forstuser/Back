@@ -129,7 +129,6 @@ var SearchAdaptor = function () {
       var _this2 = this;
 
       var categoryOption = {
-        category_level: 1,
         status_type: 1,
         $and: [this.modals.sequelize.where(this.modals.sequelize.fn('lower', this.modals.sequelize.col('categories.category_name')), { $iLike: this.modals.sequelize.fn('lower', searchValue) })]
       };
@@ -143,15 +142,22 @@ var SearchAdaptor = function () {
 
       return this.categoryAdaptor.retrieveCategories(categoryOption).then(function (results) {
         categories = results;
-
-        productOptions.$or = {
-          category_id: categories.map(function (item) {
-            return item.id;
-          }),
-          main_category_id: categories.map(function (item) {
-            return item.id;
-          })
-        };
+        var categoryIds = categories.filter(function(item) {
+          return item.level === 2;
+        });
+        var mainCategoryIds = categories.filter(function(item) {
+          return item.level === 1;
+        });
+        productOptions.category_id = categoryIds.length > 0 ?
+            categoryIds.map(function(item) {
+          return item.id;
+            }) :
+            undefined;
+        productOptions.main_category_id = mainCategoryIds.length > 0 ?
+            mainCategoryIds.map(function(item) {
+          return item.id;
+            }) :
+            undefined;
         return _this2.productAdaptor.retrieveProducts(productOptions);
       }).then(function (productResult) {
         return categories.map(function (categoryItem) {

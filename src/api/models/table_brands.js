@@ -51,6 +51,10 @@ export default (sequelize, DataTypes) => {
       through: 'center_brand_mapping',
       as: 'centers',
     });
+    brands.hasMany(models.brandDropDown, {
+      foreignKey: 'brand_id',
+      as: 'dropDowns',
+    });
     brands.hasMany(models.brandReviews,
         {foreignKey: 'brand_id', as: 'brandReviews'});
   };

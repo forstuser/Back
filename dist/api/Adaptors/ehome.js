@@ -225,6 +225,7 @@ var EHomeAdaptor = function () {
         }).map(function (item) {
           return item.brand;
         });
+            brands = _lodash2.default.uniqBy(brands, 'brandId');
 
         var offlineSellers = result.productList.filter(function (item) {
           return item.sellers !== null;
@@ -234,6 +235,8 @@ var EHomeAdaptor = function () {
           return sellerItem;
         });
 
+            offlineSellers = _lodash2.default.uniqBy(offlineSellers, 'id');
+
         var onlineSellers = result.productList.filter(function (item) {
           return item.bill !== null && item.bill.sellers !== null;
         }).map(function (item) {
@@ -241,6 +244,8 @@ var EHomeAdaptor = function () {
           sellerItem.name = sellerItem.sellerName;
           return sellerItem;
         });
+
+            onlineSellers = _lodash2.default.uniqBy(onlineSellers, 'id');
         return {
           status: true,
           productList: productList /* :productList.slice((pageNo * 10) - 10, 10) */

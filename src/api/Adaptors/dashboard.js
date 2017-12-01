@@ -42,7 +42,13 @@ class DashboardAdaptor {
             },
             required: true,
           }],
-			})
+      }), this.modals.products.count({
+        where: {
+          user_id: user.id,
+          status_type: [5, 8, 11],
+          main_category_id: [2, 3],
+        },
+      }),
 		]).then((result) => {
 			// console.log(require('util').inspect(result[0], false, null));
 
@@ -126,7 +132,8 @@ class DashboardAdaptor {
 				upcomingServices: upcomingServices,
 				insight: insightResult,
 				forceUpdate: request.pre.forceUpdate,
-				showDashboard: !!(result[4] && result[4] > 0)
+        showDashboard: !!(result[4] && result[4] > 0),
+        hasProducts: !!(result[5] && result[5] > 0),
 			};
 		}).catch(err => ({
 			status: false,
@@ -139,7 +146,8 @@ class DashboardAdaptor {
 
 	prepareDashboardResult(isNewUser, user, token, request) {
 		if (!isNewUser) {
-      return this.modals.products.count({
+      return Promise.all([
+        this.modals.products.count({
         where: {
           user_id: user.id,
           status_type: [5, 8, 11],
@@ -155,12 +163,21 @@ class DashboardAdaptor {
             },
             required: true,
           }],
-      }).then((billCounts) => {
+        }), this.modals.products.count({
+          where: {
+            user_id: user.id,
+            status_type: [5, 8, 11],
+            main_category_id: [2, 3],
+          },
+        })]).then((result) => {
+        const billCounts = parseInt(result[0]);
+        const productCounts = parseInt(result[1]);
 				if (billCounts) {
 					return {
 						status: true,
 						message: 'User Exist',
 						billCounts,
+            hasProducts: !!(productCounts && productCounts > 0),
             showDashboard: !!(billCounts && billCounts > 0),
 						isExistingUser: !isNewUser,
 						authorization: token,
@@ -173,6 +190,7 @@ class DashboardAdaptor {
 					status: true,
 					message: 'Existing User',
 					authorization: token,
+          hasProducts: !!(productCounts && productCounts > 0),
 					billCounts: 0,
 					showDashboard: false,
 					isExistingUser: !isNewUser,
@@ -243,16 +261,13 @@ class DashboardAdaptor {
 						return metaData;
 					});
 
-          if (product.masterCategoryId.toString() === '6') {
-            product.productType = 5;
-          } else {
             product.productType = 1;
-          }
 					return product;
 				});
 
-      products = products.filter(item => item.bill &&
-          ((item.dueIn !== undefined && item.dueIn !== null) && item.dueIn <=
+      products = products.filter(
+          item => ((item.dueIn !== undefined && item.dueIn !== null) &&
+              item.dueIn <=
               30 && item.dueIn >= 0));
 
 				let amcs = result[1].map((item) => {

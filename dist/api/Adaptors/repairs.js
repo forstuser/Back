@@ -44,15 +44,29 @@ var RepairAdaptor = function () {
     key: 'retrieveRepairs',
     value: function retrieveRepairs(options) {
       options.status_type = 5;
-        var productOptions = options.main_category_id || options.product_status_type ? {
-        main_category_id: options.main_category_id,
-        status_type: options.product_status_type,
-            category_id: options.category_id
-      } : undefined;
-        productOptions = productOptions ? productOptions.category_id ? productOptions : _lodash2.default.omit(productOptions, 'category_id') : undefined;
+      var productOptions = {};
+      if (options.main_category_id || options.product_status_type) {
+        Object.assign(productOptions, {
+          main_category_id: options.main_category_id,
+          status_type: options.product_status_type,
+          category_id: options.category_id,
+        });
+      } else {
+        productOptions = undefined;
+      }
+      productOptions = productOptions ?
+          productOptions.category_id ?
+              productOptions :
+              _lodash2.default.omit(productOptions, 'category_id') :
+          undefined;
       options = _lodash2.default.omit(options, 'category_id');
       options = _lodash2.default.omit(options, 'main_category_id');
       options = _lodash2.default.omit(options, 'product_status_type');
+
+      console.log({
+        productOptions: productOptions,
+        options: options,
+      });
       return this.modals.repairs.findAll({
         where: options,
         include: [{
@@ -71,10 +85,47 @@ var RepairAdaptor = function () {
           attributes: [['seller_name', 'sellerName'], ['owner_name', 'ownerName'], ['pan_no', 'panNo'], ['reg_no', 'regNo'], ['is_service', 'isService'], 'url', 'gstin', ['contact_no', 'contact'], 'email', 'address', 'city', 'state', 'pincode', 'latitude', 'longitude'],
           required: false
         }],
-          attributes: ['id', ['product_id', 'productId'], ['job_id', 'jobId'], [this.modals.sequelize.literal('"product"."main_category_id"'), 'masterCategoryId'], 'user_id', ['document_number', 'policyNo'], ['repair_cost', 'premiumAmount'], [this.modals.sequelize.literal('"product"."product_name"'), 'productName'], ['repair_cost', 'value'], ['repair_taxes', 'taxes'], ['document_date', 'purchaseDate'], ['updated_at', 'updatedDate'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"product_id"')), 'productURL'], 'copies'],
-          order: [['document_date', 'DESC']]
+        attributes: [
+          'id',
+          [
+            'product_id',
+            'productId'],
+          [
+            'job_id',
+            'jobId'],
+          [
+            this.modals.sequelize.literal('"product"."main_category_id"'),
+            'masterCategoryId'],
+          'user_id',
+          [
+            'document_number',
+            'policyNo'],
+          [
+            'repair_cost',
+            'premiumAmount'],
+          [
+            this.modals.sequelize.literal('"product"."product_name"'),
+            'productName'],
+          [
+            'repair_cost',
+            'value'],
+          [
+            'repair_taxes',
+            'taxes'],
+          [
+            'document_date',
+            'purchaseDate'],
+          [
+            'updated_at',
+            'updatedDate'],
+          [
+            this.modals.sequelize.fn('CONCAT', 'products/',
+                this.modals.sequelize.literal('"product_id"')),
+            'productURL'],
+          'copies'],
+        order: [['document_date', 'DESC']],
       }).then(function (repairResult) {
-          return repairResult.map(function (item) {
+        return repairResult.map(function(item) {
           return item.toJSON();
         }).sort(sortAmcWarrantyInsuranceRepair);
       });
@@ -85,13 +136,51 @@ var RepairAdaptor = function () {
       options.status_type = 5;
       return this.modals.repairs.findAll({
         where: options,
-          include: [{
-              model: this.modals.products,
-              where: productOptions,
-              attributes: [],
-              required: productOptions !== undefined
+        include: [
+          {
+            model: this.modals.products,
+            where: productOptions,
+            attributes: [],
+            required: productOptions !== undefined,
           }],
-          attributes: ['id', ['product_id', 'productId'], ['job_id', 'jobId'], [this.modals.sequelize.literal('"product"."main_category_id"'), 'masterCategoryId'], 'user_id', ['document_number', 'policyNo'], ['repair_cost', 'premiumAmount'], [this.modals.sequelize.literal('"product"."product_name"'), 'productName'], ['repair_cost', 'value'], ['repair_taxes', 'taxes'], ['document_date', 'purchaseDate'], ['updated_at', 'updatedDate'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"product_id"')), 'productURL'], 'copies'],
+        attributes: [
+          'id',
+          [
+            'product_id',
+            'productId'],
+          [
+            'job_id',
+            'jobId'],
+          [
+            this.modals.sequelize.literal('"product"."main_category_id"'),
+            'masterCategoryId'],
+          'user_id',
+          [
+            'document_number',
+            'policyNo'],
+          [
+            'repair_cost',
+            'premiumAmount'],
+          [
+            this.modals.sequelize.literal('"product"."product_name"'),
+            'productName'],
+          [
+            'repair_cost',
+            'value'],
+          [
+            'repair_taxes',
+            'taxes'],
+          [
+            'document_date',
+            'purchaseDate'],
+          [
+            'updated_at',
+            'updatedDate'],
+          [
+            this.modals.sequelize.fn('CONCAT', 'products/',
+                this.modals.sequelize.literal('"product_id"')),
+            'productURL'],
+          'copies'],
         order: [['document_date', 'DESC']]
       }).then(function (repairResult) {
         return repairResult.map(function (item) {

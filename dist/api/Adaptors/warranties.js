@@ -44,15 +44,29 @@ var WarrantyAdaptor = function () {
     key: 'retrieveWarranties',
     value: function retrieveWarranties(options) {
       options.status_type = 5;
-        var productOptions = options.main_category_id || options.product_status_type ? {
-        main_category_id: options.main_category_id,
-        status_type: options.product_status_type,
-            category_id: options.category_id
-      } : undefined;
-        productOptions = productOptions ? productOptions.category_id ? productOptions : _lodash2.default.omit(productOptions, 'category_id') : undefined;
+      var productOptions = {};
+      if (options.main_category_id || options.product_status_type) {
+        Object.assign(productOptions, {
+          main_category_id: options.main_category_id,
+          status_type: options.product_status_type,
+          category_id: options.category_id,
+        });
+      } else {
+        productOptions = undefined;
+      }
+      productOptions = productOptions ?
+          productOptions.category_id ?
+              productOptions :
+              _lodash2.default.omit(productOptions, 'category_id') :
+          undefined;
       options = _lodash2.default.omit(options, 'category_id');
       options = _lodash2.default.omit(options, 'main_category_id');
       options = _lodash2.default.omit(options, 'product_status_type');
+
+      console.log({
+        productOptions: productOptions,
+        options: options,
+      });
       return this.modals.warranties.findAll({
         where: options,
         include: [{
@@ -74,10 +88,56 @@ var WarrantyAdaptor = function () {
           attributes: [['seller_name', 'sellerName'], ['owner_name', 'ownerName'], ['pan_no', 'panNo'], ['reg_no', 'regNo'], ['is_service', 'isService'], 'url', 'gstin', ['contact_no', 'contact'], 'email', 'address', 'city', 'state', 'pincode', 'latitude', 'longitude'],
           required: false
         }],
-          attributes: ['id', ['product_id', 'productId'], ['job_id', 'jobId'], ['document_number', 'policyNo'], [this.modals.sequelize.literal('"product"."product_name"'), 'productName'], [this.modals.sequelize.literal('"renewalType"."title"'), 'premiumType'], [this.modals.sequelize.literal('"product"."main_category_id"'), 'masterCategoryId'], ['renewal_cost', 'premiumAmount'], 'user_id', ['renewal_cost', 'value'], ['renewal_taxes', 'taxes'], ['effective_date', 'effectiveDate'], ['expiry_date', 'expiryDate'], ['document_date', 'purchaseDate'], ['updated_at', 'updatedDate'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"product_id"')), 'productURL'], 'copies'],
-          order: [['expiry_date', 'DESC']]
+        attributes: [
+          'id',
+          [
+            'product_id',
+            'productId'],
+          [
+            'job_id',
+            'jobId'],
+          [
+            'document_number',
+            'policyNo'],
+          [
+            this.modals.sequelize.literal('"product"."product_name"'),
+            'productName'],
+          [
+            this.modals.sequelize.literal('"renewalType"."title"'),
+            'premiumType'],
+          [
+            this.modals.sequelize.literal('"product"."main_category_id"'),
+            'masterCategoryId'],
+          [
+            'renewal_cost',
+            'premiumAmount'],
+          'user_id',
+          [
+            'renewal_cost',
+            'value'],
+          [
+            'renewal_taxes',
+            'taxes'],
+          [
+            'effective_date',
+            'effectiveDate'],
+          [
+            'expiry_date',
+            'expiryDate'],
+          [
+            'document_date',
+            'purchaseDate'],
+          [
+            'updated_at',
+            'updatedDate'],
+          [
+            this.modals.sequelize.fn('CONCAT', 'products/',
+                this.modals.sequelize.literal('"product_id"')),
+            'productURL'],
+          'copies'],
+        order: [['expiry_date', 'DESC']],
       }).then(function (warrantyResult) {
-          return warrantyResult.map(function (item) {
+        return warrantyResult.map(function(item) {
           return item.toJSON();
         }).sort(sortAmcWarrantyInsuranceRepair);
       });
@@ -88,14 +148,61 @@ var WarrantyAdaptor = function () {
       options.status_type = 5;
       return this.modals.warranties.findAll({
         where: options,
-          include: [{
-              model: this.modals.renewalTypes,
-              attributes: []
+        include: [
+          {
+            model: this.modals.renewalTypes,
+            attributes: [],
           }, {
-              model: this.modals.products,
-              attributes: []
+            model: this.modals.products,
+            attributes: [],
           }],
-          attributes: ['id', ['product_id', 'productId'], ['job_id', 'jobId'], ['document_number', 'policyNo'], [this.modals.sequelize.literal('"product"."product_name"'), 'productName'], [this.modals.sequelize.literal('"renewalType"."title"'), 'premiumType'], [this.modals.sequelize.literal('"product"."main_category_id"'), 'masterCategoryId'], ['renewal_cost', 'premiumAmount'], 'user_id', ['renewal_cost', 'value'], ['renewal_taxes', 'taxes'], ['effective_date', 'effectiveDate'], ['expiry_date', 'expiryDate'], ['document_date', 'purchaseDate'], ['updated_at', 'updatedDate'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"product_id"')), 'productURL'], 'copies'],
+        attributes: [
+          'id',
+          [
+            'product_id',
+            'productId'],
+          [
+            'job_id',
+            'jobId'],
+          [
+            'document_number',
+            'policyNo'],
+          [
+            this.modals.sequelize.literal('"product"."product_name"'),
+            'productName'],
+          [
+            this.modals.sequelize.literal('"renewalType"."title"'),
+            'premiumType'],
+          [
+            this.modals.sequelize.literal('"product"."main_category_id"'),
+            'masterCategoryId'],
+          [
+            'renewal_cost',
+            'premiumAmount'],
+          'user_id',
+          [
+            'renewal_cost',
+            'value'],
+          [
+            'renewal_taxes',
+            'taxes'],
+          [
+            'effective_date',
+            'effectiveDate'],
+          [
+            'expiry_date',
+            'expiryDate'],
+          [
+            'document_date',
+            'purchaseDate'],
+          [
+            'updated_at',
+            'updatedDate'],
+          [
+            this.modals.sequelize.fn('CONCAT', 'products/',
+                this.modals.sequelize.literal('"product_id"')),
+            'productURL'],
+          'copies'],
         order: [['expiry_date', 'DESC']]
       }).then(function (warrantyResult) {
         return warrantyResult.map(function (item) {

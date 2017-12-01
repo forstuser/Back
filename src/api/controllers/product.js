@@ -34,12 +34,15 @@ class ProductController {
         status_type: 11,
         document_number: request.payload.document_number,
         document_date: request.payload.document_date,
+        copies: [],
       };
-      const metaDataBody = request.payload.metadata.map((item) => {
+      const metaDataBody = request.payload.metadata ?
+          request.payload.metadata.map((item) => {
         item.updated_by = user.id;
 
         return item;
-      });
+          }) :
+          [];
       return productAdaptor.createProduct(productBody, metaDataBody).
           then((result) => {
             if (result) {

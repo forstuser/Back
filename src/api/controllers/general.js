@@ -5,6 +5,8 @@ import NotificationAdaptor from '../Adaptors/notification';
 import CategoryAdaptor from '../Adaptors/category';
 import BrandAdaptor from '../Adaptors/brands';
 import SellerAdaptor from '../Adaptors/sellers';
+import Bluebird from 'bluebird';
+import shared from '../../helpers/shared';
 
 let contactModel;
 let modals;
@@ -27,12 +29,38 @@ class GeneralController {
    * @param reply
    */
   static retrieveReferenceData(request, reply) {
-    return categoryAdaptor.retrieveCategories(
-        {category_level: 1, category_id: [2, 3]}, true).
+    const user = shared.verifyAuthorization(request.headers);
+    return Bluebird.try(() => {
+      if (request.query && user) {
+        if (request.query.categoryId && request.query.brandId) {
+          return brandAdaptor.retrieveBrandDropDowns({
+            category_id: request.query.categoryId,
+            brand_id: request.query.brandId,
+            $or: {
+              status_type: 5,
+              $and: {
+                status_type: 11,
+                updated_by: user.id,
+              },
+            },
+          });
+        } else if (request.query.categoryId) {
+          return categoryAdaptor.retrieveSubCategories(
+              {category_id: request.query.categoryId}, true);
+        } else if (request.query.mainCategoryId) {
+          return categoryAdaptor.retrieveCategories(
+              {category_id: request.query.mainCategoryId}, false);
+        }
+      }
+
+      return categoryAdaptor.retrieveCategories(
+          {category_level: 1, category_id: [2, 3]}, true);
+    }).
         then((results) => {
           return reply({
             status: true,
-            categories: results,
+            dropDowns: request.query.brandId ? results : undefined,
+            categories: request.query.brandId ? undefined : results,
             contactType: [
               {
                 id: 1,

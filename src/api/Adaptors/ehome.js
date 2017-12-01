@@ -214,23 +214,28 @@ class EHomeAdaptor {
       const productList = result.productList;
       /* const listIndex = (pageNo * 10) - 10; */
 
-      const brands = result.productList.filter((item) => item.brand !== null).
+      let brands = result.productList.filter((item) => item.brand !== null).
           map((item) => item.brand);
+      brands = _.uniqBy(brands, 'brandId');
 
-      const offlineSellers = result.productList.filter(
+      let offlineSellers = result.productList.filter(
           (item) => item.sellers !== null).map((item) => {
         const sellerItem = item.sellers;
         sellerItem.name = sellerItem.sellerName;
         return sellerItem;
       });
 
-      const onlineSellers = result.productList.filter(
+      offlineSellers = _.uniqBy(offlineSellers, 'id');
+
+      let onlineSellers = result.productList.filter(
           item => item.bill !== null && item.bill.sellers !== null).
           map((item) => {
             const sellerItem = item.bill.sellers;
             sellerItem.name = sellerItem.sellerName;
             return sellerItem;
           });
+
+      onlineSellers = _.uniqBy(onlineSellers, 'id');
       return {
         status: true,
         productList /* :productList.slice((pageNo * 10) - 10, 10) */,

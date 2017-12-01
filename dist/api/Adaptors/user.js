@@ -216,10 +216,10 @@ var UserAdaptor = function () {
           userUpdates.email = emailID;
           userUpdates.email_secret = _uuid2.default.v4();
           userUpdates.email_verified = false;
-        } else {
+        } else if (emailID !== null) {
           userUpdates.email = result.email;
-          userUpdates.email_secret = result.secret;
-          userUpdates.email_verified = result.email_verified;
+          userUpdates.email_secret = result.secret || _uuid2.default.v4();
+          userUpdates.email_verified = result.email_verified || false;
         }
 
         userPromise.push(_this.updateUserDetail(userUpdates, filterOptions));
@@ -240,6 +240,16 @@ var UserAdaptor = function () {
         }).code(200);
       }).catch(function (err) {
         console.log({ API_Logs: err });
+        if (err && err.errors && err.errors.findIndex(function(item) {
+              return item.message === 'email must be unique';
+            }) !== -1) {
+          return reply({
+            status: false,
+            message: 'The email mentioned is already linked with other account',
+            err: err,
+            forceUpdate: request.pre.forceUpdate,
+          });
+        }
         return reply({
           status: false,
           message: 'User Detail Update failed',

@@ -76,7 +76,14 @@ var DashboardAdaptor = function () {
 					},
 					required: true
 				}]
-			})]).then(function (result) {
+      }),
+        this.modals.products.count({
+          where: {
+            user_id: user.id,
+            status_type: [5, 8, 11],
+            main_category_id: [2, 3],
+          },
+        })]).then(function(result) {
 				// console.log(require('util').inspect(result[0], false, null));
 
 				var upcomingServices = result[0].map(function (elem) {
@@ -159,7 +166,8 @@ var DashboardAdaptor = function () {
 					upcomingServices: upcomingServices,
 					insight: insightResult,
 					forceUpdate: request.pre.forceUpdate,
-					showDashboard: !!(result[4] && result[4] > 0)
+          showDashboard: !!(result[4] && result[4] > 0),
+          hasProducts: !!(result[5] && result[5] > 0),
 				};
 			}).catch(function (err) {
 				return {
@@ -175,7 +183,8 @@ var DashboardAdaptor = function () {
 		key: 'prepareDashboardResult',
 		value: function prepareDashboardResult(isNewUser, user, token, request) {
 			if (!isNewUser) {
-				return this.modals.products.count({
+        return Promise.all([
+          this.modals.products.count({
 					where: {
 						user_id: user.id,
 						status_type: [5, 8, 11],
@@ -190,12 +199,21 @@ var DashboardAdaptor = function () {
 						},
 						required: true
 					}]
-				}).then(function (billCounts) {
+          }), this.modals.products.count({
+            where: {
+              user_id: user.id,
+              status_type: [5, 8, 11],
+              main_category_id: [2, 3],
+            },
+          })]).then(function(result) {
+          var billCounts = parseInt(result[0]);
+          var productCounts = parseInt(result[1]);
 					if (billCounts) {
 						return {
 							status: true,
 							message: 'User Exist',
 							billCounts: billCounts,
+              hasProducts: !!(productCounts && productCounts > 0),
 							showDashboard: !!(billCounts && billCounts > 0),
 							isExistingUser: !isNewUser,
 							authorization: token,
@@ -208,6 +226,7 @@ var DashboardAdaptor = function () {
 						status: true,
 						message: 'Existing User',
 						authorization: token,
+            hasProducts: !!(productCounts && productCounts > 0),
 						billCounts: 0,
 						showDashboard: false,
 						isExistingUser: !isNewUser,
@@ -274,16 +293,13 @@ var DashboardAdaptor = function () {
 						return metaData;
 					});
 
-					if (product.masterCategoryId.toString() === '6') {
-						product.productType = 5;
-					} else {
-						product.productType = 1;
-					}
+          product.productType = 1;
 					return product;
 				});
 
 				products = products.filter(function (item) {
-					return item.bill && item.dueIn !== undefined && item.dueIn !== null && item.dueIn <= 30 && item.dueIn >= 0;
+          return item.dueIn !== undefined && item.dueIn !== null &&
+              item.dueIn <= 30 && item.dueIn >= 0;
 				});
 
 				var amcs = result[1].map(function (item) {

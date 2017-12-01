@@ -279,11 +279,11 @@ var NotificationAdaptor = function () {
     value: function createNotifications(days) {
       var _this = this;
 
-        return this.retrieveCronNotification(days).then(function (result) {
-            var upcomingServices = result.map(function (elem) {
+      return this.retrieveCronNotification(days).then(function(result) {
+        var upcomingServices = result.map(function(elem) {
           if (elem.productType === 4) {
             console.log(elem);
-              var dueAmountArr = elem.productMetaData.filter(function (e) {
+            var dueAmountArr = elem.productMetaData.filter(function(e) {
               return e.name.toLowerCase() === 'due amount';
             });
 
@@ -340,20 +340,23 @@ var NotificationAdaptor = function () {
         });
         /* const listIndex = (parseInt(pageNo || 1, 10) * 10) - 10; */
 
-            upcomingServices.sort(function (a, b) {
+        upcomingServices.sort(function(a, b) {
           var aDate = void 0;
           var bDate = void 0;
 
           aDate = a.dueDate;
           bDate = b.dueDate;
-                if (_moment2.default.utc(aDate, 'YYYY-MM-DD').isBefore(_moment2.default.utc(bDate, 'YYYY-MM-DD'))) {
+          if (_moment2.default.utc(aDate, 'YYYY-MM-DD').
+                  isBefore(_moment2.default.utc(bDate, 'YYYY-MM-DD'))) {
             return -1;
           }
 
           return 1;
         });
-            var notificationPromise = upcomingServices.map(function (upcomingNotification) {
-                _this.notifyUserCron(upcomingNotification.user_id, upcomingNotification);
+        var notificationPromise = upcomingServices.map(
+            function(upcomingNotification) {
+              _this.notifyUserCron(upcomingNotification.user_id,
+                  upcomingNotification);
             });
 
         return Promise.all(notificationPromise);
@@ -364,11 +367,11 @@ var NotificationAdaptor = function () {
     value: function createMissingDocNotification(days) {
       var _this2 = this;
 
-        return this.retrieveMissingDocNotification(days).then(function (result) {
-            var upcomingServices = result.map(function (elem) {
+      return this.retrieveMissingDocNotification(days).then(function(result) {
+        var upcomingServices = result.map(function(elem) {
           if (elem.productType === 4) {
             console.log(elem);
-              var dueAmountArr = elem.productMetaData.filter(function (e) {
+            var dueAmountArr = elem.productMetaData.filter(function(e) {
               return e.name.toLowerCase() === 'due amount';
             });
 
@@ -423,8 +426,10 @@ var NotificationAdaptor = function () {
           return update;
         });
 
-            var notificationPromise = upcomingServices.map(function (upcomingNotification) {
-                _this2.notifyUserCron(upcomingNotification.user_id, upcomingNotification);
+        var notificationPromise = upcomingServices.map(
+            function(upcomingNotification) {
+              _this2.notifyUserCron(upcomingNotification.user_id,
+                  upcomingNotification);
             });
 
         return Promise.all(notificationPromise);
@@ -435,23 +440,35 @@ var NotificationAdaptor = function () {
     value: function createExpenseNotification(days) {
       var _this3 = this;
 
-        return this.retrieveMissingDocNotification(days).then(function (result) {
+      return this.retrieveMissingDocNotification(days).then(function(result) {
 
-            var expenseUpdates = result.map(function (resultItem) {
+        var expenseUpdates = result.map(function(resultItem) {
           return {
             notification_type: days === 1 ? 5 : days === 6 ? 6 : 7,
             due_amount: resultItem.value,
             taxes: resultItem.taxes,
-              title: days === 1 ? 'Daily Expense' : days === 7 ? 'Last Seven Days Expense' : 'Monthly Expense',
-              description: days === 1 ? 'Daily Expense Summary' : days === 7 ? 'Last Seven Days Expense Summary' : 'Monthly Expense Summary',
-              productUrl: days === 1 ? '/insight' : days === 7 ? '/insight' : '/insight',
-              user_id: resultItem.user_id
+            title: days === 1 ?
+                'Daily Expense' :
+                days === 7 ?
+                    'Last Seven Days Expense' :
+                    'Monthly Expense',
+            description: days === 1 ?
+                'Daily Expense Summary' :
+                days === 7 ?
+                    'Last Seven Days Expense Summary' :
+                    'Monthly Expense Summary',
+            productUrl: days === 1 ?
+                '/insight' :
+                days === 7 ?
+                    '/insight' :
+                    '/insight',
+            user_id: resultItem.user_id,
           };
         });
         var upcomingServices = [];
 
-            expenseUpdates.forEach(function (item) {
-                var index = upcomingServices.findIndex(function (distinctItem) {
+        expenseUpdates.forEach(function(item) {
+          var index = upcomingServices.findIndex(function(distinctItem) {
             return distinctItem.user_id === item.user_id;
           });
           if (index === -1) {
@@ -462,7 +479,7 @@ var NotificationAdaptor = function () {
               title: item.title,
               description: item.description,
               productUrl: item.productUrl,
-                user_id: item.user_id
+              user_id: item.user_id,
             });
           } else {
             upcomingServices[index].due_amount += item.due_amount;
@@ -470,8 +487,10 @@ var NotificationAdaptor = function () {
           }
         });
 
-            var notificationPromise = upcomingServices.map(function (upcomingNotification) {
-                _this3.notifyUserCron(upcomingNotification.user_id, upcomingNotification);
+        var notificationPromise = upcomingServices.map(
+            function(upcomingNotification) {
+              _this3.notifyUserCron(upcomingNotification.user_id,
+                  upcomingNotification);
             });
 
         return Promise.all(notificationPromise);
@@ -481,9 +500,9 @@ var NotificationAdaptor = function () {
     key: 'retrieveMissingDocNotification',
     value: function retrieveMissingDocNotification(days) {
       return this.productAdaptor.retrieveMissingDocProducts({
-          status_type: [5, 8, 11]
+        status_type: [5, 8, 11],
       }).then(function (result) {
-          return result.map(function (item) {
+        return result.map(function(item) {
           var product = item;
 
           product.title = product.productName + ' Reminder';
@@ -498,27 +517,28 @@ var NotificationAdaptor = function () {
     value: function retrieveExpenseCronNotification(days) {
       var purchaseDateCompare = days === 1 ? {
         $gte: (0, _moment2.default)().subtract(days, 'day').startOf('day'),
-          $lte: (0, _moment2.default)().subtract(days, 'day').endOf('day')
+        $lte: (0, _moment2.default)().subtract(days, 'day').endOf('day'),
       } : days === 7 ? {
         $lte: (0, _moment2.default)().subtract(days, 'day').endOf('day'),
-          $gte: (0, _moment2.default)().subtract(days, 'day').startOf('day')
+        $gte: (0, _moment2.default)().subtract(days, 'day').startOf('day'),
       } : {
         $gte: (0, _moment2.default)().startOf('month'),
-          $lte: (0, _moment2.default)().endOf('month')
+        $lte: (0, _moment2.default)().endOf('month'),
       };
-        return Promise.all([this.productAdaptor.retrieveNotificationProducts({
-            status_type: [5, 11],
-            document_date: purchaseDateCompare
+      return Promise.all([
+        this.productAdaptor.retrieveNotificationProducts({
+          status_type: [5, 11],
+          document_date: purchaseDateCompare,
         }), this.amcAdaptor.retrieveNotificationAMCs({
-            status_type: 5,
-            document_date: purchaseDateCompare
+          status_type: 5,
+          document_date: purchaseDateCompare,
         }), this.insuranceAdaptor.retrieveNotificationInsurances({
-            status_type: 5,
-            document_date: purchaseDateCompare
+          status_type: 5,
+          document_date: purchaseDateCompare,
         }), this.warrantyAdaptor.retrieveNotificationWarranties({
-            status_type: 5,
-            document_date: purchaseDateCompare
-        })]).then(function (result) {
+          status_type: 5,
+          document_date: purchaseDateCompare,
+        })]).then(function(result) {
         var products = result[0];
 
         var amcs = result[1];
@@ -527,7 +547,9 @@ var NotificationAdaptor = function () {
 
         var warranties = result[3];
 
-            return [].concat(_toConsumableArray(products), _toConsumableArray(warranties), _toConsumableArray(insurances), _toConsumableArray(amcs));
+        return [].concat(_toConsumableArray(products),
+            _toConsumableArray(warranties), _toConsumableArray(insurances),
+            _toConsumableArray(amcs));
       });
     }
   }, {
@@ -535,37 +557,41 @@ var NotificationAdaptor = function () {
     value: function retrieveCronNotification(days) {
       var expiryDateCompare = days === 15 ? {
         $gte: (0, _moment2.default)().add(days, 'day').startOf('day'),
-          $lte: (0, _moment2.default)().add(days, 'day').endOf('day')
+        $lte: (0, _moment2.default)().add(days, 'day').endOf('day'),
       } : {
         $gte: (0, _moment2.default)().startOf('day'),
-          $lte: (0, _moment2.default)().add(days, 'day').endOf('day')
+        $lte: (0, _moment2.default)().add(days, 'day').endOf('day'),
       };
-        return Promise.all([this.productAdaptor.retrieveNotificationProducts({
-            status_type: 5,
-            main_category_id: [6, 8]
+      return Promise.all([
+        this.productAdaptor.retrieveNotificationProducts({
+          status_type: 5,
+          main_category_id: [6, 8],
         }), this.amcAdaptor.retrieveNotificationAMCs({
-            status_type: 5,
-            expiry_date: expiryDateCompare
+          status_type: 5,
+          expiry_date: expiryDateCompare,
         }), this.insuranceAdaptor.retrieveNotificationInsurances({
-            status_type: 5,
-            expiry_date: expiryDateCompare
+          status_type: 5,
+          expiry_date: expiryDateCompare,
         }), this.warrantyAdaptor.retrieveNotificationWarranties({
-            status_type: 5,
-            expiry_date: expiryDateCompare
-        })]).then(function (result) {
-            var products = result[0].map(function (item) {
+          status_type: 5,
+          expiry_date: expiryDateCompare,
+        })]).then(function(result) {
+        var products = result[0].map(function(item) {
           var product = item;
 
-                product.productMetaData.map(function (metaItem) {
+          product.productMetaData.map(function(metaItem) {
             var metaData = metaItem;
-                    if (metaData.name.toLowerCase().includes('due') && metaData.name.toLowerCase().includes('date') && (0, _moment2.default)(metaData.value).isValid()) {
+            if (metaData.name.toLowerCase().includes('due') &&
+                metaData.name.toLowerCase().includes('date') &&
+                (0, _moment2.default)(metaData.value).isValid()) {
               var dueDateTime = (0, _moment2.default)(metaData.value);
               product.dueDate = metaData.value;
               product.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
             }
 
             if (metaData.name.toLowerCase().includes('address')) {
-                product.description = metaData.name.toLowerCase().includes('address') ? '' + metaData.value : '';
+              product.description = metaData.name.toLowerCase().
+                  includes('address') ? '' + metaData.value : '';
             }
 
             return metaData;
@@ -576,10 +602,17 @@ var NotificationAdaptor = function () {
           return product;
         });
 
-            products = products.filter(function (item) {
-                return days === 15 ? item.dueDate <= (0, _moment2.default)().add(days, 'day').endOf('day') && item.dueDate >= (0, _moment2.default)().add(days, 'day').startOf('day') : item.dueDate <= (0, _moment2.default)().add(days, 'day').endOf('day') && item.dueDate >= (0, _moment2.default)().startOf('day');
+        products = products.filter(function(item) {
+          return days === 15 ?
+              item.dueDate <=
+              (0, _moment2.default)().add(days, 'day').endOf('day') &&
+              item.dueDate >=
+              (0, _moment2.default)().add(days, 'day').startOf('day') :
+              item.dueDate <=
+              (0, _moment2.default)().add(days, 'day').endOf('day') &&
+              item.dueDate >= (0, _moment2.default)().startOf('day');
         });
-            var amcs = result[1].map(function (item) {
+        var amcs = result[1].map(function(item) {
           var amc = item;
           if ((0, _moment2.default)(amc.expiryDate).isValid()) {
             var dueDateTime = (0, _moment2.default)(amc.expiryDate);
@@ -593,7 +626,7 @@ var NotificationAdaptor = function () {
           return amc;
         });
 
-            var insurances = result[2].map(function (item) {
+        var insurances = result[2].map(function(item) {
           var insurance = item;
           if ((0, _moment2.default)(insurance.expiryDate).isValid()) {
             var dueDateTime = (0, _moment2.default)(insurance.expiryDate);
@@ -601,12 +634,13 @@ var NotificationAdaptor = function () {
             insurance.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
             insurance.productType = 3;
             insurance.title = 'Insurance Renewal Pending';
-              insurance.description = 'Insurance #' + insurance.policyNo + ' of ' + insurance.productName;
+            insurance.description = 'Insurance #' + insurance.policyNo +
+                ' of ' + insurance.productName;
           }
           return insurance;
         });
 
-            var warranties = result[3].map(function (item) {
+        var warranties = result[3].map(function(item) {
           var warranty = item;
           if ((0, _moment2.default)(warranty.expiryDate).isValid()) {
             var dueDateTime = (0, _moment2.default)(warranty.expiryDate);
@@ -615,13 +649,16 @@ var NotificationAdaptor = function () {
             warranty.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
             warranty.productType = 3;
             warranty.title = 'Warranty Renewal Pending';
-              warranty.description = 'Warranty #' + warranty.policyNo + ' of ' + warranty.productName;
+            warranty.description = 'Warranty #' + warranty.policyNo + ' of ' +
+                warranty.productName;
           }
 
           return warranty;
         });
 
-            return [].concat(_toConsumableArray(products), _toConsumableArray(warranties), _toConsumableArray(insurances), _toConsumableArray(amcs));
+        return [].concat(_toConsumableArray(products),
+            _toConsumableArray(warranties), _toConsumableArray(insurances),
+            _toConsumableArray(amcs));
       });
     }
   }, {
@@ -629,37 +666,38 @@ var NotificationAdaptor = function () {
     value: function notifyUserCron(userId, payload) {
       return this.modals.fcmDetails.findAll({
         where: {
-            user_id: userId
+          user_id: userId,
         }
       }).then(function (result) {
         var options = {
           uri: 'https://fcm.googleapis.com/fcm/send',
           method: 'POST',
-            headers: {Authorization: 'key=' + _main2.default.GOOGLE.FCM_KEY},
+          headers: {Authorization: 'key=' + _main2.default.GOOGLE.FCM_KEY},
           json: {
             // note that Sequelize returns token object array, we map it with token value only
-              registration_ids: result.map(function (user) {
+            registration_ids: result.map(function(user) {
               return user.fcm_id;
             }),
             // iOS requires priority to be set as 'high' for message to be received in background
             priority: 'high',
-              data: payload
+            data: payload,
           }
         };
-          (0, _request2.default)(options, function (error, response, body) {
+        (0, _request2.default)(options, function(error, response, body) {
           if (!(!error && response.statusCode === 200)) {
             console.log({
               error: error,
               userId: userId,
-                user: JSON.stringify(result)
+              user: JSON.stringify(result),
             });
           }
           // extract invalid registration for removal
-              if (body.failure > 0 && Array.isArray(body.results) && body.results.length === result.length) {
+          if (body.failure > 0 && Array.isArray(body.results) &&
+              body.results.length === result.length) {
             var results = body.results;
             for (var i = 0; i < result.length; i += 1) {
               if (results[i].error === 'InvalidRegistration') {
-                  result[i].destroy().then(function (rows) {
+                result[i].destroy().then(function(rows) {
                   console.log('FCM ID\'s DELETED: ', rows);
                 });
               }
@@ -756,6 +794,31 @@ var NotificationAdaptor = function () {
         to: email, // list of receivers
         subject: 'BinBill Email Verification',
         html: _shared2.default.retrieveMailTemplate(user, 0)
+      };
+
+      // send mail with defined transport object
+      smtpTransporter.sendMail(mailOptions);
+    }
+  }, {
+    key: 'sendMailOnUpload',
+    value: function sendMailOnUpload(subject, email, user, jobId) {
+      var smtpTransporter = _nodemailer2.default.createTransport(
+          (0, _nodemailerSmtpTransport2.default)({
+            service: 'gmail',
+            auth: {
+              user: _main2.default.EMAIL.USER,
+              pass: _main2.default.EMAIL.PASSWORD,
+            },
+            secure: true,
+            port: 465,
+          }));
+
+      // setup email data with unicode symbols
+      var mailOptions = {
+        from: '"BinBill" <' + _main2.default.EMAIL.USER + '>', // sender address
+        to: email, // list of receivers
+        subject: subject,
+        html: '<p class="main-class" style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0; font-family: \'Quicksand\', sans-serif;font-weight: 500;letter-spacing: 0.3px;text-align: left;color: #3b3b3b; padding: 10px 0;"> Hi Team,</p><p class="main-class" style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0; font-family: \'Quicksand\', sans-serif;font-weight: 500;letter-spacing: 0.3px;text-align: left;color: #3b3b3b; padding: 10px 0;"> New Job has been added on Admin.</p>',
       };
 
       // send mail with defined transport object

@@ -189,7 +189,15 @@ var UploadController = function () {
         updated_by: user.id,
         uploaded_by: user.id,
         user_status: 8,
-        admin_status: 4
+        admin_status: 4,
+        comments: request.query ?
+            request.query.productId ?
+                'This job is sent for product id ' + request.query.productId :
+                request.query.productName ?
+                    'This job is sent for product name ' +
+                    request.query.productName :
+                    '' :
+            '',
       }).then(function (result) {
         if (Array.isArray(fileData)) {
           var fileNames = [];
@@ -237,9 +245,13 @@ var UploadController = function () {
               });
             }
 
+            _notification2.default.sendMailOnUpload(
+                'New Job has been created with multiple files for consumer',
+                'sagar@binbill.com;pranjal@binbill.com;', user, result.id);
             return reply({
               status: true,
               message: 'Uploaded Successfully',
+              job_id: result.id,
               billResult: billResult
               // forceUpdate: request.pre.forceUpdate
             });
@@ -291,8 +303,13 @@ var UploadController = function () {
                     }
                   });
                 }
+
+                _notification2.default.sendMailOnUpload(
+                    'New Job has been added with single file for consumer',
+                    'sagar@binbill.com;pranjal@binbill.com;', user, result.id);
                 return reply({
                   status: true,
+                  job_id: result.id,
                   message: 'Uploaded Successfully'
                   // forceUpdate: request.pre.forceUpdate
                 });
@@ -319,55 +336,64 @@ var UploadController = function () {
   }, {
     key: 'retrieveFiles',
     value: function retrieveFiles(request, reply) {
-      var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!user) {
-        reply({
-          status: false,
-            message: 'Unauthorized'
-        });
-      } else {
-        if (!request.pre.forceUpdate) {
-          modals.jobs.findById(request.params.id, {
-              include: [{
+      /* const user = shared.verifyAuthorization(request.headers);
+       if (!user) {
+          reply({
+            status: false,
+            message: 'Unauthorized',
+          });
+       } else {*/
+      if (!request.pre.forceUpdate) {
+        modals.jobs.findById(request.params.id, {
+          include: [
+            {
               model: modals.jobCopies,
               as: 'copies',
               where: {
-                  id: request.params.copyid
+                id: request.params.copyid,
               },
-                  required: true
-              }]
-          }).then(function (result) {
-            if (result) {
-                fsImpl.readFile(_guid2.default.isGuid(result.job_id) ? '' + result.copies[0].file_name : 'jobs/' + result.job_id + '/' + result.copies[0].file_name).then(function (fileResult) {
-                    reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', 'attachment; filename=' + result.bill_copy_name);
-                }).catch(function (err) {
-                    console.log({API_Logs: err});
-                reply({
-                  status: false,
-                  message: 'No Result Found',
-                  forceUpdate: request.pre.forceUpdate,
-                    err: err
-                }).code(404);
-              });
-            } else {
-              reply({
-                status: false,
-                message: 'No Result Found',
-                  forceUpdate: request.pre.forceUpdate
-              }).code(404);
-            }
-          }).catch(function (err) {
-              console.log({API_Logs: err});
-              reply({status: false, err: err, forceUpdate: request.pre.forceUpdate});
-          });
-        } else {
-          reply({
-            status: false,
-            message: 'Forbidden',
-              forceUpdate: request.pre.forceUpdate
-          });
-        }
+              required: true,
+            }],
+        }).then(function(result) {
+          if (result) {
+            fsImpl.readFile(_guid2.default.isGuid(result.job_id) ?
+                '' + result.copies[0].file_name :
+                'jobs/' + result.job_id + '/' + result.copies[0].file_name).
+                then(function(fileResult) {
+                  reply(fileResult.Body).
+                      header('Content-Type', fileResult.ContentType).
+                      header('Content-Disposition', 'attachment; filename=' +
+                          result.bill_copy_name);
+                }).
+                catch(function(err) {
+                  console.log({API_Logs: err});
+                  reply({
+                    status: false,
+                    message: 'No Result Found',
+                    forceUpdate: request.pre.forceUpdate,
+                    err: err,
+                  }).code(404);
+                });
+          } else {
+            reply({
+              status: false,
+              message: 'No Result Found',
+              forceUpdate: request.pre.forceUpdate,
+            }).code(404);
+          }
+        }).catch(function(err) {
+          console.log({API_Logs: err});
+          reply(
+              {status: false, err: err, forceUpdate: request.pre.forceUpdate});
+        });
+      } else {
+        reply({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate,
+        });
       }
+      // }
     }
   }, {
     key: 'deleteFile',
@@ -433,7 +459,10 @@ var UploadController = function () {
     key: 'retrieveCategoryImage',
     value: function retrieveCategoryImage(request, reply) {
       if (!request.pre.forceUpdate) {
-          var fsImplCategory = new _s3fs2.default(_main2.default.AWS.S3.BUCKET + '/' + _main2.default.AWS.S3.CATEGORY_IMAGE + '/' + categoryImageType[request.params.type || 0], _main2.default.AWS.ACCESS_DETAILS);
+        var fsImplCategory = new _s3fs2.default(_main2.default.AWS.S3.BUCKET +
+            '/' + _main2.default.AWS.S3.CATEGORY_IMAGE + '/' +
+            categoryImageType[request.params.type || 0],
+            _main2.default.AWS.ACCESS_DETAILS);
         modals.categories.findOne({
           where: {
             category_id: request.params.id

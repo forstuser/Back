@@ -7,9 +7,15 @@ class fcmManager {
     if (!fcmId || fcmId === '') {
       return Promise.resolve('NULL FCMID');
     }
-    return this.fcmModal.create({
-      user_id: userId,
-      fcm_id: fcmId,
+    return this.fcmModal.findCreateFind({
+      where: {
+        user_id: userId,
+        fcm_id: fcmId,
+      },
+      defaults: {
+        user_id: userId,
+        fcm_id: fcmId,
+      },
     }).then((data) => {
       return data;
     }).catch((err) => {
