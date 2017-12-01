@@ -132,6 +132,7 @@ var BrandAdaptor = function () {
         options.status_type = 1;
         var detailOptions = options;
         options = _lodash2.default.omit(options, 'category_id');
+        detailOptions.brand_id = id;
         return Promise.all([
           this.modals.brands.findById(id, {
             where: options,

@@ -315,6 +315,7 @@ var ProductAdaptor = function () {
                 this.modals.sequelize.col('"products"."category_id"')),
             'serviceCenterUrl'],
           'status_type'],
+        order: [['document_date', 'DESC']],
       }).then(function (productResult) {
         products = productResult.map(function (item) {
           return item.toJSON();

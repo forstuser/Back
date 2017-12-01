@@ -272,6 +272,7 @@ class ProductAdaptor {
           'serviceCenterUrl'],
         'status_type',
       ],
+      order: [['document_date', 'DESC']],
     }).then((productResult) => {
       products = productResult.map((item) => item.toJSON());
       inProgressProductOption = _.omit(inProgressProductOption, 'product_name');

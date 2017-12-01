@@ -80,6 +80,7 @@ class BrandAdaptor {
     options.status_type = 1;
     const detailOptions = options;
     options = _.omit(options, 'category_id');
+    detailOptions.brand_id = id;
     return Promise.all([
       this.modals.brands.findById(id, {
         where: options,

@@ -379,7 +379,7 @@ var EHomeAdaptor = function () {
             return productItem.masterCategoryId === category.id;
           }).value();
           category.productList = _lodash2.default.chain([].concat(_toConsumableArray(products), _toConsumableArray(inProgressProduct)) || []).sortBy(function (item) {
-            return (0, _moment2.default)(item.lastUpdatedAt);
+            return (0, _moment2.default)(item.updatedDate);
           }).reverse().value();
 
           return category;

@@ -408,10 +408,15 @@ var InsightAdaptor = function () {
                     filter(function(warrantyItem) {
                       return warrantyItem.masterCategoryId === category.id;
                     });
-                category.expenses = [].concat(_toConsumableArray(products),
-                    _toConsumableArray(amcs), _toConsumableArray(insurances),
-                    _toConsumableArray(repairs),
-                    _toConsumableArray(warranties)) || [];
+                category.expenses = _lodash2.default.chain([].concat(
+                    _toConsumableArray(products), _toConsumableArray(amcs),
+                    _toConsumableArray(insurances), _toConsumableArray(repairs),
+                    _toConsumableArray(warranties)) || []).
+                    sortBy(function(item) {
+                      return (0, _moment2.default)(item.updatedDate);
+                    }).
+                    reverse().
+                    value();
 
                 return category;
               });

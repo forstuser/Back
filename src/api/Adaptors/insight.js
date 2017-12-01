@@ -363,12 +363,14 @@ class InsightAdaptor {
                 filter(
                     (warrantyItem) => warrantyItem.masterCategoryId ===
                         category.id);
-            category.expenses = [
+            category.expenses = _.chain([
               ...products,
               ...amcs,
               ...insurances,
               ...repairs,
-              ...warranties] || [];
+              ...warranties] || []).sortBy((item) => {
+              return moment(item.updatedDate);
+            }).reverse().value();
 
             return category;
           });

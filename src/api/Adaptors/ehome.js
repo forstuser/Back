@@ -348,7 +348,7 @@ class EHomeAdaptor {
             category.productList = _.chain([
               ...products,
               ...inProgressProduct] || []).sortBy((item) => {
-              return moment(item.lastUpdatedAt);
+              return moment(item.updatedDate);
             }).reverse().value();
 
             return category;
