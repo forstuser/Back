@@ -64,21 +64,36 @@ var ProductAdaptor = function () {
       var _this = this;
 
       if (!options.status_type) {
-        options.status_type = {
-          $notIn: [3, 9],
-        };
+        options.status_type = [5, 11];
       }
 
-      var billOption = {
-        status_type: 5,
-      };
+      var billOption = {};
+      if (options.status_type === 8) {
+        billOption.status_type = 5;
+      }
 
       if (options.online_seller_id) {
         billOption.seller_id = options.online_seller_id;
       }
-
       options = _lodash2.default.omit(options, 'online_seller_id');
+
+      var inProgressProductOption = {};
+      _lodash2.default.assignIn(inProgressProductOption, options);
       options = _lodash2.default.omit(options, 'product_status_type');
+      if (!inProgressProductOption.product_name) {
+        inProgressProductOption = _lodash2.default.omit(options,
+            'product_name');
+      }
+      if (!inProgressProductOption.brand_id) {
+        inProgressProductOption = _lodash2.default.omit(options, 'brand_id');
+      }
+      if (!inProgressProductOption.seller_id) {
+        inProgressProductOption = _lodash2.default.omit(options, 'seller_id');
+      }
+      if (!inProgressProductOption.online_seller_id) {
+        inProgressProductOption = _lodash2.default.omit(options,
+            'online_seller_id');
+      }
 
       var products = void 0;
       return this.modals.products.findAll({
@@ -159,7 +174,7 @@ var ProductAdaptor = function () {
               }],
             required: false
           }],
-          required: true,
+          required: options.status_type === 8,
         }, {
           model: this.modals.offlineSellers,
           as: 'sellers',
@@ -289,69 +304,58 @@ var ProductAdaptor = function () {
                 this.modals.sequelize.literal('"products"."brand_id"'),
                 '&categoryid=',
                 this.modals.sequelize.col('"products"."category_id"')),
-            'serviceCenterUrl']],
+            'serviceCenterUrl'],
+          'status_type'],
       }).then(function (productResult) {
         products = productResult.map(function (item) {
           return item.toJSON();
         });
-        return Promise.all([
-          _this.retrieveProductMetadata({
-          product_id: {
-            $in: products.map(function (item) {
-              return item.id;
-            })
-          }
-          }), _this.insuranceAdaptor.retrieveInsurances({
-            product_id: {
-              $in: products.map(function(item) {
-                return item.id;
-              }),
-            },
-          }), _this.warrantyAdaptor.retrieveWarranties({
-            product_id: {
-              $in: products.map(function(item) {
-                return item.id;
-              }),
-            },
-          }), _this.amcAdaptor.retrieveAMCs({
-            product_id: {
-              $in: products.map(function(item) {
-                return item.id;
-              }),
-            },
-          }), _this.repairAdaptor.retrieveRepairs({
-            product_id: {
-              $in: products.map(function(item) {
-                return item.id;
-              }),
-            },
-          })]);
+        inProgressProductOption = _lodash2.default.omit(inProgressProductOption,
+            'product_name');
+        inProgressProductOption.status_type = 5;
+        inProgressProductOption.product_status_type = options.status_type;
+        if (productResult.length > 0) {
+          return Promise.all([
+            _this.retrieveProductMetadata({
+              product_id: {
+                $in: products.map(function(item) {
+                  return item.id;
+                }),
+              },
+            }),
+            _this.insuranceAdaptor.retrieveInsurances(inProgressProductOption),
+            _this.warrantyAdaptor.retrieveWarranties(inProgressProductOption),
+            _this.amcAdaptor.retrieveAMCs(inProgressProductOption),
+            _this.repairAdaptor.retrieveRepairs(inProgressProductOption)]);
+        }
+        return undefined;
       }).then(function(results) {
-        var metaData = results[0];
+        if (results) {
+          var metaData = results[0];
+          products = products.map(function(productItem) {
+            productItem.productMetaData = metaData.filter(function(item) {
+              return item.productId === productItem.id;
+            });
+            productItem.insuranceDetails = results[1].filter(function(item) {
+              return item.productId === productItem.id;
+            });
+            productItem.warrantyDetails = results[2].filter(function(item) {
+              return item.productId === productItem.id;
+            });
+            productItem.amcDetails = results[3].filter(function(item) {
+              return item.productId === productItem.id;
+            });
+            productItem.repairBills = results[4].filter(function(item) {
+              return item.productId === productItem.id;
+            });
 
-        products = products.map(function(productItem) {
-          productItem.productMetaData = metaData.filter(function(item) {
-            return item.productId === productItem.id;
-          });
-          productItem.insuranceDetails = results[1].filter(function(item) {
-            return item.productId === productItem.id;
-          });
-          productItem.warrantyDetails = results[2].filter(function(item) {
-            return item.productId === productItem.id;
-          });
-          productItem.amcDetails = results[3].filter(function(item) {
-            return item.productId === productItem.id;
-          });
-          productItem.repairBills = results[4].filter(function(item) {
-            return item.productId === productItem.id;
-          });
+            productItem.requiredCount = productItem.insuranceDetails.length +
+                productItem.warrantyDetails.length +
+                productItem.amcDetails.length + productItem.repairBills.length;
 
-          productItem.requiredCount = productItem.insuranceDetails.length +
-              productItem.warrantyDetails.length +
-              productItem.amcDetails.length + productItem.repairBills.length;
-
-          return productItem;
-        });
+            return productItem;
+          });
+        }
 
         return options.status_type && options.status_type === 8 ?
             products.filter(function(item) {
@@ -393,6 +397,7 @@ var ProductAdaptor = function () {
                 attributes: [],
                 required: false,
           }],
+            attributes: [],
             required: true,
           }],
         attributes: ['id'],
@@ -408,11 +413,16 @@ var ProductAdaptor = function () {
       var _this2 = this;
 
       if (!options.status_type) {
-        options.status_type = {
-          $notIn: [3, 9],
-        };
+        options.status_type = [5, 11];
       }
 
+      var billOption = {};
+      if (options.status_type === 8) {
+        billOption.status_type = 5;
+      }
+
+      var inProgressProductOption = {};
+      _lodash2.default.assignIn(inProgressProductOption, options);
       var productResult = void 0;
       options = _lodash2.default.omit(options, 'product_status_type');
       return this.modals.products.findAll({
@@ -420,11 +430,9 @@ var ProductAdaptor = function () {
         include: [
           {
             model: this.modals.bills,
-            where: {
-              status_type: 5,
-            },
+            where: billOption,
             attributes: [],
-            required: true,
+            required: options.status_type === 8,
           }],
         attributes: [
           [
@@ -441,9 +449,8 @@ var ProductAdaptor = function () {
         productResult = productItems.map(function(item) {
           return item.toJSON();
         });
-        var inProgressProductOption = {};
-        _lodash2.default.assignIn(inProgressProductOption, options);
         inProgressProductOption.status_type = 5;
+        inProgressProductOption.product_status_type = options.status_type;
         return Promise.all([
           _this2.amcAdaptor.retrieveAMCCounts(inProgressProductOption),
           _this2.insuranceAdaptor.retrieveInsuranceCount(
@@ -451,7 +458,7 @@ var ProductAdaptor = function () {
           _this2.warrantyAdaptor.retrieveWarrantyCount(inProgressProductOption),
           _this2.repairAdaptor.retrieveRepairCount(inProgressProductOption)]);
       }).then(function(results) {
-        if (options.status_type === 5) {
+        if (options.status_type !== 8) {
           return productResult;
         }
         var availableResult = [].concat(_toConsumableArray(results[0]),
@@ -459,9 +466,9 @@ var ProductAdaptor = function () {
             _toConsumableArray(results[3]));
 
         return productResult.filter(function(item) {
-          return availableResult.includes(function(availResult) {
+          return availableResult.filter(function(availResult) {
             return availResult.masterCategoryId === item.masterCategoryId;
-          });
+          }).length > 0;
         });
       });
     }
@@ -676,6 +683,7 @@ var ProductAdaptor = function () {
             'updated_at',
             'updatedDate'],
           'copies',
+          'status_type',
           [
             this.modals.sequelize.fn('CONCAT', 'products/',
                 this.modals.sequelize.literal('"products"."id"'), '/reviews'),

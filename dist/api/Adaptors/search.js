@@ -62,7 +62,28 @@ var SearchAdaptor = function () {
       var _this = this;
 
       return Promise.all([this.fetchProductDetailOnline(user, '%' + searchValue + '%'), this.fetchProductDetailOffline(user, '%' + searchValue + '%'), this.fetchProductDetailBrand(user, '%' + searchValue + '%')]).then(function (results) {
-        return Promise.all([_this.fetchProductDetails(user, '%' + searchValue + '%', [].concat(_toConsumableArray(results[0]), _toConsumableArray(results[1]), _toConsumableArray(results[2]))), _this.prepareCategoryData(user, '%' + searchValue + '%'), _this.updateRecentSearch(user, searchValue), _this.retrieveRecentSearch(user)]);
+        var onlineSellerProductId = results[0].map(function(item) {
+          return item.id;
+        });
+        var offlineSellerProductId = results[1].map(function(item) {
+          return item.id;
+        });
+        var brandProductId = results[2].map(function(item) {
+          return item.id;
+        });
+        console.log({
+          onlineSellerProductId: onlineSellerProductId,
+          offlineSellerProductId: offlineSellerProductId,
+          brandProductId: brandProductId,
+        });
+        return Promise.all([
+          _this.fetchProductDetails(user, '%' + searchValue + '%',
+              [].concat(_toConsumableArray(onlineSellerProductId),
+                  _toConsumableArray(offlineSellerProductId),
+                  _toConsumableArray(brandProductId))),
+          _this.prepareCategoryData(user, '%' + searchValue + '%'),
+          _this.updateRecentSearch(user, searchValue),
+          _this.retrieveRecentSearch(user)]);
       }).then(function (result) {
         var productIds = [];
         var productList = result[0].map(function (item) {
@@ -155,7 +176,7 @@ var SearchAdaptor = function () {
   }, {
     key: 'updateRecentSearch',
     value: function updateRecentSearch(user, searchValue) {
-      return this.modals.recentSearches.findOrCreate({
+      return this.modals.recentSearches.findCreateFind({
         where: {
           user_id: user.id,
           searchValue: searchValue

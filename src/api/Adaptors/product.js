@@ -20,21 +20,34 @@ class ProductAdaptor {
 
   retrieveProducts(options) {
     if (!options.status_type) {
-      options.status_type = {
-        $notIn: [3, 9],
-      };
+      options.status_type = [5, 11];
     }
 
-    const billOption = {
-      status_type: 5,
-    };
+    let billOption = {};
+    if (options.status_type === 8) {
+      billOption.status_type = 5;
+    }
 
     if (options.online_seller_id) {
       billOption.seller_id = options.online_seller_id;
     }
-
     options = _.omit(options, 'online_seller_id');
+
+    let inProgressProductOption = {};
+    _.assignIn(inProgressProductOption, options);
     options = _.omit(options, 'product_status_type');
+    if (!inProgressProductOption.product_name) {
+      inProgressProductOption = _.omit(options, 'product_name');
+    }
+    if (!inProgressProductOption.brand_id) {
+      inProgressProductOption = _.omit(options, 'brand_id');
+    }
+    if (!inProgressProductOption.seller_id) {
+      inProgressProductOption = _.omit(options, 'seller_id');
+    }
+    if (!inProgressProductOption.online_seller_id) {
+      inProgressProductOption = _.omit(options, 'online_seller_id');
+    }
 
     let products;
     return this.modals.products.findAll({
@@ -119,7 +132,7 @@ class ProductAdaptor {
               ],
               required: false,
             }],
-          required: true,
+          required: options.status_type === 8,
         },
         {
           model: this.modals.offlineSellers,
@@ -247,52 +260,49 @@ class ProductAdaptor {
               '&categoryid=',
               this.modals.sequelize.col('"products"."category_id"')),
           'serviceCenterUrl'],
+        'status_type',
       ],
     }).then((productResult) => {
       products = productResult.map((item) => item.toJSON());
-      return Promise.all([
-        this.retrieveProductMetadata({
-          product_id: {
-            $in: products.map((item) => item.id),
-          },
-        }), this.insuranceAdaptor.retrieveInsurances({
-          product_id: {
-            $in: products.map((item) => item.id),
-          },
-        }), this.warrantyAdaptor.retrieveWarranties({
-          product_id: {
-            $in: products.map((item) => item.id),
-          },
-        }), this.amcAdaptor.retrieveAMCs({
-          product_id: {
-            $in: products.map((item) => item.id),
-          },
-        }), this.repairAdaptor.retrieveRepairs({
-          product_id: {
-            $in: products.map((item) => item.id),
-          },
-        })]);
+      inProgressProductOption = _.omit(inProgressProductOption, 'product_name');
+      inProgressProductOption.status_type = 5;
+      inProgressProductOption.product_status_type = options.status_type;
+      if (productResult.length > 0) {
+        return Promise.all([
+          this.retrieveProductMetadata({
+            product_id: {
+              $in: products.map((item) => item.id),
+            },
+          }),
+          this.insuranceAdaptor.retrieveInsurances(inProgressProductOption),
+          this.warrantyAdaptor.retrieveWarranties(inProgressProductOption),
+          this.amcAdaptor.retrieveAMCs(inProgressProductOption),
+          this.repairAdaptor.retrieveRepairs(inProgressProductOption)]);
+      }
+      return undefined;
     }).then((results) => {
-      const metaData = results[0];
+      if (results) {
+        const metaData = results[0];
+        products = products.map((productItem) => {
+          productItem.productMetaData = metaData.filter(
+              (item) => item.productId === productItem.id);
+          productItem.insuranceDetails = results[1].filter(
+              (item) => item.productId === productItem.id);
+          productItem.warrantyDetails = results[2].filter(
+              (item) => item.productId === productItem.id);
+          productItem.amcDetails = results[3].filter(
+              (item) => item.productId === productItem.id);
+          productItem.repairBills = results[4].filter(
+              (item) => item.productId === productItem.id);
 
-      products = products.map((productItem) => {
-        productItem.productMetaData = metaData.filter(
-            (item) => item.productId === productItem.id);
-        productItem.insuranceDetails = results[1].filter(
-            (item) => item.productId === productItem.id);
-        productItem.warrantyDetails = results[2].filter(
-            (item) => item.productId === productItem.id);
-        productItem.amcDetails = results[3].filter(
-            (item) => item.productId === productItem.id);
-        productItem.repairBills = results[4].filter(
-            (item) => item.productId === productItem.id);
+          productItem.requiredCount = productItem.insuranceDetails.length +
+              productItem.warrantyDetails.length +
+              productItem.amcDetails.length +
+              productItem.repairBills.length;
 
-        productItem.requiredCount = productItem.insuranceDetails.length +
-            productItem.warrantyDetails.length + productItem.amcDetails.length +
-            productItem.repairBills.length;
-
-        return productItem;
-      });
+          return productItem;
+        });
+      }
 
       return options.status_type && options.status_type === 8 ?
           products.filter((item) => item.requiredCount > 0) :
@@ -331,6 +341,7 @@ class ProductAdaptor {
               attributes: [],
               required: false,
             }],
+          attributes: [],
           required: true,
         },
       ],
@@ -340,11 +351,16 @@ class ProductAdaptor {
 
   retrieveProductCounts(options) {
     if (!options.status_type) {
-      options.status_type = {
-        $notIn: [3, 9],
-      };
+      options.status_type = [5, 11];
     }
 
+    let billOption = {};
+    if (options.status_type === 8) {
+      billOption.status_type = 5;
+    }
+
+    const inProgressProductOption = {};
+    _.assignIn(inProgressProductOption, options);
     let productResult;
     options = _.omit(options, 'product_status_type');
     return this.modals.products.findAll({
@@ -352,11 +368,9 @@ class ProductAdaptor {
       include: [
         {
           model: this.modals.bills,
-          where: {
-            status_type: 5,
-          },
+          where: billOption,
           attributes: [],
-          required: true,
+          required: options.status_type === 8,
         }],
       attributes: [
         [this.modals.sequelize.literal('COUNT(*)'), 'productCounts'],
@@ -370,16 +384,15 @@ class ProductAdaptor {
       group: 'main_category_id',
     }).then((productItems) => {
       productResult = productItems.map((item) => item.toJSON());
-      const inProgressProductOption = {};
-      _.assignIn(inProgressProductOption, options);
       inProgressProductOption.status_type = 5;
+      inProgressProductOption.product_status_type = options.status_type;
       return Promise.all([
         this.amcAdaptor.retrieveAMCCounts(inProgressProductOption),
         this.insuranceAdaptor.retrieveInsuranceCount(inProgressProductOption),
         this.warrantyAdaptor.retrieveWarrantyCount(inProgressProductOption),
         this.repairAdaptor.retrieveRepairCount(inProgressProductOption)]);
     }).then((results) => {
-      if (options.status_type === 5) {
+      if (options.status_type !== 8) {
         return productResult;
       }
       const availableResult = [
@@ -388,9 +401,9 @@ class ProductAdaptor {
         ...results[2],
         ...results[3]];
 
-      return productResult.filter((item) => availableResult.includes(
+      return productResult.filter((item) => availableResult.filter(
           (availResult) => availResult.masterCategoryId ===
-              item.masterCategoryId));
+              item.masterCategoryId).length > 0);
 
     });
   }
@@ -594,6 +607,7 @@ class ProductAdaptor {
           'sellerId'],
         ['updated_at', 'updatedDate'],
         'copies',
+        'status_type',
         [
           this.modals.sequelize.fn('CONCAT', 'products/',
               this.modals.sequelize.literal('"products"."id"'), '/reviews'),

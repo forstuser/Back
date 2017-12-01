@@ -1,7 +1,6 @@
 'use strict';
 
 import fs from 'fs';
-import good from 'good';
 import Hapi from 'hapi';
 import hapiJWT from 'hapi-auth-jwt2';
 import cors from 'hapi-cors';
@@ -36,51 +35,8 @@ if (process.env.NODE_ENV !== 'production') {
 	server.connection(SERVER_OPTIONS);
 }
 
-const goodLoggingOption = {
-	ops: {
-		interval: 1000
-	},
-	reporters: {
-		myConsoleReporter: [{
-			module: 'good-squeeze',
-			name: 'Squeeze',
-			args: [{log: '*', response: '*'}]
-		}, {
-			module: 'good-console'
-		}, 'stdout'],
-		myFileReporter: [{
-			module: 'good-squeeze',
-			name: 'Squeeze',
-			args: [{log: '*', response: '*', error: '*'}]
-		}, {
-			module: 'good-squeeze',
-			name: 'SafeJson',
-			args: [
-				null,
-				{separator: ','}
-			]
-		}, {
-			module: 'rotating-file-stream',
-			args: [
-				'log.json',
-				{
-					size: '10M', // rotate every 10 MegaBytes written
-					interval: '1d', // rotate daily
-					compress: 'gzip', // compress rotated files
-					history: `logs-${new Date().getTime()}`,
-					path: './logs'
-				}
-			]
-		}]
-	}
-};
-
 models.sequelize.sync().then(() => {
 	server.register([
-		{
-			register: good,
-			options: goodLoggingOption
-		},
 		{
 			register: inert
 		},

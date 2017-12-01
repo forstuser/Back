@@ -175,15 +175,10 @@ var EHomeAdaptor = function () {
       };
 
       var productOptions = {
-        status_type: 5,
+        status_type: [5, 11],
         user_id: user.id,
         product_status_type: 8
       };
-
-      if (options.category_id) {
-        categoryOption.category_id = options.category_id;
-        productOptions.main_category_id = options.category_id;
-      }
 
       var inProgressProductOption = {};
       _lodash2.default.assignIn(inProgressProductOption, productOptions);
@@ -259,13 +254,17 @@ var EHomeAdaptor = function () {
         var offlineSellers = result.productList.filter(function (item) {
           return item.sellers !== null;
         }).map(function (item) {
-          return item.sellers;
+          var sellerItem = item.sellers;
+          sellerItem.name = sellerItem.sellerName;
+          return sellerItem;
         });
 
         var onlineSellers = result.productList.filter(function (item) {
           return item.bill !== null && item.bill.sellers !== null;
         }).map(function (item) {
-          return item.bill.sellers;
+          var sellerItem = item.bill.sellers;
+          sellerItem.name = sellerItem.sellerName;
+          return sellerItem;
         });
         return {
           status: true,
@@ -311,7 +310,7 @@ var EHomeAdaptor = function () {
       };
 
       var productOptions = {
-        status_type: 5,
+        status_type: [5, 11],
         user_id: user.id
       };
 
@@ -324,6 +323,10 @@ var EHomeAdaptor = function () {
         productOptions.category_id = subCategoryId;
       }
 
+      if (categoryIds && categoryIds.length > 0) {
+        productOptions.category_id = categoryIds;
+      }
+
       if (searchValue) {
         productOptions.product_name = {
           $iLike: searchValue
@@ -332,10 +335,6 @@ var EHomeAdaptor = function () {
 
       if (brandIds && brandIds.length > 0) {
         productOptions.brand_id = brandIds;
-      }
-
-      if (categoryIds && categoryIds.length > 0) {
-        productOptions.category_id = categoryIds;
       }
 
       if (offlineSellerIds && offlineSellerIds.length > 0) {
@@ -349,7 +348,6 @@ var EHomeAdaptor = function () {
       var inProgressProductOption = {};
       _lodash2.default.assignIn(inProgressProductOption, productOptions);
       inProgressProductOption.status_type = 8;
-
       console.log({
         productOptions: productOptions,
         inProgressProductOption: inProgressProductOption

@@ -150,15 +150,10 @@ class EHomeAdaptor {
     };
 
     const productOptions = {
-      status_type: 5,
+      status_type: [5, 11],
       user_id: user.id,
       product_status_type: 8,
     };
-
-    if (options.category_id) {
-      categoryOption.category_id = options.category_id;
-      productOptions.main_category_id = options.category_id;
-    }
 
     const inProgressProductOption = {};
     _.assignIn(inProgressProductOption, productOptions);
@@ -223,11 +218,19 @@ class EHomeAdaptor {
           map((item) => item.brand);
 
       const offlineSellers = result.productList.filter(
-          (item) => item.sellers !== null).map((item) => item.sellers);
+          (item) => item.sellers !== null).map((item) => {
+        const sellerItem = item.sellers;
+        sellerItem.name = sellerItem.sellerName;
+        return sellerItem;
+      });
 
       const onlineSellers = result.productList.filter(
           item => item.bill !== null && item.bill.sellers !== null).
-          map((item) => item.bill.sellers);
+          map((item) => {
+            const sellerItem = item.bill.sellers;
+            sellerItem.name = sellerItem.sellerName;
+            return sellerItem;
+          });
       return {
         status: true,
         productList /* :productList.slice((pageNo * 10) - 10, 10) */,
@@ -267,7 +270,7 @@ class EHomeAdaptor {
     };
 
     const productOptions = {
-      status_type: 5,
+      status_type: [5, 11],
       user_id: user.id,
     };
 
@@ -280,6 +283,10 @@ class EHomeAdaptor {
       productOptions.category_id = subCategoryId;
     }
 
+    if (categoryIds && categoryIds.length > 0) {
+      productOptions.category_id = categoryIds;
+    }
+
     if (searchValue) {
       productOptions.product_name = {
         $iLike: searchValue,
@@ -288,10 +295,6 @@ class EHomeAdaptor {
 
     if (brandIds && brandIds.length > 0) {
       productOptions.brand_id = brandIds;
-    }
-
-    if (categoryIds && categoryIds.length > 0) {
-      productOptions.category_id = categoryIds;
     }
 
     if (offlineSellerIds && offlineSellerIds.length > 0) {
@@ -305,7 +308,6 @@ class EHomeAdaptor {
     const inProgressProductOption = {};
     _.assignIn(inProgressProductOption, productOptions);
     inProgressProductOption.status_type = 8;
-
     console.log({
       productOptions
       , inProgressProductOption,

@@ -403,6 +403,7 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
       method: 'GET',
       path: '/jobs/{id}/files/{copyid}',
       config: {
+        auth: 'jwt',
         pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
         handler: _upload2.default.retrieveFiles
       }

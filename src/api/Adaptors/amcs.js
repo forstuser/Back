@@ -26,11 +26,18 @@ class AmcAdaptor {
 
   retrieveAMCs(options) {
     options.status_type = 5;
-    const productOptions = options.main_category_id ||
+    let productOptions = options.main_category_id ||
     options.product_status_type ? {
       main_category_id: options.main_category_id,
       status_type: options.product_status_type,
+      category_id: options.category_id,
     } : undefined;
+    productOptions = productOptions ?
+        productOptions.category_id ?
+            productOptions :
+            _.omit(productOptions, 'category_id') :
+        undefined;
+    options = _.omit(options, 'category_id');
     options = _.omit(options, 'main_category_id');
     options = _.omit(options, 'product_status_type');
 
@@ -198,11 +205,10 @@ class AmcAdaptor {
   
   retrieveAMCCounts(options) {
     options.status_type = 5;
-    const productOptions = options.main_category_id ||
-    options.product_status_type ? {
-      main_category_id: options.main_category_id,
+    const productOptions = options.product_status_type ? {
       status_type: options.product_status_type,
     } : undefined;
+    options = _.omit(options, 'category_id');
     options = _.omit(options, 'main_category_id');
     options = _.omit(options, 'product_status_type');
 

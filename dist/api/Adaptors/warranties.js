@@ -48,7 +48,14 @@ var WarrantyAdaptor = function () {
       options.product_status_type ? {
         main_category_id: options.main_category_id,
         status_type: options.product_status_type,
+        category_id: options.category_id,
       } : undefined;
+      productOptions = productOptions ?
+          productOptions.category_id ?
+              productOptions :
+              _lodash2.default.omit(productOptions, 'category_id') :
+          undefined;
+      options = _lodash2.default.omit(options, 'category_id');
       options = _lodash2.default.omit(options, 'main_category_id');
       options = _lodash2.default.omit(options, 'product_status_type');
       return this.modals.warranties.findAll({
@@ -198,11 +205,10 @@ var WarrantyAdaptor = function () {
     key: 'retrieveWarrantyCount',
     value: function retrieveWarrantyCount(options) {
       options.status_type = 5;
-      var productOptions = options.main_category_id || options.product_status_type ? {
-        main_category_id: options.main_category_id,
+      var productOptions = options.product_status_type ? {
         status_type: options.product_status_type
       } : undefined;
-
+      options = _lodash2.default.omit(options, 'category_id');
       options = _lodash2.default.omit(options, 'main_category_id');
       options = _lodash2.default.omit(options, 'product_status_type');
       return this.modals.warranties.findAll({

@@ -26,13 +26,26 @@ class SearchAdaptor {
       this.fetchProductDetailOnline(user, `%${searchValue}%`),
       this.fetchProductDetailOffline(user, `%${searchValue}%`),
       this.fetchProductDetailBrand(user, `%${searchValue}%`),
-    ]).then((results) => Promise.all([
-      this.fetchProductDetails(user, `%${searchValue}%`,
-          [...results[0], ...results[1], ...results[2]]),
-      this.prepareCategoryData(user, `%${searchValue}%`),
-      this.updateRecentSearch(user, searchValue),
-      this.retrieveRecentSearch(user),
-    ])).then((result) => {
+    ]).then((results) => {
+      const onlineSellerProductId = results[0].map(item => item.id);
+      const offlineSellerProductId = results[1].map(item => item.id);
+      const brandProductId = results[2].map(item => item.id);
+      console.log({
+        onlineSellerProductId,
+        offlineSellerProductId,
+        brandProductId,
+      });
+      return Promise.all([
+        this.fetchProductDetails(user, `%${searchValue}%`,
+            [
+              ...onlineSellerProductId,
+              ...offlineSellerProductId,
+              ...brandProductId]),
+        this.prepareCategoryData(user, `%${searchValue}%`),
+        this.updateRecentSearch(user, searchValue),
+        this.retrieveRecentSearch(user),
+      ]);
+    }).then((result) => {
       const productIds = [];
       let productList = result[0].map((item) => {
         const product = item;
@@ -120,7 +133,7 @@ class SearchAdaptor {
   }
 
   updateRecentSearch(user, searchValue) {
-    return this.modals.recentSearches.findOrCreate({
+    return this.modals.recentSearches.findCreateFind({
       where: {
         user_id: user.id,
         searchValue,

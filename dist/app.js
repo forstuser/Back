@@ -8,10 +8,6 @@ var _fs = require('fs');
 
 var _fs2 = _interopRequireDefault(_fs);
 
-var _good = require('good');
-
-var _good2 = _interopRequireDefault(_good);
-
 var _hapi = require('hapi');
 
 var _hapi2 = _interopRequireDefault(_hapi);
@@ -78,44 +74,8 @@ if (process.env.NODE_ENV !== 'production') {
 	server.connection(SERVER_OPTIONS);
 }
 
-var goodLoggingOption = {
-	ops: {
-		interval: 1000
-	},
-	reporters: {
-		myConsoleReporter: [{
-			module: 'good-squeeze',
-			name: 'Squeeze',
-			args: [{ log: '*', response: '*' }]
-		}, {
-			module: 'good-console'
-		}, 'stdout'],
-		myFileReporter: [{
-			module: 'good-squeeze',
-			name: 'Squeeze',
-			args: [{ log: '*', response: '*', error: '*' }]
-		}, {
-			module: 'good-squeeze',
-			name: 'SafeJson',
-			args: [null, { separator: ',' }]
-		}, {
-			module: 'rotating-file-stream',
-			args: ['log.json', {
-				size: '10M', // rotate every 10 MegaBytes written
-				interval: '1d', // rotate daily
-				compress: 'gzip', // compress rotated files
-				history: 'logs-' + new Date().getTime(),
-				path: './logs'
-			}]
-		}]
-	}
-};
-
 _models2.default.sequelize.sync().then(function () {
 	server.register([{
-		register: _good2.default,
-		options: goodLoggingOption
-	}, {
 		register: _inert2.default
 	}, {
 		register: _vision2.default
