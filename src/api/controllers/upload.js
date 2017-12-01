@@ -7,6 +7,7 @@ import config from '../../config/main';
 import shared from '../../helpers/shared';
 import notificationAdaptor from '../Adaptors/notification';
 import UserAdaptor from '../Adaptors/user';
+import Guid from 'guid';
 
 const fsImpl = new S3FS(config.AWS.S3.BUCKET, config.AWS.ACCESS_DETAILS);
 
@@ -340,7 +341,7 @@ class UploadController {
         }).then((result) => {
           if (result) {
             fsImpl.readFile(
-                `jobs/${result.job_id}/${result.copies[0].file_name}`).
+                Guid.isGuid(result.job_id) ? `${result.copies[0].file_name}` : `jobs/${result.job_id}/${result.copies[0].file_name}`).
                 then(fileResult => {
                   reply(fileResult.Body).
                       header('Content-Type', fileResult.ContentType).

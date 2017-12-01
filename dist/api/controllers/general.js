@@ -2,7 +2,7 @@
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
-  value: true,
+    value: true
 });
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -51,72 +51,70 @@ var GeneralController = function () {
    */
 
 
-  _createClass(GeneralController, null, [
-    {
+  _createClass(GeneralController, null, [{
       key: 'retrieveReferenceData',
       value: function retrieveReferenceData(request, reply) {
-        return categoryAdaptor.retrieveCategories(
-            {category_level: 1, category_id: [2, 3]}, true).
-            then(function(results) {
+          return categoryAdaptor.retrieveCategories({
+              category_level: 1,
+              category_id: [2, 3]
+          }, true).then(function (results) {
               return reply({
-                status: true,
-                categories: results,
-                contactType: [
-                  {
-                    id: 1,
-                    name: 'URL',
+                  status: true,
+                  categories: results,
+                  contactType: [{
+                      id: 1,
+                      name: 'URL'
                   }, {
-                    id: 2,
-                    name: 'EMAIL',
+                      id: 2,
+                      name: 'EMAIL'
                   }, {
-                    id: 3,
-                    name: 'PHONE',
-                  }],
+                      id: 3,
+                      name: 'PHONE'
+                  }]
               });
-            }).
-            catch(function(err) {
+          }).catch(function (err) {
               console.log({
-                api_err: err,
+                  api_err: err
               });
 
               return reply({
-                status: false,
+                  status: false
               });
-            });
-      },
-    }, {
+          });
+      }
+  }, {
       key: 'contactUs',
       value: function contactUs(request, reply) {
-        _notification2.default.sendLinkOnMessage(request.payload.phone);
-        contactModel.create({
-          name: request.payload.name,
-          phone: request.payload.phone,
-          email: request.payload.email,
-          message: request.payload.message,
-        }).then(function() {
-          reply({status: true}).code(201);
-        }).catch(function(err) {
-          console.log({API_Logs: err});
-          reply({status: false}).code(500);
-        });
-      },
-    }, {
+          _notification2.default.sendLinkOnMessage(request.payload.phone);
+          contactModel.create({
+              name: request.payload.name,
+              phone: request.payload.phone,
+              email: request.payload.email,
+              message: request.payload.message
+          }).then(function () {
+              reply({status: true}).code(201);
+          }).catch(function (err) {
+              console.log({API_Logs: err});
+              reply({status: false}).code(500);
+          });
+      }
+  }, {
       key: 'retrieveFAQs',
       value: function retrieveFAQs(request, reply) {
-        modals.faqs.findAll({
-          where: {
-            status_id: {
-              $ne: 3,
-            },
-          },
-        }).then(function(faq) {
-          reply({status: true, faq: faq}).code(200);
-        }).catch(function(err) {
-          console.log({API_Logs: err});
-          reply({status: false}).code(200);
-        });
-      },
-    }]);
+          modals.faqs.findAll({
+              where: {
+                  status_id: {
+                      $ne: 3
+                  }
+              }
+          }).then(function (faq) {
+              reply({status: true, faq: faq}).code(200);
+          }).catch(function (err) {
+              console.log({API_Logs: err});
+              reply({status: false}).code(200);
+          });
+      }
+  }]);
 
   return GeneralController;
 }();

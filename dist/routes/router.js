@@ -580,30 +580,22 @@ function prepareProductRoutes(productController, productRoutes) {
       path: '/products',
       config: {
         auth: 'jwt',
-        pre: [
-          {
-            method: appVersionHelper.checkAppVersion,
-            assign: 'forceUpdate',
-          }],
+          pre: [{method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}],
         handler: _product2.default.createProduct,
         description: 'Create Product.',
         validate: {
           payload: {
             product_name: [_joi2.default.string(), _joi2.default.allow(null)],
-            main_category_id: [
-              _joi2.default.number(),
-              _joi2.default.allow(null)],
+              main_category_id: [_joi2.default.number(), _joi2.default.allow(null)],
             category_id: [_joi2.default.number(), _joi2.default.allow(null)],
             brand_id: [_joi2.default.number(), _joi2.default.allow(null)],
             colour_id: [_joi2.default.number(), _joi2.default.allow(null)],
             purchase_cost: [_joi2.default.number(), _joi2.default.allow(null)],
             taxes: [_joi2.default.number(), _joi2.default.allow(null)],
             seller_id: [_joi2.default.number(), _joi2.default.allow(null)],
-            document_number: [
-              _joi2.default.string(),
-              _joi2.default.allow(null)],
+              document_number: [_joi2.default.string(), _joi2.default.allow(null)],
             document_date: [_joi2.default.string(), _joi2.default.allow(null)],
-            metadata: [_joi2.default.array(), _joi2.default.allow(null)],
+              metadata: [_joi2.default.array(), _joi2.default.allow(null)]
           }
         }
       }

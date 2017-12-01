@@ -34,6 +34,10 @@ var _user = require('../Adaptors/user');
 
 var _user2 = _interopRequireDefault(_user);
 
+var _guid = require('guid');
+
+var _guid2 = _interopRequireDefault(_guid);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -319,57 +323,48 @@ var UploadController = function () {
       if (!user) {
         reply({
           status: false,
-          message: 'Unauthorized',
+            message: 'Unauthorized'
         });
       } else {
         if (!request.pre.forceUpdate) {
           modals.jobs.findById(request.params.id, {
-            include: [
-              {
+              include: [{
               model: modals.jobCopies,
               as: 'copies',
               where: {
-                id: request.params.copyid,
+                  id: request.params.copyid
               },
-                required: true,
+                  required: true
               }]
-          }).then(function(result) {
+          }).then(function (result) {
             if (result) {
-              fsImpl.readFile('jobs/' + result.job_id + '/' +
-                  result.copies[0].file_name).then(function(fileResult) {
-                reply(fileResult.Body).
-                    header('Content-Type', fileResult.ContentType).
-                    header('Content-Disposition', 'attachment; filename=' +
-                        result.bill_copy_name);
-              }).catch(function(err) {
-                console.log({API_Logs: err});
+                fsImpl.readFile(_guid2.default.isGuid(result.job_id) ? '' + result.copies[0].file_name : 'jobs/' + result.job_id + '/' + result.copies[0].file_name).then(function (fileResult) {
+                    reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', 'attachment; filename=' + result.bill_copy_name);
+                }).catch(function (err) {
+                    console.log({API_Logs: err});
                 reply({
                   status: false,
                   message: 'No Result Found',
                   forceUpdate: request.pre.forceUpdate,
-                  err: err,
+                    err: err
                 }).code(404);
               });
             } else {
               reply({
                 status: false,
                 message: 'No Result Found',
-                forceUpdate: request.pre.forceUpdate,
+                  forceUpdate: request.pre.forceUpdate
               }).code(404);
             }
-          }).catch(function(err) {
-            console.log({API_Logs: err});
-            reply({
-              status: false,
-              err: err,
-              forceUpdate: request.pre.forceUpdate,
-            });
+          }).catch(function (err) {
+              console.log({API_Logs: err});
+              reply({status: false, err: err, forceUpdate: request.pre.forceUpdate});
           });
         } else {
           reply({
             status: false,
             message: 'Forbidden',
-            forceUpdate: request.pre.forceUpdate,
+              forceUpdate: request.pre.forceUpdate
           });
         }
       }
@@ -438,10 +433,7 @@ var UploadController = function () {
     key: 'retrieveCategoryImage',
     value: function retrieveCategoryImage(request, reply) {
       if (!request.pre.forceUpdate) {
-        var fsImplCategory = new _s3fs2.default(_main2.default.AWS.S3.BUCKET +
-            '/' + _main2.default.AWS.S3.CATEGORY_IMAGE + '/' +
-            categoryImageType[request.params.type || 0],
-            _main2.default.AWS.ACCESS_DETAILS);
+          var fsImplCategory = new _s3fs2.default(_main2.default.AWS.S3.BUCKET + '/' + _main2.default.AWS.S3.CATEGORY_IMAGE + '/' + categoryImageType[request.params.type || 0], _main2.default.AWS.ACCESS_DETAILS);
         modals.categories.findOne({
           where: {
             category_id: request.params.id
