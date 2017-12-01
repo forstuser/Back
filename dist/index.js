@@ -13,8 +13,6 @@ var _app = require('./app');
 
 var _app2 = _interopRequireDefault(_app);
 
-// var _cronRunner = require('./cronRunner');
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 // import {executeCron} from './cronRunner';
@@ -23,7 +21,7 @@ var numCPUs = (0, _os.cpus)().length;
 /**
  * Module dependencies.
  */
-var numCPUs = (0, _os.cpus)().length;
+
 
 var server = _app2.default.server;
 var options = _app2.default.options;
