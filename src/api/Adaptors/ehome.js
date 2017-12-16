@@ -218,6 +218,7 @@ class EHomeAdaptor {
           map((item) => {
             const brandItem = item.brand;
             brandItem.id = brandItem.brandId;
+            return brandItem;
           });
       brands = _.uniqBy(brands, 'brandId');
 

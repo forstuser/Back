@@ -250,6 +250,7 @@ var EHomeAdaptor = function () {
         }).map(function (item) {
           var brandItem = item.brand;
           brandItem.id = brandItem.brandId;
+          return brandItem;
         });
             brands = _lodash2.default.uniqBy(brands, 'brandId');
 
