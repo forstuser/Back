@@ -346,7 +346,7 @@ var InsightAdaptor = function () {
         var productOptions = {
           status_type: [5, 11],
           product_status_type: [5, 11],
-          user_id: user.id,
+          user_id: user.id || user.ID,
         };
 
         if (options.category_id) {
@@ -413,7 +413,8 @@ var InsightAdaptor = function () {
                     _toConsumableArray(insurances), _toConsumableArray(repairs),
                     _toConsumableArray(warranties)) || []).
                     sortBy(function(item) {
-                      return (0, _moment2.default)(item.updatedDate);
+                      return (0, _moment2.default)(item.purchaseDate ||
+                          item.updatedDate);
                     }).
                     reverse().
                     value();

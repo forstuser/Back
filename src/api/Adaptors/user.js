@@ -78,7 +78,7 @@ class UserAdaptor {
    */
   retrieveUserById(user) {
     return Promise.all([
-      this.modals.users.findById(user.id, {
+      this.modals.users.findById(user.id || user.ID, {
         attributes: [
           'id',
           [
@@ -99,7 +99,7 @@ class UserAdaptor {
         ],
       }), this.retrieveUserAddress({
         where: {
-          user_id: user.id,
+          user_id: user.id || user.ID,
         },
       })]).then((result) => {
       if (result[0]) {
@@ -113,7 +113,7 @@ class UserAdaptor {
   }
 
   retrieveUserImageNameById(user) {
-    return this.modals.users.findById(user.id, {
+    return this.modals.users.findById(user.id || user.ID, {
       attributes: [
         'image_name',
       ],
@@ -189,7 +189,7 @@ class UserAdaptor {
 
     const filterOptions = {
       where: {
-        id: user.id,
+        id: user.id || user.ID,
       },
     };
     return this.retrieveUserById(user).then((result) => {
@@ -203,7 +203,7 @@ class UserAdaptor {
           if (existingAddress) {
             return this.updateUserAddress(item, {
               where: {
-                user_id: user.id,
+                user_id: user.id || user.ID,
                 id: existingAddress.id,
               },
             });

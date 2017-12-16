@@ -158,7 +158,7 @@ var InsightAdaptor = function () {
 					model: this.modals.productBills,
 					as: 'products',
 					where: {
-						user_id: user.ID,
+            user_id: user.id || user.ID,
 						status_id: {
 							$ne: 3
 						}
@@ -207,7 +207,7 @@ var InsightAdaptor = function () {
 					model: this.modals.productBills,
 					as: 'products',
 					where: {
-						user_id: user.ID,
+            user_id: user.id || user.ID,
 						status_id: {
 							$ne: 3
 						}
@@ -256,7 +256,7 @@ var InsightAdaptor = function () {
 					model: this.modals.productBills,
 					as: 'products',
 					where: {
-						user_id: user.ID,
+            user_id: user.id || user.ID,
 						status_id: {
 							$ne: 3
 						}
@@ -305,7 +305,7 @@ var InsightAdaptor = function () {
 					model: this.modals.productBills,
 					as: 'products',
 					where: {
-						user_id: user.ID,
+            user_id: user.id || user.ID,
 						status_id: {
 							$ne: 3
 						}
@@ -519,7 +519,7 @@ var InsightAdaptor = function () {
 		key: 'fetchProductDetails',
 		value: function fetchProductDetails(user, masterCategoryId) {
 			var whereClause = {
-				user_id: user.ID,
+        user_id: user.id || user.ID,
 				status_id: {
 					$ne: 3
 				},
@@ -593,7 +593,7 @@ var InsightAdaptor = function () {
 					as: 'amcDetails',
 					attributes: [['bill_amc_id', 'id'], 'policyNo', 'premiumType', 'premiumAmount', 'effectiveDate', 'expiryDate'],
 					where: {
-						user_id: user.ID,
+            user_id: user.id || user.ID,
 						status_id: {
 							$ne: 3
 						},
@@ -607,7 +607,7 @@ var InsightAdaptor = function () {
 					as: 'insuranceDetails',
 					attributes: [['bill_insurance_id', 'id'], 'policyNo', 'premiumType', 'premiumAmount', 'effectiveDate', 'expiryDate', 'amountInsured', 'plan'],
 					where: {
-						user_id: user.ID,
+            user_id: user.id || user.ID,
 						status_id: {
 							$ne: 3
 						},
@@ -621,7 +621,7 @@ var InsightAdaptor = function () {
 					as: 'warrantyDetails',
 					attributes: [['bill_warranty_id', 'id'], 'warrantyType', 'policyNo', 'premiumType', 'premiumAmount', 'effectiveDate', 'expiryDate'],
 					where: {
-						user_id: user.ID,
+            user_id: user.id || user.ID,
 						status_id: {
 							$ne: 3
 						},

@@ -67,7 +67,7 @@ var EHomeAdaptor = function () {
     value: function prepareEHomeResult(user, request) {
       return Promise.all([this.retrieveUnProcessedBills(user), this.prepareCategoryData(user, {}), this.retrieveRecentSearch(user), this.modals.mailBox.count({
         where: {
-          user_id: user.id,
+          user_id: user.id || user.ID,
           status_id: 4
         }
       })]).then(function (result) {
@@ -137,7 +137,7 @@ var EHomeAdaptor = function () {
       return this.modals.jobs.findAll({
         attributes: [['created_at', 'uploadedDate'], ['id', 'docId']],
         where: {
-          user_id: user.id,
+          user_id: user.id || user.ID,
           user_status: {
             $notIn: [3, 5, 9]
           },
@@ -176,7 +176,7 @@ var EHomeAdaptor = function () {
 
       var productOptions = {
         status_type: [5, 11],
-        user_id: user.id,
+        user_id: user.id || user.ID,
         product_status_type: 8
       };
 
@@ -222,7 +222,7 @@ var EHomeAdaptor = function () {
     value: function retrieveRecentSearch(user) {
       return this.modals.recentSearches.findAll({
         where: {
-          user_id: user.id,
+          user_id: user.id || user.ID,
         },
         order: [['searchDate', 'DESC']],
         attributes: ['searchValue'],
@@ -316,7 +316,7 @@ var EHomeAdaptor = function () {
 
       var productOptions = {
         status_type: [5, 11],
-        user_id: user.id
+        user_id: user.id || user.ID,
       };
 
       if (masterCategoryId) {
@@ -379,7 +379,7 @@ var EHomeAdaptor = function () {
             return productItem.masterCategoryId === category.id;
           }).value();
           category.productList = _lodash2.default.chain([].concat(_toConsumableArray(products), _toConsumableArray(inProgressProduct)) || []).sortBy(function (item) {
-            return (0, _moment2.default)(item.updatedDate);
+            return (0, _moment2.default)(item.purchaseDate);
           }).reverse().value();
 
           return category;

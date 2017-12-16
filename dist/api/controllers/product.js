@@ -33,7 +33,6 @@ var ProductController = function () {
     key: 'createProduct',
     value: function createProduct(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      console.log(user);
       if (!user) {
         return reply({
           status: false,
@@ -43,14 +42,14 @@ var ProductController = function () {
       } else if (user && !request.pre.forceUpdate) {
         var productBody = {
           product_name: request.payload.product_name,
-          user_id: user.id || user.userId,
+          user_id: user.id || user.ID,
           main_category_id: request.payload.main_category_id,
           category_id: request.payload.category_id,
           brand_id: request.payload.brand_id,
           colour_id: request.payload.colour_id,
           purchase_cost: request.payload.purchase_cost,
           taxes: request.payload.taxes,
-          updated_by: user.id,
+          updated_by: user.id || user.ID,
           seller_id: request.payload.seller_id,
           status_type: 11,
           document_number: request.payload.document_number,
@@ -59,7 +58,7 @@ var ProductController = function () {
         };
         var metaDataBody = request.payload.metadata ?
             request.payload.metadata.map(function(item) {
-          item.updated_by = user.id;
+              item.updated_by = user.id || user.ID;
 
           return item;
             }) :
@@ -164,7 +163,7 @@ var ProductController = function () {
           var options = {
             main_category_id: [2, 3],
             status_type: [5, 11],
-            user_id: user.id,
+            user_id: user.id || user.ID,
           };
 
           if (brandId.length > 0) {

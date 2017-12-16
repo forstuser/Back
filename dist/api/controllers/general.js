@@ -73,7 +73,7 @@ var GeneralController = function () {
                 status_type: 5,
                 $and: {
                   status_type: 11,
-                  updated_by: user.id,
+                  updated_by: user.id || user.ID,
                 }
               }
             });

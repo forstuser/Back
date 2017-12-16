@@ -73,7 +73,8 @@ let loginOrRegisterUser = function(
     }
 
     if (request.payload.fcmId) {
-      fcmManager.insertFcmDetails(updatedUser.id, request.payload.fcmId).
+      fcmManager.insertFcmDetails(updatedUser.id || updatedUser.ID,
+          request.payload.fcmId).
           then((data) => {
             console.log(data);
           }).
@@ -137,7 +138,7 @@ class UserController {
       reply(replyObject);
     } else if (user && !request.pre.forceUpdate) {
       if (request.payload && request.payload.fcmId) {
-        fcmManager.insertFcmDetails(user.id, request.payload.fcmId).
+        fcmManager.insertFcmDetails(user.id || user.ID, request.payload.fcmId).
             then((data) => {
               console.log(data);
             }).
@@ -287,7 +288,7 @@ class UserController {
       return reply(replyObject);
     } else if (user && !request.pre.forceUpdate) {
       if (request.payload && request.payload.fcmId) {
-        fcmManager.deleteFcmDetails(user.id, request.payload.fcmId).
+        fcmManager.deleteFcmDetails(user.id || user.ID, request.payload.fcmId).
             then((rows) => {
               console.log('TOTAL FCM ID\'s DELETED: ', rows);
             });
@@ -360,7 +361,8 @@ class UserController {
       nearByAdaptor.retrieveNearBy(request.query.location ||
           user.location, request.query.geolocation ||
           `${user.latitude},${user.longitude}`,
-          request.query.professionids || '[]', reply, user.id, request);
+          request.query.professionids || '[]', reply, user.id || user.ID,
+          request);
     } else {
       reply({
         status: false,

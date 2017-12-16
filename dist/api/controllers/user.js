@@ -125,7 +125,8 @@ var loginOrRegisterUser = function loginOrRegisterUser(userWhere, userInput, tru
     }
 
     if (request.payload.fcmId) {
-      fcmManager.insertFcmDetails(updatedUser.id, request.payload.fcmId).then(function (data) {
+      fcmManager.insertFcmDetails(updatedUser.id || updatedUser.ID,
+          request.payload.fcmId).then(function(data) {
         console.log(data);
       }).catch(function (err) {
         return console.log({ API_Logs: err });
@@ -185,7 +186,8 @@ var UserController = function () {
         reply(replyObject);
       } else if (user && !request.pre.forceUpdate) {
         if (request.payload && request.payload.fcmId) {
-          fcmManager.insertFcmDetails(user.id, request.payload.fcmId).then(function (data) {
+          fcmManager.insertFcmDetails(user.id || user.ID,
+              request.payload.fcmId).then(function(data) {
             console.log(data);
           }).catch(function (err) {
             console.log({ API_Logs: err });
@@ -330,7 +332,8 @@ var UserController = function () {
         return reply(replyObject);
       } else if (user && !request.pre.forceUpdate) {
         if (request.payload && request.payload.fcmId) {
-          fcmManager.deleteFcmDetails(user.id, request.payload.fcmId).then(function (rows) {
+          fcmManager.deleteFcmDetails(user.id || user.ID,
+              request.payload.fcmId).then(function(rows) {
             console.log('TOTAL FCM ID\'s DELETED: ', rows);
           });
         }
@@ -397,7 +400,10 @@ var UserController = function () {
           forceUpdate: request.pre.forceUpdate
         });
       } else if (user && !request.pre.forceUpdate) {
-        nearByAdaptor.retrieveNearBy(request.query.location || user.location, request.query.geolocation || user.latitude + ',' + user.longitude, request.query.professionids || '[]', reply, user.id, request);
+        nearByAdaptor.retrieveNearBy(request.query.location ||
+            user.location, request.query.geolocation || user.latitude + ',' +
+            user.longitude, request.query.professionids || '[]',
+            reply, user.id || user.ID, request);
       } else {
         reply({
           status: false,

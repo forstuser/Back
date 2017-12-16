@@ -13,7 +13,6 @@ class ProductController {
 
   static createProduct(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    console.log(user);
     if (!user) {
       return reply({
         status: false,
@@ -23,14 +22,14 @@ class ProductController {
     } else if (user && !request.pre.forceUpdate) {
       const productBody = {
         product_name: request.payload.product_name,
-        user_id: user.id || user.userId,
+        user_id: user.id || user.ID,
         main_category_id: request.payload.main_category_id,
         category_id: request.payload.category_id,
         brand_id: request.payload.brand_id,
         colour_id: request.payload.colour_id,
         purchase_cost: request.payload.purchase_cost,
         taxes: request.payload.taxes,
-        updated_by: user.id,
+        updated_by: user.id || user.ID,
         seller_id: request.payload.seller_id,
         status_type: 11,
         document_number: request.payload.document_number,
@@ -39,7 +38,7 @@ class ProductController {
       };
       const metaDataBody = request.payload.metadata ?
           request.payload.metadata.map((item) => {
-            item.updated_by = user.id;
+            item.updated_by = user.id || user.ID;
 
             return item;
           }) :
@@ -141,7 +140,7 @@ class ProductController {
       const options = {
         main_category_id: [2, 3],
         status_type: [5, 11],
-        user_id: user.id,
+        user_id: user.id || user.ID,
       };
 
       if (brandId.length > 0) {

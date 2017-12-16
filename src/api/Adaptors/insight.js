@@ -303,7 +303,7 @@ class InsightAdaptor {
     const productOptions = {
       status_type: [5, 11],
       product_status_type: [5, 11],
-      user_id: user.id,
+      user_id: user.id || user.ID,
     };
 
     if (options.category_id) {
@@ -369,7 +369,7 @@ class InsightAdaptor {
               ...insurances,
               ...repairs,
               ...warranties] || []).sortBy((item) => {
-              return moment(item.updatedDate);
+              return moment(item.purchaseDate || item.updatedDate);
             }).reverse().value();
 
             return category;

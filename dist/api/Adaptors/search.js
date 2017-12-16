@@ -142,7 +142,7 @@ var SearchAdaptor = function () {
 
       var productOptions = {
         status_type: [5, 8],
-        user_id: user.id
+        user_id: user.id || user.ID,
       };
 
       var categories = void 0;
@@ -184,11 +184,11 @@ var SearchAdaptor = function () {
     value: function updateRecentSearch(user, searchValue) {
       return this.modals.recentSearches.findCreateFind({
         where: {
-          user_id: user.id,
+          user_id: user.id || user.ID,
           searchValue: searchValue
         },
         default: {
-          user_id: user.id,
+          user_id: user.id || user.ID,
           searchValue: searchValue,
           resultCount: 0,
           searchDate: (0, _moment2.default)().format('YYYY-MM-DD HH:mm:ss')
@@ -200,7 +200,7 @@ var SearchAdaptor = function () {
     value: function retrieveRecentSearch(user) {
       return this.modals.recentSearches.findAll({
         where: {
-          user_id: user.id
+          user_id: user.id || user.ID,
         },
         order: [['searchDate', 'DESC']],
         attributes: ['searchValue']
@@ -210,7 +210,7 @@ var SearchAdaptor = function () {
     key: 'fetchProductDetails',
     value: function fetchProductDetails(user, searchValue, productIds) {
       return this.productAdaptor.retrieveProducts({
-        user_id: user.id,
+        user_id: user.id || user.ID,
         status_type: [5, 8, 11],
         $or: {
           id: productIds,
@@ -227,7 +227,7 @@ var SearchAdaptor = function () {
         $and: [this.modals.sequelize.where(this.modals.sequelize.fn('lower', this.modals.sequelize.col('seller_name')), { $iLike: this.modals.sequelize.fn('lower', searchValue) })]
       }).then(function (onlineSellers) {
         return _this3.productAdaptor.retrieveProductIds({
-          user_id: user.id,
+          user_id: user.id || user.ID,
           status_type: [5, 8],
           online_seller_id: onlineSellers.map(function (item) {
             return item.id;
@@ -244,7 +244,7 @@ var SearchAdaptor = function () {
         $and: [this.modals.sequelize.where(this.modals.sequelize.fn('lower', this.modals.sequelize.col('seller_name')), { $iLike: this.modals.sequelize.fn('lower', searchValue) })]
       }).then(function (offlineSellers) {
         return _this4.productAdaptor.retrieveProductIds({
-          user_id: user.id,
+          user_id: user.id || user.ID,
           status_type: [5, 8],
           seller_id: offlineSellers.map(function (item) {
             return item.id;
@@ -261,7 +261,7 @@ var SearchAdaptor = function () {
         $and: [this.modals.sequelize.where(this.modals.sequelize.fn('lower', this.modals.sequelize.col('brand_name')), { $iLike: this.modals.sequelize.fn('lower', searchValue) })]
       }).then(function (brands) {
         return _this5.productAdaptor.retrieveProductIds({
-          user_id: user.id,
+          user_id: user.id || user.ID,
           status_type: [5, 8],
           brand_id: brands.map(function (item) {
             return item.id;

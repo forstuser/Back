@@ -85,27 +85,28 @@ var UserAdaptor = function () {
   }, {
     key: 'retrieveUserById',
     value: function retrieveUserById(user) {
-      return Promise.all([this.modals.users.findById(user.id, {
-        attributes: [
-          'id',
-          [
-            'full_name',
-            'name'],
-          'mobile_no',
-          'email',
-          'email_verified',
-          'email_secret',
-          'location',
-          'latitude',
-          'longitude',
-          'image_name',
-          [
-            this.modals.sequelize.fn('CONCAT', '/consumer/',
-                this.modals.sequelize.col('id'), '/images'),
-            'imageUrl']],
+      return Promise.all([
+        this.modals.users.findById(user.id || user.ID, {
+          attributes: [
+            'id',
+            [
+              'full_name',
+              'name'],
+            'mobile_no',
+            'email',
+            'email_verified',
+            'email_secret',
+            'location',
+            'latitude',
+            'longitude',
+            'image_name',
+            [
+              this.modals.sequelize.fn('CONCAT', '/consumer/',
+                  this.modals.sequelize.col('id'), '/images'),
+              'imageUrl']],
       }), this.retrieveUserAddress({
         where: {
-          user_id: user.id
+          user_id: user.id || user.ID,
         }
       })]).then(function (result) {
         if (result[0]) {
@@ -122,7 +123,7 @@ var UserAdaptor = function () {
   }, {
     key: 'retrieveUserImageNameById',
     value: function retrieveUserImageNameById(user) {
-      return this.modals.users.findById(user.id, {
+      return this.modals.users.findById(user.id || user.ID, {
         attributes: ['image_name']
       }).then(function (result) {
         return result.toJSON();
@@ -206,7 +207,7 @@ var UserAdaptor = function () {
 
       var filterOptions = {
         where: {
-          id: user.id
+          id: user.id || user.ID,
         }
       };
       return this.retrieveUserById(user).then(function (result) {
@@ -220,7 +221,7 @@ var UserAdaptor = function () {
             if (existingAddress) {
               return _this.updateUserAddress(item, {
                 where: {
-                  user_id: user.id,
+                  user_id: user.id || user.ID,
                   id: existingAddress.id
                 }
               });

@@ -104,7 +104,7 @@ var ProductAdaptor = function () {
           attributes: [
             [
               'brand_id',
-              'brandId'],
+              'id'],
             [
               'brand_name',
               'name'],
@@ -264,7 +264,7 @@ var ProductAdaptor = function () {
             'masterCategoryId'],
           [
             'brand_id',
-            'brandId'],
+            'id'],
           [
             'colour_id',
             'colorId'],
@@ -397,7 +397,7 @@ var ProductAdaptor = function () {
             attributes: [
               [
                 'brand_id',
-                'brandId'],
+                'id'],
               [
                 'brand_name',
                 'name'],
@@ -563,7 +563,7 @@ var ProductAdaptor = function () {
             'masterCategoryId'],
           [
             'brand_id',
-            'brandId'],
+            'id'],
           [
             'colour_id',
             'colorId'],
@@ -927,7 +927,7 @@ var ProductAdaptor = function () {
             'masterCategoryId'],
           [
             'brand_id',
-            'brandId'],
+            'id'],
           [
             'colour_id',
             'colorId'],
@@ -990,7 +990,7 @@ var ProductAdaptor = function () {
           return Promise.all([
             _this4.retrieveProductMetadata({
               product_id: products.id,
-            }), _this4.brandAdaptor.retrieveBrandById(products.brandId, {
+            }), _this4.brandAdaptor.retrieveBrandById(products.id, {
               category_id: products.categoryId,
             }), _this4.insuranceAdaptor.retrieveInsurances({
               product_id: products.id,
@@ -1221,12 +1221,12 @@ var ProductAdaptor = function () {
       var payload = request.payload;
       return this.modals.brandReviews.findCreateFind({
         where: {
-          user_id: user.id,
+          user_id: user.id || user.ID,
           brand_id: brandId,
           status_id: 1,
         },
         defaults: {
-          user_id: user.id,
+          user_id: user.id || user.ID,
           brand_id: brandId,
           status_id: 1,
           review_ratings: payload.ratings,
@@ -1262,24 +1262,24 @@ var ProductAdaptor = function () {
     value: function updateSellerReview(user, sellerId, isOnlineSeller, request) {
       var payload = request.payload;
       var whereClause = isOnlineSeller ? {
-        user_id: user.id,
+        user_id: user.id || user.ID,
         seller_id: sellerId,
         status_id: 1,
       } : {
-        user_id: user.id,
+        user_id: user.id || user.ID,
         offline_seller_id: sellerId,
         status_id: 1,
       };
 
       var defaultClause = isOnlineSeller ? {
-        user_id: user.id,
+        user_id: user.id || user.ID,
         seller_id: sellerId,
         status_id: 1,
         review_ratings: payload.ratings,
         review_feedback: payload.feedback,
         review_comments: payload.comments
       } : {
-        user_id: user.id,
+        user_id: user.id || user.ID,
         offline_seller_id: sellerId,
         status_id: 1,
         review_ratings: payload.ratings,
@@ -1319,7 +1319,7 @@ var ProductAdaptor = function () {
     value: function updateProductReview(user, productId, request) {
       var payload = request.payload;
       var whereClause = {
-        user_id: user.id,
+        user_id: user.id || user.ID,
         bill_product_id: productId,
         status_id: 1,
       };
@@ -1327,7 +1327,7 @@ var ProductAdaptor = function () {
       return this.modals.productReviews.findCreateFind({
         where: whereClause,
         defaults: {
-          user_id: user.id,
+          user_id: user.id || user.ID,
           bill_product_id: productId,
           status_id: 1,
           review_ratings: payload.ratings,
@@ -1587,7 +1587,7 @@ var ProductAdaptor = function () {
       var productId = request.params.id;
       return this.retrieveProductById(productId, {
         where: {
-          user_id: user.id,
+          user_id: user.id || user.ID,
           status_type: [5, 8, 11],
         }
       }).then(function (result) {

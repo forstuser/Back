@@ -145,7 +145,7 @@ class InsightAdaptor {
 					model: this.modals.productBills,
 					as: 'products',
 					where: {
-						user_id: user.ID,
+            user_id: user.id || user.ID,
 						status_id: {
 							$ne: 3
 						}
@@ -200,7 +200,7 @@ class InsightAdaptor {
 					model: this.modals.productBills,
 					as: 'products',
 					where: {
-						user_id: user.ID,
+            user_id: user.id || user.ID,
 						status_id: {
 							$ne: 3
 						}
@@ -254,7 +254,7 @@ class InsightAdaptor {
 					model: this.modals.productBills,
 					as: 'products',
 					where: {
-						user_id: user.ID,
+            user_id: user.id || user.ID,
 						status_id: {
 							$ne: 3
 						}
@@ -308,7 +308,7 @@ class InsightAdaptor {
 					model: this.modals.productBills,
 					as: 'products',
 					where: {
-						user_id: user.ID,
+            user_id: user.id || user.ID,
 						status_id: {
 							$ne: 3
 						}
@@ -514,7 +514,7 @@ class InsightAdaptor {
 
 	fetchProductDetails(user, masterCategoryId) {
 		const whereClause = {
-			user_id: user.ID,
+      user_id: user.id || user.ID,
 			status_id: {
 				$ne: 3
 			},
@@ -598,7 +598,7 @@ class InsightAdaptor {
 					as: 'amcDetails',
 					attributes: [['bill_amc_id', 'id'], 'policyNo', 'premiumType', 'premiumAmount', 'effectiveDate', 'expiryDate'],
 					where: {
-						user_id: user.ID,
+            user_id: user.id || user.ID,
 						status_id: {
 							$ne: 3
 						},
@@ -613,7 +613,7 @@ class InsightAdaptor {
 					as: 'insuranceDetails',
 					attributes: [['bill_insurance_id', 'id'], 'policyNo', 'premiumType', 'premiumAmount', 'effectiveDate', 'expiryDate', 'amountInsured', 'plan'],
 					where: {
-						user_id: user.ID,
+            user_id: user.id || user.ID,
 						status_id: {
 							$ne: 3
 						},
@@ -628,7 +628,7 @@ class InsightAdaptor {
 					as: 'warrantyDetails',
 					attributes: [['bill_warranty_id', 'id'], 'warrantyType', 'policyNo', 'premiumType', 'premiumAmount', 'effectiveDate', 'expiryDate'],
 					where: {
-						user_id: user.ID,
+            user_id: user.id || user.ID,
 						status_id: {
 							$ne: 3
 						},

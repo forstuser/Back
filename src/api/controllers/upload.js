@@ -79,7 +79,7 @@ class UploadController {
           image_name: fileName,
         }, {
           where: {
-            id: user.id,
+            id: user.id || user.ID,
           },
         });
       }).then(() => {
@@ -167,9 +167,9 @@ class UploadController {
     return modals.jobs.create({
       job_id: `${Math.random().toString(36).substr(2, 9)}${user.id.toString(
           36)}`,
-      user_id: user.id,
-      updated_by: user.id,
-      uploaded_by: user.id,
+      user_id: user.id || user.ID,
+      updated_by: user.id || user.ID,
+      uploaded_by: user.id || user.ID,
       user_status: 8,
       admin_status: 4,
       comments: request.query ?
@@ -210,7 +210,7 @@ class UploadController {
                   ? fileTypes[index].toString()
                   : fileTypeDataArray[index].ext,
               status_type: 6,
-              updated_by: user.id,
+              updated_by: user.id || user.ID,
             };
             return modals.jobCopies.create(ret);
           });
@@ -222,7 +222,7 @@ class UploadController {
           if (user.email) {
             modals.jobs.count({
               where: {
-                uploaded_by: user.id,
+                uploaded_by: user.id || user.ID,
               },
             }).then((billCount) => {
               if (billCount === 1) {
@@ -282,7 +282,7 @@ class UploadController {
                   ? fileType.toString()
                   : fileTypeData.ext,
               status_type: 6,
-              updated_by: user.id,
+              updated_by: user.id || user.ID,
             };
 
             console.log(fileResult);
@@ -290,7 +290,7 @@ class UploadController {
               if (user.email) {
                 modals.jobs.count({
                   where: {
-                    uploaded_by: user.id,
+                    uploaded_by: user.id || user.ID,
                   },
                 }).then((billCount) => {
                   if (billCount === 1) {
@@ -416,7 +416,7 @@ class UploadController {
           modals.jobs.findById(request.params.id),
           modals.jobCopies.update({
             status_type: 3,
-            updated_by: user.id,
+            updated_by: user.id || user.ID,
           }, {
             where: {
               id: request.params.copyid,
@@ -440,13 +440,13 @@ class UploadController {
             admin_status: 4,
             ce_status: null,
             qe_status: null,
-            updated_by: user.id,
+            updated_by: user.id || user.ID,
           } : {
             user_status: 3,
             admin_status: 3,
             ce_status: 3,
             qe_status: 3,
-            updated_by: user.id,
+            updated_by: user.id || user.ID,
           };
           result[0].updateAttributes(attributes);
           reply({

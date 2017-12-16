@@ -187,20 +187,20 @@ class NotificationAdaptor {
   filterUpcomingService(user) {
     return Promise.all([
       this.productAdaptor.retrieveProducts({
-        user_id: user.id,
+        user_id: user.id || user.ID,
         status_type: 5,
         main_category_id: [6, 8],
       }),
       this.amcAdaptor.retrieveAMCs({
-        user_id: user.id,
+        user_id: user.id || user.ID,
         status_type: 5,
       }),
       this.insuranceAdaptor.retrieveInsurances({
-        user_id: user.id,
+        user_id: user.id || user.ID,
         status_type: 5,
       }),
       this.warrantyAdaptor.retrieveWarranties({
-        user_id: user.id,
+        user_id: user.id || user.ID,
         status_type: 5,
       })]).then((result) => {
       let products = result[0].map((item) => {
@@ -298,7 +298,7 @@ class NotificationAdaptor {
   prepareNotificationData(user) {
     return this.modals.mailBox.findAll({
       where: {
-        user_id: user.id,
+        user_id: user.id || user.ID,
         status_id: {
           $notIn: [3, 9],
         },
@@ -356,7 +356,7 @@ class NotificationAdaptor {
       status_id: 10,
     }, {
       where: {
-        user_id: user.id,
+        user_id: user.id || user.ID,
         status_id: {
           $notIn: [3, 9],
         },

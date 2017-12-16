@@ -29,7 +29,7 @@ class EHomeAdaptor {
       this.retrieveRecentSearch(user),
       this.modals.mailBox.count({
         where: {
-          user_id: user.id,
+          user_id: user.id || user.ID,
           status_id: 4,
         },
       }),
@@ -100,7 +100,7 @@ class EHomeAdaptor {
     return this.modals.jobs.findAll({
       attributes: [['created_at', 'uploadedDate'], ['id', 'docId']],
       where: {
-        user_id: user.id,
+        user_id: user.id || user.ID,
         user_status: {
           $notIn: [3, 5, 9],
         },
@@ -151,7 +151,7 @@ class EHomeAdaptor {
 
     const productOptions = {
       status_type: [5, 11],
-      user_id: user.id,
+      user_id: user.id || user.ID,
       product_status_type: 8,
     };
 
@@ -193,7 +193,7 @@ class EHomeAdaptor {
   retrieveRecentSearch(user) {
     return this.modals.recentSearches.findAll({
       where: {
-        user_id: user.id,
+        user_id: user.id || user.ID,
       },
       order: [['searchDate', 'DESC']],
       attributes: ['searchValue'],
@@ -276,7 +276,7 @@ class EHomeAdaptor {
 
     const productOptions = {
       status_type: [5, 11],
-      user_id: user.id,
+      user_id: user.id || user.ID,
     };
 
     if (masterCategoryId) {
@@ -348,7 +348,7 @@ class EHomeAdaptor {
             category.productList = _.chain([
               ...products,
               ...inProgressProduct] || []).sortBy((item) => {
-              return moment(item.updatedDate);
+              return moment(item.purchaseDate);
             }).reverse().value();
 
             return category;

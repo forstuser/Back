@@ -25,10 +25,11 @@ class DashboardAdaptor {
       this.filterUpcomingService(user),
       this.prepareInsightData(user),
       this.retrieveRecentSearch(user),
-      this.modals.mailBox.count({where: {user_id: user.id, status_id: 4}}),
+      this.modals.mailBox.count(
+          {where: {user_id: user.id || user.ID, status_id: 4}}),
       this.modals.products.count({
         where: {
-          user_id: user.id,
+          user_id: user.id || user.ID,
           status_type: [5, 8],
           main_category_id: {
             $notIn: [9, 10],
@@ -45,13 +46,13 @@ class DashboardAdaptor {
       }),
       this.modals.products.count({
         where: {
-          user_id: user.id,
+          user_id: user.id || user.ID,
           status_type: [5, 8, 11],
           main_category_id: [2, 3],
         },
       }),
       this.productAdaptor.retrieveUsersLastProduct({
-        user_id: user.id,
+        user_id: user.id || user.ID,
         status_type: [5, 8, 11],
       }),
     ]).then((result) => {
@@ -164,7 +165,7 @@ class DashboardAdaptor {
       return Promise.all([
         this.modals.products.count({
           where: {
-            user_id: user.id,
+            user_id: user.id || user.ID,
             status_type: [5, 8, 11],
             main_category_id: {
               $notIn: [9, 10],
@@ -180,7 +181,7 @@ class DashboardAdaptor {
             }],
         }), this.modals.products.count({
           where: {
-            user_id: user.id,
+            user_id: user.id || user.ID,
             status_type: [5, 8, 11],
             main_category_id: [2, 3],
           },
@@ -196,7 +197,7 @@ class DashboardAdaptor {
             showDashboard: !!(billCounts && billCounts > 0),
             isExistingUser: !isNewUser,
             authorization: token,
-            userId: user.id,
+            userId: user.id || user.ID,
             forceUpdate: request.pre.forceUpdate,
           };
         }
@@ -209,7 +210,7 @@ class DashboardAdaptor {
           billCounts: 0,
           showDashboard: false,
           isExistingUser: !isNewUser,
-          userId: user.id,
+          userId: user.id || user.ID,
           forceUpdate: request.pre.forceUpdate,
         };
       }).catch((err) => {
@@ -234,7 +235,7 @@ class DashboardAdaptor {
       billCounts: 0,
       showDashboard: false,
       isExistingUser: false,
-      userId: user.id,
+      userId: user.id || user.ID,
       forceUpdate: request.pre.forceUpdate,
     };
   }
@@ -242,20 +243,20 @@ class DashboardAdaptor {
   filterUpcomingService(user) {
     return Promise.all([
       this.productAdaptor.retrieveProducts({
-        user_id: user.id,
+        user_id: user.id || user.ID,
         status_type: 5,
         main_category_id: [6, 8],
       }),
       this.amcAdaptor.retrieveAMCs({
-        user_id: user.id,
+        user_id: user.id || user.ID,
         status_type: 5,
       }),
       this.insuranceAdaptor.retrieveInsurances({
-        user_id: user.id,
+        user_id: user.id || user.ID,
         status_type: 5,
       }),
       this.warrantyAdaptor.retrieveWarranties({
-        user_id: user.id,
+        user_id: user.id || user.ID,
         status_type: 5,
       })]).then((result) => {
       let products = result[0].map((item) => {
@@ -340,7 +341,7 @@ class DashboardAdaptor {
     return Promise.all([
       this.productAdaptor.retrieveProducts({
         status_type: [5, 11],
-        user_id: user.id,
+        user_id: user.id || user.ID,
         document_date: {
           $lte: moment.utc(),
           $gte: moment.utc().subtract(6, 'd').startOf('d'),
@@ -348,7 +349,7 @@ class DashboardAdaptor {
       }),
       this.amcAdaptor.retrieveAMCs({
         status_type: [5, 11],
-        user_id: user.id,
+        user_id: user.id || user.ID,
         document_date: {
           $lte: moment.utc(),
           $gte: moment.utc().subtract(6, 'd').startOf('d'),
@@ -356,7 +357,7 @@ class DashboardAdaptor {
       }),
       this.insuranceAdaptor.retrieveInsurances({
         status_type: [5, 11],
-        user_id: user.id,
+        user_id: user.id || user.ID,
         document_date: {
           $lte: moment.utc(),
           $gte: moment.utc().subtract(6, 'd').startOf('d'),
@@ -364,7 +365,7 @@ class DashboardAdaptor {
       }),
       this.repairAdaptor.retrieveRepairs({
         status_type: [5, 11],
-        user_id: user.id,
+        user_id: user.id || user.ID,
         document_date: {
           $lte: moment.utc(),
           $gte: moment.utc().subtract(6, 'd').startOf('d'),
@@ -372,7 +373,7 @@ class DashboardAdaptor {
       }),
       this.warrantyAdaptor.retrieveWarranties({
         status_type: [5, 11],
-        user_id: user.id,
+        user_id: user.id || user.ID,
         document_date: {
           $lte: moment.utc(),
           $gte: moment.utc().subtract(6, 'd').startOf('d'),
@@ -389,7 +390,7 @@ class DashboardAdaptor {
   retrieveRecentSearch(user) {
     return this.modals.recentSearches.findAll({
       where: {
-        user_id: user.id,
+        user_id: user.id || user.ID,
       },
       order: [['searchDate', 'DESC']],
       attributes: ['searchValue'],

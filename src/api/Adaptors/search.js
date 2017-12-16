@@ -102,7 +102,7 @@ class SearchAdaptor {
 
     const productOptions = {
       status_type: [5, 8],
-      user_id: user.id,
+      user_id: user.id || user.ID,
     };
 
     let categories;
@@ -138,11 +138,11 @@ class SearchAdaptor {
   updateRecentSearch(user, searchValue) {
     return this.modals.recentSearches.findCreateFind({
       where: {
-        user_id: user.id,
+        user_id: user.id || user.ID,
         searchValue,
       },
       default: {
-        user_id: user.id,
+        user_id: user.id || user.ID,
         searchValue,
         resultCount: 0,
         searchDate: moment().format('YYYY-MM-DD HH:mm:ss'),
@@ -153,7 +153,7 @@ class SearchAdaptor {
   retrieveRecentSearch(user) {
     return this.modals.recentSearches.findAll({
       where: {
-        user_id: user.id,
+        user_id: user.id || user.ID,
       },
       order: [['searchDate', 'DESC']],
       attributes: ['searchValue'],
@@ -162,7 +162,7 @@ class SearchAdaptor {
 
   fetchProductDetails(user, searchValue, productIds) {
     return this.productAdaptor.retrieveProducts({
-      user_id: user.id,
+      user_id: user.id || user.ID,
       status_type: [5, 8, 11],
       $or: {
         id: productIds,
@@ -183,7 +183,7 @@ class SearchAdaptor {
             {$iLike: this.modals.sequelize.fn('lower', searchValue)})],
     }).then((onlineSellers) => {
       return this.productAdaptor.retrieveProductIds({
-        user_id: user.id,
+        user_id: user.id || user.ID,
         status_type: [5, 8],
         online_seller_id: onlineSellers.map(item => item.id),
       });
@@ -198,7 +198,7 @@ class SearchAdaptor {
             {$iLike: this.modals.sequelize.fn('lower', searchValue)})],
     }).then((offlineSellers) => {
       return this.productAdaptor.retrieveProductIds({
-        user_id: user.id,
+        user_id: user.id || user.ID,
         status_type: [5, 8],
         seller_id: offlineSellers.map(item => item.id),
       });
@@ -213,7 +213,7 @@ class SearchAdaptor {
             {$iLike: this.modals.sequelize.fn('lower', searchValue)})],
     }).then((brands) => {
       return this.productAdaptor.retrieveProductIds({
-        user_id: user.id,
+        user_id: user.id || user.ID,
         status_type: [5, 8],
         brand_id: brands.map(item => item.id),
       });

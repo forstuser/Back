@@ -59,7 +59,7 @@ class ProductAdaptor {
           attributes: [
             [
               'brand_id',
-              'brandId'],
+              'id'],
             [
               'brand_name',
               'name'],
@@ -224,7 +224,7 @@ class ProductAdaptor {
           'masterCategoryId'],
         [
           'brand_id',
-          'brandId'],
+          'id'],
         [
           'colour_id',
           'colorId'],
@@ -340,7 +340,7 @@ class ProductAdaptor {
           attributes: [
             [
               'brand_id',
-              'brandId'],
+              'id'],
             [
               'brand_name',
               'name'],
@@ -500,7 +500,7 @@ class ProductAdaptor {
           'masterCategoryId'],
         [
           'brand_id',
-          'brandId'],
+          'id'],
         [
           'colour_id',
           'colorId'],
@@ -853,7 +853,7 @@ class ProductAdaptor {
           'masterCategoryId'],
         [
           'brand_id',
-          'brandId'],
+          'id'],
         [
           'colour_id',
           'colorId'],
@@ -911,7 +911,7 @@ class ProductAdaptor {
         return Promise.all([
           this.retrieveProductMetadata({
             product_id: products.id,
-          }), this.brandAdaptor.retrieveBrandById(products.brandId, {
+          }), this.brandAdaptor.retrieveBrandById(products.id, {
             category_id: products.categoryId,
           }), this.insuranceAdaptor.retrieveInsurances({
             product_id: products.id,
@@ -1123,12 +1123,12 @@ class ProductAdaptor {
     const payload = request.payload;
     return this.modals.brandReviews.findCreateFind({
       where: {
-        user_id: user.id,
+        user_id: user.id || user.ID,
         brand_id: brandId,
         status_id: 1,
       },
       defaults: {
-        user_id: user.id,
+        user_id: user.id || user.ID,
         brand_id: brandId,
         status_id: 1,
         review_ratings: payload.ratings,
@@ -1163,24 +1163,24 @@ class ProductAdaptor {
   updateSellerReview(user, sellerId, isOnlineSeller, request) {
     const payload = request.payload;
     const whereClause = isOnlineSeller ? {
-      user_id: user.id,
+      user_id: user.id || user.ID,
       seller_id: sellerId,
       status_id: 1,
     } : {
-      user_id: user.id,
+      user_id: user.id || user.ID,
       offline_seller_id: sellerId,
       status_id: 1,
     };
 
     const defaultClause = isOnlineSeller ? {
-      user_id: user.id,
+      user_id: user.id || user.ID,
       seller_id: sellerId,
       status_id: 1,
       review_ratings: payload.ratings,
       review_feedback: payload.feedback,
       review_comments: payload.comments,
     } : {
-      user_id: user.id,
+      user_id: user.id || user.ID,
       offline_seller_id: sellerId,
       status_id: 1,
       review_ratings: payload.ratings,
@@ -1219,7 +1219,7 @@ class ProductAdaptor {
   updateProductReview(user, productId, request) {
     const payload = request.payload;
     const whereClause = {
-      user_id: user.id,
+      user_id: user.id || user.ID,
       bill_product_id: productId,
       status_id: 1,
     };
@@ -1227,7 +1227,7 @@ class ProductAdaptor {
     return this.modals.productReviews.findCreateFind({
       where: whereClause,
       defaults: {
-        user_id: user.id,
+        user_id: user.id || user.ID,
         bill_product_id: productId,
         status_id: 1,
         review_ratings: payload.ratings,
@@ -1450,7 +1450,7 @@ class ProductAdaptor {
     const productId = request.params.id;
     return this.retrieveProductById(productId, {
       where: {
-        user_id: user.id,
+        user_id: user.id || user.ID,
         status_type: [5, 8, 11],
       },
     }).then((result) => {

@@ -66,10 +66,11 @@ var DashboardAdaptor = function () {
           this.filterUpcomingService(user),
           this.prepareInsightData(user),
           this.retrieveRecentSearch(user),
-          this.modals.mailBox.count({where: {user_id: user.id, status_id: 4}}),
+          this.modals.mailBox.count(
+              {where: {user_id: user.id || user.ID, status_id: 4}}),
           this.modals.products.count({
             where: {
-              user_id: user.id,
+              user_id: user.id || user.ID,
               status_type: [5, 8],
               main_category_id: {
                 $notIn: [9, 10],
@@ -86,13 +87,13 @@ var DashboardAdaptor = function () {
           }),
           this.modals.products.count({
             where: {
-              user_id: user.id,
+              user_id: user.id || user.ID,
               status_type: [5, 8, 11],
               main_category_id: [2, 3],
             },
           }),
           this.productAdaptor.retrieveUsersLastProduct({
-            user_id: user.id,
+            user_id: user.id || user.ID,
             status_type: [5, 8, 11],
           })]).then(function(result) {
           // console.log(require('util').inspect(result[0], false, null));
@@ -208,7 +209,7 @@ var DashboardAdaptor = function () {
           return Promise.all([
             this.modals.products.count({
               where: {
-                user_id: user.id,
+                user_id: user.id || user.ID,
                 status_type: [5, 8, 11],
                 main_category_id: {
                   $notIn: [9, 10],
@@ -224,7 +225,7 @@ var DashboardAdaptor = function () {
                 }],
             }), this.modals.products.count({
               where: {
-                user_id: user.id,
+                user_id: user.id || user.ID,
                 status_type: [5, 8, 11],
                 main_category_id: [2, 3],
               },
@@ -240,7 +241,7 @@ var DashboardAdaptor = function () {
                 showDashboard: !!(billCounts && billCounts > 0),
                 isExistingUser: !isNewUser,
                 authorization: token,
-                userId: user.id,
+                userId: user.id || user.ID,
                 forceUpdate: request.pre.forceUpdate,
               };
             }
@@ -253,7 +254,7 @@ var DashboardAdaptor = function () {
               billCounts: 0,
               showDashboard: false,
               isExistingUser: !isNewUser,
-              userId: user.id,
+              userId: user.id || user.ID,
               forceUpdate: request.pre.forceUpdate,
             };
           }).catch(function(err) {
@@ -278,7 +279,7 @@ var DashboardAdaptor = function () {
           billCounts: 0,
           showDashboard: false,
           isExistingUser: false,
-          userId: user.id,
+          userId: user.id || user.ID,
           forceUpdate: request.pre.forceUpdate,
         };
       }
@@ -287,17 +288,17 @@ var DashboardAdaptor = function () {
       value: function filterUpcomingService(user) {
         return Promise.all([
           this.productAdaptor.retrieveProducts({
-            user_id: user.id,
+            user_id: user.id || user.ID,
             status_type: 5,
             main_category_id: [6, 8],
           }), this.amcAdaptor.retrieveAMCs({
-            user_id: user.id,
+            user_id: user.id || user.ID,
             status_type: 5,
           }), this.insuranceAdaptor.retrieveInsurances({
-            user_id: user.id,
+            user_id: user.id || user.ID,
             status_type: 5,
           }), this.warrantyAdaptor.retrieveWarranties({
-            user_id: user.id,
+            user_id: user.id || user.ID,
             status_type: 5,
           })]).then(function(result) {
           var products = result[0].map(function(item) {
@@ -391,35 +392,35 @@ var DashboardAdaptor = function () {
         return Promise.all([
           this.productAdaptor.retrieveProducts({
             status_type: [5, 11],
-            user_id: user.id,
+            user_id: user.id || user.ID,
             document_date: {
               $lte: _moment2.default.utc(),
               $gte: _moment2.default.utc().subtract(6, 'd').startOf('d'),
             },
           }), this.amcAdaptor.retrieveAMCs({
             status_type: [5, 11],
-            user_id: user.id,
+            user_id: user.id || user.ID,
             document_date: {
               $lte: _moment2.default.utc(),
               $gte: _moment2.default.utc().subtract(6, 'd').startOf('d'),
             },
           }), this.insuranceAdaptor.retrieveInsurances({
             status_type: [5, 11],
-            user_id: user.id,
+            user_id: user.id || user.ID,
             document_date: {
               $lte: _moment2.default.utc(),
               $gte: _moment2.default.utc().subtract(6, 'd').startOf('d'),
             },
           }), this.repairAdaptor.retrieveRepairs({
             status_type: [5, 11],
-            user_id: user.id,
+            user_id: user.id || user.ID,
             document_date: {
               $lte: _moment2.default.utc(),
               $gte: _moment2.default.utc().subtract(6, 'd').startOf('d'),
             },
           }), this.warrantyAdaptor.retrieveWarranties({
             status_type: [5, 11],
-            user_id: user.id,
+            user_id: user.id || user.ID,
             document_date: {
               $lte: _moment2.default.utc(),
               $gte: _moment2.default.utc().subtract(6, 'd').startOf('d'),
@@ -435,7 +436,7 @@ var DashboardAdaptor = function () {
       value: function retrieveRecentSearch(user) {
         return this.modals.recentSearches.findAll({
           where: {
-            user_id: user.id,
+            user_id: user.id || user.ID,
           },
           order: [['searchDate', 'DESC']],
           attributes: ['searchValue'],
