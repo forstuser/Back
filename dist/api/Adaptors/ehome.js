@@ -277,7 +277,11 @@ var EHomeAdaptor = function () {
           status: true,
           productList: productList /* :productList.slice((pageNo * 10) - 10, 10) */
           , filterData: {
-            categories: result.subCategories,
+            categories: result.subCategories.filter(function(item) {
+              return productList.find(function(productItem) {
+                return productItem.categoryId === item.id;
+              });
+            }),
             brands: brands.filter(function (item) {
               return item.id !== 0;
             }),

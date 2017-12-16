@@ -69,7 +69,8 @@ class UploadController {
 
       const name = fileData.hapi.filename;
       const fileType = name.split('.')[name.split('.').length - 1];
-      const fileName = `active-${user.id}-${new Date().getTime()}.${fileType}`;
+      const fileName = `active-${user.id ||
+      user.ID}-${new Date().getTime()}.${fileType}`;
       // const file = fs.createReadStream();
       return fsImpl.writeFile(fileName, fileData._data,
           {ContentType: mime.lookup(fileName)}).then((fileResult) => {
@@ -163,9 +164,11 @@ class UploadController {
 
   static uploadFileGeneric(user, fileData, reply, request) {
     console.log(
-        `${Math.random().toString(36).substr(2, 9)}${user.id.toString(36)}`);
+        `${Math.random().toString(36).substr(2, 9)}${(user.id ||
+            user.ID).toString(36)}`);
     return modals.jobs.create({
-      job_id: `${Math.random().toString(36).substr(2, 9)}${user.id.toString(
+      job_id: `${Math.random().toString(36).substr(2, 9)}${(user.id ||
+          user.ID).toString(
           36)}`,
       user_id: user.id || user.ID,
       updated_by: user.id || user.ID,
@@ -188,7 +191,7 @@ class UploadController {
           const name = elem.hapi.filename;
           const fileType = (/[.]/.exec(name)) ? /[^.]+$/.exec(name) : undefined;
           const fileTypeData = getTypeFromBuffer(elem._data);
-          const fileName = `${user.id}-${index +
+          const fileName = `${user.id || user.ID}-${index +
           1}.${(fileType)
               ? fileType.toString()
               : fileTypeData.ext}`;
@@ -215,11 +218,13 @@ class UploadController {
             return modals.jobCopies.create(ret);
           });
 
+          promisedQuery.push(modals.users.findById(user.id || user.ID));
           // if (promisedQuery.length === Object.keys(fileData).length) {
           return Promise.all(promisedQuery);
           // }
         }).then(billResult => {
-          if (user.email) {
+          console.log(billResult);
+          if (billResult[billResult.length - 1].email) {
             modals.jobs.count({
               where: {
                 uploaded_by: user.id || user.ID,
@@ -228,11 +233,13 @@ class UploadController {
               if (billCount === 1) {
                 notificationAdaptor.sendMailOnDifferentSteps(
                     'It’s good to see you start building your eHome',
-                    user.email, user, 2);
+                    billResult[billResult.length - 1].email,
+                    billResult[billResult.length - 1], 2);
               } else {
                 notificationAdaptor.sendMailOnDifferentSteps(
                     'We have received your bill, soon it will be available in your eHome',
-                    user.email, user, 3);
+                    billResult[billResult.length - 1].email,
+                    billResult[billResult.length - 1], 3);
               }
             });
           }
@@ -244,7 +251,7 @@ class UploadController {
             status: true,
             message: 'Uploaded Successfully',
             job_id: result.id,
-            billResult,
+            billResult: billResult.splice(billResult.length - 1, 1),
             // forceUpdate: request.pre.forceUpdate
           });
         }).catch((err) => {
@@ -269,7 +276,7 @@ class UploadController {
           result.updateAttributes({
             file_types: [fileType],
           });
-          const fileName = `${user.id}-1.${(fileType)
+          const fileName = `${user.id || user.ID}-1.${(fileType)
               ? fileType.toString()
               : fileTypeData.ext}`;
 
@@ -287,20 +294,22 @@ class UploadController {
 
             console.log(fileResult);
             modals.jobCopies.create(ret).then(() => {
-              if (user.email) {
+              return modals.users.findById(user.id || user.ID);
+            }).then((userResult) => {
+              if (userResult.email) {
                 modals.jobs.count({
                   where: {
-                    uploaded_by: user.id || user.ID,
+                    uploaded_by: userResult.id || userResult.ID,
                   },
                 }).then((billCount) => {
                   if (billCount === 1) {
                     notificationAdaptor.sendMailOnDifferentSteps(
                         'It’s good to see you start building your eHome',
-                        user.email, user, 2);
+                        userResult.email, userResult, 2);
                   } else {
                     notificationAdaptor.sendMailOnDifferentSteps(
                         'We have received your bill, soon it will be available in your eHome',
-                        user.email, user, 3);
+                        userResult.email, userResult, 3);
                   }
                 });
               }

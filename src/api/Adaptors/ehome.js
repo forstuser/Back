@@ -244,7 +244,8 @@ class EHomeAdaptor {
         status: true,
         productList /* :productList.slice((pageNo * 10) - 10, 10) */,
         filterData: {
-          categories: result.subCategories,
+          categories: result.subCategories.filter((item) => productList.find(
+              (productItem) => productItem.categoryId === item.id)),
           brands: brands.filter(item => item.id !== 0),
           sellers: {
             offlineSellers: offlineSellers.filter(item => item.id !== 0),

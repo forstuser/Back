@@ -71,7 +71,7 @@ class AuthenticationController {
 		return (req, res, next) => {
 			const user = shared.verifyAuthorization(req.headers);
 
-			User.findById(user.id).then((foundUser) => {
+      User.findById(user.id || user.ID).then((foundUser) => {
 				// If user is found, check role.
 				if (getRole(foundUser.accessLevel) >= getRole(requiredRole)) {
 					return next();

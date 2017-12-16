@@ -96,7 +96,7 @@ var AuthenticationController = function () {
 			return function (req, res, next) {
 				var user = _shared2.default.verifyAuthorization(req.headers);
 
-				User.findById(user.id).then(function (foundUser) {
+        User.findById(user.id || user.ID).then(function(foundUser) {
 					// If user is found, check role.
 					if (getRole(foundUser.accessLevel) >= getRole(requiredRole)) {
 						return next();

@@ -21,17 +21,18 @@ const emptyObject = {};
 const emptyString = '';
 const authorizationParamConst = 'authorization';
 const readJSONFile = (fileName, lang) => new Promise((resolve, reject) => {
-	const completeFilePath = path.resolve(__dirname, `${filePath}${fileName}${jsonFileType}`);
-	readFile(completeFilePath, utfFormatting, (err, data) => {
-		if (err) {
-			reject(err);
-		}
-		try {
-			resolve(JSON.parse(data));
-		} catch (ex) {
-			reject(ex);
-		}
-	});
+  const completeFilePath = path.resolve(__dirname,
+      `${filePath}${fileName}${jsonFileType}`);
+  readFile(completeFilePath, utfFormatting, (err, data) => {
+    if (err) {
+      reject(err);
+    }
+    try {
+      resolve(JSON.parse(data));
+    } catch (ex) {
+      reject(ex);
+    }
+  });
 });
 
 /**
@@ -39,18 +40,18 @@ const readJSONFile = (fileName, lang) => new Promise((resolve, reject) => {
  * @param {string} authorization The authorization Token in header
  * @returns {object} The Empty String
  */
-function validateAccessToken (authorization) {
-	if (!authorization) {
-		return null;
-	}
-	// noinspection Eslint
-	const data = config.JWT_SECRET;
-	const auth = authorization.split(spaceString)[1];
-	try {
-		return verify(auth, data, {algorithms: ['HS512']});
-	} catch (e) {
-		return null;
-	}
+function validateAccessToken(authorization) {
+  if (!authorization) {
+    return null;
+  }
+  // noinspection Eslint
+  const data = config.JWT_SECRET;
+  const auth = authorization.split(spaceString)[1];
+  try {
+    return verify(auth, data, {algorithms: ['HS512']});
+  } catch (e) {
+    return null;
+  }
 }
 
 /**
@@ -58,12 +59,12 @@ function validateAccessToken (authorization) {
  * @param {string} authorization The authorization Token in header
  * @returns {string} The Empty String
  */
-function isAccessTokenBasic (authorization) {
-	if (authorization.indexOf(basicStringConst) >= 0) {
-		return emptyObject;
-	}
+function isAccessTokenBasic(authorization) {
+  if (authorization.indexOf(basicStringConst) >= 0) {
+    return emptyObject;
+  }
 
-	return validateAccessToken(authorization);
+  return validateAccessToken(authorization);
 }
 
 /**
@@ -73,8 +74,8 @@ function isAccessTokenBasic (authorization) {
  * @param defaultValue
  * @returns {*}
  */
-function verifyParameters (rootNode, currentField, defaultValue) {
-	return _.get(rootNode, currentField, defaultValue);
+function verifyParameters(rootNode, currentField, defaultValue) {
+  return _.get(rootNode, currentField, defaultValue);
 }
 
 /**
@@ -82,61 +83,62 @@ function verifyParameters (rootNode, currentField, defaultValue) {
  * @param headers
  * @returns {string}
  */
-function verifyAuthorization (headers) {
-	return isAccessTokenBasic(verifyParameters(headers, authorizationParamConst, emptyString));
+function verifyAuthorization(headers) {
+  return isAccessTokenBasic(
+      verifyParameters(headers, authorizationParamConst, emptyString));
 }
 
-function sumProps (arrayItem, prop) {
-	let total = 0;
-	for (let i = 0; i < arrayItem.length; i += 1) {
-		total += parseFloat(arrayItem[i][prop] || 0);
-	}
-	return total.toFixed(2);
+function sumProps(arrayItem, prop) {
+  let total = 0;
+  for (let i = 0; i < arrayItem.length; i += 1) {
+    total += parseFloat(arrayItem[i][prop] || 0);
+  }
+  return total.toFixed(2);
 }
 
-const getAllDays = function () {
-	let s = moment(moment.utc().subtract(6, 'd')).utc().startOf('d');
-	const e = moment.utc();
-	const a = [];
-	while (s.valueOf() < e.valueOf()) {
-		a.push({
-			value: 0,
-			purchaseDate: moment(s).utc().startOf('d')
-		});
-		s = moment(s).utc().add(1, 'd').startOf('d');
-	}
+const getAllDays = function() {
+  let s = moment(moment.utc().subtract(6, 'd')).utc().startOf('d');
+  const e = moment.utc();
+  const a = [];
+  while (s.valueOf() < e.valueOf()) {
+    a.push({
+      value: 0,
+      purchaseDate: moment(s).utc().startOf('d'),
+    });
+    s = moment(s).utc().add(1, 'd').startOf('d');
+  }
 
-	return a;
+  return a;
 };
 
-function retrieveDaysInsight (distinctInsight) {
-	const allDaysInWeek = getAllDays();
-	distinctInsight.map((item) => {
-		const currentDate = moment(item.purchaseDate).startOf('day');
-		for (let i = 0; i < allDaysInWeek.length; i += 1) {
-			const weekData = allDaysInWeek[i];
-			if (weekData.purchaseDate.valueOf() === currentDate.valueOf()) {
+function retrieveDaysInsight(distinctInsight) {
+  const allDaysInWeek = getAllDays();
+  distinctInsight.map((item) => {
+    const currentDate = moment(item.purchaseDate).startOf('day');
+    for (let i = 0; i < allDaysInWeek.length; i += 1) {
+      const weekData = allDaysInWeek[i];
+      if (weekData.purchaseDate.valueOf() === currentDate.valueOf()) {
         weekData.value = !(item.value) ? 0 : item.value;
-				weekData.purchaseDate = moment(weekData.purchaseDate);
-				break;
-			}
-		}
+        weekData.purchaseDate = moment(weekData.purchaseDate);
+        break;
+      }
+    }
 
-		return item;
-	});
+    return item;
+  });
 
-	return allDaysInWeek.map(weekItem => ({
-		value: weekItem.value,
-		purchaseDate: moment(weekItem.purchaseDate),
-		purchaseDay: moment(weekItem.purchaseDate).format('ddd')
-	}));
+  return allDaysInWeek.map(weekItem => ({
+    value: weekItem.value,
+    purchaseDate: moment(weekItem.purchaseDate),
+    purchaseDay: moment(weekItem.purchaseDate).format('ddd'),
+  }));
 }
 
 export function retrieveMailTemplate(user, templateType) {
   switch (templateType) {
     case 0: {
       return `<!DOCTYPE html><html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office"><head> <meta charset="utf-8"> <meta name="viewport" content="width=device-width"> <meta http-equiv="X-UA-Compatible" content="IE=edge"> <meta name="x-apple-disable-message-reformatting"> <title>BinBill</title> <style>@font-face{font-family: 'Quicksand'; font-style: normal; font-weight: 400; src: local('Quicksand Regular'), local('Quicksand-Regular'), url(https://fonts.gstatic.com/s/quicksand/v6/NUrn2XQrRfyGZp5MknntaRJtnKITppOI_IvcXXDNrsc.woff2) format('woff2'); unicode-range: U+0102-0103, U+1EA0-1EF9, U+20AB;}@font-face{font-family: 'Quicksand'; font-style: normal; font-weight: 400; src: local('Quicksand Regular'), local('Quicksand-Regular'), url(https://fonts.gstatic.com/s/quicksand/v6/s2PXW4WrV3VLrOUpHiqsfRJtnKITppOI_IvcXXDNrsc.woff2) format('woff2'); unicode-range: U+0100-024F, U+1E00-1EFF, U+20A0-20AB, U+20AD-20CF, U+2C60-2C7F, U+A720-A7FF;}/* latin */ @font-face{font-family: 'Quicksand'; font-style: normal; font-weight: 400; src: local('Quicksand Regular'), local('Quicksand-Regular'), url(https://fonts.gstatic.com/s/quicksand/v6/sKd0EMYPAh5PYCRKSryvW1tXRa8TVwTICgirnJhmVJw.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215;}@font-face{font-family: 'Quicksand'; font-style: normal; font-weight: 500; src: local('Quicksand Medium'), local('Quicksand-Medium'), url(https://fonts.gstatic.com/s/quicksand/v6/FRGja7LlrG1Mypm0hCq0Dv8zf_FOSsgRmwsS7Aa9k2w.woff2) format('woff2'); unicode-range: U+0102-0103, U+1EA0-1EF9, U+20AB;}@font-face{font-family: 'Quicksand'; font-style: normal; font-weight: 500; src: local('Quicksand Medium'), local('Quicksand-Medium'), url(https://fonts.gstatic.com/s/quicksand/v6/FRGja7LlrG1Mypm0hCq0Dj0LW-43aMEzIO6XUTLjad8.woff2) format('woff2'); unicode-range: U+0100-024F, U+1E00-1EFF, U+20A0-20AB, U+20AD-20CF, U+2C60-2C7F, U+A720-A7FF;}@font-face{font-family: 'Quicksand'; font-style: normal; font-weight: 500; src: local('Quicksand Medium'), local('Quicksand-Medium'), url(https://fonts.gstatic.com/s/quicksand/v6/FRGja7LlrG1Mypm0hCq0Dugdm0LZdjqr5-oayXSOefg.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215;}@font-face{font-family: 'Quicksand'; font-style: normal; font-weight: 700; src: local('Quicksand Bold'), local('Quicksand-Bold'), url(https://fonts.gstatic.com/s/quicksand/v6/32nyIRHyCu6iqEka_hbKsv8zf_FOSsgRmwsS7Aa9k2w.woff2) format('woff2'); unicode-range: U+0102-0103, U+1EA0-1EF9, U+20AB;}@font-face{font-family: 'Quicksand'; font-style: normal; font-weight: 700; src: local('Quicksand Bold'), local('Quicksand-Bold'), url(https://fonts.gstatic.com/s/quicksand/v6/32nyIRHyCu6iqEka_hbKsj0LW-43aMEzIO6XUTLjad8.woff2) format('woff2'); unicode-range: U+0100-024F, U+1E00-1EFF, U+20A0-20AB, U+20AD-20CF, U+2C60-2C7F, U+A720-A7FF;}@font-face{font-family: 'Quicksand'; font-style: normal; font-weight: 700; src: local('Quicksand Bold'), local('Quicksand-Bold'), url(https://fonts.gstatic.com/s/quicksand/v6/32nyIRHyCu6iqEka_hbKsugdm0LZdjqr5-oayXSOefg.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215;}html, body{margin: 0 auto !important; padding: 0 !important; height: 100% !important; /* width: 100% !important; */}*{-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;}div[style*="margin: 16px 0"]{margin: 0 !important;}table, td{mso-table-lspace: 0pt !important; mso-table-rspace: 0pt !important;}table{border-spacing: 0 !important; border-collapse: collapse !important; table-layout: fixed !important; margin: 0 auto !important;}table table table{table-layout: auto;}img{-ms-interpolation-mode: bicubic;}*[x-apple-data-detectors], /* iOS */ .x-gmail-data-detectors, /* Gmail */ .x-gmail-data-detectors *, .aBn{border-bottom: 0 !important; cursor: default !important; color: inherit !important; /* text-decoration: none !important; */ font-size: inherit !important; font-family: inherit !important; font-weight: inherit !important; line-height: inherit !important;}/* What it does: Prevents Gmail from displaying an download button on large, non-linked images. */ .a6S{display: none !important; opacity: 0.01 !important;}/* If the above doesn't work, add a .g-img class to any image in question. */ img.g-img+div{display: none !important;}/* What it does: Prevents underlining the button text in Windows 10 */ .button-link{text-decoration: none !important;}/* What it does: Removes right gutter in Gmail iOS app: https://github.com/TedGoas/Cerberus/issues/89 */ /* Create one of these media queries for each additional viewport size you'd like to fix */ /* Thanks to Eric Lepetit (@ericlepetitsf) for help troubleshooting */ @media only screen and (min-width: 320px) and (max-width: 600px){/* iPhone 6 and 6+ */ .email-container{max-width: 600px; margin: auto;}}@media only screen and (min-width: 600px) and (max-width: 1400px){/* iPhone 6 and 6+ */ .email-container{width:100%;}.main-class{font-size:16px;}}/* @media only screen and (min-device-width: 375px) and (max-device-width: 413px){/* iPhone 6 and 6+ */ /* .email-container{min-width: 375px !important;}*/ </style> <style>/* What it does: Hover styles for buttons */ .button-td, .button-a{transition: all 100ms ease-in;}.button-td:hover, .button-a:hover{background: #555555 !important; border-color: #555555 !important;}/* Media Queries */ @media screen and (max-width: 600px){/* What it does: Adjust typography on small screens to improve readability */ .email-container p{line-height: 14px !important;}.main-class{font-size:12px;}}</style></head><body width="100%" bgcolor="#222222" style="margin: 0; mso-line-height-rule: exactly;"> <center style="width: 100%; background: #cecece; text-align: left;"> <div class="email-container" style="border:1px solid black;"> <table role="presentation" cellspacing="0" cellpadding="0" style="background:white;" border="0" align="center" width="100%" background-color="white"> <tr> <td style="padding:0px 15px;" class="text-left"> <div style="padding:20px 0px;"> <img src="https://s3.ap-south-1.amazonaws.com/binbill-static/logo-color.png" width="150" height="auto" alt="alt_text" border="0" style="height: auto; font-family: sans-serif; font-size: 15px; line-height: 20px; color: #555555;"> </div></td><td style="text-align:right; position:absolute;right:0px;"> <img src="https://s3.ap-south-1.amazonaws.com/binbill-static/email-header.png" width="150" height="auto" alt="alt_text" border="0" style="height: auto; font-family: sans-serif; font-size: 15px; line-height: 20px; color: #555555;"> </td></tr></table> <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" width="100%"> <tr> <td bgcolor="#ffffff"> <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"> <tr> <td style="padding: 20px; font-family: sans-serif; font-size: 15px; line-height: 20px; color: #555555;"> <hr class="title-border" style="-webkit-box-sizing: content-box;-moz-box-sizing: content-box;box-sizing: content-box;height: 0;margin:15px 15px 0px 0px;border: 0;border-top: 5px solid #ff732e;overflow: visible;width: 8.33333333%"> <p style="margin: 0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0;color: #ff732e;font-family: 'Quicksand', sans-serif; font-weight: 500;font-size:22px; text-align: left; color: #ff732e;padding-top:10px; "> Welcome to BinBill! </p><p class="main-class" style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0; font-family: 'Quicksand', sans-serif;font-weight: 500;letter-spacing: 0.3px;text-align: left;color: #3b3b3b; padding: 10px 0;"> Hi ${user.name ||
-      'User'},</p><p class="main-class" style="-webkit-margin-before: 0; -webkit-margin-after: 0;margin:0 auto;"> We are happy to have you here, and see that you have started building your eHome. But it’s important to secure your eHome and verify the builder’s identity. </p><p class="main-class" style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0;padding: 10px 0px;"> For security purpose, please verify your email address by clicking below:- </p><a href="https://www.binbill.com/upload?verificationId=${user.email_secret}" style="text-decoration:none;"><p style="width: 200px;max-height: 60px;border-radius: 100px;background-image: linear-gradient(256deg, #ff622e, #ff822e);box-shadow: 0 5px 15px 0 rgba(180, 75, 35, 0.35);color: #ffffff;padding: 15px 20px;margin-bottom: 0;font-size: 12px;font-weight: 700;line-height: 1.25;text-align: left;font-family: 'Quicksand', sans-serif;letter-spacing: 1px;text-decoration: none;"> Verify Email <img src="https://s3.ap-south-1.amazonaws.com/binbill-static/white.png" alt="arrow" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;border: 0;vertical-align: middle;page-break-inside: avoid;border-style: none;float: right;font-size: 1.25rem;max-width: 100%!important;margin-top: -4px;"> </p></a> </td></tr></table> </td></tr></table> <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" width="100%" style="background:linear-gradient(256deg, #56BDFE, rgb(51, 137, 233)); font-family: sans-serif; color: white; line-height:18px;"> <tr> <td class="main-class" style="padding: 25px 10px;width: 100%; font-family: sans-serif; line-height:18px; text-align: center; color: white;" class="x-gmail-data-detectors"> <p style="margin:0 auto;-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;orphans: 3;widows: 3;-webkit-margin-before: 0; -webkit-margin-after: 0;font-family: 'Quicksand', sans-serif;line-height: 1.44;letter-spacing: 0.3px;text-align: center;color: white"> We look forward to serving you better. For any queries, you can either visit our <a href="https://www.binbill.com/faq" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;background-color: transparent;color: white;text-decoration: none;-webkit-text-decoration-skip: objects;-ms-touch-action: manipulation;touch-action: manipulation;font-family: 'Quicksand', sans-serif;font-size: 1.125rem;line-height: 1.44;letter-spacing: 0.3px;text-align: center;"> <u class="main-class" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;">FAQs</u> </a> section, or write to us at <a href="mailto:support@binbill.com" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;background-color: transparent;color:white;text-decoration: none;-webkit-text-decoration-skip: objects;-ms-touch-action: manipulation;touch-action: manipulation;font-family: 'Quicksand', sans-serif;line-height: 1.44;letter-spacing: 0.3px;text-align: center;"> <u style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;">support@binbill.com</u> </a> </p><p style="margin:0 auto;-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;orphans: 3;widows: 3;-webkit-margin-before: 0; -webkit-margin-after: 0;font-family: 'Quicksand', sans-serif;line-height: 1.44;letter-spacing: 0.3px;text-align: center;color:white; padding: 20px 0px 0px 0px;"> Where there is a bill, there is BinBill! <br><u style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;"> <b style="-webkit-box-sizing: border-box;font-weight:bold;-moz-box-sizing: border-box;box-sizing: inherit;"> The BinBill Team </b> </u> </p></td></tr><tr style="border-top:1px solid white"> <td> <p class="center" style="margin:0 auto;-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;orphans: 3;widows: 3;-webkit-margin-before: 0; -webkit-margin-after: 0;font-family: 'Quicksand', sans-serif;font-size: 1.125rem;line-height: 1.44;letter-spacing: 0.3px;text-align: center;color: rgba(255, 255, 255, 1);padding-top: 15px;padding-bottom: 15px;"> <a href="https://www.facebook.com/binbill.ehome/?ref=br_rs" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;background-color: transparent;color: rgba(255, 255, 255, 1);text-decoration: none;-webkit-text-decoration-skip: objects;-ms-touch-action: manipulation;touch-action: manipulation;font-family: 'Quicksand', sans-serif;font-size: 1.125rem;line-height: 1.44;letter-spacing: 0.3px;text-align: center;padding-left: 30px;"> <img src="https://s3.ap-south-1.amazonaws.com/binbill-static/facebook%403x.png" alt="fb-binbill" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;vertical-align: middle;page-break-inside: avoid;border: 0 none;max-width: 100%!important; width: 23px;"> </a> <a href="https://twitter.com/binbill_ehome" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;background-color: transparent;color: rgba(255, 255, 255, 1);text-decoration: none;-webkit-text-decoration-skip: objects;-ms-touch-action: manipulation;touch-action: manipulation;font-family: 'Quicksand', sans-serif;font-size: 1.125rem;line-height: 1.44;letter-spacing: 0.3px;text-align: center;padding-left: 30px;"> <img src="https://s3.ap-south-1.amazonaws.com/binbill-static/twitter-logo.png" alt="tweet-binbill" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;vertical-align: middle;page-break-inside: avoid;border: 0 none;max-width: 100%!important; width: 23px;"> </a> <a href="https://www.instagram.com/binbill_ehome/" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;background-color: transparent;color: rgba(255, 255, 255, 1);text-decoration: none;-webkit-text-decoration-skip: objects;-ms-touch-action: manipulation;touch-action: manipulation;font-family: 'Quicksand', sans-serif;font-size: 1.125rem;line-height: 1.44;letter-spacing: 0.3px;text-align: center;padding-left: 30px;"> <img src="https://s3.ap-south-1.amazonaws.com/binbill-static/instagram-logo.png" alt="insta-binbill" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;vertical-align: middle;page-break-inside: avoid;border: 0 none;max-width: 100%!important; width: 23px;"> </a> <a href="https://www.linkedin.com/company/13320885/" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;background-color: transparent;color: rgba(255, 255, 255, 1);text-decoration: none;-webkit-text-decoration-skip: objects;-ms-touch-action: manipulation;touch-action: manipulation;font-family: 'Quicksand', sans-serif;font-size: 1.125rem;line-height: 1.44;letter-spacing: 0.3px;text-align: center;padding-left: 30px;"> <img src="https://s3.ap-south-1.amazonaws.com/binbill-static/linkedin-logo.png" alt="in-binbill" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;vertical-align: middle;page-break-inside: avoid;border: 0 none;max-width: 100%!important; width: 23px;"> </a></p></td></tr></div></center></body></html>`;
+      'User'},</p><p class="main-class" style="-webkit-margin-before: 0; -webkit-margin-after: 0;margin:0 auto;"> We are happy to have you here, and see that you have started building your eHome. But it’s important to secure your eHome and verify the builder’s identity. </p><p class="main-class" style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0;padding: 10px 0px;"> For security purpose, please verify your email address by clicking below:- </p><a href="https://www.binbill.com/dashboard?verificationId=${user.email_secret}" style="text-decoration:none;"><p style="width: 200px;max-height: 60px;border-radius: 100px;background-image: linear-gradient(256deg, #ff622e, #ff822e);box-shadow: 0 5px 15px 0 rgba(180, 75, 35, 0.35);color: #ffffff;padding: 15px 20px;margin-bottom: 0;font-size: 12px;font-weight: 700;line-height: 1.25;text-align: left;font-family: 'Quicksand', sans-serif;letter-spacing: 1px;text-decoration: none;"> Verify Email <img src="https://s3.ap-south-1.amazonaws.com/binbill-static/white.png" alt="arrow" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;border: 0;vertical-align: middle;page-break-inside: avoid;border-style: none;float: right;font-size: 1.25rem;max-width: 100%!important;margin-top: -4px;"> </p></a> </td></tr></table> </td></tr></table> <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" width="100%" style="background:linear-gradient(256deg, #56BDFE, rgb(51, 137, 233)); font-family: sans-serif; color: white; line-height:18px;"> <tr> <td class="main-class" style="padding: 25px 10px;width: 100%; font-family: sans-serif; line-height:18px; text-align: center; color: white;" class="x-gmail-data-detectors"> <p style="margin:0 auto;-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;orphans: 3;widows: 3;-webkit-margin-before: 0; -webkit-margin-after: 0;font-family: 'Quicksand', sans-serif;line-height: 1.44;letter-spacing: 0.3px;text-align: center;color: white"> We look forward to serving you better. For any queries, you can either visit our <a href="https://www.binbill.com/faq" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;background-color: transparent;color: white;text-decoration: none;-webkit-text-decoration-skip: objects;-ms-touch-action: manipulation;touch-action: manipulation;font-family: 'Quicksand', sans-serif;font-size: 1.125rem;line-height: 1.44;letter-spacing: 0.3px;text-align: center;"> <u class="main-class" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;">FAQs</u> </a> section, or write to us at <a href="mailto:support@binbill.com" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;background-color: transparent;color:white;text-decoration: none;-webkit-text-decoration-skip: objects;-ms-touch-action: manipulation;touch-action: manipulation;font-family: 'Quicksand', sans-serif;line-height: 1.44;letter-spacing: 0.3px;text-align: center;"> <u style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;">support@binbill.com</u> </a> </p><p style="margin:0 auto;-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;orphans: 3;widows: 3;-webkit-margin-before: 0; -webkit-margin-after: 0;font-family: 'Quicksand', sans-serif;line-height: 1.44;letter-spacing: 0.3px;text-align: center;color:white; padding: 20px 0px 0px 0px;"> Where there is a bill, there is BinBill! <br><u style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;"> <b style="-webkit-box-sizing: border-box;font-weight:bold;-moz-box-sizing: border-box;box-sizing: inherit;"> The BinBill Team </b> </u> </p></td></tr><tr style="border-top:1px solid white"> <td> <p class="center" style="margin:0 auto;-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;orphans: 3;widows: 3;-webkit-margin-before: 0; -webkit-margin-after: 0;font-family: 'Quicksand', sans-serif;font-size: 1.125rem;line-height: 1.44;letter-spacing: 0.3px;text-align: center;color: rgba(255, 255, 255, 1);padding-top: 15px;padding-bottom: 15px;"> <a href="https://www.facebook.com/binbill.ehome/?ref=br_rs" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;background-color: transparent;color: rgba(255, 255, 255, 1);text-decoration: none;-webkit-text-decoration-skip: objects;-ms-touch-action: manipulation;touch-action: manipulation;font-family: 'Quicksand', sans-serif;font-size: 1.125rem;line-height: 1.44;letter-spacing: 0.3px;text-align: center;padding-left: 30px;"> <img src="https://s3.ap-south-1.amazonaws.com/binbill-static/facebook%403x.png" alt="fb-binbill" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;vertical-align: middle;page-break-inside: avoid;border: 0 none;max-width: 100%!important; width: 23px;"> </a> <a href="https://twitter.com/binbill_ehome" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;background-color: transparent;color: rgba(255, 255, 255, 1);text-decoration: none;-webkit-text-decoration-skip: objects;-ms-touch-action: manipulation;touch-action: manipulation;font-family: 'Quicksand', sans-serif;font-size: 1.125rem;line-height: 1.44;letter-spacing: 0.3px;text-align: center;padding-left: 30px;"> <img src="https://s3.ap-south-1.amazonaws.com/binbill-static/twitter-logo.png" alt="tweet-binbill" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;vertical-align: middle;page-break-inside: avoid;border: 0 none;max-width: 100%!important; width: 23px;"> </a> <a href="https://www.instagram.com/binbill_ehome/" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;background-color: transparent;color: rgba(255, 255, 255, 1);text-decoration: none;-webkit-text-decoration-skip: objects;-ms-touch-action: manipulation;touch-action: manipulation;font-family: 'Quicksand', sans-serif;font-size: 1.125rem;line-height: 1.44;letter-spacing: 0.3px;text-align: center;padding-left: 30px;"> <img src="https://s3.ap-south-1.amazonaws.com/binbill-static/instagram-logo.png" alt="insta-binbill" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;vertical-align: middle;page-break-inside: avoid;border: 0 none;max-width: 100%!important; width: 23px;"> </a> <a href="https://www.linkedin.com/company/13320885/" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;background-color: transparent;color: rgba(255, 255, 255, 1);text-decoration: none;-webkit-text-decoration-skip: objects;-ms-touch-action: manipulation;touch-action: manipulation;font-family: 'Quicksand', sans-serif;font-size: 1.125rem;line-height: 1.44;letter-spacing: 0.3px;text-align: center;padding-left: 30px;"> <img src="https://s3.ap-south-1.amazonaws.com/binbill-static/linkedin-logo.png" alt="in-binbill" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;vertical-align: middle;page-break-inside: avoid;border: 0 none;max-width: 100%!important; width: 23px;"> </a></p></td></tr></div></center></body></html>`;
     }
     case 1: {
       return `<!DOCTYPE html><html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office"><head> <meta charset="utf-8"> <meta name="viewport" content="width=device-width"> <meta http-equiv="X-UA-Compatible" content="IE=edge"> <meta name="x-apple-disable-message-reformatting"> <title>BinBill</title> <style>@font-face{font-family: 'Quicksand'; font-style: normal; font-weight: 400; src: local('Quicksand Regular'), local('Quicksand-Regular'), url(https://fonts.gstatic.com/s/quicksand/v6/NUrn2XQrRfyGZp5MknntaRJtnKITppOI_IvcXXDNrsc.woff2) format('woff2'); unicode-range: U+0102-0103, U+1EA0-1EF9, U+20AB;}@font-face{font-family: 'Quicksand'; font-style: normal; font-weight: 400; src: local('Quicksand Regular'), local('Quicksand-Regular'), url(https://fonts.gstatic.com/s/quicksand/v6/s2PXW4WrV3VLrOUpHiqsfRJtnKITppOI_IvcXXDNrsc.woff2) format('woff2'); unicode-range: U+0100-024F, U+1E00-1EFF, U+20A0-20AB, U+20AD-20CF, U+2C60-2C7F, U+A720-A7FF;}/* latin */ @font-face{font-family: 'Quicksand'; font-style: normal; font-weight: 400; src: local('Quicksand Regular'), local('Quicksand-Regular'), url(https://fonts.gstatic.com/s/quicksand/v6/sKd0EMYPAh5PYCRKSryvW1tXRa8TVwTICgirnJhmVJw.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215;}@font-face{font-family: 'Quicksand'; font-style: normal; font-weight: 500; src: local('Quicksand Medium'), local('Quicksand-Medium'), url(https://fonts.gstatic.com/s/quicksand/v6/FRGja7LlrG1Mypm0hCq0Dv8zf_FOSsgRmwsS7Aa9k2w.woff2) format('woff2'); unicode-range: U+0102-0103, U+1EA0-1EF9, U+20AB;}@font-face{font-family: 'Quicksand'; font-style: normal; font-weight: 500; src: local('Quicksand Medium'), local('Quicksand-Medium'), url(https://fonts.gstatic.com/s/quicksand/v6/FRGja7LlrG1Mypm0hCq0Dj0LW-43aMEzIO6XUTLjad8.woff2) format('woff2'); unicode-range: U+0100-024F, U+1E00-1EFF, U+20A0-20AB, U+20AD-20CF, U+2C60-2C7F, U+A720-A7FF;}@font-face{font-family: 'Quicksand'; font-style: normal; font-weight: 500; src: local('Quicksand Medium'), local('Quicksand-Medium'), url(https://fonts.gstatic.com/s/quicksand/v6/FRGja7LlrG1Mypm0hCq0Dugdm0LZdjqr5-oayXSOefg.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215;}@font-face{font-family: 'Quicksand'; font-style: normal; font-weight: 700; src: local('Quicksand Bold'), local('Quicksand-Bold'), url(https://fonts.gstatic.com/s/quicksand/v6/32nyIRHyCu6iqEka_hbKsv8zf_FOSsgRmwsS7Aa9k2w.woff2) format('woff2'); unicode-range: U+0102-0103, U+1EA0-1EF9, U+20AB;}@font-face{font-family: 'Quicksand'; font-style: normal; font-weight: 700; src: local('Quicksand Bold'), local('Quicksand-Bold'), url(https://fonts.gstatic.com/s/quicksand/v6/32nyIRHyCu6iqEka_hbKsj0LW-43aMEzIO6XUTLjad8.woff2) format('woff2'); unicode-range: U+0100-024F, U+1E00-1EFF, U+20A0-20AB, U+20AD-20CF, U+2C60-2C7F, U+A720-A7FF;}@font-face{font-family: 'Quicksand'; font-style: normal; font-weight: 700; src: local('Quicksand Bold'), local('Quicksand-Bold'), url(https://fonts.gstatic.com/s/quicksand/v6/32nyIRHyCu6iqEka_hbKsugdm0LZdjqr5-oayXSOefg.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215;}html, body{margin: 0 auto !important; padding: 0 !important; height: 100% !important; /* width: 100% !important; */}*{-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;}div[style*="margin: 16px 0"]{margin: 0 !important;}table, td{mso-table-lspace: 0pt !important; mso-table-rspace: 0pt !important;}table{border-spacing: 0 !important; border-collapse: collapse !important; table-layout: fixed !important; margin: 0 auto !important;}table table table{table-layout: auto;}img{-ms-interpolation-mode: bicubic;}*[x-apple-data-detectors], /* iOS */ .x-gmail-data-detectors, /* Gmail */ .x-gmail-data-detectors *, .aBn{border-bottom: 0 !important; cursor: default !important; color: inherit !important; /* text-decoration: none !important; */ font-size: inherit !important; font-family: inherit !important; font-weight: inherit !important; line-height: inherit !important;}/* What it does: Prevents Gmail from displaying an download button on large, non-linked images. */ .a6S{display: none !important; opacity: 0.01 !important;}/* If the above doesn't work, add a .g-img class to any image in question. */ img.g-img+div{display: none !important;}/* What it does: Prevents underlining the button text in Windows 10 */ .button-link{text-decoration: none !important;}/* What it does: Removes right gutter in Gmail iOS app: https://github.com/TedGoas/Cerberus/issues/89 */ /* Create one of these media queries for each additional viewport size you'd like to fix */ /* Thanks to Eric Lepetit (@ericlepetitsf) for help troubleshooting */ @media only screen and (min-width: 320px) and (max-width: 600px){/* iPhone 6 and 6+ */ .email-container{max-width: 600px; margin: auto;}}@media only screen and (min-width: 600px) and (max-width: 1400px){/* iPhone 6 and 6+ */ .email-container{width:100%;}.main-class{font-size:16px;}.mains-class{font-size:16px;}}</style> <style>/* What it does: Hover styles for buttons */ .button-td, .button-a{transition: all 100ms ease-in;}.button-td:hover, .button-a:hover{background: #555555 !important; border-color: #555555 !important;}/* Media Queries */ @media screen and (max-width: 600px){/* What it does: Adjust typography on small screens to improve readability */ .email-container p{line-height: 14px !important;}.main-class{font-size:12px;}.mains-class{font-size:11px;}}</style></head><body width="100%" bgcolor="#222222" style="margin: 0; mso-line-height-rule: exactly;"> <center style="width: 100%; background: #cecece; text-align: left;"> <div style="border:1px solid black;" class="email-container"> <table role="presentation" cellspacing="0" cellpadding="0" style="background:white;" border="0" align="center" width="100%" background-color="white" style="max-width: 600px;"> <tr> <td style="padding:0px 15px;" class="text-left"> <div style="padding:20px 0px;"> <img src="https://s3.ap-south-1.amazonaws.com/binbill-static/logo-color.png" width="150" height="auto" alt="alt_text" border="0" style="height: auto; font-family: sans-serif; font-size: 15px; line-height: 20px; color: #555555;"> </div></td><td style="text-align:right; position:absolute;right:0px;"> <img src="https://s3.ap-south-1.amazonaws.com/binbill-static/email-header.png" width="150" height="auto" alt="alt_text" border="0" style="height: auto; font-family: sans-serif; font-size: 15px; line-height: 20px; color: #555555;"> </td></tr></table> <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" width="100%"> <tr> <td bgcolor="#ffffff"> <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"> <tr> <td style="padding: 20px; font-family: sans-serif; font-size: 15px; line-height: 20px; color: #555555;"> <hr class="title-border" style="-webkit-box-sizing: content-box;-moz-box-sizing: content-box;box-sizing: content-box;height: 0;margin:15px 15px 0px 0px;border: 0;border-top: 5px solid #ff732e;overflow: visible;width: 8.33333333%"> <p style="margin: 0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0;color: #ff732e;font-family: 'Quicksand', sans-serif; font-weight: 500;font-size:22px; text-align: left; color: #ff732e;padding-top:10px; "> Welcome to BinBill! </p><p class="main-class" style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0; font-family: 'Quicksand', sans-serif;font-weight: 500;letter-spacing: 0.3px;text-align: left;color: #3b3b3b; padding: 10px 0;"> Hi ${user.name ||
@@ -162,33 +164,36 @@ export function retrieveMailTemplate(user, templateType) {
   }
 }
 
-const formatDate = (actualValue, dateFormatString) => dateFormat(actualValue, dateFormatString);
+const formatDate = (actualValue, dateFormatString) => dateFormat(actualValue,
+    dateFormatString);
 const prepareUrl = (basePath, ...relPath) => url(basePath, ...relPath);
 const queryStringFromObject = queryObject => stringify(queryObject);
 const retrieveHeaderValue = headers => ({
-	authorization: verifyParameters(headers, authorizationParamConst, emptyString),
-	CorrelationId: uuid.v4()
+  authorization: verifyParameters(headers, authorizationParamConst,
+      emptyString),
+  CorrelationId: uuid.v4(),
 });
 const iterateToCollection = (collection, callback, ...relativeItems) => {
-	const result = [];
-	_.forEach(collection, item => result.push(callback(item, relativeItems[0])));
+  const result = [];
+  _.forEach(collection, item => result.push(callback(item, relativeItems[0])));
 
-	return result;
+  return result;
 };
-const stringHasSubString = (stringItem, subString) => _.includes(stringItem, subString);
+const stringHasSubString = (stringItem, subString) => _.includes(stringItem,
+    subString);
 
 export default {
-	readJSONFile,
-	formatDate,
-	prepareUrl,
-	verifyParameters,
-	queryStringFromObject,
-	verifyAuthorization,
-	retrieveHeaderValue,
-	iterateToCollection,
-	stringHasSubString,
-	getAllDays,
-	sumProps,
-	retrieveDaysInsight,
+  readJSONFile,
+  formatDate,
+  prepareUrl,
+  verifyParameters,
+  queryStringFromObject,
+  verifyAuthorization,
+  retrieveHeaderValue,
+  iterateToCollection,
+  stringHasSubString,
+  getAllDays,
+  sumProps,
+  retrieveDaysInsight,
   retrieveMailTemplate,
 };

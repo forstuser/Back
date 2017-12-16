@@ -450,7 +450,8 @@ var UserController = function () {
     key: 'uploadUserImage',
     value: function uploadUserImage(user, result) {
       var fileType = result.headers['content-type'].split('/')[1];
-      var fileName = user.id + '/active-' + user.id + '-' + new Date().getTime() + '.' + fileType;
+      var fileName = (user.id || user.ID) + '/active-' + (user.id || user.ID) +
+          '-' + new Date().getTime() + '.' + fileType;
       // const file = fs.createReadStream();
       fsImpl.writeFile(fileName, result.body, { ContentType: result.headers['content-type'] }).then(function (fileResult) {
         console.log(fileResult);

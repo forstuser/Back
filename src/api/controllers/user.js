@@ -406,7 +406,8 @@ class UserController {
 
   static uploadUserImage(user, result) {
     const fileType = result.headers['content-type'].split('/')[1];
-    const fileName = `${user.id}/active-${user.id}-${new Date().getTime()}.${fileType}`;
+    const fileName = `${user.id || user.ID}/active-${user.id ||
+    user.ID}-${new Date().getTime()}.${fileType}`;
     // const file = fs.createReadStream();
     fsImpl.writeFile(fileName, result.body,
         {ContentType: result.headers['content-type']}).then((fileResult) => {

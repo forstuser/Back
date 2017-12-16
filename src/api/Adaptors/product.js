@@ -93,7 +93,8 @@ class ProductAdaptor {
               'consumerPhoneNo'],
             [
               'document_number',
-              'invoiceNo']],
+              'invoiceNo'],
+            'seller_id'],
           include: [
             {
               model: this.modals.onlineSellers,
@@ -275,6 +276,11 @@ class ProductAdaptor {
       order: [['document_date', 'DESC']],
     }).then((productResult) => {
       products = productResult.map((item) => item.toJSON());
+      if (billOption.seller_id && billOption.seller_id.length > 0) {
+        products = products.filter(
+            (item) => item.bill && billOption.seller_id.find(
+            sItem => parseInt(item.bill.seller_id) === parseInt(sItem)));
+      }
       inProgressProductOption = _.omit(inProgressProductOption, 'product_name');
       inProgressProductOption.status_type = 5;
       inProgressProductOption.product_status_type = options.status_type;

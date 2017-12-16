@@ -95,7 +95,8 @@ var UploadController = function () {
 
         var name = fileData.hapi.filename;
         var _fileType = name.split('.')[name.split('.').length - 1];
-        var fileName = 'active-' + user.id + '-' + new Date().getTime() + '.' + _fileType;
+        var fileName = 'active-' + (user.id || user.ID) + '-' +
+            new Date().getTime() + '.' + _fileType;
         // const file = fs.createReadStream();
         return fsImpl.writeFile(fileName, fileData._data, { ContentType: _mimeTypes2.default.lookup(fileName) }).then(function (fileResult) {
 
@@ -182,9 +183,11 @@ var UploadController = function () {
   }, {
     key: 'uploadFileGeneric',
     value: function uploadFileGeneric(user, fileData, reply, request) {
-      console.log('' + Math.random().toString(36).substr(2, 9) + user.id.toString(36));
+      console.log('' + Math.random().toString(36).substr(2, 9) +
+          (user.id || user.ID).toString(36));
       return modals.jobs.create({
-        job_id: '' + Math.random().toString(36).substr(2, 9) + user.id.toString(36),
+        job_id: '' + Math.random().toString(36).substr(2, 9) +
+        (user.id || user.ID).toString(36),
         user_id: user.id || user.ID,
         updated_by: user.id || user.ID,
         uploaded_by: user.id || user.ID,
@@ -207,7 +210,8 @@ var UploadController = function () {
             var name = elem.hapi.filename;
             var fileType = /[.]/.exec(name) ? /[^.]+$/.exec(name) : undefined;
             var fileTypeData = getTypeFromBuffer(elem._data);
-            var fileName = user.id + '-' + (index + 1) + '.' + (fileType ? fileType.toString() : fileTypeData.ext);
+            var fileName = (user.id || user.ID) + '-' + (index + 1) + '.' +
+                (fileType ? fileType.toString() : fileTypeData.ext);
 
             fileNames.push(fileName);
             fileTypes.push(fileType);
@@ -227,20 +231,28 @@ var UploadController = function () {
               return modals.jobCopies.create(ret);
             });
 
+            promisedQuery.push(modals.users.findById(user.id || user.ID));
             // if (promisedQuery.length === Object.keys(fileData).length) {
             return Promise.all(promisedQuery);
             // }
           }).then(function (billResult) {
-            if (user.email) {
+            console.log(billResult);
+            if (billResult[billResult.length - 1].email) {
               modals.jobs.count({
                 where: {
                   uploaded_by: user.id || user.ID,
                 }
               }).then(function (billCount) {
                 if (billCount === 1) {
-                  _notification2.default.sendMailOnDifferentSteps('It’s good to see you start building your eHome', user.email, user, 2);
+                  _notification2.default.sendMailOnDifferentSteps(
+                      'It’s good to see you start building your eHome',
+                      billResult[billResult.length - 1].email,
+                      billResult[billResult.length - 1], 2);
                 } else {
-                  _notification2.default.sendMailOnDifferentSteps('We have received your bill, soon it will be available in your eHome', user.email, user, 3);
+                  _notification2.default.sendMailOnDifferentSteps(
+                      'We have received your bill, soon it will be available in your eHome',
+                      billResult[billResult.length - 1].email,
+                      billResult[billResult.length - 1], 3);
                 }
               });
             }
@@ -252,7 +264,7 @@ var UploadController = function () {
               status: true,
               message: 'Uploaded Successfully',
               job_id: result.id,
-              billResult: billResult
+              billResult: billResult.splice(billResult.length - 1, 1),
               // forceUpdate: request.pre.forceUpdate
             });
           }).catch(function (err) {
@@ -277,7 +289,8 @@ var UploadController = function () {
             result.updateAttributes({
               file_types: [_fileType3]
             });
-            var fileName = user.id + '-1.' + (_fileType3 ? _fileType3.toString() : fileTypeData.ext);
+            var fileName = (user.id || user.ID) + '-1.' +
+                (_fileType3 ? _fileType3.toString() : fileTypeData.ext);
 
             fsImpl.writeFile('jobs/' + result.job_id + '/' + fileName, fileData._data, { ContentType: _mimeTypes2.default.lookup(fileName) }).then(function (fileResult) {
               var ret = {
@@ -290,16 +303,22 @@ var UploadController = function () {
 
               console.log(fileResult);
               modals.jobCopies.create(ret).then(function () {
-                if (user.email) {
+                return modals.users.findById(user.id || user.ID);
+              }).then(function(userResult) {
+                if (userResult.email) {
                   modals.jobs.count({
                     where: {
-                      uploaded_by: user.id || user.ID,
+                      uploaded_by: userResult.id || userResult.ID,
                     }
                   }).then(function (billCount) {
                     if (billCount === 1) {
-                      _notification2.default.sendMailOnDifferentSteps('It’s good to see you start building your eHome', user.email, user, 2);
+                      _notification2.default.sendMailOnDifferentSteps(
+                          'It’s good to see you start building your eHome',
+                          userResult.email, userResult, 2);
                     } else {
-                      _notification2.default.sendMailOnDifferentSteps('We have received your bill, soon it will be available in your eHome', user.email, user, 3);
+                      _notification2.default.sendMailOnDifferentSteps(
+                          'We have received your bill, soon it will be available in your eHome',
+                          userResult.email, userResult, 3);
                     }
                   });
                 }

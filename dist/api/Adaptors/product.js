@@ -136,7 +136,8 @@ var ProductAdaptor = function () {
               'consumerPhoneNo'],
             [
               'document_number',
-              'invoiceNo']],
+              'invoiceNo'],
+            'seller_id'],
           include: [{
             model: this.modals.onlineSellers,
             as: 'sellers',
@@ -320,6 +321,13 @@ var ProductAdaptor = function () {
         products = productResult.map(function (item) {
           return item.toJSON();
         });
+        if (billOption.seller_id && billOption.seller_id.length > 0) {
+          products = products.filter(function(item) {
+            return item.bill && billOption.seller_id.find(function(sItem) {
+              return parseInt(item.bill.seller_id) === parseInt(sItem);
+            });
+          });
+        }
         inProgressProductOption = _lodash2.default.omit(inProgressProductOption,
             'product_name');
         inProgressProductOption.status_type = 5;
