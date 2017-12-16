@@ -248,7 +248,8 @@ var EHomeAdaptor = function () {
         var brands = result.productList.filter(function (item) {
           return item.brand !== null;
         }).map(function (item) {
-          return item.brand;
+          var brandItem = item.brand;
+          brandItem.id = brandItem.brandId;
         });
             brands = _lodash2.default.uniqBy(brands, 'brandId');
 

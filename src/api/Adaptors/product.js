@@ -59,7 +59,7 @@ class ProductAdaptor {
           attributes: [
             [
               'brand_id',
-              'id'],
+              'brandId'],
             [
               'brand_name',
               'name'],
@@ -224,7 +224,7 @@ class ProductAdaptor {
           'masterCategoryId'],
         [
           'brand_id',
-          'id'],
+          'brandId'],
         [
           'colour_id',
           'colorId'],
@@ -340,7 +340,7 @@ class ProductAdaptor {
           attributes: [
             [
               'brand_id',
-              'id'],
+              'brandId'],
             [
               'brand_name',
               'name'],
@@ -500,7 +500,7 @@ class ProductAdaptor {
           'masterCategoryId'],
         [
           'brand_id',
-          'id'],
+          'brandId'],
         [
           'colour_id',
           'colorId'],
@@ -853,7 +853,7 @@ class ProductAdaptor {
           'masterCategoryId'],
         [
           'brand_id',
-          'id'],
+          'brandId'],
         [
           'colour_id',
           'colorId'],
@@ -911,7 +911,7 @@ class ProductAdaptor {
         return Promise.all([
           this.retrieveProductMetadata({
             product_id: products.id,
-          }), this.brandAdaptor.retrieveBrandById(products.id, {
+          }), this.brandAdaptor.retrieveBrandById(products.brandId, {
             category_id: products.categoryId,
           }), this.insuranceAdaptor.retrieveInsurances({
             product_id: products.id,

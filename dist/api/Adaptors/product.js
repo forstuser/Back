@@ -104,7 +104,7 @@ var ProductAdaptor = function () {
           attributes: [
             [
               'brand_id',
-              'id'],
+              'brandId'],
             [
               'brand_name',
               'name'],
@@ -264,7 +264,7 @@ var ProductAdaptor = function () {
             'masterCategoryId'],
           [
             'brand_id',
-            'id'],
+            'brandId'],
           [
             'colour_id',
             'colorId'],
@@ -397,7 +397,7 @@ var ProductAdaptor = function () {
             attributes: [
               [
                 'brand_id',
-                'id'],
+                'brandId'],
               [
                 'brand_name',
                 'name'],
@@ -563,7 +563,7 @@ var ProductAdaptor = function () {
             'masterCategoryId'],
           [
             'brand_id',
-            'id'],
+            'brandId'],
           [
             'colour_id',
             'colorId'],
@@ -927,7 +927,7 @@ var ProductAdaptor = function () {
             'masterCategoryId'],
           [
             'brand_id',
-            'id'],
+            'brandId'],
           [
             'colour_id',
             'colorId'],
@@ -990,7 +990,7 @@ var ProductAdaptor = function () {
           return Promise.all([
             _this4.retrieveProductMetadata({
               product_id: products.id,
-            }), _this4.brandAdaptor.retrieveBrandById(products.id, {
+            }), _this4.brandAdaptor.retrieveBrandById(products.brandId, {
               category_id: products.categoryId,
             }), _this4.insuranceAdaptor.retrieveInsurances({
               product_id: products.id,

@@ -215,7 +215,10 @@ class EHomeAdaptor {
       /* const listIndex = (pageNo * 10) - 10; */
 
       let brands = result.productList.filter((item) => item.brand !== null).
-          map((item) => item.brand);
+          map((item) => {
+            const brandItem = item.brand;
+            brandItem.id = brandItem.brandId;
+          });
       brands = _.uniqBy(brands, 'brandId');
 
       let offlineSellers = result.productList.filter(
