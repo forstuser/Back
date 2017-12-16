@@ -45,10 +45,6 @@ class InsuranceAdaptor {
     options = _.omit(options, 'product_status_type');
     options = _.omit(options, 'brand_id');
 
-    console.log({
-      productOptions,
-      options,
-    });
     return this.modals.insurances.findAll({
       where: options,
       include: [

@@ -139,7 +139,9 @@ class ServiceCenterController {
 							}).code(200);
 							// }
 						}).catch((err) => {
-							console.log({API_Logs: err});
+              console.log(
+                  `Error on ${new Date()} for user ${user.id ||
+                  user.ID} is as follow: \n \n ${err}`);
 
 							reply({
 								status: false,
@@ -167,7 +169,9 @@ class ServiceCenterController {
 					});
 				}
 			}).catch((err) => {
-				console.log({API_Logs: err});
+        console.log(
+            `Error on ${new Date()} for user ${user.id ||
+            user.ID} is as follow: \n \n ${err}`);
 				reply({
 					status: false,
 					err,

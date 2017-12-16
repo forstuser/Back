@@ -89,7 +89,9 @@ class UploadController {
           message: 'Uploaded Successfully',
         });
       }).catch((err) => {
-        console.log({API_Logs: err});
+        console.log(
+            `Error on ${new Date()} for user ${user.id ||
+            user.ID} is as follow: \n \n ${err}`);
         return reply({
           status: false,
           message: 'Upload Failed',
@@ -150,8 +152,15 @@ class UploadController {
           return reply(
               {status: false, message: 'No valid documents in request'});
         } else {
-          UploadController.uploadFileGeneric(user, filteredFileData, reply,
-              request);
+          return UploadController.uploadFileGeneric(user, filteredFileData,
+              reply,
+              request).catch((err) => {
+            console.log(
+                `Error on ${new Date()} for user ${user.id ||
+                user.ID} is as follow: \n \n ${err}`);
+            return reply(
+                {status: false, message: 'Unable to upload document'});
+          });
         }
         // } else {
         // 	reply({status: false, message: 'No File', forceUpdate: request.pre.forceUpdate}).code(400);
@@ -166,7 +175,8 @@ class UploadController {
     console.log(
         `${Math.random().toString(36).substr(2, 9)}${(user.id ||
             user.ID).toString(36)}`);
-    return modals.jobs.create({
+    return modals.jobs.create(
+        {
       job_id: `${Math.random().toString(36).substr(2, 9)}${(user.id ||
           user.ID).toString(
           36)}`,
@@ -182,7 +192,8 @@ class UploadController {
                   `This job is sent for product name ${request.query.productName}` :
                   '' :
           ``,
-    }).then((result) => {
+        }
+    ).then((result) => {
       if (Array.isArray(fileData)) {
         const fileNames = [];
         const fileTypes = [];
@@ -241,12 +252,19 @@ class UploadController {
                     billResult[billResult.length - 1].email,
                     billResult[billResult.length - 1], 3);
               }
+            }).catch((err) => {
+              console.log(
+                  `Error on ${new Date()} for user ${user.id ||
+                  user.ID} is as follow: \n ${JSON.stringify(
+                      err)} \n email is ${billResult[billResult.length -
+                  1].email}`);
             });
           }
 
           notificationAdaptor.sendMailOnUpload(
               'New Job has been created with multiple files for consumer',
-              'sagar@binbill.com;pranjal@binbill.com;', user, result.id);
+              'sagar@binbill.com;pranjal@binbill.com;anu.gupta@binbill.com',
+              user, result.id);
           return reply({
             status: true,
             message: 'Uploaded Successfully',
@@ -255,7 +273,9 @@ class UploadController {
             // forceUpdate: request.pre.forceUpdate
           });
         }).catch((err) => {
-          console.log({API_Logs: err});
+          console.log(
+              `Error on ${new Date()} for user ${user.id ||
+              user.ID} is as follow: \n \n ${err}`);
           return reply({
             status: false,
             message: 'Upload Failed',
@@ -311,12 +331,18 @@ class UploadController {
                         'We have received your bill, soon it will be available in your eHome',
                         userResult.email, userResult, 3);
                   }
+                }).catch((err) => {
+                  console.log(
+                      `Error on ${new Date()} for user ${user.id ||
+                      user.ID} is as follow: \n ${JSON.stringify(
+                          err)} \n email is ${userResult.email}`);
                 });
               }
 
               notificationAdaptor.sendMailOnUpload(
                   'New Job has been added with single file for consumer',
-                  'sagar@binbill.com;pranjal@binbill.com;', user, result.id);
+                  'sagar@binbill.com;pranjal@binbill.com;anu.gupta@binbill.com',
+                  user, result.id);
               return reply({
                 status: true,
                 job_id: result.id,
@@ -324,7 +350,9 @@ class UploadController {
                 // forceUpdate: request.pre.forceUpdate
               });
             }).catch((err) => {
-              console.log({API_Logs: err});
+              console.log(
+                  `Error on ${new Date()} for user ${user.id ||
+                  user.ID} is as follow: \n \n ${err}`);
               return reply({
                 status: false,
                 message: 'Data Update Failed',
@@ -333,13 +361,17 @@ class UploadController {
               });
             });
           }).catch((err) => {
-            console.log({API_Logs: err});
+            console.log(
+                `Error on ${new Date()} for user ${user.id ||
+                user.ID} is as follow: \n \n ${err}`);
             return reply({status: false, message: 'Upload Failed', err}); //forceUpdate: request.pre.forceUpdate});
           });
         }
       }
     }).catch((err) => {
-      console.log('ERR', err);
+      console.log(
+          `Error on ${new Date()} for user ${user.id ||
+          user.ID} is as follow: \n \n ${err}`);
       return reply({status: false, message: 'Upload Failed', err});// , forceUpdate: request.pre.forceUpdate});
     });
   }
@@ -383,7 +415,9 @@ class UploadController {
                         `attachment; filename=${result.bill_copy_name}`);
               }).
               catch((err) => {
-                console.log({API_Logs: err});
+                console.log(
+                    `Error on ${new Date()} for user ${user.id ||
+                    user.ID} is as follow: \n \n ${err}`);
                 reply({
                   status: false,
                   message: 'No Result Found',
@@ -399,7 +433,9 @@ class UploadController {
           }).code(404);
         }
       }).catch((err) => {
-        console.log({API_Logs: err});
+        console.log(
+            `Error on ${new Date()} for user ${user.id ||
+            user.ID} is as follow: \n \n ${err}`);
         reply({status: false, err, forceUpdate: request.pre.forceUpdate});
       });
     } else {
@@ -464,7 +500,9 @@ class UploadController {
             forceUpdate: request.pre.forceUpdate,
           });
         }).catch((err) => {
-          console.log({API_Logs: err});
+          console.log(
+              `Error on ${new Date()} for user ${user.id ||
+              user.ID} is as follow: \n \n ${err}`);
           reply({status: false, err, forceUpdate: request.pre.forceUpdate});
         });
       } else {
@@ -493,7 +531,9 @@ class UploadController {
                 header('Content-Disposition',
                     `attachment; filename=${result.CopyName}`)).
             catch((err) => {
-              console.log({API_Logs: err});
+              console.log(
+                  `Error on ${new Date()} for user ${user.id ||
+                  user.ID} is as follow: \n \n ${err}`);
               reply({
                 status: false,
                 message: 'Unable to retrieve image',
@@ -502,7 +542,9 @@ class UploadController {
               });
             });
       }).catch((err) => {
-        console.log({API_Logs: err});
+        console.log(
+            `Error on ${new Date()} for user ${user.id ||
+            user.ID} is as follow: \n \n ${err}`);
         reply({
           status: false,
           message: 'Unable to retrieve image',
@@ -541,7 +583,9 @@ class UploadController {
                       `attachment; filename=${fileResult.CopyName}`);
             }).
             catch((err) => {
-              console.log({API_Logs: err});
+              console.log(
+                  `Error on ${new Date()} for user ${user.id ||
+                  user.ID} is as follow: \n \n ${err}`);
               const fsImplUser = new S3FS(
                   `${config.AWS.S3.BUCKET}/${config.AWS.S3.USER_IMAGE}`,
                   config.AWS.ACCESS_DETAILS);
@@ -553,6 +597,10 @@ class UploadController {
                             `attachment; filename=${fileResult.CopyName}`);
                   }).
                   catch((err) => {
+                    console.log(
+                        `Error on ${new Date()} for user ${user.id ||
+                        user.ID} is as follow: \n ${JSON.stringify(
+                            err.toJSON())}`);
                     return reply({
                       status: false,
                       message: 'No Result Found',

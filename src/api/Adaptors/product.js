@@ -279,7 +279,7 @@ class ProductAdaptor {
       if (billOption.seller_id && billOption.seller_id.length > 0) {
         products = products.filter(
             (item) => item.bill && billOption.seller_id.find(
-            sItem => parseInt(item.bill.seller_id) === parseInt(sItem)));
+                sItem => parseInt(item.bill.seller_id) === parseInt(sItem)));
       }
       inProgressProductOption = _.omit(inProgressProductOption, 'product_name');
       inProgressProductOption.status_type = 5;
@@ -584,8 +584,7 @@ class ProductAdaptor {
       return undefined;
     }).then((results) => {
       if (results) {
-        const metaData = results[0];
-        product.metaData = metaData;
+        product.metaData = results[0];
         product.insuranceDetails = results[1];
         product.warrantyDetails = results[2];
         product.amcDetails = results[3];
@@ -944,68 +943,74 @@ class ProductAdaptor {
   }
 
   createProduct(productBody, metadataBody) {
+    const brandBody = {
+      brand_name: productBody.brand_name,
+      updated_by: productBody.user_id,
+      created_by: productBody.user_id,
+      status_type: 11,
+    };
+
+    console.log(brandBody);
     const brandPromise = productBody.brand_name ?
         this.modals.brands.findCreateFind({
           where: {
             brand_name: {
               $iLike: productBody.brand_name,
             },
-            updated_by: productBody.user_id,
           },
-          defaults: {
-            brand_name: productBody.brand_name,
-            updated_by: productBody.user_id,
-            status_type: 11,
-          },
+          defaults: brandBody,
         }) :
-        '';
-    console.log({
-      metadataBody,
-    });
-    const dropDownPromise = metadataBody.map((item) => {
-      if (item.new_drop_down) {
-        console.log({
-          testMetadata: {
-            title: {
-              $iLike: item.form_value.toLowerCase(),
-            },
-            category_form_id: item.category_form_id,
-            category_id: productBody.category_id,
-            brand_id: productBody.brand_id,
-          },
-        });
-        return this.modals.brandDropDown.findCreateFind({
+        this.modals.brands.findAll({
           where: {
-            title: {
-              $iLike: item.form_value.toLowerCase(),
+            brand_name: {
+              $iLike: productBody.brand_name,
             },
-            category_form_id: item.category_form_id,
-            category_id: productBody.category_id,
-            brand_id: productBody.brand_id,
-          },
-          defaults: {
-            title: item.form_value,
-            category_form_id: item.category_form_id,
-            category_id: productBody.category_id,
-            brand_id: productBody.brand_id,
-            updated_by: item.updated_by,
-            created_by: item.created_by,
-            status_type: 11,
           },
         });
-      }
-
-      return '';
-    });
-
-    return Promise.all([...dropDownPromise, brandPromise]).
+    let product = productBody;
+    let metadata;
+    return brandPromise.
         then((newItemResult) => {
-          let product = productBody;
+          console.log(newItemResult);
           const newBrand = productBody.brand_name ?
-              newItemResult[newItemResult.length - 1][0] : undefined;
+              newItemResult[0].toJSON() : undefined;
+          console.log(newBrand);
+          product = _.omit(product, 'brand_name');
           product.brand_id = newBrand ?
               newBrand.brand_id :
               product.brand_id;
+
+          const dropDownPromise = metadataBody.map((item) => {
+            if (item.new_drop_down) {
+              return this.modals.brandDropDown.findCreateFind({
+                where: {
+                  title: {
+                    $iLike: item.form_value.toLowerCase(),
+                  },
+                  category_form_id: item.category_form_id,
+                  category_id: productBody.category_id,
+                  brand_id: product.brand_id,
+                },
+                defaults: {
+                  title: item.form_value,
+                  category_form_id: item.category_form_id,
+                  category_id: productBody.category_id,
+                  brand_id: product.brand_id,
+                  updated_by: item.updated_by,
+                  created_by: item.created_by,
+                  status_type: 11,
+                },
+              });
+            }
+
+            return '';
+          });
+          metadata = metadataBody.map((mdItem) => {
+            mdItem = _.omit(mdItem, 'new_drop_down');
+            return mdItem;
+          });
+          return Promise.all(dropDownPromise);
+        }).then(() => {
           product = !product.colour_id ? _.omit(product, 'colour_id') : product;
           product = !product.purchase_cost ?
               _.omit(product, 'purchase_cost') :
@@ -1018,10 +1023,7 @@ class ProductAdaptor {
               _.omit(product, 'document_date') :
               product;
           product = !product.seller_id ? _.omit(product, 'seller_id') : product;
-          let metadata = metadataBody.map((mdItem) => {
-            mdItem = _.omit(mdItem, 'new_drop_down');
-            return mdItem;
-          });
+
           return this.modals.products.count({
             where: product,
             include: [
@@ -1031,34 +1033,37 @@ class ProductAdaptor {
                 }, required: true, as: 'metaData',
               },
             ],
-          }).then((count) => {
-            if (count === 0) {
-              return this.modals.products.create(product);
-            }
-
-            return undefined;
-          }).then((productResult) => {
-            if (productResult) {
-              product = productResult.toJSON();
-              const metadataPromise = metadata.map((mdItem) => {
-                mdItem.product_id = product.id;
-                mdItem.status_type = 8;
-
-                return this.modals.metaData.create(mdItem);
-              });
-
-              return Promise.all(metadataPromise);
-            }
-
-            return undefined;
-          }).then((metaData) => {
-            if (metaData) {
-              product.metaData = metaData.map((mdItem) => mdItem.toJSON());
-              return product;
-            }
-
-            return undefined;
           });
+        }).then((count) => {
+          if (count === 0) {
+            console.log({
+              testProduct: product,
+            });
+            return this.modals.products.create(product);
+          }
+
+          return undefined;
+        }).then((productResult) => {
+          if (productResult) {
+            product = productResult.toJSON();
+            const metadataPromise = metadata.map((mdItem) => {
+              mdItem.product_id = product.id;
+              mdItem.status_type = 8;
+
+              return this.modals.metaData.create(mdItem);
+            });
+
+            return Promise.all(metadataPromise);
+          }
+
+          return undefined;
+        }).then((metaData) => {
+          if (metaData) {
+            product.metaData = metaData.map((mdItem) => mdItem.toJSON());
+            return product;
+          }
+
+          return undefined;
         });
   }
 
@@ -1156,7 +1161,9 @@ class ProductAdaptor {
         forceUpdate: request.pre.forceUpdate,
       };
     }).catch((err) => {
-      console.log({API_Logs: err});
+      console.log(
+          `Error on ${new Date()} for user ${user.id ||
+          user.ID} is as follow: \n \n ${err}`);
       return {
         status: true,
         message: 'Review Update Failed',
@@ -1212,7 +1219,9 @@ class ProductAdaptor {
         forceUpdate: request.pre.forceUpdate,
       };
     }).catch((err) => {
-      console.log({API_Logs: err});
+      console.log(
+          `Error on ${new Date()} for user ${user.id ||
+          user.ID} is as follow: \n \n ${err}`);
       return {
         status: true,
         message: 'Review Update Failed',
@@ -1255,7 +1264,9 @@ class ProductAdaptor {
         forceUpdate: request.pre.forceUpdate,
       };
     }).catch((err) => {
-      console.log({API_Logs: err});
+      console.log(
+          `Error on ${new Date()} for user ${user.id ||
+          user.ID} is as follow: \n \n ${err}`);
       return {
         status: true,
         message: 'Review Update Failed',
@@ -1476,7 +1487,9 @@ class ProductAdaptor {
         });
       }
     }).catch((err) => {
-      console.log({API_Logs: err});
+      console.log(
+          `Error on ${new Date()} for user ${user.id ||
+          user.ID} is as follow: \n \n ${err}`);
       return {
         status: false,
         message: 'Unable to retrieve data',

@@ -98,7 +98,8 @@ var BrandController = function () {
               forceUpdate: request.pre.forceUpdate,
             });
           }).catch(function(err) {
-            console.log({API_Logs: err});
+            console.log('Error on ' + new Date() + ' for user ' +
+                (user.id || user.ID) + ' is as follow: \n \n ' + err);
             reply({
               status: false,
               message: 'Something wrong',
@@ -134,7 +135,8 @@ var BrandController = function () {
               }).code(404);
             }).
             catch(function(err) {
-              console.log({API_Logs: err});
+              console.log('Error on ' + new Date() + ' for user ' +
+                  (user.id || user.ID) + ' is as follow: \n \n ' + err);
               return reply({
                 status: false,
                 message: 'Something wrong',

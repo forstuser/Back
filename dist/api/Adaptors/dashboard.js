@@ -192,7 +192,8 @@ var DashboardAdaptor = function () {
             product: !!(result[4] && result[4] > 0) ? product : {},
           };
         }).catch(function(err) {
-          console.log(err);
+          console.log('Error on ' + new Date() + ' for user ' +
+              (user.id || user.ID) + ' is as follow: \n \n ' + err);
           return {
             status: false,
             message: 'Dashboard restore failed',
@@ -258,7 +259,8 @@ var DashboardAdaptor = function () {
               forceUpdate: request.pre.forceUpdate,
             };
           }).catch(function(err) {
-            console.log({API_Logs: err});
+            console.log('Error on ' + new Date() + ' for user ' +
+                (user.id || user.ID) + ' is as follow: \n \n ' + err);
             return {
               status: false,
               authorization: token,

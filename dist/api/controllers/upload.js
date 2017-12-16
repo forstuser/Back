@@ -114,7 +114,8 @@ var UploadController = function () {
             message: 'Uploaded Successfully'
           });
         }).catch(function (err) {
-          console.log({ API_Logs: err });
+          console.log('Error on ' + new Date() + ' for user ' +
+              (user.id || user.ID) + ' is as follow: \n \n ' + err);
           return reply({
             status: false,
             message: 'Upload Failed',
@@ -170,7 +171,13 @@ var UploadController = function () {
             console.log('No valid documents in request');
             return reply({ status: false, message: 'No valid documents in request' });
           } else {
-            UploadController.uploadFileGeneric(user, filteredFileData, reply, request);
+            return UploadController.uploadFileGeneric(user, filteredFileData,
+                reply, request).catch(function(err) {
+              console.log('Error on ' + new Date() + ' for user ' +
+                  (user.id || user.ID) + ' is as follow: \n \n ' + err);
+              return reply(
+                  {status: false, message: 'Unable to upload document'});
+            });
           }
           // } else {
           // 	reply({status: false, message: 'No File', forceUpdate: request.pre.forceUpdate}).code(400);
@@ -254,12 +261,18 @@ var UploadController = function () {
                       billResult[billResult.length - 1].email,
                       billResult[billResult.length - 1], 3);
                 }
+              }).catch(function(err) {
+                console.log('Error on ' + new Date() + ' for user ' +
+                    (user.id || user.ID) + ' is as follow: \n ' +
+                    JSON.stringify(err) + ' \n email is ' +
+                    billResult[billResult.length - 1].email);
               });
             }
 
             _notification2.default.sendMailOnUpload(
                 'New Job has been created with multiple files for consumer',
-                'sagar@binbill.com;pranjal@binbill.com;', user, result.id);
+                'sagar@binbill.com;pranjal@binbill.com;anu.gupta@binbill.com',
+                user, result.id);
             return reply({
               status: true,
               message: 'Uploaded Successfully',
@@ -268,7 +281,8 @@ var UploadController = function () {
               // forceUpdate: request.pre.forceUpdate
             });
           }).catch(function (err) {
-            console.log({ API_Logs: err });
+            console.log('Error on ' + new Date() + ' for user ' +
+                (user.id || user.ID) + ' is as follow: \n \n ' + err);
             return reply({
               status: false,
               message: 'Upload Failed',
@@ -320,12 +334,18 @@ var UploadController = function () {
                           'We have received your bill, soon it will be available in your eHome',
                           userResult.email, userResult, 3);
                     }
+                  }).catch(function(err) {
+                    console.log('Error on ' + new Date() + ' for user ' +
+                        (user.id || user.ID) + ' is as follow: \n ' +
+                        JSON.stringify(err) + ' \n email is ' +
+                        userResult.email);
                   });
                 }
 
                 _notification2.default.sendMailOnUpload(
                     'New Job has been added with single file for consumer',
-                    'sagar@binbill.com;pranjal@binbill.com;', user, result.id);
+                    'sagar@binbill.com;pranjal@binbill.com;anu.gupta@binbill.com',
+                    user, result.id);
                 return reply({
                   status: true,
                   job_id: result.id,
@@ -333,7 +353,8 @@ var UploadController = function () {
                   // forceUpdate: request.pre.forceUpdate
                 });
               }).catch(function (err) {
-                console.log({ API_Logs: err });
+                console.log('Error on ' + new Date() + ' for user ' +
+                    (user.id || user.ID) + ' is as follow: \n \n ' + err);
                 return reply({
                   status: false,
                   message: 'Data Update Failed',
@@ -342,13 +363,15 @@ var UploadController = function () {
                 });
               });
             }).catch(function (err) {
-              console.log({ API_Logs: err });
+              console.log('Error on ' + new Date() + ' for user ' +
+                  (user.id || user.ID) + ' is as follow: \n \n ' + err);
               return reply({ status: false, message: 'Upload Failed', err: err }); //forceUpdate: request.pre.forceUpdate});
             });
           }
         }
       }).catch(function (err) {
-        console.log('ERR', err);
+        console.log('Error on ' + new Date() + ' for user ' +
+            (user.id || user.ID) + ' is as follow: \n \n ' + err);
         return reply({ status: false, message: 'Upload Failed', err: err }); // , forceUpdate: request.pre.forceUpdate});
       });
     }
@@ -392,7 +415,8 @@ var UploadController = function () {
                           result.bill_copy_name);
                 }).
                 catch(function(err) {
-                  console.log({API_Logs: err});
+                  console.log('Error on ' + new Date() + ' for user ' +
+                      (user.id || user.ID) + ' is as follow: \n \n ' + err);
                   reply({
                     status: false,
                     message: 'No Result Found',
@@ -408,7 +432,8 @@ var UploadController = function () {
             }).code(404);
           }
         }).catch(function(err) {
-          console.log({API_Logs: err});
+          console.log('Error on ' + new Date() + ' for user ' +
+              (user.id || user.ID) + ' is as follow: \n \n ' + err);
           reply(
               {status: false, err: err, forceUpdate: request.pre.forceUpdate});
         });
@@ -472,7 +497,8 @@ var UploadController = function () {
               forceUpdate: request.pre.forceUpdate
             });
           }).catch(function (err) {
-            console.log({ API_Logs: err });
+            console.log('Error on ' + new Date() + ' for user ' +
+                (user.id || user.ID) + ' is as follow: \n \n ' + err);
             reply({ status: false, err: err, forceUpdate: request.pre.forceUpdate });
           });
         } else {
@@ -500,7 +526,8 @@ var UploadController = function () {
           fsImplCategory.readFile(result.category_image_name, 'utf8').then(function (fileResult) {
             return reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', 'attachment; filename=' + result.CopyName);
           }).catch(function (err) {
-            console.log({ API_Logs: err });
+            console.log('Error on ' + new Date() + ' for user ' +
+                (user.id || user.ID) + ' is as follow: \n \n ' + err);
             reply({
               status: false,
               message: 'Unable to retrieve image',
@@ -509,7 +536,8 @@ var UploadController = function () {
             });
           });
         }).catch(function (err) {
-          console.log({ API_Logs: err });
+          console.log('Error on ' + new Date() + ' for user ' +
+              (user.id || user.ID) + ' is as follow: \n \n ' + err);
           reply({
             status: false,
             message: 'Unable to retrieve image',
@@ -543,7 +571,8 @@ var UploadController = function () {
           }).then(function (fileResult) {
             return reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', 'attachment; filename=' + fileResult.CopyName);
           }).catch(function (err) {
-            console.log({ API_Logs: err });
+            console.log('Error on ' + new Date() + ' for user ' +
+                (user.id || user.ID) + ' is as follow: \n \n ' + err);
             var fsImplUser = new _s3fs2.default(_main2.default.AWS.S3.BUCKET +
                 '/' + _main2.default.AWS.S3.USER_IMAGE,
                 _main2.default.AWS.ACCESS_DETAILS);
@@ -555,6 +584,9 @@ var UploadController = function () {
                           fileResult.CopyName);
                 }).
                 catch(function(err) {
+                  console.log('Error on ' + new Date() + ' for user ' +
+                      (user.id || user.ID) + ' is as follow: \n ' +
+                      JSON.stringify(err.toJSON()));
                   return reply({
                     status: false,
                     message: 'No Result Found',

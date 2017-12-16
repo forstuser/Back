@@ -63,10 +63,6 @@ var AmcAdaptor = function () {
       options = _lodash2.default.omit(options, 'product_status_type');
       options = _lodash2.default.omit(options, 'brand_id');
 
-      console.log({
-        productOptions: productOptions,
-        options: options,
-      });
       return this.modals.amcs.findAll({
         where: options,
         include: [{

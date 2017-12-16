@@ -70,7 +70,7 @@ var GeneralController = function () {
               category_id: request.query.categoryId,
               brand_id: request.query.brandId,
               $or: {
-                status_type: 5,
+                status_type: 1,
                 $and: {
                   status_type: 11,
                   updated_by: user.id || user.ID,
@@ -106,9 +106,8 @@ var GeneralController = function () {
             }],
         });
       }).catch(function(err) {
-        console.log({
-          api_err: err,
-        });
+        console.log('Error on ' + new Date() + ' for user ' +
+            (user.id || user.ID) + ' is as follow: \n \n ' + err);
 
         return reply({
           status: false,
@@ -127,7 +126,8 @@ var GeneralController = function () {
       }).then(function() {
         reply({status: true}).code(201);
       }).catch(function(err) {
-        console.log({API_Logs: err});
+        console.log('Error on ' + new Date() + ' for user ' +
+            (user.id || user.ID) + ' is as follow: \n \n ' + err);
         reply({status: false}).code(500);
       });
     }
@@ -143,7 +143,8 @@ var GeneralController = function () {
       }).then(function(faq) {
         reply({status: true, faq: faq}).code(200);
       }).catch(function(err) {
-        console.log({API_Logs: err});
+        console.log('Error on ' + new Date() + ' for user ' +
+            (user.id || user.ID) + ' is as follow: \n \n ' + err);
         reply({status: false}).code(200);
       });
     }

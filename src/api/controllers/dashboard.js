@@ -72,7 +72,9 @@ class DashboardController {
 
 				reply({status: true}).code(201); //, forceUpdate: request.pre.forceUpdate}).code(201);
 			}).catch((err) => {
-				console.log({API_Logs: err});
+        console.log(
+            `Error on ${new Date()} for user ${user.id ||
+            user.ID} is as follow: \n \n ${err}`);
 				reply({status: false}).code(500); //, forceUpdate: request.pre.forceUpdate}).code(500);
 			});
 		}

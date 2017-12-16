@@ -646,8 +646,7 @@ var ProductAdaptor = function () {
         return undefined;
       }).then(function(results) {
         if (results) {
-          var metaData = results[0];
-          product.metaData = metaData;
+          product.metaData = results[0];
           product.insuranceDetails = results[1];
           product.warrantyDetails = results[2];
           product.amcDetails = results[3];
@@ -1028,128 +1027,132 @@ var ProductAdaptor = function () {
     value: function createProduct(productBody, metadataBody) {
       var _this5 = this;
 
+      var brandBody = {
+        brand_name: productBody.brand_name,
+        updated_by: productBody.user_id,
+        created_by: productBody.user_id,
+        status_type: 11,
+      };
+
+      console.log(brandBody);
       var brandPromise = productBody.brand_name ?
           this.modals.brands.findCreateFind({
             where: {
               brand_name: {
                 $iLike: productBody.brand_name,
               },
-              updated_by: productBody.user_id,
             },
-            defaults: {
-              brand_name: productBody.brand_name,
-              updated_by: productBody.user_id,
-              status_type: 11,
-            },
+            defaults: brandBody,
           }) :
-          '';
-      console.log({
-        metadataBody: metadataBody,
-      });
-      var dropDownPromise = metadataBody.map(function(item) {
-        if (item.new_drop_down) {
-          console.log({
-            testMetadata: {
-              title: {
-                $iLike: item.form_value.toLowerCase(),
-              },
-              category_form_id: item.category_form_id,
-              category_id: productBody.category_id,
-              brand_id: productBody.brand_id,
-            }
-          });
-          return _this5.modals.brandDropDown.findCreateFind({
+          this.modals.brands.findAll({
             where: {
-              title: {
-                $iLike: item.form_value.toLowerCase(),
+              brand_name: {
+                $iLike: productBody.brand_name,
               },
-              category_form_id: item.category_form_id,
-              category_id: productBody.category_id,
-              brand_id: productBody.brand_id,
             },
-            defaults: {
-              title: item.form_value,
-              category_form_id: item.category_form_id,
-              category_id: productBody.category_id,
-              brand_id: productBody.brand_id,
-              updated_by: item.updated_by,
-              created_by: item.created_by,
-              status_type: 11,
-            }
           });
-        }
+      var product = productBody;
+      var metadata = void 0;
+      return brandPromise.then(function(newItemResult) {
+        console.log(newItemResult);
+        var newBrand = productBody.brand_name ?
+            newItemResult[0].toJSON() :
+            undefined;
+        console.log(newBrand);
+        product = _lodash2.default.omit(product, 'brand_name');
+        product.brand_id = newBrand ? newBrand.brand_id : product.brand_id;
 
-        return '';
-      });
+        var dropDownPromise = metadataBody.map(function(item) {
+          if (item.new_drop_down) {
+            return _this5.modals.brandDropDown.findCreateFind({
+              where: {
+                title: {
+                  $iLike: item.form_value.toLowerCase(),
+                },
+                category_form_id: item.category_form_id,
+                category_id: productBody.category_id,
+                brand_id: product.brand_id,
+              },
+              defaults: {
+                title: item.form_value,
+                category_form_id: item.category_form_id,
+                category_id: productBody.category_id,
+                brand_id: product.brand_id,
+                updated_by: item.updated_by,
+                created_by: item.created_by,
+                status_type: 11,
+              }
+            });
+          }
 
-      return Promise.all(
-          [].concat(_toConsumableArray(dropDownPromise), [brandPromise])).
-          then(function(newItemResult) {
-            var product = productBody;
-            var newBrand = productBody.brand_name ?
-                newItemResult[newItemResult.length - 1][0] :
-                undefined;
-            product.brand_id = newBrand ? newBrand.brand_id : product.brand_id;
-            product = !product.colour_id ?
-                _lodash2.default.omit(product, 'colour_id') :
-                product;
-            product = !product.purchase_cost ?
-                _lodash2.default.omit(product, 'purchase_cost') :
-                product;
-            product = !product.taxes ?
-                _lodash2.default.omit(product, 'taxes') :
-                product;
-            product = !product.document_number ?
-                _lodash2.default.omit(product, 'document_number') :
-                product;
-            product = !product.document_date ?
-                _lodash2.default.omit(product, 'document_date') :
-                product;
-            product = !product.seller_id ?
-                _lodash2.default.omit(product, 'seller_id') :
-                product;
-            var metadata = metadataBody.map(function(mdItem) {
+          return '';
+        });
+        metadata = metadataBody.map(function(mdItem) {
           mdItem = _lodash2.default.omit(mdItem, 'new_drop_down');
           return mdItem;
         });
-            return _this5.modals.products.count({
+        return Promise.all(dropDownPromise);
+      }).then(function() {
+        product = !product.colour_id ?
+            _lodash2.default.omit(product, 'colour_id') :
+            product;
+        product = !product.purchase_cost ?
+            _lodash2.default.omit(product, 'purchase_cost') :
+            product;
+        product = !product.taxes ?
+            _lodash2.default.omit(product, 'taxes') :
+            product;
+        product = !product.document_number ?
+            _lodash2.default.omit(product, 'document_number') :
+            product;
+        product = !product.document_date ?
+            _lodash2.default.omit(product, 'document_date') :
+            product;
+        product = !product.seller_id ?
+            _lodash2.default.omit(product, 'seller_id') :
+            product;
+
+        return _this5.modals.products.count({
           where: product,
-              include: [
-                {
-                  model: _this5.modals.metaData, where: {
-                    $and: metadata,
-                  }, required: true, as: 'metaData',
-                }],
-        }).then(function (count) {
-          if (count === 0) {
-            return _this5.modals.products.create(product);
-          }
-
-          return undefined;
-        }).then(function (productResult) {
-          if (productResult) {
-            product = productResult.toJSON();
-            var metadataPromise = metadata.map(function(mdItem) {
-              mdItem.product_id = product.id;
-              mdItem.status_type = 8;
-
-              return _this5.modals.metaData.create(mdItem);
-            });
-
-            return Promise.all(metadataPromise);
-          }
-
-          return undefined;
-        }).then(function (metaData) {
-          if (metaData) {
-            product.metaData = metaData.map(function(mdItem) {
-              return mdItem.toJSON();
-            });
-            return product;
-          }
-
-          return undefined;
+          include: [
+            {
+              model: _this5.modals.metaData, where: {
+                $and: metadata,
+              }, required: true, as: 'metaData',
+            }],
         });
+      }).then(function(count) {
+        if (count === 0) {
+          console.log({
+            testProduct: product,
+          });
+          return _this5.modals.products.create(product);
+        }
+
+        return undefined;
+      }).then(function(productResult) {
+        if (productResult) {
+          product = productResult.toJSON();
+          var metadataPromise = metadata.map(function(mdItem) {
+            mdItem.product_id = product.id;
+            mdItem.status_type = 8;
+
+            return _this5.modals.metaData.create(mdItem);
+          });
+
+          return Promise.all(metadataPromise);
+        }
+
+        return undefined;
+      }).then(function(metaData) {
+        if (metaData) {
+          product.metaData = metaData.map(function(mdItem) {
+            return mdItem.toJSON();
+          });
+          return product;
+        }
+
+        return undefined;
       });
     }
   }, {
@@ -1256,7 +1259,8 @@ var ProductAdaptor = function () {
           forceUpdate: request.pre.forceUpdate
         };
       }).catch(function (err) {
-        console.log({ API_Logs: err });
+        console.log('Error on ' + new Date() + ' for user ' +
+            (user.id || user.ID) + ' is as follow: \n \n ' + err);
         return {
           status: true,
           message: 'Review Update Failed',
@@ -1313,7 +1317,8 @@ var ProductAdaptor = function () {
           forceUpdate: request.pre.forceUpdate
         };
       }).catch(function (err) {
-        console.log({ API_Logs: err });
+        console.log('Error on ' + new Date() + ' for user ' +
+            (user.id || user.ID) + ' is as follow: \n \n ' + err);
         return {
           status: true,
           message: 'Review Update Failed',
@@ -1357,7 +1362,8 @@ var ProductAdaptor = function () {
           forceUpdate: request.pre.forceUpdate
         };
       }).catch(function (err) {
-        console.log({ API_Logs: err });
+        console.log('Error on ' + new Date() + ' for user ' +
+            (user.id || user.ID) + ' is as follow: \n \n ' + err);
         return {
           status: true,
           message: 'Review Update Failed',
@@ -1615,7 +1621,8 @@ var ProductAdaptor = function () {
           };
         }
       }).catch(function (err) {
-        console.log({ API_Logs: err });
+        console.log('Error on ' + new Date() + ' for user ' +
+            (user.id || user.ID) + ' is as follow: \n \n ' + err);
         return {
           status: false,
           message: 'Unable to retrieve data',

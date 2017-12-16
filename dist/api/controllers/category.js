@@ -58,7 +58,8 @@ var CategoryController = function () {
             });
           }
         }).catch(function (err) {
-          console.log({ API_Logs: err });
+          console.log('Error on ' + new Date() + ' for user ' +
+              (user.id || user.ID) + ' is as follow: \n \n ' + err);
           reply({ status: false, message: 'ISE' });
         });
       } else {

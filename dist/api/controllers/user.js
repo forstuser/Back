@@ -110,12 +110,13 @@ var trackTransaction = function trackTransaction(transactionId, userId) {
 
 var loginOrRegisterUser = function loginOrRegisterUser(userWhere, userInput, trueObject, request, reply) {
   var token = void 0;
+  var updatedUser = void 0;
   return userAdaptor.loginOrRegister(userWhere, userInput).then(function (userData) {
     if (!userData[1]) {
       userData[0].updateAttributes(userInput);
     }
 
-    var updatedUser = userData[0].toJSON();
+    updatedUser = userData[0].toJSON();
     if (!updatedUser.email_verified && updatedUser.email) {
       _notification2.default.sendVerificationMail(trueObject.EmailAddress, updatedUser);
     }
@@ -129,7 +130,9 @@ var loginOrRegisterUser = function loginOrRegisterUser(userWhere, userInput, tru
           request.payload.fcmId).then(function(data) {
         console.log(data);
       }).catch(function (err) {
-        return console.log({ API_Logs: err });
+        return console.log('Error on ' + new Date() + ' for user ' +
+            (updatedUser.id || updatedUser.ID) + ' is as follow: \n ' +
+            JSON.stringify(err.toJSON()));
       });
     }
 
@@ -140,7 +143,8 @@ var loginOrRegisterUser = function loginOrRegisterUser(userWhere, userInput, tru
   }).then(function (result) {
     return reply(result).code(201).header('authorization', replyObject.authorization);
   }).catch(function (err) {
-    console.log(err);
+    console.log('Error on ' + new Date() + ' for user ' +
+        (updatedUser.id || updatedUser.ID) + ' is as follow: \n \n ' + err);
     if (err.authorization) {
       return reply(err).code(401).header('authorization', replyObject.authorization);
     }
@@ -190,7 +194,8 @@ var UserController = function () {
               request.payload.fcmId).then(function(data) {
             console.log(data);
           }).catch(function (err) {
-            console.log({ API_Logs: err });
+            console.log('Error on ' + new Date() + ' for user ' +
+                (user.id || user.ID) + ' is as follow: \n \n ' + err);
           });
         }
 

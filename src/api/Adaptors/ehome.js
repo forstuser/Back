@@ -86,7 +86,9 @@ class EHomeAdaptor {
         forceUpdate: request.pre.forceUpdate,
       };
     }).catch((err) => {
-      console.log({API_Logs: err});
+      console.log(
+          `Error on ${new Date()} for user ${user.id ||
+          user.ID} is as follow: \n \n ${err}`);
       return {
         status: false,
         message: 'EHome restore failed',
@@ -262,7 +264,9 @@ class EHomeAdaptor {
              ${onlineSellerIds}&sortby=${sortBy}&searchvalue=${searchValue}` : '' */
       };
     }).catch((err) => {
-      console.log({API_Logs: err});
+      console.log(
+          `Error on ${new Date()} for user ${user.id ||
+          user.ID} is as follow: \n \n ${err}`);
       return {
         status: false,
         err,

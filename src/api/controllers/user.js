@@ -56,13 +56,14 @@ const trackTransaction = (transactionId, userId) => {
 let loginOrRegisterUser = function(
     userWhere, userInput, trueObject, request, reply) {
   let token;
+  let updatedUser;
   return userAdaptor.loginOrRegister(userWhere,
       userInput).then((userData) => {
     if (!userData[1]) {
       userData[0].updateAttributes(userInput);
     }
 
-    const updatedUser = userData[0].toJSON();
+    updatedUser = userData[0].toJSON();
     if ((!updatedUser.email_verified) && (updatedUser.email)) {
       NotificationAdaptor.sendVerificationMail(trueObject.EmailAddress,
           updatedUser);
@@ -78,7 +79,11 @@ let loginOrRegisterUser = function(
           then((data) => {
             console.log(data);
           }).
-          catch((err) => console.log({API_Logs: err}));
+          catch((err) =>
+              console.log(
+                  `Error on ${new Date()} for user ${updatedUser.id ||
+                  updatedUser.ID} is as follow: \n ${JSON.stringify(
+                      err.toJSON())}`));
     }
 
     trackTransaction(request.payload.transactionId, updatedUser.id);
@@ -92,7 +97,9 @@ let loginOrRegisterUser = function(
         code(201).
         header('authorization', replyObject.authorization);
   }).catch((err) => {
-    console.log(err);
+    console.log(
+        `Error on ${new Date()} for user ${updatedUser.id ||
+        updatedUser.ID} is as follow: \n \n ${err}`);
     if (err.authorization) {
       return reply(err).
           code(401).
@@ -143,7 +150,9 @@ class UserController {
               console.log(data);
             }).
             catch((err) => {
-              console.log({API_Logs: err});
+              console.log(
+                  `Error on ${new Date()} for user ${user.id ||
+                  user.ID} is as follow: \n \n ${err}`);
             });
       }
 

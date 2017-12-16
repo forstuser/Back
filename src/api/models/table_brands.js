@@ -14,6 +14,9 @@ export default (sequelize, DataTypes) => {
         brand_description: {
           type: DataTypes.STRING
         },
+        created_by: {
+          type: DataTypes.INTEGER,
+        },
         updated_by: {
           type: DataTypes.INTEGER,
         },

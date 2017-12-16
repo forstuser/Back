@@ -77,7 +77,9 @@ class BrandController {
           forceUpdate: request.pre.forceUpdate,
         });
       }).catch((err) => {
-        console.log({API_Logs: err});
+        console.log(
+            `Error on ${new Date()} for user ${user.id ||
+            user.ID} is as follow: \n \n ${err}`);
         reply({
           status: false,
           message: 'Something wrong',
@@ -111,7 +113,9 @@ class BrandController {
       }).code(404);
 
     }).catch((err) => {
-      console.log({API_Logs: err});
+      console.log(
+          `Error on ${new Date()} for user ${user.id ||
+          user.ID} is as follow: \n \n ${err}`);
       return reply({
         status: false,
         message: 'Something wrong',

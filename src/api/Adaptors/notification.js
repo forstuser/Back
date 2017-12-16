@@ -174,7 +174,9 @@ class NotificationAdaptor {
              listIndex + 10 ? `consumer/mailbox?pageno=${parseInt(pageNo, 10) + 1}` : '' */
       };
     }).catch((err) => {
-      console.log({API_Logs: err});
+      console.log(
+          `Error on ${new Date()} for user ${user.id ||
+          user.ID} is as follow: \n ${err}`);
       return {
         status: false,
         message: 'Mailbox restore failed',
@@ -841,7 +843,9 @@ class NotificationAdaptor {
 
       return reply({status: true});
     }).catch((err) => {
-      console.log({API_Logs: err});
+      console.log(
+          `Error on ${new Date()} for user ${user.id ||
+          user.ID} is as follow: \n \n ${err}`);
       return reply({status: false});
     });
   }

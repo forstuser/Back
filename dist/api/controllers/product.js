@@ -54,6 +54,7 @@ var ProductController = function () {
           status_type: 11,
           document_number: request.payload.document_number,
           document_date: request.payload.document_date,
+          brand_name: request.payload.brand_name,
           copies: [],
         };
         var metaDataBody = request.payload.metadata ?
@@ -81,7 +82,8 @@ var ProductController = function () {
               }
             }).
             catch(function(err) {
-              console.log(err);
+              console.log('Error on ' + new Date() + ' for user ' +
+                  (user.id || user.ID) + ' is as follow: \n \n ' + err);
               return reply({
                 status: false,
                 message: 'An error occurred in product creation.',
@@ -189,10 +191,8 @@ var ProductController = function () {
                 });
               }).
               catch(function(err) {
-
-                console.log({
-                  apiErr: err,
-                });
+                console.log('Error on ' + new Date() + ' for user ' +
+                    (user.id || user.ID) + ' is as follow: \n \n ' + err);
 
                 return reply({
                   status: false,

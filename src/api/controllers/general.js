@@ -37,7 +37,7 @@ class GeneralController {
             category_id: request.query.categoryId,
             brand_id: request.query.brandId,
             $or: {
-              status_type: 5,
+              status_type: 1,
               $and: {
                 status_type: 11,
                 updated_by: user.id || user.ID,
@@ -75,9 +75,9 @@ class GeneralController {
           });
         }).
         catch((err) => {
-          console.log({
-            api_err: err,
-          });
+          console.log(
+              `Error on ${new Date()} for user ${user.id ||
+              user.ID} is as follow: \n \n ${err}`);
 
           return reply({
             status: false,
@@ -95,7 +95,9 @@ class GeneralController {
     }).then(() => {
       reply({status: true}).code(201);
     }).catch((err) => {
-      console.log({API_Logs: err});
+      console.log(
+          `Error on ${new Date()} for user ${user.id ||
+          user.ID} is as follow: \n \n ${err}`);
       reply({status: false}).code(500);
     });
   }
@@ -110,7 +112,9 @@ class GeneralController {
     }).then((faq) => {
       reply({status: true, faq}).code(200);
     }).catch((err) => {
-      console.log({API_Logs: err});
+      console.log(
+          `Error on ${new Date()} for user ${user.id ||
+          user.ID} is as follow: \n \n ${err}`);
       reply({status: false}).code(200);
     });
   }

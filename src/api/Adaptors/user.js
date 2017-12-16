@@ -145,7 +145,9 @@ class UserAdaptor {
         forceUpdate: request.pre.forceUpdate,
       };
     }).catch((err) => {
-      console.log({API_Logs: err});
+      console.log(
+          `Error on ${new Date()} for user ${user.id ||
+          user.ID} is as follow: \n \n ${err}`);
       return {
         status: false,
         message: 'User Data Retrieval Failed',
@@ -241,7 +243,9 @@ class UserAdaptor {
         forceUpdate: request.pre.forceUpdate,
       }).code(200);
     }).catch((err) => {
-      console.log({API_Logs: err});
+      console.log(
+          `Error on ${new Date()} for user ${user.id ||
+          user.ID} is as follow: \n \n ${err}`);
       if (err && err.errors && err.errors.findIndex(
               (item) => item.message === 'email must be unique') !== -1) {
         return reply({

@@ -149,7 +149,9 @@ class DashboardAdaptor {
         product: !!(result[4] && result[4] > 0) ? product : {},
       };
     }).catch(err => {
-      console.log(err);
+      console.log(
+          `Error on ${new Date()} for user ${user.id ||
+          user.ID} is as follow: \n \n ${err}`);
       return ({
         status: false,
         message: 'Dashboard restore failed',
@@ -214,7 +216,9 @@ class DashboardAdaptor {
           forceUpdate: request.pre.forceUpdate,
         };
       }).catch((err) => {
-        console.log({API_Logs: err});
+        console.log(
+            `Error on ${new Date()} for user ${user.id ||
+            user.ID} is as follow: \n \n ${err}`);
         return {
           status: false,
           authorization: token,
