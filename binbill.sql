@@ -582,7 +582,7 @@ CREATE TABLE IF NOT EXISTS `table_consumer_bill_products` (
   `bill_product_id` int(11) NOT NULL AUTO_INCREMENT,
   `bill_detail_id` int(11) NOT NULL,
   `product_name` varchar(200) NOT NULL,
-  `master_category_id` int(11) NOT NULL,
+  `main_category_id` int(11) NOT NULL,
   `category_id` int(11) NOT NULL,
   `brand_id` int(11) NOT NULL,
   `color_id` int(11) NOT NULL,
@@ -591,14 +591,14 @@ CREATE TABLE IF NOT EXISTS `table_consumer_bill_products` (
   `tag` varchar(200) NOT NULL,
   `status_id` int(11) NOT NULL,
   PRIMARY KEY (`bill_product_id`),
-  KEY `bill_id` (`bill_detail_id`,`master_category_id`,`category_id`)
+  KEY `bill_id` (`bill_detail_id`,`main_category_id`,`category_id`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=2 ;
 
 --
 -- Dumping data for table `table_consumer_bill_products`
 --
 
-INSERT INTO `table_consumer_bill_products` (`bill_product_id`, `bill_detail_id`, `product_name`, `master_category_id`, `category_id`, `brand_id`, `color_id`, `value_of_purchase`, `taxes`, `tag`, `status_id`) VALUES
+INSERT INTO `table_consumer_bill_products` (`bill_product_id`, `bill_detail_id`, `product_name`, `main_category_id`, `category_id`, `brand_id`, `color_id`, `value_of_purchase`, `taxes`, `tag`, `status_id`) VALUES
 (1, 1, 'Text', 1, 4, 1, 1, 1000.00, 10.00, 'dsadad', 1);
 
 -- --------------------------------------------------------
