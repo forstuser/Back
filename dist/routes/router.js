@@ -100,9 +100,9 @@ function prepareServiceCenterRoutes(
             brandId: [_joi2.default.number(), _joi2.default.allow(null)],
             output: 'data',
             parse: true,
-          },
-        },
-      },
+          }
+        }
+      }
     });
 
     serviceCenterRoutes.push({
@@ -116,7 +116,7 @@ function prepareServiceCenterRoutes(
             assign: 'forceUpdate',
           }],
         handler: _serviceCenter2.default.retrieveServiceCenters,
-      },
+      }
     });
     serviceCenterRoutes.push({
       method: 'GET',
@@ -129,7 +129,7 @@ function prepareServiceCenterRoutes(
             assign: 'forceUpdate',
           }],
         handler: _serviceCenter2.default.retrieveServiceCenterFilters,
-      },
+      }
     });
   }
 }
@@ -148,7 +148,7 @@ function prepareBrandRoutes(brandController, brandRoutes) {
             assign: 'forceUpdate',
           }],
         handler: _brand2.default.getBrands,
-      },
+      }
     });
 
     brandRoutes.push({
@@ -161,7 +161,7 @@ function prepareBrandRoutes(brandController, brandRoutes) {
             assign: 'forceUpdate',
           }],
         handler: _brand2.default.getBrandASC,
-      },
+      }
     });
   }
 }
@@ -180,7 +180,7 @@ function prepareCategoryRoutes(categoryController, categoryRoutes) {
             assign: 'forceUpdate',
           }],
         handler: _category2.default.getCategories,
-      },
+      }
     });
   }
 }
@@ -210,7 +210,7 @@ function prepareAuthRoutes(userController, authRoutes) {
             PhoneNo: _joi2.default.string().required(),
             output: 'data',
             parse: true,
-          },
+          }
         },
         plugins: {
           'hapi-swagger': {
@@ -235,9 +235,9 @@ function prepareAuthRoutes(userController, authRoutes) {
                 code: 500,
                 message: 'Internal Server Error',
               }],
-          },
-        },
-      },
+          }
+        }
+      }
     });
 
     /*Update FCM of consumer*/
@@ -258,7 +258,7 @@ function prepareAuthRoutes(userController, authRoutes) {
             fcmId: [_joi2.default.string(), _joi2.default.allow(null)],
             output: 'data',
             parse: true,
-          },
+          }
         },
         plugins: {
           'hapi-swagger': {
@@ -283,9 +283,9 @@ function prepareAuthRoutes(userController, authRoutes) {
                 code: 500,
                 message: 'Internal Server Error',
               }],
-          },
-        },
-      },
+          }
+        }
+      }
     });
 
     /*Update Consumer Profile*/
@@ -314,7 +314,7 @@ function prepareAuthRoutes(userController, authRoutes) {
             addresses: _joi2.default.array(),
             output: 'data',
             parse: true,
-          },
+          }
         },
         plugins: {
           'hapi-swagger': {
@@ -339,9 +339,9 @@ function prepareAuthRoutes(userController, authRoutes) {
                 code: 500,
                 message: 'Internal Server Error',
               }],
-          },
-        },
-      },
+          }
+        }
+      }
     });
 
     /*Retrieve Profile of Consumer*/
@@ -380,9 +380,9 @@ function prepareAuthRoutes(userController, authRoutes) {
                 code: 500,
                 message: 'Internal Server Error',
               }],
-          },
-        },
-      },
+          }
+        }
+      }
     });
 
     /*Verify Email Secret of Consumer*/
@@ -415,9 +415,9 @@ function prepareAuthRoutes(userController, authRoutes) {
                 code: 500,
                 message: 'Internal Server Error',
               }],
-          },
-        },
-      },
+          }
+        }
+      }
     });
 
     /*Retrieve Near By of User*/
@@ -456,9 +456,9 @@ function prepareAuthRoutes(userController, authRoutes) {
                 code: 500,
                 message: 'Internal Server Error',
               }],
-          },
-        },
-      },
+          }
+        }
+      }
     });
 
     /*Validate Consumer OTP*/
@@ -485,7 +485,7 @@ function prepareAuthRoutes(userController, authRoutes) {
             TrueSecret: _joi2.default.string(),
             output: 'data',
             parse: true,
-          },
+          }
         },
         plugins: {
           'hapi-swagger': {
@@ -510,9 +510,9 @@ function prepareAuthRoutes(userController, authRoutes) {
                 code: 500,
                 message: 'Internal Server Error',
               }],
-          },
-        },
-      },
+          }
+        }
+      }
     });
 
     /*Logout Consumer from app*/
@@ -534,7 +534,7 @@ function prepareAuthRoutes(userController, authRoutes) {
             fcmId: [_joi2.default.string()],
             output: 'data',
             parse: true,
-          }).allow(null),
+          }).allow(null)
         },
         plugins: {
           'hapi-swagger': {
@@ -559,9 +559,9 @@ function prepareAuthRoutes(userController, authRoutes) {
                 code: 500,
                 message: 'Internal Server Error',
               }],
-          },
-        },
-      },
+          }
+        }
+      }
     });
   }
 }
@@ -591,8 +591,8 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
           allow: 'multipart/form-data',
           failAction: 'log',
           maxBytes: 209715200,
-        },
-      },
+        }
+      }
     });
 
     /*Allow user to upload document*/
@@ -618,8 +618,8 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
           allow: 'multipart/form-data',
           failAction: 'log',
           maxBytes: 209715200,
-        },
-      },
+        }
+      }
     });
 
     /*Retrieve user job copies*/
@@ -634,7 +634,7 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
             assign: 'forceUpdate',
           }],
         handler: _upload2.default.retrieveFiles,
-      },
+      }
     });
 
     /*Allow user to delete job files*/
@@ -649,7 +649,7 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
             assign: 'forceUpdate',
           }],
         handler: _upload2.default.deleteFile,
-      },
+      }
     });
 
     /*Retrieve User Image*/
@@ -664,7 +664,7 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
             assign: 'forceUpdate',
           }],
         handler: _upload2.default.retrieveUserImage,
-      },
+      }
     });
 
     /*Retrieve Category images*/
@@ -673,7 +673,7 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
       path: '/categories/{id}/images/{type}',
       config: {
         handler: _upload2.default.retrieveCategoryImage,
-      },
+      }
     });
   }
 }
@@ -693,7 +693,7 @@ function prepareDashboardRoutes(dashboardController, dashboardRoutes) {
             assign: 'forceUpdate',
           }],
         handler: _dashboard2.default.getDashboard,
-      },
+      }
     });
 
     /*Retrieve E-Home of consumer*/
@@ -708,7 +708,7 @@ function prepareDashboardRoutes(dashboardController, dashboardRoutes) {
             assign: 'forceUpdate',
           }],
         handler: _dashboard2.default.getEHome,
-      },
+      }
     });
 
     /*Retrieve Product list for categories*/
@@ -723,7 +723,7 @@ function prepareDashboardRoutes(dashboardController, dashboardRoutes) {
             assign: 'forceUpdate',
           }],
         handler: _dashboard2.default.getProductsInCategory,
-      },
+      }
     });
 
     /*Retrieve mails of consumer*/
@@ -738,7 +738,7 @@ function prepareDashboardRoutes(dashboardController, dashboardRoutes) {
             assign: 'forceUpdate',
           }],
         handler: _dashboard2.default.getMailbox,
-      },
+      }
     });
 
     /*Mark mail of consumer read*/
@@ -761,9 +761,9 @@ function prepareDashboardRoutes(dashboardController, dashboardRoutes) {
                 min(0),
             output: 'data',
             parse: true,
-          },
-        },
-      },
+          }
+        }
+      }
     });
 
     /*Send notification to consumer*/
@@ -784,9 +784,9 @@ function prepareDashboardRoutes(dashboardController, dashboardRoutes) {
             data: _joi2.default.object(),
             output: 'data',
             parse: true,
-          }).allow(null),
-        },
-      },
+          }).allow(null)
+        }
+      }
     });
   }
 }
@@ -816,7 +816,7 @@ function prepareProductRoutes(productController, productRoutes) {
             comments: [_joi2.default.string(), _joi2.default.allow(null)],
             output: 'data',
             parse: true,
-          },
+          }
         },
         plugins: {
           'hapi-swagger': {
@@ -841,9 +841,9 @@ function prepareProductRoutes(productController, productRoutes) {
                 code: 500,
                 message: 'Internal Server Error',
               }],
-          },
-        },
-      },
+          }
+        }
+      }
     });
 
     productRoutes.push({
@@ -881,9 +881,9 @@ function prepareProductRoutes(productController, productRoutes) {
                 code: 500,
                 message: 'Internal Server Error',
               }],
-          },
-        },
-      },
+          }
+        }
+      }
     });
 
     productRoutes.push({
@@ -921,9 +921,9 @@ function prepareProductRoutes(productController, productRoutes) {
                 code: 500,
                 message: 'Internal Server Error',
               }],
-          },
-        },
-      },
+          }
+        }
+      }
     });
 
     productRoutes.push({
@@ -956,9 +956,9 @@ function prepareProductRoutes(productController, productRoutes) {
               _joi2.default.allow(null)],
             document_date: [_joi2.default.string(), _joi2.default.allow(null)],
             metadata: [_joi2.default.array(), _joi2.default.allow(null)],
-          },
-        },
-      },
+          }
+        }
+      }
     });
   }
 }
@@ -1004,9 +1004,9 @@ function prepareInsightRoutes(insightController, insightRoutes) {
                 code: 500,
                 message: 'Internal Server Error',
               }],
-          },
-        },
-      },
+          }
+        }
+      }
     });
     insightRoutes.push({
       method: 'GET',
@@ -1043,9 +1043,9 @@ function prepareInsightRoutes(insightController, insightRoutes) {
                 code: 500,
                 message: 'Internal Server Error',
               }],
-          },
-        },
-      },
+          }
+        }
+      }
     });
   }
 }
@@ -1064,9 +1064,9 @@ function prepareGeneralRoutes(generalController, generalRoutes) {
             email: [_joi2.default.string().email(), _joi2.default.allow(null)],
             phone: _joi2.default.string().required(),
             message: [_joi2.default.string(), _joi2.default.allow(null)],
-          },
-        },
-      },
+          }
+        }
+      }
     });
 
     generalRoutes.push({
@@ -1075,7 +1075,7 @@ function prepareGeneralRoutes(generalController, generalRoutes) {
       config: {
         handler: _general2.default.retrieveFAQs,
         description: 'Retrieve FAQ\'s',
-      },
+      }
     });
 
     generalRoutes.push({
@@ -1084,7 +1084,7 @@ function prepareGeneralRoutes(generalController, generalRoutes) {
       config: {
         handler: _general2.default.retrieveReferenceData,
         description: 'Retrieve Reference data',
-      },
+      }
     });
   }
 }
@@ -1173,9 +1173,9 @@ exports.default = function(app, modals) {
                 code: 500,
                 message: 'Internal Server Error',
               }],
-          },
-        },
-      },
+          }
+        }
+      }
     });
   }
 

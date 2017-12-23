@@ -20,7 +20,7 @@ exports.default = function(sequelize, DataTypes) {
     updatedAt: {
       type: DataTypes.DATE,
       defaultValue: sequelize.literal('NOW()'),
-    },
+    }
   }, {
     freezeTableName: true,
     defaultPrimaryKey: true,

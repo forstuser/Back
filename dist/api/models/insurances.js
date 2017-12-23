@@ -67,7 +67,7 @@ exports.default = function(sequelize, DataTypes) {
     },
     copies: {
       type: DataTypes.ARRAY(DataTypes.JSONB),
-    },
+    }
   }, {
     freezeTableName: true,
     defaultPrimaryKey: true,

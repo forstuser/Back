@@ -361,9 +361,9 @@ var NotificationAdaptor = function() {
               $notIn: [3, 9],
             },
             notification_id: notificationIds,
-          },
+          }
         });
-      },
+      }
     }, {
       key: 'createNotifications',
       value: function createNotifications(days) {
@@ -857,7 +857,7 @@ var NotificationAdaptor = function() {
               $ne: 3,
             },
             email_secret: emailSecret,
-          },
+          }
         }).then(function(result) {
           result.updateAttributes({
             email_verified: true,
@@ -869,7 +869,7 @@ var NotificationAdaptor = function() {
               (user.id || user.ID) + ' is as follow: \n \n ' + err);
           return reply({status: false});
         });
-      },
+      }
     }], [
     {
       key: 'sendVerificationMail',

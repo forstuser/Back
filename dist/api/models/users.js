@@ -25,7 +25,7 @@ exports.default = function(sequelize, DataTypes) {
       unique: true,
       validate: {
         isEmail: true,
-      },
+      }
     },
     location: {
       type: DataTypes.STRING,
@@ -47,7 +47,7 @@ exports.default = function(sequelize, DataTypes) {
       unique: true,
       validate: {
         is: /^(\+91-|\+91|0)?\d{10}$/,
-      },
+      }
     },
     password: {
       type: DataTypes.STRING,
@@ -80,7 +80,7 @@ exports.default = function(sequelize, DataTypes) {
     updated_at: {
       type: DataTypes.DATE,
       defaultValue: sequelize.literal('NOW()'),
-    },
+    }
   }, {
     freezeTableName: true,
     defaultPrimaryKey: true,
@@ -94,8 +94,8 @@ exports.default = function(sequelize, DataTypes) {
         user.updateAttributes({
           last_login_at: _moment2.default.utc().toISOString(),
         });
-      },
-    },
+      }
+    }
   });
 
   users.associate = function(models) {

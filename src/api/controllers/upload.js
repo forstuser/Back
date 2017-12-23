@@ -183,8 +183,8 @@ class UploadController {
           user_id: user.id || user.ID,
           updated_by: user.id || user.ID,
           uploaded_by: user.id || user.ID,
-      user_status: 8,
-      admin_status: 4,
+          user_status: 8,
+          admin_status: 4,
           comments: request.query ?
               request.query.productId ?
                   `This job is sent for product id ${request.query.productId}` :
@@ -192,7 +192,7 @@ class UploadController {
                       `This job is sent for product name ${request.query.productName}` :
                       '' :
               ``,
-        }
+        },
     ).then((result) => {
       if (Array.isArray(fileData)) {
         const fileNames = [];
@@ -261,10 +261,12 @@ class UploadController {
             });
           }
 
-          notificationAdaptor.sendMailOnUpload(
-              'New Job has been created with multiple files for consumer',
-              'sagar@binbill.com;pranjal@binbill.com;anu.gupta@binbill.com',
-              user, result.id);
+          if (process.env.NODE_ENV === 'production') {
+            notificationAdaptor.sendMailOnUpload(
+                'New Job has been created with multiple files for consumer',
+                'sagar@binbill.com;pranjal@binbill.com;anu.gupta@binbill.com',
+                user, result.id);
+          }
           return reply({
             status: true,
             message: 'Uploaded Successfully',
@@ -339,10 +341,12 @@ class UploadController {
                 });
               }
 
-              notificationAdaptor.sendMailOnUpload(
-                  'New Job has been added with single file for consumer',
-                  'sagar@binbill.com;pranjal@binbill.com;anu.gupta@binbill.com',
-                  user, result.id);
+              if (process.env.NODE_ENV === 'production') {
+                notificationAdaptor.sendMailOnUpload(
+                    'New Job has been added with single file for consumer',
+                    'sagar@binbill.com;pranjal@binbill.com;anu.gupta@binbill.com',
+                    user, result.id);
+              }
               return reply({
                 status: true,
                 job_id: result.id,

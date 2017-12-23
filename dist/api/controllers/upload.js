@@ -320,10 +320,12 @@ var UploadController = function() {
                 });
               }
 
-              _notification2.default.sendMailOnUpload(
-                  'New Job has been created with multiple files for consumer',
-                  'sagar@binbill.com;pranjal@binbill.com;anu.gupta@binbill.com',
-                  user, result.id);
+              if (process.env.NODE_ENV === 'production') {
+                _notification2.default.sendMailOnUpload(
+                    'New Job has been created with multiple files for consumer',
+                    'sagar@binbill.com;pranjal@binbill.com;anu.gupta@binbill.com',
+                    user, result.id);
+              }
               return reply({
                 status: true,
                 message: 'Uploaded Successfully',
@@ -399,10 +401,12 @@ var UploadController = function() {
                         });
                       }
 
-                      _notification2.default.sendMailOnUpload(
-                          'New Job has been added with single file for consumer',
-                          'sagar@binbill.com;pranjal@binbill.com;anu.gupta@binbill.com',
-                          user, result.id);
+                      if (process.env.NODE_ENV === 'production') {
+                        _notification2.default.sendMailOnUpload(
+                            'New Job has been added with single file for consumer',
+                            'sagar@binbill.com;pranjal@binbill.com;anu.gupta@binbill.com',
+                            user, result.id);
+                      }
                       return reply({
                         status: true,
                         job_id: result.id,

@@ -62,7 +62,7 @@ exports.default = function(sequelize, DataTypes) {
     },
     updated_by: {
       type: DataTypes.INTEGER,
-    },
+    }
   }, {
     freezeTableName: true,
     defaultPrimaryKey: true,
@@ -74,8 +74,8 @@ exports.default = function(sequelize, DataTypes) {
         user.updateAttributes({
           last_login: _moment2.default.utc().toISOString(),
         });
-      },
-    },
+      }
+    }
   });
 
   userAddress.associate = function(models) {
