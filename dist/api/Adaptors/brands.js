@@ -69,9 +69,9 @@ var BrandAdaptor = function() {
         }).then(function(brandResult) {
           return brandResult.map(function(item) {
             return item.toJSON();
-          });
         });
-      },
+        });
+      }
     }, {
       key: 'retrieveASCBrands',
       value: function retrieveASCBrands(options) {
@@ -116,7 +116,6 @@ var BrandAdaptor = function() {
           return undefined;
         }).then(function(result) {
           if (result) {
-            console.log(result[1][0]);
             brand.details = result[0];
             brand.serviceCenters = result[1];
 

@@ -61,7 +61,9 @@ var BrandController = function() {
       key: 'getBrands',
       value: function getBrands(request, reply) {
         var user = _shared2.default.verifyAuthorization(request.headers);
-        if (!user) {
+        var isWebMode = request.params && request.params.mode &&
+            request.params.mode.toLowerCase() === 'web';
+        if (!user && !isWebMode) {
           reply({status: false, message: 'Unauthorized'});
         } else if (!request.pre.forceUpdate) {
           var categoryId = request.query.categoryid || undefined;

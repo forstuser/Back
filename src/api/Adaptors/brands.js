@@ -65,7 +65,6 @@ class BrandAdaptor {
       return undefined;
     }).then((result) => {
       if (result) {
-        console.log(result[1][0]);
         brand.details = result[0];
         brand.serviceCenters = result[1];
 

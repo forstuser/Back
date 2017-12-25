@@ -3,8 +3,6 @@
 let MODAL;
 
 const checkAppVersion = (request, reply) => {
-	// console.log("here");
-	// console.log(request.headers);
 	if (request.headers.app_version !== undefined) {
 		const currentAppVersion = (!isNaN(parseInt(request.headers.app_version)) ? parseInt(request.headers.app_version) : null);
 		console.log(`CURRENT APP VERSION = ${currentAppVersion}`);

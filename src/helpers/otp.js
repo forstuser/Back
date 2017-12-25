@@ -33,7 +33,8 @@ const sendOTPToUser = mobileNo => Bluebird.try(() => {
   const phone = `91${mobileNo}`;
   const otp = generateOTP(6); // OTP of length = 6
   return sendOTP.sendAsync(phone, 'BINBILL', otp).catch((err) => {
-    console.log({API_Logs: err});
+    console.log(
+        `Error on ${new Date()} is as follow: \n \n ${err}`);
 
     return sendOTP.retryAsync(phone, true);
   });

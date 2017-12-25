@@ -109,7 +109,6 @@ var NotificationAdaptor = function() {
           this.prepareNotificationData(user)]).then(function(result) {
           var upcomingServices = result[0].map(function(elem) {
             if (elem.productType === 4) {
-              console.log(elem);
               var dueAmountArr = elem.productMetaData.filter(function(e) {
                 return e.name.toLowerCase() === 'due amount';
               });
@@ -193,8 +192,10 @@ var NotificationAdaptor = function() {
               var metaData = metaItem;
               if (metaData.name.toLowerCase().includes('due') &&
                   metaData.name.toLowerCase().includes('date') &&
-                  (0, _moment2.default)(metaData.value).isValid()) {
-                var dueDateTime = (0, _moment2.default)(metaData.value);
+                  (0, _moment2.default)(metaData.value,
+                      _moment2.default.ISO_8601).isValid()) {
+                var dueDateTime = (0, _moment2.default)(metaData.value,
+                    _moment2.default.ISO_8601);
                 product.dueDate = metaData.value;
                 product.dueIn = dueDateTime.diff(_moment2.default.utc(),
                     'days');
@@ -225,8 +226,10 @@ var NotificationAdaptor = function() {
           });
           var amcs = result[1].map(function(item) {
             var amc = item;
-            if ((0, _moment2.default)(amc.expiryDate).isValid()) {
-              var dueDateTime = (0, _moment2.default)(amc.expiryDate);
+            if ((0, _moment2.default)(amc.expiryDate,
+                    _moment2.default.ISO_8601).isValid()) {
+              var dueDateTime = (0, _moment2.default)(amc.expiryDate,
+                  _moment2.default.ISO_8601);
               amc.dueDate = amc.expiryDate;
               amc.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
               amc.productType = 3;
@@ -243,8 +246,10 @@ var NotificationAdaptor = function() {
 
           var insurances = result[2].map(function(item) {
             var insurance = item;
-            if ((0, _moment2.default)(insurance.expiryDate).isValid()) {
-              var dueDateTime = (0, _moment2.default)(insurance.expiryDate);
+            if ((0, _moment2.default)(insurance.expiryDate,
+                    _moment2.default.ISO_8601).isValid()) {
+              var dueDateTime = (0, _moment2.default)(insurance.expiryDate,
+                  _moment2.default.ISO_8601);
               insurance.dueDate = insurance.expiryDate;
               insurance.dueIn = dueDateTime.diff(_moment2.default.utc(),
                   'days');
@@ -262,8 +267,10 @@ var NotificationAdaptor = function() {
 
           var warranties = result[3].map(function(item) {
             var warranty = item;
-            if ((0, _moment2.default)(warranty.expiryDate).isValid()) {
-              var dueDateTime = (0, _moment2.default)(warranty.expiryDate);
+            if ((0, _moment2.default)(warranty.expiryDate,
+                    _moment2.default.ISO_8601).isValid()) {
+              var dueDateTime = (0, _moment2.default)(warranty.expiryDate,
+                  _moment2.default.ISO_8601);
 
               warranty.dueDate = warranty.expiryDate;
               warranty.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
@@ -325,6 +332,12 @@ var NotificationAdaptor = function() {
                   this.modals.sequelize.literal('"product"."id"')),
               'productURL'],
             [
+              this.modals.sequelize.literal('"product"."main_category_id"'),
+              'masterCategoryId'],
+            [
+              this.modals.sequelize.literal('"product"."document_date"'),
+              'purchaseDate'],
+            [
               'due_date',
               'dueDate'],
             'taxes',
@@ -359,7 +372,7 @@ var NotificationAdaptor = function() {
             user_id: user.id || user.ID,
             status_id: {
               $notIn: [3, 9],
-            },
+          },
             notification_id: notificationIds,
           }
         });
@@ -372,7 +385,6 @@ var NotificationAdaptor = function() {
         return this.retrieveCronNotification(days).then(function(result) {
           var upcomingServices = result.map(function(elem) {
             if (elem.productType === 4) {
-              console.log(elem);
               var dueAmountArr = elem.productMetaData.filter(function(e) {
                 return e.name.toLowerCase() === 'due amount';
               });
@@ -460,7 +472,6 @@ var NotificationAdaptor = function() {
         return this.retrieveMissingDocNotification(days).then(function(result) {
           var upcomingServices = result.map(function(elem) {
             if (elem.productType === 4) {
-              console.log(elem);
               var dueAmountArr = elem.productMetaData.filter(function(e) {
                 return e.name.toLowerCase() === 'due amount';
               });
@@ -588,7 +599,7 @@ var NotificationAdaptor = function() {
       },
     }, {
       key: 'retrieveMissingDocNotification',
-      value: function retrieveMissingDocNotification(days) {
+      value: function retrieveMissingDocNotification() {
         return this.productAdaptor.retrieveMissingDocProducts({
           status_type: [5, 8, 11],
         }).then(function(result) {
@@ -673,8 +684,10 @@ var NotificationAdaptor = function() {
               var metaData = metaItem;
               if (metaData.name.toLowerCase().includes('due') &&
                   metaData.name.toLowerCase().includes('date') &&
-                  (0, _moment2.default)(metaData.value).isValid()) {
-                var dueDateTime = (0, _moment2.default)(metaData.value);
+                  (0, _moment2.default)(metaData.value,
+                      _moment2.default.ISO_8601).isValid()) {
+                var dueDateTime = (0, _moment2.default)(metaData.value,
+                    _moment2.default.ISO_8601);
                 product.dueDate = metaData.value;
                 product.dueIn = dueDateTime.diff(_moment2.default.utc(),
                     'days');
@@ -705,8 +718,10 @@ var NotificationAdaptor = function() {
           });
           var amcs = result[1].map(function(item) {
             var amc = item;
-            if ((0, _moment2.default)(amc.expiryDate).isValid()) {
-              var dueDateTime = (0, _moment2.default)(amc.expiryDate);
+            if ((0, _moment2.default)(amc.expiryDate,
+                    _moment2.default.ISO_8601).isValid()) {
+              var dueDateTime = (0, _moment2.default)(amc.expiryDate,
+                  _moment2.default.ISO_8601);
               amc.dueDate = amc.expiryDate;
               amc.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
               amc.productType = 3;
@@ -720,8 +735,10 @@ var NotificationAdaptor = function() {
 
           var insurances = result[2].map(function(item) {
             var insurance = item;
-            if ((0, _moment2.default)(insurance.expiryDate).isValid()) {
-              var dueDateTime = (0, _moment2.default)(insurance.expiryDate);
+            if ((0, _moment2.default)(insurance.expiryDate,
+                    _moment2.default.ISO_8601).isValid()) {
+              var dueDateTime = (0, _moment2.default)(insurance.expiryDate,
+                  _moment2.default.ISO_8601);
               insurance.dueDate = insurance.expiryDate;
               insurance.dueIn = dueDateTime.diff(_moment2.default.utc(),
                   'days');
@@ -735,8 +752,10 @@ var NotificationAdaptor = function() {
 
           var warranties = result[3].map(function(item) {
             var warranty = item;
-            if ((0, _moment2.default)(warranty.expiryDate).isValid()) {
-              var dueDateTime = (0, _moment2.default)(warranty.expiryDate);
+            if ((0, _moment2.default)(warranty.expiryDate,
+                    _moment2.default.ISO_8601).isValid()) {
+              var dueDateTime = (0, _moment2.default)(warranty.expiryDate,
+                  _moment2.default.ISO_8601);
 
               warranty.dueDate = warranty.expiryDate;
               warranty.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
@@ -778,7 +797,7 @@ var NotificationAdaptor = function() {
           };
           (0, _request2.default)(options, function(error, response, body) {
             if (!(!error && response.statusCode === 200)) {
-              console.log({
+              console.log('Error on ' + new Date() + ' is as follow: \n \n ' + {
                 error: error,
                 userId: userId,
                 user: JSON.stringify(result),
@@ -855,7 +874,7 @@ var NotificationAdaptor = function() {
           where: {
             user_status_type: {
               $ne: 3,
-            },
+          },
             email_secret: emailSecret,
           }
         }).then(function(result) {
@@ -898,7 +917,7 @@ var NotificationAdaptor = function() {
       },
     }, {
       key: 'sendMailOnUpload',
-      value: function sendMailOnUpload(subject, email, user, jobId) {
+      value: function sendMailOnUpload(subject, email) {
         var smtpTransporter = _nodemailer2.default.createTransport(
             (0, _nodemailerSmtpTransport2.default)({
               service: 'gmail',
@@ -971,7 +990,8 @@ var NotificationAdaptor = function() {
               status: true,
             };
           } else {
-            console.log(error);
+            console.log('Error on ' + new Date() + ' is as follow: \n \n ' +
+                error);
           }
         });
       },

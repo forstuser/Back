@@ -7,8 +7,6 @@ Object.defineProperty(exports, '__esModule', {
 var MODAL = void 0;
 
 var checkAppVersion = function checkAppVersion(request, reply) {
-  // console.log("here");
-  // console.log(request.headers);
   if (request.headers.app_version !== undefined) {
     var currentAppVersion = !isNaN(parseInt(request.headers.app_version)) ?
         parseInt(request.headers.app_version) :

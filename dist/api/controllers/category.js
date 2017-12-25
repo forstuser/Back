@@ -51,7 +51,9 @@ var CategoryController = function() {
       key: 'getCategories',
       value: function getCategories(request, reply) {
         var user = _shared2.default.verifyAuthorization(request.headers);
-        if (!user) {
+        var isWebMode = request.params && request.params.mode &&
+            request.params.mode.toLowerCase() === 'web';
+        if (!user && !isWebMode) {
           reply({
             status: false,
             message: 'Unauthorized',
@@ -60,8 +62,8 @@ var CategoryController = function() {
         } else if (!request.pre.forceUpdate) {
           var condition = void 0;
 
-          if (request.query.brandid) {
-            condition = '= ' + request.query.brandid;
+          if (request.query.brandid || request.query.brandId) {
+            condition = '= ' + (request.query.brandid || request.query.brandId);
           } else {
             condition = 'IS NOT NULL';
           }

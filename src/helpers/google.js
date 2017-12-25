@@ -27,11 +27,8 @@ const distanceMatrix = (origins, destinations) => {
 
 	return Bluebird.all(promises).then((result) => {
 		const rows = result.map((elem) => {
-			// console.log(util.inspect(elem, false, null));
 			return elem.json.rows;
 		});
-    // console.log("~~~~~~~~");
-		// console.log(util.inspect(flattenedRows, false, null));
 
     return _.chain(rows).flatten().map((elem) => {
       return elem.elements;

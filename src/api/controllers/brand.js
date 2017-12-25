@@ -16,7 +16,9 @@ class BrandController {
 
   static getBrands(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (!user) {
+    const isWebMode = (request.params && request.params.mode &&
+        request.params.mode.toLowerCase() === 'web');
+    if (!user && !isWebMode) {
       reply({status: false, message: 'Unauthorized'});
     } else if (!request.pre.forceUpdate) {
       const categoryId = request.query.categoryid || undefined;

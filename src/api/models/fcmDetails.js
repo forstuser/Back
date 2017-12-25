@@ -22,6 +22,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DATE,
       defaultValue: sequelize.literal('NOW()'),
     },
+    platform_id: {
+      type: DataTypes.INTEGER,
+      defaultValue: 1,
+    },
   }, {
     freezeTableName: true,
     tableName: 'fcm_details',

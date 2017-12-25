@@ -45,7 +45,7 @@ class NotificationAdaptor {
     smtpTransporter.sendMail(mailOptions);
   }
 
-  static sendMailOnUpload(subject, email, user, jobId) {
+  static sendMailOnUpload(subject, email) {
     const smtpTransporter = nodemailer.createTransport(smtpTransport({
       service: 'gmail',
       auth: {
@@ -114,7 +114,7 @@ class NotificationAdaptor {
           status: true,
         };
       } else {
-        console.log(error);
+        console.log(`Error on ${new Date()} is as follow: \n \n ${error}`);
       }
     });
   }
@@ -126,7 +126,6 @@ class NotificationAdaptor {
     ]).then((result) => {
       const upcomingServices = result[0].map((elem) => {
         if (elem.productType === 4) {
-          console.log(elem);
           const dueAmountArr = elem.productMetaData.filter((e) => {
             return e.name.toLowerCase() === 'due amount';
           });
@@ -212,8 +211,8 @@ class NotificationAdaptor {
           const metaData = metaItem;
           if (metaData.name.toLowerCase().includes('due') &&
               metaData.name.toLowerCase().includes('date') &&
-              moment(metaData.value).isValid()) {
-            const dueDateTime = moment(metaData.value);
+              moment(metaData.value, moment.ISO_8601).isValid()) {
+            const dueDateTime = moment(metaData.value, moment.ISO_8601);
             product.dueDate = metaData.value;
             product.dueIn = dueDateTime.diff(moment.utc(), 'days');
           }
@@ -242,8 +241,8 @@ class NotificationAdaptor {
               item.dueIn <= 30 && item.dueIn >= 0));
       let amcs = result[1].map((item) => {
         const amc = item;
-        if (moment(amc.expiryDate).isValid()) {
-          const dueDateTime = moment(amc.expiryDate);
+        if (moment(amc.expiryDate, moment.ISO_8601).isValid()) {
+          const dueDateTime = moment(amc.expiryDate, moment.ISO_8601);
           amc.dueDate = amc.expiryDate;
           amc.dueIn = dueDateTime.diff(moment.utc(), 'days');
           amc.productType = 3;
@@ -259,8 +258,8 @@ class NotificationAdaptor {
 
       let insurances = result[2].map((item) => {
         const insurance = item;
-        if (moment(insurance.expiryDate).isValid()) {
-          const dueDateTime = moment(insurance.expiryDate);
+        if (moment(insurance.expiryDate, moment.ISO_8601).isValid()) {
+          const dueDateTime = moment(insurance.expiryDate, moment.ISO_8601);
           insurance.dueDate = insurance.expiryDate;
           insurance.dueIn = dueDateTime.diff(moment.utc(), 'days');
           insurance.productType = 3;
@@ -276,8 +275,8 @@ class NotificationAdaptor {
 
       let warranties = result[3].map((item) => {
         const warranty = item;
-        if (moment(warranty.expiryDate).isValid()) {
-          const dueDateTime = moment(warranty.expiryDate);
+        if (moment(warranty.expiryDate, moment.ISO_8601).isValid()) {
+          const dueDateTime = moment(warranty.expiryDate, moment.ISO_8601);
 
           warranty.dueDate = warranty.expiryDate;
           warranty.dueIn = dueDateTime.diff(moment.utc(), 'days');
@@ -335,6 +334,12 @@ class NotificationAdaptor {
               this.modals.sequelize.literal('"product"."id"')),
           'productURL'],
         [
+          this.modals.sequelize.literal('"product"."main_category_id"'),
+          'masterCategoryId'],
+        [
+          this.modals.sequelize.literal('"product"."document_date"'),
+          'purchaseDate'],
+        [
           'due_date',
           'dueDate'],
         'taxes',
@@ -371,7 +376,6 @@ class NotificationAdaptor {
     return this.retrieveCronNotification(days).then((result) => {
       const upcomingServices = result.map((elem) => {
         if (elem.productType === 4) {
-          console.log(elem);
           const dueAmountArr = elem.productMetaData.filter((e) => {
             return e.name.toLowerCase() === 'due amount';
           });
@@ -457,7 +461,6 @@ class NotificationAdaptor {
     return this.retrieveMissingDocNotification(days).then((result) => {
       const upcomingServices = result.map((elem) => {
         if (elem.productType === 4) {
-          console.log(elem);
           const dueAmountArr = elem.productMetaData.filter((e) => {
             return e.name.toLowerCase() === 'due amount';
           });
@@ -582,7 +585,7 @@ class NotificationAdaptor {
     });
   }
 
-  retrieveMissingDocNotification(days) {
+  retrieveMissingDocNotification() {
     return this.productAdaptor.retrieveMissingDocProducts({
       status_type: [5, 8, 11],
     }).then((result) => {
@@ -669,8 +672,8 @@ class NotificationAdaptor {
           const metaData = metaItem;
           if (metaData.name.toLowerCase().includes('due') &&
               metaData.name.toLowerCase().includes('date') &&
-              moment(metaData.value).isValid()) {
-            const dueDateTime = moment(metaData.value);
+              moment(metaData.value, moment.ISO_8601).isValid()) {
+            const dueDateTime = moment(metaData.value, moment.ISO_8601);
             product.dueDate = metaData.value;
             product.dueIn = dueDateTime.diff(moment.utc(), 'days');
           }
@@ -696,8 +699,8 @@ class NotificationAdaptor {
                   item.dueDate >= moment().startOf('day')));
       let amcs = result[1].map((item) => {
         const amc = item;
-        if (moment(amc.expiryDate).isValid()) {
-          const dueDateTime = moment(amc.expiryDate);
+        if (moment(amc.expiryDate, moment.ISO_8601).isValid()) {
+          const dueDateTime = moment(amc.expiryDate, moment.ISO_8601);
           amc.dueDate = amc.expiryDate;
           amc.dueIn = dueDateTime.diff(moment.utc(), 'days');
           amc.productType = 3;
@@ -710,8 +713,8 @@ class NotificationAdaptor {
 
       let insurances = result[2].map((item) => {
         const insurance = item;
-        if (moment(insurance.expiryDate).isValid()) {
-          const dueDateTime = moment(insurance.expiryDate);
+        if (moment(insurance.expiryDate, moment.ISO_8601).isValid()) {
+          const dueDateTime = moment(insurance.expiryDate, moment.ISO_8601);
           insurance.dueDate = insurance.expiryDate;
           insurance.dueIn = dueDateTime.diff(moment.utc(), 'days');
           insurance.productType = 3;
@@ -723,8 +726,8 @@ class NotificationAdaptor {
 
       let warranties = result[3].map((item) => {
         const warranty = item;
-        if (moment(warranty.expiryDate).isValid()) {
-          const dueDateTime = moment(warranty.expiryDate);
+        if (moment(warranty.expiryDate, moment.ISO_8601).isValid()) {
+          const dueDateTime = moment(warranty.expiryDate, moment.ISO_8601);
 
           warranty.dueDate = warranty.expiryDate;
           warranty.dueIn = dueDateTime.diff(moment.utc(), 'days');
@@ -760,11 +763,11 @@ class NotificationAdaptor {
       };
       request(options, (error, response, body) => {
         if (!(!error && response.statusCode === 200)) {
-          console.log({
+          console.log(`Error on ${new Date()} is as follow: \n \n ${{
             error,
             userId,
             user: JSON.stringify(result),
-          });
+          }}`);
         }
         // extract invalid registration for removal
         if (body.failure > 0 && Array.isArray(body.results) &&

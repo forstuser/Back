@@ -35,6 +35,10 @@ var _serviceCenter = require('../Adaptors/serviceCenter');
 
 var _serviceCenter2 = _interopRequireDefault(_serviceCenter);
 
+var _brands = require('../Adaptors/brands');
+
+var _brands2 = _interopRequireDefault(_brands);
+
 function _interopRequireDefault(obj) {
   return obj && obj.__esModule ? obj : {default: obj};
 }
@@ -47,6 +51,7 @@ function _classCallCheck(instance, Constructor) {
 
 var modals = void 0;
 var serviceCenterAdaptor = void 0;
+var brandAdaptor = void 0;
 
 var ServiceCenterController = function() {
   function ServiceCenterController(modal) {
@@ -54,6 +59,7 @@ var ServiceCenterController = function() {
 
     modals = modal;
     serviceCenterAdaptor = new _serviceCenter2.default(modal);
+    brandAdaptor = new _brands2.default(modals);
   }
 
   _createClass(ServiceCenterController, null, [
@@ -61,7 +67,9 @@ var ServiceCenterController = function() {
       key: 'retrieveServiceCenters',
       value: function retrieveServiceCenters(request, reply) {
         var user = _shared2.default.verifyAuthorization(request.headers);
-        if (user && !request.pre.forceUpdate) {
+        var isWebMode = request.params && request.params.mode &&
+            request.params.mode.toLowerCase() === 'web';
+        if ((user || isWebMode) && !request.pre.forceUpdate) {
           var payload = request.payload || {
             location: '',
             city: '',
@@ -72,11 +80,18 @@ var ServiceCenterController = function() {
             masterCategoryId: '',
             brandId: '',
           };
+          var latitude = '';
+          var longitude = '';
+          var location = '';
+          var city = request.query.city;
 
-          var latitude = payload.latitude || user.latitude || '';
-          var longitude = payload.longitude || user.longitude || '';
-          var location = payload.location || user.location || '';
-          var city = payload.city || '';
+          if (!isWebMode) {
+            latitude = payload.latitude || user.latitude || '';
+            longitude = payload.longitude || user.longitude || '';
+            location = payload.location || user.location || '';
+            city = payload.city || '';
+          }
+
           var latlong = latitude && longitude ?
               latitude + ', ' + longitude :
               '';
@@ -106,65 +121,60 @@ var ServiceCenterController = function() {
             origins.push(city);
           }
 
+          var brandDetailOption = {
+            status_type: 1,
+            category_id: categoryId,
+          };
+
           Promise.all([
             serviceCenterAdaptor.retrieveServiceCenters(whereClause),
-            modals.brands.findAll({
-              where: {
-                status_type: 1,
-              },
-              include: [
-                {
-                  model: modals.brandDetails,
-                  as: 'details',
-                  where: {
-                    status_type: 1,
-                    category_id: categoryId,
-                  },
-                  attributes: [],
-                }],
-              attributes: [['brand_id', 'id'], ['brand_name', 'name']],
-            })]).then(function(result) {
-            var serviceCentersWithLocation = [];
-            var finalResult = [];
-            if (result[0].length > 0) {
-              var serviceCenters = result[0].map(function(item) {
-                var center = item;
-                center.mobileDetails = center.centerDetails.filter(
-                    function(detail) {
-                      return detail.detailType === 3;
-                    });
-                center.centerAddress = center.centerName + ', ' + center.city +
-                    '-' + center.pinCode + ', ' + center.state + ', India';
-                center.address = center.address + ', ' + center.city + '-' +
-                    center.pinCode + ', ' + center.state + ', India';
-                center.geoLocation = center.latitude && center.longitude &&
-                center.latitude.toString() !== '0' &&
-                center.longitude.toString() !== '0' ?
-                    center.latitude + ', ' + center.longitude :
-                    '';
-                if (center.geoLocation) {
-                  destinations.push(center.geoLocation);
-                } else if (center.address) {
-                  destinations.push(center.address);
-                } else if (center.centerAddress) {
-                  destinations.push(center.centerAddress);
-                } else if (center.city) {
-                  destinations.push(center.city);
-                }
+            brandAdaptor.retrieveCategoryBrands(brandDetailOption),
+            brandAdaptor.retrieveBrandById(brandId, brandDetailOption)]).
+              then(function(result) {
+                var serviceCentersWithLocation = [];
+                var finalResult = [];
+                if (result[0].length > 0) {
+                  var filterBrands = result[1];
+                  var selectedBrand = result[2];
+                  var serviceCenters = result[0].map(function(item) {
+                    var center = item;
+                    center.mobileDetails = center.centerDetails.filter(
+                        function(detail) {
+                          return detail.detailType === 3;
+                        });
+                    center.centerAddress = center.centerName + ', ' +
+                        center.city + '-' + center.pinCode + ', ' +
+                        center.state + ', India';
+                    center.address = center.address + ', ' + center.city + '-' +
+                        center.pinCode + ', ' + center.state + ', India';
+                    center.geoLocation = center.latitude && center.longitude &&
+                    center.latitude.toString() !== '0' &&
+                    center.longitude.toString() !== '0' ?
+                        center.latitude + ', ' + center.longitude :
+                        '';
+                    if (center.geoLocation) {
+                      destinations.push(center.geoLocation);
+                    } else if (center.address) {
+                      destinations.push(center.address);
+                    } else if (center.centerAddress) {
+                      destinations.push(center.centerAddress);
+                    } else if (center.city) {
+                      destinations.push(center.city);
+                    }
 
-                if (origins.length > 0 && destinations.length > 0) {
-                  serviceCentersWithLocation.push(center);
-                } else {
-                  center.distanceMetrics = 'km';
-                  center.distance = parseFloat(500.001);
-                  finalResult.push(center);
-                }
+                    if (origins.length > 0 && destinations.length > 0) {
+                      serviceCentersWithLocation.push(center);
+                    } else {
+                      center.distanceMetrics = 'km';
+                      center.distance = parseFloat(500.001);
+                      finalResult.push(center);
+                    }
 
-                return center;
-              });
-              if (origins.length > 0 && destinations.length > 0) {
-                return _google2.default.distanceMatrix(origins, destinations).
-                    then(function(result) {
+                    return center;
+                  });
+                  if (origins.length > 0 && destinations.length > 0) {
+                    return _google2.default.distanceMatrix(origins,
+                        destinations).then(function(result) {
                       for (var i = 0; i <
                       serviceCentersWithLocation.length; i += 1) {
                         if (result.length > 0) {
@@ -195,14 +205,14 @@ var ServiceCenterController = function() {
                       reply({
                         status: true,
                         serviceCenters: finalFilteredList,
+                        brand: selectedBrand,
                         filterData: {
-                          brands: result[1],
+                          brands: filterBrands,
                         },
                         forceUpdate: request.pre.forceUpdate,
                       }).code(200);
                       // }
-                    }).
-                    catch(function(err) {
+                    }).catch(function(err) {
                       console.log('Error on ' + new Date() + ' for user ' +
                           (user.id || user.ID) + ' is as follow: \n \n ' + err);
 
@@ -212,34 +222,36 @@ var ServiceCenterController = function() {
                         forceUpdate: request.pre.forceUpdate,
                       });
                     });
-              }
-              if (origins.length <= 0) {
+                  }
+                  if (origins.length <= 0) {
+                    reply({
+                      status: true,
+                      filterData: {
+                        brands: filterBrands,
+                      },
+                      serviceCenters: serviceCenters,
+                      brand: selectedBrand,
+                      forceUpdate: request.pre.forceUpdate,
+                    });
+                  }
+                } else {
+                  reply({
+                    status: false,
+                    message: 'No Data Found for mentioned search',
+                    serviceCenters: [],
+                    forceUpdate: request.pre.forceUpdate,
+                  });
+                }
+              }).
+              catch(function(err) {
+                console.log('Error on ' + new Date() + ' for user ' +
+                    (user.id || user.ID) + ' is as follow: \n \n ' + err);
                 reply({
-                  status: true,
-                  filterData: {
-                    brands: result[1],
-                  },
-                  serviceCenters: serviceCenters,
+                  status: false,
+                  err: err,
                   forceUpdate: request.pre.forceUpdate,
                 });
-              }
-            } else {
-              reply({
-                status: false,
-                message: 'No Data Found for mentioned search',
-                serviceCenters: [],
-                forceUpdate: request.pre.forceUpdate,
               });
-            }
-          }).catch(function(err) {
-            console.log('Error on ' + new Date() + ' for user ' +
-                (user.id || user.ID) + ' is as follow: \n \n ' + err);
-            reply({
-              status: false,
-              err: err,
-              forceUpdate: request.pre.forceUpdate,
-            });
-          });
         } else if (!user) {
           reply({
             status: false,

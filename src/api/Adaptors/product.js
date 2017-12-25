@@ -61,6 +61,9 @@ class ProductAdaptor {
               'brand_id',
               'brandId'],
             [
+              'brand_id',
+              'id'],
+            [
               'brand_name',
               'name'],
             [
@@ -354,6 +357,9 @@ class ProductAdaptor {
               'brand_description',
               'description'],
             [
+              'brand_id',
+              'id'],
+            [
               this.modals.sequelize.fn('CONCAT', 'brands/',
                   this.modals.sequelize.col('"brand"."brand_id"'), '/reviews'),
               'reviewUrl']],
@@ -559,7 +565,6 @@ class ProductAdaptor {
                   (producItem.status_type === 8 && producItem.bill &&
                       producItem.bill.billStatus ===
                       5));
-      console.log(products);
       product = products.length > 0 ?
           products[0] :
           undefined;
@@ -699,12 +704,15 @@ class ProductAdaptor {
   }
 
   retrieveProductById(id, options) {
-    options.status_type = {
-      $notIn: [3, 9],
-    };
+    if (!options.status_type) {
+      options.status_type = {
+        $notIn: [3, 9],
+      };
+    }
 
+    options.id = id;
     let products;
-    return this.modals.products.findById(id, {
+    return this.modals.products.findOne({
       where: options,
       include: [
         {
@@ -950,7 +958,6 @@ class ProductAdaptor {
       status_type: 11,
     };
 
-    console.log(brandBody);
     const brandPromise = productBody.brand_name ?
         this.modals.brands.findCreateFind({
           where: {
@@ -971,10 +978,8 @@ class ProductAdaptor {
     let metadata;
     return brandPromise.
         then((newItemResult) => {
-          console.log(newItemResult);
           const newBrand = productBody.brand_name ?
               newItemResult[0].toJSON() : undefined;
-          console.log(newBrand);
           product = _.omit(product, 'brand_name');
           product.brand_id = newBrand ?
               newBrand.brand_id :
@@ -1036,9 +1041,6 @@ class ProductAdaptor {
           });
         }).then((count) => {
           if (count === 0) {
-            console.log({
-              testProduct: product,
-            });
             return this.modals.products.create(product);
           }
 
@@ -1350,10 +1352,6 @@ class ProductAdaptor {
       };
     }
 
-    const billOption = {
-      status_type: 5,
-    };
-
     let products;
     return this.modals.products.findAll({
       where: options,
@@ -1430,7 +1428,6 @@ class ProductAdaptor {
       };
     }
 
-    let products;
     return this.modals.products.findAll({
       where: options,
       attributes: [
@@ -1466,10 +1463,8 @@ class ProductAdaptor {
   prepareProductDetail(user, request) {
     const productId = request.params.id;
     return this.retrieveProductById(productId, {
-      where: {
         user_id: user.id || user.ID,
         status_type: [5, 8, 11],
-      },
     }).then((result) => {
       if (result) {
         return ({

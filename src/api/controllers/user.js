@@ -82,8 +82,7 @@ let loginOrRegisterUser = function(
           catch((err) =>
               console.log(
                   `Error on ${new Date()} for user ${updatedUser.id ||
-                  updatedUser.ID} is as follow: \n ${JSON.stringify(
-                      err.toJSON())}`));
+                  updatedUser.ID} is as follow: \n ${err}`));
     }
 
     trackTransaction(request.payload.transactionId, updatedUser.id);
@@ -101,7 +100,7 @@ let loginOrRegisterUser = function(
         `Error on ${new Date()} for user ${updatedUser.id ||
         updatedUser.ID} is as follow: \n \n ${err}`);
     if (err.authorization) {
-      return reply(err).
+      return reply({status: false, message: 'Unable to Login User', err}).
           code(401).
           header('authorization', replyObject.authorization);
     }
@@ -144,23 +143,44 @@ class UserController {
       replyObject.message = 'Unauthorized';
       reply(replyObject);
     } else if (user && !request.pre.forceUpdate) {
-      if (request.payload && request.payload.fcmId) {
-        fcmManager.insertFcmDetails(user.id || user.ID, request.payload.fcmId).
-            then((data) => {
-              console.log(data);
-            }).
-            catch((err) => {
-              console.log(
-                  `Error on ${new Date()} for user ${user.id ||
-                  user.ID} is as follow: \n \n ${err}`);
-            });
-      }
+      return userAdaptor.isUserValid(user).then((isValid) => {
+        if (isValid) {
+          if (request.payload && request.payload.fcmId) {
+            fcmManager.insertFcmDetails(user.id || user.ID,
+                request.payload.fcmId,
+                request.payload.platform).
+                then((data) => {
+                  console.log(data);
+                }).
+                catch((err) => {
+                  console.log(
+                      `Error on ${new Date()} for user ${user.id ||
+                      user.ID} is as follow: \n \n ${err}`);
+                });
+          }
 
-      reply(replyObject).code(201);
+          reply(replyObject).code(201);
+
+        }
+
+        return reply({
+          status: false,
+          message: 'Token Expired or Invalid',
+          forceUpdate: request.pre.forceUpdate,
+        }).code(401);
+      }).catch((err) => {
+        console.log(
+            `Error on ${new Date()} for user ${user.mobile_no} is as follow: \n \n ${err}`);
+        return reply({
+          status: false,
+          message: 'Token Expired or Invalid',
+          forceUpdate: request.pre.forceUpdate,
+        }).code(401);
+      });
     } else {
       replyObject.status = false;
       replyObject.message = 'Forbidden';
-      reply(replyObject);
+      return reply(replyObject);
     }
   }
 
@@ -247,7 +267,8 @@ class UserController {
             return reply(replyObject).code(401);
           }
         }).catch((err) => {
-          console.log({API_Logs: err});
+          console.log(
+              `Error on ${new Date()} for mobile no: ${trueObject.PhoneNo} is as follow: \n \n ${err}`);
           replyObject.status = false;
           replyObject.message = 'Issue in updating data';
           replyObject.error = err;
@@ -269,7 +290,8 @@ class UserController {
           userInput.user_status_type = 1;
           return loginOrRegisterUser(userWhere, userInput, trueObject, request,
               reply).catch((err) => {
-            console.log({API_Logs: err});
+            console.log(
+                `Error on ${new Date()} for mobile no: ${trueObject.PhoneNo} is as follow: \n \n ${err}`);
             replyObject.status = false;
             replyObject.message = 'Issue in updating data';
             replyObject.error = err;
@@ -297,7 +319,8 @@ class UserController {
       return reply(replyObject);
     } else if (user && !request.pre.forceUpdate) {
       if (request.payload && request.payload.fcmId) {
-        fcmManager.deleteFcmDetails(user.id || user.ID, request.payload.fcmId).
+        fcmManager.deleteFcmDetails(user.id || user.ID, request.payload.fcmId,
+            request.payload.platform).
             then((rows) => {
               console.log('TOTAL FCM ID\'s DELETED: ', rows);
             });
@@ -307,7 +330,7 @@ class UserController {
         last_logout_at: moment.utc().format('YYYY-MM-DD HH:mm:ss'),
       }, {
         where: {
-          id,
+          id: user.id || user.ID,
         },
       }).then(() => {
         return reply(replyObject).code(201);

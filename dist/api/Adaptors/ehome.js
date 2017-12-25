@@ -216,7 +216,7 @@ var EHomeAdaptor = function() {
       },
     }, {
       key: 'prepareCategoryData',
-      value: function prepareCategoryData(user, options) {
+      value: function prepareCategoryData(user) {
         var categoryOption = {
           category_level: 1,
           status_type: 1,
@@ -251,7 +251,8 @@ var EHomeAdaptor = function() {
                     _toConsumableArray(products),
                     _toConsumableArray(inProgressProduct)) || []).
                     sortBy(function(item) {
-                      return (0, _moment2.default)(item.lastUpdatedAt);
+                      return (0, _moment2.default)(item.lastUpdatedAt,
+                          _moment2.default.ISO_8601);
                     }).
                     reverse().
                     value();
@@ -411,19 +412,12 @@ var EHomeAdaptor = function() {
         var inProgressProductOption = {};
         _lodash2.default.assignIn(inProgressProductOption, productOptions);
         inProgressProductOption.status_type = 8;
-        console.log({
-          productOptions: productOptions,
-          inProgressProductOption: inProgressProductOption,
-        });
 
         return Promise.all([
           this.categoryAdaptor.retrieveCategories(categoryOption),
           this.productAdaptor.retrieveProducts(productOptions),
           this.productAdaptor.retrieveProducts(inProgressProductOption)]).
             then(function(results) {
-              console.log({
-                results: results,
-              });
               return results[0].map(function(categoryItem) {
                 var category = categoryItem;
                 var products = _lodash2.default.chain(results[1]).
@@ -450,7 +444,8 @@ var EHomeAdaptor = function() {
                     _toConsumableArray(products),
                     _toConsumableArray(inProgressProduct)) || []).
                     sortBy(function(item) {
-                      return (0, _moment2.default)(item.purchaseDate);
+                      return (0, _moment2.default)(item.purchaseDate,
+                          _moment2.default.ISO_8601);
                     }).
                     reverse().
                     value();

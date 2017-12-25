@@ -137,7 +137,6 @@ var UploadController = function() {
               {ContentType: _mimeTypes2.default.lookup(fileName)}).
               then(function(fileResult) {
 
-                console.log(fileResult);
                 return userAdaptor.updateUserDetail({
                   image_name: fileName,
                 }, {
@@ -237,8 +236,6 @@ var UploadController = function() {
     }, {
       key: 'uploadFileGeneric',
       value: function uploadFileGeneric(user, fileData, reply, request) {
-        console.log('' + Math.random().toString(36).substr(2, 9) +
-            (user.id || user.ID).toString(36));
         return modals.jobs.create({
           job_id: '' + Math.random().toString(36).substr(2, 9) +
           (user.id || user.ID).toString(36),
@@ -294,7 +291,6 @@ var UploadController = function() {
               return Promise.all(promisedQuery);
               // }
             }).then(function(billResult) {
-              console.log(billResult);
               if (billResult[billResult.length - 1].email) {
                 modals.jobs.count({
                   where: {
@@ -321,8 +317,7 @@ var UploadController = function() {
               }
 
               if (process.env.NODE_ENV === 'production') {
-                _notification2.default.sendMailOnUpload(
-                    'New Job has been created with multiple files for consumer',
+                _notification2.default.sendMailOnUpload(_main2.default.MESSAGE,
                     'sagar@binbill.com;pranjal@binbill.com;anu.gupta@binbill.com',
                     user, result.id);
               }
@@ -374,7 +369,6 @@ var UploadController = function() {
                       updated_by: user.id || user.ID,
                     };
 
-                    console.log(fileResult);
                     modals.jobCopies.create(ret).then(function() {
                       return modals.users.findById(user.id || user.ID);
                     }).then(function(userResult) {
@@ -403,7 +397,7 @@ var UploadController = function() {
 
                       if (process.env.NODE_ENV === 'production') {
                         _notification2.default.sendMailOnUpload(
-                            'New Job has been added with single file for consumer',
+                            _main2.default.MESSAGE,
                             'sagar@binbill.com;pranjal@binbill.com;anu.gupta@binbill.com',
                             user, result.id);
                       }
@@ -461,13 +455,6 @@ var UploadController = function() {
               }],
           }).then(function(result) {
             if (result) {
-              console.log({
-                result: result,
-                fileName: _guid2.default.isGuid(result.job_id) ?
-                    '' + result.copies[0].file_name :
-                    'jobs/' + result.job_id + '/' + result.copies[0].file_name,
-              });
-
               fsImpl.readFile(_guid2.default.isGuid(result.job_id) ?
                   '' + result.copies[0].file_name :
                   'jobs/' + result.job_id + '/' + result.copies[0].file_name).
