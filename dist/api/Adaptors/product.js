@@ -130,6 +130,9 @@ var ProductAdaptor = function() {
                   'brand_id',
                   'brandId'],
                 [
+                  'brand_id',
+                  'id'],
+                [
                   'brand_name',
                   'name'],
                 [
@@ -448,6 +451,9 @@ var ProductAdaptor = function() {
                   'brand_description',
                   'description'],
                 [
+                  'brand_id',
+                  'id'],
+                [
                   this.modals.sequelize.fn('CONCAT', 'brands/',
                       this.modals.sequelize.col('"brand"."brand_id"'),
                       '/reviews'),
@@ -663,7 +669,6 @@ var ProductAdaptor = function() {
             return producItem.status_type !== 8 || producItem.status_type ===
                 8 && producItem.bill && producItem.bill.billStatus === 5;
           });
-          console.log(products);
           product = products.length > 0 ? products[0] : undefined;
           if (product) {
             return Promise.all([
@@ -810,12 +815,15 @@ var ProductAdaptor = function() {
       value: function retrieveProductById(id, options) {
         var _this4 = this;
 
-        options.status_type = {
-          $notIn: [3, 9],
-        };
+        if (!options.status_type) {
+          options.status_type = {
+            $notIn: [3, 9],
+          };
+        }
 
+        options.id = id;
         var products = void 0;
-        return this.modals.products.findById(id, {
+        return this.modals.products.findOne({
           where: options,
           include: [
             {
@@ -1072,7 +1080,6 @@ var ProductAdaptor = function() {
           status_type: 11,
         };
 
-        console.log(brandBody);
         var brandPromise = productBody.brand_name ?
             this.modals.brands.findCreateFind({
               where: {
@@ -1092,11 +1099,9 @@ var ProductAdaptor = function() {
         var product = productBody;
         var metadata = void 0;
         return brandPromise.then(function(newItemResult) {
-          console.log(newItemResult);
           var newBrand = productBody.brand_name ?
               newItemResult[0].toJSON() :
               undefined;
-          console.log(newBrand);
           product = _lodash2.default.omit(product, 'brand_name');
           product.brand_id = newBrand ? newBrand.brand_id : product.brand_id;
 
@@ -1161,9 +1166,6 @@ var ProductAdaptor = function() {
           });
         }).then(function(count) {
           if (count === 0) {
-            console.log({
-              testProduct: product,
-            });
             return _this5.modals.products.create(product);
           }
 
@@ -1503,10 +1505,6 @@ var ProductAdaptor = function() {
           };
         }
 
-        var billOption = {
-          status_type: 5,
-        };
-
         var products = void 0;
         return this.modals.products.findAll({
           where: options,
@@ -1600,7 +1598,6 @@ var ProductAdaptor = function() {
           };
         }
 
-        var products = void 0;
         return this.modals.products.findAll({
           where: options,
           attributes: [
@@ -1643,10 +1640,8 @@ var ProductAdaptor = function() {
       value: function prepareProductDetail(user, request) {
         var productId = request.params.id;
         return this.retrieveProductById(productId, {
-          where: {
-            user_id: user.id || user.ID,
-            status_type: [5, 8, 11],
-          },
+          user_id: user.id || user.ID,
+          status_type: [5, 8, 11],
         }).then(function(result) {
           if (result) {
             return {

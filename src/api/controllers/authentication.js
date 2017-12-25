@@ -43,7 +43,6 @@ class AuthenticationController {
 
 	static generateToken(user) {
 		const expiresIn = new Date().getTime() + 647000;
-    console.log(config.JWT_SECRET);
     const token = jwt.sign(JSON.parse(JSON.stringify(user.toJSON(), replacer)),
         config.JWT_SECRET,
 			{
@@ -80,7 +79,8 @@ class AuthenticationController {
 
 				return res.status(401).json({error: 'You are not authorized to view this content.'});
 			}).catch((err) => {
-				console.log({API_Logs: err});
+        console.log(
+            `Error on ${new Date()} is as follow: \n \n ${err}`);
 				res.status(422).json({error: 'No user was found.'});
 				return next(err);
 			});

@@ -30,11 +30,6 @@ class SearchAdaptor {
       const onlineSellerProductId = results[0].map(item => item.id);
       const offlineSellerProductId = results[1].map(item => item.id);
       const brandProductId = results[2].map(item => item.id);
-      console.log({
-        onlineSellerProductId,
-        offlineSellerProductId,
-        brandProductId,
-      });
       return Promise.all([
         this.fetchProductDetails(user, `%${searchValue}%`,
             [
@@ -130,7 +125,7 @@ class SearchAdaptor {
                     (productItem) => productItem.masterCategoryId ===
                         category.id || productItem.categoryId === category.id);
             category.products = _.chain(products).sortBy((item) => {
-              return moment(item.lastUpdatedAt);
+              return moment(item.lastUpdatedAt, moment.ISO_8601);
             }).reverse().value();
             return category;
           });

@@ -131,11 +131,6 @@ class InsightAdaptor {
           };
         }),
         yearlyData: result.map((item) => {
-          if (item.id === 3) {
-            console.log({
-              uncalculatedResult: JSON.stringify(item.expenses),
-            });
-          }
           const expenses = item.expenses.filter(
               (item) => moment.utc(moment.utc(item.purchaseDate).valueOf()) >=
                   moment.utc(moment.utc().startOf('year').valueOf()) &&
@@ -393,9 +388,6 @@ class InsightAdaptor {
                   ['asc']).
               value();
 
-          console.log({
-            productList: JSON.stringify(productList),
-          });
           const distinctInsightWeekly = [];
           const distinctInsightMonthly = [];
           const distinctInsight = [];

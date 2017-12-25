@@ -23,6 +23,27 @@ class UserAdaptor {
     this.modals = modals;
   }
 
+  isUserValid(user) {
+    return this.modals.users.count({
+      where: {
+        id: user.id || user.ID,
+      },
+    }).then((userCount) => {
+      if (userCount && userCount > 0) {
+        return true;
+      }
+
+      console.log(
+          `Error on ${new Date()} for user ${user.mobile_no ||
+          user.mobile_no} is as follow: \n \n User does not exist`);
+      return false;
+    }).catch((err) => {
+      console.log(
+          `Error on ${new Date()} for user ${user.mobile_no ||
+          user.mobile_no} is as follow: \n \n ${err}`);
+      return false;
+    });
+  }
   /**
    * This is for getting user login or register for OTP and true caller
    * @param whereObject
@@ -109,7 +130,7 @@ class UserAdaptor {
       }
 
       return result[0];
-    });
+    }).catch((err) => console.log(err));
   }
 
   retrieveUserImageNameById(user) {
@@ -229,9 +250,7 @@ class UserAdaptor {
 
       return Promise.all(userPromise);
     }).then(() => {
-      // console.log("EMAIL: ", payload.email);
       const updatedUser = userUpdates;
-      console.log(updatedUser);
       if (!updatedUser.email_verified) {
         NotificationAdaptor.sendVerificationMail(updatedUser.email,
             updatedUser);
@@ -270,8 +289,6 @@ class UserAdaptor {
    * @param filterOptions
    */
   updateUserDetail(updateValues, filterOptions) {
-    console.log(this.modals.users);
-
     return this.modals.users.update(updateValues, filterOptions);
   }
 

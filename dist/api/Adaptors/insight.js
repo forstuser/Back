@@ -206,11 +206,6 @@ var InsightAdaptor = function() {
               };
             }),
             yearlyData: result.map(function(item) {
-              if (item.id === 3) {
-                console.log({
-                  uncalculatedResult: JSON.stringify(item.expenses),
-                });
-              }
               var expenses = item.expenses.filter(function(item) {
                 return _moment2.default.utc(
                     _moment2.default.utc(item.purchaseDate).valueOf()) >=
@@ -466,7 +461,7 @@ var InsightAdaptor = function() {
                 return category;
               });
             });
-      },
+      }
     }, {
       key: 'prepareCategoryInsight',
       value: function prepareCategoryInsight(user, request) {
@@ -484,9 +479,6 @@ var InsightAdaptor = function() {
                   orderBy(['purchaseDate'], ['asc']).
                   value();
 
-              console.log({
-                productList: JSON.stringify(productList),
-              });
               var distinctInsightWeekly = [];
               var distinctInsightMonthly = [];
               var distinctInsight = [];
@@ -703,7 +695,7 @@ var InsightAdaptor = function() {
                 forceUpdate: request.pre.forceUpdate,
               };
             });
-      },
+      }
     }]);
 
   return InsightAdaptor;

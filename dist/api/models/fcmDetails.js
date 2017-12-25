@@ -21,6 +21,10 @@ module.exports = function(sequelize, DataTypes) {
     updated_at: {
       type: DataTypes.DATE,
       defaultValue: sequelize.literal('NOW()'),
+    },
+    platform_id: {
+      type: DataTypes.INTEGER,
+      defaultValue: 1,
     }
   }, {
     freezeTableName: true,

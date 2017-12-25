@@ -145,7 +145,7 @@ class EHomeAdaptor {
     });
   }
 
-  prepareCategoryData(user, options) {
+  prepareCategoryData(user) {
     const categoryOption = {
       category_level: 1,
       status_type: 1,
@@ -178,7 +178,7 @@ class EHomeAdaptor {
               ...products,
               ...inProgressProduct,
             ] || []).sortBy((item) => {
-              return moment(item.lastUpdatedAt);
+              return moment(item.lastUpdatedAt, moment.ISO_8601);
             }).reverse().value();
             category.expenses = expenses;
             category.cLastUpdate = expenses &&
@@ -322,19 +322,12 @@ class EHomeAdaptor {
     const inProgressProductOption = {};
     _.assignIn(inProgressProductOption, productOptions);
     inProgressProductOption.status_type = 8;
-    console.log({
-      productOptions
-      , inProgressProductOption,
-    });
 
     return Promise.all([
       this.categoryAdaptor.retrieveCategories(categoryOption),
       this.productAdaptor.retrieveProducts(productOptions),
       this.productAdaptor.retrieveProducts(inProgressProductOption),]).
         then((results) => {
-          console.log({
-            results,
-          });
           return results[0].map((categoryItem) => {
             const category = categoryItem;
             const products = _.chain(results[1]).
@@ -357,7 +350,7 @@ class EHomeAdaptor {
             category.productList = _.chain([
               ...products,
               ...inProgressProduct] || []).sortBy((item) => {
-              return moment(item.purchaseDate);
+              return moment(item.purchaseDate, moment.ISO_8601);
             }).reverse().value();
 
             return category;

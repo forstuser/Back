@@ -45,11 +45,8 @@ var distanceMatrix = function distanceMatrix(origins, destinations) {
 
   return _bluebird2.default.all(promises).then(function(result) {
     var rows = result.map(function(elem) {
-      // console.log(util.inspect(elem, false, null));
       return elem.json.rows;
     });
-    // console.log("~~~~~~~~");
-    // console.log(util.inspect(flattenedRows, false, null));
 
     return _lodash2.default.chain(rows).flatten().map(function(elem) {
       return elem.elements;

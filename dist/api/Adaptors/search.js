@@ -107,11 +107,6 @@ var SearchAdaptor = function() {
               var brandProductId = results[2].map(function(item) {
                 return item.id;
               });
-              console.log({
-                onlineSellerProductId: onlineSellerProductId,
-                offlineSellerProductId: offlineSellerProductId,
-                brandProductId: brandProductId,
-              });
               return Promise.all([
                 _this.fetchProductDetails(user, '%' + searchValue + '%',
                     [].concat(_toConsumableArray(onlineSellerProductId),
@@ -222,7 +217,8 @@ var SearchAdaptor = function() {
                     });
                 category.products = _lodash2.default.chain(products).
                     sortBy(function(item) {
-                      return (0, _moment2.default)(item.lastUpdatedAt);
+                      return (0, _moment2.default)(item.lastUpdatedAt,
+                          _moment2.default.ISO_8601);
                     }).
                     reverse().
                     value();

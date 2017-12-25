@@ -12,7 +12,9 @@ class CategoryController {
 
   static getCategories(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (!user) {
+    const isWebMode = (request.params && request.params.mode &&
+        request.params.mode.toLowerCase() === 'web');
+    if (!user && !isWebMode) {
       reply({
         status: false,
         message: 'Unauthorized',
@@ -21,8 +23,8 @@ class CategoryController {
     } else if (!request.pre.forceUpdate) {
       let condition;
 
-      if (request.query.brandid) {
-        condition = `= ${request.query.brandid}`;
+      if (request.query.brandid || request.query.brandId) {
+        condition = `= ${request.query.brandid || request.query.brandId}`;
       } else {
         condition = 'IS NOT NULL';
       }

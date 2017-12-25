@@ -86,7 +86,7 @@ var DashboardAdaptor = function() {
     this.insuranceAdaptor = new _insurances2.default(modals);
     this.repairAdaptor = new _repairs2.default(modals);
     this.warrantyAdaptor = new _warranties2.default(modals);
-    this.date = new Date();
+    this.date = _moment2.default.utc();
   }
 
   _createClass(DashboardAdaptor, [
@@ -119,7 +119,7 @@ var DashboardAdaptor = function() {
           this.modals.products.count({
             where: {
               user_id: user.id || user.ID,
-              status_type: [5, 8, 11],
+              status_type: 11,
               main_category_id: [2, 3],
             },
           }),
@@ -127,11 +127,8 @@ var DashboardAdaptor = function() {
             user_id: user.id || user.ID,
             status_type: [5, 8, 11],
           })]).then(function(result) {
-          // console.log(require('util').inspect(result[0], false, null));
           var upcomingServices = result[0].map(function(elem) {
             if (elem.productType === 1) {
-              console.log('found 1');
-              console.log(elem);
               var dueAmountArr = elem.productMetaData.filter(function(e) {
                 return e.name.toLowerCase() === 'due amount';
               });
@@ -145,17 +142,13 @@ var DashboardAdaptor = function() {
           });
 
           var distinctInsight = [];
-          console.log({
-            insightData: result[1],
-          });
           var insightData = result[1].map(function(item) {
             var insightItem = item;
             var index = distinctInsight.findIndex(function(distinctItem) {
-              return (0, _moment2.default)(distinctItem.purchaseDate).
-                  startOf('day').
-                  valueOf() === (0, _moment2.default)(insightItem.purchaseDate).
-                  startOf('day').
-                  valueOf();
+              return (0, _moment2.default)(distinctItem.purchaseDate,
+                  _moment2.default.ISO_8601).startOf('day').valueOf() ===
+                  (0, _moment2.default)(insightItem.purchaseDate,
+                      _moment2.default.ISO_8601).startOf('day').valueOf();
             });
 
             if (index === -1) {
@@ -218,9 +211,10 @@ var DashboardAdaptor = function() {
             upcomingServices: upcomingServices,
             insight: insightResult,
             forceUpdate: request.pre.forceUpdate,
-            showDashboard: !!(result[4] && result[4] > 0),
-            hasProducts: !!(result[5] && result[5] > 0),
-            product: !!(result[4] && result[4] > 0) ? product : {},
+            showDashboard: !!(result[4] && parseInt(result[4]) > 0) ||
+            !!(result[5] && parseInt(result[5]) > 1),
+            hasProducts: !!(result[5] && parseInt(result[5]) > 0),
+            product: !!(result[4] && parseInt(result[4]) > 0) ? product : {},
           };
         }).catch(function(err) {
           console.log('Error on ' + new Date() + ' for user ' +
@@ -258,7 +252,7 @@ var DashboardAdaptor = function() {
             }), this.modals.products.count({
               where: {
                 user_id: user.id || user.ID,
-                status_type: [5, 8, 11],
+                status_type: 11,
                 main_category_id: [2, 3],
               },
             })]).then(function(result) {
@@ -270,7 +264,8 @@ var DashboardAdaptor = function() {
                 message: 'User Exist',
                 billCounts: billCounts,
                 hasProducts: !!(productCounts && productCounts > 0),
-                showDashboard: !!(billCounts && billCounts > 0),
+                showDashboard: !!(billCounts && billCounts > 0) ||
+                !!(productCounts && productCounts > 1),
                 isExistingUser: !isNewUser,
                 authorization: token,
                 userId: user.id || user.ID,
@@ -341,9 +336,10 @@ var DashboardAdaptor = function() {
               var metaData = metaItem;
               if (metaData.name.toLowerCase().includes('due') &&
                   metaData.name.toLowerCase().includes('date') &&
-                  metaData.value &&
-                  (0, _moment2.default)(metaData.value).isValid()) {
-                var dueDateTime = (0, _moment2.default)(metaData.value);
+                  metaData.value && (0, _moment2.default)(metaData.value,
+                      _moment2.default.ISO_8601).isValid()) {
+                var dueDateTime = (0, _moment2.default)(metaData.value,
+                    _moment2.default.ISO_8601);
                 product.dueDate = metaData.value;
                 product.dueIn = dueDateTime.diff(_moment2.default.utc(),
                     'days');
@@ -367,8 +363,10 @@ var DashboardAdaptor = function() {
 
           var amcs = result[1].map(function(item) {
             var amc = item;
-            if ((0, _moment2.default)(amc.expiryDate).isValid()) {
-              var dueDateTime = (0, _moment2.default)(amc.expiryDate);
+            if ((0, _moment2.default)(amc.expiryDate,
+                    _moment2.default.ISO_8601).isValid()) {
+              var dueDateTime = (0, _moment2.default)(amc.expiryDate,
+                  _moment2.default.ISO_8601);
               amc.dueDate = amc.expiryDate;
               amc.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
               amc.productType = 4;
@@ -383,8 +381,10 @@ var DashboardAdaptor = function() {
 
           var insurances = result[2].map(function(item) {
             var insurance = item;
-            if ((0, _moment2.default)(insurance.expiryDate).isValid()) {
-              var dueDateTime = (0, _moment2.default)(insurance.expiryDate);
+            if ((0, _moment2.default)(insurance.expiryDate,
+                    _moment2.default.ISO_8601).isValid()) {
+              var dueDateTime = (0, _moment2.default)(insurance.expiryDate,
+                  _moment2.default.ISO_8601);
               insurance.dueDate = insurance.expiryDate;
               insurance.dueIn = dueDateTime.diff(_moment2.default.utc(),
                   'days');
@@ -400,8 +400,10 @@ var DashboardAdaptor = function() {
 
           var warranties = result[3].map(function(item) {
             var warranty = item;
-            if ((0, _moment2.default)(warranty.expiryDate).isValid()) {
-              var dueDateTime = (0, _moment2.default)(warranty.expiryDate);
+            if ((0, _moment2.default)(warranty.expiryDate,
+                    _moment2.default.ISO_8601).isValid()) {
+              var dueDateTime = (0, _moment2.default)(warranty.expiryDate,
+                  _moment2.default.ISO_8601);
               warranty.dueDate = warranty.expiryDate;
               warranty.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
               warranty.productType = 2;

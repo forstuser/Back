@@ -28,6 +28,7 @@ exports.default = function(user) {
 
 // Setting JWT strategy options
 
+
 var jwtOptions = {
   // Telling Passport to check authorization headers for JWT
   jwtFromRequest: _passportJwt.ExtractJwt.fromAuthHeader(),

@@ -91,7 +91,6 @@ var AuthenticationController = function() {
       key: 'generateToken',
       value: function generateToken(user) {
         var expiresIn = new Date().getTime() + 647000;
-        console.log(_main2.default.JWT_SECRET);
         var token = _jsonwebtoken2.default.sign(
             JSON.parse(JSON.stringify(user.toJSON(), replacer)),
             _main2.default.JWT_SECRET, {
@@ -131,7 +130,8 @@ var AuthenticationController = function() {
             return res.status(401).
                 json({error: 'You are not authorized to view this content.'});
           }).catch(function(err) {
-            console.log({API_Logs: err});
+            console.log('Error on ' + new Date() + ' is as follow: \n \n ' +
+                err);
             res.status(422).json({error: 'No user was found.'});
             return next(err);
           });

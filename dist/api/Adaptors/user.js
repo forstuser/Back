@@ -65,16 +65,38 @@ var UserAdaptor = function() {
     this.modals = modals;
   }
 
-  /**
-   * This is for getting user login or register for OTP and true caller
-   * @param whereObject
-   * @param defaultObject
-   * @returns {Promise.<Model, created>}
-   */
-
-
   _createClass(UserAdaptor, [
     {
+      key: 'isUserValid',
+      value: function isUserValid(user) {
+        return this.modals.users.count({
+          where: {
+            id: user.id || user.ID,
+          },
+        }).then(function(userCount) {
+          if (userCount && userCount > 0) {
+            return true;
+          }
+
+          console.log('Error on ' + new Date() + ' for user ' +
+              (user.mobile_no || user.mobile_no) +
+              ' is as follow: \n \n User does not exist');
+          return false;
+        }).catch(function(err) {
+          console.log('Error on ' + new Date() + ' for user ' +
+              (user.mobile_no || user.mobile_no) + ' is as follow: \n \n ' +
+              err);
+          return false;
+        });
+      },
+      /**
+       * This is for getting user login or register for OTP and true caller
+       * @param whereObject
+       * @param defaultObject
+       * @returns {Promise.<Model, created>}
+       */
+
+    }, {
       key: 'loginOrRegister',
       value: function loginOrRegister(whereObject, defaultObject) {
         return this.modals.users.findCreateFind({
@@ -161,6 +183,8 @@ var UserAdaptor = function() {
           }
 
           return result[0];
+        }).catch(function(err) {
+          return console.log(err);
         });
       },
     }, {
@@ -290,9 +314,7 @@ var UserAdaptor = function() {
 
           return Promise.all(userPromise);
         }).then(function() {
-          // console.log("EMAIL: ", payload.email);
           var updatedUser = userUpdates;
-          console.log(updatedUser);
           if (!updatedUser.email_verified) {
             _notification2.default.sendVerificationMail(updatedUser.email,
                 updatedUser);
@@ -334,8 +356,6 @@ var UserAdaptor = function() {
     }, {
       key: 'updateUserDetail',
       value: function updateUserDetail(updateValues, filterOptions) {
-        console.log(this.modals.users);
-
         return this.modals.users.update(updateValues, filterOptions);
       },
 

@@ -161,7 +161,7 @@ var loginOrRegisterUser = function loginOrRegisterUser(
           }).catch(function(err) {
             return console.log('Error on ' + new Date() + ' for user ' +
                 (updatedUser.id || updatedUser.ID) + ' is as follow: \n ' +
-                JSON.stringify(err.toJSON()));
+                err);
           });
         }
 
@@ -181,7 +181,8 @@ var loginOrRegisterUser = function loginOrRegisterUser(
         console.log('Error on ' + new Date() + ' for user ' +
             (updatedUser.id || updatedUser.ID) + ' is as follow: \n \n ' + err);
         if (err.authorization) {
-          return reply(err).
+          return reply(
+              {status: false, message: 'Unable to Login User', err: err}).
               code(401).
               header('authorization', replyObject.authorization);
         }
@@ -227,21 +228,41 @@ var UserController = function() {
           replyObject.message = 'Unauthorized';
           reply(replyObject);
         } else if (user && !request.pre.forceUpdate) {
-          if (request.payload && request.payload.fcmId) {
-            fcmManager.insertFcmDetails(user.id || user.ID,
-                request.payload.fcmId).then(function(data) {
-              console.log(data);
-            }).catch(function(err) {
-              console.log('Error on ' + new Date() + ' for user ' +
-                  (user.id || user.ID) + ' is as follow: \n \n ' + err);
-            });
-          }
+          return userAdaptor.isUserValid(user).then(function(isValid) {
+            if (isValid) {
+              if (request.payload && request.payload.fcmId) {
+                fcmManager.insertFcmDetails(user.id || user.ID,
+                    request.payload.fcmId, request.payload.platform).
+                    then(function(data) {
+                      console.log(data);
+                    }).
+                    catch(function(err) {
+                      console.log('Error on ' + new Date() + ' for user ' +
+                          (user.id || user.ID) + ' is as follow: \n \n ' + err);
+                    });
+              }
 
-          reply(replyObject).code(201);
+              reply(replyObject).code(201);
+            }
+
+            return reply({
+              status: false,
+              message: 'Token Expired or Invalid',
+              forceUpdate: request.pre.forceUpdate,
+            }).code(401);
+          }).catch(function(err) {
+            console.log('Error on ' + new Date() + ' for user ' +
+                user.mobile_no + ' is as follow: \n \n ' + err);
+            return reply({
+              status: false,
+              message: 'Token Expired or Invalid',
+              forceUpdate: request.pre.forceUpdate,
+            }).code(401);
+          });
         } else {
           replyObject.status = false;
           replyObject.message = 'Forbidden';
-          reply(replyObject);
+          return reply(replyObject);
         }
       },
     }, {
@@ -330,7 +351,8 @@ var UserController = function() {
                 return reply(replyObject).code(401);
               }
             }).catch(function(err) {
-              console.log({API_Logs: err});
+              console.log('Error on ' + new Date() + ' for mobile no: ' +
+                  trueObject.PhoneNo + ' is as follow: \n \n ' + err);
               replyObject.status = false;
               replyObject.message = 'Issue in updating data';
               replyObject.error = err;
@@ -352,7 +374,8 @@ var UserController = function() {
               userInput.user_status_type = 1;
               return loginOrRegisterUser(userWhere, userInput, trueObject,
                   request, reply).catch(function(err) {
-                console.log({API_Logs: err});
+                console.log('Error on ' + new Date() + ' for mobile no: ' +
+                    trueObject.PhoneNo + ' is as follow: \n \n ' + err);
                 replyObject.status = false;
                 replyObject.message = 'Issue in updating data';
                 replyObject.error = err;
@@ -382,17 +405,17 @@ var UserController = function() {
         } else if (user && !request.pre.forceUpdate) {
           if (request.payload && request.payload.fcmId) {
             fcmManager.deleteFcmDetails(user.id || user.ID,
-                request.payload.fcmId).then(function(rows) {
-              console.log('TOTAL FCM ID\'s DELETED: ', rows);
-            });
+                request.payload.fcmId, request.payload.platform).
+                then(function(rows) {
+                  console.log('TOTAL FCM ID\'s DELETED: ', rows);
+                });
           }
 
           return userAdaptor.updateUserDetail({
-            last_logout_at: _moment2.default.utc().
-                format('YYYY-MM-DD HH:mm:ss'),
+            last_logout_at: _moment2.default.utc().format('YYYY-MM-DD HH:mm:ss'),
           }, {
             where: {
-              id: id,
+              id: user.id || user.ID,
             },
           }).then(function() {
             return reply(replyObject).code(201);

@@ -75,7 +75,6 @@ class UploadController {
       return fsImpl.writeFile(fileName, fileData._data,
           {ContentType: mime.lookup(fileName)}).then((fileResult) => {
 
-        console.log(fileResult);
         return userAdaptor.updateUserDetail({
           image_name: fileName,
         }, {
@@ -172,9 +171,6 @@ class UploadController {
   }
 
   static uploadFileGeneric(user, fileData, reply, request) {
-    console.log(
-        `${Math.random().toString(36).substr(2, 9)}${(user.id ||
-            user.ID).toString(36)}`);
     return modals.jobs.create(
         {
           job_id: `${Math.random().toString(36).substr(2, 9)}${(user.id ||
@@ -234,7 +230,6 @@ class UploadController {
           return Promise.all(promisedQuery);
           // }
         }).then(billResult => {
-          console.log(billResult);
           if (billResult[billResult.length - 1].email) {
             modals.jobs.count({
               where: {
@@ -263,7 +258,7 @@ class UploadController {
 
           if (process.env.NODE_ENV === 'production') {
             notificationAdaptor.sendMailOnUpload(
-                'New Job has been created with multiple files for consumer',
+                config.MESSAGE,
                 'sagar@binbill.com;pranjal@binbill.com;anu.gupta@binbill.com',
                 user, result.id);
           }
@@ -314,7 +309,6 @@ class UploadController {
               updated_by: user.id || user.ID,
             };
 
-            console.log(fileResult);
             modals.jobCopies.create(ret).then(() => {
               return modals.users.findById(user.id || user.ID);
             }).then((userResult) => {
@@ -343,7 +337,7 @@ class UploadController {
 
               if (process.env.NODE_ENV === 'production') {
                 notificationAdaptor.sendMailOnUpload(
-                    'New Job has been added with single file for consumer',
+                    config.MESSAGE,
                     'sagar@binbill.com;pranjal@binbill.com;anu.gupta@binbill.com',
                     user, result.id);
               }
@@ -401,13 +395,6 @@ class UploadController {
           }],
       }).then((result) => {
         if (result) {
-          console.log({
-            result,
-            fileName: Guid.isGuid(result.job_id) ?
-                `${result.copies[0].file_name}` :
-                `jobs/${result.job_id}/${result.copies[0].file_name}`,
-          });
-
           fsImpl.readFile(
               Guid.isGuid(result.job_id) ?
                   `${result.copies[0].file_name}` :
@@ -556,6 +543,36 @@ class UploadController {
           forceUpdate: request.pre.forceUpdate,
         });
       });
+    } else {
+      reply({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
+  static retrieveBrandImage(request, reply) {
+    if (!request.pre.forceUpdate) {
+      const fsImplBrand = new S3FS(
+          `${config.AWS.S3.BUCKET}/${config.AWS.S3.BRAND_IMAGE}`,
+          config.AWS.ACCESS_DETAILS);
+      fsImplBrand.readFile(`${request.params.id}.png`, 'utf8').
+          then(fileResult => reply(fileResult.Body).
+              header('Content-Type', fileResult.ContentType).
+              header('Content-Disposition',
+                  `attachment; filename=${result.CopyName}`)).
+          catch((err) => {
+            console.log(
+                `Error on ${new Date()} for user ${user.id ||
+                user.ID} is as follow: \n \n ${err}`);
+            reply({
+              status: false,
+              message: 'Unable to retrieve image',
+              err,
+              forceUpdate: request.pre.forceUpdate,
+            });
+          });
     } else {
       reply({
         status: false,

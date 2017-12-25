@@ -38,23 +38,30 @@ var fcmManager = function() {
   _createClass(fcmManager, [
     {
       key: 'insertFcmDetails',
-      value: function insertFcmDetails(userId, fcmId) {
+      value: function insertFcmDetails(userId, fcmId, platformId) {
         if (!fcmId || fcmId === '') {
           return Promise.resolve('NULL FCMID');
         }
+        var defaults = {
+          user_id: userId,
+          fcm_id: fcmId,
+        };
+
+        if (platformId) {
+          defaults.platform_id = platformId;
+        }
+
         return this.fcmModal.findCreateFind({
           where: {
             user_id: userId,
             fcm_id: fcmId,
           },
-          defaults: {
-            user_id: userId,
-            fcm_id: fcmId,
-          },
+          defaults: defaults,
         }).then(function(data) {
           return data;
         }).catch(function(err) {
-          console.log({API_Logs: err});
+          console.log('Error on ' + new Date() + ' for user ' + userId +
+              ' is as follow: \n \n ' + err);
         });
       },
     }, {
@@ -68,7 +75,8 @@ var fcmManager = function() {
         }).then(function(rows) {
           return rows;
         }).catch(function(err) {
-          console.log({API_Logs: err});
+          console.log('Error on ' + new Date() + ' for user ' + userId +
+              ' is as follow: \n \n ' + err);
         });
       },
     }]);

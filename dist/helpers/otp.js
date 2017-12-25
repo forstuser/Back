@@ -49,7 +49,7 @@ var sendOTPToUser = function sendOTPToUser(mobileNo) {
     var phone = '91' + mobileNo;
     var otp = generateOTP(6); // OTP of length = 6
     return sendOTP.sendAsync(phone, 'BINBILL', otp).catch(function(err) {
-      console.log({API_Logs: err});
+      console.log('Error on ' + new Date() + ' is as follow: \n \n ' + err);
 
       return sendOTP.retryAsync(phone, true);
     });

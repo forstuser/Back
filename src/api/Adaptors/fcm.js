@@ -3,23 +3,30 @@ class fcmManager {
     this.fcmModal = fcmModal;
   }
 
-  insertFcmDetails(userId, fcmId) {
+  insertFcmDetails(userId, fcmId, platformId) {
     if (!fcmId || fcmId === '') {
       return Promise.resolve('NULL FCMID');
     }
+    const defaults = {
+      user_id: userId,
+      fcm_id: fcmId,
+    };
+
+    if (platformId) {
+      defaults.platform_id = platformId;
+    }
+
     return this.fcmModal.findCreateFind({
       where: {
         user_id: userId,
         fcm_id: fcmId,
       },
-      defaults: {
-        user_id: userId,
-        fcm_id: fcmId,
-      },
+      defaults,
     }).then((data) => {
       return data;
     }).catch((err) => {
-      console.log({API_Logs: err});
+      console.log(
+          `Error on ${new Date()} for user ${userId} is as follow: \n \n ${err}`);
     });
   }
 
@@ -32,7 +39,8 @@ class fcmManager {
     }).then((rows) => {
       return rows;
     }).catch((err) => {
-      console.log({API_Logs: err});
+      console.log(
+          `Error on ${new Date()} for user ${userId} is as follow: \n \n ${err}`);
     });
   }
 }

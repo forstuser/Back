@@ -17,7 +17,7 @@ class DashboardAdaptor {
     this.insuranceAdaptor = new InsuranceAdaptor(modals);
     this.repairAdaptor = new RepairAdaptor(modals);
     this.warrantyAdaptor = new WarrantyAdaptor(modals);
-    this.date = new Date();
+    this.date = moment.utc();
   }
 
   retrieveDashboardResult(user, request) {
@@ -47,7 +47,7 @@ class DashboardAdaptor {
       this.modals.products.count({
         where: {
           user_id: user.id || user.ID,
-          status_type: [5, 8, 11],
+          status_type: 11,
           main_category_id: [2, 3],
         },
       }),
@@ -56,11 +56,8 @@ class DashboardAdaptor {
         status_type: [5, 8, 11],
       }),
     ]).then((result) => {
-      // console.log(require('util').inspect(result[0], false, null));
       const upcomingServices = result[0].map((elem) => {
         if (elem.productType === 1) {
-          console.log('found 1');
-          console.log(elem);
           const dueAmountArr = elem.productMetaData.filter((e) => {
             return e.name.toLowerCase() === 'due amount';
           });
@@ -74,16 +71,15 @@ class DashboardAdaptor {
       });
 
       const distinctInsight = [];
-      console.log({
-        insightData: result[1],
-      });
       const insightData = result[1].map((item) => {
         const insightItem = item;
         const index = distinctInsight.findIndex(
-            distinctItem => (moment(distinctItem.purchaseDate).
+            distinctItem => (moment(distinctItem.purchaseDate, moment.ISO_8601).
                     startOf('day').
                     valueOf() ===
-                moment(insightItem.purchaseDate).startOf('day').valueOf()));
+                moment(insightItem.purchaseDate, moment.ISO_8601).
+                    startOf('day').
+                    valueOf()));
 
         if (index === -1) {
           distinctInsight.push(insightItem);
@@ -144,9 +140,10 @@ class DashboardAdaptor {
         upcomingServices: upcomingServices,
         insight: insightResult,
         forceUpdate: request.pre.forceUpdate,
-        showDashboard: !!(result[4] && result[4] > 0),
-        hasProducts: !!(result[5] && result[5] > 0),
-        product: !!(result[4] && result[4] > 0) ? product : {},
+        showDashboard: !!(result[4] && parseInt(result[4]) > 0) ||
+        !!(result[5] && parseInt(result[5]) > 1),
+        hasProducts: !!(result[5] && parseInt(result[5]) > 0),
+        product: !!(result[4] && parseInt(result[4]) > 0) ? product : {},
       };
     }).catch(err => {
       console.log(
@@ -184,7 +181,7 @@ class DashboardAdaptor {
         }), this.modals.products.count({
           where: {
             user_id: user.id || user.ID,
-            status_type: [5, 8, 11],
+            status_type: 11,
             main_category_id: [2, 3],
           },
         })]).then((result) => {
@@ -196,7 +193,8 @@ class DashboardAdaptor {
             message: 'User Exist',
             billCounts,
             hasProducts: !!(productCounts && productCounts > 0),
-            showDashboard: !!(billCounts && billCounts > 0),
+            showDashboard: !!(billCounts && billCounts > 0) ||
+            !!(productCounts && productCounts > 1),
             isExistingUser: !isNewUser,
             authorization: token,
             userId: user.id || user.ID,
@@ -270,8 +268,9 @@ class DashboardAdaptor {
           const metaData = metaItem;
           if (metaData.name.toLowerCase().includes('due') &&
               metaData.name.toLowerCase().includes('date') &&
-              metaData.value && moment(metaData.value).isValid()) {
-            const dueDateTime = moment(metaData.value);
+              metaData.value &&
+              moment(metaData.value, moment.ISO_8601).isValid()) {
+            const dueDateTime = moment(metaData.value, moment.ISO_8601);
             product.dueDate = metaData.value;
             product.dueIn = dueDateTime.diff(moment.utc(), 'days');
           }
@@ -294,8 +293,8 @@ class DashboardAdaptor {
 
       let amcs = result[1].map((item) => {
         const amc = item;
-        if (moment(amc.expiryDate).isValid()) {
-          const dueDateTime = moment(amc.expiryDate);
+        if (moment(amc.expiryDate, moment.ISO_8601).isValid()) {
+          const dueDateTime = moment(amc.expiryDate, moment.ISO_8601);
           amc.dueDate = amc.expiryDate;
           amc.dueIn = dueDateTime.diff(moment.utc(), 'days');
           amc.productType = 4;
@@ -309,8 +308,8 @@ class DashboardAdaptor {
 
       let insurances = result[2].map((item) => {
         const insurance = item;
-        if (moment(insurance.expiryDate).isValid()) {
-          const dueDateTime = moment(insurance.expiryDate);
+        if (moment(insurance.expiryDate, moment.ISO_8601).isValid()) {
+          const dueDateTime = moment(insurance.expiryDate, moment.ISO_8601);
           insurance.dueDate = insurance.expiryDate;
           insurance.dueIn = dueDateTime.diff(moment.utc(), 'days');
           insurance.productType = 3;
@@ -324,8 +323,8 @@ class DashboardAdaptor {
 
       let warranties = result[3].map((item) => {
         const warranty = item;
-        if (moment(warranty.expiryDate).isValid()) {
-          const dueDateTime = moment(warranty.expiryDate);
+        if (moment(warranty.expiryDate, moment.ISO_8601).isValid()) {
+          const dueDateTime = moment(warranty.expiryDate, moment.ISO_8601);
           warranty.dueDate = warranty.expiryDate;
           warranty.dueIn = dueDateTime.diff(moment.utc(), 'days');
           warranty.productType = 2;

@@ -131,6 +131,31 @@ function prepareServiceCenterRoutes(
         handler: _serviceCenter2.default.retrieveServiceCenterFilters,
       }
     });
+
+    serviceCenterRoutes.push({
+      method: 'GET',
+      path: '/consumer/{mode}/centers',
+      config: {
+        pre: [
+          {
+            method: appVersionHelper.checkAppVersion,
+            assign: 'forceUpdate',
+          }],
+        handler: _serviceCenter2.default.retrieveServiceCenters,
+      }
+    });
+    serviceCenterRoutes.push({
+      method: 'GET',
+      path: '/consumer/web/centers/filters',
+      config: {
+        pre: [
+          {
+            method: appVersionHelper.checkAppVersion,
+            assign: 'forceUpdate',
+          }],
+        handler: _serviceCenter2.default.retrieveServiceCenterFilters,
+      }
+    });
   }
 }
 
@@ -142,6 +167,19 @@ function prepareBrandRoutes(brandController, brandRoutes) {
       path: '/brands',
       config: {
         auth: 'jwt',
+        pre: [
+          {
+            method: appVersionHelper.checkAppVersion,
+            assign: 'forceUpdate',
+          }],
+        handler: _brand2.default.getBrands,
+      }
+    });
+
+    brandRoutes.push({
+      method: 'GET',
+      path: '/{mode}/brands',
+      config: {
         pre: [
           {
             method: appVersionHelper.checkAppVersion,
@@ -174,6 +212,18 @@ function prepareCategoryRoutes(categoryController, categoryRoutes) {
       path: '/categories',
       config: {
         auth: 'jwt',
+        pre: [
+          {
+            method: appVersionHelper.checkAppVersion,
+            assign: 'forceUpdate',
+          }],
+        handler: _category2.default.getCategories,
+      }
+    });
+    categoryRoutes.push({
+      method: 'GET',
+      path: '/{mode}/categories',
+      config: {
         pre: [
           {
             method: appVersionHelper.checkAppVersion,
@@ -256,6 +306,7 @@ function prepareAuthRoutes(userController, authRoutes) {
         validate: {
           payload: {
             fcmId: [_joi2.default.string(), _joi2.default.allow(null)],
+            platform: [_joi2.default.number(), _joi2.default.allow(null)],
             output: 'data',
             parse: true,
           }
@@ -305,6 +356,7 @@ function prepareAuthRoutes(userController, authRoutes) {
           payload: {
             phoneNo: [_joi2.default.string(), _joi2.default.allow(null)],
             fcmId: [_joi2.default.string(), _joi2.default.allow(null)],
+            platform: [_joi2.default.number(), _joi2.default.allow(null)],
             email: [_joi2.default.string(), _joi2.default.allow(null, '')],
             oldEmail: [_joi2.default.string(), _joi2.default.allow(null, '')],
             name: [_joi2.default.string(), _joi2.default.allow(null, '')],
@@ -480,6 +532,7 @@ function prepareAuthRoutes(userController, authRoutes) {
             },
             TruePayload: _joi2.default.string(),
             fcmId: _joi2.default.string(),
+            platform: [_joi2.default.number(), _joi2.default.allow(null)],
             BBLogin_Type: _joi2.default.number().required(),
             transactionId: _joi2.default.string(),
             TrueSecret: _joi2.default.string(),
@@ -673,6 +726,15 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
       path: '/categories/{id}/images/{type}',
       config: {
         handler: _upload2.default.retrieveCategoryImage,
+      }
+    });
+
+    /*Retrieve Brand images*/
+    uploadFileRoute.push({
+      method: 'GET',
+      path: '/brands/{id}/images',
+      config: {
+        handler: _upload2.default.retrieveBrandImage,
       }
     });
   }

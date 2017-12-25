@@ -35,6 +35,10 @@ var _dashboard = require('../Adaptors/dashboard');
 
 var _dashboard2 = _interopRequireDefault(_dashboard);
 
+var _user = require('../Adaptors/user');
+
+var _user2 = _interopRequireDefault(_user);
+
 var _shared = require('../../helpers/shared');
 
 var _shared2 = _interopRequireDefault(_shared);
@@ -50,16 +54,18 @@ function _classCallCheck(instance, Constructor) {
 }
 
 var dashboardAdaptor = void 0;
-var ehomeAdaptor = void 0;
+var eHomeAdaptor = void 0;
 var notificationAdaptor = void 0;
+var userAdaptor = void 0;
 
 var DashboardController = function() {
   function DashboardController(modal) {
     _classCallCheck(this, DashboardController);
 
     dashboardAdaptor = new _dashboard2.default(modal);
-    ehomeAdaptor = new _ehome2.default(modal);
+    eHomeAdaptor = new _ehome2.default(modal);
     notificationAdaptor = new _notification2.default(modal);
+    userAdaptor = new _user2.default(modal);
   }
 
   _createClass(DashboardController, null, [
@@ -68,15 +74,35 @@ var DashboardController = function() {
       value: function getDashboard(request, reply) {
         var user = _shared2.default.verifyAuthorization(request.headers);
         if (user && !request.pre.forceUpdate) {
-          reply(dashboardAdaptor.retrieveDashboardResult(user, request)).
-              code(200);
+          return userAdaptor.isUserValid(user).then(function(isValid) {
+            if (isValid) {
+              return reply(
+                  dashboardAdaptor.retrieveDashboardResult(user, request)).
+                  code(200);
+            }
+
+            return reply({
+              status: false,
+              message: 'Token Expired or Invalid',
+              forceUpdate: request.pre.forceUpdate,
+            }).code(401);
+          }).catch(function(err) {
+            console.log('Error on ' + new Date() + ' for user ' +
+                user.mobile_no + ' is as follow: \n \n ' + err);
+            return reply({
+              status: false,
+              message: 'Token Expired or Invalid',
+              forceUpdate: request.pre.forceUpdate,
+            }).code(401);
+          });
         } else if (!user) {
-          reply({
+          return reply({
+            status: false,
             message: 'Token Expired or Invalid',
             forceUpdate: request.pre.forceUpdate,
           }).code(401);
         } else {
-          reply({
+          return reply({
             status: false,
             message: 'Forbidden',
             forceUpdate: request.pre.forceUpdate,
@@ -88,15 +114,34 @@ var DashboardController = function() {
       value: function getEHome(request, reply) {
         var user = _shared2.default.verifyAuthorization(request.headers);
         if (user && !request.pre.forceUpdate) {
-          reply(ehomeAdaptor.prepareEHomeResult(user, request)).code(200);
+          return userAdaptor.isUserValid(user).then(function(isValid) {
+            if (isValid) {
+              return reply(eHomeAdaptor.prepareEHomeResult(user, request)).
+                  code(200);
+            }
+
+            return reply({
+              status: false,
+              message: 'Token Expired or Invalid',
+              forceUpdate: request.pre.forceUpdate,
+            }).code(401);
+          }).catch(function(err) {
+            console.log('Error on ' + new Date() + ' for user ' +
+                user.mobile_no + ' is as follow: \n \n ' + err);
+            return reply({
+              status: false,
+              message: 'Token Expired or Invalid',
+              forceUpdate: request.pre.forceUpdate,
+            }).code(401);
+          });
         } else if (!user) {
-          reply({
+          return reply({
             status: false,
             message: 'Token Expired or Invalid',
             forceUpdate: request.pre.forceUpdate,
           }).code(401);
         } else {
-          reply({
+          return reply({
             status: false,
             message: 'Forbidden',
             forceUpdate: request.pre.forceUpdate,
@@ -108,21 +153,42 @@ var DashboardController = function() {
       value: function getProductsInCategory(request, reply) {
         var user = _shared2.default.verifyAuthorization(request.headers);
         if (!user) {
-          reply({
+          return reply({
             status: false,
             message: 'Unauthorized',
             forceUpdate: request.pre.forceUpdate,
           });
         } else if (user && !request.pre.forceUpdate) {
-          reply(ehomeAdaptor.prepareProductDetail(user, request.params.id,
-              request.query.subCategoryId,
-              /* request.query.pageno, */
-              request.query.brandids || '[]', request.query.categoryids ||
-              '[]', request.query.offlinesellerids ||
-              '[]', request.query.onlinesellerids || '[]', request.query.sortby,
-              request.query.searchvalue, request)).code(200);
+          return userAdaptor.isUserValid(user).then(function(isValid) {
+            if (isValid) {
+              return reply(
+                  eHomeAdaptor.prepareProductDetail(user, request.params.id,
+                      request.query.subCategoryId,
+                      /* request.query.pageno, */
+                      request.query.brandids ||
+                      '[]', request.query.categoryids ||
+                      '[]', request.query.offlinesellerids ||
+                      '[]', request.query.onlinesellerids || '[]',
+                      request.query.sortby, request.query.searchvalue,
+                      request)).code(200);
+            }
+
+            return reply({
+              status: false,
+              message: 'Token Expired or Invalid',
+              forceUpdate: request.pre.forceUpdate,
+            }).code(401);
+          }).catch(function(err) {
+            console.log('Error on ' + new Date() + ' for user ' +
+                user.mobile_no + ' is as follow: \n \n ' + err);
+            return reply({
+              status: false,
+              message: 'Token Expired or Invalid',
+              forceUpdate: request.pre.forceUpdate,
+            }).code(401);
+          });
         } else {
-          reply({
+          return reply({
             status: false,
             message: 'Forbidden',
             forceUpdate: request.pre.forceUpdate,
@@ -134,26 +200,40 @@ var DashboardController = function() {
       value: function updateNotificationStatus(request, reply) {
         var user = _shared2.default.verifyAuthorization(request.headers);
         if (!user) {
-          reply({
+          return reply({
             status: false,
             message: 'Unauthorized',
           });
         } else {
           //if (user && !request.pre.forceUpdate) {
-          notificationAdaptor.updateNotificationStatus(user,
-              request.payload.notificationIds).then(function(count) {
-            console.log('UPDATE COUNT: ', count);
+          return userAdaptor.isUserValid(user).then(function(isValid) {
+            if (isValid) {
+              return notificationAdaptor.updateNotificationStatus(user,
+                  request.payload.notificationIds).then(function(count) {
 
-            reply({status: true}).code(201); //, forceUpdate: request.pre.forceUpdate}).code(201);
+                return reply({status: true}).code(201); //, forceUpdate: request.pre.forceUpdate}).code(201);
+              }).catch(function(err) {
+                console.log('Error on ' + new Date() + ' for user ' +
+                    (user.id || user.ID) + ' is as follow: \n \n ' + err);
+                return reply({status: false}).code(500); //, forceUpdate: request.pre.forceUpdate}).code(500);
+              });
+            }
+
+            return reply({
+              status: false,
+              message: 'Token Expired or Invalid',
+              forceUpdate: request.pre.forceUpdate,
+            }).code(401);
           }).catch(function(err) {
             console.log('Error on ' + new Date() + ' for user ' +
-                (user.id || user.ID) + ' is as follow: \n \n ' + err);
-            reply({status: false}).code(500); //, forceUpdate: request.pre.forceUpdate}).code(500);
+                user.mobile_no + ' is as follow: \n \n ' + err);
+            return reply({
+              status: false,
+              message: 'Token Expired or Invalid',
+              forceUpdate: request.pre.forceUpdate,
+            }).code(401);
           });
         }
-        // } else {
-        // 	reply({status: false, message: "Forbidden", forceUpdate: request.pre.forceUpdate});
-        // }
       },
     }, {
       key: 'getMailbox',
@@ -166,10 +246,30 @@ var DashboardController = function() {
             forceUpdate: request.pre.forceUpdate,
           });
         } else if (!request.pre.forceUpdate && user) {
-          reply(notificationAdaptor.retrieveNotifications(user, request)).
-              code(200);
+
+          return userAdaptor.isUserValid(user).then(function(isValid) {
+            if (isValid) {
+              return reply(
+                  notificationAdaptor.retrieveNotifications(user, request)).
+                  code(200);
+            }
+
+            return reply({
+              status: false,
+              message: 'Token Expired or Invalid',
+              forceUpdate: request.pre.forceUpdate,
+            }).code(401);
+          }).catch(function(err) {
+            console.log('Error on ' + new Date() + ' for user ' +
+                user.mobile_no + ' is as follow: \n \n ' + err);
+            return reply({
+              status: false,
+              message: 'Token Expired or Invalid',
+              forceUpdate: request.pre.forceUpdate,
+            }).code(401);
+          });
         } else {
-          reply({
+          return reply({
             status: false,
             message: 'Forbidden',
             forceUpdate: request.pre.forceUpdate,
