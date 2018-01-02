@@ -91,18 +91,6 @@ var PUCAdaptor = function() {
           where: options,
           include: [
             {
-              model: this.modals.onlineSellers,
-              as: 'onlineSellers',
-              attributes: [
-                [
-                  'seller_name',
-                  'sellerName'],
-                'url',
-                'gstin',
-                'contact',
-                'email'],
-              required: false,
-            }, {
               model: this.modals.products,
               where: productOptions,
               attributes: [],

@@ -1699,7 +1699,463 @@ var ProductAdaptor = function() {
 
           return undefined;
         });
-      }
+      },
+    }, {
+      key: 'preparePUCPromise',
+      value: function preparePUCPromise(
+          renewalTypes, otherItems, pucPromise, productBody,
+          isProductPUCSellerSame, sellerList, productId) {
+        var pucRenewalType = renewalTypes.find(function(item) {
+          return item.type === otherItems.puc.expiry_period || 7;
+        });
+        var effective_date = (0, _moment2.default)(
+            otherItems.puc.effective_date, _moment2.default.ISO_8601).
+            isValid() ?
+            (0, _moment2.default)(otherItems.puc.effective_date,
+                _moment2.default.ISO_8601).startOf('day') :
+            (0, _moment2.default)(otherItems.puc.effective_date, 'DD MMM YY').
+                startOf('day');
+        var expiry_date = (0, _moment2.default)(effective_date,
+            _moment2.default.ISO_8601).
+            add(pucRenewalType.effective_months, 'months').
+            subtract(1, 'day').
+            endOf('days').
+            format('YYYY-MM-DD');
+        pucPromise.push(
+            otherItems.puc.id ? this.pucAdaptor.updatePUCs(otherItems.puc.id, {
+              renewal_type: otherItems.puc.expiry_period || 7,
+              updated_by: productBody.user_id,
+              status_type: 11,
+              seller_id: isProductPUCSellerSame ?
+                  sellerList[0].sid :
+                  otherItems.puc.seller_name || otherItems.puc.seller_contact ?
+                      sellerList[3].sid :
+                      undefined,
+              product_id: productId,
+              expiry_date: (0, _moment2.default)(expiry_date).
+                  format('YYYY-MM-DD'),
+              effective_date: (0, _moment2.default)(effective_date).
+                  format('YYYY-MM-DD'),
+              document_date: (0, _moment2.default)(effective_date).
+                  format('YYYY-MM-DD'),
+              user_id: productBody.user_id,
+            }) : this.pucAdaptor.createPUCs({
+              renewal_type: otherItems.puc.expiry_period || 7,
+              updated_by: productBody.user_id,
+              status_type: 11,
+              product_id: productId,
+              seller_id: isProductPUCSellerSame ?
+                  sellerList[0].sid :
+                  otherItems.puc.seller_name || otherItems.puc.seller_contact ?
+                      sellerList[3].sid :
+                      undefined,
+              expiry_date: (0, _moment2.default)(expiry_date).
+                  format('YYYY-MM-DD'),
+              effective_date: (0, _moment2.default)(effective_date).
+                  format('YYYY-MM-DD'),
+              document_date: (0, _moment2.default)(effective_date).
+                  format('YYYY-MM-DD'),
+              user_id: productBody.user_id,
+            }));
+      },
+    }, {
+      key: 'prepareRepairPromise',
+      value: function prepareRepairPromise(
+          otherItems, isProductRepairSellerSame, sellerList,
+          isAMCRepairSellerSame, repairPromise, productBody, productId) {
+        var document_date = (0, _moment2.default)(
+            otherItems.repair.document_date, _moment2.default.ISO_8601).
+            isValid() ?
+            (0, _moment2.default)(otherItems.repair.document_date,
+                _moment2.default.ISO_8601).startOf('day') :
+            (0, _moment2.default)(otherItems.repair.document_date, 'DD MMM YY').
+                startOf('day');
+
+        var repairSellerId = isProductRepairSellerSame ?
+            sellerList[0].sid :
+            otherItems.repair.is_amc_seller || isAMCRepairSellerSame ?
+                sellerList[1].sid :
+                otherItems.repair.seller_name ||
+                otherItems.repair.seller_contact ?
+                    sellerList[2].sid :
+                    undefined;
+        repairPromise.push(otherItems.repair.id ?
+            this.repairAdaptor.updateRepairs(otherItems.repair.id, {
+              updated_by: productBody.user_id,
+              status_type: 11,
+              product_id: productId,
+              seller_id: repairSellerId,
+              document_date: (0, _moment2.default)(document_date).
+                  format('YYYY-MM-DD'),
+              repair_for: otherItems.repair.repair_for,
+              repair_cost: otherItems.repair.repair_cost,
+              warranty_upto: otherItems.repair.warranty_upto,
+              user_id: productBody.user_id,
+            }) :
+            this.repairAdaptor.createRepairs({
+              updated_by: productBody.user_id,
+              status_type: 11,
+              product_id: productId,
+              document_date: (0, _moment2.default)(document_date).
+                  format('YYYY-MM-DD'),
+              seller_id: repairSellerId,
+              repair_for: otherItems.repair.repair_for,
+              repair_cost: otherItems.repair.repair_cost,
+              warranty_upto: otherItems.repair.warranty_upto,
+              user_id: productBody.user_id,
+            }));
+      },
+    }, {
+      key: 'prepareAMCPromise',
+      value: function prepareAMCPromise(
+          renewalTypes, otherItems, amcPromise, productBody, productId,
+          isProductAMCSellerSame, sellerList) {
+        var amcRenewalType = renewalTypes.find(function(item) {
+          return item.type === 8;
+        });
+        var effective_date = (0, _moment2.default)(
+            otherItems.amc.effective_date, _moment2.default.ISO_8601).
+            isValid() ?
+            (0, _moment2.default)(otherItems.amc.effective_date,
+                _moment2.default.ISO_8601).startOf('day') :
+            (0, _moment2.default)(otherItems.amc.effective_date, 'DD MMM YY').
+                startOf('day');
+        var expiry_date = (0, _moment2.default)(effective_date,
+            _moment2.default.ISO_8601).
+            add(amcRenewalType.effective_months, 'months').
+            subtract(1, 'day').
+            endOf('days').
+            format('YYYY-MM-DD');
+        amcPromise.push(
+            otherItems.amc.id ? this.amcAdaptor.updateAMCs(otherItems.amc.id, {
+              renewal_type: 8,
+              updated_by: productBody.user_id,
+              status_type: 11,
+              product_id: productId,
+              renewal_cost: otherItems.amc.renewal_cost,
+              seller_id: isProductAMCSellerSame ?
+                  sellerList[0].sid :
+                  otherItems.amc.seller_name || otherItems.amc.seller_contact ?
+                      sellerList[1].sid :
+                      undefined,
+              expiry_date: (0, _moment2.default)(expiry_date).
+                  format('YYYY-MM-DD'),
+              effective_date: (0, _moment2.default)(effective_date).
+                  format('YYYY-MM-DD'),
+              document_date: (0, _moment2.default)(effective_date).
+                  format('YYYY-MM-DD'),
+              user_id: productBody.user_id,
+            }) : this.amcAdaptor.createAMCs({
+              renewal_type: 8,
+              updated_by: productBody.user_id,
+              status_type: 11,
+              product_id: productId,
+              seller_id: isProductAMCSellerSame ?
+                  sellerList[0].sid :
+                  otherItems.amc.seller_name || otherItems.amc.seller_contact ?
+                      sellerList[1].sid :
+                      undefined,
+              expiry_date: (0, _moment2.default)(expiry_date).
+                  format('YYYY-MM-DD'),
+              effective_date: (0, _moment2.default)(effective_date).
+                  format('YYYY-MM-DD'),
+              document_date: (0, _moment2.default)(effective_date).
+                  format('YYYY-MM-DD'),
+              user_id: productBody.user_id,
+            }));
+      },
+    }, {
+      key: 'prepareInsurancePromise',
+      value: function prepareInsurancePromise(
+          otherItems, insurancePromise, productBody, productId) {
+        var effective_date = (0, _moment2.default)(
+            otherItems.insurance.effective_date, _moment2.default.ISO_8601).
+            isValid() ?
+            (0, _moment2.default)(otherItems.insurance.effective_date,
+                _moment2.default.ISO_8601).startOf('day') :
+            (0, _moment2.default)(otherItems.insurance.effective_date,
+                'DD MMM YY').startOf('day');
+        var expiry_date = (0, _moment2.default)(effective_date,
+            _moment2.default.ISO_8601).add(8759, 'hours').endOf('days');
+        insurancePromise.push(otherItems.insurance.id ?
+            this.insuranceAdaptor.updateInsurances(otherItems.insurance.id, {
+              renewal_type: 8,
+              updated_by: productBody.user_id,
+              status_type: 11,
+              product_id: productId,
+              expiry_date: (0, _moment2.default)(expiry_date).
+                  format('YYYY-MM-DD'),
+              effective_date: (0, _moment2.default)(effective_date).
+                  format('YYYY-MM-DD'),
+              document_date: (0, _moment2.default)(effective_date).
+                  format('YYYY-MM-DD'),
+              document_number: otherItems.insurance.policy_no,
+              provider_id: otherItems.insurance.provider_id,
+              amount_insured: otherItems.insurance.amount_insured,
+              renewal_cost: otherItems.insurance.renewal_cost,
+              user_id: productBody.user_id,
+            }) :
+            this.insuranceAdaptor.createInsurances({
+              renewal_type: 8,
+              updated_by: productBody.user_id,
+              status_type: 11,
+              product_id: productId,
+              expiry_date: (0, _moment2.default)(expiry_date).
+                  format('YYYY-MM-DD'),
+              effective_date: (0, _moment2.default)(effective_date).
+                  format('YYYY-MM-DD'),
+              document_date: (0, _moment2.default)(effective_date).
+                  format('YYYY-MM-DD'),
+              document_number: otherItems.insurance.policy_no,
+              provider_id: otherItems.insurance.provider_id,
+              amount_insured: otherItems.insurance.amount_insured,
+              renewal_cost: otherItems.insurance.renewal_cost,
+              user_id: productBody.user_id,
+            }));
+      },
+    }, {
+      key: 'prepareWarrantyPromise',
+      value: function prepareWarrantyPromise(
+          otherItems, renewalTypes, warrantyItemPromise, productBody,
+          productId) {
+        var warrantyRenewalType = void 0;
+        var expiry_date = void 0;
+        if (otherItems.warranty.renewal_type) {
+          warrantyRenewalType = renewalTypes.find(function(item) {
+            return item.type === otherItems.warranty.renewal_type;
+          });
+          var effective_date = (0, _moment2.default)(
+              otherItems.warranty.effective_date, _moment2.default.ISO_8601).
+              isValid() ?
+              (0, _moment2.default)(otherItems.warranty.effective_date,
+                  _moment2.default.ISO_8601).startOf('day') :
+              (0, _moment2.default)(otherItems.warranty.effective_date,
+                  'DD MMM YY').startOf('day');
+          expiry_date = (0, _moment2.default)(effective_date,
+              _moment2.default.ISO_8601).
+              add(warrantyRenewalType.effective_months, 'months').
+              subtract(1, 'day').
+              endOf('days');
+          warrantyItemPromise.push(otherItems.warranty.id ?
+              this.warrantyAdaptor.updateWarranties(otherItems.warranty.id, {
+                renewal_type: otherItems.warranty.renewal_type,
+                updated_by: productBody.user_id,
+                status_type: 11,
+                product_id: productId,
+                expiry_date: (0, _moment2.default)(expiry_date).
+                    format('YYYY-MM-DD'),
+                effective_date: (0, _moment2.default)(effective_date).
+                    format('YYYY-MM-DD'),
+                document_date: (0, _moment2.default)(effective_date).
+                    format('YYYY-MM-DD'),
+                warranty_type: 1,
+                user_id: productBody.user_id,
+              }) :
+              this.warrantyAdaptor.createWarranties({
+                renewal_type: otherItems.warranty.renewal_type,
+                updated_by: productBody.user_id,
+                status_type: 11,
+                product_id: productId,
+                expiry_date: (0, _moment2.default)(expiry_date).
+                    format('YYYY-MM-DD'),
+                effective_date: (0, _moment2.default)(effective_date).
+                    format('YYYY-MM-DD'),
+                document_date: (0, _moment2.default)(effective_date).
+                    format('YYYY-MM-DD'),
+                warranty_type: 1,
+                user_id: productBody.user_id,
+              }));
+        }
+
+        if (otherItems.warranty.extended_renewal_type) {
+          warrantyRenewalType = renewalTypes.find(function(item) {
+            return item.type === otherItems.warranty.extended_renewal_type;
+          });
+          var _effective_date7 = otherItems.warranty.extended_effective_date ?
+              (0, _moment2.default)(otherItems.warranty.extended_effective_date,
+                  _moment2.default.ISO_8601).isValid() ?
+                  (0, _moment2.default)(
+                      otherItems.warranty.extended_effective_date,
+                      _moment2.default.ISO_8601).startOf('day') :
+                  (0, _moment2.default)(
+                      otherItems.warranty.extended_effective_date, 'DD MMM YY').
+                      startOf('day') :
+              expiry_date;
+          expiry_date = (0, _moment2.default)(_effective_date7).
+              add(warrantyRenewalType.effective_months, 'months').
+              subtract(1, 'day').
+              endOf('days');
+          warrantyItemPromise.push(otherItems.warranty.id ?
+              this.warrantyAdaptor.updateWarranties(
+                  otherItems.warranty.extended_id, {
+                    renewal_type: otherItems.warranty.extended_renewal_type,
+                    provider_id: otherItems.warranty.extended_provider_id,
+                    updated_by: productBody.user_id,
+                    status_type: 11,
+                    product_id: productId,
+                    expiry_date: (0, _moment2.default)(expiry_date).
+                        format('YYYY-MM-DD'),
+                    effective_date: (0, _moment2.default)(_effective_date7).
+                        format('YYYY-MM-DD'),
+                    document_date: (0, _moment2.default)(_effective_date7).
+                        format('YYYY-MM-DD'),
+                    warranty_type: 2,
+                    user_id: productBody.user_id,
+                  }) :
+              this.warrantyAdaptor.createWarranties({
+                renewal_type: otherItems.warranty.extended_renewal_type,
+                provider_id: otherItems.warranty.extended_provider_id,
+                updated_by: productBody.user_id,
+                status_type: 11,
+                product_id: productId,
+                expiry_date: (0, _moment2.default)(expiry_date).
+                    format('YYYY-MM-DD'),
+                effective_date: (0, _moment2.default)(_effective_date7).
+                    format('YYYY-MM-DD'),
+                document_date: (0, _moment2.default)(_effective_date7).
+                    format('YYYY-MM-DD'),
+                warranty_type: 2,
+                user_id: productBody.user_id,
+              }));
+        }
+
+        if (otherItems.warranty.dual_renewal_type) {
+          warrantyRenewalType = renewalTypes.find(function(item) {
+            return item.type === otherItems.warranty.dual_renewal_type;
+          });
+          var _effective_date8 = (0, _moment2.default)(
+              otherItems.warranty.effective_date, _moment2.default.ISO_8601).
+              isValid() ?
+              (0, _moment2.default)(otherItems.warranty.effective_date,
+                  _moment2.default.ISO_8601).startOf('day') :
+              (0, _moment2.default)(otherItems.warranty.effective_date,
+                  'DD MMM YY').startOf('day');
+          expiry_date = (0, _moment2.default)(_effective_date8,
+              _moment2.default.ISO_8601).
+              add(warrantyRenewalType.effective_months, 'months').
+              subtract(1, 'day').
+              endOf('days');
+          warrantyItemPromise.push(otherItems.warranty.dual_id ?
+              this.warrantyAdaptor.updateWarranties(otherItems.warranty.dual_id,
+                  {
+                    renewal_type: otherItems.warranty.dual_renewal_type,
+                    updated_by: productBody.user_id,
+                    status_type: 11,
+                    product_id: productId,
+                    expiry_date: (0, _moment2.default)(expiry_date).
+                        format('YYYY-MM-DD'),
+                    effective_date: (0, _moment2.default)(_effective_date8).
+                        format('YYYY-MM-DD'),
+                    document_date: (0, _moment2.default)(_effective_date8).
+                        format('YYYY-MM-DD'),
+                    warranty_type: 3,
+                    user_id: productBody.user_id,
+                  }) :
+              this.warrantyAdaptor.createWarranties({
+                renewal_type: otherItems.warranty.dual_renewal_type,
+                updated_by: productBody.user_id,
+                status_type: 11,
+                product_id: productId,
+                expiry_date: (0, _moment2.default)(expiry_date).
+                    format('YYYY-MM-DD'),
+                effective_date: (0, _moment2.default)(_effective_date8).
+                    format('YYYY-MM-DD'),
+                document_date: (0, _moment2.default)(_effective_date8).
+                    format('YYYY-MM-DD'),
+                warranty_type: 3,
+                user_id: productBody.user_id,
+              }));
+        }
+
+        if (otherItems.warranty.accessory_renewal_type) {
+          warrantyRenewalType = renewalTypes.find(function(item) {
+            return item.type === otherItems.warranty.accessory_renewal_type;
+          });
+          var _effective_date9 = (0, _moment2.default)(
+              otherItems.warranty.effective_date, _moment2.default.ISO_8601).
+              isValid() ?
+              (0, _moment2.default)(otherItems.warranty.effective_date,
+                  _moment2.default.ISO_8601).startOf('day') :
+              (0, _moment2.default)(otherItems.warranty.effective_date,
+                  'DD MMM YY').startOf('day');
+          expiry_date = (0, _moment2.default)(_effective_date9).
+              add(warrantyRenewalType.effective_months, 'months').
+              subtract(1, 'day').
+              endOf('days');
+          warrantyItemPromise.push(this.warrantyAdaptor.createWarranties({
+            renewal_type: otherItems.warranty.accessory_renewal_type,
+            updated_by: productBody.user_id,
+            status_type: 11,
+            product_id: productId,
+            expiry_date: (0, _moment2.default)(expiry_date).
+                format('YYYY-MM-DD'),
+            effective_date: (0, _moment2.default)(_effective_date9).
+                format('YYYY-MM-DD'),
+            document_date: (0, _moment2.default)(_effective_date9).
+                format('YYYY-MM-DD'),
+            warranty_type: 4,
+            user_id: productBody.user_id,
+          }));
+        }
+      },
+    }, {
+      key: 'prepareSellerPromise',
+      value: function prepareSellerPromise(
+          sellerPromise, productBody, otherItems, isProductAMCSellerSame,
+          isProductRepairSellerSame, isProductPUCSellerSame,
+          isAMCRepairSellerSame) {
+        sellerPromise.push(
+            productBody.seller_contact || productBody.seller_name ?
+                this.sellerAdaptor.retrieveOrCreateOfflineSellers({
+                  contact_no: productBody.seller_contact,
+                }, {
+                  seller_name: productBody.seller_name,
+                  contact_no: productBody.seller_contact,
+                  updated_by: productBody.user_id,
+                  created_by: productBody.user_id,
+                  status_type: 11,
+                }) :
+                '');
+        sellerPromise.push(otherItems.amc && isProductAMCSellerSame &&
+        (otherItems.amc.seller_contact || otherItems.amc.seller_name) ?
+            this.sellerAdaptor.retrieveOrCreateOfflineSellers({
+              contact_no: otherItems.amc.seller_contact,
+            }, {
+              seller_name: otherItems.amc.seller_name,
+              contact_no: otherItems.amc.contact_no,
+              updated_by: productBody.user_id,
+              created_by: productBody.user_id,
+              status_type: 11,
+            }) :
+            '');
+        sellerPromise.push(
+            otherItems.repair && !otherItems.repair.is_amc_seller &&
+            isProductRepairSellerSame && isAMCRepairSellerSame &&
+            (otherItems.repair.seller_contact ||
+                otherItems.repair.seller_name) ?
+                this.sellerAdaptor.retrieveOrCreateOfflineSellers({
+                  contact_no: otherItems.repair.seller_contact,
+                }, {
+                  seller_name: otherItems.repair.seller_name,
+                  contact_no: otherItems.repair.contact_no,
+                  updated_by: productBody.user_id,
+                  created_by: productBody.user_id,
+                  status_type: 11,
+                }) :
+                '');
+        sellerPromise.push(otherItems.puc && isProductPUCSellerSame &&
+        (otherItems.puc.seller_contact || otherItems.puc.seller_name) ?
+            this.sellerAdaptor.retrieveOrCreateOfflineSellers({
+              contact_no: otherItems.puc.seller_contact,
+            }, {
+              seller_name: otherItems.puc.seller_name,
+              contact_no: otherItems.puc.contact_no,
+              updated_by: productBody.user_id,
+              created_by: productBody.user_id,
+              status_type: 11,
+            }) :
+            '');
+      },
     }, {
       key: 'preparePUCPromise',
       value: function preparePUCPromise(
