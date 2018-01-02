@@ -14,17 +14,21 @@ class InsightController {
 	static retrieveCategorywiseInsight(request, reply) {
 		const user = shared.verifyAuthorization(request.headers);
 		if (!user) {
-			reply({
+      return reply({
 				status: false,
 				message: 'Unauthorized',
 				forceUpdate: request.pre.forceUpdate
 			});
 		} else if (user && !request.pre.forceUpdate) {
-			reply(insightAdaptor
+      return reply(insightAdaptor
 				.prepareInsightData(user, request))
 				.code(200);
 		} else {
-			reply({status: false, message: "Forbidden", forceUpdate: request.pre.forceUpdate})
+      return reply({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
 		}
 	}
 

@@ -61,6 +61,10 @@ export default (sequelize, DataTypes) => {
         copies: {
           type: DataTypes.ARRAY(DataTypes.JSONB),
         },
+        warranty_type: {
+          type: DataTypes.INTEGER,
+          defaultValue: 1,
+        },
       },
       {
         freezeTableName: true,

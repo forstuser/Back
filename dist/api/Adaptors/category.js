@@ -124,6 +124,7 @@ var CategoryAdaptor = function() {
             [
               'ref_id',
               'refId'],
+            'dual_warranty_item',
             [
               'category_level',
               'level'],
@@ -145,6 +146,7 @@ var CategoryAdaptor = function() {
               'categoryImageUrl']],
           order: ['category_id'],
         }).then(function(result) {
+          console.log(result);
           categoryData = result.map(function(item) {
             return item.toJSON();
           });
@@ -160,6 +162,16 @@ var CategoryAdaptor = function() {
                   return item.id;
                 }),
                 status_type: 1,
+              }), _this2.modals.insuranceBrands.findAll({
+                include: {
+                  model: _this2.modals.categories,
+                  where: {
+                    category_id: options.category_id,
+                  },
+                  as: 'categories',
+                  attributes: [],
+                  required: true,
+                },
               })]);
           }
 
@@ -173,11 +185,12 @@ var CategoryAdaptor = function() {
               item.categoryForms = results[1].filter(function(formItem) {
                 return formItem.categoryId === item.id;
               });
+              item.insuranceProviders = results[2];
               return item;
             });
           }
           return categoryData;
-        });
+        }).catch(console.log);
       },
     }, {
       key: 'retrieveCategoryForms',
@@ -220,6 +233,18 @@ var CategoryAdaptor = function() {
           order: ['display_index'],
         }).then(function(formResult) {
           return formResult.map(function(item) {
+            return item.toJSON();
+          });
+        });
+      },
+    }, {
+      key: 'retrieveRenewalTypes',
+      value: function retrieveRenewalTypes(options) {
+        return this.modals.renewalTypes.findAll({
+          where: options,
+          order: [['type', 'ASC']],
+        }).then(function(renewalTypes) {
+          return renewalTypes.map(function(item) {
             return item.toJSON();
           });
         });

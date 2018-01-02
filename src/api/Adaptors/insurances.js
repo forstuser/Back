@@ -24,7 +24,9 @@ class InsuranceAdaptor {
   }
 
   retrieveInsurances(options) {
-    options.status_type = [5, 11];
+    if (!options.status_type) {
+      options.status_type = [5, 11, 12];
+    }
     let productOptions = {};
 
     if (options.main_category_id) {
@@ -72,6 +74,30 @@ class InsuranceAdaptor {
           required: false,
         },
         {
+          model: this.modals.insuranceBrands,
+          as: 'provider',
+          attributes: [
+            'id',
+            'name',
+            [
+              'pan_no',
+              'panNo'],
+            [
+              'reg_no',
+              'regNo'],
+            'url',
+            'gstin',
+            ['contact_no', 'contact'],
+            'email',
+            'address',
+            'city',
+            'state',
+            'pincode',
+            'latitude',
+            'longitude'],
+          required: false,
+        },
+        {
           model: this.modals.offlineSellers,
           as: 'sellers',
           attributes: [
@@ -116,6 +142,7 @@ class InsuranceAdaptor {
         [
           'document_number',
           'policyNo'],
+        'provider_id',
         [
           this.modals.sequelize.literal('"renewalType"."title"'),
           'premiumType'],
@@ -154,7 +181,7 @@ class InsuranceAdaptor {
   }
 
   retrieveNotificationInsurances(options) {
-    options.status_type = 5;
+    options.status_type = [5, 11, 12];
     return this.modals.insurances.findAll({
       where: options,
       include: [
@@ -219,7 +246,7 @@ class InsuranceAdaptor {
   }
 
   retrieveInsuranceCount(options) {
-    options.status_type = 5;
+    options.status_type = [5, 11, 12];
     const productOptions = options.product_status_type ? {
       status_type: options.product_status_type,
     } : undefined;
@@ -246,6 +273,11 @@ class InsuranceAdaptor {
           'lastUpdatedAt']],
       group: this.modals.sequelize.literal('"product"."main_category_id"'),
     }).then((insuranceResult) => insuranceResult.map((item) => item.toJSON()));
+  }
+
+  createInsurances(values) {
+    this.modals.insurances.create(values).
+        then(result => result.toJSON());
   }
 }
 

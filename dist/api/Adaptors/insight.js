@@ -164,13 +164,14 @@ var InsightAdaptor = function() {
           var categoryData = !(minDate || maxDate) ? {
             weeklyData: result.map(function(item) {
               var expenses = item.expenses.filter(function(item) {
-                return _moment2.default.utc(item.purchaseDate).valueOf() >=
+                return _moment2.default.utc(item.purchaseDate,
+                    _moment2.default.ISO_8601).valueOf() >=
                     _moment2.default.utc().
                         subtract(6, 'd').
-                        startOf('d').
-                        valueOf() &&
-                    _moment2.default.utc(item.purchaseDate).valueOf() <=
-                    _moment2.default.utc().valueOf();
+                        startOf('day').
+                        valueOf() && _moment2.default.utc(item.purchaseDate,
+                        _moment2.default.ISO_8601).valueOf() <=
+                    _moment2.default.utc(_moment2.default.utc()).valueOf();
               });
               var totalAmount = _shared2.default.sumProps(expenses, 'value');
               var totalTax = _shared2.default.sumProps(expenses, 'taxes');
@@ -186,13 +187,13 @@ var InsightAdaptor = function() {
             monthlyData: result.map(function(item) {
               var expenses = item.expenses.filter(function(item) {
                 return _moment2.default.utc(
-                    _moment2.default.utc(item.purchaseDate).valueOf()) >=
+                    _moment2.default.utc(item.purchaseDate,
+                        _moment2.default.ISO_8601).valueOf()) >=
                     _moment2.default.utc(
                         _moment2.default.utc().startOf('month').valueOf()) &&
-                    _moment2.default.utc(
-                        _moment2.default.utc(item.purchaseDate).valueOf()) <=
-                    _moment2.default.utc(
-                        _moment2.default.utc().endOf('month').valueOf());
+                    _moment2.default.utc(_moment2.default.utc(item.purchaseDate,
+                        _moment2.default.ISO_8601).valueOf()) <=
+                    _moment2.default.utc(_moment2.default.utc()).valueOf();
               });
               var totalAmount = _shared2.default.sumProps(expenses, 'value');
               var totalTax = _shared2.default.sumProps(expenses, 'taxes');
@@ -208,11 +209,30 @@ var InsightAdaptor = function() {
             yearlyData: result.map(function(item) {
               var expenses = item.expenses.filter(function(item) {
                 return _moment2.default.utc(
-                    _moment2.default.utc(item.purchaseDate).valueOf()) >=
+                    _moment2.default.utc(item.purchaseDate,
+                        _moment2.default.ISO_8601).valueOf()) >=
                     _moment2.default.utc(
                         _moment2.default.utc().startOf('year').valueOf()) &&
-                    _moment2.default.utc(
-                        _moment2.default.utc(item.purchaseDate).valueOf()) <=
+                    _moment2.default.utc(_moment2.default.utc(item.purchaseDate,
+                        _moment2.default.ISO_8601).valueOf()) <=
+                    _moment2.default.utc(_moment2.default.utc()).valueOf();
+              });
+              var totalAmount = _shared2.default.sumProps(expenses, 'value');
+              var totalTax = _shared2.default.sumProps(expenses, 'taxes');
+              return {
+                id: item.id,
+                cName: item.name,
+                cURL: item.categoryInsightUrl,
+                cImageURl: item.categoryImageUrl,
+                totalAmount: parseFloat(totalAmount || 0).toFixed(2),
+                totalTax: parseFloat(totalTax || 0).toFixed(2),
+              };
+            }),
+            overallData: result.map(function(item) {
+              var expenses = item.expenses.filter(function(item) {
+                return _moment2.default.utc(
+                    _moment2.default.utc(item.purchaseDate,
+                        _moment2.default.ISO_8601).valueOf()) <=
                     _moment2.default.utc(_moment2.default.utc()).valueOf();
               });
               var totalAmount = _shared2.default.sumProps(expenses, 'value');
@@ -229,12 +249,13 @@ var InsightAdaptor = function() {
           } : {
             customDateData: result.map(function(item) {
               var expenses = item.expenses.filter(function(item) {
-                return _moment2.default.utc(item.purchaseDate).valueOf() >=
+                return _moment2.default.utc(item.purchaseDate,
+                    _moment2.default.ISO_8601).valueOf() >=
                     _moment2.default.utc(minDate).
                         utc().
                         startOf('d').
-                        valueOf() &&
-                    _moment2.default.utc(item.purchaseDate).valueOf() <=
+                        valueOf() && _moment2.default.utc(item.purchaseDate,
+                        _moment2.default.ISO_8601).valueOf() <=
                     _moment2.default.utc(maxDate).utc().endOf('d').valueOf();
               });
               var totalAmount = _shared2.default.sumProps(expenses, 'value');
@@ -319,12 +340,27 @@ var InsightAdaptor = function() {
               }).
               value();
 
+          categoryData.overallData = _lodash2.default.chain(
+              categoryData.overallData).
+              map(function(elem) {
+                elem.totalAmount = parseFloat(elem.totalAmount);
+                return elem;
+              }).
+              orderBy(['totalAmount', 'cName'], ['desc', 'asc']).
+              map(function(elem) {
+                elem.totalAmount = elem.totalAmount.toString();
+                return elem;
+              }).
+              value();
+
           categoryData.weeklyData = customSortCategories(
               categoryData.weeklyData, 'totalAmount');
           categoryData.monthlyData = customSortCategories(
               categoryData.monthlyData, 'totalAmount');
           categoryData.yearlyData = customSortCategories(
               categoryData.yearlyData, 'totalAmount');
+          categoryData.overallData = customSortCategories(
+              categoryData.overallData, 'totalAmount');
 
           var totalWeeklyAmounts = _shared2.default.sumProps(
               categoryData.weeklyData, 'totalAmount');
@@ -334,6 +370,10 @@ var InsightAdaptor = function() {
               categoryData.yearlyData, 'totalAmount');
           var totalYearlyTaxes = _shared2.default.sumProps(
               categoryData.yearlyData, 'totalTax');
+          var totalOverallAmounts = _shared2.default.sumProps(
+              categoryData.overallData, 'totalAmount');
+          var totalOverallTaxes = _shared2.default.sumProps(
+              categoryData.overallData, 'totalTax');
           var totalMonthlyAmounts = _shared2.default.sumProps(
               categoryData.monthlyData, 'totalAmount');
           var totalMonthlyTaxes = _shared2.default.sumProps(
@@ -361,6 +401,8 @@ var InsightAdaptor = function() {
             totalYearlyTaxes: parseFloat(totalYearlyTaxes || 0).toFixed(2),
             totalMonthlySpend: parseFloat(totalMonthlyAmounts || 0).toFixed(2),
             totalMonthlyTaxes: parseFloat(totalMonthlyTaxes || 0).toFixed(2),
+            totalOverallSpend: parseFloat(totalOverallAmounts || 0).toFixed(2),
+            totalOverallTaxes: parseFloat(totalOverallTaxes || 0).toFixed(2),
             forceUpdate: request.pre.forceUpdate,
           };
         }).catch(function(err) {
@@ -383,7 +425,7 @@ var InsightAdaptor = function() {
         };
 
         var productOptions = {
-          status_type: [5, 11],
+          status_type: [5, 11, 12],
           product_status_type: [5, 11],
           user_id: user.id || user.ID,
         };
@@ -391,6 +433,10 @@ var InsightAdaptor = function() {
         if (options.category_id) {
           categoryOption.category_id = options.category_id;
           productOptions.main_category_id = options.category_id;
+        } else {
+          categoryOption.category_id = {
+            $notIn: [10],
+          };
         }
         return Promise.all([
           this.categoryAdaptor.retrieveCategories(categoryOption),
@@ -471,37 +517,41 @@ var InsightAdaptor = function() {
               var productList = _lodash2.default.chain(result[0].expenses).
                   filter(function(item) {
                     return item.purchaseDate &&
-                        _moment2.default.utc(item.purchaseDate).valueOf() >=
-                        _moment2.default.utc().startOf('year').valueOf() &&
-                        _moment2.default.utc(item.purchaseDate).valueOf() <=
-                        _moment2.default.utc().valueOf();
+                        _moment2.default.utc(item.purchaseDate,
+                            _moment2.default.ISO_8601).valueOf() <=
+                        _moment2.default.utc(_moment2.default.utc()).valueOf();
                   }).
                   orderBy(['purchaseDate'], ['asc']).
                   value();
 
               var distinctInsightWeekly = [];
               var distinctInsightMonthly = [];
+              var distinctInsightYearly = [];
               var distinctInsight = [];
               productList.map(function(item) {
                 var expense = item;
                 var index = distinctInsight.findIndex(function(distinctItem) {
                   return _moment2.default.utc(distinctItem.purchaseDate).
-                      startOf('day').
-                      diff(_moment2.default.utc(expense.purchaseDate).
-                          startOf('day'), 'days') === 0;
+                          startOf('day').
+                          diff(_moment2.default.utc(expense.purchaseDate,
+                              _moment2.default.ISO_8601).startOf('day'), 'days') ===
+                      0;
                 });
                 if (index === -1) {
                   distinctInsight.push({
                     value: expense.value,
-                    month: monthArray[_moment2.default.utc(
-                        expense.purchaseDate).month()],
-                    monthId: _moment2.default.utc(expense.purchaseDate).
-                        month() + 1,
-                    purchaseDate: _moment2.default.utc(expense.purchaseDate),
-                    week: weekAndDay(
-                        _moment2.default.utc(expense.purchaseDate)).monthWeek,
-                    day: weekAndDay(
-                        _moment2.default.utc(expense.purchaseDate)).day,
+                    month: monthArray[_moment2.default.utc(expense.purchaseDate,
+                        _moment2.default.ISO_8601).month()],
+                    monthId: _moment2.default.utc(expense.purchaseDate,
+                        _moment2.default.ISO_8601).month() + 1,
+                    purchaseDate: _moment2.default.utc(expense.purchaseDate,
+                        _moment2.default.ISO_8601),
+                    year: _moment2.default.utc(expense.purchaseDate,
+                        _moment2.default.ISO_8601).year(),
+                    week: weekAndDay(_moment2.default.utc(expense.purchaseDate,
+                        _moment2.default.ISO_8601)).monthWeek,
+                    day: weekAndDay(_moment2.default.utc(expense.purchaseDate,
+                        _moment2.default.ISO_8601)).day,
                     tax: expense.taxes,
                   });
                 } else {
@@ -520,6 +570,7 @@ var InsightAdaptor = function() {
                   purchaseDate: item.purchaseDate,
                   week: item.week,
                   day: item.day,
+                  year: item.year,
                   tax: item.tax,
                 };
 
@@ -530,6 +581,7 @@ var InsightAdaptor = function() {
                   purchaseDate: item.purchaseDate,
                   week: item.week,
                   day: item.day,
+                  year: item.year,
                   tax: item.tax,
                 };
 
@@ -540,15 +592,33 @@ var InsightAdaptor = function() {
                   purchaseDate: item.purchaseDate,
                   week: item.week,
                   day: item.day,
+                  year: item.year,
+                  tax: item.tax,
+                };
+
+                var yearItem = {
+                  value: item.value,
+                  month: item.month,
+                  monthId: item.monthId,
+                  purchaseDate: item.purchaseDate,
+                  week: item.week,
+                  year: item.year,
+                  day: item.day,
                   tax: item.tax,
                 };
                 var monthIndex = distinctInsightMonthly.findIndex(
                     function(distinctItem) {
-                      return distinctItem.month === monthItem.month;
+                      return distinctItem.month === monthItem.month &&
+                          distinctItem.year === monthItem.year;
                     });
                 var weekIndex = distinctInsightWeekly.findIndex(
                     function(distinctItem) {
-                      return distinctItem.week === weekItem.week;
+                      return distinctItem.week === weekItem.week &&
+                          distinctItem.year === weekItem.year;
+                    });
+                var yearIndex = distinctInsightYearly.findIndex(
+                    function(distinctItem) {
+                      return distinctItem.year === yearItem.year;
                     });
                 if (weekIndex !== -1 && monthIndex !== -1) {
                   var currentWeekInsight = distinctInsightWeekly[weekIndex];
@@ -566,29 +636,52 @@ var InsightAdaptor = function() {
                   currentMonthInsight.tax += monthItem.tax;
                 }
 
+                if (yearIndex === -1) {
+                  distinctInsightYearly.push(yearItem);
+                } else {
+                  var currentYearInsight = distinctInsightYearly[yearIndex];
+                  currentYearInsight.value += yearItem.value;
+                  currentYearInsight.tax += yearItem.tax;
+                }
+
                 return dayItem;
               });
 
               var productListWeekly = productList.filter(function(item) {
-                return _moment2.default.utc(item.purchaseDate).valueOf() >=
+                return _moment2.default.utc(item.purchaseDate,
+                    _moment2.default.ISO_8601).valueOf() >=
                     _moment2.default.utc().startOf('month').valueOf() &&
-                    _moment2.default.utc(item.purchaseDate).valueOf() <=
-                    _moment2.default.utc().valueOf();
+                    _moment2.default.utc(item.purchaseDate,
+                        _moment2.default.ISO_8601).valueOf() <=
+                    _moment2.default.utc(_moment2.default.utc()).valueOf();
               }).map(function(item) {
-                item.purchaseDate = _moment2.default.utc(item.purchaseDate).
-                    startOf('days');
+                item.purchaseDate = _moment2.default.utc(item.purchaseDate,
+                    _moment2.default.ISO_8601).startOf('days');
                 return item;
               });
               var productListMonthly = productList.filter(function(item) {
-                return _moment2.default.utc(item.purchaseDate).valueOf() >=
+                return _moment2.default.utc(item.purchaseDate,
+                    _moment2.default.ISO_8601).valueOf() >=
                     _moment2.default.utc().startOf('year').valueOf() &&
-                    _moment2.default.utc(item.purchaseDate).valueOf() <=
-                    _moment2.default.utc().valueOf();
+                    _moment2.default.utc(item.purchaseDate,
+                        _moment2.default.ISO_8601).valueOf() <=
+                    _moment2.default.utc(_moment2.default.utc()).valueOf();
               }).map(function(item) {
-                item.purchaseDate = _moment2.default.utc(item.purchaseDate).
-                    startOf('days');
+                item.purchaseDate = _moment2.default.utc(item.purchaseDate,
+                    _moment2.default.ISO_8601).startOf('days');
                 return item;
               });
+
+              var overallProductList = productList.filter(function(item) {
+                return _moment2.default.utc(item.purchaseDate,
+                    _moment2.default.ISO_8601).valueOf() <=
+                    _moment2.default.utc(_moment2.default.utc()).valueOf();
+              }).map(function(item) {
+                item.purchaseDate = _moment2.default.utc(item.purchaseDate,
+                    _moment2.default.ISO_8601).startOf('days');
+                return item;
+              });
+
               distinctInsightMonthly.sort(function(a, b) {
                 return _moment2.default.utc(b.purchaseDate) -
                     _moment2.default.utc(a.purchaseDate);
@@ -597,16 +690,21 @@ var InsightAdaptor = function() {
                 return _moment2.default.utc(b.purchaseDate) -
                     _moment2.default.utc(a.purchaseDate);
               });
+              distinctInsightYearly.sort(function(a, b) {
+                return _moment2.default.utc(b.purchaseDate) -
+                    _moment2.default.utc(a.purchaseDate);
+              });
 
               var insightData = _shared2.default.retrieveDaysInsight(
                   distinctInsightTemp.filter(function(item) {
-                    return _moment2.default.utc(item.purchaseDate).valueOf() >=
+                    return _moment2.default.utc(item.purchaseDate,
+                        _moment2.default.ISO_8601).valueOf() >=
                         _moment2.default.utc().
                             subtract(6, 'd').
-                            startOf('d').
-                            valueOf() &&
-                        _moment2.default.utc(item.purchaseDate).valueOf() <=
-                        _moment2.default.utc().valueOf();
+                            startOf('day').
+                            valueOf() && _moment2.default.utc(item.purchaseDate,
+                            _moment2.default.ISO_8601).valueOf() <=
+                        _moment2.default.utc(_moment2.default.utc()).valueOf();
                   }));
               insightData.sort(function(a, b) {
                 return _moment2.default.utc(a.purchaseDate) -
@@ -614,31 +712,42 @@ var InsightAdaptor = function() {
               });
 
               var insightWeekly = distinctInsightWeekly.filter(function(item) {
-                return _moment2.default.utc(item.purchaseDate).valueOf() >=
+                return _moment2.default.utc(item.purchaseDate,
+                    _moment2.default.ISO_8601).valueOf() >=
                     _moment2.default.utc().startOf('month').valueOf() &&
-                    _moment2.default.utc(item.purchaseDate).valueOf() <=
-                    _moment2.default.utc().valueOf();
+                    _moment2.default.utc(item.purchaseDate,
+                        _moment2.default.ISO_8601).valueOf() <=
+                    _moment2.default.utc(_moment2.default.utc()).valueOf();
               });
               var insightMonthly = distinctInsightMonthly.filter(
                   function(item) {
-                    return _moment2.default.utc(item.purchaseDate).valueOf() >=
+                    return _moment2.default.utc(item.purchaseDate,
+                        _moment2.default.ISO_8601).valueOf() >=
                         _moment2.default.utc().startOf('year').valueOf() &&
-                        _moment2.default.utc(item.purchaseDate).valueOf() <=
-                        _moment2.default.utc().valueOf();
+                        _moment2.default.utc(item.purchaseDate,
+                            _moment2.default.ISO_8601).valueOf() <=
+                        _moment2.default.utc(_moment2.default.utc()).valueOf();
                   });
+              var overallInsight = distinctInsightYearly.filter(function(item) {
+                return _moment2.default.utc(item.purchaseDate,
+                    _moment2.default.ISO_8601).valueOf() <=
+                    _moment2.default.utc(_moment2.default.utc()).valueOf();
+              });
               return {
                 status: true,
                 productList: productList.filter(function(item) {
-                  return _moment2.default.utc(item.purchaseDate).valueOf() >=
+                  return _moment2.default.utc(item.purchaseDate,
+                      _moment2.default.ISO_8601).valueOf() >=
                       _moment2.default.utc().
                           subtract(6, 'd').
-                          startOf('d').
-                          valueOf() &&
-                      _moment2.default.utc(item.purchaseDate).valueOf() <=
-                      _moment2.default.utc().valueOf();
+                          startOf('day').
+                          valueOf() && _moment2.default.utc(item.purchaseDate,
+                          _moment2.default.ISO_8601).valueOf() <=
+                      _moment2.default.utc(_moment2.default.utc()).valueOf();
                 }),
                 productListWeekly: productListWeekly,
                 productListMonthly: productListMonthly,
+                overallProductList: overallProductList,
                 insight: distinctInsight && distinctInsight.length > 0 ? {
                   categoryName: result[0].name,
                   startDate: _moment2.default.utc().
@@ -657,10 +766,13 @@ var InsightAdaptor = function() {
                       'value'),
                   totalMonthlySpend: _shared2.default.sumProps(insightWeekly,
                       'value'),
+                  totalOverallSpend: _shared2.default.sumProps(overallInsight,
+                      'value'),
                   totalDays: insightData.length,
                   insightData: insightData,
                   insightWeekly: insightWeekly,
                   insightMonthly: insightMonthly,
+                  overallInsight: overallInsight,
                 } : {
                   categoryName: result[0].name,
                   startDate: _moment2.default.utc().
@@ -681,6 +793,7 @@ var InsightAdaptor = function() {
                   insightData: [],
                   insightWeekly: [],
                   insightMonthly: [],
+                  overallInsight: [],
                 },
                 categoryName: result[0].name,
                 forceUpdate: request.pre.forceUpdate,

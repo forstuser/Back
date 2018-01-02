@@ -56,15 +56,16 @@ var InsightController = function() {
       value: function retrieveCategorywiseInsight(request, reply) {
         var user = _shared2.default.verifyAuthorization(request.headers);
         if (!user) {
-          reply({
+          return reply({
             status: false,
             message: 'Unauthorized',
             forceUpdate: request.pre.forceUpdate,
           });
         } else if (user && !request.pre.forceUpdate) {
-          reply(insightAdaptor.prepareInsightData(user, request)).code(200);
+          return reply(insightAdaptor.prepareInsightData(user, request)).
+              code(200);
         } else {
-          reply({
+          return reply({
             status: false,
             message: 'Forbidden',
             forceUpdate: request.pre.forceUpdate,

@@ -6,7 +6,9 @@ import InsuranceAdaptor from './insurances';
 import WarrantyAdaptor from './warranties';
 import AMCAdaptor from './amcs';
 import RepairAdaptor from './repairs';
+import CategoryAdaptor from './category';
 import _ from 'lodash';
+import moment from 'moment/moment';
 
 class ProductAdaptor {
   constructor(modals) {
@@ -16,6 +18,7 @@ class ProductAdaptor {
     this.warrantyAdaptor = new WarrantyAdaptor(modals);
     this.amcAdaptor = new AMCAdaptor(modals);
     this.repairAdaptor = new RepairAdaptor(modals);
+    this.categoryAdaptor = new CategoryAdaptor(modals);
   }
 
   retrieveProducts(options) {
@@ -285,8 +288,11 @@ class ProductAdaptor {
                 sItem => parseInt(item.bill.seller_id) === parseInt(sItem)));
       }
       inProgressProductOption = _.omit(inProgressProductOption, 'product_name');
-      inProgressProductOption.status_type = 5;
+      inProgressProductOption.status_type = [5, 12];
       inProgressProductOption.product_status_type = options.status_type;
+      let warrantyOptions = {};
+      _.assignIn(warrantyOptions, inProgressProductOption);
+      warrantyOptions.warranty_type = [1, 2];
       if (products.length > 0) {
         inProgressProductOption.product_id = products.map((item) => item.id);
         return Promise.all([
@@ -296,7 +302,7 @@ class ProductAdaptor {
             },
           }),
           this.insuranceAdaptor.retrieveInsurances(inProgressProductOption),
-          this.warrantyAdaptor.retrieveWarranties(inProgressProductOption),
+          this.warrantyAdaptor.retrieveWarranties(warrantyOptions),
           this.amcAdaptor.retrieveAMCs(inProgressProductOption),
           this.repairAdaptor.retrieveRepairs(inProgressProductOption)]);
       }
@@ -305,8 +311,16 @@ class ProductAdaptor {
       if (results) {
         const metaData = results[0];
         products = products.map((productItem) => {
+          const pucItem = metaData.find(
+              (item) => item.name.toLowerCase().includes('puc'));
+          if (pucItem) {
+            productItem.pucDetail = {
+              expiry_date: pucItem.value,
+            };
+          }
           productItem.productMetaData = metaData.filter(
-              (item) => item.productId === productItem.id);
+              (item) => item.productId === productItem.id &&
+                  !item.name.toLowerCase().includes('puc'));
           productItem.insuranceDetails = results[1].filter(
               (item) => item.productId === productItem.id);
           productItem.warrantyDetails = results[2].filter(
@@ -334,6 +348,8 @@ class ProductAdaptor {
 
     if (options.online_seller_id) {
       billOption.seller_id = options.online_seller_id;
+    } else {
+      billOption = undefined;
     }
     options = _.omit(options, 'online_seller_id');
 
@@ -568,6 +584,7 @@ class ProductAdaptor {
       product = products.length > 0 ?
           products[0] :
           undefined;
+
       if (product) {
         return Promise.all([
           this.retrieveProductMetadata({
@@ -578,6 +595,7 @@ class ProductAdaptor {
           }),
           this.warrantyAdaptor.retrieveWarranties({
             product_id: product.id,
+            warranty_type: [1, 2],
           }),
           this.amcAdaptor.retrieveAMCs({
             product_id: product.id,
@@ -586,10 +604,20 @@ class ProductAdaptor {
             product_id: product.id,
           })]);
       }
+
       return undefined;
     }).then((results) => {
       if (results) {
-        product.metaData = results[0];
+        const metaData = results[0];
+        const pucItem = metaData.find(
+            (item) => item.name.toLowerCase().includes('puc'));
+        if (pucItem) {
+          product.pucDetail = {
+            expiry_date: pucItem.value,
+          };
+        }
+        product.metaData = metaData.filter(
+            (item) => !item.name.toLowerCase().includes('puc'));
         product.insuranceDetails = results[1];
         product.warrantyDetails = results[2];
         product.amcDetails = results[3];
@@ -862,6 +890,9 @@ class ProductAdaptor {
           this.modals.sequelize.literal('"category"."category_id"'),
           'categoryId'],
         [
+          this.modals.sequelize.literal('"category"."dual_warranty_item"'),
+          'dualWarrantyItem'],
+        [
           'main_category_id',
           'masterCategoryId'],
         [
@@ -938,7 +969,16 @@ class ProductAdaptor {
       }
     }).then((results) => {
       if (products) {
-        products.metaData = results[0];
+        const metaData = results[0];
+        const pucItem = metaData.find(
+            (item) => item.name.toLowerCase().includes('puc'));
+        if (pucItem) {
+          products.pucDetail = {
+            expiry_date: pucItem.value,
+          };
+        }
+        products.metaData = metaData.filter(
+            (item) => !item.name.toLowerCase().includes('puc'));
         products.brand = results[1];
         products.insuranceDetails = results[2];
         products.warrantyDetails = results[3];
@@ -950,7 +990,7 @@ class ProductAdaptor {
     });
   }
 
-  createProduct(productBody, metadataBody) {
+  createProduct(productBody, metadataBody, otherItems) {
     const brandBody = {
       brand_name: productBody.brand_name,
       updated_by: productBody.user_id,
@@ -974,6 +1014,7 @@ class ProductAdaptor {
             },
           },
         });
+    let renewalTypes;
     let product = productBody;
     let metadata;
     return brandPromise.
@@ -1029,18 +1070,24 @@ class ProductAdaptor {
               product;
           product = !product.seller_id ? _.omit(product, 'seller_id') : product;
 
-          return this.modals.products.count({
-            where: product,
-            include: [
-              {
-                model: this.modals.metaData, where: {
-                  $and: metadata,
-                }, required: true, as: 'metaData',
+          return Promise.all([
+            this.modals.products.count({
+              where: product,
+              include: [
+                {
+                  model: this.modals.metaData, where: {
+                    $and: metadata,
+                  }, required: true, as: 'metaData',
+                },
+              ],
+            }), this.categoryAdaptor.retrieveRenewalTypes({
+              id: {
+                $gte: 7,
               },
-            ],
-          });
-        }).then((count) => {
-          if (count === 0) {
+            })]);
+        }).then((countRenewalTypeResult) => {
+          renewalTypes = countRenewalTypeResult[1];
+          if (countRenewalTypeResult[0] === 0) {
             return this.modals.products.create(product);
           }
 
@@ -1048,6 +1095,175 @@ class ProductAdaptor {
         }).then((productResult) => {
           if (productResult) {
             product = productResult.toJSON();
+            const warrantyItemPromise = [];
+            if (otherItems.warranty) {
+              let warrantyRenewalType;
+              let expiry_date;
+              if (otherItems.warranty.renewal_type) {
+                warrantyRenewalType = renewalTypes.find(
+                    item => item.type === otherItems.warranty.renewal_type);
+                const effective_date = moment(
+                    otherItems.warranty.effective_date, moment.ISO_8601).
+                    isValid() ?
+                    moment(otherItems.warranty.effective_date,
+                        moment.ISO_8601).startOf('day') :
+                    moment(otherItems.warranty.effective_date, 'DD MMM YY').
+                        startOf('day');
+                expiry_date = moment(effective_date, moment.ISO_8601).
+                    add(warrantyRenewalType.effective_months, 'months').
+                    subtract(1, 'day').
+                    endOf('days');
+                warrantyItemPromise.push(this.warrantyAdaptor.createWarranties({
+                  renewal_type: otherItems.warranty.renewal_type,
+                  updated_by: productBody.user_id,
+                  status_type: 11,
+                  product_id: product.id,
+                  expiry_date: moment(expiry_date).format('YYYY-MM-DD'),
+                  effective_date: moment(effective_date).format('YYYY-MM-DD'),
+                  document_date: moment(effective_date).format('YYYY-MM-DD'),
+                  warranty_type: 1,
+                  user_id: productBody.user_id,
+                }));
+              }
+
+              if (otherItems.warranty.dual_renewal_type) {
+                warrantyRenewalType = renewalTypes.find(item => item.type ===
+                    otherItems.warranty.dual_renewal_type);
+                const effective_date = moment(
+                    otherItems.warranty.effective_date, moment.ISO_8601).
+                    isValid() ?
+                    moment(otherItems.warranty.effective_date,
+                        moment.ISO_8601).startOf('day') :
+                    moment(otherItems.warranty.effective_date, 'DD MMM YY').
+                        startOf('day');
+                expiry_date = moment(effective_date, moment.ISO_8601).
+                    add(warrantyRenewalType.effective_months, 'months').
+                    subtract(1, 'day').
+                    endOf('days');
+                warrantyItemPromise.push(this.warrantyAdaptor.createWarranties({
+                  renewal_type: otherItems.warranty.dual_renewal_type,
+                  updated_by: productBody.user_id,
+                  status_type: 11,
+                  product_id: product.id,
+                  expiry_date: moment(expiry_date).format('YYYY-MM-DD'),
+                  effective_date: moment(effective_date).format('YYYY-MM-DD'),
+                  document_date: moment(effective_date).format('YYYY-MM-DD'),
+                  warranty_type: 3,
+                  user_id: productBody.user_id,
+                }));
+              }
+
+              if (otherItems.warranty.extended_renewal_type) {
+                warrantyRenewalType = renewalTypes.find(item => item.type ===
+                    otherItems.warranty.extended_renewal_type);
+                const effective_date = moment(
+                    otherItems.warranty.effective_date, moment.ISO_8601).
+                    isValid() ?
+                    moment(otherItems.warranty.effective_date,
+                        moment.ISO_8601).startOf('day') :
+                    moment(otherItems.warranty.effective_date, 'DD MMM YY').
+                        startOf('day');
+                expiry_date = moment(effective_date).
+                    add(warrantyRenewalType.effective_months, 'months').
+                    subtract(1, 'day').
+                    endOf('days');
+                warrantyItemPromise.push(this.warrantyAdaptor.createWarranties({
+                  renewal_type: otherItems.warranty.extended_renewal_type,
+                  updated_by: productBody.user_id,
+                  status_type: 11,
+                  product_id: product.id,
+                  expiry_date: moment(expiry_date).format('YYYY-MM-DD'),
+                  effective_date: moment(effective_date).format('YYYY-MM-DD'),
+                  document_date: moment(effective_date).format('YYYY-MM-DD'),
+                  warranty_type: 2,
+                  user_id: productBody.user_id,
+                }));
+              }
+
+              if (otherItems.warranty.accessory_renewal_type) {
+                warrantyRenewalType = renewalTypes.find(item => item.type ===
+                    otherItems.warranty.accessory_renewal_type);
+                const effective_date = moment(
+                    otherItems.warranty.effective_date, moment.ISO_8601).
+                    isValid() ?
+                    moment(otherItems.warranty.effective_date,
+                        moment.ISO_8601).startOf('day') :
+                    moment(otherItems.warranty.effective_date, 'DD MMM YY').
+                        startOf('day');
+                expiry_date = moment(effective_date).
+                    add(warrantyRenewalType.effective_months, 'months').
+                    subtract(1, 'day').
+                    endOf('days');
+                warrantyItemPromise.push(this.warrantyAdaptor.createWarranties({
+                  renewal_type: otherItems.warranty.accessory_renewal_type,
+                  updated_by: productBody.user_id,
+                  status_type: 11,
+                  product_id: product.id,
+                  expiry_date: moment(expiry_date).format('YYYY-MM-DD'),
+                  effective_date: moment(effective_date).format('YYYY-MM-DD'),
+                  document_date: moment(effective_date).format('YYYY-MM-DD'),
+                  warranty_type: 4,
+                  user_id: productBody.user_id,
+                }));
+              }
+            }
+
+            const insurancePromise = [];
+            if (otherItems.insurance) {
+              const effective_date = moment(
+                  otherItems.insurance.effective_date, moment.ISO_8601).
+                  isValid() ?
+                  moment(otherItems.insurance.effective_date,
+                      moment.ISO_8601).startOf('day') :
+                  moment(otherItems.insurance.effective_date, 'DD MMM YY').
+                      startOf('day');
+              const expiry_date = moment(effective_date,
+                  moment.ISO_8601).
+                  add(8759, 'hours').
+                  endOf('days');
+              insurancePromise.push(this.insuranceAdaptor.createInsurances({
+                renewal_type: 8,
+                updated_by: productBody.user_id,
+                status_type: 11,
+                product_id: product.id,
+                expiry_date: moment(expiry_date).format('YYYY-MM-DD'),
+                effective_date: moment(effective_date).format('YYYY-MM-DD'),
+                document_date: moment(effective_date).format('YYYY-MM-DD'),
+                document_number: otherItems.insurance.policy_no,
+                provider_id: otherItems.insurance.provider_id,
+                amount_insured: otherItems.insurance.amount_insured,
+                renewal_cost: otherItems.insurance.renewal_cost,
+                user_id: productBody.user_id,
+              }));
+            }
+
+            const amcPromise = [];
+            if (otherItems.amc) {
+              const amcRenewalType = renewalTypes.find(
+                  item => item.type === otherItems.amc.expiry_period);
+              const effective_date = moment(otherItems.amc.effective_date,
+                  moment.ISO_8601).isValid() ?
+                  moment(otherItems.amc.effective_date, moment.ISO_8601).
+                      startOf('day') :
+                  moment(otherItems.amc.effective_date, 'DD MMM YY').
+                      startOf('day');
+              const expiry_date = moment(effective_date,
+                  moment.ISO_8601).
+                  add(amcRenewalType.effective_months, 'months').
+                  subtract(1, 'day').
+                  endOf('days').
+                  format('YYYY-MM-DD');
+              amcPromise.push(this.amcAdaptor.createAMCs({
+                renewal_type: 8,
+                updated_by: productBody.user_id,
+                status_type: 11,
+                product_id: product.id,
+                expiry_date: moment(expiry_date).format('YYYY-MM-DD'),
+                effective_date: moment(effective_date).format('YYYY-MM-DD'),
+                document_date: moment(effective_date).format('YYYY-MM-DD'),
+                user_id: productBody.user_id,
+              }));
+            }
             const metadataPromise = metadata.map((mdItem) => {
               mdItem.product_id = product.id;
               mdItem.status_type = 8;
@@ -1055,13 +1271,43 @@ class ProductAdaptor {
               return this.modals.metaData.create(mdItem);
             });
 
-            return Promise.all(metadataPromise);
+            if (otherItems.puc) {
+              const pucRenewalType = renewalTypes.find(
+                  item => item.type === otherItems.puc.expiry_period);
+              const effective_date = moment(otherItems.puc.effective_date,
+                  moment.ISO_8601).isValid() ?
+                  moment(otherItems.puc.effective_date, moment.ISO_8601).
+                      startOf('day') :
+                  moment(otherItems.puc.effective_date, 'DD MMM YY').
+                      startOf('day');
+              const form_value = moment(effective_date,
+                  moment.ISO_8601).
+                  add(pucRenewalType.effective_months, 'months').
+                  subtract(1, 'day').
+                  endOf('days').format('YYYY-MM-DD');
+              metadataPromise.push(this.modals.metaData.create({
+                category_form_id: product.category_id === 138 ? 1191 : 1192,
+                form_value,
+                product_id: product.id,
+                status_type: 8, updated_by: product.user_id,
+              }));
+            }
+
+            return Promise.all([
+              metadataPromise,
+              insurancePromise,
+              warrantyItemPromise,
+              amcPromise]);
           }
 
           return undefined;
-        }).then((metaData) => {
-          if (metaData) {
-            product.metaData = metaData.map((mdItem) => mdItem.toJSON());
+        }).then((productItemsResult) => {
+          if (productItemsResult) {
+            product.metaData = productItemsResult[0].map(
+                (mdItem) => mdItem.toJSON());
+            product.insurances = productItemsResult[1];
+            product.warranties = productItemsResult[2];
+            product.amcs = productItemsResult[3];
             return product;
           }
 
@@ -1463,8 +1709,8 @@ class ProductAdaptor {
   prepareProductDetail(user, request) {
     const productId = request.params.id;
     return this.retrieveProductById(productId, {
-        user_id: user.id || user.ID,
-        status_type: [5, 8, 11],
+      user_id: user.id || user.ID,
+      status_type: [5, 8, 11],
     }).then((result) => {
       if (result) {
         return ({

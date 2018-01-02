@@ -73,6 +73,7 @@ export default class CategoryAdaptor {
         [
           'ref_id',
           'refId'],
+        'dual_warranty_item',
         [
           'category_level',
           'level'],
@@ -95,6 +96,7 @@ export default class CategoryAdaptor {
           'categoryImageUrl']],
       order: ['category_id'],
     }).then((result) => {
+      console.log(result);
       categoryData = result.map(item => item.toJSON());
       if (isBrandFormRequired) {
         return Promise.all([
@@ -104,6 +106,16 @@ export default class CategoryAdaptor {
           }), this.retrieveCategoryForms({
             category_id: categoryData.map(item => item.id),
             status_type: 1,
+          }), this.modals.insuranceBrands.findAll({
+            include: {
+              model: this.modals.categories,
+              where: {
+                category_id: options.category_id,
+              },
+              as: 'categories',
+              attributes: [],
+              required: true,
+            },
           })]);
       }
 
@@ -115,11 +127,12 @@ export default class CategoryAdaptor {
               (brandItem) => brandItem.categoryId === item.id);
           item.categoryForms = results[1].filter(
               (formItem) => formItem.categoryId === item.id);
+          item.insuranceProviders = results[2];
           return item;
         });
       }
       return categoryData;
-    });
+    }).catch(console.log);
   }
 
   retrieveCategoryForms(options) {
@@ -161,5 +174,12 @@ export default class CategoryAdaptor {
       ],
       order: ['display_index'],
     }).then((formResult) => formResult.map(item => item.toJSON()));
+  }
+
+  retrieveRenewalTypes(options) {
+    return this.modals.renewalTypes.findAll({
+      where: options,
+      order: [['type', 'ASC']],
+    }).then((renewalTypes) => renewalTypes.map(item => item.toJSON()));
   }
 }

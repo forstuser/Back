@@ -140,7 +140,7 @@ class RepairAdaptor {
   }
 
   retrieveNotificationRepairs(options) {
-    options.status_type = 5;
+    options.status_type = [5, 11];
     return this.modals.repairs.findAll({
       where: options,
       include: [
@@ -192,7 +192,7 @@ class RepairAdaptor {
   }
 
   retrieveRepairCount(options) {
-    options.status_type = 5;
+    options.status_type = [5, 11];
     const productOptions = options.product_status_type ? {
       status_type: options.product_status_type,
     } : undefined;

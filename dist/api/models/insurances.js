@@ -43,6 +43,9 @@ exports.default = function(sequelize, DataTypes) {
     seller_id: {
       type: DataTypes.INTEGER,
     },
+    provider_id: {
+      type: DataTypes.INTEGER,
+    },
     status_type: {
       type: DataTypes.INTEGER,
     },
@@ -89,6 +92,8 @@ exports.default = function(sequelize, DataTypes) {
         {foreignKey: 'online_seller_id', as: 'onlineSellers'});
     insurances.belongsTo(models.offlineSellers,
         {foreignKey: 'seller_id', as: 'sellers'});
+    insurances.belongsTo(models.insuranceBrands,
+        {foreignKey: 'provider_id', as: 'provider'});
     insurances.belongsTo(models.renewalTypes,
         {foreignKey: 'renewal_type', targetKey: 'type'});
   };

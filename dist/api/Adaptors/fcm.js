@@ -52,10 +52,7 @@ var fcmManager = function() {
         }
 
         return this.fcmModal.findCreateFind({
-          where: {
-            user_id: userId,
-            fcm_id: fcmId,
-          },
+          where: defaults,
           defaults: defaults,
         }).then(function(data) {
           return data;

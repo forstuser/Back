@@ -67,7 +67,9 @@ var WarrantyAdaptor = function() {
     {
       key: 'retrieveWarranties',
       value: function retrieveWarranties(options) {
-        options.status_type = [5, 11];
+        if (!options.status_type) {
+        options.status_type = [5, 11, 12];
+        }
         var productOptions = {};
         if (options.main_category_id) {
           productOptions.main_category_id = options.main_category_id;
@@ -98,6 +100,13 @@ var WarrantyAdaptor = function() {
               where: productOptions,
               attributes: [],
               required: productOptions !== undefined,
+              include: [
+                {
+                  model: this.modals.categories,
+                  as: 'category',
+                  attributes: [],
+                  required: false,
+                }],
             }, {
               model: this.modals.onlineSellers,
               as: 'onlineSellers',
@@ -158,6 +167,10 @@ var WarrantyAdaptor = function() {
               this.modals.sequelize.literal('"product"."product_name"'),
               'productName'],
             [
+              this.modals.sequelize.literal(
+                  '"product->category"."dual_warranty_item"'),
+              'dualWarrantyItem'],
+            [
               this.modals.sequelize.literal('"renewalType"."title"'),
               'premiumType'],
             [
@@ -167,6 +180,7 @@ var WarrantyAdaptor = function() {
               'renewal_cost',
               'premiumAmount'],
             'user_id',
+            'warranty_type',
             [
               'renewal_cost',
               'value'],
@@ -196,11 +210,11 @@ var WarrantyAdaptor = function() {
             return item.toJSON();
           }).sort(sortAmcWarrantyInsuranceRepair);
         });
-      },
+      }
     }, {
       key: 'retrieveNotificationWarranties',
       value: function retrieveNotificationWarranties(options) {
-        options.status_type = 5;
+        options.status_type = [5, 11, 12];
         return this.modals.warranties.findAll({
           where: options,
           include: [
@@ -268,7 +282,7 @@ var WarrantyAdaptor = function() {
     }, {
       key: 'retrieveWarrantyCount',
       value: function retrieveWarrantyCount(options) {
-        options.status_type = 5;
+        options.status_type = [5, 11, 12];
         var productOptions = options.product_status_type ? {
           status_type: options.product_status_type,
         } : undefined;
@@ -300,6 +314,13 @@ var WarrantyAdaptor = function() {
           return warrantyResult.map(function(item) {
             return item.toJSON();
           });
+        });
+      },
+    }, {
+      key: 'createWarranties',
+      value: function createWarranties(values) {
+        this.modals.warranties.create(values).then(function(result) {
+          return result.toJSON();
         });
       },
     }]);

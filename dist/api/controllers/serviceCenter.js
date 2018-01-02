@@ -133,9 +133,9 @@ var ServiceCenterController = function() {
               then(function(result) {
                 var serviceCentersWithLocation = [];
                 var finalResult = [];
+                var filterBrands = result[1];
+                var selectedBrand = result[2];
                 if (result[0].length > 0) {
-                  var filterBrands = result[1];
-                  var selectedBrand = result[2];
                   var serviceCenters = result[0].map(function(item) {
                     var center = item;
                     center.mobileDetails = center.centerDetails.filter(
@@ -236,9 +236,13 @@ var ServiceCenterController = function() {
                   }
                 } else {
                   reply({
-                    status: false,
+                    status: true,
                     message: 'No Data Found for mentioned search',
+                    filterData: {
+                      brands: filterBrands,
+                    },
                     serviceCenters: [],
+                    brand: selectedBrand,
                     forceUpdate: request.pre.forceUpdate,
                   });
                 }

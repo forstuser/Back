@@ -24,7 +24,9 @@ class AmcAdaptor {
   }
 
   retrieveAMCs(options) {
-    options.status_type = [5, 11];
+    if (!options.status_type) {
+      options.status_type = [5, 11, 12];
+    }
     let productOptions = {};
     if (options.main_category_id) {
       productOptions.main_category_id = options.main_category_id;
@@ -152,7 +154,7 @@ class AmcAdaptor {
   }
 
   retrieveNotificationAMCs(options) {
-    options.status_type = 5;
+    options.status_type = [5, 11, 12];
 
     return this.modals.amcs.findAll({
       where: options,
@@ -217,7 +219,7 @@ class AmcAdaptor {
   }
 
   retrieveAMCCounts(options) {
-    options.status_type = 5;
+    options.status_type = [5, 11, 12];
     const productOptions = options.product_status_type ? {
       status_type: options.product_status_type,
     } : undefined;
@@ -245,6 +247,11 @@ class AmcAdaptor {
           'lastUpdatedAt']],
       group: this.modals.sequelize.literal('"product"."main_category_id"'),
     }).then((amcResult) => amcResult.map((item) => item.toJSON()));
+  }
+
+  createAMCs(values) {
+    this.modals.amcs.create(values).
+        then(result => result.toJSON());
   }
 }
 

@@ -173,17 +173,21 @@ var NotificationAdaptor = function() {
         return Promise.all([
           this.productAdaptor.retrieveProducts({
             user_id: user.id || user.ID,
-            status_type: 5,
+            status_type: [5, 11],
             main_category_id: [6, 8],
           }), this.amcAdaptor.retrieveAMCs({
             user_id: user.id || user.ID,
-            status_type: 5,
+            status_type: [5, 11],
           }), this.insuranceAdaptor.retrieveInsurances({
             user_id: user.id || user.ID,
-            status_type: 5,
+            status_type: [5, 11],
           }), this.warrantyAdaptor.retrieveWarranties({
             user_id: user.id || user.ID,
-            status_type: 5,
+            status_type: [5, 11],
+          }), this.productAdaptor.retrieveProducts({
+            user_id: user.id || user.ID,
+            status_type: [5, 11],
+            main_category_id: [3],
           })]).then(function(result) {
           var products = result[0].map(function(item) {
             var product = item;
@@ -221,6 +225,27 @@ var NotificationAdaptor = function() {
           });
 
           products = products.filter(function(item) {
+            return item.dueIn !== undefined && item.dueIn !== null &&
+                item.dueIn <= 30 && item.dueIn >= 0;
+          });
+
+          var pucProducts = result[4].map(function(item) {
+            var product = item;
+            if (product.pucDetail &&
+                _moment2.default.utc(product.pucDetail.expiry_date,
+                    _moment2.default.ISO_8601).isValid()) {
+              var dueDateTime = _moment2.default.utc(
+                  product.pucDetail.expiry_date, _moment2.default.ISO_8601).
+                  endOf('day');
+              product.dueDate = product.pucDetail.expiry_date;
+              product.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
+            }
+
+            product.productType = 5;
+            return product;
+          });
+
+          pucProducts = pucProducts.filter(function(item) {
             return item.dueIn !== undefined && item.dueIn !== null &&
                 item.dueIn <= 30 && item.dueIn >= 0;
           });
@@ -276,7 +301,13 @@ var NotificationAdaptor = function() {
               warranty.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
               warranty.productType = 3;
               warranty.title = 'Warranty Renewal Pending';
-              warranty.description = warranty.productName;
+              warranty.description = 'Warranty Renewal Pending for ' +
+                  (warranty.warranty_type === 3 ?
+                      warranty.dualWarrantyItem + ' of ' +
+                      warranty.productName :
+                      warranty.warranty_type === 4 ?
+                          'Accessories of ' + warranty.productName :
+                          'of ' + warranty.productName);
             }
 
             return warranty;
@@ -289,7 +320,7 @@ var NotificationAdaptor = function() {
 
           return [].concat(_toConsumableArray(products),
               _toConsumableArray(warranties), _toConsumableArray(insurances),
-              _toConsumableArray(amcs));
+              _toConsumableArray(amcs), _toConsumableArray(pucProducts));
         });
       },
     }, {
@@ -324,6 +355,9 @@ var NotificationAdaptor = function() {
             [
               'due_amount',
               'dueAmount'],
+            [
+              this.modals.sequelize.literal('"product"."id"'),
+              'productId'],
             [
               this.modals.sequelize.literal('"product"."product_name"'),
               'productName'],

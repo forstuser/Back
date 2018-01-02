@@ -7,13 +7,20 @@ Object.defineProperty(exports, '__esModule', {
 var MODAL = void 0;
 
 var checkAppVersion = function checkAppVersion(request, reply) {
-  if (request.headers.app_version !== undefined) {
-    var currentAppVersion = !isNaN(parseInt(request.headers.app_version)) ?
-        parseInt(request.headers.app_version) :
+  if (request.headers.app_version !== undefined ||
+      request.headers.ios_app_version !== undefined) {
+    var appVersion = request.headers.ios_app_version ||
+        request.headers.app_version;
+    var id = request.headers.ios_app_version ? 2 : 1;
+    var currentAppVersion = !isNaN(parseInt(appVersion)) ?
+        parseInt(appVersion) :
         null;
     console.log('CURRENT APP VERSION = ' + currentAppVersion);
 
     MODAL.appVersion.findOne({
+      where: {
+        id: id,
+      },
       order: [['updatedAt', 'DESC']],
       attributes: [
         [

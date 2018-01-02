@@ -189,7 +189,7 @@ var RepairAdaptor = function() {
     }, {
       key: 'retrieveNotificationRepairs',
       value: function retrieveNotificationRepairs(options) {
-        options.status_type = 5;
+        options.status_type = [5, 11];
         return this.modals.repairs.findAll({
           where: options,
           include: [
@@ -247,7 +247,7 @@ var RepairAdaptor = function() {
     }, {
       key: 'retrieveRepairCount',
       value: function retrieveRepairCount(options) {
-        options.status_type = 5;
+        options.status_type = [5, 11];
         var productOptions = options.product_status_type ? {
           status_type: options.product_status_type,
         } : undefined;

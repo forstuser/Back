@@ -86,6 +86,7 @@ var GeneralController = function() {
       key: 'retrieveReferenceData',
       value: function retrieveReferenceData(request, reply) {
         var user = _shared2.default.verifyAuthorization(request.headers);
+        var isBrandRequest = false;
         return _bluebird2.default.try(function() {
           if (request.query && user) {
             if (request.query.categoryId && request.query.brandId) {
@@ -101,8 +102,16 @@ var GeneralController = function() {
                 },
               });
             } else if (request.query.categoryId) {
-              return categoryAdaptor.retrieveSubCategories(
-                  {category_id: request.query.categoryId}, true);
+              isBrandRequest = true;
+              return Promise.all([
+                categoryAdaptor.retrieveSubCategories(
+                    {category_id: request.query.categoryId}, true),
+                categoryAdaptor.retrieveRenewalTypes({
+                  status_type: 1,
+                  type: {
+                    $gte: 7,
+                  },
+                })]);
             } else if (request.query.mainCategoryId) {
               return categoryAdaptor.retrieveCategories(
                   {category_id: request.query.mainCategoryId}, false);
@@ -115,7 +124,12 @@ var GeneralController = function() {
           return reply({
             status: true,
             dropDowns: request.query.brandId ? results : undefined,
-            categories: request.query.brandId ? undefined : results,
+            categories: request.query.brandId ?
+                undefined :
+                isBrandRequest ?
+                    results[0] :
+                    results,
+            renewalTypes: isBrandRequest ? results[1] : undefined,
             contactType: [
               {
                 id: 1,

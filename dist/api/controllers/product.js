@@ -31,6 +31,10 @@ var _shared = require('../../helpers/shared');
 
 var _shared2 = _interopRequireDefault(_shared);
 
+var _moment = require('moment/moment');
+
+var _moment2 = _interopRequireDefault(_moment);
+
 function _interopRequireDefault(obj) {
   return obj && obj.__esModule ? obj : {default: obj};
 }
@@ -62,6 +66,7 @@ var ProductController = function() {
             forceUpdate: request.pre.forceUpdate,
           });
         } else if (user && !request.pre.forceUpdate) {
+          console.log(request.payload);
           var productBody = {
             product_name: request.payload.product_name,
             user_id: user.id || user.ID,
@@ -75,10 +80,28 @@ var ProductController = function() {
             seller_id: request.payload.seller_id,
             status_type: 11,
             document_number: request.payload.document_number,
-            document_date: request.payload.document_date,
+            document_date: request.payload.document_date ?
+                (0, _moment2.default)(request.payload.document_date,
+                    _moment2.default.ISO_8601).isValid() ?
+                    (0, _moment2.default)(request.payload.document_date,
+                        _moment2.default.ISO_8601).
+                        startOf('day').
+                        format('YYYY-MM-DD') :
+                    (0, _moment2.default)(request.payload.document_date,
+                        'DD MMM YY').startOf('day').format('YYYY-MM-DD') :
+                undefined,
             brand_name: request.payload.brand_name,
             copies: [],
           };
+
+          console.log(productBody);
+          var otherItems = {
+            warranty: request.payload.warranty,
+            insurance: request.payload.insurance,
+            puc: request.payload.puc,
+            amc: request.payload.amc,
+          };
+
           var metaDataBody = request.payload.metadata ?
               request.payload.metadata.map(function(item) {
                 item.updated_by = user.id || user.ID;
@@ -86,33 +109,32 @@ var ProductController = function() {
                 return item;
               }) :
               [];
-          return productAdaptor.createProduct(productBody, metaDataBody).
-              then(function(result) {
-                if (result) {
-                  return reply({
-                    status: true,
-                    message: 'successfull',
-                    product: result,
-                    forceUpdate: request.pre.forceUpdate,
-                  });
-                } else {
-                  return reply({
-                    status: false,
-                    message: 'Product already exist.',
-                    forceUpdate: request.pre.forceUpdate,
-                  });
-                }
-              }).
-              catch(function(err) {
-                console.log('Error on ' + new Date() + ' for user ' +
-                    (user.id || user.ID) + ' is as follow: \n \n ' + err);
-                return reply({
-                  status: false,
-                  message: 'An error occurred in product creation.',
-                  forceUpdate: request.pre.forceUpdate,
-                  err: err,
-                });
+          return productAdaptor.createProduct(productBody, metaDataBody,
+              otherItems).then(function(result) {
+            if (result) {
+              return reply({
+                status: true,
+                message: 'successfull',
+                product: result,
+                forceUpdate: request.pre.forceUpdate,
               });
+            } else {
+              return reply({
+                status: false,
+                message: 'Product already exist.',
+                forceUpdate: request.pre.forceUpdate,
+              });
+            }
+          }).catch(function(err) {
+            console.log('Error on ' + new Date() + ' for user ' +
+                (user.id || user.ID) + ' is as follow: \n \n ' + err);
+            return reply({
+              status: false,
+              message: 'An error occurred in product creation.',
+              forceUpdate: request.pre.forceUpdate,
+              err: err,
+            });
+          });
         } else {
           reply({
             status: false,

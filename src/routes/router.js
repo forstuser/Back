@@ -740,7 +740,39 @@ function prepareProductRoutes(productController, productRoutes) {
             seller_id: [joi.number(), joi.allow(null)],
             document_number: [joi.string(), joi.allow(null)],
             document_date: [joi.string(), joi.allow(null)],
-            metadata: [joi.array(), joi.allow(null)],
+            metadata: [
+              joi.array().items(joi.object().keys({
+                category_form_id: [joi.number(), joi.allow(null)],
+                form_value: [joi.string(), joi.allow(null)],
+                new_drop_down: [joi.boolean(), joi.allow(null)],
+              })), joi.allow(null)],
+            warranty: [
+              joi.object().keys({
+                renewal_type: [joi.number(), joi.allow(null)],
+                dual_renewal_type: [joi.number(), joi.allow(null)],
+                extended_renewal_type: [joi.number(), joi.allow(null)],
+                effective_date: [joi.string(), joi.allow(null)],
+                accessory_renewal_type: [joi.string(), joi.allow(null)],
+              }), joi.allow(null)],
+            insurance: [
+              joi.object().keys({
+                effective_date: [joi.string(), joi.allow(null)],
+                provider_id: [joi.number(), joi.allow(null)],
+                policy_no: [joi.string(), joi.allow(null)],
+                renewal_cost: [joi.number(), joi.allow(null)],
+                amount_insured: [joi.string(), joi.allow(null)],
+                expiry_period: [joi.number(), joi.allow(null)],
+              }), joi.allow(null)],
+            puc: [
+              joi.object().keys({
+                effective_date: [joi.string(), joi.allow(null)],
+                expiry_period: [joi.number(), joi.allow(null)],
+              }), joi.allow(null)],
+            amc: [
+              joi.object().keys({
+                effective_date: [joi.string(), joi.allow(null)],
+                expiry_period: [joi.number(), joi.allow(null)],
+              }), joi.allow(null)],
           },
         },
       },

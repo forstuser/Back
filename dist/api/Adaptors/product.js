@@ -43,9 +43,17 @@ var _repairs = require('./repairs');
 
 var _repairs2 = _interopRequireDefault(_repairs);
 
+var _category = require('./category');
+
+var _category2 = _interopRequireDefault(_category);
+
 var _lodash = require('lodash');
 
 var _lodash2 = _interopRequireDefault(_lodash);
+
+var _moment = require('moment/moment');
+
+var _moment2 = _interopRequireDefault(_moment);
 
 function _interopRequireDefault(obj) {
   return obj && obj.__esModule ? obj : {default: obj};
@@ -78,6 +86,7 @@ var ProductAdaptor = function() {
     this.warrantyAdaptor = new _warranties2.default(modals);
     this.amcAdaptor = new _amcs2.default(modals);
     this.repairAdaptor = new _repairs2.default(modals);
+    this.categoryAdaptor = new _category2.default(modals);
   }
 
   _createClass(ProductAdaptor, [
@@ -366,8 +375,11 @@ var ProductAdaptor = function() {
           }
           inProgressProductOption = _lodash2.default.omit(
               inProgressProductOption, 'product_name');
-          inProgressProductOption.status_type = 5;
+          inProgressProductOption.status_type = [5, 12];
           inProgressProductOption.product_status_type = options.status_type;
+          var warrantyOptions = {};
+          _lodash2.default.assignIn(warrantyOptions, inProgressProductOption);
+          warrantyOptions.warranty_type = [1, 2];
           if (products.length > 0) {
             inProgressProductOption.product_id = products.map(function(item) {
               return item.id;
@@ -382,7 +394,7 @@ var ProductAdaptor = function() {
               }),
               _this.insuranceAdaptor.retrieveInsurances(
                   inProgressProductOption),
-              _this.warrantyAdaptor.retrieveWarranties(inProgressProductOption),
+              _this.warrantyAdaptor.retrieveWarranties(warrantyOptions),
               _this.amcAdaptor.retrieveAMCs(inProgressProductOption),
               _this.repairAdaptor.retrieveRepairs(inProgressProductOption)]);
           }
@@ -391,8 +403,17 @@ var ProductAdaptor = function() {
           if (results) {
             var metaData = results[0];
             products = products.map(function(productItem) {
+              var pucItem = metaData.find(function(item) {
+                return item.name.toLowerCase().includes('puc');
+              });
+              if (pucItem) {
+                productItem.pucDetail = {
+                  expiry_date: pucItem.value,
+                };
+              }
               productItem.productMetaData = metaData.filter(function(item) {
-                return item.productId === productItem.id;
+                return item.productId === productItem.id &&
+                    !item.name.toLowerCase().includes('puc');
               });
               productItem.insuranceDetails = results[1].filter(function(item) {
                 return item.productId === productItem.id;
@@ -428,6 +449,8 @@ var ProductAdaptor = function() {
 
         if (options.online_seller_id) {
           billOption.seller_id = options.online_seller_id;
+        } else {
+          billOption = undefined;
         }
         options = _lodash2.default.omit(options, 'online_seller_id');
 
@@ -670,6 +693,7 @@ var ProductAdaptor = function() {
                 8 && producItem.bill && producItem.bill.billStatus === 5;
           });
           product = products.length > 0 ? products[0] : undefined;
+
           if (product) {
             return Promise.all([
               _this2.retrieveProductMetadata({
@@ -678,16 +702,29 @@ var ProductAdaptor = function() {
                 product_id: product.id,
               }), _this2.warrantyAdaptor.retrieveWarranties({
                 product_id: product.id,
+                warranty_type: [1, 2],
               }), _this2.amcAdaptor.retrieveAMCs({
                 product_id: product.id,
               }), _this2.repairAdaptor.retrieveRepairs({
                 product_id: product.id,
               })]);
           }
+
           return undefined;
         }).then(function(results) {
           if (results) {
-            product.metaData = results[0];
+            var metaData = results[0];
+            var pucItem = metaData.find(function(item) {
+              return item.name.toLowerCase().includes('puc');
+            });
+            if (pucItem) {
+              product.pucDetail = {
+                expiry_date: pucItem.value,
+              };
+            }
+            product.metaData = metaData.filter(function(item) {
+              return !item.name.toLowerCase().includes('puc');
+            });
             product.insuranceDetails = results[1];
             product.warrantyDetails = results[2];
             product.amcDetails = results[3];
@@ -976,6 +1013,9 @@ var ProductAdaptor = function() {
               this.modals.sequelize.literal('"category"."category_id"'),
               'categoryId'],
             [
+              this.modals.sequelize.literal('"category"."dual_warranty_item"'),
+              'dualWarrantyItem'],
+            [
               'main_category_id',
               'masterCategoryId'],
             [
@@ -1057,7 +1097,18 @@ var ProductAdaptor = function() {
           }
         }).then(function(results) {
           if (products) {
-            products.metaData = results[0];
+            var metaData = results[0];
+            var pucItem = metaData.find(function(item) {
+              return item.name.toLowerCase().includes('puc');
+            });
+            if (pucItem) {
+              products.pucDetail = {
+                expiry_date: pucItem.value,
+              };
+            }
+            products.metaData = metaData.filter(function(item) {
+              return !item.name.toLowerCase().includes('puc');
+            });
             products.brand = results[1];
             products.insuranceDetails = results[2];
             products.warrantyDetails = results[3];
@@ -1070,7 +1121,7 @@ var ProductAdaptor = function() {
       },
     }, {
       key: 'createProduct',
-      value: function createProduct(productBody, metadataBody) {
+      value: function createProduct(productBody, metadataBody, otherItems) {
         var _this5 = this;
 
         var brandBody = {
@@ -1096,6 +1147,7 @@ var ProductAdaptor = function() {
                 },
               },
             });
+        var renewalTypes = void 0;
         var product = productBody;
         var metadata = void 0;
         return brandPromise.then(function(newItemResult) {
@@ -1155,17 +1207,23 @@ var ProductAdaptor = function() {
               _lodash2.default.omit(product, 'seller_id') :
               product;
 
-          return _this5.modals.products.count({
-            where: product,
-            include: [
-              {
-                model: _this5.modals.metaData, where: {
-                  $and: metadata,
-                }, required: true, as: 'metaData',
-              }],
-          });
-        }).then(function(count) {
-          if (count === 0) {
+          return Promise.all([
+            _this5.modals.products.count({
+              where: product,
+              include: [
+                {
+                  model: _this5.modals.metaData, where: {
+                    $and: metadata,
+                  }, required: true, as: 'metaData',
+                }],
+            }), _this5.categoryAdaptor.retrieveRenewalTypes({
+              id: {
+                $gte: 7,
+              },
+            })]);
+        }).then(function(countRenewalTypeResult) {
+          renewalTypes = countRenewalTypeResult[1];
+          if (countRenewalTypeResult[0] === 0) {
             return _this5.modals.products.create(product);
           }
 
@@ -1173,6 +1231,204 @@ var ProductAdaptor = function() {
         }).then(function(productResult) {
           if (productResult) {
             product = productResult.toJSON();
+            var warrantyItemPromise = [];
+            if (otherItems.warranty) {
+              var warrantyRenewalType = void 0;
+              var expiry_date = void 0;
+              if (otherItems.warranty.renewal_type) {
+                warrantyRenewalType = renewalTypes.find(function(item) {
+                return item.type === otherItems.warranty.renewal_type;
+              });
+                var effective_date = (0, _moment2.default)(
+                    otherItems.warranty.effective_date,
+                    _moment2.default.ISO_8601).isValid() ?
+                    (0, _moment2.default)(otherItems.warranty.effective_date,
+                        _moment2.default.ISO_8601).startOf('day') :
+                    (0, _moment2.default)(otherItems.warranty.effective_date,
+                        'DD MMM YY').startOf('day');
+                expiry_date = (0, _moment2.default)(effective_date,
+                    _moment2.default.ISO_8601).
+                    add(warrantyRenewalType.effective_months, 'months').
+                    subtract(1, 'day').
+                    endOf('days');
+              warrantyItemPromise.push(_this5.warrantyAdaptor.createWarranties({
+                renewal_type: otherItems.warranty.renewal_type,
+                updated_by: productBody.user_id,
+                status_type: 11,
+                product_id: product.id,
+                expiry_date: (0, _moment2.default)(expiry_date).
+                    format('YYYY-MM-DD'),
+                effective_date: (0, _moment2.default)(effective_date).
+                    format('YYYY-MM-DD'),
+                document_date: (0, _moment2.default)(effective_date).
+                    format('YYYY-MM-DD'),
+                warranty_type: 1,
+                user_id: productBody.user_id,
+              }));
+              }
+
+              if (otherItems.warranty.dual_renewal_type) {
+                warrantyRenewalType = renewalTypes.find(function(item) {
+                  return item.type === otherItems.warranty.dual_renewal_type;
+                });
+                var _effective_date = (0, _moment2.default)(
+                    otherItems.warranty.effective_date,
+                    _moment2.default.ISO_8601).isValid() ?
+                    (0, _moment2.default)(otherItems.warranty.effective_date,
+                        _moment2.default.ISO_8601).startOf('day') :
+                    (0, _moment2.default)(otherItems.warranty.effective_date,
+                        'DD MMM YY').startOf('day');
+                expiry_date = (0, _moment2.default)(_effective_date,
+                    _moment2.default.ISO_8601).
+                    add(warrantyRenewalType.effective_months, 'months').
+                    subtract(1, 'day').
+                    endOf('days');
+                warrantyItemPromise.push(
+                    _this5.warrantyAdaptor.createWarranties({
+                      renewal_type: otherItems.warranty.dual_renewal_type,
+                      updated_by: productBody.user_id,
+                      status_type: 11,
+                      product_id: product.id,
+                      expiry_date: (0, _moment2.default)(expiry_date).
+                          format('YYYY-MM-DD'),
+                      effective_date: (0, _moment2.default)(_effective_date).
+                          format('YYYY-MM-DD'),
+                      document_date: (0, _moment2.default)(_effective_date).
+                          format('YYYY-MM-DD'),
+                      warranty_type: 3,
+                      user_id: productBody.user_id,
+                    }));
+              }
+
+              if (otherItems.warranty.extended_renewal_type) {
+                warrantyRenewalType = renewalTypes.find(function(item) {
+                  return item.type ===
+                      otherItems.warranty.extended_renewal_type;
+                });
+                var _effective_date2 = (0, _moment2.default)(
+                    otherItems.warranty.effective_date,
+                    _moment2.default.ISO_8601).isValid() ?
+                    (0, _moment2.default)(otherItems.warranty.effective_date,
+                        _moment2.default.ISO_8601).startOf('day') :
+                    (0, _moment2.default)(otherItems.warranty.effective_date,
+                        'DD MMM YY').startOf('day');
+                expiry_date = (0, _moment2.default)(_effective_date2).
+                    add(warrantyRenewalType.effective_months, 'months').
+                    subtract(1, 'day').
+                    endOf('days');
+                warrantyItemPromise.push(
+                    _this5.warrantyAdaptor.createWarranties({
+                      renewal_type: otherItems.warranty.extended_renewal_type,
+                      updated_by: productBody.user_id,
+                      status_type: 11,
+                      product_id: product.id,
+                      expiry_date: (0, _moment2.default)(expiry_date).
+                          format('YYYY-MM-DD'),
+                      effective_date: (0, _moment2.default)(_effective_date2).
+                          format('YYYY-MM-DD'),
+                      document_date: (0, _moment2.default)(_effective_date2).
+                          format('YYYY-MM-DD'),
+                      warranty_type: 2,
+                      user_id: productBody.user_id,
+                    }));
+              }
+
+              if (otherItems.warranty.accessory_renewal_type) {
+                warrantyRenewalType = renewalTypes.find(function(item) {
+                  return item.type ===
+                      otherItems.warranty.accessory_renewal_type;
+                });
+                var _effective_date3 = (0, _moment2.default)(
+                    otherItems.warranty.effective_date,
+                    _moment2.default.ISO_8601).isValid() ?
+                    (0, _moment2.default)(otherItems.warranty.effective_date,
+                        _moment2.default.ISO_8601).startOf('day') :
+                    (0, _moment2.default)(otherItems.warranty.effective_date,
+                        'DD MMM YY').startOf('day');
+                expiry_date = (0, _moment2.default)(_effective_date3).
+                    add(warrantyRenewalType.effective_months, 'months').
+                    subtract(1, 'day').
+                    endOf('days');
+                warrantyItemPromise.push(
+                    _this5.warrantyAdaptor.createWarranties({
+                      renewal_type: otherItems.warranty.accessory_renewal_type,
+                      updated_by: productBody.user_id,
+                      status_type: 11,
+                      product_id: product.id,
+                      expiry_date: (0, _moment2.default)(expiry_date).
+                          format('YYYY-MM-DD'),
+                      effective_date: (0, _moment2.default)(_effective_date3).
+                          format('YYYY-MM-DD'),
+                      document_date: (0, _moment2.default)(_effective_date3).
+                          format('YYYY-MM-DD'),
+                      warranty_type: 4,
+                      user_id: productBody.user_id,
+                    }));
+            }
+            }
+
+            var insurancePromise = [];
+            if (otherItems.insurance) {
+              var _effective_date4 = (0, _moment2.default)(
+                  otherItems.insurance.effective_date,
+                  _moment2.default.ISO_8601).isValid() ?
+                  (0, _moment2.default)(otherItems.insurance.effective_date,
+                      _moment2.default.ISO_8601).startOf('day') :
+                  (0, _moment2.default)(otherItems.insurance.effective_date,
+                      'DD MMM YY').startOf('day');
+              var _expiry_date = (0, _moment2.default)(_effective_date4,
+                  _moment2.default.ISO_8601).add(8759, 'hours').endOf('days');
+              insurancePromise.push(_this5.insuranceAdaptor.createInsurances({
+                renewal_type: 8,
+                updated_by: productBody.user_id,
+                status_type: 11,
+                product_id: product.id,
+                expiry_date: (0, _moment2.default)(_expiry_date).
+                    format('YYYY-MM-DD'),
+                effective_date: (0, _moment2.default)(_effective_date4).
+                    format('YYYY-MM-DD'),
+                document_date: (0, _moment2.default)(_effective_date4).
+                    format('YYYY-MM-DD'),
+                document_number: otherItems.insurance.policy_no,
+                provider_id: otherItems.insurance.provider_id,
+                amount_insured: otherItems.insurance.amount_insured,
+                renewal_cost: otherItems.insurance.renewal_cost,
+                user_id: productBody.user_id,
+              }));
+            }
+
+            var amcPromise = [];
+            if (otherItems.amc) {
+              var amcRenewalType = renewalTypes.find(function(item) {
+                return item.type === otherItems.amc.expiry_period;
+              });
+              var _effective_date5 = (0, _moment2.default)(
+                  otherItems.amc.effective_date, _moment2.default.ISO_8601).
+                  isValid() ?
+                  (0, _moment2.default)(otherItems.amc.effective_date,
+                      _moment2.default.ISO_8601).startOf('day') :
+                  (0, _moment2.default)(otherItems.amc.effective_date,
+                      'DD MMM YY').startOf('day');
+              var _expiry_date2 = (0, _moment2.default)(_effective_date5,
+                  _moment2.default.ISO_8601).
+                  add(amcRenewalType.effective_months, 'months').
+                  subtract(1, 'day').
+                  endOf('days').
+                  format('YYYY-MM-DD');
+              amcPromise.push(_this5.amcAdaptor.createAMCs({
+                renewal_type: 8,
+                updated_by: productBody.user_id,
+                status_type: 11,
+                product_id: product.id,
+                expiry_date: (0, _moment2.default)(_expiry_date2).
+                    format('YYYY-MM-DD'),
+                effective_date: (0, _moment2.default)(_effective_date5).
+                    format('YYYY-MM-DD'),
+                document_date: (0, _moment2.default)(_effective_date5).
+                    format('YYYY-MM-DD'),
+                user_id: productBody.user_id,
+              }));
+            }
             var metadataPromise = metadata.map(function(mdItem) {
               mdItem.product_id = product.id;
               mdItem.status_type = 8;
@@ -1180,21 +1436,53 @@ var ProductAdaptor = function() {
               return _this5.modals.metaData.create(mdItem);
             });
 
-            return Promise.all(metadataPromise);
+            if (otherItems.puc) {
+              var pucRenewalType = renewalTypes.find(function(item) {
+                return item.type === otherItems.puc.expiry_period;
+              });
+              var _effective_date6 = (0, _moment2.default)(
+                  otherItems.puc.effective_date, _moment2.default.ISO_8601).
+                  isValid() ?
+                  (0, _moment2.default)(otherItems.puc.effective_date,
+                      _moment2.default.ISO_8601).startOf('day') :
+                  (0, _moment2.default)(otherItems.puc.effective_date,
+                      'DD MMM YY').startOf('day');
+              var form_value = (0, _moment2.default)(_effective_date6,
+                  _moment2.default.ISO_8601).
+                  add(pucRenewalType.effective_months, 'months').
+                  subtract(1, 'day').
+                  endOf('days').
+                  format('YYYY-MM-DD');
+              metadataPromise.push(_this5.modals.metaData.create({
+                category_form_id: product.category_id === 138 ? 1191 : 1192,
+                form_value: form_value,
+                product_id: product.id,
+                status_type: 8, updated_by: product.user_id,
+              }));
+            }
+
+            return Promise.all([
+              metadataPromise,
+              insurancePromise,
+              warrantyItemPromise,
+              amcPromise]);
           }
 
           return undefined;
-        }).then(function(metaData) {
-          if (metaData) {
-            product.metaData = metaData.map(function(mdItem) {
+        }).then(function(productItemsResult) {
+          if (productItemsResult) {
+            product.metaData = productItemsResult[0].map(function(mdItem) {
               return mdItem.toJSON();
             });
+            product.insurances = productItemsResult[1];
+            product.warranties = productItemsResult[2];
+            product.amcs = productItemsResult[3];
             return product;
           }
 
           return undefined;
         });
-      },
+      }
     }, {
       key: 'retrieveProductMetadata',
       value: function retrieveProductMetadata(options) {

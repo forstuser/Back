@@ -1017,7 +1017,71 @@ function prepareProductRoutes(productController, productRoutes) {
               _joi2.default.string(),
               _joi2.default.allow(null)],
             document_date: [_joi2.default.string(), _joi2.default.allow(null)],
-            metadata: [_joi2.default.array(), _joi2.default.allow(null)],
+            metadata: [
+              _joi2.default.array().items(_joi2.default.object().keys({
+                category_form_id: [
+                  _joi2.default.number(),
+                  _joi2.default.allow(null)],
+                form_value: [_joi2.default.string(), _joi2.default.allow(null)],
+                new_drop_down: [
+                  _joi2.default.boolean(),
+                  _joi2.default.allow(null)],
+              })), _joi2.default.allow(null)],
+            warranty: [
+              _joi2.default.object().keys({
+                renewal_type: [
+                  _joi2.default.number(),
+                  _joi2.default.allow(null)],
+                dual_renewal_type: [
+                  _joi2.default.number(),
+                  _joi2.default.allow(null)],
+                extended_renewal_type: [
+                  _joi2.default.number(),
+                  _joi2.default.allow(null)],
+                effective_date: [
+                  _joi2.default.string(),
+                  _joi2.default.allow(null)],
+                accessory_renewal_type: [
+                  _joi2.default.string(),
+                  _joi2.default.allow(null)],
+              }), _joi2.default.allow(null)],
+            insurance: [
+              _joi2.default.object().keys({
+                effective_date: [
+                  _joi2.default.string(),
+                  _joi2.default.allow(null)],
+                provider_id: [
+                  _joi2.default.number(),
+                  _joi2.default.allow(null)],
+                policy_no: [_joi2.default.string(), _joi2.default.allow(null)],
+                renewal_cost: [
+                  _joi2.default.number(),
+                  _joi2.default.allow(null)],
+                amount_insured: [
+                  _joi2.default.string(),
+                  _joi2.default.allow(null)],
+                expiry_period: [
+                  _joi2.default.number(),
+                  _joi2.default.allow(null)],
+              }), _joi2.default.allow(null)],
+            puc: [
+              _joi2.default.object().keys({
+                effective_date: [
+                  _joi2.default.string(),
+                  _joi2.default.allow(null)],
+                expiry_period: [
+                  _joi2.default.number(),
+                  _joi2.default.allow(null)],
+              }), _joi2.default.allow(null)],
+            amc: [
+              _joi2.default.object().keys({
+                effective_date: [
+                  _joi2.default.string(),
+                  _joi2.default.allow(null)],
+                expiry_period: [
+                  _joi2.default.number(),
+                  _joi2.default.allow(null)],
+              }), _joi2.default.allow(null)],
           }
         }
       }
