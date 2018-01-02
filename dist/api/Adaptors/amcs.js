@@ -309,7 +309,19 @@ var AmcAdaptor = function() {
     }, {
       key: 'createAMCs',
       value: function createAMCs(values) {
-        this.modals.amcs.create(values).then(function(result) {
+        return this.modals.amcs.create(values).then(function(result) {
+          return result.toJSON();
+        });
+      },
+    }, {
+      key: 'updateAMCs',
+      value: function updateAMCs(id, values) {
+        return this.modals.amcs.findOne({
+          where: {
+            id: id,
+          },
+        }).then(function(result) {
+          result.updateAttributes(values);
           return result.toJSON();
         });
       },

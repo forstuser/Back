@@ -5,14 +5,21 @@ import NotificationAdaptor from '../Adaptors/notification';
 import CategoryAdaptor from '../Adaptors/category';
 import BrandAdaptor from '../Adaptors/brands';
 import SellerAdaptor from '../Adaptors/sellers';
+import JobAdaptor from '../Adaptors/job';
+import ProductAdaptor from '../Adaptors/product';
+import UserAdaptor from '../Adaptors/user';
 import Bluebird from 'bluebird';
 import shared from '../../helpers/shared';
+import moment from 'moment/moment';
 
 let contactModel;
 let modals;
 let categoryAdaptor;
 let brandAdaptor;
 let sellerAdaptor;
+let jobAdaptor;
+let productAdaptor;
+let userAdaptor;
 
 class GeneralController {
   constructor(modal) {
@@ -20,6 +27,9 @@ class GeneralController {
     categoryAdaptor = new CategoryAdaptor(modal);
     brandAdaptor = new BrandAdaptor(modal);
     sellerAdaptor = new SellerAdaptor(modal);
+    jobAdaptor = new JobAdaptor(modal);
+    productAdaptor = new ProductAdaptor(modal);
+    userAdaptor = new UserAdaptor(modal);
     modals = modal;
   }
 
@@ -101,36 +111,174 @@ class GeneralController {
 
   static contactUs(request, reply) {
     NotificationAdaptor.sendLinkOnMessage(request.payload.phone);
-    contactModel.create({
+    return contactModel.create({
       name: request.payload.name,
       phone: request.payload.phone,
       email: request.payload.email,
       message: request.payload.message,
     }).then(() => {
-      reply({status: true}).code(201);
+      return reply({status: true}).code(201);
     }).catch((err) => {
       console.log(
           `Error on ${new Date()} for user ${user.id ||
           user.ID} is as follow: \n \n ${err}`);
-      reply({status: false}).code(500);
+      return reply({status: false}).code(500);
     });
   }
 
   static retrieveFAQs(request, reply) {
-    modals.faqs.findAll({
+    return modals.faqs.findAll({
       where: {
         status_id: {
           $ne: 3,
         },
       },
     }).then((faq) => {
-      reply({status: true, faq}).code(200);
+      return reply({status: true, faq}).code(200);
     }).catch((err) => {
       console.log(
           `Error on ${new Date()} for user ${user.id ||
           user.ID} is as follow: \n \n ${err}`);
-      reply({status: false}).code(200);
+      return reply({status: false}).code(200);
     });
+  }
+
+  static intializeUserProduct(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+
+    if (user && !request.pre.forceUpdate) {
+      return userAdaptor.isUserValid(user).then((isValid) => {
+        if (isValid) {
+          return Bluebird.try(() => {
+            return jobAdaptor.createJobs(
+                {
+                  job_id: `${Math.random().
+                      toString(36).
+                      substr(2, 9)}${(user.id ||
+                      user.ID).toString(
+                      36)}`,
+                  user_id: user.id || user.ID,
+                  updated_by: user.id || user.ID,
+                  uploaded_by: user.id || user.ID,
+                  user_status: 8,
+                  admin_status: 2,
+                  comments: request.query ?
+                      request.query.productId ?
+                          `This job is sent for product id ${request.query.productId}` :
+                          request.query.productName ?
+                              `This job is sent for product name ${request.query.productName}` :
+                              '' :
+                      ``,
+                });
+          }).then((jobResult) => {
+            return productAdaptor.createEmptyProduct({
+              job_id: jobResult.id,
+              product_name: request.payload.product_name,
+              user_id: user.id || user.ID,
+              main_category_id: request.payload.main_category_id,
+              category_id: request.payload.category_id,
+              brand_id: request.payload.brand_id,
+              colour_id: request.payload.colour_id,
+              purchase_cost: request.payload.purchase_cost,
+              taxes: request.payload.taxes,
+              updated_by: user.id || user.ID,
+              seller_id: request.payload.seller_id,
+              status_type: 2,
+              document_number: request.payload.document_number,
+              document_date: request.payload.document_date ?
+                  moment(request.payload.document_date,
+                      moment.ISO_8601).
+                      isValid() ?
+                      moment(request.payload.document_date,
+                          moment.ISO_8601).startOf('day').format('YYYY-MM-DD') :
+                      moment(request.payload.document_date, 'DD MMM YY').
+                          startOf('day').
+                          format('YYYY-MM-DD') :
+                  undefined,
+              brand_name: request.payload.brand_name,
+              copies: [],
+            });
+          }).then((productResult) => reply({
+            status: true,
+            product: productResult,
+            message: 'Product and Job is initialized.',
+          }));
+        }
+
+        return reply({
+          status: false,
+          message: 'Token Expired or Invalid',
+          forceUpdate: request.pre.forceUpdate,
+        }).code(401);
+      }).catch((err) => {
+        console.log(
+            `Error on ${new Date()} for user ${user.mobile_no} is as follow: \n \n ${err}`);
+        return reply({
+          status: false,
+          message: 'Token Expired or Invalid',
+          forceUpdate: request.pre.forceUpdate,
+        }).code(401);
+      });
+    } else if (!user) {
+      return reply({
+        status: false,
+        message: 'Token Expired or Invalid',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(401);
+    } else {
+      return reply({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
+  static retrieveRepairableProducts(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+
+    if (user && !request.pre.forceUpdate) {
+      return userAdaptor.isUserValid(user).then((isValid) => {
+        if (isValid) {
+          return Bluebird.try(() => {
+            return productAdaptor.retrieveProducts({
+              main_category_id: [1, 2, 3],
+              status_type: [5, 8, 11],
+            });
+          }).then((productResult) => reply({
+            status: true,
+            product: productResult,
+            message: 'Product and Job is initialized.',
+          }));
+        }
+
+        return reply({
+          status: false,
+          message: 'Token Expired or Invalid',
+          forceUpdate: request.pre.forceUpdate,
+        }).code(401);
+      }).catch((err) => {
+        console.log(
+            `Error on ${new Date()} for user ${user.mobile_no} is as follow: \n \n ${err}`);
+        return reply({
+          status: false,
+          message: 'Token Expired or Invalid',
+          forceUpdate: request.pre.forceUpdate,
+        }).code(401);
+      });
+    } else if (!user) {
+      return reply({
+        status: false,
+        message: 'Token Expired or Invalid',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(401);
+    } else {
+      return reply({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
   }
 }
 

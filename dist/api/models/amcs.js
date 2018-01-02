@@ -21,7 +21,6 @@ exports.default = function(sequelize, DataTypes) {
     },
     renewal_type: {
       type: DataTypes.INTEGER,
-      allowNull: false,
     },
     renewal_cost: {
       type: DataTypes.FLOAT,

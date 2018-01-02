@@ -65,12 +65,11 @@ export default (sequelize, DataTypes) => {
         updated_by: {
           type: DataTypes.INTEGER,
         },
-        status_type: {
+        created_by: {
           type: DataTypes.INTEGER,
         },
-        created_at: {
-          type: DataTypes.DATE,
-          defaultValue: sequelize.literal('NOW()'),
+        status_type: {
+          type: DataTypes.INTEGER,
         },
         updated_at: {
           type: DataTypes.DATE,

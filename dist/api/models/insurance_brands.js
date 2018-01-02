@@ -86,6 +86,9 @@ exports.default = function(sequelize, DataTypes) {
     },
     main_category_id: {
       type: DataTypes.INTEGER,
+    },
+    type: {
+      type: DataTypes.INTEGER,
     }
   }, {
     freezeTableName: true,

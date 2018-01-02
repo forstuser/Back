@@ -8,6 +8,9 @@ export default (sequelize, DataTypes) => {
         status_type: {
           type: DataTypes.INTEGER,
         },
+        type: {
+          type: DataTypes.INTEGER,
+        },
         file_name: {
           type: DataTypes.STRING,
         },
