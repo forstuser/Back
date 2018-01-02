@@ -214,7 +214,7 @@ var DashboardAdaptor = function() {
             showDashboard: !!(result[4] && parseInt(result[4]) > 0) ||
             !!(result[5] && parseInt(result[5]) > 1),
             hasProducts: !!(result[5] && parseInt(result[5]) > 0),
-            product: !!(result[4] && parseInt(result[4]) > 0) ? product : {},
+            product: product,
           };
         }).catch(function(err) {
           console.log('Error on ' + new Date() + ' for user ' +
@@ -317,17 +317,21 @@ var DashboardAdaptor = function() {
         return Promise.all([
           this.productAdaptor.retrieveProducts({
             user_id: user.id || user.ID,
-            status_type: 5,
+            status_type: [5, 11],
             main_category_id: [6, 8],
           }), this.amcAdaptor.retrieveAMCs({
             user_id: user.id || user.ID,
-            status_type: 5,
+            status_type: [5, 11],
           }), this.insuranceAdaptor.retrieveInsurances({
             user_id: user.id || user.ID,
-            status_type: 5,
+            status_type: [5, 11],
           }), this.warrantyAdaptor.retrieveWarranties({
             user_id: user.id || user.ID,
-            status_type: 5,
+            status_type: [5, 11],
+          }), this.productAdaptor.retrieveProducts({
+            user_id: user.id || user.ID,
+            status_type: [5, 11],
+            main_category_id: [3],
           })]).then(function(result) {
           var products = result[0].map(function(item) {
             var product = item;
@@ -361,12 +365,33 @@ var DashboardAdaptor = function() {
                 item.dueIn <= 30 && item.dueIn >= 0;
           });
 
+          var pucProducts = result[4].map(function(item) {
+            var product = item;
+            if (product.pucDetail &&
+                _moment2.default.utc(product.pucDetail.expiry_date,
+                    _moment2.default.ISO_8601).isValid()) {
+              var dueDateTime = _moment2.default.utc(
+                  product.pucDetail.expiry_date, _moment2.default.ISO_8601).
+                  endOf('day');
+              product.dueDate = product.pucDetail.expiry_date;
+              product.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
+            }
+
+            product.productType = 5;
+            return product;
+          });
+
+          pucProducts = pucProducts.filter(function(item) {
+            return item.dueIn !== undefined && item.dueIn !== null &&
+                item.dueIn <= 30 && item.dueIn >= 0;
+          });
+
           var amcs = result[1].map(function(item) {
             var amc = item;
             if ((0, _moment2.default)(amc.expiryDate,
                     _moment2.default.ISO_8601).isValid()) {
-              var dueDateTime = (0, _moment2.default)(amc.expiryDate,
-                  _moment2.default.ISO_8601);
+              var dueDateTime = _moment2.default.utc(amc.expiryDate,
+                  _moment2.default.ISO_8601).endOf('day');
               amc.dueDate = amc.expiryDate;
               amc.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
               amc.productType = 4;
@@ -383,8 +408,8 @@ var DashboardAdaptor = function() {
             var insurance = item;
             if ((0, _moment2.default)(insurance.expiryDate,
                     _moment2.default.ISO_8601).isValid()) {
-              var dueDateTime = (0, _moment2.default)(insurance.expiryDate,
-                  _moment2.default.ISO_8601);
+              var dueDateTime = _moment2.default.utc(insurance.expiryDate,
+                  _moment2.default.ISO_8601).endOf('day');
               insurance.dueDate = insurance.expiryDate;
               insurance.dueIn = dueDateTime.diff(_moment2.default.utc(),
                   'days');
@@ -402,8 +427,8 @@ var DashboardAdaptor = function() {
             var warranty = item;
             if ((0, _moment2.default)(warranty.expiryDate,
                     _moment2.default.ISO_8601).isValid()) {
-              var dueDateTime = (0, _moment2.default)(warranty.expiryDate,
-                  _moment2.default.ISO_8601);
+              var dueDateTime = _moment2.default.utc(warranty.expiryDate,
+                  _moment2.default.ISO_8601).endOf('day');
               warranty.dueDate = warranty.expiryDate;
               warranty.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
               warranty.productType = 2;
@@ -418,7 +443,7 @@ var DashboardAdaptor = function() {
 
           return [].concat(_toConsumableArray(products),
               _toConsumableArray(warranties), _toConsumableArray(insurances),
-              _toConsumableArray(amcs));
+              _toConsumableArray(amcs), _toConsumableArray(pucProducts));
         });
       },
     }, {

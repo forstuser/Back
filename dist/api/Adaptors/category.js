@@ -87,11 +87,35 @@ var CategoryAdaptor = function() {
           categoryData = result.map(function(item) {
             return item.toJSON();
           });
-
+          var main_category_id = options.category_id;
+          var excluded_category_id = main_category_id ? {
+            $notIn: main_category_id === 1 ?
+                [
+                  20,
+                  72,
+                  73] :
+                main_category_id === 2 ?
+                    [
+                      327,
+                      162,
+                      530,
+                      581,
+                      491,
+                      541] :
+                    main_category_id === 3 ?
+                        [
+                          139,
+                          138,
+                          154,
+                          150,
+                          153] :
+                        [],
+          } : undefined;
           return _this.retrieveSubCategories({
             ref_id: categoryData.map(function(item) {
               return item.id;
             }),
+            category_id: excluded_category_id,
             status_type: 1,
           }, isBrandFormRequired);
         }).then(function(subCategories) {
@@ -124,6 +148,7 @@ var CategoryAdaptor = function() {
             [
               'ref_id',
               'refId'],
+            'dual_warranty_item',
             [
               'category_level',
               'level'],
@@ -145,6 +170,7 @@ var CategoryAdaptor = function() {
               'categoryImageUrl']],
           order: ['category_id'],
         }).then(function(result) {
+          console.log(result);
           categoryData = result.map(function(item) {
             return item.toJSON();
           });
@@ -156,10 +182,98 @@ var CategoryAdaptor = function() {
                 }),
                 status_type: 1,
               }), _this2.retrieveCategoryForms({
-                category_id: categoryData.map(function(item) {
+                $or: [
+                  {
+                    $and: {
+                      category_id: categoryData.map(function(item) {
+                        return item.id;
+                      }),
+                      title: {
+                        $ilike: 'model',
+                      },
+                    },
+                  }, {
+                    $and: {
+                      category_id: categoryData.map(function(item) {
+                        return item.id;
+                      }),
+                      title: {
+                        $ilike: 'IMEI Number',
+                      },
+                    },
+                  }, {
+                    $and: {
+                      category_id: categoryData.map(function(item) {
+                        return item.id;
+                      }),
+                      title: {
+                        $ilike: 'Serial Number',
+                      },
+                    },
+                  }, {
+                    $and: {
+                      category_id: categoryData.map(function(item) {
+                        return item.id;
+                      }),
+                      title: {
+                        $ilike: 'Chasis Number',
+                      },
+                    },
+                  }, {
+                    $and: {
+                      category_id: categoryData.map(function(item) {
                   return item.id;
                 }),
+                      title: {
+                        $ilike: 'due date%',
+                      },
+                    }
+                  }, {
+                    $and: {
+                      main_category_id: categoryData.map(function(item) {
+                        return item.refId;
+                      }),
+                      title: {
+                        $ilike: 'Vehicle Number',
+                      },
+                    },
+                  }, {
+                    $and: {
+                      main_category_id: categoryData.map(function(item) {
+                        return item.refId;
+                      }),
+                      title: {
+                        $ilike: 'Registration Number',
+                      },
+                    },
+                  }],
                 status_type: 1,
+              }), _this2.modals.insuranceBrands.findAll({
+                where: {
+                  type: [1, 3],
+                },
+                include: {
+                  model: _this2.modals.categories,
+                  where: {
+                    category_id: options.category_id,
+                  },
+                  as: 'categories',
+                  attributes: [],
+                  required: true,
+                },
+              }), _this2.modals.insuranceBrands.findAll({
+                where: {
+                  type: [2, 3],
+                },
+                include: {
+                  model: _this2.modals.categories,
+                  where: {
+                    category_id: options.category_id,
+                  },
+                  as: 'categories',
+                  attributes: [],
+                  required: true,
+                },
               })]);
           }
 
@@ -173,12 +287,14 @@ var CategoryAdaptor = function() {
               item.categoryForms = results[1].filter(function(formItem) {
                 return formItem.categoryId === item.id;
               });
+              item.insuranceProviders = results[2];
+              item.warrantyProviders = results[3];
               return item;
             });
           }
           return categoryData;
-        });
-      },
+        }).catch(console.log);
+      }
     }, {
       key: 'retrieveCategoryForms',
       value: function retrieveCategoryForms(options) {
@@ -220,6 +336,18 @@ var CategoryAdaptor = function() {
           order: ['display_index'],
         }).then(function(formResult) {
           return formResult.map(function(item) {
+            return item.toJSON();
+          });
+        });
+      },
+    }, {
+      key: 'retrieveRenewalTypes',
+      value: function retrieveRenewalTypes(options) {
+        return this.modals.renewalTypes.findAll({
+          where: options,
+          order: [['type', 'ASC']],
+        }).then(function(renewalTypes) {
+          return renewalTypes.map(function(item) {
             return item.toJSON();
           });
         });

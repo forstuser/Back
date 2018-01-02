@@ -67,7 +67,9 @@ var AmcAdaptor = function() {
     {
       key: 'retrieveAMCs',
       value: function retrieveAMCs(options) {
-        options.status_type = [5, 11];
+        if (!options.status_type) {
+        options.status_type = [5, 11, 12];
+        }
         var productOptions = {};
         if (options.main_category_id) {
           productOptions.main_category_id = options.main_category_id;
@@ -196,11 +198,11 @@ var AmcAdaptor = function() {
             return item.toJSON();
           }).sort(sortAmcWarrantyInsuranceRepair);
         });
-      },
+      }
     }, {
       key: 'retrieveNotificationAMCs',
       value: function retrieveNotificationAMCs(options) {
-        options.status_type = 5;
+        options.status_type = [5, 11, 12];
 
         return this.modals.amcs.findAll({
           where: options,
@@ -269,7 +271,7 @@ var AmcAdaptor = function() {
     }, {
       key: 'retrieveAMCCounts',
       value: function retrieveAMCCounts(options) {
-        options.status_type = 5;
+        options.status_type = [5, 11, 12];
         var productOptions = options.product_status_type ? {
           status_type: options.product_status_type,
         } : undefined;
@@ -302,6 +304,25 @@ var AmcAdaptor = function() {
           return amcResult.map(function(item) {
             return item.toJSON();
           });
+        });
+      },
+    }, {
+      key: 'createAMCs',
+      value: function createAMCs(values) {
+        return this.modals.amcs.create(values).then(function(result) {
+          return result.toJSON();
+        });
+      },
+    }, {
+      key: 'updateAMCs',
+      value: function updateAMCs(id, values) {
+        return this.modals.amcs.findOne({
+          where: {
+            id: id,
+          },
+        }).then(function(result) {
+          result.updateAttributes(values);
+          return result.toJSON();
         });
       },
     }]);

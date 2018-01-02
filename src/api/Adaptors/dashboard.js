@@ -143,7 +143,7 @@ class DashboardAdaptor {
         showDashboard: !!(result[4] && parseInt(result[4]) > 0) ||
         !!(result[5] && parseInt(result[5]) > 1),
         hasProducts: !!(result[5] && parseInt(result[5]) > 0),
-        product: !!(result[4] && parseInt(result[4]) > 0) ? product : {},
+        product,
       };
     }).catch(err => {
       console.log(
@@ -246,20 +246,25 @@ class DashboardAdaptor {
     return Promise.all([
       this.productAdaptor.retrieveProducts({
         user_id: user.id || user.ID,
-        status_type: 5,
+        status_type: [5, 11],
         main_category_id: [6, 8],
       }),
       this.amcAdaptor.retrieveAMCs({
         user_id: user.id || user.ID,
-        status_type: 5,
+        status_type: [5, 11],
       }),
       this.insuranceAdaptor.retrieveInsurances({
         user_id: user.id || user.ID,
-        status_type: 5,
+        status_type: [5, 11],
       }),
       this.warrantyAdaptor.retrieveWarranties({
         user_id: user.id || user.ID,
-        status_type: 5,
+        status_type: [5, 11],
+      }),
+      this.productAdaptor.retrieveProducts({
+        user_id: user.id || user.ID,
+        status_type: [5, 11],
+        main_category_id: [3],
       })]).then((result) => {
       let products = result[0].map((item) => {
         const product = item;
@@ -291,10 +296,31 @@ class DashboardAdaptor {
               item.dueIn <=
               30 && item.dueIn >= 0));
 
+      let pucProducts = result[4].map((item) => {
+        const product = item;
+        if (product.pucDetail &&
+            moment.utc(product.pucDetail.expiry_date, moment.ISO_8601).
+                isValid()) {
+          const dueDateTime = moment.utc(product.pucDetail.expiry_date,
+              moment.ISO_8601).
+              endOf('day');
+          product.dueDate = product.pucDetail.expiry_date;
+          product.dueIn = dueDateTime.diff(moment.utc(), 'days');
+        }
+
+        product.productType = 5;
+        return product;
+      });
+
+      pucProducts = pucProducts.filter(
+          item => ((item.dueIn !== undefined && item.dueIn !== null) &&
+              item.dueIn <= 30 && item.dueIn >= 0));
+
       let amcs = result[1].map((item) => {
         const amc = item;
         if (moment(amc.expiryDate, moment.ISO_8601).isValid()) {
-          const dueDateTime = moment(amc.expiryDate, moment.ISO_8601);
+          const dueDateTime = moment.utc(amc.expiryDate, moment.ISO_8601).
+              endOf('day');
           amc.dueDate = amc.expiryDate;
           amc.dueIn = dueDateTime.diff(moment.utc(), 'days');
           amc.productType = 4;
@@ -309,7 +335,8 @@ class DashboardAdaptor {
       let insurances = result[2].map((item) => {
         const insurance = item;
         if (moment(insurance.expiryDate, moment.ISO_8601).isValid()) {
-          const dueDateTime = moment(insurance.expiryDate, moment.ISO_8601);
+          const dueDateTime = moment.utc(insurance.expiryDate, moment.ISO_8601).
+              endOf('day');
           insurance.dueDate = insurance.expiryDate;
           insurance.dueIn = dueDateTime.diff(moment.utc(), 'days');
           insurance.productType = 3;
@@ -324,7 +351,8 @@ class DashboardAdaptor {
       let warranties = result[3].map((item) => {
         const warranty = item;
         if (moment(warranty.expiryDate, moment.ISO_8601).isValid()) {
-          const dueDateTime = moment(warranty.expiryDate, moment.ISO_8601);
+          const dueDateTime = moment.utc(warranty.expiryDate, moment.ISO_8601).
+              endOf('day');
           warranty.dueDate = warranty.expiryDate;
           warranty.dueIn = dueDateTime.diff(moment.utc(), 'days');
           warranty.productType = 2;
@@ -336,7 +364,12 @@ class DashboardAdaptor {
           item => (item.dueIn !== undefined && item.dueIn !== null) &&
               item.dueIn <= 30 && item.dueIn >= 0);
 
-      return [...products, ...warranties, ...insurances, ...amcs];
+      return [
+        ...products,
+        ...warranties,
+        ...insurances,
+        ...amcs,
+        ...pucProducts];
     });
   }
 

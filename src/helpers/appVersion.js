@@ -3,11 +3,20 @@
 let MODAL;
 
 const checkAppVersion = (request, reply) => {
-	if (request.headers.app_version !== undefined) {
-		const currentAppVersion = (!isNaN(parseInt(request.headers.app_version)) ? parseInt(request.headers.app_version) : null);
+  if (request.headers.app_version !== undefined ||
+      request.headers.ios_app_version !== undefined) {
+    const appVersion = request.headers.ios_app_version ||
+        request.headers.app_version;
+    const id = request.headers.ios_app_version ? 2 : 1;
+    const currentAppVersion = (!isNaN(parseInt(appVersion)) ?
+        parseInt(appVersion) :
+        null);
 		console.log(`CURRENT APP VERSION = ${currentAppVersion}`);
 
 		MODAL.appVersion.findOne({
+      where: {
+        id,
+      },
 			order: [['updatedAt', 'DESC']],
 			attributes: [['recommended_version', 'recommendedVersion'], ['force_version', 'forceVersion']]
 		}).then((results) => {

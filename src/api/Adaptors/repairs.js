@@ -140,7 +140,7 @@ class RepairAdaptor {
   }
 
   retrieveNotificationRepairs(options) {
-    options.status_type = 5;
+    options.status_type = [5, 11];
     return this.modals.repairs.findAll({
       where: options,
       include: [
@@ -192,7 +192,7 @@ class RepairAdaptor {
   }
 
   retrieveRepairCount(options) {
-    options.status_type = 5;
+    options.status_type = [5, 11];
     const productOptions = options.product_status_type ? {
       status_type: options.product_status_type,
     } : undefined;
@@ -219,6 +219,23 @@ class RepairAdaptor {
           'lastUpdatedAt']],
       group: this.modals.sequelize.literal('"product"."main_category_id"'),
     }).then((repairResult) => repairResult.map((item) => item.toJSON()));
+  }
+
+  createRepairs(values) {
+    return this.modals.repairs.create(values).
+        then(result => result.toJSON());
+  }
+
+  updateRepairs(id, values) {
+    return this.modals.repairs.findOne({
+      where: {
+        id,
+      },
+    }).
+        then(result => {
+          result.updateAttributes(values);
+          return result.toJSON();
+        });
   }
 }
 

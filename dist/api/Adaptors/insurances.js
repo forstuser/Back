@@ -67,7 +67,9 @@ var InsuranceAdaptor = function() {
     {
       key: 'retrieveInsurances',
       value: function retrieveInsurances(options) {
-        options.status_type = [5, 11];
+        if (!options.status_type) {
+        options.status_type = [5, 11, 12];
+        }
         var productOptions = {};
 
         if (options.main_category_id) {
@@ -110,6 +112,31 @@ var InsuranceAdaptor = function() {
                 'gstin',
                 'contact',
                 'email'],
+              required: false,
+            }, {
+              model: this.modals.insuranceBrands,
+              as: 'provider',
+              attributes: [
+                'id',
+                'name',
+                [
+                  'pan_no',
+                  'panNo'],
+                [
+                  'reg_no',
+                  'regNo'],
+                'url',
+                'gstin',
+                [
+                  'contact_no',
+                  'contact'],
+                'email',
+                'address',
+                'city',
+                'state',
+                'pincode',
+                'latitude',
+                'longitude'],
               required: false,
             }, {
               model: this.modals.offlineSellers,
@@ -158,6 +185,7 @@ var InsuranceAdaptor = function() {
             [
               'document_number',
               'policyNo'],
+            'provider_id',
             [
               this.modals.sequelize.literal('"renewalType"."title"'),
               'premiumType'],
@@ -200,11 +228,11 @@ var InsuranceAdaptor = function() {
             return item.toJSON();
           }).sort(sortAmcWarrantyInsuranceRepair);
         });
-      },
+      }
     }, {
       key: 'retrieveNotificationInsurances',
       value: function retrieveNotificationInsurances(options) {
-        options.status_type = 5;
+        options.status_type = [5, 11, 12];
         return this.modals.insurances.findAll({
           where: options,
           include: [
@@ -275,7 +303,7 @@ var InsuranceAdaptor = function() {
     }, {
       key: 'retrieveInsuranceCount',
       value: function retrieveInsuranceCount(options) {
-        options.status_type = 5;
+        options.status_type = [5, 11, 12];
         var productOptions = options.product_status_type ? {
           status_type: options.product_status_type,
         } : undefined;
@@ -307,6 +335,25 @@ var InsuranceAdaptor = function() {
           return insuranceResult.map(function(item) {
             return item.toJSON();
           });
+        });
+      },
+    }, {
+      key: 'createInsurances',
+      value: function createInsurances(values) {
+        return this.modals.insurances.create(values).then(function(result) {
+          return result.toJSON();
+        });
+      },
+    }, {
+      key: 'updateInsurances',
+      value: function updateInsurances(id, values) {
+        return this.modals.insurances.findOne({
+          where: {
+            id: id,
+          },
+        }).then(function(result) {
+          result.updateAttributes(values);
+          return result.toJSON();
         });
       },
     }]);

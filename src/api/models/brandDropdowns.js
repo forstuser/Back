@@ -14,6 +14,12 @@ export default (sequelize, DataTypes) => {
         brand_id: {
           type: DataTypes.INTEGER,
         },
+        warranty_renewal_type: {
+          type: DataTypes.INTEGER,
+        },
+        dual_renewal_type: {
+          type: DataTypes.INTEGER,
+        },
         updated_by: {
           type: DataTypes.INTEGER,
         },
@@ -55,6 +61,12 @@ export default (sequelize, DataTypes) => {
       foreignKey: 'category_form_id', as: 'categoryForm',
     });
 
+    brandDropDown.belongsTo(models.renewalTypes, {
+      foreignKey: 'warranty_renewal_type', as: 'warrantyRenewalType',
+    });
+    brandDropDown.belongsTo(models.renewalTypes, {
+      foreignKey: 'dual_renewal_type', as: 'dualRenewalType',
+    });
     brandDropDown.belongsTo(models.categories,
         {foreignKey: 'category_id'});
     brandDropDown.belongsTo(models.statuses,

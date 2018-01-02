@@ -189,20 +189,25 @@ class NotificationAdaptor {
     return Promise.all([
       this.productAdaptor.retrieveProducts({
         user_id: user.id || user.ID,
-        status_type: 5,
+        status_type: [5, 11],
         main_category_id: [6, 8],
       }),
       this.amcAdaptor.retrieveAMCs({
         user_id: user.id || user.ID,
-        status_type: 5,
+        status_type: [5, 11],
       }),
       this.insuranceAdaptor.retrieveInsurances({
         user_id: user.id || user.ID,
-        status_type: 5,
+        status_type: [5, 11],
       }),
       this.warrantyAdaptor.retrieveWarranties({
         user_id: user.id || user.ID,
-        status_type: 5,
+        status_type: [5, 11],
+      }),
+      this.productAdaptor.retrieveProducts({
+        user_id: user.id || user.ID,
+        status_type: [5, 11],
+        main_category_id: [3],
       })]).then((result) => {
       let products = result[0].map((item) => {
         const product = item;
@@ -237,6 +242,26 @@ class NotificationAdaptor {
       });
 
       products = products.filter(
+          item => ((item.dueIn !== undefined && item.dueIn !== null) &&
+              item.dueIn <= 30 && item.dueIn >= 0));
+
+      let pucProducts = result[4].map((item) => {
+        const product = item;
+        if (product.pucDetail &&
+            moment.utc(product.pucDetail.expiry_date, moment.ISO_8601).
+                isValid()) {
+          const dueDateTime = moment.utc(product.pucDetail.expiry_date,
+              moment.ISO_8601).
+              endOf('day');
+          product.dueDate = product.pucDetail.expiry_date;
+          product.dueIn = dueDateTime.diff(moment.utc(), 'days');
+        }
+
+        product.productType = 5;
+        return product;
+      });
+
+      pucProducts = pucProducts.filter(
           item => ((item.dueIn !== undefined && item.dueIn !== null) &&
               item.dueIn <= 30 && item.dueIn >= 0));
       let amcs = result[1].map((item) => {
@@ -281,8 +306,13 @@ class NotificationAdaptor {
           warranty.dueDate = warranty.expiryDate;
           warranty.dueIn = dueDateTime.diff(moment.utc(), 'days');
           warranty.productType = 3;
-          warranty.title = 'Warranty Renewal Pending';
-          warranty.description = warranty.productName;
+          warranty.title = `Warranty Renewal Pending`;
+          warranty.description = `Warranty Renewal Pending for ${warranty.warranty_type ===
+          3 ?
+              `${warranty.dualWarrantyItem} of ${warranty.productName}` :
+              warranty.warranty_type === 4 ?
+                  `Accessories of ${warranty.productName}` :
+                  `of ${warranty.productName}`}`;
         }
 
         return warranty;
@@ -292,7 +322,12 @@ class NotificationAdaptor {
           item => (item.dueIn !== undefined && item.dueIn !== null) &&
               item.dueIn <= 30 && item.dueIn >= 0);
 
-      return [...products, ...warranties, ...insurances, ...amcs];
+      return [
+        ...products,
+        ...warranties,
+        ...insurances,
+        ...amcs,
+        ...pucProducts];
     });
   }
 
@@ -326,6 +361,9 @@ class NotificationAdaptor {
         [
           'due_amount',
           'dueAmount'],
+        [
+          this.modals.sequelize.literal('"product"."id"'),
+          'productId'],
         [
           this.modals.sequelize.literal('"product"."product_name"'),
           'productName'],

@@ -88,7 +88,7 @@ var SellerAdaptor = function() {
         options.status_type = 1;
         return this.modals.onlineSellers.findAll({
           where: options,
-          attributes: [
+          default: [
             [
               'sid',
               'id'],
@@ -103,6 +103,16 @@ var SellerAdaptor = function() {
           return result.map(function(item) {
             return item.toJSON();
           });
+        });
+      },
+    }, {
+      key: 'retrieveOrCreateOfflineSellers',
+      value: function retrieveOrCreateOfflineSellers(options, defaults) {
+        return this.modals.offlineSellers.findCreateFind({
+          where: options,
+          defaults: defaults,
+        }).then(function(result) {
+          return result[0].toJSON();
         });
       },
     }]);

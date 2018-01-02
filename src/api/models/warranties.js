@@ -17,7 +17,6 @@ export default (sequelize, DataTypes) => {
         },
         renewal_type: {
           type: DataTypes.INTEGER,
-          allowNull: false,
         },
         renewal_cost: {
           type: DataTypes.FLOAT,
@@ -61,6 +60,13 @@ export default (sequelize, DataTypes) => {
         copies: {
           type: DataTypes.ARRAY(DataTypes.JSONB),
         },
+        warranty_type: {
+          type: DataTypes.INTEGER,
+          defaultValue: 1,
+        },
+        provider_id: {
+          type: DataTypes.INTEGER,
+        },
       },
       {
         freezeTableName: true,
@@ -86,6 +92,8 @@ export default (sequelize, DataTypes) => {
         {foreignKey: 'seller_id', as: 'sellers'});
     warranties.belongsTo(models.renewalTypes,
         {foreignKey: 'renewal_type', targetKey: 'type'});
+    warranties.belongsTo(models.insuranceBrands,
+        {foreignKey: 'provider_id', as: 'provider'});
   };
 
   return warranties;

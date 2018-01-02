@@ -1,17 +1,16 @@
 'use strict';
 
+import categories from './categories';
+
 export default (sequelize, DataTypes) => {
-  const offlineSellers = sequelize.define('offlineSellers', {
-        sid: {
+  const insuranceBrands = sequelize.define('insuranceBrands', {
+        id: {
           type: DataTypes.INTEGER,
           primaryKey: true,
           autoIncrement: true,
           unique: true,
         },
-        seller_name: {
-          type: DataTypes.STRING,
-        },
-        owner_name: {
+        name: {
           type: DataTypes.STRING,
         },
         gstin: {
@@ -22,12 +21,6 @@ export default (sequelize, DataTypes) => {
         },
         reg_no: {
           type: DataTypes.STRING,
-        },
-        is_service: {
-          type: DataTypes.BOOLEAN,
-        },
-        is_onboarded: {
-          type: DataTypes.BOOLEAN,
         },
         address: {
           type: DataTypes.STRING,
@@ -62,18 +55,30 @@ export default (sequelize, DataTypes) => {
         email: {
           type: DataTypes.STRING,
         },
+        callback_options: {
+          type: DataTypes.STRING,
+        },
         updated_by: {
           type: DataTypes.INTEGER,
-        },
-        created_by: {
-          type: DataTypes.INTEGER,
+          defaultValue: 1,
         },
         status_type: {
           type: DataTypes.INTEGER,
+          defaultValue: 1,
+        },
+        created_at: {
+          type: DataTypes.DATE,
+          defaultValue: sequelize.literal('NOW()'),
         },
         updated_at: {
           type: DataTypes.DATE,
           defaultValue: sequelize.literal('NOW()'),
+        },
+        main_category_id: {
+          type: DataTypes.INTEGER,
+        },
+        type: {
+          type: DataTypes.INTEGER,
         },
       },
       {
@@ -81,17 +86,29 @@ export default (sequelize, DataTypes) => {
         defaultPrimaryKey: false,
         timestamps: true,
         underscored: true,
-        tableName: 'offline_sellers',
+        tableName: 'insurance_brands',
       });
 
-  offlineSellers.associate = (models) => {
-    offlineSellers.belongsTo(models.users,
+  insuranceBrands.associate = (models) => {
+    insuranceBrands.belongsTo(models.users,
         {foreignKey: 'updated_by'});
-
-    offlineSellers.belongsTo(models.statuses,
+    insuranceBrands.belongsTo(models.statuses,
         {foreignKey: 'status_type', targetKey: 'status_type'});
-    offlineSellers.hasMany(models.sellerReviews,
-        {foreignKey: 'seller_id', as: 'sellerReviews'});
+    insuranceBrands.belongsTo(models.categories,
+        {
+          foreignKey: 'main_category_id',
+          targetKey: 'category_id',
+          as: 'main_category',
+        });
+    insuranceBrands.hasMany(models.insurances,
+        {foreignKey: 'provider_id'});
+    insuranceBrands.belongsToMany(models.categories,
+        {
+          foreignKey: 'insurance_brand_id',
+          otherKey: 'category_id',
+          through: 'insurance_brand_categories',
+          as: 'categories',
+        });
   };
-  return offlineSellers;
+  return insuranceBrands;
 };

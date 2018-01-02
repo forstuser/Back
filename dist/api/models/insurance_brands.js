@@ -4,18 +4,23 @@ Object.defineProperty(exports, '__esModule', {
   value: true,
 });
 
+var _categories = require('./categories');
+
+var _categories2 = _interopRequireDefault(_categories);
+
+function _interopRequireDefault(obj) {
+  return obj && obj.__esModule ? obj : {default: obj};
+}
+
 exports.default = function(sequelize, DataTypes) {
-  var offlineSellers = sequelize.define('offlineSellers', {
-    sid: {
+  var insuranceBrands = sequelize.define('insuranceBrands', {
+    id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
       unique: true,
     },
-    seller_name: {
-      type: DataTypes.STRING,
-    },
-    owner_name: {
+    name: {
       type: DataTypes.STRING,
     },
     gstin: {
@@ -26,12 +31,6 @@ exports.default = function(sequelize, DataTypes) {
     },
     reg_no: {
       type: DataTypes.STRING,
-    },
-    is_service: {
-      type: DataTypes.BOOLEAN,
-    },
-    is_onboarded: {
-      type: DataTypes.BOOLEAN,
     },
     address: {
       type: DataTypes.STRING,
@@ -66,34 +65,55 @@ exports.default = function(sequelize, DataTypes) {
     email: {
       type: DataTypes.STRING,
     },
+    callback_options: {
+      type: DataTypes.STRING,
+    },
     updated_by: {
       type: DataTypes.INTEGER,
-    },
-    created_by: {
-      type: DataTypes.INTEGER,
+      defaultValue: 1,
     },
     status_type: {
       type: DataTypes.INTEGER,
+      defaultValue: 1,
+    },
+    created_at: {
+      type: DataTypes.DATE,
+      defaultValue: sequelize.literal('NOW()'),
     },
     updated_at: {
       type: DataTypes.DATE,
       defaultValue: sequelize.literal('NOW()'),
+    },
+    main_category_id: {
+      type: DataTypes.INTEGER,
+    },
+    type: {
+      type: DataTypes.INTEGER,
     }
   }, {
     freezeTableName: true,
     defaultPrimaryKey: false,
     timestamps: true,
     underscored: true,
-    tableName: 'offline_sellers',
+    tableName: 'insurance_brands',
   });
 
-  offlineSellers.associate = function(models) {
-    offlineSellers.belongsTo(models.users, {foreignKey: 'updated_by'});
-
-    offlineSellers.belongsTo(models.statuses,
+  insuranceBrands.associate = function(models) {
+    insuranceBrands.belongsTo(models.users, {foreignKey: 'updated_by'});
+    insuranceBrands.belongsTo(models.statuses,
         {foreignKey: 'status_type', targetKey: 'status_type'});
-    offlineSellers.hasMany(models.sellerReviews,
-        {foreignKey: 'seller_id', as: 'sellerReviews'});
+    insuranceBrands.belongsTo(models.categories, {
+      foreignKey: 'main_category_id',
+      targetKey: 'category_id',
+      as: 'main_category',
+    });
+    insuranceBrands.hasMany(models.insurances, {foreignKey: 'provider_id'});
+    insuranceBrands.belongsToMany(models.categories, {
+      foreignKey: 'insurance_brand_id',
+      otherKey: 'category_id',
+      through: 'insurance_brand_categories',
+      as: 'categories',
+    });
   };
-  return offlineSellers;
+  return insuranceBrands;
 };

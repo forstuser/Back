@@ -1,7 +1,7 @@
 'use strict';
 
 export default (sequelize, DataTypes) => {
-  const repairs = sequelize.define('repairs', {
+  const pucs = sequelize.define('pucs', {
         product_id: {
           type: DataTypes.INTEGER,
           allowNull: false,
@@ -9,23 +9,17 @@ export default (sequelize, DataTypes) => {
         job_id: {
           type: DataTypes.INTEGER,
         },
-        online_seller_id: {
-          type: DataTypes.INTEGER,
-        },
         document_number: {
           type: DataTypes.STRING,
         },
-        repair_for: {
-          type: DataTypes.STRING,
+        renewal_type: {
+          type: DataTypes.INTEGER,
         },
-        warranty_upto: {
-          type: DataTypes.STRING,
-        },
-        repair_cost: {
+        renewal_cost: {
           type: DataTypes.FLOAT,
           defaultValue: 0,
         },
-        repair_taxes: {
+        renewal_taxes: {
           type: DataTypes.FLOAT,
           defaultValue: 0,
         },
@@ -49,6 +43,13 @@ export default (sequelize, DataTypes) => {
           type: DataTypes.DATE,
           defaultValue: sequelize.literal('NOW()'),
         },
+        effective_date: {
+          type: DataTypes.DATE,
+          defaultValue: sequelize.literal('NOW()'),
+        },
+        expiry_date: {
+          type: DataTypes.DATE,
+        },
         document_date: {
           type: DataTypes.DATE,
           defaultValue: sequelize.literal('NOW()'),
@@ -62,24 +63,24 @@ export default (sequelize, DataTypes) => {
         defaultPrimaryKey: true,
         timestamps: true,
         underscored: true,
-        tableName: 'consumer_repairs',
+        tableName: 'consumer_pucs',
       });
 
-  repairs.associate = (models) => {
-    repairs.belongsTo(models.products, {foreignKey: 'product_id'});
-    repairs.belongsTo(models.users,
+  pucs.associate = (models) => {
+    pucs.belongsTo(models.products, {foreignKey: 'product_id'});
+    pucs.belongsTo(models.users,
         {foreignKey: 'user_id', as: 'consumer'});
-    repairs.belongsTo(models.users,
+    pucs.belongsTo(models.users,
         {foreignKey: 'updated_by', as: 'updatedByUser'});
 
-    repairs.belongsTo(models.statuses,
+    pucs.belongsTo(models.statuses,
         {foreignKey: 'status_type', targetKey: 'status_type'});
-    repairs.belongsTo(models.jobs, {as: 'jobs', foreignKey: 'job_id'});
-    repairs.belongsTo(models.onlineSellers,
-        {foreignKey: 'online_seller_id', as: 'onlineSellers'});
-    repairs.belongsTo(models.offlineSellers,
+    pucs.belongsTo(models.jobs, {as: 'jobs', foreignKey: 'job_id'});
+    pucs.belongsTo(models.offlineSellers,
         {foreignKey: 'seller_id', as: 'sellers'});
+    pucs.belongsTo(models.renewalTypes,
+        {foreignKey: 'renewal_type', targetKey: 'type'});
   };
 
-  return repairs;
+  return pucs;
 };

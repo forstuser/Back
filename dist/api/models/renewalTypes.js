@@ -18,6 +18,9 @@ exports.default = function(sequelize, DataTypes) {
     effective_hours: {
       type: DataTypes.INTEGER,
     },
+    effective_months: {
+      type: DataTypes.INTEGER,
+    },
     updated_by: {
       type: DataTypes.INTEGER,
     },

@@ -34,6 +34,9 @@ export default (sequelize, DataTypes) => {
           type: DataTypes.DATE,
           defaultValue: sequelize.literal('NOW()'),
         },
+        dual_warranty_item: {
+          type: DataTypes.STRING,
+        },
       },
       {
         freezeTableName: true,
@@ -53,6 +56,13 @@ export default (sequelize, DataTypes) => {
 
     categories.belongsTo(models.statuses,
         {foreignKey: 'status_type', targetKey: 'status_type'});
+    categories.belongsToMany(models.insuranceBrands,
+        {
+          foreignKey: 'category_id',
+          otherKey: 'insurance_brand_id',
+          through: 'insurance_brand_categories',
+          as: 'insuranceProviders',
+        });
   };
   return categories;
 };

@@ -17,10 +17,7 @@ class fcmManager {
     }
 
     return this.fcmModal.findCreateFind({
-      where: {
-        user_id: userId,
-        fcm_id: fcmId,
-      },
+      where: defaults,
       defaults,
     }).then((data) => {
       return data;

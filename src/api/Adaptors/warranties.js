@@ -24,7 +24,9 @@ class WarrantyAdaptor {
   }
 
   retrieveWarranties(options) {
-    options.status_type = [5, 11];
+    if (!options.status_type) {
+      options.status_type = [5, 11, 12];
+    }
     let productOptions = {};
     if (options.main_category_id) {
       productOptions.main_category_id = options.main_category_id;
@@ -56,6 +58,14 @@ class WarrantyAdaptor {
           where: productOptions,
           attributes: [],
           required: productOptions !== undefined,
+          include: [
+            {
+              model: this.modals.categories,
+              as: 'category',
+              attributes: [],
+              required: false,
+            },
+          ],
         },
         {
           model: this.modals.onlineSellers,
@@ -68,6 +78,30 @@ class WarrantyAdaptor {
             'gstin',
             'contact',
             'email'],
+          required: false,
+        },
+        {
+          model: this.modals.insuranceBrands,
+          as: 'provider',
+          attributes: [
+            'id',
+            'name',
+            [
+              'pan_no',
+              'panNo'],
+            [
+              'reg_no',
+              'regNo'],
+            'url',
+            'gstin',
+            ['contact_no', 'contact'],
+            'email',
+            'address',
+            'city',
+            'state',
+            'pincode',
+            'latitude',
+            'longitude'],
           required: false,
         },
         {
@@ -116,6 +150,10 @@ class WarrantyAdaptor {
           this.modals.sequelize.literal('"product"."product_name"'),
           'productName'],
         [
+          this.modals.sequelize.literal(
+              '"product->category"."dual_warranty_item"'),
+          'dualWarrantyItem'],
+        [
           this.modals.sequelize.literal('"renewalType"."title"'),
           'premiumType'],
         [
@@ -123,7 +161,9 @@ class WarrantyAdaptor {
           'masterCategoryId'],
         [
           'renewal_cost',
-          'premiumAmount'], 'user_id',
+          'premiumAmount'],
+        'user_id',
+        'warranty_type',
         [
           'renewal_cost',
           'value'],
@@ -152,7 +192,7 @@ class WarrantyAdaptor {
   }
 
   retrieveNotificationWarranties(options) {
-    options.status_type = 5;
+    options.status_type = [5, 11, 12];
     return this.modals.warranties.findAll({
       where: options,
       include: [
@@ -216,7 +256,7 @@ class WarrantyAdaptor {
   }
 
   retrieveWarrantyCount(options) {
-    options.status_type = 5;
+    options.status_type = [5, 11, 12];
     const productOptions = options.product_status_type ? {
       status_type: options.product_status_type,
     } : undefined;
@@ -243,6 +283,23 @@ class WarrantyAdaptor {
           'lastUpdatedAt']],
       group: this.modals.sequelize.literal('"product"."main_category_id"'),
     }).then((warrantyResult) => warrantyResult.map((item) => item.toJSON()));
+  }
+
+  createWarranties(values) {
+    return this.modals.warranties.create(values).
+        then(result => result.toJSON());
+  }
+
+  updateWarranties(id, values) {
+    return this.modals.warranties.findOne({
+      where: {
+        id,
+      },
+    }).
+        then(result => {
+          result.updateAttributes(values);
+          return result.toJSON();
+        });
   }
 }
 
