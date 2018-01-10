@@ -144,23 +144,23 @@ var PUCAdaptor = function() {
               'document_number',
               'policyNo'],
             [
-              'puc_cost',
+              'renewal_cost',
               'premiumAmount'],
             [
               this.modals.sequelize.literal('"product"."product_name"'),
               'productName'],
             [
-              'puc_cost',
+              'renewal_cost',
               'value'],
+            [
+              'renewal_taxes',
+              'taxes'],
             [
               'effective_date',
               'effectiveDate'],
             [
               'expiry_date',
               'expiryDate'],
-            [
-              'puc_taxes',
-              'taxes'],
             [
               'document_date',
               'purchaseDate'],
@@ -208,16 +208,16 @@ var PUCAdaptor = function() {
               'document_number',
               'policyNo'],
             [
-              'puc_cost',
+              'renewal_cost',
               'premiumAmount'],
             [
               this.modals.sequelize.literal('"product"."product_name"'),
               'productName'],
             [
-              'puc_cost',
+              'renewal_cost',
               'value'],
             [
-              'puc_taxes',
+              'renewal_taxes',
               'taxes'],
             [
               'effective_date',

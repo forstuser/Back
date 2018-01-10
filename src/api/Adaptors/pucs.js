@@ -95,28 +95,29 @@ class PUCAdaptor {
           'jobId'],
         [
           this.modals.sequelize.literal('"product"."main_category_id"'),
-          'masterCategoryId'], 'user_id',
+          'masterCategoryId'],
+        'user_id',
         [
           'document_number',
           'policyNo'],
         [
-          'puc_cost',
+          'renewal_cost',
           'premiumAmount'],
         [
           this.modals.sequelize.literal('"product"."product_name"'),
           'productName'],
         [
-          'puc_cost',
+          'renewal_cost',
           'value'],
+        [
+          'renewal_taxes',
+          'taxes'],
         [
           'effective_date',
           'effectiveDate'],
         [
           'expiry_date',
           'expiryDate'],
-        [
-          'puc_taxes',
-          'taxes'],
         [
           'document_date',
           'purchaseDate'],
@@ -153,21 +154,22 @@ class PUCAdaptor {
           'jobId'],
         [
           this.modals.sequelize.literal('"product"."main_category_id"'),
-          'masterCategoryId'], 'user_id',
+          'masterCategoryId'],
+        'user_id',
         [
           'document_number',
           'policyNo'],
         [
-          'puc_cost',
+          'renewal_cost',
           'premiumAmount'],
         [
           this.modals.sequelize.literal('"product"."product_name"'),
           'productName'],
         [
-          'puc_cost',
+          'renewal_cost',
           'value'],
         [
-          'puc_taxes',
+          'renewal_taxes',
           'taxes'],
         [
           'effective_date',
