@@ -65,6 +65,10 @@ var _appVersion = require('../helpers/appVersion');
 
 var _appVersion2 = _interopRequireDefault(_appVersion);
 
+var _productItem = require('../api/controllers/productItem');
+
+var _productItem2 = _interopRequireDefault(_productItem);
+
 function _interopRequireDefault(obj) {
   return obj && obj.__esModule ? obj : {default: obj};
 }
@@ -675,6 +679,32 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
       }
     });
 
+    uploadFileRoute.push({
+      method: 'POST',
+      path: '/consumer/upload/{id}',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {
+            method: appVersionHelper.checkAppVersion,
+            assign: 'forceUpdate',
+          }],
+        files: {
+          relativeTo: _path2.default.join(__dirname, '../static/src'),
+        },
+        handler: _upload2.default.uploadFiles,
+        payload: {
+          output: 'stream',
+          parse: true,
+          uploads: 'up_files',
+          timeout: 30034,
+          allow: 'multipart/form-data',
+          failAction: 'log',
+          maxBytes: 209715200,
+        }
+      }
+    });
+
     /*Retrieve user job copies*/
     uploadFileRoute.push({
       method: 'GET',
@@ -1013,6 +1043,8 @@ function prepareProductRoutes(productController, productRoutes) {
             purchase_cost: [_joi2.default.number(), _joi2.default.allow(null)],
             taxes: [_joi2.default.number(), _joi2.default.allow(null)],
             seller_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            seller_name: [_joi2.default.string(), _joi2.default.allow(null)],
+            seller_contact: [_joi2.default.string(), _joi2.default.allow(null)],
             document_number: [
               _joi2.default.string(),
               _joi2.default.allow(null)],
@@ -1029,6 +1061,7 @@ function prepareProductRoutes(productController, productRoutes) {
               })), _joi2.default.allow(null)],
             warranty: [
               _joi2.default.object().keys({
+                id: [_joi2.default.number(), _joi2.default.allow(null)],
                 renewal_type: [
                   _joi2.default.number(),
                   _joi2.default.allow(null)],
@@ -1047,6 +1080,7 @@ function prepareProductRoutes(productController, productRoutes) {
               }), _joi2.default.allow(null)],
             insurance: [
               _joi2.default.object().keys({
+                id: [_joi2.default.number(), _joi2.default.allow(null)],
                 effective_date: [
                   _joi2.default.string(),
                   _joi2.default.allow(null)],
@@ -1066,20 +1100,211 @@ function prepareProductRoutes(productController, productRoutes) {
               }), _joi2.default.allow(null)],
             puc: [
               _joi2.default.object().keys({
+                id: [_joi2.default.number(), _joi2.default.allow(null)],
                 effective_date: [
+                  _joi2.default.string(),
+                  _joi2.default.allow(null)],
+                expiry_period: [
+                  _joi2.default.number(),
+                  _joi2.default.allow(null)],
+                seller_name: [
+                  _joi2.default.string(),
+                  _joi2.default.allow(null)],
+                seller_contact: [
+                  _joi2.default.string(),
+                  _joi2.default.allow(null)],
+              }), _joi2.default.allow(null)],
+            amc: [
+              _joi2.default.object().keys({
+                id: [_joi2.default.number(), _joi2.default.allow(null)],
+                effective_date: [
+                  _joi2.default.string(),
+                  _joi2.default.allow(null)],
+                expiry_period: [
+                  _joi2.default.number(),
+                  _joi2.default.allow(null)],
+                seller_name: [
+                  _joi2.default.string(),
+                  _joi2.default.allow(null)],
+                seller_contact: [
+                  _joi2.default.string(),
+                  _joi2.default.allow(null)],
+              }), _joi2.default.allow(null)],
+            repair: [
+              _joi2.default.object().keys({
+                id: [_joi2.default.number(), _joi2.default.allow(null)],
+                effective_date: [
+                  _joi2.default.string(),
+                  _joi2.default.allow(null)],
+                repair_for: [_joi2.default.string(), _joi2.default.allow(null)],
+                seller_name: [
+                  _joi2.default.string(),
+                  _joi2.default.allow(null)],
+                seller_contact: [
+                  _joi2.default.string(),
+                  _joi2.default.allow(null)],
+                repair_cost: [
+                  _joi2.default.number(),
+                  _joi2.default.allow(null)],
+                warranty_upto: [
+                  _joi2.default.string(),
+                  _joi2.default.allow(null)],
+              }), _joi2.default.allow(null)],
+          }
+        }
+      }
+    });
+
+    productRoutes.push({
+      method: 'PUT',
+      path: '/products/{id}',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {
+            method: appVersionHelper.checkAppVersion,
+            assign: 'forceUpdate',
+          }],
+        handler: _product2.default.updateProduct,
+        description: 'Update Product.',
+        validate: {
+          payload: {
+            product_name: [_joi2.default.string(), _joi2.default.allow(null)],
+            brand_name: [_joi2.default.string(), _joi2.default.allow(null)],
+            main_category_id: [
+              _joi2.default.number(),
+              _joi2.default.allow(null)],
+            category_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            brand_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            colour_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            purchase_cost: [_joi2.default.number(), _joi2.default.allow(null)],
+            taxes: [_joi2.default.number(), _joi2.default.allow(null)],
+            seller_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            seller_name: [_joi2.default.string(), _joi2.default.allow(null)],
+            seller_contact: [_joi2.default.string(), _joi2.default.allow(null)],
+            document_number: [
+              _joi2.default.string(),
+              _joi2.default.allow(null)],
+            document_date: [_joi2.default.string(), _joi2.default.allow(null)],
+            metadata: [
+              _joi2.default.array().items(_joi2.default.object().keys({
+                id: [_joi2.default.number(), _joi2.default.allow(null)],
+                category_form_id: [
+                  _joi2.default.number(),
+                  _joi2.default.allow(null)],
+                form_value: [_joi2.default.string(), _joi2.default.allow(null)],
+                new_drop_down: [
+                  _joi2.default.boolean(),
+                  _joi2.default.allow(null)],
+              })), _joi2.default.allow(null)],
+            warranty: [
+              _joi2.default.object().keys({
+                id: [_joi2.default.number(), _joi2.default.allow(null)],
+                dual_id: [_joi2.default.number(), _joi2.default.allow(null)],
+                extended_id: [
+                  _joi2.default.number(),
+                  _joi2.default.allow(null)],
+                extended_provider_id: [
+                  _joi2.default.number(),
+                  _joi2.default.allow(null)],
+                renewal_type: [
+                  _joi2.default.number(),
+                  _joi2.default.allow(null)],
+                dual_renewal_type: [
+                  _joi2.default.number(),
+                  _joi2.default.allow(null)],
+                extended_renewal_type: [
+                  _joi2.default.number(),
+                  _joi2.default.allow(null)],
+                extended_effective_date: [
+                  _joi2.default.string(),
+                  _joi2.default.allow(null)],
+                effective_date: [
+                  _joi2.default.string(),
+                  _joi2.default.allow(null)],
+                accessory_renewal_type: [
+                  _joi2.default.string(),
+                  _joi2.default.allow(null)],
+              }), _joi2.default.allow(null)],
+            insurance: [
+              _joi2.default.object().keys({
+                id: [_joi2.default.number(), _joi2.default.allow(null)],
+                effective_date: [
+                  _joi2.default.string(),
+                  _joi2.default.allow(null)],
+                provider_id: [
+                  _joi2.default.number(),
+                  _joi2.default.allow(null)],
+                policy_no: [_joi2.default.string(), _joi2.default.allow(null)],
+                renewal_cost: [
+                  _joi2.default.number(),
+                  _joi2.default.allow(null)],
+                amount_insured: [
                   _joi2.default.string(),
                   _joi2.default.allow(null)],
                 expiry_period: [
                   _joi2.default.number(),
                   _joi2.default.allow(null)],
               }), _joi2.default.allow(null)],
-            amc: [
+            puc: [
               _joi2.default.object().keys({
+                id: [_joi2.default.number(), _joi2.default.allow(null)],
                 effective_date: [
                   _joi2.default.string(),
                   _joi2.default.allow(null)],
                 expiry_period: [
                   _joi2.default.number(),
+                  _joi2.default.allow(null)],
+                seller_name: [
+                  _joi2.default.string(),
+                  _joi2.default.allow(null)],
+                renewal_cost: [
+                  _joi2.default.number(),
+                  _joi2.default.allow(null)],
+                seller_contact: [
+                  _joi2.default.string(),
+                  _joi2.default.allow(null)],
+              }), _joi2.default.allow(null)],
+            amc: [
+              _joi2.default.object().keys({
+                id: [_joi2.default.number(), _joi2.default.allow(null)],
+                effective_date: [
+                  _joi2.default.string(),
+                  _joi2.default.allow(null)],
+                expiry_period: [
+                  _joi2.default.number(),
+                  _joi2.default.allow(null)],
+                renewal_cost: [
+                  _joi2.default.number(),
+                  _joi2.default.allow(null)],
+                seller_name: [
+                  _joi2.default.string(),
+                  _joi2.default.allow(null)],
+                seller_contact: [
+                  _joi2.default.string(),
+                  _joi2.default.allow(null)],
+              }), _joi2.default.allow(null)],
+            repair: [
+              _joi2.default.object().keys({
+                id: [_joi2.default.number(), _joi2.default.allow(null)],
+                document_date: [
+                  _joi2.default.string(),
+                  _joi2.default.allow(null)],
+                repair_for: [_joi2.default.string(), _joi2.default.allow(null)],
+                seller_name: [
+                  _joi2.default.string(),
+                  _joi2.default.allow(null)],
+                seller_contact: [
+                  _joi2.default.string(),
+                  _joi2.default.allow(null)],
+                is_amc_seller: [
+                  _joi2.default.string(),
+                  _joi2.default.allow(null)],
+                repair_cost: [
+                  _joi2.default.number(),
+                  _joi2.default.allow(null)],
+                warranty_upto: [
+                  _joi2.default.string(),
                   _joi2.default.allow(null)],
               }), _joi2.default.allow(null)],
           }
@@ -1212,6 +1437,109 @@ function prepareGeneralRoutes(generalController, generalRoutes) {
         description: 'Retrieve Reference data',
       }
     });
+
+    generalRoutes.push({
+      method: 'GET',
+      path: '/repairs/products',
+      config: {
+        handler: _general2.default.retrieveRepairableProducts,
+        description: 'Retrieve Repairable Products',
+      }
+    });
+
+    generalRoutes.push({
+      method: 'POST',
+      path: '/products/init',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {
+            method: appVersionHelper.checkAppVersion,
+            assign: 'forceUpdate',
+          }],
+        handler: _general2.default.intializeUserProduct,
+        description: 'Create Product.',
+        validate: {
+          payload: {
+            product_name: [_joi2.default.string(), _joi2.default.allow(null)],
+            brand_name: [_joi2.default.string(), _joi2.default.allow(null)],
+            main_category_id: _joi2.default.number(),
+            category_id: _joi2.default.number(),
+            brand_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            colour_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            purchase_cost: [_joi2.default.number(), _joi2.default.allow(null)],
+            taxes: [_joi2.default.number(), _joi2.default.allow(null)],
+            seller_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            document_number: [
+              _joi2.default.string(),
+              _joi2.default.allow(null)],
+            document_date: [_joi2.default.string(), _joi2.default.allow(null)],
+          }
+        }
+      }
+    });
+  }
+}
+
+function prepareProductItemRoutes(productItemController, productItemRoutes) {
+  //= ========================
+  // Repair Routes
+  //= ========================
+
+  if (productItemController) {
+
+    productItemRoutes.push({
+      method: 'POST',
+      path: '/products/{id}/repairs',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {
+            method: appVersionHelper.checkAppVersion,
+            assign: 'forceUpdate',
+          }],
+        handler: _productItem2.default.updateRepair,
+        description: 'Update Repair.',
+        validate: {
+          payload: {
+            document_date: [_joi2.default.string(), _joi2.default.allow(null)],
+            repair_for: [_joi2.default.string(), _joi2.default.allow(null)],
+            seller_name: [_joi2.default.string(), _joi2.default.allow(null)],
+            seller_contact: [_joi2.default.string(), _joi2.default.allow(null)],
+            seller_address: [_joi2.default.string(), _joi2.default.allow(null)],
+            seller_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            repair_cost: [_joi2.default.number(), _joi2.default.allow(null)],
+            warranty_upto: [_joi2.default.string(), _joi2.default.allow(null)],
+          }
+        }
+      }
+    });
+
+    productItemRoutes.push({
+      method: 'PUT',
+      path: '/products/{id}/repairs/{repairId}',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {
+            method: appVersionHelper.checkAppVersion,
+            assign: 'forceUpdate',
+          }],
+        handler: _productItem2.default.updateRepair,
+        description: 'Update Repair.',
+        validate: {
+          payload: {
+            document_date: [_joi2.default.string(), _joi2.default.allow(null)],
+            repair_for: [_joi2.default.string(), _joi2.default.allow(null)],
+            seller_name: [_joi2.default.string(), _joi2.default.allow(null)],
+            seller_contact: [_joi2.default.string(), _joi2.default.allow(null)],
+            seller_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            repair_cost: [_joi2.default.number(), _joi2.default.allow(null)],
+            warranty_upto: [_joi2.default.string(), _joi2.default.allow(null)],
+          }
+        }
+      }
+    });
   }
 }
 
@@ -1233,6 +1561,7 @@ exports.default = function(app, modals) {
   var insightRoutes = [];
   var searchRoutes = [];
   var generalRoutes = [];
+  var repairRoutes = [];
 
   var uploadFileRoute = [];
   var userController = new _user2.default(modals);
@@ -1245,6 +1574,7 @@ exports.default = function(app, modals) {
   var insightController = new _insight2.default(modals);
   var searchController = new _search2.default(modals);
   var generalController = new _general2.default(modals);
+  var repairController = new _productItem2.default(modals);
 
   prepareAuthRoutes(userController, authRoutes);
 
@@ -1261,7 +1591,10 @@ exports.default = function(app, modals) {
   prepareProductRoutes(productController, productRoutes);
 
   prepareInsightRoutes(insightController, insightRoutes);
+
   prepareGeneralRoutes(generalController, generalRoutes);
+
+  prepareProductItemRoutes(repairController, repairRoutes);
 
   if (searchController) {
     searchRoutes.push({
@@ -1308,5 +1641,5 @@ exports.default = function(app, modals) {
   app.route([].concat(authRoutes, categoryRoutes, brandRoutes, sellerRoutes,
       serviceCenterRoutes, billManagementRoutes, uploadFileRoute,
       dashboardRoutes, productRoutes, insightRoutes, searchRoutes,
-      generalRoutes));
+      generalRoutes, repairRoutes));
 };

@@ -120,6 +120,31 @@ var WarrantyAdaptor = function() {
                 'email'],
               required: false,
             }, {
+              model: this.modals.insuranceBrands,
+              as: 'provider',
+              attributes: [
+                'id',
+                'name',
+                [
+                  'pan_no',
+                  'panNo'],
+                [
+                  'reg_no',
+                  'regNo'],
+                'url',
+                'gstin',
+                [
+                  'contact_no',
+                  'contact'],
+                'email',
+                'address',
+                'city',
+                'state',
+                'pincode',
+                'latitude',
+                'longitude'],
+              required: false,
+            }, {
               model: this.modals.offlineSellers,
               as: 'sellers',
               attributes: [
@@ -319,7 +344,19 @@ var WarrantyAdaptor = function() {
     }, {
       key: 'createWarranties',
       value: function createWarranties(values) {
-        this.modals.warranties.create(values).then(function(result) {
+        return this.modals.warranties.create(values).then(function(result) {
+          return result.toJSON();
+        });
+      },
+    }, {
+      key: 'updateWarranties',
+      value: function updateWarranties(id, values) {
+        return this.modals.warranties.findOne({
+          where: {
+            id: id,
+          },
+        }).then(function(result) {
+          result.updateAttributes(values);
           return result.toJSON();
         });
       },

@@ -27,6 +27,9 @@ exports.default = function(sequelize, DataTypes) {
     status_type: {
       type: DataTypes.INTEGER,
     },
+    main_category_id: {
+      type: DataTypes.INTEGER,
+    },
     created_at: {
       type: DataTypes.DATE,
       defaultValue: sequelize.literal('NOW()'),

@@ -81,6 +81,30 @@ class WarrantyAdaptor {
           required: false,
         },
         {
+          model: this.modals.insuranceBrands,
+          as: 'provider',
+          attributes: [
+            'id',
+            'name',
+            [
+              'pan_no',
+              'panNo'],
+            [
+              'reg_no',
+              'regNo'],
+            'url',
+            'gstin',
+            ['contact_no', 'contact'],
+            'email',
+            'address',
+            'city',
+            'state',
+            'pincode',
+            'latitude',
+            'longitude'],
+          required: false,
+        },
+        {
           model: this.modals.offlineSellers,
           as: 'sellers',
           attributes: [
@@ -262,8 +286,20 @@ class WarrantyAdaptor {
   }
 
   createWarranties(values) {
-    this.modals.warranties.create(values).
+    return this.modals.warranties.create(values).
         then(result => result.toJSON());
+  }
+
+  updateWarranties(id, values) {
+    return this.modals.warranties.findOne({
+      where: {
+        id,
+      },
+    }).
+        then(result => {
+          result.updateAttributes(values);
+          return result.toJSON();
+        });
   }
 }
 

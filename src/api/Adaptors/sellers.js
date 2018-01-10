@@ -48,7 +48,7 @@ export default class SellerAdaptor {
     options.status_type = 1;
     return this.modals.onlineSellers.findAll({
       where: options,
-      attributes: [
+      default: [
         [
           'sid',
           'id'],
@@ -60,5 +60,12 @@ export default class SellerAdaptor {
         'contact',
         'email'],
     }).then(result => result.map(item => item.toJSON()));
+  }
+
+  retrieveOrCreateOfflineSellers(options, defaults) {
+    return this.modals.offlineSellers.findCreateFind({
+      where: options,
+      defaults,
+    }).then(result => result[0].toJSON());
   }
 }

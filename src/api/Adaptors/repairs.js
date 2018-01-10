@@ -220,6 +220,23 @@ class RepairAdaptor {
       group: this.modals.sequelize.literal('"product"."main_category_id"'),
     }).then((repairResult) => repairResult.map((item) => item.toJSON()));
   }
+
+  createRepairs(values) {
+    return this.modals.repairs.create(values).
+        then(result => result.toJSON());
+  }
+
+  updateRepairs(id, values) {
+    return this.modals.repairs.findOne({
+      where: {
+        id,
+      },
+    }).
+        then(result => {
+          result.updateAttributes(values);
+          return result.toJSON();
+        });
+  }
 }
 
 export default RepairAdaptor;

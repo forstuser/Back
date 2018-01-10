@@ -41,8 +41,7 @@ function _classCallCheck(instance, Constructor) {
   }
 }
 
-var sortAmcWarrantyInsuranceRepair = function sortAmcWarrantyInsuranceRepair(
-    a, b) {
+var sortAmcWarrantyInsurancePUC = function sortAmcWarrantyInsurancePUC(a, b) {
   var aDate = void 0;
   var bDate = void 0;
 
@@ -56,17 +55,17 @@ var sortAmcWarrantyInsuranceRepair = function sortAmcWarrantyInsuranceRepair(
   return -1;
 };
 
-var RepairAdaptor = function() {
-  function RepairAdaptor(modals) {
-    _classCallCheck(this, RepairAdaptor);
+var PUCAdaptor = function() {
+  function PUCAdaptor(modals) {
+    _classCallCheck(this, PUCAdaptor);
 
     this.modals = modals;
   }
 
-  _createClass(RepairAdaptor, [
+  _createClass(PUCAdaptor, [
     {
-      key: 'retrieveRepairs',
-      value: function retrieveRepairs(options) {
+      key: 'retrievePUCs',
+      value: function retrievePUCs(options) {
         options.status_type = [5, 11];
         var productOptions = {};
 
@@ -88,7 +87,7 @@ var RepairAdaptor = function() {
         options = _lodash2.default.omit(options, 'product_status_type');
         options = _lodash2.default.omit(options, 'brand_id');
 
-        return this.modals.repairs.findAll({
+        return this.modals.pucs.findAll({
           where: options,
           include: [
             {
@@ -157,16 +156,22 @@ var RepairAdaptor = function() {
               'document_number',
               'policyNo'],
             [
-              'repair_cost',
+              'puc_cost',
               'premiumAmount'],
             [
               this.modals.sequelize.literal('"product"."product_name"'),
               'productName'],
             [
-              'repair_cost',
+              'puc_cost',
               'value'],
             [
-              'repair_taxes',
+              'effective_date',
+              'effectiveDate'],
+            [
+              'expiry_date',
+              'expiryDate'],
+            [
+              'puc_taxes',
               'taxes'],
             [
               'document_date',
@@ -180,17 +185,17 @@ var RepairAdaptor = function() {
               'productURL'],
             'copies'],
           order: [['document_date', 'DESC']],
-        }).then(function(repairResult) {
-          return repairResult.map(function(item) {
+        }).then(function(pucResult) {
+          return pucResult.map(function(item) {
             return item.toJSON();
-          }).sort(sortAmcWarrantyInsuranceRepair);
+          }).sort(sortAmcWarrantyInsurancePUC);
         });
       },
     }, {
-      key: 'retrieveNotificationRepairs',
-      value: function retrieveNotificationRepairs(options) {
+      key: 'retrieveNotificationPUCs',
+      value: function retrieveNotificationPUCs(options) {
         options.status_type = [5, 11];
-        return this.modals.repairs.findAll({
+        return this.modals.pucs.findAll({
           where: options,
           include: [
             {
@@ -215,17 +220,23 @@ var RepairAdaptor = function() {
               'document_number',
               'policyNo'],
             [
-              'repair_cost',
+              'puc_cost',
               'premiumAmount'],
             [
               this.modals.sequelize.literal('"product"."product_name"'),
               'productName'],
             [
-              'repair_cost',
+              'puc_cost',
               'value'],
             [
-              'repair_taxes',
+              'puc_taxes',
               'taxes'],
+            [
+              'effective_date',
+              'effectiveDate'],
+            [
+              'expiry_date',
+              'expiryDate'],
             [
               'document_date',
               'purchaseDate'],
@@ -238,15 +249,15 @@ var RepairAdaptor = function() {
               'productURL'],
             'copies'],
           order: [['document_date', 'DESC']],
-        }).then(function(repairResult) {
-          return repairResult.map(function(item) {
+        }).then(function(pucResult) {
+          return pucResult.map(function(item) {
             return item.toJSON();
-          }).sort(sortAmcWarrantyInsuranceRepair);
+          }).sort(sortAmcWarrantyInsurancePUC);
         });
       },
     }, {
-      key: 'retrieveRepairCount',
-      value: function retrieveRepairCount(options) {
+      key: 'retrievePUCCount',
+      value: function retrievePUCCount(options) {
         options.status_type = [5, 11];
         var productOptions = options.product_status_type ? {
           status_type: options.product_status_type,
@@ -254,7 +265,7 @@ var RepairAdaptor = function() {
         options = _lodash2.default.omit(options, 'category_id');
         options = _lodash2.default.omit(options, 'main_category_id');
         options = _lodash2.default.omit(options, 'product_status_type');
-        return this.modals.repairs.findAll({
+        return this.modals.pucs.findAll({
           where: options,
           include: [
             {
@@ -272,26 +283,26 @@ var RepairAdaptor = function() {
               this.modals.sequelize.literal('"product"."main_category_id"'),
               'masterCategoryId'],
             [
-              this.modals.sequelize.literal('max("repairs"."updated_at")'),
+              this.modals.sequelize.literal('max("pucs"."updated_at")'),
               'lastUpdatedAt']],
           group: this.modals.sequelize.literal('"product"."main_category_id"'),
-        }).then(function(repairResult) {
-          return repairResult.map(function(item) {
+        }).then(function(pucResult) {
+          return pucResult.map(function(item) {
             return item.toJSON();
           });
         });
       },
     }, {
-      key: 'createRepairs',
-      value: function createRepairs(values) {
-        return this.modals.repairs.create(values).then(function(result) {
+      key: 'createPUCs',
+      value: function createPUCs(values) {
+        return this.modals.pucs.create(values).then(function(result) {
           return result.toJSON();
         });
       },
     }, {
-      key: 'updateRepairs',
-      value: function updateRepairs(id, values) {
-        return this.modals.repairs.findOne({
+      key: 'updatePUCs',
+      value: function updatePUCs(id, values) {
+        return this.modals.pucs.findOne({
           where: {
             id: id,
           },
@@ -302,7 +313,7 @@ var RepairAdaptor = function() {
       },
     }]);
 
-  return RepairAdaptor;
+  return PUCAdaptor;
 }();
 
-exports.default = RepairAdaptor;
+exports.default = PUCAdaptor;

@@ -340,7 +340,19 @@ var InsuranceAdaptor = function() {
     }, {
       key: 'createInsurances',
       value: function createInsurances(values) {
-        this.modals.insurances.create(values).then(function(result) {
+        return this.modals.insurances.create(values).then(function(result) {
+          return result.toJSON();
+        });
+      },
+    }, {
+      key: 'updateInsurances',
+      value: function updateInsurances(id, values) {
+        return this.modals.insurances.findOne({
+          where: {
+            id: id,
+          },
+        }).then(function(result) {
+          result.updateAttributes(values);
           return result.toJSON();
         });
       },

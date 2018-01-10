@@ -16,6 +16,7 @@ import UploadController from '../api/controllers/upload';
 import UserController from '../api/controllers/user';
 import PassportService from '../config/passport';
 import AppVersionHelper from '../helpers/appVersion';
+import ProductItemController from '../api/controllers/productItem';
 
 let User;
 let appVersionHelper;
@@ -473,6 +474,30 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
       },
     });
 
+    uploadFileRoute.push({
+      method: 'POST',
+      path: '/consumer/upload/{id}',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+        ],
+        files: {
+          relativeTo: Path.join(__dirname, '../static/src'),
+        },
+        handler: UploadController.uploadFiles,
+        payload: {
+          output: 'stream',
+          parse: true,
+          uploads: 'up_files',
+          timeout: 30034,
+          allow: 'multipart/form-data',
+          failAction: 'log',
+          maxBytes: 209715200,
+        },
+      },
+    });
+
     /*Retrieve user job copies*/
     uploadFileRoute.push({
       method: 'GET',
@@ -738,6 +763,8 @@ function prepareProductRoutes(productController, productRoutes) {
             purchase_cost: [joi.number(), joi.allow(null)],
             taxes: [joi.number(), joi.allow(null)],
             seller_id: [joi.number(), joi.allow(null)],
+            seller_name: [joi.string(), joi.allow(null)],
+            seller_contact: [joi.string(), joi.allow(null)],
             document_number: [joi.string(), joi.allow(null)],
             document_date: [joi.string(), joi.allow(null)],
             metadata: [
@@ -748,6 +775,7 @@ function prepareProductRoutes(productController, productRoutes) {
               })), joi.allow(null)],
             warranty: [
               joi.object().keys({
+                id: [joi.number(), joi.allow(null)],
                 renewal_type: [joi.number(), joi.allow(null)],
                 dual_renewal_type: [joi.number(), joi.allow(null)],
                 extended_renewal_type: [joi.number(), joi.allow(null)],
@@ -756,6 +784,7 @@ function prepareProductRoutes(productController, productRoutes) {
               }), joi.allow(null)],
             insurance: [
               joi.object().keys({
+                id: [joi.number(), joi.allow(null)],
                 effective_date: [joi.string(), joi.allow(null)],
                 provider_id: [joi.number(), joi.allow(null)],
                 policy_no: [joi.string(), joi.allow(null)],
@@ -765,13 +794,118 @@ function prepareProductRoutes(productController, productRoutes) {
               }), joi.allow(null)],
             puc: [
               joi.object().keys({
+                id: [joi.number(), joi.allow(null)],
                 effective_date: [joi.string(), joi.allow(null)],
                 expiry_period: [joi.number(), joi.allow(null)],
+                seller_name: [joi.string(), joi.allow(null)],
+                seller_contact: [joi.string(), joi.allow(null)],
               }), joi.allow(null)],
             amc: [
               joi.object().keys({
+                id: [joi.number(), joi.allow(null)],
                 effective_date: [joi.string(), joi.allow(null)],
                 expiry_period: [joi.number(), joi.allow(null)],
+                seller_name: [joi.string(), joi.allow(null)],
+                seller_contact: [joi.string(), joi.allow(null)],
+              }), joi.allow(null)],
+            repair: [
+              joi.object().keys({
+                id: [joi.number(), joi.allow(null)],
+                effective_date: [joi.string(), joi.allow(null)],
+                repair_for: [joi.string(), joi.allow(null)],
+                seller_name: [joi.string(), joi.allow(null)],
+                seller_contact: [joi.string(), joi.allow(null)],
+                repair_cost: [joi.number(), joi.allow(null)],
+                warranty_upto: [joi.string(), joi.allow(null)],
+              }), joi.allow(null)],
+          },
+        },
+      },
+    });
+
+    productRoutes.push({
+      method: 'PUT',
+      path: '/products/{id}',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+        ],
+        handler: ProductController.updateProduct,
+        description: 'Update Product.',
+        validate: {
+          payload: {
+            product_name: [joi.string(), joi.allow(null)],
+            brand_name: [joi.string(), joi.allow(null)],
+            main_category_id: [joi.number(), joi.allow(null)],
+            category_id: [joi.number(), joi.allow(null)],
+            brand_id: [joi.number(), joi.allow(null)],
+            colour_id: [joi.number(), joi.allow(null)],
+            purchase_cost: [joi.number(), joi.allow(null)],
+            taxes: [joi.number(), joi.allow(null)],
+            seller_id: [joi.number(), joi.allow(null)],
+            seller_name: [joi.string(), joi.allow(null)],
+            seller_contact: [joi.string(), joi.allow(null)],
+            document_number: [joi.string(), joi.allow(null)],
+            document_date: [joi.string(), joi.allow(null)],
+            metadata: [
+              joi.array().items(joi.object().keys({
+                id: [joi.number(), joi.allow(null)],
+                category_form_id: [joi.number(), joi.allow(null)],
+                form_value: [joi.string(), joi.allow(null)],
+                new_drop_down: [joi.boolean(), joi.allow(null)],
+              })), joi.allow(null)],
+            warranty: [
+              joi.object().keys({
+                id: [joi.number(), joi.allow(null)],
+                dual_id: [joi.number(), joi.allow(null)],
+                extended_id: [joi.number(), joi.allow(null)],
+                extended_provider_id: [joi.number(), joi.allow(null)],
+                renewal_type: [joi.number(), joi.allow(null)],
+                dual_renewal_type: [joi.number(), joi.allow(null)],
+                extended_renewal_type: [joi.number(), joi.allow(null)],
+                extended_effective_date: [joi.string(), joi.allow(null)],
+                effective_date: [joi.string(), joi.allow(null)],
+                accessory_renewal_type: [joi.string(), joi.allow(null)],
+              }), joi.allow(null)],
+            insurance: [
+              joi.object().keys({
+                id: [joi.number(), joi.allow(null)],
+                effective_date: [joi.string(), joi.allow(null)],
+                provider_id: [joi.number(), joi.allow(null)],
+                policy_no: [joi.string(), joi.allow(null)],
+                renewal_cost: [joi.number(), joi.allow(null)],
+                amount_insured: [joi.string(), joi.allow(null)],
+                expiry_period: [joi.number(), joi.allow(null)],
+              }), joi.allow(null)],
+            puc: [
+              joi.object().keys({
+                id: [joi.number(), joi.allow(null)],
+                effective_date: [joi.string(), joi.allow(null)],
+                expiry_period: [joi.number(), joi.allow(null)],
+                seller_name: [joi.string(), joi.allow(null)],
+                renewal_cost: [joi.number(), joi.allow(null)],
+                seller_contact: [joi.string(), joi.allow(null)],
+              }), joi.allow(null)],
+            amc: [
+              joi.object().keys({
+                id: [joi.number(), joi.allow(null)],
+                effective_date: [joi.string(), joi.allow(null)],
+                expiry_period: [joi.number(), joi.allow(null)],
+                renewal_cost: [joi.number(), joi.allow(null)],
+                seller_name: [joi.string(), joi.allow(null)],
+                seller_contact: [joi.string(), joi.allow(null)],
+              }), joi.allow(null)],
+            repair: [
+              joi.object().keys({
+                id: [joi.number(), joi.allow(null)],
+                document_date: [joi.string(), joi.allow(null)],
+                repair_for: [joi.string(), joi.allow(null)],
+                seller_name: [joi.string(), joi.allow(null)],
+                seller_contact: [joi.string(), joi.allow(null)],
+                is_amc_seller: [joi.string(), joi.allow(null)],
+                repair_cost: [joi.number(), joi.allow(null)],
+                warranty_upto: [joi.string(), joi.allow(null)],
               }), joi.allow(null)],
           },
         },
@@ -871,6 +1005,101 @@ function prepareGeneralRoutes(generalController, generalRoutes) {
         description: 'Retrieve Reference data',
       },
     });
+
+    generalRoutes.push({
+      method: 'GET',
+      path: '/repairs/products',
+      config: {
+        handler: GeneralController.retrieveRepairableProducts,
+        description: 'Retrieve Repairable Products',
+      },
+    });
+
+    generalRoutes.push({
+      method: 'POST',
+      path: '/products/init',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+        ],
+        handler: GeneralController.intializeUserProduct,
+        description: 'Create Product.',
+        validate: {
+          payload: {
+            product_name: [joi.string(), joi.allow(null)],
+            brand_name: [joi.string(), joi.allow(null)],
+            main_category_id: joi.number(),
+            category_id: joi.number(),
+            brand_id: [joi.number(), joi.allow(null)],
+            colour_id: [joi.number(), joi.allow(null)],
+            purchase_cost: [joi.number(), joi.allow(null)],
+            taxes: [joi.number(), joi.allow(null)],
+            seller_id: [joi.number(), joi.allow(null)],
+            document_number: [joi.string(), joi.allow(null)],
+            document_date: [joi.string(), joi.allow(null)],
+          },
+        },
+      },
+    });
+  }
+}
+
+function prepareProductItemRoutes(productItemController, productItemRoutes) {
+//= ========================
+  // Repair Routes
+  //= ========================
+
+  if (productItemController) {
+
+    productItemRoutes.push({
+      method: 'POST',
+      path: '/products/{id}/repairs',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+        ],
+        handler: ProductItemController.updateRepair,
+        description: 'Update Repair.',
+        validate: {
+          payload: {
+            document_date: [joi.string(), joi.allow(null)],
+            repair_for: [joi.string(), joi.allow(null)],
+            seller_name: [joi.string(), joi.allow(null)],
+            seller_contact: [joi.string(), joi.allow(null)],
+            seller_address: [joi.string(), joi.allow(null)],
+            seller_id: [joi.number(), joi.allow(null)],
+            repair_cost: [joi.number(), joi.allow(null)],
+            warranty_upto: [joi.string(), joi.allow(null)],
+          },
+        },
+      },
+    });
+
+    productItemRoutes.push({
+      method: 'PUT',
+      path: '/products/{id}/repairs/{repairId}',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+        ],
+        handler: ProductItemController.updateRepair,
+        description: 'Update Repair.',
+        validate: {
+          payload: {
+            document_date: [joi.string(), joi.allow(null)],
+            repair_for: [joi.string(), joi.allow(null)],
+            seller_name: [joi.string(), joi.allow(null)],
+            seller_contact: [joi.string(), joi.allow(null)],
+            seller_id: [joi.number(), joi.allow(null)],
+            repair_cost: [joi.number(), joi.allow(null)],
+            warranty_upto: [joi.string(), joi.allow(null)],
+          },
+        },
+      },
+    });
   }
 }
 
@@ -892,6 +1121,7 @@ export default (app, modals) => {
   const insightRoutes = [];
   const searchRoutes = [];
   const generalRoutes = [];
+  const repairRoutes = [];
 
   const uploadFileRoute = [];
   const userController = new UserController(modals);
@@ -904,6 +1134,7 @@ export default (app, modals) => {
   const insightController = new InsightController(modals);
   const searchController = new SearchController(modals);
   const generalController = new GeneralController(modals);
+  const repairController = new ProductItemController(modals);
 
   prepareAuthRoutes(userController, authRoutes);
 
@@ -920,7 +1151,10 @@ export default (app, modals) => {
   prepareProductRoutes(productController, productRoutes);
 
   prepareInsightRoutes(insightController, insightRoutes);
+
   prepareGeneralRoutes(generalController, generalRoutes);
+
+  prepareProductItemRoutes(repairController, repairRoutes);
 
   if (searchController) {
     searchRoutes.push({
@@ -960,6 +1194,7 @@ export default (app, modals) => {
     ...productRoutes,
     ...insightRoutes,
     ...searchRoutes,
-    ...generalRoutes
+    ...generalRoutes,
+    ...repairRoutes,
   ]);
 };

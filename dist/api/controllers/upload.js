@@ -22,9 +22,9 @@ var _createClass = function() {
   };
 }();
 
-var _fileType4 = require('file-type');
+var _fileType5 = require('file-type');
 
-var _fileType5 = _interopRequireDefault(_fileType4);
+var _fileType6 = _interopRequireDefault(_fileType5);
 
 var _mimeTypes = require('mime-types');
 
@@ -49,6 +49,34 @@ var _notification2 = _interopRequireDefault(_notification);
 var _user = require('../Adaptors/user');
 
 var _user2 = _interopRequireDefault(_user);
+
+var _job = require('../Adaptors/job');
+
+var _job2 = _interopRequireDefault(_job);
+
+var _amcs = require('../Adaptors/amcs');
+
+var _amcs2 = _interopRequireDefault(_amcs);
+
+var _insurances = require('../Adaptors/insurances');
+
+var _insurances2 = _interopRequireDefault(_insurances);
+
+var _warranties = require('../Adaptors/warranties');
+
+var _warranties2 = _interopRequireDefault(_warranties);
+
+var _repairs = require('../Adaptors/repairs');
+
+var _repairs2 = _interopRequireDefault(_repairs);
+
+var _pucs = require('../Adaptors/pucs');
+
+var _pucs2 = _interopRequireDefault(_pucs);
+
+var _product = require('../Adaptors/product');
+
+var _product2 = _interopRequireDefault(_product);
 
 var _guid = require('guid');
 
@@ -95,15 +123,22 @@ var isFileTypeAllowed = function isFileTypeAllowed(fileTypeData) {
 
 var isFileTypeAllowedMagicNumber = function isFileTypeAllowedMagicNumber(buffer) {
   // console.log("GOT BUFFER");
-  var result = (0, _fileType5.default)(buffer);
+  var result = (0, _fileType6.default)(buffer);
   return ALLOWED_FILE_TYPES.indexOf(result.ext.toString()) > -1;
 };
 
 var getTypeFromBuffer = function getTypeFromBuffer(buffer) {
-  return (0, _fileType5.default)(buffer);
+  return (0, _fileType6.default)(buffer);
 };
 var modals = void 0;
 var userAdaptor = void 0;
+var jobAdaptor = void 0;
+var amcAdaptor = void 0;
+var warrantyAdaptor = void 0;
+var insuranceAdaptor = void 0;
+var repairAdaptor = void 0;
+var pucAdaptor = void 0;
+var productAdaptor = void 0;
 
 var UploadController = function() {
   function UploadController(modal) {
@@ -111,6 +146,13 @@ var UploadController = function() {
 
     modals = modal;
     userAdaptor = new _user2.default(modals);
+    jobAdaptor = new _job2.default(modals);
+    amcAdaptor = new _amcs2.default(modals);
+    insuranceAdaptor = new _insurances2.default(modals);
+    warrantyAdaptor = new _warranties2.default(modals);
+    repairAdaptor = new _repairs2.default(modals);
+    pucAdaptor = new _pucs2.default(modals);
+    productAdaptor = new _product2.default(modals);
   }
 
   _createClass(UploadController, null, [
@@ -217,8 +259,26 @@ var UploadController = function() {
               return reply(
                   {status: false, message: 'No valid documents in request'});
             } else {
-              return UploadController.uploadFileGeneric(user, filteredFileData,
-                  reply, request).catch(function(err) {
+              if (request.params && request.params.id) {
+                return UploadController.retrieveJobCreateCopies({
+                  user: user,
+                  fileData: fileData,
+                  reply: reply,
+                  request: request,
+                }).catch(function(err) {
+                  console.log('Error on ' + new Date() + ' for user ' +
+                      (user.id || user.ID) + ' is as follow: \n \n ' + err);
+                  return reply(
+                      {status: false, message: 'Unable to upload document'});
+                });
+              }
+
+              return UploadController.createJobWithCopies({
+                user: user,
+                fileData: filteredFileData,
+                reply: reply,
+                request: request,
+              }).catch(function(err) {
                 console.log('Error on ' + new Date() + ' for user ' +
                     (user.id || user.ID) + ' is as follow: \n \n ' + err);
                 return reply(
@@ -234,9 +294,67 @@ var UploadController = function() {
         }
       },
     }, {
-      key: 'uploadFileGeneric',
-      value: function uploadFileGeneric(user, fileData, reply, request) {
-        return modals.jobs.create({
+      key: 'retrieveJobCreateCopies',
+      value: function retrieveJobCreateCopies(parameters) {
+        var user = parameters.user,
+            fileData = parameters.fileData,
+            reply = parameters.reply,
+            request = parameters.request;
+
+        return jobAdaptor.retrieveJobDetail(request.params.id).
+            then(function(jobResult) {
+              if (Array.isArray(fileData)) {
+                return UploadController.uploadArrayOfFile({
+                  requiredDetail: {
+                    fileData: fileData,
+                    user: user,
+                    result: jobResult,
+                    type: request.query ?
+                        parseInt(request.query.type || '1') :
+                        1,
+                  }, reply: reply,
+                });
+              } else {
+                var name = fileData.hapi.filename;
+                var _fileType3 = /[.]/.exec(name) ?
+                    /[^.]+$/.exec(name) :
+                    undefined;
+                // console.log("OUTSIDE FILE ALLOWED: ", fileType);
+                if (_fileType3 && !isFileTypeAllowed(_fileType3)) {
+                  return reply({status: false, message: 'Data Upload Failed'});
+                } else if (!_fileType3 &&
+                    !isFileTypeAllowedMagicNumber(fileData._data)) {
+                  return reply({status: false, message: 'Data Upload Failed'});
+                } else {
+                  return UploadController.uploadSingleFile({
+                    requiredDetail: {
+                      fileData: fileData,
+                      result: jobResult,
+                      fileType: _fileType3,
+                      user: user,
+                      type: request.query ?
+                          parseInt(request.query.type || '1') :
+                          1,
+                    }, reply: reply,
+                  });
+                }
+              }
+            }).
+            catch(function(err) {
+              console.log('Error on ' + new Date() + ' for user ' +
+                  (user.id || user.ID) + ' is as follow: \n \n ' + err);
+              return reply({status: false, message: 'Upload Failed', err: err}); // , forceUpdate: request.pre.forceUpdate});
+            });
+      },
+    }, {
+      key: 'createJobWithCopies',
+      value: function createJobWithCopies(parameters) {
+        var user = parameters.user,
+            fileData = parameters.fileData,
+            reply = parameters.reply,
+            request = parameters.request;
+
+        return jobAdaptor.createJobs({
           job_id: '' + Math.random().toString(36).substr(2, 9) +
           (user.id || user.ID).toString(36),
           user_id: user.id || user.ID,
@@ -252,178 +370,32 @@ var UploadController = function() {
                       request.query.productName :
                       '' :
               '',
-        }).then(function(result) {
+        }).then(function(jobResult) {
           if (Array.isArray(fileData)) {
-            var fileNames = [];
-            var fileTypes = [];
-            var fileTypeDataArray = [];
-            var fileUploadPromises = fileData.map(function(elem, index) {
-              var name = elem.hapi.filename;
-              var fileType = /[.]/.exec(name) ? /[^.]+$/.exec(name) : undefined;
-              var fileTypeData = getTypeFromBuffer(elem._data);
-              var fileName = (user.id || user.ID) + '-' + (index + 1) + '.' +
-                  (fileType ? fileType.toString() : fileTypeData.ext);
-
-              fileNames.push(fileName);
-              fileTypes.push(fileType);
-              fileTypeDataArray.push(fileTypeData);
-              // const file = fs.createReadStream();
-              return fsImpl.writeFile('jobs/' + result.job_id + '/' + fileName,
-                  elem._data,
-                  {ContentType: _mimeTypes2.default.lookup(fileName)});
-            });
-            Promise.all(fileUploadPromises).then(function(fileResult) {
-              var promisedQuery = fileResult.map(function(elem, index) {
-                var ret = {
-                  job_id: result.id,
-                  file_name: fileNames[index],
-                  file_type: fileTypes[index] ?
-                      fileTypes[index].toString() :
-                      fileTypeDataArray[index].ext,
-                  status_type: 6,
-                  updated_by: user.id || user.ID,
-                };
-                return modals.jobCopies.create(ret);
-              });
-
-              promisedQuery.push(modals.users.findById(user.id || user.ID));
-              // if (promisedQuery.length === Object.keys(fileData).length) {
-              return Promise.all(promisedQuery);
-              // }
-            }).then(function(billResult) {
-              if (billResult[billResult.length - 1].email) {
-                modals.jobs.count({
-                  where: {
-                    uploaded_by: user.id || user.ID,
-                  },
-                }).then(function(billCount) {
-                  if (billCount === 1) {
-                    _notification2.default.sendMailOnDifferentSteps(
-                        'It’s good to see you start building your eHome',
-                        billResult[billResult.length - 1].email,
-                        billResult[billResult.length - 1], 2);
-                  } else {
-                    _notification2.default.sendMailOnDifferentSteps(
-                        'We have received your bill, soon it will be available in your eHome',
-                        billResult[billResult.length - 1].email,
-                        billResult[billResult.length - 1], 3);
-                  }
-                }).catch(function(err) {
-                  console.log('Error on ' + new Date() + ' for user ' +
-                      (user.id || user.ID) + ' is as follow: \n ' +
-                      JSON.stringify(err) + ' \n email is ' +
-                      billResult[billResult.length - 1].email);
-                });
-              }
-
-              if (process.env.NODE_ENV === 'production') {
-                _notification2.default.sendMailOnUpload(_main2.default.MESSAGE,
-                    'sagar@binbill.com;pranjal@binbill.com;anu.gupta@binbill.com',
-                    user, result.id);
-              }
-              return reply({
-                status: true,
-                message: 'Uploaded Successfully',
-                job_id: result.id,
-                billResult: billResult.splice(billResult.length - 1, 1),
-                // forceUpdate: request.pre.forceUpdate
-              });
-            }).catch(function(err) {
-              console.log('Error on ' + new Date() + ' for user ' +
-                  (user.id || user.ID) + ' is as follow: \n \n ' + err);
-              return reply({
-                status: false,
-                message: 'Upload Failed',
-                err: JSON.stringify(err),
-                // forceUpdate: request.pre.forceUpdate
-              }).code(500);
+            return UploadController.uploadArrayOfFile({
+              requiredDetail: {
+                fileData: fileData,
+                user: user,
+                result: jobResult,
+                type: request.query ? request.query.type || 1 : 1,
+              }, reply: reply,
             });
           } else {
             var name = fileData.hapi.filename;
-            var _fileType3 = /[.]/.exec(name) ? /[^.]+$/.exec(name) : undefined;
+            var _fileType4 = /[.]/.exec(name) ? /[^.]+$/.exec(name) : undefined;
             // console.log("OUTSIDE FILE ALLOWED: ", fileType);
-            if (_fileType3 && !isFileTypeAllowed(_fileType3)) {
+            if (_fileType4 && !isFileTypeAllowed(_fileType4)) {
               return reply({status: false, message: 'Data Upload Failed'});
-            } else if (!_fileType3 &&
+            } else if (!_fileType4 &&
                 !isFileTypeAllowedMagicNumber(fileData._data)) {
               return reply({status: false, message: 'Data Upload Failed'});
             } else {
-              var fileTypeData = getTypeFromBuffer(fileData._data);
-              result.updateAttributes({
-                file_types: [_fileType3],
+              return UploadController.uploadSingleFile({
+                requiredDetail: {
+                  fileData: fileData, result: jobResult, fileType: _fileType4,
+                  user: user, type: request.query ? request.query.type || 1 : 1,
+                }, reply: reply,
               });
-              var fileName = (user.id || user.ID) + '-1.' +
-                  (_fileType3 ? _fileType3.toString() : fileTypeData.ext);
-
-              fsImpl.writeFile('jobs/' + result.job_id + '/' + fileName,
-                  fileData._data,
-                  {ContentType: _mimeTypes2.default.lookup(fileName)}).
-                  then(function(fileResult) {
-                    var ret = {
-                      job_id: result.id,
-                      file_name: fileName,
-                      file_type: _fileType3 ?
-                          _fileType3.toString() :
-                          fileTypeData.ext,
-                      status_type: 6,
-                      updated_by: user.id || user.ID,
-                    };
-
-                    modals.jobCopies.create(ret).then(function() {
-                      return modals.users.findById(user.id || user.ID);
-                    }).then(function(userResult) {
-                      if (userResult.email) {
-                        modals.jobs.count({
-                          where: {
-                            uploaded_by: userResult.id || userResult.ID,
-                          },
-                        }).then(function(billCount) {
-                          if (billCount === 1) {
-                            _notification2.default.sendMailOnDifferentSteps(
-                                'It’s good to see you start building your eHome',
-                                userResult.email, userResult, 2);
-                          } else {
-                            _notification2.default.sendMailOnDifferentSteps(
-                                'We have received your bill, soon it will be available in your eHome',
-                                userResult.email, userResult, 3);
-                          }
-                        }).catch(function(err) {
-                          console.log('Error on ' + new Date() + ' for user ' +
-                              (user.id || user.ID) + ' is as follow: \n ' +
-                              JSON.stringify(err) + ' \n email is ' +
-                              userResult.email);
-                        });
-                      }
-
-                      if (process.env.NODE_ENV === 'production') {
-                        _notification2.default.sendMailOnUpload(
-                            _main2.default.MESSAGE,
-                            'sagar@binbill.com;pranjal@binbill.com;anu.gupta@binbill.com',
-                            user, result.id);
-                      }
-                      return reply({
-                        status: true,
-                        job_id: result.id,
-                        message: 'Uploaded Successfully',
-                        // forceUpdate: request.pre.forceUpdate
-                      });
-                    }).catch(function(err) {
-                      console.log('Error on ' + new Date() + ' for user ' +
-                          (user.id || user.ID) + ' is as follow: \n \n ' + err);
-                      return reply({
-                        status: false,
-                        message: 'Data Update Failed',
-                        err: err,
-                        // forceUpdate: request.pre.forceUpdate
-                      });
-                    });
-                  }).
-                  catch(function(err) {
-                    console.log('Error on ' + new Date() + ' for user ' +
-                        (user.id || user.ID) + ' is as follow: \n \n ' + err);
-                    return reply(
-                        {status: false, message: 'Upload Failed', err: err}); //forceUpdate: request.pre.forceUpdate});
-                  });
             }
           }
         }).catch(function(err) {
@@ -431,6 +403,354 @@ var UploadController = function() {
               (user.id || user.ID) + ' is as follow: \n \n ' + err);
           return reply({status: false, message: 'Upload Failed', err: err}); // , forceUpdate: request.pre.forceUpdate});
         });
+      },
+    }, {
+      key: 'uploadSingleFile',
+      value: function uploadSingleFile(parameters) {
+        console.log('Single File Upload');
+        var requiredDetail = parameters.requiredDetail,
+            reply = parameters.reply;
+
+        var user = requiredDetail.user;
+        var fileData = requiredDetail.fileData;
+        var jobResult = requiredDetail.result;
+        var type = requiredDetail.type;
+        var fileType = requiredDetail.fileType;
+        var fileTypeData = getTypeFromBuffer(fileData._data);
+        var fileName = (user.id || user.ID) + '-1.' +
+            (fileType ? fileType.toString() : fileTypeData.ext);
+
+        return fsImpl.writeFile('jobs/' + jobResult.job_id + '/' + fileName,
+            fileData._data,
+            {ContentType: _mimeTypes2.default.lookup(fileName)}).
+            then(function(fileResult) {
+              var jobCopyDetail = {
+                job_id: jobResult.id,
+                file_name: fileName,
+                file_type: fileType ? fileType.toString() : fileTypeData.ext,
+                status_type: 6,
+                updated_by: user.id || user.ID,
+                type: type,
+              };
+              var copyData = void 0;
+              return jobAdaptor.createJobCopies(jobCopyDetail).
+                  then(function(copyResult) {
+                    copyData = copyResult;
+                    return modals.users.findById(user.id || user.ID);
+                  }).
+                  then(function(userResult) {
+                    if (userResult.email) {
+                      UploadController.mailUserForJob(userResult, user);
+                    }
+
+                    UploadController.notifyTeam(user, jobResult);
+
+                    if (type && jobResult.productId) {
+                      return UploadController.createProductItems({
+                        type: type,
+                        jobId: jobResult.id,
+                        user: user,
+                        productId: jobResult.productId,
+                      });
+                    }
+
+                    return undefined;
+                  }).
+                  then(function(productItemResult) {
+                    var replyResult = {
+                      status: true,
+                      job_id: jobResult.id,
+                      message: 'Uploaded Successfully',
+                      billResult: copyData,
+                      // forceUpdate: request.pre.forceUpdate
+                    };
+                    console.log({
+                      type: type, productItemResult: productItemResult,
+                    });
+                    if (productItemResult) {
+                      if (type === 2) {
+                        replyResult.amc = productItemResult[0];
+                        replyResult.product = productItemResult[1];
+                      } else if (type === 3) {
+                        replyResult.insurance = productItemResult[0];
+                        replyResult.product = productItemResult[1];
+                      } else if (type === 4) {
+                        replyResult.repair = productItemResult[0];
+                        replyResult.product = productItemResult[1];
+                      } else if (type === 5) {
+                        replyResult.warranty = productItemResult[0];
+                        replyResult.product = productItemResult[1];
+                      } else if (type === 6) {
+                        replyResult.warranty = productItemResult[0];
+                        replyResult.product = productItemResult[1];
+                      } else if (type === 7) {
+                        replyResult.puc = productItemResult[0];
+                        replyResult.product = productItemResult[1];
+                      } else {
+                        replyResult.product = productItemResult[0];
+                      }
+                    }
+
+                    return reply(replyResult);
+                  }).
+                  catch(function(err) {
+                    console.log('Error on ' + new Date() + ' for user ' +
+                        (user.id || user.ID) + ' is as follow: \n \n ' + err);
+                    return reply({
+                      status: false,
+                      message: 'Data Update Failed',
+                      err: err,
+                      // forceUpdate: request.pre.forceUpdate
+                    });
+                  });
+            }).
+            catch(function(err) {
+              console.log('Error on ' + new Date() + ' for user ' +
+                  (user.id || user.ID) + ' is as follow: \n \n ' + err);
+              return reply({status: false, message: 'Upload Failed', err: err}); //forceUpdate: request.pre.forceUpdate});
+            });
+      },
+    }, {
+      key: 'uploadArrayOfFile',
+      value: function uploadArrayOfFile(parameters) {
+        console.log('Multiple File Upload');
+        var requiredDetail = parameters.requiredDetail,
+            reply = parameters.reply;
+
+        var jobCopies = void 0;
+        var fileNames = [];
+        var fileTypes = [];
+        var fileTypeDataArray = [];
+        var user = requiredDetail.user;
+        var fileData = requiredDetail.fileData;
+        var jobResult = requiredDetail.result;
+        var type = requiredDetail.type;
+        var fileUploadPromises = fileData.map(function(elem, index) {
+          var name = elem.hapi.filename;
+          var fileType = /[.]/.exec(name) ? /[^.]+$/.exec(name) : undefined;
+          var fileTypeData = getTypeFromBuffer(elem._data);
+          var fileName = (user.id || user.ID) + '-' + (index + 1) + '.' +
+              (fileType ? fileType.toString() : fileTypeData.ext);
+
+          fileNames.push(fileName);
+          fileTypes.push(fileType);
+          fileTypeDataArray.push(fileTypeData);
+          // const file = fs.createReadStream();
+          return fsImpl.writeFile('jobs/' + jobResult.job_id + '/' + fileName,
+              elem._data, {ContentType: _mimeTypes2.default.lookup(fileName)});
+        });
+        Promise.all(fileUploadPromises).then(function(fileResult) {
+          var promisedQuery = fileResult.map(function(elem, index) {
+            var jobCopyDetail = {
+              job_id: jobResult.id,
+              file_name: fileNames[index],
+              file_type: fileTypes[index] ?
+                  fileTypes[index].toString() :
+                  fileTypeDataArray[index].ext,
+              status_type: 6,
+              updated_by: user.id || user.ID,
+              type: type,
+            };
+            return jobAdaptor.createJobCopies(jobCopyDetail);
+          });
+
+          promisedQuery.push(modals.users.findById(user.id || user.ID));
+          // if (promisedQuery.length === Object.keys(fileData).length) {
+          return Promise.all(promisedQuery);
+          // }
+        }).then(function(billResult) {
+          jobCopies = billResult.splice(billResult.length - 1, 1);
+          var userResult = billResult[billResult.length - 1];
+          if (userResult.email) {
+            UploadController.mailUserForJob(userResult, user);
+          }
+
+          UploadController.notifyTeam(user, jobResult);
+          if (type && jobResult.productId) {
+            return UploadController.createProductItems({
+              type: type,
+              jobId: jobResult.id,
+              user: user,
+              productId: jobResult.productId,
+            });
+          }
+
+          return undefined;
+        }).then(function(productItemResult) {
+          var replyResult = {
+            status: true,
+            message: 'Uploaded Successfully',
+            job_id: jobResult.id,
+            billResult: jobCopies,
+            // forceUpdate: request.pre.forceUpdate
+          };
+          if (productItemResult) {
+          if (type === 2) {
+            replyResult.amc = productItemResult[0];
+            replyResult.product = productItemResult[1];
+          } else if (type === 3) {
+            replyResult.insurance = productItemResult[0];
+            replyResult.product = productItemResult[1];
+          } else if (type === 4) {
+            replyResult.repair = productItemResult[0];
+            replyResult.product = productItemResult[1];
+          } else if (type === 5) {
+            replyResult.warranty = productItemResult[0];
+            replyResult.product = productItemResult[1];
+          } else if (type === 6) {
+            replyResult.warranty = productItemResult[0];
+            replyResult.product = productItemResult[1];
+          } else if (type === 7) {
+            replyResult.puc = productItemResult[0];
+            replyResult.product = productItemResult[1];
+          } else {
+            replyResult.product = productItemResult[0];
+          }
+          }
+
+          return reply(replyResult);
+        }).catch(function(err) {
+          console.log('Error on ' + new Date() + ' for user ' +
+              (user.id || user.ID) + ' is as follow: \n \n ' + err);
+          return reply({
+            status: false,
+            message: 'Upload Failed',
+            err: JSON.stringify(err),
+            // forceUpdate: request.pre.forceUpdate
+          }).code(500);
+        });
+      }
+    }, {
+      key: 'createProductItems',
+      value: function createProductItems(parameters) {
+        var type = parameters.type,
+            jobId = parameters.jobId,
+            user = parameters.user,
+            productId = parameters.productId;
+
+        var productItemPromise = [];
+        switch (type) {
+          case 2:
+            productItemPromise.push(amcAdaptor.createAMCs({
+              job_id: jobId,
+              product_id: productId,
+              user_id: user.id || user.ID,
+              updated_by: user.id || user.ID,
+              status_type: 11,
+            }));
+            break;
+
+          case 3:
+            productItemPromise.push(insuranceAdaptor.createInsurances({
+              job_id: jobId,
+              product_id: productId,
+              user_id: user.id || user.ID,
+              updated_by: user.id || user.ID,
+              status_type: 11,
+            }));
+            break;
+
+          case 4:
+            productItemPromise.push(repairAdaptor.createRepairs({
+              job_id: jobId,
+              product_id: productId,
+              user_id: user.id || user.ID,
+              updated_by: user.id || user.ID,
+              status_type: 11,
+            }));
+            break;
+          case 5:
+            productItemPromise.push(warrantyAdaptor.createWarranties({
+              job_id: jobId,
+              product_id: productId,
+              user_id: user.id || user.ID,
+              updated_by: user.id || user.ID,
+              status_type: 11,
+              warranty_type: 1,
+            }));
+            break;
+
+          case 6:
+            productItemPromise.push(warrantyAdaptor.createWarranties({
+              job_id: jobId,
+              product_id: productId,
+              user_id: user.id || user.ID,
+              updated_by: user.id || user.ID,
+              status_type: 11,
+              warranty_type: 3,
+            }));
+            break;
+          case 7:
+            productItemPromise.push(pucAdaptor.createPUCs({
+              job_id: jobId,
+              product_id: productId,
+              user_id: user.id || user.ID,
+              updated_by: user.id || user.ID,
+              status_type: 11,
+            }));
+            break;
+          case 8:
+            productItemPromise.push(warrantyAdaptor.createWarranties({
+              job_id: jobId,
+              product_id: productId,
+              user_id: user.id || user.ID,
+              updated_by: user.id || user.ID,
+              status_type: 11,
+              warranty_type: 2,
+            }));
+            break;
+          default:
+            productItemPromise.push(productAdaptor.updateProduct(productId, {
+              job_id: jobId,
+              user_id: user.id || user.ID,
+              updated_by: user.id || user.ID,
+              status_type: 11,
+            }));
+            break;
+        }
+
+        if (type > 1 && type < 8) {
+          productItemPromise.push(productAdaptor.updateProduct(productId, {
+            job_id: jobId,
+            user_id: user.id || user.ID,
+            updated_by: user.id || user.ID,
+            status_type: 11,
+          }));
+        }
+
+        return Promise.all(productItemPromise);
+      },
+    }, {
+      key: 'mailUserForJob',
+      value: function mailUserForJob(userResult, user) {
+        modals.jobs.count({
+          where: {
+            uploaded_by: userResult.id || userResult.ID,
+          },
+        }).then(function(billCount) {
+          if (billCount === 1) {
+            _notification2.default.sendMailOnDifferentSteps(
+                'It’s good to see you start building your eHome',
+                userResult.email, userResult, 2);
+          } else {
+            _notification2.default.sendMailOnDifferentSteps(
+                'We have received your bill, soon it will be available in your eHome',
+                userResult.email, userResult, 3);
+          }
+        }).catch(function(err) {
+          console.log('Error on ' + new Date() + ' for user ' +
+              (user.id || user.ID) + ' is as follow: \n ' +
+              JSON.stringify(err) + ' \n email is ' + userResult.email);
+        });
+      },
+    }, {
+      key: 'notifyTeam',
+      value: function notifyTeam(user, result) {
+        if (process.env.NODE_ENV === 'production') {
+          _notification2.default.sendMailOnUpload(_main2.default.MESSAGE,
+              'sagar@binbill.com;pranjal@binbill.com;anu.gupta@binbill.com',
+              user, result.id);
+        }
       },
     }, {
       key: 'retrieveFiles',

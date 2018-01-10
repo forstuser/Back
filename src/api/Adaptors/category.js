@@ -42,9 +42,20 @@ export default class CategoryAdaptor {
       order: ['category_id'],
     }).then((result) => {
       categoryData = result.map(item => item.toJSON());
-
+      const main_category_id = options.category_id;
+      const excluded_category_id = main_category_id ? {
+        $notIn:
+            main_category_id === 1 ?
+                [20, 72, 73] :
+                main_category_id === 2 ?
+                    [327, 162, 530, 581, 491, 541] :
+                    main_category_id === 3 ?
+                        [139, 138, 154, 150, 153] :
+                        [],
+      } : undefined;
       return this.retrieveSubCategories({
         ref_id: categoryData.map(item => item.id),
+        category_id: excluded_category_id,
         status_type: 1,
       }, isBrandFormRequired);
     }).then((subCategories) => {
@@ -104,9 +115,75 @@ export default class CategoryAdaptor {
             category_id: categoryData.map(item => item.id),
             status_type: 1,
           }), this.retrieveCategoryForms({
-            category_id: categoryData.map(item => item.id),
+            $or: [
+              {
+                $and: {
+                  category_id: categoryData.map(item => item.id),
+                  title: {
+                    $ilike: 'model',
+                  },
+                },
+              }, {
+                $and: {
+                  category_id: categoryData.map(item => item.id),
+                  title: {
+                    $ilike: 'IMEI Number',
+                  },
+                },
+              }, {
+                $and: {
+                  category_id: categoryData.map(item => item.id),
+                  title: {
+                    $ilike: 'Serial Number',
+                  },
+                },
+              }, {
+                $and: {
+                  category_id: categoryData.map(item => item.id),
+                  title: {
+                    $ilike: 'Chasis Number',
+                  },
+                },
+              }, {
+                $and: {
+                  category_id: categoryData.map(item => item.id),
+                  title: {
+                    $ilike: 'due date%',
+                  },
+                },
+              }, {
+                $and: {
+                  main_category_id: categoryData.map(item => item.refId),
+                  title: {
+                    $ilike: 'Vehicle Number',
+                  },
+                },
+              }, {
+                $and: {
+                  main_category_id: categoryData.map(item => item.refId),
+                  title: {
+                    $ilike: 'Registration Number',
+                  },
+                },
+              }],
             status_type: 1,
           }), this.modals.insuranceBrands.findAll({
+            where: {
+              type: [1, 3],
+            },
+            include: {
+              model: this.modals.categories,
+              where: {
+                category_id: options.category_id,
+              },
+              as: 'categories',
+              attributes: [],
+              required: true,
+            },
+          }), this.modals.insuranceBrands.findAll({
+            where: {
+              type: [2, 3],
+            },
             include: {
               model: this.modals.categories,
               where: {
@@ -128,6 +205,7 @@ export default class CategoryAdaptor {
           item.categoryForms = results[1].filter(
               (formItem) => formItem.categoryId === item.id);
           item.insuranceProviders = results[2];
+          item.warrantyProviders = results[3];
           return item;
         });
       }

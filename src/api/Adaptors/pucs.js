@@ -4,7 +4,7 @@
 import moment from 'moment';
 import _ from 'lodash';
 
-const sortAmcWarrantyInsuranceRepair = (a, b) => {
+const sortAmcWarrantyInsurancePUC = (a, b) => {
   let aDate;
   let bDate;
 
@@ -18,16 +18,15 @@ const sortAmcWarrantyInsuranceRepair = (a, b) => {
   return -1;
 };
 
-class AmcAdaptor {
+class PUCAdaptor {
   constructor(modals) {
     this.modals = modals;
   }
 
-  retrieveAMCs(options) {
-    if (!options.status_type) {
-      options.status_type = [5, 11, 12];
-    }
+  retrievePUCs(options) {
+    options.status_type = [5, 11];
     let productOptions = {};
+
     if (options.main_category_id) {
       productOptions.main_category_id = options.main_category_id;
     }
@@ -46,19 +45,9 @@ class AmcAdaptor {
     options = _.omit(options, 'product_status_type');
     options = _.omit(options, 'brand_id');
 
-    return this.modals.amcs.findAll({
+    return this.modals.pucs.findAll({
       where: options,
       include: [
-        {
-          model: this.modals.renewalTypes,
-          attributes: [],
-        },
-        {
-          model: this.modals.products,
-          where: productOptions,
-          attributes: [],
-          required: productOptions !== undefined,
-        },
         {
           model: this.modals.onlineSellers,
           as: 'onlineSellers',
@@ -71,6 +60,12 @@ class AmcAdaptor {
             'contact',
             'email'],
           required: false,
+        },
+        {
+          model: this.modals.products,
+          where: productOptions,
+          attributes: [],
+          required: productOptions !== undefined,
         },
         {
           model: this.modals.offlineSellers,
@@ -112,32 +107,29 @@ class AmcAdaptor {
           'job_id',
           'jobId'],
         [
+          this.modals.sequelize.literal('"product"."main_category_id"'),
+          'masterCategoryId'], 'user_id',
+        [
           'document_number',
           'policyNo'],
         [
-          this.modals.sequelize.literal('"product"."main_category_id"'),
-          'masterCategoryId'],
-        [
-          this.modals.sequelize.literal('"renewalType"."title"'),
-          'premiumType'],
+          'puc_cost',
+          'premiumAmount'],
         [
           this.modals.sequelize.literal('"product"."product_name"'),
           'productName'],
         [
-          'renewal_cost',
-          'premiumAmount'],
-        [
-          'renewal_cost',
+          'puc_cost',
           'value'],
-        [
-          'renewal_taxes',
-          'taxes'],
         [
           'effective_date',
           'effectiveDate'],
         [
           'expiry_date',
           'expiryDate'],
+        [
+          'puc_taxes',
+          'taxes'],
         [
           'document_date',
           'purchaseDate'],
@@ -146,28 +138,24 @@ class AmcAdaptor {
           this.modals.sequelize.fn('CONCAT', 'products/',
               this.modals.sequelize.literal('"product_id"')),
           'productURL'],
-        'copies', 'user_id'],
-      order: [['expiry_date', 'DESC']],
+        'copies'],
+      order: [['document_date', 'DESC']],
     }).
-        then((amcResult) => amcResult.map((item) => item.toJSON()).
-            sort(sortAmcWarrantyInsuranceRepair));
+        then((pucResult) => pucResult.map((item) => item.toJSON()).
+            sort(sortAmcWarrantyInsurancePUC));
   }
 
-  retrieveNotificationAMCs(options) {
-    options.status_type = [5, 11, 12];
-
-    return this.modals.amcs.findAll({
+  retrieveNotificationPUCs(options) {
+    options.status_type = [5, 11];
+    return this.modals.pucs.findAll({
       where: options,
       include: [
         {
-          model: this.modals.renewalTypes,
-          attributes: [],
-        },
-        {
           model: this.modals.products,
+          where: productOptions,
           attributes: [],
-        },
-      ],
+          required: productOptions !== undefined,
+        }],
       attributes: [
         'id',
         [
@@ -177,25 +165,22 @@ class AmcAdaptor {
           'job_id',
           'jobId'],
         [
+          this.modals.sequelize.literal('"product"."main_category_id"'),
+          'masterCategoryId'], 'user_id',
+        [
           'document_number',
           'policyNo'],
         [
-          this.modals.sequelize.literal('"product"."main_category_id"'),
-          'masterCategoryId'],
-        [
-          this.modals.sequelize.literal('"renewalType"."title"'),
-          'premiumType'],
+          'puc_cost',
+          'premiumAmount'],
         [
           this.modals.sequelize.literal('"product"."product_name"'),
           'productName'],
         [
-          'renewal_cost',
-          'premiumAmount'],
-        [
-          'renewal_cost',
+          'puc_cost',
           'value'],
         [
-          'renewal_taxes',
+          'puc_taxes',
           'taxes'],
         [
           'effective_date',
@@ -211,23 +196,22 @@ class AmcAdaptor {
           this.modals.sequelize.fn('CONCAT', 'products/',
               this.modals.sequelize.literal('"product_id"')),
           'productURL'],
-        'copies', 'user_id'],
-      order: [['expiry_date', 'DESC']],
+        'copies'],
+      order: [['document_date', 'DESC']],
     }).
-        then((amcResult) => amcResult.map((item) => item.toJSON()).
-            sort(sortAmcWarrantyInsuranceRepair));
+        then((pucResult) => pucResult.map((item) => item.toJSON()).
+            sort(sortAmcWarrantyInsurancePUC));
   }
 
-  retrieveAMCCounts(options) {
-    options.status_type = [5, 11, 12];
+  retrievePUCCount(options) {
+    options.status_type = [5, 11];
     const productOptions = options.product_status_type ? {
       status_type: options.product_status_type,
     } : undefined;
     options = _.omit(options, 'category_id');
     options = _.omit(options, 'main_category_id');
     options = _.omit(options, 'product_status_type');
-
-    return this.modals.amcs.findAll({
+    return this.modals.pucs.findAll({
       where: options,
       include: [
         {
@@ -243,19 +227,19 @@ class AmcAdaptor {
           this.modals.sequelize.literal('"product"."main_category_id"'),
           'masterCategoryId'],
         [
-          this.modals.sequelize.literal('max("amcs"."updated_at")'),
+          this.modals.sequelize.literal('max("pucs"."updated_at")'),
           'lastUpdatedAt']],
       group: this.modals.sequelize.literal('"product"."main_category_id"'),
-    }).then((amcResult) => amcResult.map((item) => item.toJSON()));
+    }).then((pucResult) => pucResult.map((item) => item.toJSON()));
   }
 
-  createAMCs(values) {
-    return this.modals.amcs.create(values).
+  createPUCs(values) {
+    return this.modals.pucs.create(values).
         then(result => result.toJSON());
   }
 
-  updateAMCs(id, values) {
-    return this.modals.amcs.findOne({
+  updatePUCs(id, values) {
+    return this.modals.pucs.findOne({
       where: {
         id,
       },
@@ -267,4 +251,4 @@ class AmcAdaptor {
   }
 }
 
-export default AmcAdaptor;
+export default PUCAdaptor;

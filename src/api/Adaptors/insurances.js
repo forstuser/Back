@@ -276,8 +276,20 @@ class InsuranceAdaptor {
   }
 
   createInsurances(values) {
-    this.modals.insurances.create(values).
+    return this.modals.insurances.create(values).
         then(result => result.toJSON());
+  }
+
+  updateInsurances(id, values) {
+    return this.modals.insurances.findOne({
+      where: {
+        id,
+      },
+    }).
+        then(result => {
+          result.updateAttributes(values);
+          return result.toJSON();
+        });
   }
 }
 
