@@ -41,13 +41,13 @@ var ProductItemController = function () {
     key: 'updateRepair',
     value: function updateRepair(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!user) {
+      if (!request.pre.userExist) {
         return reply({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         });
-      } else if (user && !request.pre.forceUpdate) {
+      } else if (request.pre.userExist && !request.pre.forceUpdate) {
         var sellerPromise = !request.payload.seller_id && (request.payload.seller_contact || request.payload.seller_name) ? sellerAdaptor.retrieveOrCreateOfflineSellers({
           contact_no: request.payload.seller_contact
         }, {
@@ -62,25 +62,33 @@ var ProductItemController = function () {
           var productId = request.params.id;
           var repairId = request.params.repairId;
           var newSellerId = sellerList ? sellerList.sid : undefined;
-          var document_date = (0, _moment2.default)(request.payload.document_date, _moment2.default.ISO_8601).isValid() ? (0, _moment2.default)(request.payload.document_date, _moment2.default.ISO_8601).startOf('day') : (0, _moment2.default)(request.payload.document_date, 'DD MMM YY').startOf('day');
+          var document_date = _moment2.default.utc(
+              request.payload.document_date, _moment2.default.ISO_8601).
+              isValid() ?
+              _moment2.default.utc(request.payload.document_date,
+                  _moment2.default.ISO_8601).startOf('day') :
+              _moment2.default.utc(request.payload.document_date, 'DD MMM YY').
+                  startOf('day');
           var repairPromise = repairId ? repairAdaptor.updateRepairs(repairId, {
             updated_by: user.id || user.ID,
             status_type: 11,
             product_id: productId,
             seller_id: request.payload.seller_id || newSellerId,
-            document_date: (0, _moment2.default)(document_date).format('YYYY-MM-DD'),
+            document_date: _moment2.default.utc(document_date).
+                format('YYYY-MM-DD'),
             repair_for: request.payload.repair_for,
-            repair_cost: request.payload.repair_cost,
+            repair_cost: request.payload.value,
             warranty_upto: request.payload.warranty_upto,
             user_id: user.id || user.ID
           }) : repairAdaptor.createRepairs({
             updated_by: user.id || user.ID,
             status_type: 11,
             product_id: productId,
-            document_date: (0, _moment2.default)(document_date).format('YYYY-MM-DD'),
+            document_date: _moment2.default.utc(document_date).
+                format('YYYY-MM-DD'),
             seller_id: request.payload.seller_id || newSellerId,
             repair_for: request.payload.repair_for,
-            repair_cost: request.payload.repair_cost,
+            repair_cost: request.payload.value,
             warranty_upto: request.payload.warranty_upto,
             user_id: user.id || user.ID
           });

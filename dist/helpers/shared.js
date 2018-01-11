@@ -100,12 +100,14 @@ function isAccessTokenBasic(authorization) {
 
 /**
  *
- * @param rootNode
- * @param currentField
- * @param defaultValue
  * @returns {*}
+ * @param parameters
  */
-function verifyParameters(rootNode, currentField, defaultValue) {
+function verifyParameters(parameters) {
+  var rootNode = parameters.rootNode,
+      currentField = parameters.currentField,
+      defaultValue = parameters.defaultValue;
+
   return _lodash2.default.get(rootNode, currentField, defaultValue);
 }
 
@@ -115,7 +117,11 @@ function verifyParameters(rootNode, currentField, defaultValue) {
  * @returns {string}
  */
 function verifyAuthorization(headers) {
-  return isAccessTokenBasic(verifyParameters(headers, authorizationParamConst, emptyString));
+  return isAccessTokenBasic(verifyParameters({
+    rootNode: headers,
+    currentField: authorizationParamConst,
+    defaultValue: emptyString,
+  }));
 }
 
 function sumProps(arrayItem, prop) {
@@ -127,15 +133,18 @@ function sumProps(arrayItem, prop) {
 }
 
 var getAllDays = function getAllDays() {
-  var s = (0, _moment2.default)(_moment2.default.utc().subtract(6, 'd')).utc().startOf('d');
+  var s = _moment2.default.utc().subtract(6, 'd').startOf('d');
   var e = _moment2.default.utc();
   var a = [];
   while (s.valueOf() < e.valueOf()) {
     a.push({
       value: 0,
-      purchaseDate: (0, _moment2.default)(s, _moment2.default.ISO_8601).utc().startOf('d')
+      purchaseDate: _moment2.default.utc(s, _moment2.default.ISO_8601).
+          startOf('d'),
     });
-    s = (0, _moment2.default)(s, _moment2.default.ISO_8601).utc().add(1, 'd').startOf('d');
+    s = _moment2.default.utc(s, _moment2.default.ISO_8601).
+        add(1, 'd').
+        startOf('d');
   }
 
   return a;
@@ -144,12 +153,14 @@ var getAllDays = function getAllDays() {
 function retrieveDaysInsight(distinctInsight) {
   var allDaysInWeek = getAllDays();
   distinctInsight.map(function (item) {
-    var currentDate = (0, _moment2.default)(item.purchaseDate, _moment2.default.ISO_8601).startOf('day');
+    var currentDate = _moment2.default.utc(item.purchaseDate,
+        _moment2.default.ISO_8601).startOf('day');
     for (var i = 0; i < allDaysInWeek.length; i += 1) {
       var weekData = allDaysInWeek[i];
       if (weekData.purchaseDate.valueOf() === currentDate.valueOf()) {
         weekData.value = !item.value ? 0 : item.value;
-        weekData.purchaseDate = (0, _moment2.default)(weekData.purchaseDate, _moment2.default.ISO_8601);
+        weekData.purchaseDate = _moment2.default.utc(weekData.purchaseDate,
+            _moment2.default.ISO_8601);
         break;
       }
     }
@@ -160,8 +171,10 @@ function retrieveDaysInsight(distinctInsight) {
   return allDaysInWeek.map(function (weekItem) {
     return {
       value: weekItem.value,
-      purchaseDate: (0, _moment2.default)(weekItem.purchaseDate, _moment2.default.ISO_8601),
-      purchaseDay: (0, _moment2.default)(weekItem.purchaseDate, _moment2.default.ISO_8601).format('ddd')
+      purchaseDate: _moment2.default.utc(weekItem.purchaseDate,
+          _moment2.default.ISO_8601),
+      purchaseDay: _moment2.default.utc(weekItem.purchaseDate,
+          _moment2.default.ISO_8601).format('ddd'),
     };
   });
 }
@@ -211,7 +224,11 @@ var queryStringFromObject = function queryStringFromObject(queryObject) {
 };
 var retrieveHeaderValue = function retrieveHeaderValue(headers) {
   return {
-    authorization: verifyParameters(headers, authorizationParamConst, emptyString),
+    authorization: verifyParameters({
+      rootNode: headers,
+      currentField: authorizationParamConst,
+      defaultValue: emptyString,
+    }),
     CorrelationId: _uuid2.default.v4()
   };
 };

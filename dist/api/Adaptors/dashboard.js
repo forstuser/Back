@@ -31,6 +31,10 @@ var _warranties = require('./warranties');
 
 var _warranties2 = _interopRequireDefault(_warranties);
 
+var _pucs = require('./pucs');
+
+var _pucs2 = _interopRequireDefault(_pucs);
+
 var _shared = require('../../helpers/shared');
 
 var _shared2 = _interopRequireDefault(_shared);
@@ -55,6 +59,7 @@ var DashboardAdaptor = function () {
     this.insuranceAdaptor = new _insurances2.default(modals);
     this.repairAdaptor = new _repairs2.default(modals);
     this.warrantyAdaptor = new _warranties2.default(modals);
+    this.pucAdaptor = new _pucs2.default(modals);
     this.date = _moment2.default.utc();
   }
 
@@ -80,7 +85,7 @@ var DashboardAdaptor = function () {
         where: {
           user_id: user.id || user.ID,
           status_type: 11,
-          main_category_id: [2, 3]
+          main_category_id: [1, 2, 3],
         }
       }), this.productAdaptor.retrieveUsersLastProduct({
         user_id: user.id || user.ID,
@@ -182,7 +187,12 @@ var DashboardAdaptor = function () {
     }
   }, {
     key: 'prepareDashboardResult',
-    value: function prepareDashboardResult(isNewUser, user, token, request) {
+    value: function prepareDashboardResult(parameters) {
+      var isNewUser = parameters.isNewUser,
+          user = parameters.user,
+          token = parameters.token,
+          request = parameters.request;
+
       if (!isNewUser) {
         return Promise.all([this.modals.products.count({
           where: {
@@ -274,20 +284,29 @@ var DashboardAdaptor = function () {
       }), this.warrantyAdaptor.retrieveWarranties({
         user_id: user.id || user.ID,
         status_type: [5, 11]
-      }), this.productAdaptor.retrieveProducts({
+      }), this.pucAdaptor.retrievePUCs({
         user_id: user.id || user.ID,
         status_type: [5, 11],
         main_category_id: [3]
+      }), this.productAdaptor.retrieveProducts({
+        user_id: user.id || user.ID,
+        status_type: [5, 11],
+        main_category_id: [3],
       })]).then(function (result) {
         var products = result[0].map(function (item) {
           var product = item;
 
           product.productMetaData.map(function (metaItem) {
             var metaData = metaItem;
-            if (metaData.name.toLowerCase().includes('due') && metaData.name.toLowerCase().includes('date') && metaData.value && (0, _moment2.default)(metaData.value, _moment2.default.ISO_8601).isValid()) {
-              var dueDateTime = (0, _moment2.default)(metaData.value, _moment2.default.ISO_8601);
+            if (metaData.name.toLowerCase().includes('due') &&
+                metaData.name.toLowerCase().includes('date') &&
+                metaData.value &&
+                _moment2.default.utc(metaData.value, _moment2.default.ISO_8601).
+                    isValid()) {
+              var dueDate_time = _moment2.default.utc(metaData.value,
+                  _moment2.default.ISO_8601);
               product.dueDate = metaData.value;
-              product.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
+              product.dueIn = dueDate_time.diff(_moment2.default.utc(), 'days');
             }
 
             if (metaData.name.toLowerCase().includes('address')) {
@@ -297,76 +316,118 @@ var DashboardAdaptor = function () {
             return metaData;
           });
 
-          product.productType = 1;
+          product.product_type = 1;
           return product;
         });
 
         products = products.filter(function (item) {
-          return item.dueIn !== undefined && item.dueIn !== null && item.dueIn <= 30 && item.dueIn >= 0;
-        });
-
-        var pucProducts = result[4].map(function (item) {
-          var product = item;
-          if (product.pucDetail && _moment2.default.utc(product.pucDetail.expiry_date, _moment2.default.ISO_8601).isValid()) {
-            var dueDateTime = _moment2.default.utc(product.pucDetail.expiry_date, _moment2.default.ISO_8601).endOf('day');
-            product.dueDate = product.pucDetail.expiry_date;
-            product.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
-          }
-
-          product.productType = 5;
-          return product;
-        });
-
-        pucProducts = pucProducts.filter(function (item) {
-          return item.dueIn !== undefined && item.dueIn !== null && item.dueIn <= 30 && item.dueIn >= 0;
+          return item.dueIn !== undefined && item.dueIn !== null &&
+              item.dueIn <= 30 && item.dueIn >= 0;
         });
 
         var amcs = result[1].map(function (item) {
           var amc = item;
-          if ((0, _moment2.default)(amc.expiryDate, _moment2.default.ISO_8601).isValid()) {
-            var dueDateTime = _moment2.default.utc(amc.expiryDate, _moment2.default.ISO_8601).endOf('day');
+          if (_moment2.default.utc(amc.expiryDate, _moment2.default.ISO_8601).
+                  isValid()) {
+            var dueDate_time = _moment2.default.utc(amc.expiryDate,
+                _moment2.default.ISO_8601).endOf('day');
             amc.dueDate = amc.expiryDate;
-            amc.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
-            amc.productType = 4;
+            amc.dueIn = dueDate_time.diff(_moment2.default.utc(), 'days');
+            amc.product_type = 4;
           }
 
           return amc;
         });
         amcs = amcs.filter(function (item) {
-          return item.dueIn !== undefined && item.dueIn !== null && item.dueIn <= 30 && item.dueIn >= 0;
+          return item.dueIn !== undefined && item.dueIn !== null &&
+              item.dueIn <= 30 && item.dueIn >= 0;
         });
 
         var insurances = result[2].map(function (item) {
           var insurance = item;
-          if ((0, _moment2.default)(insurance.expiryDate, _moment2.default.ISO_8601).isValid()) {
-            var dueDateTime = _moment2.default.utc(insurance.expiryDate, _moment2.default.ISO_8601).endOf('day');
+          if (_moment2.default.utc(insurance.expiryDate,
+                  _moment2.default.ISO_8601).isValid()) {
+            var dueDate_time = _moment2.default.utc(insurance.expiryDate,
+                _moment2.default.ISO_8601).endOf('day');
             insurance.dueDate = insurance.expiryDate;
-            insurance.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
-            insurance.productType = 3;
+            insurance.dueIn = dueDate_time.diff(_moment2.default.utc(), 'days');
+            insurance.product_type = 3;
           }
           return insurance;
         });
 
         insurances = insurances.filter(function (item) {
-          return item.dueIn !== undefined && item.dueIn !== null && item.dueIn <= 30 && item.dueIn >= 0;
+          return item.dueIn !== undefined && item.dueIn !== null &&
+              item.dueIn <= 30 && item.dueIn >= 0;
         });
 
         var warranties = result[3].map(function (item) {
           var warranty = item;
-          if ((0, _moment2.default)(warranty.expiryDate, _moment2.default.ISO_8601).isValid()) {
-            var dueDateTime = _moment2.default.utc(warranty.expiryDate, _moment2.default.ISO_8601).endOf('day');
+          if (_moment2.default.utc(warranty.expiryDate,
+                  _moment2.default.ISO_8601).isValid()) {
+            var dueDate_time = _moment2.default.utc(warranty.expiryDate,
+                _moment2.default.ISO_8601).endOf('day');
             warranty.dueDate = warranty.expiryDate;
-            warranty.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
-            warranty.productType = 2;
+            warranty.dueIn = dueDate_time.diff(_moment2.default.utc(), 'days');
+            warranty.product_type = 2;
           }
           return warranty;
         });
 
         warranties = warranties.filter(function (item) {
-          return item.dueIn !== undefined && item.dueIn !== null && item.dueIn <= 30 && item.dueIn >= 0;
+          return item.dueIn !== undefined && item.dueIn !== null &&
+              item.dueIn <= 30 && item.dueIn >= 0;
         });
 
-        return [].concat(_toConsumableArray(products), _toConsumableArray(warranties), _toConsumableArray(insurances), _toConsumableArray(amcs), _toConsumableArray(pucProducts));
+        var pucProducts = result[4].map(function(item) {
+          var puc = item;
+          if (_moment2.default.utc(puc.expiryDate, _moment2.default.ISO_8601).
+                  isValid()) {
+            var dueDate_time = _moment2.default.utc(puc.expiryDate,
+                _moment2.default.ISO_8601).endOf('day');
+            puc.dueDate = puc.expiryDate;
+            puc.dueIn = dueDate_time.diff(_moment2.default.utc(), 'days');
+            puc.product_type = 5;
+          }
+
+          return puc;
+        });
+
+        pucProducts = pucProducts.filter(function(item) {
+          return item.dueIn !== undefined && item.dueIn !== null &&
+              item.dueIn <= 30 && item.dueIn >= 0;
+        });
+
+        var productServiceSchedule = result[5].map(function(item) {
+          var scheduledProduct = item;
+          var scheduledDate = scheduledProduct.schedule ?
+              _moment2.default.utc(scheduledProduct.purchaseDate,
+                  _moment2.default.ISO_8601).
+                  add(scheduledProduct.schedule.dueIn_months, 'months') :
+              undefined;
+          if (scheduledDate &&
+              _moment2.default.utc(scheduledDate, _moment2.default.ISO_8601).
+                  isValid()) {
+            var dueDate_time = _moment2.default.utc(scheduledDate,
+                _moment2.default.ISO_8601).endOf('day');
+            scheduledProduct.dueDate = scheduledDate;
+            scheduledProduct.dueIn = dueDate_time.diff(_moment2.default.utc(),
+                'days');
+            scheduledProduct.product_type = 6;
+          }
+
+          return scheduledProduct;
+        });
+
+        productServiceSchedule = productServiceSchedule.filter(function(item) {
+          return item.dueIn !== undefined && item.dueIn !== null &&
+              item.dueIn <= 7 && item.dueIn >= 0;
+        });
+
+        return [].concat(_toConsumableArray(products),
+            _toConsumableArray(warranties), _toConsumableArray(insurances),
+            _toConsumableArray(amcs), _toConsumableArray(pucProducts),
+            _toConsumableArray(productServiceSchedule));
       });
     }
   }, {
@@ -407,8 +468,18 @@ var DashboardAdaptor = function () {
           $lte: _moment2.default.utc(),
           $gte: _moment2.default.utc().subtract(6, 'd').startOf('d')
         }
+      }), this.pucAdaptor.retrievePUCs({
+        status_type: [5, 11],
+        user_id: user.id || user.ID,
+        document_date: {
+          $lte: _moment2.default.utc(),
+          $gte: _moment2.default.utc().subtract(6, 'd').startOf('d'),
+        }
       })]).then(function (results) {
-        return [].concat(_toConsumableArray(results[0]), _toConsumableArray(results[1]), _toConsumableArray(results[2]), _toConsumableArray(results[3]), _toConsumableArray(results[4]));
+        return [].concat(_toConsumableArray(results[0]),
+            _toConsumableArray(results[1]), _toConsumableArray(results[2]),
+            _toConsumableArray(results[3]), _toConsumableArray(results[4]),
+            _toConsumableArray(results[5]));
       });
     }
   }, {

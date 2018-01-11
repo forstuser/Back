@@ -36,14 +36,13 @@ var ProductController = function () {
     key: 'createProduct',
     value: function createProduct(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!user) {
+      if (!request.pre.userExist) {
         return reply({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         });
-      } else if (user && !request.pre.forceUpdate) {
-        console.log(request.payload);
+      } else if (request.pre.userExist && !request.pre.forceUpdate) {
         var productBody = {
           product_name: request.payload.product_name,
           user_id: user.id || user.ID,
@@ -57,7 +56,16 @@ var ProductController = function () {
           seller_id: request.payload.seller_id,
           status_type: 11,
           document_number: request.payload.document_number,
-          document_date: request.payload.document_date ? (0, _moment2.default)(request.payload.document_date, _moment2.default.ISO_8601).isValid() ? (0, _moment2.default)(request.payload.document_date, _moment2.default.ISO_8601).startOf('day').format('YYYY-MM-DD') : (0, _moment2.default)(request.payload.document_date, 'DD MMM YY').startOf('day').format('YYYY-MM-DD') : undefined,
+          document_date: request.payload.document_date ?
+              _moment2.default.utc(request.payload.document_date,
+                  _moment2.default.ISO_8601).isValid() ?
+                  _moment2.default.utc(request.payload.document_date,
+                      _moment2.default.ISO_8601).
+                      startOf('day').
+                      format('YYYY-MM-DD') :
+                  _moment2.default.utc(request.payload.document_date,
+                      'DD MMM YY').startOf('day').format('YYYY-MM-DD') :
+              undefined,
           brand_name: request.payload.brand_name,
           copies: []
         };
@@ -108,16 +116,61 @@ var ProductController = function () {
       }
     }
   }, {
+    key: 'deleteProduct',
+    value: function deleteProduct(request, reply) {
+      var user = _shared2.default.verifyAuthorization(request.headers);
+      if (!request.pre.userExist) {
+        return reply({
+          status: false,
+          message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate,
+        });
+      } else if (request.pre.userExist && !request.pre.forceUpdate) {
+        return productAdaptor.deleteProduct(request.params.id, user.id ||
+            user.ID).then(function(deleted) {
+          if (deleted) {
+            return reply({
+              status: true,
+              message: 'successfull',
+              deleted: deleted,
+              forceUpdate: request.pre.forceUpdate,
+            });
+          } else {
+            return reply({
+              status: false,
+              message: 'Product delete failed',
+              forceUpdate: request.pre.forceUpdate,
+            });
+          }
+        }).catch(function(err) {
+          console.log('Error on ' + new Date() + ' for user ' +
+              (user.id || user.ID) + ' is as follow: \n \n ' + err);
+          return reply({
+            status: false,
+            message: 'An error occurred in product creation.',
+            forceUpdate: request.pre.forceUpdate,
+            err: err,
+          });
+        });
+      } else {
+        reply({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate,
+        });
+      }
+    }
+  }, {
     key: 'updateProduct',
     value: function updateProduct(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!user) {
+      if (!request.pre.userExist) {
         return reply({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         });
-      } else if (user && !request.pre.forceUpdate) {
+      } else if (request.pre.userExist && !request.pre.forceUpdate) {
         var productBody = {
           product_name: request.payload.product_name,
           user_id: user.id || user.ID,
@@ -133,7 +186,16 @@ var ProductController = function () {
           seller_id: request.payload.seller_id,
           status_type: 11,
           document_number: request.payload.document_number,
-          document_date: request.payload.document_date ? (0, _moment2.default)(request.payload.document_date, _moment2.default.ISO_8601).isValid() ? (0, _moment2.default)(request.payload.document_date, _moment2.default.ISO_8601).startOf('day').format('YYYY-MM-DD') : (0, _moment2.default)(request.payload.document_date, 'DD MMM YY').startOf('day').format('YYYY-MM-DD') : undefined,
+          document_date: request.payload.document_date ?
+              _moment2.default.utc(request.payload.document_date,
+                  _moment2.default.ISO_8601).isValid() ?
+                  _moment2.default.utc(request.payload.document_date,
+                      _moment2.default.ISO_8601).
+                      startOf('day').
+                      format('YYYY-MM-DD') :
+                  _moment2.default.utc(request.payload.document_date,
+                      'DD MMM YY').startOf('day').format('YYYY-MM-DD') :
+              undefined,
           brand_name: request.payload.brand_name,
           copies: []
         };
@@ -187,23 +249,24 @@ var ProductController = function () {
     key: 'updateUserReview',
     value: function updateUserReview(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!user) {
-        reply({
+      if (!request.pre.userExist) {
+        return reply({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         });
-      } else if (user && !request.pre.forceUpdate) {
+      } else if (request.pre.userExist && !request.pre.forceUpdate) {
         var id = request.params.id;
         if (request.params.reviewfor === 'brands') {
-          reply(productAdaptor.updateBrandReview(user, id, request));
+          return reply(productAdaptor.updateBrandReview(user, id, request));
         } else if (request.params.reviewfor === 'sellers') {
-          reply(productAdaptor.updateSellerReview(user, id, request.query.isonlineseller, request));
+          return reply(productAdaptor.updateSellerReview(user, id,
+              request.query.isonlineseller, request));
         } else {
-          reply(productAdaptor.updateProductReview(user, id, request));
+          return reply(productAdaptor.updateProductReview(user, id, request));
         }
       } else {
-        reply({
+        return reply({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -214,16 +277,19 @@ var ProductController = function () {
     key: 'retrieveProductDetail',
     value: function retrieveProductDetail(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!user) {
-        reply({
+      if (!request.pre.userExist) {
+        return reply({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         });
-      } else if (user && !request.pre.forceUpdate) {
-        reply(productAdaptor.prepareProductDetail(user, request)).code(200);
+      } else if (request.pre.userExist && !request.pre.forceUpdate) {
+        return reply(productAdaptor.prepareProductDetail({
+          user: user,
+          request: request,
+        })).code(200);
       } else {
-        reply({
+        return reply({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -234,13 +300,13 @@ var ProductController = function () {
     key: 'retrieveCenterProducts',
     value: function retrieveCenterProducts(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!user) {
-        reply({
+      if (!request.pre.userExist) {
+        return reply({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         });
-      } else if (user && !request.pre.forceUpdate) {
+      } else if (request.pre.userExist && !request.pre.forceUpdate) {
         var brandId = (request.query.brandids || '[]').split('[')[1].split(']')[0].split(',').filter(Boolean);
         var categoryId = (request.query.categoryids || '[]').split('[')[1].split(']')[0].split(',').filter(Boolean);
         var options = {
@@ -279,7 +345,7 @@ var ProductController = function () {
           });
         });
       } else {
-        reply({
+        return reply({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate

@@ -50,29 +50,13 @@ var DashboardController = function () {
     key: 'getDashboard',
     value: function getDashboard(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (user && !request.pre.forceUpdate) {
-        return userAdaptor.isUserValid(user).then(function (isValid) {
-          if (isValid) {
-            return reply(dashboardAdaptor.retrieveDashboardResult(user, request)).code(200);
-          }
-
-          return reply({
-            status: false,
-            message: 'Token Expired or Invalid',
-            forceUpdate: request.pre.forceUpdate
-          }).code(401);
-        }).catch(function (err) {
-          console.log('Error on ' + new Date() + ' for user ' + user.mobile_no + ' is as follow: \n \n ' + err);
-          return reply({
-            status: false,
-            message: 'Token Expired or Invalid',
-            forceUpdate: request.pre.forceUpdate
-          }).code(401);
-        });
-      } else if (!user) {
+      if (request.pre.userExist && !request.pre.forceUpdate) {
+        return reply(dashboardAdaptor.retrieveDashboardResult(user, request)).
+            code(200);
+      } else if (!request.pre.userExist) {
         return reply({
           status: false,
-          message: 'Token Expired or Invalid',
+          message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         }).code(401);
       } else {
@@ -87,29 +71,12 @@ var DashboardController = function () {
     key: 'getEHome',
     value: function getEHome(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (user && !request.pre.forceUpdate) {
-        return userAdaptor.isUserValid(user).then(function (isValid) {
-          if (isValid) {
-            return reply(eHomeAdaptor.prepareEHomeResult(user, request)).code(200);
-          }
-
-          return reply({
-            status: false,
-            message: 'Token Expired or Invalid',
-            forceUpdate: request.pre.forceUpdate
-          }).code(401);
-        }).catch(function (err) {
-          console.log('Error on ' + new Date() + ' for user ' + user.mobile_no + ' is as follow: \n \n ' + err);
-          return reply({
-            status: false,
-            message: 'Token Expired or Invalid',
-            forceUpdate: request.pre.forceUpdate
-          }).code(401);
-        });
-      } else if (!user) {
+      if (request.pre.userExist && !request.pre.forceUpdate) {
+        return reply(eHomeAdaptor.prepareEHomeResult(user, request)).code(200);
+      } else if (!request.pre.userExist) {
         return reply({
           status: false,
-          message: 'Token Expired or Invalid',
+          message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         }).code(401);
       } else {
@@ -124,33 +91,27 @@ var DashboardController = function () {
     key: 'getProductsInCategory',
     value: function getProductsInCategory(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!user) {
+      if (!request.pre.userExist) {
         return reply({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
-        });
-      } else if (user && !request.pre.forceUpdate) {
-        return userAdaptor.isUserValid(user).then(function (isValid) {
-          if (isValid) {
-            return reply(eHomeAdaptor.prepareProductDetail(user, request.params.id, request.query.subCategoryId,
-            /* request.query.pageno, */
-            request.query.brandids || '[]', request.query.categoryids || '[]', request.query.offlinesellerids || '[]', request.query.onlinesellerids || '[]', request.query.sortby, request.query.searchvalue, request)).code(200);
+        }).code(401);
+      } else if (request.pre.userExist && !request.pre.forceUpdate) {
+        return reply(eHomeAdaptor.prepareProductDetail({
+          user: {
+            user: user,
+            masterCategoryId: request.params.id,
+            ctype: request.query.subCategoryId,
+            brandIds: request.query.brandids || '[]',
+            categoryIds: request.query.categoryids || '[]',
+            offlineSellerIds: request.query.offlinesellerids || '[]',
+            onlineSellerIds: request.query.onlinesellerids || '[]',
+            sortBy: request.query.sortby,
+            searchValue: request.query.searchvalue,
+            request: request,
           }
-
-          return reply({
-            status: false,
-            message: 'Token Expired or Invalid',
-            forceUpdate: request.pre.forceUpdate
-          }).code(401);
-        }).catch(function (err) {
-          console.log('Error on ' + new Date() + ' for user ' + user.mobile_no + ' is as follow: \n \n ' + err);
-          return reply({
-            status: false,
-            message: 'Token Expired or Invalid',
-            forceUpdate: request.pre.forceUpdate
-          }).code(401);
-        });
+        })).code(200);
       } else {
         return reply({
           status: false,
@@ -163,36 +124,20 @@ var DashboardController = function () {
     key: 'updateNotificationStatus',
     value: function updateNotificationStatus(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!user) {
+      if (!request.pre.userExist) {
         return reply({
           status: false,
-          message: 'Unauthorized'
-        });
+          message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate,
+        }).code(401);
       } else {
-        //if (user && !request.pre.forceUpdate) {
-        return userAdaptor.isUserValid(user).then(function (isValid) {
-          if (isValid) {
-            return notificationAdaptor.updateNotificationStatus(user, request.payload.notificationIds).then(function (count) {
-
-              return reply({ status: true }).code(201); //, forceUpdate: request.pre.forceUpdate}).code(201);
-            }).catch(function (err) {
-              console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
-              return reply({ status: false }).code(500); //, forceUpdate: request.pre.forceUpdate}).code(500);
-            });
-          }
-
-          return reply({
-            status: false,
-            message: 'Token Expired or Invalid',
-            forceUpdate: request.pre.forceUpdate
-          }).code(401);
-        }).catch(function (err) {
-          console.log('Error on ' + new Date() + ' for user ' + user.mobile_no + ' is as follow: \n \n ' + err);
-          return reply({
-            status: false,
-            message: 'Token Expired or Invalid',
-            forceUpdate: request.pre.forceUpdate
-          }).code(401);
+        return notificationAdaptor.updateNotificationStatus(user,
+            request.payload.notificationIds).then(function() {
+          return reply({status: true}).code(201); //, forceUpdate: request.pre.forceUpdate}).code(201);
+        }).catch(function(err) {
+          console.log('Error on ' + new Date() + ' for user ' +
+              (user.id || user.ID) + ' is as follow: \n \n ' + err);
+          return reply({status: false}).code(500); //, forceUpdate: request.pre.forceUpdate}).code(500);
         });
       }
     }
@@ -200,32 +145,15 @@ var DashboardController = function () {
     key: 'getMailbox',
     value: function getMailbox(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!user) {
-        reply({
+      if (!request.pre.userExist) {
+        return reply({
           status: false,
           message: 'Unauthorized',
-          forceUpdate: request.pre.forceUpdate
-        });
+          forceUpdate: request.pre.forceUpdate,
+        }).code(401);
       } else if (!request.pre.forceUpdate && user) {
-
-        return userAdaptor.isUserValid(user).then(function (isValid) {
-          if (isValid) {
-            return reply(notificationAdaptor.retrieveNotifications(user, request)).code(200);
-          }
-
-          return reply({
-            status: false,
-            message: 'Token Expired or Invalid',
-            forceUpdate: request.pre.forceUpdate
-          }).code(401);
-        }).catch(function (err) {
-          console.log('Error on ' + new Date() + ' for user ' + user.mobile_no + ' is as follow: \n \n ' + err);
-          return reply({
-            status: false,
-            message: 'Token Expired or Invalid',
-            forceUpdate: request.pre.forceUpdate
-          }).code(401);
-        });
+        return reply(notificationAdaptor.retrieveNotifications(user, request)).
+            code(200);
       } else {
         return reply({
           status: false,

@@ -5,6 +5,7 @@ import shared from '../../helpers/shared';
 import config from '../../config/main';
 import ProductAdaptor from './product';
 import AMCAdaptor from './amcs';
+import PUCAdaptor from './pucs';
 import InsuranceAdaptor from './insurances';
 import WarrantyAdaptor from './warranties';
 import smtpTransport from 'nodemailer-smtp-transport';
@@ -20,6 +21,7 @@ class NotificationAdaptor {
     this.amcAdaptor = new AMCAdaptor(modals);
     this.insuranceAdaptor = new InsuranceAdaptor(modals);
     this.warrantyAdaptor = new WarrantyAdaptor(modals);
+    this.pucAdaptor = new PUCAdaptor(modals);
   }
 
   static sendVerificationMail(email, user) {
@@ -204,6 +206,11 @@ class NotificationAdaptor {
         user_id: user.id || user.ID,
         status_type: [5, 11],
       }),
+      this.pucAdaptor.retrievePUCs({
+        user_id: user.id || user.ID,
+        status_type: [5, 11],
+        main_category_id: [3],
+      }),
       this.productAdaptor.retrieveProducts({
         user_id: user.id || user.ID,
         status_type: [5, 11],
@@ -223,8 +230,8 @@ class NotificationAdaptor {
           }
 
           if (metaData.name.toLowerCase().includes('address')) {
-            product.description = metaData.name.toLowerCase().
-                includes('address') ? `${metaData.value}` : '';
+            product.description = metaData.value;
+            product.address = metaData.value;
           }
 
           return metaData;
@@ -246,19 +253,18 @@ class NotificationAdaptor {
               item.dueIn <= 30 && item.dueIn >= 0));
 
       let pucProducts = result[4].map((item) => {
-        const product = item;
-        if (product.pucDetail &&
-            moment.utc(product.pucDetail.expiry_date, moment.ISO_8601).
-                isValid()) {
-          const dueDateTime = moment.utc(product.pucDetail.expiry_date,
-              moment.ISO_8601).
+        const puc = item;
+        if (moment.utc(puc.expiryDate, moment.ISO_8601).isValid()) {
+          const dueDateTime = moment.utc(puc.expiryDate, moment.ISO_8601).
               endOf('day');
-          product.dueDate = product.pucDetail.expiry_date;
-          product.dueIn = dueDateTime.diff(moment.utc(), 'days');
+          puc.dueDate = puc.expiryDate;
+          puc.dueIn = dueDateTime.diff(moment.utc(), 'days');
+          puc.productType = 3;
+          puc.title = 'PUC Renewal Pending';
+          puc.description = puc.productName;
         }
 
-        product.productType = 5;
-        return product;
+        return puc;
       });
 
       pucProducts = pucProducts.filter(
@@ -322,12 +328,37 @@ class NotificationAdaptor {
           item => (item.dueIn !== undefined && item.dueIn !== null) &&
               item.dueIn <= 30 && item.dueIn >= 0);
 
+      let productServiceSchedule = result[5].map((item) => {
+        const scheduledProduct = item;
+        const scheduledDate = scheduledProduct.schedule ?
+            moment.utc(scheduledProduct.purchaseDate, moment.ISO_8601).
+                add(scheduledProduct.schedule.due_in_months, 'months') :
+            undefined;
+        if (scheduledDate &&
+            moment.utc(scheduledDate, moment.ISO_8601).isValid()) {
+          const due_date_time = moment.utc(scheduledDate, moment.ISO_8601).
+              endOf('day');
+          scheduledProduct.dueDate = scheduledDate;
+          scheduledProduct.dueIn = due_date_time.diff(moment.utc(), 'days');
+          scheduledProduct.product_type = 3;
+          scheduledProduct.Product.title = `Service is pending for ${scheduledProduct.productName}`;
+          scheduledProduct.Product.description = `${scheduledProduct.productName}`;
+        }
+
+        return scheduledProduct;
+      });
+
+      productServiceSchedule = productServiceSchedule.filter(
+          item => ((item.dueIn !== undefined && item.dueIn !== null) &&
+              item.dueIn <= 7 && item.dueIn >= 0));
+
       return [
         ...products,
         ...warranties,
         ...insurances,
         ...amcs,
-        ...pucProducts];
+        ...pucProducts,
+        ...productServiceSchedule];
     });
   }
 
@@ -731,14 +762,15 @@ class NotificationAdaptor {
 
       products = products.filter(
           item => days === 15 ?
-              (item.dueDate <= moment().add(days, 'day').endOf('day') &&
-                  item.dueDate >= moment().add(days, 'day').startOf('day')) :
-              (item.dueDate <= moment().add(days, 'day').endOf('day') &&
-                  item.dueDate >= moment().startOf('day')));
+              (item.dueDate <= moment.utc().add(days, 'day').endOf('day') &&
+                  item.dueDate >=
+                  moment.utc().add(days, 'day').startOf('day')) :
+              (item.dueDate <= moment.utc().add(days, 'day').endOf('day') &&
+                  item.dueDate >= moment.utc().startOf('day')));
       let amcs = result[1].map((item) => {
         const amc = item;
-        if (moment(amc.expiryDate, moment.ISO_8601).isValid()) {
-          const dueDateTime = moment(amc.expiryDate, moment.ISO_8601);
+        if (moment.utc(amc.expiryDate, moment.ISO_8601).isValid()) {
+          const dueDateTime = moment.utc(amc.expiryDate, moment.ISO_8601);
           amc.dueDate = amc.expiryDate;
           amc.dueIn = dueDateTime.diff(moment.utc(), 'days');
           amc.productType = 3;

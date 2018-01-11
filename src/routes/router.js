@@ -31,6 +31,10 @@ function prepareServiceCenterRoutes(
         auth: 'jwt',
         pre: [
           {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
         ],
         handler: ServiceCenterController.retrieveServiceCenters,
         validate: {
@@ -57,6 +61,10 @@ function prepareServiceCenterRoutes(
         auth: 'jwt',
         pre: [
           {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
         ],
         handler: ServiceCenterController.retrieveServiceCenters,
       },
@@ -68,6 +76,10 @@ function prepareServiceCenterRoutes(
         auth: 'jwt',
         pre: [
           {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
         ],
         handler: ServiceCenterController.retrieveServiceCenterFilters,
       },
@@ -79,6 +91,10 @@ function prepareServiceCenterRoutes(
       config: {
         pre: [
           {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
         ],
         handler: ServiceCenterController.retrieveServiceCenters,
       },
@@ -89,6 +105,10 @@ function prepareServiceCenterRoutes(
       config: {
         pre: [
           {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
         ],
         handler: ServiceCenterController.retrieveServiceCenterFilters,
       },
@@ -106,6 +126,10 @@ function prepareBrandRoutes(brandController, brandRoutes) {
         auth: 'jwt',
         pre: [
           {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
         ],
         handler: BrandController.getBrands,
       },
@@ -117,6 +141,10 @@ function prepareBrandRoutes(brandController, brandRoutes) {
       config: {
         pre: [
           {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
         ],
         handler: BrandController.getBrands,
       },
@@ -128,6 +156,10 @@ function prepareBrandRoutes(brandController, brandRoutes) {
       config: {
         pre: [
           {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
         ],
         handler: BrandController.getBrandASC,
       },
@@ -145,6 +177,10 @@ function prepareCategoryRoutes(categoryController, categoryRoutes) {
         auth: 'jwt',
         pre: [
           {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
         ],
         handler: CategoryController.getCategories,
       },
@@ -155,6 +191,10 @@ function prepareCategoryRoutes(categoryController, categoryRoutes) {
       config: {
         pre: [
           {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
         ],
         handler: CategoryController.getCategories,
       },
@@ -176,6 +216,10 @@ function prepareAuthRoutes(userController, authRoutes) {
       config: {
         pre: [
           {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
         ],
         handler: UserController.dispatchOTP,
         description: 'Generate OTP.',
@@ -209,6 +253,10 @@ function prepareAuthRoutes(userController, authRoutes) {
         auth: 'jwt',
         pre: [
           {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
         ],
         handler: UserController.subscribeUser,
         description: 'Update User FCM Server ID.',
@@ -242,6 +290,10 @@ function prepareAuthRoutes(userController, authRoutes) {
         auth: 'jwt',
         pre: [
           {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
         ],
         handler: UserController.updateUserProfile,
         description: 'Update User Profile.',
@@ -283,6 +335,10 @@ function prepareAuthRoutes(userController, authRoutes) {
         auth: 'jwt',
         pre: [
           {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
         ],
         handler: UserController.retrieveUserProfile,
         description: 'Get User Profile.',
@@ -329,6 +385,10 @@ function prepareAuthRoutes(userController, authRoutes) {
         auth: 'jwt',
         pre: [
           {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
         ],
         handler: UserController.retrieveNearBy,
         description: 'Get User Profile.',
@@ -396,6 +456,10 @@ function prepareAuthRoutes(userController, authRoutes) {
         auth: 'jwt',
         pre: [
           {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
         ],
         description: 'Logout User.',
         tags: ['api', 'User', 'Authentication'],
@@ -432,6 +496,10 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
         auth: 'jwt',
         pre: [
           {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
         ],
         files: {
           relativeTo: Path.join(__dirname, '../static/src'),
@@ -457,6 +525,10 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
         auth: 'jwt',
         pre: [
           {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
         ],
         files: {
           relativeTo: Path.join(__dirname, '../static/src'),
@@ -481,6 +553,10 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
         auth: 'jwt',
         pre: [
           {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
         ],
         files: {
           relativeTo: Path.join(__dirname, '../static/src'),
@@ -506,6 +582,10 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
         // auth: 'jwt',
         pre: [
           {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
         ],
         handler: UploadController.retrieveFiles,
       },
@@ -519,6 +599,10 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
         auth: 'jwt',
         pre: [
           {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
         ],
         handler: UploadController.deleteFile,
       },
@@ -532,6 +616,10 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
         // auth: 'jwt',
         pre: [
           {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
         ],
         handler: UploadController.retrieveUserImage,
       },
@@ -568,6 +656,10 @@ function prepareDashboardRoutes(dashboardController, dashboardRoutes) {
         auth: 'jwt',
         pre: [
           {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
         ],
         handler: DashboardController.getDashboard,
       },
@@ -581,6 +673,10 @@ function prepareDashboardRoutes(dashboardController, dashboardRoutes) {
         auth: 'jwt',
         pre: [
           {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
         ],
         handler: DashboardController.getEHome,
       },
@@ -594,6 +690,10 @@ function prepareDashboardRoutes(dashboardController, dashboardRoutes) {
         auth: 'jwt',
         pre: [
           {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
         ],
         handler: DashboardController.getProductsInCategory,
       },
@@ -607,6 +707,10 @@ function prepareDashboardRoutes(dashboardController, dashboardRoutes) {
         auth: 'jwt',
         pre: [
           {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
         ],
         handler: DashboardController.getMailbox,
       },
@@ -620,6 +724,10 @@ function prepareDashboardRoutes(dashboardController, dashboardRoutes) {
         auth: 'jwt',
         pre: [
           {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
         ],
         handler: DashboardController.updateNotificationStatus,
         validate: {
@@ -640,6 +748,10 @@ function prepareDashboardRoutes(dashboardController, dashboardRoutes) {
         auth: 'jwt',
         pre: [
           {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
         ],
         handler: DashboardController.notifyUser,
         validate: {
@@ -669,6 +781,10 @@ function prepareProductRoutes(productController, productRoutes) {
         auth: 'jwt',
         pre: [
           {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
         ],
         description: 'Update User Review.',
         validate: {
@@ -701,6 +817,10 @@ function prepareProductRoutes(productController, productRoutes) {
         auth: 'jwt',
         pre: [
           {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
         ],
         handler: ProductController.retrieveProductDetail,
         description: 'Get Product Details.',
@@ -725,6 +845,10 @@ function prepareProductRoutes(productController, productRoutes) {
         auth: 'jwt',
         pre: [
           {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
         ],
         handler: ProductController.retrieveCenterProducts,
         description: 'Get Center Products.',
@@ -749,6 +873,10 @@ function prepareProductRoutes(productController, productRoutes) {
         auth: 'jwt',
         pre: [
           {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
         ],
         handler: ProductController.createProduct,
         description: 'Create Product.',
@@ -798,26 +926,26 @@ function prepareProductRoutes(productController, productRoutes) {
                 effective_date: [joi.string(), joi.allow(null)],
                 expiry_period: [joi.number(), joi.allow(null)],
                 seller_name: [joi.string(), joi.allow(null)],
-                value: [joi.number(), joi.allow(null)],
                 seller_contact: [joi.string(), joi.allow(null)],
+                value: [joi.number(), joi.allow(null)],
               }), joi.allow(null)],
             amc: [
               joi.object().keys({
                 id: [joi.number(), joi.allow(null)],
                 effective_date: [joi.string(), joi.allow(null)],
                 expiry_period: [joi.number(), joi.allow(null)],
-                value: [joi.number(), joi.allow(null)],
                 seller_name: [joi.string(), joi.allow(null)],
                 seller_contact: [joi.string(), joi.allow(null)],
+                value: [joi.number(), joi.allow(null)],
               }), joi.allow(null)],
             repair: [
               joi.object().keys({
                 id: [joi.number(), joi.allow(null)],
                 effective_date: [joi.string(), joi.allow(null)],
                 repair_for: [joi.string(), joi.allow(null)],
-                value: [joi.number(), joi.allow(null)],
                 seller_name: [joi.string(), joi.allow(null)],
                 seller_contact: [joi.string(), joi.allow(null)],
+                value: [joi.number(), joi.allow(null)],
                 warranty_upto: [joi.string(), joi.allow(null)],
               }), joi.allow(null)],
           },
@@ -832,6 +960,10 @@ function prepareProductRoutes(productController, productRoutes) {
         auth: 'jwt',
         pre: [
           {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
         ],
         handler: ProductController.updateProduct,
         description: 'Update Product.',
@@ -841,6 +973,7 @@ function prepareProductRoutes(productController, productRoutes) {
             brand_name: [joi.string(), joi.allow(null)],
             main_category_id: [joi.number(), joi.allow(null)],
             category_id: [joi.number(), joi.allow(null)],
+            sub_category_id: [joi.number(), joi.allow(null)],
             brand_id: [joi.number(), joi.allow(null)],
             colour_id: [joi.number(), joi.allow(null)],
             value: [joi.number(), joi.allow(null)],
@@ -863,6 +996,7 @@ function prepareProductRoutes(productController, productRoutes) {
                 dual_id: [joi.number(), joi.allow(null)],
                 extended_id: [joi.number(), joi.allow(null)],
                 extended_provider_id: [joi.number(), joi.allow(null)],
+                extended_provider_name: [joi.string(), joi.allow(null)],
                 renewal_type: [joi.number(), joi.allow(null)],
                 dual_renewal_type: [joi.number(), joi.allow(null)],
                 extended_renewal_type: [joi.number(), joi.allow(null)],
@@ -876,6 +1010,7 @@ function prepareProductRoutes(productController, productRoutes) {
                 effective_date: [joi.string(), joi.allow(null)],
                 provider_id: [joi.number(), joi.allow(null)],
                 policy_no: [joi.string(), joi.allow(null)],
+                provider_name: [joi.string(), joi.allow(null)],
                 value: [joi.number(), joi.allow(null)],
                 amount_insured: [joi.string(), joi.allow(null)],
                 expiry_period: [joi.number(), joi.allow(null)],
@@ -913,6 +1048,25 @@ function prepareProductRoutes(productController, productRoutes) {
         },
       },
     });
+    productRoutes.push({
+      method: 'DELETE',
+      path: '/products/{id}',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {
+            method: appVersionHelper.checkAppVersion,
+            assign: 'forceUpdate',
+          },
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: ProductController.deleteProduct,
+        description: 'Delete Product.',
+      },
+    });
   }
 }
 
@@ -929,8 +1083,12 @@ function prepareInsightRoutes(insightController, insightRoutes) {
         auth: 'jwt',
         pre: [
           {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
         ],
-        handler: InsightController.retrieveCategorywiseInsight,
+        handler: InsightController.retrieveCategoryWiseInsight,
         description: 'Get Insight Data.',
         plugins: {
           'hapi-swagger': {
@@ -952,6 +1110,10 @@ function prepareInsightRoutes(insightController, insightRoutes) {
         auth: 'jwt',
         pre: [
           {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
         ],
         handler: InsightController.retrieveInsightForSelectedCategory,
         description: 'Get Insight Data.',
@@ -1012,6 +1174,17 @@ function prepareGeneralRoutes(generalController, generalRoutes) {
       method: 'GET',
       path: '/repairs/products',
       config: {
+        auth: 'jwt',
+        pre: [
+          {
+            method: appVersionHelper.checkAppVersion,
+            assign: 'forceUpdate',
+          },
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
         handler: GeneralController.retrieveRepairableProducts,
         description: 'Retrieve Repairable Products',
       },
@@ -1024,6 +1197,10 @@ function prepareGeneralRoutes(generalController, generalRoutes) {
         auth: 'jwt',
         pre: [
           {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
         ],
         handler: GeneralController.intializeUserProduct,
         description: 'Create Product.',
@@ -1035,13 +1212,33 @@ function prepareGeneralRoutes(generalController, generalRoutes) {
             category_id: joi.number(),
             brand_id: [joi.number(), joi.allow(null)],
             colour_id: [joi.number(), joi.allow(null)],
-            purchase_cost: [joi.number(), joi.allow(null)],
+            value: [joi.number(), joi.allow(null)],
             taxes: [joi.number(), joi.allow(null)],
             seller_id: [joi.number(), joi.allow(null)],
             document_number: [joi.string(), joi.allow(null)],
             document_date: [joi.string(), joi.allow(null)],
           },
         },
+      },
+    });
+
+    generalRoutes.push({
+      method: 'PUT',
+      path: '/service/centers/accessed',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {
+            method: appVersionHelper.checkAppVersion,
+            assign: 'forceUpdate',
+          },
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: GeneralController.serviceCenterAccessed,
+        description: 'Update user service center accessed.',
       },
     });
   }
@@ -1061,6 +1258,10 @@ function prepareProductItemRoutes(productItemController, productItemRoutes) {
         auth: 'jwt',
         pre: [
           {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
         ],
         handler: ProductItemController.updateRepair,
         description: 'Update Repair.',
@@ -1072,7 +1273,7 @@ function prepareProductItemRoutes(productItemController, productItemRoutes) {
             seller_contact: [joi.string(), joi.allow(null)],
             seller_address: [joi.string(), joi.allow(null)],
             seller_id: [joi.number(), joi.allow(null)],
-            repair_cost: [joi.number(), joi.allow(null)],
+            value: [joi.number(), joi.allow(null)],
             warranty_upto: [joi.string(), joi.allow(null)],
           },
         },
@@ -1086,6 +1287,10 @@ function prepareProductItemRoutes(productItemController, productItemRoutes) {
         auth: 'jwt',
         pre: [
           {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
         ],
         handler: ProductItemController.updateRepair,
         description: 'Update Repair.',
@@ -1096,7 +1301,7 @@ function prepareProductItemRoutes(productItemController, productItemRoutes) {
             seller_name: [joi.string(), joi.allow(null)],
             seller_contact: [joi.string(), joi.allow(null)],
             seller_id: [joi.number(), joi.allow(null)],
-            repair_cost: [joi.number(), joi.allow(null)],
+            value: [joi.number(), joi.allow(null)],
             warranty_upto: [joi.string(), joi.allow(null)],
           },
         },
@@ -1166,6 +1371,10 @@ export default (app, modals) => {
         auth: 'jwt',
         pre: [
           {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
         ],
         handler: SearchController.retrieveSearch,
         description: 'Get Search Data.',

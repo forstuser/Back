@@ -15,13 +15,15 @@ class SearchController {
 
 	static retrieveSearch(request, reply) {
 		const user = shared.verifyAuthorization(request.headers);
-		if (!user) {
-			reply({
-				status: false,
-				message: 'Unauthorized'
-			});
+    if (!request.pre.userExist) {
+      return reply({
+        status: false,
+        message: 'Unauthorized',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(401);
 		} else {
-			reply(searchAdaptor.prepareSearchResult(user, request.query.searchvalue));
+      return reply(
+          searchAdaptor.prepareSearchResult(user, request.query.searchvalue));
 		}
 	}
 }

@@ -193,7 +193,8 @@ var EHomeAdaptor = function () {
             return amcItem.masterCategoryId === category.id;
           });
           var expenses = _lodash2.default.chain([].concat(_toConsumableArray(products), _toConsumableArray(inProgressProduct)) || []).sortBy(function (item) {
-            return (0, _moment2.default)(item.lastUpdatedAt, _moment2.default.ISO_8601);
+            return _moment2.default.utc(item.lastUpdatedAt,
+                _moment2.default.ISO_8601);
           }).reverse().value();
           category.expenses = expenses;
           category.cLastUpdate = expenses && expenses.length > 0 ? expenses[0].lastUpdatedAt : null;
@@ -215,8 +216,33 @@ var EHomeAdaptor = function () {
     }
   }, {
     key: 'prepareProductDetail',
-    value: function prepareProductDetail(user, masterCategoryId, ctype, /* pageNo, */brandIds, categoryIds, offlineSellerIds, onlineSellerIds, sortBy, searchValue, request) {
-      return this.fetchProductDetails(user, masterCategoryId, ctype || undefined, brandIds.split('[')[1].split(']')[0].split(',').filter(Boolean), categoryIds.split('[')[1].split(']')[0].split(',').filter(Boolean), offlineSellerIds.split('[')[1].split(']')[0].split(',').filter(Boolean), onlineSellerIds.split('[')[1].split(']')[0].split(',').filter(Boolean), sortBy, '%' + (searchValue || '') + '%').then(function (result) {
+    value: function prepareProductDetail(parameters) {
+      var user = parameters.user,
+          masterCategoryId = parameters.masterCategoryId,
+          ctype = parameters.ctype,
+          brandIds = parameters.brandIds,
+          categoryIds = parameters.categoryIds,
+          offlineSellerIds = parameters.offlineSellerIds,
+          onlineSellerIds = parameters.onlineSellerIds,
+          sortBy = parameters.sortBy,
+          searchValue = parameters.searchValue,
+          request = parameters.request;
+
+      return this.fetchProductDetails({
+        user: user,
+        masterCategoryId: masterCategoryId,
+        subCategoryId: ctype || undefined,
+        brandIds: brandIds.split('[')[1].split(']')[0].split(',').
+            filter(Boolean),
+        categoryIds: categoryIds.split('[')[1].split(']')[0].split(',').
+            filter(Boolean),
+        offlineSellerIds: offlineSellerIds.split('[')[1].split(']')[0].split(
+            ',').filter(Boolean),
+        onlineSellerIds: onlineSellerIds.split('[')[1].split(']')[0].split(',').
+            filter(Boolean),
+        sortBy: sortBy,
+        searchValue: '%' + (searchValue || '') + '%',
+      }).then(function(result) {
         var productList = result.productList;
         /* const listIndex = (pageNo * 10) - 10; */
 
@@ -227,7 +253,7 @@ var EHomeAdaptor = function () {
           brandItem.id = brandItem.brandId;
           return brandItem;
         });
-        brands = _lodash2.default.uniqBy(brands, 'brandId');
+        brands = _lodash2.default.uniqBy(brands, 'id');
 
         var offlineSellers = result.productList.filter(function (item) {
           return item.sellers !== null;
@@ -289,7 +315,17 @@ var EHomeAdaptor = function () {
     }
   }, {
     key: 'fetchProductDetails',
-    value: function fetchProductDetails(user, masterCategoryId, subCategoryId, brandIds, categoryIds, offlineSellerIds, onlineSellerIds, sortBy, searchValue) {
+    value: function fetchProductDetails(parameters) {
+      var user = parameters.user,
+          masterCategoryId = parameters.masterCategoryId,
+          subCategoryId = parameters.subCategoryId,
+          brandIds = parameters.brandIds,
+          categoryIds = parameters.categoryIds,
+          offlineSellerIds = parameters.offlineSellerIds,
+          onlineSellerIds = parameters.onlineSellerIds,
+          sortBy = parameters.sortBy,
+          searchValue = parameters.searchValue;
+
       var categoryOption = {
         category_level: 1,
         status_type: 1
@@ -353,7 +389,8 @@ var EHomeAdaptor = function () {
             return productItem.masterCategoryId === category.id;
           }).value();
           category.productList = _lodash2.default.chain([].concat(_toConsumableArray(products), _toConsumableArray(inProgressProduct)) || []).sortBy(function (item) {
-            return (0, _moment2.default)(item.purchaseDate, _moment2.default.ISO_8601);
+            return _moment2.default.utc(item.purchaseDate,
+                _moment2.default.ISO_8601);
           }).reverse().value();
 
           return category;

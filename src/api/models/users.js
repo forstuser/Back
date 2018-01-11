@@ -54,10 +54,16 @@ export default (sequelize, DataTypes) => {
     image_name: {
       type: DataTypes.STRING,
     },
+    last_api: {
+      type: DataTypes.STRING,
+    },
     last_login_at: {
       type: DataTypes.DATE,
     },
     last_logout_at: {
+      type: DataTypes.DATE,
+    },
+    last_active_date: {
       type: DataTypes.DATE,
     },
     last_password_change_at: {
@@ -70,6 +76,10 @@ export default (sequelize, DataTypes) => {
     updated_at: {
       type: DataTypes.DATE,
       defaultValue: sequelize.literal('NOW()'),
+    },
+    service_center_accessed: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
     },
   }, {
     freezeTableName: true,

@@ -8,16 +8,21 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var fcmManager = function () {
-  function fcmManager(fcmModal) {
-    _classCallCheck(this, fcmManager);
+var FCMManager = function() {
+  function FCMManager(fcmModal) {
+    _classCallCheck(this, FCMManager);
 
     this.fcmModal = fcmModal;
   }
 
-  _createClass(fcmManager, [{
+  _createClass(FCMManager, [
+    {
     key: 'insertFcmDetails',
-    value: function insertFcmDetails(userId, fcmId, platformId) {
+      value: function insertFcmDetails(parameters) {
+        var userId = parameters.userId,
+            fcmId = parameters.fcmId,
+            platformId = parameters.platformId;
+
       if (!fcmId || fcmId === '') {
         return Promise.resolve('NULL FCMID');
       }
@@ -41,7 +46,10 @@ var fcmManager = function () {
     }
   }, {
     key: 'deleteFcmDetails',
-    value: function deleteFcmDetails(userId, fcmId) {
+      value: function deleteFcmDetails(parameters) {
+        var userId = parameters.userId,
+            fcmId = parameters.fcmId;
+
       return this.fcmModal.destroy({
         where: {
           user_id: userId,
@@ -55,7 +63,7 @@ var fcmManager = function () {
     }
   }]);
 
-  return fcmManager;
+  return FCMManager;
 }();
 
-exports.default = fcmManager;
+exports.default = FCMManager;

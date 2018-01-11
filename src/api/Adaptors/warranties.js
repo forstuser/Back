@@ -71,6 +71,7 @@ class WarrantyAdaptor {
           model: this.modals.onlineSellers,
           as: 'onlineSellers',
           attributes: [
+            ['sid', 'id'],
             [
               'seller_name',
               'sellerName'],
@@ -108,6 +109,7 @@ class WarrantyAdaptor {
           model: this.modals.offlineSellers,
           as: 'sellers',
           attributes: [
+            ['sid', 'id'],
             [
               'seller_name',
               'sellerName'],
@@ -295,8 +297,7 @@ class WarrantyAdaptor {
       where: {
         id,
       },
-    }).
-        then(result => {
+    }).then(result => {
           result.updateAttributes(values);
           return result.toJSON();
         });

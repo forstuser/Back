@@ -79,7 +79,17 @@ var InsuranceAdaptor = function () {
         }, {
           model: this.modals.onlineSellers,
           as: 'onlineSellers',
-          attributes: [['seller_name', 'sellerName'], 'url', 'gstin', 'contact', 'email'],
+          attributes: [
+            [
+              'sid',
+              'id'],
+            [
+              'seller_name',
+              'sellerName'],
+            'url',
+            'gstin',
+            'contact',
+            'email'],
           required: false
         }, {
           model: this.modals.insuranceBrands,
@@ -89,7 +99,37 @@ var InsuranceAdaptor = function () {
         }, {
           model: this.modals.offlineSellers,
           as: 'sellers',
-          attributes: [['seller_name', 'sellerName'], ['owner_name', 'ownerName'], ['pan_no', 'panNo'], ['reg_no', 'regNo'], ['is_service', 'isService'], 'url', 'gstin', ['contact_no', 'contact'], 'email', 'address', 'city', 'state', 'pincode', 'latitude', 'longitude'],
+          attributes: [
+            [
+              'sid',
+              'id'],
+            [
+              'seller_name',
+              'sellerName'],
+            [
+              'owner_name',
+              'ownerName'],
+            [
+              'pan_no',
+              'panNo'],
+            [
+              'reg_no',
+              'regNo'],
+            [
+              'is_service',
+              'isService'],
+            'url',
+            'gstin',
+            [
+              'contact_no',
+              'contact'],
+            'email',
+            'address',
+            'city',
+            'state',
+            'pincode',
+            'latitude',
+            'longitude'],
           required: false
         }],
         attributes: ['id', ['product_id', 'productId'], [this.modals.sequelize.literal('"product"."main_category_id"'), 'masterCategoryId'], ['job_id', 'jobId'], ['document_number', 'policyNo'], 'provider_id', [this.modals.sequelize.literal('"renewalType"."title"'), 'premiumType'], [this.modals.sequelize.literal('"product"."product_name"'), 'productName'], ['renewal_cost', 'premiumAmount'], ['renewal_cost', 'value'], ['renewal_taxes', 'taxes'], ['amount_insured', 'amountInsured'], ['effective_date', 'effectiveDate'], ['expiry_date', 'expiryDate'], ['document_date', 'purchaseDate'], ['updated_at', 'updatedDate'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"product_id"')), 'productURL'], 'copies', 'user_id'],
@@ -153,6 +193,55 @@ var InsuranceAdaptor = function () {
     value: function createInsurances(values) {
       return this.modals.insurances.create(values).then(function (result) {
         return result.toJSON();
+      });
+    }
+  }, {
+    key: 'findCreateInsuranceBrand',
+    value: function findCreateInsuranceBrand(values) {
+      var _this = this;
+
+      var insuranceBrand = void 0;
+      return this.modals.insuranceBrands.findOne({
+        where: {
+          name: {
+            $iLike: '' + values.name,
+          },
+          main_category_id: values.main_category_id,
+          type: values.type,
+        },
+        include: {
+          model: this.modals.categories,
+          where: {
+            category_id: values.category_id,
+          },
+          as: 'categories',
+          attributes: ['category_id'],
+          required: true,
+        }
+      }).then(function(result) {
+        if (!result) {
+          return _this.modals.insuranceBrands.create(
+              _lodash2.default.omit(values, 'category_id'));
+        }
+
+        return result;
+      }).then(function(updatedResult) {
+        insuranceBrand = updatedResult.toJSON();
+        console.log(insuranceBrand);
+        if (!insuranceBrand.categories) {
+          return _this.modals.insuranceBrandCategories.create({
+            insurance_brand_id: insuranceBrand.id,
+            category_id: values.category_id,
+          });
+        }
+
+        return undefined;
+      }).then(function(finalResult) {
+        if (finalResult) {
+          insuranceBrand.categories = finalResult.toJSON();
+        }
+
+        return insuranceBrand;
       });
     }
   }, {

@@ -64,6 +64,7 @@ class InsuranceAdaptor {
           model: this.modals.onlineSellers,
           as: 'onlineSellers',
           attributes: [
+            ['sid', 'id'],
             [
               'seller_name',
               'sellerName'],
@@ -101,6 +102,7 @@ class InsuranceAdaptor {
           model: this.modals.offlineSellers,
           as: 'sellers',
           attributes: [
+            ['sid', 'id'],
             [
               'seller_name',
               'sellerName'],
@@ -280,16 +282,61 @@ class InsuranceAdaptor {
         then(result => result.toJSON());
   }
 
+  findCreateInsuranceBrand(values) {
+    let insuranceBrand;
+    return this.modals.insuranceBrands.findOne({
+      where: {
+        name: {
+          $iLike: `${values.name}`,
+        },
+        main_category_id: values.main_category_id,
+        type: values.type,
+      },
+      include: {
+        model: this.modals.categories,
+        where: {
+          category_id: values.category_id,
+        },
+        as: 'categories',
+        attributes: ['category_id'],
+        required: true,
+      },
+    }).then((result) => {
+      if (!result) {
+        return this.modals.insuranceBrands.create(
+            _.omit(values, 'category_id'));
+      }
+
+      return result;
+    }).then((updatedResult) => {
+      insuranceBrand = updatedResult.toJSON();
+      console.log(insuranceBrand);
+      if (!insuranceBrand.categories) {
+        return this.modals.insuranceBrandCategories.create({
+          insurance_brand_id: insuranceBrand.id,
+          category_id: values.category_id,
+        });
+      }
+
+      return undefined;
+    }).then((finalResult) => {
+      if (finalResult) {
+        insuranceBrand.categories = finalResult.toJSON();
+      }
+
+      return insuranceBrand;
+    });
+  }
+
   updateInsurances(id, values) {
     return this.modals.insurances.findOne({
       where: {
         id,
       },
-    }).
-        then(result => {
-          result.updateAttributes(values);
-          return result.toJSON();
-        });
+    }).then(result => {
+      result.updateAttributes(values);
+      return result.toJSON();
+    });
   }
 }
 

@@ -53,8 +53,8 @@ const trackTransaction = (transactionId, userId) => {
   }
 };
 
-let loginOrRegisterUser = function(
-    userWhere, userInput, trueObject, request, reply) {
+let loginOrRegisterUser = parameters => {
+  let {userWhere, userInput, trueObject, request, reply} = parameters;
   let token;
   let updatedUser;
   return userAdaptor.loginOrRegister(userWhere,
@@ -74,11 +74,12 @@ let loginOrRegisterUser = function(
     }
 
     if (request.payload.fcmId) {
-      fcmManager.insertFcmDetails(updatedUser.id || updatedUser.ID,
-          request.payload.fcmId).
-          then((data) => {
-            console.log(data);
-          }).
+      fcmManager.insertFcmDetails({
+        userId: updatedUser.id || updatedUser.ID,
+        fcmId: request.payload.fcmId,
+      }).then((data) => {
+        console.log(data);
+      }).
           catch((err) =>
               console.log(
                   `Error on ${new Date()} for user ${updatedUser.id ||
@@ -89,8 +90,12 @@ let loginOrRegisterUser = function(
     replyObject.authorization = `bearer ${authentication.generateToken(
         userData[0]).token}`;
     token = replyObject.authorization;
-    return dashboardAdaptor.prepareDashboardResult(userData[1],
-        userData[0].toJSON(), replyObject.authorization, request);
+    return dashboardAdaptor.prepareDashboardResult({
+      isNewUser: userData[1],
+      user: userData[0].toJSON(),
+      token: replyObject.authorization,
+      request: request,
+    });
   }).then((result) => {
     return reply(result).
         code(201).
@@ -138,45 +143,27 @@ class UserController {
       message: 'success',
       forceUpdate: request.pre.forceUpdate,
     };
-    if (!user) {
+    if (!request.pre.userExist) {
       replyObject.status = false;
       replyObject.message = 'Unauthorized';
-      reply(replyObject);
-    } else if (user && !request.pre.forceUpdate) {
-      return userAdaptor.isUserValid(user).then((isValid) => {
-        if (isValid) {
-          if (request.payload && request.payload.fcmId) {
-            fcmManager.insertFcmDetails(user.id || user.ID,
-                request.payload.fcmId,
-                request.payload.platform).
-                then((data) => {
-                  console.log(data);
-                }).
-                catch((err) => {
-                  console.log(
-                      `Error on ${new Date()} for user ${user.id ||
-                      user.ID} is as follow: \n \n ${err}`);
-                });
-          }
-
-          return reply(replyObject).code(201);
-
-        }
-
-        return reply({
-          status: false,
-          message: 'Token Expired or Invalid',
-          forceUpdate: request.pre.forceUpdate,
-        }).code(401);
-      }).catch((err) => {
-        console.log(
-            `Error on ${new Date()} for user ${user.mobile_no} is as follow: \n \n ${err}`);
-        return reply({
-          status: false,
-          message: 'Token Expired or Invalid',
-          forceUpdate: request.pre.forceUpdate,
-        }).code(401);
-      });
+      return reply(replyObject);
+    } else if (request.pre.userExist && !request.pre.forceUpdate) {
+      if (request.payload && request.payload.fcmId) {
+        fcmManager.insertFcmDetails({
+          userId: user.id || user.ID,
+          fcmId: request.payload.fcmId,
+          platformId: request.payload.platform,
+        }).
+            then((data) => {
+              console.log(data);
+            }).
+            catch((err) => {
+              console.log(
+                  `Error on ${new Date()} for user ${user.id ||
+                  user.ID} is as follow: \n \n ${err}`);
+            });
+      }
+      return reply(replyObject).code(201);
     } else {
       replyObject.status = false;
       replyObject.message = 'Forbidden';
@@ -259,8 +246,13 @@ class UserController {
               request.payload.Token).then((data) => {
             console.log('VALIDATE OTP RESPONSE: ', data);
             if (data.type === 'success') {
-              return loginOrRegisterUser(userWhere, userInput, trueObject,
-                  request, reply);
+              return loginOrRegisterUser({
+                userWhere: userWhere,
+                userInput: userInput,
+                trueObject: trueObject,
+                request: request,
+                reply: reply,
+              });
             } else {
               replyObject.status = false;
               replyObject.message = 'Invalid/Expired OTP';
@@ -277,8 +269,13 @@ class UserController {
             return reply(replyObject).code(401);
           });
         } else if (request.payload.Token === '050118') {
-          return loginOrRegisterUser(userWhere, userInput, trueObject,
-              request, reply);
+          return loginOrRegisterUser({
+            userWhere: userWhere,
+            userInput: userInput,
+            trueObject: trueObject,
+            request: request,
+            reply: reply,
+          });
         }
       } else if (request.payload.BBLogin_Type === 2) {
         const TrueSecret = request.payload.TrueSecret;
@@ -294,8 +291,13 @@ class UserController {
           userInput.email_secret = uuid.v4();
           userInput.mobile_no = trueObject.PhoneNo;
           userInput.user_status_type = 1;
-          return loginOrRegisterUser(userWhere, userInput, trueObject, request,
-              reply).catch((err) => {
+          return loginOrRegisterUser({
+            userWhere: userWhere,
+            userInput: userInput,
+            trueObject: trueObject,
+            request: request,
+            reply: reply,
+          }).catch((err) => {
             console.log(
                 `Error on ${new Date()} for mobile no: ${trueObject.PhoneNo} is as follow: \n \n ${err}`);
             replyObject.status = false;
@@ -319,11 +321,11 @@ class UserController {
       message: 'success',
       forceUpdate: request.pre.forceUpdate,
     };
-    if (!user) {
+    if (!request.pre.userExist) {
       replyObject.status = false;
       replyObject.message = 'Unauthorized';
       return reply(replyObject);
-    } else if (user && !request.pre.forceUpdate) {
+    } else if (request.pre.userExist && !request.pre.forceUpdate) {
       if (request.payload && request.payload.fcmId) {
         fcmManager.deleteFcmDetails(user.id || user.ID, request.payload.fcmId,
             request.payload.platform).
@@ -355,9 +357,9 @@ class UserController {
 
   static retrieveUserProfile(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (user && !request.pre.forceUpdate) {
+    if (request.pre.userExist && !request.pre.forceUpdate) {
       return reply(userAdaptor.retrieveUserProfile(user, request));
-    } else if (!user) {
+    } else if (!request.pre.userExist) {
       return reply(
           {message: 'Invalid Token', forceUpdate: request.pre.forceUpdate}).
           code(401);
@@ -372,9 +374,9 @@ class UserController {
 
   static updateUserProfile(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (user && !request.pre.forceUpdate) {
+    if (request.pre.userExist && !request.pre.forceUpdate) {
       return userAdaptor.updateUserProfile(user, request, reply);
-    } else if (!user) {
+    } else if (!request.pre.userExist) {
       return reply(
           {message: 'Invalid Token', forceUpdate: request.pre.forceUpdate}).
           code(401);
@@ -389,13 +391,13 @@ class UserController {
 
   static retrieveNearBy(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (!user) {
+    if (!request.pre.userExist) {
       reply({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       });
-    } else if (user && !request.pre.forceUpdate) {
+    } else if (request.pre.userExist && !request.pre.forceUpdate) {
       nearByAdaptor.retrieveNearBy(request.query.location ||
           user.location, request.query.geolocation ||
           `${user.latitude},${user.longitude}`,

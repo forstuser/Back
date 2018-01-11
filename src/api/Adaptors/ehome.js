@@ -178,7 +178,7 @@ class EHomeAdaptor {
               ...products,
               ...inProgressProduct,
             ] || []).sortBy((item) => {
-              return moment(item.lastUpdatedAt, moment.ISO_8601);
+              return moment.utc(item.lastUpdatedAt, moment.ISO_8601);
             }).reverse().value();
             category.expenses = expenses;
             category.cLastUpdate = expenses &&
@@ -202,17 +202,22 @@ class EHomeAdaptor {
     });
   }
 
-  prepareProductDetail(user, masterCategoryId, ctype, /* pageNo, */ brandIds,
-                       categoryIds, offlineSellerIds, onlineSellerIds, sortBy,
-                       searchValue, request) {
-    return this.fetchProductDetails(user, masterCategoryId, ctype || undefined,
-        brandIds.split('[')[1].split(']')[0].split(',').filter(Boolean),
-        categoryIds.split('[')[1].split(']')[0].split(',').filter(Boolean),
-        offlineSellerIds.split('[')[1].split(']')[0].split(',').
-            filter(Boolean),
-        onlineSellerIds.split('[')[1].split(']')[0].split(',').
-            filter(Boolean),
-        sortBy, `%${searchValue || ''}%`).then((result) => {
+  prepareProductDetail(parameters) {
+    let {user, masterCategoryId, ctype, brandIds, categoryIds, offlineSellerIds, onlineSellerIds, sortBy, searchValue, request} = parameters;
+    return this.fetchProductDetails({
+      user: user,
+      masterCategoryId: masterCategoryId,
+      subCategoryId: ctype || undefined,
+      brandIds: brandIds.split('[')[1].split(']')[0].split(',').filter(Boolean),
+      categoryIds: categoryIds.split('[')[1].split(']')[0].split(',').
+          filter(Boolean),
+      offlineSellerIds: offlineSellerIds.split('[')[1].split(']')[0].split(',').
+          filter(Boolean),
+      onlineSellerIds: onlineSellerIds.split('[')[1].split(']')[0].split(',').
+          filter(Boolean),
+      sortBy: sortBy,
+      searchValue: `%${searchValue || ''}%`,
+    }).then((result) => {
       const productList = result.productList;
       /* const listIndex = (pageNo * 10) - 10; */
 
@@ -222,7 +227,7 @@ class EHomeAdaptor {
             brandItem.id = brandItem.brandId;
             return brandItem;
           });
-      brands = _.uniqBy(brands, 'brandId');
+      brands = _.uniqBy(brands, 'id');
 
       let offlineSellers = result.productList.filter(
           (item) => item.sellers !== null).map((item) => {
@@ -275,9 +280,8 @@ class EHomeAdaptor {
     });
   }
 
-  fetchProductDetails(user,
-                      masterCategoryId, subCategoryId, brandIds, categoryIds,
-                      offlineSellerIds, onlineSellerIds, sortBy, searchValue) {
+  fetchProductDetails(parameters) {
+    let {user, masterCategoryId, subCategoryId, brandIds, categoryIds, offlineSellerIds, onlineSellerIds, sortBy, searchValue} = parameters;
     const categoryOption = {
       category_level: 1,
       status_type: 1,
@@ -350,7 +354,7 @@ class EHomeAdaptor {
             category.productList = _.chain([
               ...products,
               ...inProgressProduct] || []).sortBy((item) => {
-              return moment(item.purchaseDate, moment.ISO_8601);
+              return moment.utc(item.purchaseDate, moment.ISO_8601);
             }).reverse().value();
 
             return category;

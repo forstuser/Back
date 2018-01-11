@@ -42,6 +42,10 @@ export default class CategoryAdaptor {
       order: ['category_id'],
     }).then((result) => {
       categoryData = result.map(item => item.toJSON());
+      const subCategoryOption = {
+        status_type: 1,
+        ref_id: categoryData.map(item => item.id),
+      };
       const main_category_id = options.category_id;
       const excluded_category_id = main_category_id ? {
         $notIn:
@@ -53,11 +57,11 @@ export default class CategoryAdaptor {
                         [139, 138, 154, 150, 153] :
                         [],
       } : undefined;
-      return this.retrieveSubCategories({
-        ref_id: categoryData.map(item => item.id),
-        category_id: excluded_category_id,
-        status_type: 1,
-      }, isBrandFormRequired);
+      if (excluded_category_id) {
+        subCategoryOption.category_id = excluded_category_id;
+      }
+
+      return this.retrieveSubCategories(subCategoryOption, isBrandFormRequired);
     }).then((subCategories) => {
       categoryData = categoryData.map((item) => {
         item.subCategories = subCategories.filter(
@@ -107,7 +111,6 @@ export default class CategoryAdaptor {
           'categoryImageUrl']],
       order: ['category_id'],
     }).then((result) => {
-      console.log(result);
       categoryData = result.map(item => item.toJSON());
       if (isBrandFormRequired) {
         return Promise.all([
@@ -180,6 +183,12 @@ export default class CategoryAdaptor {
               attributes: [],
               required: true,
             },
+            attributes: [
+              'id',
+              'name',
+              [
+                this.modals.sequelize.literal('"categories"."category_id"'),
+                'category_id']],
           }), this.modals.insuranceBrands.findAll({
             where: {
               type: [2, 3],
@@ -193,6 +202,51 @@ export default class CategoryAdaptor {
               attributes: [],
               required: true,
             },
+            attributes: [
+              'id',
+              'name',
+              [
+                this.modals.sequelize.literal('"categories"."category_id"'),
+                'category_id']],
+          }),
+          this.modals.categories.findAll({
+            where: {
+              status_type: 1,
+              ref_id: options.category_id,
+              category_level: 3,
+            },
+            attributes: [
+              [
+                'category_id',
+                'id'],
+              [
+                'category_name',
+                'name'],
+              [
+                'ref_id',
+                'refId'],
+              'dual_warranty_item',
+              [
+                'category_level',
+                'level'],
+              [
+                this.modals.sequelize.fn('CONCAT', 'categories/',
+                    this.modals.sequelize.literal('ref_id'),
+                    '/products?subCategoryId=', this.modals.sequelize.literal(
+                        'category_id')),
+                'categoryProductUrl'],
+              [
+                this.modals.sequelize.fn('CONCAT', 'categories/',
+                    this.modals.sequelize.literal('ref_id'),
+                    '/insights?subCategoryId=', this.modals.sequelize.literal(
+                        'category_id')),
+                'categoryInsightUrl'],
+              [
+                this.modals.sequelize.fn('CONCAT', '/categories/',
+                    this.modals.sequelize.literal('category_id'),
+                    '/images/'),
+                'categoryImageUrl']],
+            order: ['category_id'],
           })]);
       }
 
@@ -203,9 +257,11 @@ export default class CategoryAdaptor {
           item.brands = results[0].filter(
               (brandItem) => brandItem.categoryId === item.id);
           item.categoryForms = results[1].filter(
-              (formItem) => formItem.categoryId === item.id);
+              (formItem) => formItem.categoryId === item.id ||
+                  formItem.main_category_id === item.refId);
           item.insuranceProviders = results[2];
           item.warrantyProviders = results[3];
+          item.subCategories = results[4];
           return item;
         });
       }
@@ -241,6 +297,7 @@ export default class CategoryAdaptor {
           'category_id',
           'categoryId'],
         'title',
+        'main_category_id',
         [
           'form_type',
           'formType'],

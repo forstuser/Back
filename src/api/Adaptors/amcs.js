@@ -63,6 +63,7 @@ class AmcAdaptor {
           model: this.modals.onlineSellers,
           as: 'onlineSellers',
           attributes: [
+            ['sid', 'id'],
             [
               'seller_name',
               'sellerName'],
@@ -76,6 +77,7 @@ class AmcAdaptor {
           model: this.modals.offlineSellers,
           as: 'sellers',
           attributes: [
+            ['sid', 'id'],
             [
               'seller_name',
               'sellerName'],
@@ -259,8 +261,7 @@ class AmcAdaptor {
       where: {
         id,
       },
-    }).
-        then(result => {
+    }).then(result => {
           result.updateAttributes(values);
           return result.toJSON();
         });

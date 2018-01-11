@@ -125,12 +125,12 @@ var UploadController = function () {
     key: 'uploadUserImage',
     value: function uploadUserImage(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!user) {
-        reply({
+      if (!request.pre.userExist) {
+        return reply({
           status: false,
           message: 'Unauthorized'
           // forceUpdate: request.pre.forceUpdate
-        });
+        }).code(401);
       } else if (request.payload) {
         var fieldNameHere = request.payload.fieldNameHere;
         var fileData = fieldNameHere || request.payload.filesName;
@@ -170,11 +170,11 @@ var UploadController = function () {
     key: 'uploadFiles',
     value: function uploadFiles(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!user) {
-        reply({
+      if (!request.pre.userExist) {
+        return reply({
           status: false,
           message: 'Unauthorized'
-        });
+        }).code(401);
       } else if (request.payload) {
         // if (!request.pre.forceUpdate && request.payload) {
         var fieldNameHere = request.payload.fieldNameHere;
@@ -659,7 +659,7 @@ var UploadController = function () {
     key: 'retrieveFiles',
     value: function retrieveFiles(request, reply) {
       /* const user = shared.verifyAuthorization(request.headers);
-       if (!user) {
+       if (!request.pre.userExist) {
           reply({
             status: false,
             message: 'Unauthorized',
@@ -712,11 +712,11 @@ var UploadController = function () {
     key: 'deleteFile',
     value: function deleteFile(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!user) {
-        reply({
+      if (!request.pre.userExist) {
+        return reply({
           status: false,
           message: 'Unauthorized'
-        });
+        }).code(401);
       } else {
         if (!request.pre.forceUpdate) {
           Promise.all([modals.jobs.findById(request.params.id), modals.jobCopies.update({
@@ -837,11 +837,11 @@ var UploadController = function () {
     key: 'retrieveUserImage',
     value: function retrieveUserImage(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!user) {
+      if (!request.pre.userExist) {
         return reply({
           status: false,
           message: 'Unauthorized'
-        });
+        }).code(401);
       } else {
         if (!request.pre.forceUpdate) {
           var userData = void 0;

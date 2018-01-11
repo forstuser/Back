@@ -45,7 +45,7 @@ var ServiceCenterController = function () {
     value: function retrieveServiceCenters(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
       var isWebMode = request.params && request.params.mode && request.params.mode.toLowerCase() === 'web';
-      if ((user || isWebMode) && !request.pre.forceUpdate) {
+      if ((request.pre.userExist || isWebMode) && !request.pre.forceUpdate) {
         var payload = request.payload || {
           location: '',
           city: '',
@@ -152,7 +152,7 @@ var ServiceCenterController = function () {
                   return a.distance - b.distance;
                 });
 
-                reply({
+                return reply({
                   status: true,
                   serviceCenters: finalFilteredList,
                   brand: selectedBrand,
@@ -165,7 +165,7 @@ var ServiceCenterController = function () {
               }).catch(function (err) {
                 console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
 
-                reply({
+                return reply({
                   status: false,
                   err: err,
                   forceUpdate: request.pre.forceUpdate
@@ -173,7 +173,7 @@ var ServiceCenterController = function () {
               });
             }
             if (origins.length <= 0) {
-              reply({
+              return reply({
                 status: true,
                 filterData: {
                   brands: filterBrands
@@ -184,7 +184,7 @@ var ServiceCenterController = function () {
               });
             }
           } else {
-            reply({
+            return reply({
               status: true,
               message: 'No Data Found for mentioned search',
               filterData: {
@@ -197,20 +197,20 @@ var ServiceCenterController = function () {
           }
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
-          reply({
+          return reply({
             status: false,
             err: err,
             forceUpdate: request.pre.forceUpdate
           });
         });
-      } else if (!user) {
-        reply({
+      } else if (!request.pre.userExist) {
+        return reply({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
-        });
+        }).code(401);
       } else {
-        reply({
+        return reply({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -258,7 +258,7 @@ var ServiceCenterController = function () {
           }],
           attributes: [['brand_name', 'name'], ['brand_id', 'id']]
         })]).then(function (result) {
-          reply({
+          return reply({
             status: true,
             categories: result[0],
             cities: result[1].map(function (item) {
@@ -269,7 +269,7 @@ var ServiceCenterController = function () {
           });
         });
       } else {
-        reply({
+        return reply({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate

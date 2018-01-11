@@ -23,6 +23,10 @@ var _amcs = require('./amcs');
 
 var _amcs2 = _interopRequireDefault(_amcs);
 
+var _pucs = require('./pucs');
+
+var _pucs2 = _interopRequireDefault(_pucs);
+
 var _insurances = require('./insurances');
 
 var _insurances2 = _interopRequireDefault(_insurances);
@@ -66,6 +70,7 @@ var NotificationAdaptor = function () {
     this.amcAdaptor = new _amcs2.default(modals);
     this.insuranceAdaptor = new _insurances2.default(modals);
     this.warrantyAdaptor = new _warranties2.default(modals);
+    this.pucAdaptor = new _pucs2.default(modals);
   }
 
   _createClass(NotificationAdaptor, [{
@@ -145,10 +150,14 @@ var NotificationAdaptor = function () {
       }), this.warrantyAdaptor.retrieveWarranties({
         user_id: user.id || user.ID,
         status_type: [5, 11]
-      }), this.productAdaptor.retrieveProducts({
+      }), this.pucAdaptor.retrievePUCs({
         user_id: user.id || user.ID,
         status_type: [5, 11],
         main_category_id: [3]
+      }), this.productAdaptor.retrieveProducts({
+        user_id: user.id || user.ID,
+        status_type: [5, 11],
+        main_category_id: [3],
       })]).then(function (result) {
         var products = result[0].map(function (item) {
           var product = item;
@@ -162,7 +171,8 @@ var NotificationAdaptor = function () {
             }
 
             if (metaData.name.toLowerCase().includes('address')) {
-              product.description = metaData.name.toLowerCase().includes('address') ? '' + metaData.value : '';
+              product.description = metaData.value;
+              product.address = metaData.value;
             }
 
             return metaData;
@@ -184,15 +194,19 @@ var NotificationAdaptor = function () {
         });
 
         var pucProducts = result[4].map(function (item) {
-          var product = item;
-          if (product.pucDetail && _moment2.default.utc(product.pucDetail.expiry_date, _moment2.default.ISO_8601).isValid()) {
-            var dueDateTime = _moment2.default.utc(product.pucDetail.expiry_date, _moment2.default.ISO_8601).endOf('day');
-            product.dueDate = product.pucDetail.expiry_date;
-            product.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
+          var puc = item;
+          if (_moment2.default.utc(puc.expiryDate, _moment2.default.ISO_8601).
+                  isValid()) {
+            var dueDateTime = _moment2.default.utc(puc.expiryDate,
+                _moment2.default.ISO_8601).endOf('day');
+            puc.dueDate = puc.expiryDate;
+            puc.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
+            puc.productType = 3;
+            puc.title = 'PUC Renewal Pending';
+            puc.description = puc.productName;
           }
 
-          product.productType = 5;
-          return product;
+          return puc;
         });
 
         pucProducts = pucProducts.filter(function (item) {
@@ -251,7 +265,40 @@ var NotificationAdaptor = function () {
           return item.dueIn !== undefined && item.dueIn !== null && item.dueIn <= 30 && item.dueIn >= 0;
         });
 
-        return [].concat(_toConsumableArray(products), _toConsumableArray(warranties), _toConsumableArray(insurances), _toConsumableArray(amcs), _toConsumableArray(pucProducts));
+        var productServiceSchedule = result[5].map(function(item) {
+          var scheduledProduct = item;
+          var scheduledDate = scheduledProduct.schedule ?
+              _moment2.default.utc(scheduledProduct.purchaseDate,
+                  _moment2.default.ISO_8601).
+                  add(scheduledProduct.schedule.due_in_months, 'months') :
+              undefined;
+          if (scheduledDate &&
+              _moment2.default.utc(scheduledDate, _moment2.default.ISO_8601).
+                  isValid()) {
+            var due_date_time = _moment2.default.utc(scheduledDate,
+                _moment2.default.ISO_8601).endOf('day');
+            scheduledProduct.dueDate = scheduledDate;
+            scheduledProduct.dueIn = due_date_time.diff(_moment2.default.utc(),
+                'days');
+            scheduledProduct.product_type = 3;
+            scheduledProduct.Product.title = 'Service is pending for ' +
+                scheduledProduct.productName;
+            scheduledProduct.Product.description = '' +
+                scheduledProduct.productName;
+          }
+
+          return scheduledProduct;
+        });
+
+        productServiceSchedule = productServiceSchedule.filter(function(item) {
+          return item.dueIn !== undefined && item.dueIn !== null &&
+              item.dueIn <= 7 && item.dueIn >= 0;
+        });
+
+        return [].concat(_toConsumableArray(products),
+            _toConsumableArray(warranties), _toConsumableArray(insurances),
+            _toConsumableArray(amcs), _toConsumableArray(pucProducts),
+            _toConsumableArray(productServiceSchedule));
       });
     }
   }, {
@@ -594,12 +641,21 @@ var NotificationAdaptor = function () {
         });
 
         products = products.filter(function (item) {
-          return days === 15 ? item.dueDate <= (0, _moment2.default)().add(days, 'day').endOf('day') && item.dueDate >= (0, _moment2.default)().add(days, 'day').startOf('day') : item.dueDate <= (0, _moment2.default)().add(days, 'day').endOf('day') && item.dueDate >= (0, _moment2.default)().startOf('day');
+          return days === 15 ?
+              item.dueDate <=
+              _moment2.default.utc().add(days, 'day').endOf('day') &&
+              item.dueDate >=
+              _moment2.default.utc().add(days, 'day').startOf('day') :
+              item.dueDate <=
+              _moment2.default.utc().add(days, 'day').endOf('day') &&
+              item.dueDate >= _moment2.default.utc().startOf('day');
         });
         var amcs = result[1].map(function (item) {
           var amc = item;
-          if ((0, _moment2.default)(amc.expiryDate, _moment2.default.ISO_8601).isValid()) {
-            var dueDateTime = (0, _moment2.default)(amc.expiryDate, _moment2.default.ISO_8601);
+          if (_moment2.default.utc(amc.expiryDate, _moment2.default.ISO_8601).
+                  isValid()) {
+            var dueDateTime = _moment2.default.utc(amc.expiryDate,
+                _moment2.default.ISO_8601);
             amc.dueDate = amc.expiryDate;
             amc.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
             amc.productType = 3;

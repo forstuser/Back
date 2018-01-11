@@ -24,7 +24,10 @@ class PUCAdaptor {
   }
 
   retrievePUCs(options) {
-    options.status_type = [5, 11];
+    if (!options.status_type) {
+      options.status_type = [5, 11, 12];
+    }
+
     let productOptions = {};
 
     if (options.main_category_id) {
@@ -58,6 +61,7 @@ class PUCAdaptor {
           model: this.modals.offlineSellers,
           as: 'sellers',
           attributes: [
+            ['sid', 'id'],
             [
               'seller_name',
               'sellerName'],
@@ -232,8 +236,7 @@ class PUCAdaptor {
       where: {
         id,
       },
-    }).
-        then(result => {
+    }).then(result => {
           result.updateAttributes(values);
           return result.toJSON();
         });

@@ -11,15 +11,15 @@ class InsightController {
 		insightAdaptor = new InsightAdaptor(modal);
 	}
 
-	static retrieveCategorywiseInsight(request, reply) {
+  static retrieveCategoryWiseInsight(request, reply) {
 		const user = shared.verifyAuthorization(request.headers);
-		if (!user) {
+    if (!request.pre.userExist) {
       return reply({
-				status: false,
-				message: 'Unauthorized',
-				forceUpdate: request.pre.forceUpdate
-			});
-		} else if (user && !request.pre.forceUpdate) {
+        status: false,
+        message: 'Unauthorized',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(401);
+    } else if (request.pre.userExist && !request.pre.forceUpdate) {
       return reply(insightAdaptor
 				.prepareInsightData(user, request))
 				.code(200);
@@ -34,18 +34,22 @@ class InsightController {
 
 	static retrieveInsightForSelectedCategory(request, reply) {
 		const user = shared.verifyAuthorization(request.headers);
-		if (!user) {
-			reply({
+    if (!request.pre.userExist) {
+      return reply({
 				status: false,
 				message: 'Unauthorized',
 				forceUpdate: request.pre.forceUpdate
-			});
-		} else if (user && !request.pre.forceUpdate) {
-			reply(insightAdaptor
+      }).code(401);
+    } else if (request.pre.userExist && !request.pre.forceUpdate) {
+      return reply(insightAdaptor
 				.prepareCategoryInsight(user, request))
 				.code(200);
 		} else {
-			reply({status: false, message: "Forbidden", forceUpdate: request.pre.forceUpdate});
+      return reply({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
 		}
 	}
 }

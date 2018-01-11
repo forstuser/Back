@@ -81,7 +81,11 @@ function prepareServiceCenterRoutes(serviceCenterController, serviceCenterRoutes
       path: '/consumer/servicecenters',
       config: {
         auth: 'jwt',
-        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}, {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          }],
         handler: _serviceCenter2.default.retrieveServiceCenters,
         validate: {
           payload: {
@@ -105,7 +109,11 @@ function prepareServiceCenterRoutes(serviceCenterController, serviceCenterRoutes
       path: '/consumer/servicecenters',
       config: {
         auth: 'jwt',
-        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}, {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          }],
         handler: _serviceCenter2.default.retrieveServiceCenters
       }
     });
@@ -114,7 +122,11 @@ function prepareServiceCenterRoutes(serviceCenterController, serviceCenterRoutes
       path: '/consumer/servicecenters/filters',
       config: {
         auth: 'jwt',
-        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}, {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          }],
         handler: _serviceCenter2.default.retrieveServiceCenterFilters
       }
     });
@@ -123,7 +135,11 @@ function prepareServiceCenterRoutes(serviceCenterController, serviceCenterRoutes
       method: 'GET',
       path: '/consumer/{mode}/centers',
       config: {
-        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}, {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          }],
         handler: _serviceCenter2.default.retrieveServiceCenters
       }
     });
@@ -131,7 +147,11 @@ function prepareServiceCenterRoutes(serviceCenterController, serviceCenterRoutes
       method: 'GET',
       path: '/consumer/web/centers/filters',
       config: {
-        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}, {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          }],
         handler: _serviceCenter2.default.retrieveServiceCenterFilters
       }
     });
@@ -146,7 +166,11 @@ function prepareBrandRoutes(brandController, brandRoutes) {
       path: '/brands',
       config: {
         auth: 'jwt',
-        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}, {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          }],
         handler: _brand2.default.getBrands
       }
     });
@@ -155,7 +179,11 @@ function prepareBrandRoutes(brandController, brandRoutes) {
       method: 'GET',
       path: '/{mode}/brands',
       config: {
-        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}, {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          }],
         handler: _brand2.default.getBrands
       }
     });
@@ -164,7 +192,11 @@ function prepareBrandRoutes(brandController, brandRoutes) {
       method: 'GET',
       path: '/brandcenter',
       config: {
-        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}, {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          }],
         handler: _brand2.default.getBrandASC
       }
     });
@@ -179,7 +211,11 @@ function prepareCategoryRoutes(categoryController, categoryRoutes) {
       path: '/categories',
       config: {
         auth: 'jwt',
-        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}, {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          }],
         handler: _category2.default.getCategories
       }
     });
@@ -187,7 +223,11 @@ function prepareCategoryRoutes(categoryController, categoryRoutes) {
       method: 'GET',
       path: '/{mode}/categories',
       config: {
-        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}, {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          }],
         handler: _category2.default.getCategories
       }
     });
@@ -206,7 +246,11 @@ function prepareAuthRoutes(userController, authRoutes) {
       method: 'POST',
       path: '/consumer/getotp',
       config: {
-        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}, {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          }],
         handler: _user2.default.dispatchOTP,
         description: 'Generate OTP.',
         tags: ['api', 'User', 'Authentication'],
@@ -231,7 +275,11 @@ function prepareAuthRoutes(userController, authRoutes) {
       path: '/consumer/subscribe',
       config: {
         auth: 'jwt',
-        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}, {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          }],
         handler: _user2.default.subscribeUser,
         description: 'Update User FCM Server ID.',
         validate: {
@@ -256,7 +304,11 @@ function prepareAuthRoutes(userController, authRoutes) {
       path: '/consumer/profile',
       config: {
         auth: 'jwt',
-        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}, {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          }],
         handler: _user2.default.updateUserProfile,
         description: 'Update User Profile.',
         validate: {
@@ -289,7 +341,11 @@ function prepareAuthRoutes(userController, authRoutes) {
       path: '/consumer/profile',
       config: {
         auth: 'jwt',
-        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}, {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          }],
         handler: _user2.default.retrieveUserProfile,
         description: 'Get User Profile.',
         plugins: {
@@ -321,7 +377,11 @@ function prepareAuthRoutes(userController, authRoutes) {
       path: '/consumer/nearby',
       config: {
         auth: 'jwt',
-        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}, {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          }],
         handler: _user2.default.retrieveNearBy,
         description: 'Get User Profile.',
         plugins: {
@@ -374,7 +434,11 @@ function prepareAuthRoutes(userController, authRoutes) {
       config: {
         handler: _user2.default.logout,
         auth: 'jwt',
-        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}, {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          }],
         description: 'Logout User.',
         tags: ['api', 'User', 'Authentication'],
         validate: {
@@ -402,7 +466,11 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
       path: '/consumer/upload/selfie',
       config: {
         auth: 'jwt',
-        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}, {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          }],
         files: {
           relativeTo: _path2.default.join(__dirname, '../static/src')
         },
@@ -425,7 +493,11 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
       path: '/consumer/upload',
       config: {
         auth: 'jwt',
-        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}, {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          }],
         files: {
           relativeTo: _path2.default.join(__dirname, '../static/src')
         },
@@ -447,7 +519,11 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
       path: '/consumer/upload/{id}',
       config: {
         auth: 'jwt',
-        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}, {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          }],
         files: {
           relativeTo: _path2.default.join(__dirname, '../static/src')
         },
@@ -470,7 +546,11 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
       path: '/jobs/{id}/files/{copyid}',
       config: {
         // auth: 'jwt',
-        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}, {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          }],
         handler: _upload2.default.retrieveFiles
       }
     });
@@ -481,7 +561,11 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
       path: '/jobs/{id}/files/{copyid}',
       config: {
         auth: 'jwt',
-        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}, {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          }],
         handler: _upload2.default.deleteFile
       }
     });
@@ -492,7 +576,11 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
       path: '/consumer/{id}/images',
       config: {
         // auth: 'jwt',
-        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}, {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          }],
         handler: _upload2.default.retrieveUserImage
       }
     });
@@ -526,7 +614,11 @@ function prepareDashboardRoutes(dashboardController, dashboardRoutes) {
       path: '/consumer/dashboard',
       config: {
         auth: 'jwt',
-        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}, {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          }],
         handler: _dashboard2.default.getDashboard
       }
     });
@@ -537,7 +629,11 @@ function prepareDashboardRoutes(dashboardController, dashboardRoutes) {
       path: '/consumer/ehome',
       config: {
         auth: 'jwt',
-        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}, {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          }],
         handler: _dashboard2.default.getEHome
       }
     });
@@ -548,7 +644,11 @@ function prepareDashboardRoutes(dashboardController, dashboardRoutes) {
       path: '/categories/{id}/products',
       config: {
         auth: 'jwt',
-        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}, {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          }],
         handler: _dashboard2.default.getProductsInCategory
       }
     });
@@ -559,7 +659,11 @@ function prepareDashboardRoutes(dashboardController, dashboardRoutes) {
       path: '/consumer/mailbox',
       config: {
         auth: 'jwt',
-        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}, {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          }],
         handler: _dashboard2.default.getMailbox
       }
     });
@@ -570,7 +674,11 @@ function prepareDashboardRoutes(dashboardController, dashboardRoutes) {
       path: '/consumer/mailbox/read',
       config: {
         auth: 'jwt',
-        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}, {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          }],
         handler: _dashboard2.default.updateNotificationStatus,
         validate: {
           payload: {
@@ -588,7 +696,11 @@ function prepareDashboardRoutes(dashboardController, dashboardRoutes) {
       path: '/consumer/notify',
       config: {
         auth: 'jwt',
-        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}, {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          }],
         handler: _dashboard2.default.notifyUser,
         validate: {
           payload: _joi2.default.object({
@@ -615,7 +727,11 @@ function prepareProductRoutes(productController, productRoutes) {
       config: {
         handler: _product2.default.updateUserReview,
         auth: 'jwt',
-        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}, {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          }],
         description: 'Update User Review.',
         validate: {
           payload: {
@@ -639,7 +755,11 @@ function prepareProductRoutes(productController, productRoutes) {
       path: '/products/{id}',
       config: {
         auth: 'jwt',
-        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}, {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          }],
         handler: _product2.default.retrieveProductDetail,
         description: 'Get Product Details.',
         plugins: {
@@ -655,7 +775,11 @@ function prepareProductRoutes(productController, productRoutes) {
       path: '/center/products',
       config: {
         auth: 'jwt',
-        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}, {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          }],
         handler: _product2.default.retrieveCenterProducts,
         description: 'Get Center Products.',
         plugins: {
@@ -671,7 +795,11 @@ function prepareProductRoutes(productController, productRoutes) {
       path: '/products',
       config: {
         auth: 'jwt',
-        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}, {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          }],
         handler: _product2.default.createProduct,
         description: 'Create Product.',
         validate: {
@@ -716,24 +844,28 @@ function prepareProductRoutes(productController, productRoutes) {
               effective_date: [_joi2.default.string(), _joi2.default.allow(null)],
               expiry_period: [_joi2.default.number(), _joi2.default.allow(null)],
               seller_name: [_joi2.default.string(), _joi2.default.allow(null)],
+              seller_contact: [
+                _joi2.default.string(),
+                _joi2.default.allow(null)],
               value: [_joi2.default.number(), _joi2.default.allow(null)],
-              seller_contact: [_joi2.default.string(), _joi2.default.allow(null)]
             }), _joi2.default.allow(null)],
             amc: [_joi2.default.object().keys({
               id: [_joi2.default.number(), _joi2.default.allow(null)],
               effective_date: [_joi2.default.string(), _joi2.default.allow(null)],
               expiry_period: [_joi2.default.number(), _joi2.default.allow(null)],
-              value: [_joi2.default.number(), _joi2.default.allow(null)],
               seller_name: [_joi2.default.string(), _joi2.default.allow(null)],
-              seller_contact: [_joi2.default.string(), _joi2.default.allow(null)]
+              seller_contact: [
+                _joi2.default.string(),
+                _joi2.default.allow(null)],
+              value: [_joi2.default.number(), _joi2.default.allow(null)],
             }), _joi2.default.allow(null)],
             repair: [_joi2.default.object().keys({
               id: [_joi2.default.number(), _joi2.default.allow(null)],
               effective_date: [_joi2.default.string(), _joi2.default.allow(null)],
               repair_for: [_joi2.default.string(), _joi2.default.allow(null)],
-              value: [_joi2.default.number(), _joi2.default.allow(null)],
               seller_name: [_joi2.default.string(), _joi2.default.allow(null)],
               seller_contact: [_joi2.default.string(), _joi2.default.allow(null)],
+              value: [_joi2.default.number(), _joi2.default.allow(null)],
               warranty_upto: [_joi2.default.string(), _joi2.default.allow(null)]
             }), _joi2.default.allow(null)]
           }
@@ -746,7 +878,11 @@ function prepareProductRoutes(productController, productRoutes) {
       path: '/products/{id}',
       config: {
         auth: 'jwt',
-        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}, {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          }],
         handler: _product2.default.updateProduct,
         description: 'Update Product.',
         validate: {
@@ -755,6 +891,9 @@ function prepareProductRoutes(productController, productRoutes) {
             brand_name: [_joi2.default.string(), _joi2.default.allow(null)],
             main_category_id: [_joi2.default.number(), _joi2.default.allow(null)],
             category_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            sub_category_id: [
+              _joi2.default.number(),
+              _joi2.default.allow(null)],
             brand_id: [_joi2.default.number(), _joi2.default.allow(null)],
             colour_id: [_joi2.default.number(), _joi2.default.allow(null)],
             value: [_joi2.default.number(), _joi2.default.allow(null)],
@@ -775,6 +914,9 @@ function prepareProductRoutes(productController, productRoutes) {
               dual_id: [_joi2.default.number(), _joi2.default.allow(null)],
               extended_id: [_joi2.default.number(), _joi2.default.allow(null)],
               extended_provider_id: [_joi2.default.number(), _joi2.default.allow(null)],
+              extended_provider_name: [
+                _joi2.default.string(),
+                _joi2.default.allow(null)],
               renewal_type: [_joi2.default.number(), _joi2.default.allow(null)],
               dual_renewal_type: [_joi2.default.number(), _joi2.default.allow(null)],
               extended_renewal_type: [_joi2.default.number(), _joi2.default.allow(null)],
@@ -787,6 +929,9 @@ function prepareProductRoutes(productController, productRoutes) {
               effective_date: [_joi2.default.string(), _joi2.default.allow(null)],
               provider_id: [_joi2.default.number(), _joi2.default.allow(null)],
               policy_no: [_joi2.default.string(), _joi2.default.allow(null)],
+              provider_name: [
+                _joi2.default.string(),
+                _joi2.default.allow(null)],
               value: [_joi2.default.number(), _joi2.default.allow(null)],
               amount_insured: [_joi2.default.string(), _joi2.default.allow(null)],
               expiry_period: [_joi2.default.number(), _joi2.default.allow(null)]
@@ -821,6 +966,23 @@ function prepareProductRoutes(productController, productRoutes) {
         }
       }
     });
+    productRoutes.push({
+      method: 'DELETE',
+      path: '/products/{id}',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {
+            method: appVersionHelper.checkAppVersion,
+            assign: 'forceUpdate',
+          }, {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          }],
+        handler: _product2.default.deleteProduct,
+        description: 'Delete Product.',
+      }
+    });
   }
 }
 
@@ -835,8 +997,12 @@ function prepareInsightRoutes(insightController, insightRoutes) {
       path: '/insight',
       config: {
         auth: 'jwt',
-        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
-        handler: _insight2.default.retrieveCategorywiseInsight,
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}, {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          }],
+        handler: _insight2.default.retrieveCategoryWiseInsight,
         description: 'Get Insight Data.',
         plugins: {
           'hapi-swagger': {
@@ -850,7 +1016,11 @@ function prepareInsightRoutes(insightController, insightRoutes) {
       path: '/categories/{id}/insights',
       config: {
         auth: 'jwt',
-        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}, {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          }],
         handler: _insight2.default.retrieveInsightForSelectedCategory,
         description: 'Get Insight Data.',
         plugins: {
@@ -904,6 +1074,15 @@ function prepareGeneralRoutes(generalController, generalRoutes) {
       method: 'GET',
       path: '/repairs/products',
       config: {
+        auth: 'jwt',
+        pre: [
+          {
+            method: appVersionHelper.checkAppVersion,
+            assign: 'forceUpdate',
+          }, {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          }],
         handler: _general2.default.retrieveRepairableProducts,
         description: 'Retrieve Repairable Products'
       }
@@ -914,7 +1093,11 @@ function prepareGeneralRoutes(generalController, generalRoutes) {
       path: '/products/init',
       config: {
         auth: 'jwt',
-        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}, {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          }],
         handler: _general2.default.intializeUserProduct,
         description: 'Create Product.',
         validate: {
@@ -925,13 +1108,31 @@ function prepareGeneralRoutes(generalController, generalRoutes) {
             category_id: _joi2.default.number(),
             brand_id: [_joi2.default.number(), _joi2.default.allow(null)],
             colour_id: [_joi2.default.number(), _joi2.default.allow(null)],
-            purchase_cost: [_joi2.default.number(), _joi2.default.allow(null)],
+            value: [_joi2.default.number(), _joi2.default.allow(null)],
             taxes: [_joi2.default.number(), _joi2.default.allow(null)],
             seller_id: [_joi2.default.number(), _joi2.default.allow(null)],
             document_number: [_joi2.default.string(), _joi2.default.allow(null)],
             document_date: [_joi2.default.string(), _joi2.default.allow(null)]
           }
         }
+      }
+    });
+
+    generalRoutes.push({
+      method: 'PUT',
+      path: '/service/centers/accessed',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {
+            method: appVersionHelper.checkAppVersion,
+            assign: 'forceUpdate',
+          }, {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          }],
+        handler: _general2.default.serviceCenterAccessed,
+        description: 'Update user service center accessed.',
       }
     });
   }
@@ -949,7 +1150,11 @@ function prepareProductItemRoutes(productItemController, productItemRoutes) {
       path: '/products/{id}/repairs',
       config: {
         auth: 'jwt',
-        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}, {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          }],
         handler: _productItem2.default.updateRepair,
         description: 'Update Repair.',
         validate: {
@@ -960,7 +1165,7 @@ function prepareProductItemRoutes(productItemController, productItemRoutes) {
             seller_contact: [_joi2.default.string(), _joi2.default.allow(null)],
             seller_address: [_joi2.default.string(), _joi2.default.allow(null)],
             seller_id: [_joi2.default.number(), _joi2.default.allow(null)],
-            repair_cost: [_joi2.default.number(), _joi2.default.allow(null)],
+            value: [_joi2.default.number(), _joi2.default.allow(null)],
             warranty_upto: [_joi2.default.string(), _joi2.default.allow(null)]
           }
         }
@@ -972,7 +1177,11 @@ function prepareProductItemRoutes(productItemController, productItemRoutes) {
       path: '/products/{id}/repairs/{repairId}',
       config: {
         auth: 'jwt',
-        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}, {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          }],
         handler: _productItem2.default.updateRepair,
         description: 'Update Repair.',
         validate: {
@@ -982,7 +1191,7 @@ function prepareProductItemRoutes(productItemController, productItemRoutes) {
             seller_name: [_joi2.default.string(), _joi2.default.allow(null)],
             seller_contact: [_joi2.default.string(), _joi2.default.allow(null)],
             seller_id: [_joi2.default.number(), _joi2.default.allow(null)],
-            repair_cost: [_joi2.default.number(), _joi2.default.allow(null)],
+            value: [_joi2.default.number(), _joi2.default.allow(null)],
             warranty_upto: [_joi2.default.string(), _joi2.default.allow(null)]
           }
         }
@@ -1050,7 +1259,11 @@ exports.default = function (app, modals) {
       path: '/search',
       config: {
         auth: 'jwt',
-        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'}, {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          }],
         handler: _search2.default.retrieveSearch,
         description: 'Get Search Data.',
         plugins: {

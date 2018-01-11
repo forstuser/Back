@@ -37,17 +37,22 @@ var CategoryAdaptor = function () {
         categoryData = result.map(function (item) {
           return item.toJSON();
         });
+        var subCategoryOption = {
+          status_type: 1,
+          ref_id: categoryData.map(function(item) {
+            return item.id;
+          })
+        };
         var main_category_id = options.category_id;
         var excluded_category_id = main_category_id ? {
           $notIn: main_category_id === 1 ? [20, 72, 73] : main_category_id === 2 ? [327, 162, 530, 581, 491, 541] : main_category_id === 3 ? [139, 138, 154, 150, 153] : []
         } : undefined;
-        return _this.retrieveSubCategories({
-          ref_id: categoryData.map(function (item) {
-            return item.id;
-          }),
-          category_id: excluded_category_id,
-          status_type: 1
-        }, isBrandFormRequired);
+        if (excluded_category_id) {
+          subCategoryOption.category_id = excluded_category_id;
+        }
+
+        return _this.retrieveSubCategories(subCategoryOption,
+            isBrandFormRequired);
       }).then(function (subCategories) {
         categoryData = categoryData.map(function (item) {
           item.subCategories = subCategories.filter(function (categoryItem) {
@@ -71,7 +76,6 @@ var CategoryAdaptor = function () {
         attributes: [['category_id', 'id'], ['category_name', 'name'], ['ref_id', 'refId'], 'dual_warranty_item', ['category_level', 'level'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.literal('ref_id'), '/products?subCategoryId=', this.modals.sequelize.literal('category_id')), 'categoryProductUrl'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.literal('ref_id'), '/insights?subCategoryId=', this.modals.sequelize.literal('category_id')), 'categoryInsightUrl'], [this.modals.sequelize.fn('CONCAT', '/categories/', this.modals.sequelize.literal('category_id'), '/images/'), 'categoryImageUrl']],
         order: ['category_id']
       }).then(function (result) {
-        console.log(result);
         categoryData = result.map(function (item) {
           return item.toJSON();
         });
@@ -159,7 +163,13 @@ var CategoryAdaptor = function () {
               as: 'categories',
               attributes: [],
               required: true
-            }
+            },
+            attributes: [
+              'id',
+              'name',
+              [
+                _this2.modals.sequelize.literal('"categories"."category_id"'),
+                'category_id']],
           }), _this2.modals.insuranceBrands.findAll({
             where: {
               type: [2, 3]
@@ -172,7 +182,50 @@ var CategoryAdaptor = function () {
               as: 'categories',
               attributes: [],
               required: true
-            }
+            },
+            attributes: [
+              'id',
+              'name',
+              [
+                _this2.modals.sequelize.literal('"categories"."category_id"'),
+                'category_id']],
+          }), _this2.modals.categories.findAll({
+            where: {
+              status_type: 1,
+              ref_id: options.category_id,
+              category_level: 3,
+            },
+            attributes: [
+              [
+                'category_id',
+                'id'],
+              [
+                'category_name',
+                'name'],
+              [
+                'ref_id',
+                'refId'],
+              'dual_warranty_item',
+              [
+                'category_level',
+                'level'],
+              [
+                _this2.modals.sequelize.fn('CONCAT', 'categories/',
+                    _this2.modals.sequelize.literal('ref_id'),
+                    '/products?subCategoryId=',
+                    _this2.modals.sequelize.literal('category_id')),
+                'categoryProductUrl'],
+              [
+                _this2.modals.sequelize.fn('CONCAT', 'categories/',
+                    _this2.modals.sequelize.literal('ref_id'),
+                    '/insights?subCategoryId=',
+                    _this2.modals.sequelize.literal('category_id')),
+                'categoryInsightUrl'],
+              [
+                _this2.modals.sequelize.fn('CONCAT', '/categories/',
+                    _this2.modals.sequelize.literal('category_id'), '/images/'),
+                'categoryImageUrl']],
+            order: ['category_id'],
           })]);
         }
 
@@ -184,10 +237,12 @@ var CategoryAdaptor = function () {
               return brandItem.categoryId === item.id;
             });
             item.categoryForms = results[1].filter(function (formItem) {
-              return formItem.categoryId === item.id;
+              return formItem.categoryId === item.id ||
+                  formItem.main_category_id === item.refId;
             });
             item.insuranceProviders = results[2];
             item.warrantyProviders = results[3];
+            item.subCategories = results[4];
             return item;
           });
         }
@@ -208,7 +263,22 @@ var CategoryAdaptor = function () {
           attributes: ['id', 'title', ['category_form_id', 'categoryFormId'], ['status_type', 'status']],
           required: false
         }],
-        attributes: [['category_id', 'categoryId'], 'title', ['form_type', 'formType'], ['status_type', 'status'], 'id', ['display_index', 'displayIndex']],
+        attributes: [
+          [
+            'category_id',
+            'categoryId'],
+          'title',
+          'main_category_id',
+          [
+            'form_type',
+            'formType'],
+          [
+            'status_type',
+            'status'],
+          'id',
+          [
+            'display_index',
+            'displayIndex']],
         order: ['display_index']
       }).then(function (formResult) {
         return formResult.map(function (item) {

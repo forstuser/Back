@@ -78,12 +78,12 @@ class UploadController {
 
   static uploadUserImage(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (!user) {
-      reply({
+    if (!request.pre.userExist) {
+      return reply({
         status: false,
         message: 'Unauthorized',
         // forceUpdate: request.pre.forceUpdate
-      });
+      }).code(401);
     } else if (request.payload) {
       const fieldNameHere = request.payload.fieldNameHere;
       const fileData = fieldNameHere || request.payload.filesName;
@@ -126,11 +126,11 @@ class UploadController {
 
   static uploadFiles(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (!user) {
-      reply({
+    if (!request.pre.userExist) {
+      return reply({
         status: false,
         message: 'Unauthorized',
-      });
+      }).code(401);
     } else if (request.payload) {
       // if (!request.pre.forceUpdate && request.payload) {
       const fieldNameHere = request.payload.fieldNameHere;
@@ -644,7 +644,7 @@ class UploadController {
 
   static retrieveFiles(request, reply) {
     /* const user = shared.verifyAuthorization(request.headers);
-     if (!user) {
+     if (!request.pre.userExist) {
         reply({
           status: false,
           message: 'Unauthorized',
@@ -709,11 +709,11 @@ class UploadController {
 
   static deleteFile(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (!user) {
-      reply({
+    if (!request.pre.userExist) {
+      return reply({
         status: false,
         message: 'Unauthorized',
-      });
+      }).code(401);
     } else {
       if (!request.pre.forceUpdate) {
         Promise.all([
@@ -852,11 +852,11 @@ class UploadController {
 
   static retrieveUserImage(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (!user) {
+    if (!request.pre.userExist) {
       return reply({
         status: false,
         message: 'Unauthorized',
-      });
+      }).code(401);
     } else {
       if (!request.pre.forceUpdate) {
         let userData;

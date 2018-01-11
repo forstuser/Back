@@ -108,7 +108,13 @@ var trackTransaction = function trackTransaction(transactionId, userId) {
   }
 };
 
-var loginOrRegisterUser = function loginOrRegisterUser(userWhere, userInput, trueObject, request, reply) {
+var loginOrRegisterUser = function loginOrRegisterUser(parameters) {
+  var userWhere = parameters.userWhere,
+      userInput = parameters.userInput,
+      trueObject = parameters.trueObject,
+      request = parameters.request,
+      reply = parameters.reply;
+
   var token = void 0;
   var updatedUser = void 0;
   return userAdaptor.loginOrRegister(userWhere, userInput).then(function (userData) {
@@ -126,7 +132,10 @@ var loginOrRegisterUser = function loginOrRegisterUser(userWhere, userInput, tru
     }
 
     if (request.payload.fcmId) {
-      fcmManager.insertFcmDetails(updatedUser.id || updatedUser.ID, request.payload.fcmId).then(function (data) {
+      fcmManager.insertFcmDetails({
+        userId: updatedUser.id || updatedUser.ID,
+        fcmId: request.payload.fcmId,
+      }).then(function(data) {
         console.log(data);
       }).catch(function (err) {
         return console.log('Error on ' + new Date() + ' for user ' + (updatedUser.id || updatedUser.ID) + ' is as follow: \n ' + err);
@@ -136,7 +145,12 @@ var loginOrRegisterUser = function loginOrRegisterUser(userWhere, userInput, tru
     trackTransaction(request.payload.transactionId, updatedUser.id);
     replyObject.authorization = 'bearer ' + _authentication2.default.generateToken(userData[0]).token;
     token = replyObject.authorization;
-    return dashboardAdaptor.prepareDashboardResult(userData[1], userData[0].toJSON(), replyObject.authorization, request);
+    return dashboardAdaptor.prepareDashboardResult({
+      isNewUser: userData[1],
+      user: userData[0].toJSON(),
+      token: replyObject.authorization,
+      request: request,
+    });
   }).then(function (result) {
     return reply(result).code(201).header('authorization', replyObject.authorization);
   }).catch(function (err) {
@@ -180,37 +194,24 @@ var UserController = function () {
         message: 'success',
         forceUpdate: request.pre.forceUpdate
       };
-      if (!user) {
+      if (!request.pre.userExist) {
         replyObject.status = false;
         replyObject.message = 'Unauthorized';
-        reply(replyObject);
-      } else if (user && !request.pre.forceUpdate) {
-        return userAdaptor.isUserValid(user).then(function (isValid) {
-          if (isValid) {
-            if (request.payload && request.payload.fcmId) {
-              fcmManager.insertFcmDetails(user.id || user.ID, request.payload.fcmId, request.payload.platform).then(function (data) {
-                console.log(data);
-              }).catch(function (err) {
-                console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
-              });
-            }
-
-            return reply(replyObject).code(201);
-          }
-
-          return reply({
-            status: false,
-            message: 'Token Expired or Invalid',
-            forceUpdate: request.pre.forceUpdate
-          }).code(401);
-        }).catch(function (err) {
-          console.log('Error on ' + new Date() + ' for user ' + user.mobile_no + ' is as follow: \n \n ' + err);
-          return reply({
-            status: false,
-            message: 'Token Expired or Invalid',
-            forceUpdate: request.pre.forceUpdate
-          }).code(401);
-        });
+        return reply(replyObject);
+      } else if (request.pre.userExist && !request.pre.forceUpdate) {
+        if (request.payload && request.payload.fcmId) {
+          fcmManager.insertFcmDetails({
+            userId: user.id || user.ID,
+            fcmId: request.payload.fcmId,
+            platformId: request.payload.platform,
+          }).then(function(data) {
+            console.log(data);
+          }).catch(function(err) {
+            console.log('Error on ' + new Date() + ' for user ' +
+                (user.id || user.ID) + ' is as follow: \n \n ' + err);
+          });
+        }
+        return reply(replyObject).code(201);
       } else {
         replyObject.status = false;
         replyObject.message = 'Forbidden';
@@ -291,7 +292,13 @@ var UserController = function () {
             return _otp2.default.verifyOTPForUser(trueObject.PhoneNo, request.payload.Token).then(function (data) {
               console.log('VALIDATE OTP RESPONSE: ', data);
               if (data.type === 'success') {
-                return loginOrRegisterUser(userWhere, userInput, trueObject, request, reply);
+                return loginOrRegisterUser({
+                  userWhere: userWhere,
+                  userInput: userInput,
+                  trueObject: trueObject,
+                  request: request,
+                  reply: reply,
+                });
               } else {
                 replyObject.status = false;
                 replyObject.message = 'Invalid/Expired OTP';
@@ -306,7 +313,13 @@ var UserController = function () {
               return reply(replyObject).code(401);
             });
           } else if (request.payload.Token === '050118') {
-            return loginOrRegisterUser(userWhere, userInput, trueObject, request, reply);
+            return loginOrRegisterUser({
+              userWhere: userWhere,
+              userInput: userInput,
+              trueObject: trueObject,
+              request: request,
+              reply: reply,
+            });
           }
         } else if (request.payload.BBLogin_Type === 2) {
           var TrueSecret = request.payload.TrueSecret;
@@ -322,7 +335,13 @@ var UserController = function () {
             userInput.email_secret = _uuid2.default.v4();
             userInput.mobile_no = trueObject.PhoneNo;
             userInput.user_status_type = 1;
-            return loginOrRegisterUser(userWhere, userInput, trueObject, request, reply).catch(function (err) {
+            return loginOrRegisterUser({
+              userWhere: userWhere,
+              userInput: userInput,
+              trueObject: trueObject,
+              request: request,
+              reply: reply,
+            }).catch(function(err) {
               console.log('Error on ' + new Date() + ' for mobile no: ' + trueObject.PhoneNo + ' is as follow: \n \n ' + err);
               replyObject.status = false;
               replyObject.message = 'Issue in updating data';
@@ -346,11 +365,11 @@ var UserController = function () {
         message: 'success',
         forceUpdate: request.pre.forceUpdate
       };
-      if (!user) {
+      if (!request.pre.userExist) {
         replyObject.status = false;
         replyObject.message = 'Unauthorized';
         return reply(replyObject);
-      } else if (user && !request.pre.forceUpdate) {
+      } else if (request.pre.userExist && !request.pre.forceUpdate) {
         if (request.payload && request.payload.fcmId) {
           fcmManager.deleteFcmDetails(user.id || user.ID, request.payload.fcmId, request.payload.platform).then(function (rows) {
             console.log('TOTAL FCM ID\'s DELETED: ', rows);
@@ -380,9 +399,9 @@ var UserController = function () {
     key: 'retrieveUserProfile',
     value: function retrieveUserProfile(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (user && !request.pre.forceUpdate) {
+      if (request.pre.userExist && !request.pre.forceUpdate) {
         return reply(userAdaptor.retrieveUserProfile(user, request));
-      } else if (!user) {
+      } else if (!request.pre.userExist) {
         return reply({ message: 'Invalid Token', forceUpdate: request.pre.forceUpdate }).code(401);
       } else {
         return reply({
@@ -396,9 +415,9 @@ var UserController = function () {
     key: 'updateUserProfile',
     value: function updateUserProfile(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (user && !request.pre.forceUpdate) {
+      if (request.pre.userExist && !request.pre.forceUpdate) {
         return userAdaptor.updateUserProfile(user, request, reply);
-      } else if (!user) {
+      } else if (!request.pre.userExist) {
         return reply({ message: 'Invalid Token', forceUpdate: request.pre.forceUpdate }).code(401);
       } else {
         return reply({
@@ -412,13 +431,13 @@ var UserController = function () {
     key: 'retrieveNearBy',
     value: function retrieveNearBy(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!user) {
+      if (!request.pre.userExist) {
         reply({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         });
-      } else if (user && !request.pre.forceUpdate) {
+      } else if (request.pre.userExist && !request.pre.forceUpdate) {
         nearByAdaptor.retrieveNearBy(request.query.location || user.location, request.query.geolocation || user.latitude + ',' + user.longitude, request.query.professionids || '[]', reply, user.id || user.ID, request);
       } else {
         reply({

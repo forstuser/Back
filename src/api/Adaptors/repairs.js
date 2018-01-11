@@ -52,6 +52,7 @@ class RepairAdaptor {
           model: this.modals.onlineSellers,
           as: 'onlineSellers',
           attributes: [
+            ['sid', 'id'],
             [
               'seller_name',
               'sellerName'],
@@ -71,6 +72,7 @@ class RepairAdaptor {
           model: this.modals.offlineSellers,
           as: 'sellers',
           attributes: [
+            ['sid', 'id'],
             [
               'seller_name',
               'sellerName'],
@@ -231,11 +233,10 @@ class RepairAdaptor {
       where: {
         id,
       },
-    }).
-        then(result => {
-          result.updateAttributes(values);
-          return result.toJSON();
-        });
+    }).then(result => {
+      result.updateAttributes(values);
+      return result.toJSON();
+    });
   }
 }
 

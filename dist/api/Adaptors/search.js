@@ -95,7 +95,7 @@ var SearchAdaptor = function () {
 
         result[2][0].updateAttributes({
           resultCount: productList.length + categoryList.length,
-          searchDate: (0, _moment2.default)().format('YYYY-MM-DD HH:mm:ss')
+          searchDate: _moment2.default.utc().format('YYYY-MM-DD HH:mm:ss'),
         });
         var recentSearches = result[3].map(function (item) {
           var searches = item.toJSON();
@@ -157,7 +157,8 @@ var SearchAdaptor = function () {
             return productItem.masterCategoryId === category.id || productItem.categoryId === category.id;
           });
           category.products = _lodash2.default.chain(products).sortBy(function (item) {
-            return (0, _moment2.default)(item.lastUpdatedAt, _moment2.default.ISO_8601);
+            return _moment2.default.utc(item.lastUpdatedAt,
+                _moment2.default.ISO_8601);
           }).reverse().value();
           return category;
         });
@@ -175,7 +176,7 @@ var SearchAdaptor = function () {
           user_id: user.id || user.ID,
           searchValue: searchValue,
           resultCount: 0,
-          searchDate: (0, _moment2.default)().format('YYYY-MM-DD HH:mm:ss')
+          searchDate: _moment2.default.utc().format('YYYY-MM-DD HH:mm:ss'),
         }
       });
     }

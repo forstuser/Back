@@ -1,9 +1,10 @@
-class fcmManager {
+class FCMManager {
   constructor(fcmModal) {
     this.fcmModal = fcmModal;
   }
 
-  insertFcmDetails(userId, fcmId, platformId) {
+  insertFcmDetails(parameters) {
+    let {userId, fcmId, platformId} = parameters;
     if (!fcmId || fcmId === '') {
       return Promise.resolve('NULL FCMID');
     }
@@ -27,7 +28,8 @@ class fcmManager {
     });
   }
 
-  deleteFcmDetails(userId, fcmId) {
+  deleteFcmDetails(parameters) {
+    let {userId, fcmId} = parameters;
     return this.fcmModal.destroy({
       where: {
         user_id: userId,
@@ -42,4 +44,4 @@ class fcmManager {
   }
 }
 
-export default fcmManager;
+export default FCMManager;

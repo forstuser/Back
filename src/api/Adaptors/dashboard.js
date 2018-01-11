@@ -6,6 +6,7 @@ import AMCAdaptor from './amcs';
 import InsuranceAdaptor from './insurances';
 import RepairAdaptor from './repairs';
 import WarrantyAdaptor from './warranties';
+import PUCAdaptor from './pucs';
 import shared from '../../helpers/shared';
 import moment from 'moment';
 
@@ -17,6 +18,7 @@ class DashboardAdaptor {
     this.insuranceAdaptor = new InsuranceAdaptor(modals);
     this.repairAdaptor = new RepairAdaptor(modals);
     this.warrantyAdaptor = new WarrantyAdaptor(modals);
+    this.pucAdaptor = new PUCAdaptor(modals);
     this.date = moment.utc();
   }
 
@@ -48,7 +50,7 @@ class DashboardAdaptor {
         where: {
           user_id: user.id || user.ID,
           status_type: 11,
-          main_category_id: [2, 3],
+          main_category_id: [1, 2, 3],
         },
       }),
       this.productAdaptor.retrieveUsersLastProduct({
@@ -159,7 +161,8 @@ class DashboardAdaptor {
     });
   }
 
-  prepareDashboardResult(isNewUser, user, token, request) {
+  prepareDashboardResult(parameters) {
+    let {isNewUser, user, token, request} = parameters;
     if (!isNewUser) {
       return Promise.all([
         this.modals.products.count({
@@ -261,6 +264,11 @@ class DashboardAdaptor {
         user_id: user.id || user.ID,
         status_type: [5, 11],
       }),
+      this.pucAdaptor.retrievePUCs({
+        user_id: user.id || user.ID,
+        status_type: [5, 11],
+        main_category_id: [3],
+      }),
       this.productAdaptor.retrieveProducts({
         user_id: user.id || user.ID,
         status_type: [5, 11],
@@ -274,10 +282,11 @@ class DashboardAdaptor {
           if (metaData.name.toLowerCase().includes('due') &&
               metaData.name.toLowerCase().includes('date') &&
               metaData.value &&
-              moment(metaData.value, moment.ISO_8601).isValid()) {
-            const dueDateTime = moment(metaData.value, moment.ISO_8601);
+              moment.utc(metaData.value, moment.ISO_8601).isValid()) {
+            const dueDate_time = moment.utc(metaData.value,
+                moment.ISO_8601);
             product.dueDate = metaData.value;
-            product.dueIn = dueDateTime.diff(moment.utc(), 'days');
+            product.dueIn = dueDate_time.diff(moment.utc(), 'days');
           }
 
           if (metaData.name.toLowerCase().includes('address')) {
@@ -287,7 +296,7 @@ class DashboardAdaptor {
           return metaData;
         });
 
-        product.productType = 1;
+        product.product_type = 1;
         return product;
       });
 
@@ -296,34 +305,14 @@ class DashboardAdaptor {
               item.dueIn <=
               30 && item.dueIn >= 0));
 
-      let pucProducts = result[4].map((item) => {
-        const product = item;
-        if (product.pucDetail &&
-            moment.utc(product.pucDetail.expiry_date, moment.ISO_8601).
-                isValid()) {
-          const dueDateTime = moment.utc(product.pucDetail.expiry_date,
-              moment.ISO_8601).
-              endOf('day');
-          product.dueDate = product.pucDetail.expiry_date;
-          product.dueIn = dueDateTime.diff(moment.utc(), 'days');
-        }
-
-        product.productType = 5;
-        return product;
-      });
-
-      pucProducts = pucProducts.filter(
-          item => ((item.dueIn !== undefined && item.dueIn !== null) &&
-              item.dueIn <= 30 && item.dueIn >= 0));
-
       let amcs = result[1].map((item) => {
         const amc = item;
-        if (moment(amc.expiryDate, moment.ISO_8601).isValid()) {
-          const dueDateTime = moment.utc(amc.expiryDate, moment.ISO_8601).
+        if (moment.utc(amc.expiryDate, moment.ISO_8601).isValid()) {
+          const dueDate_time = moment.utc(amc.expiryDate, moment.ISO_8601).
               endOf('day');
           amc.dueDate = amc.expiryDate;
-          amc.dueIn = dueDateTime.diff(moment.utc(), 'days');
-          amc.productType = 4;
+          amc.dueIn = dueDate_time.diff(moment.utc(), 'days');
+          amc.product_type = 4;
         }
 
         return amc;
@@ -334,12 +323,13 @@ class DashboardAdaptor {
 
       let insurances = result[2].map((item) => {
         const insurance = item;
-        if (moment(insurance.expiryDate, moment.ISO_8601).isValid()) {
-          const dueDateTime = moment.utc(insurance.expiryDate, moment.ISO_8601).
+        if (moment.utc(insurance.expiryDate, moment.ISO_8601).isValid()) {
+          const dueDate_time = moment.utc(insurance.expiryDate,
+              moment.ISO_8601).
               endOf('day');
           insurance.dueDate = insurance.expiryDate;
-          insurance.dueIn = dueDateTime.diff(moment.utc(), 'days');
-          insurance.productType = 3;
+          insurance.dueIn = dueDate_time.diff(moment.utc(), 'days');
+          insurance.product_type = 3;
         }
         return insurance;
       });
@@ -350,12 +340,13 @@ class DashboardAdaptor {
 
       let warranties = result[3].map((item) => {
         const warranty = item;
-        if (moment(warranty.expiryDate, moment.ISO_8601).isValid()) {
-          const dueDateTime = moment.utc(warranty.expiryDate, moment.ISO_8601).
+        if (moment.utc(warranty.expiryDate, moment.ISO_8601).isValid()) {
+          const dueDate_time = moment.utc(warranty.expiryDate,
+              moment.ISO_8601).
               endOf('day');
           warranty.dueDate = warranty.expiryDate;
-          warranty.dueIn = dueDateTime.diff(moment.utc(), 'days');
-          warranty.productType = 2;
+          warranty.dueIn = dueDate_time.diff(moment.utc(), 'days');
+          warranty.product_type = 2;
         }
         return warranty;
       });
@@ -364,12 +355,52 @@ class DashboardAdaptor {
           item => (item.dueIn !== undefined && item.dueIn !== null) &&
               item.dueIn <= 30 && item.dueIn >= 0);
 
+      let pucProducts = result[4].map((item) => {
+        const puc = item;
+        if (moment.utc(puc.expiryDate, moment.ISO_8601).isValid()) {
+          const dueDate_time = moment.utc(puc.expiryDate, moment.ISO_8601).
+              endOf('day');
+          puc.dueDate = puc.expiryDate;
+          puc.dueIn = dueDate_time.diff(moment.utc(), 'days');
+          puc.product_type = 5;
+        }
+
+        return puc;
+      });
+
+      pucProducts = pucProducts.filter(
+          item => ((item.dueIn !== undefined && item.dueIn !== null) &&
+              item.dueIn <= 30 && item.dueIn >= 0));
+
+      let productServiceSchedule = result[5].map((item) => {
+        const scheduledProduct = item;
+        const scheduledDate = scheduledProduct.schedule ?
+            moment.utc(scheduledProduct.purchaseDate, moment.ISO_8601).
+                add(scheduledProduct.schedule.dueIn_months, 'months') :
+            undefined;
+        if (scheduledDate &&
+            moment.utc(scheduledDate, moment.ISO_8601).isValid()) {
+          const dueDate_time = moment.utc(scheduledDate, moment.ISO_8601).
+              endOf('day');
+          scheduledProduct.dueDate = scheduledDate;
+          scheduledProduct.dueIn = dueDate_time.diff(moment.utc(), 'days');
+          scheduledProduct.product_type = 6;
+        }
+
+        return scheduledProduct;
+      });
+
+      productServiceSchedule = productServiceSchedule.filter(
+          item => ((item.dueIn !== undefined && item.dueIn !== null) &&
+              item.dueIn <= 7 && item.dueIn >= 0));
+
       return [
         ...products,
         ...warranties,
         ...insurances,
         ...amcs,
-        ...pucProducts];
+        ...pucProducts,
+        ...productServiceSchedule];
     });
   }
 
@@ -414,13 +445,22 @@ class DashboardAdaptor {
           $lte: moment.utc(),
           $gte: moment.utc().subtract(6, 'd').startOf('d'),
         },
+      }),
+      this.pucAdaptor.retrievePUCs({
+        status_type: [5, 11],
+        user_id: user.id || user.ID,
+        document_date: {
+          $lte: moment.utc(),
+          $gte: moment.utc().subtract(6, 'd').startOf('d'),
+        },
       })]).
         then((results) => [
           ...results[0],
           ...results[1],
           ...results[2],
           ...results[3],
-          ...results[4]]);
+          ...results[4],
+          ...results[5]]);
   }
 
   retrieveRecentSearch(user) {

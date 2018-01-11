@@ -3,25 +3,11 @@
 export default (sequelize, DataTypes) => {
   const insuranceBrandCategories = sequelize.define('insuranceBrandCategories',
       {
-        id: {
-          type: DataTypes.INTEGER,
-          primaryKey: true,
-          autoIncrement: true,
-          unique: true,
-        },
         insurance_brand_id: {
           type: DataTypes.INTEGER,
         },
         category_id: {
           type: DataTypes.INTEGER,
-        },
-        updated_by: {
-          type: DataTypes.INTEGER,
-          defaultValue: 1,
-        },
-        status_type: {
-          type: DataTypes.INTEGER,
-          defaultValue: 1,
         },
         created_at: {
           type: DataTypes.DATE,
@@ -41,11 +27,6 @@ export default (sequelize, DataTypes) => {
       });
 
   insuranceBrandCategories.associate = (models) => {
-    insuranceBrandCategories.belongsTo(models.users,
-        {foreignKey: 'updated_by'});
-
-    insuranceBrandCategories.belongsTo(models.statuses,
-        {foreignKey: 'status_type', targetKey: 'status_type'});
     insuranceBrandCategories.belongsTo(models.insuranceBrands,
         {foreignKey: 'insurance_brand_id'});
     insuranceBrandCategories.belongsTo(models.categories,
