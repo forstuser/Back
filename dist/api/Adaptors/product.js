@@ -39,6 +39,10 @@ var _sellers = require('./sellers');
 
 var _sellers2 = _interopRequireDefault(_sellers);
 
+var _job = require('./job');
+
+var _job2 = _interopRequireDefault(_job);
+
 var _lodash = require('lodash');
 
 var _lodash2 = _interopRequireDefault(_lodash);
@@ -66,6 +70,7 @@ var ProductAdaptor = function () {
     this.repairAdaptor = new _repairs2.default(modals);
     this.categoryAdaptor = new _category2.default(modals);
     this.sellerAdaptor = new _sellers2.default(modals);
+    this.jobAdaptor = new _job2.default(modals);
   }
 
   _createClass(ProductAdaptor, [{
@@ -817,11 +822,16 @@ var ProductAdaptor = function () {
       var _this6 = this;
 
       var sellerPromise = [];
-      var isProductAMCSellerSame = otherItems.amc.seller_contact === productBody.seller_contact;
-      var isProductRepairSellerSame = otherItems.repair.seller_contact === productBody.seller_contact;
-      var isAMCRepairSellerSame = otherItems.repair.seller_contact === otherItems.amc.seller_contact;
-      var isProductPUCSellerSame = otherItems.puc.seller_contact === productBody.seller_contact;
+      var isProductAMCSellerSame = otherItems.amc &&
+          otherItems.amc.seller_contact === productBody.seller_contact;
+      var isProductRepairSellerSame = otherItems.repair &&
+          otherItems.repair.seller_contact === productBody.seller_contact;
+      var isAMCRepairSellerSame = otherItems.repair && otherItems.amc &&
+          otherItems.repair.seller_contact === otherItems.amc.seller_contact;
+      var isProductPUCSellerSame = otherItems.puc &&
+          otherItems.puc.seller_contact === productBody.seller_contact;
       this.prepareSellerPromise(sellerPromise, productBody, otherItems, isProductAMCSellerSame, isProductRepairSellerSame, isProductPUCSellerSame);
+
       var renewalTypes = void 0;
       var product = productBody;
       var metadata = void 0;
@@ -889,21 +899,25 @@ var ProductAdaptor = function () {
 
           var insurancePromise = [];
           if (otherItems.insurance) {
-            _this6.prepareInsurancePromise(otherItems, insurancePromise, productBody, productId);
+            _this6.prepareInsurancePromise(otherItems, insurancePromise,
+                product, productId);
           }
 
           var amcPromise = [];
           if (otherItems.amc) {
-            _this6.prepareAMCPromise(renewalTypes, otherItems, amcPromise, productBody, productId, isProductAMCSellerSame, sellerList);
+            _this6.prepareAMCPromise(renewalTypes, otherItems, amcPromise,
+                product, productId, isProductAMCSellerSame, sellerList);
           }
 
           var repairPromise = [];
           if (otherItems.repair) {
-            _this6.prepareRepairPromise(otherItems, isProductRepairSellerSame, sellerList, isAMCRepairSellerSame, repairPromise, productBody, productId);
+            _this6.prepareRepairPromise(otherItems, isProductRepairSellerSame,
+                sellerList, isAMCRepairSellerSame, repairPromise, product,
+                productId);
           }
           var metadataPromise = metadata.map(function (mdItem) {
+            mdItem.status_type = 11;
             if (mdItem.id) {
-              mdItem.status_type = 11;
               return _this6.updateProductMetaData(mdItem.id, mdItem);
             }
             mdItem.product_id = productId;
@@ -912,10 +926,18 @@ var ProductAdaptor = function () {
 
           var pucPromise = [];
           if (otherItems.puc) {
-            _this6.preparePUCPromise(renewalTypes, otherItems, pucPromise, productBody, isProductPUCSellerSame, sellerList, productId);
+            _this6.preparePUCPromise(renewalTypes, otherItems, pucPromise,
+                product, isProductPUCSellerSame, sellerList, productId);
           }
 
-          return Promise.all([Promise.all(metadataPromise), Promise.all(insurancePromise), Promise.all(warrantyItemPromise), Promise.all(amcPromise), Promise.all(repairPromise), Promise.all(pucPromise)]);
+          return Promise.all([
+            Promise.all(metadataPromise),
+            Promise.all(insurancePromise),
+            Promise.all(warrantyItemPromise),
+            Promise.all(amcPromise),
+            Promise.all(repairPromise),
+            Promise.all(pucPromise),
+            _this6.jobAdaptor.retrieveJobDetail(product.job_id)]);
         }
 
         return undefined;

@@ -9,6 +9,7 @@ import AMCAdaptor from './amcs';
 import RepairAdaptor from './repairs';
 import CategoryAdaptor from './category';
 import SellerAdaptor from './sellers';
+import JobAdaptor from './job';
 import _ from 'lodash';
 import moment from 'moment/moment';
 
@@ -23,6 +24,7 @@ class ProductAdaptor {
     this.repairAdaptor = new RepairAdaptor(modals);
     this.categoryAdaptor = new CategoryAdaptor(modals);
     this.sellerAdaptor = new SellerAdaptor(modals);
+    this.jobAdaptor = new JobAdaptor(modals);
   }
 
   retrieveProducts(options) {
@@ -1364,17 +1366,22 @@ class ProductAdaptor {
 
   updateProductDetails(productBody, metadataBody, otherItems, productId) {
     const sellerPromise = [];
-    const isProductAMCSellerSame = otherItems.amc.seller_contact ===
+    const isProductAMCSellerSame = otherItems.amc &&
+        otherItems.amc.seller_contact ===
         productBody.seller_contact;
-    const isProductRepairSellerSame = otherItems.repair.seller_contact ===
+    const isProductRepairSellerSame = otherItems.repair &&
+        otherItems.repair.seller_contact ===
         productBody.seller_contact;
-    const isAMCRepairSellerSame = otherItems.repair.seller_contact ===
+    const isAMCRepairSellerSame = otherItems.repair && otherItems.amc &&
+        otherItems.repair.seller_contact ===
         otherItems.amc.seller_contact;
-    const isProductPUCSellerSame = otherItems.puc.seller_contact ===
+    const isProductPUCSellerSame = otherItems.puc &&
+        otherItems.puc.seller_contact ===
         productBody.seller_contact;
     this.prepareSellerPromise(sellerPromise, productBody, otherItems,
         isProductAMCSellerSame, isProductRepairSellerSame,
         isProductPUCSellerSame);
+
     let renewalTypes;
     let product = productBody;
     let metadata;
@@ -1456,24 +1463,24 @@ class ProductAdaptor {
             const insurancePromise = [];
             if (otherItems.insurance) {
               this.prepareInsurancePromise(otherItems, insurancePromise,
-                  productBody, productId);
+                  product, productId);
             }
 
             const amcPromise = [];
             if (otherItems.amc) {
               this.prepareAMCPromise(renewalTypes, otherItems, amcPromise,
-                  productBody, productId, isProductAMCSellerSame, sellerList);
+                  product, productId, isProductAMCSellerSame, sellerList);
             }
 
             const repairPromise = [];
             if (otherItems.repair) {
               this.prepareRepairPromise(otherItems, isProductRepairSellerSame,
-                  sellerList, isAMCRepairSellerSame, repairPromise, productBody,
+                  sellerList, isAMCRepairSellerSame, repairPromise, product,
                   productId);
             }
             const metadataPromise = metadata.map((mdItem) => {
+              mdItem.status_type = 11;
               if (mdItem.id) {
-                mdItem.status_type = 11;
                 return this.updateProductMetaData(mdItem.id, mdItem);
               }
               mdItem.product_id = productId;
@@ -1483,7 +1490,7 @@ class ProductAdaptor {
             const pucPromise = [];
             if (otherItems.puc) {
               this.preparePUCPromise(renewalTypes, otherItems, pucPromise,
-                  productBody, isProductPUCSellerSame, sellerList, productId);
+                  product, isProductPUCSellerSame, sellerList, productId);
             }
 
             return Promise.all([
@@ -1492,7 +1499,8 @@ class ProductAdaptor {
               Promise.all(warrantyItemPromise),
               Promise.all(amcPromise),
               Promise.all(repairPromise),
-              Promise.all(pucPromise)]);
+              Promise.all(pucPromise),
+              this.jobAdaptor.retrieveJobDetail(product.job_id)]);
           }
 
           return undefined;
