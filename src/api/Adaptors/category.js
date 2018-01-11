@@ -42,6 +42,10 @@ export default class CategoryAdaptor {
       order: ['category_id'],
     }).then((result) => {
       categoryData = result.map(item => item.toJSON());
+      const subCategoryOption = {
+        status_type: 1,
+        ref_id: categoryData.map(item => item.id),
+      };
       const main_category_id = options.category_id;
       const excluded_category_id = main_category_id ? {
         $notIn:
@@ -53,11 +57,11 @@ export default class CategoryAdaptor {
                         [139, 138, 154, 150, 153] :
                         [],
       } : undefined;
-      return this.retrieveSubCategories({
-        ref_id: categoryData.map(item => item.id),
-        category_id: excluded_category_id,
-        status_type: 1,
-      }, isBrandFormRequired);
+      if (excluded_category_id) {
+        subCategoryOption.category_id = excluded_category_id;
+      }
+
+      return this.retrieveSubCategories(subCategoryOption, isBrandFormRequired);
     }).then((subCategories) => {
       categoryData = categoryData.map((item) => {
         item.subCategories = subCategories.filter(
@@ -107,7 +111,6 @@ export default class CategoryAdaptor {
           'categoryImageUrl']],
       order: ['category_id'],
     }).then((result) => {
-      console.log(result);
       categoryData = result.map(item => item.toJSON());
       if (isBrandFormRequired) {
         return Promise.all([
@@ -120,49 +123,49 @@ export default class CategoryAdaptor {
                 $and: {
                   category_id: categoryData.map(item => item.id),
                   title: {
-                    $ilike: 'model',
+                    $iLike: 'model',
                   },
                 },
               }, {
                 $and: {
                   category_id: categoryData.map(item => item.id),
                   title: {
-                    $ilike: 'IMEI Number',
+                    $iLike: 'IMEI Number',
                   },
                 },
               }, {
                 $and: {
                   category_id: categoryData.map(item => item.id),
                   title: {
-                    $ilike: 'Serial Number',
+                    $iLike: 'Serial Number',
                   },
                 },
               }, {
                 $and: {
                   category_id: categoryData.map(item => item.id),
                   title: {
-                    $ilike: 'Chasis Number',
+                    $iLike: 'Chasis Number',
                   },
                 },
               }, {
                 $and: {
                   category_id: categoryData.map(item => item.id),
                   title: {
-                    $ilike: 'due date%',
+                    $iLike: 'due date%',
                   },
                 },
               }, {
                 $and: {
                   main_category_id: categoryData.map(item => item.refId),
                   title: {
-                    $ilike: 'Vehicle Number',
+                    $iLike: 'Vehicle Number',
                   },
                 },
               }, {
                 $and: {
                   main_category_id: categoryData.map(item => item.refId),
                   title: {
-                    $ilike: 'Registration Number',
+                    $iLike: 'Registration Number',
                   },
                 },
               }],

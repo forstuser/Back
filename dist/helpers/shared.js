@@ -131,19 +131,17 @@ function sumProps(arrayItem, prop) {
 }
 
 var getAllDays = function getAllDays() {
-  var s = (0, _moment2.default)(_moment2.default.utc().subtract(6, 'd')).
-      utc().
-      startOf('d');
+  var s = _moment2.default.utc().subtract(6, 'd').startOf('d');
   var e = _moment2.default.utc();
   var a = [];
   while (s.valueOf() < e.valueOf()) {
     a.push({
       value: 0,
-      purchaseDate: (0, _moment2.default)(s, _moment2.default.ISO_8601).
+      document_date: _moment2.default.utc(s, _moment2.default.ISO_8601).
           utc().
           startOf('d'),
     });
-    s = (0, _moment2.default)(s, _moment2.default.ISO_8601).
+    s = _moment2.default.utc(s, _moment2.default.ISO_8601).
         utc().
         add(1, 'd').
         startOf('d');
@@ -155,13 +153,13 @@ var getAllDays = function getAllDays() {
 function retrieveDaysInsight(distinctInsight) {
   var allDaysInWeek = getAllDays();
   distinctInsight.map(function(item) {
-    var currentDate = (0, _moment2.default)(item.purchaseDate,
+    var currentDate = _moment2.default.utc(item.document_date,
         _moment2.default.ISO_8601).startOf('day');
     for (var i = 0; i < allDaysInWeek.length; i += 1) {
       var weekData = allDaysInWeek[i];
-      if (weekData.purchaseDate.valueOf() === currentDate.valueOf()) {
+      if (weekData.document_date.valueOf() === currentDate.valueOf()) {
         weekData.value = !item.value ? 0 : item.value;
-        weekData.purchaseDate = (0, _moment2.default)(weekData.purchaseDate,
+        weekData.document_date = _moment2.default.utc(weekData.document_date,
             _moment2.default.ISO_8601);
         break;
       }
@@ -173,9 +171,9 @@ function retrieveDaysInsight(distinctInsight) {
   return allDaysInWeek.map(function(weekItem) {
     return {
       value: weekItem.value,
-      purchaseDate: (0, _moment2.default)(weekItem.purchaseDate,
+      document_date: _moment2.default.utc(weekItem.document_date,
           _moment2.default.ISO_8601),
-      purchaseDay: (0, _moment2.default)(weekItem.purchaseDate,
+      purchaseDay: _moment2.default.utc(weekItem.document_date,
           _moment2.default.ISO_8601).format('ddd'),
     };
   });

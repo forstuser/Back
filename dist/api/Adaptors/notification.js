@@ -89,6 +89,40 @@ function _classCallCheck(instance, Constructor) {
   }
 }
 
+var omitUpdates = function omitUpdates(update) {
+  update = _lodash2.default.omit(update, 'document_number');
+  update = _lodash2.default.omit(update, 'premium_type');
+  update = _lodash2.default.omit(update, 'product_name');
+  update = _lodash2.default.omit(update, 'due_date');
+  update = _lodash2.default.omit(update, 'productType');
+  update = _lodash2.default.omit(update, 'sellers');
+  update = _lodash2.default.omit(update, 'onlineSellers');
+  update = _lodash2.default.omit(update, 'due_in');
+  update = _lodash2.default.omit(update, 'document_date');
+  update = _lodash2.default.omit(update, 'updated_at');
+  update = _lodash2.default.omit(update, 'effective_date');
+  update = _lodash2.default.omit(update, 'expiry_date');
+  update = _lodash2.default.omit(update, 'value');
+  update = _lodash2.default.omit(update, 'taxes');
+  update = _lodash2.default.omit(update, 'category_id');
+  update = _lodash2.default.omit(update, 'brand_id');
+  update = _lodash2.default.omit(update, 'color_id');
+  update = _lodash2.default.omit(update, 'bill_id');
+  update = _lodash2.default.omit(update, 'seller_id');
+  update = _lodash2.default.omit(update, 'review_url');
+  update = _lodash2.default.omit(update, 'color');
+  update = _lodash2.default.omit(update, 'brand');
+  update = _lodash2.default.omit(update, 'bill');
+  update = _lodash2.default.omit(update, 'productReviews');
+  update = _lodash2.default.omit(update, 'productMetaData');
+  update = _lodash2.default.omit(update, 'insuranceDetails');
+  update = _lodash2.default.omit(update, 'warrantyDetails');
+  update = _lodash2.default.omit(update, 'amcDetails');
+  update = _lodash2.default.omit(update, 'repairBills');
+  update = _lodash2.default.omit(update, 'requiredCount');
+  return update;
+};
+
 var NotificationAdaptor = function() {
   function NotificationAdaptor(modals) {
     _classCallCheck(this, NotificationAdaptor);
@@ -126,15 +160,15 @@ var NotificationAdaptor = function() {
             var aDate = void 0;
             var bDate = void 0;
 
-            aDate = a.expiryDate;
-            bDate = b.expiryDate;
+            aDate = a.expiry_date;
+            bDate = b.expiry_date;
 
             if (a.productType === 1) {
-              aDate = a.dueDate;
+              aDate = a.due_date;
             }
 
             if (b.productType === 1) {
-              bDate = b.dueDate;
+              bDate = b.due_date;
             }
 
             if (_moment2.default.utc(aDate, 'YYYY-MM-DD').
@@ -184,7 +218,7 @@ var NotificationAdaptor = function() {
           }), this.warrantyAdaptor.retrieveWarranties({
             user_id: user.id || user.ID,
             status_type: [5, 11],
-          }), this.productAdaptor.retrieveProducts({
+          }), this.pucAdaptor.retrievePUCs({
             user_id: user.id || user.ID,
             status_type: [5, 11],
             main_category_id: [3],
@@ -194,128 +228,109 @@ var NotificationAdaptor = function() {
 
             product.productMetaData.map(function(metaItem) {
               var metaData = metaItem;
-              if (metaData.name.toLowerCase().includes('due') &&
-                  metaData.name.toLowerCase().includes('date') &&
-                  (0, _moment2.default)(metaData.value,
+
+              console.log('' + metaData);
+              if (metaData.title.toLowerCase().includes('due') &&
+                  metaData.title.toLowerCase().includes('date') &&
+                  metaData.form_value &&
+                  _moment2.default.utc(metaData.form_value,
                       _moment2.default.ISO_8601).isValid()) {
-                var dueDateTime = (0, _moment2.default)(metaData.value,
+                var due_date_time = _moment2.default.utc(metaData.form_value,
                     _moment2.default.ISO_8601);
-                product.dueDate = metaData.value;
-                product.dueIn = dueDateTime.diff(_moment2.default.utc(),
+                product.due_date = metaData.form_value;
+                product.due_in = due_date_time.diff(_moment2.default.utc(),
                     'days');
               }
 
-              if (metaData.name.toLowerCase().includes('address')) {
-                product.description = metaData.name.toLowerCase().
-                    includes('address') ? '' + metaData.value : '';
+              if (metaData.title.toLowerCase().includes('address')) {
+                product.address = metaData.form_value;
               }
 
               return metaData;
             });
 
-            if (product.masterCategoryId.toString() === '6') {
-              product.title = product.productName + ' Reminder';
-              product.productType = 5;
-            } else {
-              product.title = product.productName + ' Reminder';
-              product.productType = 4;
-            }
-
+            product.product_type = 1;
             return product;
           });
 
           products = products.filter(function(item) {
-            return item.dueIn !== undefined && item.dueIn !== null &&
-                item.dueIn <= 30 && item.dueIn >= 0;
+            return item.due_in !== undefined && item.due_in !== null &&
+                item.due_in <= 30 && item.due_in >= 0;
           });
 
           var pucProducts = result[4].map(function(item) {
-            var product = item;
-            if (product.pucDetail &&
-                _moment2.default.utc(product.pucDetail.expiry_date,
+            var puc = item;
+            if (_moment2.default.utc(puc.expiry_date,
                     _moment2.default.ISO_8601).isValid()) {
-              var dueDateTime = _moment2.default.utc(
-                  product.pucDetail.expiry_date, _moment2.default.ISO_8601).
-                  endOf('day');
-              product.dueDate = product.pucDetail.expiry_date;
-              product.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
+              var due_date_time = _moment2.default.utc(puc.expiry_date,
+                  _moment2.default.ISO_8601).endOf('day');
+              puc.due_date = puc.expiry_date;
+              puc.due_in = due_date_time.diff(_moment2.default.utc(), 'days');
+              puc.product_type = 5;
             }
 
-            product.productType = 5;
-            return product;
+            return puc;
           });
 
           pucProducts = pucProducts.filter(function(item) {
-            return item.dueIn !== undefined && item.dueIn !== null &&
-                item.dueIn <= 30 && item.dueIn >= 0;
+            return item.due_in !== undefined && item.due_in !== null &&
+                item.due_in <= 30 && item.due_in >= 0;
           });
+
           var amcs = result[1].map(function(item) {
             var amc = item;
-            if ((0, _moment2.default)(amc.expiryDate,
+            if (_moment2.default.utc(amc.expiry_date,
                     _moment2.default.ISO_8601).isValid()) {
-              var dueDateTime = (0, _moment2.default)(amc.expiryDate,
-                  _moment2.default.ISO_8601);
-              amc.dueDate = amc.expiryDate;
-              amc.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
-              amc.productType = 3;
-              amc.title = 'AMC Renewal Pending';
-              amc.description = amc.productName;
+              var due_date_time = _moment2.default.utc(amc.expiry_date,
+                  _moment2.default.ISO_8601).endOf('day');
+              amc.due_date = amc.expiry_date;
+              amc.due_in = due_date_time.diff(_moment2.default.utc(), 'days');
+              amc.product_type = 4;
             }
 
             return amc;
           });
           amcs = amcs.filter(function(item) {
-            return item.dueIn !== undefined && item.dueIn !== null &&
-                item.dueIn <= 30 && item.dueIn >= 0;
+            return item.due_in !== undefined && item.due_in !== null &&
+                item.due_in <= 30 && item.due_in >= 0;
           });
 
           var insurances = result[2].map(function(item) {
             var insurance = item;
-            if ((0, _moment2.default)(insurance.expiryDate,
+            if (_moment2.default.utc(insurance.expiry_date,
                     _moment2.default.ISO_8601).isValid()) {
-              var dueDateTime = (0, _moment2.default)(insurance.expiryDate,
-                  _moment2.default.ISO_8601);
-              insurance.dueDate = insurance.expiryDate;
-              insurance.dueIn = dueDateTime.diff(_moment2.default.utc(),
+              var due_date_time = _moment2.default.utc(insurance.expiry_date,
+                  _moment2.default.ISO_8601).endOf('day');
+              insurance.due_date = insurance.expiry_date;
+              insurance.due_in = due_date_time.diff(_moment2.default.utc(),
                   'days');
-              insurance.productType = 3;
-              insurance.title = 'Insurance Renewal Pending';
-              insurance.description = insurance.productName;
+              insurance.product_type = 3;
             }
             return insurance;
           });
 
           insurances = insurances.filter(function(item) {
-            return item.dueIn !== undefined && item.dueIn !== null &&
-                item.dueIn <= 30 && item.dueIn >= 0;
+            return item.due_in !== undefined && item.due_in !== null &&
+                item.due_in <= 30 && item.due_in >= 0;
           });
 
           var warranties = result[3].map(function(item) {
             var warranty = item;
-            if ((0, _moment2.default)(warranty.expiryDate,
+            if (_moment2.default.utc(warranty.expiry_date,
                     _moment2.default.ISO_8601).isValid()) {
-              var dueDateTime = (0, _moment2.default)(warranty.expiryDate,
-                  _moment2.default.ISO_8601);
-
-              warranty.dueDate = warranty.expiryDate;
-              warranty.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
-              warranty.productType = 3;
-              warranty.title = 'Warranty Renewal Pending';
-              warranty.description = 'Warranty Renewal Pending for ' +
-                  (warranty.warranty_type === 3 ?
-                      warranty.dualWarrantyItem + ' of ' +
-                      warranty.productName :
-                      warranty.warranty_type === 4 ?
-                          'Accessories of ' + warranty.productName :
-                          'of ' + warranty.productName);
+              var due_date_time = _moment2.default.utc(warranty.expiry_date,
+                  _moment2.default.ISO_8601).endOf('day');
+              warranty.due_date = warranty.expiry_date;
+              warranty.due_in = due_date_time.diff(_moment2.default.utc(),
+                  'days');
+              warranty.product_type = 2;
             }
-
             return warranty;
           });
 
           warranties = warranties.filter(function(item) {
-            return item.dueIn !== undefined && item.dueIn !== null &&
-                item.dueIn <= 30 && item.dueIn >= 0;
+            return item.due_in !== undefined && item.due_in !== null &&
+                item.due_in <= 30 && item.due_in >= 0;
           });
 
           return [].concat(_toConsumableArray(products),
@@ -338,13 +353,11 @@ var NotificationAdaptor = function() {
               model: this.modals.products,
               as: 'product',
               attributes: [
-                [
-                  'product_name',
-                  'productName'],
+                'product_name',
                 [
                   this.modals.sequelize.fn('CONCAT', 'products/',
                       this.modals.sequelize.col('"product"."id"')),
-                  'productURL']],
+                  'product_url']],
               required: false,
             }],
           order: [['created_at', 'DESC']],
@@ -352,50 +365,46 @@ var NotificationAdaptor = function() {
             [
               'notification_id',
               'id'],
-            [
-              'due_amount',
-              'dueAmount'],
+            'due_amount',
             [
               this.modals.sequelize.literal('"product"."id"'),
-              'productId'],
+              'product_id'],
             [
               this.modals.sequelize.literal('"product"."product_name"'),
-              'productName'],
+              'product_name'],
             [
               this.modals.sequelize.fn('CONCAT', 'products/',
                   this.modals.sequelize.literal('"product"."id"')),
-              'productURL'],
+              'product_url'],
             [
               this.modals.sequelize.literal('"product"."main_category_id"'),
-              'masterCategoryId'],
+              'main_category_id'],
             [
               this.modals.sequelize.literal('"product"."document_date"'),
-              'purchaseDate'],
-            [
-              'due_date',
-              'dueDate'],
+              'document_date'],
+            'due_date',
             'taxes',
-            [
-              'total_amount',
-              'totalAmount'],
-            [
-              'notification_type',
-              'productType'],
+            'total_amount',
+            'notification_type',
             'title',
             'description',
-            [
-              'status_id',
-              'statusId'],
-            [
-              'created_at',
-              'createdAt'],
+            'status_id',
+            'created_at',
             'copies'],
         }).then(function(result) {
           return result.map(function(item) {
-            return item.toJSON();
+            var notification = item.toJSON();
+            notification.copies = notification.copies.map(function(copyItem) {
+              copyItem.copy_id = copyItem.copy_id || copyItem.copyId;
+              copyItem.copy_url = copyItem.copy_url || copyItem.copyUrl;
+              copyItem = _lodash2.default.omit(copyItem, 'copyId');
+              copyItem = _lodash2.default.omit(copyItem, 'copyUrl');
+              return copyItem;
           });
+            return notification;
         });
-      },
+        });
+      }
     }, {
       key: 'updateNotificationStatus',
       value: function updateNotificationStatus(user, notificationIds) {
@@ -433,46 +442,7 @@ var NotificationAdaptor = function() {
             update.due_amount = update.value;
             update.due_date = update.dueDate;
             update.notification_type = update.productType;
-
-            update = _lodash2.default.omit(update, 'id');
-            update = _lodash2.default.omit(update, 'productId');
-            update = _lodash2.default.omit(update, 'jobId');
-            update = _lodash2.default.omit(update, 'policyNo');
-            update = _lodash2.default.omit(update, 'premiumType');
-            update = _lodash2.default.omit(update, 'productName');
-            update = _lodash2.default.omit(update, 'premiumAmount');
-            update = _lodash2.default.omit(update, 'dueDate');
-            update = _lodash2.default.omit(update, 'productType');
-            update = _lodash2.default.omit(update, 'sellers');
-            update = _lodash2.default.omit(update, 'onlineSellers');
-            update = _lodash2.default.omit(update, 'dueIn');
-            update = _lodash2.default.omit(update, 'purchaseDate');
-            update = _lodash2.default.omit(update, 'updatedDate');
-            update = _lodash2.default.omit(update, 'effectiveDate');
-            update = _lodash2.default.omit(update, 'expiryDate');
-            update = _lodash2.default.omit(update, 'value');
-            update = _lodash2.default.omit(update, 'taxes');
-            update = _lodash2.default.omit(update, 'categoryId');
-            update = _lodash2.default.omit(update, 'brandId');
-            update = _lodash2.default.omit(update, 'colorId');
-            update = _lodash2.default.omit(update, 'value');
-            update = _lodash2.default.omit(update, 'documentNo');
-            update = _lodash2.default.omit(update, 'billId');
-            update = _lodash2.default.omit(update, 'sellerId');
-            update = _lodash2.default.omit(update, 'reviewUrl');
-            update = _lodash2.default.omit(update, 'color');
-            update = _lodash2.default.omit(update, 'brand');
-            update = _lodash2.default.omit(update, 'bill');
-            update = _lodash2.default.omit(update, 'productReviews');
-            update = _lodash2.default.omit(update, 'productMetaData');
-            update = _lodash2.default.omit(update, 'insuranceDetails');
-            update = _lodash2.default.omit(update, 'warrantyDetails');
-            update = _lodash2.default.omit(update, 'amcDetails');
-            update = _lodash2.default.omit(update, 'repairBills');
-            update = _lodash2.default.omit(update, 'requiredCount');
-            update = _lodash2.default.omit(update, 'dueDate');
-            update = _lodash2.default.omit(update, 'dueIn');
-            return update;
+            return omitUpdates(update);
           });
           /* const listIndex = (parseInt(pageNo || 1, 10) * 10) - 10; */
 
@@ -520,45 +490,7 @@ var NotificationAdaptor = function() {
             update.due_amount = update.value;
             update.notification_type = update.productType;
 
-            update = _lodash2.default.omit(update, 'id');
-            update = _lodash2.default.omit(update, 'productId');
-            update = _lodash2.default.omit(update, 'jobId');
-            update = _lodash2.default.omit(update, 'policyNo');
-            update = _lodash2.default.omit(update, 'premiumType');
-            update = _lodash2.default.omit(update, 'productName');
-            update = _lodash2.default.omit(update, 'premiumAmount');
-            update = _lodash2.default.omit(update, 'dueDate');
-            update = _lodash2.default.omit(update, 'productType');
-            update = _lodash2.default.omit(update, 'sellers');
-            update = _lodash2.default.omit(update, 'onlineSellers');
-            update = _lodash2.default.omit(update, 'dueIn');
-            update = _lodash2.default.omit(update, 'purchaseDate');
-            update = _lodash2.default.omit(update, 'updatedDate');
-            update = _lodash2.default.omit(update, 'effectiveDate');
-            update = _lodash2.default.omit(update, 'expiryDate');
-            update = _lodash2.default.omit(update, 'value');
-            update = _lodash2.default.omit(update, 'taxes');
-            update = _lodash2.default.omit(update, 'categoryId');
-            update = _lodash2.default.omit(update, 'brandId');
-            update = _lodash2.default.omit(update, 'colorId');
-            update = _lodash2.default.omit(update, 'value');
-            update = _lodash2.default.omit(update, 'documentNo');
-            update = _lodash2.default.omit(update, 'billId');
-            update = _lodash2.default.omit(update, 'sellerId');
-            update = _lodash2.default.omit(update, 'reviewUrl');
-            update = _lodash2.default.omit(update, 'color');
-            update = _lodash2.default.omit(update, 'brand');
-            update = _lodash2.default.omit(update, 'bill');
-            update = _lodash2.default.omit(update, 'productReviews');
-            update = _lodash2.default.omit(update, 'productMetaData');
-            update = _lodash2.default.omit(update, 'insuranceDetails');
-            update = _lodash2.default.omit(update, 'warrantyDetails');
-            update = _lodash2.default.omit(update, 'amcDetails');
-            update = _lodash2.default.omit(update, 'repairBills');
-            update = _lodash2.default.omit(update, 'requiredCount');
-            update = _lodash2.default.omit(update, 'dueDate');
-            update = _lodash2.default.omit(update, 'dueIn');
-            return update;
+            return omitUpdates(update);
           });
 
           var notificationPromise = upcomingServices.map(
@@ -651,14 +583,14 @@ var NotificationAdaptor = function() {
       key: 'retrieveExpenseCronNotification',
       value: function retrieveExpenseCronNotification(days) {
         var purchaseDateCompare = days === 1 ? {
-          $gte: (0, _moment2.default)().subtract(days, 'day').startOf('day'),
-          $lte: (0, _moment2.default)().subtract(days, 'day').endOf('day'),
+          $gte: _moment2.default.utc().subtract(days, 'day').startOf('day'),
+          $lte: _moment2.default.utc().subtract(days, 'day').endOf('day'),
         } : days === 7 ? {
-          $lte: (0, _moment2.default)().subtract(days, 'day').endOf('day'),
-          $gte: (0, _moment2.default)().subtract(days, 'day').startOf('day'),
+          $lte: _moment2.default.utc().subtract(days, 'day').endOf('day'),
+          $gte: _moment2.default.utc().subtract(days, 'day').startOf('day'),
         } : {
-          $gte: (0, _moment2.default)().startOf('month'),
-          $lte: (0, _moment2.default)().endOf('month'),
+          $gte: _moment2.default.utc().startOf('month'),
+          $lte: _moment2.default.utc().endOf('month'),
         };
         return Promise.all([
           this.productAdaptor.retrieveNotificationProducts({
@@ -691,11 +623,11 @@ var NotificationAdaptor = function() {
       key: 'retrieveCronNotification',
       value: function retrieveCronNotification(days) {
         var expiryDateCompare = days === 15 ? {
-          $gte: (0, _moment2.default)().add(days, 'day').startOf('day'),
-          $lte: (0, _moment2.default)().add(days, 'day').endOf('day'),
+          $gte: _moment2.default.utc().add(days, 'day').startOf('day'),
+          $lte: _moment2.default.utc().add(days, 'day').endOf('day'),
         } : {
-          $gte: (0, _moment2.default)().startOf('day'),
-          $lte: (0, _moment2.default)().add(days, 'day').endOf('day'),
+          $gte: _moment2.default.utc().startOf('day'),
+          $lte: _moment2.default.utc().add(days, 'day').endOf('day'),
         };
         return Promise.all([
           this.productAdaptor.retrieveNotificationProducts({
@@ -718,9 +650,9 @@ var NotificationAdaptor = function() {
               var metaData = metaItem;
               if (metaData.name.toLowerCase().includes('due') &&
                   metaData.name.toLowerCase().includes('date') &&
-                  (0, _moment2.default)(metaData.value,
+                  _moment2.default.utc(metaData.value,
                       _moment2.default.ISO_8601).isValid()) {
-                var dueDateTime = (0, _moment2.default)(metaData.value,
+                var dueDateTime = _moment2.default.utc(metaData.value,
                     _moment2.default.ISO_8601);
                 product.dueDate = metaData.value;
                 product.dueIn = dueDateTime.diff(_moment2.default.utc(),
@@ -743,18 +675,18 @@ var NotificationAdaptor = function() {
           products = products.filter(function(item) {
             return days === 15 ?
                 item.dueDate <=
-                (0, _moment2.default)().add(days, 'day').endOf('day') &&
+                _moment2.default.utc().add(days, 'day').endOf('day') &&
                 item.dueDate >=
-                (0, _moment2.default)().add(days, 'day').startOf('day') :
+                _moment2.default.utc().add(days, 'day').startOf('day') :
                 item.dueDate <=
-                (0, _moment2.default)().add(days, 'day').endOf('day') &&
-                item.dueDate >= (0, _moment2.default)().startOf('day');
+                _moment2.default.utc().add(days, 'day').endOf('day') &&
+                item.dueDate >= _moment2.default.utc().startOf('day');
           });
           var amcs = result[1].map(function(item) {
             var amc = item;
-            if ((0, _moment2.default)(amc.expiryDate,
-                    _moment2.default.ISO_8601).isValid()) {
-              var dueDateTime = (0, _moment2.default)(amc.expiryDate,
+            if (_moment2.default.utc(amc.expiryDate, _moment2.default.ISO_8601).
+                    isValid()) {
+              var dueDateTime = _moment2.default.utc(amc.expiryDate,
                   _moment2.default.ISO_8601);
               amc.dueDate = amc.expiryDate;
               amc.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
@@ -769,9 +701,9 @@ var NotificationAdaptor = function() {
 
           var insurances = result[2].map(function(item) {
             var insurance = item;
-            if ((0, _moment2.default)(insurance.expiryDate,
+            if (_moment2.default.utc(insurance.expiryDate,
                     _moment2.default.ISO_8601).isValid()) {
-              var dueDateTime = (0, _moment2.default)(insurance.expiryDate,
+              var dueDateTime = _moment2.default.utc(insurance.expiryDate,
                   _moment2.default.ISO_8601);
               insurance.dueDate = insurance.expiryDate;
               insurance.dueIn = dueDateTime.diff(_moment2.default.utc(),
@@ -786,9 +718,9 @@ var NotificationAdaptor = function() {
 
           var warranties = result[3].map(function(item) {
             var warranty = item;
-            if ((0, _moment2.default)(warranty.expiryDate,
+            if (_moment2.default.utc(warranty.expiryDate,
                     _moment2.default.ISO_8601).isValid()) {
-              var dueDateTime = (0, _moment2.default)(warranty.expiryDate,
+              var dueDateTime = _moment2.default.utc(warranty.expiryDate,
                   _moment2.default.ISO_8601);
 
               warranty.dueDate = warranty.expiryDate;

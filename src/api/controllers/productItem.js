@@ -40,11 +40,11 @@ class ProductItemController {
         const productId = request.params.id;
         const repairId = request.params.repairId;
         const newSellerId = sellerList ? sellerList.sid : undefined;
-        const document_date = moment(request.payload.document_date,
+        const document_date = moment.utc(request.payload.document_date,
             moment.ISO_8601).isValid() ?
-            moment(request.payload.document_date, moment.ISO_8601).
+            moment.utc(request.payload.document_date, moment.ISO_8601).
                 startOf('day') :
-            moment(request.payload.document_date, 'DD MMM YY').
+            moment.utc(request.payload.document_date, 'DD MMM YY').
                 startOf('day');
         const repairPromise = repairId ?
             repairAdaptor.updateRepairs(repairId, {
@@ -52,9 +52,9 @@ class ProductItemController {
               status_type: 11,
               product_id: productId,
               seller_id: request.payload.seller_id || newSellerId,
-              document_date: moment(document_date).format('YYYY-MM-DD'),
+              document_date: moment.utc(document_date).format('YYYY-MM-DD'),
               repair_for: request.payload.repair_for,
-              repair_cost: request.payload.repair_cost,
+              repair_cost: request.payload.value,
               warranty_upto: request.payload.warranty_upto,
               user_id: user.id || user.ID,
             }) :
@@ -62,10 +62,10 @@ class ProductItemController {
               updated_by: user.id || user.ID,
               status_type: 11,
               product_id: productId,
-              document_date: moment(document_date).format('YYYY-MM-DD'),
+              document_date: moment.utc(document_date).format('YYYY-MM-DD'),
               seller_id: request.payload.seller_id || newSellerId,
               repair_for: request.payload.repair_for,
-              repair_cost: request.payload.repair_cost,
+              repair_cost: request.payload.value,
               warranty_upto: request.payload.warranty_upto,
               user_id: user.id || user.ID,
             });

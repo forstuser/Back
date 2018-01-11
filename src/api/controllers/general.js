@@ -171,38 +171,59 @@ class GeneralController {
                       ``,
                 });
           }).then((jobResult) => {
-            return productAdaptor.createEmptyProduct({
-              job_id: jobResult.id,
-              product_name: request.payload.product_name,
-              user_id: user.id || user.ID,
-              main_category_id: request.payload.main_category_id,
-              category_id: request.payload.category_id,
-              brand_id: request.payload.brand_id,
-              colour_id: request.payload.colour_id,
-              purchase_cost: request.payload.purchase_cost,
-              taxes: request.payload.taxes,
-              updated_by: user.id || user.ID,
-              seller_id: request.payload.seller_id,
-              status_type: 2,
-              document_number: request.payload.document_number,
-              document_date: request.payload.document_date ?
-                  moment(request.payload.document_date,
-                      moment.ISO_8601).
-                      isValid() ?
-                      moment(request.payload.document_date,
-                          moment.ISO_8601).startOf('day').format('YYYY-MM-DD') :
-                      moment(request.payload.document_date, 'DD MMM YY').
-                          startOf('day').
-                          format('YYYY-MM-DD') :
-                  undefined,
-              brand_name: request.payload.brand_name,
-              copies: [],
-            });
-          }).then((productResult) => reply({
+            return Promise.all([
+              productAdaptor.createEmptyProduct({
+                job_id: jobResult.id,
+                product_name: request.payload.product_name,
+                user_id: user.id || user.ID,
+                main_category_id: request.payload.main_category_id,
+                category_id: request.payload.category_id,
+                brand_id: request.payload.brand_id,
+                colour_id: request.payload.colour_id,
+                purchase_cost: request.payload.purchase_cost,
+                taxes: request.payload.taxes,
+                updated_by: user.id || user.ID,
+                seller_id: request.payload.seller_id,
+                status_type: 2,
+                document_number: request.payload.document_number,
+                document_date: request.payload.document_date ?
+                    moment(request.payload.document_date,
+                        moment.ISO_8601).
+                        isValid() ?
+                        moment(request.payload.document_date,
+                            moment.ISO_8601).
+                            startOf('day').
+                            format('YYYY-MM-DD') :
+                        moment(request.payload.document_date, 'DD MMM YY').
+                            startOf('day').
+                            format('YYYY-MM-DD') :
+                    undefined,
+                brand_name: request.payload.brand_name,
+                copies: [],
+              }), categoryAdaptor.retrieveSubCategories(
+                  {category_id: request.payload.category_id}, true),
+              categoryAdaptor.retrieveRenewalTypes({
+                status_type: 1,
+                type: {
+                  $gte: 7,
+                },
+              })]);
+          }).then((initResult) => reply({
             status: true,
-            product: productResult,
+            product: initResult[0],
+            categories: initResult[1],
+            renewalTypes: initResult[2],
             message: 'Product and Job is initialized.',
-          }));
+          })).catch((err) => {
+            console.log(
+                `Error on ${new Date()} for user ${user.id ||
+                user.ID} is as follow: \n \n ${err}`);
+            return reply({
+              status: false,
+              message: 'Unable to create product',
+              forceUpdate: request.pre.forceUpdate,
+            }).code(401);
+          });
         }
 
         return reply({

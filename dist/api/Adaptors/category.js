@@ -87,6 +87,12 @@ var CategoryAdaptor = function() {
           categoryData = result.map(function(item) {
             return item.toJSON();
           });
+          var subCategoryOption = {
+            status_type: 1,
+            ref_id: categoryData.map(function(item) {
+              return item.id;
+            }),
+          };
           var main_category_id = options.category_id;
           var excluded_category_id = main_category_id ? {
             $notIn: main_category_id === 1 ?
@@ -111,13 +117,12 @@ var CategoryAdaptor = function() {
                           153] :
                         [],
           } : undefined;
-          return _this.retrieveSubCategories({
-            ref_id: categoryData.map(function(item) {
-              return item.id;
-            }),
-            category_id: excluded_category_id,
-            status_type: 1,
-          }, isBrandFormRequired);
+          if (excluded_category_id) {
+            subCategoryOption.category_id = excluded_category_id;
+          }
+
+          return _this.retrieveSubCategories(subCategoryOption,
+              isBrandFormRequired);
         }).then(function(subCategories) {
           categoryData = categoryData.map(function(item) {
             item.subCategories = subCategories.filter(function(categoryItem) {
@@ -170,7 +175,6 @@ var CategoryAdaptor = function() {
               'categoryImageUrl']],
           order: ['category_id'],
         }).then(function(result) {
-          console.log(result);
           categoryData = result.map(function(item) {
             return item.toJSON();
           });
@@ -189,7 +193,7 @@ var CategoryAdaptor = function() {
                         return item.id;
                       }),
                       title: {
-                        $ilike: 'model',
+                        $iLike: 'model',
                       },
                     },
                   }, {
@@ -198,7 +202,7 @@ var CategoryAdaptor = function() {
                         return item.id;
                       }),
                       title: {
-                        $ilike: 'IMEI Number',
+                        $iLike: 'IMEI Number',
                       },
                     },
                   }, {
@@ -207,7 +211,7 @@ var CategoryAdaptor = function() {
                         return item.id;
                       }),
                       title: {
-                        $ilike: 'Serial Number',
+                        $iLike: 'Serial Number',
                       },
                     },
                   }, {
@@ -216,7 +220,7 @@ var CategoryAdaptor = function() {
                         return item.id;
                       }),
                       title: {
-                        $ilike: 'Chasis Number',
+                        $iLike: 'Chasis Number',
                       },
                     },
                   }, {
@@ -225,7 +229,7 @@ var CategoryAdaptor = function() {
                   return item.id;
                 }),
                       title: {
-                        $ilike: 'due date%',
+                        $iLike: 'due date%',
                       },
                     }
                   }, {
@@ -234,7 +238,7 @@ var CategoryAdaptor = function() {
                         return item.refId;
                       }),
                       title: {
-                        $ilike: 'Vehicle Number',
+                        $iLike: 'Vehicle Number',
                       },
                     },
                   }, {
@@ -243,7 +247,7 @@ var CategoryAdaptor = function() {
                         return item.refId;
                       }),
                       title: {
-                        $ilike: 'Registration Number',
+                        $iLike: 'Registration Number',
                       },
                     },
                   }],

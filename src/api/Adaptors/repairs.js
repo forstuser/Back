@@ -8,8 +8,8 @@ const sortAmcWarrantyInsuranceRepair = (a, b) => {
   let aDate;
   let bDate;
 
-  aDate = a.expiryDate;
-  bDate = b.expiryDate;
+  aDate = a.expiry_date;
+  bDate = b.expiry_date;
 
   if (moment.utc(aDate).isBefore(moment.utc(bDate))) {
     return 1;
@@ -52,11 +52,9 @@ class RepairAdaptor {
           model: this.modals.onlineSellers,
           as: 'onlineSellers',
           attributes: [
-            [
-              'seller_name',
-              'sellerName'],
+            ['sid', 'id'],
+            'seller_name',
             'url',
-            'gstin',
             'contact',
             'email'],
           required: false,
@@ -71,23 +69,10 @@ class RepairAdaptor {
           model: this.modals.offlineSellers,
           as: 'sellers',
           attributes: [
-            [
-              'seller_name',
-              'sellerName'],
-            [
-              'owner_name',
-              'ownerName'],
-            [
-              'pan_no',
-              'panNo'],
-            [
-              'reg_no',
-              'regNo'],
-            [
-              'is_service',
-              'isService'],
+            ['sid', 'id'],
+            'seller_name',
+            'owner_name',
             'url',
-            'gstin',
             ['contact_no', 'contact'],
             'email',
             'address',
@@ -100,42 +85,41 @@ class RepairAdaptor {
         }],
       attributes: [
         'id',
-        [
-          'product_id',
-          'productId'],
-        [
-          'job_id',
-          'jobId'],
+        'product_id',
+        'job_id',
         [
           this.modals.sequelize.literal('"product"."main_category_id"'),
-          'masterCategoryId'], 'user_id',
-        [
-          'document_number',
-          'policyNo'],
-        [
-          'repair_cost',
-          'premiumAmount'],
+          'main_category_id'], 'user_id',
+        'document_number',
         [
           this.modals.sequelize.literal('"product"."product_name"'),
-          'productName'],
+          'product_name'],
         [
           'repair_cost',
           'value'],
         [
           'repair_taxes',
           'taxes'],
-        [
-          'document_date',
-          'purchaseDate'],
-        ['updated_at', 'updatedDate'],
+        'document_date', 'updated_at',
         [
           this.modals.sequelize.fn('CONCAT', 'products/',
               this.modals.sequelize.literal('"product_id"')),
-          'productURL'],
+          'product_url'],
         'copies'],
       order: [['document_date', 'DESC']],
     }).
-        then((repairResult) => repairResult.map((item) => item.toJSON()).
+        then((repairResult) => repairResult.map((item) => {
+          const productItem = item.toJSON();
+
+          productItem.copies = productItem.copies.map((copyItem) => {
+            copyItem.copy_id = copyItem.copy_id || copyItem.copyId;
+            copyItem.copy_url = copyItem.copy_url || copyItem.copyUrl;
+            copyItem = _.omit(copyItem, 'copyId');
+            copyItem = _.omit(copyItem, 'copyUrl');
+            return copyItem;
+          });
+          return productItem;
+        }).
             sort(sortAmcWarrantyInsuranceRepair));
   }
 
@@ -146,48 +130,35 @@ class RepairAdaptor {
       include: [
         {
           model: this.modals.products,
-          where: productOptions,
           attributes: [],
-          required: productOptions !== undefined,
         }],
       attributes: [
         'id',
-        [
-          'product_id',
-          'productId'],
-        [
-          'job_id',
-          'jobId'],
+        'product_id',
+        'job_id',
         [
           this.modals.sequelize.literal('"product"."main_category_id"'),
-          'masterCategoryId'], 'user_id',
-        [
-          'document_number',
-          'policyNo'],
-        [
-          'repair_cost',
-          'premiumAmount'],
+          'main_category_id'], 'user_id',
+        'document_number',
         [
           this.modals.sequelize.literal('"product"."product_name"'),
-          'productName'],
+          'product_name'],
         [
           'repair_cost',
           'value'],
         [
           'repair_taxes',
           'taxes'],
-        [
-          'document_date',
-          'purchaseDate'],
-        ['updated_at', 'updatedDate'],
+        'document_date',
+        'updated_at',
         [
           this.modals.sequelize.fn('CONCAT', 'products/',
               this.modals.sequelize.literal('"product_id"')),
-          'productURL'],
-        'copies'],
+          'product_url'],
+        'copies',
+      ],
       order: [['document_date', 'DESC']],
-    }).
-        then((repairResult) => repairResult.map((item) => item.toJSON()).
+    }).then((repairResult) => repairResult.map((item) => item.toJSON()).
             sort(sortAmcWarrantyInsuranceRepair));
   }
 
@@ -210,13 +181,13 @@ class RepairAdaptor {
         }],
 
       attributes: [
-        [this.modals.sequelize.literal('COUNT(*)'), 'productCounts'],
+        [this.modals.sequelize.literal('COUNT(*)'), 'product_counts'],
         [
           this.modals.sequelize.literal('"product"."main_category_id"'),
-          'masterCategoryId'],
+          'main_category_id'],
         [
           this.modals.sequelize.literal('max("repairs"."updated_at")'),
-          'lastUpdatedAt']],
+          'last_updated_at']],
       group: this.modals.sequelize.literal('"product"."main_category_id"'),
     }).then((repairResult) => repairResult.map((item) => item.toJSON()));
   }
@@ -231,11 +202,10 @@ class RepairAdaptor {
       where: {
         id,
       },
-    }).
-        then(result => {
-          result.updateAttributes(values);
-          return result.toJSON();
-        });
+    }).then(result => {
+      result.updateAttributes(values);
+      return result.toJSON();
+    });
   }
 }
 

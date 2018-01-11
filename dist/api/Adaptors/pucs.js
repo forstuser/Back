@@ -45,8 +45,8 @@ var sortAmcWarrantyInsurancePUC = function sortAmcWarrantyInsurancePUC(a, b) {
   var aDate = void 0;
   var bDate = void 0;
 
-  aDate = a.expiryDate;
-  bDate = b.expiryDate;
+  aDate = a.expiry_date;
+  bDate = b.expiry_date;
 
   if (_moment2.default.utc(aDate).isBefore(_moment2.default.utc(bDate))) {
     return 1;
@@ -66,7 +66,7 @@ var PUCAdaptor = function() {
     {
       key: 'retrievePUCs',
       value: function retrievePUCs(options) {
-        options.status_type = [5, 11];
+        options.status_type = [5, 11, 12];
         var productOptions = {};
 
         if (options.main_category_id) {
@@ -91,18 +91,6 @@ var PUCAdaptor = function() {
           where: options,
           include: [
             {
-              model: this.modals.onlineSellers,
-              as: 'onlineSellers',
-              attributes: [
-                [
-                  'seller_name',
-                  'sellerName'],
-                'url',
-                'gstin',
-                'contact',
-                'email'],
-              required: false,
-            }, {
               model: this.modals.products,
               where: productOptions,
               attributes: [],
@@ -112,22 +100,11 @@ var PUCAdaptor = function() {
               as: 'sellers',
               attributes: [
                 [
-                  'seller_name',
-                  'sellerName'],
-                [
-                  'owner_name',
-                  'ownerName'],
-                [
-                  'pan_no',
-                  'panNo'],
-                [
-                  'reg_no',
-                  'regNo'],
-                [
-                  'is_service',
-                  'isService'],
+                  'sid',
+                  'id'],
+                'seller_name',
+                'owner_name',
                 'url',
-                'gstin',
                 [
                   'contact_no',
                   'contact'],
@@ -142,47 +119,33 @@ var PUCAdaptor = function() {
             }],
           attributes: [
             'id',
-            [
-              'product_id',
-              'productId'],
-            [
-              'job_id',
-              'jobId'],
+            'product_id',
+            'job_id',
             [
               this.modals.sequelize.literal('"product"."main_category_id"'),
-              'masterCategoryId'],
+              'main_category_id'],
             'user_id',
-            [
-              'document_number',
-              'policyNo'],
-            [
-              'puc_cost',
-              'premiumAmount'],
+            'document_number',
             [
               this.modals.sequelize.literal('"product"."product_name"'),
-              'productName'],
+              'product_name'],
             [
-              'puc_cost',
+              'renewal_type',
+              'premium_type'],
+            [
+              'renewal_cost',
               'value'],
             [
-              'effective_date',
-              'effectiveDate'],
-            [
-              'expiry_date',
-              'expiryDate'],
-            [
-              'puc_taxes',
+              'renewal_taxes',
               'taxes'],
-            [
-              'document_date',
-              'purchaseDate'],
-            [
-              'updated_at',
-              'updatedDate'],
+            'effective_date',
+            'expiry_date',
+            'document_date',
+            'updated_at',
             [
               this.modals.sequelize.fn('CONCAT', 'products/',
                   this.modals.sequelize.literal('"product_id"')),
-              'productURL'],
+              'product_url'],
             'copies'],
           order: [['document_date', 'DESC']],
         }).then(function(pucResult) {
@@ -194,7 +157,7 @@ var PUCAdaptor = function() {
     }, {
       key: 'retrieveNotificationPUCs',
       value: function retrieveNotificationPUCs(options) {
-        options.status_type = [5, 11];
+        options.status_type = [5, 11, 12];
         return this.modals.pucs.findAll({
           where: options,
           include: [
@@ -206,47 +169,30 @@ var PUCAdaptor = function() {
             }],
           attributes: [
             'id',
-            [
-              'product_id',
-              'productId'],
-            [
-              'job_id',
-              'jobId'],
+            'product_id',
+            'job_id',
             [
               this.modals.sequelize.literal('"product"."main_category_id"'),
-              'masterCategoryId'],
+              'main_category_id'],
             'user_id',
-            [
-              'document_number',
-              'policyNo'],
-            [
-              'puc_cost',
-              'premiumAmount'],
+            'document_number',
             [
               this.modals.sequelize.literal('"product"."product_name"'),
-              'productName'],
+              'product_name'],
             [
-              'puc_cost',
+              'renewal_cost',
               'value'],
             [
-              'puc_taxes',
+              'renewal_taxes',
               'taxes'],
-            [
-              'effective_date',
-              'effectiveDate'],
-            [
-              'expiry_date',
-              'expiryDate'],
-            [
-              'document_date',
-              'purchaseDate'],
-            [
-              'updated_at',
-              'updatedDate'],
+            'effective_date',
+            'expiry_date',
+            'document_date',
+            'updated_at',
             [
               this.modals.sequelize.fn('CONCAT', 'products/',
                   this.modals.sequelize.literal('"product_id"')),
-              'productURL'],
+              'product_url'],
             'copies'],
           order: [['document_date', 'DESC']],
         }).then(function(pucResult) {
@@ -258,7 +204,7 @@ var PUCAdaptor = function() {
     }, {
       key: 'retrievePUCCount',
       value: function retrievePUCCount(options) {
-        options.status_type = [5, 11];
+        options.status_type = [5, 11, 12];
         var productOptions = options.product_status_type ? {
           status_type: options.product_status_type,
         } : undefined;
@@ -278,13 +224,13 @@ var PUCAdaptor = function() {
           attributes: [
             [
               this.modals.sequelize.literal('COUNT(*)'),
-              'productCounts'],
+              'product_counts'],
             [
               this.modals.sequelize.literal('"product"."main_category_id"'),
-              'masterCategoryId'],
+              'main_category_id'],
             [
               this.modals.sequelize.literal('max("pucs"."updated_at")'),
-              'lastUpdatedAt']],
+              'last_updated_at']],
           group: this.modals.sequelize.literal('"product"."main_category_id"'),
         }).then(function(pucResult) {
           return pucResult.map(function(item) {

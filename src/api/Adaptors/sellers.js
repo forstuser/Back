@@ -11,25 +11,8 @@ export default class SellerAdaptor {
         [
           'sid',
           'id'],
-        [
-          'seller_name',
-          'name'],
-        [
-          'owner_name',
-          'ownerName'],
-        'gstin',
-        [
-          'pan_no',
-          'panNo'],
-        [
-          'reg_no',
-          'registrationNo'],
-        [
-          'is_service',
-          'isService'],
-        [
-          'is_onboarded',
-          'isOnboarded'],
+        'seller_name',
+        'owner_name',
         'address',
         'city',
         'state',
@@ -52,10 +35,7 @@ export default class SellerAdaptor {
         [
           'sid',
           'id'],
-        [
-          'seller_name',
-          'name'],
-        'gstin',
+        'seller_name',
         'url',
         'contact',
         'email'],

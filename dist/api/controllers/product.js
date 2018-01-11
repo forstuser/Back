@@ -73,20 +73,20 @@ var ProductController = function() {
             category_id: request.payload.category_id,
             brand_id: request.payload.brand_id,
             colour_id: request.payload.colour_id,
-            purchase_cost: request.payload.purchase_cost,
+            purchase_cost: request.payload.value,
             taxes: request.payload.taxes,
             updated_by: user.id || user.ID,
             seller_id: request.payload.seller_id,
             status_type: 11,
             document_number: request.payload.document_number,
             document_date: request.payload.document_date ?
-                (0, _moment2.default)(request.payload.document_date,
+                _moment2.default.utc(request.payload.document_date,
                     _moment2.default.ISO_8601).isValid() ?
-                    (0, _moment2.default)(request.payload.document_date,
+                    _moment2.default.utc(request.payload.document_date,
                         _moment2.default.ISO_8601).
                         startOf('day').
                         format('YYYY-MM-DD') :
-                    (0, _moment2.default)(request.payload.document_date,
+                    _moment2.default.utc(request.payload.document_date,
                         'DD MMM YY').startOf('day').format('YYYY-MM-DD') :
                 undefined,
             brand_name: request.payload.brand_name,
@@ -160,7 +160,7 @@ var ProductController = function() {
             category_id: request.payload.category_id,
             brand_id: request.payload.brand_id,
             colour_id: request.payload.colour_id,
-            purchase_cost: request.payload.purchase_cost,
+            purchase_cost: request.payload.value,
             taxes: request.payload.taxes,
             updated_by: user.id || user.ID,
             seller_name: request.payload.seller_name,
@@ -169,13 +169,13 @@ var ProductController = function() {
             status_type: 11,
             document_number: request.payload.document_number,
             document_date: request.payload.document_date ?
-                (0, _moment2.default)(request.payload.document_date,
+                _moment2.default.utc(request.payload.document_date,
                     _moment2.default.ISO_8601).isValid() ?
-                    (0, _moment2.default)(request.payload.document_date,
+                    _moment2.default.utc(request.payload.document_date,
                         _moment2.default.ISO_8601).
                         startOf('day').
                         format('YYYY-MM-DD') :
-                    (0, _moment2.default)(request.payload.document_date,
+                    _moment2.default.utc(request.payload.document_date,
                         'DD MMM YY').startOf('day').format('YYYY-MM-DD') :
                 undefined,
             brand_name: request.payload.brand_name,
@@ -316,7 +316,7 @@ var ProductController = function() {
                   , forceUpdate: request.pre.forceUpdate,
                   /* ,
                       nextPageUrl: productList.length > listIndex + 10 ?
-                       `categories/${masterCategoryId}/products?pageno=${parseInt(pageNo, 10) + 1}
+                       `categories/${main_category_id}/products?pageno=${parseInt(pageNo, 10) + 1}
                        &ctype=${ctype}&categoryids=${categoryIds}&brandids=${brandIds}
                        &offlinesellerids=${offlineSellerIds}&onlinesellerids=
                        ${onlineSellerIds}&sortby=${sortBy}&searchvalue=${searchValue}` : '' */

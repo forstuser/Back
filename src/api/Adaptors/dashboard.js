@@ -6,6 +6,7 @@ import AMCAdaptor from './amcs';
 import InsuranceAdaptor from './insurances';
 import RepairAdaptor from './repairs';
 import WarrantyAdaptor from './warranties';
+import PUCAdaptor from './pucs';
 import shared from '../../helpers/shared';
 import moment from 'moment';
 
@@ -17,6 +18,7 @@ class DashboardAdaptor {
     this.insuranceAdaptor = new InsuranceAdaptor(modals);
     this.repairAdaptor = new RepairAdaptor(modals);
     this.warrantyAdaptor = new WarrantyAdaptor(modals);
+    this.pucAdaptor = new PUCAdaptor(modals);
     this.date = moment.utc();
   }
 
@@ -48,7 +50,7 @@ class DashboardAdaptor {
         where: {
           user_id: user.id || user.ID,
           status_type: 11,
-          main_category_id: [2, 3],
+          main_category_id: [1, 2, 3],
         },
       }),
       this.productAdaptor.retrieveUsersLastProduct({
@@ -57,13 +59,14 @@ class DashboardAdaptor {
       }),
     ]).then((result) => {
       const upcomingServices = result[0].map((elem) => {
-        if (elem.productType === 1) {
+        if (elem.product_type === 1) {
+          console.log(`${elem.productMetaData}`);
           const dueAmountArr = elem.productMetaData.filter((e) => {
-            return e.name.toLowerCase() === 'due amount';
+            return e.title.toLowerCase() === 'due amount';
           });
 
           if (dueAmountArr.length > 0) {
-            elem.value = dueAmountArr[0].value;
+            elem.value = dueAmountArr[0].form_value;
           }
         }
 
@@ -74,10 +77,11 @@ class DashboardAdaptor {
       const insightData = result[1].map((item) => {
         const insightItem = item;
         const index = distinctInsight.findIndex(
-            distinctItem => (moment(distinctItem.purchaseDate, moment.ISO_8601).
+            distinctItem => (moment.utc(distinctItem.document_date,
+                moment.ISO_8601).
                     startOf('day').
                     valueOf() ===
-                moment(insightItem.purchaseDate, moment.ISO_8601).
+                moment.utc(insightItem.document_date, moment.ISO_8601).
                     startOf('day').
                     valueOf()));
 
@@ -109,15 +113,15 @@ class DashboardAdaptor {
         let aDate;
         let bDate;
 
-        aDate = a.expiryDate;
-        bDate = b.expiryDate;
+        aDate = a.expiry_date;
+        bDate = b.expiry_date;
 
-        if (a.productType === 1) {
-          aDate = a.dueDate;
+        if (a.product_type === 1) {
+          aDate = a.due_date;
         }
 
-        if (b.productType === 1) {
-          bDate = b.dueDate;
+        if (b.product_type === 1) {
+          bDate = b.due_date;
         }
 
         if (moment.utc(aDate, 'YYYY-MM-DD').
@@ -261,7 +265,7 @@ class DashboardAdaptor {
         user_id: user.id || user.ID,
         status_type: [5, 11],
       }),
-      this.productAdaptor.retrieveProducts({
+      this.pucAdaptor.retrievePUCs({
         user_id: user.id || user.ID,
         status_type: [5, 11],
         main_category_id: [3],
@@ -271,98 +275,100 @@ class DashboardAdaptor {
 
         product.productMetaData.map((metaItem) => {
           const metaData = metaItem;
-          if (metaData.name.toLowerCase().includes('due') &&
-              metaData.name.toLowerCase().includes('date') &&
-              metaData.value &&
-              moment(metaData.value, moment.ISO_8601).isValid()) {
-            const dueDateTime = moment(metaData.value, moment.ISO_8601);
-            product.dueDate = metaData.value;
-            product.dueIn = dueDateTime.diff(moment.utc(), 'days');
+
+          console.log(`${metaData}`);
+          if (metaData.title.toLowerCase().includes('due') &&
+              metaData.title.toLowerCase().includes('date') &&
+              metaData.form_value &&
+              moment.utc(metaData.form_value, moment.ISO_8601).isValid()) {
+            const due_date_time = moment.utc(metaData.form_value,
+                moment.ISO_8601);
+            product.due_date = metaData.form_value;
+            product.due_in = due_date_time.diff(moment.utc(), 'days');
           }
 
-          if (metaData.name.toLowerCase().includes('address')) {
-            product.address = metaData.value;
+          if (metaData.title.toLowerCase().includes('address')) {
+            product.address = metaData.form_value;
           }
 
           return metaData;
         });
 
-        product.productType = 1;
+        product.product_type = 1;
         return product;
       });
 
       products = products.filter(
-          item => ((item.dueIn !== undefined && item.dueIn !== null) &&
-              item.dueIn <=
-              30 && item.dueIn >= 0));
+          item => ((item.due_in !== undefined && item.due_in !== null) &&
+              item.due_in <=
+              30 && item.due_in >= 0));
 
       let pucProducts = result[4].map((item) => {
-        const product = item;
-        if (product.pucDetail &&
-            moment.utc(product.pucDetail.expiry_date, moment.ISO_8601).
-                isValid()) {
-          const dueDateTime = moment.utc(product.pucDetail.expiry_date,
-              moment.ISO_8601).
+        const puc = item;
+        if (moment.utc(puc.expiry_date, moment.ISO_8601).isValid()) {
+          const due_date_time = moment.utc(puc.expiry_date, moment.ISO_8601).
               endOf('day');
-          product.dueDate = product.pucDetail.expiry_date;
-          product.dueIn = dueDateTime.diff(moment.utc(), 'days');
+          puc.due_date = puc.expiry_date;
+          puc.due_in = due_date_time.diff(moment.utc(), 'days');
+          puc.product_type = 5;
         }
 
-        product.productType = 5;
-        return product;
+        return puc;
       });
 
       pucProducts = pucProducts.filter(
-          item => ((item.dueIn !== undefined && item.dueIn !== null) &&
-              item.dueIn <= 30 && item.dueIn >= 0));
+          item => ((item.due_in !== undefined && item.due_in !== null) &&
+              item.due_in <= 30 && item.due_in >= 0));
 
       let amcs = result[1].map((item) => {
         const amc = item;
-        if (moment(amc.expiryDate, moment.ISO_8601).isValid()) {
-          const dueDateTime = moment.utc(amc.expiryDate, moment.ISO_8601).
+        if (moment.utc(amc.expiry_date, moment.ISO_8601).isValid()) {
+          const due_date_time = moment.utc(amc.expiry_date, moment.ISO_8601).
               endOf('day');
-          amc.dueDate = amc.expiryDate;
-          amc.dueIn = dueDateTime.diff(moment.utc(), 'days');
-          amc.productType = 4;
+          amc.due_date = amc.expiry_date;
+          amc.due_in = due_date_time.diff(moment.utc(), 'days');
+          amc.product_type = 4;
         }
 
         return amc;
       });
       amcs = amcs.filter(
-          item => (item.dueIn !== undefined && item.dueIn !== null) &&
-              item.dueIn <= 30 && item.dueIn >= 0);
+          item => (item.due_in !== undefined && item.due_in !== null) &&
+              item.due_in <= 30 && item.due_in >= 0);
 
       let insurances = result[2].map((item) => {
         const insurance = item;
-        if (moment(insurance.expiryDate, moment.ISO_8601).isValid()) {
-          const dueDateTime = moment.utc(insurance.expiryDate, moment.ISO_8601).
+        if (moment.utc(insurance.expiry_date, moment.ISO_8601).isValid()) {
+          const due_date_time = moment.utc(insurance.expiry_date,
+              moment.ISO_8601).
               endOf('day');
-          insurance.dueDate = insurance.expiryDate;
-          insurance.dueIn = dueDateTime.diff(moment.utc(), 'days');
-          insurance.productType = 3;
+          insurance.due_date = insurance.expiry_date;
+          insurance.due_in = due_date_time.diff(moment.utc(), 'days');
+          insurance.product_type = 3;
         }
         return insurance;
       });
 
       insurances = insurances.filter(
-          item => (item.dueIn !== undefined && item.dueIn !== null) &&
-              item.dueIn <= 30 && item.dueIn >= 0);
+          item => (item.due_in !== undefined && item.due_in !== null) &&
+              item.due_in <= 30 && item.due_in >= 0);
 
       let warranties = result[3].map((item) => {
         const warranty = item;
-        if (moment(warranty.expiryDate, moment.ISO_8601).isValid()) {
-          const dueDateTime = moment.utc(warranty.expiryDate, moment.ISO_8601).
+        if (moment.utc(warranty.expiry_date, moment.ISO_8601).isValid()) {
+          const due_date_time = moment.utc(warranty.expiry_date,
+              moment.ISO_8601).
               endOf('day');
-          warranty.dueDate = warranty.expiryDate;
-          warranty.dueIn = dueDateTime.diff(moment.utc(), 'days');
-          warranty.productType = 2;
+          warranty.due_date = warranty.expiry_date;
+          warranty.due_in = due_date_time.diff(moment.utc(), 'days');
+          warranty.product_type = 2;
         }
         return warranty;
       });
 
       warranties = warranties.filter(
-          item => (item.dueIn !== undefined && item.dueIn !== null) &&
-              item.dueIn <= 30 && item.dueIn >= 0);
+          item => (item.due_in !== undefined && item.due_in !== null) &&
+              item.due_in <= 30 && item.due_in >= 0);
 
       return [
         ...products,
@@ -414,13 +420,22 @@ class DashboardAdaptor {
           $lte: moment.utc(),
           $gte: moment.utc().subtract(6, 'd').startOf('d'),
         },
+      }),
+      this.pucAdaptor.retrievePUCs({
+        status_type: [5, 11],
+        user_id: user.id || user.ID,
+        document_date: {
+          $lte: moment.utc(),
+          $gte: moment.utc().subtract(6, 'd').startOf('d'),
+        },
       })]).
         then((results) => [
           ...results[0],
           ...results[1],
           ...results[2],
           ...results[3],
-          ...results[4]]);
+          ...results[4],
+          ...results[5]]);
   }
 
   retrieveRecentSearch(user) {

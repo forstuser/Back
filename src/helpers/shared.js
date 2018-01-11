@@ -97,15 +97,15 @@ function sumProps(arrayItem, prop) {
 }
 
 const getAllDays = function() {
-  let s = moment(moment.utc().subtract(6, 'd')).utc().startOf('d');
+  let s = moment.utc().subtract(6, 'd').startOf('d');
   const e = moment.utc();
   const a = [];
   while (s.valueOf() < e.valueOf()) {
     a.push({
       value: 0,
-      purchaseDate: moment(s, moment.ISO_8601).utc().startOf('d'),
+      document_date: moment.utc(s, moment.ISO_8601).utc().startOf('d'),
     });
-    s = moment(s, moment.ISO_8601).utc().add(1, 'd').startOf('d');
+    s = moment.utc(s, moment.ISO_8601).utc().add(1, 'd').startOf('d');
   }
 
   return a;
@@ -114,13 +114,14 @@ const getAllDays = function() {
 function retrieveDaysInsight(distinctInsight) {
   const allDaysInWeek = getAllDays();
   distinctInsight.map((item) => {
-    const currentDate = moment(item.purchaseDate, moment.ISO_8601).
+    const currentDate = moment.utc(item.document_date, moment.ISO_8601).
         startOf('day');
     for (let i = 0; i < allDaysInWeek.length; i += 1) {
       const weekData = allDaysInWeek[i];
-      if (weekData.purchaseDate.valueOf() === currentDate.valueOf()) {
+      if (weekData.document_date.valueOf() === currentDate.valueOf()) {
         weekData.value = !(item.value) ? 0 : item.value;
-        weekData.purchaseDate = moment(weekData.purchaseDate, moment.ISO_8601);
+        weekData.document_date = moment.utc(weekData.document_date,
+            moment.ISO_8601);
         break;
       }
     }
@@ -130,8 +131,9 @@ function retrieveDaysInsight(distinctInsight) {
 
   return allDaysInWeek.map(weekItem => ({
     value: weekItem.value,
-    purchaseDate: moment(weekItem.purchaseDate, moment.ISO_8601),
-    purchaseDay: moment(weekItem.purchaseDate, moment.ISO_8601).format('ddd'),
+    document_date: moment.utc(weekItem.document_date, moment.ISO_8601),
+    purchaseDay: moment.utc(weekItem.document_date, moment.ISO_8601).
+        format('ddd'),
   }));
 }
 

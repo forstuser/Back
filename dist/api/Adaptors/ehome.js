@@ -122,7 +122,7 @@ var EHomeAdaptor = function() {
           var categoryDataWithoutOthers = _lodash2.default.orderBy(
               categoryList.filter(function(elem) {
                 return elem.id !== 9;
-              }), ['productCounts'], ['desc']);
+              }), ['product_counts'], ['desc']);
 
           var newCategoryData = categoryDataWithoutOthers;
 
@@ -131,7 +131,8 @@ var EHomeAdaptor = function() {
           if (OtherCategory) {
             newCategoryData = [];
             categoryDataWithoutOthers.forEach(function(elem) {
-              if (OtherCategory.productCounts > elem.productCounts && !pushed) {
+              if (OtherCategory.product_counts > elem.product_counts &&
+                  !pushed) {
                 newCategoryData.push(OtherCategory);
                 pushed = true;
               }
@@ -173,7 +174,7 @@ var EHomeAdaptor = function() {
       key: 'retrieveUnProcessedBills',
       value: function retrieveUnProcessedBills(user) {
         return this.modals.jobs.findAll({
-          attributes: [['created_at', 'uploadedDate'], ['id', 'docId']],
+          attributes: [['created_at', 'uploaded_on'], ['id', 'job_id']],
           where: {
             user_id: user.id || user.ID,
             user_status: {
@@ -198,13 +199,13 @@ var EHomeAdaptor = function() {
               attributes: [
                 [
                   'id',
-                  'copyId'],
+                  'copy_id'],
                 'file_type',
                 [
                   this.modals.sequelize.fn('CONCAT', '/jobs/',
                       this.modals.sequelize.literal('"jobs"."id"'), '/files/',
                       this.modals.sequelize.literal('"copies"."id"')),
-                  'copyUrl']],
+                  'copy_url']],
               where: {
                 status_type: {
                   $notIn: [3, 5, 9],
@@ -241,27 +242,27 @@ var EHomeAdaptor = function() {
                 var category = categoryItem;
                 var products = _lodash2.default.chain(results[1]).
                     filter(function(productItem) {
-                      return productItem.masterCategoryId === category.id;
+                      return productItem.main_category_id === category.id;
                     });
                 var inProgressProduct = _lodash2.default.chain(results[2]).
                     filter(function(amcItem) {
-                      return amcItem.masterCategoryId === category.id;
+                      return amcItem.main_category_id === category.id;
                     });
                 var expenses = _lodash2.default.chain([].concat(
                     _toConsumableArray(products),
                     _toConsumableArray(inProgressProduct)) || []).
                     sortBy(function(item) {
-                      return (0, _moment2.default)(item.lastUpdatedAt,
+                      return _moment2.default.utc(item.last_updated_at,
                           _moment2.default.ISO_8601);
                     }).
                     reverse().
                     value();
                 category.expenses = expenses;
-                category.cLastUpdate = expenses && expenses.length > 0 ?
-                    expenses[0].lastUpdatedAt :
+                category.last_updated_at = expenses && expenses.length > 0 ?
+                    expenses[0].last_updated_at :
                     null;
-                category.productCounts = parseInt(
-                    _shared2.default.sumProps(expenses, 'productCounts'));
+                category.product_counts = parseInt(
+                    _shared2.default.sumProps(expenses, 'product_counts'));
                 return category;
               });
             });
@@ -297,17 +298,15 @@ var EHomeAdaptor = function() {
               var brands = result.productList.filter(function(item) {
                 return item.brand !== null;
               }).map(function(item) {
-                var brandItem = item.brand;
-                brandItem.id = brandItem.brandId;
-                return brandItem;
+                return item.brand;
               });
-              brands = _lodash2.default.uniqBy(brands, 'brandId');
+              brands = _lodash2.default.uniqBy(brands, 'id');
 
               var offlineSellers = result.productList.filter(function(item) {
                 return item.sellers !== null;
               }).map(function(item) {
                 var sellerItem = item.sellers;
-                sellerItem.name = sellerItem.sellerName;
+                sellerItem.name = sellerItem.seller_name;
                 return sellerItem;
               });
 
@@ -317,7 +316,7 @@ var EHomeAdaptor = function() {
                 return item.bill !== null && item.bill.sellers !== null;
               }).map(function(item) {
                 var sellerItem = item.bill.sellers;
-                sellerItem.name = sellerItem.sellerName;
+                sellerItem.name = sellerItem.seller_name;
                 return sellerItem;
               });
 
@@ -328,7 +327,7 @@ var EHomeAdaptor = function() {
                 , filterData: {
                   categories: result.subCategories.filter(function(item) {
                     return productList.find(function(productItem) {
-                      return productItem.categoryId === item.id;
+                      return productItem.category_id === item.id;
                     });
                   }),
                   brands: brands.filter(function(item) {
@@ -427,7 +426,7 @@ var EHomeAdaptor = function() {
                       return product;
                     }).
                     filter(function(productItem) {
-                      return productItem.masterCategoryId === category.id;
+                      return productItem.main_category_id === category.id;
                     }).
                     value();
                 var inProgressProduct = _lodash2.default.chain(results[2]).
@@ -437,14 +436,14 @@ var EHomeAdaptor = function() {
                       return product;
                     }).
                     filter(function(productItem) {
-                      return productItem.masterCategoryId === category.id;
+                      return productItem.main_category_id === category.id;
                     }).
                     value();
                 category.productList = _lodash2.default.chain([].concat(
                     _toConsumableArray(products),
                     _toConsumableArray(inProgressProduct)) || []).
                     sortBy(function(item) {
-                      return (0, _moment2.default)(item.purchaseDate,
+                      return _moment2.default.utc(item.document_date,
                           _moment2.default.ISO_8601);
                     }).
                     reverse().

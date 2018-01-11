@@ -62,7 +62,7 @@ class SearchAdaptor {
 
       result[2][0].updateAttributes({
         resultCount: productList.length + categoryList.length,
-        searchDate: moment().format('YYYY-MM-DD HH:mm:ss'),
+        searchDate: moment.utc().format('YYYY-MM-DD HH:mm:ss'),
       });
       const recentSearches = result[3].map(item => {
         const searches = item.toJSON();
@@ -122,10 +122,10 @@ class SearchAdaptor {
             const category = categoryItem;
             const products = _.chain(productResult).
                 filter(
-                    (productItem) => productItem.masterCategoryId ===
+                    (productItem) => productItem.main_category_id ===
                         category.id || productItem.categoryId === category.id);
             category.products = _.chain(products).sortBy((item) => {
-              return moment(item.lastUpdatedAt, moment.ISO_8601);
+              return moment.utc(item.last_updated_at, moment.ISO_8601);
             }).reverse().value();
             return category;
           });
@@ -142,7 +142,7 @@ class SearchAdaptor {
         user_id: user.id || user.ID,
         searchValue,
         resultCount: 0,
-        searchDate: moment().format('YYYY-MM-DD HH:mm:ss'),
+        searchDate: moment.utc().format('YYYY-MM-DD HH:mm:ss'),
       },
     });
   }

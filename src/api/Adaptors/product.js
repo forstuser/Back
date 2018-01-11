@@ -9,6 +9,7 @@ import AMCAdaptor from './amcs';
 import RepairAdaptor from './repairs';
 import CategoryAdaptor from './category';
 import SellerAdaptor from './sellers';
+import JobAdaptor from './job';
 import _ from 'lodash';
 import moment from 'moment/moment';
 
@@ -23,6 +24,7 @@ class ProductAdaptor {
     this.repairAdaptor = new RepairAdaptor(modals);
     this.categoryAdaptor = new CategoryAdaptor(modals);
     this.sellerAdaptor = new SellerAdaptor(modals);
+    this.jobAdaptor = new JobAdaptor(modals);
   }
 
   retrieveProducts(options) {
@@ -66,64 +68,44 @@ class ProductAdaptor {
           attributes: [
             [
               'brand_id',
-              'brandId'],
-            [
-              'brand_id',
               'id'],
-            [
-              'brand_name',
-              'name'],
-            [
-              'brand_description',
-              'description'],
+            'brand_name',
+            'brand_description',
             [
               this.modals.sequelize.fn('CONCAT', 'brands/',
                   this.modals.sequelize.col('"brand"."brand_id"'), '/reviews'),
-              'reviewUrl']],
+              'review_url']],
           required: false,
         },
         {
           model: this.modals.colours,
           as: 'color',
-          attributes: [['colour_id', 'colorId'], ['colour_name', 'colorName']],
+          attributes: [['colour_id', 'id'], 'colour_name'],
           required: false,
         },
         {
           model: this.modals.bills,
           where: billOption,
           attributes: [
-            [
-              'consumer_name',
-              'consumerName'],
-            [
-              'consumer_email',
-              'consumerEmail'],
-            [
-              'consumer_phone_no',
-              'consumerPhoneNo'],
-            [
-              'document_number',
-              'invoiceNo'],
+            'consumer_name',
+            'consumer_email',
+            'consumer_phone_no',
+            'document_number',
             'seller_id'],
           include: [
             {
               model: this.modals.onlineSellers,
               as: 'sellers',
               attributes: [
-                [
-                  'sid',
-                  'id'],
-                [
-                  'seller_name',
-                  'sellerName'],
+                ['sid', 'id'],
+                'seller_name',
                 'url',
-                'gstin',
                 'contact',
                 'email',
                 [
                   this.modals.sequelize.fn('CONCAT', 'sellers/',
                       this.modals.sequelize.literal('"bill->sellers"."sid"'),
-                      '/reviews?isonlineseller=true'), 'reviewUrl']],
+                      '/reviews?isonlineseller=true'), 'review_url']],
               include: [
                 {
                   model: this.modals.sellerReviews,
@@ -149,26 +131,9 @@ class ProductAdaptor {
           model: this.modals.offlineSellers,
           as: 'sellers',
           attributes: [
-            [
-              'sid',
-              'id'],
-            [
-              'seller_name',
-              'sellerName'],
-            [
-              'owner_name',
-              'ownerName'],
-            [
-              'pan_no',
-              'panNo'],
-            [
-              'reg_no',
-              'regNo'],
-            [
-              'is_service',
-              'isService'],
+            ['sid', 'id'],
+            'seller_name', 'owner_name',
             'url',
-            'gstin',
             ['contact_no', 'contact'],
             'email',
             'address',
@@ -180,7 +145,7 @@ class ProductAdaptor {
             [
               this.modals.sequelize.fn('CONCAT', 'sellers/',
                   this.modals.sequelize.literal('"sellers"."sid"'),
-                  '/reviews?isonlineseller=false'), 'reviewUrl']],
+                  '/reviews?isonlineseller=false'), 'review_url']],
           include: [
             {
               model: this.modals.sellerReviews,
@@ -224,75 +189,67 @@ class ProductAdaptor {
       ],
       attributes: [
         'id',
-        [
-          'product_name',
-          'productName'],
+        'product_name',
         [
           this.modals.sequelize.literal('"category"."category_id"'),
-          'categoryId'],
-        [
-          'main_category_id',
-          'masterCategoryId'],
-        [
-          'brand_id',
-          'brandId'],
-        [
-          'colour_id',
-          'colorId'],
-        [
-          'purchase_cost',
-          'value'],
+          'category_id'],
+        'main_category_id',
+        'brand_id',
+        'colour_id', ['purchase_cost', 'value'],
         'taxes',
         [
           this.modals.sequelize.fn('CONCAT', '/categories/',
               this.modals.sequelize.literal('"category"."category_id"'),
               '/images/'),
-          'cImageURL'],
+          'category_image_url'],
         [
           this.modals.sequelize.fn('CONCAT', 'products/',
               this.modals.sequelize.literal('"products"."id"')),
-          'productURL'],
-        [
-          'document_date',
-          'purchaseDate'],
-        ['document_number', 'documentNo'],
-        ['updated_at', 'updatedDate'],
-        [
-          'bill_id',
-          'billId'],
-        [
-          'job_id',
-          'jobId'],
-        [
-          'seller_id',
-          'sellerId'],
+          'product_url'],
+        'document_date',
+        'document_number',
+        'updated_at',
+        'bill_id',
+        'job_id',
+        'seller_id',
         'copies',
         [
           this.modals.sequelize.fn('CONCAT', 'products/',
               this.modals.sequelize.literal('"products"."id"'), '/reviews'),
-          'reviewUrl'],
+          'review_url'],
         [
           this.modals.sequelize.literal('"category"."category_name"'),
-          'categoryName'],
+          'category_name'],
         [
           this.modals.sequelize.fn('CONCAT',
               '/consumer/servicecenters?brandid=',
               this.modals.sequelize.literal('"products"."brand_id"'),
-              '&categoryid=',
+              '&category_id=',
               this.modals.sequelize.col('"products"."category_id"')),
-          'serviceCenterUrl'],
+          'service_center_url'],
         'status_type',
       ],
       order: [['document_date', 'DESC']],
     }).then((productResult) => {
-      products = productResult.map((item) => item.toJSON());
+      products = productResult.map((item) => {
+        const productItem = item.toJSON();
+
+        productItem.copies = productItem.copies.map((copyItem) => {
+          copyItem.copy_id = copyItem.copy_id || copyItem.copyId;
+          copyItem.copy_url = copyItem.copy_url || copyItem.copyUrl;
+          copyItem = _.omit(copyItem, 'copyId');
+          copyItem = _.omit(copyItem, 'copyUrl');
+          return copyItem;
+        });
+        return productItem;
+      });
       if (billOption.seller_id && billOption.seller_id.length > 0) {
         products = products.filter(
             (item) => item.bill && billOption.seller_id.find(
                 sItem => parseInt(item.bill.seller_id) === parseInt(sItem)));
       }
       inProgressProductOption = _.omit(inProgressProductOption, 'product_name');
-      inProgressProductOption.status_type = [5, 12];
+      inProgressProductOption.status_type = [5, 11, 12];
       inProgressProductOption.product_status_type = options.status_type;
       let warrantyOptions = {};
       _.assignIn(warrantyOptions, inProgressProductOption);
@@ -301,9 +258,7 @@ class ProductAdaptor {
         inProgressProductOption.product_id = products.map((item) => item.id);
         return Promise.all([
           this.retrieveProductMetadata({
-            product_id: {
-              $in: products.map((item) => item.id),
-            },
+            product_id: products.map((item) => item.id),
           }),
           this.insuranceAdaptor.retrieveInsurances(inProgressProductOption),
           this.warrantyAdaptor.retrieveWarranties(warrantyOptions),
@@ -317,25 +272,25 @@ class ProductAdaptor {
         const metaData = results[0];
         products = products.map((productItem) => {
           const pucItem = metaData.find(
-              (item) => item.name.toLowerCase().includes('puc'));
+              (item) => item.title.toLowerCase().includes('puc'));
           if (pucItem) {
             productItem.pucDetail = {
-              expiry_date: pucItem.value,
+              expiry_date: pucItem.form_value,
             };
           }
           productItem.productMetaData = metaData.filter(
-              (item) => item.productId === productItem.id &&
-                  !item.name.toLowerCase().includes('puc'));
+              (item) => item.product_id === productItem.id &&
+                  !item.title.toLowerCase().includes('puc'));
           productItem.insuranceDetails = results[1].filter(
-              (item) => item.productId === productItem.id);
+              (item) => item.product_id === productItem.id);
           productItem.warrantyDetails = results[2].filter(
-              (item) => item.productId === productItem.id);
+              (item) => item.product_id === productItem.id);
           productItem.amcDetails = results[3].filter(
-              (item) => item.productId === productItem.id);
+              (item) => item.product_id === productItem.id);
           productItem.repairBills = results[4].filter(
-              (item) => item.productId === productItem.id);
+              (item) => item.product_id === productItem.id);
           productItem.pucDetails = results[5].filter(
-              (item) => item.productId === productItem.id);
+              (item) => item.product_id === productItem.id);
 
           productItem.requiredCount = productItem.insuranceDetails.length +
               productItem.warrantyDetails.length +
@@ -372,64 +327,43 @@ class ProductAdaptor {
           attributes: [
             [
               'brand_id',
-              'brandId'],
-            [
-              'brand_name',
-              'name'],
-            [
-              'brand_description',
-              'description'],
-            [
-              'brand_id',
               'id'],
+            'brand_name',
+            'brand_description',
             [
               this.modals.sequelize.fn('CONCAT', 'brands/',
                   this.modals.sequelize.col('"brand"."brand_id"'), '/reviews'),
-              'reviewUrl']],
+              'review_url']],
           required: false,
         },
         {
           model: this.modals.colours,
           as: 'color',
-          attributes: [['colour_id', 'colorId'], ['colour_name', 'colorName']],
+          attributes: [['colour_id', 'id'], 'colour_name'],
           required: false,
         },
         {
           model: this.modals.bills,
           where: billOption,
           attributes: [
-            [
-              'consumer_name',
-              'consumerName'],
-            [
-              'consumer_email',
-              'consumerEmail'],
-            [
-              'consumer_phone_no',
-              'consumerPhoneNo'],
-            [
-              'document_number',
-              'invoiceNo'],
-            ['status_type', 'billStatus']],
+            'consumer_name',
+            'consumer_email',
+            'consumer_phone_no',
+            'document_number', 'status_type'],
           include: [
             {
               model: this.modals.onlineSellers,
               as: 'sellers',
               attributes: [
-                [
-                  'sid',
-                  'id'],
-                [
-                  'seller_name',
-                  'sellerName'],
+                ['sid', 'id'],
+                'seller_name',
                 'url',
-                'gstin',
                 'contact',
                 'email',
                 [
                   this.modals.sequelize.fn('CONCAT', 'sellers/',
                       this.modals.sequelize.literal('"bill->sellers"."sid"'),
-                      '/reviews?isonlineseller=true'), 'reviewUrl']],
+                      '/reviews?isonlineseller=true'), 'review_url']],
               include: [
                 {
                   model: this.modals.sellerReviews,
@@ -455,26 +389,10 @@ class ProductAdaptor {
           model: this.modals.offlineSellers,
           as: 'sellers',
           attributes: [
-            [
-              'sid',
-              'id'],
-            [
-              'seller_name',
-              'sellerName'],
-            [
-              'owner_name',
-              'ownerName'],
-            [
-              'pan_no',
-              'panNo'],
-            [
-              'reg_no',
-              'regNo'],
-            [
-              'is_service',
-              'isService'],
+            ['sid', 'id'],
+            'seller_name',
+            'owner_name',
             'url',
-            'gstin',
             ['contact_no', 'contact'],
             'email',
             'address',
@@ -486,7 +404,7 @@ class ProductAdaptor {
             [
               this.modals.sequelize.fn('CONCAT', 'sellers/',
                   this.modals.sequelize.literal('"sellers"."sid"'),
-                  '/reviews?isonlineseller=false'), 'reviewUrl']],
+                  '/reviews?isonlineseller=false'), 'review_url']],
           include: [
             {
               model: this.modals.sellerReviews,
@@ -524,69 +442,56 @@ class ProductAdaptor {
       ],
       attributes: [
         'id',
-        [
-          'product_name',
-          'productName'],
-        [
-          'category_id',
-          'categoryId'],
-        [
-          'main_category_id',
-          'masterCategoryId'],
-        [
-          'brand_id',
-          'brandId'],
-        [
-          'colour_id',
-          'colorId'],
-        [
-          'purchase_cost',
-          'value'],
+        'product_name',
+        'category_id',
+        'main_category_id',
+        'brand_id',
+        'colour_id', ['purchase_cost', 'value'],
         'taxes',
         [
           this.modals.sequelize.fn('CONCAT', '/categories/',
               this.modals.sequelize.col('category_id'), '/images/'),
-          'cImageURL'],
+          'category_image_url'],
         [
           this.modals.sequelize.fn('CONCAT', 'products/',
               this.modals.sequelize.literal('"products"."id"')),
-          'productURL'],
-        [
-          'document_date',
-          'purchaseDate'],
-        ['document_number', 'documentNo'],
-        ['updated_at', 'updatedDate'],
-        [
-          'bill_id',
-          'billId'],
-        [
-          'job_id',
-          'jobId'],
-        [
-          'seller_id',
-          'sellerId'],
+          'product_url'],
+        'document_date',
+        'document_number', 'updated_at', 'bill_id', 'job_id',
+        'seller_id',
         'copies',
         [
           this.modals.sequelize.fn('CONCAT', 'products/',
               this.modals.sequelize.literal('"products"."id"'), '/reviews'),
-          'reviewUrl'],
+          'review_url'],
         [
           this.modals.sequelize.fn('CONCAT',
               '/consumer/servicecenters?brandid=',
               this.modals.sequelize.literal('"products"."brand_id"'),
-              '&categoryid=',
+              '&category_id=',
               this.modals.sequelize.col('"products"."category_id"')),
-          'serviceCenterUrl'],
+          'service_center_url'],
         'updated_at',
         'status_type',
       ],
       order: [['updated_at', 'DESC']],
     }).then((productResult) => {
-      const products = productResult.map(item => item.toJSON()).
+      const products = productResult.map(item => {
+        const productItem = item.toJSON();
+
+        productItem.copies = productItem.copies.map((copyItem) => {
+          copyItem.copy_id = copyItem.copy_id || copyItem.copyId;
+          copyItem.copy_url = copyItem.copy_url || copyItem.copyUrl;
+          copyItem = _.omit(copyItem, 'copyId');
+          copyItem = _.omit(copyItem, 'copyUrl');
+          return copyItem;
+        });
+        return productItem;
+      }).
           filter(
-              (producItem) => producItem.status_type !== 8 ||
-                  (producItem.status_type === 8 && producItem.bill &&
-                      producItem.bill.billStatus ===
+              (productItem) => productItem.status_type !== 8 ||
+                  (productItem.status_type === 8 && productItem.bill &&
+                      productItem.bill.billStatus ===
                       5));
       product = products.length > 0 ?
           products[0] :
@@ -620,14 +525,14 @@ class ProductAdaptor {
       if (results) {
         const metaData = results[0];
         const pucItem = metaData.find(
-            (item) => item.name.toLowerCase().includes('puc'));
+            (item) => item.title.toLowerCase().includes('puc'));
         if (pucItem) {
           product.pucDetail = {
-            expiry_date: pucItem.value,
+            expiry_date: pucItem.form_value,
           };
         }
         product.metaData = metaData.filter(
-            (item) => !item.name.toLowerCase().includes('puc'));
+            (item) => !item.title.toLowerCase().includes('puc'));
         product.insuranceDetails = results[1];
         product.warrantyDetails = results[2];
         product.amcDetails = results[3];
@@ -707,13 +612,11 @@ class ProductAdaptor {
           required: options.status_type === 8,
         }],
       attributes: [
-        [this.modals.sequelize.literal('COUNT(*)'), 'productCounts'],
-        [
-          'main_category_id',
-          'masterCategoryId'],
+        [this.modals.sequelize.literal('COUNT(*)'), 'product_counts'],
+        'main_category_id',
         [
           this.modals.sequelize.literal('max("products"."updated_at")'),
-          'lastUpdatedAt'],
+          'last_updated_at'],
       ],
       group: 'main_category_id',
     }).then((productItems) => {
@@ -724,7 +627,8 @@ class ProductAdaptor {
         this.amcAdaptor.retrieveAMCCounts(inProgressProductOption),
         this.insuranceAdaptor.retrieveInsuranceCount(inProgressProductOption),
         this.warrantyAdaptor.retrieveWarrantyCount(inProgressProductOption),
-        this.repairAdaptor.retrieveRepairCount(inProgressProductOption)]);
+        this.repairAdaptor.retrieveRepairCount(inProgressProductOption),
+        this.pucAdaptor.retrievePUCs(inProgressProductOption)]);
     }).then((results) => {
       if (options.status_type !== 8) {
         return productResult;
@@ -733,11 +637,12 @@ class ProductAdaptor {
         ...results[0],
         ...results[1],
         ...results[2],
-        ...results[3]];
+        ...results[3],
+        ...results[4]];
 
       return productResult.filter((item) => availableResult.filter(
-          (availResult) => availResult.masterCategoryId ===
-              item.masterCategoryId).length > 0);
+          (availResult) => availResult.main_category_id ===
+              item.main_category_id).length > 0);
 
     });
   }
@@ -750,47 +655,37 @@ class ProductAdaptor {
     }
 
     options.id = id;
-    let products;
+    let productDetail;
     return this.modals.products.findOne({
       where: options,
       include: [
         {
           model: this.modals.colours,
           as: 'color',
-          attributes: [['colour_id', 'colorId'], ['colour_name', 'colorName']],
+          attributes: [['colour_id', 'id'], 'colour_name'],
           required: false,
         },
         {
           model: this.modals.bills,
           attributes: [
-            [
-              'consumer_name',
-              'consumerName'],
-            [
-              'consumer_email',
-              'consumerEmail'],
-            [
-              'consumer_phone_no',
-              'consumerPhoneNo'],
-            [
-              'document_number',
-              'invoiceNo']],
+            'consumer_name',
+            'consumer_email',
+            'consumer_phone_no',
+            'document_number'],
           include: [
             {
               model: this.modals.onlineSellers,
               as: 'sellers',
               attributes: [
-                [
-                  'seller_name',
-                  'sellerName'],
+                ['sid', 'id'],
+                'seller_name',
                 'url',
-                'gstin',
                 'contact',
                 'email',
                 [
                   this.modals.sequelize.fn('CONCAT', 'sellers/',
                       this.modals.sequelize.literal('"bill->sellers"."sid"'),
-                      '/reviews?isonlineseller=true'), 'reviewUrl']],
+                      '/reviews?isonlineseller=true'), 'review_url']],
               include: [
                 {
                   model: this.modals.sellerReviews,
@@ -816,23 +711,7 @@ class ProductAdaptor {
           model: this.modals.offlineSellers,
           as: 'sellers',
           attributes: [
-            [
-              'seller_name',
-              'sellerName'],
-            [
-              'owner_name',
-              'ownerName'],
-            [
-              'pan_no',
-              'panNo'],
-            [
-              'reg_no',
-              'regNo'],
-            [
-              'is_service',
-              'isService'],
-            'url',
-            'gstin',
+            ['sid', 'id'], 'seller_name', 'owner_name', 'url',
             ['contact_no', 'contact'],
             'email',
             'address',
@@ -844,7 +723,7 @@ class ProductAdaptor {
             [
               this.modals.sequelize.fn('CONCAT', 'sellers/',
                   this.modals.sequelize.literal('"sellers"."sid"'),
-                  '/reviews?isonlineseller=false'), 'reviewUrl']],
+                  '/reviews?isonlineseller=false'), 'review_url']],
           include: [
             {
               model: this.modals.sellerReviews,
@@ -893,115 +772,100 @@ class ProductAdaptor {
         },
       ],
       attributes: [
-        'id',
-        [
-          'product_name',
-          'productName'],
+        'id', 'product_name',
         [
           this.modals.sequelize.literal('"category"."category_id"'),
-          'categoryId'],
+          'category_id'],
         [
           this.modals.sequelize.literal('"category"."dual_warranty_item"'),
-          'dualWarrantyItem'],
-        [
-          'main_category_id',
-          'masterCategoryId'],
-        [
-          'brand_id',
-          'brandId'],
-        [
-          'colour_id',
-          'colorId'],
-        [
-          'purchase_cost',
-          'value'],
+          'dual_warranty_item'],
+        'main_category_id',
+        'brand_id',
+        'colour_id', ['purchase_cost', 'value'],
         [
           this.modals.sequelize.literal('"category"."category_name"'),
-          'categoryName'],
+          'category_name'],
         [
           this.modals.sequelize.literal('"mainCategory"."category_name"'),
-          'masterCategoryName'],
+          'main_category_name'],
         'taxes',
         [
           this.modals.sequelize.fn('CONCAT', '/categories/',
               this.modals.sequelize.col('"category"."category_id"'),
               '/images/'),
-          'cImageURL'],
+          'category_image_url'],
         [
           this.modals.sequelize.fn('CONCAT', 'products/',
               this.modals.sequelize.literal('"products"."id"')),
-          'productURL'],
-        [
-          'document_date',
-          'purchaseDate'],
-        ['document_number', 'documentNo'],
-        ['updated_at', 'updatedDate'],
-        [
-          'bill_id',
-          'billId'],
-        [
-          'job_id',
-          'jobId'],
-        [
-          'seller_id',
-          'sellerId'],
-        ['updated_at', 'updatedDate'],
+          'product_url'],
+        'document_date',
+        'document_number', 'updated_at', 'bill_id', 'job_id',
+        'seller_id',
+        'updated_at',
         'copies',
         'status_type',
         [
           this.modals.sequelize.fn('CONCAT', 'products/',
               this.modals.sequelize.literal('"products"."id"'), '/reviews'),
-          'reviewUrl'],
+          'review_url'],
         [
           this.modals.sequelize.fn('CONCAT',
               '/consumer/servicecenters?brandid=',
               this.modals.sequelize.literal('"products"."brand_id"'),
-              '&categoryid=',
+              '&category_id=',
               this.modals.sequelize.col('"products"."category_id"')),
-          'serviceCenterUrl'],
+          'service_center_url'],
       ],
     }).then((productResult) => {
-      products = productResult ? productResult.toJSON() : productResult;
-      if (products) {
+      productDetail = productResult ? productResult.toJSON() : productResult;
+      if (productDetail) {
+
+        productDetail.copies = productDetail.copies.map((copyItem) => {
+          copyItem.copy_id = copyItem.copy_id || copyItem.copyId;
+          copyItem.copy_url = copyItem.copy_url || copyItem.copyUrl;
+          copyItem = _.omit(copyItem, 'copyId');
+          copyItem = _.omit(copyItem, 'copyUrl');
+          return copyItem;
+        });
         return Promise.all([
           this.retrieveProductMetadata({
-            product_id: products.id,
-          }), this.brandAdaptor.retrieveBrandById(products.brandId, {
-            category_id: products.categoryId,
+            product_id: productDetail.id,
+          }), this.brandAdaptor.retrieveBrandById(productDetail.brandId, {
+            category_id: productDetail.category_id,
           }), this.insuranceAdaptor.retrieveInsurances({
-            product_id: products.id,
+            product_id: productDetail.id,
           }), this.warrantyAdaptor.retrieveWarranties({
-            product_id: products.id,
+            product_id: productDetail.id,
           }), this.amcAdaptor.retrieveAMCs({
-            product_id: products.id,
+            product_id: productDetail.id,
           }), this.repairAdaptor.retrieveRepairs({
-            product_id: products.id,
+            product_id: productDetail.id,
           }),
           this.pucAdaptor.retrievePUCs({
-            product_id: products.id,
+            product_id: productDetail.id,
           })]);
       }
     }).then((results) => {
-      if (products) {
+      if (productDetail) {
         const metaData = results[0];
         const pucItem = metaData.find(
-            (item) => item.name.toLowerCase().includes('puc'));
+            (item) => item.title.toLowerCase().includes('puc'));
         if (pucItem) {
-          products.pucDetail = {
-            expiry_date: pucItem.value,
+          productDetail.pucDetail = {
+            expiry_date: pucItem.form_value,
           };
         }
-        products.metaData = metaData.filter(
-            (item) => !item.name.toLowerCase().includes('puc'));
-        products.brand = results[1];
-        products.insuranceDetails = results[2];
-        products.warrantyDetails = results[3];
-        products.amcDetails = results[4];
-        products.repairBills = results[5];
-        products.pucDetails = results[6];
+        productDetail.metaData = metaData.filter(
+            (item) => !item.title.toLowerCase().includes('puc'));
+        productDetail.brand = results[1];
+        productDetail.insuranceDetails = results[2];
+        productDetail.warrantyDetails = results[3];
+        productDetail.amcDetails = results[4];
+        productDetail.repairBills = results[5];
+        productDetail.pucDetails = results[6];
       }
 
-      return products;
+      return productDetail;
     });
   }
 
@@ -1117,14 +981,14 @@ class ProductAdaptor {
               if (otherItems.warranty.renewal_type) {
                 warrantyRenewalType = renewalTypes.find(
                     item => item.type === otherItems.warranty.renewal_type);
-                const effective_date = moment(
+                const effective_date = moment.utc(
                     otherItems.warranty.effective_date, moment.ISO_8601).
                     isValid() ?
-                    moment(otherItems.warranty.effective_date,
+                    moment.utc(otherItems.warranty.effective_date,
                         moment.ISO_8601).startOf('day') :
-                    moment(otherItems.warranty.effective_date, 'DD MMM YY').
+                    moment.utc(otherItems.warranty.effective_date, 'DD MMM YY').
                         startOf('day');
-                expiry_date = moment(effective_date, moment.ISO_8601).
+                expiry_date = moment.utc(effective_date, moment.ISO_8601).
                     add(warrantyRenewalType.effective_months, 'months').
                     subtract(1, 'day').
                     endOf('days');
@@ -1133,9 +997,11 @@ class ProductAdaptor {
                   updated_by: productBody.user_id,
                   status_type: 11,
                   product_id: product.id,
-                  expiry_date: moment(expiry_date).format('YYYY-MM-DD'),
-                  effective_date: moment(effective_date).format('YYYY-MM-DD'),
-                  document_date: moment(effective_date).format('YYYY-MM-DD'),
+                  expiry_date: moment.utc(expiry_date).format('YYYY-MM-DD'),
+                  effective_date: moment.utc(effective_date).
+                      format('YYYY-MM-DD'),
+                  document_date: moment.utc(effective_date).
+                      format('YYYY-MM-DD'),
                   warranty_type: 1,
                   user_id: productBody.user_id,
                 }));
@@ -1144,14 +1010,14 @@ class ProductAdaptor {
               if (otherItems.warranty.dual_renewal_type) {
                 warrantyRenewalType = renewalTypes.find(item => item.type ===
                     otherItems.warranty.dual_renewal_type);
-                const effective_date = moment(
+                const effective_date = moment.utc(
                     otherItems.warranty.effective_date, moment.ISO_8601).
                     isValid() ?
-                    moment(otherItems.warranty.effective_date,
+                    moment.utc(otherItems.warranty.effective_date,
                         moment.ISO_8601).startOf('day') :
-                    moment(otherItems.warranty.effective_date, 'DD MMM YY').
+                    moment.utc(otherItems.warranty.effective_date, 'DD MMM YY').
                         startOf('day');
-                expiry_date = moment(effective_date, moment.ISO_8601).
+                expiry_date = moment.utc(effective_date, moment.ISO_8601).
                     add(warrantyRenewalType.effective_months, 'months').
                     subtract(1, 'day').
                     endOf('days');
@@ -1160,9 +1026,11 @@ class ProductAdaptor {
                   updated_by: productBody.user_id,
                   status_type: 11,
                   product_id: product.id,
-                  expiry_date: moment(expiry_date).format('YYYY-MM-DD'),
-                  effective_date: moment(effective_date).format('YYYY-MM-DD'),
-                  document_date: moment(effective_date).format('YYYY-MM-DD'),
+                  expiry_date: moment.utc(expiry_date).format('YYYY-MM-DD'),
+                  effective_date: moment.utc(effective_date).
+                      format('YYYY-MM-DD'),
+                  document_date: moment.utc(effective_date).
+                      format('YYYY-MM-DD'),
                   warranty_type: 3,
                   user_id: productBody.user_id,
                 }));
@@ -1171,14 +1039,14 @@ class ProductAdaptor {
               if (otherItems.warranty.extended_renewal_type) {
                 warrantyRenewalType = renewalTypes.find(item => item.type ===
                     otherItems.warranty.extended_renewal_type);
-                const effective_date = moment(
+                const effective_date = moment.utc(
                     otherItems.warranty.effective_date, moment.ISO_8601).
                     isValid() ?
-                    moment(otherItems.warranty.effective_date,
+                    moment.utc(otherItems.warranty.effective_date,
                         moment.ISO_8601).startOf('day') :
-                    moment(otherItems.warranty.effective_date, 'DD MMM YY').
+                    moment.utc(otherItems.warranty.effective_date, 'DD MMM YY').
                         startOf('day');
-                expiry_date = moment(effective_date).
+                expiry_date = moment.utc(effective_date).
                     add(warrantyRenewalType.effective_months, 'months').
                     subtract(1, 'day').
                     endOf('days');
@@ -1187,9 +1055,11 @@ class ProductAdaptor {
                   updated_by: productBody.user_id,
                   status_type: 11,
                   product_id: product.id,
-                  expiry_date: moment(expiry_date).format('YYYY-MM-DD'),
-                  effective_date: moment(effective_date).format('YYYY-MM-DD'),
-                  document_date: moment(effective_date).format('YYYY-MM-DD'),
+                  expiry_date: moment.utc(expiry_date).format('YYYY-MM-DD'),
+                  effective_date: moment.utc(effective_date).
+                      format('YYYY-MM-DD'),
+                  document_date: moment.utc(effective_date).
+                      format('YYYY-MM-DD'),
                   warranty_type: 2,
                   user_id: productBody.user_id,
                 }));
@@ -1198,14 +1068,14 @@ class ProductAdaptor {
               if (otherItems.warranty.accessory_renewal_type) {
                 warrantyRenewalType = renewalTypes.find(item => item.type ===
                     otherItems.warranty.accessory_renewal_type);
-                const effective_date = moment(
+                const effective_date = moment.utc(
                     otherItems.warranty.effective_date, moment.ISO_8601).
                     isValid() ?
-                    moment(otherItems.warranty.effective_date,
+                    moment.utc(otherItems.warranty.effective_date,
                         moment.ISO_8601).startOf('day') :
-                    moment(otherItems.warranty.effective_date, 'DD MMM YY').
+                    moment.utc(otherItems.warranty.effective_date, 'DD MMM YY').
                         startOf('day');
-                expiry_date = moment(effective_date).
+                expiry_date = moment.utc(effective_date).
                     add(warrantyRenewalType.effective_months, 'months').
                     subtract(1, 'day').
                     endOf('days');
@@ -1214,9 +1084,11 @@ class ProductAdaptor {
                   updated_by: productBody.user_id,
                   status_type: 11,
                   product_id: product.id,
-                  expiry_date: moment(expiry_date).format('YYYY-MM-DD'),
-                  effective_date: moment(effective_date).format('YYYY-MM-DD'),
-                  document_date: moment(effective_date).format('YYYY-MM-DD'),
+                  expiry_date: moment.utc(expiry_date).format('YYYY-MM-DD'),
+                  effective_date: moment.utc(effective_date).
+                      format('YYYY-MM-DD'),
+                  document_date: moment.utc(effective_date).
+                      format('YYYY-MM-DD'),
                   warranty_type: 4,
                   user_id: productBody.user_id,
                 }));
@@ -1225,7 +1097,7 @@ class ProductAdaptor {
 
             const insurancePromise = [];
             if (otherItems.insurance) {
-              const effective_date = moment(
+              const effective_date = moment.utc(
                   otherItems.insurance.effective_date, moment.ISO_8601).
                   isValid() ?
                   moment(otherItems.insurance.effective_date,
@@ -1288,8 +1160,7 @@ class ProductAdaptor {
 
             const pucPromise = [];
             if (otherItems.puc) {
-              const pucRenewalType = renewalTypes.find(
-                  item => item.type === otherItems.puc.expiry_period || 7);
+              const pucRenewalType = otherItems.puc.expiry_period;
               const effective_date = moment(otherItems.puc.effective_date,
                   moment.ISO_8601).isValid() ?
                   moment(otherItems.puc.effective_date, moment.ISO_8601).
@@ -1298,12 +1169,12 @@ class ProductAdaptor {
                       startOf('day');
               const expiry_date = moment(effective_date,
                   moment.ISO_8601).
-                  add(pucRenewalType.effective_months, 'months').
+                  add(pucRenewalType, 'months').
                   subtract(1, 'day').
                   endOf('days').format('YYYY-MM-DD');
               pucPromise.push(otherItems.puc.id ?
                   this.pucAdaptor.updatePUCs(otherItems.puc.id, {
-                    renewal_type: otherItems.puc.expiry_period || 7,
+                    renewal_type: otherItems.puc.expiry_period,
                     updated_by: productBody.user_id,
                     status_type: 11,
                     seller_id: isProductPUCSellerSame ?
@@ -1312,7 +1183,7 @@ class ProductAdaptor {
                         otherItems.puc.seller_contact ?
                             sellerList[3].sid :
                             undefined,
-                    product_id: productId,
+                    product_id,
                     expiry_date: moment(expiry_date).format('YYYY-MM-DD'),
                     effective_date: moment(effective_date).format('YYYY-MM-DD'),
                     document_date: moment(effective_date).format('YYYY-MM-DD'),
@@ -1323,7 +1194,7 @@ class ProductAdaptor {
                     updated_by: productBody.user_id,
                     status_type: 11,
                     renewal_cost: otherItems.puc.renewal_cost,
-                    product_id: productId,
+                    product_id,
                     seller_id: isProductPUCSellerSame ?
                         sellerList[0].sid :
                         otherItems.puc.seller_name ||
@@ -1362,19 +1233,28 @@ class ProductAdaptor {
         });
   }
 
-  updateProductDetails(productBody, metadataBody, otherItems, productId) {
+  updateProductDetails(productBody, metadataBody, otherItems, product_id) {
     const sellerPromise = [];
-    const isProductAMCSellerSame = otherItems.amc.seller_contact ===
+    const isProductAMCSellerSame = otherItems.amc &&
+        otherItems.amc.seller_contact ===
         productBody.seller_contact;
-    const isProductRepairSellerSame = otherItems.repair.seller_contact ===
+    const isProductRepairSellerSame = otherItems.repair &&
+        otherItems.repair.seller_contact ===
         productBody.seller_contact;
-    const isAMCRepairSellerSame = otherItems.repair.seller_contact ===
+    const isAMCRepairSellerSame = otherItems.repair && otherItems.amc &&
+        otherItems.repair.seller_contact ===
         otherItems.amc.seller_contact;
-    const isProductPUCSellerSame = otherItems.puc.seller_contact ===
+    const isProductPUCSellerSame = otherItems.puc &&
+        otherItems.puc.seller_contact ===
         productBody.seller_contact;
-    this.prepareSellerPromise(sellerPromise, productBody, otherItems,
-        isProductAMCSellerSame, isProductRepairSellerSame,
-        isProductPUCSellerSame);
+    this.prepareSellerPromise({
+      sellerPromise,
+      productBody,
+      otherItems,
+      isProductAMCSellerSame,
+      isProductRepairSellerSame,
+      isProductPUCSellerSame,
+    });
     let renewalTypes;
     let product = productBody;
     let metadata;
@@ -1441,7 +1321,7 @@ class ProductAdaptor {
               id: {
                 $gte: 7,
               },
-            }), this.updateProduct(productId, product)]);
+            }), this.updateProduct(product_id, product)]);
         }).then((updateProductResult) => {
           renewalTypes = updateProductResult[0];
           const productResult = updateProductResult[1];
@@ -1449,41 +1329,70 @@ class ProductAdaptor {
             product = productResult.toJSON();
             const warrantyItemPromise = [];
             if (otherItems.warranty) {
-              this.prepareWarrantyPromise(otherItems, renewalTypes,
-                  warrantyItemPromise, productBody, productId);
+              this.prepareWarrantyPromise({
+                otherItems,
+                renewalTypes,
+                warrantyItemPromise,
+                productBody,
+                product_id,
+              });
             }
 
             const insurancePromise = [];
             if (otherItems.insurance) {
-              this.prepareInsurancePromise(otherItems, insurancePromise,
-                  productBody, productId);
+              this.prepareInsurancePromise({
+                otherItems,
+                insurancePromise,
+                productBody,
+                product_id,
+              });
             }
 
             const amcPromise = [];
             if (otherItems.amc) {
-              this.prepareAMCPromise(renewalTypes, otherItems, amcPromise,
-                  productBody, productId, isProductAMCSellerSame, sellerList);
+              this.prepareAMCPromise({
+                renewalTypes,
+                otherItems,
+                amcPromise,
+                productBody,
+                product_id,
+                isProductAMCSellerSame,
+                sellerList,
+              });
             }
 
             const repairPromise = [];
             if (otherItems.repair) {
-              this.prepareRepairPromise(otherItems, isProductRepairSellerSame,
-                  sellerList, isAMCRepairSellerSame, repairPromise, productBody,
-                  productId);
+              this.prepareRepairPromise({
+                otherItems,
+                isProductRepairSellerSame,
+                sellerList,
+                isAMCRepairSellerSame,
+                repairPromise,
+                productBody,
+                product_id,
+              });
             }
             const metadataPromise = metadata.map((mdItem) => {
+              mdItem.status_type = 11;
               if (mdItem.id) {
-                mdItem.status_type = 11;
                 return this.updateProductMetaData(mdItem.id, mdItem);
               }
-              mdItem.product_id = productId;
+              mdItem.product_id = product_id;
               return this.modals.metaData.create(mdItem);
             });
 
             const pucPromise = [];
             if (otherItems.puc) {
-              this.preparePUCPromise(renewalTypes, otherItems, pucPromise,
-                  productBody, isProductPUCSellerSame, sellerList, productId);
+              this.preparePUCPromise({
+                renewalTypes,
+                otherItems,
+                pucPromise,
+                productBody,
+                isProductPUCSellerSame,
+                sellerList,
+                product_id,
+              });
             }
 
             return Promise.all([
@@ -1492,7 +1401,8 @@ class ProductAdaptor {
               Promise.all(warrantyItemPromise),
               Promise.all(amcPromise),
               Promise.all(repairPromise),
-              Promise.all(pucPromise)]);
+              Promise.all(pucPromise),
+              this.jobAdaptor.retrieveJobDetail(product.job_id)]);
           }
 
           return undefined;
@@ -1512,9 +1422,8 @@ class ProductAdaptor {
         });
   }
 
-  preparePUCPromise(
-      renewalTypes, otherItems, pucPromise, productBody, isProductPUCSellerSame,
-      sellerList, productId) {
+  preparePUCPromise(parameters) {
+    let {renewalTypes, otherItems, pucPromise, productBody, isProductPUCSellerSame, sellerList, product_id} = parameters;
     const pucRenewalType = renewalTypes.find(
         item => item.type === otherItems.puc.expiry_period || 7);
     const effective_date = moment(otherItems.puc.effective_date,
@@ -1533,13 +1442,14 @@ class ProductAdaptor {
           renewal_type: otherItems.puc.expiry_period || 7,
           updated_by: productBody.user_id,
           status_type: 11,
+          renewal_cost: otherItems.puc.value,
           seller_id: isProductPUCSellerSame ?
               sellerList[0].sid :
               otherItems.puc.seller_name ||
               otherItems.puc.seller_contact ?
                   sellerList[3].sid :
                   undefined,
-          product_id: productId,
+          product_id,
           expiry_date: moment(expiry_date).format('YYYY-MM-DD'),
           effective_date: moment(effective_date).format('YYYY-MM-DD'),
           document_date: moment(effective_date).format('YYYY-MM-DD'),
@@ -1549,7 +1459,8 @@ class ProductAdaptor {
           renewal_type: otherItems.puc.expiry_period || 7,
           updated_by: productBody.user_id,
           status_type: 11,
-          product_id: productId,
+          renewal_cost: otherItems.puc.value,
+          product_id,
           seller_id: isProductPUCSellerSame ?
               sellerList[0].sid :
               otherItems.puc.seller_name ||
@@ -1563,9 +1474,8 @@ class ProductAdaptor {
         }));
   }
 
-  prepareRepairPromise(
-      otherItems, isProductRepairSellerSame, sellerList, isAMCRepairSellerSame,
-      repairPromise, productBody, productId) {
+  prepareRepairPromise(parameters) {
+    let {otherItems, isProductRepairSellerSame, sellerList, isAMCRepairSellerSame, repairPromise, productBody, product_id} = parameters;
     const document_date = moment(otherItems.repair.document_date,
         moment.ISO_8601).isValid() ?
         moment(otherItems.repair.document_date, moment.ISO_8601).
@@ -1586,30 +1496,29 @@ class ProductAdaptor {
         this.repairAdaptor.updateRepairs(otherItems.repair.id, {
           updated_by: productBody.user_id,
           status_type: 11,
-          product_id: productId,
+          product_id,
           seller_id: repairSellerId,
           document_date: moment(document_date).format('YYYY-MM-DD'),
           repair_for: otherItems.repair.repair_for,
-          repair_cost: otherItems.repair.repair_cost,
+          repair_cost: otherItems.repair.value,
           warranty_upto: otherItems.repair.warranty_upto,
           user_id: productBody.user_id,
         }) :
         this.repairAdaptor.createRepairs({
           updated_by: productBody.user_id,
           status_type: 11,
-          product_id: productId,
+          product_id,
           document_date: moment(document_date).format('YYYY-MM-DD'),
           seller_id: repairSellerId,
           repair_for: otherItems.repair.repair_for,
-          repair_cost: otherItems.repair.repair_cost,
+          repair_cost: otherItems.repair.value,
           warranty_upto: otherItems.repair.warranty_upto,
           user_id: productBody.user_id,
         }));
   }
 
-  prepareAMCPromise(
-      renewalTypes, otherItems, amcPromise, productBody, productId,
-      isProductAMCSellerSame, sellerList) {
+  prepareAMCPromise(parameters) {
+    let {renewalTypes, otherItems, amcPromise, productBody, product_id, isProductAMCSellerSame, sellerList} = parameters;
     const amcRenewalType = renewalTypes.find(
         item => item.type === 8);
     const effective_date = moment(otherItems.amc.effective_date,
@@ -1629,8 +1538,8 @@ class ProductAdaptor {
           renewal_type: 8,
           updated_by: productBody.user_id,
           status_type: 11,
-          product_id: productId,
-          renewal_cost: otherItems.amc.renewal_cost,
+          product_id,
+          renewal_cost: otherItems.amc.value,
           seller_id: isProductAMCSellerSame ?
               sellerList[0].sid :
               otherItems.amc.seller_name ||
@@ -1645,8 +1554,9 @@ class ProductAdaptor {
         this.amcAdaptor.createAMCs({
           renewal_type: 8,
           updated_by: productBody.user_id,
+          renewal_cost: otherItems.amc.value,
           status_type: 11,
-          product_id: productId,
+          product_id,
           seller_id: isProductAMCSellerSame ?
               sellerList[0].sid :
               otherItems.amc.seller_name ||
@@ -1660,8 +1570,8 @@ class ProductAdaptor {
         }));
   }
 
-  prepareInsurancePromise(
-      otherItems, insurancePromise, productBody, productId) {
+  prepareInsurancePromise(parameters) {
+    let {otherItems, insurancePromise, productBody, product_id} = parameters;
     const effective_date = moment(
         otherItems.insurance.effective_date, moment.ISO_8601).
         isValid() ?
@@ -1679,7 +1589,7 @@ class ProductAdaptor {
               renewal_type: 8,
               updated_by: productBody.user_id,
               status_type: 11,
-              product_id: productId,
+              product_id,
               expiry_date: moment(expiry_date).format('YYYY-MM-DD'),
               effective_date: moment(effective_date).
                   format('YYYY-MM-DD'),
@@ -1688,27 +1598,27 @@ class ProductAdaptor {
               document_number: otherItems.insurance.policy_no,
               provider_id: otherItems.insurance.provider_id,
               amount_insured: otherItems.insurance.amount_insured,
-              renewal_cost: otherItems.insurance.renewal_cost,
+              renewal_cost: otherItems.insurance.value,
               user_id: productBody.user_id,
             }) :
         this.insuranceAdaptor.createInsurances({
           renewal_type: 8,
           updated_by: productBody.user_id,
           status_type: 11,
-          product_id: productId,
+          product_id,
           expiry_date: moment(expiry_date).format('YYYY-MM-DD'),
           effective_date: moment(effective_date).format('YYYY-MM-DD'),
           document_date: moment(effective_date).format('YYYY-MM-DD'),
           document_number: otherItems.insurance.policy_no,
           provider_id: otherItems.insurance.provider_id,
           amount_insured: otherItems.insurance.amount_insured,
-          renewal_cost: otherItems.insurance.renewal_cost,
+          renewal_cost: otherItems.insurance.value,
           user_id: productBody.user_id,
         }));
   }
 
-  prepareWarrantyPromise(
-      otherItems, renewalTypes, warrantyItemPromise, productBody, productId) {
+  prepareWarrantyPromise(parameters) {
+    let {otherItems, renewalTypes, warrantyItemPromise, productBody, product_id} = parameters;
     let warrantyRenewalType;
     let expiry_date;
     if (otherItems.warranty.renewal_type) {
@@ -1731,7 +1641,7 @@ class ProductAdaptor {
                 renewal_type: otherItems.warranty.renewal_type,
                 updated_by: productBody.user_id,
                 status_type: 11,
-                product_id: productId,
+                product_id,
                 expiry_date: moment(expiry_date).format('YYYY-MM-DD'),
                 effective_date: moment(effective_date).
                     format('YYYY-MM-DD'),
@@ -1745,7 +1655,7 @@ class ProductAdaptor {
             renewal_type: otherItems.warranty.renewal_type,
             updated_by: productBody.user_id,
             status_type: 11,
-            product_id: productId,
+            product_id,
             expiry_date: moment(expiry_date).format('YYYY-MM-DD'),
             effective_date: moment(effective_date).
                 format('YYYY-MM-DD'),
@@ -1781,7 +1691,7 @@ class ProductAdaptor {
                 provider_id: otherItems.warranty.extended_provider_id,
                 updated_by: productBody.user_id,
                 status_type: 11,
-                product_id: productId,
+                product_id,
                 expiry_date: moment(expiry_date).format('YYYY-MM-DD'),
                 effective_date: moment(effective_date).
                     format('YYYY-MM-DD'),
@@ -1795,7 +1705,7 @@ class ProductAdaptor {
             provider_id: otherItems.warranty.extended_provider_id,
             updated_by: productBody.user_id,
             status_type: 11,
-            product_id: productId,
+            product_id,
             expiry_date: moment(expiry_date).format('YYYY-MM-DD'),
             effective_date: moment(effective_date).
                 format('YYYY-MM-DD'),
@@ -1826,7 +1736,7 @@ class ProductAdaptor {
                 renewal_type: otherItems.warranty.dual_renewal_type,
                 updated_by: productBody.user_id,
                 status_type: 11,
-                product_id: productId,
+                product_id,
                 expiry_date: moment(expiry_date).format('YYYY-MM-DD'),
                 effective_date: moment(effective_date).
                     format('YYYY-MM-DD'),
@@ -1839,7 +1749,7 @@ class ProductAdaptor {
             renewal_type: otherItems.warranty.dual_renewal_type,
             updated_by: productBody.user_id,
             status_type: 11,
-            product_id: productId,
+            product_id,
             expiry_date: moment(expiry_date).format('YYYY-MM-DD'),
             effective_date: moment(effective_date).
                 format('YYYY-MM-DD'),
@@ -1868,7 +1778,7 @@ class ProductAdaptor {
         renewal_type: otherItems.warranty.accessory_renewal_type,
         updated_by: productBody.user_id,
         status_type: 11,
-        product_id: productId,
+        product_id,
         expiry_date: moment(expiry_date).format('YYYY-MM-DD'),
         effective_date: moment(effective_date).format('YYYY-MM-DD'),
         document_date: moment(effective_date).format('YYYY-MM-DD'),
@@ -1878,10 +1788,8 @@ class ProductAdaptor {
     }
   }
 
-  prepareSellerPromise(
-      sellerPromise, productBody, otherItems, isProductAMCSellerSame,
-      isProductRepairSellerSame, isProductPUCSellerSame,
-      isAMCRepairSellerSame) {
+  prepareSellerPromise(parameters) {
+    let {sellerPromise, productBody, otherItems, isProductAMCSellerSame, isProductRepairSellerSame, isProductPUCSellerSame, isAMCRepairSellerSame} = parameters;
     sellerPromise.push(productBody.seller_contact ||
     productBody.seller_name ?
         this.sellerAdaptor.retrieveOrCreateOfflineSellers({
@@ -1955,27 +1863,22 @@ class ProductAdaptor {
         }],
 
       attributes: [
-        [
-          'product_id',
-          'productId'],
-        [
-          'form_value',
-          'value'],
-        [
-          'category_form_id',
-          'categoryFormId'],
+        'id',
+        'product_id',
+        'form_value',
+        'category_form_id',
         [
           this.modals.sequelize.literal('"categoryForm"."form_type"'),
-          'formType'],
+          'form_type'],
         [
           this.modals.sequelize.literal('"categoryForm"."title"'),
-          'name'],
+          'title'],
         [
           this.modals.sequelize.literal('"categoryForm"."display_index"'),
-          'displayIndex']],
+          'display_index']],
     }).then((metaDataResult) => {
       const metaData = metaDataResult.map((item) => item.toJSON());
-      const categoryFormIds = metaData.map((item) => item.categoryFormId);
+      const categoryFormIds = metaData.map((item) => item.category_form_id);
 
       return Promise.all([
         metaData, this.modals.dropDowns.findAll({
@@ -1987,33 +1890,35 @@ class ProductAdaptor {
     }).then((result) => {
       const unOrderedMetaData = result[0].map((item) => {
         const metaDataItem = item;
-        if (metaDataItem.formType === 2 && metaDataItem.value) {
+        if (metaDataItem.form_type === 2 && metaDataItem.form_value) {
           const dropDown = result[1].find(
-              (item) => item.id === parseInt(metaDataItem.value));
-          metaDataItem.value = dropDown ? dropDown.title : metaDataItem.value;
+              (item) => item.id === parseInt(metaDataItem.form_value));
+          metaDataItem.form_value = dropDown ?
+              dropDown.title :
+              metaDataItem.form_value;
         }
 
         return metaDataItem;
       });
 
       unOrderedMetaData.sort(
-          (itemA, itemB) => itemA.displayIndex - itemB.displayIndex);
+          (itemA, itemB) => itemA.display_index - itemB.display_index);
 
       return unOrderedMetaData;
     });
   }
 
-  updateBrandReview(user, brandId, request) {
+  updateBrandReview(user, brand_id, request) {
     const payload = request.payload;
     return this.modals.brandReviews.findCreateFind({
       where: {
         user_id: user.id || user.ID,
-        brand_id: brandId,
+        brand_id,
         status_id: 1,
       },
       defaults: {
         user_id: user.id || user.ID,
-        brand_id: brandId,
+        brand_id,
         status_id: 1,
         review_ratings: payload.ratings,
         review_feedback: payload.feedback,
@@ -2046,28 +1951,28 @@ class ProductAdaptor {
     });
   }
 
-  updateSellerReview(user, sellerId, isOnlineSeller, request) {
+  updateSellerReview(user, seller_id, isOnlineSeller, request) {
     const payload = request.payload;
     const whereClause = isOnlineSeller ? {
       user_id: user.id || user.ID,
-      seller_id: sellerId,
+      seller_id,
       status_id: 1,
     } : {
       user_id: user.id || user.ID,
-      offline_seller_id: sellerId,
+      offline_seller_id: seller_id,
       status_id: 1,
     };
 
     const defaultClause = isOnlineSeller ? {
       user_id: user.id || user.ID,
-      seller_id: sellerId,
+      seller_id,
       status_id: 1,
       review_ratings: payload.ratings,
       review_feedback: payload.feedback,
       review_comments: payload.comments,
     } : {
       user_id: user.id || user.ID,
-      offline_seller_id: sellerId,
+      offline_seller_id: seller_id,
       status_id: 1,
       review_ratings: payload.ratings,
       review_feedback: payload.feedback,
@@ -2104,11 +2009,11 @@ class ProductAdaptor {
     });
   }
 
-  updateProductReview(user, productId, request) {
+  updateProductReview(user, product_id, request) {
     const payload = request.payload;
     const whereClause = {
       user_id: user.id || user.ID,
-      bill_product_id: productId,
+      bill_product_id: product_id,
       status_id: 1,
     };
 
@@ -2116,7 +2021,7 @@ class ProductAdaptor {
       where: whereClause,
       defaults: {
         user_id: user.id || user.ID,
-        bill_product_id: productId,
+        bill_product_id: product_id,
         status_id: 1,
         review_ratings: payload.ratings,
         review_feedback: payload.feedback,
@@ -2171,28 +2076,11 @@ class ProductAdaptor {
         },
       ],
       attributes: [
-        'id',
-        [
-          'product_name',
-          'productName'],
-        [
-          'purchase_cost',
-          'value'],
-        [
-          'main_category_id',
-          'masterCategoryId'],
+        'id', 'product_name', ['purchase_cost', 'value'],
+        'main_category_id',
         'taxes',
-        [
-          'document_date',
-          'purchaseDate'],
-        ['document_number', 'documentNo'],
-        ['updated_at', 'updatedDate'],
-        [
-          'bill_id',
-          'billId'],
-        [
-          'job_id',
-          'jobId'],
+        'document_date',
+        'document_number', 'updated_at', 'bill_id', 'job_id',
         'copies', 'user_id',
       ],
     }).then((productResult) => {
@@ -2207,7 +2095,7 @@ class ProductAdaptor {
 
       products = products.map((productItem) => {
         productItem.productMetaData = metaData.filter(
-            (item) => item.productId === productItem.id);
+            (item) => item.product_id === productItem.id);
 
         return productItem;
       });
@@ -2227,28 +2115,11 @@ class ProductAdaptor {
     return this.modals.products.findAll({
       where: options,
       attributes: [
-        'id',
-        [
-          'product_name',
-          'productName'],
-        [
-          'purchase_cost',
-          'value'],
-        [
-          'main_category_id',
-          'masterCategoryId'],
+        'id', 'product_name', ['purchase_cost', 'value'],
+        'main_category_id',
         'taxes',
-        [
-          'document_date',
-          'purchaseDate'],
-        ['document_number', 'documentNo'],
-        ['updated_at', 'updatedDate'],
-        [
-          'bill_id',
-          'billId'],
-        [
-          'job_id',
-          'jobId'],
+        'document_date',
+        'document_number', 'updated_at', 'bill_id', 'job_id',
         'copies', 'user_id',
       ],
     }).then((productResult) => {
@@ -2260,13 +2131,13 @@ class ProductAdaptor {
       return Promise.all([
         this.insuranceAdaptor.retrieveInsurances({
           product_id: {
-            $in: products.filter((item) => item.masterCategoryId === 2 ||
-                item.masterCategoryId === 3).map((item) => item.id),
+            $in: products.filter((item) => item.main_category_id === 2 ||
+                item.main_category_id === 3).map((item) => item.id),
           },
         }), this.warrantyAdaptor.retrieveWarranties({
           product_id: {
-            $in: products.filter((item) => item.masterCategoryId === 2 ||
-                item.masterCategoryId === 3).map((item) => item.id),
+            $in: products.filter((item) => item.main_category_id === 2 ||
+                item.main_category_id === 3).map((item) => item.id),
           },
         })]);
     }).then((results) => {
@@ -2274,13 +2145,13 @@ class ProductAdaptor {
       const warranties = results[1];
 
       products = products.map((productItem) => {
-        if (productItem.masterCategoryId === 2 ||
-            productItem.masterCategoryId === 3) {
+        if (productItem.main_category_id === 2 ||
+            productItem.main_category_id === 3) {
           productItem.hasInsurance = insurances.filter(
-              (item) => item.productId === productItem.id).length > 0;
+              (item) => item.product_id === productItem.id).length > 0;
 
           productItem.hasWarranty = warranties.filter(
-              (item) => item.productId === productItem.id).length > 0;
+              (item) => item.product_id === productItem.id).length > 0;
         }
 
         return productItem;
@@ -2302,28 +2173,11 @@ class ProductAdaptor {
     return this.modals.products.findAll({
       where: options,
       attributes: [
-        'id',
-        [
-          'product_name',
-          'productName'],
-        [
-          'purchase_cost',
-          'value'],
-        [
-          'main_category_id',
-          'masterCategoryId'],
+        'id', 'product_name', ['purchase_cost', 'value'],
+        'main_category_id',
         'taxes',
-        [
-          'document_date',
-          'purchaseDate'],
-        ['document_number', 'documentNo'],
-        ['updated_at', 'updatedDate'],
-        [
-          'bill_id',
-          'billId'],
-        [
-          'job_id',
-          'jobId'],
+        'document_date',
+        'document_number', 'updated_at', 'bill_id', 'job_id',
         'copies', 'user_id',
       ],
     }).then((productResult) => {
@@ -2332,8 +2186,8 @@ class ProductAdaptor {
   }
 
   prepareProductDetail(user, request) {
-    const productId = request.params.id;
-    return this.retrieveProductById(productId, {
+    const product_id = request.params.id;
+    return this.retrieveProductById(product_id, {
       user_id: user.id || user.ID,
       status_type: [5, 8, 11],
     }).then((result) => {
@@ -2392,11 +2246,10 @@ class ProductAdaptor {
       where: {
         id,
       },
-    }).
-        then(result => {
-          result.updateAttributes(values);
-          return result.toJSON();
-        });
+    }).then(result => {
+      result.updateAttributes(values);
+      return result.toJSON();
+    });
   }
 }
 

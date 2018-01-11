@@ -8,8 +8,8 @@ const sortAmcWarrantyInsuranceRepair = (a, b) => {
   let aDate;
   let bDate;
 
-  aDate = a.expiryDate;
-  bDate = b.expiryDate;
+  aDate = a.expiry_date;
+  bDate = b.expiry_date;
 
   if (moment.utc(aDate).isBefore(moment.utc(bDate))) {
     return 1;
@@ -71,11 +71,9 @@ class WarrantyAdaptor {
           model: this.modals.onlineSellers,
           as: 'onlineSellers',
           attributes: [
-            [
+            ['sid', 'id'],
               'seller_name',
-              'sellerName'],
             'url',
-            'gstin',
             'contact',
             'email'],
           required: false,
@@ -86,14 +84,7 @@ class WarrantyAdaptor {
           attributes: [
             'id',
             'name',
-            [
-              'pan_no',
-              'panNo'],
-            [
-              'reg_no',
-              'regNo'],
             'url',
-            'gstin',
             ['contact_no', 'contact'],
             'email',
             'address',
@@ -108,23 +99,10 @@ class WarrantyAdaptor {
           model: this.modals.offlineSellers,
           as: 'sellers',
           attributes: [
-            [
+            ['sid', 'id'],
               'seller_name',
-              'sellerName'],
-            [
               'owner_name',
-              'ownerName'],
-            [
-              'pan_no',
-              'panNo'],
-            [
-              'reg_no',
-              'regNo'],
-            [
-              'is_service',
-              'isService'],
             'url',
-            'gstin',
             ['contact_no', 'contact'],
             'email',
             'address',
@@ -137,31 +115,22 @@ class WarrantyAdaptor {
         }],
       attributes: [
         'id',
-        [
           'product_id',
-          'productId'],
-        [
           'job_id',
-          'jobId'],
-        [
           'document_number',
-          'policyNo'],
         [
           this.modals.sequelize.literal('"product"."product_name"'),
-          'productName'],
+          'product_name'],
         [
           this.modals.sequelize.literal(
               '"product->category"."dual_warranty_item"'),
-          'dualWarrantyItem'],
+          'dual_warranty_item'],
         [
           this.modals.sequelize.literal('"renewalType"."title"'),
-          'premiumType'],
+          'premium_type'],
         [
           this.modals.sequelize.literal('"product"."main_category_id"'),
-          'masterCategoryId'],
-        [
-          'renewal_cost',
-          'premiumAmount'],
+          'main_category_id'],
         'user_id',
         'warranty_type',
         [
@@ -170,24 +139,27 @@ class WarrantyAdaptor {
         [
           'renewal_taxes',
           'taxes'],
-        [
           'effective_date',
-          'effectiveDate'],
-        [
           'expiry_date',
-          'expiryDate'],
-        [
-          'document_date',
-          'purchaseDate'],
-        ['updated_at', 'updatedDate'],
-        [
+        'document_date', 'updated_at', [
           this.modals.sequelize.fn('CONCAT', 'products/',
               this.modals.sequelize.literal('"product_id"')),
-          'productURL'],
+          'product_url'],
         'copies'],
       order: [['expiry_date', 'DESC']],
     }).
-        then((warrantyResult) => warrantyResult.map((item) => item.toJSON()).
+        then((warrantyResult) => warrantyResult.map((item) => {
+          const productItem = item.toJSON();
+
+          productItem.copies = productItem.copies.map((copyItem) => {
+            copyItem.copy_id = copyItem.copy_id || copyItem.copyId;
+            copyItem.copy_url = copyItem.copy_url || copyItem.copyUrl;
+            copyItem = _.omit(copyItem, 'copyId');
+            copyItem = _.omit(copyItem, 'copyUrl');
+            return copyItem;
+          });
+          return productItem;
+        }).
             sort(sortAmcWarrantyInsuranceRepair));
   }
 
@@ -207,47 +179,36 @@ class WarrantyAdaptor {
       ],
       attributes: [
         'id',
-        [
-          'product_id',
-          'productId'],
-        [
-          'job_id',
-          'jobId'],
-        [
-          'document_number',
-          'policyNo'],
+        'product_id',
+        'job_id',
+        'document_number',
         [
           this.modals.sequelize.literal('"product"."product_name"'),
-          'productName'],
+          'product_name'],
+        [
+          this.modals.sequelize.literal(
+              '"product->category"."dual_warranty_item"'),
+          'dual_warranty_item'],
         [
           this.modals.sequelize.literal('"renewalType"."title"'),
-          'premiumType'],
+          'premium_type'],
         [
           this.modals.sequelize.literal('"product"."main_category_id"'),
-          'masterCategoryId'],
-        [
-          'renewal_cost',
-          'premiumAmount'], 'user_id',
+          'main_category_id'],
+        'user_id',
+        'warranty_type',
         [
           'renewal_cost',
           'value'],
         [
           'renewal_taxes',
           'taxes'],
-        [
-          'effective_date',
-          'effectiveDate'],
-        [
-          'expiry_date',
-          'expiryDate'],
-        [
-          'document_date',
-          'purchaseDate'],
-        ['updated_at', 'updatedDate'],
-        [
+        'effective_date',
+        'expiry_date',
+        'document_date', 'updated_at', [
           this.modals.sequelize.fn('CONCAT', 'products/',
               this.modals.sequelize.literal('"product_id"')),
-          'productURL'],
+          'product_url'],
         'copies'],
       order: [['expiry_date', 'DESC']],
     }).
@@ -277,7 +238,7 @@ class WarrantyAdaptor {
         [this.modals.sequelize.literal('COUNT(*)'), 'productCounts'],
         [
           this.modals.sequelize.literal('"product"."main_category_id"'),
-          'masterCategoryId'],
+          'main_category_id'],
         [
           this.modals.sequelize.literal('max("warranties"."updated_at")'),
           'lastUpdatedAt']],

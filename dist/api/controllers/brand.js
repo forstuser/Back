@@ -96,7 +96,7 @@ var BrandController = function() {
                     required: true,
                   }],
                 order: [['brand_name', 'ASC']],
-                attributes: [['brand_name', 'brandName'], ['brand_id', 'id']],
+                attributes: ['brand_name', ['brand_id', 'id']],
               });
             } else {
               return modals.brands.findAll({
@@ -104,7 +104,7 @@ var BrandController = function() {
                   status_type: 1,
                 },
                 order: [['brand_name', 'ASC']],
-                attributes: [['brand_name', 'brandName'], ['brand_id', 'id']],
+                attributes: ['brand_name', ['brand_id', 'id']],
                 include: [
                   {
                     model: modals.serviceCenters,

@@ -46,25 +46,8 @@ var SellerAdaptor = function() {
             [
               'sid',
               'id'],
-            [
-              'seller_name',
-              'name'],
-            [
-              'owner_name',
-              'ownerName'],
-            'gstin',
-            [
-              'pan_no',
-              'panNo'],
-            [
-              'reg_no',
-              'registrationNo'],
-            [
-              'is_service',
-              'isService'],
-            [
-              'is_onboarded',
-              'isOnboarded'],
+            'seller_name',
+            'owner_name',
             'address',
             'city',
             'state',
@@ -88,17 +71,7 @@ var SellerAdaptor = function() {
         options.status_type = 1;
         return this.modals.onlineSellers.findAll({
           where: options,
-          default: [
-            [
-              'sid',
-              'id'],
-            [
-              'seller_name',
-              'name'],
-            'gstin',
-            'url',
-            'contact',
-            'email'],
+          default: [['sid', 'id'], 'seller_name', 'url', 'contact', 'email'],
         }).then(function(result) {
           return result.map(function(item) {
             return item.toJSON();

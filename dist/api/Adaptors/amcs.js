@@ -46,8 +46,8 @@ var sortAmcWarrantyInsuranceRepair = function sortAmcWarrantyInsuranceRepair(
   var aDate = void 0;
   var bDate = void 0;
 
-  aDate = a.expiryDate;
-  bDate = b.expiryDate;
+  aDate = a.expiry_date;
+  bDate = b.expiry_date;
 
   if (_moment2.default.utc(aDate).isBefore(_moment2.default.utc(bDate))) {
     return 1;
@@ -105,10 +105,10 @@ var AmcAdaptor = function() {
               as: 'onlineSellers',
               attributes: [
                 [
-                  'seller_name',
-                  'sellerName'],
+                  'sid',
+                  'id'],
+                'seller_name',
                 'url',
-                'gstin',
                 'contact',
                 'email'],
               required: false,
@@ -116,23 +116,9 @@ var AmcAdaptor = function() {
               model: this.modals.offlineSellers,
               as: 'sellers',
               attributes: [
-                [
-                  'seller_name',
-                  'sellerName'],
-                [
-                  'owner_name',
-                  'ownerName'],
-                [
-                  'pan_no',
-                  'panNo'],
-                [
-                  'reg_no',
-                  'regNo'],
-                [
-                  'is_service',
-                  'isService'],
+                'seller_name',
+                'owner_name',
                 'url',
-                'gstin',
                 [
                   'contact_no',
                   'contact'],
@@ -147,55 +133,47 @@ var AmcAdaptor = function() {
             }],
           attributes: [
             'id',
-            [
-              'product_id',
-              'productId'],
-            [
-              'job_id',
-              'jobId'],
-            [
-              'document_number',
-              'policyNo'],
+            'product_id',
+            'job_id',
+            'document_number',
             [
               this.modals.sequelize.literal('"product"."main_category_id"'),
-              'masterCategoryId'],
+              'main_category_id'],
             [
               this.modals.sequelize.literal('"renewalType"."title"'),
-              'premiumType'],
+              'premium_type'],
             [
               this.modals.sequelize.literal('"product"."product_name"'),
-              'productName'],
-            [
-              'renewal_cost',
-              'premiumAmount'],
+              'product_name'],
             [
               'renewal_cost',
               'value'],
             [
               'renewal_taxes',
               'taxes'],
-            [
-              'effective_date',
-              'effectiveDate'],
-            [
-              'expiry_date',
-              'expiryDate'],
-            [
-              'document_date',
-              'purchaseDate'],
-            [
-              'updated_at',
-              'updatedDate'],
+            'effective_date',
+            'expiry_date',
+            'document_date',
+            'updated_at',
             [
               this.modals.sequelize.fn('CONCAT', 'products/',
                   this.modals.sequelize.literal('"product_id"')),
-              'productURL'],
+              'product_url'],
             'copies',
             'user_id'],
           order: [['expiry_date', 'DESC']],
         }).then(function(amcResult) {
           return amcResult.map(function(item) {
-            return item.toJSON();
+            var productItem = item.toJSON();
+
+            productItem.copies = productItem.copies.map(function(copyItem) {
+              copyItem.copy_id = copyItem.copy_id || copyItem.copyId;
+              copyItem.copy_url = copyItem.copy_url || copyItem.copyUrl;
+              copyItem = _lodash2.default.omit(copyItem, 'copyId');
+              copyItem = _lodash2.default.omit(copyItem, 'copyUrl');
+              return copyItem;
+            });
+            return productItem;
           }).sort(sortAmcWarrantyInsuranceRepair);
         });
       }
@@ -216,49 +194,32 @@ var AmcAdaptor = function() {
             }],
           attributes: [
             'id',
-            [
-              'product_id',
-              'productId'],
-            [
-              'job_id',
-              'jobId'],
-            [
-              'document_number',
-              'policyNo'],
+            'product_id',
+            'job_id',
+            'document_number',
             [
               this.modals.sequelize.literal('"product"."main_category_id"'),
-              'masterCategoryId'],
+              'main_category_id'],
             [
               this.modals.sequelize.literal('"renewalType"."title"'),
-              'premiumType'],
+              'premium_type'],
             [
               this.modals.sequelize.literal('"product"."product_name"'),
-              'productName'],
-            [
-              'renewal_cost',
-              'premiumAmount'],
+              'product_name'],
             [
               'renewal_cost',
               'value'],
             [
               'renewal_taxes',
               'taxes'],
-            [
-              'effective_date',
-              'effectiveDate'],
-            [
-              'expiry_date',
-              'expiryDate'],
-            [
-              'document_date',
-              'purchaseDate'],
-            [
-              'updated_at',
-              'updatedDate'],
+            'effective_date',
+            'expiry_date',
+            'document_date',
+            'updated_at',
             [
               this.modals.sequelize.fn('CONCAT', 'products/',
                   this.modals.sequelize.literal('"product_id"')),
-              'productURL'],
+              'product_url'],
             'copies',
             'user_id'],
           order: [['expiry_date', 'DESC']],
@@ -292,13 +253,13 @@ var AmcAdaptor = function() {
           attributes: [
             [
               this.modals.sequelize.literal('COUNT(*)'),
-              'productCounts'],
+              'product_counts'],
             [
               this.modals.sequelize.literal('"product"."main_category_id"'),
-              'masterCategoryId'],
+              'main_category_id'],
             [
               this.modals.sequelize.literal('max("amcs"."updated_at")'),
-              'lastUpdatedAt']],
+              'last_updated_at']],
           group: this.modals.sequelize.literal('"product"."main_category_id"'),
         }).then(function(amcResult) {
           return amcResult.map(function(item) {

@@ -8,8 +8,8 @@ const sortAmcWarrantyInsurancePUC = (a, b) => {
   let aDate;
   let bDate;
 
-  aDate = a.expiryDate;
-  bDate = b.expiryDate;
+  aDate = a.expiry_date;
+  bDate = b.expiry_date;
 
   if (moment.utc(aDate).isBefore(moment.utc(bDate))) {
     return 1;
@@ -24,7 +24,7 @@ class PUCAdaptor {
   }
 
   retrievePUCs(options) {
-    options.status_type = [5, 11];
+    options.status_type = [5, 11, 12];
     let productOptions = {};
 
     if (options.main_category_id) {
@@ -49,19 +49,6 @@ class PUCAdaptor {
       where: options,
       include: [
         {
-          model: this.modals.onlineSellers,
-          as: 'onlineSellers',
-          attributes: [
-            [
-              'seller_name',
-              'sellerName'],
-            'url',
-            'gstin',
-            'contact',
-            'email'],
-          required: false,
-        },
-        {
           model: this.modals.products,
           where: productOptions,
           attributes: [],
@@ -71,23 +58,7 @@ class PUCAdaptor {
           model: this.modals.offlineSellers,
           as: 'sellers',
           attributes: [
-            [
-              'seller_name',
-              'sellerName'],
-            [
-              'owner_name',
-              'ownerName'],
-            [
-              'pan_no',
-              'panNo'],
-            [
-              'reg_no',
-              'regNo'],
-            [
-              'is_service',
-              'isService'],
-            'url',
-            'gstin',
+            ['sid', 'id'], 'seller_name', 'owner_name', 'url',
             ['contact_no', 'contact'],
             'email',
             'address',
@@ -100,44 +71,32 @@ class PUCAdaptor {
         }],
       attributes: [
         'id',
-        [
-          'product_id',
-          'productId'],
-        [
-          'job_id',
-          'jobId'],
+        'product_id',
+        'job_id',
         [
           this.modals.sequelize.literal('"product"."main_category_id"'),
-          'masterCategoryId'], 'user_id',
-        [
+          'main_category_id'],
+        'user_id',
           'document_number',
-          'policyNo'],
-        [
-          'puc_cost',
-          'premiumAmount'],
         [
           this.modals.sequelize.literal('"product"."product_name"'),
-          'productName'],
+          'product_name'],
         [
-          'puc_cost',
+          'renewal_type',
+          'premium_type'],
+        [
+          'renewal_cost',
           'value'],
         [
-          'effective_date',
-          'effectiveDate'],
-        [
-          'expiry_date',
-          'expiryDate'],
-        [
-          'puc_taxes',
+          'renewal_taxes',
           'taxes'],
-        [
-          'document_date',
-          'purchaseDate'],
-        ['updated_at', 'updatedDate'],
+          'effective_date',
+          'expiry_date',
+        'document_date', 'updated_at',
         [
           this.modals.sequelize.fn('CONCAT', 'products/',
               this.modals.sequelize.literal('"product_id"')),
-          'productURL'],
+          'product_url'],
         'copies'],
       order: [['document_date', 'DESC']],
     }).
@@ -146,7 +105,7 @@ class PUCAdaptor {
   }
 
   retrieveNotificationPUCs(options) {
-    options.status_type = [5, 11];
+    options.status_type = [5, 11, 12];
     return this.modals.pucs.findAll({
       where: options,
       include: [
@@ -158,44 +117,30 @@ class PUCAdaptor {
         }],
       attributes: [
         'id',
-        [
-          'product_id',
-          'productId'],
-        [
-          'job_id',
-          'jobId'],
+        'product_id',
+        'job_id',
         [
           this.modals.sequelize.literal('"product"."main_category_id"'),
-          'masterCategoryId'], 'user_id',
-        [
+          'main_category_id'],
+        'user_id',
           'document_number',
-          'policyNo'],
-        [
-          'puc_cost',
-          'premiumAmount'],
         [
           this.modals.sequelize.literal('"product"."product_name"'),
-          'productName'],
+          'product_name'],
         [
-          'puc_cost',
+          'renewal_cost',
           'value'],
         [
-          'puc_taxes',
+          'renewal_taxes',
           'taxes'],
-        [
           'effective_date',
-          'effectiveDate'],
-        [
           'expiry_date',
-          'expiryDate'],
-        [
           'document_date',
-          'purchaseDate'],
-        ['updated_at', 'updatedDate'],
+        'updated_at',
         [
           this.modals.sequelize.fn('CONCAT', 'products/',
               this.modals.sequelize.literal('"product_id"')),
-          'productURL'],
+          'product_url'],
         'copies'],
       order: [['document_date', 'DESC']],
     }).
@@ -204,7 +149,7 @@ class PUCAdaptor {
   }
 
   retrievePUCCount(options) {
-    options.status_type = [5, 11];
+    options.status_type = [5, 11, 12];
     const productOptions = options.product_status_type ? {
       status_type: options.product_status_type,
     } : undefined;
@@ -222,13 +167,13 @@ class PUCAdaptor {
         }],
 
       attributes: [
-        [this.modals.sequelize.literal('COUNT(*)'), 'productCounts'],
+        [this.modals.sequelize.literal('COUNT(*)'), 'product_counts'],
         [
           this.modals.sequelize.literal('"product"."main_category_id"'),
-          'masterCategoryId'],
+          'main_category_id'],
         [
           this.modals.sequelize.literal('max("pucs"."updated_at")'),
-          'lastUpdatedAt']],
+          'last_updated_at']],
       group: this.modals.sequelize.literal('"product"."main_category_id"'),
     }).then((pucResult) => pucResult.map((item) => item.toJSON()));
   }

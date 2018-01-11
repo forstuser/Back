@@ -80,8 +80,6 @@ exports.default = function(sequelize, DataTypes) {
     pucs.belongsTo(models.jobs, {as: 'jobs', foreignKey: 'job_id'});
     pucs.belongsTo(models.offlineSellers,
         {foreignKey: 'seller_id', as: 'sellers'});
-    pucs.belongsTo(models.renewalTypes,
-        {foreignKey: 'renewal_type', targetKey: 'type'});
   };
 
   return pucs;

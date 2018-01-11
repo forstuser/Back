@@ -46,8 +46,8 @@ var sortAmcWarrantyInsuranceRepair = function sortAmcWarrantyInsuranceRepair(
   var aDate = void 0;
   var bDate = void 0;
 
-  aDate = a.expiryDate;
-  bDate = b.expiryDate;
+  aDate = a.expiry_date;
+  bDate = b.expiry_date;
 
   if (_moment2.default.utc(aDate).isBefore(_moment2.default.utc(bDate))) {
     return 1;
@@ -106,10 +106,10 @@ var InsuranceAdaptor = function() {
               as: 'onlineSellers',
               attributes: [
                 [
-                  'seller_name',
-                  'sellerName'],
+                  'sid',
+                  'id'],
+                'seller_name',
                 'url',
-                'gstin',
                 'contact',
                 'email'],
               required: false,
@@ -119,14 +119,7 @@ var InsuranceAdaptor = function() {
               attributes: [
                 'id',
                 'name',
-                [
-                  'pan_no',
-                  'panNo'],
-                [
-                  'reg_no',
-                  'regNo'],
                 'url',
-                'gstin',
                 [
                   'contact_no',
                   'contact'],
@@ -143,22 +136,11 @@ var InsuranceAdaptor = function() {
               as: 'sellers',
               attributes: [
                 [
-                  'seller_name',
-                  'sellerName'],
-                [
-                  'owner_name',
-                  'ownerName'],
-                [
-                  'pan_no',
-                  'panNo'],
-                [
-                  'reg_no',
-                  'regNo'],
-                [
-                  'is_service',
-                  'isService'],
+                  'sid',
+                  'id'],
+                'seller_name',
+                'owner_name',
                 'url',
-                'gstin',
                 [
                   'contact_no',
                   'contact'],
@@ -173,59 +155,49 @@ var InsuranceAdaptor = function() {
             }],
           attributes: [
             'id',
-            [
-              'product_id',
-              'productId'],
+            'product_id',
             [
               this.modals.sequelize.literal('"product"."main_category_id"'),
-              'masterCategoryId'],
-            [
-              'job_id',
-              'jobId'],
-            [
-              'document_number',
-              'policyNo'],
+              'main_category_id'],
+            'job_id',
+            'document_number',
             'provider_id',
             [
               this.modals.sequelize.literal('"renewalType"."title"'),
-              'premiumType'],
+              'premium_type'],
             [
               this.modals.sequelize.literal('"product"."product_name"'),
-              'productName'],
-            [
-              'renewal_cost',
-              'premiumAmount'],
+              'product_name'],
             [
               'renewal_cost',
               'value'],
             [
               'renewal_taxes',
               'taxes'],
-            [
-              'amount_insured',
-              'amountInsured'],
-            [
-              'effective_date',
-              'effectiveDate'],
-            [
-              'expiry_date',
-              'expiryDate'],
-            [
-              'document_date',
-              'purchaseDate'],
-            [
-              'updated_at',
-              'updatedDate'],
+            'amount_insured',
+            'effective_date',
+            'expiry_date',
+            'document_date',
+            'updated_at',
             [
               this.modals.sequelize.fn('CONCAT', 'products/',
                   this.modals.sequelize.literal('"product_id"')),
-              'productURL'],
+              'product_url'],
             'copies',
             'user_id'],
           order: [['expiry_date', 'DESC']],
         }).then(function(insuranceResult) {
           return insuranceResult.map(function(item) {
-            return item.toJSON();
+            var productItem = item.toJSON();
+
+            productItem.copies = productItem.copies.map(function(copyItem) {
+              copyItem.copy_id = copyItem.copy_id || copyItem.copyId;
+              copyItem.copy_url = copyItem.copy_url || copyItem.copyUrl;
+              copyItem = _lodash2.default.omit(copyItem, 'copyId');
+              copyItem = _lodash2.default.omit(copyItem, 'copyUrl');
+              return copyItem;
+            });
+            return productItem;
           }).sort(sortAmcWarrantyInsuranceRepair);
         });
       }
@@ -245,52 +217,33 @@ var InsuranceAdaptor = function() {
             }],
           attributes: [
             'id',
-            [
-              'product_id',
-              'productId'],
+            'product_id',
             [
               this.modals.sequelize.literal('"product"."main_category_id"'),
-              'masterCategoryId'],
-            [
-              'job_id',
-              'jobId'],
-            [
-              'document_number',
-              'policyNo'],
+              'main_category_id'],
+            'job_id',
+            'document_number',
             [
               this.modals.sequelize.literal('"renewalType"."title"'),
-              'premiumType'],
+              'premium_type'],
             [
               this.modals.sequelize.literal('"product"."product_name"'),
-              'productName'],
-            [
-              'renewal_cost',
-              'premiumAmount'],
+              'product_name'],
             [
               'renewal_cost',
               'value'],
             [
               'renewal_taxes',
               'taxes'],
-            [
-              'amount_insured',
-              'amountInsured'],
-            [
-              'effective_date',
-              'effectiveDate'],
-            [
-              'expiry_date',
-              'expiryDate'],
-            [
-              'document_date',
-              'purchaseDate'],
-            [
-              'updated_at',
-              'updatedDate'],
+            'amount_insured',
+            'effective_date',
+            'expiry_date',
+            'document_date',
+            'updated_at',
             [
               this.modals.sequelize.fn('CONCAT', 'products/',
                   this.modals.sequelize.literal('"product_id"')),
-              'productURL'],
+              'product_url'],
             'copies',
             'user_id'],
           order: [['expiry_date', 'DESC']],
@@ -323,13 +276,13 @@ var InsuranceAdaptor = function() {
           attributes: [
             [
               this.modals.sequelize.literal('COUNT(*)'),
-              'productCounts'],
+              'product_counts'],
             [
               this.modals.sequelize.literal('"product"."main_category_id"'),
-              'masterCategoryId'],
+              'main_category_id'],
             [
               this.modals.sequelize.literal('max("insurances"."updated_at")'),
-              'lastUpdatedAt']],
+              'last_updated_at']],
           group: this.modals.sequelize.literal('"product"."main_category_id"'),
         }).then(function(insuranceResult) {
           return insuranceResult.map(function(item) {

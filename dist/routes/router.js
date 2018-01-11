@@ -1040,7 +1040,7 @@ function prepareProductRoutes(productController, productRoutes) {
             category_id: [_joi2.default.number(), _joi2.default.allow(null)],
             brand_id: [_joi2.default.number(), _joi2.default.allow(null)],
             colour_id: [_joi2.default.number(), _joi2.default.allow(null)],
-            purchase_cost: [_joi2.default.number(), _joi2.default.allow(null)],
+            value: [_joi2.default.number(), _joi2.default.allow(null)],
             taxes: [_joi2.default.number(), _joi2.default.allow(null)],
             seller_id: [_joi2.default.number(), _joi2.default.allow(null)],
             seller_name: [_joi2.default.string(), _joi2.default.allow(null)],
@@ -1088,9 +1088,7 @@ function prepareProductRoutes(productController, productRoutes) {
                   _joi2.default.number(),
                   _joi2.default.allow(null)],
                 policy_no: [_joi2.default.string(), _joi2.default.allow(null)],
-                renewal_cost: [
-                  _joi2.default.number(),
-                  _joi2.default.allow(null)],
+                value: [_joi2.default.number(), _joi2.default.allow(null)],
                 amount_insured: [
                   _joi2.default.string(),
                   _joi2.default.allow(null)],
@@ -1113,6 +1111,7 @@ function prepareProductRoutes(productController, productRoutes) {
                 seller_contact: [
                   _joi2.default.string(),
                   _joi2.default.allow(null)],
+                value: [_joi2.default.number(), _joi2.default.allow(null)],
               }), _joi2.default.allow(null)],
             amc: [
               _joi2.default.object().keys({
@@ -1129,6 +1128,7 @@ function prepareProductRoutes(productController, productRoutes) {
                 seller_contact: [
                   _joi2.default.string(),
                   _joi2.default.allow(null)],
+                value: [_joi2.default.number(), _joi2.default.allow(null)],
               }), _joi2.default.allow(null)],
             repair: [
               _joi2.default.object().keys({
@@ -1143,9 +1143,7 @@ function prepareProductRoutes(productController, productRoutes) {
                 seller_contact: [
                   _joi2.default.string(),
                   _joi2.default.allow(null)],
-                repair_cost: [
-                  _joi2.default.number(),
-                  _joi2.default.allow(null)],
+                value: [_joi2.default.number(), _joi2.default.allow(null)],
                 warranty_upto: [
                   _joi2.default.string(),
                   _joi2.default.allow(null)],
@@ -1177,7 +1175,7 @@ function prepareProductRoutes(productController, productRoutes) {
             category_id: [_joi2.default.number(), _joi2.default.allow(null)],
             brand_id: [_joi2.default.number(), _joi2.default.allow(null)],
             colour_id: [_joi2.default.number(), _joi2.default.allow(null)],
-            purchase_cost: [_joi2.default.number(), _joi2.default.allow(null)],
+            value: [_joi2.default.number(), _joi2.default.allow(null)],
             taxes: [_joi2.default.number(), _joi2.default.allow(null)],
             seller_id: [_joi2.default.number(), _joi2.default.allow(null)],
             seller_name: [_joi2.default.string(), _joi2.default.allow(null)],
@@ -1236,9 +1234,7 @@ function prepareProductRoutes(productController, productRoutes) {
                   _joi2.default.number(),
                   _joi2.default.allow(null)],
                 policy_no: [_joi2.default.string(), _joi2.default.allow(null)],
-                renewal_cost: [
-                  _joi2.default.number(),
-                  _joi2.default.allow(null)],
+                value: [_joi2.default.number(), _joi2.default.allow(null)],
                 amount_insured: [
                   _joi2.default.string(),
                   _joi2.default.allow(null)],
@@ -1258,9 +1254,7 @@ function prepareProductRoutes(productController, productRoutes) {
                 seller_name: [
                   _joi2.default.string(),
                   _joi2.default.allow(null)],
-                renewal_cost: [
-                  _joi2.default.number(),
-                  _joi2.default.allow(null)],
+                value: [_joi2.default.number(), _joi2.default.allow(null)],
                 seller_contact: [
                   _joi2.default.string(),
                   _joi2.default.allow(null)],
@@ -1274,9 +1268,7 @@ function prepareProductRoutes(productController, productRoutes) {
                 expiry_period: [
                   _joi2.default.number(),
                   _joi2.default.allow(null)],
-                renewal_cost: [
-                  _joi2.default.number(),
-                  _joi2.default.allow(null)],
+                value: [_joi2.default.number(), _joi2.default.allow(null)],
                 seller_name: [
                   _joi2.default.string(),
                   _joi2.default.allow(null)],
@@ -1300,9 +1292,7 @@ function prepareProductRoutes(productController, productRoutes) {
                 is_amc_seller: [
                   _joi2.default.string(),
                   _joi2.default.allow(null)],
-                repair_cost: [
-                  _joi2.default.number(),
-                  _joi2.default.allow(null)],
+                value: [_joi2.default.number(), _joi2.default.allow(null)],
                 warranty_upto: [
                   _joi2.default.string(),
                   _joi2.default.allow(null)],
@@ -1467,7 +1457,7 @@ function prepareGeneralRoutes(generalController, generalRoutes) {
             category_id: _joi2.default.number(),
             brand_id: [_joi2.default.number(), _joi2.default.allow(null)],
             colour_id: [_joi2.default.number(), _joi2.default.allow(null)],
-            purchase_cost: [_joi2.default.number(), _joi2.default.allow(null)],
+            value: [_joi2.default.number(), _joi2.default.allow(null)],
             taxes: [_joi2.default.number(), _joi2.default.allow(null)],
             seller_id: [_joi2.default.number(), _joi2.default.allow(null)],
             document_number: [
@@ -1508,7 +1498,7 @@ function prepareProductItemRoutes(productItemController, productItemRoutes) {
             seller_contact: [_joi2.default.string(), _joi2.default.allow(null)],
             seller_address: [_joi2.default.string(), _joi2.default.allow(null)],
             seller_id: [_joi2.default.number(), _joi2.default.allow(null)],
-            repair_cost: [_joi2.default.number(), _joi2.default.allow(null)],
+            value: [_joi2.default.number(), _joi2.default.allow(null)],
             warranty_upto: [_joi2.default.string(), _joi2.default.allow(null)],
           }
         }
@@ -1534,7 +1524,7 @@ function prepareProductItemRoutes(productItemController, productItemRoutes) {
             seller_name: [_joi2.default.string(), _joi2.default.allow(null)],
             seller_contact: [_joi2.default.string(), _joi2.default.allow(null)],
             seller_id: [_joi2.default.number(), _joi2.default.allow(null)],
-            repair_cost: [_joi2.default.number(), _joi2.default.allow(null)],
+            value: [_joi2.default.number(), _joi2.default.allow(null)],
             warranty_upto: [_joi2.default.string(), _joi2.default.allow(null)],
           }
         }

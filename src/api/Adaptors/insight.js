@@ -10,6 +10,7 @@ import AmcAdaptor from './amcs';
 import InsuranceAdaptor from './insurances';
 import RepairAdaptor from './repairs';
 import WarrantyAdaptor from './warranties';
+import PUCAdaptor from './pucs';
 
 function weekAndDay(d) {
   const days = [1, 2, 3, 4, 5, 6, 7];
@@ -21,7 +22,7 @@ function weekAndDay(d) {
   };
 }
 
-const dateFormatString = 'yyyy-mm-dd';
+const dateFormatString = 'YYYY-MM-DD';
 const monthArray = [
   'Jan',
   'Feb',
@@ -35,11 +36,10 @@ const monthArray = [
   'Oct',
   'Nov',
   'Dec'];
-const date = new Date();
-const monthStartDay = new Date(date.getFullYear(), date.getMonth(), 1);
-const monthLastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-const yearStartDay = new Date(date.getFullYear(), 0, 1);
-const yearLastDay = new Date(date.getFullYear() + 1, 0, 0);
+const monthStartDay = moment.utc().startOf('month');
+const monthLastDay = moment.utc().endOf('month');
+const yearStartDay = moment.utc().startOf('year');
+const yearLastDay = moment.utc().startOf('year');
 
 function customSortCategories(categoryData) {
   const OtherCategory = categoryData.find((elem) => {
@@ -80,6 +80,7 @@ class InsightAdaptor {
     this.insuranceAdaptor = new InsuranceAdaptor(modals);
     this.repairAdaptor = new RepairAdaptor(modals);
     this.warrantyAdaptor = new WarrantyAdaptor(modals);
+    this.pucAdaptor = new PUCAdaptor(modals);
   }
 
   prepareInsightData(user, request) {
@@ -90,11 +91,11 @@ class InsightAdaptor {
       const categoryData = !(minDate || maxDate) ? {
         weeklyData: result.map((item) => {
           const expenses = item.expenses.filter(
-              (item) => moment.utc(item.purchaseDate, moment.ISO_8601).
+              (item) => moment.utc(item.document_date, moment.ISO_8601).
                       valueOf() >=
                   moment.utc().subtract(6, 'd').startOf('day').valueOf() &&
-                  moment.utc(item.purchaseDate, moment.ISO_8601).valueOf() <=
-                  moment.utc(moment.utc()).valueOf());
+                  moment.utc(item.document_date, moment.ISO_8601).valueOf() <=
+                  moment.utc().valueOf());
           const totalAmount = shared.sumProps(expenses,
               'value');
           const totalTax = shared.sumProps(expenses,
@@ -113,11 +114,11 @@ class InsightAdaptor {
         monthlyData: result.map((item) => {
           const expenses = item.expenses.filter(
               (item) => moment.utc(
-                  moment.utc(item.purchaseDate, moment.ISO_8601).valueOf()) >=
-                  moment.utc(moment.utc().startOf('month').valueOf()) &&
-                  moment.utc(moment.utc(item.purchaseDate, moment.ISO_8601).
+                  moment.utc(item.document_date, moment.ISO_8601).valueOf()) >=
+                  moment.utc(moment().startOf('month').valueOf()) &&
+                  moment(moment(item.document_date, moment.ISO_8601).
                       valueOf()) <=
-                  moment.utc(moment.utc()).valueOf());
+                  moment().valueOf());
           const totalAmount = shared.sumProps(expenses,
               'value');
           const totalTax = shared.sumProps(expenses,
@@ -135,12 +136,12 @@ class InsightAdaptor {
         }),
         yearlyData: result.map((item) => {
           const expenses = item.expenses.filter(
-              (item) => moment.utc(
-                  moment.utc(item.purchaseDate, moment.ISO_8601).valueOf()) >=
-                  moment.utc(moment.utc().startOf('year').valueOf()) &&
-                  moment.utc(moment.utc(item.purchaseDate, moment.ISO_8601).
+              (item) => moment(
+                  moment(item.document_date, moment.ISO_8601).valueOf()) >=
+                  moment(moment().startOf('year').valueOf()) &&
+                  moment(moment(item.document_date, moment.ISO_8601).
                       valueOf()) <=
-                  moment.utc(moment.utc()).valueOf());
+                  moment().valueOf());
           const totalAmount = shared.sumProps(expenses,
               'value');
           const totalTax = shared.sumProps(expenses,
@@ -158,10 +159,10 @@ class InsightAdaptor {
         }),
         overallData: result.map((item) => {
           const expenses = item.expenses.filter(
-              (item) => moment.utc(
-                  moment.utc(item.purchaseDate, moment.ISO_8601).
+              (item) => moment(
+                  moment(item.document_date, moment.ISO_8601).
                       valueOf()) <=
-                  moment.utc(moment.utc()).valueOf());
+                  moment().valueOf());
           const totalAmount = shared.sumProps(expenses,
               'value');
           const totalTax = shared.sumProps(expenses,
@@ -180,11 +181,11 @@ class InsightAdaptor {
       } : {
         customDateData: result.map((item) => {
           const expenses = item.expenses.filter(
-              (item) => moment.utc(item.purchaseDate, moment.ISO_8601).
+              (item) => moment(item.document_date, moment.ISO_8601).
                       valueOf() >=
-                  moment.utc(minDate).utc().startOf('d').valueOf() &&
-                  moment.utc(item.purchaseDate, moment.ISO_8601).valueOf() <=
-                  moment.utc(maxDate).utc().endOf('d').valueOf());
+                  moment(minDate).utc().startOf('d').valueOf() &&
+                  moment(item.document_date, moment.ISO_8601).valueOf() <=
+                  moment(maxDate).utc().endOf('d').valueOf());
           const totalAmount = shared.sumProps(expenses,
               'value');
           const totalTax = shared.sumProps(expenses,
@@ -302,13 +303,19 @@ class InsightAdaptor {
         status: true,
         message: 'Insight restore successful',
         categoryData,
-        weekStartDate: shared.formatDate(
-            moment.utc().subtract(6, 'd').startOf('d'), dateFormatString),
-        monthStartDate: shared.formatDate(monthStartDay, dateFormatString),
-        weekEndDate: shared.formatDate(moment.utc(), dateFormatString),
-        monthLastDate: shared.formatDate(monthLastDay, dateFormatString),
-        yearStartDate: shared.formatDate(yearStartDay, dateFormatString),
-        yearEndDate: shared.formatDate(yearLastDay, dateFormatString),
+        weekStartDate: moment().
+            subtract(6, 'd').
+            startOf('d').
+            format(dateFormatString),
+        monthStartDate: moment(monthStartDay, moment.ISO_8601).
+            format(dateFormatString),
+        weekEndDate: moment().format(dateFormatString),
+        monthLastDate: moment(monthLastDay, moment.ISO_8601).
+            format(dateFormatString),
+        yearStartDate: moment(yearStartDay, moment.ISO_8601).
+            format(dateFormatString),
+        yearEndDate: moment(yearLastDay, moment.ISO_8601).
+            format(dateFormatString),
         totalYearlySpend: parseFloat(totalYearlyAmounts ||
             0).toFixed(2),
         totalWeeklySpend: parseFloat(totalWeeklyAmounts ||
@@ -366,7 +373,8 @@ class InsightAdaptor {
       this.amcAdaptor.retrieveAMCs(productOptions),
       this.insuranceAdaptor.retrieveInsurances(productOptions),
       this.repairAdaptor.retrieveRepairs(productOptions),
-      this.warrantyAdaptor.retrieveWarranties(productOptions)]).
+      this.warrantyAdaptor.retrieveWarranties(productOptions),
+      this.pucAdaptor.retrievePUCs(productOptions)]).
         then((results) => {
           return results[0].map((categoryItem) => {
             const category = categoryItem;
@@ -377,7 +385,7 @@ class InsightAdaptor {
                   return product;
                 }).
                 filter(
-                    (productItem) => productItem.masterCategoryId ===
+                    (productItem) => productItem.main_category_id ===
                         category.id);
             const amcs = _.chain(results[2]).
                 map((amcItem) => {
@@ -385,7 +393,7 @@ class InsightAdaptor {
                   amc.dataIndex = 2;
                   return amc;
                 }).
-                filter((amcItem) => amcItem.masterCategoryId === category.id);
+                filter((amcItem) => amcItem.main_category_id === category.id);
             const insurances = _.chain(results[3]).
                 map((insuranceItem) => {
                   const insurance = insuranceItem;
@@ -393,7 +401,7 @@ class InsightAdaptor {
                   return insurance;
                 }).
                 filter(
-                    (insuranceItem) => insuranceItem.masterCategoryId ===
+                    (insuranceItem) => insuranceItem.main_category_id ===
                         category.id);
             const repairs = _.chain(results[4]).
                 map((repairItem) => {
@@ -402,7 +410,7 @@ class InsightAdaptor {
                   return repair;
                 }).
                 filter(
-                    (repairItem) => repairItem.masterCategoryId ===
+                    (repairItem) => repairItem.main_category_id ===
                         category.id);
             const warranties = _.chain(results[5]).
                 map((warrantyItem) => {
@@ -411,15 +419,26 @@ class InsightAdaptor {
                   return warranty;
                 }).
                 filter(
-                    (warrantyItem) => warrantyItem.masterCategoryId ===
+                    (warrantyItem) => warrantyItem.main_category_id ===
+                        category.id);
+            const pucs = _.chain(results[6]).
+                map((pucItem) => {
+                  const puc = pucItem;
+                  puc.dataIndex = 6;
+                  return puc;
+                }).
+                filter(
+                    (pucItem) => pucItem.main_category_id ===
                         category.id);
             category.expenses = _.chain([
               ...products,
               ...amcs,
               ...insurances,
               ...repairs,
-              ...warranties] || []).sortBy((item) => {
-              return moment.utc(item.purchaseDate || item.updatedDate);
+              ...warranties,
+              ...pucs,
+            ] || []).sortBy((item) => {
+              return moment(item.document_date || item.updated_at);
             }).reverse().value();
 
             return category;
@@ -428,14 +447,14 @@ class InsightAdaptor {
   }
 
   prepareCategoryInsight(user, request) {
-    const masterCategoryId = request.params.id;
-    return this.prepareCategoryData(user, {category_id: masterCategoryId}).
+    const main_category_id = request.params.id;
+    return this.prepareCategoryData(user, {category_id: main_category_id}).
         then((result) => {
           const productList = _.chain(result[0].expenses).
-              filter((item) => (item.purchaseDate &&
-                  moment.utc(item.purchaseDate, moment.ISO_8601).valueOf() <=
-                  moment.utc(moment.utc()).valueOf())).
-              orderBy(['purchaseDate'],
+              filter((item) => (item.document_date &&
+                  moment(item.document_date, moment.ISO_8601).valueOf() <=
+                  moment().valueOf())).
+              orderBy(['document_date'],
                   ['asc']).
               value();
 
@@ -446,25 +465,25 @@ class InsightAdaptor {
           productList.map((item) => {
             const expense = item;
             const index = distinctInsight.findIndex(
-                distinctItem => (moment.utc(distinctItem.purchaseDate).
+                distinctItem => (moment(distinctItem.document_date).
                     startOf('day').
-                    diff(moment.utc(expense.purchaseDate, moment.ISO_8601).
+                    diff(moment(expense.document_date, moment.ISO_8601).
                             startOf('day'),
                         'days') === 0));
             if (index === -1) {
               distinctInsight.push({
                 value: expense.value,
-                month: monthArray[moment.utc(expense.purchaseDate,
+                month: monthArray[moment(expense.document_date,
                     moment.ISO_8601).
                     month()],
-                monthId: moment.utc(expense.purchaseDate, moment.ISO_8601).
+                monthId: moment(expense.document_date, moment.ISO_8601).
                     month() + 1,
-                purchaseDate: moment.utc(expense.purchaseDate, moment.ISO_8601),
-                year: moment.utc(expense.purchaseDate, moment.ISO_8601).year(),
-                week: weekAndDay(moment.utc(expense.purchaseDate,
+                document_date: moment(expense.document_date, moment.ISO_8601),
+                year: moment(expense.document_date, moment.ISO_8601).year(),
+                week: weekAndDay(moment(expense.document_date,
                     moment.ISO_8601)).monthWeek,
                 day: weekAndDay(
-                    moment.utc(expense.purchaseDate, moment.ISO_8601)).day,
+                    moment(expense.document_date, moment.ISO_8601)).day,
                 tax: expense.taxes,
               });
             } else {
@@ -480,7 +499,7 @@ class InsightAdaptor {
               value: item.value,
               month: item.month,
               monthId: item.monthId,
-              purchaseDate: item.purchaseDate,
+              document_date: item.document_date,
               week: item.week,
               day: item.day,
               year: item.year,
@@ -491,7 +510,7 @@ class InsightAdaptor {
               value: item.value,
               month: item.month,
               monthId: item.monthId,
-              purchaseDate: item.purchaseDate,
+              document_date: item.document_date,
               week: item.week,
               day: item.day,
               year: item.year,
@@ -502,7 +521,7 @@ class InsightAdaptor {
               value: item.value,
               month: item.month,
               monthId: item.monthId,
-              purchaseDate: item.purchaseDate,
+              document_date: item.document_date,
               week: item.week,
               day: item.day,
               year: item.year,
@@ -513,7 +532,7 @@ class InsightAdaptor {
               value: item.value,
               month: item.month,
               monthId: item.monthId,
-              purchaseDate: item.purchaseDate,
+              document_date: item.document_date,
               week: item.week,
               year: item.year,
               day: item.day,
@@ -555,95 +574,95 @@ class InsightAdaptor {
           });
 
           const productListWeekly = productList.filter(
-              item => moment.utc(item.purchaseDate, moment.ISO_8601).
+              item => moment(item.document_date, moment.ISO_8601).
                       valueOf() >=
-                  moment.utc().startOf('month').valueOf() &&
-                  moment.utc(item.purchaseDate, moment.ISO_8601).valueOf() <=
-                  moment.utc(moment.utc()).valueOf()).map((item) => {
-            item.purchaseDate = moment.utc(item.purchaseDate, moment.ISO_8601).
+                  moment().startOf('month').valueOf() &&
+                  moment(item.document_date, moment.ISO_8601).valueOf() <=
+                  moment().valueOf()).map((item) => {
+            item.document_date = moment(item.document_date, moment.ISO_8601).
                 startOf('days');
             return item;
           });
           const productListMonthly = productList.filter(
-              item => moment.utc(item.purchaseDate, moment.ISO_8601).
+              item => moment(item.document_date, moment.ISO_8601).
                       valueOf() >=
-                  moment.utc().startOf('year').valueOf() &&
-                  moment.utc(item.purchaseDate, moment.ISO_8601).valueOf() <=
-                  moment.utc(moment.utc()).valueOf()).map((item) => {
-            item.purchaseDate = moment.utc(item.purchaseDate, moment.ISO_8601).
+                  moment().startOf('year').valueOf() &&
+                  moment(item.document_date, moment.ISO_8601).valueOf() <=
+                  moment().valueOf()).map((item) => {
+            item.document_date = moment(item.document_date, moment.ISO_8601).
                 startOf('days');
             return item;
           });
 
           const overallProductList = productList.filter(
-              item => moment.utc(item.purchaseDate, moment.ISO_8601).
+              item => moment(item.document_date, moment.ISO_8601).
                       valueOf() <=
-                  moment.utc(moment.utc()).valueOf()).map((item) => {
-            item.purchaseDate = moment.utc(item.purchaseDate, moment.ISO_8601).
+                  moment().valueOf()).map((item) => {
+            item.document_date = moment(item.document_date, moment.ISO_8601).
                 startOf('days');
             return item;
           });
 
           distinctInsightMonthly.sort(
-              (a, b) => moment.utc(b.purchaseDate) -
-                  moment.utc(a.purchaseDate));
+              (a, b) => moment(b.document_date) -
+                  moment(a.document_date));
           distinctInsightWeekly.sort(
-              (a, b) => moment.utc(b.purchaseDate) -
-                  moment.utc(a.purchaseDate));
+              (a, b) => moment(b.document_date) -
+                  moment(a.document_date));
           distinctInsightYearly.sort(
-              (a, b) => moment.utc(b.purchaseDate) -
-                  moment.utc(a.purchaseDate));
+              (a, b) => moment(b.document_date) -
+                  moment(a.document_date));
 
           const insightData = shared.retrieveDaysInsight(
               distinctInsightTemp.filter(
-                  item => moment.utc(item.purchaseDate, moment.ISO_8601).
+                  item => moment(item.document_date, moment.ISO_8601).
                           valueOf() >=
-                      moment.utc().subtract(6, 'd').startOf('day').valueOf() &&
-                      moment.utc(item.purchaseDate, moment.ISO_8601).
+                      moment().subtract(6, 'd').startOf('day').valueOf() &&
+                      moment(item.document_date, moment.ISO_8601).
                           valueOf() <=
-                      moment.utc(moment.utc()).valueOf()));
+                      moment().valueOf()));
           insightData.sort(
-              (a, b) => moment.utc(a.purchaseDate) -
-                  moment.utc(b.purchaseDate));
+              (a, b) => moment(a.document_date) -
+                  moment(b.document_date));
 
           const insightWeekly = distinctInsightWeekly.filter(
-              item => moment.utc(item.purchaseDate, moment.ISO_8601).
+              item => moment(item.document_date, moment.ISO_8601).
                       valueOf() >=
-                  moment.utc().startOf('month').valueOf() &&
-                  moment.utc(item.purchaseDate, moment.ISO_8601).valueOf() <=
-                  moment.utc(moment.utc()).valueOf());
+                  moment().startOf('month').valueOf() &&
+                  moment(item.document_date, moment.ISO_8601).valueOf() <=
+                  moment().valueOf());
           const insightMonthly = distinctInsightMonthly.filter(
-              item => moment.utc(item.purchaseDate, moment.ISO_8601).
+              item => moment(item.document_date, moment.ISO_8601).
                       valueOf() >=
-                  moment.utc().startOf('year').valueOf() &&
-                  moment.utc(item.purchaseDate, moment.ISO_8601).valueOf() <=
-                  moment.utc(moment.utc()).valueOf());
+                  moment().startOf('year').valueOf() &&
+                  moment(item.document_date, moment.ISO_8601).valueOf() <=
+                  moment().valueOf());
           const overallInsight = distinctInsightYearly.filter(
-              item => moment.utc(item.purchaseDate, moment.ISO_8601).
+              item => moment(item.document_date, moment.ISO_8601).
                       valueOf() <=
-                  moment.utc(moment.utc()).valueOf());
+                  moment().valueOf());
           return {
             status: true,
             productList: productList.filter(
-                item => moment.utc(item.purchaseDate, moment.ISO_8601).
+                item => moment(item.document_date, moment.ISO_8601).
                         valueOf() >=
-                    moment.utc().subtract(6, 'd').startOf('day').valueOf() &&
-                    moment.utc(item.purchaseDate, moment.ISO_8601).valueOf() <=
-                    moment.utc(moment.utc()).valueOf()),
+                    moment().subtract(6, 'd').startOf('day').valueOf() &&
+                    moment(item.document_date, moment.ISO_8601).valueOf() <=
+                    moment().valueOf()),
             productListWeekly,
             productListMonthly,
             overallProductList,
             insight: distinctInsight && distinctInsight.length > 0 ? {
               categoryName: result[0].name,
-              startDate: moment.utc().subtract(6, 'd').startOf('d'),
-              endDate: moment.utc(),
-              currentMonthId: moment.utc().month() + 1,
-              currentWeek: weekAndDay(moment.utc()).monthWeek,
-              currentDay: weekAndDay(moment.utc()).day,
-              monthStartDate: moment.utc().startOf('month'),
-              monthEndDate: moment.utc(),
-              yearStartDate: moment.utc().startOf('year'),
-              yearEndDate: moment.utc(),
+              startDate: moment().subtract(6, 'd').startOf('d'),
+              endDate: moment(),
+              currentMonthId: moment().month() + 1,
+              currentWeek: weekAndDay(moment()).monthWeek,
+              currentDay: weekAndDay(moment()).day,
+              monthStartDate: moment().startOf('month'),
+              monthEndDate: moment(),
+              yearStartDate: moment().startOf('year'),
+              yearEndDate: moment(),
               totalSpend: shared.sumProps(insightData, 'value'),
               totalYearlySpend: shared.sumProps(insightMonthly, 'value'),
               totalMonthlySpend: shared.sumProps(insightWeekly, 'value'),
@@ -655,15 +674,15 @@ class InsightAdaptor {
               overallInsight,
             } : {
               categoryName: result[0].name,
-              startDate: moment.utc().subtract(6, 'd').startOf('d'),
-              endDate: moment.utc(),
-              currentMonthId: moment.utc().month() + 1,
-              currentWeek: weekAndDay(moment.utc()).monthWeek,
-              currentDay: weekAndDay(moment.utc()).day,
-              monthStartDate: moment.utc().startOf('month'),
-              monthEndDate: moment.utc(),
-              yearStartDate: moment.utc().startOf('year'),
-              yearEndDate: moment.utc(),
+              startDate: moment().subtract(6, 'd').startOf('d'),
+              endDate: moment(),
+              currentMonthId: moment().month() + 1,
+              currentWeek: weekAndDay(moment()).monthWeek,
+              currentDay: weekAndDay(moment()).day,
+              monthStartDate: moment().startOf('month'),
+              monthEndDate: moment(),
+              yearStartDate: moment().startOf('year'),
+              yearEndDate: moment(),
               totalSpend: 0.00,
               totalYearlySpend: 0.00,
               totalMonthlySpend: 0.00,

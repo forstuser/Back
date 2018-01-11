@@ -49,7 +49,7 @@ class EHomeAdaptor {
       const categoryDataWithoutOthers = _.orderBy(
           categoryList.filter((elem) => {
             return (elem.id !== 9);
-          }), ['productCounts'], ['desc']);
+          }), ['product_counts'], ['desc']);
 
       let newCategoryData = categoryDataWithoutOthers;
 
@@ -58,7 +58,7 @@ class EHomeAdaptor {
       if (OtherCategory) {
         newCategoryData = [];
         categoryDataWithoutOthers.forEach((elem) => {
-          if (OtherCategory.productCounts > elem.productCounts && !pushed) {
+          if (OtherCategory.product_counts > elem.product_counts && !pushed) {
             newCategoryData.push(OtherCategory);
             pushed = true;
           }
@@ -100,7 +100,7 @@ class EHomeAdaptor {
 
   retrieveUnProcessedBills(user) {
     return this.modals.jobs.findAll({
-      attributes: [['created_at', 'uploadedDate'], ['id', 'docId']],
+      attributes: [['created_at', 'uploaded_on'], ['id', 'job_id']],
       where: {
         user_id: user.id || user.ID,
         user_status: {
@@ -126,13 +126,13 @@ class EHomeAdaptor {
           attributes: [
             [
               'id',
-              'copyId'],
+              'copy_id'],
             'file_type',
             [
               this.modals.sequelize.fn('CONCAT', '/jobs/',
                   this.modals.sequelize.literal('"jobs"."id"'), '/files/',
                   this.modals.sequelize.literal('"copies"."id"')),
-              'copyUrl']],
+              'copy_url']],
           where: {
             status_type: {
               $notIn: [3, 5, 9],
@@ -170,23 +170,23 @@ class EHomeAdaptor {
             const category = categoryItem;
             const products = _.chain(results[1]).
                 filter(
-                    (productItem) => productItem.masterCategoryId ===
+                    (productItem) => productItem.main_category_id ===
                         category.id);
             const inProgressProduct = _.chain(results[2]).
-                filter((amcItem) => amcItem.masterCategoryId === category.id);
+                filter((amcItem) => amcItem.main_category_id === category.id);
             const expenses = _.chain([
               ...products,
               ...inProgressProduct,
             ] || []).sortBy((item) => {
-              return moment(item.lastUpdatedAt, moment.ISO_8601);
+              return moment.utc(item.last_updated_at, moment.ISO_8601);
             }).reverse().value();
             category.expenses = expenses;
-            category.cLastUpdate = expenses &&
+            category.last_updated_at = expenses &&
             expenses.length > 0 ?
-                expenses[0].lastUpdatedAt :
+                expenses[0].last_updated_at :
                 null;
-            category.productCounts = parseInt(shared.sumProps(expenses,
-                'productCounts'));
+            category.product_counts = parseInt(shared.sumProps(expenses,
+                'product_counts'));
             return category;
           });
         });
@@ -217,17 +217,13 @@ class EHomeAdaptor {
       /* const listIndex = (pageNo * 10) - 10; */
 
       let brands = result.productList.filter((item) => item.brand !== null).
-          map((item) => {
-            const brandItem = item.brand;
-            brandItem.id = brandItem.brandId;
-            return brandItem;
-          });
-      brands = _.uniqBy(brands, 'brandId');
+          map((item) => item.brand);
+      brands = _.uniqBy(brands, 'id');
 
       let offlineSellers = result.productList.filter(
           (item) => item.sellers !== null).map((item) => {
         const sellerItem = item.sellers;
-        sellerItem.name = sellerItem.sellerName;
+        sellerItem.name = sellerItem.seller_name;
         return sellerItem;
       });
 
@@ -237,7 +233,7 @@ class EHomeAdaptor {
           item => item.bill !== null && item.bill.sellers !== null).
           map((item) => {
             const sellerItem = item.bill.sellers;
-            sellerItem.name = sellerItem.sellerName;
+            sellerItem.name = sellerItem.seller_name;
             return sellerItem;
           });
 
@@ -247,7 +243,7 @@ class EHomeAdaptor {
         productList /* :productList.slice((pageNo * 10) - 10, 10) */,
         filterData: {
           categories: result.subCategories.filter((item) => productList.find(
-              (productItem) => productItem.categoryId === item.id)),
+              (productItem) => productItem.category_id === item.id)),
           brands: brands.filter(item => item.id !== 0),
           sellers: {
             offlineSellers: offlineSellers.filter(item => item.id !== 0),
@@ -337,7 +333,7 @@ class EHomeAdaptor {
                   return product;
                 }).
                 filter(
-                    (productItem) => productItem.masterCategoryId ===
+                    (productItem) => productItem.main_category_id ===
                         category.id).value();
             const inProgressProduct = _.chain(results[2]).
                 map((productItem) => {
@@ -345,12 +341,12 @@ class EHomeAdaptor {
                   product.dataIndex = 2;
                   return product;
                 }).
-                filter((productItem) => productItem.masterCategoryId ===
+                filter((productItem) => productItem.main_category_id ===
                     category.id).value();
             category.productList = _.chain([
               ...products,
               ...inProgressProduct] || []).sortBy((item) => {
-              return moment(item.purchaseDate, moment.ISO_8601);
+              return moment.utc(item.document_date, moment.ISO_8601);
             }).reverse().value();
 
             return category;

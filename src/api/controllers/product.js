@@ -28,19 +28,19 @@ class ProductController {
         category_id: request.payload.category_id,
         brand_id: request.payload.brand_id,
         colour_id: request.payload.colour_id,
-        purchase_cost: request.payload.purchase_cost,
+        purchase_cost: request.payload.value,
         taxes: request.payload.taxes,
         updated_by: user.id || user.ID,
         seller_id: request.payload.seller_id,
         status_type: 11,
         document_number: request.payload.document_number,
         document_date: request.payload.document_date ?
-            moment(request.payload.document_date,
+            moment.utc(request.payload.document_date,
             moment.ISO_8601).
             isValid() ?
-            moment(request.payload.document_date,
+                moment.utc(request.payload.document_date,
                 moment.ISO_8601).startOf('day').format('YYYY-MM-DD') :
-            moment(request.payload.document_date, 'DD MMM YY').
+                moment.utc(request.payload.document_date, 'DD MMM YY').
                 startOf('day').
                 format('YYYY-MM-DD') :
             undefined,
@@ -117,7 +117,7 @@ class ProductController {
         category_id: request.payload.category_id,
         brand_id: request.payload.brand_id,
         colour_id: request.payload.colour_id,
-        purchase_cost: request.payload.purchase_cost,
+        purchase_cost: request.payload.value,
         taxes: request.payload.taxes,
         updated_by: user.id || user.ID,
         seller_name: request.payload.seller_name,
@@ -126,12 +126,12 @@ class ProductController {
         status_type: 11,
         document_number: request.payload.document_number,
         document_date: request.payload.document_date ?
-            moment(request.payload.document_date,
+            moment.utc(request.payload.document_date,
                 moment.ISO_8601).
                 isValid() ?
-                moment(request.payload.document_date,
+                moment.utc(request.payload.document_date,
                     moment.ISO_8601).startOf('day').format('YYYY-MM-DD') :
-                moment(request.payload.document_date, 'DD MMM YY').
+                moment.utc(request.payload.document_date, 'DD MMM YY').
                     startOf('day').
                     format('YYYY-MM-DD') :
             undefined,
@@ -272,7 +272,7 @@ class ProductController {
           forceUpdate: request.pre.forceUpdate,
           /* ,
               nextPageUrl: productList.length > listIndex + 10 ?
-               `categories/${masterCategoryId}/products?pageno=${parseInt(pageNo, 10) + 1}
+               `categories/${main_category_id}/products?pageno=${parseInt(pageNo, 10) + 1}
                &ctype=${ctype}&categoryids=${categoryIds}&brandids=${brandIds}
                &offlinesellerids=${offlineSellerIds}&onlinesellerids=
                ${onlineSellerIds}&sortby=${sortBy}&searchvalue=${searchValue}` : '' */

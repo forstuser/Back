@@ -13,6 +13,40 @@ import nodemailer from 'nodemailer';
 import request from 'request';
 import moment from 'moment';
 
+const omitUpdates = (update) => {
+  update = _.omit(update, 'document_number');
+  update = _.omit(update, 'premium_type');
+  update = _.omit(update, 'product_name');
+  update = _.omit(update, 'due_date');
+  update = _.omit(update, 'productType');
+  update = _.omit(update, 'sellers');
+  update = _.omit(update, 'onlineSellers');
+  update = _.omit(update, 'due_in');
+  update = _.omit(update, 'document_date');
+  update = _.omit(update, 'updated_at');
+  update = _.omit(update, 'effective_date');
+  update = _.omit(update, 'expiry_date');
+  update = _.omit(update, 'value');
+  update = _.omit(update, 'taxes');
+  update = _.omit(update, 'category_id');
+  update = _.omit(update, 'brand_id');
+  update = _.omit(update, 'color_id');
+  update = _.omit(update, 'bill_id');
+  update = _.omit(update, 'seller_id');
+  update = _.omit(update, 'review_url');
+  update = _.omit(update, 'color');
+  update = _.omit(update, 'brand');
+  update = _.omit(update, 'bill');
+  update = _.omit(update, 'productReviews');
+  update = _.omit(update, 'productMetaData');
+  update = _.omit(update, 'insuranceDetails');
+  update = _.omit(update, 'warrantyDetails');
+  update = _.omit(update, 'amcDetails');
+  update = _.omit(update, 'repairBills');
+  update = _.omit(update, 'requiredCount');
+  return update;
+};
+
 class NotificationAdaptor {
   constructor(modals) {
     this.modals = modals;
@@ -143,15 +177,15 @@ class NotificationAdaptor {
         let aDate;
         let bDate;
 
-        aDate = a.expiryDate;
-        bDate = b.expiryDate;
+        aDate = a.expiry_date;
+        bDate = b.expiry_date;
 
         if (a.productType === 1) {
-          aDate = a.dueDate;
+          aDate = a.due_date;
         }
 
         if (b.productType === 1) {
-          bDate = b.dueDate;
+          bDate = b.due_date;
         }
 
         if (moment.utc(aDate, 'YYYY-MM-DD').
@@ -204,7 +238,7 @@ class NotificationAdaptor {
         user_id: user.id || user.ID,
         status_type: [5, 11],
       }),
-      this.productAdaptor.retrieveProducts({
+      this.pucAdaptor.retrievePUCs({
         user_id: user.id || user.ID,
         status_type: [5, 11],
         main_category_id: [3],
@@ -214,113 +248,100 @@ class NotificationAdaptor {
 
         product.productMetaData.map((metaItem) => {
           const metaData = metaItem;
-          if (metaData.name.toLowerCase().includes('due') &&
-              metaData.name.toLowerCase().includes('date') &&
-              moment(metaData.value, moment.ISO_8601).isValid()) {
-            const dueDateTime = moment(metaData.value, moment.ISO_8601);
-            product.dueDate = metaData.value;
-            product.dueIn = dueDateTime.diff(moment.utc(), 'days');
+
+          console.log(`${metaData}`);
+          if (metaData.title.toLowerCase().includes('due') &&
+              metaData.title.toLowerCase().includes('date') &&
+              metaData.form_value &&
+              moment.utc(metaData.form_value, moment.ISO_8601).isValid()) {
+            const due_date_time = moment.utc(metaData.form_value,
+                moment.ISO_8601);
+            product.due_date = metaData.form_value;
+            product.due_in = due_date_time.diff(moment.utc(), 'days');
           }
 
-          if (metaData.name.toLowerCase().includes('address')) {
-            product.description = metaData.name.toLowerCase().
-                includes('address') ? `${metaData.value}` : '';
+          if (metaData.title.toLowerCase().includes('address')) {
+            product.address = metaData.form_value;
           }
 
           return metaData;
         });
 
-        if (product.masterCategoryId.toString() === '6') {
-          product.title = `${product.productName} Reminder`;
-          product.productType = 5;
-        } else {
-          product.title = `${product.productName} Reminder`;
-          product.productType = 4;
-        }
-
+        product.product_type = 1;
         return product;
       });
 
       products = products.filter(
-          item => ((item.dueIn !== undefined && item.dueIn !== null) &&
-              item.dueIn <= 30 && item.dueIn >= 0));
+          item => ((item.due_in !== undefined && item.due_in !== null) &&
+              item.due_in <=
+              30 && item.due_in >= 0));
 
       let pucProducts = result[4].map((item) => {
-        const product = item;
-        if (product.pucDetail &&
-            moment.utc(product.pucDetail.expiry_date, moment.ISO_8601).
-                isValid()) {
-          const dueDateTime = moment.utc(product.pucDetail.expiry_date,
-              moment.ISO_8601).
+        const puc = item;
+        if (moment.utc(puc.expiry_date, moment.ISO_8601).isValid()) {
+          const due_date_time = moment.utc(puc.expiry_date, moment.ISO_8601).
               endOf('day');
-          product.dueDate = product.pucDetail.expiry_date;
-          product.dueIn = dueDateTime.diff(moment.utc(), 'days');
+          puc.due_date = puc.expiry_date;
+          puc.due_in = due_date_time.diff(moment.utc(), 'days');
+          puc.product_type = 5;
         }
 
-        product.productType = 5;
-        return product;
+        return puc;
       });
 
       pucProducts = pucProducts.filter(
-          item => ((item.dueIn !== undefined && item.dueIn !== null) &&
-              item.dueIn <= 30 && item.dueIn >= 0));
+          item => ((item.due_in !== undefined && item.due_in !== null) &&
+              item.due_in <= 30 && item.due_in >= 0));
+
       let amcs = result[1].map((item) => {
         const amc = item;
-        if (moment(amc.expiryDate, moment.ISO_8601).isValid()) {
-          const dueDateTime = moment(amc.expiryDate, moment.ISO_8601);
-          amc.dueDate = amc.expiryDate;
-          amc.dueIn = dueDateTime.diff(moment.utc(), 'days');
-          amc.productType = 3;
-          amc.title = 'AMC Renewal Pending';
-          amc.description = amc.productName;
+        if (moment.utc(amc.expiry_date, moment.ISO_8601).isValid()) {
+          const due_date_time = moment.utc(amc.expiry_date, moment.ISO_8601).
+              endOf('day');
+          amc.due_date = amc.expiry_date;
+          amc.due_in = due_date_time.diff(moment.utc(), 'days');
+          amc.product_type = 4;
         }
 
         return amc;
       });
       amcs = amcs.filter(
-          item => (item.dueIn !== undefined && item.dueIn !== null) &&
-              item.dueIn <= 30 && item.dueIn >= 0);
+          item => (item.due_in !== undefined && item.due_in !== null) &&
+              item.due_in <= 30 && item.due_in >= 0);
 
       let insurances = result[2].map((item) => {
         const insurance = item;
-        if (moment(insurance.expiryDate, moment.ISO_8601).isValid()) {
-          const dueDateTime = moment(insurance.expiryDate, moment.ISO_8601);
-          insurance.dueDate = insurance.expiryDate;
-          insurance.dueIn = dueDateTime.diff(moment.utc(), 'days');
-          insurance.productType = 3;
-          insurance.title = 'Insurance Renewal Pending';
-          insurance.description = insurance.productName;
+        if (moment.utc(insurance.expiry_date, moment.ISO_8601).isValid()) {
+          const due_date_time = moment.utc(insurance.expiry_date,
+              moment.ISO_8601).
+              endOf('day');
+          insurance.due_date = insurance.expiry_date;
+          insurance.due_in = due_date_time.diff(moment.utc(), 'days');
+          insurance.product_type = 3;
         }
         return insurance;
       });
 
       insurances = insurances.filter(
-          item => (item.dueIn !== undefined && item.dueIn !== null) &&
-              item.dueIn <= 30 && item.dueIn >= 0);
+          item => (item.due_in !== undefined && item.due_in !== null) &&
+              item.due_in <= 30 && item.due_in >= 0);
 
       let warranties = result[3].map((item) => {
         const warranty = item;
-        if (moment(warranty.expiryDate, moment.ISO_8601).isValid()) {
-          const dueDateTime = moment(warranty.expiryDate, moment.ISO_8601);
-
-          warranty.dueDate = warranty.expiryDate;
-          warranty.dueIn = dueDateTime.diff(moment.utc(), 'days');
-          warranty.productType = 3;
-          warranty.title = `Warranty Renewal Pending`;
-          warranty.description = `Warranty Renewal Pending for ${warranty.warranty_type ===
-          3 ?
-              `${warranty.dualWarrantyItem} of ${warranty.productName}` :
-              warranty.warranty_type === 4 ?
-                  `Accessories of ${warranty.productName}` :
-                  `of ${warranty.productName}`}`;
+        if (moment.utc(warranty.expiry_date, moment.ISO_8601).isValid()) {
+          const due_date_time = moment.utc(warranty.expiry_date,
+              moment.ISO_8601).
+              endOf('day');
+          warranty.due_date = warranty.expiry_date;
+          warranty.due_in = due_date_time.diff(moment.utc(), 'days');
+          warranty.product_type = 2;
         }
-
         return warranty;
       });
 
       warranties = warranties.filter(
-          item => (item.dueIn !== undefined && item.dueIn !== null) &&
-              item.dueIn <= 30 && item.dueIn >= 0);
+          item => (item.due_in !== undefined && item.due_in !== null) &&
+              item.due_in <= 30 && item.due_in >= 0);
 
       return [
         ...products,
@@ -344,13 +365,11 @@ class NotificationAdaptor {
           model: this.modals.products,
           as: 'product',
           attributes: [
-            [
               'product_name',
-              'productName'],
             [
               this.modals.sequelize.fn('CONCAT', 'products/',
                   this.modals.sequelize.col('"product"."id"')),
-              'productURL']],
+              'product_url']],
           required: false,
         }],
       order: [['created_at', 'DESC']],
@@ -358,42 +377,42 @@ class NotificationAdaptor {
         [
           'notification_id',
           'id'],
-        [
           'due_amount',
-          'dueAmount'],
         [
           this.modals.sequelize.literal('"product"."id"'),
-          'productId'],
+          'product_id'],
         [
           this.modals.sequelize.literal('"product"."product_name"'),
-          'productName'],
+          'product_name'],
         [
           this.modals.sequelize.fn('CONCAT', 'products/',
               this.modals.sequelize.literal('"product"."id"')),
-          'productURL'],
+          'product_url'],
         [
           this.modals.sequelize.literal('"product"."main_category_id"'),
-          'masterCategoryId'],
+          'main_category_id'],
         [
           this.modals.sequelize.literal('"product"."document_date"'),
-          'purchaseDate'],
-        [
+          'document_date'],
           'due_date',
-          'dueDate'],
         'taxes',
-        [
           'total_amount',
-          'totalAmount'],
-        [
           'notification_type',
-          'productType'],
         'title',
         'description',
-        [
           'status_id',
-          'statusId'],
-        ['created_at', 'createdAt'], 'copies'],
-    }).then((result) => result.map(item => item.toJSON()));
+        'created_at', 'copies'],
+    }).then((result) => result.map(item => {
+      const notification = item.toJSON();
+      notification.copies = notification.copies.map((copyItem) => {
+        copyItem.copy_id = copyItem.copy_id || copyItem.copyId;
+        copyItem.copy_url = copyItem.copy_url || copyItem.copyUrl;
+        copyItem = _.omit(copyItem, 'copyId');
+        copyItem = _.omit(copyItem, 'copyUrl');
+        return copyItem;
+      });
+      return notification;
+    }));
   }
 
   updateNotificationStatus(user, notificationIds) {
@@ -428,46 +447,7 @@ class NotificationAdaptor {
         update.due_amount = update.value;
         update.due_date = update.dueDate;
         update.notification_type = update.productType;
-
-        update = _.omit(update, 'id');
-        update = _.omit(update, 'productId');
-        update = _.omit(update, 'jobId');
-        update = _.omit(update, 'policyNo');
-        update = _.omit(update, 'premiumType');
-        update = _.omit(update, 'productName');
-        update = _.omit(update, 'premiumAmount');
-        update = _.omit(update, 'dueDate');
-        update = _.omit(update, 'productType');
-        update = _.omit(update, 'sellers');
-        update = _.omit(update, 'onlineSellers');
-        update = _.omit(update, 'dueIn');
-        update = _.omit(update, 'purchaseDate');
-        update = _.omit(update, 'updatedDate');
-        update = _.omit(update, 'effectiveDate');
-        update = _.omit(update, 'expiryDate');
-        update = _.omit(update, 'value');
-        update = _.omit(update, 'taxes');
-        update = _.omit(update, 'categoryId');
-        update = _.omit(update, 'brandId');
-        update = _.omit(update, 'colorId');
-        update = _.omit(update, 'value');
-        update = _.omit(update, 'documentNo');
-        update = _.omit(update, 'billId');
-        update = _.omit(update, 'sellerId');
-        update = _.omit(update, 'reviewUrl');
-        update = _.omit(update, 'color');
-        update = _.omit(update, 'brand');
-        update = _.omit(update, 'bill');
-        update = _.omit(update, 'productReviews');
-        update = _.omit(update, 'productMetaData');
-        update = _.omit(update, 'insuranceDetails');
-        update = _.omit(update, 'warrantyDetails');
-        update = _.omit(update, 'amcDetails');
-        update = _.omit(update, 'repairBills');
-        update = _.omit(update, 'requiredCount');
-        update = _.omit(update, 'dueDate');
-        update = _.omit(update, 'dueIn');
-        return update;
+        return omitUpdates(update);
       });
       /* const listIndex = (parseInt(pageNo || 1, 10) * 10) - 10; */
 
@@ -513,45 +493,7 @@ class NotificationAdaptor {
         update.due_amount = update.value;
         update.notification_type = update.productType;
 
-        update = _.omit(update, 'id');
-        update = _.omit(update, 'productId');
-        update = _.omit(update, 'jobId');
-        update = _.omit(update, 'policyNo');
-        update = _.omit(update, 'premiumType');
-        update = _.omit(update, 'productName');
-        update = _.omit(update, 'premiumAmount');
-        update = _.omit(update, 'dueDate');
-        update = _.omit(update, 'productType');
-        update = _.omit(update, 'sellers');
-        update = _.omit(update, 'onlineSellers');
-        update = _.omit(update, 'dueIn');
-        update = _.omit(update, 'purchaseDate');
-        update = _.omit(update, 'updatedDate');
-        update = _.omit(update, 'effectiveDate');
-        update = _.omit(update, 'expiryDate');
-        update = _.omit(update, 'value');
-        update = _.omit(update, 'taxes');
-        update = _.omit(update, 'categoryId');
-        update = _.omit(update, 'brandId');
-        update = _.omit(update, 'colorId');
-        update = _.omit(update, 'value');
-        update = _.omit(update, 'documentNo');
-        update = _.omit(update, 'billId');
-        update = _.omit(update, 'sellerId');
-        update = _.omit(update, 'reviewUrl');
-        update = _.omit(update, 'color');
-        update = _.omit(update, 'brand');
-        update = _.omit(update, 'bill');
-        update = _.omit(update, 'productReviews');
-        update = _.omit(update, 'productMetaData');
-        update = _.omit(update, 'insuranceDetails');
-        update = _.omit(update, 'warrantyDetails');
-        update = _.omit(update, 'amcDetails');
-        update = _.omit(update, 'repairBills');
-        update = _.omit(update, 'requiredCount');
-        update = _.omit(update, 'dueDate');
-        update = _.omit(update, 'dueIn');
-        return update;
+        return omitUpdates(update);
       });
 
       const notificationPromise = upcomingServices.map(
@@ -640,14 +582,14 @@ class NotificationAdaptor {
 
   retrieveExpenseCronNotification(days) {
     const purchaseDateCompare = days === 1 ? {
-      $gte: moment().subtract(days, 'day').startOf('day'),
-      $lte: moment().subtract(days, 'day').endOf('day'),
+      $gte: moment.utc().subtract(days, 'day').startOf('day'),
+      $lte: moment.utc().subtract(days, 'day').endOf('day'),
     } : days === 7 ? {
-      $lte: moment().subtract(days, 'day').endOf('day'),
-      $gte: moment().subtract(days, 'day').startOf('day'),
+      $lte: moment.utc().subtract(days, 'day').endOf('day'),
+      $gte: moment.utc().subtract(days, 'day').startOf('day'),
     } : {
-      $gte: moment().startOf('month'),
-      $lte: moment().endOf('month'),
+      $gte: moment.utc().startOf('month'),
+      $lte: moment.utc().endOf('month'),
     };
     return Promise.all([
       this.productAdaptor.retrieveNotificationProducts({
@@ -680,11 +622,11 @@ class NotificationAdaptor {
 
   retrieveCronNotification(days) {
     const expiryDateCompare = days === 15 ? {
-      $gte: moment().add(days, 'day').startOf('day'),
-      $lte: moment().add(days, 'day').endOf('day'),
+      $gte: moment.utc().add(days, 'day').startOf('day'),
+      $lte: moment.utc().add(days, 'day').endOf('day'),
     } : {
-      $gte: moment().startOf('day'),
-      $lte: moment().add(days, 'day').endOf('day'),
+      $gte: moment.utc().startOf('day'),
+      $lte: moment.utc().add(days, 'day').endOf('day'),
     };
     return Promise.all([
       this.productAdaptor.retrieveNotificationProducts({
@@ -710,8 +652,8 @@ class NotificationAdaptor {
           const metaData = metaItem;
           if (metaData.name.toLowerCase().includes('due') &&
               metaData.name.toLowerCase().includes('date') &&
-              moment(metaData.value, moment.ISO_8601).isValid()) {
-            const dueDateTime = moment(metaData.value, moment.ISO_8601);
+              moment.utc(metaData.value, moment.ISO_8601).isValid()) {
+            const dueDateTime = moment.utc(metaData.value, moment.ISO_8601);
             product.dueDate = metaData.value;
             product.dueIn = dueDateTime.diff(moment.utc(), 'days');
           }
@@ -731,14 +673,15 @@ class NotificationAdaptor {
 
       products = products.filter(
           item => days === 15 ?
-              (item.dueDate <= moment().add(days, 'day').endOf('day') &&
-                  item.dueDate >= moment().add(days, 'day').startOf('day')) :
-              (item.dueDate <= moment().add(days, 'day').endOf('day') &&
-                  item.dueDate >= moment().startOf('day')));
+              (item.dueDate <= moment.utc().add(days, 'day').endOf('day') &&
+                  item.dueDate >=
+                  moment.utc().add(days, 'day').startOf('day')) :
+              (item.dueDate <= moment.utc().add(days, 'day').endOf('day') &&
+                  item.dueDate >= moment.utc().startOf('day')));
       let amcs = result[1].map((item) => {
         const amc = item;
-        if (moment(amc.expiryDate, moment.ISO_8601).isValid()) {
-          const dueDateTime = moment(amc.expiryDate, moment.ISO_8601);
+        if (moment.utc(amc.expiryDate, moment.ISO_8601).isValid()) {
+          const dueDateTime = moment.utc(amc.expiryDate, moment.ISO_8601);
           amc.dueDate = amc.expiryDate;
           amc.dueIn = dueDateTime.diff(moment.utc(), 'days');
           amc.productType = 3;
@@ -751,8 +694,8 @@ class NotificationAdaptor {
 
       let insurances = result[2].map((item) => {
         const insurance = item;
-        if (moment(insurance.expiryDate, moment.ISO_8601).isValid()) {
-          const dueDateTime = moment(insurance.expiryDate, moment.ISO_8601);
+        if (moment.utc(insurance.expiryDate, moment.ISO_8601).isValid()) {
+          const dueDateTime = moment.utc(insurance.expiryDate, moment.ISO_8601);
           insurance.dueDate = insurance.expiryDate;
           insurance.dueIn = dueDateTime.diff(moment.utc(), 'days');
           insurance.productType = 3;
@@ -764,8 +707,8 @@ class NotificationAdaptor {
 
       let warranties = result[3].map((item) => {
         const warranty = item;
-        if (moment(warranty.expiryDate, moment.ISO_8601).isValid()) {
-          const dueDateTime = moment(warranty.expiryDate, moment.ISO_8601);
+        if (moment.utc(warranty.expiryDate, moment.ISO_8601).isValid()) {
+          const dueDateTime = moment.utc(warranty.expiryDate, moment.ISO_8601);
 
           warranty.dueDate = warranty.expiryDate;
           warranty.dueIn = dueDateTime.diff(moment.utc(), 'days');
