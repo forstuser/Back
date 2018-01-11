@@ -1247,7 +1247,7 @@ class ProductAdaptor {
                 document_number: otherItems.insurance.policy_no,
                 provider_id: otherItems.insurance.provider_id,
                 amount_insured: otherItems.insurance.amount_insured,
-                renewal_cost: otherItems.insurance.renewal_cost,
+                renewal_cost: otherItems.insurance.value,
                 user_id: productBody.user_id,
               }));
             }
@@ -1322,7 +1322,7 @@ class ProductAdaptor {
                     renewal_type: otherItems.puc.expiry_period || 7,
                     updated_by: productBody.user_id,
                     status_type: 11,
-                    renewal_cost: otherItems.puc.renewal_cost,
+                    renewal_cost: otherItems.puc.value,
                     product_id: productId,
                     seller_id: isProductPUCSellerSame ?
                         sellerList[0].sid :
@@ -1590,7 +1590,7 @@ class ProductAdaptor {
           seller_id: repairSellerId,
           document_date: moment(document_date).format('YYYY-MM-DD'),
           repair_for: otherItems.repair.repair_for,
-          repair_cost: otherItems.repair.repair_cost,
+          repair_cost: otherItems.repair.value,
           warranty_upto: otherItems.repair.warranty_upto,
           user_id: productBody.user_id,
         }) :
@@ -1601,7 +1601,7 @@ class ProductAdaptor {
           document_date: moment(document_date).format('YYYY-MM-DD'),
           seller_id: repairSellerId,
           repair_for: otherItems.repair.repair_for,
-          repair_cost: otherItems.repair.repair_cost,
+          repair_cost: otherItems.repair.value,
           warranty_upto: otherItems.repair.warranty_upto,
           user_id: productBody.user_id,
         }));
@@ -1630,7 +1630,7 @@ class ProductAdaptor {
           updated_by: productBody.user_id,
           status_type: 11,
           product_id: productId,
-          renewal_cost: otherItems.amc.renewal_cost,
+          renewal_cost: otherItems.amc.value,
           seller_id: isProductAMCSellerSame ?
               sellerList[0].sid :
               otherItems.amc.seller_name ||
@@ -1688,7 +1688,7 @@ class ProductAdaptor {
               document_number: otherItems.insurance.policy_no,
               provider_id: otherItems.insurance.provider_id,
               amount_insured: otherItems.insurance.amount_insured,
-              renewal_cost: otherItems.insurance.renewal_cost,
+              renewal_cost: otherItems.insurance.value,
               user_id: productBody.user_id,
             }) :
         this.insuranceAdaptor.createInsurances({
@@ -1702,7 +1702,7 @@ class ProductAdaptor {
           document_number: otherItems.insurance.policy_no,
           provider_id: otherItems.insurance.provider_id,
           amount_insured: otherItems.insurance.amount_insured,
-          renewal_cost: otherItems.insurance.renewal_cost,
+          renewal_cost: otherItems.insurance.value,
           user_id: productBody.user_id,
         }));
   }

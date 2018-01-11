@@ -731,7 +731,7 @@ var ProductAdaptor = function () {
               document_number: otherItems.insurance.policy_no,
               provider_id: otherItems.insurance.provider_id,
               amount_insured: otherItems.insurance.amount_insured,
-              renewal_cost: otherItems.insurance.renewal_cost,
+              renewal_cost: otherItems.insurance.value,
               user_id: productBody.user_id
             }));
           }
@@ -782,7 +782,7 @@ var ProductAdaptor = function () {
               renewal_type: otherItems.puc.expiry_period || 7,
               updated_by: productBody.user_id,
               status_type: 11,
-              renewal_cost: otherItems.puc.renewal_cost,
+              renewal_cost: otherItems.puc.value,
               product_id: productId,
               seller_id: isProductPUCSellerSame ? sellerList[0].sid : otherItems.puc.seller_name || otherItems.puc.seller_contact ? sellerList[3].sid : undefined,
               expiry_date: (0, _moment2.default)(_expiry_date3).format('YYYY-MM-DD'),
@@ -978,7 +978,7 @@ var ProductAdaptor = function () {
         seller_id: repairSellerId,
         document_date: (0, _moment2.default)(document_date).format('YYYY-MM-DD'),
         repair_for: otherItems.repair.repair_for,
-        repair_cost: otherItems.repair.repair_cost,
+        repair_cost: otherItems.repair.value,
         warranty_upto: otherItems.repair.warranty_upto,
         user_id: productBody.user_id
       }) : this.repairAdaptor.createRepairs({
@@ -988,7 +988,7 @@ var ProductAdaptor = function () {
         document_date: (0, _moment2.default)(document_date).format('YYYY-MM-DD'),
         seller_id: repairSellerId,
         repair_for: otherItems.repair.repair_for,
-        repair_cost: otherItems.repair.repair_cost,
+        repair_cost: otherItems.repair.value,
         warranty_upto: otherItems.repair.warranty_upto,
         user_id: productBody.user_id
       }));
@@ -1006,7 +1006,7 @@ var ProductAdaptor = function () {
         updated_by: productBody.user_id,
         status_type: 11,
         product_id: productId,
-        renewal_cost: otherItems.amc.renewal_cost,
+        renewal_cost: otherItems.amc.value,
         seller_id: isProductAMCSellerSame ? sellerList[0].sid : otherItems.amc.seller_name || otherItems.amc.seller_contact ? sellerList[1].sid : undefined,
         expiry_date: (0, _moment2.default)(expiry_date).format('YYYY-MM-DD'),
         effective_date: (0, _moment2.default)(effective_date).format('YYYY-MM-DD'),
@@ -1040,7 +1040,7 @@ var ProductAdaptor = function () {
         document_number: otherItems.insurance.policy_no,
         provider_id: otherItems.insurance.provider_id,
         amount_insured: otherItems.insurance.amount_insured,
-        renewal_cost: otherItems.insurance.renewal_cost,
+        renewal_cost: otherItems.insurance.value,
         user_id: productBody.user_id
       }) : this.insuranceAdaptor.createInsurances({
         renewal_type: 8,
@@ -1053,7 +1053,7 @@ var ProductAdaptor = function () {
         document_number: otherItems.insurance.policy_no,
         provider_id: otherItems.insurance.provider_id,
         amount_insured: otherItems.insurance.amount_insured,
-        renewal_cost: otherItems.insurance.renewal_cost,
+        renewal_cost: otherItems.insurance.value,
         user_id: productBody.user_id
       }));
     }
