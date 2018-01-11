@@ -1,8 +1,8 @@
 /*jshint esversion: 6 */
 'use strict';
 
-Object.defineProperty(exports, '__esModule', {
-  value: true,
+Object.defineProperty(exports, "__esModule", {
+  value: true
 });
 
 var _joi = require('joi');
@@ -69,26 +69,19 @@ var _productItem = require('../api/controllers/productItem');
 
 var _productItem2 = _interopRequireDefault(_productItem);
 
-function _interopRequireDefault(obj) {
-  return obj && obj.__esModule ? obj : {default: obj};
-}
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var User = void 0;
 var appVersionHelper = void 0;
 
-function prepareServiceCenterRoutes(
-    serviceCenterController, serviceCenterRoutes) {
+function prepareServiceCenterRoutes(serviceCenterController, serviceCenterRoutes) {
   if (serviceCenterController) {
     serviceCenterRoutes.push({
       method: 'POST',
       path: '/consumer/servicecenters',
       config: {
         auth: 'jwt',
-        pre: [
-          {
-            method: appVersionHelper.checkAppVersion,
-            assign: 'forceUpdate',
-          }],
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
         handler: _serviceCenter2.default.retrieveServiceCenters,
         validate: {
           payload: {
@@ -98,12 +91,10 @@ function prepareServiceCenterRoutes(
             longitude: [_joi2.default.string(), _joi2.default.allow(null)],
             latitude: [_joi2.default.string(), _joi2.default.allow(null)],
             categoryId: [_joi2.default.number(), _joi2.default.allow(null)],
-            masterCategoryId: [
-              _joi2.default.number(),
-              _joi2.default.allow(null)],
+            masterCategoryId: [_joi2.default.number(), _joi2.default.allow(null)],
             brandId: [_joi2.default.number(), _joi2.default.allow(null)],
             output: 'data',
-            parse: true,
+            parse: true
           }
         }
       }
@@ -114,12 +105,8 @@ function prepareServiceCenterRoutes(
       path: '/consumer/servicecenters',
       config: {
         auth: 'jwt',
-        pre: [
-          {
-            method: appVersionHelper.checkAppVersion,
-            assign: 'forceUpdate',
-          }],
-        handler: _serviceCenter2.default.retrieveServiceCenters,
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        handler: _serviceCenter2.default.retrieveServiceCenters
       }
     });
     serviceCenterRoutes.push({
@@ -127,12 +114,8 @@ function prepareServiceCenterRoutes(
       path: '/consumer/servicecenters/filters',
       config: {
         auth: 'jwt',
-        pre: [
-          {
-            method: appVersionHelper.checkAppVersion,
-            assign: 'forceUpdate',
-          }],
-        handler: _serviceCenter2.default.retrieveServiceCenterFilters,
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        handler: _serviceCenter2.default.retrieveServiceCenterFilters
       }
     });
 
@@ -140,24 +123,16 @@ function prepareServiceCenterRoutes(
       method: 'GET',
       path: '/consumer/{mode}/centers',
       config: {
-        pre: [
-          {
-            method: appVersionHelper.checkAppVersion,
-            assign: 'forceUpdate',
-          }],
-        handler: _serviceCenter2.default.retrieveServiceCenters,
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        handler: _serviceCenter2.default.retrieveServiceCenters
       }
     });
     serviceCenterRoutes.push({
       method: 'GET',
       path: '/consumer/web/centers/filters',
       config: {
-        pre: [
-          {
-            method: appVersionHelper.checkAppVersion,
-            assign: 'forceUpdate',
-          }],
-        handler: _serviceCenter2.default.retrieveServiceCenterFilters,
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        handler: _serviceCenter2.default.retrieveServiceCenterFilters
       }
     });
   }
@@ -171,12 +146,8 @@ function prepareBrandRoutes(brandController, brandRoutes) {
       path: '/brands',
       config: {
         auth: 'jwt',
-        pre: [
-          {
-            method: appVersionHelper.checkAppVersion,
-            assign: 'forceUpdate',
-          }],
-        handler: _brand2.default.getBrands,
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        handler: _brand2.default.getBrands
       }
     });
 
@@ -184,12 +155,8 @@ function prepareBrandRoutes(brandController, brandRoutes) {
       method: 'GET',
       path: '/{mode}/brands',
       config: {
-        pre: [
-          {
-            method: appVersionHelper.checkAppVersion,
-            assign: 'forceUpdate',
-          }],
-        handler: _brand2.default.getBrands,
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        handler: _brand2.default.getBrands
       }
     });
 
@@ -197,12 +164,8 @@ function prepareBrandRoutes(brandController, brandRoutes) {
       method: 'GET',
       path: '/brandcenter',
       config: {
-        pre: [
-          {
-            method: appVersionHelper.checkAppVersion,
-            assign: 'forceUpdate',
-          }],
-        handler: _brand2.default.getBrandASC,
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        handler: _brand2.default.getBrandASC
       }
     });
   }
@@ -216,24 +179,16 @@ function prepareCategoryRoutes(categoryController, categoryRoutes) {
       path: '/categories',
       config: {
         auth: 'jwt',
-        pre: [
-          {
-            method: appVersionHelper.checkAppVersion,
-            assign: 'forceUpdate',
-          }],
-        handler: _category2.default.getCategories,
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        handler: _category2.default.getCategories
       }
     });
     categoryRoutes.push({
       method: 'GET',
       path: '/{mode}/categories',
       config: {
-        pre: [
-          {
-            method: appVersionHelper.checkAppVersion,
-            assign: 'forceUpdate',
-          }],
-        handler: _category2.default.getCategories,
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        handler: _category2.default.getCategories
       }
     });
   }
@@ -251,11 +206,7 @@ function prepareAuthRoutes(userController, authRoutes) {
       method: 'POST',
       path: '/consumer/getotp',
       config: {
-        pre: [
-          {
-            method: appVersionHelper.checkAppVersion,
-            assign: 'forceUpdate',
-          }],
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
         handler: _user2.default.dispatchOTP,
         description: 'Generate OTP.',
         tags: ['api', 'User', 'Authentication'],
@@ -263,32 +214,12 @@ function prepareAuthRoutes(userController, authRoutes) {
           payload: {
             PhoneNo: _joi2.default.string().required(),
             output: 'data',
-            parse: true,
+            parse: true
           }
         },
         plugins: {
           'hapi-swagger': {
-            responseMessages: [
-              {
-                code: 200,
-                message: 'Authenticated',
-              },
-              {
-                code: 400,
-                message: 'Bad Request',
-              },
-              {
-                code: 401,
-                message: 'Invalid Credentials',
-              },
-              {
-                code: 404,
-                message: 'Not Found',
-              },
-              {
-                code: 500,
-                message: 'Internal Server Error',
-              }],
+            responseMessages: [{ code: 200, message: 'Authenticated' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
           }
         }
       }
@@ -300,11 +231,7 @@ function prepareAuthRoutes(userController, authRoutes) {
       path: '/consumer/subscribe',
       config: {
         auth: 'jwt',
-        pre: [
-          {
-            method: appVersionHelper.checkAppVersion,
-            assign: 'forceUpdate',
-          }],
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
         handler: _user2.default.subscribeUser,
         description: 'Update User FCM Server ID.',
         validate: {
@@ -312,32 +239,12 @@ function prepareAuthRoutes(userController, authRoutes) {
             fcmId: [_joi2.default.string(), _joi2.default.allow(null)],
             platform: [_joi2.default.number(), _joi2.default.allow(null)],
             output: 'data',
-            parse: true,
+            parse: true
           }
         },
         plugins: {
           'hapi-swagger': {
-            responseMessages: [
-              {
-                code: 202,
-                message: 'Authenticated',
-              },
-              {
-                code: 400,
-                message: 'Bad Request',
-              },
-              {
-                code: 401,
-                message: 'Invalid Credentials',
-              },
-              {
-                code: 404,
-                message: 'Not Found',
-              },
-              {
-                code: 500,
-                message: 'Internal Server Error',
-              }],
+            responseMessages: [{ code: 202, message: 'Authenticated' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
           }
         }
       }
@@ -349,11 +256,7 @@ function prepareAuthRoutes(userController, authRoutes) {
       path: '/consumer/profile',
       config: {
         auth: 'jwt',
-        pre: [
-          {
-            method: appVersionHelper.checkAppVersion,
-            assign: 'forceUpdate',
-          }],
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
         handler: _user2.default.updateUserProfile,
         description: 'Update User Profile.',
         validate: {
@@ -369,32 +272,12 @@ function prepareAuthRoutes(userController, authRoutes) {
             location: [_joi2.default.string(), _joi2.default.allow(null, '')],
             addresses: _joi2.default.array(),
             output: 'data',
-            parse: true,
+            parse: true
           }
         },
         plugins: {
           'hapi-swagger': {
-            responseMessages: [
-              {
-                code: 202,
-                message: 'Authenticated',
-              },
-              {
-                code: 400,
-                message: 'Bad Request',
-              },
-              {
-                code: 401,
-                message: 'Invalid Credentials',
-              },
-              {
-                code: 404,
-                message: 'Not Found',
-              },
-              {
-                code: 500,
-                message: 'Internal Server Error',
-              }],
+            responseMessages: [{ code: 202, message: 'Authenticated' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
           }
         }
       }
@@ -406,36 +289,12 @@ function prepareAuthRoutes(userController, authRoutes) {
       path: '/consumer/profile',
       config: {
         auth: 'jwt',
-        pre: [
-          {
-            method: appVersionHelper.checkAppVersion,
-            assign: 'forceUpdate',
-          }],
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
         handler: _user2.default.retrieveUserProfile,
         description: 'Get User Profile.',
         plugins: {
           'hapi-swagger': {
-            responseMessages: [
-              {
-                code: 200,
-                message: 'Successful',
-              },
-              {
-                code: 400,
-                message: 'Bad Request',
-              },
-              {
-                code: 401,
-                message: 'Invalid Credentials',
-              },
-              {
-                code: 404,
-                message: 'Not Found',
-              },
-              {
-                code: 500,
-                message: 'Internal Server Error',
-              }],
+            responseMessages: [{ code: 200, message: 'Successful' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
           }
         }
       }
@@ -450,27 +309,7 @@ function prepareAuthRoutes(userController, authRoutes) {
         description: 'Verify Email Address.',
         plugins: {
           'hapi-swagger': {
-            responseMessages: [
-              {
-                code: 200,
-                message: 'Successful',
-              },
-              {
-                code: 400,
-                message: 'Bad Request',
-              },
-              {
-                code: 401,
-                message: 'Invalid Credentials',
-              },
-              {
-                code: 404,
-                message: 'Not Found',
-              },
-              {
-                code: 500,
-                message: 'Internal Server Error',
-              }],
+            responseMessages: [{ code: 200, message: 'Successful' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
           }
         }
       }
@@ -482,36 +321,12 @@ function prepareAuthRoutes(userController, authRoutes) {
       path: '/consumer/nearby',
       config: {
         auth: 'jwt',
-        pre: [
-          {
-            method: appVersionHelper.checkAppVersion,
-            assign: 'forceUpdate',
-          }],
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
         handler: _user2.default.retrieveNearBy,
         description: 'Get User Profile.',
         plugins: {
           'hapi-swagger': {
-            responseMessages: [
-              {
-                code: 200,
-                message: 'Successful',
-              },
-              {
-                code: 400,
-                message: 'Bad Request',
-              },
-              {
-                code: 401,
-                message: 'Invalid Credentials',
-              },
-              {
-                code: 404,
-                message: 'Not Found',
-              },
-              {
-                code: 500,
-                message: 'Internal Server Error',
-              }],
+            responseMessages: [{ code: 200, message: 'Successful' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
           }
         }
       }
@@ -532,7 +347,7 @@ function prepareAuthRoutes(userController, authRoutes) {
               EmailAddress: _joi2.default.string().email(),
               PhoneNo: _joi2.default.string().required(),
               Name: _joi2.default.string(),
-              ImageLink: _joi2.default.string(),
+              ImageLink: _joi2.default.string()
             },
             TruePayload: _joi2.default.string(),
             fcmId: _joi2.default.string(),
@@ -541,32 +356,12 @@ function prepareAuthRoutes(userController, authRoutes) {
             transactionId: _joi2.default.string(),
             TrueSecret: _joi2.default.string(),
             output: 'data',
-            parse: true,
+            parse: true
           }
         },
         plugins: {
           'hapi-swagger': {
-            responseMessages: [
-              {
-                code: 200,
-                message: 'Authenticated',
-              },
-              {
-                code: 400,
-                message: 'Bad Request',
-              },
-              {
-                code: 401,
-                message: 'Invalid Credentials',
-              },
-              {
-                code: 404,
-                message: 'Not Found',
-              },
-              {
-                code: 500,
-                message: 'Internal Server Error',
-              }],
+            responseMessages: [{ code: 200, message: 'Authenticated' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
           }
         }
       }
@@ -579,43 +374,19 @@ function prepareAuthRoutes(userController, authRoutes) {
       config: {
         handler: _user2.default.logout,
         auth: 'jwt',
-        pre: [
-          {
-            method: appVersionHelper.checkAppVersion,
-            assign: 'forceUpdate',
-          }],
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
         description: 'Logout User.',
         tags: ['api', 'User', 'Authentication'],
         validate: {
           payload: _joi2.default.object({
             fcmId: [_joi2.default.string()],
             output: 'data',
-            parse: true,
+            parse: true
           }).allow(null)
         },
         plugins: {
           'hapi-swagger': {
-            responseMessages: [
-              {
-                code: 202,
-                message: 'Authenticated',
-              },
-              {
-                code: 400,
-                message: 'Bad Request',
-              },
-              {
-                code: 401,
-                message: 'Invalid Credentials',
-              },
-              {
-                code: 404,
-                message: 'Not Found',
-              },
-              {
-                code: 500,
-                message: 'Internal Server Error',
-              }],
+            responseMessages: [{ code: 202, message: 'Authenticated' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
           }
         }
       }
@@ -631,13 +402,9 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
       path: '/consumer/upload/selfie',
       config: {
         auth: 'jwt',
-        pre: [
-          {
-            method: appVersionHelper.checkAppVersion,
-            assign: 'forceUpdate',
-          }],
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
         files: {
-          relativeTo: _path2.default.join(__dirname, '../static/src'),
+          relativeTo: _path2.default.join(__dirname, '../static/src')
         },
         handler: _upload2.default.uploadUserImage,
         payload: {
@@ -647,7 +414,7 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
           timeout: 30034,
           allow: 'multipart/form-data',
           failAction: 'log',
-          maxBytes: 209715200,
+          maxBytes: 209715200
         }
       }
     });
@@ -658,13 +425,9 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
       path: '/consumer/upload',
       config: {
         auth: 'jwt',
-        pre: [
-          {
-            method: appVersionHelper.checkAppVersion,
-            assign: 'forceUpdate',
-          }],
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
         files: {
-          relativeTo: _path2.default.join(__dirname, '../static/src'),
+          relativeTo: _path2.default.join(__dirname, '../static/src')
         },
         handler: _upload2.default.uploadFiles,
         payload: {
@@ -674,7 +437,7 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
           timeout: 30034,
           allow: 'multipart/form-data',
           failAction: 'log',
-          maxBytes: 209715200,
+          maxBytes: 209715200
         }
       }
     });
@@ -684,13 +447,9 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
       path: '/consumer/upload/{id}',
       config: {
         auth: 'jwt',
-        pre: [
-          {
-            method: appVersionHelper.checkAppVersion,
-            assign: 'forceUpdate',
-          }],
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
         files: {
-          relativeTo: _path2.default.join(__dirname, '../static/src'),
+          relativeTo: _path2.default.join(__dirname, '../static/src')
         },
         handler: _upload2.default.uploadFiles,
         payload: {
@@ -700,7 +459,7 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
           timeout: 30034,
           allow: 'multipart/form-data',
           failAction: 'log',
-          maxBytes: 209715200,
+          maxBytes: 209715200
         }
       }
     });
@@ -711,12 +470,8 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
       path: '/jobs/{id}/files/{copyid}',
       config: {
         // auth: 'jwt',
-        pre: [
-          {
-            method: appVersionHelper.checkAppVersion,
-            assign: 'forceUpdate',
-          }],
-        handler: _upload2.default.retrieveFiles,
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        handler: _upload2.default.retrieveFiles
       }
     });
 
@@ -726,12 +481,8 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
       path: '/jobs/{id}/files/{copyid}',
       config: {
         auth: 'jwt',
-        pre: [
-          {
-            method: appVersionHelper.checkAppVersion,
-            assign: 'forceUpdate',
-          }],
-        handler: _upload2.default.deleteFile,
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        handler: _upload2.default.deleteFile
       }
     });
 
@@ -741,12 +492,8 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
       path: '/consumer/{id}/images',
       config: {
         // auth: 'jwt',
-        pre: [
-          {
-            method: appVersionHelper.checkAppVersion,
-            assign: 'forceUpdate',
-          }],
-        handler: _upload2.default.retrieveUserImage,
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        handler: _upload2.default.retrieveUserImage
       }
     });
 
@@ -755,7 +502,7 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
       method: 'GET',
       path: '/categories/{id}/images/{type}',
       config: {
-        handler: _upload2.default.retrieveCategoryImage,
+        handler: _upload2.default.retrieveCategoryImage
       }
     });
 
@@ -764,7 +511,7 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
       method: 'GET',
       path: '/brands/{id}/images',
       config: {
-        handler: _upload2.default.retrieveBrandImage,
+        handler: _upload2.default.retrieveBrandImage
       }
     });
   }
@@ -779,12 +526,8 @@ function prepareDashboardRoutes(dashboardController, dashboardRoutes) {
       path: '/consumer/dashboard',
       config: {
         auth: 'jwt',
-        pre: [
-          {
-            method: appVersionHelper.checkAppVersion,
-            assign: 'forceUpdate',
-          }],
-        handler: _dashboard2.default.getDashboard,
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        handler: _dashboard2.default.getDashboard
       }
     });
 
@@ -794,12 +537,8 @@ function prepareDashboardRoutes(dashboardController, dashboardRoutes) {
       path: '/consumer/ehome',
       config: {
         auth: 'jwt',
-        pre: [
-          {
-            method: appVersionHelper.checkAppVersion,
-            assign: 'forceUpdate',
-          }],
-        handler: _dashboard2.default.getEHome,
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        handler: _dashboard2.default.getEHome
       }
     });
 
@@ -809,12 +548,8 @@ function prepareDashboardRoutes(dashboardController, dashboardRoutes) {
       path: '/categories/{id}/products',
       config: {
         auth: 'jwt',
-        pre: [
-          {
-            method: appVersionHelper.checkAppVersion,
-            assign: 'forceUpdate',
-          }],
-        handler: _dashboard2.default.getProductsInCategory,
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        handler: _dashboard2.default.getProductsInCategory
       }
     });
 
@@ -824,12 +559,8 @@ function prepareDashboardRoutes(dashboardController, dashboardRoutes) {
       path: '/consumer/mailbox',
       config: {
         auth: 'jwt',
-        pre: [
-          {
-            method: appVersionHelper.checkAppVersion,
-            assign: 'forceUpdate',
-          }],
-        handler: _dashboard2.default.getMailbox,
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
+        handler: _dashboard2.default.getMailbox
       }
     });
 
@@ -839,20 +570,13 @@ function prepareDashboardRoutes(dashboardController, dashboardRoutes) {
       path: '/consumer/mailbox/read',
       config: {
         auth: 'jwt',
-        pre: [
-          {
-            method: appVersionHelper.checkAppVersion,
-            assign: 'forceUpdate',
-          }],
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
         handler: _dashboard2.default.updateNotificationStatus,
         validate: {
           payload: {
-            notificationIds: _joi2.default.array().
-                items(_joi2.default.number()).
-                required().
-                min(0),
+            notificationIds: _joi2.default.array().items(_joi2.default.number()).required().min(0),
             output: 'data',
-            parse: true,
+            parse: true
           }
         }
       }
@@ -864,18 +588,14 @@ function prepareDashboardRoutes(dashboardController, dashboardRoutes) {
       path: '/consumer/notify',
       config: {
         auth: 'jwt',
-        pre: [
-          {
-            method: appVersionHelper.checkAppVersion,
-            assign: 'forceUpdate',
-          }],
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
         handler: _dashboard2.default.notifyUser,
         validate: {
           payload: _joi2.default.object({
             userId: [_joi2.default.number(), _joi2.default.allow(null)],
             data: _joi2.default.object(),
             output: 'data',
-            parse: true,
+            parse: true
           }).allow(null)
         }
       }
@@ -895,11 +615,7 @@ function prepareProductRoutes(productController, productRoutes) {
       config: {
         handler: _product2.default.updateUserReview,
         auth: 'jwt',
-        pre: [
-          {
-            method: appVersionHelper.checkAppVersion,
-            assign: 'forceUpdate',
-          }],
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
         description: 'Update User Review.',
         validate: {
           payload: {
@@ -907,32 +623,12 @@ function prepareProductRoutes(productController, productRoutes) {
             feedback: [_joi2.default.string(), _joi2.default.allow(null)],
             comments: [_joi2.default.string(), _joi2.default.allow(null)],
             output: 'data',
-            parse: true,
+            parse: true
           }
         },
         plugins: {
           'hapi-swagger': {
-            responseMessages: [
-              {
-                code: 204,
-                message: 'No Content',
-              },
-              {
-                code: 400,
-                message: 'Bad Request',
-              },
-              {
-                code: 401,
-                message: 'Invalid Credentials',
-              },
-              {
-                code: 404,
-                message: 'Not Found',
-              },
-              {
-                code: 500,
-                message: 'Internal Server Error',
-              }],
+            responseMessages: [{ code: 204, message: 'No Content' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
           }
         }
       }
@@ -943,36 +639,12 @@ function prepareProductRoutes(productController, productRoutes) {
       path: '/products/{id}',
       config: {
         auth: 'jwt',
-        pre: [
-          {
-            method: appVersionHelper.checkAppVersion,
-            assign: 'forceUpdate',
-          }],
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
         handler: _product2.default.retrieveProductDetail,
         description: 'Get Product Details.',
         plugins: {
           'hapi-swagger': {
-            responseMessages: [
-              {
-                code: 200,
-                message: 'Successful',
-              },
-              {
-                code: 400,
-                message: 'Bad Request',
-              },
-              {
-                code: 401,
-                message: 'Invalid Credentials',
-              },
-              {
-                code: 404,
-                message: 'Not Found',
-              },
-              {
-                code: 500,
-                message: 'Internal Server Error',
-              }],
+            responseMessages: [{ code: 200, message: 'Successful' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
           }
         }
       }
@@ -983,36 +655,12 @@ function prepareProductRoutes(productController, productRoutes) {
       path: '/center/products',
       config: {
         auth: 'jwt',
-        pre: [
-          {
-            method: appVersionHelper.checkAppVersion,
-            assign: 'forceUpdate',
-          }],
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
         handler: _product2.default.retrieveCenterProducts,
         description: 'Get Center Products.',
         plugins: {
           'hapi-swagger': {
-            responseMessages: [
-              {
-                code: 200,
-                message: 'Successful',
-              },
-              {
-                code: 400,
-                message: 'Bad Request',
-              },
-              {
-                code: 401,
-                message: 'Invalid Credentials',
-              },
-              {
-                code: 404,
-                message: 'Not Found',
-              },
-              {
-                code: 500,
-                message: 'Internal Server Error',
-              }],
+            responseMessages: [{ code: 200, message: 'Successful' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
           }
         }
       }
@@ -1023,20 +671,14 @@ function prepareProductRoutes(productController, productRoutes) {
       path: '/products',
       config: {
         auth: 'jwt',
-        pre: [
-          {
-            method: appVersionHelper.checkAppVersion,
-            assign: 'forceUpdate',
-          }],
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
         handler: _product2.default.createProduct,
         description: 'Create Product.',
         validate: {
           payload: {
             product_name: [_joi2.default.string(), _joi2.default.allow(null)],
             brand_name: [_joi2.default.string(), _joi2.default.allow(null)],
-            main_category_id: [
-              _joi2.default.number(),
-              _joi2.default.allow(null)],
+            main_category_id: [_joi2.default.number(), _joi2.default.allow(null)],
             category_id: [_joi2.default.number(), _joi2.default.allow(null)],
             brand_id: [_joi2.default.number(), _joi2.default.allow(null)],
             colour_id: [_joi2.default.number(), _joi2.default.allow(null)],
@@ -1045,111 +687,53 @@ function prepareProductRoutes(productController, productRoutes) {
             seller_id: [_joi2.default.number(), _joi2.default.allow(null)],
             seller_name: [_joi2.default.string(), _joi2.default.allow(null)],
             seller_contact: [_joi2.default.string(), _joi2.default.allow(null)],
-            document_number: [
-              _joi2.default.string(),
-              _joi2.default.allow(null)],
+            document_number: [_joi2.default.string(), _joi2.default.allow(null)],
             document_date: [_joi2.default.string(), _joi2.default.allow(null)],
-            metadata: [
-              _joi2.default.array().items(_joi2.default.object().keys({
-                category_form_id: [
-                  _joi2.default.number(),
-                  _joi2.default.allow(null)],
-                form_value: [_joi2.default.string(), _joi2.default.allow(null)],
-                new_drop_down: [
-                  _joi2.default.boolean(),
-                  _joi2.default.allow(null)],
-              })), _joi2.default.allow(null)],
-            warranty: [
-              _joi2.default.object().keys({
-                id: [_joi2.default.number(), _joi2.default.allow(null)],
-                renewal_type: [
-                  _joi2.default.number(),
-                  _joi2.default.allow(null)],
-                dual_renewal_type: [
-                  _joi2.default.number(),
-                  _joi2.default.allow(null)],
-                extended_renewal_type: [
-                  _joi2.default.number(),
-                  _joi2.default.allow(null)],
-                effective_date: [
-                  _joi2.default.string(),
-                  _joi2.default.allow(null)],
-                accessory_renewal_type: [
-                  _joi2.default.string(),
-                  _joi2.default.allow(null)],
-              }), _joi2.default.allow(null)],
-            insurance: [
-              _joi2.default.object().keys({
-                id: [_joi2.default.number(), _joi2.default.allow(null)],
-                effective_date: [
-                  _joi2.default.string(),
-                  _joi2.default.allow(null)],
-                provider_id: [
-                  _joi2.default.number(),
-                  _joi2.default.allow(null)],
-                policy_no: [_joi2.default.string(), _joi2.default.allow(null)],
-                renewal_cost: [
-                  _joi2.default.number(),
-                  _joi2.default.allow(null)],
-                amount_insured: [
-                  _joi2.default.string(),
-                  _joi2.default.allow(null)],
-                expiry_period: [
-                  _joi2.default.number(),
-                  _joi2.default.allow(null)],
-              }), _joi2.default.allow(null)],
-            puc: [
-              _joi2.default.object().keys({
-                id: [_joi2.default.number(), _joi2.default.allow(null)],
-                effective_date: [
-                  _joi2.default.string(),
-                  _joi2.default.allow(null)],
-                expiry_period: [
-                  _joi2.default.number(),
-                  _joi2.default.allow(null)],
-                seller_name: [
-                  _joi2.default.string(),
-                  _joi2.default.allow(null)],
-                seller_contact: [
-                  _joi2.default.string(),
-                  _joi2.default.allow(null)],
-              }), _joi2.default.allow(null)],
-            amc: [
-              _joi2.default.object().keys({
-                id: [_joi2.default.number(), _joi2.default.allow(null)],
-                effective_date: [
-                  _joi2.default.string(),
-                  _joi2.default.allow(null)],
-                expiry_period: [
-                  _joi2.default.number(),
-                  _joi2.default.allow(null)],
-                seller_name: [
-                  _joi2.default.string(),
-                  _joi2.default.allow(null)],
-                seller_contact: [
-                  _joi2.default.string(),
-                  _joi2.default.allow(null)],
-              }), _joi2.default.allow(null)],
-            repair: [
-              _joi2.default.object().keys({
-                id: [_joi2.default.number(), _joi2.default.allow(null)],
-                effective_date: [
-                  _joi2.default.string(),
-                  _joi2.default.allow(null)],
-                repair_for: [_joi2.default.string(), _joi2.default.allow(null)],
-                seller_name: [
-                  _joi2.default.string(),
-                  _joi2.default.allow(null)],
-                seller_contact: [
-                  _joi2.default.string(),
-                  _joi2.default.allow(null)],
-                repair_cost: [
-                  _joi2.default.number(),
-                  _joi2.default.allow(null)],
-                warranty_upto: [
-                  _joi2.default.string(),
-                  _joi2.default.allow(null)],
-              }), _joi2.default.allow(null)],
+            metadata: [_joi2.default.array().items(_joi2.default.object().keys({
+              category_form_id: [_joi2.default.number(), _joi2.default.allow(null)],
+              form_value: [_joi2.default.string(), _joi2.default.allow(null)],
+              new_drop_down: [_joi2.default.boolean(), _joi2.default.allow(null)]
+            })), _joi2.default.allow(null)],
+            warranty: [_joi2.default.object().keys({
+              id: [_joi2.default.number(), _joi2.default.allow(null)],
+              renewal_type: [_joi2.default.number(), _joi2.default.allow(null)],
+              dual_renewal_type: [_joi2.default.number(), _joi2.default.allow(null)],
+              extended_renewal_type: [_joi2.default.number(), _joi2.default.allow(null)],
+              effective_date: [_joi2.default.string(), _joi2.default.allow(null)],
+              accessory_renewal_type: [_joi2.default.string(), _joi2.default.allow(null)]
+            }), _joi2.default.allow(null)],
+            insurance: [_joi2.default.object().keys({
+              id: [_joi2.default.number(), _joi2.default.allow(null)],
+              effective_date: [_joi2.default.string(), _joi2.default.allow(null)],
+              provider_id: [_joi2.default.number(), _joi2.default.allow(null)],
+              policy_no: [_joi2.default.string(), _joi2.default.allow(null)],
+              renewal_cost: [_joi2.default.number(), _joi2.default.allow(null)],
+              amount_insured: [_joi2.default.string(), _joi2.default.allow(null)],
+              expiry_period: [_joi2.default.number(), _joi2.default.allow(null)]
+            }), _joi2.default.allow(null)],
+            puc: [_joi2.default.object().keys({
+              id: [_joi2.default.number(), _joi2.default.allow(null)],
+              effective_date: [_joi2.default.string(), _joi2.default.allow(null)],
+              expiry_period: [_joi2.default.number(), _joi2.default.allow(null)],
+              seller_name: [_joi2.default.string(), _joi2.default.allow(null)],
+              seller_contact: [_joi2.default.string(), _joi2.default.allow(null)]
+            }), _joi2.default.allow(null)],
+            amc: [_joi2.default.object().keys({
+              id: [_joi2.default.number(), _joi2.default.allow(null)],
+              effective_date: [_joi2.default.string(), _joi2.default.allow(null)],
+              expiry_period: [_joi2.default.number(), _joi2.default.allow(null)],
+              seller_name: [_joi2.default.string(), _joi2.default.allow(null)],
+              seller_contact: [_joi2.default.string(), _joi2.default.allow(null)]
+            }), _joi2.default.allow(null)],
+            repair: [_joi2.default.object().keys({
+              id: [_joi2.default.number(), _joi2.default.allow(null)],
+              effective_date: [_joi2.default.string(), _joi2.default.allow(null)],
+              repair_for: [_joi2.default.string(), _joi2.default.allow(null)],
+              seller_name: [_joi2.default.string(), _joi2.default.allow(null)],
+              seller_contact: [_joi2.default.string(), _joi2.default.allow(null)],
+              repair_cost: [_joi2.default.number(), _joi2.default.allow(null)],
+              warranty_upto: [_joi2.default.string(), _joi2.default.allow(null)]
+            }), _joi2.default.allow(null)]
           }
         }
       }
@@ -1160,20 +744,14 @@ function prepareProductRoutes(productController, productRoutes) {
       path: '/products/{id}',
       config: {
         auth: 'jwt',
-        pre: [
-          {
-            method: appVersionHelper.checkAppVersion,
-            assign: 'forceUpdate',
-          }],
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
         handler: _product2.default.updateProduct,
         description: 'Update Product.',
         validate: {
           payload: {
             product_name: [_joi2.default.string(), _joi2.default.allow(null)],
             brand_name: [_joi2.default.string(), _joi2.default.allow(null)],
-            main_category_id: [
-              _joi2.default.number(),
-              _joi2.default.allow(null)],
+            main_category_id: [_joi2.default.number(), _joi2.default.allow(null)],
             category_id: [_joi2.default.number(), _joi2.default.allow(null)],
             brand_id: [_joi2.default.number(), _joi2.default.allow(null)],
             colour_id: [_joi2.default.number(), _joi2.default.allow(null)],
@@ -1182,131 +760,61 @@ function prepareProductRoutes(productController, productRoutes) {
             seller_id: [_joi2.default.number(), _joi2.default.allow(null)],
             seller_name: [_joi2.default.string(), _joi2.default.allow(null)],
             seller_contact: [_joi2.default.string(), _joi2.default.allow(null)],
-            document_number: [
-              _joi2.default.string(),
-              _joi2.default.allow(null)],
+            document_number: [_joi2.default.string(), _joi2.default.allow(null)],
             document_date: [_joi2.default.string(), _joi2.default.allow(null)],
-            metadata: [
-              _joi2.default.array().items(_joi2.default.object().keys({
-                id: [_joi2.default.number(), _joi2.default.allow(null)],
-                category_form_id: [
-                  _joi2.default.number(),
-                  _joi2.default.allow(null)],
-                form_value: [_joi2.default.string(), _joi2.default.allow(null)],
-                new_drop_down: [
-                  _joi2.default.boolean(),
-                  _joi2.default.allow(null)],
-              })), _joi2.default.allow(null)],
-            warranty: [
-              _joi2.default.object().keys({
-                id: [_joi2.default.number(), _joi2.default.allow(null)],
-                dual_id: [_joi2.default.number(), _joi2.default.allow(null)],
-                extended_id: [
-                  _joi2.default.number(),
-                  _joi2.default.allow(null)],
-                extended_provider_id: [
-                  _joi2.default.number(),
-                  _joi2.default.allow(null)],
-                renewal_type: [
-                  _joi2.default.number(),
-                  _joi2.default.allow(null)],
-                dual_renewal_type: [
-                  _joi2.default.number(),
-                  _joi2.default.allow(null)],
-                extended_renewal_type: [
-                  _joi2.default.number(),
-                  _joi2.default.allow(null)],
-                extended_effective_date: [
-                  _joi2.default.string(),
-                  _joi2.default.allow(null)],
-                effective_date: [
-                  _joi2.default.string(),
-                  _joi2.default.allow(null)],
-                accessory_renewal_type: [
-                  _joi2.default.string(),
-                  _joi2.default.allow(null)],
-              }), _joi2.default.allow(null)],
-            insurance: [
-              _joi2.default.object().keys({
-                id: [_joi2.default.number(), _joi2.default.allow(null)],
-                effective_date: [
-                  _joi2.default.string(),
-                  _joi2.default.allow(null)],
-                provider_id: [
-                  _joi2.default.number(),
-                  _joi2.default.allow(null)],
-                policy_no: [_joi2.default.string(), _joi2.default.allow(null)],
-                renewal_cost: [
-                  _joi2.default.number(),
-                  _joi2.default.allow(null)],
-                amount_insured: [
-                  _joi2.default.string(),
-                  _joi2.default.allow(null)],
-                expiry_period: [
-                  _joi2.default.number(),
-                  _joi2.default.allow(null)],
-              }), _joi2.default.allow(null)],
-            puc: [
-              _joi2.default.object().keys({
-                id: [_joi2.default.number(), _joi2.default.allow(null)],
-                effective_date: [
-                  _joi2.default.string(),
-                  _joi2.default.allow(null)],
-                expiry_period: [
-                  _joi2.default.number(),
-                  _joi2.default.allow(null)],
-                seller_name: [
-                  _joi2.default.string(),
-                  _joi2.default.allow(null)],
-                renewal_cost: [
-                  _joi2.default.number(),
-                  _joi2.default.allow(null)],
-                seller_contact: [
-                  _joi2.default.string(),
-                  _joi2.default.allow(null)],
-              }), _joi2.default.allow(null)],
-            amc: [
-              _joi2.default.object().keys({
-                id: [_joi2.default.number(), _joi2.default.allow(null)],
-                effective_date: [
-                  _joi2.default.string(),
-                  _joi2.default.allow(null)],
-                expiry_period: [
-                  _joi2.default.number(),
-                  _joi2.default.allow(null)],
-                renewal_cost: [
-                  _joi2.default.number(),
-                  _joi2.default.allow(null)],
-                seller_name: [
-                  _joi2.default.string(),
-                  _joi2.default.allow(null)],
-                seller_contact: [
-                  _joi2.default.string(),
-                  _joi2.default.allow(null)],
-              }), _joi2.default.allow(null)],
-            repair: [
-              _joi2.default.object().keys({
-                id: [_joi2.default.number(), _joi2.default.allow(null)],
-                document_date: [
-                  _joi2.default.string(),
-                  _joi2.default.allow(null)],
-                repair_for: [_joi2.default.string(), _joi2.default.allow(null)],
-                seller_name: [
-                  _joi2.default.string(),
-                  _joi2.default.allow(null)],
-                seller_contact: [
-                  _joi2.default.string(),
-                  _joi2.default.allow(null)],
-                is_amc_seller: [
-                  _joi2.default.string(),
-                  _joi2.default.allow(null)],
-                repair_cost: [
-                  _joi2.default.number(),
-                  _joi2.default.allow(null)],
-                warranty_upto: [
-                  _joi2.default.string(),
-                  _joi2.default.allow(null)],
-              }), _joi2.default.allow(null)],
+            metadata: [_joi2.default.array().items(_joi2.default.object().keys({
+              id: [_joi2.default.number(), _joi2.default.allow(null)],
+              category_form_id: [_joi2.default.number(), _joi2.default.allow(null)],
+              form_value: [_joi2.default.string(), _joi2.default.allow(null)],
+              new_drop_down: [_joi2.default.boolean(), _joi2.default.allow(null)]
+            })), _joi2.default.allow(null)],
+            warranty: [_joi2.default.object().keys({
+              id: [_joi2.default.number(), _joi2.default.allow(null)],
+              dual_id: [_joi2.default.number(), _joi2.default.allow(null)],
+              extended_id: [_joi2.default.number(), _joi2.default.allow(null)],
+              extended_provider_id: [_joi2.default.number(), _joi2.default.allow(null)],
+              renewal_type: [_joi2.default.number(), _joi2.default.allow(null)],
+              dual_renewal_type: [_joi2.default.number(), _joi2.default.allow(null)],
+              extended_renewal_type: [_joi2.default.number(), _joi2.default.allow(null)],
+              extended_effective_date: [_joi2.default.string(), _joi2.default.allow(null)],
+              effective_date: [_joi2.default.string(), _joi2.default.allow(null)],
+              accessory_renewal_type: [_joi2.default.string(), _joi2.default.allow(null)]
+            }), _joi2.default.allow(null)],
+            insurance: [_joi2.default.object().keys({
+              id: [_joi2.default.number(), _joi2.default.allow(null)],
+              effective_date: [_joi2.default.string(), _joi2.default.allow(null)],
+              provider_id: [_joi2.default.number(), _joi2.default.allow(null)],
+              policy_no: [_joi2.default.string(), _joi2.default.allow(null)],
+              renewal_cost: [_joi2.default.number(), _joi2.default.allow(null)],
+              amount_insured: [_joi2.default.string(), _joi2.default.allow(null)],
+              expiry_period: [_joi2.default.number(), _joi2.default.allow(null)]
+            }), _joi2.default.allow(null)],
+            puc: [_joi2.default.object().keys({
+              id: [_joi2.default.number(), _joi2.default.allow(null)],
+              effective_date: [_joi2.default.string(), _joi2.default.allow(null)],
+              expiry_period: [_joi2.default.number(), _joi2.default.allow(null)],
+              seller_name: [_joi2.default.string(), _joi2.default.allow(null)],
+              renewal_cost: [_joi2.default.number(), _joi2.default.allow(null)],
+              seller_contact: [_joi2.default.string(), _joi2.default.allow(null)]
+            }), _joi2.default.allow(null)],
+            amc: [_joi2.default.object().keys({
+              id: [_joi2.default.number(), _joi2.default.allow(null)],
+              effective_date: [_joi2.default.string(), _joi2.default.allow(null)],
+              expiry_period: [_joi2.default.number(), _joi2.default.allow(null)],
+              renewal_cost: [_joi2.default.number(), _joi2.default.allow(null)],
+              seller_name: [_joi2.default.string(), _joi2.default.allow(null)],
+              seller_contact: [_joi2.default.string(), _joi2.default.allow(null)]
+            }), _joi2.default.allow(null)],
+            repair: [_joi2.default.object().keys({
+              id: [_joi2.default.number(), _joi2.default.allow(null)],
+              document_date: [_joi2.default.string(), _joi2.default.allow(null)],
+              repair_for: [_joi2.default.string(), _joi2.default.allow(null)],
+              seller_name: [_joi2.default.string(), _joi2.default.allow(null)],
+              seller_contact: [_joi2.default.string(), _joi2.default.allow(null)],
+              is_amc_seller: [_joi2.default.string(), _joi2.default.allow(null)],
+              repair_cost: [_joi2.default.number(), _joi2.default.allow(null)],
+              warranty_upto: [_joi2.default.string(), _joi2.default.allow(null)]
+            }), _joi2.default.allow(null)]
           }
         }
       }
@@ -1325,36 +833,12 @@ function prepareInsightRoutes(insightController, insightRoutes) {
       path: '/insight',
       config: {
         auth: 'jwt',
-        pre: [
-          {
-            method: appVersionHelper.checkAppVersion,
-            assign: 'forceUpdate',
-          }],
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
         handler: _insight2.default.retrieveCategorywiseInsight,
         description: 'Get Insight Data.',
         plugins: {
           'hapi-swagger': {
-            responseMessages: [
-              {
-                code: 200,
-                message: 'Successful',
-              },
-              {
-                code: 400,
-                message: 'Bad Request',
-              },
-              {
-                code: 401,
-                message: 'Invalid Credentials',
-              },
-              {
-                code: 404,
-                message: 'Not Found',
-              },
-              {
-                code: 500,
-                message: 'Internal Server Error',
-              }],
+            responseMessages: [{ code: 200, message: 'Successful' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
           }
         }
       }
@@ -1364,36 +848,12 @@ function prepareInsightRoutes(insightController, insightRoutes) {
       path: '/categories/{id}/insights',
       config: {
         auth: 'jwt',
-        pre: [
-          {
-            method: appVersionHelper.checkAppVersion,
-            assign: 'forceUpdate',
-          }],
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
         handler: _insight2.default.retrieveInsightForSelectedCategory,
         description: 'Get Insight Data.',
         plugins: {
           'hapi-swagger': {
-            responseMessages: [
-              {
-                code: 200,
-                message: 'Successful',
-              },
-              {
-                code: 400,
-                message: 'Bad Request',
-              },
-              {
-                code: 401,
-                message: 'Invalid Credentials',
-              },
-              {
-                code: 404,
-                message: 'Not Found',
-              },
-              {
-                code: 500,
-                message: 'Internal Server Error',
-              }],
+            responseMessages: [{ code: 200, message: 'Successful' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
           }
         }
       }
@@ -1414,7 +874,7 @@ function prepareGeneralRoutes(generalController, generalRoutes) {
             name: [_joi2.default.string(), _joi2.default.allow(null)],
             email: [_joi2.default.string().email(), _joi2.default.allow(null)],
             phone: _joi2.default.string().required(),
-            message: [_joi2.default.string(), _joi2.default.allow(null)],
+            message: [_joi2.default.string(), _joi2.default.allow(null)]
           }
         }
       }
@@ -1425,7 +885,7 @@ function prepareGeneralRoutes(generalController, generalRoutes) {
       path: '/faqs',
       config: {
         handler: _general2.default.retrieveFAQs,
-        description: 'Retrieve FAQ\'s',
+        description: 'Retrieve FAQ\'s'
       }
     });
 
@@ -1434,7 +894,7 @@ function prepareGeneralRoutes(generalController, generalRoutes) {
       path: '/referencedata',
       config: {
         handler: _general2.default.retrieveReferenceData,
-        description: 'Retrieve Reference data',
+        description: 'Retrieve Reference data'
       }
     });
 
@@ -1443,7 +903,7 @@ function prepareGeneralRoutes(generalController, generalRoutes) {
       path: '/repairs/products',
       config: {
         handler: _general2.default.retrieveRepairableProducts,
-        description: 'Retrieve Repairable Products',
+        description: 'Retrieve Repairable Products'
       }
     });
 
@@ -1452,11 +912,7 @@ function prepareGeneralRoutes(generalController, generalRoutes) {
       path: '/products/init',
       config: {
         auth: 'jwt',
-        pre: [
-          {
-            method: appVersionHelper.checkAppVersion,
-            assign: 'forceUpdate',
-          }],
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
         handler: _general2.default.intializeUserProduct,
         description: 'Create Product.',
         validate: {
@@ -1470,10 +926,8 @@ function prepareGeneralRoutes(generalController, generalRoutes) {
             purchase_cost: [_joi2.default.number(), _joi2.default.allow(null)],
             taxes: [_joi2.default.number(), _joi2.default.allow(null)],
             seller_id: [_joi2.default.number(), _joi2.default.allow(null)],
-            document_number: [
-              _joi2.default.string(),
-              _joi2.default.allow(null)],
-            document_date: [_joi2.default.string(), _joi2.default.allow(null)],
+            document_number: [_joi2.default.string(), _joi2.default.allow(null)],
+            document_date: [_joi2.default.string(), _joi2.default.allow(null)]
           }
         }
       }
@@ -1493,11 +947,7 @@ function prepareProductItemRoutes(productItemController, productItemRoutes) {
       path: '/products/{id}/repairs',
       config: {
         auth: 'jwt',
-        pre: [
-          {
-            method: appVersionHelper.checkAppVersion,
-            assign: 'forceUpdate',
-          }],
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
         handler: _productItem2.default.updateRepair,
         description: 'Update Repair.',
         validate: {
@@ -1509,7 +959,7 @@ function prepareProductItemRoutes(productItemController, productItemRoutes) {
             seller_address: [_joi2.default.string(), _joi2.default.allow(null)],
             seller_id: [_joi2.default.number(), _joi2.default.allow(null)],
             repair_cost: [_joi2.default.number(), _joi2.default.allow(null)],
-            warranty_upto: [_joi2.default.string(), _joi2.default.allow(null)],
+            warranty_upto: [_joi2.default.string(), _joi2.default.allow(null)]
           }
         }
       }
@@ -1520,11 +970,7 @@ function prepareProductItemRoutes(productItemController, productItemRoutes) {
       path: '/products/{id}/repairs/{repairId}',
       config: {
         auth: 'jwt',
-        pre: [
-          {
-            method: appVersionHelper.checkAppVersion,
-            assign: 'forceUpdate',
-          }],
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
         handler: _productItem2.default.updateRepair,
         description: 'Update Repair.',
         validate: {
@@ -1535,7 +981,7 @@ function prepareProductItemRoutes(productItemController, productItemRoutes) {
             seller_contact: [_joi2.default.string(), _joi2.default.allow(null)],
             seller_id: [_joi2.default.number(), _joi2.default.allow(null)],
             repair_cost: [_joi2.default.number(), _joi2.default.allow(null)],
-            warranty_upto: [_joi2.default.string(), _joi2.default.allow(null)],
+            warranty_upto: [_joi2.default.string(), _joi2.default.allow(null)]
           }
         }
       }
@@ -1543,12 +989,12 @@ function prepareProductItemRoutes(productItemController, productItemRoutes) {
   }
 }
 
-exports.default = function(app, modals) {
+exports.default = function (app, modals) {
   appVersionHelper = new _appVersion2.default(modals);
   User = modals.users;
   // Middleware to require login/auth
   new _passport4.default(User);
-  _passport2.default.authenticate('jwt', {session: false});
+  _passport2.default.authenticate('jwt', { session: false });
   // Initializing route groups
   var authRoutes = [];
   var categoryRoutes = [];
@@ -1602,44 +1048,17 @@ exports.default = function(app, modals) {
       path: '/search',
       config: {
         auth: 'jwt',
-        pre: [
-          {
-            method: appVersionHelper.checkAppVersion,
-            assign: 'forceUpdate',
-          }],
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }],
         handler: _search2.default.retrieveSearch,
         description: 'Get Search Data.',
         plugins: {
           'hapi-swagger': {
-            responseMessages: [
-              {
-                code: 200,
-                message: 'Successful',
-              },
-              {
-                code: 400,
-                message: 'Bad Request',
-              },
-              {
-                code: 401,
-                message: 'Invalid Credentials',
-              },
-              {
-                code: 404,
-                message: 'Not Found',
-              },
-              {
-                code: 500,
-                message: 'Internal Server Error',
-              }],
+            responseMessages: [{ code: 200, message: 'Successful' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
           }
         }
       }
     });
   }
 
-  app.route([].concat(authRoutes, categoryRoutes, brandRoutes, sellerRoutes,
-      serviceCenterRoutes, billManagementRoutes, uploadFileRoute,
-      dashboardRoutes, productRoutes, insightRoutes, searchRoutes,
-      generalRoutes, repairRoutes));
+  app.route([].concat(authRoutes, categoryRoutes, brandRoutes, sellerRoutes, serviceCenterRoutes, billManagementRoutes, uploadFileRoute, dashboardRoutes, productRoutes, insightRoutes, searchRoutes, generalRoutes, repairRoutes));
 };

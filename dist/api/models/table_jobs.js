@@ -1,54 +1,54 @@
 'use strict';
 
-Object.defineProperty(exports, '__esModule', {
-  value: true,
+Object.defineProperty(exports, "__esModule", {
+  value: true
 });
 
-exports.default = function(sequelize, DataTypes) {
+exports.default = function (sequelize, DataTypes) {
   var jobs = sequelize.define('jobs', {
     job_id: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
+      unique: true
     },
     user_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.INTEGER
     },
     updated_by: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.INTEGER
     },
     uploaded_by: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.INTEGER
     },
     user_status: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.INTEGER
     },
     admin_status: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.INTEGER
     },
 
     assigned_to_ce: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.INTEGER
     },
     ce_status: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.INTEGER
     },
     assigned_to_qe: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.INTEGER
     },
     qe_status: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.INTEGER
     },
     comments: {
-      type: DataTypes.STRING(2000),
+      type: DataTypes.STRING(2000)
     },
     created_at: {
       type: DataTypes.DATE,
-      defaultValue: sequelize.literal('NOW()'),
+      defaultValue: sequelize.literal('NOW()')
     },
     updated_at: {
       type: DataTypes.DATE,
-      defaultValue: sequelize.literal('NOW()'),
+      defaultValue: sequelize.literal('NOW()')
     }
   }, {
     freezeTableName: true,
@@ -56,26 +56,20 @@ exports.default = function(sequelize, DataTypes) {
     timestamps: true,
     paranoid: true,
     underscored: true,
-    tableName: 'jobs',
+    tableName: 'jobs'
   });
 
-  jobs.associate = function(models) {
-    jobs.belongsTo(models.users, {foreignKey: 'user_id', as: 'consumer'});
-    jobs.belongsTo(models.users, {foreignKey: 'uploaded_by', as: 'user'});
-    jobs.belongsTo(models.users,
-        {foreignKey: 'updated_by', as: 'updatedByUser'});
-    jobs.belongsTo(models.statuses,
-        {foreignKey: 'user_status', targetKey: 'status_type'});
-    jobs.belongsTo(models.users, {foreignKey: 'assigned_to_ce', as: 'ce'});
-    jobs.belongsTo(models.statuses,
-        {foreignKey: 'ce_status', targetKey: 'status_type'});
-    jobs.belongsTo(models.users, {foreignKey: 'assigned_to_qe', as: 'qe'});
-    jobs.belongsTo(models.statuses,
-        {foreignKey: 'qe_status', targetKey: 'status_type'});
-    jobs.belongsTo(models.statuses,
-        {foreignKey: 'admin_status', targetKey: 'status_type'});
-    jobs.hasMany(models.jobCopies,
-        {onDelete: 'cascade', hooks: true, as: 'copies'});
+  jobs.associate = function (models) {
+    jobs.belongsTo(models.users, { foreignKey: 'user_id', as: 'consumer' });
+    jobs.belongsTo(models.users, { foreignKey: 'uploaded_by', as: 'user' });
+    jobs.belongsTo(models.users, { foreignKey: 'updated_by', as: 'updatedByUser' });
+    jobs.belongsTo(models.statuses, { foreignKey: 'user_status', targetKey: 'status_type' });
+    jobs.belongsTo(models.users, { foreignKey: 'assigned_to_ce', as: 'ce' });
+    jobs.belongsTo(models.statuses, { foreignKey: 'ce_status', targetKey: 'status_type' });
+    jobs.belongsTo(models.users, { foreignKey: 'assigned_to_qe', as: 'qe' });
+    jobs.belongsTo(models.statuses, { foreignKey: 'qe_status', targetKey: 'status_type' });
+    jobs.belongsTo(models.statuses, { foreignKey: 'admin_status', targetKey: 'status_type' });
+    jobs.hasMany(models.jobCopies, { onDelete: 'cascade', hooks: true, as: 'copies' });
   };
   return jobs;
 };

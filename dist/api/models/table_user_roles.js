@@ -1,26 +1,26 @@
 'use strict';
 
-Object.defineProperty(exports, '__esModule', {
-  value: true,
+Object.defineProperty(exports, "__esModule", {
+  value: true
 });
 
-exports.default = function(sequelize, DataTypes) {
+exports.default = function (sequelize, DataTypes) {
   var userRoles = sequelize.define('userRoles', {
     role_type: {
       type: DataTypes.INTEGER,
-      unique: true,
+      unique: true
     },
     role_name: {
       type: DataTypes.STRING,
-      unique: true,
+      unique: true
     },
     created_at: {
       type: DataTypes.DATE,
-      defaultValue: sequelize.literal('NOW()'),
+      defaultValue: sequelize.literal('NOW()')
     },
     updated_at: {
       type: DataTypes.DATE,
-      defaultValue: sequelize.literal('NOW()'),
+      defaultValue: sequelize.literal('NOW()')
     }
   }, {
     freezeTableName: true,
@@ -28,12 +28,11 @@ exports.default = function(sequelize, DataTypes) {
     timestamps: true,
     paranoid: true,
     underscored: true,
-    tableName: 'user_roles',
+    tableName: 'user_roles'
   });
 
-  userRoles.associate = function(models) {
-    userRoles.hasMany(models.users,
-        {foreignKey: 'role_type', sourceKey: 'role_type'});
+  userRoles.associate = function (models) {
+    userRoles.hasMany(models.users, { foreignKey: 'role_type', sourceKey: 'role_type' });
   };
   return userRoles;
 };

@@ -1,36 +1,36 @@
 'use strict';
 
-Object.defineProperty(exports, '__esModule', {
-  value: true,
+Object.defineProperty(exports, "__esModule", {
+  value: true
 });
 
-exports.default = function(sequelize, DataTypes) {
+exports.default = function (sequelize, DataTypes) {
   var jobCopies = sequelize.define('jobCopies', {
     updated_by: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.INTEGER
     },
     status_type: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.INTEGER
     },
     type: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.INTEGER
     },
     file_name: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING
     },
     file_type: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING
     },
     comments: {
-      type: DataTypes.STRING(2000),
+      type: DataTypes.STRING(2000)
     },
     created_at: {
       type: DataTypes.DATE,
-      defaultValue: sequelize.literal('NOW()'),
+      defaultValue: sequelize.literal('NOW()')
     },
     updated_at: {
       type: DataTypes.DATE,
-      defaultValue: sequelize.literal('NOW()'),
+      defaultValue: sequelize.literal('NOW()')
     }
   }, {
     freezeTableName: true,
@@ -38,14 +38,13 @@ exports.default = function(sequelize, DataTypes) {
     timestamps: true,
     paranoid: true,
     underscored: true,
-    tableName: 'job_copies',
+    tableName: 'job_copies'
   });
 
-  jobCopies.associate = function(models) {
-    jobCopies.belongsTo(models.users, {foreignKey: 'updated_by'});
+  jobCopies.associate = function (models) {
+    jobCopies.belongsTo(models.users, { foreignKey: 'updated_by' });
     jobCopies.belongsTo(models.jobs);
-    jobCopies.belongsTo(models.statuses,
-        {foreignKey: 'status_type', targetKey: 'status_type'});
+    jobCopies.belongsTo(models.statuses, { foreignKey: 'status_type', targetKey: 'status_type' });
   };
   return jobCopies;
 };

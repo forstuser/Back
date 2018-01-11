@@ -1,27 +1,11 @@
 /*jshint esversion: 6 */
 'use strict';
 
-Object.defineProperty(exports, '__esModule', {
-  value: true,
+Object.defineProperty(exports, "__esModule", {
+  value: true
 });
 
-var _createClass = function() {
-  function defineProperties(target, props) {
-    for (var i = 0; i < props.length; i++) {
-      var descriptor = props[i];
-      descriptor.enumerable = descriptor.enumerable || false;
-      descriptor.configurable = true;
-      if ('value' in descriptor) descriptor.writable = true;
-      Object.defineProperty(target, descriptor.key, descriptor);
-    }
-  }
-
-  return function(Constructor, protoProps, staticProps) {
-    if (protoProps) defineProperties(Constructor.prototype, protoProps);
-    if (staticProps) defineProperties(Constructor, staticProps);
-    return Constructor;
-  };
-}();
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 var _notification = require('../Adaptors/notification');
 
@@ -63,15 +47,9 @@ var _moment = require('moment/moment');
 
 var _moment2 = _interopRequireDefault(_moment);
 
-function _interopRequireDefault(obj) {
-  return obj && obj.__esModule ? obj : {default: obj};
-}
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _classCallCheck(instance, Constructor) {
-  if (!(instance instanceof Constructor)) {
-    throw new TypeError('Cannot call a class as a function');
-  }
-}
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var contactModel = void 0;
 var modals = void 0;
@@ -82,7 +60,7 @@ var jobAdaptor = void 0;
 var productAdaptor = void 0;
 var userAdaptor = void 0;
 
-var GeneralController = function() {
+var GeneralController = function () {
   function GeneralController(modal) {
     _classCallCheck(this, GeneralController);
 
@@ -103,253 +81,219 @@ var GeneralController = function() {
    */
 
 
-  _createClass(GeneralController, null, [
-    {
-      key: 'retrieveReferenceData',
-      value: function retrieveReferenceData(request, reply) {
-        var user = _shared2.default.verifyAuthorization(request.headers);
-        var isBrandRequest = false;
-        return _bluebird2.default.try(function() {
-          if (request.query && user) {
-            if (request.query.categoryId && request.query.brandId) {
-              return brandAdaptor.retrieveBrandDropDowns({
-                category_id: request.query.categoryId,
-                brand_id: request.query.brandId,
-                $or: {
-                  status_type: 1,
-                  $and: {
-                    status_type: 11,
-                    updated_by: user.id || user.ID,
-                  },
-                },
+  _createClass(GeneralController, null, [{
+    key: 'retrieveReferenceData',
+    value: function retrieveReferenceData(request, reply) {
+      var user = _shared2.default.verifyAuthorization(request.headers);
+      var isBrandRequest = false;
+      return _bluebird2.default.try(function () {
+        if (request.query && user) {
+          if (request.query.categoryId && request.query.brandId) {
+            return brandAdaptor.retrieveBrandDropDowns({
+              category_id: request.query.categoryId,
+              brand_id: request.query.brandId,
+              $or: {
+                status_type: 1,
+                $and: {
+                  status_type: 11,
+                  updated_by: user.id || user.ID
+                }
+              }
+            });
+          } else if (request.query.categoryId) {
+            isBrandRequest = true;
+            return Promise.all([categoryAdaptor.retrieveSubCategories({ category_id: request.query.categoryId }, true), categoryAdaptor.retrieveRenewalTypes({
+              status_type: 1,
+              type: {
+                $gte: 7
+              }
+            })]);
+          } else if (request.query.mainCategoryId) {
+            return categoryAdaptor.retrieveCategories({ category_id: request.query.mainCategoryId }, false);
+          }
+        }
+
+        return categoryAdaptor.retrieveCategories({ category_level: 1, category_id: [2, 3] }, true);
+      }).then(function (results) {
+        return reply({
+          status: true,
+          dropDowns: request.query.brandId ? results : undefined,
+          categories: request.query.brandId ? undefined : isBrandRequest ? results[0] : results,
+          renewalTypes: isBrandRequest ? results[1] : undefined,
+          contactType: [{
+            id: 1,
+            name: 'URL'
+          }, {
+            id: 2,
+            name: 'EMAIL'
+          }, {
+            id: 3,
+            name: 'PHONE'
+          }]
+        });
+      }).catch(function (err) {
+        console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+
+        return reply({
+          status: false
+        });
+      });
+    }
+  }, {
+    key: 'contactUs',
+    value: function contactUs(request, reply) {
+      _notification2.default.sendLinkOnMessage(request.payload.phone);
+      return contactModel.create({
+        name: request.payload.name,
+        phone: request.payload.phone,
+        email: request.payload.email,
+        message: request.payload.message
+      }).then(function () {
+        return reply({ status: true }).code(201);
+      }).catch(function (err) {
+        console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+        return reply({ status: false }).code(500);
+      });
+    }
+  }, {
+    key: 'retrieveFAQs',
+    value: function retrieveFAQs(request, reply) {
+      return modals.faqs.findAll({
+        where: {
+          status_id: {
+            $ne: 3
+          }
+        }
+      }).then(function (faq) {
+        return reply({ status: true, faq: faq }).code(200);
+      }).catch(function (err) {
+        console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+        return reply({ status: false }).code(200);
+      });
+    }
+  }, {
+    key: 'intializeUserProduct',
+    value: function intializeUserProduct(request, reply) {
+      var user = _shared2.default.verifyAuthorization(request.headers);
+
+      if (user && !request.pre.forceUpdate) {
+        return userAdaptor.isUserValid(user).then(function (isValid) {
+          if (isValid) {
+            return _bluebird2.default.try(function () {
+              return jobAdaptor.createJobs({
+                job_id: '' + Math.random().toString(36).substr(2, 9) + (user.id || user.ID).toString(36),
+                user_id: user.id || user.ID,
+                updated_by: user.id || user.ID,
+                uploaded_by: user.id || user.ID,
+                user_status: 8,
+                admin_status: 2,
+                comments: request.query ? request.query.productId ? 'This job is sent for product id ' + request.query.productId : request.query.productName ? 'This job is sent for product name ' + request.query.productName : '' : ''
               });
-            } else if (request.query.categoryId) {
-              isBrandRequest = true;
-              return Promise.all([
-                categoryAdaptor.retrieveSubCategories(
-                    {category_id: request.query.categoryId}, true),
-                categoryAdaptor.retrieveRenewalTypes({
-                  status_type: 1,
-                  type: {
-                    $gte: 7,
-                  },
-                })]);
-            } else if (request.query.mainCategoryId) {
-              return categoryAdaptor.retrieveCategories(
-                  {category_id: request.query.mainCategoryId}, false);
-            }
+            }).then(function (jobResult) {
+              return productAdaptor.createEmptyProduct({
+                job_id: jobResult.id,
+                product_name: request.payload.product_name,
+                user_id: user.id || user.ID,
+                main_category_id: request.payload.main_category_id,
+                category_id: request.payload.category_id,
+                brand_id: request.payload.brand_id,
+                colour_id: request.payload.colour_id,
+                purchase_cost: request.payload.purchase_cost,
+                taxes: request.payload.taxes,
+                updated_by: user.id || user.ID,
+                seller_id: request.payload.seller_id,
+                status_type: 2,
+                document_number: request.payload.document_number,
+                document_date: request.payload.document_date ? (0, _moment2.default)(request.payload.document_date, _moment2.default.ISO_8601).isValid() ? (0, _moment2.default)(request.payload.document_date, _moment2.default.ISO_8601).startOf('day').format('YYYY-MM-DD') : (0, _moment2.default)(request.payload.document_date, 'DD MMM YY').startOf('day').format('YYYY-MM-DD') : undefined,
+                brand_name: request.payload.brand_name,
+                copies: []
+              });
+            }).then(function (productResult) {
+              return reply({
+                status: true,
+                product: productResult,
+                message: 'Product and Job is initialized.'
+              });
+            });
           }
 
-          return categoryAdaptor.retrieveCategories(
-              {category_level: 1, category_id: [2, 3]}, true);
-        }).then(function(results) {
-          return reply({
-            status: true,
-            dropDowns: request.query.brandId ? results : undefined,
-            categories: request.query.brandId ?
-                undefined :
-                isBrandRequest ?
-                    results[0] :
-                    results,
-            renewalTypes: isBrandRequest ? results[1] : undefined,
-            contactType: [
-              {
-                id: 1,
-                name: 'URL',
-              }, {
-                id: 2,
-                name: 'EMAIL',
-              }, {
-                id: 3,
-                name: 'PHONE',
-              }],
-          });
-        }).catch(function(err) {
-          console.log('Error on ' + new Date() + ' for user ' +
-              (user.id || user.ID) + ' is as follow: \n \n ' + err);
-
-          return reply({
-            status: false,
-          });
-        });
-      },
-    }, {
-      key: 'contactUs',
-      value: function contactUs(request, reply) {
-        _notification2.default.sendLinkOnMessage(request.payload.phone);
-        return contactModel.create({
-          name: request.payload.name,
-          phone: request.payload.phone,
-          email: request.payload.email,
-          message: request.payload.message,
-        }).then(function() {
-          return reply({status: true}).code(201);
-        }).catch(function(err) {
-          console.log('Error on ' + new Date() + ' for user ' +
-              (user.id || user.ID) + ' is as follow: \n \n ' + err);
-          return reply({status: false}).code(500);
-        });
-      },
-    }, {
-      key: 'retrieveFAQs',
-      value: function retrieveFAQs(request, reply) {
-        return modals.faqs.findAll({
-          where: {
-            status_id: {
-              $ne: 3,
-            },
-          },
-        }).then(function(faq) {
-          return reply({status: true, faq: faq}).code(200);
-        }).catch(function(err) {
-          console.log('Error on ' + new Date() + ' for user ' +
-              (user.id || user.ID) + ' is as follow: \n \n ' + err);
-          return reply({status: false}).code(200);
-        });
-      },
-    }, {
-      key: 'intializeUserProduct',
-      value: function intializeUserProduct(request, reply) {
-        var user = _shared2.default.verifyAuthorization(request.headers);
-
-        if (user && !request.pre.forceUpdate) {
-          return userAdaptor.isUserValid(user).then(function(isValid) {
-            if (isValid) {
-              return _bluebird2.default.try(function() {
-                return jobAdaptor.createJobs({
-                  job_id: '' + Math.random().toString(36).substr(2, 9) +
-                  (user.id || user.ID).toString(36),
-                  user_id: user.id || user.ID,
-                  updated_by: user.id || user.ID,
-                  uploaded_by: user.id || user.ID,
-                  user_status: 8,
-                  admin_status: 2,
-                  comments: request.query ?
-                      request.query.productId ?
-                          'This job is sent for product id ' +
-                          request.query.productId :
-                          request.query.productName ?
-                              'This job is sent for product name ' +
-                              request.query.productName :
-                              '' :
-                      '',
-                });
-              }).then(function(jobResult) {
-                return productAdaptor.createEmptyProduct({
-                  job_id: jobResult.id,
-                  product_name: request.payload.product_name,
-                  user_id: user.id || user.ID,
-                  main_category_id: request.payload.main_category_id,
-                  category_id: request.payload.category_id,
-                  brand_id: request.payload.brand_id,
-                  colour_id: request.payload.colour_id,
-                  purchase_cost: request.payload.purchase_cost,
-                  taxes: request.payload.taxes,
-                  updated_by: user.id || user.ID,
-                  seller_id: request.payload.seller_id,
-                  status_type: 2,
-                  document_number: request.payload.document_number,
-                  document_date: request.payload.document_date ?
-                      (0, _moment2.default)(request.payload.document_date,
-                          _moment2.default.ISO_8601).isValid() ?
-                          (0, _moment2.default)(request.payload.document_date,
-                              _moment2.default.ISO_8601).
-                              startOf('day').
-                              format('YYYY-MM-DD') :
-                          (0, _moment2.default)(request.payload.document_date,
-                              'DD MMM YY').startOf('day').format('YYYY-MM-DD') :
-                      undefined,
-                  brand_name: request.payload.brand_name,
-                  copies: [],
-                });
-              }).then(function(productResult) {
-                return reply({
-                  status: true,
-                  product: productResult,
-                  message: 'Product and Job is initialized.',
-                });
-              });
-            }
-
-            return reply({
-              status: false,
-              message: 'Token Expired or Invalid',
-              forceUpdate: request.pre.forceUpdate,
-            }).code(401);
-          }).catch(function(err) {
-            console.log('Error on ' + new Date() + ' for user ' +
-                user.mobile_no + ' is as follow: \n \n ' + err);
-            return reply({
-              status: false,
-              message: 'Token Expired or Invalid',
-              forceUpdate: request.pre.forceUpdate,
-            }).code(401);
-          });
-        } else if (!user) {
           return reply({
             status: false,
             message: 'Token Expired or Invalid',
-            forceUpdate: request.pre.forceUpdate,
+            forceUpdate: request.pre.forceUpdate
           }).code(401);
-        } else {
-          return reply({
-            status: false,
-            message: 'Forbidden',
-            forceUpdate: request.pre.forceUpdate,
-          });
-        }
-      },
-    }, {
-      key: 'retrieveRepairableProducts',
-      value: function retrieveRepairableProducts(request, reply) {
-        var user = _shared2.default.verifyAuthorization(request.headers);
-
-        if (user && !request.pre.forceUpdate) {
-          return userAdaptor.isUserValid(user).then(function(isValid) {
-            if (isValid) {
-              return _bluebird2.default.try(function() {
-                return productAdaptor.retrieveProducts({
-                  main_category_id: [1, 2, 3],
-                  status_type: [5, 8, 11],
-                });
-              }).then(function(productResult) {
-                return reply({
-                  status: true,
-                  product: productResult,
-                  message: 'Product and Job is initialized.',
-                });
-              });
-            }
-
-            return reply({
-              status: false,
-              message: 'Token Expired or Invalid',
-              forceUpdate: request.pre.forceUpdate,
-            }).code(401);
-          }).catch(function(err) {
-            console.log('Error on ' + new Date() + ' for user ' +
-                user.mobile_no + ' is as follow: \n \n ' + err);
-            return reply({
-              status: false,
-              message: 'Token Expired or Invalid',
-              forceUpdate: request.pre.forceUpdate,
-            }).code(401);
-          });
-        } else if (!user) {
+        }).catch(function (err) {
+          console.log('Error on ' + new Date() + ' for user ' + user.mobile_no + ' is as follow: \n \n ' + err);
           return reply({
             status: false,
             message: 'Token Expired or Invalid',
-            forceUpdate: request.pre.forceUpdate,
+            forceUpdate: request.pre.forceUpdate
           }).code(401);
-        } else {
+        });
+      } else if (!user) {
+        return reply({
+          status: false,
+          message: 'Token Expired or Invalid',
+          forceUpdate: request.pre.forceUpdate
+        }).code(401);
+      } else {
+        return reply({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    }
+  }, {
+    key: 'retrieveRepairableProducts',
+    value: function retrieveRepairableProducts(request, reply) {
+      var user = _shared2.default.verifyAuthorization(request.headers);
+
+      if (user && !request.pre.forceUpdate) {
+        return userAdaptor.isUserValid(user).then(function (isValid) {
+          if (isValid) {
+            return _bluebird2.default.try(function () {
+              return productAdaptor.retrieveProducts({
+                main_category_id: [1, 2, 3],
+                status_type: [5, 8, 11]
+              });
+            }).then(function (productResult) {
+              return reply({
+                status: true,
+                product: productResult,
+                message: 'Product and Job is initialized.'
+              });
+            });
+          }
+
           return reply({
             status: false,
-            message: 'Forbidden',
-            forceUpdate: request.pre.forceUpdate,
-          });
-        }
-      },
-    }]);
+            message: 'Token Expired or Invalid',
+            forceUpdate: request.pre.forceUpdate
+          }).code(401);
+        }).catch(function (err) {
+          console.log('Error on ' + new Date() + ' for user ' + user.mobile_no + ' is as follow: \n \n ' + err);
+          return reply({
+            status: false,
+            message: 'Token Expired or Invalid',
+            forceUpdate: request.pre.forceUpdate
+          }).code(401);
+        });
+      } else if (!user) {
+        return reply({
+          status: false,
+          message: 'Token Expired or Invalid',
+          forceUpdate: request.pre.forceUpdate
+        }).code(401);
+      } else {
+        return reply({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    }
+  }]);
 
   return GeneralController;
 }();

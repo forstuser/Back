@@ -1,26 +1,10 @@
 'use strict';
 
-Object.defineProperty(exports, '__esModule', {
-  value: true,
+Object.defineProperty(exports, "__esModule", {
+  value: true
 });
 
-var _createClass = function() {
-  function defineProperties(target, props) {
-    for (var i = 0; i < props.length; i++) {
-      var descriptor = props[i];
-      descriptor.enumerable = descriptor.enumerable || false;
-      descriptor.configurable = true;
-      if ('value' in descriptor) descriptor.writable = true;
-      Object.defineProperty(target, descriptor.key, descriptor);
-    }
-  }
-
-  return function(Constructor, protoProps, staticProps) {
-    if (protoProps) defineProperties(Constructor.prototype, protoProps);
-    if (staticProps) defineProperties(Constructor, staticProps);
-    return Constructor;
-  };
-}();
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 var _moment = require('moment');
 
@@ -86,23 +70,16 @@ var _s3fs = require('s3fs');
 
 var _s3fs2 = _interopRequireDefault(_s3fs);
 
-function _interopRequireDefault(obj) {
-  return obj && obj.__esModule ? obj : {default: obj};
-}
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _classCallCheck(instance, Constructor) {
-  if (!(instance instanceof Constructor)) {
-    throw new TypeError('Cannot call a class as a function');
-  }
-}
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var PUBLIC_KEY = new _nodeRsa2.default(_main2.default.TRUECALLER_PUBLIC_KEY,
-    {signingScheme: 'sha512'});
+var PUBLIC_KEY = new _nodeRsa2.default(_main2.default.TRUECALLER_PUBLIC_KEY, { signingScheme: 'sha512' });
 var AWS = _main2.default.AWS;
 var fsImpl = new _s3fs2.default(AWS.S3.BUCKET, AWS.ACCESS_DETAILS);
 var replyObject = {
   status: true,
-  message: 'success',
+  message: 'success'
 };
 
 var userModel = void 0;
@@ -115,90 +92,71 @@ var notificationAdaptor = void 0;
 var fcmModel = void 0;
 var fcmManager = void 0;
 
-var validatePayloadSignature = function validatePayloadSignature(
-    payload, signature) {
+var validatePayloadSignature = function validatePayloadSignature(payload, signature) {
   return PUBLIC_KEY.verify(payload, signature, '', 'base64');
 };
 
 var trackTransaction = function trackTransaction(transactionId, userId) {
   if (transactionId && transactionId !== '') {
-    _tracking2.default.postbackTracking(transactionId, userId).
-        then(function(response) {
-          console.log('SUCCESSFULLY SENT ICUBESWIRE POSTBACK');
-          console.log(response);
-        }).
-        catch(function(err) {
-          console.log('Error in sending iCUBESWIRE POSTBACK');
-          console.log({API_Logs: err});
-        });
+    _tracking2.default.postbackTracking(transactionId, userId).then(function (response) {
+      console.log('SUCCESSFULLY SENT ICUBESWIRE POSTBACK');
+      console.log(response);
+    }).catch(function (err) {
+      console.log('Error in sending iCUBESWIRE POSTBACK');
+      console.log({ API_Logs: err });
+    });
   }
 };
 
-var loginOrRegisterUser = function loginOrRegisterUser(
-    userWhere, userInput, trueObject, request, reply) {
+var loginOrRegisterUser = function loginOrRegisterUser(userWhere, userInput, trueObject, request, reply) {
   var token = void 0;
   var updatedUser = void 0;
-  return userAdaptor.loginOrRegister(userWhere, userInput).
-      then(function(userData) {
-        if (!userData[1]) {
-          userData[0].updateAttributes(userInput);
-        }
+  return userAdaptor.loginOrRegister(userWhere, userInput).then(function (userData) {
+    if (!userData[1]) {
+      userData[0].updateAttributes(userInput);
+    }
 
-        updatedUser = userData[0].toJSON();
-        if (!updatedUser.email_verified && updatedUser.email) {
-          _notification2.default.sendVerificationMail(trueObject.EmailAddress,
-              updatedUser);
-        }
+    updatedUser = userData[0].toJSON();
+    if (!updatedUser.email_verified && updatedUser.email) {
+      _notification2.default.sendVerificationMail(trueObject.EmailAddress, updatedUser);
+    }
 
-        if (trueObject.ImageLink) {
-          UserController.uploadTrueCallerImage(trueObject, updatedUser);
-        }
+    if (trueObject.ImageLink) {
+      UserController.uploadTrueCallerImage(trueObject, updatedUser);
+    }
 
-        if (request.payload.fcmId) {
-          fcmManager.insertFcmDetails(updatedUser.id || updatedUser.ID,
-              request.payload.fcmId).then(function(data) {
-            console.log(data);
-          }).catch(function(err) {
-            return console.log('Error on ' + new Date() + ' for user ' +
-                (updatedUser.id || updatedUser.ID) + ' is as follow: \n ' +
-                err);
-          });
-        }
-
-        trackTransaction(request.payload.transactionId, updatedUser.id);
-        replyObject.authorization = 'bearer ' +
-            _authentication2.default.generateToken(userData[0]).token;
-        token = replyObject.authorization;
-        return dashboardAdaptor.prepareDashboardResult(userData[1],
-            userData[0].toJSON(), replyObject.authorization, request);
-      }).
-      then(function(result) {
-        return reply(result).
-            code(201).
-            header('authorization', replyObject.authorization);
-      }).
-      catch(function(err) {
-        console.log('Error on ' + new Date() + ' for user ' +
-            (updatedUser.id || updatedUser.ID) + ' is as follow: \n \n ' + err);
-        if (err.authorization) {
-          return reply(
-              {status: false, message: 'Unable to Login User', err: err}).
-              code(401).
-              header('authorization', replyObject.authorization);
-        }
-
-        return reply({
-          status: false,
-          authorization: token,
-          message: 'Unable to Login User',
-          showDashboard: false,
-          err: err,
-          forceUpdate: request.pre.forceUpdate,
-        }).code(401).header('authorization', replyObject.authorization);
+    if (request.payload.fcmId) {
+      fcmManager.insertFcmDetails(updatedUser.id || updatedUser.ID, request.payload.fcmId).then(function (data) {
+        console.log(data);
+      }).catch(function (err) {
+        return console.log('Error on ' + new Date() + ' for user ' + (updatedUser.id || updatedUser.ID) + ' is as follow: \n ' + err);
       });
+    }
+
+    trackTransaction(request.payload.transactionId, updatedUser.id);
+    replyObject.authorization = 'bearer ' + _authentication2.default.generateToken(userData[0]).token;
+    token = replyObject.authorization;
+    return dashboardAdaptor.prepareDashboardResult(userData[1], userData[0].toJSON(), replyObject.authorization, request);
+  }).then(function (result) {
+    return reply(result).code(201).header('authorization', replyObject.authorization);
+  }).catch(function (err) {
+    console.log('Error on ' + new Date() + ' for user ' + (updatedUser.id || updatedUser.ID) + ' is as follow: \n \n ' + err);
+    if (err.authorization) {
+      return reply({ status: false, message: 'Unable to Login User', err: err }).code(401).header('authorization', replyObject.authorization);
+    }
+
+    return reply({
+      status: false,
+      authorization: token,
+      message: 'Unable to Login User',
+      showDashboard: false,
+      err: err,
+      forceUpdate: request.pre.forceUpdate
+    }).code(401).header('authorization', replyObject.authorization);
+  });
 };
 
-var UserController = function() {
+var UserController = function () {
   function UserController(modal) {
     _classCallCheck(this, UserController);
 
@@ -213,338 +171,310 @@ var UserController = function() {
     notificationAdaptor = new _notification2.default(modals);
   }
 
-  _createClass(UserController, null, [
-    {
-      key: 'subscribeUser',
-      value: function subscribeUser(request, reply) {
-        var user = _shared2.default.verifyAuthorization(request.headers);
-        replyObject = {
-          status: true,
-          message: 'success',
-          forceUpdate: request.pre.forceUpdate,
-        };
-        if (!user) {
-          replyObject.status = false;
-          replyObject.message = 'Unauthorized';
-          reply(replyObject);
-        } else if (user && !request.pre.forceUpdate) {
-          return userAdaptor.isUserValid(user).then(function(isValid) {
-            if (isValid) {
-              if (request.payload && request.payload.fcmId) {
-                fcmManager.insertFcmDetails(user.id || user.ID,
-                    request.payload.fcmId, request.payload.platform).
-                    then(function(data) {
-                      console.log(data);
-                    }).
-                    catch(function(err) {
-                      console.log('Error on ' + new Date() + ' for user ' +
-                          (user.id || user.ID) + ' is as follow: \n \n ' + err);
-                    });
-              }
-
-              return reply(replyObject).code(201);
+  _createClass(UserController, null, [{
+    key: 'subscribeUser',
+    value: function subscribeUser(request, reply) {
+      var user = _shared2.default.verifyAuthorization(request.headers);
+      replyObject = {
+        status: true,
+        message: 'success',
+        forceUpdate: request.pre.forceUpdate
+      };
+      if (!user) {
+        replyObject.status = false;
+        replyObject.message = 'Unauthorized';
+        reply(replyObject);
+      } else if (user && !request.pre.forceUpdate) {
+        return userAdaptor.isUserValid(user).then(function (isValid) {
+          if (isValid) {
+            if (request.payload && request.payload.fcmId) {
+              fcmManager.insertFcmDetails(user.id || user.ID, request.payload.fcmId, request.payload.platform).then(function (data) {
+                console.log(data);
+              }).catch(function (err) {
+                console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+              });
             }
 
-            return reply({
-              status: false,
-              message: 'Token Expired or Invalid',
-              forceUpdate: request.pre.forceUpdate,
-            }).code(401);
-          }).catch(function(err) {
-            console.log('Error on ' + new Date() + ' for user ' +
-                user.mobile_no + ' is as follow: \n \n ' + err);
-            return reply({
-              status: false,
-              message: 'Token Expired or Invalid',
-              forceUpdate: request.pre.forceUpdate,
-            }).code(401);
-          });
+            return reply(replyObject).code(201);
+          }
+
+          return reply({
+            status: false,
+            message: 'Token Expired or Invalid',
+            forceUpdate: request.pre.forceUpdate
+          }).code(401);
+        }).catch(function (err) {
+          console.log('Error on ' + new Date() + ' for user ' + user.mobile_no + ' is as follow: \n \n ' + err);
+          return reply({
+            status: false,
+            message: 'Token Expired or Invalid',
+            forceUpdate: request.pre.forceUpdate
+          }).code(401);
+        });
+      } else {
+        replyObject.status = false;
+        replyObject.message = 'Forbidden';
+        return reply(replyObject);
+      }
+    }
+  }, {
+    key: 'dispatchOTP',
+    value: function dispatchOTP(request, reply) {
+      replyObject = {
+        status: true,
+        message: 'success'
+      };
+      if (!_google2.default.isValidPhoneNumber(request.payload.PhoneNo)) {
+        console.log('Phone number: ' + request.payload.PhoneNo + ' is not a valid phone number');
+        replyObject.status = false;
+        replyObject.message = 'Invalid Phone number';
+        return reply(replyObject);
+      }
+
+      return Promise.all([_otp2.default.sendOTPToUser(request.payload.PhoneNo), userAdaptor.retrieveSingleUser({
+        where: {
+          mobile_no: request.payload.PhoneNo
+        }
+      })]).then(function (response) {
+        if (response[0].type === 'success') {
+          console.log('SMS SENT WITH ID: ', response[0].message);
+          replyObject.PhoneNo = request.payload.PhoneNo;
+          var user = response[1];
+          if (response[1]) {
+            replyObject.Name = user.name;
+            replyObject.imageUrl = user.imageUrl;
+            return reply(replyObject).code(201);
+          } else {
+            return reply(replyObject).code(201);
+          }
         } else {
           replyObject.status = false;
-          replyObject.message = 'Forbidden';
-          return reply(replyObject);
+          replyObject.message = response[0].ErrorMessage;
+          replyObject.error = response[0].ErrorMessage;
+          return reply(replyObject).code(403);
         }
-      },
-    }, {
-      key: 'dispatchOTP',
-      value: function dispatchOTP(request, reply) {
-        replyObject = {
-          status: true,
-          message: 'success',
-        };
-        if (!_google2.default.isValidPhoneNumber(request.payload.PhoneNo)) {
-          console.log('Phone number: ' + request.payload.PhoneNo +
-              ' is not a valid phone number');
-          replyObject.status = false;
-          replyObject.message = 'Invalid Phone number';
-          return reply(replyObject);
-        }
+      }).catch(function (err) {
+        console.log({ API_Logs: err });
 
-        return Promise.all([
-          _otp2.default.sendOTPToUser(request.payload.PhoneNo),
-          userAdaptor.retrieveSingleUser({
-            where: {
-              mobile_no: request.payload.PhoneNo,
-            },
-          })]).then(function(response) {
-          if (response[0].type === 'success') {
-            console.log('SMS SENT WITH ID: ', response[0].message);
-            replyObject.PhoneNo = request.payload.PhoneNo;
-            var user = response[1];
-            if (response[1]) {
-              replyObject.Name = user.name;
-              replyObject.imageUrl = user.imageUrl;
-              return reply(replyObject).code(201);
-            } else {
-              return reply(replyObject).code(201);
-            }
-          } else {
-            replyObject.status = false;
-            replyObject.message = response[0].ErrorMessage;
-            replyObject.error = response[0].ErrorMessage;
-            return reply(replyObject).code(403);
-          }
-        }).catch(function(err) {
-          console.log({API_Logs: err});
+        replyObject.status = false;
+        replyObject.message = 'Some issue with sending OTP';
+        replyObject.error = err;
+        return reply(replyObject);
+      });
+    }
+  }, {
+    key: 'validateOTP',
+    value: function validateOTP(request, reply) {
+      replyObject = {
+        status: true,
+        message: 'success',
+        forceUpdate: request.pre.forceUpdate
+      };
+      console.log('REQUEST PAYLOAD FOR VALIDATE OTP: ');
+      console.log(request.payload);
+      var trueObject = request.payload.TrueObject;
 
-          replyObject.status = false;
-          replyObject.message = 'Some issue with sending OTP';
-          replyObject.error = err;
-          return reply(replyObject);
-        });
-      },
-    }, {
-      key: 'validateOTP',
-      value: function validateOTP(request, reply) {
-        replyObject = {
-          status: true,
-          message: 'success',
-          forceUpdate: request.pre.forceUpdate,
-        };
-        console.log('REQUEST PAYLOAD FOR VALIDATE OTP: ');
-        console.log(request.payload);
-        var trueObject = request.payload.TrueObject;
+      var userWhere = {
+        mobile_no: trueObject.PhoneNo,
+        user_status_type: 1
+      };
+      var userInput = {
+        role_type: 5,
+        mobile_no: trueObject.PhoneNo,
+        user_status_type: 1,
+        last_login_at: _moment2.default.utc().format('YYYY-MM-DD HH:mm:ss')
+      };
 
-        var userWhere = {
-          mobile_no: trueObject.PhoneNo,
-          user_status_type: 1,
-        };
-        var userInput = {
-          role_type: 5,
-          mobile_no: trueObject.PhoneNo,
-          user_status_type: 1,
-          last_login_at: _moment2.default.utc().format('YYYY-MM-DD HH:mm:ss'),
-        };
-
-        if (!request.pre.forceUpdate) {
-          if (request.payload.BBLogin_Type === 1) {
-            if (trueObject.PhoneNo !== '8750568036') {
-              return _otp2.default.verifyOTPForUser(trueObject.PhoneNo,
-                  request.payload.Token).then(function(data) {
+      if (!request.pre.forceUpdate) {
+        if (request.payload.BBLogin_Type === 1) {
+          if (trueObject.PhoneNo !== '8750568036') {
+            return _otp2.default.verifyOTPForUser(trueObject.PhoneNo, request.payload.Token).then(function (data) {
               console.log('VALIDATE OTP RESPONSE: ', data);
               if (data.type === 'success') {
-                return loginOrRegisterUser(userWhere, userInput, trueObject,
-                    request, reply);
+                return loginOrRegisterUser(userWhere, userInput, trueObject, request, reply);
               } else {
                 replyObject.status = false;
                 replyObject.message = 'Invalid/Expired OTP';
 
                 return reply(replyObject).code(401);
               }
-              }).catch(function(err) {
-                console.log('Error on ' + new Date() + ' for mobile no: ' +
-                    trueObject.PhoneNo + ' is as follow: \n \n ' + err);
+            }).catch(function (err) {
+              console.log('Error on ' + new Date() + ' for mobile no: ' + trueObject.PhoneNo + ' is as follow: \n \n ' + err);
               replyObject.status = false;
               replyObject.message = 'Issue in updating data';
               replyObject.error = err;
               return reply(replyObject).code(401);
             });
-            } else if (request.payload.Token === '050118') {
-              return loginOrRegisterUser(userWhere, userInput, trueObject,
-                  request, reply);
-            }
-          } else if (request.payload.BBLogin_Type === 2) {
-            var TrueSecret = request.payload.TrueSecret;
-            var TruePayload = request.payload.TruePayload;
-
-            if (!validatePayloadSignature(TruePayload, TrueSecret)) {
-              replyObject.status = false;
-              replyObject.message = 'Payload verification failed';
-              return reply(replyObject);
-            } else {
-              userInput.email = trueObject.EmailAddress;
-              userInput.full_name = trueObject.Name;
-              userInput.email_secret = _uuid2.default.v4();
-              userInput.mobile_no = trueObject.PhoneNo;
-              userInput.user_status_type = 1;
-              return loginOrRegisterUser(userWhere, userInput, trueObject,
-                  request, reply).catch(function(err) {
-                console.log('Error on ' + new Date() + ' for mobile no: ' +
-                    trueObject.PhoneNo + ' is as follow: \n \n ' + err);
-                replyObject.status = false;
-                replyObject.message = 'Issue in updating data';
-                replyObject.error = err;
-                return reply(replyObject).code(401);
-              });
-            }
+          } else if (request.payload.Token === '050118') {
+            return loginOrRegisterUser(userWhere, userInput, trueObject, request, reply);
           }
-        } else {
-          replyObject.status = false;
-          replyObject.message = 'Forbidden';
-          reply(replyObject);
-        }
-      }
-    }, {
-      key: 'logout',
-      value: function logout(request, reply) {
-        var user = _shared2.default.verifyAuthorization(request.headers);
-        replyObject = {
-          status: true,
-          message: 'success',
-          forceUpdate: request.pre.forceUpdate,
-        };
-        if (!user) {
-          replyObject.status = false;
-          replyObject.message = 'Unauthorized';
-          return reply(replyObject);
-        } else if (user && !request.pre.forceUpdate) {
-          if (request.payload && request.payload.fcmId) {
-            fcmManager.deleteFcmDetails(user.id || user.ID,
-                request.payload.fcmId, request.payload.platform).
-                then(function(rows) {
-                  console.log('TOTAL FCM ID\'s DELETED: ', rows);
-                });
-          }
+        } else if (request.payload.BBLogin_Type === 2) {
+          var TrueSecret = request.payload.TrueSecret;
+          var TruePayload = request.payload.TruePayload;
 
-          return userAdaptor.updateUserDetail({
-            last_logout_at: _moment2.default.utc().format('YYYY-MM-DD HH:mm:ss'),
-          }, {
-            where: {
-              id: user.id || user.ID,
-            },
-          }).then(function() {
-            return reply(replyObject).code(201);
-          }).catch(function() {
+          if (!validatePayloadSignature(TruePayload, TrueSecret)) {
             replyObject.status = false;
-            replyObject.message = 'Forbidden';
+            replyObject.message = 'Payload verification failed';
             return reply(replyObject);
+          } else {
+            userInput.email = trueObject.EmailAddress;
+            userInput.full_name = trueObject.Name;
+            userInput.email_secret = _uuid2.default.v4();
+            userInput.mobile_no = trueObject.PhoneNo;
+            userInput.user_status_type = 1;
+            return loginOrRegisterUser(userWhere, userInput, trueObject, request, reply).catch(function (err) {
+              console.log('Error on ' + new Date() + ' for mobile no: ' + trueObject.PhoneNo + ' is as follow: \n \n ' + err);
+              replyObject.status = false;
+              replyObject.message = 'Issue in updating data';
+              replyObject.error = err;
+              return reply(replyObject).code(401);
+            });
+          }
+        }
+      } else {
+        replyObject.status = false;
+        replyObject.message = 'Forbidden';
+        reply(replyObject);
+      }
+    }
+  }, {
+    key: 'logout',
+    value: function logout(request, reply) {
+      var user = _shared2.default.verifyAuthorization(request.headers);
+      replyObject = {
+        status: true,
+        message: 'success',
+        forceUpdate: request.pre.forceUpdate
+      };
+      if (!user) {
+        replyObject.status = false;
+        replyObject.message = 'Unauthorized';
+        return reply(replyObject);
+      } else if (user && !request.pre.forceUpdate) {
+        if (request.payload && request.payload.fcmId) {
+          fcmManager.deleteFcmDetails(user.id || user.ID, request.payload.fcmId, request.payload.platform).then(function (rows) {
+            console.log('TOTAL FCM ID\'s DELETED: ', rows);
           });
-        } else {
+        }
+
+        return userAdaptor.updateUserDetail({
+          last_logout_at: _moment2.default.utc().format('YYYY-MM-DD HH:mm:ss')
+        }, {
+          where: {
+            id: user.id || user.ID
+          }
+        }).then(function () {
+          return reply(replyObject).code(201);
+        }).catch(function () {
           replyObject.status = false;
           replyObject.message = 'Forbidden';
-          reply(replyObject);
-        }
-      },
-    }, {
-      key: 'retrieveUserProfile',
-      value: function retrieveUserProfile(request, reply) {
-        var user = _shared2.default.verifyAuthorization(request.headers);
-        if (user && !request.pre.forceUpdate) {
-          return reply(userAdaptor.retrieveUserProfile(user, request));
-        } else if (!user) {
-          return reply(
-              {message: 'Invalid Token', forceUpdate: request.pre.forceUpdate}).
-              code(401);
-        } else {
-          return reply({
-            message: 'Forbidden',
-            status: false,
-            forceUpdate: request.pre.forceUpdate,
-          });
-        }
-      },
-    }, {
-      key: 'updateUserProfile',
-      value: function updateUserProfile(request, reply) {
-        var user = _shared2.default.verifyAuthorization(request.headers);
-        if (user && !request.pre.forceUpdate) {
-          return userAdaptor.updateUserProfile(user, request, reply);
-        } else if (!user) {
-          return reply(
-              {message: 'Invalid Token', forceUpdate: request.pre.forceUpdate}).
-              code(401);
-        } else {
-          return reply({
-            status: false,
-            message: 'Forbidden',
-            forceUpdate: request.pre.forceUpdate,
-          });
-        }
-      },
-    }, {
-      key: 'retrieveNearBy',
-      value: function retrieveNearBy(request, reply) {
-        var user = _shared2.default.verifyAuthorization(request.headers);
-        if (!user) {
-          reply({
-            status: false,
-            message: 'Unauthorized',
-            forceUpdate: request.pre.forceUpdate,
-          });
-        } else if (user && !request.pre.forceUpdate) {
-          nearByAdaptor.retrieveNearBy(request.query.location ||
-              user.location, request.query.geolocation || user.latitude + ',' +
-              user.longitude, request.query.professionids || '[]',
-              reply, user.id || user.ID, request);
-        } else {
-          reply({
-            status: false,
-            message: 'Forbidden',
-            forceUpdate: request.pre.forceUpdate,
-          });
-        }
-      },
-    }, {
-      key: 'verifyEmailAddress',
-      value: function verifyEmailAddress(request, reply) {
-        var emailSecret = request.params.token;
-        notificationAdaptor.verifyEmailAddress(emailSecret, reply);
-      },
-    }, {
-      key: 'uploadTrueCallerImage',
-      value: function uploadTrueCallerImage(trueObject, userData) {
-        if (trueObject.ImageLink) {
-          var options = {
-            uri: trueObject.ImageLink,
-            timeout: 170000,
-            resolveWithFullResponse: true,
-            encoding: null,
-          };
-          console.log(userData.id);
-          fsImpl.readdirp(userData.id.toString()).then(function(images) {
-            if (images.length <= 0) {
-              (0, _requestPromise2.default)(options).then(function(result) {
-                UserController.uploadUserImage(userData, result);
-              });
-            }
-          }).catch(function(err) {
-            console.log({
-              apiErr: err,
-            });
-
-            (0, _requestPromise2.default)(options).then(function(result) {
+          return reply(replyObject);
+        });
+      } else {
+        replyObject.status = false;
+        replyObject.message = 'Forbidden';
+        reply(replyObject);
+      }
+    }
+  }, {
+    key: 'retrieveUserProfile',
+    value: function retrieveUserProfile(request, reply) {
+      var user = _shared2.default.verifyAuthorization(request.headers);
+      if (user && !request.pre.forceUpdate) {
+        return reply(userAdaptor.retrieveUserProfile(user, request));
+      } else if (!user) {
+        return reply({ message: 'Invalid Token', forceUpdate: request.pre.forceUpdate }).code(401);
+      } else {
+        return reply({
+          message: 'Forbidden',
+          status: false,
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    }
+  }, {
+    key: 'updateUserProfile',
+    value: function updateUserProfile(request, reply) {
+      var user = _shared2.default.verifyAuthorization(request.headers);
+      if (user && !request.pre.forceUpdate) {
+        return userAdaptor.updateUserProfile(user, request, reply);
+      } else if (!user) {
+        return reply({ message: 'Invalid Token', forceUpdate: request.pre.forceUpdate }).code(401);
+      } else {
+        return reply({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    }
+  }, {
+    key: 'retrieveNearBy',
+    value: function retrieveNearBy(request, reply) {
+      var user = _shared2.default.verifyAuthorization(request.headers);
+      if (!user) {
+        reply({
+          status: false,
+          message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate
+        });
+      } else if (user && !request.pre.forceUpdate) {
+        nearByAdaptor.retrieveNearBy(request.query.location || user.location, request.query.geolocation || user.latitude + ',' + user.longitude, request.query.professionids || '[]', reply, user.id || user.ID, request);
+      } else {
+        reply({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    }
+  }, {
+    key: 'verifyEmailAddress',
+    value: function verifyEmailAddress(request, reply) {
+      var emailSecret = request.params.token;
+      notificationAdaptor.verifyEmailAddress(emailSecret, reply);
+    }
+  }, {
+    key: 'uploadTrueCallerImage',
+    value: function uploadTrueCallerImage(trueObject, userData) {
+      if (trueObject.ImageLink) {
+        var options = {
+          uri: trueObject.ImageLink,
+          timeout: 170000,
+          resolveWithFullResponse: true,
+          encoding: null
+        };
+        console.log(userData.id);
+        fsImpl.readdirp(userData.id.toString()).then(function (images) {
+          if (images.length <= 0) {
+            (0, _requestPromise2.default)(options).then(function (result) {
               UserController.uploadUserImage(userData, result);
             });
+          }
+        }).catch(function (err) {
+          console.log({
+            apiErr: err
           });
-        }
-      },
-    }, {
-      key: 'uploadUserImage',
-      value: function uploadUserImage(user, result) {
-        var fileType = result.headers['content-type'].split('/')[1];
-        var fileName = (user.id || user.ID) + '/active-' +
-            (user.id || user.ID) + '-' + new Date().getTime() + '.' + fileType;
-        // const file = fs.createReadStream();
-        fsImpl.writeFile(fileName, result.body,
-            {ContentType: result.headers['content-type']}).
-            then(function(fileResult) {
-              console.log(fileResult);
-            }).
-            catch(function(err) {
-              console.log({API_TC_Upload_Logs: err});
-            });
-      },
-    }]);
+
+          (0, _requestPromise2.default)(options).then(function (result) {
+            UserController.uploadUserImage(userData, result);
+          });
+        });
+      }
+    }
+  }, {
+    key: 'uploadUserImage',
+    value: function uploadUserImage(user, result) {
+      var fileType = result.headers['content-type'].split('/')[1];
+      var fileName = (user.id || user.ID) + '/active-' + (user.id || user.ID) + '-' + new Date().getTime() + '.' + fileType;
+      // const file = fs.createReadStream();
+      fsImpl.writeFile(fileName, result.body, { ContentType: result.headers['content-type'] }).then(function (fileResult) {
+        console.log(fileResult);
+      }).catch(function (err) {
+        console.log({ API_TC_Upload_Logs: err });
+      });
+    }
+  }]);
 
   return UserController;
 }();

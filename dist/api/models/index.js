@@ -16,9 +16,7 @@ var _fs = require('fs');
 
 var _fs2 = _interopRequireDefault(_fs);
 
-function _interopRequireDefault(obj) {
-  return obj && obj.__esModule ? obj : {default: obj};
-}
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var database = _main2.default.DATABASE;
 var Op = _sequelize2.default.Op;
@@ -56,10 +54,9 @@ database.operatorsAliases = {
   $any: Op.any,
   $all: Op.all,
   $values: Op.values,
-  $col: Op.col,
+  $col: Op.col
 };
-var sequelize = new _sequelize2.default(database.database, database.username,
-    database.password, database);
+var sequelize = new _sequelize2.default(database.database, database.username, database.password, database);
 /* const tediousSequelize = new Sequelize(
   config.msSQLDatabase.database,
   config.msSQLDatabase.username,
@@ -68,15 +65,15 @@ var sequelize = new _sequelize2.default(database.database, database.username,
 ); */
 var db = {};
 
-_fs2.default.readdirSync(__dirname).filter(function(file) {
+_fs2.default.readdirSync(__dirname).filter(function (file) {
   return file.indexOf('.') !== 0 && file !== 'index.js';
-}).forEach(function(file) {
+}).forEach(function (file) {
   var model = sequelize.import(_path2.default.join(__dirname, file));
   // model.removeAttribute('id');
   db[model.name] = model;
 });
 
-Object.keys(db).forEach(function(modelName) {
+Object.keys(db).forEach(function (modelName) {
   if ('associate' in db[modelName]) {
     db[modelName].associate(db);
   }

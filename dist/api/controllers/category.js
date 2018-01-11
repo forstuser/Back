@@ -1,102 +1,76 @@
 /*jshint esversion: 6 */
 'use strict';
 
-Object.defineProperty(exports, '__esModule', {
-  value: true,
+Object.defineProperty(exports, "__esModule", {
+  value: true
 });
 
-var _createClass = function() {
-  function defineProperties(target, props) {
-    for (var i = 0; i < props.length; i++) {
-      var descriptor = props[i];
-      descriptor.enumerable = descriptor.enumerable || false;
-      descriptor.configurable = true;
-      if ('value' in descriptor) descriptor.writable = true;
-      Object.defineProperty(target, descriptor.key, descriptor);
-    }
-  }
-
-  return function(Constructor, protoProps, staticProps) {
-    if (protoProps) defineProperties(Constructor.prototype, protoProps);
-    if (staticProps) defineProperties(Constructor, staticProps);
-    return Constructor;
-  };
-}();
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 var _shared = require('../../helpers/shared');
 
 var _shared2 = _interopRequireDefault(_shared);
 
-function _interopRequireDefault(obj) {
-  return obj && obj.__esModule ? obj : {default: obj};
-}
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _classCallCheck(instance, Constructor) {
-  if (!(instance instanceof Constructor)) {
-    throw new TypeError('Cannot call a class as a function');
-  }
-}
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var modals = void 0;
 
-var CategoryController = function() {
+var CategoryController = function () {
   function CategoryController(modal) {
     _classCallCheck(this, CategoryController);
 
     modals = modal;
   }
 
-  _createClass(CategoryController, null, [
-    {
-      key: 'getCategories',
-      value: function getCategories(request, reply) {
-        var user = _shared2.default.verifyAuthorization(request.headers);
-        var isWebMode = request.params && request.params.mode &&
-            request.params.mode.toLowerCase() === 'web';
-        if (!user && !isWebMode) {
-          reply({
-            status: false,
-            message: 'Unauthorized',
-            forceUpdate: request.pre.forceUpdate,
-          });
-        } else if (!request.pre.forceUpdate) {
-          var condition = void 0;
+  _createClass(CategoryController, null, [{
+    key: 'getCategories',
+    value: function getCategories(request, reply) {
+      var user = _shared2.default.verifyAuthorization(request.headers);
+      var isWebMode = request.params && request.params.mode && request.params.mode.toLowerCase() === 'web';
+      if (!user && !isWebMode) {
+        reply({
+          status: false,
+          message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate
+        });
+      } else if (!request.pre.forceUpdate) {
+        var condition = void 0;
 
-          if (request.query.brandid || request.query.brandId) {
-            condition = '= ' + (request.query.brandid || request.query.brandId);
-          } else {
-            condition = 'IS NOT NULL';
-          }
-
-          return modals.sequelize.query('SELECT category_id, category_name from categories where category_id in (SELECT DISTINCT category_id from service_center_details where center_id in (SELECT center_id from center_brand_mapping where brand_id ' +
-              condition + ')) order by category_name;').then(function(results) {
-            if (results.length === 0) {
-              reply({
-                status: true,
-                categories: [],
-                forceUpdate: request.pre.forceUpdate,
-              });
-            } else {
-              reply({
-                status: true,
-                categories: results[0],
-                forceUpdate: request.pre.forceUpdate,
-              });
-            }
-          }).catch(function(err) {
-            console.log('Error on ' + new Date() + ' for user ' +
-                (user.id || user.ID) + ' is as follow: \n \n ' + err);
-            reply({status: false, message: 'ISE'});
-          });
+        if (request.query.brandid || request.query.brandId) {
+          condition = '= ' + (request.query.brandid || request.query.brandId);
         } else {
-          reply({
-            status: false,
-            message: 'Forbidden',
-            forceUpdate: request.pre.forceUpdate,
-          });
+          condition = 'IS NOT NULL';
         }
-      },
-    }]);
+
+        return modals.sequelize.query('SELECT category_id, category_name from categories where category_id in (SELECT DISTINCT category_id from service_center_details where center_id in (SELECT center_id from center_brand_mapping where brand_id ' + condition + ')) order by category_name;').then(function (results) {
+          if (results.length === 0) {
+            reply({
+              status: true,
+              categories: [],
+              forceUpdate: request.pre.forceUpdate
+            });
+          } else {
+            reply({
+              status: true,
+              categories: results[0],
+              forceUpdate: request.pre.forceUpdate
+            });
+          }
+        }).catch(function (err) {
+          console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+          reply({ status: false, message: 'ISE' });
+        });
+      } else {
+        reply({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    }
+  }]);
 
   return CategoryController;
 }();

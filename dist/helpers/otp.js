@@ -17,14 +17,11 @@ var _sendotp = require('sendotp');
 
 var _sendotp2 = _interopRequireDefault(_sendotp);
 
-function _interopRequireDefault(obj) {
-  return obj && obj.__esModule ? obj : {default: obj};
-}
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var OTP_CHAR_ARRAY = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
 
-var sendOTP = new _sendotp2.default(_main2.default.SMS.AUTH_KEY,
-    'Your verification code is "{{otp}}". Please enter this code to login to your account.');
+var sendOTP = new _sendotp2.default(_main2.default.SMS.AUTH_KEY, 'Your verification code is "{{otp}}". Please enter this code to login to your account.');
 
 _bluebird2.default.promisifyAll(sendOTP);
 
@@ -45,10 +42,10 @@ var generateOTP = function generateOTP(length) {
 };
 
 var sendOTPToUser = function sendOTPToUser(mobileNo) {
-  return _bluebird2.default.try(function() {
+  return _bluebird2.default.try(function () {
     var phone = '91' + mobileNo;
     var otp = generateOTP(6); // OTP of length = 6
-    return sendOTP.sendAsync(phone, 'BINBILL', otp).catch(function(err) {
+    return sendOTP.sendAsync(phone, 'BINBILL', otp).catch(function (err) {
       console.log('Error on ' + new Date() + ' is as follow: \n \n ' + err);
 
       return sendOTP.retryAsync(phone, true);
@@ -57,7 +54,7 @@ var sendOTPToUser = function sendOTPToUser(mobileNo) {
 };
 
 var verifyOTPForUser = function verifyOTPForUser(mobileNo, otp) {
-  return _bluebird2.default.try(function() {
+  return _bluebird2.default.try(function () {
     var phone = '91' + mobileNo;
 
     return sendOTP.verifyAsync(phone, otp);
@@ -66,5 +63,5 @@ var verifyOTPForUser = function verifyOTPForUser(mobileNo, otp) {
 
 module.exports = {
   sendOTPToUser: sendOTPToUser,
-  verifyOTPForUser: verifyOTPForUser,
+  verifyOTPForUser: verifyOTPForUser
 };

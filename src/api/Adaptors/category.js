@@ -120,49 +120,49 @@ export default class CategoryAdaptor {
                 $and: {
                   category_id: categoryData.map(item => item.id),
                   title: {
-                    $ilike: 'model',
+                    $iLike: 'model',
                   },
                 },
               }, {
                 $and: {
                   category_id: categoryData.map(item => item.id),
                   title: {
-                    $ilike: 'IMEI Number',
+                    $iLike: 'IMEI Number',
                   },
                 },
               }, {
                 $and: {
                   category_id: categoryData.map(item => item.id),
                   title: {
-                    $ilike: 'Serial Number',
+                    $iLike: 'Serial Number',
                   },
                 },
               }, {
                 $and: {
                   category_id: categoryData.map(item => item.id),
                   title: {
-                    $ilike: 'Chasis Number',
+                    $iLike: 'Chasis Number',
                   },
                 },
               }, {
                 $and: {
                   category_id: categoryData.map(item => item.id),
                   title: {
-                    $ilike: 'due date%',
+                    $iLike: 'due date%',
                   },
                 },
               }, {
                 $and: {
                   main_category_id: categoryData.map(item => item.refId),
                   title: {
-                    $ilike: 'Vehicle Number',
+                    $iLike: 'Vehicle Number',
                   },
                 },
               }, {
                 $and: {
                   main_category_id: categoryData.map(item => item.refId),
                   title: {
-                    $ilike: 'Registration Number',
+                    $iLike: 'Registration Number',
                   },
                 },
               }],
