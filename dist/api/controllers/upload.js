@@ -255,7 +255,8 @@ var UploadController = function () {
               fileData: fileData,
               user: user,
               result: jobResult,
-              type: request.query ? parseInt(request.query.type || '1') : 1
+              type: request.query ? parseInt(request.query.type || '1') : 1,
+              itemId: request.query ? request.query.itemid : undefined,
             }, reply: reply
           });
         } else {
@@ -273,7 +274,8 @@ var UploadController = function () {
                 result: jobResult,
                 fileType: _fileType3,
                 user: user,
-                type: request.query ? parseInt(request.query.type || '1') : 1
+                type: request.query ? parseInt(request.query.type || '1') : 1,
+                itemId: request.query ? request.query.itemid : undefined,
               }, reply: reply
             });
           }
@@ -353,11 +355,11 @@ var UploadController = function () {
           file_type: fileType ? fileType.toString() : fileTypeData.ext,
           status_type: 6,
           updated_by: user.id || user.ID,
-          type: type
+          type: type,
         };
         var copyData = void 0;
         return jobAdaptor.createJobCopies(jobCopyDetail).then(function (copyResult) {
-          copyData = copyResult;
+          copyData = [copyResult];
           return modals.users.findById(user.id || user.ID);
         }).then(function (userResult) {
           if (userResult.email) {
@@ -371,47 +373,24 @@ var UploadController = function () {
               type: type,
               jobId: jobResult.id,
               user: user,
-              productId: jobResult.productId
+              productId: jobResult.productId,
+              itemId: requiredDetail.itemId,
+              copies: copyData.map(function(copyItem) {
+                return {
+                  copyId: copyItem.id,
+                  copyUrl: '/jobs/' + copyItem.job_id + '/files/' + copyItem.id,
+                  fileType: copyItem.file_type,
+                  jobId: copyItem.job_id,
+                  copyName: copyItem.file_name,
+                };
+              })
             });
           }
 
           return undefined;
         }).then(function (productItemResult) {
-          var replyResult = {
-            status: true,
-            job_id: jobResult.id,
-            message: 'Uploaded Successfully',
-            billResult: copyData
-            // forceUpdate: request.pre.forceUpdate
-          };
-          console.log({
-            type: type, productItemResult: productItemResult
-          });
-          if (productItemResult) {
-            if (type === 2) {
-              replyResult.amc = productItemResult[0];
-              replyResult.product = productItemResult[1];
-            } else if (type === 3) {
-              replyResult.insurance = productItemResult[0];
-              replyResult.product = productItemResult[1];
-            } else if (type === 4) {
-              replyResult.repair = productItemResult[0];
-              replyResult.product = productItemResult[1];
-            } else if (type === 5) {
-              replyResult.warranty = productItemResult[0];
-              replyResult.product = productItemResult[1];
-            } else if (type === 6) {
-              replyResult.warranty = productItemResult[0];
-              replyResult.product = productItemResult[1];
-            } else if (type === 7) {
-              replyResult.puc = productItemResult[0];
-              replyResult.product = productItemResult[1];
-            } else {
-              replyResult.product = productItemResult[0];
-            }
-          }
-
-          return reply(replyResult);
+          return UploadController.uploadResponse(jobResult, copyData,
+              productItemResult, type, reply);
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
           return reply({
@@ -461,7 +440,7 @@ var UploadController = function () {
             file_type: fileTypes[index] ? fileTypes[index].toString() : fileTypeDataArray[index].ext,
             status_type: 6,
             updated_by: user.id || user.ID,
-            type: type
+            type: type,
           };
           return jobAdaptor.createJobCopies(jobCopyDetail);
         });
@@ -483,53 +462,74 @@ var UploadController = function () {
             type: type,
             jobId: jobResult.id,
             user: user,
-            productId: jobResult.productId
+            itemId: requiredDetail.itemId,
+            productId: jobResult.productId,
+            copies: jobCopies.map(function(copyItem) {
+              return {
+                copyId: copyItem.id,
+                copyUrl: '/jobs/' + copyItem.job_id + '/files/' + copyItem.id,
+                file_type: copyItem.file_type,
+                jobId: copyItem.job_id,
+                copyName: copyItem.file_name,
+              };
+            })
           });
         }
 
         return undefined;
       }).then(function (productItemResult) {
-        var replyResult = {
-          status: true,
-          message: 'Uploaded Successfully',
-          job_id: jobResult.id,
-          billResult: jobCopies
-          // forceUpdate: request.pre.forceUpdate
-        };
-        if (productItemResult) {
-          if (type === 2) {
-            replyResult.amc = productItemResult[0];
-            replyResult.product = productItemResult[1];
-          } else if (type === 3) {
-            replyResult.insurance = productItemResult[0];
-            replyResult.product = productItemResult[1];
-          } else if (type === 4) {
-            replyResult.repair = productItemResult[0];
-            replyResult.product = productItemResult[1];
-          } else if (type === 5) {
-            replyResult.warranty = productItemResult[0];
-            replyResult.product = productItemResult[1];
-          } else if (type === 6) {
-            replyResult.warranty = productItemResult[0];
-            replyResult.product = productItemResult[1];
-          } else if (type === 7) {
-            replyResult.puc = productItemResult[0];
-            replyResult.product = productItemResult[1];
-          } else {
-            replyResult.product = productItemResult[0];
-          }
-        }
-
-        return reply(replyResult);
-      }).catch(function (err) {
-        console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+        return UploadController.uploadResponse(jobResult, jobCopies,
+            productItemResult, type, reply);
+      }).catch(function(err) {
+        console.log('Error on ' + new Date() + ' for user ' +
+            (user.id || user.ID) + ' is as follow: \n \n ' + err);
         return reply({
           status: false,
           message: 'Upload Failed',
-          err: JSON.stringify(err)
+          err: JSON.stringify(err),
           // forceUpdate: request.pre.forceUpdate
         }).code(500);
       });
+    }
+  }, {
+    key: 'uploadResponse',
+    value: function uploadResponse(
+        jobResult, copyData, productItemResult, type, reply) {
+      var replyResult = {
+        status: true,
+        job_id: jobResult.id,
+        message: 'Uploaded Successfully',
+        billResult: copyData,
+        // forceUpdate: request.pre.forceUpdate
+      };
+      if (productItemResult) {
+        if (type === 2) {
+          replyResult.amc = productItemResult[0];
+          replyResult.product = productItemResult[1];
+        } else if (type === 3) {
+          replyResult.insurance = productItemResult[0];
+          replyResult.product = productItemResult[1];
+        } else if (type === 4) {
+          replyResult.repair = productItemResult[0];
+          replyResult.product = productItemResult[1];
+        } else if (type === 5) {
+          replyResult.warranty = productItemResult[0];
+          replyResult.product = productItemResult[1];
+        } else if (type === 6) {
+          replyResult.warranty = productItemResult[0];
+          replyResult.product = productItemResult[1];
+        } else if (type === 7) {
+          replyResult.puc = productItemResult[0];
+          replyResult.product = productItemResult[1];
+        } else if (type === 8) {
+          replyResult.warranty = productItemResult[0];
+          replyResult.product = productItemResult[1];
+        } else {
+          replyResult.product = productItemResult[0];
+        }
+      }
+
+      return reply(replyResult);
     }
   }, {
     key: 'createProductItems',
@@ -537,77 +537,138 @@ var UploadController = function () {
       var type = parameters.type,
           jobId = parameters.jobId,
           user = parameters.user,
-          productId = parameters.productId;
+          productId = parameters.productId,
+          itemId = parameters.itemId,
+          copies = parameters.copies;
 
       var productItemPromise = [];
       switch (type) {
         case 2:
-          productItemPromise.push(amcAdaptor.createAMCs({
+          productItemPromise.push(!itemId ? amcAdaptor.createAMCs({
             job_id: jobId,
             product_id: productId,
             user_id: user.id || user.ID,
             updated_by: user.id || user.ID,
-            status_type: 11
+            status_type: 11,
+            copies: copies,
+          }) : amcAdaptor.updateAMCs(itemId, {
+            job_id: jobId,
+            product_id: productId,
+            user_id: user.id || user.ID,
+            updated_by: user.id || user.ID,
+            status_type: 11,
+            copies: copies,
           }));
           break;
 
         case 3:
-          productItemPromise.push(insuranceAdaptor.createInsurances({
+          productItemPromise.push(!itemId ? insuranceAdaptor.createInsurances({
             job_id: jobId,
             product_id: productId,
             user_id: user.id || user.ID,
             updated_by: user.id || user.ID,
-            status_type: 11
+            status_type: 11,
+            copies: copies,
+          }) : insuranceAdaptor.updateInsurances(itemId, {
+            job_id: jobId,
+            product_id: productId,
+            user_id: user.id || user.ID,
+            updated_by: user.id || user.ID,
+            status_type: 11,
+            copies: copies,
           }));
           break;
 
         case 4:
-          productItemPromise.push(repairAdaptor.createRepairs({
-            job_id: jobId,
-            product_id: productId,
-            user_id: user.id || user.ID,
-            updated_by: user.id || user.ID,
-            status_type: 11
-          }));
-          break;
-        case 5:
-          productItemPromise.push(warrantyAdaptor.createWarranties({
+          productItemPromise.push(!itemId ? repairAdaptor.createRepairs({
             job_id: jobId,
             product_id: productId,
             user_id: user.id || user.ID,
             updated_by: user.id || user.ID,
             status_type: 11,
-            warranty_type: 1
+            copies: copies,
+          }) : repairAdaptor.updateRepairs(itemId, {
+            job_id: jobId,
+            product_id: productId,
+            user_id: user.id || user.ID,
+            updated_by: user.id || user.ID,
+            status_type: 11,
+            copies: copies,
+          }));
+          break;
+        case 5:
+          productItemPromise.push(!itemId ? warrantyAdaptor.createWarranties({
+            job_id: jobId,
+            product_id: productId,
+            user_id: user.id || user.ID,
+            updated_by: user.id || user.ID,
+            status_type: 11,
+            warranty_type: 1,
+            copies: copies,
+          }) : warrantyAdaptor.updateWarranties(itemId, {
+            job_id: jobId,
+            product_id: productId,
+            user_id: user.id || user.ID,
+            updated_by: user.id || user.ID,
+            status_type: 11,
+            warranty_type: 1,
+            copies: copies,
           }));
           break;
 
         case 6:
-          productItemPromise.push(warrantyAdaptor.createWarranties({
+          productItemPromise.push(!itemId ? warrantyAdaptor.createWarranties({
             job_id: jobId,
             product_id: productId,
             user_id: user.id || user.ID,
             updated_by: user.id || user.ID,
             status_type: 11,
-            warranty_type: 3
+            warranty_type: 3,
+            copies: copies,
+          }) : warrantyAdaptor.updateWarranties(itemId, {
+            job_id: jobId,
+            product_id: productId,
+            user_id: user.id || user.ID,
+            updated_by: user.id || user.ID,
+            status_type: 11,
+            warranty_type: 3,
+            copies: copies,
           }));
           break;
         case 7:
-          productItemPromise.push(pucAdaptor.createPUCs({
-            job_id: jobId,
-            product_id: productId,
-            user_id: user.id || user.ID,
-            updated_by: user.id || user.ID,
-            status_type: 11
-          }));
-          break;
-        case 8:
-          productItemPromise.push(warrantyAdaptor.createWarranties({
+          productItemPromise.push(!itemId ? pucAdaptor.createPUCs({
             job_id: jobId,
             product_id: productId,
             user_id: user.id || user.ID,
             updated_by: user.id || user.ID,
             status_type: 11,
-            warranty_type: 2
+            copies: copies,
+          }) : pucAdaptor.updatePUCs(itemId, {
+            job_id: jobId,
+            product_id: productId,
+            user_id: user.id || user.ID,
+            updated_by: user.id || user.ID,
+            status_type: 11,
+            copies: copies,
+          }));
+          break;
+        case 8:
+          productItemPromise.push(!itemId ? warrantyAdaptor.createWarranties({
+            job_id: jobId,
+            product_id: productId,
+            user_id: user.id || user.ID,
+            updated_by: user.id || user.ID,
+            status_type: 11,
+            warranty_type: 2,
+            copies: copies,
+          }) : warrantyAdaptor.updateWarranties(itemId, {
+            job_id: jobId,
+            product_id: productId,
+            user_id: user.id || user.ID,
+            updated_by: user.id || user.ID,
+            status_type: 11,
+            warranty_type: 2,
+            copies: copies,
           }));
           break;
         default:
@@ -615,7 +676,8 @@ var UploadController = function () {
             job_id: jobId,
             user_id: user.id || user.ID,
             updated_by: user.id || user.ID,
-            status_type: 11
+            status_type: 11,
+            copies: copies,
           }));
           break;
       }
@@ -625,7 +687,7 @@ var UploadController = function () {
           job_id: jobId,
           user_id: user.id || user.ID,
           updated_by: user.id || user.ID,
-          status_type: 11
+          status_type: 11,
         }));
       }
 
@@ -678,10 +740,13 @@ var UploadController = function () {
         }).then(function (result) {
           if (result) {
             fsImpl.readFile(_guid2.default.isGuid(result.job_id) ? '' + result.copies[0].file_name : 'jobs/' + result.job_id + '/' + result.copies[0].file_name).then(function (fileResult) {
-              reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', 'attachment; filename=' + result.bill_copy_name);
+              return reply(fileResult.Body).
+                  header('Content-Type', fileResult.ContentType).
+                  header('Content-Disposition', 'attachment; filename=' +
+                      result.bill_copy_name);
             }).catch(function (err) {
               console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
-              reply({
+              return reply({
                 status: false,
                 message: 'No Result Found',
                 forceUpdate: request.pre.forceUpdate,
@@ -689,7 +754,7 @@ var UploadController = function () {
               }).code(404);
             });
           } else {
-            reply({
+            return reply({
               status: false,
               message: 'No Result Found',
               forceUpdate: request.pre.forceUpdate
@@ -697,10 +762,11 @@ var UploadController = function () {
           }
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
-          reply({ status: false, err: err, forceUpdate: request.pre.forceUpdate });
+          return reply(
+              {status: false, err: err, forceUpdate: request.pre.forceUpdate});
         });
       } else {
-        reply({
+        return reply({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -719,10 +785,19 @@ var UploadController = function () {
         }).code(401);
       } else {
         if (!request.pre.forceUpdate) {
-          Promise.all([modals.jobs.findById(request.params.id), modals.jobCopies.update({
-            status_type: 3,
-            updated_by: user.id || user.ID
-          }, {
+          var itemId = request.query && request.query.itemid ?
+              request.query.itemid :
+              undefined;
+
+          Promise.all([
+            modals.jobs.findById(request.params.id, {
+              include: [
+                {
+                  model: modals.jobCopies,
+                  as: 'copies',
+                  required: true,
+                }],
+            }), modals.jobCopies.destroy({
             where: {
               id: request.params.copyid,
               job_id: request.params.id
@@ -737,7 +812,13 @@ var UploadController = function () {
                 $notIn: [3, 9]
               }
             }
-          })]).then(function (result) {
+            }), itemId ? UploadController.updateOrDeleteProductItems({
+              type: parseInt(request.query.type || '1'),
+              jobId: request.params.id,
+              user: user,
+              itemId: itemId,
+              copyId: request.params.copyid,
+            }) : '']).then(function(result) {
             var count = result[2];
             var attributes = count > 0 ? {
               user_status: 8,
@@ -752,24 +833,132 @@ var UploadController = function () {
               qe_status: 3,
               updated_by: user.id || user.ID
             };
+            var copiesData = result[0].copies.find(function(copyItem) {
+              return copyItem.id.toString() ===
+                  request.params.copyid.toString();
+            });
+            if (copiesData) {
+              fsImpl.rmdirp(_guid2.default.isGuid(result[0].job_id) ?
+                  '' + copiesData.file_name :
+                  'jobs/' + result[0].job_id + '/' + copiesData.file_name);
+            }
+
             result[0].updateAttributes(attributes);
-            reply({
+            return reply({
               status: true,
               message: 'File deleted successfully',
               forceUpdate: request.pre.forceUpdate
             });
           }).catch(function (err) {
             console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
-            reply({ status: false, err: err, forceUpdate: request.pre.forceUpdate });
+            return reply({
+              status: false,
+              err: err,
+              forceUpdate: request.pre.forceUpdate,
+            });
           });
         } else {
-          reply({
+          return reply({
             status: false,
             message: 'Forbidden',
             forceUpdate: request.pre.forceUpdate
           });
         }
       }
+    }
+  }, {
+    key: 'updateOrDeleteProductItems',
+    value: function updateOrDeleteProductItems(parameters) {
+      var type = parameters.type,
+          jobId = parameters.jobId,
+          user = parameters.user,
+          itemId = parameters.itemId,
+          copyId = parameters.copyId;
+
+      var productItemPromise = [];
+      switch (type) {
+        case 2:
+          productItemPromise.push(amcAdaptor.removeAMCs(itemId, copyId, {
+            job_id: jobId,
+            product_id: productId,
+            user_id: user.id || user.ID,
+            updated_by: user.id || user.ID,
+          }));
+          break;
+
+        case 3:
+          productItemPromise.push(
+              insuranceAdaptor.removeInsurances(itemId, copyId, {
+                job_id: jobId,
+                product_id: productId,
+                user_id: user.id || user.ID,
+                updated_by: user.id || user.ID,
+              }));
+          break;
+
+        case 4:
+          productItemPromise.push(repairAdaptor.removeRepairs(itemId, copyId, {
+            job_id: jobId,
+            product_id: productId,
+            user_id: user.id || user.ID,
+            updated_by: user.id || user.ID,
+          }));
+          break;
+        case 5:
+          productItemPromise.push(
+              warrantyAdaptor.removeWarranties(itemId, copyId, {
+                job_id: jobId,
+                product_id: productId,
+                user_id: user.id || user.ID,
+                updated_by: user.id || user.ID,
+              }));
+          break;
+
+        case 6:
+          productItemPromise.push(
+              warrantyAdaptor.removeWarranties(itemId, copyId, {
+                job_id: jobId,
+                product_id: productId,
+                user_id: user.id || user.ID,
+                updated_by: user.id || user.ID,
+              }));
+          break;
+        case 7:
+          productItemPromise.push(pucAdaptor.removePUCs(itemId, {
+            job_id: jobId,
+            product_id: productId,
+            user_id: user.id || user.ID,
+            updated_by: user.id || user.ID,
+          }));
+          break;
+        case 8:
+          productItemPromise.push(
+              warrantyAdaptor.removeWarranties(itemId, copyId, {
+                job_id: jobId,
+                product_id: productId,
+                user_id: user.id || user.ID,
+                updated_by: user.id || user.ID,
+              }));
+          break;
+        default:
+          productItemPromise.push(
+              productAdaptor.removeProducts(itemId, copyId, {
+                job_id: jobId,
+                user_id: user.id || user.ID,
+                updated_by: user.id || user.ID,
+              }));
+          break;
+      }
+
+      if (type > 1 && type < 8) {
+        productItemPromise.push(productAdaptor.removeProducts(itemId, copyId, {
+          job_id: jobId,
+          user_id: user.id || user.ID,
+          updated_by: user.id || user.ID,
+        }));
+      }
+
+      return Promise.all(productItemPromise);
     }
   }, {
     key: 'retrieveCategoryImage',

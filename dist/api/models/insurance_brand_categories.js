@@ -22,7 +22,7 @@ exports.default = function (sequelize, DataTypes) {
     }
   }, {
     freezeTableName: true,
-    defaultPrimaryKey: false,
+    defaultPrimaryKey: true,
     timestamps: true,
     underscored: true,
     tableName: 'insurance_brand_categories'

@@ -185,6 +185,8 @@ var ProductController = function () {
           seller_contact: request.payload.seller_contact,
           seller_id: request.payload.seller_id,
           status_type: 11,
+          model: request.payload.model,
+          new_drop_down: request.payload.isNewModel,
           document_number: request.payload.document_number,
           document_date: request.payload.document_date ?
               _moment2.default.utc(request.payload.document_date,
@@ -197,7 +199,6 @@ var ProductController = function () {
                       'DD MMM YY').startOf('day').format('YYYY-MM-DD') :
               undefined,
           brand_name: request.payload.brand_name,
-          copies: []
         };
 
         var otherItems = {

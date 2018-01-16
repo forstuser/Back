@@ -219,6 +219,7 @@ class UploadController {
             user,
             result: jobResult,
             type: request.query ? parseInt(request.query.type || '1') : 1,
+            itemId: request.query ? request.query.itemid : undefined,
           }, reply,
         });
       } else {
@@ -237,6 +238,7 @@ class UploadController {
               fileType,
               user,
               type: request.query ? parseInt(request.query.type || '1') : 1,
+              itemId: request.query ? request.query.itemid : undefined,
             }, reply,
           });
         }
@@ -330,7 +332,7 @@ class UploadController {
       };
       let copyData;
       return jobAdaptor.createJobCopies(jobCopyDetail).then((copyResult) => {
-        copyData = copyResult;
+        copyData = [copyResult];
         return modals.users.findById(user.id || user.ID);
       }).then((userResult) => {
         if (userResult.email) {
@@ -345,46 +347,22 @@ class UploadController {
             jobId: jobResult.id,
             user,
             productId: jobResult.productId,
+            itemId: requiredDetail.itemId,
+            copies: copyData.map((copyItem) => ({
+              copyId: copyItem.id,
+              copyUrl: `/jobs/${copyItem.job_id}/files/${copyItem.id}`,
+              file_type: copyItem.file_type,
+              jobId: copyItem.job_id,
+              copyName: copyItem.file_name,
+            })),
           });
         }
 
         return undefined;
       }).then((productItemResult) => {
-        const replyResult = {
-          status: true,
-          job_id: jobResult.id,
-          message: 'Uploaded Successfully',
-          billResult: copyData,
-          // forceUpdate: request.pre.forceUpdate
-        };
-        console.log({
-          type, productItemResult,
-        });
-        if (productItemResult) {
-          if (type === 2) {
-            replyResult.amc = productItemResult[0];
-            replyResult.product = productItemResult[1];
-          } else if (type === 3) {
-            replyResult.insurance = productItemResult[0];
-            replyResult.product = productItemResult[1];
-          } else if (type === 4) {
-            replyResult.repair = productItemResult[0];
-            replyResult.product = productItemResult[1];
-          } else if (type === 5) {
-            replyResult.warranty = productItemResult[0];
-            replyResult.product = productItemResult[1];
-          } else if (type === 6) {
-            replyResult.warranty = productItemResult[0];
-            replyResult.product = productItemResult[1];
-          } else if (type === 7) {
-            replyResult.puc = productItemResult[0];
-            replyResult.product = productItemResult[1];
-          } else {
-            replyResult.product = productItemResult[0];
-          }
-        }
-
-        return reply(replyResult);
+        return UploadController.uploadResponse(jobResult, copyData,
+            productItemResult, type,
+            reply);
       }).catch((err) => {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
@@ -464,44 +442,22 @@ class UploadController {
           type,
           jobId: jobResult.id,
           user,
+          itemId: requiredDetail.itemId,
           productId: jobResult.productId,
+          copies: jobCopies.map((copyItem) => ({
+            copyId: copyItem.id,
+            copyUrl: `/jobs/${copyItem.job_id}/files/${copyItem.id}`,
+            file_type: copyItem.file_type,
+            jobId: copyItem.job_id,
+            copyName: copyItem.file_name,
+          })),
         });
       }
 
       return undefined;
     }).then((productItemResult) => {
-      const replyResult = {
-        status: true,
-        message: 'Uploaded Successfully',
-        job_id: jobResult.id,
-        billResult: jobCopies,
-        // forceUpdate: request.pre.forceUpdate
-      };
-      if (productItemResult) {
-        if (type === 2) {
-          replyResult.amc = productItemResult[0];
-          replyResult.product = productItemResult[1];
-        } else if (type === 3) {
-          replyResult.insurance = productItemResult[0];
-          replyResult.product = productItemResult[1];
-        } else if (type === 4) {
-          replyResult.repair = productItemResult[0];
-          replyResult.product = productItemResult[1];
-        } else if (type === 5) {
-          replyResult.warranty = productItemResult[0];
-          replyResult.product = productItemResult[1];
-        } else if (type === 6) {
-          replyResult.warranty = productItemResult[0];
-          replyResult.product = productItemResult[1];
-        } else if (type === 7) {
-          replyResult.puc = productItemResult[0];
-          replyResult.product = productItemResult[1];
-        } else {
-          replyResult.product = productItemResult[0];
-        }
-      }
-
-      return reply(replyResult);
+      return UploadController.uploadResponse(jobResult, jobCopies,
+          productItemResult, type, reply);
     }).catch((err) => {
       console.log(
           `Error on ${new Date()} for user ${user.id ||
@@ -515,77 +471,174 @@ class UploadController {
     });
   }
 
+  static uploadResponse(jobResult, copyData, productItemResult, type, reply) {
+    const replyResult = {
+      status: true,
+      job_id: jobResult.id,
+      message: 'Uploaded Successfully',
+      billResult: copyData,
+      // forceUpdate: request.pre.forceUpdate
+    };
+    if (productItemResult) {
+      if (type === 2) {
+        replyResult.amc = productItemResult[0];
+        replyResult.product = productItemResult[1];
+      } else if (type === 3) {
+        replyResult.insurance = productItemResult[0];
+        replyResult.product = productItemResult[1];
+      } else if (type === 4) {
+        replyResult.repair = productItemResult[0];
+        replyResult.product = productItemResult[1];
+      } else if (type === 5) {
+        replyResult.warranty = productItemResult[0];
+        replyResult.product = productItemResult[1];
+      } else if (type === 6) {
+        replyResult.warranty = productItemResult[0];
+        replyResult.product = productItemResult[1];
+      } else if (type === 7) {
+        replyResult.puc = productItemResult[0];
+        replyResult.product = productItemResult[1];
+      } else if (type === 8) {
+        replyResult.warranty = productItemResult[0];
+        replyResult.product = productItemResult[1];
+      } else {
+        replyResult.product = productItemResult[0];
+      }
+    }
+
+    return reply(replyResult);
+  }
+
   static createProductItems(parameters) {
-    let {type, jobId, user, productId} = parameters;
+    let {type, jobId, user, productId, itemId, copies} = parameters;
     const productItemPromise = [];
     switch (type) {
       case 2:
-        productItemPromise.push(amcAdaptor.createAMCs({
+        productItemPromise.push(!itemId ? amcAdaptor.createAMCs({
           job_id: jobId,
           product_id: productId,
           user_id: user.id || user.ID,
           updated_by: user.id || user.ID,
           status_type: 11,
+          copies,
+        }) : amcAdaptor.updateAMCs(itemId, {
+          job_id: jobId,
+          product_id: productId,
+          user_id: user.id || user.ID,
+          updated_by: user.id || user.ID,
+          status_type: 11,
+          copies,
         }));
         break;
 
       case 3:
-        productItemPromise.push(insuranceAdaptor.createInsurances({
+        productItemPromise.push(!itemId ? insuranceAdaptor.createInsurances({
           job_id: jobId,
           product_id: productId,
           user_id: user.id || user.ID,
           updated_by: user.id || user.ID,
           status_type: 11,
+          copies,
+        }) : insuranceAdaptor.updateInsurances(itemId, {
+          job_id: jobId,
+          product_id: productId,
+          user_id: user.id || user.ID,
+          updated_by: user.id || user.ID,
+          status_type: 11,
+          copies,
         }));
         break;
 
       case 4:
-        productItemPromise.push(repairAdaptor.createRepairs({
+        productItemPromise.push(!itemId ? repairAdaptor.createRepairs({
           job_id: jobId,
           product_id: productId,
           user_id: user.id || user.ID,
           updated_by: user.id || user.ID,
           status_type: 11,
+          copies,
+        }) : repairAdaptor.updateRepairs(itemId, {
+          job_id: jobId,
+          product_id: productId,
+          user_id: user.id || user.ID,
+          updated_by: user.id || user.ID,
+          status_type: 11,
+          copies,
         }));
         break;
       case 5 :
-        productItemPromise.push(warrantyAdaptor.createWarranties({
+        productItemPromise.push(!itemId ? warrantyAdaptor.createWarranties({
           job_id: jobId,
           product_id: productId,
           user_id: user.id || user.ID,
           updated_by: user.id || user.ID,
           status_type: 11,
           warranty_type: 1,
+          copies,
+        }) : warrantyAdaptor.updateWarranties(itemId, {
+          job_id: jobId,
+          product_id: productId,
+          user_id: user.id || user.ID,
+          updated_by: user.id || user.ID,
+          status_type: 11,
+          warranty_type: 1,
+          copies,
         }));
         break;
 
       case 6:
-        productItemPromise.push(warrantyAdaptor.createWarranties({
+        productItemPromise.push(!itemId ? warrantyAdaptor.createWarranties({
           job_id: jobId,
           product_id: productId,
           user_id: user.id || user.ID,
           updated_by: user.id || user.ID,
           status_type: 11,
           warranty_type: 3,
-        }));
-        break;
-      case 7:
-        productItemPromise.push(pucAdaptor.createPUCs({
+          copies,
+        }) : warrantyAdaptor.updateWarranties(itemId, {
           job_id: jobId,
           product_id: productId,
           user_id: user.id || user.ID,
           updated_by: user.id || user.ID,
           status_type: 11,
+          warranty_type: 3,
+          copies,
+        }));
+        break;
+      case 7:
+        productItemPromise.push(!itemId ? pucAdaptor.createPUCs({
+          job_id: jobId,
+          product_id: productId,
+          user_id: user.id || user.ID,
+          updated_by: user.id || user.ID,
+          status_type: 11,
+          copies,
+        }) : pucAdaptor.updatePUCs(itemId, {
+          job_id: jobId,
+          product_id: productId,
+          user_id: user.id || user.ID,
+          updated_by: user.id || user.ID,
+          status_type: 11,
+          copies,
         }));
         break;
       case 8:
-        productItemPromise.push(warrantyAdaptor.createWarranties({
+        productItemPromise.push(!itemId ? warrantyAdaptor.createWarranties({
           job_id: jobId,
           product_id: productId,
           user_id: user.id || user.ID,
           updated_by: user.id || user.ID,
           status_type: 11,
           warranty_type: 2,
+          copies,
+        }) : warrantyAdaptor.updateWarranties(itemId, {
+          job_id: jobId,
+          product_id: productId,
+          user_id: user.id || user.ID,
+          updated_by: user.id || user.ID,
+          status_type: 11,
+          warranty_type: 2,
+          copies,
         }));
         break;
       default:
@@ -594,6 +647,7 @@ class UploadController {
           user_id: user.id || user.ID,
           updated_by: user.id || user.ID,
           status_type: 11,
+          copies,
         }));
         break;
     }
@@ -668,7 +722,7 @@ class UploadController {
                   `${result.copies[0].file_name}` :
                   `jobs/${result.job_id}/${result.copies[0].file_name}`).
               then(fileResult => {
-                reply(fileResult.Body).
+                return reply(fileResult.Body).
                     header('Content-Type', fileResult.ContentType).
                     header('Content-Disposition',
                         `attachment; filename=${result.bill_copy_name}`);
@@ -677,7 +731,7 @@ class UploadController {
                 console.log(
                     `Error on ${new Date()} for user ${user.id ||
                     user.ID} is as follow: \n \n ${err}`);
-                reply({
+                return reply({
                   status: false,
                   message: 'No Result Found',
                   forceUpdate: request.pre.forceUpdate,
@@ -685,7 +739,7 @@ class UploadController {
                 }).code(404);
               });
         } else {
-          reply({
+          return reply({
             status: false,
             message: 'No Result Found',
             forceUpdate: request.pre.forceUpdate,
@@ -695,10 +749,11 @@ class UploadController {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
-        reply({status: false, err, forceUpdate: request.pre.forceUpdate});
+        return reply(
+            {status: false, err, forceUpdate: request.pre.forceUpdate});
       });
     } else {
-      reply({
+      return reply({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -716,12 +771,20 @@ class UploadController {
       }).code(401);
     } else {
       if (!request.pre.forceUpdate) {
+        const itemId = request.query && request.query.itemid ?
+            request.query.itemid :
+            undefined;
+
         Promise.all([
-          modals.jobs.findById(request.params.id),
-          modals.jobCopies.update({
-            status_type: 3,
-            updated_by: user.id || user.ID,
-          }, {
+          modals.jobs.findById(request.params.id, {
+            include: [
+              {
+                model: modals.jobCopies,
+                as: 'copies',
+                required: true,
+              }],
+          }),
+          modals.jobCopies.destroy({
             where: {
               id: request.params.copyid,
               job_id: request.params.id,
@@ -737,7 +800,16 @@ class UploadController {
                 $notIn: [3, 9],
               },
             },
-          })]).then((result) => {
+          }),
+          itemId ?
+              UploadController.updateOrDeleteProductItems({
+                type: parseInt(request.query.type || '1'),
+                jobId: request.params.id,
+                user,
+                itemId,
+                copyId: request.params.copyid,
+              }) :
+              '']).then((result) => {
           const count = result[2];
           const attributes = count > 0 ? {
             user_status: 8,
@@ -752,8 +824,18 @@ class UploadController {
             qe_status: 3,
             updated_by: user.id || user.ID,
           };
+          const copiesData = result[0].copies.find(
+              (copyItem) => copyItem.id.toString() ===
+                  request.params.copyid.toString());
+          if (copiesData) {
+            fsImpl.rmdirp(
+                Guid.isGuid(result[0].job_id) ?
+                    `${copiesData.file_name}` :
+                    `jobs/${result[0].job_id}/${copiesData.file_name}`);
+          }
+
           result[0].updateAttributes(attributes);
-          reply({
+          return reply({
             status: true,
             message: 'File deleted successfully',
             forceUpdate: request.pre.forceUpdate,
@@ -762,16 +844,104 @@ class UploadController {
           console.log(
               `Error on ${new Date()} for user ${user.id ||
               user.ID} is as follow: \n \n ${err}`);
-          reply({status: false, err, forceUpdate: request.pre.forceUpdate});
+          return reply(
+              {status: false, err, forceUpdate: request.pre.forceUpdate});
         });
       } else {
-        reply({
+        return reply({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate,
         });
       }
     }
+  }
+
+  static updateOrDeleteProductItems(parameters) {
+    let {type, jobId, user, itemId, copyId} = parameters;
+    const productItemPromise = [];
+    switch (type) {
+      case 2:
+        productItemPromise.push(amcAdaptor.removeAMCs(itemId, copyId, {
+          job_id: jobId,
+          product_id: productId,
+          user_id: user.id || user.ID,
+          updated_by: user.id || user.ID,
+        }));
+        break;
+
+      case 3:
+        productItemPromise.push(
+            insuranceAdaptor.removeInsurances(itemId, copyId, {
+              job_id: jobId,
+              product_id: productId,
+              user_id: user.id || user.ID,
+              updated_by: user.id || user.ID,
+            }));
+        break;
+
+      case 4:
+        productItemPromise.push(repairAdaptor.removeRepairs(itemId, copyId, {
+          job_id: jobId,
+          product_id: productId,
+          user_id: user.id || user.ID,
+          updated_by: user.id || user.ID,
+        }));
+        break;
+      case 5 :
+        productItemPromise.push(
+            warrantyAdaptor.removeWarranties(itemId, copyId, {
+              job_id: jobId,
+              product_id: productId,
+              user_id: user.id || user.ID,
+              updated_by: user.id || user.ID,
+            }));
+        break;
+
+      case 6:
+        productItemPromise.push(
+            warrantyAdaptor.removeWarranties(itemId, copyId, {
+              job_id: jobId,
+              product_id: productId,
+              user_id: user.id || user.ID,
+              updated_by: user.id || user.ID,
+            }));
+        break;
+      case 7:
+        productItemPromise.push(pucAdaptor.removePUCs(itemId, {
+          job_id: jobId,
+          product_id: productId,
+          user_id: user.id || user.ID,
+          updated_by: user.id || user.ID,
+        }));
+        break;
+      case 8:
+        productItemPromise.push(
+            warrantyAdaptor.removeWarranties(itemId, copyId, {
+              job_id: jobId,
+              product_id: productId,
+              user_id: user.id || user.ID,
+              updated_by: user.id || user.ID,
+            }));
+        break;
+      default:
+        productItemPromise.push(productAdaptor.removeProducts(itemId, copyId, {
+          job_id: jobId,
+          user_id: user.id || user.ID,
+          updated_by: user.id || user.ID,
+        }));
+        break;
+    }
+
+    if (type > 1 && type < 8) {
+      productItemPromise.push(productAdaptor.removeProducts(itemId, copyId, {
+        job_id: jobId,
+        user_id: user.id || user.ID,
+        updated_by: user.id || user.ID,
+      }));
+    }
+
+    return Promise.all(productItemPromise);
   }
 
   static retrieveCategoryImage(request, reply) {

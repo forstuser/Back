@@ -279,6 +279,7 @@ class ProductAdaptor {
         [
           'document_date',
           'purchaseDate'],
+        'model',
         ['document_number', 'documentNo'],
         ['updated_at', 'updatedDate'],
         [
@@ -565,6 +566,7 @@ class ProductAdaptor {
         [
           'product_name',
           'productName'],
+        'model',
         [
           'category_id',
           'categoryId'],
@@ -966,6 +968,7 @@ class ProductAdaptor {
         [
           'product_name',
           'productName'],
+        'model',
         [
           this.modals.sequelize.literal('"category"."category_id"'),
           'categoryId'],
@@ -1472,7 +1475,19 @@ class ProductAdaptor {
           main_category_id: productBody.main_category_id,
           category_id: productBody.category_id,
           type: 1,
+          status_type: 11,
+          updated_by: productBody.user_id,
           name: otherItems.insurance.provider_name,
+        }) :
+        undefined;
+
+    const brandPromise = !productBody.brand_id &&
+    productBody.brand_name ?
+        this.brandAdaptor.findCreateBrand({
+          status_type: 11,
+          brand_name: productBody.brand_name,
+          updated_by: productBody.user_id,
+          created_by: productBody.user_id,
         }) :
         undefined;
     this.prepareSellerPromise({
@@ -1484,6 +1499,7 @@ class ProductAdaptor {
       isProductPUCSellerSame,
     });
     sellerPromise.push(insuranceProviderPromise);
+    sellerPromise.push(brandPromise);
     let renewalTypes;
     let product = productBody;
     let metadata;
@@ -1500,42 +1516,41 @@ class ProductAdaptor {
           product.seller_id = newSeller ?
               newSeller.sid :
               product.seller_id;
-
-          const dropDownPromise = metadataBody.map((item) => {
-            if (item.new_drop_down) {
-              return this.modals.brandDropDown.findCreateFind({
-                where: {
-                  title: {
-                    $iLike: item.form_value.toLowerCase(),
-                  },
-                  category_form_id: item.category_form_id,
-                  category_id: productBody.category_id,
-                  brand_id: product.brand_id,
-                },
-                defaults: {
-                  title: item.form_value,
-                  category_form_id: item.category_form_id,
-                  category_id: productBody.category_id,
-                  brand_id: product.brand_id,
-                  updated_by: item.updated_by,
-                  created_by: item.created_by,
-                  status_type: 11,
-                },
-              });
-            }
-
-            return '';
-          });
+          product.brand_id = sellerList[5] ?
+              sellerList[5].brand_id :
+              product.brand_id;
           metadata = metadataBody.map((mdItem) => {
             mdItem = _.omit(mdItem, 'new_drop_down');
             return mdItem;
           });
-          return Promise.all(dropDownPromise);
+          if (product.new_drop_down && product.model) {
+            return this.modals.brandDropDown.findCreateFind({
+              where: {
+                title: {
+                  $iLike: product.model,
+                },
+                category_id: product.category_id,
+                brand_id: product.brand_id,
+              },
+              defaults: {
+                title: product.model,
+                category_id: product.category_id,
+                brand_id: product.brand_id,
+                updated_by: product.updated_by,
+                created_by: product.created_by,
+                status_type: 11,
+              },
+            });
+          }
+
+          return '';
         }).then(() => {
           product = !product.colour_id ? _.omit(product, 'colour_id') : product;
           product = !product.purchase_cost ?
               _.omit(product, 'purchase_cost') :
               product;
+          product = _.omit(product, 'new_drop_down');
+          product = !product.model ? _.omit(product, 'model') : product;
           product = !product.taxes ? _.omit(product, 'taxes') : product;
           product = !product.document_number ?
               _.omit(product, 'document_number') :
@@ -1555,42 +1570,8 @@ class ProductAdaptor {
           renewalTypes = updateProductResult[0];
           product = updateProductResult[1] || undefined;
           if (product) {
-            const modelDetail = metadata.find(
-                item => item.category_form_id === 2 || item.category_form_id ===
-                    1073 || item.category_form_id ===
-                    18 || item.category_form_id === 26 ||
-                    item.category_form_id === 33 || item.category_form_id ===
-                    516 || item.category_form_id === 720 ||
-                    item.category_form_id === 1034 || item.category_form_id ===
-                    1039 || item.category_form_id === 1044 ||
-                    item.category_form_id === 1049 || item.category_form_id ===
-                    1057 || item.category_form_id === 1061 ||
-                    item.category_form_id === 1067 || item.category_form_id ===
-                    1033 || item.category_form_id === 1135 ||
-                    item.category_form_id === 1136 || item.category_form_id ===
-                    1141 || item.category_form_id === 1143 ||
-                    item.category_form_id === 1146 || item.category_form_id ===
-                    1148 || item.category_form_id === 1151 ||
-                    item.category_form_id === 1152 || item.category_form_id ===
-                    1155 || item.category_form_id === 1157 ||
-                    item.category_form_id === 1159 || item.category_form_id ===
-                    1161 || item.category_form_id === 1163 ||
-                    item.category_form_id === 1165 || item.category_form_id ===
-                    1167 || item.category_form_id === 1169 ||
-                    item.category_form_id === 1154 || item.category_form_id ===
-                    1173 || item.category_form_id === 1174 ||
-                    item.category_form_id === 1175 || item.category_form_id ===
-                    1176 || item.category_form_id === 39 ||
-                    item.category_form_id === 1177 || item.category_form_id ===
-                    1178 || item.category_form_id === 1179 ||
-                    item.category_form_id === 1180 || item.category_form_id ===
-                    1181 || item.category_form_id === 1182 ||
-                    item.category_form_id === 1183 || item.category_form_id ===
-                    1184 || item.category_form_id === 1185 ||
-                    item.category_form_id === 1186 || item.category_form_id ===
-                    1189);
             let serviceSchedule;
-            if (product.main_category_id === 3 && modelDetail) {
+            if (product.main_category_id === 3 && product.model) {
               const diffDays = moment.utc().
                   diff(moment.utc(product.document_date), 'days');
               const diffMonths = moment.utc().
@@ -1600,7 +1581,7 @@ class ProductAdaptor {
                     category_id: product.category_id,
                     brand_id: product.brand_id,
                     title: {
-                      $iLike: `${modelDetail.form_value}%`,
+                      $iLike: `${product.model}%`,
                     },
                     $or: {
                       due_in_days: {
@@ -1702,7 +1683,7 @@ class ProductAdaptor {
             product.amcs = productItemsResult[3];
             product.repairs = productItemsResult[4];
             product.pucDetail = productItemsResult[5];
-            if (productItemsResult[6]) {
+            if (productItemsResult[6] && productItemsResult[6].length > 0) {
               return this.updateProduct(product.id, {
                 service_schedule_id: productItemsResult[6][0].id,
               });
@@ -2114,13 +2095,16 @@ class ProductAdaptor {
   prepareSellerPromise(parameters) {
     let {sellerPromise, productBody, otherItems, isProductAMCSellerSame, isProductRepairSellerSame, isProductPUCSellerSame, isAMCRepairSellerSame} = parameters;
     sellerPromise.push(productBody.seller_contact ||
-    productBody.seller_name ?
+    productBody.seller_name || productBody.seller_email ||
+    productBody.seller_address ?
         this.sellerAdaptor.retrieveOrCreateOfflineSellers({
               contact_no: productBody.seller_contact,
             },
             {
-              seller_name: productBody.seller_name,
+              seller_name: productBody.seller_name || productBody.product_name,
               contact_no: productBody.seller_contact,
+              email: productBody.seller_email,
+              address: productBody.seller_address,
               updated_by: productBody.user_id,
               created_by: productBody.user_id,
               status_type: 11,
@@ -2225,7 +2209,7 @@ class ProductAdaptor {
         }
 
         return metaDataItem;
-      });
+      }).filter((item) => item.value);
 
       unOrderedMetaData.sort(
           (itemA, itemB) => itemA.displayIndex - itemB.displayIndex);
@@ -2614,6 +2598,14 @@ class ProductAdaptor {
         id,
       },
     }).then((productResult) => {
+      const itemDetail = productResult.toJSON();
+      if (productDetail.copies && productDetail.copies.length > 0 &&
+          itemDetail.copies.length > 0) {
+        const newCopies = productDetail.copies;
+        productDetail.copies = itemDetail.copies;
+        productDetail.copies.push(...newCopies);
+      }
+
       productResult.updateAttributes(productDetail);
       return productResult.toJSON();
     });
@@ -2638,6 +2630,32 @@ class ProductAdaptor {
       },
     }).then(() => {
       return true;
+    });
+  }
+
+  removeProducts(id, copyId, values) {
+    return this.modals.products.findOne({
+      where: {
+        id,
+      },
+    }).then(result => {
+      const itemDetail = result.toJSON();
+      if (copyId &&
+          itemDetail.copies.length > 0) {
+        values.copies = itemDetail.copies.filter(
+            (item) => item.copyId !== parseInt(copyId));
+
+        if (values.copies.length > 0) {
+          result.updateAttributes(values);
+          return result.toJSON();
+        }
+      }
+
+      return this.modals.products.destroy({
+        id,
+      }).then(() => {
+        return true;
+      });
     });
   }
 }

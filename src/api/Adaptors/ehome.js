@@ -208,13 +208,10 @@ class EHomeAdaptor {
       user: user,
       masterCategoryId: masterCategoryId,
       subCategoryId: ctype || undefined,
-      brandIds: brandIds.split('[')[1].split(']')[0].split(',').filter(Boolean),
-      categoryIds: categoryIds.split('[')[1].split(']')[0].split(',').
-          filter(Boolean),
-      offlineSellerIds: offlineSellerIds.split('[')[1].split(']')[0].split(',').
-          filter(Boolean),
-      onlineSellerIds: onlineSellerIds.split('[')[1].split(']')[0].split(',').
-          filter(Boolean),
+      brandIds: brandIds,
+      categoryIds: categoryIds,
+      offlineSellerIds: offlineSellerIds,
+      onlineSellerIds: onlineSellerIds,
       sortBy: sortBy,
       searchValue: `%${searchValue || ''}%`,
     }).then((result) => {
@@ -247,6 +244,7 @@ class EHomeAdaptor {
           });
 
       onlineSellers = _.uniqBy(onlineSellers, 'id');
+      console.log('\n\n\n\n\n\n\n', request);
       return {
         status: true,
         productList /* :productList.slice((pageNo * 10) - 10, 10) */,

@@ -22,7 +22,7 @@ exports.default = function(sequelize, DataTypes) {
       type: DataTypes.INTEGER,
     },
     service_number: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.STRING,
     },
     service_type: {
       type: DataTypes.INTEGER,

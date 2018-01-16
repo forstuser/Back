@@ -192,6 +192,24 @@ class BrandAdaptor {
       where: options,
     }).then((result) => result.map((item) => item.toJSON()));
   }
+
+  findCreateBrand(values) {
+    return this.modals.brands.findOne({
+      where: {
+        brand_name: {
+          $iLike: `${values.brand_name}`,
+        },
+      },
+    }).then((result) => {
+      if (!result) {
+        return this.modals.brands.create(values);
+      }
+
+      return result;
+    }).then((updatedResult) => {
+      return updatedResult.toJSON();
+    });
+  }
 }
 
 export default BrandAdaptor;

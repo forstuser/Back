@@ -17,6 +17,17 @@ var _lodash2 = _interopRequireDefault(_lodash);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+function _toConsumableArray(arr) {
+  if (Array.isArray(arr)) {
+    for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) {
+      arr2[i] = arr[i];
+    }
+    return arr2;
+  } else {
+    return Array.from(arr);
+  }
+}
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var sortAmcWarrantyInsuranceRepair = function sortAmcWarrantyInsuranceRepair(a, b) {
@@ -252,8 +263,48 @@ var InsuranceAdaptor = function () {
           id: id
         }
       }).then(function (result) {
+        var itemDetail = result.toJSON();
+        if (values.copies && values.copies.length > 0 &&
+            itemDetail.copies.length > 0) {
+          var _values$copies;
+
+          var newCopies = values.copies;
+          values.copies = itemDetail.copies;
+          (_values$copies = values.copies).push.apply(_values$copies,
+              _toConsumableArray(newCopies));
+        }
+
         result.updateAttributes(values);
         return result.toJSON();
+      });
+    }
+  }, {
+    key: 'removeInsurances',
+    value: function removeInsurances(id, copyId, values) {
+      var _this2 = this;
+
+      return this.modals.insurances.findOne({
+        where: {
+          id: id,
+        }
+      }).then(function(result) {
+        var itemDetail = result.toJSON();
+        if (copyId && itemDetail.copies.length > 0) {
+          values.copies = itemDetail.copies.filter(function(item) {
+            return item.copyId !== parseInt(copyId);
+          });
+
+          if (values.copies.length > 0) {
+            result.updateAttributes(values);
+            return result.toJSON();
+          }
+        }
+
+        return _this2.modals.insurances.destroy({
+          id: id,
+        }).then(function() {
+          return true;
+        });
       });
     }
   }]);

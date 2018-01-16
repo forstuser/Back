@@ -143,6 +143,17 @@ class GeneralController {
     });
   }
 
+  static retrieveTips(request, reply) {
+    return modals.tips.findAll({}).then((tips) => {
+      return reply({status: true, tips}).code(200);
+    }).catch((err) => {
+      console.log(
+          `Error on ${new Date()} for user ${user.id ||
+          user.ID} is as follow: \n \n ${err}`);
+      return reply({status: false}).code(200);
+    });
+  }
+
   static intializeUserProduct(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
 

@@ -99,18 +99,20 @@ var DashboardController = function () {
         }).code(401);
       } else if (request.pre.userExist && !request.pre.forceUpdate) {
         return reply(eHomeAdaptor.prepareProductDetail({
-          user: {
-            user: user,
-            masterCategoryId: request.params.id,
-            ctype: request.query.subCategoryId,
-            brandIds: request.query.brandids || '[]',
-            categoryIds: request.query.categoryids || '[]',
-            offlineSellerIds: request.query.offlinesellerids || '[]',
-            onlineSellerIds: request.query.onlinesellerids || '[]',
-            sortBy: request.query.sortby,
-            searchValue: request.query.searchvalue,
-            request: request,
-          }
+          user: user,
+          masterCategoryId: request.params.id,
+          ctype: request.query.subCategoryId,
+          brandIds: (request.query.brandids || '[]').split('[')[1].split(
+              ']')[0].split(',').filter(Boolean),
+          categoryIds: (request.query.categoryids || '[]').split('[')[1].split(
+              ']')[0].split(',').filter(Boolean),
+          offlineSellerIds: (request.query.offlinesellerids || '[]').split(
+              '[')[1].split(']')[0].split(',').filter(Boolean),
+          onlineSellerIds: (request.query.onlinesellerids || '[]').split(
+              '[')[1].split(']')[0].split(',').filter(Boolean),
+          sortBy: request.query.sortby,
+          searchValue: request.query.searchvalue,
+          request: request,
         })).code(200);
       } else {
         return reply({

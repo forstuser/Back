@@ -901,13 +901,16 @@ function prepareProductRoutes(productController, productRoutes) {
             seller_id: [_joi2.default.number(), _joi2.default.allow(null)],
             seller_name: [_joi2.default.string(), _joi2.default.allow(null)],
             seller_contact: [_joi2.default.string(), _joi2.default.allow(null)],
+            seller_email: [_joi2.default.string(), _joi2.default.allow(null)],
+            seller_address: [_joi2.default.string(), _joi2.default.allow(null)],
             document_number: [_joi2.default.string(), _joi2.default.allow(null)],
             document_date: [_joi2.default.string(), _joi2.default.allow(null)],
+            model: [_joi2.default.string(), _joi2.default.allow(null)],
+            isNewModel: [_joi2.default.boolean(), _joi2.default.allow(null)],
             metadata: [_joi2.default.array().items(_joi2.default.object().keys({
               id: [_joi2.default.number(), _joi2.default.allow(null)],
               category_form_id: [_joi2.default.number(), _joi2.default.allow(null)],
               form_value: [_joi2.default.string(), _joi2.default.allow(null)],
-              new_drop_down: [_joi2.default.boolean(), _joi2.default.allow(null)]
             })), _joi2.default.allow(null)],
             warranty: [_joi2.default.object().keys({
               id: [_joi2.default.number(), _joi2.default.allow(null)],
@@ -1058,6 +1061,15 @@ function prepareGeneralRoutes(generalController, generalRoutes) {
       config: {
         handler: _general2.default.retrieveFAQs,
         description: 'Retrieve FAQ\'s'
+      }
+    });
+
+    generalRoutes.push({
+      method: 'GET',
+      path: '/tips',
+      config: {
+        handler: _general2.default.retrieveTips,
+        description: 'Retrieve tip\'s',
       }
     });
 

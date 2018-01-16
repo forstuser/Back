@@ -11,6 +11,15 @@ export default (sequelize, DataTypes) => {
         title: {
           type: DataTypes.STRING,
         },
+        category_form_1_value: {
+          type: DataTypes.STRING,
+        },
+        category_form_2_value: {
+          type: DataTypes.STRING,
+        },
+        product_type: {
+          type: DataTypes.STRING,
+        },
         brand_id: {
           type: DataTypes.INTEGER,
         },

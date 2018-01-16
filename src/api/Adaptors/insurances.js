@@ -334,8 +334,42 @@ class InsuranceAdaptor {
         id,
       },
     }).then(result => {
+      const itemDetail = result.toJSON();
+      if (values.copies && values.copies.length > 0 &&
+          itemDetail.copies.length > 0) {
+        const newCopies = values.copies;
+        values.copies = itemDetail.copies;
+        values.copies.push(...newCopies);
+      }
+
       result.updateAttributes(values);
       return result.toJSON();
+    });
+  }
+
+  removeInsurances(id, copyId, values) {
+    return this.modals.insurances.findOne({
+      where: {
+        id,
+      },
+    }).then(result => {
+      const itemDetail = result.toJSON();
+      if (copyId &&
+          itemDetail.copies.length > 0) {
+        values.copies = itemDetail.copies.filter(
+            (item) => item.copyId !== parseInt(copyId));
+
+        if (values.copies.length > 0) {
+          result.updateAttributes(values);
+          return result.toJSON();
+        }
+      }
+
+      return this.modals.insurances.destroy({
+        id,
+      }).then(() => {
+        return true;
+      });
     });
   }
 }

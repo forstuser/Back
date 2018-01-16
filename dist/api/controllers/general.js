@@ -172,6 +172,17 @@ var GeneralController = function () {
       });
     }
   }, {
+    key: 'retrieveTips',
+    value: function retrieveTips(request, reply) {
+      return modals.tips.findAll({}).then(function(tips) {
+        return reply({status: true, tips: tips}).code(200);
+      }).catch(function(err) {
+        console.log('Error on ' + new Date() + ' for user ' +
+            (user.id || user.ID) + ' is as follow: \n \n ' + err);
+        return reply({status: false}).code(200);
+      });
+    }
+  }, {
     key: 'intializeUserProduct',
     value: function intializeUserProduct(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);

@@ -221,6 +221,7 @@ var ProductAdaptor = function () {
           [
             'document_date',
             'purchaseDate'],
+          'model',
           [
             'document_number',
             'documentNo'],
@@ -408,6 +409,7 @@ var ProductAdaptor = function () {
           [
             'product_name',
             'productName'],
+          'model',
           [
             'category_id',
             'categoryId'],
@@ -743,6 +745,7 @@ var ProductAdaptor = function () {
           [
             'product_name',
             'productName'],
+          'model',
           [
             this.modals.sequelize.literal('"category"."category_id"'),
             'categoryId'],
@@ -1234,7 +1237,18 @@ var ProductAdaptor = function () {
             main_category_id: productBody.main_category_id,
             category_id: productBody.category_id,
             type: 1,
+            status_type: 11,
+            updated_by: productBody.user_id,
             name: otherItems.insurance.provider_name,
+          }) :
+          undefined;
+
+      var brandPromise = !productBody.brand_id && productBody.brand_name ?
+          this.brandAdaptor.findCreateBrand({
+            status_type: 11,
+            brand_name: productBody.brand_name,
+            updated_by: productBody.user_id,
+            created_by: productBody.user_id,
           }) :
           undefined;
       this.prepareSellerPromise({
@@ -1246,6 +1260,7 @@ var ProductAdaptor = function () {
         isProductPUCSellerSame: isProductPUCSellerSame,
       });
       sellerPromise.push(insuranceProviderPromise);
+      sellerPromise.push(brandPromise);
       var renewalTypes = void 0;
       var product = productBody;
       var metadata = void 0;
@@ -1257,40 +1272,41 @@ var ProductAdaptor = function () {
         product = _lodash2.default.omit(product, 'seller_contact');
         product = _lodash2.default.omit(product, 'brand_name');
         product.seller_id = newSeller ? newSeller.sid : product.seller_id;
-
-        var dropDownPromise = metadataBody.map(function (item) {
-          if (item.new_drop_down) {
-            return _this6.modals.brandDropDown.findCreateFind({
-              where: {
-                title: {
-                  $iLike: item.form_value.toLowerCase()
-                },
-                category_form_id: item.category_form_id,
-                category_id: productBody.category_id,
-                brand_id: product.brand_id
-              },
-              defaults: {
-                title: item.form_value,
-                category_form_id: item.category_form_id,
-                category_id: productBody.category_id,
-                brand_id: product.brand_id,
-                updated_by: item.updated_by,
-                created_by: item.created_by,
-                status_type: 11
-              }
-            });
-          }
-
-          return '';
-        });
-        metadata = metadataBody.map(function (mdItem) {
+        product.brand_id = sellerList[5] ?
+            sellerList[5].brand_id :
+            product.brand_id;
+        metadata = metadataBody.map(function(mdItem) {
           mdItem = _lodash2.default.omit(mdItem, 'new_drop_down');
           return mdItem;
         });
-        return Promise.all(dropDownPromise);
+        if (product.new_drop_down && product.model) {
+          return _this6.modals.brandDropDown.findCreateFind({
+            where: {
+              title: {
+                $iLike: product.model,
+              },
+              category_id: product.category_id,
+              brand_id: product.brand_id,
+            },
+            defaults: {
+              title: product.model,
+              category_id: product.category_id,
+              brand_id: product.brand_id,
+              updated_by: product.updated_by,
+              created_by: product.created_by,
+              status_type: 11,
+            },
+          });
+        }
+
+        return '';
       }).then(function () {
         product = !product.colour_id ? _lodash2.default.omit(product, 'colour_id') : product;
         product = !product.purchase_cost ? _lodash2.default.omit(product, 'purchase_cost') : product;
+        product = _lodash2.default.omit(product, 'new_drop_down');
+        product = !product.model ?
+            _lodash2.default.omit(product, 'model') :
+            product;
         product = !product.taxes ? _lodash2.default.omit(product, 'taxes') : product;
         product = !product.document_number ? _lodash2.default.omit(product, 'document_number') : product;
         product = !product.document_date ? _lodash2.default.omit(product, 'document_date') : product;
@@ -1305,42 +1321,8 @@ var ProductAdaptor = function () {
         renewalTypes = updateProductResult[0];
         product = updateProductResult[1] || undefined;
         if (product) {
-          var modelDetail = metadata.find(function(item) {
-            return item.category_form_id === 2 || item.category_form_id ===
-                1073 || item.category_form_id === 18 ||
-                item.category_form_id === 26 || item.category_form_id === 33 ||
-                item.category_form_id === 516 || item.category_form_id ===
-                720 || item.category_form_id === 1034 ||
-                item.category_form_id === 1039 || item.category_form_id ===
-                1044 || item.category_form_id === 1049 ||
-                item.category_form_id === 1057 || item.category_form_id ===
-                1061 || item.category_form_id === 1067 ||
-                item.category_form_id === 1033 || item.category_form_id ===
-                1135 || item.category_form_id === 1136 ||
-                item.category_form_id === 1141 || item.category_form_id ===
-                1143 || item.category_form_id === 1146 ||
-                item.category_form_id === 1148 || item.category_form_id ===
-                1151 || item.category_form_id === 1152 ||
-                item.category_form_id === 1155 || item.category_form_id ===
-                1157 || item.category_form_id === 1159 ||
-                item.category_form_id === 1161 || item.category_form_id ===
-                1163 || item.category_form_id === 1165 ||
-                item.category_form_id === 1167 || item.category_form_id ===
-                1169 || item.category_form_id === 1154 ||
-                item.category_form_id === 1173 || item.category_form_id ===
-                1174 || item.category_form_id === 1175 ||
-                item.category_form_id === 1176 || item.category_form_id ===
-                39 || item.category_form_id === 1177 ||
-                item.category_form_id === 1178 || item.category_form_id ===
-                1179 || item.category_form_id === 1180 ||
-                item.category_form_id === 1181 || item.category_form_id ===
-                1182 || item.category_form_id === 1183 ||
-                item.category_form_id === 1184 || item.category_form_id ===
-                1185 || item.category_form_id === 1186 ||
-                item.category_form_id === 1189;
-          });
           var serviceSchedule = void 0;
-          if (product.main_category_id === 3 && modelDetail) {
+          if (product.main_category_id === 3 && product.model) {
             var diffDays = _moment2.default.utc().
                 diff(_moment2.default.utc(product.document_date), 'days');
             var diffMonths = _moment2.default.utc().
@@ -1350,7 +1332,7 @@ var ProductAdaptor = function () {
                   category_id: product.category_id,
                   brand_id: product.brand_id,
                   title: {
-                    $iLike: modelDetail.form_value + '%',
+                    $iLike: product.model + '%',
                   },
                   $or: {
                     due_in_days: {
@@ -1453,7 +1435,7 @@ var ProductAdaptor = function () {
           product.amcs = productItemsResult[3];
           product.repairs = productItemsResult[4];
           product.pucDetail = productItemsResult[5];
-          if (productItemsResult[6]) {
+          if (productItemsResult[6] && productItemsResult[6].length > 0) {
             return _this6.updateProduct(product.id, {
               service_schedule_id: productItemsResult[6][0].id,
             });
@@ -1779,11 +1761,17 @@ var ProductAdaptor = function () {
           isProductPUCSellerSame = parameters.isProductPUCSellerSame,
           isAMCRepairSellerSame = parameters.isAMCRepairSellerSame;
 
-      sellerPromise.push(productBody.seller_contact || productBody.seller_name ? this.sellerAdaptor.retrieveOrCreateOfflineSellers({
+      sellerPromise.push(
+          productBody.seller_contact || productBody.seller_name ||
+          productBody.seller_email || productBody.seller_address ?
+              this.sellerAdaptor.retrieveOrCreateOfflineSellers({
         contact_no: productBody.seller_contact
       }, {
-        seller_name: productBody.seller_name,
+                seller_name: productBody.seller_name ||
+                productBody.product_name,
         contact_no: productBody.seller_contact,
+                email: productBody.seller_email,
+                address: productBody.seller_address,
         updated_by: productBody.user_id,
         created_by: productBody.user_id,
         status_type: 11
@@ -1859,6 +1847,8 @@ var ProductAdaptor = function () {
           }
 
           return metaDataItem;
+        }).filter(function(item) {
+          return item.value;
         });
 
         unOrderedMetaData.sort(function (itemA, itemB) {
@@ -2195,6 +2185,17 @@ var ProductAdaptor = function () {
           id: id
         }
       }).then(function (productResult) {
+        var itemDetail = productResult.toJSON();
+        if (productDetail.copies && productDetail.copies.length > 0 &&
+            itemDetail.copies.length > 0) {
+          var _productDetail$copies;
+
+          var newCopies = productDetail.copies;
+          productDetail.copies = itemDetail.copies;
+          (_productDetail$copies = productDetail.copies).push.apply(
+              _productDetail$copies, _toConsumableArray(newCopies));
+        }
+
         productResult.updateAttributes(productDetail);
         return productResult.toJSON();
       });
@@ -2221,6 +2222,35 @@ var ProductAdaptor = function () {
         }
       }).then(function() {
         return true;
+      });
+    }
+  }, {
+    key: 'removeProducts',
+    value: function removeProducts(id, copyId, values) {
+      var _this10 = this;
+
+      return this.modals.products.findOne({
+        where: {
+          id: id,
+        }
+      }).then(function(result) {
+        var itemDetail = result.toJSON();
+        if (copyId && itemDetail.copies.length > 0) {
+          values.copies = itemDetail.copies.filter(function(item) {
+            return item.copyId !== parseInt(copyId);
+          });
+
+          if (values.copies.length > 0) {
+            result.updateAttributes(values);
+            return result.toJSON();
+          }
+        }
+
+        return _this10.modals.products.destroy({
+          id: id,
+        }).then(function() {
+          return true;
+        });
       });
     }
   }]);

@@ -76,7 +76,6 @@ var updateUserActiveStatus = function updateUserActiveStatus(request, reply) {
   if (!user) {
     return reply(null);
   } else {
-    console.log(request);
     return MODAL.users.findOne({
       where: {
         id: user.id || user.ID,

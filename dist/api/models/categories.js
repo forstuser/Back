@@ -18,6 +18,16 @@ exports.default = function (sequelize, DataTypes) {
     ref_id: {
       'type': DataTypes.INTEGER
     },
+    model_category_form: {
+      'type': DataTypes.INTEGER,
+    },
+    type_category_form: {
+      'type': DataTypes.INTEGER,
+    }, category_form_1: {
+      'type': DataTypes.INTEGER,
+    }, category_form_2: {
+      'type': DataTypes.INTEGER,
+    },
     category_level: {
       'type': DataTypes.INTEGER
     },

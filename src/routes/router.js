@@ -981,14 +981,17 @@ function prepareProductRoutes(productController, productRoutes) {
             seller_id: [joi.number(), joi.allow(null)],
             seller_name: [joi.string(), joi.allow(null)],
             seller_contact: [joi.string(), joi.allow(null)],
+            seller_email: [joi.string(), joi.allow(null)],
+            seller_address: [joi.string(), joi.allow(null)],
             document_number: [joi.string(), joi.allow(null)],
             document_date: [joi.string(), joi.allow(null)],
+            model: [joi.string(), joi.allow(null)],
+            isNewModel: [joi.boolean(), joi.allow(null)],
             metadata: [
               joi.array().items(joi.object().keys({
                 id: [joi.number(), joi.allow(null)],
                 category_form_id: [joi.number(), joi.allow(null)],
                 form_value: [joi.string(), joi.allow(null)],
-                new_drop_down: [joi.boolean(), joi.allow(null)],
               })), joi.allow(null)],
             warranty: [
               joi.object().keys({
@@ -1158,6 +1161,15 @@ function prepareGeneralRoutes(generalController, generalRoutes) {
       config: {
         handler: GeneralController.retrieveFAQs,
         description: 'Retrieve FAQ\'s',
+      },
+    });
+
+    generalRoutes.push({
+      method: 'GET',
+      path: '/tips',
+      config: {
+        handler: GeneralController.retrieveTips,
+        description: 'Retrieve tip\'s',
       },
     });
 

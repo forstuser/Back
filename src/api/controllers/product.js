@@ -171,6 +171,8 @@ class ProductController {
         seller_contact: request.payload.seller_contact,
         seller_id: request.payload.seller_id,
         status_type: 11,
+        model: request.payload.model,
+        new_drop_down: request.payload.isNewModel,
         document_number: request.payload.document_number,
         document_date: request.payload.document_date ?
             moment.utc(request.payload.document_date,
@@ -183,7 +185,6 @@ class ProductController {
                     format('YYYY-MM-DD') :
             undefined,
         brand_name: request.payload.brand_name,
-        copies: [],
       };
 
       const otherItems = {
