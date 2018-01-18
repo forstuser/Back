@@ -379,7 +379,7 @@ var UploadController = function () {
                 return {
                   copyId: copyItem.id,
                   copyUrl: '/jobs/' + copyItem.job_id + '/files/' + copyItem.id,
-                  fileType: copyItem.file_type,
+                  file_type: copyItem.file_type,
                   jobId: copyItem.job_id,
                   copyName: copyItem.file_name,
                 };
@@ -433,7 +433,8 @@ var UploadController = function () {
         return fsImpl.writeFile('jobs/' + jobResult.job_id + '/' + fileName, elem._data, { ContentType: _mimeTypes2.default.lookup(fileName) });
       });
       Promise.all(fileUploadPromises).then(function (fileResult) {
-        var promisedQuery = fileResult.map(function (elem, index) {
+        var promisedQuery = [];
+        var jobPromise = fileResult.map(function(elem, index) {
           var jobCopyDetail = {
             job_id: jobResult.id,
             file_name: fileNames[index],
@@ -445,12 +446,13 @@ var UploadController = function () {
           return jobAdaptor.createJobCopies(jobCopyDetail);
         });
 
+        promisedQuery.push(Promise.all(jobPromise));
         promisedQuery.push(modals.users.findById(user.id || user.ID));
         // if (promisedQuery.length === Object.keys(fileData).length) {
         return Promise.all(promisedQuery);
         // }
       }).then(function (billResult) {
-        jobCopies = billResult.splice(billResult.length - 1, 1);
+        jobCopies = billResult[0];
         var userResult = billResult[billResult.length - 1];
         if (userResult.email) {
           UploadController.mailUserForJob(userResult, user);

@@ -1295,7 +1295,7 @@ var ProductAdaptor = function () {
               updated_by: product.updated_by,
               created_by: product.created_by,
               status_type: 11,
-            },
+            }
           });
         }
 

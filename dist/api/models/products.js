@@ -36,6 +36,9 @@ exports.default = function (sequelize, DataTypes) {
     product_name: {
       type: DataTypes.STRING
     },
+    model: {
+      type: DataTypes.STRING,
+    },
     purchase_cost: {
       type: DataTypes.FLOAT,
       defaultValue: 0

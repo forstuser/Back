@@ -411,7 +411,8 @@ class UploadController {
           {ContentType: mime.lookup(fileName)});
     });
     Promise.all(fileUploadPromises).then((fileResult) => {
-      const promisedQuery = fileResult.map((elem, index) => {
+      const promisedQuery = [];
+      const jobPromise = fileResult.map((elem, index) => {
         const jobCopyDetail = {
           job_id: jobResult.id,
           file_name: fileNames[index],
@@ -425,12 +426,13 @@ class UploadController {
         return jobAdaptor.createJobCopies(jobCopyDetail);
       });
 
+      promisedQuery.push(Promise.all(jobPromise));
       promisedQuery.push(modals.users.findById(user.id || user.ID));
       // if (promisedQuery.length === Object.keys(fileData).length) {
       return Promise.all(promisedQuery);
       // }
     }).then(billResult => {
-      jobCopies = billResult.splice(billResult.length - 1, 1);
+      jobCopies = billResult[0];
       const userResult = billResult[billResult.length - 1];
       if (userResult.email) {
         UploadController.mailUserForJob(userResult, user);
