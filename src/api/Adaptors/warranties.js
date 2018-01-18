@@ -345,12 +345,25 @@ class WarrantyAdaptor {
   }
 
   deleteWarranties(id, user_id) {
-    return this.modals.warranties.destroy({
-      where: {
-        id,
-        user_id,
-      },
-    }).then(() => {
+    return this.modals.warranties.findById(id).then((result) => {
+      if (result) {
+        return Promise.all([
+          this.modals.warranties.destroy({
+            where: {
+              id,
+              user_id,
+            },
+          }), result.copies.length > 0 ? this.modals.jobCopies.update({
+            status_type: 3,
+            updated_by: user_id,
+          }, {
+            where: {
+              id: result.copies.map(item => item.copyId),
+            },
+          }) : undefined]).then(() => {
+          return true;
+        });
+      }
       return true;
     });
   }

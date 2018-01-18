@@ -332,12 +332,30 @@ var PUCAdaptor = function () {
   }, {
     key: 'deletePUCs',
     value: function deletePUCs(id, user_id) {
-      return this.modals.pucs.destroy({
-        where: {
-          id: id,
-          user_id: user_id,
-        },
-      }).then(function() {
+      var _this2 = this;
+
+      return this.modals.pucs.findById(id).then(function(result) {
+        if (result) {
+          return Promise.all([
+            _this2.modals.pucs.destroy({
+              where: {
+                id: id,
+                user_id: user_id,
+              },
+            }), result.copies.length > 0 ? _this2.modals.jobCopies.update({
+              status_type: 3,
+              updated_by: user_id,
+            }, {
+              where: {
+                id: result.copies.map(function(item) {
+                  return item.copyId;
+                }),
+              },
+            }) : undefined]).then(function() {
+            return true;
+          });
+        }
+
         return true;
       });
     }

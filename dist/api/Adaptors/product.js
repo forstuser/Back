@@ -1277,14 +1277,11 @@ var ProductAdaptor = function () {
       var _this6 = this;
 
       var sellerPromise = [];
-      var isProductAMCSellerSame = otherItems.amc &&
-          otherItems.amc.seller_contact === productBody.seller_contact;
-      var isProductRepairSellerSame = otherItems.repair &&
-          otherItems.repair.seller_contact === productBody.seller_contact;
+      var isProductAMCSellerSame = false;
+      var isProductRepairSellerSame = false;
       var isAMCRepairSellerSame = otherItems.repair && otherItems.amc &&
           otherItems.repair.seller_contact === otherItems.amc.seller_contact;
-      var isProductPUCSellerSame = otherItems.puc &&
-          otherItems.puc.seller_contact === productBody.seller_contact;
+      var isProductPUCSellerSame = false;
       var insuranceProviderPromise = otherItems.insurance &&
       otherItems.insurance.provider_name ?
           this.insuranceAdaptor.findCreateInsuranceBrand({
@@ -1294,6 +1291,17 @@ var ProductAdaptor = function () {
             status_type: 11,
             updated_by: productBody.user_id,
             name: otherItems.insurance.provider_name,
+          }) :
+          undefined;
+      var warrantyProviderPromise = otherItems.warranty &&
+      otherItems.warranty.extended_provider_name ?
+          this.insuranceAdaptor.findCreateInsuranceBrand({
+            main_category_id: productBody.main_category_id,
+            category_id: productBody.category_id,
+            type: 2,
+            status_type: 11,
+            updated_by: productBody.user_id,
+            name: otherItems.warranty.extended_provider_name,
           }) :
           undefined;
 
@@ -1315,6 +1323,7 @@ var ProductAdaptor = function () {
       });
       sellerPromise.push(insuranceProviderPromise);
       sellerPromise.push(brandPromise);
+      sellerPromise.push(warrantyProviderPromise);
       var renewalTypes = void 0;
       var product = productBody;
       var metadata = void 0;
@@ -1407,6 +1416,7 @@ var ProductAdaptor = function () {
               warrantyItemPromise: warrantyItemPromise,
               productBody: product,
               productId: productId,
+              sellerList: sellerList,
             });
           }
 
@@ -1535,7 +1545,7 @@ var ProductAdaptor = function () {
           subtract(1, 'day').
           endOf('days').
           format('YYYY-MM-DD');
-      pucPromise.push(otherItems.puc.id ? this.pucAdaptor.updatePUCs(otherItems.puc.id, {
+      var values = {
         renewal_type: otherItems.puc.expiry_period || 6,
         updated_by: productBody.user_id,
         status_type: 11,
@@ -1549,21 +1559,10 @@ var ProductAdaptor = function () {
         document_date: _moment2.default.utc(effective_date).
             format('YYYY-MM-DD'),
         user_id: productBody.user_id
-      }) : this.pucAdaptor.createPUCs({
-        renewal_type: otherItems.puc.expiry_period || 6,
-        updated_by: productBody.user_id,
-        status_type: 11,
-        renewal_cost: otherItems.puc.value,
-        product_id: productId,
-        job_id: productBody.job_id,
-        seller_id: isProductPUCSellerSame ? sellerList[0].sid : otherItems.puc.seller_name || otherItems.puc.seller_contact ? sellerList[3].sid : undefined,
-        expiry_date: _moment2.default.utc(expiry_date).format('YYYY-MM-DD'),
-        effective_date: _moment2.default.utc(effective_date).
-            format('YYYY-MM-DD'),
-        document_date: _moment2.default.utc(effective_date).
-            format('YYYY-MM-DD'),
-        user_id: productBody.user_id
-      }));
+      };
+      pucPromise.push(otherItems.puc.id ?
+          this.pucAdaptor.updatePUCs(otherItems.puc.id, values) :
+          this.pucAdaptor.createPUCs(values));
     }
   }, {
     key: 'prepareRepairPromise',
@@ -1584,8 +1583,15 @@ var ProductAdaptor = function () {
               startOf('day') :
           _moment2.default.utc(document_date, 'DD MMM YY').startOf('day');
 
-      var repairSellerId = isProductRepairSellerSame ? sellerList[0].sid : otherItems.repair.is_amc_seller || isAMCRepairSellerSame ? sellerList[1].sid : otherItems.repair.seller_name || otherItems.repair.seller_contact ? sellerList[2].sid : undefined;
-      repairPromise.push(otherItems.repair.id ? this.repairAdaptor.updateRepairs(otherItems.repair.id, {
+      var repairSellerId = isProductRepairSellerSame ?
+          sellerList[0].sid :
+          isAMCRepairSellerSame ?
+              sellerList[1].sid :
+              otherItems.repair.seller_name ||
+              otherItems.repair.seller_contact ?
+                  sellerList[2].sid :
+                  undefined;
+      var values = {
         updated_by: productBody.user_id,
         status_type: 11,
         product_id: productId,
@@ -1596,18 +1602,10 @@ var ProductAdaptor = function () {
         repair_cost: otherItems.repair.value,
         warranty_upto: otherItems.repair.warranty_upto,
         user_id: productBody.user_id
-      }) : this.repairAdaptor.createRepairs({
-        updated_by: productBody.user_id,
-        status_type: 11,
-        product_id: productId,
-        document_date: _moment2.default.utc(document_date).format('YYYY-MM-DD'),
-        seller_id: repairSellerId,
-        repair_for: otherItems.repair.repair_for,
-        repair_cost: otherItems.repair.value,
-        job_id: productBody.job_id,
-        warranty_upto: otherItems.repair.warranty_upto,
-        user_id: productBody.user_id
-      }));
+      };
+      repairPromise.push(otherItems.repair.id ?
+          this.repairAdaptor.updateRepairs(otherItems.repair.id, values) :
+          this.repairAdaptor.createRepairs(values));
     }
   }, {
     key: 'prepareAMCPromise',
@@ -1633,7 +1631,7 @@ var ProductAdaptor = function () {
           subtract(1, 'day').
           endOf('days').
           format('YYYY-MM-DD');
-      amcPromise.push(otherItems.amc.id ? this.amcAdaptor.updateAMCs(otherItems.amc.id, {
+      var values = {
         renewal_type: 8,
         updated_by: productBody.user_id,
         status_type: 11,
@@ -1647,21 +1645,10 @@ var ProductAdaptor = function () {
         document_date: _moment2.default.utc(effective_date).
             format('YYYY-MM-DD'),
         user_id: productBody.user_id
-      }) : this.amcAdaptor.createAMCs({
-        renewal_type: 8,
-        updated_by: productBody.user_id,
-        renewal_cost: otherItems.amc.value,
-        status_type: 11,
-        job_id: productBody.job_id,
-        product_id: productId,
-        seller_id: isProductAMCSellerSame ? sellerList[0].sid : otherItems.amc.seller_name || otherItems.amc.seller_contact ? sellerList[1].sid : undefined,
-        expiry_date: _moment2.default.utc(expiry_date).format('YYYY-MM-DD'),
-        effective_date: _moment2.default.utc(effective_date).
-            format('YYYY-MM-DD'),
-        document_date: _moment2.default.utc(effective_date).
-            format('YYYY-MM-DD'),
-        user_id: productBody.user_id
-      }));
+      };
+      amcPromise.push(otherItems.amc.id ?
+          this.amcAdaptor.updateAMCs(otherItems.amc.id, values) :
+          this.amcAdaptor.createAMCs(values));
     }
   }, {
     key: 'prepareInsurancePromise',
@@ -1725,7 +1712,8 @@ var ProductAdaptor = function () {
           renewalTypes = parameters.renewalTypes,
           warrantyItemPromise = parameters.warrantyItemPromise,
           productBody = parameters.productBody,
-          productId = parameters.productId;
+          productId = parameters.productId,
+          sellerList = parameters.sellerList;
 
       var warrantyRenewalType = void 0;
       var expiry_date = void 0;
@@ -1808,7 +1796,10 @@ var ProductAdaptor = function () {
             this.warrantyAdaptor.updateWarranties(
                 otherItems.warranty.extended_id, {
           renewal_type: otherItems.warranty.extended_renewal_type,
-          provider_id: otherItems.warranty.extended_provider_id,
+                  provider_id: otherItems.warranty.extended_provider_name &&
+                  sellerList[4] ?
+                      sellerList[6].id :
+                      otherItems.warranty.extended_provider_id,
           updated_by: productBody.user_id,
           status_type: 11,
           job_id: productBody.job_id,
@@ -1822,7 +1813,10 @@ var ProductAdaptor = function () {
           user_id: productBody.user_id
         }) : this.warrantyAdaptor.createWarranties({
           renewal_type: otherItems.warranty.extended_renewal_type,
-          provider_id: otherItems.warranty.extended_provider_id,
+              provider_id: otherItems.warranty.extended_provider_name &&
+              sellerList[4] ?
+                  sellerList[6].id :
+                  otherItems.warranty.extended_provider_id,
           updated_by: productBody.user_id,
           status_type: 11,
           job_id: productBody.job_id,
@@ -1927,9 +1921,7 @@ var ProductAdaptor = function () {
       sellerPromise.push(
           productBody.seller_contact || productBody.seller_name ||
           productBody.seller_email || productBody.seller_address ?
-              this.sellerAdaptor.retrieveOrCreateOfflineSellers({
-        contact_no: productBody.seller_contact
-      }, {
+              this.sellerAdaptor.retrieveOrCreateOfflineSellers({}, {
                 seller_name: productBody.seller_name ||
                 productBody.product_name,
         contact_no: productBody.seller_contact,
@@ -1939,27 +1931,29 @@ var ProductAdaptor = function () {
         created_by: productBody.user_id,
         status_type: 11
       }) : '');
-      sellerPromise.push(otherItems.amc && isProductAMCSellerSame && (otherItems.amc.seller_contact || otherItems.amc.seller_name) ? this.sellerAdaptor.retrieveOrCreateOfflineSellers({
-        contact_no: otherItems.amc.seller_contact
-      }, {
+      sellerPromise.push(otherItems.amc && !isProductAMCSellerSame &&
+      (otherItems.amc.seller_contact || otherItems.amc.seller_name) ?
+          this.sellerAdaptor.retrieveOrCreateOfflineSellers({}, {
         seller_name: otherItems.amc.seller_name,
         contact_no: otherItems.amc.contact_no,
         updated_by: productBody.user_id,
         created_by: productBody.user_id,
         status_type: 11
       }) : '');
-      sellerPromise.push(otherItems.repair && !otherItems.repair.is_amc_seller && isProductRepairSellerSame && isAMCRepairSellerSame && (otherItems.repair.seller_contact || otherItems.repair.seller_name) ? this.sellerAdaptor.retrieveOrCreateOfflineSellers({
-        contact_no: otherItems.repair.seller_contact
-      }, {
+      sellerPromise.push(
+          otherItems.repair && !otherItems.repair.is_amc_seller &&
+          !isProductRepairSellerSame && !isAMCRepairSellerSame &&
+          (otherItems.repair.seller_contact || otherItems.repair.seller_name) ?
+              this.sellerAdaptor.retrieveOrCreateOfflineSellers({}, {
         seller_name: otherItems.repair.seller_name,
         contact_no: otherItems.repair.contact_no,
         updated_by: productBody.user_id,
         created_by: productBody.user_id,
         status_type: 11
       }) : '');
-      sellerPromise.push(otherItems.puc && isProductPUCSellerSame && (otherItems.puc.seller_contact || otherItems.puc.seller_name) ? this.sellerAdaptor.retrieveOrCreateOfflineSellers({
-        contact_no: otherItems.puc.seller_contact
-      }, {
+      sellerPromise.push(otherItems.puc && !isProductPUCSellerSame &&
+      (otherItems.puc.seller_contact || otherItems.puc.seller_name) ?
+          this.sellerAdaptor.retrieveOrCreateOfflineSellers({}, {
         seller_name: otherItems.puc.seller_name,
         contact_no: otherItems.puc.contact_no,
         updated_by: productBody.user_id,
@@ -2381,19 +2375,46 @@ var ProductAdaptor = function () {
   }, {
     key: 'deleteProduct',
     value: function deleteProduct(id, userId) {
-      return this.modals.products.destroy({
-        where: {
-          id: id,
-          user_id: userId,
+      var _this10 = this;
+
+      return this.modals.products.findById(id).then(function(result) {
+        if (result) {
+          return Promise.all([
+            _this10.modals.products.destroy({
+              where: {
+                id: id,
+                user_id: userId,
+              },
+            }), result.job_id ? Promise.All([
+              _this10.modals.job.update({
+                user_status: 3,
+                admin_status: 3,
+                ce_status: null,
+                qe_status: null,
+                updated_by: userId,
+              }, {
+                where: {
+                  id: result.job_id,
+                },
+              }), _this10.modals.jobCopies.update({
+                status_type: 3,
+                updated_by: userId,
+              }, {
+                where: {
+                  job_id: result.job_id,
+                },
+              })]) : undefined]).then(function() {
+            return true;
+          });
         }
-      }).then(function() {
+
         return true;
       });
     }
   }, {
     key: 'removeProducts',
     value: function removeProducts(id, copyId, values) {
-      var _this10 = this;
+      var _this11 = this;
 
       return this.modals.products.findOne({
         where: {
@@ -2413,7 +2434,7 @@ var ProductAdaptor = function () {
           return result.toJSON();
         }
 
-        return _this10.modals.products.destroy({
+        return _this11.modals.products.destroy({
           where: {
             id: id,
           }

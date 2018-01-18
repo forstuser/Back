@@ -7,6 +7,8 @@ import WarrantyAdaptor from '../Adaptors/warranties';
 import RepairAdaptor from '../Adaptors/repairs';
 import SellerAdaptor from '../Adaptors/sellers';
 import CategoryAdaptor from '../Adaptors/category';
+import ProductAdaptor from '../Adaptors/product';
+import JobAdaptor from '../Adaptors/job';
 
 let repairAdaptor;
 let sellerAdaptor;
@@ -15,6 +17,8 @@ let amcAdaptor;
 let pucAdaptor;
 let warrantyAdaptor;
 let categoryAdaptor;
+let productAdaptor;
+let jobAdaptor;
 
 class ProductItemController {
   constructor(modal) {
@@ -25,6 +29,8 @@ class ProductItemController {
     pucAdaptor = new PUCAdaptor(modal);
     warrantyAdaptor = new WarrantyAdaptor(modal);
     categoryAdaptor = new CategoryAdaptor(modal);
+    productAdaptor = new ProductAdaptor(modal);
+    jobAdaptor = new JobAdaptor(modal);
   }
 
   static updateRepair(request, reply) {
@@ -51,20 +57,21 @@ class ProductItemController {
                 status_type: 11,
               }) :
           '';
-      return sellerPromise.then(sellerList => {
-        const productId = request.params.id;
+      return Promise.all([sellerPromise]).then(sellerList => {
+        const product_id = request.params.id;
         const repairId = request.params.repairId;
-        const newSellerId = sellerList ? sellerList.sid : undefined;
+        const newSellerId = sellerList[0] ? sellerList[0].sid : undefined;
         const document_date = moment.utc(request.payload.document_date,
             moment.ISO_8601).isValid() ?
             moment.utc(request.payload.document_date, moment.ISO_8601).
                 startOf('day') :
             moment.utc(request.payload.document_date, 'DD MMM YY').
                 startOf('day');
+
         const values = {
           updated_by: user.id || user.ID,
           status_type: 11,
-          product_id: productId,
+          product_id,
           seller_id: request.payload.seller_id || newSellerId,
           document_date: document_date ?
               moment.utc(document_date).format('YYYY-MM-DD') :
@@ -125,7 +132,16 @@ class ProductItemController {
       });
     } else if (request.pre.userExist && !request.pre.forceUpdate) {
       return repairAdaptor.deleteRepair(request.params.repairId, user.id ||
-          user.ID);
+          user.ID).then(() => reply({
+        status: true,
+      })).catch((err) => {
+        console.log(
+            `Error on ${new Date()} for user ${user.id ||
+            user.ID} is as follow: \n \n ${err}`);
+        return reply({
+          status: false,
+        });
+      });
     } else {
       reply({
         status: false,
@@ -155,6 +171,11 @@ class ProductItemController {
                 name: request.payload.provider_name,
               }) :
               undefined;
+      let insuranceRenewalType;
+      let renewalTypes;
+      let insuranceId;
+      let providerId;
+      let product_id;
       return Promise.all([
         providerPromise, categoryAdaptor.retrieveRenewalTypes({
           id: {
@@ -162,17 +183,33 @@ class ProductItemController {
           },
         })]).then(promiseResult => {
         const provider = promiseResult[0];
-        const renewalTypes = promiseResult[1];
-        const product_id = request.params.id;
-        const insuranceId = request.params.insuranceId;
-        const providerId = provider ? provider.id : undefined;
-        let insuranceRenewalType = renewalTypes.find(
+        renewalTypes = promiseResult[1];
+        product_id = request.params.id;
+        insuranceId = request.params.insuranceId;
+        providerId = provider ? provider.id : undefined;
+        insuranceRenewalType = renewalTypes.find(
             item => item.type === 8);
         if (request.payload.renewal_type) {
           insuranceRenewalType = renewalTypes.find(
               item => item.type === request.payload.renewal_type);
         }
-        let effective_date = request.payload.effective_date || moment.utc();
+        if (!insuranceId) {
+          return productAdaptor.retrieveProductById(product_id, {
+            status_type: [5, 11],
+          });
+        }
+
+        return undefined;
+      }).then((productResult) => {
+        const insuranceEffectiveDate = productResult ?
+            productResult.insuranceDetails &&
+            productResult.insuranceDetails.length > 0 ?
+                moment.utc(productResult.insuranceDetails[0].expiryDate,
+                    moment.ISO_8601).add(1, 'days') :
+                productResult.purchaseDate :
+            undefined;
+        let effective_date = request.payload.effective_date ||
+            insuranceEffectiveDate || moment.utc();
         effective_date = moment.utc(effective_date, moment.ISO_8601).
             isValid() ?
             moment.utc(effective_date,
@@ -205,12 +242,11 @@ class ProductItemController {
           renewal_cost: request.payload.value,
           user_id: user.id || user.ID,
         };
-        const insurancePromise = insuranceId ?
+        return insuranceId ?
             insuranceAdaptor.updateInsurances(
                 insuranceId, insuranceBody) :
             insuranceAdaptor.createInsurances(insuranceBody);
-        return insurancePromise.
-            then((result) => {
+      }).then((result) => {
               if (result) {
                 return reply({
                   status: true,
@@ -225,7 +261,6 @@ class ProductItemController {
                   forceUpdate: request.pre.forceUpdate,
                 });
               }
-            });
       }).catch((err) => {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
@@ -257,7 +292,16 @@ class ProductItemController {
     } else if (request.pre.userExist && !request.pre.forceUpdate) {
       return insuranceAdaptor.deleteInsurance(
           request.params.insuranceId, user.id ||
-          user.ID);
+          user.ID).then(() => reply({
+        status: true,
+      })).catch((err) => {
+        console.log(
+            `Error on ${new Date()} for user ${user.id ||
+            user.ID} is as follow: \n \n ${err}`);
+        return reply({
+          status: false,
+        });
+      });
     } else {
       reply({
         status: false,
@@ -291,10 +335,27 @@ class ProductItemController {
                 status_type: 11,
               }) :
           '';
-      return sellerPromise.then(sellerList => {
-        const productId = request.params.id;
-        const amcId = request.params.amcId;
-        let effective_date = request.payload.effective_date || moment.utc();
+      const product_id = request.params.id;
+      const amcId = request.params.amcId;
+      let sellerList;
+      return Promise.all([sellerPromise]).then(sellerResult => {
+        sellerList = sellerResult[0];
+        if (!amcId) {
+          return productAdaptor.retrieveProductById(product_id, {
+            status_type: [5, 11],
+          });
+        }
+
+        return undefined;
+      }).then((productResult) => {
+        const amcEffectiveDate = productResult ?
+            productResult.amcDetails && productResult.amcDetails.length > 0 ?
+                moment.utc(productResult.amcDetails[0].expiryDate,
+                    moment.ISO_8601).add(1, 'days') :
+                productResult.purchaseDate :
+            undefined;
+        let effective_date = request.payload.effective_date ||
+            amcEffectiveDate || moment.utc();
         effective_date = moment.utc(effective_date, moment.ISO_8601).
             isValid() ?
             moment.utc(effective_date,
@@ -312,7 +373,7 @@ class ProductItemController {
           renewal_type: 8,
           updated_by: user.id || user.ID,
           status_type: 11,
-          product_id: productId,
+          product_id: product_id,
           job_id: request.payload.job_id,
           renewal_cost: request.payload.value,
           seller_id: sellerList ?
@@ -327,11 +388,10 @@ class ProductItemController {
               format('YYYY-MM-DD') : undefined,
           user_id: user.id || user.ID,
         };
-        const amcPromise = amcId ?
+        return amcId ?
             amcAdaptor.updateAMCs(amcId, values) :
             amcAdaptor.createAMCs(values);
-        return amcPromise.
-            then((result) => {
+      }).then((result) => {
               if (result) {
                 return reply({
                   status: true,
@@ -346,7 +406,6 @@ class ProductItemController {
                   forceUpdate: request.pre.forceUpdate,
                 });
               }
-            });
       }).catch((err) => {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
@@ -377,7 +436,16 @@ class ProductItemController {
       });
     } else if (request.pre.userExist && !request.pre.forceUpdate) {
       return amcAdaptor.deleteAMC(request.params.amcId, user.id ||
-          user.ID);
+          user.ID).then(() => reply({
+        status: true,
+      })).catch((err) => {
+        console.log(
+            `Error on ${new Date()} for user ${user.id ||
+            user.ID} is as follow: \n \n ${err}`);
+        return reply({
+          status: false,
+        });
+      });
     } else {
       reply({
         status: false,
@@ -411,10 +479,27 @@ class ProductItemController {
                 status_type: 11,
               }) :
           '';
-      return sellerPromise.then(sellerList => {
-        const productId = request.params.id;
-        const pucId = request.params.pucId;
-        let effective_date = request.payload.effective_date || moment.utc();
+      let sellerList;
+      const product_id = request.params.id;
+      const pucId = request.params.pucId;
+      return Promise.all([sellerPromise]).then(sellerResult => {
+        sellerList = sellerResult[0];
+        if (!pucId) {
+          return productAdaptor.retrieveProductById(product_id, {
+            status_type: [5, 11],
+          });
+        }
+
+        return undefined;
+      }).then((productResult) => {
+        const pucEffectiveDate = productResult ?
+            productResult.pucDetails && productResult.pucDetails.length > 0 ?
+                moment.utc(productResult.pucDetails[0].expiryDate,
+                    moment.ISO_8601).add(1, 'days') :
+                productResult.purchaseDate :
+            undefined;
+        let effective_date = request.payload.effective_date ||
+            pucEffectiveDate || moment.utc();
         effective_date = moment.utc(effective_date, moment.ISO_8601).
             isValid() ?
             moment.utc(effective_date,
@@ -431,7 +516,7 @@ class ProductItemController {
           updated_by: user.id || user.ID,
           status_type: 11,
           renewal_cost: request.payload.value,
-          product_id: productId,
+          product_id,
           job_id: request.payload.job_id,
           seller_id: sellerList ?
               sellerList.sid :
@@ -494,8 +579,17 @@ class ProductItemController {
         forceUpdate: request.pre.forceUpdate,
       });
     } else if (request.pre.userExist && !request.pre.forceUpdate) {
-      return insuranceAdaptor.deletePUCs(request.params.pucId, user.id ||
-          user.ID);
+      return pucAdaptor.deletePUCs(request.params.pucId, user.id ||
+          user.ID).then(() => reply({
+        status: true,
+      })).catch((err) => {
+        console.log(
+            `Error on ${new Date()} for user ${user.id ||
+            user.ID} is as follow: \n \n ${err}`);
+        return reply({
+          status: false,
+        });
+      });
     } else {
       reply({
         status: false,
@@ -525,20 +619,43 @@ class ProductItemController {
                 name: request.payload.provider_name,
               }) :
               undefined;
+      const product_id = request.params.id;
+      const warrantyId = request.params.warrantyId;
+      let warrantyRenewalType;
+      let expiry_date;
+      let provider;
       return Promise.all([
         providerPromise, categoryAdaptor.retrieveRenewalTypes({
           id: {
             $gte: 7,
           },
         })]).then(promiseResult => {
-        const productId = request.params.id;
-        const warrantyId = request.params.warrantyId;
-        let warrantyRenewalType;
-        let expiry_date;
-        const provider = promiseResult[0];
+        provider = promiseResult[0];
         warrantyRenewalType = promiseResult[1].find(
             item => item.type === request.payload.renewal_type);
-        let effective_date = request.payload.effective_date || moment.utc();
+        if (!warrantyId) {
+          return productAdaptor.retrieveProductById(product_id, {
+            status_type: [5, 11],
+          });
+        }
+
+        return undefined;
+      }).then((productResult) => {
+        const warrantyDetail = productResult ?
+            productResult.warrantyDetails.filter(
+                (warrantyItem) => request.payload.warranty_type === 3 ?
+                    warrantyItem.warranty_type === 3 :
+                    warrantyItem.warranty_type === 1 ||
+                    warrantyItem.warranty_type === 2) :
+            undefined;
+        const warrantyEffectiveDate = productResult ?
+            warrantyDetail && warrantyDetail.length > 0 ?
+                moment.utc(warrantyDetail[0].expiryDate, moment.ISO_8601).
+                    add(1, 'days') :
+                productResult.purchaseDate :
+            undefined;
+        let effective_date = request.payload.effective_date ||
+            warrantyEffectiveDate || moment.utc();
         effective_date = moment.utc(effective_date, moment.ISO_8601).
             isValid() ?
             moment.utc(effective_date,
@@ -554,7 +671,7 @@ class ProductItemController {
           updated_by: user.id || user.ID,
           status_type: 11,
           job_id: request.payload.job_id,
-          product_id: productId,
+          product_id: product_id,
           expiry_date: effective_date ?
               moment.utc(expiry_date).format('YYYY-MM-DD') :
               undefined,
@@ -615,9 +732,18 @@ class ProductItemController {
         forceUpdate: request.pre.forceUpdate,
       });
     } else if (request.pre.userExist && !request.pre.forceUpdate) {
-      return insuranceAdaptor.deleteWarranties(
+      return warrantyAdaptor.deleteWarranties(
           request.params.warrantyId, user.id ||
-          user.ID);
+          user.ID).then(() => reply({
+        status: true,
+      })).catch((err) => {
+        console.log(
+            `Error on ${new Date()} for user ${user.id ||
+            user.ID} is as follow: \n \n ${err}`);
+        return reply({
+          status: false,
+        });
+      });
     } else {
       reply({
         status: false,

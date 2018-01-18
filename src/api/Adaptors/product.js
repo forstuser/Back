@@ -1119,10 +1119,10 @@ class ProductAdaptor {
         products.pucDetails = results[6];
         products.serviceSchedules = results[7] ?
             results[7].map((scheduleItem) => {
-          scheduleItem.due_date = moment.utc(products.purchaseDate,
-              moment.ISO_8601).add(scheduleItem.due_in_months, 'months');
+              scheduleItem.due_date = moment.utc(products.purchaseDate,
+                  moment.ISO_8601).add(scheduleItem.due_in_months, 'months');
 
-          return scheduleItem;
+              return scheduleItem;
             }) :
             results[7];
         products.jobId = results[8] ? results[8].id : products.jobId;
@@ -1505,18 +1505,12 @@ class ProductAdaptor {
 
   updateProductDetails(productBody, metadataBody, otherItems, productId) {
     const sellerPromise = [];
-    const isProductAMCSellerSame = otherItems.amc &&
-        otherItems.amc.seller_contact ===
-        productBody.seller_contact;
-    const isProductRepairSellerSame = otherItems.repair &&
-        otherItems.repair.seller_contact ===
-        productBody.seller_contact;
+    const isProductAMCSellerSame = false;
+    const isProductRepairSellerSame = false;
     const isAMCRepairSellerSame = otherItems.repair && otherItems.amc &&
         otherItems.repair.seller_contact ===
         otherItems.amc.seller_contact;
-    const isProductPUCSellerSame = otherItems.puc &&
-        otherItems.puc.seller_contact ===
-        productBody.seller_contact;
+    const isProductPUCSellerSame = false;
     const insuranceProviderPromise = otherItems.insurance &&
     otherItems.insurance.provider_name ?
         this.insuranceAdaptor.findCreateInsuranceBrand({
@@ -1526,6 +1520,17 @@ class ProductAdaptor {
           status_type: 11,
           updated_by: productBody.user_id,
           name: otherItems.insurance.provider_name,
+        }) :
+        undefined;
+    const warrantyProviderPromise = otherItems.warranty &&
+    otherItems.warranty.extended_provider_name ?
+        this.insuranceAdaptor.findCreateInsuranceBrand({
+          main_category_id: productBody.main_category_id,
+          category_id: productBody.category_id,
+          type: 2,
+          status_type: 11,
+          updated_by: productBody.user_id,
+          name: otherItems.warranty.extended_provider_name,
         }) :
         undefined;
 
@@ -1548,6 +1553,7 @@ class ProductAdaptor {
     });
     sellerPromise.push(insuranceProviderPromise);
     sellerPromise.push(brandPromise);
+    sellerPromise.push(warrantyProviderPromise);
     let renewalTypes;
     let product = productBody;
     let metadata;
@@ -1650,6 +1656,7 @@ class ProductAdaptor {
                 warrantyItemPromise,
                 productBody: product,
                 productId,
+                sellerList,
               });
             }
 
@@ -1770,43 +1777,27 @@ class ProductAdaptor {
         add(otherItems.puc.expiry_period || 6, 'months').
         subtract(1, 'day').
         endOf('days').format('YYYY-MM-DD');
+    const values = {
+      renewal_type: otherItems.puc.expiry_period || 6,
+      updated_by: productBody.user_id,
+      status_type: 11,
+      renewal_cost: otherItems.puc.value,
+      seller_id: isProductPUCSellerSame ?
+          sellerList[0].sid :
+          otherItems.puc.seller_name ||
+          otherItems.puc.seller_contact ?
+              sellerList[3].sid :
+              undefined,
+      product_id: productId,
+      job_id: productBody.job_id,
+      expiry_date: moment.utc(expiry_date).format('YYYY-MM-DD'),
+      effective_date: moment.utc(effective_date).format('YYYY-MM-DD'),
+      document_date: moment.utc(effective_date).format('YYYY-MM-DD'),
+      user_id: productBody.user_id,
+    };
     pucPromise.push(otherItems.puc.id ?
-        this.pucAdaptor.updatePUCs(otherItems.puc.id, {
-          renewal_type: otherItems.puc.expiry_period || 6,
-          updated_by: productBody.user_id,
-          status_type: 11,
-          renewal_cost: otherItems.puc.value,
-          seller_id: isProductPUCSellerSame ?
-              sellerList[0].sid :
-              otherItems.puc.seller_name ||
-              otherItems.puc.seller_contact ?
-                  sellerList[3].sid :
-                  undefined,
-          product_id: productId,
-          job_id: productBody.job_id,
-          expiry_date: moment.utc(expiry_date).format('YYYY-MM-DD'),
-          effective_date: moment.utc(effective_date).format('YYYY-MM-DD'),
-          document_date: moment.utc(effective_date).format('YYYY-MM-DD'),
-          user_id: productBody.user_id,
-        }) :
-        this.pucAdaptor.createPUCs({
-          renewal_type: otherItems.puc.expiry_period || 6,
-          updated_by: productBody.user_id,
-          status_type: 11,
-          renewal_cost: otherItems.puc.value,
-          product_id: productId,
-          job_id: productBody.job_id,
-          seller_id: isProductPUCSellerSame ?
-              sellerList[0].sid :
-              otherItems.puc.seller_name ||
-              otherItems.puc.seller_contact ?
-                  sellerList[3].sid :
-                  undefined,
-          expiry_date: moment.utc(expiry_date).format('YYYY-MM-DD'),
-          effective_date: moment.utc(effective_date).format('YYYY-MM-DD'),
-          document_date: moment.utc(effective_date).format('YYYY-MM-DD'),
-          user_id: productBody.user_id,
-        }));
+        this.pucAdaptor.updatePUCs(otherItems.puc.id, values) :
+        this.pucAdaptor.createPUCs(values));
   }
 
   prepareRepairPromise(parameters) {
@@ -1822,38 +1813,27 @@ class ProductAdaptor {
 
     const repairSellerId = isProductRepairSellerSame ?
         sellerList[0].sid :
-        otherItems.repair.is_amc_seller ||
         isAMCRepairSellerSame ?
             sellerList[1].sid :
             otherItems.repair.seller_name ||
             otherItems.repair.seller_contact ?
                 sellerList[2].sid :
                 undefined;
+    const values = {
+      updated_by: productBody.user_id,
+      status_type: 11,
+      product_id: productId,
+      seller_id: repairSellerId,
+      document_date: moment.utc(document_date).format('YYYY-MM-DD'),
+      repair_for: otherItems.repair.repair_for,
+      job_id: productBody.job_id,
+      repair_cost: otherItems.repair.value,
+      warranty_upto: otherItems.repair.warranty_upto,
+      user_id: productBody.user_id,
+    };
     repairPromise.push(otherItems.repair.id ?
-        this.repairAdaptor.updateRepairs(otherItems.repair.id, {
-          updated_by: productBody.user_id,
-          status_type: 11,
-          product_id: productId,
-          seller_id: repairSellerId,
-          document_date: moment.utc(document_date).format('YYYY-MM-DD'),
-          repair_for: otherItems.repair.repair_for,
-          job_id: productBody.job_id,
-          repair_cost: otherItems.repair.value,
-          warranty_upto: otherItems.repair.warranty_upto,
-          user_id: productBody.user_id,
-        }) :
-        this.repairAdaptor.createRepairs({
-          updated_by: productBody.user_id,
-          status_type: 11,
-          product_id: productId,
-          document_date: moment.utc(document_date).format('YYYY-MM-DD'),
-          seller_id: repairSellerId,
-          repair_for: otherItems.repair.repair_for,
-          repair_cost: otherItems.repair.value,
-          job_id: productBody.job_id,
-          warranty_upto: otherItems.repair.warranty_upto,
-          user_id: productBody.user_id,
-        }));
+        this.repairAdaptor.updateRepairs(otherItems.repair.id, values) :
+        this.repairAdaptor.createRepairs(values));
   }
 
   prepareAMCPromise(parameters) {
@@ -1872,43 +1852,27 @@ class ProductAdaptor {
         subtract(1, 'day').
         endOf('days').
         format('YYYY-MM-DD');
+    const values = {
+      renewal_type: 8,
+      updated_by: productBody.user_id,
+      status_type: 11,
+      product_id: productId,
+      job_id: productBody.job_id,
+      renewal_cost: otherItems.amc.value,
+      seller_id: isProductAMCSellerSame ?
+          sellerList[0].sid :
+          otherItems.amc.seller_name ||
+          otherItems.amc.seller_contact ?
+              sellerList[1].sid :
+              undefined,
+      expiry_date: moment.utc(expiry_date).format('YYYY-MM-DD'),
+      effective_date: moment.utc(effective_date).format('YYYY-MM-DD'),
+      document_date: moment.utc(effective_date).format('YYYY-MM-DD'),
+      user_id: productBody.user_id,
+    };
     amcPromise.push(otherItems.amc.id ?
-        this.amcAdaptor.updateAMCs(otherItems.amc.id, {
-          renewal_type: 8,
-          updated_by: productBody.user_id,
-          status_type: 11,
-          product_id: productId,
-          job_id: productBody.job_id,
-          renewal_cost: otherItems.amc.value,
-          seller_id: isProductAMCSellerSame ?
-              sellerList[0].sid :
-              otherItems.amc.seller_name ||
-              otherItems.amc.seller_contact ?
-                  sellerList[1].sid :
-                  undefined,
-          expiry_date: moment.utc(expiry_date).format('YYYY-MM-DD'),
-          effective_date: moment.utc(effective_date).format('YYYY-MM-DD'),
-          document_date: moment.utc(effective_date).format('YYYY-MM-DD'),
-          user_id: productBody.user_id,
-        }) :
-        this.amcAdaptor.createAMCs({
-          renewal_type: 8,
-          updated_by: productBody.user_id,
-          renewal_cost: otherItems.amc.value,
-          status_type: 11,
-          job_id: productBody.job_id,
-          product_id: productId,
-          seller_id: isProductAMCSellerSame ?
-              sellerList[0].sid :
-              otherItems.amc.seller_name ||
-              otherItems.amc.seller_contact ?
-                  sellerList[1].sid :
-                  undefined,
-          expiry_date: moment.utc(expiry_date).format('YYYY-MM-DD'),
-          effective_date: moment.utc(effective_date).format('YYYY-MM-DD'),
-          document_date: moment.utc(effective_date).format('YYYY-MM-DD'),
-          user_id: productBody.user_id,
-        }));
+        this.amcAdaptor.updateAMCs(otherItems.amc.id, values) :
+        this.amcAdaptor.createAMCs(values));
   }
 
   prepareInsurancePromise(parameters) {
@@ -1958,7 +1922,7 @@ class ProductAdaptor {
   }
 
   prepareWarrantyPromise(parameters) {
-    let {otherItems, renewalTypes, warrantyItemPromise, productBody, productId} = parameters;
+    let {otherItems, renewalTypes, warrantyItemPromise, productBody, productId, sellerList} = parameters;
     let warrantyRenewalType;
     let expiry_date;
     if (otherItems.warranty.id) {
@@ -2043,7 +2007,9 @@ class ProductAdaptor {
           this.warrantyAdaptor.updateWarranties(
               otherItems.warranty.extended_id, {
                 renewal_type: otherItems.warranty.extended_renewal_type,
-                provider_id: otherItems.warranty.extended_provider_id,
+                provider_id: otherItems.warranty.extended_provider_name &&
+                sellerList[4] ?
+                    sellerList[6].id : otherItems.warranty.extended_provider_id,
                 updated_by: productBody.user_id,
                 status_type: 11,
                 job_id: productBody.job_id,
@@ -2058,7 +2024,9 @@ class ProductAdaptor {
               })
           : this.warrantyAdaptor.createWarranties({
             renewal_type: otherItems.warranty.extended_renewal_type,
-            provider_id: otherItems.warranty.extended_provider_id,
+            provider_id: otherItems.warranty.extended_provider_name &&
+            sellerList[4] ?
+                sellerList[6].id : otherItems.warranty.extended_provider_id,
             updated_by: productBody.user_id,
             status_type: 11,
             job_id: productBody.job_id,
@@ -2155,9 +2123,7 @@ class ProductAdaptor {
     sellerPromise.push(productBody.seller_contact ||
     productBody.seller_name || productBody.seller_email ||
     productBody.seller_address ?
-        this.sellerAdaptor.retrieveOrCreateOfflineSellers({
-              contact_no: productBody.seller_contact,
-            },
+        this.sellerAdaptor.retrieveOrCreateOfflineSellers({},
             {
               seller_name: productBody.seller_name || productBody.product_name,
               contact_no: productBody.seller_contact,
@@ -2168,12 +2134,10 @@ class ProductAdaptor {
               status_type: 11,
             }) :
         '');
-    sellerPromise.push(otherItems.amc && isProductAMCSellerSame &&
+    sellerPromise.push(otherItems.amc && !isProductAMCSellerSame &&
     (otherItems.amc.seller_contact ||
         otherItems.amc.seller_name) ?
-        this.sellerAdaptor.retrieveOrCreateOfflineSellers({
-              contact_no: otherItems.amc.seller_contact,
-            },
+        this.sellerAdaptor.retrieveOrCreateOfflineSellers({},
             {
               seller_name: otherItems.amc.seller_name,
               contact_no: otherItems.amc.contact_no,
@@ -2183,12 +2147,10 @@ class ProductAdaptor {
             }) :
         '');
     sellerPromise.push(otherItems.repair && !otherItems.repair.is_amc_seller &&
-    isProductRepairSellerSame && isAMCRepairSellerSame &&
+    !isProductRepairSellerSame && !isAMCRepairSellerSame &&
     (otherItems.repair.seller_contact ||
         otherItems.repair.seller_name) ?
-        this.sellerAdaptor.retrieveOrCreateOfflineSellers({
-              contact_no: otherItems.repair.seller_contact,
-            },
+        this.sellerAdaptor.retrieveOrCreateOfflineSellers({},
             {
               seller_name: otherItems.repair.seller_name,
               contact_no: otherItems.repair.contact_no,
@@ -2197,12 +2159,10 @@ class ProductAdaptor {
               status_type: 11,
             }) :
         '');
-    sellerPromise.push(otherItems.puc && isProductPUCSellerSame &&
+    sellerPromise.push(otherItems.puc && !isProductPUCSellerSame &&
     (otherItems.puc.seller_contact ||
         otherItems.puc.seller_name) ?
-        this.sellerAdaptor.retrieveOrCreateOfflineSellers({
-              contact_no: otherItems.puc.seller_contact,
-            },
+        this.sellerAdaptor.retrieveOrCreateOfflineSellers({},
             {
               seller_name: otherItems.puc.seller_name,
               contact_no: otherItems.puc.contact_no,
@@ -2684,12 +2644,37 @@ class ProductAdaptor {
   }
 
   deleteProduct(id, userId) {
-    return this.modals.products.destroy({
-      where: {
-        id,
-        user_id: userId,
-      },
-    }).then(() => {
+    return this.modals.products.findById(id).then((result) => {
+      if (result) {
+        return Promise.all([
+          this.modals.products.destroy({
+            where: {
+              id,
+              user_id: userId,
+            },
+          }), result.job_id ? Promise.All([
+            this.modals.job.update({
+              user_status: 3,
+              admin_status: 3,
+              ce_status: null,
+              qe_status: null,
+              updated_by: userId,
+            }, {
+              where: {
+                id: result.job_id,
+              },
+            }), this.modals.jobCopies.update({
+              status_type: 3,
+              updated_by: userId,
+            }, {
+              where: {
+                job_id: result.job_id,
+              },
+            })]) : undefined]).then(() => {
+          return true;
+        });
+      }
+
       return true;
     });
   }

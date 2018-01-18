@@ -296,7 +296,7 @@ class DashboardAdaptor {
           return metaData;
         });
 
-        product.product_type = 1;
+        product.productType = 1;
         return product;
       });
 
@@ -312,7 +312,7 @@ class DashboardAdaptor {
               endOf('day');
           amc.dueDate = amc.expiryDate;
           amc.dueIn = dueDate_time.diff(moment.utc(), 'days');
-          amc.product_type = 4;
+          amc.productType = 4;
         }
 
         return amc;
@@ -329,7 +329,7 @@ class DashboardAdaptor {
               endOf('day');
           insurance.dueDate = insurance.expiryDate;
           insurance.dueIn = dueDate_time.diff(moment.utc(), 'days');
-          insurance.product_type = 3;
+          insurance.productType = 3;
         }
         return insurance;
       });
@@ -346,7 +346,7 @@ class DashboardAdaptor {
               endOf('day');
           warranty.dueDate = warranty.expiryDate;
           warranty.dueIn = dueDate_time.diff(moment.utc(), 'days');
-          warranty.product_type = 2;
+          warranty.productType = 2;
         }
         return warranty;
       });
@@ -362,7 +362,7 @@ class DashboardAdaptor {
               endOf('day');
           puc.dueDate = puc.expiryDate;
           puc.dueIn = dueDate_time.diff(moment.utc(), 'days');
-          puc.product_type = 5;
+          puc.productType = 5;
         }
 
         return puc;
@@ -384,7 +384,7 @@ class DashboardAdaptor {
               endOf('day');
           scheduledProduct.dueDate = scheduledDate;
           scheduledProduct.dueIn = dueDate_time.diff(moment.utc(), 'days');
-          scheduledProduct.product_type = 6;
+          scheduledProduct.productType = 6;
         }
 
         return scheduledProduct;

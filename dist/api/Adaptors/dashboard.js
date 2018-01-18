@@ -316,7 +316,7 @@ var DashboardAdaptor = function () {
             return metaData;
           });
 
-          product.product_type = 1;
+          product.productType = 1;
           return product;
         });
 
@@ -333,7 +333,7 @@ var DashboardAdaptor = function () {
                 _moment2.default.ISO_8601).endOf('day');
             amc.dueDate = amc.expiryDate;
             amc.dueIn = dueDate_time.diff(_moment2.default.utc(), 'days');
-            amc.product_type = 4;
+            amc.productType = 4;
           }
 
           return amc;
@@ -351,7 +351,7 @@ var DashboardAdaptor = function () {
                 _moment2.default.ISO_8601).endOf('day');
             insurance.dueDate = insurance.expiryDate;
             insurance.dueIn = dueDate_time.diff(_moment2.default.utc(), 'days');
-            insurance.product_type = 3;
+            insurance.productType = 3;
           }
           return insurance;
         });
@@ -369,7 +369,7 @@ var DashboardAdaptor = function () {
                 _moment2.default.ISO_8601).endOf('day');
             warranty.dueDate = warranty.expiryDate;
             warranty.dueIn = dueDate_time.diff(_moment2.default.utc(), 'days');
-            warranty.product_type = 2;
+            warranty.productType = 2;
           }
           return warranty;
         });
@@ -387,7 +387,7 @@ var DashboardAdaptor = function () {
                 _moment2.default.ISO_8601).endOf('day');
             puc.dueDate = puc.expiryDate;
             puc.dueIn = dueDate_time.diff(_moment2.default.utc(), 'days');
-            puc.product_type = 5;
+            puc.productType = 5;
           }
 
           return puc;
@@ -413,7 +413,7 @@ var DashboardAdaptor = function () {
             scheduledProduct.dueDate = scheduledDate;
             scheduledProduct.dueIn = dueDate_time.diff(_moment2.default.utc(),
                 'days');
-            scheduledProduct.product_type = 6;
+            scheduledProduct.productType = 6;
           }
 
           return scheduledProduct;

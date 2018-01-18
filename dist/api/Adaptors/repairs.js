@@ -167,6 +167,7 @@ var RepairAdaptor = function () {
             'updated_at',
             'updatedDate'],
           'warranty_upto',
+          'repair_for',
           [
             this.modals.sequelize.fn('CONCAT', 'products/',
                 this.modals.sequelize.literal('"product_id"')),
@@ -295,12 +296,30 @@ var RepairAdaptor = function () {
   }, {
     key: 'deleteRepair',
     value: function deleteRepair(id, user_id) {
-      return this.modals.repairs.destroy({
-        where: {
-          id: id,
-          user_id: user_id,
-        },
-      }).then(function() {
+      var _this2 = this;
+
+      return this.modals.repairs.findById(id).then(function(result) {
+        if (result) {
+          return Promise.all([
+            _this2.modals.repairs.destroy({
+              where: {
+                id: id,
+                user_id: user_id,
+              },
+            }), result.copies.length > 0 ? _this2.modals.jobCopies.update({
+              status_type: 3,
+              updated_by: user_id,
+            }, {
+              where: {
+                id: result.copies.map(function(item) {
+                  return item.copyId;
+                }),
+              },
+            }) : undefined]).then(function() {
+            return true;
+          });
+        }
+
         return true;
       });
     }

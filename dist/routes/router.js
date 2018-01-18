@@ -1224,7 +1224,7 @@ function prepareProductItemRoutes(productItemController, productItemRoutes) {
           }],
         handler: _productItem2.default.deleteRepair,
         description: 'Delete Repair.',
-      },
+      }
     });
 
     productItemRoutes.push({
@@ -1303,7 +1303,7 @@ function prepareProductItemRoutes(productItemController, productItemRoutes) {
           }],
         handler: _productItem2.default.deleteInsurance,
         description: 'Delete Insurance.',
-      },
+      }
     });
 
     productItemRoutes.push({
@@ -1368,7 +1368,7 @@ function prepareProductItemRoutes(productItemController, productItemRoutes) {
           }],
         handler: _productItem2.default.deleteAMC,
         description: 'Delete AMC.',
-      },
+      }
     });
 
     productItemRoutes.push({
@@ -1433,7 +1433,7 @@ function prepareProductItemRoutes(productItemController, productItemRoutes) {
           }],
         handler: _productItem2.default.deletePUC,
         description: 'Delete PUC.',
-      },
+      }
     });
 
     productItemRoutes.push({
@@ -1504,9 +1504,9 @@ function prepareProductItemRoutes(productItemController, productItemRoutes) {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
           }],
-        handler: _productItem2.default.deleteAMC,
+        handler: _productItem2.default.deleteWarranty,
         description: 'Delete AMC.',
-      },
+      }
     });
   }
 }

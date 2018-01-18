@@ -131,6 +131,7 @@ class RepairAdaptor {
           'purchaseDate'],
         ['updated_at', 'updatedDate'],
         'warranty_upto',
+        'repair_for',
         [
           this.modals.sequelize.fn('CONCAT', 'products/',
               this.modals.sequelize.literal('"product_id"')),
@@ -282,12 +283,26 @@ class RepairAdaptor {
   }
 
   deleteRepair(id, user_id) {
-    return this.modals.repairs.destroy({
-      where: {
-        id,
-        user_id,
-      },
-    }).then(() => {
+    return this.modals.repairs.findById(id).then((result) => {
+      if (result) {
+        return Promise.all([
+          this.modals.repairs.destroy({
+            where: {
+              id,
+              user_id,
+            },
+          }), result.copies.length > 0 ? this.modals.jobCopies.update({
+            status_type: 3,
+            updated_by: user_id,
+          }, {
+            where: {
+              id: result.copies.map(item => item.copyId),
+            },
+          }) : undefined]).then(() => {
+          return true;
+        });
+      }
+
       return true;
     });
   }

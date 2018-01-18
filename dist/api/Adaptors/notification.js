@@ -280,7 +280,7 @@ var NotificationAdaptor = function () {
             scheduledProduct.dueDate = scheduledDate;
             scheduledProduct.dueIn = due_date_time.diff(_moment2.default.utc(),
                 'days');
-            scheduledProduct.product_type = 3;
+            scheduledProduct.productType = 3;
             scheduledProduct.title = 'Service is pending for ' +
                 scheduledProduct.productName;
             scheduledProduct.description = '' + scheduledProduct.productName;

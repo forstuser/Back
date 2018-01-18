@@ -1632,7 +1632,7 @@ function prepareProductItemRoutes(productItemController, productItemRoutes) {
             assign: 'userExist',
           },
         ],
-        handler: ProductItemController.deleteAMC,
+        handler: ProductItemController.deleteWarranty,
         description: 'Delete AMC.',
       },
     });

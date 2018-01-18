@@ -368,12 +368,30 @@ var InsuranceAdaptor = function () {
   }, {
     key: 'deleteInsurance',
     value: function deleteInsurance(id, user_id) {
-      return this.modals.insurances.destroy({
-        where: {
-          id: id,
-          user_id: user_id,
-        },
-      }).then(function() {
+      var _this3 = this;
+
+      return this.modals.insurances.findById(id).then(function(result) {
+        if (result) {
+          return Promise.all([
+            _this3.modals.insurances.destroy({
+              where: {
+                id: id,
+                user_id: user_id,
+              },
+            }), result.copies.length > 0 ? _this3.modals.jobCopies.update({
+              status_type: 3,
+              updated_by: user_id,
+            }, {
+              where: {
+                id: result.copies.map(function(item) {
+                  return item.copyId;
+                }),
+              },
+            }) : undefined]).then(function() {
+            return true;
+          });
+        }
+
         return true;
       });
     }
