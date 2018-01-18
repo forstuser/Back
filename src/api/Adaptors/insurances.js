@@ -151,6 +151,7 @@ class InsuranceAdaptor {
         [
           this.modals.sequelize.literal('"product"."product_name"'),
           'productName'],
+        'renewal_type',
         [
           'renewal_cost',
           'premiumAmount'],
@@ -342,6 +343,10 @@ class InsuranceAdaptor {
         values.copies.push(...newCopies);
       }
 
+      values.status_type = itemDetail.status_type !== 8 ?
+          11 :
+          values.status_type || itemDetail.status_type;
+
       result.updateAttributes(values);
       return result.toJSON();
     });
@@ -361,15 +366,29 @@ class InsuranceAdaptor {
 
         if (values.copies.length > 0) {
           result.updateAttributes(values);
-          return result.toJSON();
         }
+
+        return result.toJSON();
       }
 
       return this.modals.insurances.destroy({
-        id,
+        where: {
+          id,
+        },
       }).then(() => {
         return true;
       });
+    });
+  }
+
+  deleteInsurance(id, user_id) {
+    return this.modals.insurances.destroy({
+      where: {
+        id,
+        user_id,
+      },
+    }).then(() => {
+      return true;
     });
   }
 }

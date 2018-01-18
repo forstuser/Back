@@ -281,10 +281,9 @@ var NotificationAdaptor = function () {
             scheduledProduct.dueIn = due_date_time.diff(_moment2.default.utc(),
                 'days');
             scheduledProduct.product_type = 3;
-            scheduledProduct.Product.title = 'Service is pending for ' +
+            scheduledProduct.title = 'Service is pending for ' +
                 scheduledProduct.productName;
-            scheduledProduct.Product.description = '' +
-                scheduledProduct.productName;
+            scheduledProduct.description = '' + scheduledProduct.productName;
           }
 
           return scheduledProduct;

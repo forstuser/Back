@@ -130,6 +130,7 @@ class RepairAdaptor {
           'document_date',
           'purchaseDate'],
         ['updated_at', 'updatedDate'],
+        'warranty_upto',
         [
           this.modals.sequelize.fn('CONCAT', 'products/',
               this.modals.sequelize.literal('"product_id"')),
@@ -241,6 +242,11 @@ class RepairAdaptor {
         values.copies = itemDetail.copies;
         values.copies.push(...newCopies);
       }
+
+      values.status_type = itemDetail.status_type !== 8 ?
+          11 :
+          values.status_type || itemDetail.status_type;
+
       result.updateAttributes(values);
       return result.toJSON();
     });
@@ -260,15 +266,29 @@ class RepairAdaptor {
 
         if (values.copies.length > 0) {
           result.updateAttributes(values);
-          return result.toJSON();
         }
+
+        return result.toJSON();
       }
 
       return this.modals.repairs.destroy({
-        id,
+        where: {
+          id,
+        },
       }).then(() => {
         return true;
       });
+    });
+  }
+
+  deleteRepair(id, user_id) {
+    return this.modals.repairs.destroy({
+      where: {
+        id,
+        user_id,
+      },
+    }).then(() => {
+      return true;
     });
   }
 }

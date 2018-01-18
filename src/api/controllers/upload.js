@@ -211,7 +211,8 @@ class UploadController {
 
   static retrieveJobCreateCopies(parameters) {
     let {user, fileData, reply, request} = parameters;
-    return jobAdaptor.retrieveJobDetail(request.params.id).then((jobResult) => {
+    return jobAdaptor.retrieveJobDetail(request.params.id, true).
+        then((jobResult) => {
       if (Array.isArray(fileData)) {
         return UploadController.uploadArrayOfFile({
           requiredDetail: {
@@ -313,7 +314,8 @@ class UploadController {
     const type = requiredDetail.type;
     const fileType = requiredDetail.fileType;
     const fileTypeData = getTypeFromBuffer(fileData._data);
-    const fileName = `${user.id || user.ID}-1.${(fileType)
+    const fileName = `${user.id || user.ID}-${jobResult.copies.length +
+    1}.${(fileType)
         ? fileType.toString()
         : fileTypeData.ext}`;
 
@@ -394,6 +396,7 @@ class UploadController {
     const jobResult = requiredDetail.result;
     const type = requiredDetail.type;
     const fileUploadPromises = fileData.map((elem, index) => {
+      index = jobResult.copies.length + index;
       const name = elem.hapi.filename;
       const fileType = (/[.]/.exec(name)) ? /[^.]+$/.exec(name) : undefined;
       const fileTypeData = getTypeFromBuffer(elem._data);
@@ -521,14 +524,13 @@ class UploadController {
           product_id: productId,
           user_id: user.id || user.ID,
           updated_by: user.id || user.ID,
-          status_type: 11,
+          status_type: 8,
           copies,
         }) : amcAdaptor.updateAMCs(itemId, {
           job_id: jobId,
           product_id: productId,
           user_id: user.id || user.ID,
           updated_by: user.id || user.ID,
-          status_type: 11,
           copies,
         }));
         break;
@@ -539,14 +541,13 @@ class UploadController {
           product_id: productId,
           user_id: user.id || user.ID,
           updated_by: user.id || user.ID,
-          status_type: 11,
+          status_type: 8,
           copies,
         }) : insuranceAdaptor.updateInsurances(itemId, {
           job_id: jobId,
           product_id: productId,
           user_id: user.id || user.ID,
           updated_by: user.id || user.ID,
-          status_type: 11,
           copies,
         }));
         break;
@@ -557,14 +558,13 @@ class UploadController {
           product_id: productId,
           user_id: user.id || user.ID,
           updated_by: user.id || user.ID,
-          status_type: 11,
+          status_type: 8,
           copies,
         }) : repairAdaptor.updateRepairs(itemId, {
           job_id: jobId,
           product_id: productId,
           user_id: user.id || user.ID,
           updated_by: user.id || user.ID,
-          status_type: 11,
           copies,
         }));
         break;
@@ -574,7 +574,7 @@ class UploadController {
           product_id: productId,
           user_id: user.id || user.ID,
           updated_by: user.id || user.ID,
-          status_type: 11,
+          status_type: 8,
           warranty_type: 1,
           copies,
         }) : warrantyAdaptor.updateWarranties(itemId, {
@@ -582,7 +582,6 @@ class UploadController {
           product_id: productId,
           user_id: user.id || user.ID,
           updated_by: user.id || user.ID,
-          status_type: 11,
           warranty_type: 1,
           copies,
         }));
@@ -594,7 +593,7 @@ class UploadController {
           product_id: productId,
           user_id: user.id || user.ID,
           updated_by: user.id || user.ID,
-          status_type: 11,
+          status_type: 8,
           warranty_type: 3,
           copies,
         }) : warrantyAdaptor.updateWarranties(itemId, {
@@ -602,7 +601,6 @@ class UploadController {
           product_id: productId,
           user_id: user.id || user.ID,
           updated_by: user.id || user.ID,
-          status_type: 11,
           warranty_type: 3,
           copies,
         }));
@@ -613,14 +611,13 @@ class UploadController {
           product_id: productId,
           user_id: user.id || user.ID,
           updated_by: user.id || user.ID,
-          status_type: 11,
+          status_type: 8,
           copies,
         }) : pucAdaptor.updatePUCs(itemId, {
           job_id: jobId,
           product_id: productId,
           user_id: user.id || user.ID,
           updated_by: user.id || user.ID,
-          status_type: 11,
           copies,
         }));
         break;
@@ -630,7 +627,7 @@ class UploadController {
           product_id: productId,
           user_id: user.id || user.ID,
           updated_by: user.id || user.ID,
-          status_type: 11,
+          status_type: 8,
           warranty_type: 2,
           copies,
         }) : warrantyAdaptor.updateWarranties(itemId, {
@@ -638,7 +635,6 @@ class UploadController {
           product_id: productId,
           user_id: user.id || user.ID,
           updated_by: user.id || user.ID,
-          status_type: 11,
           warranty_type: 2,
           copies,
         }));
@@ -648,7 +644,6 @@ class UploadController {
           job_id: jobId,
           user_id: user.id || user.ID,
           updated_by: user.id || user.ID,
-          status_type: 11,
           copies,
         }));
         break;
@@ -659,7 +654,6 @@ class UploadController {
         job_id: jobId,
         user_id: user.id || user.ID,
         updated_by: user.id || user.ID,
-        status_type: 11,
       }));
     }
 
@@ -764,6 +758,7 @@ class UploadController {
     // }
   }
 
+  //Will required to be change if discard is required
   static deleteFile(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (!request.pre.userExist) {
@@ -786,7 +781,10 @@ class UploadController {
                 required: true,
               }],
           }),
-          modals.jobCopies.destroy({
+          modals.jobCopies.update({
+            status_type: 3,
+            updated_by: user.id || user.ID,
+          }, {
             where: {
               id: request.params.copyid,
               job_id: request.params.id,
@@ -813,17 +811,17 @@ class UploadController {
               }) :
               '']).then((result) => {
           const count = result[2];
-          const attributes = count > 0 ? {
+          let attributes = count > 0 ? {
             user_status: 8,
             admin_status: 4,
             ce_status: null,
             qe_status: null,
             updated_by: user.id || user.ID,
           } : {
-            user_status: 3,
-            admin_status: 3,
-            ce_status: 3,
-            qe_status: 3,
+            user_status: 8,
+            admin_status: 2,
+            ce_status: null,
+            qe_status: null,
             updated_by: user.id || user.ID,
           };
           const copiesData = result[0].copies.find(
@@ -835,11 +833,25 @@ class UploadController {
                     `${copiesData.file_name}` :
                     `jobs/${result[0].job_id}/${copiesData.file_name}`);
           }
+          const jobItem = result[0].toJSON();
+          if (jobItem.admin_status !== 5) {
+            result[0].updateAttributes(attributes);
+          }
 
-          result[0].updateAttributes(attributes);
           return reply({
             status: true,
-            message: 'File deleted successfully',
+            message: result[3][0] === true ?
+                'Product item deleted successfully' :
+                result[3][0] && itemId ?
+                    'File deleted successfully from product item' :
+                    'File deleted successfully',
+            isProductItemDeleted: result[3][0] === true,
+            productItemCopiesCount: result[3][0] && result[3][0] !== true ?
+                result[3][0].copies.length :
+                0,
+            productItemCopies: result[3][0] !== true && result[3][0] ?
+                result[3][0].copies :
+                undefined,
             forceUpdate: request.pre.forceUpdate,
           });
         }).catch((err) => {
@@ -866,7 +878,6 @@ class UploadController {
       case 2:
         productItemPromise.push(amcAdaptor.removeAMCs(itemId, copyId, {
           job_id: jobId,
-          product_id: productId,
           user_id: user.id || user.ID,
           updated_by: user.id || user.ID,
         }));
@@ -876,7 +887,6 @@ class UploadController {
         productItemPromise.push(
             insuranceAdaptor.removeInsurances(itemId, copyId, {
               job_id: jobId,
-              product_id: productId,
               user_id: user.id || user.ID,
               updated_by: user.id || user.ID,
             }));
@@ -885,7 +895,6 @@ class UploadController {
       case 4:
         productItemPromise.push(repairAdaptor.removeRepairs(itemId, copyId, {
           job_id: jobId,
-          product_id: productId,
           user_id: user.id || user.ID,
           updated_by: user.id || user.ID,
         }));
@@ -894,7 +903,6 @@ class UploadController {
         productItemPromise.push(
             warrantyAdaptor.removeWarranties(itemId, copyId, {
               job_id: jobId,
-              product_id: productId,
               user_id: user.id || user.ID,
               updated_by: user.id || user.ID,
             }));
@@ -904,7 +912,6 @@ class UploadController {
         productItemPromise.push(
             warrantyAdaptor.removeWarranties(itemId, copyId, {
               job_id: jobId,
-              product_id: productId,
               user_id: user.id || user.ID,
               updated_by: user.id || user.ID,
             }));
@@ -912,7 +919,6 @@ class UploadController {
       case 7:
         productItemPromise.push(pucAdaptor.removePUCs(itemId, {
           job_id: jobId,
-          product_id: productId,
           user_id: user.id || user.ID,
           updated_by: user.id || user.ID,
         }));
@@ -921,7 +927,6 @@ class UploadController {
         productItemPromise.push(
             warrantyAdaptor.removeWarranties(itemId, copyId, {
               job_id: jobId,
-              product_id: productId,
               user_id: user.id || user.ID,
               updated_by: user.id || user.ID,
             }));
@@ -933,14 +938,6 @@ class UploadController {
           updated_by: user.id || user.ID,
         }));
         break;
-    }
-
-    if (type > 1 && type < 8) {
-      productItemPromise.push(productAdaptor.removeProducts(itemId, copyId, {
-        job_id: jobId,
-        user_id: user.id || user.ID,
-        updated_by: user.id || user.ID,
-      }));
     }
 
     return Promise.all(productItemPromise);
@@ -956,27 +953,15 @@ class UploadController {
           category_id: request.params.id,
         },
       }).then((result) => {
-        fsImplCategory.readFile(result.category_image_name, 'utf8').
+        return fsImplCategory.readFile(result.category_image_name, 'utf8').
             then(fileResult => reply(fileResult.Body).
                 header('Content-Type', fileResult.ContentType).
                 header('Content-Disposition',
-                    `attachment; filename=${result.CopyName}`)).
-            catch((err) => {
-              console.log(
-                  `Error on ${new Date()} for user ${user.id ||
-                  user.ID} is as follow: \n \n ${err}`);
-              reply({
-                status: false,
-                message: 'Unable to retrieve image',
-                err,
-                forceUpdate: request.pre.forceUpdate,
-              });
-            });
+                    `attachment; filename=${result.CopyName}`));
       }).catch((err) => {
         console.log(
-            `Error on ${new Date()} for user ${user.id ||
-            user.ID} is as follow: \n \n ${err}`);
-        reply({
+            `Error on ${new Date()} for user while retrieving category image is as follow: \n \n ${err}`);
+        return reply({
           status: false,
           message: 'Unable to retrieve image',
           err,
@@ -984,7 +969,7 @@ class UploadController {
         });
       });
     } else {
-      reply({
+      return reply({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,

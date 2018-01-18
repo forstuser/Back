@@ -14,14 +14,13 @@ export default (sequelize, DataTypes) => {
         ref_id: {
           'type': DataTypes.INTEGER,
         },
-        model_category_form: {
-          'type': DataTypes.INTEGER,
-        },
         type_category_form: {
           'type': DataTypes.INTEGER,
-        }, category_form_1: {
+        },
+        category_form_1: {
           'type': DataTypes.INTEGER,
-        }, category_form_2: {
+        },
+        category_form_2: {
           'type': DataTypes.INTEGER,
         },
         category_level: {

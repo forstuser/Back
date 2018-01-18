@@ -341,8 +341,8 @@ class NotificationAdaptor {
           scheduledProduct.dueDate = scheduledDate;
           scheduledProduct.dueIn = due_date_time.diff(moment.utc(), 'days');
           scheduledProduct.product_type = 3;
-          scheduledProduct.Product.title = `Service is pending for ${scheduledProduct.productName}`;
-          scheduledProduct.Product.description = `${scheduledProduct.productName}`;
+          scheduledProduct.title = `Service is pending for ${scheduledProduct.productName}`;
+          scheduledProduct.description = `${scheduledProduct.productName}`;
         }
 
         return scheduledProduct;

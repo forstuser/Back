@@ -143,6 +143,7 @@ class AmcAdaptor {
         [
           'document_date',
           'purchaseDate'],
+        'renewal_type',
         ['updated_at', 'updatedDate'],
         [
           this.modals.sequelize.fn('CONCAT', 'products/',
@@ -269,6 +270,11 @@ class AmcAdaptor {
         values.copies = itemDetail.copies;
         values.copies.push(...newCopies);
       }
+
+      values.status_type = itemDetail.status_type !== 8 ?
+          11 :
+          values.status_type || itemDetail.status_type;
+
       result.updateAttributes(values);
       return result.toJSON();
     });
@@ -288,15 +294,29 @@ class AmcAdaptor {
 
         if (values.copies.length > 0) {
           result.updateAttributes(values);
-          return result.toJSON();
         }
+
+        return result.toJSON();
       }
 
       return this.modals.amcs.destroy({
-        id,
+        where: {
+          id,
+        },
       }).then(() => {
         return true;
       });
+    });
+  }
+
+  deleteAMC(id, user_id) {
+    return this.modals.amcs.destroy({
+      where: {
+        id,
+        user_id,
+      },
+    }).then(() => {
+      return true;
     });
   }
 }

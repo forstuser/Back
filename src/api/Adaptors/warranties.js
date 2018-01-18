@@ -158,6 +158,7 @@ class WarrantyAdaptor {
         [
           this.modals.sequelize.literal('"renewalType"."title"'),
           'premiumType'],
+        'renewal_type',
         [
           this.modals.sequelize.literal('"product"."main_category_id"'),
           'masterCategoryId'],
@@ -306,6 +307,9 @@ class WarrantyAdaptor {
         values.copies.push(...newCopies);
       }
 
+      values.status_type = itemDetail.status_type !== 8 ?
+          11 :
+          values.status_type || itemDetail.status_type;
       result.updateAttributes(values);
       return result.toJSON();
     });
@@ -325,15 +329,29 @@ class WarrantyAdaptor {
 
         if (values.copies.length > 0) {
           result.updateAttributes(values);
-          return result.toJSON();
         }
+
+        return result.toJSON();
       }
 
       return this.modals.warranties.destroy({
-        id,
+        where: {
+          id,
+        },
       }).then(() => {
         return true;
       });
+    });
+  }
+
+  deleteWarranties(id, user_id) {
+    return this.modals.warranties.destroy({
+      where: {
+        id,
+        user_id,
+      },
+    }).then(() => {
+      return true;
     });
   }
 }

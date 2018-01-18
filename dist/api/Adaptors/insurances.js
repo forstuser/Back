@@ -143,7 +143,58 @@ var InsuranceAdaptor = function () {
             'longitude'],
           required: false
         }],
-        attributes: ['id', ['product_id', 'productId'], [this.modals.sequelize.literal('"product"."main_category_id"'), 'masterCategoryId'], ['job_id', 'jobId'], ['document_number', 'policyNo'], 'provider_id', [this.modals.sequelize.literal('"renewalType"."title"'), 'premiumType'], [this.modals.sequelize.literal('"product"."product_name"'), 'productName'], ['renewal_cost', 'premiumAmount'], ['renewal_cost', 'value'], ['renewal_taxes', 'taxes'], ['amount_insured', 'amountInsured'], ['effective_date', 'effectiveDate'], ['expiry_date', 'expiryDate'], ['document_date', 'purchaseDate'], ['updated_at', 'updatedDate'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"product_id"')), 'productURL'], 'copies', 'user_id'],
+        attributes: [
+          'id',
+          [
+            'product_id',
+            'productId'],
+          [
+            this.modals.sequelize.literal('"product"."main_category_id"'),
+            'masterCategoryId'],
+          [
+            'job_id',
+            'jobId'],
+          [
+            'document_number',
+            'policyNo'],
+          'provider_id',
+          [
+            this.modals.sequelize.literal('"renewalType"."title"'),
+            'premiumType'],
+          [
+            this.modals.sequelize.literal('"product"."product_name"'),
+            'productName'],
+          'renewal_type',
+          [
+            'renewal_cost',
+            'premiumAmount'],
+          [
+            'renewal_cost',
+            'value'],
+          [
+            'renewal_taxes',
+            'taxes'],
+          [
+            'amount_insured',
+            'amountInsured'],
+          [
+            'effective_date',
+            'effectiveDate'],
+          [
+            'expiry_date',
+            'expiryDate'],
+          [
+            'document_date',
+            'purchaseDate'],
+          [
+            'updated_at',
+            'updatedDate'],
+          [
+            this.modals.sequelize.fn('CONCAT', 'products/',
+                this.modals.sequelize.literal('"product_id"')),
+            'productURL'],
+          'copies',
+          'user_id'],
         order: [['expiry_date', 'DESC']]
       }).then(function (insuranceResult) {
         return insuranceResult.map(function (item) {
@@ -274,6 +325,10 @@ var InsuranceAdaptor = function () {
               _toConsumableArray(newCopies));
         }
 
+        values.status_type = itemDetail.status_type !== 8 ?
+            11 :
+            values.status_type || itemDetail.status_type;
+
         result.updateAttributes(values);
         return result.toJSON();
       });
@@ -296,15 +351,30 @@ var InsuranceAdaptor = function () {
 
           if (values.copies.length > 0) {
             result.updateAttributes(values);
-            return result.toJSON();
           }
+
+          return result.toJSON();
         }
 
         return _this2.modals.insurances.destroy({
-          id: id,
+          where: {
+            id: id,
+          }
         }).then(function() {
           return true;
         });
+      });
+    }
+  }, {
+    key: 'deleteInsurance',
+    value: function deleteInsurance(id, user_id) {
+      return this.modals.insurances.destroy({
+        where: {
+          id: id,
+          user_id: user_id,
+        },
+      }).then(function() {
+        return true;
       });
     }
   }]);

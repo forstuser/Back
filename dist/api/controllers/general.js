@@ -221,7 +221,7 @@ var GeneralController = function () {
               taxes: request.payload.taxes,
               updated_by: user.id || user.ID,
               seller_id: request.payload.seller_id,
-              status_type: 2,
+              status_type: 8,
               document_number: request.payload.document_number,
               document_date: request.payload.document_date ?
                   (0, _moment2.default)(request.payload.document_date,
@@ -324,6 +324,7 @@ var GeneralController = function () {
           return productAdaptor.retrieveProducts({
             main_category_id: [1, 2, 3],
             status_type: [5, 11],
+            user_id: user.id || user.ID,
           });
         }).then(function(productResult) {
           return reply({

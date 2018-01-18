@@ -133,7 +133,45 @@ var RepairAdaptor = function () {
             'longitude'],
           required: false
         }],
-        attributes: ['id', ['product_id', 'productId'], ['job_id', 'jobId'], [this.modals.sequelize.literal('"product"."main_category_id"'), 'masterCategoryId'], 'user_id', ['document_number', 'policyNo'], ['repair_cost', 'premiumAmount'], [this.modals.sequelize.literal('"product"."product_name"'), 'productName'], ['repair_cost', 'value'], ['repair_taxes', 'taxes'], ['document_date', 'purchaseDate'], ['updated_at', 'updatedDate'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"product_id"')), 'productURL'], 'copies'],
+        attributes: [
+          'id',
+          [
+            'product_id',
+            'productId'],
+          [
+            'job_id',
+            'jobId'],
+          [
+            this.modals.sequelize.literal('"product"."main_category_id"'),
+            'masterCategoryId'],
+          'user_id',
+          [
+            'document_number',
+            'policyNo'],
+          [
+            'repair_cost',
+            'premiumAmount'],
+          [
+            this.modals.sequelize.literal('"product"."product_name"'),
+            'productName'],
+          [
+            'repair_cost',
+            'value'],
+          [
+            'repair_taxes',
+            'taxes'],
+          [
+            'document_date',
+            'purchaseDate'],
+          [
+            'updated_at',
+            'updatedDate'],
+          'warranty_upto',
+          [
+            this.modals.sequelize.fn('CONCAT', 'products/',
+                this.modals.sequelize.literal('"product_id"')),
+            'productURL'],
+          'copies'],
         order: [['document_date', 'DESC']]
       }).then(function (repairResult) {
         return repairResult.map(function (item) {
@@ -213,6 +251,11 @@ var RepairAdaptor = function () {
           (_values$copies = values.copies).push.apply(_values$copies,
               _toConsumableArray(newCopies));
         }
+
+        values.status_type = itemDetail.status_type !== 8 ?
+            11 :
+            values.status_type || itemDetail.status_type;
+
         result.updateAttributes(values);
         return result.toJSON();
       });
@@ -235,15 +278,30 @@ var RepairAdaptor = function () {
 
           if (values.copies.length > 0) {
             result.updateAttributes(values);
-            return result.toJSON();
           }
+
+          return result.toJSON();
         }
 
         return _this.modals.repairs.destroy({
-          id: id,
+          where: {
+            id: id,
+          }
         }).then(function() {
           return true;
         });
+      });
+    }
+  }, {
+    key: 'deleteRepair',
+    value: function deleteRepair(id, user_id) {
+      return this.modals.repairs.destroy({
+        where: {
+          id: id,
+          user_id: user_id,
+        },
+      }).then(function() {
+        return true;
       });
     }
   }]);

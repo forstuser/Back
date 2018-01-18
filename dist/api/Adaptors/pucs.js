@@ -121,7 +121,51 @@ var PUCAdaptor = function () {
             'longitude'],
           required: false
         }],
-        attributes: ['id', ['product_id', 'productId'], ['job_id', 'jobId'], [this.modals.sequelize.literal('"product"."main_category_id"'), 'masterCategoryId'], 'user_id', ['document_number', 'policyNo'], ['renewal_cost', 'premiumAmount'], [this.modals.sequelize.literal('"product"."product_name"'), 'productName'], ['renewal_cost', 'value'], ['renewal_taxes', 'taxes'], ['effective_date', 'effectiveDate'], ['expiry_date', 'expiryDate'], ['document_date', 'purchaseDate'], ['updated_at', 'updatedDate'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"product_id"')), 'productURL'], 'copies'],
+        attributes: [
+          'id',
+          [
+            'product_id',
+            'productId'],
+          [
+            'job_id',
+            'jobId'],
+          [
+            this.modals.sequelize.literal('"product"."main_category_id"'),
+            'masterCategoryId'],
+          'user_id',
+          [
+            'document_number',
+            'policyNo'],
+          [
+            'renewal_cost',
+            'premiumAmount'],
+          [
+            this.modals.sequelize.literal('"product"."product_name"'),
+            'productName'],
+          [
+            'renewal_cost',
+            'value'],
+          'renewal_type',
+          [
+            'renewal_taxes',
+            'taxes'],
+          [
+            'effective_date',
+            'effectiveDate'],
+          [
+            'expiry_date',
+            'expiryDate'],
+          [
+            'document_date',
+            'purchaseDate'],
+          [
+            'updated_at',
+            'updatedDate'],
+          [
+            this.modals.sequelize.fn('CONCAT', 'products/',
+                this.modals.sequelize.literal('"product_id"')),
+            'productURL'],
+          'copies'],
         order: [['document_date', 'DESC']]
       }).then(function (pucResult) {
         return pucResult.map(function (item) {
@@ -141,7 +185,51 @@ var PUCAdaptor = function () {
           attributes: [],
           required: productOptions !== undefined
         }],
-        attributes: ['id', ['product_id', 'productId'], ['job_id', 'jobId'], [this.modals.sequelize.literal('"product"."main_category_id"'), 'masterCategoryId'], 'user_id', ['document_number', 'policyNo'], ['renewal_cost', 'premiumAmount'], [this.modals.sequelize.literal('"product"."product_name"'), 'productName'], ['renewal_cost', 'value'], ['renewal_taxes', 'taxes'], ['effective_date', 'effectiveDate'], ['expiry_date', 'expiryDate'], ['document_date', 'purchaseDate'], ['updated_at', 'updatedDate'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"product_id"')), 'productURL'], 'copies'],
+        attributes: [
+          'id',
+          [
+            'product_id',
+            'productId'],
+          [
+            'job_id',
+            'jobId'],
+          [
+            this.modals.sequelize.literal('"product"."main_category_id"'),
+            'masterCategoryId'],
+          'user_id',
+          [
+            'document_number',
+            'policyNo'],
+          [
+            'renewal_cost',
+            'premiumAmount'],
+          'renewal_type',
+          [
+            this.modals.sequelize.literal('"product"."product_name"'),
+            'productName'],
+          [
+            'renewal_cost',
+            'value'],
+          [
+            'renewal_taxes',
+            'taxes'],
+          [
+            'effective_date',
+            'effectiveDate'],
+          [
+            'expiry_date',
+            'expiryDate'],
+          [
+            'document_date',
+            'purchaseDate'],
+          [
+            'updated_at',
+            'updatedDate'],
+          [
+            this.modals.sequelize.fn('CONCAT', 'products/',
+                this.modals.sequelize.literal('"product_id"')),
+            'productURL'],
+          'copies'],
         order: [['document_date', 'DESC']]
       }).then(function (pucResult) {
         return pucResult.map(function (item) {
@@ -202,6 +290,9 @@ var PUCAdaptor = function () {
               _toConsumableArray(newCopies));
         }
 
+        values.status_type = itemDetail.status_type !== 8 ?
+            11 :
+            values.status_type || itemDetail.status_type;
         result.updateAttributes(values);
         return result.toJSON();
       });
@@ -224,15 +315,30 @@ var PUCAdaptor = function () {
 
           if (values.copies.length > 0) {
             result.updateAttributes(values);
-            return result.toJSON();
           }
+
+          return result.toJSON();
         }
 
         return _this.modals.pucs.destroy({
-          id: id,
+          where: {
+            id: id,
+          }
         }).then(function() {
           return true;
         });
+      });
+    }
+  }, {
+    key: 'deletePUCs',
+    value: function deletePUCs(id, user_id) {
+      return this.modals.pucs.destroy({
+        where: {
+          id: id,
+          user_id: user_id,
+        },
+      }).then(function() {
+        return true;
       });
     }
   }]);

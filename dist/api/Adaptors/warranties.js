@@ -148,7 +148,59 @@ var WarrantyAdaptor = function () {
             'longitude'],
           required: false
         }],
-        attributes: ['id', ['product_id', 'productId'], ['job_id', 'jobId'], ['document_number', 'policyNo'], [this.modals.sequelize.literal('"product"."product_name"'), 'productName'], [this.modals.sequelize.literal('"product->category"."dual_warranty_item"'), 'dualWarrantyItem'], [this.modals.sequelize.literal('"renewalType"."title"'), 'premiumType'], [this.modals.sequelize.literal('"product"."main_category_id"'), 'masterCategoryId'], ['renewal_cost', 'premiumAmount'], 'user_id', 'warranty_type', ['renewal_cost', 'value'], ['renewal_taxes', 'taxes'], ['effective_date', 'effectiveDate'], ['expiry_date', 'expiryDate'], ['document_date', 'purchaseDate'], ['updated_at', 'updatedDate'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"product_id"')), 'productURL'], 'copies'],
+        attributes: [
+          'id',
+          [
+            'product_id',
+            'productId'],
+          [
+            'job_id',
+            'jobId'],
+          [
+            'document_number',
+            'policyNo'],
+          [
+            this.modals.sequelize.literal('"product"."product_name"'),
+            'productName'],
+          [
+            this.modals.sequelize.literal(
+                '"product->category"."dual_warranty_item"'),
+            'dualWarrantyItem'],
+          [
+            this.modals.sequelize.literal('"renewalType"."title"'),
+            'premiumType'],
+          'renewal_type',
+          [
+            this.modals.sequelize.literal('"product"."main_category_id"'),
+            'masterCategoryId'],
+          [
+            'renewal_cost',
+            'premiumAmount'],
+          'user_id',
+          'warranty_type',
+          [
+            'renewal_cost',
+            'value'],
+          [
+            'renewal_taxes',
+            'taxes'],
+          [
+            'effective_date',
+            'effectiveDate'],
+          [
+            'expiry_date',
+            'expiryDate'],
+          [
+            'document_date',
+            'purchaseDate'],
+          [
+            'updated_at',
+            'updatedDate'],
+          [
+            this.modals.sequelize.fn('CONCAT', 'products/',
+                this.modals.sequelize.literal('"product_id"')),
+            'productURL'],
+          'copies'],
         order: [['expiry_date', 'DESC']]
       }).then(function (warrantyResult) {
         return warrantyResult.map(function (item) {
@@ -230,6 +282,9 @@ var WarrantyAdaptor = function () {
               _toConsumableArray(newCopies));
         }
 
+        values.status_type = itemDetail.status_type !== 8 ?
+            11 :
+            values.status_type || itemDetail.status_type;
         result.updateAttributes(values);
         return result.toJSON();
       });
@@ -252,15 +307,30 @@ var WarrantyAdaptor = function () {
 
           if (values.copies.length > 0) {
             result.updateAttributes(values);
-            return result.toJSON();
           }
+
+          return result.toJSON();
         }
 
         return _this.modals.warranties.destroy({
-          id: id,
+          where: {
+            id: id,
+          }
         }).then(function() {
           return true;
         });
+      });
+    }
+  }, {
+    key: 'deleteWarranties',
+    value: function deleteWarranties(id, user_id) {
+      return this.modals.warranties.destroy({
+        where: {
+          id: id,
+          user_id: user_id,
+        },
+      }).then(function() {
+        return true;
       });
     }
   }]);

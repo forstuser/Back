@@ -32,14 +32,34 @@ var JobAdaptor = function () {
     }
   }, {
     key: 'retrieveJobDetail',
-    value: function retrieveJobDetail(id) {
-      return Promise.all([this.modals.jobs.findById(id), this.modals.products.findOne({ where: { job_id: id }, attributes: ['id'] })]).then(function (jobResult) {
-        jobResult[0].updateAttributes({
-          admin_status: 4
-        });
-        var jobDetail = jobResult[0].toJSON();
+    value: function retrieveJobDetail(id, isUpload) {
+      return Promise.all([
+        this.modals.jobs.findById(id),
+        this.modals.products.findOne({where: {job_id: id}, attributes: ['id']}),
+        this.modals.jobCopies.findAll({where: {job_id: id}})]).
+          then(function(jobResult) {
+            var jobDetail = jobResult[0].toJSON();
+            if (jobDetail.admin_status === 8 || isUpload) {
+              jobResult[0].updateAttributes({
+                admin_status: 4,
+                ce_status: null,
+                assigned_to_ce: null,
+                qe_status: null,
+                assigned_to_qe: null,
+              });
+            } else if (jobDetail.admin_status === 2) {
+              jobResult[0].updateAttributes({
+                admin_status: 5,
+                user_status: 5,
+              });
+            }
+
+            jobDetail = jobResult[0].toJSON();
         var productDetail = jobResult[1].toJSON();
         jobDetail.productId = productDetail.id;
+            jobDetail.copies = jobResult[2].map(function(item) {
+              return item.toJSON();
+            });
         return jobDetail;
       });
     }

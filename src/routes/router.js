@@ -1279,6 +1279,7 @@ function prepareProductItemRoutes(productItemController, productItemRoutes) {
         description: 'Update Repair.',
         validate: {
           payload: {
+            job_id: [joi.number(), joi.allow(null)],
             document_date: [joi.string(), joi.allow(null)],
             repair_for: [joi.string(), joi.allow(null)],
             seller_name: [joi.string(), joi.allow(null)],
@@ -1308,6 +1309,7 @@ function prepareProductItemRoutes(productItemController, productItemRoutes) {
         description: 'Update Repair.',
         validate: {
           payload: {
+            job_id: [joi.number(), joi.allow(null)],
             document_date: [joi.string(), joi.allow(null)],
             repair_for: [joi.string(), joi.allow(null)],
             seller_name: [joi.string(), joi.allow(null)],
@@ -1317,6 +1319,321 @@ function prepareProductItemRoutes(productItemController, productItemRoutes) {
             warranty_upto: [joi.string(), joi.allow(null)],
           },
         },
+      },
+    });
+
+    productItemRoutes.push({
+      method: 'DELETE',
+      path: '/products/{id}/repairs/{repairId}',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: ProductItemController.deleteRepair,
+        description: 'Delete Repair.',
+      },
+    });
+
+    productItemRoutes.push({
+      method: 'POST',
+      path: '/products/{id}/insurances',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: ProductItemController.updateInsurance,
+        description: 'Add Insurance.',
+        validate: {
+          payload: {
+            job_id: [joi.number(), joi.allow(null)],
+            effective_date: [joi.string(), joi.allow(null)],
+            renewal_type: [joi.number(), joi.allow(null)],
+            provider_id: [joi.number(), joi.allow(null)],
+            policy_no: [joi.string(), joi.allow(null)],
+            provider_name: [joi.string(), joi.allow(null)],
+            value: [joi.number(), joi.allow(null)],
+            amount_insured: [joi.number(), joi.allow(null)],
+            expiry_period: [joi.number(), joi.allow(null)],
+            main_category_id: [joi.number(), joi.allow(null)],
+            category_id: [joi.number(), joi.allow(null)],
+          },
+        },
+      },
+    });
+
+    productItemRoutes.push({
+      method: 'PUT',
+      path: '/products/{id}/insurances/{insuranceId}',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: ProductItemController.updateInsurance,
+        description: 'Update Insurance.',
+        validate: {
+          payload: {
+            job_id: [joi.number(), joi.allow(null)],
+            effective_date: [joi.string(), joi.allow(null)],
+            renewal_type: [joi.number(), joi.allow(null)],
+            provider_id: [joi.number(), joi.allow(null)],
+            policy_no: [joi.string(), joi.allow(null)],
+            provider_name: [joi.string(), joi.allow(null)],
+            value: [joi.number(), joi.allow(null)],
+            amount_insured: [joi.number(), joi.allow(null)],
+            expiry_period: [joi.number(), joi.allow(null)],
+            main_category_id: [joi.number(), joi.allow(null)],
+            category_id: [joi.number(), joi.allow(null)],
+          },
+        },
+      },
+    });
+
+    productItemRoutes.push({
+      method: 'DELETE',
+      path: '/products/{id}/insurances/{insuranceId}',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: ProductItemController.deleteInsurance,
+        description: 'Delete Insurance.',
+      },
+    });
+
+    productItemRoutes.push({
+      method: 'POST',
+      path: '/products/{id}/amcs',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: ProductItemController.updateAmc,
+        description: 'Add AMC.',
+        validate: {
+          payload: {
+            job_id: [joi.number(), joi.allow(null)],
+            effective_date: [joi.string(), joi.allow(null)],
+            expiry_period: [joi.number(), joi.allow(null)],
+            value: [joi.number(), joi.allow(null)],
+            seller_name: [joi.string(), joi.allow(null)],
+            seller_contact: [joi.string(), joi.allow(null)],
+          },
+        },
+      },
+    });
+
+    productItemRoutes.push({
+      method: 'PUT',
+      path: '/products/{id}/amcs/{amcId}',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: ProductItemController.updateAmc,
+        description: 'Update AMC.',
+        validate: {
+          payload: {
+            job_id: [joi.number(), joi.allow(null)],
+            effective_date: [joi.string(), joi.allow(null)],
+            expiry_period: [joi.number(), joi.allow(null)],
+            value: [joi.number(), joi.allow(null)],
+            seller_name: [joi.string(), joi.allow(null)],
+            seller_contact: [joi.string(), joi.allow(null)],
+          },
+        },
+      },
+    });
+
+    productItemRoutes.push({
+      method: 'DELETE',
+      path: '/products/{id}/amcs/{amcId}',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: ProductItemController.deleteAMC,
+        description: 'Delete AMC.',
+      },
+    });
+
+    productItemRoutes.push({
+      method: 'POST',
+      path: '/products/{id}/pucs',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: ProductItemController.updatePUC,
+        description: 'Add PUC.',
+        validate: {
+          payload: {
+            job_id: [joi.number(), joi.allow(null)],
+            effective_date: [joi.string(), joi.allow(null)],
+            expiry_period: [joi.number(), joi.allow(null)],
+            seller_name: [joi.string(), joi.allow(null)],
+            value: [joi.number(), joi.allow(null)],
+            seller_contact: [joi.string(), joi.allow(null)],
+          },
+        },
+      },
+    });
+
+    productItemRoutes.push({
+      method: 'PUT',
+      path: '/products/{id}/pucs/{pucId}',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: ProductItemController.updatePUC,
+        description: 'Update PUC.',
+        validate: {
+          payload: {
+            job_id: [joi.number(), joi.allow(null)],
+            effective_date: [joi.string(), joi.allow(null)],
+            expiry_period: [joi.number(), joi.allow(null)],
+            seller_name: [joi.string(), joi.allow(null)],
+            value: [joi.number(), joi.allow(null)],
+            seller_contact: [joi.string(), joi.allow(null)],
+          },
+        },
+      },
+    });
+
+    productItemRoutes.push({
+      method: 'DELETE',
+      path: '/products/{id}/pucs/{pucId}',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: ProductItemController.deletePUC,
+        description: 'Delete PUC.',
+      },
+    });
+
+    productItemRoutes.push({
+      method: 'POST',
+      path: '/products/{id}/warranties',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: ProductItemController.updateWarranty,
+        description: 'Add Warranty.',
+        validate: {
+          payload: {
+            job_id: [joi.number(), joi.allow(null)],
+            provider_id: [joi.number(), joi.allow(null)],
+            provider_name: [joi.string(), joi.allow(null)],
+            renewal_type: [joi.number(), joi.allow(null)],
+            effective_date: [joi.string(), joi.allow(null)],
+            warranty_type: [joi.number(), joi.allow(null)],
+            main_category_id: [joi.number(), joi.allow(null)],
+            category_id: [joi.number(), joi.allow(null)],
+          },
+        },
+      },
+    });
+
+    productItemRoutes.push({
+      method: 'PUT',
+      path: '/products/{id}/warranties/{warrantyId}',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: ProductItemController.updateWarranty,
+        description: 'Update Warranty.',
+        validate: {
+          payload: {
+            job_id: [joi.number(), joi.allow(null)],
+            provider_id: [joi.number(), joi.allow(null)],
+            provider_name: [joi.string(), joi.allow(null)],
+            renewal_type: [joi.number(), joi.allow(null)],
+            effective_date: [joi.string(), joi.allow(null)],
+            warranty_type: [joi.number(), joi.allow(null)],
+            main_category_id: [joi.number(), joi.allow(null)],
+            category_id: [joi.number(), joi.allow(null)],
+          },
+        },
+      },
+    });
+
+    productItemRoutes.push({
+      method: 'DELETE',
+      path: '/products/{id}/warranties/{warrantyId}',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: ProductItemController.deleteAMC,
+        description: 'Delete AMC.',
       },
     });
   }
