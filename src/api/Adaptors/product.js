@@ -1126,9 +1126,11 @@ class ProductAdaptor {
             }) :
             results[7];
         products.jobId = results[8] ? results[8].id : products.jobId;
-        productItem.updateAttributes({
-          job_id: results[8] ? results[8].id : products.jobId,
-        });
+        if (results[8]) {
+          productItem.updateAttributes({
+            job_id: results[8] ? results[8].id : products.jobId,
+          });
+        }
       }
 
       return products;
@@ -2123,7 +2125,10 @@ class ProductAdaptor {
     sellerPromise.push(productBody.seller_contact ||
     productBody.seller_name || productBody.seller_email ||
     productBody.seller_address ?
-        this.sellerAdaptor.retrieveOrCreateOfflineSellers({},
+        this.sellerAdaptor.retrieveOrCreateOfflineSellers({
+              seller_name: productBody.seller_name || productBody.product_name,
+              contact_no: productBody.seller_contact,
+            },
             {
               seller_name: productBody.seller_name || productBody.product_name,
               contact_no: productBody.seller_contact,
@@ -2137,7 +2142,10 @@ class ProductAdaptor {
     sellerPromise.push(otherItems.amc && !isProductAMCSellerSame &&
     (otherItems.amc.seller_contact ||
         otherItems.amc.seller_name) ?
-        this.sellerAdaptor.retrieveOrCreateOfflineSellers({},
+        this.sellerAdaptor.retrieveOrCreateOfflineSellers({
+              seller_name: otherItems.amc.seller_name,
+              contact_no: otherItems.amc.contact_no,
+            },
             {
               seller_name: otherItems.amc.seller_name,
               contact_no: otherItems.amc.contact_no,
@@ -2150,7 +2158,10 @@ class ProductAdaptor {
     !isProductRepairSellerSame && !isAMCRepairSellerSame &&
     (otherItems.repair.seller_contact ||
         otherItems.repair.seller_name) ?
-        this.sellerAdaptor.retrieveOrCreateOfflineSellers({},
+        this.sellerAdaptor.retrieveOrCreateOfflineSellers({
+              seller_name: otherItems.repair.seller_name,
+              contact_no: otherItems.repair.contact_no,
+            },
             {
               seller_name: otherItems.repair.seller_name,
               contact_no: otherItems.repair.contact_no,
@@ -2162,7 +2173,10 @@ class ProductAdaptor {
     sellerPromise.push(otherItems.puc && !isProductPUCSellerSame &&
     (otherItems.puc.seller_contact ||
         otherItems.puc.seller_name) ?
-        this.sellerAdaptor.retrieveOrCreateOfflineSellers({},
+        this.sellerAdaptor.retrieveOrCreateOfflineSellers({
+              seller_name: otherItems.puc.seller_name,
+              contact_no: otherItems.puc.contact_no,
+            },
             {
               seller_name: otherItems.puc.seller_name,
               contact_no: otherItems.puc.contact_no,
