@@ -1070,18 +1070,6 @@ class ProductAdaptor {
               status_type: 1,
             }) :
             undefined;
-        const jobPromise = !products.jobId ? this.jobAdaptor.createJobs({
-          job_id: `${Math.random().
-              toString(36).
-              substr(2, 9)}${(options.user_id).toString(
-              36)}`,
-          user_id: options.user_id,
-          updated_by: options.user_id,
-          uploaded_by: options.user_id,
-          user_status: 8,
-          admin_status: 4,
-          comments: `This job is created for product ${products.productName}`,
-        }) : undefined;
         return Promise.all([
           this.retrieveProductMetadata({
             product_id: products.id,
@@ -1097,7 +1085,7 @@ class ProductAdaptor {
             product_id: products.id,
           }), this.pucAdaptor.retrievePUCs({
             product_id: products.id,
-          }), serviceSchedulePromise, jobPromise]);
+          }), serviceSchedulePromise]);
       }
     }).then((results) => {
       if (products) {
@@ -1125,12 +1113,6 @@ class ProductAdaptor {
               return scheduleItem;
             }) :
             results[7];
-        products.jobId = results[8] ? results[8].id : products.jobId;
-        if (results[8]) {
-          productItem.updateAttributes({
-            job_id: results[8] ? results[8].id : products.jobId,
-          });
-        }
       }
 
       return products;
@@ -1804,7 +1786,7 @@ class ProductAdaptor {
 
   prepareRepairPromise(parameters) {
     let {otherItems, isProductRepairSellerSame, sellerList, isAMCRepairSellerSame, repairPromise, productBody, productId} = parameters;
-    let document_date = otherItems.warranty.document_date ||
+    let document_date = otherItems.repair.document_date ||
         productBody.document_date;
     document_date = moment.utc(document_date, moment.ISO_8601).
         isValid() ?
@@ -2144,11 +2126,11 @@ class ProductAdaptor {
         otherItems.amc.seller_name) ?
         this.sellerAdaptor.retrieveOrCreateOfflineSellers({
               seller_name: otherItems.amc.seller_name,
-              contact_no: otherItems.amc.contact_no,
+              contact_no: otherItems.amc.seller_contact,
             },
             {
               seller_name: otherItems.amc.seller_name,
-              contact_no: otherItems.amc.contact_no,
+              contact_no: otherItems.amc.seller_contact,
               updated_by: productBody.user_id,
               created_by: productBody.user_id,
               status_type: 11,
@@ -2160,11 +2142,11 @@ class ProductAdaptor {
         otherItems.repair.seller_name) ?
         this.sellerAdaptor.retrieveOrCreateOfflineSellers({
               seller_name: otherItems.repair.seller_name,
-              contact_no: otherItems.repair.contact_no,
+              contact_no: otherItems.repair.seller_contact,
             },
             {
               seller_name: otherItems.repair.seller_name,
-              contact_no: otherItems.repair.contact_no,
+              contact_no: otherItems.repair.seller_contact,
               updated_by: productBody.user_id,
               created_by: productBody.user_id,
               status_type: 11,
@@ -2175,11 +2157,11 @@ class ProductAdaptor {
         otherItems.puc.seller_name) ?
         this.sellerAdaptor.retrieveOrCreateOfflineSellers({
               seller_name: otherItems.puc.seller_name,
-              contact_no: otherItems.puc.contact_no,
+              contact_no: otherItems.puc.seller_contact,
             },
             {
               seller_name: otherItems.puc.seller_name,
-              contact_no: otherItems.puc.contact_no,
+              contact_no: otherItems.puc.seller_contact,
               updated_by: productBody.user_id,
               created_by: productBody.user_id,
               status_type: 11,
@@ -2202,6 +2184,7 @@ class ProductAdaptor {
         }],
 
       attributes: [
+        'id',
         [
           'product_id',
           'productId'],
@@ -2660,31 +2643,32 @@ class ProductAdaptor {
   deleteProduct(id, userId) {
     return this.modals.products.findById(id).then((result) => {
       if (result) {
+        const jobPromise = result.job_id ? [
+          this.modals.jobs.update({
+            user_status: 3,
+            admin_status: 3,
+            ce_status: null,
+            qe_status: null,
+            updated_by: userId,
+          }, {
+            where: {
+              id: result.job_id,
+            },
+          }), this.modals.jobCopies.update({
+            status_type: 3,
+            updated_by: userId,
+          }, {
+            where: {
+              job_id: result.job_id,
+            },
+          })] : [undefined, undefined];
         return Promise.all([
           this.modals.products.destroy({
             where: {
               id,
               user_id: userId,
             },
-          }), result.job_id ? Promise.All([
-            this.modals.job.update({
-              user_status: 3,
-              admin_status: 3,
-              ce_status: null,
-              qe_status: null,
-              updated_by: userId,
-            }, {
-              where: {
-                id: result.job_id,
-              },
-            }), this.modals.jobCopies.update({
-              status_type: 3,
-              updated_by: userId,
-            }, {
-              where: {
-                job_id: result.job_id,
-              },
-            })]) : undefined]).then(() => {
+          }), ...jobPromise]).then(() => {
           return true;
         });
       }

@@ -44,11 +44,19 @@ var SellerAdaptor = function () {
   }, {
     key: 'retrieveOrCreateOfflineSellers',
     value: function retrieveOrCreateOfflineSellers(options, defaults) {
-      return this.modals.offlineSellers.findCreateFind({
+      var _this = this;
+
+      return this.modals.offlineSellers.findOne({
         where: options,
-        defaults: defaults
       }).then(function (result) {
-        return result[0].toJSON();
+        if (result) {
+          result.updateAttributes(defaults);
+          return result;
+        }
+
+        return _this.modals.offlineSellers.create(defaults);
+      }).then(function(result) {
+        return result.toJSON();
       });
     }
   }]);

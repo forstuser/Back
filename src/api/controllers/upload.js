@@ -278,6 +278,8 @@ class UploadController {
             user,
             result: jobResult,
             type: request.query ? request.query.type || 1 : 1,
+            itemId: request.query ? request.query.itemid : undefined,
+            productId: request.query ? request.query.productid : undefined,
           }, reply,
         });
       } else {
@@ -293,6 +295,8 @@ class UploadController {
             requiredDetail: {
               fileData, result: jobResult, fileType,
               user, type: request.query ? request.query.type || 1 : 1,
+              itemId: request.query ? request.query.itemid : undefined,
+              productId: request.query ? request.query.productid : undefined,
             }, reply,
           });
         }
@@ -343,12 +347,12 @@ class UploadController {
 
         UploadController.notifyTeam(user, jobResult);
 
-        if (type && jobResult.productId) {
+        if (type && (requiredDetail.productId || jobResult.productId)) {
           return UploadController.createProductItems({
             type,
             jobId: jobResult.id,
             user,
-            productId: jobResult.productId,
+            productId: requiredDetail.productId || jobResult.productId,
             itemId: requiredDetail.itemId,
             copies: copyData.map((copyItem) => ({
               copyId: copyItem.id,
@@ -442,14 +446,15 @@ class UploadController {
       }
 
       UploadController.notifyTeam(user, jobResult);
-      if (type && jobResult.productId) {
+
+      if (type && (requiredDetail.productId || jobResult.productId)) {
         return UploadController.createProductItems({
           type,
           jobId: jobResult.id,
           user,
+          productId: requiredDetail.productId || jobResult.productId,
           itemId: requiredDetail.itemId,
-          productId: jobResult.productId,
-          copies: jobCopies.map((copyItem) => ({
+          copies: copyData.map((copyItem) => ({
             copyId: copyItem.id,
             copyUrl: `/jobs/${copyItem.job_id}/files/${copyItem.id}`,
             file_type: copyItem.file_type,

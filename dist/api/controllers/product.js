@@ -147,7 +147,7 @@ var ProductController = function () {
               (user.id || user.ID) + ' is as follow: \n \n ' + err);
           return reply({
             status: false,
-            message: 'An error occurred in product creation.',
+            message: 'An error occurred in product deletion.',
             forceUpdate: request.pre.forceUpdate,
             err: err,
           });
@@ -183,6 +183,8 @@ var ProductController = function () {
           updated_by: user.id || user.ID,
           seller_name: request.payload.seller_name,
           seller_contact: request.payload.seller_contact,
+          seller_email: request.payload.seller_email,
+          seller_address: request.payload.seller_address,
           seller_id: request.payload.seller_id,
           status_type: 11,
           model: request.payload.model,
@@ -245,6 +247,11 @@ var ProductController = function () {
           forceUpdate: request.pre.forceUpdate
         });
       }
+    }
+  }, {
+    key: 'updateProductJob',
+    value: function updateProductJob(request, reply) {
+
     }
   }, {
     key: 'updateUserReview',

@@ -846,17 +846,6 @@ var ProductAdaptor = function () {
                   $gte: products.schedule.id,
                 },
                 status_type: 1,
-              }) :
-              undefined;
-          var jobPromise = !products.jobId ? _this4.jobAdaptor.createJobs({
-            job_id: '' + Math.random().toString(36).substr(2, 9) +
-            options.user_id.toString(36),
-            user_id: options.user_id,
-            updated_by: options.user_id,
-            uploaded_by: options.user_id,
-            user_status: 8,
-            admin_status: 4,
-            comments: 'This job is created for product ' + products.productName,
           }) : undefined;
           return Promise.all([_this4.retrieveProductMetadata({
             product_id: products.id
@@ -872,7 +861,7 @@ var ProductAdaptor = function () {
             product_id: products.id
           }), _this4.pucAdaptor.retrievePUCs({
             product_id: products.id
-          }), serviceSchedulePromise, jobPromise]);
+          }), serviceSchedulePromise]);
         }
       }).then(function (results) {
         if (products) {
@@ -903,12 +892,6 @@ var ProductAdaptor = function () {
             return scheduleItem;
               }) :
               results[7];
-          products.jobId = results[8] ? results[8].id : products.jobId;
-          if (results[8]) {
-            productItem.updateAttributes({
-              job_id: results[8] ? results[8].id : products.jobId,
-            });
-          }
         }
 
         return products;
@@ -1577,7 +1560,7 @@ var ProductAdaptor = function () {
           productBody = parameters.productBody,
           productId = parameters.productId;
 
-      var document_date = otherItems.warranty.document_date ||
+      var document_date = otherItems.repair.document_date ||
           productBody.document_date;
       document_date = _moment2.default.utc(document_date,
           _moment2.default.ISO_8601).isValid() ?
@@ -1941,10 +1924,10 @@ var ProductAdaptor = function () {
       (otherItems.amc.seller_contact || otherItems.amc.seller_name) ?
           this.sellerAdaptor.retrieveOrCreateOfflineSellers({
             seller_name: otherItems.amc.seller_name,
-            contact_no: otherItems.amc.contact_no,
+            contact_no: otherItems.amc.seller_contact,
           }, {
         seller_name: otherItems.amc.seller_name,
-        contact_no: otherItems.amc.contact_no,
+            contact_no: otherItems.amc.seller_contact,
         updated_by: productBody.user_id,
         created_by: productBody.user_id,
         status_type: 11
@@ -1955,10 +1938,10 @@ var ProductAdaptor = function () {
           (otherItems.repair.seller_contact || otherItems.repair.seller_name) ?
               this.sellerAdaptor.retrieveOrCreateOfflineSellers({
                 seller_name: otherItems.repair.seller_name,
-                contact_no: otherItems.repair.contact_no,
+                contact_no: otherItems.repair.seller_contact,
               }, {
         seller_name: otherItems.repair.seller_name,
-        contact_no: otherItems.repair.contact_no,
+                contact_no: otherItems.repair.seller_contact,
         updated_by: productBody.user_id,
         created_by: productBody.user_id,
         status_type: 11
@@ -1967,10 +1950,10 @@ var ProductAdaptor = function () {
       (otherItems.puc.seller_contact || otherItems.puc.seller_name) ?
           this.sellerAdaptor.retrieveOrCreateOfflineSellers({
             seller_name: otherItems.puc.seller_name,
-            contact_no: otherItems.puc.contact_no,
+            contact_no: otherItems.puc.seller_contact,
           }, {
         seller_name: otherItems.puc.seller_name,
-        contact_no: otherItems.puc.contact_no,
+            contact_no: otherItems.puc.seller_contact,
         updated_by: productBody.user_id,
         created_by: productBody.user_id,
         status_type: 11
@@ -1993,7 +1976,26 @@ var ProductAdaptor = function () {
           attributes: []
         }],
 
-        attributes: [['product_id', 'productId'], ['form_value', 'value'], ['category_form_id', 'categoryFormId'], [this.modals.sequelize.literal('"categoryForm"."form_type"'), 'formType'], [this.modals.sequelize.literal('"categoryForm"."title"'), 'name'], [this.modals.sequelize.literal('"categoryForm"."display_index"'), 'displayIndex']]
+        attributes: [
+          'id',
+          [
+            'product_id',
+            'productId'],
+          [
+            'form_value',
+            'value'],
+          [
+            'category_form_id',
+            'categoryFormId'],
+          [
+            this.modals.sequelize.literal('"categoryForm"."form_type"'),
+            'formType'],
+          [
+            this.modals.sequelize.literal('"categoryForm"."title"'),
+            'name'],
+          [
+            this.modals.sequelize.literal('"categoryForm"."display_index"'),
+            'displayIndex']],
       }).then(function (metaDataResult) {
         var metaData = metaDataResult.map(function (item) {
           return item.toJSON();
@@ -2394,31 +2396,32 @@ var ProductAdaptor = function () {
 
       return this.modals.products.findById(id).then(function(result) {
         if (result) {
+          var jobPromise = result.job_id ? [
+            _this10.modals.jobs.update({
+              user_status: 3,
+              admin_status: 3,
+              ce_status: null,
+              qe_status: null,
+              updated_by: userId,
+            }, {
+              where: {
+                id: result.job_id,
+              },
+            }), _this10.modals.jobCopies.update({
+              status_type: 3,
+              updated_by: userId,
+            }, {
+              where: {
+                job_id: result.job_id,
+              },
+            })] : [undefined, undefined];
           return Promise.all([
             _this10.modals.products.destroy({
               where: {
                 id: id,
                 user_id: userId,
               },
-            }), result.job_id ? Promise.All([
-              _this10.modals.job.update({
-                user_status: 3,
-                admin_status: 3,
-                ce_status: null,
-                qe_status: null,
-                updated_by: userId,
-              }, {
-                where: {
-                  id: result.job_id,
-                },
-              }), _this10.modals.jobCopies.update({
-                status_type: 3,
-                updated_by: userId,
-              }, {
-                where: {
-                  job_id: result.job_id,
-                },
-              })]) : undefined]).then(function() {
+            })].concat(jobPromise)).then(function() {
             return true;
           });
         }

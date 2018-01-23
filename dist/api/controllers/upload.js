@@ -309,7 +309,9 @@ var UploadController = function () {
               fileData: fileData,
               user: user,
               result: jobResult,
-              type: request.query ? request.query.type || 1 : 1
+              type: request.query ? request.query.type || 1 : 1,
+              itemId: request.query ? request.query.itemid : undefined,
+              productId: request.query ? request.query.productid : undefined,
             }, reply: reply
           });
         } else {
@@ -324,7 +326,9 @@ var UploadController = function () {
             return UploadController.uploadSingleFile({
               requiredDetail: {
                 fileData: fileData, result: jobResult, fileType: _fileType4,
-                user: user, type: request.query ? request.query.type || 1 : 1
+                user: user, type: request.query ? request.query.type || 1 : 1,
+                itemId: request.query ? request.query.itemid : undefined,
+                productId: request.query ? request.query.productid : undefined,
               }, reply: reply
             });
           }
@@ -371,12 +375,12 @@ var UploadController = function () {
 
           UploadController.notifyTeam(user, jobResult);
 
-          if (type && jobResult.productId) {
+          if (type && (requiredDetail.productId || jobResult.productId)) {
             return UploadController.createProductItems({
               type: type,
               jobId: jobResult.id,
               user: user,
-              productId: jobResult.productId,
+              productId: requiredDetail.productId || jobResult.productId,
               itemId: requiredDetail.itemId,
               copies: copyData.map(function(copyItem) {
                 return {
@@ -463,14 +467,15 @@ var UploadController = function () {
         }
 
         UploadController.notifyTeam(user, jobResult);
-        if (type && jobResult.productId) {
+
+        if (type && (requiredDetail.productId || jobResult.productId)) {
           return UploadController.createProductItems({
             type: type,
             jobId: jobResult.id,
             user: user,
+            productId: requiredDetail.productId || jobResult.productId,
             itemId: requiredDetail.itemId,
-            productId: jobResult.productId,
-            copies: jobCopies.map(function(copyItem) {
+            copies: copyData.map(function(copyItem) {
               return {
                 copyId: copyItem.id,
                 copyUrl: '/jobs/' + copyItem.job_id + '/files/' + copyItem.id,

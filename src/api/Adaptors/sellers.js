@@ -63,9 +63,15 @@ export default class SellerAdaptor {
   }
 
   retrieveOrCreateOfflineSellers(options, defaults) {
-    return this.modals.offlineSellers.findCreateFind({
+    return this.modals.offlineSellers.findOne({
       where: options,
-      defaults,
-    }).then(result => result[0].toJSON());
+    }).then(result => {
+      if (result) {
+        result.updateAttributes(defaults);
+        return result;
+      }
+
+      return this.modals.offlineSellers.create(defaults);
+    }).then(result => result.toJSON());
   }
 }
