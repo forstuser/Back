@@ -271,27 +271,47 @@ var DashboardAdaptor = function () {
   }, {
     key: 'filterUpcomingService',
     value: function filterUpcomingService(user) {
-      return Promise.all([this.productAdaptor.retrieveProducts({
+      return Promise.all([
+        this.productAdaptor.retrieveUpcomingProducts({
         user_id: user.id || user.ID,
         status_type: [5, 11],
         main_category_id: [6, 8]
       }), this.amcAdaptor.retrieveAMCs({
         user_id: user.id || user.ID,
-        status_type: [5, 11]
+          status_type: [5, 11],
+          expiry_date: {
+            $gte: _moment2.default.utc().startOf('days'),
+            $lte: _moment2.default.utc().endOf('months'),
+          },
       }), this.insuranceAdaptor.retrieveInsurances({
         user_id: user.id || user.ID,
-        status_type: [5, 11]
+          status_type: [5, 11],
+          expiry_date: {
+            $gte: _moment2.default.utc().startOf('days'),
+            $lte: _moment2.default.utc().endOf('months'),
+          },
       }), this.warrantyAdaptor.retrieveWarranties({
         user_id: user.id || user.ID,
-        status_type: [5, 11]
+          status_type: [5, 11],
+          expiry_date: {
+            $gte: _moment2.default.utc().startOf('days'),
+            $lte: _moment2.default.utc().endOf('months'),
+          },
       }), this.pucAdaptor.retrievePUCs({
         user_id: user.id || user.ID,
         status_type: [5, 11],
-        main_category_id: [3]
-      }), this.productAdaptor.retrieveProducts({
+          main_category_id: [3],
+          expiry_date: {
+            $gte: _moment2.default.utc().startOf('days'),
+            $lte: _moment2.default.utc().endOf('months'),
+          },
+        }), this.productAdaptor.retrieveUpcomingProducts({
         user_id: user.id || user.ID,
         status_type: [5, 11],
         main_category_id: [3],
+          service_schedule_id: {
+            $not: null,
+          },
       })]).then(function (result) {
         var products = result[0].map(function (item) {
           var product = item;
@@ -308,7 +328,7 @@ var DashboardAdaptor = function () {
               product.dueDate = metaData.value;
               product.dueIn = dueDate_time.diff(_moment2.default.utc(), 'days');
             }
-
+            product.address = '';
             if (metaData.name.toLowerCase().includes('address')) {
               product.address = metaData.value;
             }
@@ -398,19 +418,19 @@ var DashboardAdaptor = function () {
               item.dueIn <= 30 && item.dueIn >= 0;
         });
 
-        var productServiceSchedule = result[5].map(function(item) {
+        var productServiceSchedule = result[5].filter(function(item) {
+          return item.schedule;
+        }).map(function(item) {
           var scheduledProduct = item;
           var scheduledDate = scheduledProduct.schedule ?
-              _moment2.default.utc(scheduledProduct.purchaseDate,
-                  _moment2.default.ISO_8601).
-                  add(scheduledProduct.schedule.dueIn_months, 'months') :
+              scheduledProduct.schedule.due_date :
               undefined;
           if (scheduledDate &&
               _moment2.default.utc(scheduledDate, _moment2.default.ISO_8601).
                   isValid()) {
             var dueDate_time = _moment2.default.utc(scheduledDate,
                 _moment2.default.ISO_8601).endOf('day');
-            scheduledProduct.dueDate = scheduledDate;
+            scheduledProduct.dueDate = dueDate_time;
             scheduledProduct.dueIn = dueDate_time.diff(_moment2.default.utc(),
                 'days');
             scheduledProduct.productType = 6;

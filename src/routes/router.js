@@ -952,22 +952,7 @@ function prepareProductRoutes(productController, productRoutes) {
         },
       },
     });
-    productRoutes.push({
-      method: 'PUT',
-      path: '/products/{id}/job',
-      config: {
-        auth: 'jwt',
-        pre: [
-          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
-          {
-            method: appVersionHelper.updateUserActiveStatus,
-            assign: 'userExist',
-          },
-        ],
-        handler: ProductController.updateProductJob,
-        description: 'Update Job for Product.',
-      },
-    });
+
     productRoutes.push({
       method: 'PUT',
       path: '/products/{id}',

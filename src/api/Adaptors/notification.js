@@ -228,7 +228,8 @@ class NotificationAdaptor {
             product.dueDate = metaData.value;
             product.dueIn = dueDateTime.diff(moment.utc(), 'days');
           }
-
+          product.description = '';
+          product.address = '';
           if (metaData.name.toLowerCase().includes('address')) {
             product.description = metaData.value;
             product.address = metaData.value;

@@ -268,6 +268,9 @@ class ProductAdaptor {
           'value'],
         'taxes',
         [
+          this.modals.sequelize.literal('"category"."category_name"'),
+          'categoryName'],
+        [
           this.modals.sequelize.fn('CONCAT', '/categories/',
               this.modals.sequelize.literal('"category"."category_id"'),
               '/images/'),
@@ -373,6 +376,139 @@ class ProductAdaptor {
               productItem.amcDetails.length +
               productItem.repairBills.length + productItem.pucDetails.length;
 
+          return productItem;
+        });
+      }
+
+      return products;
+    });
+  }
+
+  retrieveUpcomingProducts(options) {
+    if (!options.status_type) {
+      options.status_type = [5, 11];
+    }
+
+    let products;
+    return this.modals.products.findAll({
+      where: options,
+      include: [
+        {
+          model: this.modals.serviceSchedules,
+          as: 'schedule',
+          attributes: [
+            'id', 'inclusions', 'exclusions', 'service_number', 'service_type',
+            'distance',
+            'due_in_months',
+            'due_in_days',],
+          required: false,
+        },
+        {
+          model: this.modals.categories,
+          as: 'category',
+          attributes: [],
+          required: false,
+        },
+        {
+          model: this.modals.categories,
+          as: 'sub_category',
+          attributes: [],
+          required: false,
+        },
+      ],
+      attributes: [
+        'id',
+        [
+          'product_name',
+          'productName'],
+        [
+          this.modals.sequelize.literal('"category"."category_id"'),
+          'categoryId'],
+        [
+          'main_category_id',
+          'masterCategoryId'],
+        'sub_category_id',
+        [
+          this.modals.sequelize.literal('"sub_category"."category_name"'),
+          'sub_category_name'],
+        [
+          'brand_id',
+          'brandId'],
+        [
+          'colour_id',
+          'colorId'],
+        [
+          'purchase_cost',
+          'value'],
+        'taxes',
+        [
+          this.modals.sequelize.literal('"category"."category_name"'),
+          'categoryName'],
+        [
+          this.modals.sequelize.fn('CONCAT', '/categories/',
+              this.modals.sequelize.literal('"category"."category_id"'),
+              '/images/'),
+          'cImageURL'],
+        [
+          this.modals.sequelize.fn('CONCAT', 'products/',
+              this.modals.sequelize.literal('"products"."id"')),
+          'productURL'],
+        [
+          'document_date',
+          'purchaseDate'],
+        'model',
+        ['document_number', 'documentNo'],
+        ['updated_at', 'updatedDate'],
+        [
+          'bill_id',
+          'billId'],
+        [
+          'job_id',
+          'jobId'],
+        [
+          'seller_id',
+          'sellerId'],
+        'copies',
+        [
+          this.modals.sequelize.fn('CONCAT', 'products/',
+              this.modals.sequelize.literal('"products"."id"'), '/reviews'),
+          'reviewUrl'],
+        [
+          this.modals.sequelize.literal('"category"."category_name"'),
+          'categoryName'],
+        [
+          this.modals.sequelize.fn('CONCAT',
+              '/consumer/servicecenters?brandid=',
+              this.modals.sequelize.literal('"products"."brand_id"'),
+              '&categoryid=',
+              this.modals.sequelize.col('"products"."category_id"')),
+          'serviceCenterUrl'],
+        'status_type',
+      ],
+      order: [['document_date', 'DESC']],
+    }).then((productResult) => {
+      products = productResult.map((item) => {
+        const productItem = item.toJSON();
+        if (productItem.schedule) {
+          productItem.schedule.due_date = moment.utc(productItem.purchaseDate,
+              moment.ISO_8601).
+              add(productItem.schedule.due_in_months, 'months');
+        }
+        return productItem;
+      });
+      if (products.length > 0) {
+        return this.retrieveProductMetadata({
+          product_id: products.map((item) => item.id),
+        });
+      }
+      return undefined;
+    }).then((results) => {
+      if (results) {
+        const metaData = results;
+        products = products.map((productItem) => {
+          productItem.productMetaData = metaData.filter(
+              (item) => item.productId === productItem.id &&
+                  !item.name.toLowerCase().includes('puc'));
           return productItem;
         });
       }
@@ -567,6 +703,11 @@ class ProductAdaptor {
           as: 'sub_category',
           attributes: [],
           required: false,
+        }, {
+          model: this.modals.categories,
+          as: 'category',
+          attributes: [],
+          required: false,
         },
       ],
       attributes: [
@@ -578,6 +719,9 @@ class ProductAdaptor {
         [
           'category_id',
           'categoryId'],
+        [
+          this.modals.sequelize.literal('"category"."category_name"'),
+          'categoryName'],
         [
           'main_category_id',
           'masterCategoryId'],
@@ -805,12 +949,6 @@ class ProductAdaptor {
   }
 
   retrieveProductById(id, options) {
-    if (!options.status_type) {
-      options.status_type = {
-        $notIn: [3, 9],
-      };
-    }
-
     options.id = id;
     let products;
     let productItem;
@@ -1709,8 +1847,7 @@ class ProductAdaptor {
               Promise.all(amcPromise),
               Promise.all(repairPromise),
               Promise.all(pucPromise),
-              serviceSchedule,
-              this.jobAdaptor.retrieveJobDetail(product.job_id)]);
+              serviceSchedule]);
           }
 
           return undefined;
@@ -2614,8 +2751,9 @@ class ProductAdaptor {
       },
     }).then((productResult) => {
       const itemDetail = productResult.toJSON();
+      const currentPurchaseDate = itemDetail.document_date;
       if (productDetail.copies && productDetail.copies.length > 0 &&
-          itemDetail.copies.length > 0) {
+          itemDetail.copies && itemDetail.copies.length > 0) {
         const newCopies = productDetail.copies;
         productDetail.copies = itemDetail.copies;
         productDetail.copies.push(...newCopies);
@@ -2625,7 +2763,18 @@ class ProductAdaptor {
           11 :
           productDetail.status_type || itemDetail.status_type;
       productResult.updateAttributes(productDetail);
-      return productResult.toJSON();
+      productDetail = productResult.toJSON();
+      if (productDetail.document_date &&
+          moment.utc(currentPurchaseDate, moment.ISO_8601) !==
+          moment.utc(productDetail.document_date, moment.ISO_8601)) {
+        return this.warrantyAdaptor.updateWarrantyPeriod(
+            {product_id: id, user_id: productDetail.user_id},
+            currentPurchaseDate, productDetail.document_date);
+      }
+
+      return undefined;
+    }).then(() => {
+      return productDetail;
     });
   }
 
@@ -2636,7 +2785,7 @@ class ProductAdaptor {
       },
     }).then(result => {
       result.updateAttributes(values);
-      return result.toJSON();
+      return result;
     });
   }
 
@@ -2688,10 +2837,7 @@ class ProductAdaptor {
           itemDetail.copies.length > 0) {
         values.copies = itemDetail.copies.filter(
             (item) => item.copyId !== parseInt(copyId));
-
-        if (values.copies.length > 0) {
-          result.updateAttributes(values);
-        }
+        result.updateAttributes(values);
 
         return result.toJSON();
       }

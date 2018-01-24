@@ -247,7 +247,7 @@ class DashboardAdaptor {
 
   filterUpcomingService(user) {
     return Promise.all([
-      this.productAdaptor.retrieveProducts({
+      this.productAdaptor.retrieveUpcomingProducts({
         user_id: user.id || user.ID,
         status_type: [5, 11],
         main_category_id: [6, 8],
@@ -255,24 +255,43 @@ class DashboardAdaptor {
       this.amcAdaptor.retrieveAMCs({
         user_id: user.id || user.ID,
         status_type: [5, 11],
+        expiry_date: {
+          $gte: moment.utc().startOf('days'),
+          $lte: moment.utc().endOf('months'),
+        },
       }),
       this.insuranceAdaptor.retrieveInsurances({
         user_id: user.id || user.ID,
         status_type: [5, 11],
+        expiry_date: {
+          $gte: moment.utc().startOf('days'),
+          $lte: moment.utc().endOf('months'),
+        },
       }),
       this.warrantyAdaptor.retrieveWarranties({
         user_id: user.id || user.ID,
         status_type: [5, 11],
+        expiry_date: {
+          $gte: moment.utc().startOf('days'),
+          $lte: moment.utc().endOf('months'),
+        },
       }),
       this.pucAdaptor.retrievePUCs({
         user_id: user.id || user.ID,
         status_type: [5, 11],
         main_category_id: [3],
+        expiry_date: {
+          $gte: moment.utc().startOf('days'),
+          $lte: moment.utc().endOf('months'),
+        },
       }),
-      this.productAdaptor.retrieveProducts({
+      this.productAdaptor.retrieveUpcomingProducts({
         user_id: user.id || user.ID,
         status_type: [5, 11],
         main_category_id: [3],
+        service_schedule_id: {
+          $not: null,
+        },
       })]).then((result) => {
       let products = result[0].map((item) => {
         const product = item;
@@ -288,7 +307,7 @@ class DashboardAdaptor {
             product.dueDate = metaData.value;
             product.dueIn = dueDate_time.diff(moment.utc(), 'days');
           }
-
+          product.address = '';
           if (metaData.name.toLowerCase().includes('address')) {
             product.address = metaData.value;
           }
@@ -372,17 +391,17 @@ class DashboardAdaptor {
           item => ((item.dueIn !== undefined && item.dueIn !== null) &&
               item.dueIn <= 30 && item.dueIn >= 0));
 
-      let productServiceSchedule = result[5].map((item) => {
+      let productServiceSchedule = result[5].filter(item => item.schedule).
+          map((item) => {
         const scheduledProduct = item;
         const scheduledDate = scheduledProduct.schedule ?
-            moment.utc(scheduledProduct.purchaseDate, moment.ISO_8601).
-                add(scheduledProduct.schedule.dueIn_months, 'months') :
+            scheduledProduct.schedule.due_date :
             undefined;
         if (scheduledDate &&
             moment.utc(scheduledDate, moment.ISO_8601).isValid()) {
           const dueDate_time = moment.utc(scheduledDate, moment.ISO_8601).
               endOf('day');
-          scheduledProduct.dueDate = scheduledDate;
+          scheduledProduct.dueDate = dueDate_time;
           scheduledProduct.dueIn = dueDate_time.diff(moment.utc(), 'days');
           scheduledProduct.productType = 6;
         }

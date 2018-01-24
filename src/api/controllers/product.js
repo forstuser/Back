@@ -162,6 +162,7 @@ class ProductController {
         user_id: user.id || user.ID,
         main_category_id: request.payload.main_category_id,
         category_id: request.payload.category_id,
+        sub_category_id: request.payload.sub_category_id,
         brand_id: request.payload.brand_id,
         colour_id: request.payload.colour_id,
         purchase_cost: request.payload.value,
@@ -241,11 +242,6 @@ class ProductController {
       });
     }
   }
-
-  static updateProductJob(request, reply) {
-
-  }
-
   static updateUserReview(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (!request.pre.userExist) {

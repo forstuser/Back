@@ -272,7 +272,7 @@ var WarrantyAdaptor = function () {
         }
       }).then(function (result) {
         var itemDetail = result.toJSON();
-        if (values.copies && values.copies.length > 0 &&
+        if (values.copies && values.copies.length > 0 && itemDetail.copies &&
             itemDetail.copies.length > 0) {
           var _values$copies;
 
@@ -290,9 +290,105 @@ var WarrantyAdaptor = function () {
       });
     }
   }, {
+    key: 'updateWarrantyPeriod',
+    value: function updateWarrantyPeriod(
+        options, productPurchaseDate, productNewPurchaseDate) {
+      var _this = this;
+
+      options.warranty_type = [1, 3];
+      return this.modals.warranties.findAll({
+        where: options,
+        order: [['document_date', 'ASC']],
+      }).then(function(result) {
+        var document_date = productNewPurchaseDate;
+        var dual_date = void 0;
+        var warrantyExpiryDate = void 0;
+        var dualWarrantyExpiryDate = void 0;
+        return Promise.all(result.map(function(item) {
+          var warrantyItem = item.toJSON();
+          var id = warrantyItem.id;
+          if (_moment2.default.utc(warrantyItem.effective_date).
+                  startOf('days').
+                  valueOf() === _moment2.default.utc(productPurchaseDate).
+                  startOf('days').
+                  valueOf()) {
+            warrantyItem.effective_date = productNewPurchaseDate;
+            warrantyItem.document_date = productNewPurchaseDate;
+            if (warrantyItem.warranty_type === 1) {
+              warrantyExpiryDate = warrantyItem.expiry_date;
+            } else {
+              dualWarrantyExpiryDate = warrantyItem.expiry_date;
+            }
+            warrantyItem.expiry_date = _moment2.default.utc(
+                productNewPurchaseDate, _moment2.default.ISO_8601).
+                add(_moment2.default.utc(productPurchaseDate,
+                    _moment2.default.ISO_8601).
+                        diff(_moment2.default.utc(warrantyItem.expiry_date,
+                            _moment2.default.ISO_8601).add(1, 'days'), 'months'),
+                    'months').
+                subtract(1, 'days');
+            warrantyItem.updated_by = options.user_id;
+            warrantyItem.status_type = 11;
+            if (warrantyItem.warranty_type === 1) {
+              document_date = warrantyItem.expiry_date;
+            } else {
+              dual_date = warrantyItem.expiry_date;
+            }
+
+            return _this.modals.warranties.update(warrantyItem,
+                {where: {id: id}});
+          } else if (_moment2.default.utc(warrantyItem.effective_date).
+                  startOf('days').
+                  valueOf() === _moment2.default.utc(warrantyExpiryDate).
+                  startOf('days').
+                  valueOf() ||
+              _moment2.default.utc(warrantyItem.effective_date).
+                  startOf('days').
+                  valueOf() === _moment2.default.utc(dualWarrantyExpiryDate).
+                  startOf('days').
+                  valueOf()) {
+            warrantyItem.effective_date = warrantyItem.warranty_type === 1 ?
+                document_date :
+                dual_date;
+            warrantyItem.document_date = warrantyItem.warranty_type === 1 ?
+                document_date :
+                dual_date;
+            if (warrantyItem.warranty_type === 1) {
+              warrantyExpiryDate = warrantyItem.expiry_date;
+            } else {
+              dualWarrantyExpiryDate = warrantyItem.expiry_date;
+            }
+            warrantyItem.expiry_date = _moment2.default.utc(
+                warrantyItem.warranty_type === 1 ? document_date : dual_date,
+                _moment2.default.ISO_8601).
+                add(_moment2.default.utc(warrantyItem.warranty_type === 1 ?
+                    warrantyExpiryDate :
+                    dualWarrantyExpiryDate, _moment2.default.ISO_8601).
+                        diff(_moment2.default.utc(warrantyItem.expiry_date,
+                            _moment2.default.ISO_8601).add(1, 'days'), 'months'),
+                    'months').
+                subtract(1, 'days');
+            warrantyItem.updated_by = options.user_id;
+            warrantyItem.status_type = 11;
+
+            if (warrantyItem.warranty_type === 1) {
+              document_date = warrantyItem.expiry_date;
+            } else {
+              dual_date = warrantyItem.expiry_date;
+            }
+
+            return _this.modals.warranties.update(warrantyItem,
+                {where: {id: id}});
+          }
+
+          return undefined;
+        }));
+      });
+    }
+  }, {
     key: 'removeWarranties',
     value: function removeWarranties(id, copyId, values) {
-      var _this = this;
+      var _this2 = this;
 
       return this.modals.warranties.findOne({
         where: {
@@ -304,15 +400,11 @@ var WarrantyAdaptor = function () {
           values.copies = itemDetail.copies.filter(function(item) {
             return item.copyId !== parseInt(copyId);
           });
-
-          if (values.copies.length > 0) {
-            result.updateAttributes(values);
-          }
-
+          result.updateAttributes(values);
           return result.toJSON();
         }
 
-        return _this.modals.warranties.destroy({
+        return _this2.modals.warranties.destroy({
           where: {
             id: id,
           }
@@ -324,17 +416,17 @@ var WarrantyAdaptor = function () {
   }, {
     key: 'deleteWarranties',
     value: function deleteWarranties(id, user_id) {
-      var _this2 = this;
+      var _this3 = this;
 
       return this.modals.warranties.findById(id).then(function(result) {
         if (result) {
           return Promise.all([
-            _this2.modals.warranties.destroy({
+            _this3.modals.warranties.destroy({
               where: {
                 id: id,
                 user_id: user_id,
               },
-            }), result.copies.length > 0 ? _this2.modals.jobCopies.update({
+            }), result.copies.length > 0 ? _this3.modals.jobCopies.update({
               status_type: 3,
               updated_by: user_id,
             }, {

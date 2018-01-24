@@ -38,8 +38,8 @@ var JobAdaptor = function () {
         this.modals.products.findOne({where: {job_id: id}, attributes: ['id']}),
         this.modals.jobCopies.findAll({where: {job_id: id}})]).
           then(function(jobResult) {
-            var jobDetail = jobResult[0].toJSON();
-            if (jobDetail.admin_status === 8 || isUpload) {
+            var jobDetail = jobResult[0] ? jobResult[0].toJSON() : undefined;
+            if (jobDetail && jobDetail.admin_status === 8 || isUpload) {
               jobResult[0].updateAttributes({
                 admin_status: 4,
                 ce_status: null,

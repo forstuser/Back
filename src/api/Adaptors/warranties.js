@@ -300,7 +300,7 @@ class WarrantyAdaptor {
       },
     }).then(result => {
       const itemDetail = result.toJSON();
-      if (values.copies && values.copies.length > 0 &&
+      if (values.copies && values.copies.length > 0 && itemDetail.copies &&
           itemDetail.copies.length > 0) {
         const newCopies = values.copies;
         values.copies = itemDetail.copies;
@@ -315,6 +315,89 @@ class WarrantyAdaptor {
     });
   }
 
+  updateWarrantyPeriod(options, productPurchaseDate, productNewPurchaseDate) {
+    options.warranty_type = [1, 3];
+    return this.modals.warranties.findAll({
+      where: options,
+      order: [['document_date', 'ASC']],
+    }).then(result => {
+      let document_date = productNewPurchaseDate;
+      let dual_date;
+      let warrantyExpiryDate;
+      let dualWarrantyExpiryDate;
+      return Promise.all(result.map((item) => {
+        const warrantyItem = item.toJSON();
+        const id = warrantyItem.id;
+        if (moment.utc(warrantyItem.effective_date).
+                startOf('days').
+                valueOf() ===
+            moment.utc(productPurchaseDate).startOf('days').valueOf()) {
+          warrantyItem.effective_date = productNewPurchaseDate;
+          warrantyItem.document_date = productNewPurchaseDate;
+          if (warrantyItem.warranty_type === 1) {
+            warrantyExpiryDate = warrantyItem.expiry_date;
+          } else {
+            dualWarrantyExpiryDate = warrantyItem.expiry_date;
+          }
+          warrantyItem.expiry_date = moment.utc(productNewPurchaseDate,
+              moment.ISO_8601).
+              add(moment.utc(productPurchaseDate, moment.ISO_8601).
+                  diff(moment.utc(warrantyItem.expiry_date, moment.ISO_8601).
+                      add(1, 'days'), 'months'), 'months').subtract(1, 'days');
+          warrantyItem.updated_by = options.user_id;
+          warrantyItem.status_type = 11;
+          if (warrantyItem.warranty_type === 1) {
+            document_date = warrantyItem.expiry_date;
+          } else {
+            dual_date = warrantyItem.expiry_date;
+          }
+
+          return this.modals.warranties.update(warrantyItem, {where: {id}});
+        } else if (moment.utc(warrantyItem.effective_date).
+                startOf('days').
+                valueOf() ===
+            moment.utc(warrantyExpiryDate).startOf('days').valueOf() ||
+            moment.utc(warrantyItem.effective_date).
+                startOf('days').
+                valueOf() ===
+            moment.utc(dualWarrantyExpiryDate).startOf('days').valueOf()) {
+          warrantyItem.effective_date = warrantyItem.warranty_type === 1 ?
+              document_date :
+              dual_date;
+          warrantyItem.document_date = warrantyItem.warranty_type === 1 ?
+              document_date :
+              dual_date;
+          if (warrantyItem.warranty_type === 1) {
+            warrantyExpiryDate = warrantyItem.expiry_date;
+          } else {
+            dualWarrantyExpiryDate = warrantyItem.expiry_date;
+          }
+          warrantyItem.expiry_date = moment.utc(
+              warrantyItem.warranty_type === 1 ? document_date : dual_date,
+              moment.ISO_8601).
+              add(moment.utc(warrantyItem.warranty_type === 1 ?
+                  warrantyExpiryDate :
+                  dualWarrantyExpiryDate,
+                  moment.ISO_8601).
+                  diff(moment.utc(warrantyItem.expiry_date, moment.ISO_8601).
+                      add(1, 'days'), 'months'), 'months').subtract(1, 'days');
+          warrantyItem.updated_by = options.user_id;
+          warrantyItem.status_type = 11;
+
+          if (warrantyItem.warranty_type === 1) {
+            document_date = warrantyItem.expiry_date;
+          } else {
+            dual_date = warrantyItem.expiry_date;
+          }
+
+          return this.modals.warranties.update(warrantyItem, {where: {id}});
+        }
+
+        return undefined;
+      }));
+    });
+  }
+
   removeWarranties(id, copyId, values) {
     return this.modals.warranties.findOne({
       where: {
@@ -326,11 +409,7 @@ class WarrantyAdaptor {
           itemDetail.copies.length > 0) {
         values.copies = itemDetail.copies.filter(
             (item) => item.copyId !== parseInt(copyId));
-
-        if (values.copies.length > 0) {
-          result.updateAttributes(values);
-        }
-
+        result.updateAttributes(values);
         return result.toJSON();
       }
 

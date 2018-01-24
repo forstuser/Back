@@ -101,8 +101,8 @@ var ProductItemController = function () {
           status_type: 11
         }) : '';
         return Promise.all([sellerPromise]).then(function(sellerList) {
-          var product_id = request.params.id;
-          var repairId = request.params.repairId;
+          var product_id = parseInt(request.params.id);
+          var repairId = parseInt(request.params.repairId);
           var newSellerId = sellerList[0] ? sellerList[0].sid : undefined;
           var document_date = _moment2.default.utc(
               request.payload.document_date, _moment2.default.ISO_8601).
@@ -150,7 +150,7 @@ var ProductItemController = function () {
               (user.id || user.ID) + ' is as follow: \n \n ' + err);
           return reply({
             status: false,
-            message: 'An error occurred in product creation.',
+            message: 'An error occurred in Repair creation.',
             forceUpdate: request.pre.forceUpdate,
             err: err,
           });
@@ -228,8 +228,8 @@ var ProductItemController = function () {
           })]).then(function(promiseResult) {
           var provider = promiseResult[0];
           renewalTypes = promiseResult[1];
-          product_id = request.params.id;
-          insuranceId = request.params.insuranceId;
+          product_id = parseInt(request.params.id);
+          insuranceId = parseInt(request.params.insuranceId);
           providerId = provider ? provider.id : undefined;
           insuranceRenewalType = renewalTypes.find(function(item) {
             return item.type === 8;
@@ -239,24 +239,28 @@ var ProductItemController = function () {
               return item.type === request.payload.renewal_type;
             });
           }
-          if (!insuranceId) {
-            return productAdaptor.retrieveProductById(product_id, {
-              status_type: [5, 11],
-            });
-          }
-
-          return undefined;
+          return productAdaptor.retrieveProductById(product_id,
+              {status_type: [5, 8, 11]});
         }).then(function(productResult) {
+          var currentItem = productResult ?
+              productResult.insuranceDetails.find(function(item) {
+                return item.id === parseInt(insuranceId);
+              }) :
+              undefined;
           var insuranceEffectiveDate = productResult ?
               productResult.insuranceDetails &&
               productResult.insuranceDetails.length > 0 ?
-                  _moment2.default.utc(
-                      productResult.insuranceDetails[0].expiryDate,
-                      _moment2.default.ISO_8601).add(1, 'days') :
+                  currentItem ?
+                      _moment2.default.utc(currentItem.effectiveDate,
+                          _moment2.default.ISO_8601) :
+                      _moment2.default.utc(
+                          productResult.insuranceDetails[0].expiryDate,
+                          _moment2.default.ISO_8601).add(1, 'days') :
                   productResult.purchaseDate :
               undefined;
-          var effective_date = request.payload.effective_date ||
-              insuranceEffectiveDate || _moment2.default.utc();
+          var effective_date = insuranceEffectiveDate ?
+              request.payload.effective_date || insuranceEffectiveDate :
+              _moment2.default.utc();
           effective_date = _moment2.default.utc(effective_date,
               _moment2.default.ISO_8601).isValid() ?
               _moment2.default.utc(effective_date, _moment2.default.ISO_8601).
@@ -283,7 +287,7 @@ var ProductItemController = function () {
                 _moment2.default.utc(effective_date).format('YYYY-MM-DD') :
                 undefined,
             document_number: request.payload.policy_no,
-            provider_id: provider ? providerId : request.payload.provider_id,
+            provider_id: providerId || request.payload.provider_id,
             amount_insured: request.payload.amount_insured,
             renewal_cost: request.payload.value,
             user_id: user.id || user.ID,
@@ -311,7 +315,7 @@ var ProductItemController = function () {
               (user.id || user.ID) + ' is as follow: \n \n ' + err);
           return reply({
             status: false,
-            message: 'An error occurred in product creation.',
+            message: 'An error occurred in Insurance creation.',
             forceUpdate: request.pre.forceUpdate,
             err: err,
           });
@@ -379,27 +383,34 @@ var ProductItemController = function () {
               status_type: 11,
             }) :
             '';
-        var product_id = request.params.id;
-        var amcId = request.params.amcId;
+        var product_id = parseInt(request.params.id);
+        var amcId = parseInt(request.params.amcId);
         var sellerList = void 0;
         return Promise.all([sellerPromise]).then(function(sellerResult) {
           sellerList = sellerResult[0];
-          if (!amcId) {
-            return productAdaptor.retrieveProductById(product_id, {
-              status_type: [5, 11],
-            });
-          }
 
-          return undefined;
+          return productAdaptor.retrieveProductById(product_id,
+              {status_type: [5, 8, 11]});
         }).then(function(productResult) {
-          var amcEffectiveDate = productResult ?
-              productResult.amcDetails && productResult.amcDetails.length > 0 ?
-                  _moment2.default.utc(productResult.amcDetails[0].expiryDate,
-                      _moment2.default.ISO_8601).add(1, 'days') :
-                  productResult.purchaseDate :
+          var currentItem = productResult ?
+              productResult.amcDetails.find(function(item) {
+                return item.id === parseInt(amcId);
+              }) :
               undefined;
-          var effective_date = request.payload.effective_date ||
-              amcEffectiveDate || _moment2.default.utc();
+          var amcEffectiveDate = productResult ?
+              currentItem ?
+                  _moment2.default.utc(currentItem.effectiveDate,
+                      _moment2.default.ISO_8601) :
+                  productResult.amcDetails &&
+                  productResult.amcDetails.length > 0 ?
+                      _moment2.default.utc(
+                          productResult.amcDetails[0].expiryDate,
+                          _moment2.default.ISO_8601).add(1, 'days') :
+                      productResult.purchaseDate :
+              undefined;
+          var effective_date = amcEffectiveDate ?
+              request.payload.effective_date || amcEffectiveDate :
+              _moment2.default.utc();
           effective_date = _moment2.default.utc(effective_date,
               _moment2.default.ISO_8601).isValid() ?
               _moment2.default.utc(effective_date, _moment2.default.ISO_8601).
@@ -454,7 +465,7 @@ var ProductItemController = function () {
               (user.id || user.ID) + ' is as follow: \n \n ' + err);
           return reply({
             status: false,
-            message: 'An error occurred in product creation.',
+            message: 'An error occurred in AMC creation.',
             forceUpdate: request.pre.forceUpdate,
             err: err,
           });
@@ -524,26 +535,32 @@ var ProductItemController = function () {
             }) :
             '';
         var sellerList = void 0;
-        var product_id = request.params.id;
-        var pucId = request.params.pucId;
+        var product_id = parseInt(request.params.id);
+        var pucId = parseInt(request.params.pucId);
         return Promise.all([sellerPromise]).then(function(sellerResult) {
           sellerList = sellerResult[0];
-          if (!pucId) {
-            return productAdaptor.retrieveProductById(product_id, {
-              status_type: [5, 11],
-            });
-          }
-
-          return undefined;
+          return productAdaptor.retrieveProductById(product_id,
+              {status_type: [5, 8, 11]});
         }).then(function(productResult) {
-          var pucEffectiveDate = productResult ?
-              productResult.pucDetails && productResult.pucDetails.length > 0 ?
-                  _moment2.default.utc(productResult.pucDetails[0].expiryDate,
-                      _moment2.default.ISO_8601).add(1, 'days') :
-                  productResult.purchaseDate :
+          var currentItem = productResult ?
+              productResult.pucDetails.find(function(pucItem) {
+                return pucItem.id === parseInt(pucId);
+              }) :
               undefined;
-          var effective_date = request.payload.effective_date ||
-              pucEffectiveDate || _moment2.default.utc();
+          var pucEffectiveDate = productResult ?
+              currentItem ?
+                  _moment2.default.utc(currentItem.effectiveDate,
+                      _moment2.default.ISO_8601) :
+                  productResult.pucDetails &&
+                  productResult.pucDetails.length > 0 ?
+                      _moment2.default.utc(
+                          productResult.pucDetails[0].expiryDate,
+                          _moment2.default.ISO_8601).add(1, 'days') :
+                      productResult.purchaseDate :
+              undefined;
+          var effective_date = pucEffectiveDate ?
+              request.payload.effective_date || pucEffectiveDate :
+              _moment2.default.utc();
           effective_date = _moment2.default.utc(effective_date,
               _moment2.default.ISO_8601).isValid() ?
               _moment2.default.utc(effective_date, _moment2.default.ISO_8601).
@@ -598,7 +615,7 @@ var ProductItemController = function () {
               (user.id || user.ID) + ' is as follow: \n \n ' + err);
           return reply({
             status: false,
-            message: 'An error occurred in product creation.',
+            message: 'An error occurred in PUC creation.',
             forceUpdate: request.pre.forceUpdate,
             err: err,
           });
@@ -664,45 +681,52 @@ var ProductItemController = function () {
               name: request.payload.provider_name,
             }) :
             undefined;
-        var product_id = request.params.id;
-        var warrantyId = request.params.warrantyId;
+        var product_id = parseInt(request.params.id);
+        var warrantyId = parseInt(request.params.warrantyId);
         var warrantyRenewalType = void 0;
         var expiry_date = void 0;
-        var _provider = void 0;
+        var provider = void 0;
         return Promise.all([
           providerPromise, categoryAdaptor.retrieveRenewalTypes({
             id: {
               $gte: 7,
             },
           })]).then(function(promiseResult) {
-          _provider = promiseResult[0];
+          provider = promiseResult[0];
           warrantyRenewalType = promiseResult[1].find(function(item) {
             return item.type === request.payload.renewal_type;
           });
-          if (!warrantyId) {
-            return productAdaptor.retrieveProductById(product_id, {
-              status_type: [5, 11],
-            });
-          }
-
-          return undefined;
+          return productAdaptor.retrieveProductById(product_id,
+              {status_type: [5, 8, 11]});
         }).then(function(productResult) {
-          var warrantyDetail = productResult ?
+          var warrantyDetails = productResult ?
               productResult.warrantyDetails.filter(function(warrantyItem) {
                 return request.payload.warranty_type === 3 ?
                     warrantyItem.warranty_type === 3 :
                     warrantyItem.warranty_type === 1 ||
                     warrantyItem.warranty_type === 2;
               }) :
-              undefined;
-          var warrantyEffectiveDate = productResult ?
-              warrantyDetail && warrantyDetail.length > 0 ?
-                  _moment2.default.utc(warrantyDetail[0].expiryDate,
+              [];
+
+          var currentItem = warrantyDetails.find(function(warrantyDetail) {
+            return warrantyDetail.id === parseInt(warrantyId);
+          });
+
+          console.log('\n\n\n\n\n\n' + JSON.stringify({
+            warrantyId: warrantyId,
+            currentItem: currentItem,
+            warrantyDetail: warrantyDetails,
+          }));
+          var warrantyEffectiveDate = currentItem ?
+              _moment2.default.utc(currentItem.effectiveDate,
+                  _moment2.default.ISO_8601) :
+              warrantyDetails.length > 0 ?
+                  _moment2.default.utc(warrantyDetails[0].expiryDate,
                       _moment2.default.ISO_8601).add(1, 'days') :
-                  productResult.purchaseDate :
-              undefined;
-          var effective_date = request.payload.effective_date ||
-              warrantyEffectiveDate || _moment2.default.utc();
+                  productResult.purchaseDate;
+          var effective_date = warrantyEffectiveDate ?
+              request.payload.effective_date || warrantyEffectiveDate :
+              _moment2.default.utc();
           effective_date = _moment2.default.utc(effective_date,
               _moment2.default.ISO_8601).isValid() ?
               _moment2.default.utc(effective_date, _moment2.default.ISO_8601).
@@ -713,6 +737,9 @@ var ProductItemController = function () {
               add(warrantyRenewalType.effective_months, 'months').
               subtract(1, 'day').
               endOf('days');
+
+          console.log('\n\n\n\n\n\n\n\n\n\n\n\n\n\n ' + effective_date + ', ' +
+              expiry_date);
           var values = {
             renewal_type: request.payload.renewal_type,
             updated_by: user.id || user.ID,
@@ -728,7 +755,7 @@ var ProductItemController = function () {
             document_date: effective_date ?
                 _moment2.default.utc(effective_date).format('YYYY-MM-DD') :
                 _moment2.default.utc().format('YYYY-MM-DD'),
-            provider_id: _provider ? _provider.id : request.payload.provider_id,
+            provider_id: provider ? provider.id : request.payload.provider_id,
             warranty_type: request.payload.warranty_type,
             user_id: user.id || user.ID
           };
@@ -755,7 +782,7 @@ var ProductItemController = function () {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
           return reply({
             status: false,
-            message: 'An error occurred in product creation.',
+            message: 'An error occurred in warranty creation.',
             forceUpdate: request.pre.forceUpdate,
             err: err
           });

@@ -210,6 +210,9 @@ var ProductAdaptor = function () {
             'value'],
           'taxes',
           [
+            this.modals.sequelize.literal('"category"."category_name"'),
+            'categoryName'],
+          [
             this.modals.sequelize.fn('CONCAT', '/categories/',
                 this.modals.sequelize.literal('"category"."category_id"'),
                 '/images/'),
@@ -329,9 +332,152 @@ var ProductAdaptor = function () {
       });
     }
   }, {
+    key: 'retrieveUpcomingProducts',
+    value: function retrieveUpcomingProducts(options) {
+      var _this2 = this;
+
+      if (!options.status_type) {
+        options.status_type = [5, 11];
+      }
+
+      var products = void 0;
+      return this.modals.products.findAll({
+        where: options,
+        include: [
+          {
+            model: this.modals.serviceSchedules,
+            as: 'schedule',
+            attributes: [
+              'id',
+              'inclusions',
+              'exclusions',
+              'service_number',
+              'service_type',
+              'distance',
+              'due_in_months',
+              'due_in_days'],
+            required: false,
+          }, {
+            model: this.modals.categories,
+            as: 'category',
+            attributes: [],
+            required: false,
+          }, {
+            model: this.modals.categories,
+            as: 'sub_category',
+            attributes: [],
+            required: false,
+          }],
+        attributes: [
+          'id',
+          [
+            'product_name',
+            'productName'],
+          [
+            this.modals.sequelize.literal('"category"."category_id"'),
+            'categoryId'],
+          [
+            'main_category_id',
+            'masterCategoryId'],
+          'sub_category_id',
+          [
+            this.modals.sequelize.literal('"sub_category"."category_name"'),
+            'sub_category_name'],
+          [
+            'brand_id',
+            'brandId'],
+          [
+            'colour_id',
+            'colorId'],
+          [
+            'purchase_cost',
+            'value'],
+          'taxes',
+          [
+            this.modals.sequelize.literal('"category"."category_name"'),
+            'categoryName'],
+          [
+            this.modals.sequelize.fn('CONCAT', '/categories/',
+                this.modals.sequelize.literal('"category"."category_id"'),
+                '/images/'),
+            'cImageURL'],
+          [
+            this.modals.sequelize.fn('CONCAT', 'products/',
+                this.modals.sequelize.literal('"products"."id"')),
+            'productURL'],
+          [
+            'document_date',
+            'purchaseDate'],
+          'model',
+          [
+            'document_number',
+            'documentNo'],
+          [
+            'updated_at',
+            'updatedDate'],
+          [
+            'bill_id',
+            'billId'],
+          [
+            'job_id',
+            'jobId'],
+          [
+            'seller_id',
+            'sellerId'],
+          'copies',
+          [
+            this.modals.sequelize.fn('CONCAT', 'products/',
+                this.modals.sequelize.literal('"products"."id"'), '/reviews'),
+            'reviewUrl'],
+          [
+            this.modals.sequelize.literal('"category"."category_name"'),
+            'categoryName'],
+          [
+            this.modals.sequelize.fn('CONCAT',
+                '/consumer/servicecenters?brandid=',
+                this.modals.sequelize.literal('"products"."brand_id"'),
+                '&categoryid=',
+                this.modals.sequelize.col('"products"."category_id"')),
+            'serviceCenterUrl'],
+          'status_type'],
+        order: [['document_date', 'DESC']],
+      }).then(function(productResult) {
+        products = productResult.map(function(item) {
+          var productItem = item.toJSON();
+          if (productItem.schedule) {
+            productItem.schedule.due_date = _moment2.default.utc(
+                productItem.purchaseDate, _moment2.default.ISO_8601).
+                add(productItem.schedule.due_in_months, 'months');
+          }
+          return productItem;
+        });
+        if (products.length > 0) {
+          return _this2.retrieveProductMetadata({
+            product_id: products.map(function(item) {
+              return item.id;
+            })
+          });
+        }
+        return undefined;
+      }).then(function(results) {
+        if (results) {
+          var metaData = results;
+          products = products.map(function(productItem) {
+            productItem.productMetaData = metaData.filter(function(item) {
+              return item.productId === productItem.id &&
+                  !item.name.toLowerCase().includes('puc');
+            });
+            return productItem;
+          });
+        }
+
+        return products;
+      });
+    }
+  }, {
     key: 'retrieveUsersLastProduct',
     value: function retrieveUsersLastProduct(options) {
-      var _this2 = this;
+      var _this3 = this;
 
       var billOption = {};
 
@@ -409,6 +555,12 @@ var ProductAdaptor = function () {
             as: 'sub_category',
             attributes: [],
             required: false,
+          },
+          {
+            model: this.modals.categories,
+            as: 'category',
+            attributes: [],
+            required: false,
           }],
         attributes: [
           'id',
@@ -419,6 +571,9 @@ var ProductAdaptor = function () {
           [
             'category_id',
             'categoryId'],
+          [
+            this.modals.sequelize.literal('"category"."category_name"'),
+            'categoryName'],
           [
             'main_category_id',
             'masterCategoryId'],
@@ -493,18 +648,19 @@ var ProductAdaptor = function () {
         product = products.length > 0 ? products[0] : undefined;
 
         if (product) {
-          return Promise.all([_this2.retrieveProductMetadata({
+          return Promise.all([
+            _this3.retrieveProductMetadata({
             product_id: product.id
-          }), _this2.insuranceAdaptor.retrieveInsurances({
+            }), _this3.insuranceAdaptor.retrieveInsurances({
             product_id: product.id
-          }), _this2.warrantyAdaptor.retrieveWarranties({
+            }), _this3.warrantyAdaptor.retrieveWarranties({
             product_id: product.id,
             warranty_type: [1, 2]
-          }), _this2.amcAdaptor.retrieveAMCs({
+            }), _this3.amcAdaptor.retrieveAMCs({
             product_id: product.id
-          }), _this2.repairAdaptor.retrieveRepairs({
+            }), _this3.repairAdaptor.retrieveRepairs({
             product_id: product.id
-          }), _this2.pucAdaptor.retrievePUCs({
+            }), _this3.pucAdaptor.retrievePUCs({
             product_id: product.id
           })]);
         }
@@ -580,7 +736,7 @@ var ProductAdaptor = function () {
   }, {
     key: 'retrieveProductCounts',
     value: function retrieveProductCounts(options) {
-      var _this3 = this;
+      var _this4 = this;
 
       if (!options.status_type) {
         options.status_type = [5, 11];
@@ -612,12 +768,12 @@ var ProductAdaptor = function () {
         inProgressProductOption.status_type = 5;
         inProgressProductOption.product_status_type = options.status_type;
         return Promise.all([
-          _this3.amcAdaptor.retrieveAMCCounts(inProgressProductOption),
-          _this3.insuranceAdaptor.retrieveInsuranceCount(
+          _this4.amcAdaptor.retrieveAMCCounts(inProgressProductOption),
+          _this4.insuranceAdaptor.retrieveInsuranceCount(
               inProgressProductOption),
-          _this3.warrantyAdaptor.retrieveWarrantyCount(inProgressProductOption),
-          _this3.repairAdaptor.retrieveRepairCount(inProgressProductOption),
-          _this3.pucAdaptor.retrievePUCs(inProgressProductOption)]);
+          _this4.warrantyAdaptor.retrieveWarrantyCount(inProgressProductOption),
+          _this4.repairAdaptor.retrieveRepairCount(inProgressProductOption),
+          _this4.pucAdaptor.retrievePUCs(inProgressProductOption)]);
       }).then(function (results) {
         if (options.status_type !== 8) {
           return productResult;
@@ -636,13 +792,7 @@ var ProductAdaptor = function () {
   }, {
     key: 'retrieveProductById',
     value: function retrieveProductById(id, options) {
-      var _this4 = this;
-
-      if (!options.status_type) {
-        options.status_type = {
-          $notIn: [3, 9]
-        };
-      }
+      var _this5 = this;
 
       options.id = id;
       var products = void 0;
@@ -838,7 +988,7 @@ var ProductAdaptor = function () {
                 add(products.schedule.due_in_months, 'months');
           }
           var serviceSchedulePromise = products.schedule ?
-              _this4.serviceScheduleAdaptor.retrieveServiceSchedules({
+              _this5.serviceScheduleAdaptor.retrieveServiceSchedules({
                 category_id: products.schedule.category_id,
                 brand_id: products.schedule.brand_id,
                 title: products.schedule.title,
@@ -847,19 +997,20 @@ var ProductAdaptor = function () {
                 },
                 status_type: 1,
           }) : undefined;
-          return Promise.all([_this4.retrieveProductMetadata({
+          return Promise.all([
+            _this5.retrieveProductMetadata({
             product_id: products.id
-          }), _this4.brandAdaptor.retrieveBrandById(products.brandId, {
+            }), _this5.brandAdaptor.retrieveBrandById(products.brandId, {
             category_id: products.categoryId
-          }), _this4.insuranceAdaptor.retrieveInsurances({
+            }), _this5.insuranceAdaptor.retrieveInsurances({
             product_id: products.id
-          }), _this4.warrantyAdaptor.retrieveWarranties({
+            }), _this5.warrantyAdaptor.retrieveWarranties({
             product_id: products.id
-          }), _this4.amcAdaptor.retrieveAMCs({
+            }), _this5.amcAdaptor.retrieveAMCs({
             product_id: products.id
-          }), _this4.repairAdaptor.retrieveRepairs({
+            }), _this5.repairAdaptor.retrieveRepairs({
             product_id: products.id
-          }), _this4.pucAdaptor.retrievePUCs({
+            }), _this5.pucAdaptor.retrievePUCs({
             product_id: products.id
           }), serviceSchedulePromise]);
         }
@@ -900,7 +1051,7 @@ var ProductAdaptor = function () {
   }, {
     key: 'createProduct',
     value: function createProduct(productBody, metadataBody, otherItems) {
-      var _this5 = this;
+      var _this6 = this;
 
       var brandBody = {
         brand_name: productBody.brand_name,
@@ -933,7 +1084,7 @@ var ProductAdaptor = function () {
 
         var dropDownPromise = metadataBody.map(function (item) {
           if (item.new_drop_down) {
-            return _this5.modals.brandDropDown.findCreateFind({
+            return _this6.modals.brandDropDown.findCreateFind({
               where: {
                 title: {
                   $iLike: item.form_value.toLowerCase()
@@ -969,14 +1120,15 @@ var ProductAdaptor = function () {
         product = !product.document_date ? _lodash2.default.omit(product, 'document_date') : product;
         product = !product.seller_id ? _lodash2.default.omit(product, 'seller_id') : product;
 
-        return Promise.all([_this5.modals.products.count({
+        return Promise.all([
+          _this6.modals.products.count({
           where: product,
           include: [{
-            model: _this5.modals.metaData, where: {
+            model: _this6.modals.metaData, where: {
               $and: metadata
             }, required: true, as: 'metaData'
           }]
-        }), _this5.categoryAdaptor.retrieveRenewalTypes({
+          }), _this6.categoryAdaptor.retrieveRenewalTypes({
           id: {
             $gte: 7
           }
@@ -984,7 +1136,7 @@ var ProductAdaptor = function () {
       }).then(function (countRenewalTypeResult) {
         renewalTypes = countRenewalTypeResult[1];
         if (countRenewalTypeResult[0] === 0) {
-          return _this5.modals.products.create(product);
+          return _this6.modals.products.create(product);
         }
 
         return undefined;
@@ -1011,7 +1163,7 @@ var ProductAdaptor = function () {
                   add(warrantyRenewalType.effective_months, 'months').
                   subtract(1, 'day').
                   endOf('days');
-              warrantyItemPromise.push(_this5.warrantyAdaptor.createWarranties({
+              warrantyItemPromise.push(_this6.warrantyAdaptor.createWarranties({
                 renewal_type: otherItems.warranty.renewal_type,
                 updated_by: productBody.user_id,
                 status_type: 11,
@@ -1043,7 +1195,7 @@ var ProductAdaptor = function () {
                   add(warrantyRenewalType.effective_months, 'months').
                   subtract(1, 'day').
                   endOf('days');
-              warrantyItemPromise.push(_this5.warrantyAdaptor.createWarranties({
+              warrantyItemPromise.push(_this6.warrantyAdaptor.createWarranties({
                 renewal_type: otherItems.warranty.dual_renewal_type,
                 updated_by: productBody.user_id,
                 status_type: 11,
@@ -1074,7 +1226,7 @@ var ProductAdaptor = function () {
                   add(warrantyRenewalType.effective_months, 'months').
                   subtract(1, 'day').
                   endOf('days');
-              warrantyItemPromise.push(_this5.warrantyAdaptor.createWarranties({
+              warrantyItemPromise.push(_this6.warrantyAdaptor.createWarranties({
                 renewal_type: otherItems.warranty.extended_renewal_type,
                 updated_by: productBody.user_id,
                 status_type: 11,
@@ -1105,7 +1257,7 @@ var ProductAdaptor = function () {
                   add(warrantyRenewalType.effective_months, 'months').
                   subtract(1, 'day').
                   endOf('days');
-              warrantyItemPromise.push(_this5.warrantyAdaptor.createWarranties({
+              warrantyItemPromise.push(_this6.warrantyAdaptor.createWarranties({
                 renewal_type: otherItems.warranty.accessory_renewal_type,
                 updated_by: productBody.user_id,
                 status_type: 11,
@@ -1133,7 +1285,7 @@ var ProductAdaptor = function () {
                     'DD MMM YY').startOf('day');
             var _expiry_date = _moment2.default.utc(_effective_date4,
                 _moment2.default.ISO_8601).add(8759, 'hours').endOf('days');
-            insurancePromise.push(_this5.insuranceAdaptor.createInsurances({
+            insurancePromise.push(_this6.insuranceAdaptor.createInsurances({
               renewal_type: 8,
               updated_by: productBody.user_id,
               status_type: 11,
@@ -1170,7 +1322,7 @@ var ProductAdaptor = function () {
                 subtract(1, 'day').
                 endOf('days').
                 format('YYYY-MM-DD');
-            amcPromise.push(_this5.amcAdaptor.createAMCs({
+            amcPromise.push(_this6.amcAdaptor.createAMCs({
               renewal_type: 8,
               updated_by: productBody.user_id,
               status_type: 11,
@@ -1188,7 +1340,7 @@ var ProductAdaptor = function () {
             mdItem.product_id = product.id;
             mdItem.status_type = 8;
 
-            return _this5.modals.metaData.create(mdItem);
+            return _this6.modals.metaData.create(mdItem);
           });
 
           var pucPromise = [];
@@ -1207,32 +1359,34 @@ var ProductAdaptor = function () {
                 subtract(1, 'day').
                 endOf('days').
                 format('YYYY-MM-DD');
-            pucPromise.push(otherItems.puc.id ? _this5.pucAdaptor.updatePUCs(otherItems.puc.id, {
+            pucPromise.push(otherItems.puc.id ?
+                _this6.pucAdaptor.updatePUCs(otherItems.puc.id, {
               renewal_type: otherItems.puc.expiry_period,
               updated_by: productBody.user_id,
               status_type: 11,
               seller_id: isProductPUCSellerSame ? sellerList[0].sid : otherItems.puc.seller_name || otherItems.puc.seller_contact ? sellerList[3].sid : undefined,
               product_id: productId,
-              expiry_date: _moment2.default.utc(_expiry_date3).
-                  format('YYYY-MM-DD'),
-              effective_date: _moment2.default.utc(_effective_date6).
-                  format('YYYY-MM-DD'),
-              document_date: _moment2.default.utc(_effective_date6).
-                  format('YYYY-MM-DD'),
+                  expiry_date: _moment2.default.utc(_expiry_date3).
+                      format('YYYY-MM-DD'),
+                  effective_date: _moment2.default.utc(_effective_date6).
+                      format('YYYY-MM-DD'),
+                  document_date: _moment2.default.utc(_effective_date6).
+                      format('YYYY-MM-DD'),
               user_id: productBody.user_id
-            }) : _this5.pucAdaptor.createPUCs({
+                }) :
+                _this6.pucAdaptor.createPUCs({
               renewal_type: otherItems.puc.expiry_period || 7,
               updated_by: productBody.user_id,
               status_type: 11,
               renewal_cost: otherItems.puc.value,
               product_id: productId,
               seller_id: isProductPUCSellerSame ? sellerList[0].sid : otherItems.puc.seller_name || otherItems.puc.seller_contact ? sellerList[3].sid : undefined,
-              expiry_date: _moment2.default.utc(_expiry_date3).
-                  format('YYYY-MM-DD'),
-              effective_date: _moment2.default.utc(_effective_date6).
-                  format('YYYY-MM-DD'),
-              document_date: _moment2.default.utc(_effective_date6).
-                  format('YYYY-MM-DD'),
+                  expiry_date: _moment2.default.utc(_expiry_date3).
+                      format('YYYY-MM-DD'),
+                  effective_date: _moment2.default.utc(_effective_date6).
+                      format('YYYY-MM-DD'),
+                  document_date: _moment2.default.utc(_effective_date6).
+                      format('YYYY-MM-DD'),
               user_id: productBody.user_id
             }));
           }
@@ -1259,7 +1413,7 @@ var ProductAdaptor = function () {
   }, {
     key: 'updateProductDetails',
     value: function updateProductDetails(productBody, metadataBody, otherItems, productId) {
-      var _this6 = this;
+      var _this7 = this;
 
       var sellerPromise = [];
       var isProductAMCSellerSame = false;
@@ -1328,7 +1482,7 @@ var ProductAdaptor = function () {
           return mdItem;
         });
         if (product.new_drop_down && product.model) {
-          return _this6.modals.brandDropDown.findCreateFind({
+          return _this7.modals.brandDropDown.findCreateFind({
             where: {
               title: {
                 $iLike: product.model,
@@ -1360,11 +1514,12 @@ var ProductAdaptor = function () {
         product = !product.document_date ? _lodash2.default.omit(product, 'document_date') : product;
         product = !product.seller_id ? _lodash2.default.omit(product, 'seller_id') : product;
         product = !product.brand_id ? _lodash2.default.omit(product, 'brand_id') : product;
-        return Promise.all([_this6.categoryAdaptor.retrieveRenewalTypes({
+        return Promise.all([
+          _this7.categoryAdaptor.retrieveRenewalTypes({
           id: {
             $gte: 7
           }
-        }), _this6.updateProduct(productId, product)]);
+          }), _this7.updateProduct(productId, product)]);
       }).then(function (updateProductResult) {
         renewalTypes = updateProductResult[0];
         product = updateProductResult[1] || undefined;
@@ -1375,7 +1530,7 @@ var ProductAdaptor = function () {
                 diff(_moment2.default.utc(product.document_date), 'days');
             var diffMonths = _moment2.default.utc().
                 diff(_moment2.default.utc(product.document_date), 'months');
-            serviceSchedule = _this6.serviceScheduleAdaptor.retrieveServiceSchedules(
+            serviceSchedule = _this7.serviceScheduleAdaptor.retrieveServiceSchedules(
                 {
                   category_id: product.category_id,
                   brand_id: product.brand_id,
@@ -1395,7 +1550,7 @@ var ProductAdaptor = function () {
           }
           var warrantyItemPromise = [];
           if (otherItems.warranty) {
-            _this6.prepareWarrantyPromise({
+            _this7.prepareWarrantyPromise({
               otherItems: otherItems,
               renewalTypes: renewalTypes,
               warrantyItemPromise: warrantyItemPromise,
@@ -1407,7 +1562,7 @@ var ProductAdaptor = function () {
 
           var insurancePromise = [];
           if (otherItems.insurance) {
-            _this6.prepareInsurancePromise({
+            _this7.prepareInsurancePromise({
               otherItems: otherItems,
               renewalTypes: renewalTypes,
               insurancePromise: insurancePromise,
@@ -1418,7 +1573,7 @@ var ProductAdaptor = function () {
 
           var amcPromise = [];
           if (otherItems.amc) {
-            _this6.prepareAMCPromise({
+            _this7.prepareAMCPromise({
               renewalTypes: renewalTypes,
               otherItems: otherItems,
               amcPromise: amcPromise,
@@ -1431,7 +1586,7 @@ var ProductAdaptor = function () {
 
           var repairPromise = [];
           if (otherItems.repair) {
-            _this6.prepareRepairPromise({
+            _this7.prepareRepairPromise({
               otherItems: otherItems,
               isProductRepairSellerSame: isProductRepairSellerSame,
               sellerList: sellerList,
@@ -1444,15 +1599,15 @@ var ProductAdaptor = function () {
           var metadataPromise = metadata.map(function (mdItem) {
             mdItem.status_type = 11;
             if (mdItem.id) {
-              return _this6.updateProductMetaData(mdItem.id, mdItem);
+              return _this7.updateProductMetaData(mdItem.id, mdItem);
             }
             mdItem.product_id = productId;
-            return _this6.modals.metaData.create(mdItem);
+            return _this7.modals.metaData.create(mdItem);
           });
 
           var pucPromise = [];
           if (otherItems.puc) {
-            _this6.preparePUCPromise({
+            _this7.preparePUCPromise({
               renewalTypes: renewalTypes,
               otherItems: otherItems,
               pucPromise: pucPromise,
@@ -1470,8 +1625,7 @@ var ProductAdaptor = function () {
             Promise.all(amcPromise),
             Promise.all(repairPromise),
             Promise.all(pucPromise),
-            serviceSchedule,
-            _this6.jobAdaptor.retrieveJobDetail(product.job_id)]);
+            serviceSchedule]);
         }
 
         return undefined;
@@ -1486,7 +1640,7 @@ var ProductAdaptor = function () {
           product.repairs = productItemsResult[4];
           product.pucDetail = productItemsResult[5];
           if (productItemsResult[6] && productItemsResult[6].length > 0) {
-            return _this6.updateProduct(product.id, {
+            return _this7.updateProduct(product.id, {
               service_schedule_id: productItemsResult[6][0].id,
             });
           }
@@ -1962,7 +2116,7 @@ var ProductAdaptor = function () {
   }, {
     key: 'retrieveProductMetadata',
     value: function retrieveProductMetadata(options) {
-      var _this7 = this;
+      var _this8 = this;
 
       options.status_type = {
         $notIn: [3, 9]
@@ -2004,7 +2158,8 @@ var ProductAdaptor = function () {
           return item.categoryFormId;
         });
 
-        return Promise.all([metaData, _this7.modals.dropDowns.findAll({
+        return Promise.all([
+          metaData, _this8.modals.dropDowns.findAll({
           where: {
             category_form_id: categoryFormIds
           },
@@ -2178,7 +2333,7 @@ var ProductAdaptor = function () {
   }, {
     key: 'retrieveNotificationProducts',
     value: function retrieveNotificationProducts(options) {
-      var _this8 = this;
+      var _this9 = this;
 
       if (!options.status_type) {
         options.status_type = {
@@ -2203,7 +2358,7 @@ var ProductAdaptor = function () {
         products = productResult.map(function (item) {
           return item.toJSON();
         });
-        return _this8.retrieveProductMetadata({
+        return _this9.retrieveProductMetadata({
           product_id: {
             $in: products.map(function (item) {
               return item.id;
@@ -2227,7 +2382,7 @@ var ProductAdaptor = function () {
   }, {
     key: 'retrieveMissingDocProducts',
     value: function retrieveMissingDocProducts(options) {
-      var _this9 = this;
+      var _this10 = this;
 
       if (!options.status_type) {
         options.status_type = {
@@ -2245,7 +2400,8 @@ var ProductAdaptor = function () {
           product.hasDocs = product.copies.length > 0;
           return product;
         });
-        return Promise.all([_this9.insuranceAdaptor.retrieveInsurances({
+        return Promise.all([
+          _this10.insuranceAdaptor.retrieveInsurances({
           product_id: {
             $in: products.filter(function (item) {
               return item.masterCategoryId === 2 || item.masterCategoryId === 3;
@@ -2253,7 +2409,7 @@ var ProductAdaptor = function () {
               return item.id;
             })
           }
-        }), _this9.warrantyAdaptor.retrieveWarranties({
+          }), _this10.warrantyAdaptor.retrieveWarranties({
           product_id: {
             $in: products.filter(function (item) {
               return item.masterCategoryId === 2 || item.masterCategoryId === 3;
@@ -2354,14 +2510,17 @@ var ProductAdaptor = function () {
   }, {
     key: 'updateProduct',
     value: function updateProduct(id, productDetail) {
+      var _this11 = this;
+
       return this.modals.products.findOne({
         where: {
           id: id
         }
       }).then(function (productResult) {
         var itemDetail = productResult.toJSON();
+        var currentPurchaseDate = itemDetail.document_date;
         if (productDetail.copies && productDetail.copies.length > 0 &&
-            itemDetail.copies.length > 0) {
+            itemDetail.copies && itemDetail.copies.length > 0) {
           var _productDetail$copies;
 
           var newCopies = productDetail.copies;
@@ -2374,7 +2533,20 @@ var ProductAdaptor = function () {
             11 :
             productDetail.status_type || itemDetail.status_type;
         productResult.updateAttributes(productDetail);
-        return productResult.toJSON();
+        productDetail = productResult.toJSON();
+        if (productDetail.document_date &&
+            _moment2.default.utc(currentPurchaseDate,
+                _moment2.default.ISO_8601) !==
+            _moment2.default.utc(productDetail.document_date,
+                _moment2.default.ISO_8601)) {
+          return _this11.warrantyAdaptor.updateWarrantyPeriod(
+              {product_id: id, user_id: productDetail.user_id},
+              currentPurchaseDate, productDetail.document_date);
+        }
+
+        return undefined;
+      }).then(function() {
+        return productDetail;
       });
     }
   }, {
@@ -2386,18 +2558,18 @@ var ProductAdaptor = function () {
         }
       }).then(function(result) {
         result.updateAttributes(values);
-        return result.toJSON();
+        return result;
       });
     }
   }, {
     key: 'deleteProduct',
     value: function deleteProduct(id, userId) {
-      var _this10 = this;
+      var _this12 = this;
 
       return this.modals.products.findById(id).then(function(result) {
         if (result) {
           var jobPromise = result.job_id ? [
-            _this10.modals.jobs.update({
+            _this12.modals.jobs.update({
               user_status: 3,
               admin_status: 3,
               ce_status: null,
@@ -2407,7 +2579,7 @@ var ProductAdaptor = function () {
               where: {
                 id: result.job_id,
               },
-            }), _this10.modals.jobCopies.update({
+            }), _this12.modals.jobCopies.update({
               status_type: 3,
               updated_by: userId,
             }, {
@@ -2416,7 +2588,7 @@ var ProductAdaptor = function () {
               },
             })] : [undefined, undefined];
           return Promise.all([
-            _this10.modals.products.destroy({
+            _this12.modals.products.destroy({
               where: {
                 id: id,
                 user_id: userId,
@@ -2432,7 +2604,7 @@ var ProductAdaptor = function () {
   }, {
     key: 'removeProducts',
     value: function removeProducts(id, copyId, values) {
-      var _this11 = this;
+      var _this13 = this;
 
       return this.modals.products.findOne({
         where: {
@@ -2444,15 +2616,12 @@ var ProductAdaptor = function () {
           values.copies = itemDetail.copies.filter(function(item) {
             return item.copyId !== parseInt(copyId);
           });
-
-          if (values.copies.length > 0) {
-            result.updateAttributes(values);
-          }
+          result.updateAttributes(values);
 
           return result.toJSON();
         }
 
-        return _this11.modals.products.destroy({
+        return _this13.modals.products.destroy({
           where: {
             id: id,
           }

@@ -158,7 +158,7 @@ export default class CategoryAdaptor {
                 $and: {
                   main_category_id: categoryData.map(item => item.refId),
                   title: {
-                    $iLike: 'Vehicle Number',
+                    $iLike: 'VIN',
                   },
                 },
               }, {
@@ -314,7 +314,7 @@ export default class CategoryAdaptor {
   retrieveRenewalTypes(options) {
     return this.modals.renewalTypes.findAll({
       where: options,
-      order: [['type', 'ASC']],
+      order: [['effective_months', 'ASC']],
     }).then((renewalTypes) => renewalTypes.map(item => item.toJSON()));
   }
 }

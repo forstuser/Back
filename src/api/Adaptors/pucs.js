@@ -241,7 +241,7 @@ class PUCAdaptor {
     }).then(result => {
       const itemDetail = result.toJSON();
       if (values.copies && values.copies.length > 0 &&
-          itemDetail.copies.length > 0) {
+          itemDetail.copies && itemDetail.copies.length > 0) {
         const newCopies = values.copies;
         values.copies = itemDetail.copies;
         values.copies.push(...newCopies);
@@ -266,10 +266,7 @@ class PUCAdaptor {
           itemDetail.copies.length > 0) {
         values.copies = itemDetail.copies.filter(
             (item) => item.copyId !== parseInt(copyId));
-
-        if (values.copies.length > 0) {
-          result.updateAttributes(values);
-        }
+        result.updateAttributes(values);
 
         return result.toJSON();
       }

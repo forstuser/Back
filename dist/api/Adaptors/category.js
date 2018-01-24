@@ -137,7 +137,7 @@ var CategoryAdaptor = function () {
                   return item.refId;
                 }),
                 title: {
-                  $iLike: 'Vehicle Number'
+                  $iLike: 'VIN',
                 }
               }
             }, {
@@ -291,7 +291,7 @@ var CategoryAdaptor = function () {
     value: function retrieveRenewalTypes(options) {
       return this.modals.renewalTypes.findAll({
         where: options,
-        order: [['type', 'ASC']]
+        order: [['effective_months', 'ASC']],
       }).then(function (renewalTypes) {
         return renewalTypes.map(function (item) {
           return item.toJSON();

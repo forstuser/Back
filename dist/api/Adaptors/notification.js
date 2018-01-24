@@ -169,7 +169,8 @@ var NotificationAdaptor = function () {
               product.dueDate = metaData.value;
               product.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
             }
-
+            product.description = '';
+            product.address = '';
             if (metaData.name.toLowerCase().includes('address')) {
               product.description = metaData.value;
               product.address = metaData.value;

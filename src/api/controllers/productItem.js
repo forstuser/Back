@@ -58,8 +58,8 @@ class ProductItemController {
               }) :
           '';
       return Promise.all([sellerPromise]).then(sellerList => {
-        const product_id = request.params.id;
-        const repairId = request.params.repairId;
+        const product_id = parseInt(request.params.id);
+        const repairId = parseInt(request.params.repairId);
         const newSellerId = sellerList[0] ? sellerList[0].sid : undefined;
         const document_date = moment.utc(request.payload.document_date,
             moment.ISO_8601).isValid() ?
@@ -108,7 +108,7 @@ class ProductItemController {
             user.ID} is as follow: \n \n ${err}`);
         return reply({
           status: false,
-          message: 'An error occurred in product creation.',
+          message: 'An error occurred in Repair creation.',
           forceUpdate: request.pre.forceUpdate,
           err,
         });
@@ -184,8 +184,8 @@ class ProductItemController {
         })]).then(promiseResult => {
         const provider = promiseResult[0];
         renewalTypes = promiseResult[1];
-        product_id = request.params.id;
-        insuranceId = request.params.insuranceId;
+        product_id = parseInt(request.params.id);
+        insuranceId = parseInt(request.params.insuranceId);
         providerId = provider ? provider.id : undefined;
         insuranceRenewalType = renewalTypes.find(
             item => item.type === 8);
@@ -193,23 +193,26 @@ class ProductItemController {
           insuranceRenewalType = renewalTypes.find(
               item => item.type === request.payload.renewal_type);
         }
-        if (!insuranceId) {
-          return productAdaptor.retrieveProductById(product_id, {
-            status_type: [5, 11],
-          });
-        }
-
-        return undefined;
+        return productAdaptor.retrieveProductById(product_id,
+            {status_type: [5, 8, 11]});
       }).then((productResult) => {
+        const currentItem = productResult ?
+            productResult.insuranceDetails.find(
+                item => item.id === parseInt(insuranceId)) :
+            undefined;
         const insuranceEffectiveDate = productResult ?
             productResult.insuranceDetails &&
             productResult.insuranceDetails.length > 0 ?
-                moment.utc(productResult.insuranceDetails[0].expiryDate,
-                    moment.ISO_8601).add(1, 'days') :
+                currentItem ?
+                    moment.utc(currentItem.effectiveDate, moment.ISO_8601) :
+                    moment.utc(productResult.insuranceDetails[0].expiryDate,
+                        moment.ISO_8601).add(1, 'days') :
                 productResult.purchaseDate :
             undefined;
-        let effective_date = request.payload.effective_date ||
-            insuranceEffectiveDate || moment.utc();
+        let effective_date = insuranceEffectiveDate ?
+            request.payload.effective_date ||
+            insuranceEffectiveDate :
+            moment.utc();
         effective_date = moment.utc(effective_date, moment.ISO_8601).
             isValid() ?
             moment.utc(effective_date,
@@ -235,9 +238,8 @@ class ProductItemController {
           document_date: effective_date ? moment.utc(effective_date).
               format('YYYY-MM-DD') : undefined,
           document_number: request.payload.policy_no,
-          provider_id: provider ?
-              providerId :
-              request.payload.provider_id,
+          provider_id: providerId ||
+          request.payload.provider_id,
           amount_insured: request.payload.amount_insured,
           renewal_cost: request.payload.value,
           user_id: user.id || user.ID,
@@ -247,27 +249,27 @@ class ProductItemController {
                 insuranceId, insuranceBody) :
             insuranceAdaptor.createInsurances(insuranceBody);
       }).then((result) => {
-              if (result) {
-                return reply({
-                  status: true,
-                  message: 'successful',
-                  insurance: result,
-                  forceUpdate: request.pre.forceUpdate,
-                });
-              } else {
-                return reply({
-                  status: false,
-                  message: 'Insurance already exist.',
-                  forceUpdate: request.pre.forceUpdate,
-                });
-              }
+        if (result) {
+          return reply({
+            status: true,
+            message: 'successful',
+            insurance: result,
+            forceUpdate: request.pre.forceUpdate,
+          });
+        } else {
+          return reply({
+            status: false,
+            message: 'Insurance already exist.',
+            forceUpdate: request.pre.forceUpdate,
+          });
+        }
       }).catch((err) => {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
         return reply({
           status: false,
-          message: 'An error occurred in product creation.',
+          message: 'An error occurred in Insurance creation.',
           forceUpdate: request.pre.forceUpdate,
           err,
         });
@@ -335,27 +337,32 @@ class ProductItemController {
                 status_type: 11,
               }) :
           '';
-      const product_id = request.params.id;
-      const amcId = request.params.amcId;
+      const product_id = parseInt(request.params.id);
+      const amcId = parseInt(request.params.amcId);
       let sellerList;
       return Promise.all([sellerPromise]).then(sellerResult => {
         sellerList = sellerResult[0];
-        if (!amcId) {
-          return productAdaptor.retrieveProductById(product_id, {
-            status_type: [5, 11],
-          });
-        }
 
-        return undefined;
+        return productAdaptor.retrieveProductById(product_id,
+            {status_type: [5, 8, 11]});
       }).then((productResult) => {
-        const amcEffectiveDate = productResult ?
-            productResult.amcDetails && productResult.amcDetails.length > 0 ?
-                moment.utc(productResult.amcDetails[0].expiryDate,
-                    moment.ISO_8601).add(1, 'days') :
-                productResult.purchaseDate :
+        const currentItem = productResult ?
+            productResult.amcDetails.find(
+                (item) => item.id === parseInt(amcId)) :
             undefined;
-        let effective_date = request.payload.effective_date ||
-            amcEffectiveDate || moment.utc();
+        const amcEffectiveDate = productResult ?
+            currentItem ?
+                moment.utc(currentItem.effectiveDate, moment.ISO_8601) :
+                productResult.amcDetails &&
+                productResult.amcDetails.length > 0 ?
+                    moment.utc(productResult.amcDetails[0].expiryDate,
+                        moment.ISO_8601).add(1, 'days') :
+                    productResult.purchaseDate :
+            undefined;
+        let effective_date = amcEffectiveDate ?
+            request.payload.effective_date ||
+            amcEffectiveDate :
+            moment.utc();
         effective_date = moment.utc(effective_date, moment.ISO_8601).
             isValid() ?
             moment.utc(effective_date,
@@ -392,27 +399,27 @@ class ProductItemController {
             amcAdaptor.updateAMCs(amcId, values) :
             amcAdaptor.createAMCs(values);
       }).then((result) => {
-              if (result) {
-                return reply({
-                  status: true,
-                  message: 'successful',
-                  amc: result,
-                  forceUpdate: request.pre.forceUpdate,
-                });
-              } else {
-                return reply({
-                  status: false,
-                  message: 'AMC already exist.',
-                  forceUpdate: request.pre.forceUpdate,
-                });
-              }
+        if (result) {
+          return reply({
+            status: true,
+            message: 'successful',
+            amc: result,
+            forceUpdate: request.pre.forceUpdate,
+          });
+        } else {
+          return reply({
+            status: false,
+            message: 'AMC already exist.',
+            forceUpdate: request.pre.forceUpdate,
+          });
+        }
       }).catch((err) => {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
         return reply({
           status: false,
-          message: 'An error occurred in product creation.',
+          message: 'An error occurred in AMC creation.',
           forceUpdate: request.pre.forceUpdate,
           err,
         });
@@ -480,26 +487,30 @@ class ProductItemController {
               }) :
           '';
       let sellerList;
-      const product_id = request.params.id;
-      const pucId = request.params.pucId;
+      const product_id = parseInt(request.params.id);
+      const pucId = parseInt(request.params.pucId);
       return Promise.all([sellerPromise]).then(sellerResult => {
         sellerList = sellerResult[0];
-        if (!pucId) {
-          return productAdaptor.retrieveProductById(product_id, {
-            status_type: [5, 11],
-          });
-        }
-
-        return undefined;
+        return productAdaptor.retrieveProductById(product_id,
+            {status_type: [5, 8, 11]});
       }).then((productResult) => {
-        const pucEffectiveDate = productResult ?
-            productResult.pucDetails && productResult.pucDetails.length > 0 ?
-                moment.utc(productResult.pucDetails[0].expiryDate,
-                    moment.ISO_8601).add(1, 'days') :
-                productResult.purchaseDate :
+        const currentItem = productResult ?
+            productResult.pucDetails.find(
+                (pucItem) => pucItem.id === parseInt(pucId)) :
             undefined;
-        let effective_date = request.payload.effective_date ||
-            pucEffectiveDate || moment.utc();
+        const pucEffectiveDate = productResult ?
+            currentItem ?
+                moment.utc(currentItem.effectiveDate, moment.ISO_8601) :
+                productResult.pucDetails &&
+                productResult.pucDetails.length > 0 ?
+                    moment.utc(productResult.pucDetails[0].expiryDate,
+                        moment.ISO_8601).add(1, 'days') :
+                    productResult.purchaseDate :
+            undefined;
+        let effective_date = pucEffectiveDate ?
+            request.payload.effective_date ||
+            pucEffectiveDate :
+            moment.utc();
         effective_date = moment.utc(effective_date, moment.ISO_8601).
             isValid() ?
             moment.utc(effective_date,
@@ -556,7 +567,7 @@ class ProductItemController {
             user.ID} is as follow: \n \n ${err}`);
         return reply({
           status: false,
-          message: 'An error occurred in product creation.',
+          message: 'An error occurred in PUC creation.',
           forceUpdate: request.pre.forceUpdate,
           err,
         });
@@ -619,8 +630,8 @@ class ProductItemController {
                 name: request.payload.provider_name,
               }) :
               undefined;
-      const product_id = request.params.id;
-      const warrantyId = request.params.warrantyId;
+      const product_id = parseInt(request.params.id);
+      const warrantyId = parseInt(request.params.warrantyId);
       let warrantyRenewalType;
       let expiry_date;
       let provider;
@@ -633,29 +644,36 @@ class ProductItemController {
         provider = promiseResult[0];
         warrantyRenewalType = promiseResult[1].find(
             item => item.type === request.payload.renewal_type);
-        if (!warrantyId) {
-          return productAdaptor.retrieveProductById(product_id, {
-            status_type: [5, 11],
-          });
-        }
-
-        return undefined;
+        return productAdaptor.retrieveProductById(product_id,
+            {status_type: [5, 8, 11]});
       }).then((productResult) => {
-        const warrantyDetail = productResult ?
+        const warrantyDetails = productResult ?
             productResult.warrantyDetails.filter(
-                (warrantyItem) => request.payload.warranty_type === 3 ?
+                (warrantyItem) => (request.payload.warranty_type === 3 ?
                     warrantyItem.warranty_type === 3 :
                     warrantyItem.warranty_type === 1 ||
-                    warrantyItem.warranty_type === 2) :
-            undefined;
-        const warrantyEffectiveDate = productResult ?
-            warrantyDetail && warrantyDetail.length > 0 ?
-                moment.utc(warrantyDetail[0].expiryDate, moment.ISO_8601).
+                    warrantyItem.warranty_type === 2)) : [];
+
+        const currentItem = warrantyDetails.find(
+            (warrantyDetail) => {
+              return warrantyDetail.id === parseInt(warrantyId);
+            });
+
+        console.log(`\n\n\n\n\n\n${JSON.stringify({
+          warrantyId,
+          currentItem,
+          warrantyDetail: warrantyDetails,
+        })}`);
+        const warrantyEffectiveDate = currentItem ?
+            moment.utc(currentItem.effectiveDate, moment.ISO_8601) :
+            warrantyDetails.length > 0 ?
+                moment.utc(warrantyDetails[0].expiryDate, moment.ISO_8601).
                     add(1, 'days') :
-                productResult.purchaseDate :
-            undefined;
-        let effective_date = request.payload.effective_date ||
-            warrantyEffectiveDate || moment.utc();
+                productResult.purchaseDate;
+        let effective_date = warrantyEffectiveDate ?
+            request.payload.effective_date ||
+            warrantyEffectiveDate :
+            moment.utc();
         effective_date = moment.utc(effective_date, moment.ISO_8601).
             isValid() ?
             moment.utc(effective_date,
@@ -666,6 +684,9 @@ class ProductItemController {
             add(warrantyRenewalType.effective_months, 'months').
             subtract(1, 'day').
             endOf('days');
+
+        console.log(
+            `\n\n\n\n\n\n\n\n\n\n\n\n\n\n ${effective_date}, ${expiry_date}`);
         const values = {
           renewal_type: request.payload.renewal_type,
           updated_by: user.id || user.ID,
@@ -709,7 +730,7 @@ class ProductItemController {
             user.ID} is as follow: \n \n ${err}`);
         return reply({
           status: false,
-          message: 'An error occurred in product creation.',
+          message: 'An error occurred in warranty creation.',
           forceUpdate: request.pre.forceUpdate,
           err,
         });

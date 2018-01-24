@@ -176,6 +176,7 @@ var ProductController = function () {
           user_id: user.id || user.ID,
           main_category_id: request.payload.main_category_id,
           category_id: request.payload.category_id,
+          sub_category_id: request.payload.sub_category_id,
           brand_id: request.payload.brand_id,
           colour_id: request.payload.colour_id,
           purchase_cost: request.payload.value,
@@ -247,11 +248,6 @@ var ProductController = function () {
           forceUpdate: request.pre.forceUpdate
         });
       }
-    }
-  }, {
-    key: 'updateProductJob',
-    value: function updateProductJob(request, reply) {
-
     }
   }, {
     key: 'updateUserReview',

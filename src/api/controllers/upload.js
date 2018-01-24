@@ -271,6 +271,7 @@ class UploadController {
                   '' :
           ``,
     }).then((jobResult) => {
+      jobResult.copies = [];
       if (Array.isArray(fileData)) {
         return UploadController.uploadArrayOfFile({
           requiredDetail: {
@@ -454,7 +455,7 @@ class UploadController {
           user,
           productId: requiredDetail.productId || jobResult.productId,
           itemId: requiredDetail.itemId,
-          copies: copyData.map((copyItem) => ({
+          copies: jobCopies.map((copyItem) => ({
             copyId: copyItem.id,
             copyUrl: `/jobs/${copyItem.job_id}/files/${copyItem.id}`,
             file_type: copyItem.file_type,
@@ -843,7 +844,7 @@ class UploadController {
             result[0].updateAttributes(attributes);
           }
 
-          return reply({
+          const deletionResponse = {
             status: true,
             message: result[3][0] === true ?
                 'Product item deleted successfully' :
@@ -854,11 +855,43 @@ class UploadController {
             productItemCopiesCount: result[3][0] && result[3][0] !== true ?
                 result[3][0].copies.length :
                 0,
-            productItemCopies: result[3][0] !== true && result[3][0] ?
-                result[3][0].copies :
+            productItem: result[3][0] && result[3][0] !== true ?
+                result[3][0] :
                 undefined,
             forceUpdate: request.pre.forceUpdate,
-          });
+          };
+
+          switch (parseInt(request.query.type || '1')) {
+            case 2:
+              deletionResponse.amc = deletionResponse.productItem;
+              break;
+
+            case 3:
+              deletionResponse.insurance = deletionResponse.productItem;
+              break;
+
+            case 4:
+              deletionResponse.repair = deletionResponse.productItem;
+              break;
+            case 5 :
+              deletionResponse.warranty = deletionResponse.productItem;
+              break;
+
+            case 6:
+              deletionResponse.warranty = deletionResponse.productItem;
+              break;
+            case 7:
+              deletionResponse.puc = deletionResponse.productItem;
+              break;
+            case 8:
+              deletionResponse.warranty = deletionResponse.productItem;
+              break;
+            default:
+              deletionResponse.product = deletionResponse.productItem;
+              break;
+          }
+
+          return reply(deletionResponse);
         }).catch((err) => {
           console.log(
               `Error on ${new Date()} for user ${user.id ||

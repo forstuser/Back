@@ -280,7 +280,7 @@ var PUCAdaptor = function () {
         }
       }).then(function (result) {
         var itemDetail = result.toJSON();
-        if (values.copies && values.copies.length > 0 &&
+        if (values.copies && values.copies.length > 0 && itemDetail.copies &&
             itemDetail.copies.length > 0) {
           var _values$copies;
 
@@ -312,10 +312,7 @@ var PUCAdaptor = function () {
           values.copies = itemDetail.copies.filter(function(item) {
             return item.copyId !== parseInt(copyId);
           });
-
-          if (values.copies.length > 0) {
-            result.updateAttributes(values);
-          }
+          result.updateAttributes(values);
 
           return result.toJSON();
         }
