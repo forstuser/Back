@@ -29,11 +29,12 @@ class FCMManager {
   }
 
   deleteFcmDetails(parameters) {
-    let {userId, fcmId} = parameters;
+    let {user_id, fcm_id, platform_id} = parameters;
     return this.fcmModal.destroy({
       where: {
-        user_id: userId,
-        fcm_id: fcmId,
+        user_id,
+        fcm_id,
+        platform_id,
       },
     }).then((rows) => {
       return rows;

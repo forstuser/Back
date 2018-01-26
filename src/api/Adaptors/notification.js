@@ -189,7 +189,7 @@ class NotificationAdaptor {
 
   filterUpcomingService(user) {
     return Promise.all([
-      this.productAdaptor.retrieveProducts({
+      this.productAdaptor.retrieveUpcomingProducts({
         user_id: user.id || user.ID,
         status_type: [5, 11],
         main_category_id: [6, 8],
@@ -197,24 +197,44 @@ class NotificationAdaptor {
       this.amcAdaptor.retrieveAMCs({
         user_id: user.id || user.ID,
         status_type: [5, 11],
+        expiry_date: {
+          $gte: moment.utc().startOf('days'),
+          $lte: moment.utc().endOf('months'),
+        },
       }),
       this.insuranceAdaptor.retrieveInsurances({
         user_id: user.id || user.ID,
         status_type: [5, 11],
+        expiry_date: {
+          $gte: moment.utc().startOf('days'),
+          $lte: moment.utc().endOf('months'),
+        },
       }),
       this.warrantyAdaptor.retrieveWarranties({
         user_id: user.id || user.ID,
         status_type: [5, 11],
+        main_category_id: [1, 2, 3],
+        expiry_date: {
+          $gte: moment.utc().startOf('days'),
+          $lte: moment.utc().endOf('months'),
+        },
       }),
       this.pucAdaptor.retrievePUCs({
         user_id: user.id || user.ID,
         status_type: [5, 11],
         main_category_id: [3],
+        expiry_date: {
+          $gte: moment.utc().startOf('days'),
+          $lte: moment.utc().endOf('months'),
+        },
       }),
-      this.productAdaptor.retrieveProducts({
+      this.productAdaptor.retrieveUpcomingProducts({
         user_id: user.id || user.ID,
         status_type: [5, 11],
         main_category_id: [3],
+        service_schedule_id: {
+          $not: null,
+        },
       })]).then((result) => {
       let products = result[0].map((item) => {
         const product = item;
@@ -223,8 +243,8 @@ class NotificationAdaptor {
           const metaData = metaItem;
           if (metaData.name.toLowerCase().includes('due') &&
               metaData.name.toLowerCase().includes('date') &&
-              moment(metaData.value, moment.ISO_8601).isValid()) {
-            const dueDateTime = moment(metaData.value, moment.ISO_8601);
+              moment.utc(metaData.value, moment.ISO_8601).isValid()) {
+            const dueDateTime = moment.utc(metaData.value, moment.ISO_8601);
             product.dueDate = metaData.value;
             product.dueIn = dueDateTime.diff(moment.utc(), 'days');
           }
@@ -273,8 +293,8 @@ class NotificationAdaptor {
               item.dueIn <= 30 && item.dueIn >= 0));
       let amcs = result[1].map((item) => {
         const amc = item;
-        if (moment(amc.expiryDate, moment.ISO_8601).isValid()) {
-          const dueDateTime = moment(amc.expiryDate, moment.ISO_8601);
+        if (moment.utc(amc.expiryDate, moment.ISO_8601).isValid()) {
+          const dueDateTime = moment.utc(amc.expiryDate, moment.ISO_8601);
           amc.dueDate = amc.expiryDate;
           amc.dueIn = dueDateTime.diff(moment.utc(), 'days');
           amc.productType = 3;
@@ -290,8 +310,8 @@ class NotificationAdaptor {
 
       let insurances = result[2].map((item) => {
         const insurance = item;
-        if (moment(insurance.expiryDate, moment.ISO_8601).isValid()) {
-          const dueDateTime = moment(insurance.expiryDate, moment.ISO_8601);
+        if (moment.utc(insurance.expiryDate, moment.ISO_8601).isValid()) {
+          const dueDateTime = moment.utc(insurance.expiryDate, moment.ISO_8601);
           insurance.dueDate = insurance.expiryDate;
           insurance.dueIn = dueDateTime.diff(moment.utc(), 'days');
           insurance.productType = 3;
@@ -307,8 +327,8 @@ class NotificationAdaptor {
 
       let warranties = result[3].map((item) => {
         const warranty = item;
-        if (moment(warranty.expiryDate, moment.ISO_8601).isValid()) {
-          const dueDateTime = moment(warranty.expiryDate, moment.ISO_8601);
+        if (moment.utc(warranty.expiryDate, moment.ISO_8601).isValid()) {
+          const dueDateTime = moment.utc(warranty.expiryDate, moment.ISO_8601);
 
           warranty.dueDate = warranty.expiryDate;
           warranty.dueIn = dueDateTime.diff(moment.utc(), 'days');
@@ -319,7 +339,7 @@ class NotificationAdaptor {
               `${warranty.dualWarrantyItem} of ${warranty.productName}` :
               warranty.warranty_type === 4 ?
                   `Accessories of ${warranty.productName}` :
-                  `of ${warranty.productName}`}`;
+                  `${warranty.productName}`}`;
         }
 
         return warranty;
@@ -672,14 +692,14 @@ class NotificationAdaptor {
 
   retrieveExpenseCronNotification(days) {
     const purchaseDateCompare = days === 1 ? {
-      $gte: moment().subtract(days, 'day').startOf('day'),
-      $lte: moment().subtract(days, 'day').endOf('day'),
+      $gte: moment.utc().subtract(days, 'day').startOf('day'),
+      $lte: moment.utc().subtract(days, 'day').endOf('day'),
     } : days === 7 ? {
-      $lte: moment().subtract(days, 'day').endOf('day'),
-      $gte: moment().subtract(days, 'day').startOf('day'),
+      $lte: moment.utc().subtract(days, 'day').endOf('day'),
+      $gte: moment.utc().subtract(days, 'day').startOf('day'),
     } : {
-      $gte: moment().startOf('month'),
-      $lte: moment().endOf('month'),
+      $gte: moment.utc().startOf('month'),
+      $lte: moment.utc().endOf('month'),
     };
     return Promise.all([
       this.productAdaptor.retrieveNotificationProducts({
@@ -712,11 +732,11 @@ class NotificationAdaptor {
 
   retrieveCronNotification(days) {
     const expiryDateCompare = days === 15 ? {
-      $gte: moment().add(days, 'day').startOf('day'),
-      $lte: moment().add(days, 'day').endOf('day'),
+      $gte: moment.utc().add(days, 'day').startOf('day'),
+      $lte: moment.utc().add(days, 'day').endOf('day'),
     } : {
-      $gte: moment().startOf('day'),
-      $lte: moment().add(days, 'day').endOf('day'),
+      $gte: moment.utc().startOf('day'),
+      $lte: moment.utc().add(days, 'day').endOf('day'),
     };
     return Promise.all([
       this.productAdaptor.retrieveNotificationProducts({
@@ -742,8 +762,8 @@ class NotificationAdaptor {
           const metaData = metaItem;
           if (metaData.name.toLowerCase().includes('due') &&
               metaData.name.toLowerCase().includes('date') &&
-              moment(metaData.value, moment.ISO_8601).isValid()) {
-            const dueDateTime = moment(metaData.value, moment.ISO_8601);
+              moment.utc(metaData.value, moment.ISO_8601).isValid()) {
+            const dueDateTime = moment.utc(metaData.value, moment.ISO_8601);
             product.dueDate = metaData.value;
             product.dueIn = dueDateTime.diff(moment.utc(), 'days');
           }
@@ -784,8 +804,8 @@ class NotificationAdaptor {
 
       let insurances = result[2].map((item) => {
         const insurance = item;
-        if (moment(insurance.expiryDate, moment.ISO_8601).isValid()) {
-          const dueDateTime = moment(insurance.expiryDate, moment.ISO_8601);
+        if (moment.utc(insurance.expiryDate, moment.ISO_8601).isValid()) {
+          const dueDateTime = moment.utc(insurance.expiryDate, moment.ISO_8601);
           insurance.dueDate = insurance.expiryDate;
           insurance.dueIn = dueDateTime.diff(moment.utc(), 'days');
           insurance.productType = 3;
@@ -797,8 +817,8 @@ class NotificationAdaptor {
 
       let warranties = result[3].map((item) => {
         const warranty = item;
-        if (moment(warranty.expiryDate, moment.ISO_8601).isValid()) {
-          const dueDateTime = moment(warranty.expiryDate, moment.ISO_8601);
+        if (moment.utc(warranty.expiryDate, moment.ISO_8601).isValid()) {
+          const dueDateTime = moment.utc(warranty.expiryDate, moment.ISO_8601);
 
           warranty.dueDate = warranty.expiryDate;
           warranty.dueIn = dueDateTime.diff(moment.utc(), 'days');

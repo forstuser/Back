@@ -188,7 +188,7 @@ var ProductController = function () {
           seller_address: request.payload.seller_address,
           seller_id: request.payload.seller_id,
           status_type: 11,
-          model: request.payload.model,
+          model: request.payload.model || '',
           new_drop_down: request.payload.isNewModel,
           document_number: request.payload.document_number,
           document_date: request.payload.document_date ?

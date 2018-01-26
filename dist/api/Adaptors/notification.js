@@ -137,35 +137,60 @@ var NotificationAdaptor = function () {
   }, {
     key: 'filterUpcomingService',
     value: function filterUpcomingService(user) {
-      return Promise.all([this.productAdaptor.retrieveProducts({
+      return Promise.all([
+        this.productAdaptor.retrieveUpcomingProducts({
         user_id: user.id || user.ID,
         status_type: [5, 11],
         main_category_id: [6, 8]
       }), this.amcAdaptor.retrieveAMCs({
         user_id: user.id || user.ID,
-        status_type: [5, 11]
+          status_type: [5, 11],
+          expiry_date: {
+            $gte: _moment2.default.utc().startOf('days'),
+            $lte: _moment2.default.utc().endOf('months'),
+          },
       }), this.insuranceAdaptor.retrieveInsurances({
         user_id: user.id || user.ID,
-        status_type: [5, 11]
+          status_type: [5, 11],
+          expiry_date: {
+            $gte: _moment2.default.utc().startOf('days'),
+            $lte: _moment2.default.utc().endOf('months'),
+          },
       }), this.warrantyAdaptor.retrieveWarranties({
         user_id: user.id || user.ID,
-        status_type: [5, 11]
+          status_type: [5, 11],
+          main_category_id: [1, 2, 3],
+          expiry_date: {
+            $gte: _moment2.default.utc().startOf('days'),
+            $lte: _moment2.default.utc().endOf('months'),
+          },
       }), this.pucAdaptor.retrievePUCs({
         user_id: user.id || user.ID,
         status_type: [5, 11],
-        main_category_id: [3]
-      }), this.productAdaptor.retrieveProducts({
+          main_category_id: [3],
+          expiry_date: {
+            $gte: _moment2.default.utc().startOf('days'),
+            $lte: _moment2.default.utc().endOf('months'),
+          },
+        }), this.productAdaptor.retrieveUpcomingProducts({
         user_id: user.id || user.ID,
         status_type: [5, 11],
         main_category_id: [3],
+          service_schedule_id: {
+            $not: null,
+          },
       })]).then(function (result) {
         var products = result[0].map(function (item) {
           var product = item;
 
           product.productMetaData.map(function (metaItem) {
             var metaData = metaItem;
-            if (metaData.name.toLowerCase().includes('due') && metaData.name.toLowerCase().includes('date') && (0, _moment2.default)(metaData.value, _moment2.default.ISO_8601).isValid()) {
-              var dueDateTime = (0, _moment2.default)(metaData.value, _moment2.default.ISO_8601);
+            if (metaData.name.toLowerCase().includes('due') &&
+                metaData.name.toLowerCase().includes('date') &&
+                _moment2.default.utc(metaData.value, _moment2.default.ISO_8601).
+                    isValid()) {
+              var dueDateTime = _moment2.default.utc(metaData.value,
+                  _moment2.default.ISO_8601);
               product.dueDate = metaData.value;
               product.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
             }
@@ -215,8 +240,10 @@ var NotificationAdaptor = function () {
         });
         var amcs = result[1].map(function (item) {
           var amc = item;
-          if ((0, _moment2.default)(amc.expiryDate, _moment2.default.ISO_8601).isValid()) {
-            var dueDateTime = (0, _moment2.default)(amc.expiryDate, _moment2.default.ISO_8601);
+          if (_moment2.default.utc(amc.expiryDate, _moment2.default.ISO_8601).
+                  isValid()) {
+            var dueDateTime = _moment2.default.utc(amc.expiryDate,
+                _moment2.default.ISO_8601);
             amc.dueDate = amc.expiryDate;
             amc.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
             amc.productType = 3;
@@ -232,8 +259,10 @@ var NotificationAdaptor = function () {
 
         var insurances = result[2].map(function (item) {
           var insurance = item;
-          if ((0, _moment2.default)(insurance.expiryDate, _moment2.default.ISO_8601).isValid()) {
-            var dueDateTime = (0, _moment2.default)(insurance.expiryDate, _moment2.default.ISO_8601);
+          if (_moment2.default.utc(insurance.expiryDate,
+                  _moment2.default.ISO_8601).isValid()) {
+            var dueDateTime = _moment2.default.utc(insurance.expiryDate,
+                _moment2.default.ISO_8601);
             insurance.dueDate = insurance.expiryDate;
             insurance.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
             insurance.productType = 3;
@@ -249,14 +278,21 @@ var NotificationAdaptor = function () {
 
         var warranties = result[3].map(function (item) {
           var warranty = item;
-          if ((0, _moment2.default)(warranty.expiryDate, _moment2.default.ISO_8601).isValid()) {
-            var dueDateTime = (0, _moment2.default)(warranty.expiryDate, _moment2.default.ISO_8601);
+          if (_moment2.default.utc(warranty.expiryDate,
+                  _moment2.default.ISO_8601).isValid()) {
+            var dueDateTime = _moment2.default.utc(warranty.expiryDate,
+                _moment2.default.ISO_8601);
 
             warranty.dueDate = warranty.expiryDate;
             warranty.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
             warranty.productType = 3;
             warranty.title = 'Warranty Renewal Pending';
-            warranty.description = 'Warranty Renewal Pending for ' + (warranty.warranty_type === 3 ? warranty.dualWarrantyItem + ' of ' + warranty.productName : warranty.warranty_type === 4 ? 'Accessories of ' + warranty.productName : 'of ' + warranty.productName);
+            warranty.description = 'Warranty Renewal Pending for ' +
+                (warranty.warranty_type === 3 ?
+                    warranty.dualWarrantyItem + ' of ' + warranty.productName :
+                    warranty.warranty_type === 4 ?
+                        'Accessories of ' + warranty.productName :
+                        '' + warranty.productName);
           }
 
           return warranty;
@@ -561,14 +597,14 @@ var NotificationAdaptor = function () {
     key: 'retrieveExpenseCronNotification',
     value: function retrieveExpenseCronNotification(days) {
       var purchaseDateCompare = days === 1 ? {
-        $gte: (0, _moment2.default)().subtract(days, 'day').startOf('day'),
-        $lte: (0, _moment2.default)().subtract(days, 'day').endOf('day')
+        $gte: _moment2.default.utc().subtract(days, 'day').startOf('day'),
+        $lte: _moment2.default.utc().subtract(days, 'day').endOf('day'),
       } : days === 7 ? {
-        $lte: (0, _moment2.default)().subtract(days, 'day').endOf('day'),
-        $gte: (0, _moment2.default)().subtract(days, 'day').startOf('day')
+        $lte: _moment2.default.utc().subtract(days, 'day').endOf('day'),
+        $gte: _moment2.default.utc().subtract(days, 'day').startOf('day'),
       } : {
-        $gte: (0, _moment2.default)().startOf('month'),
-        $lte: (0, _moment2.default)().endOf('month')
+        $gte: _moment2.default.utc().startOf('month'),
+        $lte: _moment2.default.utc().endOf('month'),
       };
       return Promise.all([this.productAdaptor.retrieveNotificationProducts({
         status_type: [5, 11],
@@ -598,11 +634,11 @@ var NotificationAdaptor = function () {
     key: 'retrieveCronNotification',
     value: function retrieveCronNotification(days) {
       var expiryDateCompare = days === 15 ? {
-        $gte: (0, _moment2.default)().add(days, 'day').startOf('day'),
-        $lte: (0, _moment2.default)().add(days, 'day').endOf('day')
+        $gte: _moment2.default.utc().add(days, 'day').startOf('day'),
+        $lte: _moment2.default.utc().add(days, 'day').endOf('day'),
       } : {
-        $gte: (0, _moment2.default)().startOf('day'),
-        $lte: (0, _moment2.default)().add(days, 'day').endOf('day')
+        $gte: _moment2.default.utc().startOf('day'),
+        $lte: _moment2.default.utc().add(days, 'day').endOf('day'),
       };
       return Promise.all([this.productAdaptor.retrieveNotificationProducts({
         status_type: 5,
@@ -622,8 +658,12 @@ var NotificationAdaptor = function () {
 
           product.productMetaData.map(function (metaItem) {
             var metaData = metaItem;
-            if (metaData.name.toLowerCase().includes('due') && metaData.name.toLowerCase().includes('date') && (0, _moment2.default)(metaData.value, _moment2.default.ISO_8601).isValid()) {
-              var dueDateTime = (0, _moment2.default)(metaData.value, _moment2.default.ISO_8601);
+            if (metaData.name.toLowerCase().includes('due') &&
+                metaData.name.toLowerCase().includes('date') &&
+                _moment2.default.utc(metaData.value, _moment2.default.ISO_8601).
+                    isValid()) {
+              var dueDateTime = _moment2.default.utc(metaData.value,
+                  _moment2.default.ISO_8601);
               product.dueDate = metaData.value;
               product.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
             }
@@ -668,8 +708,10 @@ var NotificationAdaptor = function () {
 
         var insurances = result[2].map(function (item) {
           var insurance = item;
-          if ((0, _moment2.default)(insurance.expiryDate, _moment2.default.ISO_8601).isValid()) {
-            var dueDateTime = (0, _moment2.default)(insurance.expiryDate, _moment2.default.ISO_8601);
+          if (_moment2.default.utc(insurance.expiryDate,
+                  _moment2.default.ISO_8601).isValid()) {
+            var dueDateTime = _moment2.default.utc(insurance.expiryDate,
+                _moment2.default.ISO_8601);
             insurance.dueDate = insurance.expiryDate;
             insurance.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
             insurance.productType = 3;
@@ -681,8 +723,10 @@ var NotificationAdaptor = function () {
 
         var warranties = result[3].map(function (item) {
           var warranty = item;
-          if ((0, _moment2.default)(warranty.expiryDate, _moment2.default.ISO_8601).isValid()) {
-            var dueDateTime = (0, _moment2.default)(warranty.expiryDate, _moment2.default.ISO_8601);
+          if (_moment2.default.utc(warranty.expiryDate,
+                  _moment2.default.ISO_8601).isValid()) {
+            var dueDateTime = _moment2.default.utc(warranty.expiryDate,
+                _moment2.default.ISO_8601);
 
             warranty.dueDate = warranty.expiryDate;
             warranty.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');

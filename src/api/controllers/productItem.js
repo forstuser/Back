@@ -179,9 +179,7 @@ class ProductItemController {
       let product_id;
       return Promise.all([
         providerPromise, categoryAdaptor.retrieveRenewalTypes({
-          id: {
-            $gte: 7,
-          },
+          status_type: 1,
         })]).then(promiseResult => {
         const provider = promiseResult[0];
         renewalTypes = promiseResult[1];
@@ -640,9 +638,7 @@ class ProductItemController {
       let provider;
       return Promise.all([
         providerPromise, categoryAdaptor.retrieveRenewalTypes({
-          id: {
-            $gte: 7,
-          },
+          status_type: 1,
         })]).then(promiseResult => {
         provider = promiseResult[0];
         warrantyRenewalType = promiseResult[1].find(
@@ -695,7 +691,7 @@ class ProductItemController {
         const values = {
           renewal_type: request.payload.renewal_type,
           updated_by: user.id || user.ID,
-          status_type: 11,
+          status_type: warrantyRenewalType ? 11 : 8,
           job_id: request.payload.job_id,
           product_id: product_id,
           expiry_date: effective_date && expiry_date ?

@@ -315,6 +315,9 @@ class ProductAdaptor {
     }).then((productResult) => {
       products = productResult.map((item) => {
         const productItem = item.toJSON();
+        productItem.purchaseDate = moment.utc(productItem.purchaseDate,
+            moment.ISO_8601).
+            startOf('days');
         if (productItem.schedule) {
           productItem.schedule.due_date = moment.utc(productItem.purchaseDate,
               moment.ISO_8601).
@@ -489,6 +492,9 @@ class ProductAdaptor {
     }).then((productResult) => {
       products = productResult.map((item) => {
         const productItem = item.toJSON();
+        productItem.purchaseDate = moment.utc(productItem.purchaseDate,
+            moment.ISO_8601).
+            startOf('days');
         if (productItem.schedule) {
           productItem.schedule.due_date = moment.utc(productItem.purchaseDate,
               moment.ISO_8601).
@@ -781,6 +787,9 @@ class ProductAdaptor {
     }).then((productResult) => {
       const products = productResult.map((item) => {
         const productItem = item.toJSON();
+        productItem.purchaseDate = moment.utc(productItem.purchaseDate,
+            moment.ISO_8601).
+            startOf('days');
         if (productItem.schedule) {
           productItem.schedule.due_date = moment.utc(productItem.purchaseDate,
               moment.ISO_8601).
@@ -1227,6 +1236,9 @@ class ProductAdaptor {
       }
     }).then((results) => {
       if (products) {
+        products.purchaseDate = moment.utc(products.purchaseDate,
+            moment.ISO_8601).
+            startOf('days');
         const metaData = results[0];
         const pucItem = metaData.find(
             (item) => item.name.toLowerCase().includes('puc'));
@@ -1300,13 +1312,11 @@ class ProductAdaptor {
                   title: {
                     $iLike: item.form_value.toLowerCase(),
                   },
-                  category_form_id: item.category_form_id,
                   category_id: productBody.category_id,
                   brand_id: product.brand_id,
                 },
                 defaults: {
                   title: item.form_value,
-                  category_form_id: item.category_form_id,
                   category_id: productBody.category_id,
                   brand_id: product.brand_id,
                   updated_by: item.updated_by,
@@ -1348,9 +1358,7 @@ class ProductAdaptor {
                 },
               ],
             }), this.categoryAdaptor.retrieveRenewalTypes({
-              id: {
-                $gte: 7,
-              },
+              status_type: 1,
             })]);
         }).then((countRenewalTypeResult) => {
           renewalTypes = countRenewalTypeResult[1];
@@ -1726,7 +1734,9 @@ class ProductAdaptor {
               _.omit(product, 'purchase_cost') :
               product;
           product = _.omit(product, 'new_drop_down');
-          product = !product.model ? _.omit(product, 'model') : product;
+          product = !product.model && product.model !== '' ?
+              _.omit(product, 'model') :
+              product;
           product = !product.taxes ? _.omit(product, 'taxes') : product;
           product = !product.document_number ?
               _.omit(product, 'document_number') :
@@ -1738,9 +1748,7 @@ class ProductAdaptor {
           product = !product.brand_id ? _.omit(product, 'brand_id') : product;
           return Promise.all([
             this.categoryAdaptor.retrieveRenewalTypes({
-              id: {
-                $gte: 7,
-              },
+              status_type: 1,
             }), this.updateProduct(productId, product)]);
         }).then((updateProductResult) => {
           renewalTypes = updateProductResult[0];
@@ -2767,9 +2775,21 @@ class ProductAdaptor {
       if (productDetail.document_date &&
           moment.utc(currentPurchaseDate, moment.ISO_8601).valueOf() !==
           moment.utc(productDetail.document_date, moment.ISO_8601).valueOf()) {
-        return this.warrantyAdaptor.updateWarrantyPeriod(
+        return Promise.all([
+          this.warrantyAdaptor.updateWarrantyPeriod(
             {product_id: id, user_id: productDetail.user_id},
-            currentPurchaseDate, productDetail.document_date);
+              currentPurchaseDate, productDetail.document_date),
+          this.insuranceAdaptor.updateInsurancePeriod(
+              {product_id: id, user_id: productDetail.user_id},
+              currentPurchaseDate, productDetail.document_date),
+          this.pucAdaptor.updatePUCPeriod(
+              {product_id: id, user_id: productDetail.user_id},
+              currentPurchaseDate, productDetail.document_date),
+          this.amcAdaptor.updateAMCPeriod(
+              {product_id: id, user_id: productDetail.user_id},
+              currentPurchaseDate, productDetail.document_date)]).
+            catch((err) => console.log(
+                `Error on ${new Date()} for user ${productDetail.user_id} is as follow: \n \n ${err}`));
       }
 
       return undefined;

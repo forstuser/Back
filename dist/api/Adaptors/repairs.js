@@ -176,7 +176,11 @@ var RepairAdaptor = function () {
         order: [['document_date', 'DESC']]
       }).then(function (repairResult) {
         return repairResult.map(function (item) {
-          return item.toJSON();
+          var productItem = item.toJSON();
+          productItem.purchaseDate = _moment2.default.utc(
+              productItem.purchaseDate, _moment2.default.ISO_8601).
+              startOf('days');
+          return productItem;
         }).sort(sortAmcWarrantyInsuranceRepair);
       });
     }
@@ -304,16 +308,19 @@ var RepairAdaptor = function () {
                 id: id,
                 user_id: user_id,
               },
-            }), result.copies.length > 0 ? _this2.modals.jobCopies.update({
-              status_type: 3,
-              updated_by: user_id,
-            }, {
-              where: {
-                id: result.copies.map(function(item) {
-                  return item.copyId;
-                }),
-              },
-            }) : undefined]).then(function() {
+            }),
+            result.copies && result.copies.length > 0 ?
+                _this2.modals.jobCopies.update({
+                  status_type: 3,
+                  updated_by: user_id,
+                }, {
+                  where: {
+                    id: result.copies.map(function(item) {
+                      return item.copyId;
+                    }),
+                  },
+                }) :
+                undefined]).then(function() {
             return true;
           });
         }

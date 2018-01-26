@@ -2,9 +2,6 @@
 
 export default (sequelize, DataTypes) => {
   const brandDropDown = sequelize.define('brandDropDown', {
-        category_form_id: {
-          type: DataTypes.INTEGER,
-        },
         category_id: {
           type: DataTypes.INTEGER,
         },
@@ -65,10 +62,6 @@ export default (sequelize, DataTypes) => {
 
     brandDropDown.belongsTo(models.brands,
         {foreignKey: 'brand_id', as: 'brand'});
-
-    brandDropDown.belongsTo(models.categoryForms, {
-      foreignKey: 'category_form_id', as: 'categoryForm',
-    });
 
     brandDropDown.belongsTo(models.renewalTypes, {
       foreignKey: 'warranty_renewal_type', as: 'warrantyRenewalType',

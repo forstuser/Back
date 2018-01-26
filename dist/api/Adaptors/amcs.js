@@ -188,7 +188,11 @@ var AmcAdaptor = function () {
         order: [['expiry_date', 'DESC']]
       }).then(function (amcResult) {
         return amcResult.map(function (item) {
-          return item.toJSON();
+          var productItem = item.toJSON();
+          productItem.purchaseDate = _moment2.default.utc(
+              productItem.purchaseDate, _moment2.default.ISO_8601).
+              startOf('days');
+          return productItem;
         }).sort(sortAmcWarrantyInsuranceRepair);
       });
     }
@@ -277,9 +281,76 @@ var AmcAdaptor = function () {
       });
     }
   }, {
+    key: 'updateAMCPeriod',
+    value: function updateAMCPeriod(
+        options, productPurchaseDate, productNewPurchaseDate) {
+      var _this = this;
+
+      return this.modals.amcs.findAll({
+        where: options,
+        order: [['document_date', 'ASC']],
+      }).then(function(result) {
+        var document_date = productNewPurchaseDate;
+        var amcExpiryDate = void 0;
+        return Promise.all(result.map(function(item) {
+          var amcItem = item.toJSON();
+          var id = amcItem.id;
+          if (_moment2.default.utc(amcItem.effective_date).
+                  startOf('days').
+                  valueOf() === _moment2.default.utc(productPurchaseDate).
+                  startOf('days').
+                  valueOf() || _moment2.default.utc(amcItem.effective_date).
+                  startOf('days').
+                  valueOf() < _moment2.default.utc(productNewPurchaseDate).
+                  startOf('days').
+                  valueOf()) {
+            amcItem.effective_date = productNewPurchaseDate;
+            amcItem.document_date = productNewPurchaseDate;
+            amcExpiryDate = _moment2.default.utc(amcItem.expiry_date).
+                add(1, 'days');
+            amcItem.expiry_date = _moment2.default.utc(productNewPurchaseDate,
+                _moment2.default.ISO_8601).
+                add(_moment2.default.utc(amcItem.expiry_date,
+                    _moment2.default.ISO_8601).
+                    add(1, 'days').
+                    diff(_moment2.default.utc(productPurchaseDate,
+                        _moment2.default.ISO_8601), 'months'), 'months').
+                subtract(1, 'days');
+            amcItem.updated_by = options.user_id;
+            amcItem.status_type = 11;
+            document_date = _moment2.default.utc(amcItem.expiry_date).
+                add(1, 'days');
+
+            return _this.modals.amcs.update(amcItem, {where: {id: id}});
+          } else if (_moment2.default.utc(amcItem.effective_date).
+                  startOf('days').
+                  valueOf() ===
+              _moment2.default.utc(amcExpiryDate).startOf('days').valueOf()) {
+            amcItem.effective_date = document_date;
+            amcItem.document_date = document_date;
+            amcExpiryDate = amcItem.expiry_date;
+            amcItem.expiry_date = _moment2.default.utc(document_date,
+                _moment2.default.ISO_8601).
+                add(_moment2.default.utc(amcItem.expiry_date,
+                    _moment2.default.ISO_8601).
+                    add(1, 'days').
+                    diff(_moment2.default.utc(amcExpiryDate,
+                        _moment2.default.ISO_8601), 'months'), 'months').
+                subtract(1, 'days');
+            amcItem.updated_by = options.user_id;
+            amcItem.status_type = 11;
+            document_date = amcItem.expiry_date;
+            return _this.modals.amcs.update(amcItem, {where: {id: id}});
+          }
+
+          return undefined;
+        }));
+      });
+    }
+  }, {
     key: 'removeAMCs',
     value: function removeAMCs(id, copyId, values) {
-      var _this = this;
+      var _this2 = this;
 
       return this.modals.amcs.findOne({
         where: {
@@ -295,7 +366,7 @@ var AmcAdaptor = function () {
           return result.toJSON();
         }
 
-        return _this.modals.amcs.destroy({
+        return _this2.modals.amcs.destroy({
           where: {
             id: id,
           }
@@ -307,26 +378,29 @@ var AmcAdaptor = function () {
   }, {
     key: 'deleteAMC',
     value: function deleteAMC(id, user_id) {
-      var _this2 = this;
+      var _this3 = this;
 
       return this.modals.amcs.findById(id).then(function(result) {
         if (result) {
           return Promise.all([
-            _this2.modals.amcs.destroy({
+            _this3.modals.amcs.destroy({
               where: {
                 id: id,
                 user_id: user_id,
               },
-            }), result.copies.length > 0 ? _this2.modals.jobCopies.update({
-              status_type: 3,
-              updated_by: user_id,
-            }, {
-              where: {
-                id: result.copies.map(function(item) {
-                  return item.copyId;
-                }),
-              },
-            }) : undefined]).then(function() {
+            }),
+            result.copies && result.copies.length > 0 ?
+                _this3.modals.jobCopies.update({
+                  status_type: 3,
+                  updated_by: user_id,
+                }, {
+                  where: {
+                    id: result.copies.map(function(item) {
+                      return item.copyId;
+                    }),
+                  },
+                }) :
+                undefined]).then(function() {
             return true;
           });
         }

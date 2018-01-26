@@ -57,11 +57,11 @@ export function executeCron() {
         });
         let rule6 = new schedule.RecurrenceRule();
         rule6.hour = 6;
-        rule6.month = moment().endOf('month');
+        rule6.month = moment.utc().endOf('month');
         schedule.scheduleJob(rule6, function() {
           console.log('Send Notification of monthly expenses Start');
           return notificationAdaptor.createExpenseNotification(
-              moment().endOf('month').date()).then(() => {
+              moment.utc().endOf('month').date()).then(() => {
             console.log('success');
           }).catch(console.log);
         });

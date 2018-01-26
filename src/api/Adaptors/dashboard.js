@@ -76,10 +76,11 @@ class DashboardAdaptor {
       const insightData = result[1].map((item) => {
         const insightItem = item;
         const index = distinctInsight.findIndex(
-            distinctItem => (moment(distinctItem.purchaseDate, moment.ISO_8601).
+            distinctItem => (moment.utc(distinctItem.purchaseDate,
+                moment.ISO_8601).
                     startOf('day').
                     valueOf() ===
-                moment(insightItem.purchaseDate, moment.ISO_8601).
+                moment.utc(insightItem.purchaseDate, moment.ISO_8601).
                     startOf('day').
                     valueOf()));
 
@@ -181,38 +182,25 @@ class DashboardAdaptor {
               },
               required: true,
             }],
-        }), this.modals.products.count({
+        }),
+        this.modals.products.count({
           where: {
             user_id: user.id || user.ID,
             status_type: 11,
-            main_category_id: [2, 3],
+            main_category_id: [1, 2, 3],
           },
         })]).then((result) => {
         const billCounts = parseInt(result[0]);
         const productCounts = parseInt(result[1]);
-        if (billCounts) {
-          return {
-            status: true,
-            message: 'User Exist',
-            billCounts,
-            hasProducts: !!(productCounts && productCounts > 0),
-            showDashboard: !!(billCounts && billCounts > 0) ||
-            !!(productCounts && productCounts > 1),
-            isExistingUser: !isNewUser,
-            authorization: token,
-            userId: user.id || user.ID,
-            forceUpdate: request.pre.forceUpdate,
-          };
-        }
-
         return {
           status: true,
-          message: 'Existing User',
-          authorization: token,
+          message: !isNewUser ? 'Existing User' : 'New User',
+          billCounts,
           hasProducts: !!(productCounts && productCounts > 0),
-          billCounts: 0,
-          showDashboard: false,
+          showDashboard: !!(billCounts && billCounts > 0) ||
+          !!(productCounts && productCounts > 1),
           isExistingUser: !isNewUser,
+          authorization: token,
           userId: user.id || user.ID,
           forceUpdate: request.pre.forceUpdate,
         };
@@ -231,8 +219,11 @@ class DashboardAdaptor {
       });
     }
 
-    notificationAdaptor.sendMailOnDifferentSteps('Welcome to BinBill!',
-        user.email, user, 1);
+    if (user.email) {
+      notificationAdaptor.sendMailOnDifferentSteps('Welcome to BinBill!',
+          user.email, user, 1);
+    }
+
     return {
       status: true,
       message: 'New User',
@@ -393,21 +384,21 @@ class DashboardAdaptor {
 
       let productServiceSchedule = result[5].filter(item => item.schedule).
           map((item) => {
-        const scheduledProduct = item;
-        const scheduledDate = scheduledProduct.schedule ?
-            scheduledProduct.schedule.due_date :
-            undefined;
-        if (scheduledDate &&
-            moment.utc(scheduledDate, moment.ISO_8601).isValid()) {
-          const dueDate_time = moment.utc(scheduledDate, moment.ISO_8601).
-              endOf('day');
-          scheduledProduct.dueDate = dueDate_time;
-          scheduledProduct.dueIn = dueDate_time.diff(moment.utc(), 'days');
-          scheduledProduct.productType = 6;
-        }
+            const scheduledProduct = item;
+            const scheduledDate = scheduledProduct.schedule ?
+                scheduledProduct.schedule.due_date :
+                undefined;
+            if (scheduledDate &&
+                moment.utc(scheduledDate, moment.ISO_8601).isValid()) {
+              const dueDate_time = moment.utc(scheduledDate, moment.ISO_8601).
+                  endOf('day');
+              scheduledProduct.dueDate = dueDate_time;
+              scheduledProduct.dueIn = dueDate_time.diff(moment.utc(), 'days');
+              scheduledProduct.productType = 6;
+            }
 
-        return scheduledProduct;
-      });
+            return scheduledProduct;
+          });
 
       productServiceSchedule = productServiceSchedule.filter(
           item => ((item.dueIn !== undefined && item.dueIn !== null) &&

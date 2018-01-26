@@ -139,7 +139,13 @@ class RepairAdaptor {
         'copies'],
       order: [['document_date', 'DESC']],
     }).
-        then((repairResult) => repairResult.map((item) => item.toJSON()).
+        then((repairResult) => repairResult.map((item) => {
+          const productItem = item.toJSON();
+          productItem.purchaseDate = moment.utc(productItem.purchaseDate,
+              moment.ISO_8601).
+              startOf('days');
+          return productItem;
+        }).
             sort(sortAmcWarrantyInsuranceRepair));
   }
 
@@ -289,7 +295,9 @@ class RepairAdaptor {
               id,
               user_id,
             },
-          }), result.copies.length > 0 ? this.modals.jobCopies.update({
+          }),
+          result.copies && result.copies.length > 0 ?
+              this.modals.jobCopies.update({
             status_type: 3,
             updated_by: user_id,
           }, {

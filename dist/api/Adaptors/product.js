@@ -260,6 +260,9 @@ var ProductAdaptor = function () {
       }).then(function (productResult) {
         products = productResult.map(function (item) {
           var productItem = item.toJSON();
+          productItem.purchaseDate = _moment2.default.utc(
+              productItem.purchaseDate, _moment2.default.ISO_8601).
+              startOf('days');
           if (productItem.schedule) {
             productItem.schedule.due_date = _moment2.default.utc(
                 productItem.purchaseDate, _moment2.default.ISO_8601).
@@ -444,6 +447,9 @@ var ProductAdaptor = function () {
       }).then(function(productResult) {
         products = productResult.map(function(item) {
           var productItem = item.toJSON();
+          productItem.purchaseDate = _moment2.default.utc(
+              productItem.purchaseDate, _moment2.default.ISO_8601).
+              startOf('days');
           if (productItem.schedule) {
             productItem.schedule.due_date = _moment2.default.utc(
                 productItem.purchaseDate, _moment2.default.ISO_8601).
@@ -636,6 +642,9 @@ var ProductAdaptor = function () {
       }).then(function (productResult) {
         var products = productResult.map(function (item) {
           var productItem = item.toJSON();
+          productItem.purchaseDate = _moment2.default.utc(
+              productItem.purchaseDate, _moment2.default.ISO_8601).
+              startOf('days');
           if (productItem.schedule) {
             productItem.schedule.due_date = _moment2.default.utc(
                 productItem.purchaseDate, _moment2.default.ISO_8601).
@@ -1016,6 +1025,8 @@ var ProductAdaptor = function () {
         }
       }).then(function (results) {
         if (products) {
+          products.purchaseDate = _moment2.default.utc(products.purchaseDate,
+              _moment2.default.ISO_8601).startOf('days');
           var metaData = results[0];
           var pucItem = metaData.find(function (item) {
             return item.name.toLowerCase().includes('puc');
@@ -1089,13 +1100,11 @@ var ProductAdaptor = function () {
                 title: {
                   $iLike: item.form_value.toLowerCase()
                 },
-                category_form_id: item.category_form_id,
                 category_id: productBody.category_id,
                 brand_id: product.brand_id
               },
               defaults: {
                 title: item.form_value,
-                category_form_id: item.category_form_id,
                 category_id: productBody.category_id,
                 brand_id: product.brand_id,
                 updated_by: item.updated_by,
@@ -1129,9 +1138,7 @@ var ProductAdaptor = function () {
             }, required: true, as: 'metaData'
           }]
           }), _this6.categoryAdaptor.retrieveRenewalTypes({
-          id: {
-            $gte: 7
-          }
+            status_type: 1,
         })]);
       }).then(function (countRenewalTypeResult) {
         renewalTypes = countRenewalTypeResult[1];
@@ -1506,7 +1513,7 @@ var ProductAdaptor = function () {
         product = !product.colour_id ? _lodash2.default.omit(product, 'colour_id') : product;
         product = !product.purchase_cost ? _lodash2.default.omit(product, 'purchase_cost') : product;
         product = _lodash2.default.omit(product, 'new_drop_down');
-        product = !product.model ?
+        product = !product.model && product.model !== '' ?
             _lodash2.default.omit(product, 'model') :
             product;
         product = !product.taxes ? _lodash2.default.omit(product, 'taxes') : product;
@@ -1516,9 +1523,7 @@ var ProductAdaptor = function () {
         product = !product.brand_id ? _lodash2.default.omit(product, 'brand_id') : product;
         return Promise.all([
           _this7.categoryAdaptor.retrieveRenewalTypes({
-          id: {
-            $gte: 7
-          }
+            status_type: 1,
           }), _this7.updateProduct(productId, product)]);
       }).then(function (updateProductResult) {
         renewalTypes = updateProductResult[0];
@@ -2539,9 +2544,23 @@ var ProductAdaptor = function () {
                 _moment2.default.ISO_8601).valueOf() !==
             _moment2.default.utc(productDetail.document_date,
                 _moment2.default.ISO_8601).valueOf()) {
-          return _this11.warrantyAdaptor.updateWarrantyPeriod(
-              {product_id: id, user_id: productDetail.user_id},
-              currentPurchaseDate, productDetail.document_date);
+          return Promise.all([
+            _this11.warrantyAdaptor.updateWarrantyPeriod(
+                {product_id: id, user_id: productDetail.user_id},
+                currentPurchaseDate, productDetail.document_date),
+            _this11.insuranceAdaptor.updateInsurancePeriod(
+                {product_id: id, user_id: productDetail.user_id},
+                currentPurchaseDate, productDetail.document_date),
+            _this11.pucAdaptor.updatePUCPeriod(
+                {product_id: id, user_id: productDetail.user_id},
+                currentPurchaseDate, productDetail.document_date),
+            _this11.amcAdaptor.updateAMCPeriod(
+                {product_id: id, user_id: productDetail.user_id},
+                currentPurchaseDate, productDetail.document_date)]).
+              catch(function(err) {
+                return console.log('Error on ' + new Date() + ' for user ' +
+                    productDetail.user_id + ' is as follow: \n \n ' + err);
+              });
         }
 
         return undefined;

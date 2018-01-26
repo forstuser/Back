@@ -104,9 +104,6 @@ var GeneralController = function () {
             isBrandRequest = true;
             return Promise.all([categoryAdaptor.retrieveSubCategories({ category_id: request.query.categoryId }, true), categoryAdaptor.retrieveRenewalTypes({
               status_type: 1,
-              type: {
-                $gte: 7
-              }
             })]);
           } else if (request.query.mainCategoryId) {
             return categoryAdaptor.retrieveCategories({ category_id: request.query.mainCategoryId }, false);
@@ -163,7 +160,8 @@ var GeneralController = function () {
           status_id: {
             $ne: 3
           }
-        }
+        },
+        order: [['id']],
       }).then(function (faq) {
         return reply({ status: true, faq: faq }).code(200);
       }).catch(function (err) {
@@ -174,7 +172,7 @@ var GeneralController = function () {
   }, {
     key: 'retrieveTips',
     value: function retrieveTips(request, reply) {
-      return modals.tips.findAll({}).then(function(tips) {
+      return modals.tips.findAll({order: [['id']]}).then(function(tips) {
         return reply({status: true, tips: tips}).code(200);
       }).catch(function(err) {
         console.log('Error on ' + new Date() + ' for user ' +
@@ -224,13 +222,13 @@ var GeneralController = function () {
               status_type: 8,
               document_number: request.payload.document_number,
               document_date: request.payload.document_date ?
-                  (0, _moment2.default)(request.payload.document_date,
+                  _moment2.default.utc(request.payload.document_date,
                       _moment2.default.ISO_8601).isValid() ?
-                      (0, _moment2.default)(request.payload.document_date,
+                      _moment2.default.utc(request.payload.document_date,
                           _moment2.default.ISO_8601).
                           startOf('day').
                           format('YYYY-MM-DD') :
-                      (0, _moment2.default)(request.payload.document_date,
+                      _moment2.default.utc(request.payload.document_date,
                           'DD MMM YY').startOf('day').format('YYYY-MM-DD') :
                   undefined,
               brand_name: request.payload.brand_name,
@@ -240,9 +238,6 @@ var GeneralController = function () {
                 {category_id: request.payload.category_id}, true),
             categoryAdaptor.retrieveRenewalTypes({
               status_type: 1,
-              type: {
-                $gte: 7,
-              },
             })]);
         }).then(function(initResult) {
           return reply({

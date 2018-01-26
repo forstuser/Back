@@ -223,9 +223,7 @@ var ProductItemController = function () {
         var product_id = void 0;
         return Promise.all([
           providerPromise, categoryAdaptor.retrieveRenewalTypes({
-            id: {
-              $gte: 7,
-            },
+            status_type: 1,
           })]).then(function(promiseResult) {
           var provider = promiseResult[0];
           renewalTypes = promiseResult[1];
@@ -692,9 +690,7 @@ var ProductItemController = function () {
         var provider = void 0;
         return Promise.all([
           providerPromise, categoryAdaptor.retrieveRenewalTypes({
-            id: {
-              $gte: 7,
-            },
+            status_type: 1,
           })]).then(function(promiseResult) {
           provider = promiseResult[0];
           warrantyRenewalType = promiseResult[1].find(function(item) {
@@ -748,7 +744,7 @@ var ProductItemController = function () {
           var values = {
             renewal_type: request.payload.renewal_type,
             updated_by: user.id || user.ID,
-            status_type: 11,
+            status_type: warrantyRenewalType ? 11 : 8,
             job_id: request.payload.job_id,
             product_id: product_id,
             expiry_date: effective_date && expiry_date ?

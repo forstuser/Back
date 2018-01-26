@@ -152,7 +152,13 @@ class AmcAdaptor {
         'copies', 'user_id'],
       order: [['expiry_date', 'DESC']],
     }).
-        then((amcResult) => amcResult.map((item) => item.toJSON()).
+        then((amcResult) => amcResult.map((item) => {
+          const productItem = item.toJSON();
+          productItem.purchaseDate = moment.utc(productItem.purchaseDate,
+              moment.ISO_8601).
+              startOf('days');
+          return productItem;
+        }).
             sort(sortAmcWarrantyInsuranceRepair));
   }
 
@@ -280,6 +286,60 @@ class AmcAdaptor {
     });
   }
 
+  updateAMCPeriod(options, productPurchaseDate, productNewPurchaseDate) {
+    return this.modals.amcs.findAll({
+      where: options,
+      order: [['document_date', 'ASC']],
+    }).then(result => {
+      let document_date = productNewPurchaseDate;
+      let amcExpiryDate;
+      return Promise.all(result.map((item) => {
+        const amcItem = item.toJSON();
+        const id = amcItem.id;
+        if (moment.utc(amcItem.effective_date).startOf('days').valueOf() ===
+            moment.utc(productPurchaseDate).startOf('days').valueOf() ||
+            moment.utc(amcItem.effective_date).startOf('days').valueOf() <
+            moment.utc(productNewPurchaseDate).startOf('days').valueOf()) {
+          amcItem.effective_date = productNewPurchaseDate;
+          amcItem.document_date = productNewPurchaseDate;
+          amcExpiryDate = moment.utc(amcItem.expiry_date).
+              add(1, 'days');
+          amcItem.expiry_date = moment.utc(productNewPurchaseDate,
+              moment.ISO_8601).
+              add(moment.utc(amcItem.expiry_date, moment.ISO_8601).
+                  add(1, 'days').
+                  diff(moment.utc(productPurchaseDate, moment.ISO_8601),
+                      'months'), 'months').
+              subtract(1, 'days');
+          amcItem.updated_by = options.user_id;
+          amcItem.status_type = 11;
+          document_date = moment.utc(amcItem.expiry_date).add(1, 'days');
+
+          return this.modals.amcs.update(amcItem, {where: {id}});
+        } else if (moment.utc(amcItem.effective_date).
+                startOf('days').
+                valueOf() ===
+            moment.utc(amcExpiryDate).startOf('days').valueOf()) {
+          amcItem.effective_date = document_date;
+          amcItem.document_date = document_date;
+          amcExpiryDate = amcItem.expiry_date;
+          amcItem.expiry_date = moment.utc(document_date,
+              moment.ISO_8601).
+              add(moment.utc(amcItem.expiry_date, moment.ISO_8601).
+                  add(1, 'days').diff(moment.utc(amcExpiryDate,
+                      moment.ISO_8601), 'months'), 'months').
+              subtract(1, 'days');
+          amcItem.updated_by = options.user_id;
+          amcItem.status_type = 11;
+          document_date = amcItem.expiry_date;
+          return this.modals.amcs.update(amcItem, {where: {id}});
+        }
+
+        return undefined;
+      }));
+    });
+  }
+
   removeAMCs(id, copyId, values) {
     return this.modals.amcs.findOne({
       where: {
@@ -314,7 +374,9 @@ class AmcAdaptor {
               id,
               user_id,
             },
-          }), result.copies.length > 0 ? this.modals.jobCopies.update({
+          }),
+          result.copies && result.copies.length > 0 ?
+              this.modals.jobCopies.update({
             status_type: 3,
             updated_by: user_id,
           }, {

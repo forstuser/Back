@@ -47,13 +47,15 @@ var FCMManager = function() {
   }, {
     key: 'deleteFcmDetails',
       value: function deleteFcmDetails(parameters) {
-        var userId = parameters.userId,
-            fcmId = parameters.fcmId;
+        var user_id = parameters.user_id,
+            fcm_id = parameters.fcm_id,
+            platform_id = parameters.platform_id;
 
       return this.fcmModal.destroy({
         where: {
-          user_id: userId,
-          fcm_id: fcmId
+          user_id: user_id,
+          fcm_id: fcm_id,
+          platform_id: platform_id,
         }
       }).then(function (rows) {
         return rows;

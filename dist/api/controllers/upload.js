@@ -310,7 +310,7 @@ var UploadController = function () {
               fileData: fileData,
               user: user,
               result: jobResult,
-              type: request.query ? request.query.type || 1 : 1,
+              type: request.query ? parseInt(request.query.type || '1') : 1,
               itemId: request.query ? request.query.itemid : undefined,
               productId: request.query ? request.query.productid : undefined,
             }, reply: reply
@@ -369,11 +369,7 @@ var UploadController = function () {
         return jobAdaptor.createJobCopies(jobCopyDetail).then(function (copyResult) {
           copyData = [copyResult];
           return modals.users.findById(user.id || user.ID);
-        }).then(function (userResult) {
-          if (userResult.email) {
-            UploadController.mailUserForJob(userResult, user);
-          }
-
+        }).then(function() {
           UploadController.notifyTeam(user, jobResult);
 
           if (type && (requiredDetail.productId || jobResult.productId)) {
@@ -463,9 +459,6 @@ var UploadController = function () {
       }).then(function (billResult) {
         jobCopies = billResult[0];
         var userResult = billResult[billResult.length - 1];
-        if (userResult.email) {
-          UploadController.mailUserForJob(userResult, user);
-        }
 
         UploadController.notifyTeam(user, jobResult);
 

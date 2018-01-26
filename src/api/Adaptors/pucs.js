@@ -134,7 +134,13 @@ class PUCAdaptor {
         'copies'],
       order: [['document_date', 'DESC']],
     }).
-        then((pucResult) => pucResult.map((item) => item.toJSON()).
+        then((pucResult) => pucResult.map((item) => {
+          const productItem = item.toJSON();
+          productItem.purchaseDate = moment.utc(productItem.purchaseDate,
+              moment.ISO_8601).
+              startOf('days');
+          return productItem;
+        }).
             sort(sortAmcWarrantyInsurancePUC));
   }
 
@@ -255,6 +261,60 @@ class PUCAdaptor {
     });
   }
 
+  updatePUCPeriod(options, productPurchaseDate, productNewPurchaseDate) {
+    return this.modals.pucs.findAll({
+      where: options,
+      order: [['document_date', 'ASC']],
+    }).then(result => {
+      let document_date = productNewPurchaseDate;
+      let pucExpiryDate;
+      return Promise.all(result.map((item) => {
+        const pucItem = item.toJSON();
+        const id = pucItem.id;
+        if (moment.utc(pucItem.effective_date).startOf('days').valueOf() ===
+            moment.utc(productPurchaseDate).startOf('days').valueOf() ||
+            moment.utc(pucItem.effective_date).startOf('days').valueOf() <
+            moment.utc(productNewPurchaseDate).startOf('days').valueOf()) {
+          pucItem.effective_date = productNewPurchaseDate;
+          pucItem.document_date = productNewPurchaseDate;
+          pucExpiryDate = moment.utc(pucItem.expiry_date).
+              add(1, 'days');
+          pucItem.expiry_date = moment.utc(productNewPurchaseDate,
+              moment.ISO_8601).
+              add(moment.utc(pucItem.expiry_date, moment.ISO_8601).
+                  add(1, 'days').
+                  diff(moment.utc(productPurchaseDate, moment.ISO_8601),
+                      'months'), 'months').
+              subtract(1, 'days');
+          pucItem.updated_by = options.user_id;
+          pucItem.status_type = 11;
+          document_date = moment.utc(pucItem.expiry_date).add(1, 'days');
+
+          return this.modals.pucs.update(pucItem, {where: {id}});
+        } else if (moment.utc(pucItem.effective_date).
+                startOf('days').
+                valueOf() ===
+            moment.utc(pucExpiryDate).startOf('days').valueOf()) {
+          pucItem.effective_date = document_date;
+          pucItem.document_date = document_date;
+          pucExpiryDate = pucItem.expiry_date;
+          pucItem.expiry_date = moment.utc(document_date,
+              moment.ISO_8601).
+              add(moment.utc(pucItem.expiry_date, moment.ISO_8601).
+                  add(1, 'days').diff(moment.utc(pucExpiryDate,
+                      moment.ISO_8601), 'months'), 'months').
+              subtract(1, 'days');
+          pucItem.updated_by = options.user_id;
+          pucItem.status_type = 11;
+          document_date = pucItem.expiry_date;
+          return this.modals.pucs.update(pucItem, {where: {id}});
+        }
+
+        return undefined;
+      }));
+    });
+  }
+
   removePUCs(id, copyId, values) {
     return this.modals.pucs.findOne({
       where: {
@@ -290,7 +350,9 @@ class PUCAdaptor {
               id,
               user_id,
             },
-          }), result.copies.length > 0 ? this.modals.jobCopies.update({
+          }),
+          result.copies && result.copies.length > 0 ?
+              this.modals.jobCopies.update({
             status_type: 3,
             updated_by: user_id,
           }, {

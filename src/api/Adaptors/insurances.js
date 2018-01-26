@@ -179,7 +179,13 @@ class InsuranceAdaptor {
         'copies', 'user_id'],
       order: [['expiry_date', 'DESC']],
     }).
-        then((insuranceResult) => insuranceResult.map((item) => item.toJSON()).
+        then((insuranceResult) => insuranceResult.map((item) => {
+          const productItem = item.toJSON();
+          productItem.purchaseDate = moment.utc(productItem.purchaseDate,
+              moment.ISO_8601).
+              startOf('days');
+          return productItem;
+        }).
             sort(sortAmcWarrantyInsuranceRepair));
   }
 
@@ -352,6 +358,62 @@ class InsuranceAdaptor {
     });
   }
 
+  updateInsurancePeriod(options, productPurchaseDate, productNewPurchaseDate) {
+    return this.modals.insurances.findAll({
+      where: options,
+      order: [['document_date', 'ASC']],
+    }).then(result => {
+      let document_date = productNewPurchaseDate;
+      let insuranceExpiryDate;
+      return Promise.all(result.map((item) => {
+        const insuranceItem = item.toJSON();
+        const id = insuranceItem.id;
+        if (moment.utc(insuranceItem.effective_date).
+                startOf('days').
+                valueOf() ===
+            moment.utc(productPurchaseDate).startOf('days').valueOf() ||
+            moment.utc(insuranceItem.effective_date).startOf('days').valueOf() <
+            moment.utc(productNewPurchaseDate).startOf('days').valueOf()) {
+          insuranceItem.effective_date = productNewPurchaseDate;
+          insuranceItem.document_date = productNewPurchaseDate;
+          insuranceExpiryDate = moment.utc(insuranceItem.expiry_date).
+              add(1, 'days');
+          insuranceItem.expiry_date = moment.utc(productNewPurchaseDate,
+              moment.ISO_8601).
+              add(moment.utc(insuranceItem.expiry_date, moment.ISO_8601).
+                  add(1, 'days').
+                  diff(moment.utc(productPurchaseDate, moment.ISO_8601),
+                      'months'), 'months').
+              subtract(1, 'days');
+          insuranceItem.updated_by = options.user_id;
+          insuranceItem.status_type = 11;
+          document_date = moment.utc(insuranceItem.expiry_date).add(1, 'days');
+
+          return this.modals.insurances.update(insuranceItem, {where: {id}});
+        } else if (moment.utc(insuranceItem.effective_date).
+                startOf('days').
+                valueOf() ===
+            moment.utc(insuranceExpiryDate).startOf('days').valueOf()) {
+          insuranceItem.effective_date = document_date;
+          insuranceItem.document_date = document_date;
+          insuranceExpiryDate = insuranceItem.expiry_date;
+          insuranceItem.expiry_date = moment.utc(document_date,
+              moment.ISO_8601).
+              add(moment.utc(insuranceItem.expiry_date, moment.ISO_8601).
+                  add(1, 'days').diff(moment.utc(insuranceExpiryDate,
+                      moment.ISO_8601), 'months'), 'months').
+              subtract(1, 'days');
+          insuranceItem.updated_by = options.user_id;
+          insuranceItem.status_type = 11;
+          document_date = insuranceItem.expiry_date;
+          return this.modals.insurances.update(insuranceItem, {where: {id}});
+        }
+
+        return undefined;
+      }));
+    });
+  }
+
   removeInsurances(id, copyId, values) {
     return this.modals.insurances.findOne({
       where: {
@@ -386,7 +448,9 @@ class InsuranceAdaptor {
               id,
               user_id,
             },
-          }), result.copies.length > 0 ? this.modals.jobCopies.update({
+          }),
+          result.copies && result.copies.length > 0 ?
+              this.modals.jobCopies.update({
             status_type: 3,
             updated_by: user_id,
           }, {

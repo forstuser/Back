@@ -278,7 +278,7 @@ class UploadController {
             fileData,
             user,
             result: jobResult,
-            type: request.query ? request.query.type || 1 : 1,
+            type: request.query ? parseInt(request.query.type || '1') : 1,
             itemId: request.query ? request.query.itemid : undefined,
             productId: request.query ? request.query.productid : undefined,
           }, reply,
@@ -341,11 +341,7 @@ class UploadController {
       return jobAdaptor.createJobCopies(jobCopyDetail).then((copyResult) => {
         copyData = [copyResult];
         return modals.users.findById(user.id || user.ID);
-      }).then((userResult) => {
-        if (userResult.email) {
-          UploadController.mailUserForJob(userResult, user);
-        }
-
+      }).then(() => {
         UploadController.notifyTeam(user, jobResult);
 
         if (type && (requiredDetail.productId || jobResult.productId)) {
@@ -442,9 +438,6 @@ class UploadController {
     }).then(billResult => {
       jobCopies = billResult[0];
       const userResult = billResult[billResult.length - 1];
-      if (userResult.email) {
-        UploadController.mailUserForJob(userResult, user);
-      }
 
       UploadController.notifyTeam(user, jobResult);
 

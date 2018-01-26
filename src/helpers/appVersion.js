@@ -68,7 +68,7 @@ const updateUserActiveStatus = (request, reply) => {
       const userDetail = userResult ? userResult.toJSON() : userResult;
       if (userDetail) {
         return MODAL.users.update({
-          last_active_date: moment(),
+          last_active_date: moment.utc(),
           last_api: request.url.pathname,
         }, {
           where: {

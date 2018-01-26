@@ -169,7 +169,11 @@ var PUCAdaptor = function () {
         order: [['document_date', 'DESC']]
       }).then(function (pucResult) {
         return pucResult.map(function (item) {
-          return item.toJSON();
+          var productItem = item.toJSON();
+          productItem.purchaseDate = _moment2.default.utc(
+              productItem.purchaseDate, _moment2.default.ISO_8601).
+              startOf('days');
+          return productItem;
         }).sort(sortAmcWarrantyInsurancePUC);
       });
     }
@@ -298,9 +302,76 @@ var PUCAdaptor = function () {
       });
     }
   }, {
+    key: 'updatePUCPeriod',
+    value: function updatePUCPeriod(
+        options, productPurchaseDate, productNewPurchaseDate) {
+      var _this = this;
+
+      return this.modals.pucs.findAll({
+        where: options,
+        order: [['document_date', 'ASC']],
+      }).then(function(result) {
+        var document_date = productNewPurchaseDate;
+        var pucExpiryDate = void 0;
+        return Promise.all(result.map(function(item) {
+          var pucItem = item.toJSON();
+          var id = pucItem.id;
+          if (_moment2.default.utc(pucItem.effective_date).
+                  startOf('days').
+                  valueOf() === _moment2.default.utc(productPurchaseDate).
+                  startOf('days').
+                  valueOf() || _moment2.default.utc(pucItem.effective_date).
+                  startOf('days').
+                  valueOf() < _moment2.default.utc(productNewPurchaseDate).
+                  startOf('days').
+                  valueOf()) {
+            pucItem.effective_date = productNewPurchaseDate;
+            pucItem.document_date = productNewPurchaseDate;
+            pucExpiryDate = _moment2.default.utc(pucItem.expiry_date).
+                add(1, 'days');
+            pucItem.expiry_date = _moment2.default.utc(productNewPurchaseDate,
+                _moment2.default.ISO_8601).
+                add(_moment2.default.utc(pucItem.expiry_date,
+                    _moment2.default.ISO_8601).
+                    add(1, 'days').
+                    diff(_moment2.default.utc(productPurchaseDate,
+                        _moment2.default.ISO_8601), 'months'), 'months').
+                subtract(1, 'days');
+            pucItem.updated_by = options.user_id;
+            pucItem.status_type = 11;
+            document_date = _moment2.default.utc(pucItem.expiry_date).
+                add(1, 'days');
+
+            return _this.modals.pucs.update(pucItem, {where: {id: id}});
+          } else if (_moment2.default.utc(pucItem.effective_date).
+                  startOf('days').
+                  valueOf() ===
+              _moment2.default.utc(pucExpiryDate).startOf('days').valueOf()) {
+            pucItem.effective_date = document_date;
+            pucItem.document_date = document_date;
+            pucExpiryDate = pucItem.expiry_date;
+            pucItem.expiry_date = _moment2.default.utc(document_date,
+                _moment2.default.ISO_8601).
+                add(_moment2.default.utc(pucItem.expiry_date,
+                    _moment2.default.ISO_8601).
+                    add(1, 'days').
+                    diff(_moment2.default.utc(pucExpiryDate,
+                        _moment2.default.ISO_8601), 'months'), 'months').
+                subtract(1, 'days');
+            pucItem.updated_by = options.user_id;
+            pucItem.status_type = 11;
+            document_date = pucItem.expiry_date;
+            return _this.modals.pucs.update(pucItem, {where: {id: id}});
+          }
+
+          return undefined;
+        }));
+      });
+    }
+  }, {
     key: 'removePUCs',
     value: function removePUCs(id, copyId, values) {
-      var _this = this;
+      var _this2 = this;
 
       return this.modals.pucs.findOne({
         where: {
@@ -317,7 +388,7 @@ var PUCAdaptor = function () {
           return result.toJSON();
         }
 
-        return _this.modals.pucs.destroy({
+        return _this2.modals.pucs.destroy({
           where: {
             id: id,
           }
@@ -329,26 +400,29 @@ var PUCAdaptor = function () {
   }, {
     key: 'deletePUCs',
     value: function deletePUCs(id, user_id) {
-      var _this2 = this;
+      var _this3 = this;
 
       return this.modals.pucs.findById(id).then(function(result) {
         if (result) {
           return Promise.all([
-            _this2.modals.pucs.destroy({
+            _this3.modals.pucs.destroy({
               where: {
                 id: id,
                 user_id: user_id,
               },
-            }), result.copies.length > 0 ? _this2.modals.jobCopies.update({
-              status_type: 3,
-              updated_by: user_id,
-            }, {
-              where: {
-                id: result.copies.map(function(item) {
-                  return item.copyId;
-                }),
-              },
-            }) : undefined]).then(function() {
+            }),
+            result.copies && result.copies.length > 0 ?
+                _this3.modals.jobCopies.update({
+                  status_type: 3,
+                  updated_by: user_id,
+                }, {
+                  where: {
+                    id: result.copies.map(function(item) {
+                      return item.copyId;
+                    }),
+                  },
+                }) :
+                undefined]).then(function() {
             return true;
           });
         }

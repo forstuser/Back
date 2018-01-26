@@ -109,7 +109,10 @@ var DashboardAdaptor = function () {
         var insightData = result[1].map(function (item) {
           var insightItem = item;
           var index = distinctInsight.findIndex(function (distinctItem) {
-            return (0, _moment2.default)(distinctItem.purchaseDate, _moment2.default.ISO_8601).startOf('day').valueOf() === (0, _moment2.default)(insightItem.purchaseDate, _moment2.default.ISO_8601).startOf('day').valueOf();
+            return _moment2.default.utc(distinctItem.purchaseDate,
+                _moment2.default.ISO_8601).startOf('day').valueOf() ===
+                _moment2.default.utc(insightItem.purchaseDate,
+                    _moment2.default.ISO_8601).startOf('day').valueOf();
           });
 
           if (index === -1) {
@@ -213,33 +216,20 @@ var DashboardAdaptor = function () {
           where: {
             user_id: user.id || user.ID,
             status_type: 11,
-            main_category_id: [2, 3]
+            main_category_id: [1, 2, 3],
           }
         })]).then(function (result) {
           var billCounts = parseInt(result[0]);
           var productCounts = parseInt(result[1]);
-          if (billCounts) {
-            return {
-              status: true,
-              message: 'User Exist',
-              billCounts: billCounts,
-              hasProducts: !!(productCounts && productCounts > 0),
-              showDashboard: !!(billCounts && billCounts > 0) || !!(productCounts && productCounts > 1),
-              isExistingUser: !isNewUser,
-              authorization: token,
-              userId: user.id || user.ID,
-              forceUpdate: request.pre.forceUpdate
-            };
-          }
-
           return {
             status: true,
-            message: 'Existing User',
-            authorization: token,
+            message: !isNewUser ? 'Existing User' : 'New User',
+            billCounts: billCounts,
             hasProducts: !!(productCounts && productCounts > 0),
-            billCounts: 0,
-            showDashboard: false,
+            showDashboard: !!(billCounts && billCounts > 0) ||
+            !!(productCounts && productCounts > 1),
             isExistingUser: !isNewUser,
+            authorization: token,
             userId: user.id || user.ID,
             forceUpdate: request.pre.forceUpdate
           };
@@ -256,7 +246,11 @@ var DashboardAdaptor = function () {
         });
       }
 
-      _notification2.default.sendMailOnDifferentSteps('Welcome to BinBill!', user.email, user, 1);
+      if (user.email) {
+        _notification2.default.sendMailOnDifferentSteps('Welcome to BinBill!',
+            user.email, user, 1);
+      }
+
       return {
         status: true,
         message: 'New User',

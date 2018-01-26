@@ -371,7 +371,11 @@ var UserController = function () {
         return reply(replyObject);
       } else if (request.pre.userExist && !request.pre.forceUpdate) {
         if (request.payload && request.payload.fcmId) {
-          fcmManager.deleteFcmDetails(user.id || user.ID, request.payload.fcmId, request.payload.platform).then(function (rows) {
+          fcmManager.deleteFcmDetails({
+            user_id: user.id || user.ID,
+            fcm_id: request.payload.fcmId,
+            platform_id: request.payload.platform || 1,
+          }).then(function(rows) {
             console.log('TOTAL FCM ID\'s DELETED: ', rows);
           });
         }

@@ -190,7 +190,13 @@ class WarrantyAdaptor {
         'copies'],
       order: [['expiry_date', 'DESC']],
     }).
-        then((warrantyResult) => warrantyResult.map((item) => item.toJSON()).
+        then((warrantyResult) => warrantyResult.map((item) => {
+          const productItem = item.toJSON();
+          productItem.purchaseDate = moment.utc(productItem.purchaseDate,
+              moment.ISO_8601).
+              startOf('days');
+          return productItem;
+        }).
             sort(sortAmcWarrantyInsuranceRepair));
   }
 
@@ -331,13 +337,19 @@ class WarrantyAdaptor {
         if (moment.utc(warrantyItem.effective_date).
                 startOf('days').
                 valueOf() ===
-            moment.utc(productPurchaseDate).startOf('days').valueOf()) {
+            moment.utc(productPurchaseDate).startOf('days').valueOf() ||
+            moment.utc(warrantyItem.effective_date).
+                startOf('days').
+                valueOf() <
+            moment.utc(productNewPurchaseDate).startOf('days').valueOf()) {
           warrantyItem.effective_date = productNewPurchaseDate;
           warrantyItem.document_date = productNewPurchaseDate;
           if (warrantyItem.warranty_type === 1) {
-            warrantyExpiryDate = warrantyItem.expiry_date;
+            warrantyExpiryDate = moment.utc(warrantyItem.expiry_date).
+                add(1, 'days');
           } else {
-            dualWarrantyExpiryDate = warrantyItem.expiry_date;
+            dualWarrantyExpiryDate = moment.utc(warrantyItem.expiry_date).
+                add(1, 'days');
           }
           warrantyItem.expiry_date = moment.utc(productNewPurchaseDate,
               moment.ISO_8601).
@@ -349,9 +361,9 @@ class WarrantyAdaptor {
           warrantyItem.updated_by = options.user_id;
           warrantyItem.status_type = 11;
           if (warrantyItem.warranty_type === 1) {
-            document_date = warrantyItem.expiry_date;
+            document_date = moment.utc(warrantyItem.expiry_date).add(1, 'days');
           } else {
-            dual_date = warrantyItem.expiry_date;
+            dual_date = moment.utc(warrantyItem.expiry_date).add(1, 'days');
           }
 
           return this.modals.warranties.update(warrantyItem, {where: {id}});
@@ -435,7 +447,9 @@ class WarrantyAdaptor {
               id,
               user_id,
             },
-          }), result.copies.length > 0 ? this.modals.jobCopies.update({
+          }),
+          result.copies && result.copies.length > 0 ?
+              this.modals.jobCopies.update({
             status_type: 3,
             updated_by: user_id,
           }, {

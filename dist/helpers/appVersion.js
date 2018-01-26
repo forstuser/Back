@@ -84,7 +84,7 @@ var updateUserActiveStatus = function updateUserActiveStatus(request, reply) {
       var userDetail = userResult ? userResult.toJSON() : userResult;
       if (userDetail) {
         return MODAL.users.update({
-          last_active_date: (0, _moment2.default)(),
+          last_active_date: _moment2.default.utc(),
           last_api: request.url.pathname,
         }, {
           where: {

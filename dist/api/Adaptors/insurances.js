@@ -198,7 +198,11 @@ var InsuranceAdaptor = function () {
         order: [['expiry_date', 'DESC']]
       }).then(function (insuranceResult) {
         return insuranceResult.map(function (item) {
-          return item.toJSON();
+          var productItem = item.toJSON();
+          productItem.purchaseDate = _moment2.default.utc(
+              productItem.purchaseDate, _moment2.default.ISO_8601).
+              startOf('days');
+          return productItem;
         }).sort(sortAmcWarrantyInsuranceRepair);
       });
     }
@@ -334,9 +338,80 @@ var InsuranceAdaptor = function () {
       });
     }
   }, {
+    key: 'updateInsurancePeriod',
+    value: function updateInsurancePeriod(
+        options, productPurchaseDate, productNewPurchaseDate) {
+      var _this2 = this;
+
+      return this.modals.insurances.findAll({
+        where: options,
+        order: [['document_date', 'ASC']],
+      }).then(function(result) {
+        var document_date = productNewPurchaseDate;
+        var insuranceExpiryDate = void 0;
+        return Promise.all(result.map(function(item) {
+          var insuranceItem = item.toJSON();
+          var id = insuranceItem.id;
+          if (_moment2.default.utc(insuranceItem.effective_date).
+                  startOf('days').
+                  valueOf() === _moment2.default.utc(productPurchaseDate).
+                  startOf('days').
+                  valueOf() ||
+              _moment2.default.utc(insuranceItem.effective_date).
+                  startOf('days').
+                  valueOf() < _moment2.default.utc(productNewPurchaseDate).
+                  startOf('days').
+                  valueOf()) {
+            insuranceItem.effective_date = productNewPurchaseDate;
+            insuranceItem.document_date = productNewPurchaseDate;
+            insuranceExpiryDate = _moment2.default.utc(
+                insuranceItem.expiry_date).add(1, 'days');
+            insuranceItem.expiry_date = _moment2.default.utc(
+                productNewPurchaseDate, _moment2.default.ISO_8601).
+                add(_moment2.default.utc(insuranceItem.expiry_date,
+                    _moment2.default.ISO_8601).
+                    add(1, 'days').
+                    diff(_moment2.default.utc(productPurchaseDate,
+                        _moment2.default.ISO_8601), 'months'), 'months').
+                subtract(1, 'days');
+            insuranceItem.updated_by = options.user_id;
+            insuranceItem.status_type = 11;
+            document_date = _moment2.default.utc(insuranceItem.expiry_date).
+                add(1, 'days');
+
+            return _this2.modals.insurances.update(insuranceItem,
+                {where: {id: id}});
+          } else if (_moment2.default.utc(insuranceItem.effective_date).
+                  startOf('days').
+                  valueOf() === _moment2.default.utc(insuranceExpiryDate).
+                  startOf('days').
+                  valueOf()) {
+            insuranceItem.effective_date = document_date;
+            insuranceItem.document_date = document_date;
+            insuranceExpiryDate = insuranceItem.expiry_date;
+            insuranceItem.expiry_date = _moment2.default.utc(document_date,
+                _moment2.default.ISO_8601).
+                add(_moment2.default.utc(insuranceItem.expiry_date,
+                    _moment2.default.ISO_8601).
+                    add(1, 'days').
+                    diff(_moment2.default.utc(insuranceExpiryDate,
+                        _moment2.default.ISO_8601), 'months'), 'months').
+                subtract(1, 'days');
+            insuranceItem.updated_by = options.user_id;
+            insuranceItem.status_type = 11;
+            document_date = insuranceItem.expiry_date;
+            return _this2.modals.insurances.update(insuranceItem,
+                {where: {id: id}});
+          }
+
+          return undefined;
+        }));
+      });
+    }
+  }, {
     key: 'removeInsurances',
     value: function removeInsurances(id, copyId, values) {
-      var _this2 = this;
+      var _this3 = this;
 
       return this.modals.insurances.findOne({
         where: {
@@ -352,7 +427,7 @@ var InsuranceAdaptor = function () {
           return result.toJSON();
         }
 
-        return _this2.modals.insurances.destroy({
+        return _this3.modals.insurances.destroy({
           where: {
             id: id,
           }
@@ -364,26 +439,29 @@ var InsuranceAdaptor = function () {
   }, {
     key: 'deleteInsurance',
     value: function deleteInsurance(id, user_id) {
-      var _this3 = this;
+      var _this4 = this;
 
       return this.modals.insurances.findById(id).then(function(result) {
         if (result) {
           return Promise.all([
-            _this3.modals.insurances.destroy({
+            _this4.modals.insurances.destroy({
               where: {
                 id: id,
                 user_id: user_id,
               },
-            }), result.copies.length > 0 ? _this3.modals.jobCopies.update({
-              status_type: 3,
-              updated_by: user_id,
-            }, {
-              where: {
-                id: result.copies.map(function(item) {
-                  return item.copyId;
-                }),
-              },
-            }) : undefined]).then(function() {
+            }),
+            result.copies && result.copies.length > 0 ?
+                _this4.modals.jobCopies.update({
+                  status_type: 3,
+                  updated_by: user_id,
+                }, {
+                  where: {
+                    id: result.copies.map(function(item) {
+                      return item.copyId;
+                    }),
+                  },
+                }) :
+                undefined]).then(function() {
             return true;
           });
         }

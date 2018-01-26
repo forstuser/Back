@@ -62,9 +62,6 @@ class GeneralController {
                 {category_id: request.query.categoryId}, true),
             categoryAdaptor.retrieveRenewalTypes({
               status_type: 1,
-              type: {
-                $gte: 7,
-              },
             })]);
         } else if (request.query.mainCategoryId) {
           return categoryAdaptor.retrieveCategories(
@@ -133,6 +130,7 @@ class GeneralController {
           $ne: 3,
         },
       },
+      order: [['id']],
     }).then((faq) => {
       return reply({status: true, faq}).code(200);
     }).catch((err) => {
@@ -144,7 +142,7 @@ class GeneralController {
   }
 
   static retrieveTips(request, reply) {
-    return modals.tips.findAll({}).then((tips) => {
+    return modals.tips.findAll({order: [['id']]}).then((tips) => {
       return reply({status: true, tips}).code(200);
     }).catch((err) => {
       console.log(
@@ -195,14 +193,14 @@ class GeneralController {
             status_type: 8,
             document_number: request.payload.document_number,
             document_date: request.payload.document_date ?
-                moment(request.payload.document_date,
+                moment.utc(request.payload.document_date,
                     moment.ISO_8601).
                     isValid() ?
-                    moment(request.payload.document_date,
+                    moment.utc(request.payload.document_date,
                         moment.ISO_8601).
                         startOf('day').
                         format('YYYY-MM-DD') :
-                    moment(request.payload.document_date, 'DD MMM YY').
+                    moment.utc(request.payload.document_date, 'DD MMM YY').
                         startOf('day').
                         format('YYYY-MM-DD') :
                 undefined,
@@ -212,9 +210,6 @@ class GeneralController {
               {category_id: request.payload.category_id}, true),
           categoryAdaptor.retrieveRenewalTypes({
             status_type: 1,
-            type: {
-              $gte: 7,
-            },
           })]);
       }).then((initResult) => reply({
         status: true,
