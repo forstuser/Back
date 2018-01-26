@@ -321,11 +321,11 @@ var WarrantyAdaptor = function () {
             }
             warrantyItem.expiry_date = _moment2.default.utc(
                 productNewPurchaseDate, _moment2.default.ISO_8601).
-                add(_moment2.default.utc(productPurchaseDate,
+                add(_moment2.default.utc(warrantyItem.expiry_date,
                     _moment2.default.ISO_8601).
-                        diff(_moment2.default.utc(warrantyItem.expiry_date,
-                            _moment2.default.ISO_8601).add(1, 'days'), 'months'),
-                    'months').
+                    add(1, 'days').
+                    diff(_moment2.default.utc(productPurchaseDate,
+                        _moment2.default.ISO_8601), 'months'), 'months').
                 subtract(1, 'days');
             warrantyItem.updated_by = options.user_id;
             warrantyItem.status_type = 11;
@@ -361,12 +361,13 @@ var WarrantyAdaptor = function () {
             warrantyItem.expiry_date = _moment2.default.utc(
                 warrantyItem.warranty_type === 1 ? document_date : dual_date,
                 _moment2.default.ISO_8601).
-                add(_moment2.default.utc(warrantyItem.warranty_type === 1 ?
-                    warrantyExpiryDate :
-                    dualWarrantyExpiryDate, _moment2.default.ISO_8601).
-                        diff(_moment2.default.utc(warrantyItem.expiry_date,
-                            _moment2.default.ISO_8601).add(1, 'days'), 'months'),
-                    'months').
+                add(_moment2.default.utc(warrantyItem.expiry_date,
+                    _moment2.default.ISO_8601).
+                    add(1, 'days').
+                    diff(_moment2.default.utc(warrantyItem.warranty_type === 1 ?
+                        warrantyExpiryDate :
+                        dualWarrantyExpiryDate, _moment2.default.ISO_8601),
+                        'months'), 'months').
                 subtract(1, 'days');
             warrantyItem.updated_by = options.user_id;
             warrantyItem.status_type = 11;

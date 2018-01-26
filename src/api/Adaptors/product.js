@@ -2765,8 +2765,8 @@ class ProductAdaptor {
       productResult.updateAttributes(productDetail);
       productDetail = productResult.toJSON();
       if (productDetail.document_date &&
-          moment.utc(currentPurchaseDate, moment.ISO_8601) !==
-          moment.utc(productDetail.document_date, moment.ISO_8601)) {
+          moment.utc(currentPurchaseDate, moment.ISO_8601).valueOf() !==
+          moment.utc(productDetail.document_date, moment.ISO_8601).valueOf()) {
         return this.warrantyAdaptor.updateWarrantyPeriod(
             {product_id: id, user_id: productDetail.user_id},
             currentPurchaseDate, productDetail.document_date);

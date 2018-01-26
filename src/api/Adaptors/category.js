@@ -173,6 +173,7 @@ export default class CategoryAdaptor {
           }), this.modals.insuranceBrands.findAll({
             where: {
               type: [1, 3],
+              status_type: 1,
             },
             include: {
               model: this.modals.categories,
@@ -192,6 +193,7 @@ export default class CategoryAdaptor {
           }), this.modals.insuranceBrands.findAll({
             where: {
               type: [2, 3],
+              status_type: 1,
             },
             include: {
               model: this.modals.categories,

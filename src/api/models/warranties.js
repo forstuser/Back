@@ -52,6 +52,7 @@ export default (sequelize, DataTypes) => {
         },
         expiry_date: {
           type: DataTypes.DATE,
+          allowNull: true,
         },
         document_date: {
           type: DataTypes.DATE,

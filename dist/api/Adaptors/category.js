@@ -153,7 +153,8 @@ var CategoryAdaptor = function () {
             status_type: 1
           }), _this2.modals.insuranceBrands.findAll({
             where: {
-              type: [1, 3]
+              type: [1, 3],
+              status_type: 1,
             },
             include: {
               model: _this2.modals.categories,
@@ -172,7 +173,8 @@ var CategoryAdaptor = function () {
                 'category_id']],
           }), _this2.modals.insuranceBrands.findAll({
             where: {
-              type: [2, 3]
+              type: [2, 3],
+              status_type: 1,
             },
             include: {
               model: _this2.modals.categories,

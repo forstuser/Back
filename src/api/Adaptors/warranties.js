@@ -341,9 +341,11 @@ class WarrantyAdaptor {
           }
           warrantyItem.expiry_date = moment.utc(productNewPurchaseDate,
               moment.ISO_8601).
-              add(moment.utc(productPurchaseDate, moment.ISO_8601).
-                  diff(moment.utc(warrantyItem.expiry_date, moment.ISO_8601).
-                      add(1, 'days'), 'months'), 'months').subtract(1, 'days');
+              add(moment.utc(warrantyItem.expiry_date, moment.ISO_8601).
+                  add(1, 'days').
+                  diff(moment.utc(productPurchaseDate, moment.ISO_8601),
+                      'months'), 'months').
+              subtract(1, 'days');
           warrantyItem.updated_by = options.user_id;
           warrantyItem.status_type = 11;
           if (warrantyItem.warranty_type === 1) {
@@ -375,12 +377,13 @@ class WarrantyAdaptor {
           warrantyItem.expiry_date = moment.utc(
               warrantyItem.warranty_type === 1 ? document_date : dual_date,
               moment.ISO_8601).
-              add(moment.utc(warrantyItem.warranty_type === 1 ?
-                  warrantyExpiryDate :
-                  dualWarrantyExpiryDate,
-                  moment.ISO_8601).
-                  diff(moment.utc(warrantyItem.expiry_date, moment.ISO_8601).
-                      add(1, 'days'), 'months'), 'months').subtract(1, 'days');
+              add(moment.utc(warrantyItem.expiry_date, moment.ISO_8601).
+                  add(1, 'days').
+                  diff(moment.utc(warrantyItem.warranty_type === 1 ?
+                      warrantyExpiryDate :
+                      dualWarrantyExpiryDate,
+                      moment.ISO_8601), 'months'), 'months').
+              subtract(1, 'days');
           warrantyItem.updated_by = options.user_id;
           warrantyItem.status_type = 11;
 

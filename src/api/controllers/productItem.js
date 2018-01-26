@@ -46,11 +46,12 @@ class ProductItemController {
       (request.payload.seller_contact ||
           request.payload.seller_name) ?
           sellerAdaptor.retrieveOrCreateOfflineSellers({
+                seller_name: request.payload.seller_name,
                 contact_no: request.payload.seller_contact,
               },
               {
                 seller_name: request.payload.seller_name,
-                contact_no: request.payload.contact_no,
+                contact_no: request.payload.seller_contact,
                 updated_by: user.id || user.ID,
                 created_by: user.id || user.ID,
                 address: request.payload.seller_address,
@@ -219,18 +220,18 @@ class ProductItemController {
                 moment.ISO_8601).startOf('day') :
             moment.utc(effective_date, 'DD MMM YY').
                 startOf('day');
-        const expiry_date = moment.utc(effective_date,
+        const expiry_date = insuranceRenewalType ? moment.utc(effective_date,
             moment.ISO_8601).
             add(insuranceRenewalType.effective_months, 'months').
             subtract(1, 'day').
-            endOf('days');
+            endOf('days') : undefined;
         const insuranceBody = {
           renewal_type: request.payload.renewal_type || 8,
           updated_by: user.id || user.ID,
           job_id: request.payload.job_id,
           status_type: 11,
           product_id,
-          expiry_date: effective_date ?
+          expiry_date: effective_date && expiry_date ?
               moment.utc(expiry_date).format('YYYY-MM-DD') :
               undefined,
           effective_date: effective_date ? moment.utc(effective_date).
@@ -326,11 +327,12 @@ class ProductItemController {
       (request.payload.seller_contact ||
           request.payload.seller_name) ?
           sellerAdaptor.retrieveOrCreateOfflineSellers({
+                seller_name: request.payload.seller_name,
                 contact_no: request.payload.seller_contact,
               },
               {
                 seller_name: request.payload.seller_name,
-                contact_no: request.payload.contact_no,
+                contact_no: request.payload.seller_contact,
                 updated_by: user.id || user.ID,
                 created_by: user.id || user.ID,
                 address: request.payload.seller_address,
@@ -475,11 +477,12 @@ class ProductItemController {
       (request.payload.seller_contact ||
           request.payload.seller_name) ?
           sellerAdaptor.retrieveOrCreateOfflineSellers({
+                seller_name: request.payload.seller_name,
                 contact_no: request.payload.seller_contact,
               },
               {
                 seller_name: request.payload.seller_name,
-                contact_no: request.payload.contact_no,
+                contact_no: request.payload.seller_contact,
                 updated_by: user.id || user.ID,
                 created_by: user.id || user.ID,
                 address: request.payload.seller_address,
@@ -680,10 +683,12 @@ class ProductItemController {
                 moment.ISO_8601).startOf('day') :
             moment.utc(effective_date, 'DD MMM YY').
                 startOf('day');
-        expiry_date = moment.utc(effective_date, moment.ISO_8601).
+        expiry_date = warrantyRenewalType ?
+            moment.utc(effective_date, moment.ISO_8601).
             add(warrantyRenewalType.effective_months, 'months').
             subtract(1, 'day').
-            endOf('days');
+                endOf('days') :
+            undefined;
 
         console.log(
             `\n\n\n\n\n\n\n\n\n\n\n\n\n\n ${effective_date}, ${expiry_date}`);
@@ -693,7 +698,7 @@ class ProductItemController {
           status_type: 11,
           job_id: request.payload.job_id,
           product_id: product_id,
-          expiry_date: effective_date ?
+          expiry_date: effective_date && expiry_date ?
               moment.utc(expiry_date).format('YYYY-MM-DD') :
               undefined,
           effective_date: effective_date ? moment.utc(effective_date).

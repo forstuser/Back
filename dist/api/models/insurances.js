@@ -61,7 +61,8 @@ exports.default = function (sequelize, DataTypes) {
       defaultValue: sequelize.literal('NOW()')
     },
     expiry_date: {
-      type: DataTypes.DATE
+      type: DataTypes.DATE,
+      allowNull: true,
     },
     document_date: {
       type: DataTypes.DATE,

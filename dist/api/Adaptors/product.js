@@ -2536,9 +2536,9 @@ var ProductAdaptor = function () {
         productDetail = productResult.toJSON();
         if (productDetail.document_date &&
             _moment2.default.utc(currentPurchaseDate,
-                _moment2.default.ISO_8601) !==
+                _moment2.default.ISO_8601).valueOf() !==
             _moment2.default.utc(productDetail.document_date,
-                _moment2.default.ISO_8601)) {
+                _moment2.default.ISO_8601).valueOf()) {
           return _this11.warrantyAdaptor.updateWarrantyPeriod(
               {product_id: id, user_id: productDetail.user_id},
               currentPurchaseDate, productDetail.document_date);
