@@ -457,6 +457,7 @@ var ProductAdaptor = function () {
           }
           return productItem;
         });
+        console.log(JSON.stringify(products));
         if (products.length > 0) {
           return _this2.retrieveProductMetadata({
             product_id: products.map(function(item) {
@@ -1647,6 +1648,10 @@ var ProductAdaptor = function () {
           if (productItemsResult[6] && productItemsResult[6].length > 0) {
             return _this7.updateProduct(product.id, {
               service_schedule_id: productItemsResult[6][0].id,
+            });
+          } else if (product.service_schedule_id && !product.model) {
+            return _this7.updateProduct(product.id, {
+              service_schedule_id: null,
             });
           }
           return product;

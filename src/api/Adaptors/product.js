@@ -502,6 +502,7 @@ class ProductAdaptor {
         }
         return productItem;
       });
+      console.log(JSON.stringify(products));
       if (products.length > 0) {
         return this.retrieveProductMetadata({
           product_id: products.map((item) => item.id),
@@ -1871,6 +1872,10 @@ class ProductAdaptor {
             if (productItemsResult[6] && productItemsResult[6].length > 0) {
               return this.updateProduct(product.id, {
                 service_schedule_id: productItemsResult[6][0].id,
+              });
+            } else if (product.service_schedule_id && !product.model) {
+              return this.updateProduct(product.id, {
+                service_schedule_id: null,
               });
             }
             return product;

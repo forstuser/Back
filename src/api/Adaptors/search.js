@@ -160,7 +160,7 @@ class SearchAdaptor {
   fetchProductDetails(user, searchValue, productIds) {
     return this.productAdaptor.retrieveProducts({
       user_id: user.id || user.ID,
-      status_type: [5, 8, 11],
+      status_type: [5, 11],
       $or: {
         id: productIds,
         $and: [
