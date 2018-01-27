@@ -489,9 +489,8 @@ class ProductAdaptor {
         'status_type',
       ],
       order: [['document_date', 'DESC']],
-    }).then((productResult) => {
-      products = productResult.map((item) => {
-        const productItem = item.toJSON();
+    }).then((productResult) => productResult.map((item) => {
+      const productItem = item.toJSON();
         productItem.purchaseDate = moment.utc(productItem.purchaseDate,
             moment.ISO_8601).
             startOf('days');
@@ -501,27 +500,7 @@ class ProductAdaptor {
               add(productItem.schedule.due_in_months, 'months');
         }
         return productItem;
-      });
-      console.log(JSON.stringify(products));
-      if (products.length > 0) {
-        return this.retrieveProductMetadata({
-          product_id: products.map((item) => item.id),
-        });
-      }
-      return undefined;
-    }).then((results) => {
-      if (results) {
-        const metaData = results;
-        products = products.map((productItem) => {
-          productItem.productMetaData = metaData.filter(
-              (item) => item.productId === productItem.id &&
-                  !item.name.toLowerCase().includes('puc'));
-          return productItem;
-        });
-      }
-
-      return products;
-    });
+    }))
   }
 
   retrieveUsersLastProduct(options) {
@@ -2320,10 +2299,6 @@ class ProductAdaptor {
   }
 
   retrieveProductMetadata(options) {
-    options.status_type = {
-      $notIn: [3, 9],
-    };
-
     return this.modals.metaData.findAll({
       where: options,
       include: [
@@ -2357,6 +2332,9 @@ class ProductAdaptor {
       const metaData = metaDataResult.map((item) => item.toJSON());
       const categoryFormIds = metaData.map((item) => item.categoryFormId);
 
+      console.log({
+        metaData, categoryFormIds,
+      });
       return Promise.all([
         metaData, this.modals.dropDowns.findAll({
           where: {
@@ -2367,6 +2345,10 @@ class ProductAdaptor {
     }).then((result) => {
       const unOrderedMetaData = result[0].map((item) => {
         const metaDataItem = item;
+
+        console.log({
+          metaDataItem,
+        });
         if (metaDataItem.formType === 2 && metaDataItem.value) {
           const dropDown = result[1].find(
               (item) => item.id === parseInt(metaDataItem.value));
@@ -2375,6 +2357,10 @@ class ProductAdaptor {
 
         return metaDataItem;
       }).filter((item) => item.value);
+
+      console.log({
+        unOrderedMetaData,
+      });
 
       unOrderedMetaData.sort(
           (itemA, itemB) => itemA.displayIndex - itemB.displayIndex);
@@ -2531,25 +2517,10 @@ class ProductAdaptor {
 
   retrieveNotificationProducts(options) {
     if (!options.status_type) {
-      options.status_type = {
-        $notIn: [3, 9],
-      };
+      options.status_type = [5, 11];
     }
-
-    const billOption = {
-      status_type: 5,
-    };
-
-    let products;
     return this.modals.products.findAll({
       where: options,
-      include: [
-        {
-          model: this.modals.bills,
-          where: billOption,
-          required: true,
-        },
-      ],
       attributes: [
         'id',
         [
@@ -2562,6 +2533,10 @@ class ProductAdaptor {
           'main_category_id',
           'masterCategoryId'],
         'taxes',
+        [
+          this.modals.sequelize.fn('CONCAT', 'products/',
+              this.modals.sequelize.literal('id')),
+          'productURL'],
         [
           'document_date',
           'purchaseDate'],
@@ -2576,23 +2551,17 @@ class ProductAdaptor {
         'copies', 'user_id',
       ],
     }).then((productResult) => {
-      products = productResult.map((item) => item.toJSON());
-      return this.retrieveProductMetadata({
-        product_id: {
-          $in: products.map((item) => item.id),
-        },
+      console.log(productResult.map((item) => item.toJSON()));
+      const products = productResult.map((item) => item.toJSON());
+      const product_id = products.map((item) => item.id);
+      console.log('\n\n\n\n\n\n\n\n');
+      console.log({
+        product_id,
       });
-    }).then((results) => {
-      const metaData = results;
-
-      products = products.map((productItem) => {
-        productItem.productMetaData = metaData.filter(
-            (item) => item.productId === productItem.id);
-
-        return productItem;
-      });
-
-      return products;
+      return Promise.all([
+        this.retrieveProductMetadata({
+          product_id,
+        }), products]);
     });
   }
 

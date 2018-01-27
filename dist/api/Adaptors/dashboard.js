@@ -266,11 +266,7 @@ var DashboardAdaptor = function () {
     key: 'filterUpcomingService',
     value: function filterUpcomingService(user) {
       return Promise.all([
-        this.productAdaptor.retrieveUpcomingProducts({
-        user_id: user.id || user.ID,
-        status_type: [5, 11],
-        main_category_id: [6, 8]
-      }), this.amcAdaptor.retrieveAMCs({
+        this.amcAdaptor.retrieveAMCs({
         user_id: user.id || user.ID,
           status_type: [5, 11],
           expiry_date: {
@@ -306,40 +302,12 @@ var DashboardAdaptor = function () {
           service_schedule_id: {
             $not: null,
           },
-      })]).then(function (result) {
-        var products = result[0].map(function (item) {
-          var product = item;
-
-          product.productMetaData.map(function (metaItem) {
-            var metaData = metaItem;
-            if (metaData.name.toLowerCase().includes('due') &&
-                metaData.name.toLowerCase().includes('date') &&
-                metaData.value &&
-                _moment2.default.utc(metaData.value, _moment2.default.ISO_8601).
-                    isValid()) {
-              var dueDate_time = _moment2.default.utc(metaData.value,
-                  _moment2.default.ISO_8601);
-              product.dueDate = metaData.value;
-              product.dueIn = dueDate_time.diff(_moment2.default.utc(), 'days');
-            }
-            product.address = '';
-            if (metaData.name.toLowerCase().includes('address')) {
-              product.address = metaData.value;
-            }
-
-            return metaData;
-          });
-
-          product.productType = 1;
-          return product;
-        });
-
-        products = products.filter(function (item) {
-          return item.dueIn !== undefined && item.dueIn !== null &&
-              item.dueIn <= 30 && item.dueIn >= 0;
-        });
-
-        var amcs = result[1].map(function (item) {
+        }), this.productAdaptor.retrieveNotificationProducts({
+          user_id: user.id || user.ID,
+          status_type: [5, 11],
+          main_category_id: [6, 8],
+        })]).then(function(result) {
+        var amcs = result[0].map(function(item) {
           var amc = item;
           if (_moment2.default.utc(amc.expiryDate, _moment2.default.ISO_8601).
                   isValid()) {
@@ -357,7 +325,7 @@ var DashboardAdaptor = function () {
               item.dueIn <= 30 && item.dueIn >= 0;
         });
 
-        var insurances = result[2].map(function (item) {
+        var insurances = result[1].map(function(item) {
           var insurance = item;
           if (_moment2.default.utc(insurance.expiryDate,
                   _moment2.default.ISO_8601).isValid()) {
@@ -375,7 +343,7 @@ var DashboardAdaptor = function () {
               item.dueIn <= 30 && item.dueIn >= 0;
         });
 
-        var warranties = result[3].map(function (item) {
+        var warranties = result[2].map(function(item) {
           var warranty = item;
           if (_moment2.default.utc(warranty.expiryDate,
                   _moment2.default.ISO_8601).isValid()) {
@@ -393,7 +361,7 @@ var DashboardAdaptor = function () {
               item.dueIn <= 30 && item.dueIn >= 0;
         });
 
-        var pucProducts = result[4].map(function(item) {
+        var pucProducts = result[3].map(function(item) {
           var puc = item;
           if (_moment2.default.utc(puc.expiryDate, _moment2.default.ISO_8601).
                   isValid()) {
@@ -412,7 +380,7 @@ var DashboardAdaptor = function () {
               item.dueIn <= 30 && item.dueIn >= 0;
         });
 
-        var productServiceSchedule = result[5].filter(function(item) {
+        var productServiceSchedule = result[4].filter(function(item) {
           return item.schedule;
         }).map(function(item) {
           var scheduledProduct = item;
@@ -437,8 +405,51 @@ var DashboardAdaptor = function () {
           return item.dueIn !== undefined && item.dueIn !== null &&
               item.dueIn <= 7 && item.dueIn >= 0;
         });
+        var metaData = result[5][0];
+        var productList = result[5][1].map(function(productItem) {
+          productItem.productMetaData = metaData.filter(function(item) {
+            return item.productId === productItem.id;
+          });
 
-        return [].concat(_toConsumableArray(products),
+          return productItem;
+        });
+
+        productList = productList.map(function(item) {
+          var productItem = item;
+          productItem.productMetaData.forEach(function(metaItem) {
+            var metaData = metaItem;
+            if (metaData.name.toLowerCase().includes('due') &&
+                metaData.name.toLowerCase().includes('date') &&
+                metaData.value && (_moment2.default.utc(metaData.value,
+                    _moment2.default.ISO_8601).isValid() ||
+                    _moment2.default.utc(metaData.value, 'DD MMM YYYY').
+                        isValid())) {
+              var dueDate_time = _moment2.default.utc(metaData.value,
+                  _moment2.default.ISO_8601).isValid() ?
+                  _moment2.default.utc(metaData.value,
+                      _moment2.default.ISO_8601) :
+                  _moment2.default.utc(metaData.value, 'DD MMM YYYY');
+              productItem.dueDate = dueDate_time;
+              productItem.dueIn = dueDate_time.diff(_moment2.default.utc(),
+                  'days');
+            }
+            productItem.address = '';
+            if (metaData.name.toLowerCase().includes('address')) {
+              productItem.address = metaData.value;
+            }
+          });
+
+          productItem.productType = 1;
+          return productItem;
+        });
+        console.log('\n\n\n\n\n\n\n' + JSON.stringify(productList));
+
+        productList = productList.filter(function(item) {
+          return item.dueIn !== undefined && item.dueIn !== null &&
+              item.dueIn <= 30 && item.dueIn >= 0;
+        });
+
+        return [].concat(_toConsumableArray(productList),
             _toConsumableArray(warranties), _toConsumableArray(insurances),
             _toConsumableArray(amcs), _toConsumableArray(pucProducts),
             _toConsumableArray(productServiceSchedule));

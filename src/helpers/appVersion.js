@@ -66,6 +66,11 @@ const updateUserActiveStatus = (request, reply) => {
       },
     }).then((userResult) => {
       const userDetail = userResult ? userResult.toJSON() : userResult;
+      console.log(
+          `Last route ${request.url.pathname} accessed by user id ${user.id ||
+          user.ID} from ${request.headers.ios_app_version ?
+              'iOS' :
+              'android'}`);
       if (userDetail) {
         return MODAL.users.update({
           last_active_date: moment.utc(),

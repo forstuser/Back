@@ -238,11 +238,6 @@ class DashboardAdaptor {
 
   filterUpcomingService(user) {
     return Promise.all([
-      this.productAdaptor.retrieveUpcomingProducts({
-        user_id: user.id || user.ID,
-        status_type: [5, 11],
-        main_category_id: [6, 8],
-      }),
       this.amcAdaptor.retrieveAMCs({
         user_id: user.id || user.ID,
         status_type: [5, 11],
@@ -283,39 +278,13 @@ class DashboardAdaptor {
         service_schedule_id: {
           $not: null,
         },
+      }),
+      this.productAdaptor.retrieveNotificationProducts({
+        user_id: user.id || user.ID,
+        status_type: [5, 11],
+        main_category_id: [6, 8],
       })]).then((result) => {
-      let products = result[0].map((item) => {
-        const product = item;
-
-        product.productMetaData.map((metaItem) => {
-          const metaData = metaItem;
-          if (metaData.name.toLowerCase().includes('due') &&
-              metaData.name.toLowerCase().includes('date') &&
-              metaData.value &&
-              moment.utc(metaData.value, moment.ISO_8601).isValid()) {
-            const dueDate_time = moment.utc(metaData.value,
-                moment.ISO_8601);
-            product.dueDate = metaData.value;
-            product.dueIn = dueDate_time.diff(moment.utc(), 'days');
-          }
-          product.address = '';
-          if (metaData.name.toLowerCase().includes('address')) {
-            product.address = metaData.value;
-          }
-
-          return metaData;
-        });
-
-        product.productType = 1;
-        return product;
-      });
-
-      products = products.filter(
-          item => ((item.dueIn !== undefined && item.dueIn !== null) &&
-              item.dueIn <=
-              30 && item.dueIn >= 0));
-
-      let amcs = result[1].map((item) => {
+      let amcs = result[0].map((item) => {
         const amc = item;
         if (moment.utc(amc.expiryDate, moment.ISO_8601).isValid()) {
           const dueDate_time = moment.utc(amc.expiryDate, moment.ISO_8601).
@@ -331,7 +300,7 @@ class DashboardAdaptor {
           item => (item.dueIn !== undefined && item.dueIn !== null) &&
               item.dueIn <= 30 && item.dueIn >= 0);
 
-      let insurances = result[2].map((item) => {
+      let insurances = result[1].map((item) => {
         const insurance = item;
         if (moment.utc(insurance.expiryDate, moment.ISO_8601).isValid()) {
           const dueDate_time = moment.utc(insurance.expiryDate,
@@ -348,7 +317,7 @@ class DashboardAdaptor {
           item => (item.dueIn !== undefined && item.dueIn !== null) &&
               item.dueIn <= 30 && item.dueIn >= 0);
 
-      let warranties = result[3].map((item) => {
+      let warranties = result[2].map((item) => {
         const warranty = item;
         if (moment.utc(warranty.expiryDate, moment.ISO_8601).isValid()) {
           const dueDate_time = moment.utc(warranty.expiryDate,
@@ -365,7 +334,7 @@ class DashboardAdaptor {
           item => (item.dueIn !== undefined && item.dueIn !== null) &&
               item.dueIn <= 30 && item.dueIn >= 0);
 
-      let pucProducts = result[4].map((item) => {
+      let pucProducts = result[3].map((item) => {
         const puc = item;
         if (moment.utc(puc.expiryDate, moment.ISO_8601).isValid()) {
           const dueDate_time = moment.utc(puc.expiryDate, moment.ISO_8601).
@@ -382,7 +351,7 @@ class DashboardAdaptor {
           item => ((item.dueIn !== undefined && item.dueIn !== null) &&
               item.dueIn <= 30 && item.dueIn >= 0));
 
-      let productServiceSchedule = result[5].filter(item => item.schedule).
+      let productServiceSchedule = result[4].filter(item => item.schedule).
           map((item) => {
             const scheduledProduct = item;
             const scheduledDate = scheduledProduct.schedule ?
@@ -403,9 +372,47 @@ class DashboardAdaptor {
       productServiceSchedule = productServiceSchedule.filter(
           item => ((item.dueIn !== undefined && item.dueIn !== null) &&
               item.dueIn <= 7 && item.dueIn >= 0));
+      const metaData = result[5][0];
+      let productList = result[5][1].map((productItem) => {
+        productItem.productMetaData = metaData.filter(
+            (item) => item.productId === productItem.id);
+
+        return productItem;
+      });
+
+      productList = productList.map((item) => {
+        const productItem = item;
+        productItem.productMetaData.forEach((metaItem) => {
+          const metaData = metaItem;
+          if (metaData.name.toLowerCase().includes('due') &&
+              metaData.name.toLowerCase().includes('date') &&
+              metaData.value &&
+              (moment.utc(metaData.value, moment.ISO_8601).isValid() ||
+                  moment.utc(metaData.value, 'DD MMM YYYY').isValid())) {
+            const dueDate_time = moment.utc(metaData.value, moment.ISO_8601).
+                isValid() ? moment.utc(metaData.value,
+                moment.ISO_8601) : moment.utc(metaData.value, 'DD MMM YYYY');
+            productItem.dueDate = dueDate_time;
+            productItem.dueIn = dueDate_time.diff(moment.utc(), 'days');
+          }
+          productItem.address = '';
+          if (metaData.name.toLowerCase().includes('address')) {
+            productItem.address = metaData.value;
+          }
+        });
+
+        productItem.productType = 1;
+        return productItem;
+      });
+      console.log(`\n\n\n\n\n\n\n${JSON.stringify(productList)}`);
+
+      productList = productList.filter(
+          item => ((item.dueIn !== undefined && item.dueIn !== null) &&
+              item.dueIn <=
+              30 && item.dueIn >= 0));
 
       return [
-        ...products,
+        ...productList,
         ...warranties,
         ...insurances,
         ...amcs,

@@ -189,7 +189,7 @@ class NotificationAdaptor {
 
   filterUpcomingService(user) {
     return Promise.all([
-      this.productAdaptor.retrieveUpcomingProducts({
+      this.productAdaptor.retrieveNotificationProducts({
         user_id: user.id || user.ID,
         status_type: [5, 11],
         main_category_id: [6, 8],
@@ -236,15 +236,25 @@ class NotificationAdaptor {
           $not: null,
         },
       })]).then((result) => {
-      let products = result[0].map((item) => {
+      const metaData = result[0][0];
+      let productList = result[0][1].map((productItem) => {
+        productItem.productMetaData = metaData.filter(
+            (item) => item.productId === productItem.id);
+
+        return productItem;
+      });
+      productList = productList.map((item) => {
         const product = item;
 
-        product.productMetaData.map((metaItem) => {
+        product.productMetaData.forEach((metaItem) => {
           const metaData = metaItem;
           if (metaData.name.toLowerCase().includes('due') &&
               metaData.name.toLowerCase().includes('date') &&
-              moment.utc(metaData.value, moment.ISO_8601).isValid()) {
-            const dueDateTime = moment.utc(metaData.value, moment.ISO_8601);
+              (moment.utc(metaData.value, moment.ISO_8601).isValid() ||
+                  moment.utc(metaData.value, 'DD MMM YYYY').isValid())) {
+            const dueDateTime = moment.utc(metaData.value, moment.ISO_8601).
+                isValid() ? moment.utc(metaData.value,
+                moment.ISO_8601) : moment.utc(metaData.value, 'DD MMM YYYY');
             product.dueDate = metaData.value;
             product.dueIn = dueDateTime.diff(moment.utc(), 'days');
           }
@@ -254,8 +264,6 @@ class NotificationAdaptor {
             product.description = metaData.value;
             product.address = metaData.value;
           }
-
-          return metaData;
         });
 
         if (product.masterCategoryId.toString() === '6') {
@@ -269,7 +277,7 @@ class NotificationAdaptor {
         return product;
       });
 
-      products = products.filter(
+      productList = productList.filter(
           item => ((item.dueIn !== undefined && item.dueIn !== null) &&
               item.dueIn <= 30 && item.dueIn >= 0));
 
@@ -374,7 +382,7 @@ class NotificationAdaptor {
               item.dueIn <= 7 && item.dueIn >= 0));
 
       return [
-        ...products,
+        ...productList,
         ...warranties,
         ...insurances,
         ...amcs,

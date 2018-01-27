@@ -138,7 +138,7 @@ var NotificationAdaptor = function () {
     key: 'filterUpcomingService',
     value: function filterUpcomingService(user) {
       return Promise.all([
-        this.productAdaptor.retrieveUpcomingProducts({
+        this.productAdaptor.retrieveNotificationProducts({
         user_id: user.id || user.ID,
         status_type: [5, 11],
         main_category_id: [6, 8]
@@ -180,17 +180,30 @@ var NotificationAdaptor = function () {
             $not: null,
           },
       })]).then(function (result) {
-        var products = result[0].map(function (item) {
+        var metaData = result[0][0];
+        var productList = result[0][1].map(function(productItem) {
+          productItem.productMetaData = metaData.filter(function(item) {
+            return item.productId === productItem.id;
+          });
+
+          return productItem;
+        });
+        productList = productList.map(function(item) {
           var product = item;
 
-          product.productMetaData.map(function (metaItem) {
+          product.productMetaData.forEach(function(metaItem) {
             var metaData = metaItem;
             if (metaData.name.toLowerCase().includes('due') &&
                 metaData.name.toLowerCase().includes('date') &&
-                _moment2.default.utc(metaData.value, _moment2.default.ISO_8601).
-                    isValid()) {
+                (_moment2.default.utc(metaData.value,
+                    _moment2.default.ISO_8601).isValid() ||
+                    _moment2.default.utc(metaData.value, 'DD MMM YYYY').
+                        isValid())) {
               var dueDateTime = _moment2.default.utc(metaData.value,
-                  _moment2.default.ISO_8601);
+                  _moment2.default.ISO_8601).isValid() ?
+                  _moment2.default.utc(metaData.value,
+                      _moment2.default.ISO_8601) :
+                  _moment2.default.utc(metaData.value, 'DD MMM YYYY');
               product.dueDate = metaData.value;
               product.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
             }
@@ -200,8 +213,6 @@ var NotificationAdaptor = function () {
               product.description = metaData.value;
               product.address = metaData.value;
             }
-
-            return metaData;
           });
 
           if (product.masterCategoryId.toString() === '6') {
@@ -215,7 +226,7 @@ var NotificationAdaptor = function () {
           return product;
         });
 
-        products = products.filter(function (item) {
+        productList = productList.filter(function(item) {
           return item.dueIn !== undefined && item.dueIn !== null && item.dueIn <= 30 && item.dueIn >= 0;
         });
 
@@ -331,7 +342,7 @@ var NotificationAdaptor = function () {
               item.dueIn <= 7 && item.dueIn >= 0;
         });
 
-        return [].concat(_toConsumableArray(products),
+        return [].concat(_toConsumableArray(productList),
             _toConsumableArray(warranties), _toConsumableArray(insurances),
             _toConsumableArray(amcs), _toConsumableArray(pucProducts),
             _toConsumableArray(productServiceSchedule));

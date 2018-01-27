@@ -196,6 +196,9 @@ var SearchAdaptor = function () {
     value: function fetchProductDetails(user, searchValue, productIds) {
       return this.productAdaptor.retrieveProducts({
         user_id: user.id || user.ID,
+        product_name: {
+          $not: null,
+        },
         status_type: [5, 11],
         $or: {
           id: productIds,
