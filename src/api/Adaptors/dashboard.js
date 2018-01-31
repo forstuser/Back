@@ -243,7 +243,7 @@ class DashboardAdaptor {
         status_type: [5, 11],
         expiry_date: {
           $gte: moment.utc().startOf('days'),
-          $lte: moment.utc().endOf('months'),
+          $lte: moment.utc().add(30, 'days').endOf('days'),
         },
       }),
       this.insuranceAdaptor.retrieveInsurances({
@@ -251,7 +251,7 @@ class DashboardAdaptor {
         status_type: [5, 11],
         expiry_date: {
           $gte: moment.utc().startOf('days'),
-          $lte: moment.utc().endOf('months'),
+          $lte: moment.utc().add(30, 'days').endOf('days'),
         },
       }),
       this.warrantyAdaptor.retrieveWarranties({
@@ -259,7 +259,7 @@ class DashboardAdaptor {
         status_type: [5, 11],
         expiry_date: {
           $gte: moment.utc().startOf('days'),
-          $lte: moment.utc().endOf('months'),
+          $lte: moment.utc().add(30, 'days').endOf('days'),
         },
       }),
       this.pucAdaptor.retrievePUCs({
@@ -268,7 +268,7 @@ class DashboardAdaptor {
         main_category_id: [3],
         expiry_date: {
           $gte: moment.utc().startOf('days'),
-          $lte: moment.utc().endOf('months'),
+          $lte: moment.utc().add(30, 'days').endOf('days'),
         },
       }),
       this.productAdaptor.retrieveUpcomingProducts({
@@ -290,7 +290,7 @@ class DashboardAdaptor {
           const dueDate_time = moment.utc(amc.expiryDate, moment.ISO_8601).
               endOf('day');
           amc.dueDate = amc.expiryDate;
-          amc.dueIn = dueDate_time.diff(moment.utc(), 'days');
+          amc.dueIn = dueDate_time.diff(moment.utc(), 'days', true);
           amc.productType = 4;
         }
 
@@ -307,7 +307,7 @@ class DashboardAdaptor {
               moment.ISO_8601).
               endOf('day');
           insurance.dueDate = insurance.expiryDate;
-          insurance.dueIn = dueDate_time.diff(moment.utc(), 'days');
+          insurance.dueIn = dueDate_time.diff(moment.utc(), 'days', true);
           insurance.productType = 3;
         }
         return insurance;
@@ -324,7 +324,7 @@ class DashboardAdaptor {
               moment.ISO_8601).
               endOf('day');
           warranty.dueDate = warranty.expiryDate;
-          warranty.dueIn = dueDate_time.diff(moment.utc(), 'days');
+          warranty.dueIn = dueDate_time.diff(moment.utc(), 'days', true);
           warranty.productType = 2;
         }
         return warranty;
@@ -340,7 +340,7 @@ class DashboardAdaptor {
           const dueDate_time = moment.utc(puc.expiryDate, moment.ISO_8601).
               endOf('day');
           puc.dueDate = puc.expiryDate;
-          puc.dueIn = dueDate_time.diff(moment.utc(), 'days');
+          puc.dueIn = dueDate_time.diff(moment.utc(), 'days', true);
           puc.productType = 5;
         }
 
@@ -362,7 +362,8 @@ class DashboardAdaptor {
               const dueDate_time = moment.utc(scheduledDate, moment.ISO_8601).
                   endOf('day');
               scheduledProduct.dueDate = dueDate_time;
-              scheduledProduct.dueIn = dueDate_time.diff(moment.utc(), 'days');
+              scheduledProduct.dueIn = dueDate_time.diff(moment.utc(), 'days',
+                  true);
               scheduledProduct.productType = 6;
             }
 
@@ -393,7 +394,7 @@ class DashboardAdaptor {
                 isValid() ? moment.utc(metaData.value,
                 moment.ISO_8601) : moment.utc(metaData.value, 'DD MMM YYYY');
             productItem.dueDate = dueDate_time;
-            productItem.dueIn = dueDate_time.diff(moment.utc(), 'days');
+            productItem.dueIn = dueDate_time.diff(moment.utc(), 'days', true);
           }
           productItem.address = '';
           if (metaData.name.toLowerCase().includes('address')) {
@@ -404,7 +405,6 @@ class DashboardAdaptor {
         productItem.productType = 1;
         return productItem;
       });
-      console.log(`\n\n\n\n\n\n\n${JSON.stringify(productList)}`);
 
       productList = productList.filter(
           item => ((item.dueIn !== undefined && item.dueIn !== null) &&

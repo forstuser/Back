@@ -383,7 +383,7 @@ class InsuranceAdaptor {
               add(moment.utc(insuranceItem.expiry_date, moment.ISO_8601).
                   add(1, 'days').
                   diff(moment.utc(productPurchaseDate, moment.ISO_8601),
-                      'months'), 'months').
+                      'months', true), 'months').
               subtract(1, 'days');
           insuranceItem.updated_by = options.user_id;
           insuranceItem.status_type = 11;
@@ -401,7 +401,7 @@ class InsuranceAdaptor {
               moment.ISO_8601).
               add(moment.utc(insuranceItem.expiry_date, moment.ISO_8601).
                   add(1, 'days').diff(moment.utc(insuranceExpiryDate,
-                      moment.ISO_8601), 'months'), 'months').
+                      moment.ISO_8601), 'months', true), 'months').
               subtract(1, 'days');
           insuranceItem.updated_by = options.user_id;
           insuranceItem.status_type = 11;

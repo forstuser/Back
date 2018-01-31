@@ -467,7 +467,7 @@ class InsightAdaptor {
                     startOf('day').
                     diff(moment.utc(expense.purchaseDate, moment.ISO_8601).
                             startOf('day'),
-                        'days') === 0));
+                        'days', true) === 0));
             if (index === -1) {
               distinctInsight.push({
                 value: expense.value,

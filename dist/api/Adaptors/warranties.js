@@ -336,7 +336,7 @@ var WarrantyAdaptor = function () {
                     _moment2.default.ISO_8601).
                     add(1, 'days').
                     diff(_moment2.default.utc(productPurchaseDate,
-                        _moment2.default.ISO_8601), 'months'), 'months').
+                        _moment2.default.ISO_8601), 'months', true), 'months').
                 subtract(1, 'days');
             warrantyItem.updated_by = options.user_id;
             warrantyItem.status_type = 11;
@@ -380,7 +380,7 @@ var WarrantyAdaptor = function () {
                     diff(_moment2.default.utc(warrantyItem.warranty_type === 1 ?
                         warrantyExpiryDate :
                         dualWarrantyExpiryDate, _moment2.default.ISO_8601),
-                        'months'), 'months').
+                        'months', true), 'months').
                 subtract(1, 'days');
             warrantyItem.updated_by = options.user_id;
             warrantyItem.status_type = 11;

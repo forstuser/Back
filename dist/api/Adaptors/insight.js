@@ -436,7 +436,11 @@ var InsightAdaptor = function () {
                 productList.map(function (item) {
                     var expense = item;
                     var index = distinctInsight.findIndex(function (distinctItem) {
-                        return _moment2.default.utc(distinctItem.purchaseDate).startOf('day').diff(_moment2.default.utc(expense.purchaseDate, _moment2.default.ISO_8601).startOf('day'), 'days') === 0;
+                      return _moment2.default.utc(distinctItem.purchaseDate).
+                          startOf('day').
+                          diff(_moment2.default.utc(expense.purchaseDate,
+                              _moment2.default.ISO_8601).startOf('day'), 'days',
+                              true) === 0;
                     });
                     if (index === -1) {
                         distinctInsight.push({

@@ -392,7 +392,13 @@ class ProductAdaptor {
       options.status_type = [5, 11];
     }
 
-    let products;
+    options.model = {
+      $not: null,
+    };
+    options.service_schedule_id = {
+      $not: null,
+    };
+
     return this.modals.products.findAll({
       where: options,
       include: [
@@ -491,16 +497,16 @@ class ProductAdaptor {
       order: [['document_date', 'DESC']],
     }).then((productResult) => productResult.map((item) => {
       const productItem = item.toJSON();
-        productItem.purchaseDate = moment.utc(productItem.purchaseDate,
+      productItem.purchaseDate = moment.utc(productItem.purchaseDate,
+          moment.ISO_8601).
+          startOf('days');
+      if (productItem.schedule) {
+        productItem.schedule.due_date = moment.utc(productItem.purchaseDate,
             moment.ISO_8601).
-            startOf('days');
-        if (productItem.schedule) {
-          productItem.schedule.due_date = moment.utc(productItem.purchaseDate,
-              moment.ISO_8601).
-              add(productItem.schedule.due_in_months, 'months');
-        }
-        return productItem;
-    }))
+            add(productItem.schedule.due_in_months, 'months');
+      }
+      return productItem;
+    }));
   }
 
   retrieveUsersLastProduct(options) {
@@ -1737,9 +1743,9 @@ class ProductAdaptor {
             let serviceSchedule;
             if (product.main_category_id === 3 && product.model) {
               const diffDays = moment.utc().
-                  diff(moment.utc(product.document_date), 'days');
+                  diff(moment.utc(product.document_date), 'days', true);
               const diffMonths = moment.utc().
-                  diff(moment.utc(product.document_date), 'months');
+                  diff(moment.utc(product.document_date), 'months', true);
               serviceSchedule = this.serviceScheduleAdaptor.retrieveServiceSchedules(
                   {
                     category_id: product.category_id,
@@ -2535,7 +2541,7 @@ class ProductAdaptor {
         'taxes',
         [
           this.modals.sequelize.fn('CONCAT', 'products/',
-              this.modals.sequelize.literal('id')),
+              this.modals.sequelize.literal('"products"."id"')),
           'productURL'],
         [
           'document_date',
@@ -2751,7 +2757,7 @@ class ProductAdaptor {
           moment.utc(productDetail.document_date, moment.ISO_8601).valueOf()) {
         return Promise.all([
           this.warrantyAdaptor.updateWarrantyPeriod(
-            {product_id: id, user_id: productDetail.user_id},
+              {product_id: id, user_id: productDetail.user_id},
               currentPurchaseDate, productDetail.document_date),
           this.insuranceAdaptor.updateInsurancePeriod(
               {product_id: id, user_id: productDetail.user_id},

@@ -271,21 +271,21 @@ var DashboardAdaptor = function () {
           status_type: [5, 11],
           expiry_date: {
             $gte: _moment2.default.utc().startOf('days'),
-            $lte: _moment2.default.utc().endOf('months'),
+            $lte: _moment2.default.utc().add(30, 'days').endOf('days'),
           },
       }), this.insuranceAdaptor.retrieveInsurances({
         user_id: user.id || user.ID,
           status_type: [5, 11],
           expiry_date: {
             $gte: _moment2.default.utc().startOf('days'),
-            $lte: _moment2.default.utc().endOf('months'),
+            $lte: _moment2.default.utc().add(30, 'days').endOf('days'),
           },
       }), this.warrantyAdaptor.retrieveWarranties({
         user_id: user.id || user.ID,
           status_type: [5, 11],
           expiry_date: {
             $gte: _moment2.default.utc().startOf('days'),
-            $lte: _moment2.default.utc().endOf('months'),
+            $lte: _moment2.default.utc().add(30, 'days').endOf('days'),
           },
       }), this.pucAdaptor.retrievePUCs({
         user_id: user.id || user.ID,
@@ -293,7 +293,7 @@ var DashboardAdaptor = function () {
           main_category_id: [3],
           expiry_date: {
             $gte: _moment2.default.utc().startOf('days'),
-            $lte: _moment2.default.utc().endOf('months'),
+            $lte: _moment2.default.utc().add(30, 'days').endOf('days'),
           },
         }), this.productAdaptor.retrieveUpcomingProducts({
         user_id: user.id || user.ID,
@@ -314,7 +314,7 @@ var DashboardAdaptor = function () {
             var dueDate_time = _moment2.default.utc(amc.expiryDate,
                 _moment2.default.ISO_8601).endOf('day');
             amc.dueDate = amc.expiryDate;
-            amc.dueIn = dueDate_time.diff(_moment2.default.utc(), 'days');
+            amc.dueIn = dueDate_time.diff(_moment2.default.utc(), 'days', true);
             amc.productType = 4;
           }
 
@@ -332,7 +332,8 @@ var DashboardAdaptor = function () {
             var dueDate_time = _moment2.default.utc(insurance.expiryDate,
                 _moment2.default.ISO_8601).endOf('day');
             insurance.dueDate = insurance.expiryDate;
-            insurance.dueIn = dueDate_time.diff(_moment2.default.utc(), 'days');
+            insurance.dueIn = dueDate_time.diff(_moment2.default.utc(), 'days',
+                true);
             insurance.productType = 3;
           }
           return insurance;
@@ -350,7 +351,8 @@ var DashboardAdaptor = function () {
             var dueDate_time = _moment2.default.utc(warranty.expiryDate,
                 _moment2.default.ISO_8601).endOf('day');
             warranty.dueDate = warranty.expiryDate;
-            warranty.dueIn = dueDate_time.diff(_moment2.default.utc(), 'days');
+            warranty.dueIn = dueDate_time.diff(_moment2.default.utc(), 'days',
+                true);
             warranty.productType = 2;
           }
           return warranty;
@@ -368,7 +370,7 @@ var DashboardAdaptor = function () {
             var dueDate_time = _moment2.default.utc(puc.expiryDate,
                 _moment2.default.ISO_8601).endOf('day');
             puc.dueDate = puc.expiryDate;
-            puc.dueIn = dueDate_time.diff(_moment2.default.utc(), 'days');
+            puc.dueIn = dueDate_time.diff(_moment2.default.utc(), 'days', true);
             puc.productType = 5;
           }
 
@@ -394,7 +396,7 @@ var DashboardAdaptor = function () {
                 _moment2.default.ISO_8601).endOf('day');
             scheduledProduct.dueDate = dueDate_time;
             scheduledProduct.dueIn = dueDate_time.diff(_moment2.default.utc(),
-                'days');
+                'days', true);
             scheduledProduct.productType = 6;
           }
 
@@ -431,7 +433,7 @@ var DashboardAdaptor = function () {
                   _moment2.default.utc(metaData.value, 'DD MMM YYYY');
               productItem.dueDate = dueDate_time;
               productItem.dueIn = dueDate_time.diff(_moment2.default.utc(),
-                  'days');
+                  'days', true);
             }
             productItem.address = '';
             if (metaData.name.toLowerCase().includes('address')) {
@@ -442,7 +444,6 @@ var DashboardAdaptor = function () {
           productItem.productType = 1;
           return productItem;
         });
-        console.log('\n\n\n\n\n\n\n' + JSON.stringify(productList));
 
         productList = productList.filter(function(item) {
           return item.dueIn !== undefined && item.dueIn !== null &&

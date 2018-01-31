@@ -341,7 +341,13 @@ var ProductAdaptor = function () {
         options.status_type = [5, 11];
       }
 
-      var products = void 0;
+      options.model = {
+        $not: null,
+      };
+      options.service_schedule_id = {
+        $not: null,
+      };
+
       return this.modals.products.findAll({
         where: options,
         include: [
@@ -1509,9 +1515,10 @@ var ProductAdaptor = function () {
           var serviceSchedule = void 0;
           if (product.main_category_id === 3 && product.model) {
             var diffDays = _moment2.default.utc().
-                diff(_moment2.default.utc(product.document_date), 'days');
+                diff(_moment2.default.utc(product.document_date), 'days', true);
             var diffMonths = _moment2.default.utc().
-                diff(_moment2.default.utc(product.document_date), 'months');
+                diff(_moment2.default.utc(product.document_date), 'months',
+                    true);
             serviceSchedule = _this6.serviceScheduleAdaptor.retrieveServiceSchedules(
                 {
                   category_id: product.category_id,
@@ -2347,7 +2354,7 @@ var ProductAdaptor = function () {
           'taxes',
           [
             this.modals.sequelize.fn('CONCAT', 'products/',
-                this.modals.sequelize.literal('id')),
+                this.modals.sequelize.literal('"products"."id"')),
             'productURL'],
           [
             'document_date',

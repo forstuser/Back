@@ -372,7 +372,7 @@ var InsuranceAdaptor = function () {
                     _moment2.default.ISO_8601).
                     add(1, 'days').
                     diff(_moment2.default.utc(productPurchaseDate,
-                        _moment2.default.ISO_8601), 'months'), 'months').
+                        _moment2.default.ISO_8601), 'months', true), 'months').
                 subtract(1, 'days');
             insuranceItem.updated_by = options.user_id;
             insuranceItem.status_type = 11;
@@ -395,7 +395,7 @@ var InsuranceAdaptor = function () {
                     _moment2.default.ISO_8601).
                     add(1, 'days').
                     diff(_moment2.default.utc(insuranceExpiryDate,
-                        _moment2.default.ISO_8601), 'months'), 'months').
+                        _moment2.default.ISO_8601), 'months', true), 'months').
                 subtract(1, 'days');
             insuranceItem.updated_by = options.user_id;
             insuranceItem.status_type = 11;

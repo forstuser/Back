@@ -147,14 +147,14 @@ var NotificationAdaptor = function () {
           status_type: [5, 11],
           expiry_date: {
             $gte: _moment2.default.utc().startOf('days'),
-            $lte: _moment2.default.utc().endOf('months'),
+            $lte: _moment2.default.utc().add(30, 'days').endOf('days'),
           },
       }), this.insuranceAdaptor.retrieveInsurances({
         user_id: user.id || user.ID,
           status_type: [5, 11],
           expiry_date: {
             $gte: _moment2.default.utc().startOf('days'),
-            $lte: _moment2.default.utc().endOf('months'),
+            $lte: _moment2.default.utc().add(30, 'days').endOf('days'),
           },
       }), this.warrantyAdaptor.retrieveWarranties({
         user_id: user.id || user.ID,
@@ -162,7 +162,7 @@ var NotificationAdaptor = function () {
           main_category_id: [1, 2, 3],
           expiry_date: {
             $gte: _moment2.default.utc().startOf('days'),
-            $lte: _moment2.default.utc().endOf('months'),
+            $lte: _moment2.default.utc().add(30, 'days').endOf('days'),
           },
       }), this.pucAdaptor.retrievePUCs({
         user_id: user.id || user.ID,
@@ -170,7 +170,7 @@ var NotificationAdaptor = function () {
           main_category_id: [3],
           expiry_date: {
             $gte: _moment2.default.utc().startOf('days'),
-            $lte: _moment2.default.utc().endOf('months'),
+            $lte: _moment2.default.utc().add(30, 'days').endOf('days'),
           },
         }), this.productAdaptor.retrieveUpcomingProducts({
         user_id: user.id || user.ID,
@@ -205,7 +205,8 @@ var NotificationAdaptor = function () {
                       _moment2.default.ISO_8601) :
                   _moment2.default.utc(metaData.value, 'DD MMM YYYY');
               product.dueDate = metaData.value;
-              product.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
+              product.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days',
+                  true);
             }
             product.description = '';
             product.address = '';
@@ -237,7 +238,7 @@ var NotificationAdaptor = function () {
             var dueDateTime = _moment2.default.utc(puc.expiryDate,
                 _moment2.default.ISO_8601).endOf('day');
             puc.dueDate = puc.expiryDate;
-            puc.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
+            puc.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days', true);
             puc.productType = 3;
             puc.title = 'PUC Renewal Pending';
             puc.description = puc.productName;
@@ -256,7 +257,7 @@ var NotificationAdaptor = function () {
             var dueDateTime = _moment2.default.utc(amc.expiryDate,
                 _moment2.default.ISO_8601);
             amc.dueDate = amc.expiryDate;
-            amc.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
+            amc.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days', true);
             amc.productType = 3;
             amc.title = 'AMC Renewal Pending';
             amc.description = amc.productName;
@@ -275,7 +276,8 @@ var NotificationAdaptor = function () {
             var dueDateTime = _moment2.default.utc(insurance.expiryDate,
                 _moment2.default.ISO_8601);
             insurance.dueDate = insurance.expiryDate;
-            insurance.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
+            insurance.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days',
+                true);
             insurance.productType = 3;
             insurance.title = 'Insurance Renewal Pending';
             insurance.description = insurance.productName;
@@ -295,7 +297,8 @@ var NotificationAdaptor = function () {
                 _moment2.default.ISO_8601);
 
             warranty.dueDate = warranty.expiryDate;
-            warranty.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
+            warranty.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days',
+                true);
             warranty.productType = 3;
             warranty.title = 'Warranty Renewal Pending';
             warranty.description = 'Warranty Renewal Pending for ' +
@@ -327,7 +330,7 @@ var NotificationAdaptor = function () {
                 _moment2.default.ISO_8601).endOf('day');
             scheduledProduct.dueDate = scheduledDate;
             scheduledProduct.dueIn = due_date_time.diff(_moment2.default.utc(),
-                'days');
+                'days', true);
             scheduledProduct.productType = 3;
             scheduledProduct.title = 'Service is pending for ' +
                 scheduledProduct.productName;
@@ -676,7 +679,8 @@ var NotificationAdaptor = function () {
               var dueDateTime = _moment2.default.utc(metaData.value,
                   _moment2.default.ISO_8601);
               product.dueDate = metaData.value;
-              product.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
+              product.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days',
+                  true);
             }
 
             if (metaData.name.toLowerCase().includes('address')) {
@@ -708,7 +712,7 @@ var NotificationAdaptor = function () {
             var dueDateTime = _moment2.default.utc(amc.expiryDate,
                 _moment2.default.ISO_8601);
             amc.dueDate = amc.expiryDate;
-            amc.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
+            amc.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days', true);
             amc.productType = 3;
             amc.title = 'AMC Renewal Pending';
             amc.description = 'AMC #' + amc.policyNo + ' of ' + amc.productName;
@@ -724,7 +728,8 @@ var NotificationAdaptor = function () {
             var dueDateTime = _moment2.default.utc(insurance.expiryDate,
                 _moment2.default.ISO_8601);
             insurance.dueDate = insurance.expiryDate;
-            insurance.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
+            insurance.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days',
+                true);
             insurance.productType = 3;
             insurance.title = 'Insurance Renewal Pending';
             insurance.description = 'Insurance #' + insurance.policyNo + ' of ' + insurance.productName;
@@ -740,7 +745,8 @@ var NotificationAdaptor = function () {
                 _moment2.default.ISO_8601);
 
             warranty.dueDate = warranty.expiryDate;
-            warranty.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days');
+            warranty.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days',
+                true);
             warranty.productType = 3;
             warranty.title = 'Warranty Renewal Pending';
             warranty.description = 'Warranty #' + warranty.policyNo + ' of ' + warranty.productName;
