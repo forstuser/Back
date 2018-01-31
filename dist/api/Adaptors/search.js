@@ -129,7 +129,7 @@ var SearchAdaptor = function () {
       };
 
       var productOptions = {
-        status_type: [5, 8],
+        status_type: [5, 8, 11],
         user_id: user.id || user.ID
       };
 
@@ -216,7 +216,7 @@ var SearchAdaptor = function () {
       }).then(function (onlineSellers) {
         return _this3.productAdaptor.retrieveProductIds({
           user_id: user.id || user.ID,
-          status_type: [5, 8],
+          status_type: [5, 8, 11],
           online_seller_id: onlineSellers.map(function (item) {
             return item.id;
           })
@@ -233,7 +233,7 @@ var SearchAdaptor = function () {
       }).then(function (offlineSellers) {
         return _this4.productAdaptor.retrieveProductIds({
           user_id: user.id || user.ID,
-          status_type: [5, 8],
+          status_type: [5, 8, 11],
           seller_id: offlineSellers.map(function (item) {
             return item.id;
           })
@@ -250,7 +250,7 @@ var SearchAdaptor = function () {
       }).then(function (brands) {
         return _this5.productAdaptor.retrieveProductIds({
           user_id: user.id || user.ID,
-          status_type: [5, 8],
+          status_type: [5, 8, 11],
           brand_id: brands.map(function (item) {
             return item.id;
           })

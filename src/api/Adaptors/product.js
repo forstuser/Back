@@ -10,7 +10,6 @@ import RepairAdaptor from './repairs';
 import CategoryAdaptor from './category';
 import SellerAdaptor from './sellers';
 import ServiceScheduleAdaptor from './serviceSchedules';
-import JobAdaptor from './job';
 import _ from 'lodash';
 import moment from 'moment/moment';
 
@@ -25,7 +24,6 @@ class ProductAdaptor {
     this.repairAdaptor = new RepairAdaptor(modals);
     this.categoryAdaptor = new CategoryAdaptor(modals);
     this.sellerAdaptor = new SellerAdaptor(modals);
-    this.jobAdaptor = new JobAdaptor(modals);
     this.serviceScheduleAdaptor = new ServiceScheduleAdaptor(modals);
   }
 
@@ -353,6 +351,12 @@ class ProductAdaptor {
       if (results) {
         const metaData = results[0];
         products = products.map((productItem) => {
+          if (productItem.copies) {
+            productItem.copies = productItem.copies.map((copyItem) => {
+              copyItem.file_type = copyItem.file_type || copyItem.fileType;
+              return copyItem;
+            });
+          }
           const pucItem = metaData.find(
               (item) => item.name.toLowerCase().includes('puc'));
           if (pucItem) {
@@ -497,6 +501,13 @@ class ProductAdaptor {
       order: [['document_date', 'DESC']],
     }).then((productResult) => productResult.map((item) => {
       const productItem = item.toJSON();
+
+      if (productItem.copies) {
+        productItem.copies = productItem.copies.map((copyItem) => {
+          copyItem.file_type = copyItem.file_type || copyItem.fileType;
+          return copyItem;
+        });
+      }
       productItem.purchaseDate = moment.utc(productItem.purchaseDate,
           moment.ISO_8601).
           startOf('days');
@@ -773,6 +784,12 @@ class ProductAdaptor {
     }).then((productResult) => {
       const products = productResult.map((item) => {
         const productItem = item.toJSON();
+        if (productItem.copies) {
+          productItem.copies = productItem.copies.map((copyItem) => {
+            copyItem.file_type = copyItem.file_type || copyItem.fileType;
+            return copyItem;
+          });
+        }
         productItem.purchaseDate = moment.utc(productItem.purchaseDate,
             moment.ISO_8601).
             startOf('days');
@@ -1188,6 +1205,12 @@ class ProductAdaptor {
       products = productResult ? productResult.toJSON() : productResult;
       if (products) {
         productItem = productResult;
+        if (products.copies) {
+          products.copies = products.copies.map((copyItem) => {
+            copyItem.file_type = copyItem.file_type || copyItem.fileType;
+            return copyItem;
+          });
+        }
         if (products.schedule) {
           products.schedule.due_date = moment.utc(products.purchaseDate,
               moment.ISO_8601).add(products.schedule.due_in_months, 'months');
@@ -1218,10 +1241,31 @@ class ProductAdaptor {
             product_id: products.id,
           }), this.pucAdaptor.retrievePUCs({
             product_id: products.id,
-          }), serviceSchedulePromise]);
+          }), serviceSchedulePromise, this.modals.serviceCenters.count({
+            include: [
+              {
+                model: this.modals.brands,
+                as: 'brands',
+                where: {
+                  brand_id: products.brand_id,
+                },
+                attributes: [],
+                required: true,
+              },
+              {
+                model: this.modals.centerDetails,
+                where: {
+                  category_id: products.category_id,
+                },
+                attributes: [],
+                required: true,
+                as: 'centerDetails',
+              }],
+          })]);
       }
     }).then((results) => {
       if (products) {
+
         products.purchaseDate = moment.utc(products.purchaseDate,
             moment.ISO_8601).
             startOf('days');
@@ -1249,6 +1293,9 @@ class ProductAdaptor {
               return scheduleItem;
             }) :
             results[7];
+        products.serviceCenterUrl = results[8] && results[8] > 0 ?
+            products.serviceCenterUrl :
+            '';
       }
 
       return products;
@@ -2558,7 +2605,18 @@ class ProductAdaptor {
       ],
     }).then((productResult) => {
       console.log(productResult.map((item) => item.toJSON()));
-      const products = productResult.map((item) => item.toJSON());
+      const products = productResult.map((item) => {
+        const productItem = item.toJSON();
+        if (productItem.copies) {
+          productItem.copies = productItem.copies.map((copyItem) => {
+            copyItem.file_type = copyItem.file_type || copyItem.fileType;
+            return copyItem;
+          });
+        }
+
+        return productItem;
+
+      });
       const product_id = products.map((item) => item.id);
       console.log('\n\n\n\n\n\n\n\n');
       console.log({

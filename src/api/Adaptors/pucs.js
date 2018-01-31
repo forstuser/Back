@@ -136,6 +136,12 @@ class PUCAdaptor {
     }).
         then((pucResult) => pucResult.map((item) => {
           const productItem = item.toJSON();
+          if (productItem.copies) {
+            productItem.copies = productItem.copies.map((copyItem) => {
+              copyItem.file_type = copyItem.file_type || copyItem.fileType;
+              return copyItem;
+            });
+          }
           productItem.purchaseDate = moment.utc(productItem.purchaseDate,
               moment.ISO_8601).
               startOf('days');

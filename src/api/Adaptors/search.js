@@ -98,7 +98,7 @@ class SearchAdaptor {
     };
 
     const productOptions = {
-      status_type: [5, 8],
+      status_type: [5, 8, 11],
       user_id: user.id || user.ID,
     };
 
@@ -184,7 +184,7 @@ class SearchAdaptor {
     }).then((onlineSellers) => {
       return this.productAdaptor.retrieveProductIds({
         user_id: user.id || user.ID,
-        status_type: [5, 8],
+        status_type: [5, 8, 11],
         online_seller_id: onlineSellers.map(item => item.id),
       });
     });
@@ -199,7 +199,7 @@ class SearchAdaptor {
     }).then((offlineSellers) => {
       return this.productAdaptor.retrieveProductIds({
         user_id: user.id || user.ID,
-        status_type: [5, 8],
+        status_type: [5, 8, 11],
         seller_id: offlineSellers.map(item => item.id),
       });
     });
@@ -214,7 +214,7 @@ class SearchAdaptor {
     }).then((brands) => {
       return this.productAdaptor.retrieveProductIds({
         user_id: user.id || user.ID,
-        status_type: [5, 8],
+        status_type: [5, 8, 11],
         brand_id: brands.map(item => item.id),
       });
     });

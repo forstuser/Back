@@ -154,6 +154,13 @@ class AmcAdaptor {
     }).
         then((amcResult) => amcResult.map((item) => {
           const productItem = item.toJSON();
+
+          if (productItem.copies) {
+            productItem.copies = productItem.copies.map((copyItem) => {
+              copyItem.file_type = copyItem.file_type || copyItem.fileType;
+              return copyItem;
+            });
+          }
           productItem.purchaseDate = moment.utc(productItem.purchaseDate,
               moment.ISO_8601).
               startOf('days');
@@ -223,7 +230,16 @@ class AmcAdaptor {
         'copies', 'user_id'],
       order: [['expiry_date', 'DESC']],
     }).
-        then((amcResult) => amcResult.map((item) => item.toJSON()).
+        then((amcResult) => amcResult.map((item) => {
+          const productItem = item.toJSON();
+          if (productItem.copies) {
+            productItem.copies = productItem.copies.map((copyItem) => {
+              copyItem.file_type = copyItem.file_type || copyItem.fileType;
+              return copyItem;
+            });
+          }
+          return productItem;
+        }).
             sort(sortAmcWarrantyInsuranceRepair));
   }
 

@@ -43,10 +43,6 @@ var _serviceSchedules = require('./serviceSchedules');
 
 var _serviceSchedules2 = _interopRequireDefault(_serviceSchedules);
 
-var _job = require('./job');
-
-var _job2 = _interopRequireDefault(_job);
-
 var _lodash = require('lodash');
 
 var _lodash2 = _interopRequireDefault(_lodash);
@@ -74,7 +70,6 @@ var ProductAdaptor = function () {
     this.repairAdaptor = new _repairs2.default(modals);
     this.categoryAdaptor = new _category2.default(modals);
     this.sellerAdaptor = new _sellers2.default(modals);
-    this.jobAdaptor = new _job2.default(modals);
     this.serviceScheduleAdaptor = new _serviceSchedules2.default(modals);
   }
 
@@ -298,6 +293,12 @@ var ProductAdaptor = function () {
         if (results) {
           var metaData = results[0];
           products = products.map(function (productItem) {
+            if (productItem.copies) {
+              productItem.copies = productItem.copies.map(function(copyItem) {
+                copyItem.file_type = copyItem.file_type || copyItem.fileType;
+                return copyItem;
+              });
+            }
             var pucItem = metaData.find(function (item) {
               return item.name.toLowerCase().includes('puc');
             });
@@ -451,6 +452,13 @@ var ProductAdaptor = function () {
       }).then(function(productResult) {
         return productResult.map(function(item) {
           var productItem = item.toJSON();
+
+          if (productItem.copies) {
+            productItem.copies = productItem.copies.map(function(copyItem) {
+              copyItem.file_type = copyItem.file_type || copyItem.fileType;
+              return copyItem;
+            });
+          }
           productItem.purchaseDate = _moment2.default.utc(
               productItem.purchaseDate, _moment2.default.ISO_8601).
               startOf('days');
@@ -625,6 +633,12 @@ var ProductAdaptor = function () {
       }).then(function (productResult) {
         var products = productResult.map(function (item) {
           var productItem = item.toJSON();
+          if (productItem.copies) {
+            productItem.copies = productItem.copies.map(function(copyItem) {
+              copyItem.file_type = copyItem.file_type || copyItem.fileType;
+              return copyItem;
+            });
+          }
           productItem.purchaseDate = _moment2.default.utc(
               productItem.purchaseDate, _moment2.default.ISO_8601).
               startOf('days');
@@ -974,6 +988,12 @@ var ProductAdaptor = function () {
         products = productResult ? productResult.toJSON() : productResult;
         if (products) {
           productItem = productResult;
+          if (products.copies) {
+            products.copies = products.copies.map(function(copyItem) {
+              copyItem.file_type = copyItem.file_type || copyItem.fileType;
+              return copyItem;
+            });
+          }
           if (products.schedule) {
             products.schedule.due_date = _moment2.default.utc(
                 products.purchaseDate, _moment2.default.ISO_8601).
@@ -1004,10 +1024,30 @@ var ProductAdaptor = function () {
             product_id: products.id
             }), _this4.pucAdaptor.retrievePUCs({
             product_id: products.id
-          }), serviceSchedulePromise]);
+            }), serviceSchedulePromise, _this4.modals.serviceCenters.count({
+              include: [
+                {
+                  model: _this4.modals.brands,
+                  as: 'brands',
+                  where: {
+                    brand_id: products.brand_id,
+                  },
+                  attributes: [],
+                  required: true,
+                }, {
+                  model: _this4.modals.centerDetails,
+                  where: {
+                    category_id: products.category_id,
+                  },
+                  attributes: [],
+                  required: true,
+                  as: 'centerDetails',
+                }],
+            })]);
         }
       }).then(function (results) {
         if (products) {
+
           products.purchaseDate = _moment2.default.utc(products.purchaseDate,
               _moment2.default.ISO_8601).startOf('days');
           var metaData = results[0];
@@ -1037,6 +1077,9 @@ var ProductAdaptor = function () {
             return scheduleItem;
               }) :
               results[7];
+          products.serviceCenterUrl = results[8] && results[8] > 0 ?
+              products.serviceCenterUrl :
+              '';
         }
 
         return products;
@@ -2378,7 +2421,15 @@ var ProductAdaptor = function () {
           return item.toJSON();
         }));
         var products = productResult.map(function(item) {
-          return item.toJSON();
+          var productItem = item.toJSON();
+          if (productItem.copies) {
+            productItem.copies = productItem.copies.map(function(copyItem) {
+              copyItem.file_type = copyItem.file_type || copyItem.fileType;
+              return copyItem;
+            });
+          }
+
+          return productItem;
         });
         var product_id = products.map(function(item) {
           return item.id;

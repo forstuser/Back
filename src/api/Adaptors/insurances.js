@@ -181,6 +181,13 @@ class InsuranceAdaptor {
     }).
         then((insuranceResult) => insuranceResult.map((item) => {
           const productItem = item.toJSON();
+
+          if (productItem.copies) {
+            productItem.copies = productItem.copies.map((copyItem) => {
+              copyItem.file_type = copyItem.file_type || copyItem.fileType;
+              return copyItem;
+            });
+          }
           productItem.purchaseDate = moment.utc(productItem.purchaseDate,
               moment.ISO_8601).
               startOf('days');
@@ -250,7 +257,17 @@ class InsuranceAdaptor {
         'copies', 'user_id'],
       order: [['expiry_date', 'DESC']],
     }).
-        then((insuranceResult) => insuranceResult.map((item) => item.toJSON()).
+        then((insuranceResult) => insuranceResult.map((item) => {
+          const productItem = item.toJSON();
+          if (productItem.copies) {
+            productItem.copies = productItem.copies.map((copyItem) => {
+              copyItem.file_type = copyItem.file_type || copyItem.fileType;
+              return copyItem;
+            });
+          }
+
+          return productItem;
+        }).
             sort(sortAmcWarrantyInsuranceRepair));
   }
 

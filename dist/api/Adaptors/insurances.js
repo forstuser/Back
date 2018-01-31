@@ -199,6 +199,13 @@ var InsuranceAdaptor = function () {
       }).then(function (insuranceResult) {
         return insuranceResult.map(function (item) {
           var productItem = item.toJSON();
+
+          if (productItem.copies) {
+            productItem.copies = productItem.copies.map(function(copyItem) {
+              copyItem.file_type = copyItem.file_type || copyItem.fileType;
+              return copyItem;
+            });
+          }
           productItem.purchaseDate = _moment2.default.utc(
               productItem.purchaseDate, _moment2.default.ISO_8601).
               startOf('days');
@@ -223,7 +230,15 @@ var InsuranceAdaptor = function () {
         order: [['expiry_date', 'DESC']]
       }).then(function (insuranceResult) {
         return insuranceResult.map(function (item) {
-          return item.toJSON();
+          var productItem = item.toJSON();
+          if (productItem.copies) {
+            productItem.copies = productItem.copies.map(function(copyItem) {
+              copyItem.file_type = copyItem.file_type || copyItem.fileType;
+              return copyItem;
+            });
+          }
+
+          return productItem;
         }).sort(sortAmcWarrantyInsuranceRepair);
       });
     }
