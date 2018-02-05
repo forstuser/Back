@@ -290,7 +290,7 @@ class NotificationAdaptor {
           puc.dueIn = dueDateTime.diff(moment.utc(), 'days', true);
           puc.productType = 3;
           puc.title = 'PUC Renewal Pending';
-          puc.description = puc.productName;
+          puc.description = `PUC Renewal Pending for ${puc.productName}`;
         }
 
         return puc;
@@ -307,7 +307,7 @@ class NotificationAdaptor {
           amc.dueIn = dueDateTime.diff(moment.utc(), 'days', true);
           amc.productType = 3;
           amc.title = 'AMC Renewal Pending';
-          amc.description = amc.productName;
+          amc.description = `AMC Renewal Pending for ${amc.productName}`;
         }
 
         return amc;
@@ -324,7 +324,7 @@ class NotificationAdaptor {
           insurance.dueIn = dueDateTime.diff(moment.utc(), 'days', true);
           insurance.productType = 3;
           insurance.title = 'Insurance Renewal Pending';
-          insurance.description = insurance.productName;
+          insurance.description = `Insurance Renewal Pending for ${insurance.productName}`;
         }
         return insurance;
       });
@@ -344,7 +344,8 @@ class NotificationAdaptor {
           warranty.title = `Warranty Renewal Pending`;
           warranty.description = `Warranty Renewal Pending for ${warranty.warranty_type ===
           3 ?
-              `${warranty.dualWarrantyItem} of ${warranty.productName}` :
+              `${warranty.dualWarrantyItem ||
+              'dual item'} of ${warranty.productName}` :
               warranty.warranty_type === 4 ?
                   `Accessories of ${warranty.productName}` :
                   `${warranty.productName}`}`;
@@ -372,7 +373,7 @@ class NotificationAdaptor {
               true);
           scheduledProduct.productType = 3;
           scheduledProduct.title = `Service is pending for ${scheduledProduct.productName}`;
-          scheduledProduct.description = `${scheduledProduct.productName}`;
+          scheduledProduct.description = `Service is pending for ${scheduledProduct.productName}`;
         }
 
         return scheduledProduct;

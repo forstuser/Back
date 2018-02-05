@@ -800,9 +800,9 @@ class ProductAdaptor {
         }
         return productItem;
       }).filter(
-          (producItem) => producItem.status_type !== 8 ||
-              (producItem.status_type === 8 && producItem.bill &&
-                  producItem.bill.billStatus ===
+          (productItem) => productItem.status_type !== 8 ||
+              (productItem.status_type === 8 && productItem.bill &&
+                  productItem.bill.billStatus ===
                   5));
       product = products.length > 0 ?
           products[0] :
@@ -891,12 +891,16 @@ class ProductAdaptor {
               attributes: [],
               required: false,
             }],
-          attributes: [],
-          required: true,
+          attributes: ['status_type'],
+          required: false,
         },
       ],
-      attributes: ['id'],
-    }).then((productResult) => productResult.map((item) => item.toJSON()));
+      attributes: ['id', 'status_type'],
+    }).then((productResult) => productResult.
+        map((item) => item.toJSON()).filter(
+            (productItem) => productItem.status_type !== 8 ||
+                (productItem.status_type === 8 && productItem.bill &&
+                    productItem.bill.status_type === 5)));
   }
 
   retrieveProductCounts(options) {

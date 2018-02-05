@@ -214,13 +214,17 @@ var SearchAdaptor = function () {
       return this.sellerAdaptor.retrieveOnlineSellers({
         $and: [this.modals.sequelize.where(this.modals.sequelize.fn('lower', this.modals.sequelize.col('seller_name')), { $iLike: this.modals.sequelize.fn('lower', searchValue) })]
       }).then(function (onlineSellers) {
-        return _this3.productAdaptor.retrieveProductIds({
-          user_id: user.id || user.ID,
-          status_type: [5, 8, 11],
-          online_seller_id: onlineSellers.map(function (item) {
-            return item.id;
-          })
-        });
+        if (onlineSellers && onlineSellers.length > 0) {
+          return _this3.productAdaptor.retrieveProductIds({
+            user_id: user.id || user.ID,
+            status_type: [5, 8, 11],
+            online_seller_id: onlineSellers.map(function(item) {
+              return item.id;
+            })
+          });
+        }
+
+        return [];
       });
     }
   }, {
@@ -231,13 +235,18 @@ var SearchAdaptor = function () {
       return this.sellerAdaptor.retrieveOfflineSellers({
         $and: [this.modals.sequelize.where(this.modals.sequelize.fn('lower', this.modals.sequelize.col('seller_name')), { $iLike: this.modals.sequelize.fn('lower', searchValue) })]
       }).then(function (offlineSellers) {
-        return _this4.productAdaptor.retrieveProductIds({
-          user_id: user.id || user.ID,
-          status_type: [5, 8, 11],
-          seller_id: offlineSellers.map(function (item) {
-            return item.id;
-          })
-        });
+
+        if (offlineSellers && offlineSellers.length > 0) {
+          return _this4.productAdaptor.retrieveProductIds({
+            user_id: user.id || user.ID,
+            status_type: [5, 8, 11],
+            seller_id: offlineSellers.map(function(item) {
+              return item.id;
+            })
+          });
+        }
+
+        return [];
       });
     }
   }, {
@@ -248,13 +257,18 @@ var SearchAdaptor = function () {
       return this.brandAdaptor.retrieveBrands({
         $and: [this.modals.sequelize.where(this.modals.sequelize.fn('lower', this.modals.sequelize.col('brand_name')), { $iLike: this.modals.sequelize.fn('lower', searchValue) })]
       }).then(function (brands) {
-        return _this5.productAdaptor.retrieveProductIds({
-          user_id: user.id || user.ID,
-          status_type: [5, 8, 11],
-          brand_id: brands.map(function (item) {
-            return item.id;
-          })
-        });
+
+        if (brands && brands.length > 0) {
+          return _this5.productAdaptor.retrieveProductIds({
+            user_id: user.id || user.ID,
+            status_type: [5, 8, 11],
+            brand_id: brands.map(function(item) {
+              return item.id;
+            })
+          });
+        }
+
+        return [];
       });
     }
   }]);

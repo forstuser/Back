@@ -182,11 +182,15 @@ class SearchAdaptor {
             this.modals.sequelize.col('seller_name')),
             {$iLike: this.modals.sequelize.fn('lower', searchValue)})],
     }).then((onlineSellers) => {
-      return this.productAdaptor.retrieveProductIds({
-        user_id: user.id || user.ID,
-        status_type: [5, 8, 11],
-        online_seller_id: onlineSellers.map(item => item.id),
-      });
+      if (onlineSellers && onlineSellers.length > 0) {
+        return this.productAdaptor.retrieveProductIds({
+          user_id: user.id || user.ID,
+          status_type: [5, 8, 11],
+          online_seller_id: onlineSellers.map(item => item.id),
+        });
+      }
+
+      return [];
     });
   }
 
@@ -197,11 +201,16 @@ class SearchAdaptor {
             this.modals.sequelize.col('seller_name')),
             {$iLike: this.modals.sequelize.fn('lower', searchValue)})],
     }).then((offlineSellers) => {
-      return this.productAdaptor.retrieveProductIds({
-        user_id: user.id || user.ID,
-        status_type: [5, 8, 11],
-        seller_id: offlineSellers.map(item => item.id),
-      });
+
+      if (offlineSellers && offlineSellers.length > 0) {
+        return this.productAdaptor.retrieveProductIds({
+          user_id: user.id || user.ID,
+          status_type: [5, 8, 11],
+          seller_id: offlineSellers.map(item => item.id),
+        });
+      }
+
+      return [];
     });
   }
 
@@ -212,11 +221,16 @@ class SearchAdaptor {
             this.modals.sequelize.col('brand_name')),
             {$iLike: this.modals.sequelize.fn('lower', searchValue)})],
     }).then((brands) => {
-      return this.productAdaptor.retrieveProductIds({
-        user_id: user.id || user.ID,
-        status_type: [5, 8, 11],
-        brand_id: brands.map(item => item.id),
-      });
+
+      if (brands && brands.length > 0) {
+        return this.productAdaptor.retrieveProductIds({
+          user_id: user.id || user.ID,
+          status_type: [5, 8, 11],
+          brand_id: brands.map(item => item.id),
+        });
+      }
+
+      return [];
     });
   }
 }

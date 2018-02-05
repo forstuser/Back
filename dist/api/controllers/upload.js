@@ -740,14 +740,26 @@ var UploadController = function () {
                   header('Content-Type', fileResult.ContentType).
                   header('Content-Disposition', 'attachment; filename=' +
                       result.bill_copy_name);
-            }).catch(function (err) {
-              console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
-              return reply({
-                status: false,
-                message: 'No Result Found',
-                forceUpdate: request.pre.forceUpdate,
-                err: err
-              }).code(404);
+            }).
+                catch(function(err) {
+                  console.log('Error on ' + new Date() +
+                      ' while retrieving image is as follow: \n \n ' + err);
+                  return fsImpl.readFile('jobs/' + result.job_id + '/' +
+                      result.copies[0].file_name).then(function(fileResult) {
+                    return reply(fileResult.Body).
+                        header('Content-Type', fileResult.ContentType).
+                        header('Content-Disposition', 'attachment; filename=' +
+                            result.bill_copy_name);
+                  }).catch(function(err) {
+                    console.log('Error on ' + new Date() +
+                        ' while retrieving image is as follow: \n \n ' + err);
+                    return reply({
+                      status: false,
+                      message: 'No Result Found',
+                      forceUpdate: request.pre.forceUpdate,
+                      err: err,
+                    }).code(404);
+                  });
             });
           } else {
             return reply({
