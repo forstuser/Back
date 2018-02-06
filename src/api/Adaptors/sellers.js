@@ -48,7 +48,7 @@ export default class SellerAdaptor {
     options.status_type = 1;
     return this.modals.onlineSellers.findAll({
       where: options,
-      default: [
+      attributes: [
         [
           'sid',
           'id'],

@@ -731,7 +731,7 @@ var ProductAdaptor = function () {
             required: false
           }],
           attributes: ['status_type'],
-          required: false,
+          required: !!billOption.seller_id,
         }],
         attributes: ['id', 'status_type'],
       }).then(function (productResult) {

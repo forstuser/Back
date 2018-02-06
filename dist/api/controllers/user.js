@@ -135,6 +135,7 @@ var loginOrRegisterUser = function loginOrRegisterUser(parameters) {
       fcmManager.insertFcmDetails({
         userId: updatedUser.id || updatedUser.ID,
         fcmId: request.payload.fcmId,
+        platformId: request.payload.platform || 1,
       }).then(function(data) {
         console.log(data);
       }).catch(function (err) {

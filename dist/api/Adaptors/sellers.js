@@ -34,7 +34,17 @@ var SellerAdaptor = function () {
       options.status_type = 1;
       return this.modals.onlineSellers.findAll({
         where: options,
-        default: [['sid', 'id'], ['seller_name', 'name'], 'gstin', 'url', 'contact', 'email']
+        attributes: [
+          [
+            'sid',
+            'id'],
+          [
+            'seller_name',
+            'name'],
+          'gstin',
+          'url',
+          'contact',
+          'email'],
       }).then(function (result) {
         return result.map(function (item) {
           return item.toJSON();

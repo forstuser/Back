@@ -77,6 +77,7 @@ let loginOrRegisterUser = parameters => {
       fcmManager.insertFcmDetails({
         userId: updatedUser.id || updatedUser.ID,
         fcmId: request.payload.fcmId,
+        platformId: request.payload.platform || 1,
       }).then((data) => {
         console.log(data);
       }).
