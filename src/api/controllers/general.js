@@ -70,7 +70,7 @@ class GeneralController {
       }
 
       return categoryAdaptor.retrieveCategories(
-          {category_level: 1, category_id: [2, 3]}, true);
+          {category_level: 1}, false);
     }).
         then((results) => {
           return reply({

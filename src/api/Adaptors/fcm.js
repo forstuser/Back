@@ -6,7 +6,7 @@ class FCMManager {
   insertFcmDetails(parameters) {
     let {userId, fcmId, platformId} = parameters;
     if (!fcmId || fcmId === '') {
-      return Promise.resolve('NULL FCMID');
+      return Promise.resolve('NULL FCM ID');
     }
     const defaults = {
       user_id: userId,
@@ -17,10 +17,18 @@ class FCMManager {
       defaults.platform_id = platformId;
     }
 
-    return this.fcmModal.findCreateFind({
+    return Promise.all([
+      this.fcmModal.destroy({
+        where: {
+          user_id: {
+            $not: userId,
+          },
+          fcm_id: fcmId,
+        },
+      }), this.fcmModal.findCreateFind({
       where: defaults,
       defaults,
-    }).then((data) => {
+      })]).then((data) => {
       return data;
     }).catch((err) => {
       console.log(

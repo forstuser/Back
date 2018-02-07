@@ -110,7 +110,7 @@ var GeneralController = function () {
           }
         }
 
-        return categoryAdaptor.retrieveCategories({ category_level: 1, category_id: [2, 3] }, true);
+        return categoryAdaptor.retrieveCategories({category_level: 1}, false);
       }).then(function (results) {
         return reply({
           status: true,

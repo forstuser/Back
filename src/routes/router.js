@@ -466,6 +466,7 @@ function prepareAuthRoutes(userController, authRoutes) {
         validate: {
           payload: joi.object({
             fcmId: [joi.string()],
+            platform: [joi.number(), joi.allow(null)],
             output: 'data',
             parse: true,
           }).allow(null),

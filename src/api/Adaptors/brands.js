@@ -11,7 +11,7 @@ class BrandAdaptor {
   }
 
   retrieveBrands(options) {
-    options.status_type = 1;
+    options.status_type = [1, 11];
     return this.modals.brands.findAll({
       where: options,
       attributes: [

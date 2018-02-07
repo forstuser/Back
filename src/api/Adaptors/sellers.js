@@ -4,7 +4,7 @@ export default class SellerAdaptor {
   }
 
   retrieveOfflineSellers(options) {
-    options.status_type = 1;
+    options.status_type = [1, 11];
     return this.modals.offlineSellers.findAll({
       where: options,
       attributes: [
@@ -45,7 +45,7 @@ export default class SellerAdaptor {
   }
 
   retrieveOnlineSellers(options) {
-    options.status_type = 1;
+    options.status_type = [1, 11];
     return this.modals.onlineSellers.findAll({
       where: options,
       attributes: [

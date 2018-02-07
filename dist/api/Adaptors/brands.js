@@ -30,7 +30,7 @@ var BrandAdaptor = function () {
   _createClass(BrandAdaptor, [{
     key: 'retrieveBrands',
     value: function retrieveBrands(options) {
-      options.status_type = 1;
+      options.status_type = [1, 11];
       return this.modals.brands.findAll({
         where: options,
         attributes: [['brand_id', 'id'], ['brand_name', 'name'], ['brand_description', 'description']]
