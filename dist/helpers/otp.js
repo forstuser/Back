@@ -41,10 +41,10 @@ var generateOTP = function generateOTP(length) {
   return value.join('');
 };
 
-var sendOTPToUser = function sendOTPToUser(mobileNo) {
+var sendOTPToUser = function sendOTPToUser(mobileNo, otpLength) {
   return _bluebird2.default.try(function () {
     var phone = '91' + mobileNo;
-    var otp = generateOTP(6); // OTP of length = 6
+    var otp = generateOTP(otpLength); // OTP of length = 4
     return sendOTP.sendAsync(phone, 'BINBILL', otp).catch(function (err) {
       console.log('Error on ' + new Date() + ' is as follow: \n \n ' + err);
 

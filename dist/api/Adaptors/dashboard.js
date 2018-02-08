@@ -70,9 +70,6 @@ var DashboardAdaptor = function () {
         where: {
           user_id: user.id || user.ID,
           status_type: [5, 8],
-          main_category_id: {
-            $notIn: [9, 10]
-          }
         },
         include: [{
           model: this.modals.bills,
@@ -85,7 +82,6 @@ var DashboardAdaptor = function () {
         where: {
           user_id: user.id || user.ID,
           status_type: 11,
-          main_category_id: [1, 2, 3],
         }
       }), this.productAdaptor.retrieveUsersLastProduct({
         user_id: user.id || user.ID,
@@ -173,7 +169,8 @@ var DashboardAdaptor = function () {
           upcomingServices: upcomingServices,
           insight: insightResult,
           forceUpdate: request.pre.forceUpdate,
-          showDashboard: !!(result[4] && parseInt(result[4]) > 0) || !!(result[5] && parseInt(result[5]) > 1),
+          showDashboard: !!(result[4] && parseInt(result[4]) > 0) ||
+          !!(result[5] && parseInt(result[5]) > 0),
           hasProducts: !!(result[5] && parseInt(result[5]) > 0),
           product: product
         };
@@ -201,9 +198,6 @@ var DashboardAdaptor = function () {
           where: {
             user_id: user.id || user.ID,
             status_type: [5, 8, 11],
-            main_category_id: {
-              $notIn: [9, 10]
-            }
           },
           include: [{
             model: this.modals.bills,
@@ -216,7 +210,6 @@ var DashboardAdaptor = function () {
           where: {
             user_id: user.id || user.ID,
             status_type: 11,
-            main_category_id: [1, 2, 3],
           }
         })]).then(function (result) {
           var billCounts = parseInt(result[0]);
@@ -227,7 +220,7 @@ var DashboardAdaptor = function () {
             billCounts: billCounts,
             hasProducts: !!(productCounts && productCounts > 0),
             showDashboard: !!(billCounts && billCounts > 0) ||
-            !!(productCounts && productCounts > 1),
+            !!(productCounts && productCounts > 0),
             isExistingUser: !isNewUser,
             authorization: token,
             userId: user.id || user.ID,

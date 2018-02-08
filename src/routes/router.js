@@ -539,10 +539,13 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
           output: 'stream',
           parse: true,
           uploads: 'up_files',
-          timeout: 30034,
+          timeout: 3003400,
           allow: 'multipart/form-data',
           failAction: 'log',
           maxBytes: 209715200,
+        },
+        timeout: {
+          socket: false,
         },
       },
     });
@@ -567,10 +570,13 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
           output: 'stream',
           parse: true,
           uploads: 'up_files',
-          timeout: 30034,
+          timeout: 3003400,
           allow: 'multipart/form-data',
           failAction: 'log',
           maxBytes: 209715200,
+        },
+        timeout: {
+          socket: false,
         },
       },
     });

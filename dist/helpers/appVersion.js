@@ -94,7 +94,13 @@ var updateUserActiveStatus = function updateUserActiveStatus(request, reply) {
             id: user.id || user.ID,
           }
         }).then(function(item) {
+          console.log('User updated detail is as follow ' +
+              JSON.stringify(item));
           return reply(true);
+        }).catch(function(err) {
+          console.log('Error on ' + new Date() + ' for user ' + user.mobile_no +
+              ' is as follow: \n \n ' + err);
+          return reply(false);
         });
       } else {
         console.log('User ' + user.mobile_no + ' doesn\'t exist');

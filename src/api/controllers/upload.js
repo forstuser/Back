@@ -34,7 +34,7 @@ const ALLOWED_FILE_TYPES = [
 const categoryImageType = ['xxhdpi', 'xxhdpi-small'];
 
 const isFileTypeAllowed = function(fileTypeData) {
-  // console.log("FILE TYPE DATA: " + fileTypeData);
+  console.log('FILE TYPE DATA: ' + fileTypeData);
   if (fileTypeData) {
     let filetype = fileTypeData.toString().toLowerCase();
     // console.log(filetype);
@@ -45,7 +45,7 @@ const isFileTypeAllowed = function(fileTypeData) {
 };
 
 const isFileTypeAllowedMagicNumber = function(buffer) {
-  // console.log("GOT BUFFER");
+  console.log('GOT BUFFER');
   const result = fileType(buffer);
   return (ALLOWED_FILE_TYPES.indexOf(result.ext.toString()) > -1);
 };
@@ -132,13 +132,15 @@ class UploadController {
         message: 'Unauthorized',
       }).code(401);
     } else if (request.payload) {
+      console.log('Request received to upload file by user_id ', user.id ||
+          user.ID);
       // if (!request.pre.forceUpdate && request.payload) {
       const fieldNameHere = request.payload.fieldNameHere;
       const fileData = fieldNameHere || request.payload.filesName ||
           request.payload.file;
 
       let filteredFileData = fileData;
-      // console.log("BEFORE FILTERING: ", filteredFileData);
+      console.log('BEFORE FILTERING: ', JSON.stringify({filteredFileData}));
       if (filteredFileData) {
         if (Array.isArray(filteredFileData)) {
           filteredFileData = fileData.filter((datum) => {
@@ -157,6 +159,7 @@ class UploadController {
           });
         } else {
           const name = filteredFileData.hapi.filename;
+          console.log('\n\n\n', name);
           const fileType = (/[.]/.exec(name)) ? /[^.]+$/.exec(name) : undefined;
           // console.log("OUTSIDE FILE ALLOWED: ", fileType);
           if (fileType && !isFileTypeAllowed(fileType)) {
@@ -173,6 +176,9 @@ class UploadController {
               {status: false, message: 'No valid documents in request'});
         } else {
           if (request.params && request.params.id) {
+            console.log(
+                `Request received has JOB ID ${request.params.id} to upload file by user_id ${user.id ||
+                user.ID}`);
             return UploadController.retrieveJobCreateCopies({
               user,
               fileData,
@@ -187,6 +193,9 @@ class UploadController {
             });
           }
 
+          console.log(
+              `Request received to create new job to upload file by user_id ${user.id ||
+              user.ID}`);
           return UploadController.createJobWithCopies({
             user,
             fileData: filteredFileData,
@@ -213,7 +222,9 @@ class UploadController {
     let {user, fileData, reply, request} = parameters;
     return jobAdaptor.retrieveJobDetail(request.params.id, true).
         then((jobResult) => {
+          console.log(`JOB detail is as follow${JSON.stringify({jobResult})}`);
       if (Array.isArray(fileData)) {
+        console.log(`Request has multiple files`);
         return UploadController.uploadArrayOfFile({
           requiredDetail: {
             fileData,
@@ -224,6 +235,7 @@ class UploadController {
           }, reply,
         });
       } else {
+        console.log(`Request has single file ${fileData.hapi.filename}`);
         const name = fileData.hapi.filename;
         const fileType = (/[.]/.exec(name)) ? /[^.]+$/.exec(name) : undefined;
         // console.log("OUTSIDE FILE ALLOWED: ", fileType);
@@ -836,10 +848,17 @@ class UploadController {
               (copyItem) => copyItem.id.toString() ===
                   request.params.copyid.toString());
           if (copiesData) {
-            fsImpl.rmdirp(
-                Guid.isGuid(result[0].job_id) ?
-                    `${copiesData.file_name}` :
-                    `jobs/${result[0].job_id}/${copiesData.file_name}`);
+            fsImpl.unlink(copiesData.file_name).catch((err) => {
+              console.log(
+                  `Error while deleting ${copiesData.file_name} on ${new Date()} for user ${user.id ||
+                  user.ID} is as follow: \n \n ${err}`);
+            });
+            fsImpl.unlink(`jobs/${result[0].job_id}/${copiesData.file_name}`).
+                catch((err) => {
+                  console.log(
+                      `Error while deleting jobs/${result[0].job_id}/${copiesData.file_name} on ${new Date()} for user ${user.id ||
+                      user.ID} is as follow: \n \n ${err}`);
+                });
           }
           const jobItem = result[0].toJSON();
           if (jobItem.admin_status !== 5) {

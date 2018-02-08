@@ -77,7 +77,7 @@ var ALLOWED_FILE_TYPES = ['txt', 'pdf', 'doc', 'docx', 'rtf', 'xls', 'xlsx', 'pn
 var categoryImageType = ['xxhdpi', 'xxhdpi-small'];
 
 var isFileTypeAllowed = function isFileTypeAllowed(fileTypeData) {
-  // console.log("FILE TYPE DATA: " + fileTypeData);
+  console.log('FILE TYPE DATA: ' + fileTypeData);
   if (fileTypeData) {
     var filetype = fileTypeData.toString().toLowerCase();
     // console.log(filetype);
@@ -88,7 +88,7 @@ var isFileTypeAllowed = function isFileTypeAllowed(fileTypeData) {
 };
 
 var isFileTypeAllowedMagicNumber = function isFileTypeAllowedMagicNumber(buffer) {
-  // console.log("GOT BUFFER");
+  console.log('GOT BUFFER');
   var result = (0, _fileType6.default)(buffer);
   return ALLOWED_FILE_TYPES.indexOf(result.ext.toString()) > -1;
 };
@@ -176,12 +176,15 @@ var UploadController = function () {
           message: 'Unauthorized'
         }).code(401);
       } else if (request.payload) {
+        console.log('Request received to upload file by user_id ', user.id ||
+            user.ID);
         // if (!request.pre.forceUpdate && request.payload) {
         var fieldNameHere = request.payload.fieldNameHere;
         var fileData = fieldNameHere || request.payload.filesName || request.payload.file;
 
         var filteredFileData = fileData;
-        // console.log("BEFORE FILTERING: ", filteredFileData);
+        console.log('BEFORE FILTERING: ',
+            JSON.stringify({filteredFileData: filteredFileData}));
         if (filteredFileData) {
           if (Array.isArray(filteredFileData)) {
             filteredFileData = fileData.filter(function (datum) {
@@ -197,6 +200,7 @@ var UploadController = function () {
             });
           } else {
             var name = filteredFileData.hapi.filename;
+            console.log('\n\n\n', name);
             var _fileType2 = /[.]/.exec(name) ? /[^.]+$/.exec(name) : undefined;
             // console.log("OUTSIDE FILE ALLOWED: ", fileType);
             if (_fileType2 && !isFileTypeAllowed(_fileType2)) {
@@ -211,6 +215,8 @@ var UploadController = function () {
             return reply({ status: false, message: 'No valid documents in request' });
           } else {
             if (request.params && request.params.id) {
+              console.log('Request received has JOB ID ' + request.params.id +
+                  ' to upload file by user_id ' + (user.id || user.ID));
               return UploadController.retrieveJobCreateCopies({
                 user: user,
                 fileData: fileData,
@@ -222,6 +228,8 @@ var UploadController = function () {
               });
             }
 
+            console.log('Request received to create new job to upload file by user_id ' +
+                (user.id || user.ID));
             return UploadController.createJobWithCopies({
               user: user,
               fileData: filteredFileData,
@@ -250,7 +258,10 @@ var UploadController = function () {
 
       return jobAdaptor.retrieveJobDetail(request.params.id, true).
           then(function(jobResult) {
+            console.log('JOB detail is as follow' +
+                JSON.stringify({jobResult: jobResult}));
         if (Array.isArray(fileData)) {
+          console.log('Request has multiple files');
           return UploadController.uploadArrayOfFile({
             requiredDetail: {
               fileData: fileData,
@@ -261,6 +272,7 @@ var UploadController = function () {
             }, reply: reply
           });
         } else {
+          console.log('Request has single file ' + fileData.hapi.filename);
           var name = fileData.hapi.filename;
           var _fileType3 = /[.]/.exec(name) ? /[^.]+$/.exec(name) : undefined;
           // console.log("OUTSIDE FILE ALLOWED: ", fileType);
@@ -852,9 +864,18 @@ var UploadController = function () {
                   request.params.copyid.toString();
             });
             if (copiesData) {
-              fsImpl.rmdirp(_guid2.default.isGuid(result[0].job_id) ?
-                  '' + copiesData.file_name :
-                  'jobs/' + result[0].job_id + '/' + copiesData.file_name);
+              fsImpl.unlink(copiesData.file_name).catch(function(err) {
+                console.log('Error while deleting ' + copiesData.file_name +
+                    ' on ' + new Date() + ' for user ' + (user.id || user.ID) +
+                    ' is as follow: \n \n ' + err);
+              });
+              fsImpl.unlink('jobs/' + result[0].job_id + '/' +
+                  copiesData.file_name).catch(function(err) {
+                console.log('Error while deleting jobs/' + result[0].job_id +
+                    '/' + copiesData.file_name + ' on ' + new Date() +
+                    ' for user ' + (user.id || user.ID) +
+                    ' is as follow: \n \n ' + err);
+              });
             }
             var jobItem = result[0].toJSON();
             if (jobItem.admin_status !== 5) {

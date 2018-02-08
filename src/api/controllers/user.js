@@ -186,7 +186,12 @@ class UserController {
     }
 
     return Promise.all([
-      OTPHelper.sendOTPToUser(request.payload.PhoneNo),
+      OTPHelper.sendOTPToUser(request.payload.PhoneNo,
+          (request.headers.ios_app_version && request.headers.ios_app_version <
+              14) ||
+          (request.headers.app_version && request.headers.app_version < 13) ?
+              6 :
+              4),
       userAdaptor.retrieveSingleUser({
         where: {
           mobile_no: request.payload.PhoneNo,

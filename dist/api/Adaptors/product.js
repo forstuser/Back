@@ -1034,14 +1034,14 @@ var ProductAdaptor = function () {
                   model: _this4.modals.brands,
                   as: 'brands',
                   where: {
-                    brand_id: products.brand_id,
+                    brand_id: products.brandId,
                   },
                   attributes: [],
                   required: true,
                 }, {
                   model: _this4.modals.centerDetails,
                   where: {
-                    category_id: products.category_id,
+                    category_id: products.categoryId,
                   },
                   attributes: [],
                   required: true,
@@ -1661,7 +1661,27 @@ var ProductAdaptor = function () {
             Promise.all(amcPromise),
             Promise.all(repairPromise),
             Promise.all(pucPromise),
-            serviceSchedule]);
+            serviceSchedule,
+            _this6.modals.serviceCenters.count({
+              include: [
+                {
+                  model: _this6.modals.brands,
+                  as: 'brands',
+                  where: {
+                    brand_id: product.brand_id,
+                  },
+                  attributes: [],
+                  required: true,
+                }, {
+                  model: _this6.modals.centerDetails,
+                  where: {
+                    category_id: product.category_id,
+                  },
+                  attributes: [],
+                  required: true,
+                  as: 'centerDetails',
+                }],
+            })]);
         }
 
         return undefined;
@@ -1684,6 +1704,11 @@ var ProductAdaptor = function () {
               service_schedule_id: null,
             });
           }
+          product.serviceCenterUrl = productItemsResult[7] &&
+          productItemsResult[7] > 0 ?
+              '/consumer/servicecenters?brandid=' + product.brand_id +
+              '&categoryid=' + product.category_id :
+              '';
           return product;
         }
 

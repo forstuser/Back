@@ -233,7 +233,13 @@ var UserController = function () {
         return reply(replyObject);
       }
 
-      return Promise.all([_otp2.default.sendOTPToUser(request.payload.PhoneNo), userAdaptor.retrieveSingleUser({
+      return Promise.all([
+        _otp2.default.sendOTPToUser(request.payload.PhoneNo,
+            request.headers.ios_app_version &&
+            request.headers.ios_app_version < 14 ||
+            request.headers.app_version && request.headers.app_version < 13 ?
+                6 :
+                4), userAdaptor.retrieveSingleUser({
         where: {
           mobile_no: request.payload.PhoneNo
         }

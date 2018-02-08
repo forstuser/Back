@@ -33,9 +33,6 @@ class DashboardAdaptor {
         where: {
           user_id: user.id || user.ID,
           status_type: [5, 8],
-          main_category_id: {
-            $notIn: [9, 10],
-          },
         },
         include: [
           {
@@ -50,7 +47,6 @@ class DashboardAdaptor {
         where: {
           user_id: user.id || user.ID,
           status_type: 11,
-          main_category_id: [1, 2, 3],
         },
       }),
       this.productAdaptor.retrieveUsersLastProduct({
@@ -144,7 +140,7 @@ class DashboardAdaptor {
         insight: insightResult,
         forceUpdate: request.pre.forceUpdate,
         showDashboard: !!(result[4] && parseInt(result[4]) > 0) ||
-        !!(result[5] && parseInt(result[5]) > 1),
+        !!(result[5] && parseInt(result[5]) > 0),
         hasProducts: !!(result[5] && parseInt(result[5]) > 0),
         product,
       };
@@ -170,9 +166,6 @@ class DashboardAdaptor {
           where: {
             user_id: user.id || user.ID,
             status_type: [5, 8, 11],
-            main_category_id: {
-              $notIn: [9, 10],
-            },
           },
           include: [
             {
@@ -187,7 +180,6 @@ class DashboardAdaptor {
           where: {
             user_id: user.id || user.ID,
             status_type: 11,
-            main_category_id: [1, 2, 3],
           },
         })]).then((result) => {
         const billCounts = parseInt(result[0]);
@@ -198,7 +190,7 @@ class DashboardAdaptor {
           billCounts,
           hasProducts: !!(productCounts && productCounts > 0),
           showDashboard: !!(billCounts && billCounts > 0) ||
-          !!(productCounts && productCounts > 1),
+          !!(productCounts && productCounts > 0),
           isExistingUser: !isNewUser,
           authorization: token,
           userId: user.id || user.ID,

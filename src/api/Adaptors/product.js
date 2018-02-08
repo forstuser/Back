@@ -1251,7 +1251,7 @@ class ProductAdaptor {
                 model: this.modals.brands,
                 as: 'brands',
                 where: {
-                  brand_id: products.brand_id,
+                  brand_id: products.brandId,
                 },
                 attributes: [],
                 required: true,
@@ -1259,7 +1259,7 @@ class ProductAdaptor {
               {
                 model: this.modals.centerDetails,
                 where: {
-                  category_id: products.category_id,
+                  category_id: products.categoryId,
                 },
                 attributes: [],
                 required: true,
@@ -1892,7 +1892,27 @@ class ProductAdaptor {
               Promise.all(amcPromise),
               Promise.all(repairPromise),
               Promise.all(pucPromise),
-              serviceSchedule]);
+              serviceSchedule, this.modals.serviceCenters.count({
+                include: [
+                  {
+                    model: this.modals.brands,
+                    as: 'brands',
+                    where: {
+                      brand_id: product.brand_id,
+                    },
+                    attributes: [],
+                    required: true,
+                  },
+                  {
+                    model: this.modals.centerDetails,
+                    where: {
+                      category_id: product.category_id,
+                    },
+                    attributes: [],
+                    required: true,
+                    as: 'centerDetails',
+                  }],
+              })]);
           }
 
           return undefined;
@@ -1914,6 +1934,10 @@ class ProductAdaptor {
                 service_schedule_id: null,
               });
             }
+            product.serviceCenterUrl = productItemsResult[7] &&
+            productItemsResult[7] > 0 ?
+                `/consumer/servicecenters?brandid=${product.brand_id}&categoryid=${product.category_id}` :
+                '';
             return product;
           }
 
