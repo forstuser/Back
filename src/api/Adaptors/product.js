@@ -316,6 +316,9 @@ class ProductAdaptor {
         productItem.purchaseDate = moment.utc(productItem.purchaseDate,
             moment.ISO_8601).
             startOf('days');
+        productItem.cImageURL = productItem.sub_category_id ?
+            `/categories/${productItem.sub_category_id}/images/` :
+            productItem.cImageURL;
         if (productItem.schedule) {
           productItem.schedule.due_date = moment.utc(productItem.purchaseDate,
               moment.ISO_8601).
@@ -508,6 +511,9 @@ class ProductAdaptor {
           return copyItem;
         });
       }
+      productItem.cImageURL = productItem.sub_category_id ?
+          `/categories/${productItem.sub_category_id}/images/` :
+          productItem.cImageURL;
       productItem.purchaseDate = moment.utc(productItem.purchaseDate,
           moment.ISO_8601).
           startOf('days');
@@ -790,6 +796,9 @@ class ProductAdaptor {
             return copyItem;
           });
         }
+        productItem.cImageURL = productItem.sub_category_id ?
+            `/categories/${productItem.sub_category_id}/images/` :
+            productItem.cImageURL;
         productItem.purchaseDate = moment.utc(productItem.purchaseDate,
             moment.ISO_8601).
             startOf('days');
@@ -1208,6 +1217,9 @@ class ProductAdaptor {
     }).then((productResult) => {
       products = productResult ? productResult.toJSON() : productResult;
       if (products) {
+        products.cImageURL = products.sub_category_id ?
+            `/categories/${products.sub_category_id}/images/` :
+            products.cImageURL;
         productItem = productResult;
         if (products.copies) {
           products.copies = products.copies.map((copyItem) => {

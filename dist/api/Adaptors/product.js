@@ -258,6 +258,9 @@ var ProductAdaptor = function () {
           productItem.purchaseDate = _moment2.default.utc(
               productItem.purchaseDate, _moment2.default.ISO_8601).
               startOf('days');
+          productItem.cImageURL = productItem.sub_category_id ?
+              '/categories/' + productItem.sub_category_id + '/images/' :
+              productItem.cImageURL;
           if (productItem.schedule) {
             productItem.schedule.due_date = _moment2.default.utc(
                 productItem.purchaseDate, _moment2.default.ISO_8601).
@@ -459,6 +462,9 @@ var ProductAdaptor = function () {
               return copyItem;
             });
           }
+          productItem.cImageURL = productItem.sub_category_id ?
+              '/categories/' + productItem.sub_category_id + '/images/' :
+              productItem.cImageURL;
           productItem.purchaseDate = _moment2.default.utc(
               productItem.purchaseDate, _moment2.default.ISO_8601).
               startOf('days');
@@ -639,6 +645,9 @@ var ProductAdaptor = function () {
               return copyItem;
             });
           }
+          productItem.cImageURL = productItem.sub_category_id ?
+              '/categories/' + productItem.sub_category_id + '/images/' :
+              productItem.cImageURL;
           productItem.purchaseDate = _moment2.default.utc(
               productItem.purchaseDate, _moment2.default.ISO_8601).
               startOf('days');
@@ -991,6 +1000,9 @@ var ProductAdaptor = function () {
       }).then(function (productResult) {
         products = productResult ? productResult.toJSON() : productResult;
         if (products) {
+          products.cImageURL = products.sub_category_id ?
+              '/categories/' + products.sub_category_id + '/images/' :
+              products.cImageURL;
           productItem = productResult;
           if (products.copies) {
             products.copies = products.copies.map(function(copyItem) {
