@@ -274,6 +274,7 @@ class PUCAdaptor {
     }).then(result => {
       let document_date = productNewPurchaseDate;
       let pucExpiryDate;
+      console.log('\n\n\n', JSON.stringify({puc: result}));
       return Promise.all(result.map((item) => {
         const pucItem = item.toJSON();
         const id = pucItem.id;

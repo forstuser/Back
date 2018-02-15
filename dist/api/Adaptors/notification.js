@@ -137,76 +137,65 @@ var NotificationAdaptor = function () {
   }, {
     key: 'filterUpcomingService',
     value: function filterUpcomingService(user) {
-      return Promise.all([
-        this.productAdaptor.retrieveNotificationProducts({
+      return Promise.all([this.productAdaptor.retrieveNotificationProducts({
         user_id: user.id || user.ID,
         status_type: [5, 11],
         main_category_id: [6, 8]
       }), this.amcAdaptor.retrieveAMCs({
         user_id: user.id || user.ID,
-          status_type: [5, 11],
-          expiry_date: {
-            $gte: _moment2.default.utc().startOf('days'),
-            $lte: _moment2.default.utc().add(30, 'days').endOf('days'),
-          },
+        status_type: [5, 11],
+        expiry_date: {
+          $gte: _moment2.default.utc().startOf('days'),
+          $lte: _moment2.default.utc().add(30, 'days').endOf('days')
+        }
       }), this.insuranceAdaptor.retrieveInsurances({
         user_id: user.id || user.ID,
-          status_type: [5, 11],
-          expiry_date: {
-            $gte: _moment2.default.utc().startOf('days'),
-            $lte: _moment2.default.utc().add(30, 'days').endOf('days'),
-          },
+        status_type: [5, 11],
+        expiry_date: {
+          $gte: _moment2.default.utc().startOf('days'),
+          $lte: _moment2.default.utc().add(30, 'days').endOf('days')
+        }
       }), this.warrantyAdaptor.retrieveWarranties({
         user_id: user.id || user.ID,
-          status_type: [5, 11],
-          main_category_id: [1, 2, 3],
-          expiry_date: {
-            $gte: _moment2.default.utc().startOf('days'),
-            $lte: _moment2.default.utc().add(30, 'days').endOf('days'),
-          },
+        status_type: [5, 11],
+        main_category_id: [1, 2, 3],
+        expiry_date: {
+          $gte: _moment2.default.utc().startOf('days'),
+          $lte: _moment2.default.utc().add(30, 'days').endOf('days')
+        }
       }), this.pucAdaptor.retrievePUCs({
         user_id: user.id || user.ID,
         status_type: [5, 11],
-          main_category_id: [3],
-          expiry_date: {
-            $gte: _moment2.default.utc().startOf('days'),
-            $lte: _moment2.default.utc().add(30, 'days').endOf('days'),
-          },
-        }), this.productAdaptor.retrieveUpcomingProducts({
+        main_category_id: [3],
+        expiry_date: {
+          $gte: _moment2.default.utc().startOf('days'),
+          $lte: _moment2.default.utc().add(30, 'days').endOf('days')
+        }
+      }), this.productAdaptor.retrieveUpcomingProducts({
         user_id: user.id || user.ID,
         status_type: [5, 11],
         main_category_id: [3],
-          service_schedule_id: {
-            $not: null,
-          },
+        service_schedule_id: {
+          $not: null
+        }
       })]).then(function (result) {
         var metaData = result[0][0];
-        var productList = result[0][1].map(function(productItem) {
-          productItem.productMetaData = metaData.filter(function(item) {
+        var productList = result[0][1].map(function (productItem) {
+          productItem.productMetaData = metaData.filter(function (item) {
             return item.productId === productItem.id;
           });
 
           return productItem;
         });
-        productList = productList.map(function(item) {
+        productList = productList.map(function (item) {
           var product = item;
 
-          product.productMetaData.forEach(function(metaItem) {
+          product.productMetaData.forEach(function (metaItem) {
             var metaData = metaItem;
-            if (metaData.name.toLowerCase().includes('due') &&
-                metaData.name.toLowerCase().includes('date') &&
-                (_moment2.default.utc(metaData.value,
-                    _moment2.default.ISO_8601).isValid() ||
-                    _moment2.default.utc(metaData.value, 'DD MMM YYYY').
-                        isValid())) {
-              var dueDateTime = _moment2.default.utc(metaData.value,
-                  _moment2.default.ISO_8601).isValid() ?
-                  _moment2.default.utc(metaData.value,
-                      _moment2.default.ISO_8601) :
-                  _moment2.default.utc(metaData.value, 'DD MMM YYYY');
+            if (metaData.name.toLowerCase().includes('due') && metaData.name.toLowerCase().includes('date') && (_moment2.default.utc(metaData.value, _moment2.default.ISO_8601).isValid() || _moment2.default.utc(metaData.value, 'DD MMM YYYY').isValid())) {
+              var dueDateTime = _moment2.default.utc(metaData.value, _moment2.default.ISO_8601).isValid() ? _moment2.default.utc(metaData.value, _moment2.default.ISO_8601) : _moment2.default.utc(metaData.value, 'DD MMM YYYY');
               product.dueDate = metaData.value;
-              product.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days',
-                  true);
+              product.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days', true);
             }
             product.description = '';
             product.address = '';
@@ -227,16 +216,14 @@ var NotificationAdaptor = function () {
           return product;
         });
 
-        productList = productList.filter(function(item) {
+        productList = productList.filter(function (item) {
           return item.dueIn !== undefined && item.dueIn !== null && item.dueIn <= 30 && item.dueIn >= 0;
         });
 
         var pucProducts = result[4].map(function (item) {
           var puc = item;
-          if (_moment2.default.utc(puc.expiryDate, _moment2.default.ISO_8601).
-                  isValid()) {
-            var dueDateTime = _moment2.default.utc(puc.expiryDate,
-                _moment2.default.ISO_8601).endOf('day');
+          if (_moment2.default.utc(puc.expiryDate, _moment2.default.ISO_8601).isValid()) {
+            var dueDateTime = _moment2.default.utc(puc.expiryDate, _moment2.default.ISO_8601).endOf('day');
             puc.dueDate = puc.expiryDate;
             puc.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days', true);
             puc.productType = 3;
@@ -252,10 +239,8 @@ var NotificationAdaptor = function () {
         });
         var amcs = result[1].map(function (item) {
           var amc = item;
-          if (_moment2.default.utc(amc.expiryDate, _moment2.default.ISO_8601).
-                  isValid()) {
-            var dueDateTime = _moment2.default.utc(amc.expiryDate,
-                _moment2.default.ISO_8601);
+          if (_moment2.default.utc(amc.expiryDate, _moment2.default.ISO_8601).isValid()) {
+            var dueDateTime = _moment2.default.utc(amc.expiryDate, _moment2.default.ISO_8601);
             amc.dueDate = amc.expiryDate;
             amc.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days', true);
             amc.productType = 3;
@@ -271,17 +256,13 @@ var NotificationAdaptor = function () {
 
         var insurances = result[2].map(function (item) {
           var insurance = item;
-          if (_moment2.default.utc(insurance.expiryDate,
-                  _moment2.default.ISO_8601).isValid()) {
-            var dueDateTime = _moment2.default.utc(insurance.expiryDate,
-                _moment2.default.ISO_8601);
+          if (_moment2.default.utc(insurance.expiryDate, _moment2.default.ISO_8601).isValid()) {
+            var dueDateTime = _moment2.default.utc(insurance.expiryDate, _moment2.default.ISO_8601);
             insurance.dueDate = insurance.expiryDate;
-            insurance.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days',
-                true);
+            insurance.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days', true);
             insurance.productType = 3;
             insurance.title = 'Insurance Renewal Pending';
-            insurance.description = 'Insurance Renewal Pending for ' +
-                insurance.productName;
+            insurance.description = 'Insurance Renewal Pending for ' + insurance.productName;
           }
           return insurance;
         });
@@ -292,23 +273,14 @@ var NotificationAdaptor = function () {
 
         var warranties = result[3].map(function (item) {
           var warranty = item;
-          if (_moment2.default.utc(warranty.expiryDate,
-                  _moment2.default.ISO_8601).isValid()) {
-            var dueDateTime = _moment2.default.utc(warranty.expiryDate,
-                _moment2.default.ISO_8601);
+          if (_moment2.default.utc(warranty.expiryDate, _moment2.default.ISO_8601).isValid()) {
+            var dueDateTime = _moment2.default.utc(warranty.expiryDate, _moment2.default.ISO_8601);
 
             warranty.dueDate = warranty.expiryDate;
-            warranty.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days',
-                true);
+            warranty.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days', true);
             warranty.productType = 3;
             warranty.title = 'Warranty Renewal Pending';
-            warranty.description = 'Warranty Renewal Pending for ' +
-                (warranty.warranty_type === 3 ?
-                    (warranty.dualWarrantyItem || 'dual item') + ' of ' +
-                    warranty.productName :
-                    warranty.warranty_type === 4 ?
-                        'Accessories of ' + warranty.productName :
-                        '' + warranty.productName);
+            warranty.description = 'Warranty Renewal Pending for ' + (warranty.warranty_type === 3 ? (warranty.dualWarrantyItem || 'dual item') + ' of ' + warranty.productName : warranty.warranty_type === 4 ? 'Accessories of ' + warranty.productName : '' + warranty.productName);
           }
 
           return warranty;
@@ -318,40 +290,26 @@ var NotificationAdaptor = function () {
           return item.dueIn !== undefined && item.dueIn !== null && item.dueIn <= 30 && item.dueIn >= 0;
         });
 
-        var productServiceSchedule = result[5].map(function(item) {
+        var productServiceSchedule = result[5].map(function (item) {
           var scheduledProduct = item;
-          var scheduledDate = scheduledProduct.schedule ?
-              _moment2.default.utc(scheduledProduct.purchaseDate,
-                  _moment2.default.ISO_8601).
-                  add(scheduledProduct.schedule.due_in_months, 'months') :
-              undefined;
-          if (scheduledDate &&
-              _moment2.default.utc(scheduledDate, _moment2.default.ISO_8601).
-                  isValid()) {
-            var due_date_time = _moment2.default.utc(scheduledDate,
-                _moment2.default.ISO_8601).endOf('day');
+          var scheduledDate = scheduledProduct.schedule ? _moment2.default.utc(scheduledProduct.purchaseDate, _moment2.default.ISO_8601).add(scheduledProduct.schedule.due_in_months, 'months') : undefined;
+          if (scheduledDate && _moment2.default.utc(scheduledDate, _moment2.default.ISO_8601).isValid()) {
+            var due_date_time = _moment2.default.utc(scheduledDate, _moment2.default.ISO_8601).endOf('day');
             scheduledProduct.dueDate = scheduledDate;
-            scheduledProduct.dueIn = due_date_time.diff(_moment2.default.utc(),
-                'days', true);
+            scheduledProduct.dueIn = due_date_time.diff(_moment2.default.utc(), 'days', true);
             scheduledProduct.productType = 3;
-            scheduledProduct.title = 'Service is pending for ' +
-                scheduledProduct.productName;
-            scheduledProduct.description = 'Service is pending for ' +
-                scheduledProduct.productName;
+            scheduledProduct.title = 'Service is pending for ' + scheduledProduct.productName;
+            scheduledProduct.description = 'Service is pending for ' + scheduledProduct.productName;
           }
 
           return scheduledProduct;
         });
 
-        productServiceSchedule = productServiceSchedule.filter(function(item) {
-          return item.dueIn !== undefined && item.dueIn !== null &&
-              item.dueIn <= 7 && item.dueIn >= 0;
+        productServiceSchedule = productServiceSchedule.filter(function (item) {
+          return item.dueIn !== undefined && item.dueIn !== null && item.dueIn <= 7 && item.dueIn >= 0;
         });
 
-        return [].concat(_toConsumableArray(productList),
-            _toConsumableArray(warranties), _toConsumableArray(insurances),
-            _toConsumableArray(amcs), _toConsumableArray(pucProducts),
-            _toConsumableArray(productServiceSchedule));
+        return [].concat(_toConsumableArray(productList), _toConsumableArray(warranties), _toConsumableArray(insurances), _toConsumableArray(amcs), _toConsumableArray(pucProducts), _toConsumableArray(productServiceSchedule));
       });
     }
   }, {
@@ -615,13 +573,13 @@ var NotificationAdaptor = function () {
     value: function retrieveExpenseCronNotification(days) {
       var purchaseDateCompare = days === 1 ? {
         $gte: _moment2.default.utc().subtract(days, 'day').startOf('day'),
-        $lte: _moment2.default.utc().subtract(days, 'day').endOf('day'),
+        $lte: _moment2.default.utc().subtract(days, 'day').endOf('day')
       } : days === 7 ? {
         $lte: _moment2.default.utc().subtract(days, 'day').endOf('day'),
-        $gte: _moment2.default.utc().subtract(days, 'day').startOf('day'),
+        $gte: _moment2.default.utc().subtract(days, 'day').startOf('day')
       } : {
         $gte: _moment2.default.utc().startOf('month'),
-        $lte: _moment2.default.utc().endOf('month'),
+        $lte: _moment2.default.utc().endOf('month')
       };
       return Promise.all([this.productAdaptor.retrieveNotificationProducts({
         status_type: [5, 11],
@@ -652,10 +610,10 @@ var NotificationAdaptor = function () {
     value: function retrieveCronNotification(days) {
       var expiryDateCompare = days === 15 ? {
         $gte: _moment2.default.utc().add(days, 'day').startOf('day'),
-        $lte: _moment2.default.utc().add(days, 'day').endOf('day'),
+        $lte: _moment2.default.utc().add(days, 'day').endOf('day')
       } : {
         $gte: _moment2.default.utc().startOf('day'),
-        $lte: _moment2.default.utc().add(days, 'day').endOf('day'),
+        $lte: _moment2.default.utc().add(days, 'day').endOf('day')
       };
       return Promise.all([this.productAdaptor.retrieveNotificationProducts({
         status_type: 5,
@@ -675,15 +633,10 @@ var NotificationAdaptor = function () {
 
           product.productMetaData.map(function (metaItem) {
             var metaData = metaItem;
-            if (metaData.name.toLowerCase().includes('due') &&
-                metaData.name.toLowerCase().includes('date') &&
-                _moment2.default.utc(metaData.value, _moment2.default.ISO_8601).
-                    isValid()) {
-              var dueDateTime = _moment2.default.utc(metaData.value,
-                  _moment2.default.ISO_8601);
+            if (metaData.name.toLowerCase().includes('due') && metaData.name.toLowerCase().includes('date') && _moment2.default.utc(metaData.value, _moment2.default.ISO_8601).isValid()) {
+              var dueDateTime = _moment2.default.utc(metaData.value, _moment2.default.ISO_8601);
               product.dueDate = metaData.value;
-              product.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days',
-                  true);
+              product.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days', true);
             }
 
             if (metaData.name.toLowerCase().includes('address')) {
@@ -699,21 +652,12 @@ var NotificationAdaptor = function () {
         });
 
         products = products.filter(function (item) {
-          return days === 15 ?
-              item.dueDate <=
-              _moment2.default.utc().add(days, 'day').endOf('day') &&
-              item.dueDate >=
-              _moment2.default.utc().add(days, 'day').startOf('day') :
-              item.dueDate <=
-              _moment2.default.utc().add(days, 'day').endOf('day') &&
-              item.dueDate >= _moment2.default.utc().startOf('day');
+          return days === 15 ? item.dueDate <= _moment2.default.utc().add(days, 'day').endOf('day') && item.dueDate >= _moment2.default.utc().add(days, 'day').startOf('day') : item.dueDate <= _moment2.default.utc().add(days, 'day').endOf('day') && item.dueDate >= _moment2.default.utc().startOf('day');
         });
         var amcs = result[1].map(function (item) {
           var amc = item;
-          if (_moment2.default.utc(amc.expiryDate, _moment2.default.ISO_8601).
-                  isValid()) {
-            var dueDateTime = _moment2.default.utc(amc.expiryDate,
-                _moment2.default.ISO_8601);
+          if (_moment2.default.utc(amc.expiryDate, _moment2.default.ISO_8601).isValid()) {
+            var dueDateTime = _moment2.default.utc(amc.expiryDate, _moment2.default.ISO_8601);
             amc.dueDate = amc.expiryDate;
             amc.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days', true);
             amc.productType = 3;
@@ -726,13 +670,10 @@ var NotificationAdaptor = function () {
 
         var insurances = result[2].map(function (item) {
           var insurance = item;
-          if (_moment2.default.utc(insurance.expiryDate,
-                  _moment2.default.ISO_8601).isValid()) {
-            var dueDateTime = _moment2.default.utc(insurance.expiryDate,
-                _moment2.default.ISO_8601);
+          if (_moment2.default.utc(insurance.expiryDate, _moment2.default.ISO_8601).isValid()) {
+            var dueDateTime = _moment2.default.utc(insurance.expiryDate, _moment2.default.ISO_8601);
             insurance.dueDate = insurance.expiryDate;
-            insurance.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days',
-                true);
+            insurance.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days', true);
             insurance.productType = 3;
             insurance.title = 'Insurance Renewal Pending';
             insurance.description = 'Insurance #' + insurance.policyNo + ' of ' + insurance.productName;
@@ -742,14 +683,11 @@ var NotificationAdaptor = function () {
 
         var warranties = result[3].map(function (item) {
           var warranty = item;
-          if (_moment2.default.utc(warranty.expiryDate,
-                  _moment2.default.ISO_8601).isValid()) {
-            var dueDateTime = _moment2.default.utc(warranty.expiryDate,
-                _moment2.default.ISO_8601);
+          if (_moment2.default.utc(warranty.expiryDate, _moment2.default.ISO_8601).isValid()) {
+            var dueDateTime = _moment2.default.utc(warranty.expiryDate, _moment2.default.ISO_8601);
 
             warranty.dueDate = warranty.expiryDate;
-            warranty.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days',
-                true);
+            warranty.dueIn = dueDateTime.diff(_moment2.default.utc(), 'days', true);
             warranty.productType = 3;
             warranty.title = 'Warranty Renewal Pending';
             warranty.description = 'Warranty #' + warranty.policyNo + ' of ' + warranty.productName;

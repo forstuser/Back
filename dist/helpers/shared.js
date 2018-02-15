@@ -120,7 +120,7 @@ function verifyAuthorization(headers) {
   return isAccessTokenBasic(verifyParameters({
     rootNode: headers,
     currentField: authorizationParamConst,
-    defaultValue: emptyString,
+    defaultValue: emptyString
   }));
 }
 
@@ -139,12 +139,9 @@ var getAllDays = function getAllDays() {
   while (s.valueOf() < e.valueOf()) {
     a.push({
       value: 0,
-      purchaseDate: _moment2.default.utc(s, _moment2.default.ISO_8601).
-          startOf('d'),
+      purchaseDate: _moment2.default.utc(s, _moment2.default.ISO_8601).startOf('d')
     });
-    s = _moment2.default.utc(s, _moment2.default.ISO_8601).
-        add(1, 'd').
-        startOf('d');
+    s = _moment2.default.utc(s, _moment2.default.ISO_8601).add(1, 'd').startOf('d');
   }
 
   return a;
@@ -153,14 +150,12 @@ var getAllDays = function getAllDays() {
 function retrieveDaysInsight(distinctInsight) {
   var allDaysInWeek = getAllDays();
   distinctInsight.map(function (item) {
-    var currentDate = _moment2.default.utc(item.purchaseDate,
-        _moment2.default.ISO_8601).startOf('day');
+    var currentDate = _moment2.default.utc(item.purchaseDate, _moment2.default.ISO_8601).startOf('day');
     for (var i = 0; i < allDaysInWeek.length; i += 1) {
       var weekData = allDaysInWeek[i];
       if (weekData.purchaseDate.valueOf() === currentDate.valueOf()) {
         weekData.value = !item.value ? 0 : item.value;
-        weekData.purchaseDate = _moment2.default.utc(weekData.purchaseDate,
-            _moment2.default.ISO_8601);
+        weekData.purchaseDate = _moment2.default.utc(weekData.purchaseDate, _moment2.default.ISO_8601);
         break;
       }
     }
@@ -171,10 +166,8 @@ function retrieveDaysInsight(distinctInsight) {
   return allDaysInWeek.map(function (weekItem) {
     return {
       value: weekItem.value,
-      purchaseDate: _moment2.default.utc(weekItem.purchaseDate,
-          _moment2.default.ISO_8601),
-      purchaseDay: _moment2.default.utc(weekItem.purchaseDate,
-          _moment2.default.ISO_8601).format('ddd'),
+      purchaseDate: _moment2.default.utc(weekItem.purchaseDate, _moment2.default.ISO_8601),
+      purchaseDay: _moment2.default.utc(weekItem.purchaseDate, _moment2.default.ISO_8601).format('ddd')
     };
   });
 }
@@ -227,7 +220,7 @@ var retrieveHeaderValue = function retrieveHeaderValue(headers) {
     authorization: verifyParameters({
       rootNode: headers,
       currentField: authorizationParamConst,
-      defaultValue: emptyString,
+      defaultValue: emptyString
     }),
     CorrelationId: _uuid2.default.v4()
   };

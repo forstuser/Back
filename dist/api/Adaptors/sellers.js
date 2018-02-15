@@ -34,17 +34,7 @@ var SellerAdaptor = function () {
       options.status_type = [1, 11];
       return this.modals.onlineSellers.findAll({
         where: options,
-        attributes: [
-          [
-            'sid',
-            'id'],
-          [
-            'seller_name',
-            'name'],
-          'gstin',
-          'url',
-          'contact',
-          'email'],
+        attributes: [['sid', 'id'], ['seller_name', 'name'], 'gstin', 'url', 'contact', 'email']
       }).then(function (result) {
         return result.map(function (item) {
           return item.toJSON();
@@ -57,7 +47,7 @@ var SellerAdaptor = function () {
       var _this = this;
 
       return this.modals.offlineSellers.findOne({
-        where: options,
+        where: options
       }).then(function (result) {
         if (result) {
           result.updateAttributes(defaults);
@@ -65,7 +55,7 @@ var SellerAdaptor = function () {
         }
 
         return _this.modals.offlineSellers.create(defaults);
-      }).then(function(result) {
+      }).then(function (result) {
         return result.toJSON();
       });
     }

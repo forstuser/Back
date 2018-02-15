@@ -309,6 +309,7 @@ class AmcAdaptor {
     }).then(result => {
       let document_date = productNewPurchaseDate;
       let amcExpiryDate;
+      console.log('\n\n\n', JSON.stringify({amc: result}));
       return Promise.all(result.map((item) => {
         const amcItem = item.toJSON();
         const id = amcItem.id;

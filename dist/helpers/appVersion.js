@@ -2,7 +2,7 @@
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
-  value: true,
+  value: true
 });
 
 var _shared = require('./shared');
@@ -13,37 +13,25 @@ var _moment = require('moment');
 
 var _moment2 = _interopRequireDefault(_moment);
 
-function _interopRequireDefault(obj) {
-  return obj && obj.__esModule ? obj : {default: obj};
-}
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var MODAL = void 0;
 
 
 var checkAppVersion = function checkAppVersion(request, reply) {
-  if (request.headers.app_version !== undefined ||
-      request.headers.ios_app_version !== undefined) {
-    var appVersion = request.headers.ios_app_version ||
-        request.headers.app_version;
+  if (request.headers.app_version !== undefined || request.headers.ios_app_version !== undefined) {
+    var appVersion = request.headers.ios_app_version || request.headers.app_version;
     var id = request.headers.ios_app_version ? 2 : 1;
-    var currentAppVersion = !isNaN(parseInt(appVersion)) ?
-        parseInt(appVersion) :
-        null;
+    var currentAppVersion = !isNaN(parseInt(appVersion)) ? parseInt(appVersion) : null;
     console.log('CURRENT APP VERSION = ' + currentAppVersion);
 
     MODAL.appVersion.findOne({
       where: {
-        id: id,
+        id: id
       },
       order: [['updatedAt', 'DESC']],
-      attributes: [
-        [
-          'recommended_version',
-          'recommendedVersion'],
-        [
-          'force_version',
-          'forceVersion']],
-    }).then(function(results) {
+      attributes: [['recommended_version', 'recommendedVersion'], ['force_version', 'forceVersion']]
+    }).then(function (results) {
       if (results && currentAppVersion) {
         var FORCE_VERSION = results.dataValues.forceVersion;
         var RECOMMENDED_VERSION = results.dataValues.recommendedVersion;
@@ -54,8 +42,7 @@ var checkAppVersion = function checkAppVersion(request, reply) {
         if (currentAppVersion < FORCE_VERSION) {
           console.log('current < force');
           return reply(true);
-        } else if (currentAppVersion >= FORCE_VERSION &&
-            currentAppVersion < RECOMMENDED_VERSION) {
+        } else if (currentAppVersion >= FORCE_VERSION && currentAppVersion < RECOMMENDED_VERSION) {
           console.log('force < current < recommended');
           return reply(false);
         } else {
@@ -78,37 +65,32 @@ var updateUserActiveStatus = function updateUserActiveStatus(request, reply) {
   } else {
     return MODAL.users.findOne({
       where: {
-        id: user.id || user.ID,
+        id: user.id || user.ID
       }
-    }).then(function(userResult) {
+    }).then(function (userResult) {
       var userDetail = userResult ? userResult.toJSON() : userResult;
-      console.log('Last route ' + request.url.pathname +
-          ' accessed by user id ' + (user.id || user.ID) + ' from ' +
-          (request.headers.ios_app_version ? 'iOS' : 'android'));
+      console.log('Last route ' + request.url.pathname + ' accessed by user id ' + (user.id || user.ID) + ' from ' + (request.headers.ios_app_version ? 'iOS' : 'android'));
       if (userDetail) {
         return MODAL.users.update({
           last_active_date: _moment2.default.utc(),
-          last_api: request.url.pathname,
+          last_api: request.url.pathname
         }, {
           where: {
-            id: user.id || user.ID,
+            id: user.id || user.ID
           }
-        }).then(function(item) {
-          console.log('User updated detail is as follow ' +
-              JSON.stringify(item));
+        }).then(function (item) {
+          console.log('User updated detail is as follow ' + JSON.stringify(item));
           return reply(true);
-        }).catch(function(err) {
-          console.log('Error on ' + new Date() + ' for user ' + user.mobile_no +
-              ' is as follow: \n \n ' + err);
+        }).catch(function (err) {
+          console.log('Error on ' + new Date() + ' for user ' + user.mobile_no + ' is as follow: \n \n ' + err);
           return reply(false);
         });
       } else {
         console.log('User ' + user.mobile_no + ' doesn\'t exist');
         return reply(null);
       }
-    }).catch(function(err) {
-      console.log('Error on ' + new Date() + ' for user ' + user.mobile_no +
-          ' is as follow: \n \n ' + err);
+    }).catch(function (err) {
+      console.log('Error on ' + new Date() + ' for user ' + user.mobile_no + ' is as follow: \n \n ' + err);
       return reply(false);
     });
   }
@@ -118,6 +100,6 @@ exports.default = function (models) {
   MODAL = models;
   return {
     checkAppVersion: checkAppVersion,
-    updateUserActiveStatus: updateUserActiveStatus,
+    updateUserActiveStatus: updateUserActiveStatus
   };
 };

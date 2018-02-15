@@ -156,6 +156,13 @@ export default class CategoryAdaptor {
                 },
               }, {
                 $and: {
+                  category_id: categoryData.map(item => item.id),
+                  title: {
+                    $iLike: 'due amount%',
+                  },
+                },
+              }, {
+                $and: {
                   main_category_id: categoryData.map(item => item.refId),
                   title: {
                     $iLike: 'VIN',

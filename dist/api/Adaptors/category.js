@@ -39,7 +39,7 @@ var CategoryAdaptor = function () {
         });
         var subCategoryOption = {
           status_type: 1,
-          ref_id: categoryData.map(function(item) {
+          ref_id: categoryData.map(function (item) {
             return item.id;
           })
         };
@@ -51,8 +51,7 @@ var CategoryAdaptor = function () {
           subCategoryOption.category_id = excluded_category_id;
         }
 
-        return _this.retrieveSubCategories(subCategoryOption,
-            isBrandFormRequired);
+        return _this.retrieveSubCategories(subCategoryOption, isBrandFormRequired);
       }).then(function (subCategories) {
         categoryData = categoryData.map(function (item) {
           item.subCategories = subCategories.filter(function (categoryItem) {
@@ -133,11 +132,20 @@ var CategoryAdaptor = function () {
               }
             }, {
               $and: {
+                category_id: categoryData.map(function (item) {
+                  return item.id;
+                }),
+                title: {
+                  $iLike: 'due amount%'
+                }
+              }
+            }, {
+              $and: {
                 main_category_id: categoryData.map(function (item) {
                   return item.refId;
                 }),
                 title: {
-                  $iLike: 'VIN',
+                  $iLike: 'VIN'
                 }
               }
             }, {
@@ -154,7 +162,7 @@ var CategoryAdaptor = function () {
           }), _this2.modals.insuranceBrands.findAll({
             where: {
               type: [1, 3],
-              status_type: 1,
+              status_type: 1
             },
             include: {
               model: _this2.modals.categories,
@@ -165,16 +173,11 @@ var CategoryAdaptor = function () {
               attributes: [],
               required: true
             },
-            attributes: [
-              'id',
-              'name',
-              [
-                _this2.modals.sequelize.literal('"categories"."category_id"'),
-                'category_id']],
+            attributes: ['id', 'name', [_this2.modals.sequelize.literal('"categories"."category_id"'), 'category_id']]
           }), _this2.modals.insuranceBrands.findAll({
             where: {
               type: [2, 3],
-              status_type: 1,
+              status_type: 1
             },
             include: {
               model: _this2.modals.categories,
@@ -185,49 +188,15 @@ var CategoryAdaptor = function () {
               attributes: [],
               required: true
             },
-            attributes: [
-              'id',
-              'name',
-              [
-                _this2.modals.sequelize.literal('"categories"."category_id"'),
-                'category_id']],
+            attributes: ['id', 'name', [_this2.modals.sequelize.literal('"categories"."category_id"'), 'category_id']]
           }), _this2.modals.categories.findAll({
             where: {
               status_type: 1,
               ref_id: options.category_id,
-              category_level: 3,
+              category_level: 3
             },
-            attributes: [
-              [
-                'category_id',
-                'id'],
-              [
-                'category_name',
-                'name'],
-              [
-                'ref_id',
-                'refId'],
-              'dual_warranty_item',
-              [
-                'category_level',
-                'level'],
-              [
-                _this2.modals.sequelize.fn('CONCAT', 'categories/',
-                    _this2.modals.sequelize.literal('ref_id'),
-                    '/products?subCategoryId=',
-                    _this2.modals.sequelize.literal('category_id')),
-                'categoryProductUrl'],
-              [
-                _this2.modals.sequelize.fn('CONCAT', 'categories/',
-                    _this2.modals.sequelize.literal('ref_id'),
-                    '/insights?subCategoryId=',
-                    _this2.modals.sequelize.literal('category_id')),
-                'categoryInsightUrl'],
-              [
-                _this2.modals.sequelize.fn('CONCAT', '/categories/',
-                    _this2.modals.sequelize.literal('category_id'), '/images/'),
-                'categoryImageUrl']],
-            order: ['category_id'],
+            attributes: [['category_id', 'id'], ['category_name', 'name'], ['ref_id', 'refId'], 'dual_warranty_item', ['category_level', 'level'], [_this2.modals.sequelize.fn('CONCAT', 'categories/', _this2.modals.sequelize.literal('ref_id'), '/products?subCategoryId=', _this2.modals.sequelize.literal('category_id')), 'categoryProductUrl'], [_this2.modals.sequelize.fn('CONCAT', 'categories/', _this2.modals.sequelize.literal('ref_id'), '/insights?subCategoryId=', _this2.modals.sequelize.literal('category_id')), 'categoryInsightUrl'], [_this2.modals.sequelize.fn('CONCAT', '/categories/', _this2.modals.sequelize.literal('category_id'), '/images/'), 'categoryImageUrl']],
+            order: ['category_id']
           })]);
         }
 
@@ -239,8 +208,7 @@ var CategoryAdaptor = function () {
               return brandItem.categoryId === item.id;
             });
             item.categoryForms = results[1].filter(function (formItem) {
-              return formItem.categoryId === item.id ||
-                  formItem.main_category_id === item.refId;
+              return formItem.categoryId === item.id || formItem.main_category_id === item.refId;
             });
             item.insuranceProviders = results[2];
             item.warrantyProviders = results[3];
@@ -265,22 +233,7 @@ var CategoryAdaptor = function () {
           attributes: ['id', 'title', ['category_form_id', 'categoryFormId'], ['status_type', 'status']],
           required: false
         }],
-        attributes: [
-          [
-            'category_id',
-            'categoryId'],
-          'title',
-          'main_category_id',
-          [
-            'form_type',
-            'formType'],
-          [
-            'status_type',
-            'status'],
-          'id',
-          [
-            'display_index',
-            'displayIndex']],
+        attributes: [['category_id', 'categoryId'], 'title', 'main_category_id', ['form_type', 'formType'], ['status_type', 'status'], 'id', ['display_index', 'displayIndex']],
         order: ['display_index']
       }).then(function (formResult) {
         return formResult.map(function (item) {
@@ -293,7 +246,7 @@ var CategoryAdaptor = function () {
     value: function retrieveRenewalTypes(options) {
       return this.modals.renewalTypes.findAll({
         where: options,
-        order: [['effective_months', 'ASC']],
+        order: [['effective_months', 'ASC']]
       }).then(function (renewalTypes) {
         return renewalTypes.map(function (item) {
           return item.toJSON();

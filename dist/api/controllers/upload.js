@@ -176,15 +176,12 @@ var UploadController = function () {
           message: 'Unauthorized'
         }).code(401);
       } else if (request.payload) {
-        console.log('Request received to upload file by user_id ', user.id ||
-            user.ID);
+        console.log('Request received to upload file by user_id ', user.id || user.ID);
         // if (!request.pre.forceUpdate && request.payload) {
         var fieldNameHere = request.payload.fieldNameHere;
         var fileData = fieldNameHere || request.payload.filesName || request.payload.file;
 
         var filteredFileData = fileData;
-        console.log('BEFORE FILTERING: ',
-            JSON.stringify({filteredFileData: filteredFileData}));
         if (filteredFileData) {
           if (Array.isArray(filteredFileData)) {
             filteredFileData = fileData.filter(function (datum) {
@@ -215,8 +212,7 @@ var UploadController = function () {
             return reply({ status: false, message: 'No valid documents in request' });
           } else {
             if (request.params && request.params.id) {
-              console.log('Request received has JOB ID ' + request.params.id +
-                  ' to upload file by user_id ' + (user.id || user.ID));
+              console.log('Request received has JOB ID ' + request.params.id + ' to upload file by user_id ' + (user.id || user.ID));
               return UploadController.retrieveJobCreateCopies({
                 user: user,
                 fileData: fileData,
@@ -228,8 +224,7 @@ var UploadController = function () {
               });
             }
 
-            console.log('Request received to create new job to upload file by user_id ' +
-                (user.id || user.ID));
+            console.log('Request received to create new job to upload file by user_id ' + (user.id || user.ID));
             return UploadController.createJobWithCopies({
               user: user,
               fileData: filteredFileData,
@@ -256,10 +251,8 @@ var UploadController = function () {
           reply = parameters.reply,
           request = parameters.request;
 
-      return jobAdaptor.retrieveJobDetail(request.params.id, true).
-          then(function(jobResult) {
-            console.log('JOB detail is as follow' +
-                JSON.stringify({jobResult: jobResult}));
+      return jobAdaptor.retrieveJobDetail(request.params.id, true).then(function (jobResult) {
+        console.log('JOB detail is as follow' + JSON.stringify({ jobResult: jobResult }));
         if (Array.isArray(fileData)) {
           console.log('Request has multiple files');
           return UploadController.uploadArrayOfFile({
@@ -268,7 +261,7 @@ var UploadController = function () {
               user: user,
               result: jobResult,
               type: request.query ? parseInt(request.query.type || '1') : 1,
-              itemId: request.query ? request.query.itemid : undefined,
+              itemId: request.query ? request.query.itemid : undefined
             }, reply: reply
           });
         } else {
@@ -288,7 +281,7 @@ var UploadController = function () {
                 fileType: _fileType3,
                 user: user,
                 type: request.query ? parseInt(request.query.type || '1') : 1,
-                itemId: request.query ? request.query.itemid : undefined,
+                itemId: request.query ? request.query.itemid : undefined
               }, reply: reply
             });
           }
@@ -324,7 +317,7 @@ var UploadController = function () {
               result: jobResult,
               type: request.query ? parseInt(request.query.type || '1') : 1,
               itemId: request.query ? request.query.itemid : undefined,
-              productId: request.query ? request.query.productid : undefined,
+              productId: request.query ? request.query.productid : undefined
             }, reply: reply
           });
         } else {
@@ -341,7 +334,7 @@ var UploadController = function () {
                 fileData: fileData, result: jobResult, fileType: _fileType4,
                 user: user, type: request.query ? request.query.type || 1 : 1,
                 itemId: request.query ? request.query.itemid : undefined,
-                productId: request.query ? request.query.productid : undefined,
+                productId: request.query ? request.query.productid : undefined
               }, reply: reply
             });
           }
@@ -364,9 +357,7 @@ var UploadController = function () {
       var type = requiredDetail.type;
       var fileType = requiredDetail.fileType;
       var fileTypeData = getTypeFromBuffer(fileData._data);
-      var fileName = (user.id || user.ID) + '-' +
-          (jobResult.copies.length + 1) + '.' +
-          (fileType ? fileType.toString() : fileTypeData.ext);
+      var fileName = (user.id || user.ID) + '-' + (jobResult.copies.length + 1) + '.' + (fileType ? fileType.toString() : fileTypeData.ext);
 
       return fsImpl.writeFile('jobs/' + jobResult.job_id + '/' + fileName, fileData._data, { ContentType: _mimeTypes2.default.lookup(fileName) }).then(function (fileResult) {
         var jobCopyDetail = {
@@ -375,13 +366,13 @@ var UploadController = function () {
           file_type: fileType ? fileType.toString() : fileTypeData.ext,
           status_type: 6,
           updated_by: user.id || user.ID,
-          type: type,
+          type: type
         };
         var copyData = void 0;
         return jobAdaptor.createJobCopies(jobCopyDetail).then(function (copyResult) {
           copyData = [copyResult];
           return modals.users.findById(user.id || user.ID);
-        }).then(function() {
+        }).then(function () {
           UploadController.notifyTeam(user, jobResult);
 
           if (type && (requiredDetail.productId || jobResult.productId)) {
@@ -391,13 +382,13 @@ var UploadController = function () {
               user: user,
               productId: requiredDetail.productId || jobResult.productId,
               itemId: requiredDetail.itemId,
-              copies: copyData.map(function(copyItem) {
+              copies: copyData.map(function (copyItem) {
                 return {
                   copyId: copyItem.id,
                   copyUrl: '/jobs/' + copyItem.job_id + '/files/' + copyItem.id,
                   file_type: copyItem.file_type,
                   jobId: copyItem.job_id,
-                  copyName: copyItem.file_name,
+                  copyName: copyItem.file_name
                 };
               })
             });
@@ -405,8 +396,7 @@ var UploadController = function () {
 
           return undefined;
         }).then(function (productItemResult) {
-          return UploadController.uploadResponse(jobResult, copyData,
-              productItemResult, type, reply);
+          return UploadController.uploadResponse(jobResult, copyData, productItemResult, type, reply);
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
           return reply({
@@ -451,14 +441,14 @@ var UploadController = function () {
       });
       Promise.all(fileUploadPromises).then(function (fileResult) {
         var promisedQuery = [];
-        var jobPromise = fileResult.map(function(elem, index) {
+        var jobPromise = fileResult.map(function (elem, index) {
           var jobCopyDetail = {
             job_id: jobResult.id,
             file_name: fileNames[index],
             file_type: fileTypes[index] ? fileTypes[index].toString() : fileTypeDataArray[index].ext,
             status_type: 6,
             updated_by: user.id || user.ID,
-            type: type,
+            type: type
           };
           return jobAdaptor.createJobCopies(jobCopyDetail);
         });
@@ -481,13 +471,13 @@ var UploadController = function () {
             user: user,
             productId: requiredDetail.productId || jobResult.productId,
             itemId: requiredDetail.itemId,
-            copies: jobCopies.map(function(copyItem) {
+            copies: jobCopies.map(function (copyItem) {
               return {
                 copyId: copyItem.id,
                 copyUrl: '/jobs/' + copyItem.job_id + '/files/' + copyItem.id,
                 file_type: copyItem.file_type,
                 jobId: copyItem.job_id,
-                copyName: copyItem.file_name,
+                copyName: copyItem.file_name
               };
             })
           });
@@ -495,28 +485,25 @@ var UploadController = function () {
 
         return undefined;
       }).then(function (productItemResult) {
-        return UploadController.uploadResponse(jobResult, jobCopies,
-            productItemResult, type, reply);
-      }).catch(function(err) {
-        console.log('Error on ' + new Date() + ' for user ' +
-            (user.id || user.ID) + ' is as follow: \n \n ' + err);
+        return UploadController.uploadResponse(jobResult, jobCopies, productItemResult, type, reply);
+      }).catch(function (err) {
+        console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
         return reply({
           status: false,
           message: 'Upload Failed',
-          err: JSON.stringify(err),
+          err: JSON.stringify(err)
           // forceUpdate: request.pre.forceUpdate
         }).code(500);
       });
     }
   }, {
     key: 'uploadResponse',
-    value: function uploadResponse(
-        jobResult, copyData, productItemResult, type, reply) {
+    value: function uploadResponse(jobResult, copyData, productItemResult, type, reply) {
       var replyResult = {
         status: true,
         job_id: jobResult.id,
         message: 'Uploaded Successfully',
-        billResult: copyData,
+        billResult: copyData
         // forceUpdate: request.pre.forceUpdate
       };
       if (productItemResult) {
@@ -567,13 +554,13 @@ var UploadController = function () {
             user_id: user.id || user.ID,
             updated_by: user.id || user.ID,
             status_type: 8,
-            copies: copies,
+            copies: copies
           }) : amcAdaptor.updateAMCs(itemId, {
             job_id: jobId,
             product_id: productId,
             user_id: user.id || user.ID,
             updated_by: user.id || user.ID,
-            copies: copies,
+            copies: copies
           }));
           break;
 
@@ -584,13 +571,13 @@ var UploadController = function () {
             user_id: user.id || user.ID,
             updated_by: user.id || user.ID,
             status_type: 8,
-            copies: copies,
+            copies: copies
           }) : insuranceAdaptor.updateInsurances(itemId, {
             job_id: jobId,
             product_id: productId,
             user_id: user.id || user.ID,
             updated_by: user.id || user.ID,
-            copies: copies,
+            copies: copies
           }));
           break;
 
@@ -601,13 +588,13 @@ var UploadController = function () {
             user_id: user.id || user.ID,
             updated_by: user.id || user.ID,
             status_type: 8,
-            copies: copies,
+            copies: copies
           }) : repairAdaptor.updateRepairs(itemId, {
             job_id: jobId,
             product_id: productId,
             user_id: user.id || user.ID,
             updated_by: user.id || user.ID,
-            copies: copies,
+            copies: copies
           }));
           break;
         case 5:
@@ -618,14 +605,14 @@ var UploadController = function () {
             updated_by: user.id || user.ID,
             status_type: 8,
             warranty_type: 1,
-            copies: copies,
+            copies: copies
           }) : warrantyAdaptor.updateWarranties(itemId, {
             job_id: jobId,
             product_id: productId,
             user_id: user.id || user.ID,
             updated_by: user.id || user.ID,
             warranty_type: 1,
-            copies: copies,
+            copies: copies
           }));
           break;
 
@@ -637,14 +624,14 @@ var UploadController = function () {
             updated_by: user.id || user.ID,
             status_type: 8,
             warranty_type: 3,
-            copies: copies,
+            copies: copies
           }) : warrantyAdaptor.updateWarranties(itemId, {
             job_id: jobId,
             product_id: productId,
             user_id: user.id || user.ID,
             updated_by: user.id || user.ID,
             warranty_type: 3,
-            copies: copies,
+            copies: copies
           }));
           break;
         case 7:
@@ -654,13 +641,13 @@ var UploadController = function () {
             user_id: user.id || user.ID,
             updated_by: user.id || user.ID,
             status_type: 8,
-            copies: copies,
+            copies: copies
           }) : pucAdaptor.updatePUCs(itemId, {
             job_id: jobId,
             product_id: productId,
             user_id: user.id || user.ID,
             updated_by: user.id || user.ID,
-            copies: copies,
+            copies: copies
           }));
           break;
         case 8:
@@ -671,14 +658,14 @@ var UploadController = function () {
             updated_by: user.id || user.ID,
             status_type: 8,
             warranty_type: 2,
-            copies: copies,
+            copies: copies
           }) : warrantyAdaptor.updateWarranties(itemId, {
             job_id: jobId,
             product_id: productId,
             user_id: user.id || user.ID,
             updated_by: user.id || user.ID,
             warranty_type: 2,
-            copies: copies,
+            copies: copies
           }));
           break;
         default:
@@ -686,7 +673,7 @@ var UploadController = function () {
             job_id: jobId,
             user_id: user.id || user.ID,
             updated_by: user.id || user.ID,
-            copies: copies,
+            copies: copies
           }));
           break;
       }
@@ -695,7 +682,7 @@ var UploadController = function () {
         productItemPromise.push(productAdaptor.updateProduct(productId, {
           job_id: jobId,
           user_id: user.id || user.ID,
-          updated_by: user.id || user.ID,
+          updated_by: user.id || user.ID
         }));
       }
 
@@ -748,30 +735,20 @@ var UploadController = function () {
         }).then(function (result) {
           if (result) {
             fsImpl.readFile(_guid2.default.isGuid(result.job_id) ? '' + result.copies[0].file_name : 'jobs/' + result.job_id + '/' + result.copies[0].file_name).then(function (fileResult) {
-              return reply(fileResult.Body).
-                  header('Content-Type', fileResult.ContentType).
-                  header('Content-Disposition', 'attachment; filename=' +
-                      result.bill_copy_name);
-            }).
-                catch(function(err) {
-                  console.log('Error on ' + new Date() +
-                      ' while retrieving image is as follow: \n \n ' + err);
-                  return fsImpl.readFile('jobs/' + result.job_id + '/' +
-                      result.copies[0].file_name).then(function(fileResult) {
-                    return reply(fileResult.Body).
-                        header('Content-Type', fileResult.ContentType).
-                        header('Content-Disposition', 'attachment; filename=' +
-                            result.bill_copy_name);
-                  }).catch(function(err) {
-                    console.log('Error on ' + new Date() +
-                        ' while retrieving image is as follow: \n \n ' + err);
-                    return reply({
-                      status: false,
-                      message: 'No Result Found',
-                      forceUpdate: request.pre.forceUpdate,
-                      err: err,
-                    }).code(404);
-                  });
+              return reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', 'attachment; filename=' + result.bill_copy_name);
+            }).catch(function (err) {
+              console.log('Error on ' + new Date() + ' while retrieving image is as follow: \n \n ' + err);
+              return fsImpl.readFile('jobs/' + result.job_id + '/' + result.copies[0].file_name).then(function (fileResult) {
+                return reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', 'attachment; filename=' + result.bill_copy_name);
+              }).catch(function (err) {
+                console.log('Error on ' + new Date() + ' while retrieving image is as follow: \n \n ' + err);
+                return reply({
+                  status: false,
+                  message: 'No Result Found',
+                  forceUpdate: request.pre.forceUpdate,
+                  err: err
+                }).code(404);
+              });
             });
           } else {
             return reply({
@@ -782,8 +759,7 @@ var UploadController = function () {
           }
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
-          return reply(
-              {status: false, err: err, forceUpdate: request.pre.forceUpdate});
+          return reply({ status: false, err: err, forceUpdate: request.pre.forceUpdate });
         });
       } else {
         return reply({
@@ -808,22 +784,18 @@ var UploadController = function () {
         }).code(401);
       } else {
         if (!request.pre.forceUpdate) {
-          var itemId = request.query && request.query.itemid ?
-              request.query.itemid :
-              undefined;
+          var itemId = request.query && request.query.itemid ? request.query.itemid : undefined;
 
-          Promise.all([
-            modals.jobs.findById(request.params.id, {
-              include: [
-                {
-                  model: modals.jobCopies,
-                  as: 'copies',
-                  required: true,
-                }],
-            }), modals.jobCopies.update({
-              status_type: 3,
-              updated_by: user.id || user.ID,
-            }, {
+          Promise.all([modals.jobs.findById(request.params.id, {
+            include: [{
+              model: modals.jobCopies,
+              as: 'copies',
+              required: true
+            }]
+          }), modals.jobCopies.update({
+            status_type: 3,
+            updated_by: user.id || user.ID
+          }, {
             where: {
               id: request.params.copyid,
               job_id: request.params.id
@@ -838,13 +810,13 @@ var UploadController = function () {
                 $notIn: [3, 9]
               }
             }
-            }), itemId ? UploadController.updateOrDeleteProductItems({
-              type: parseInt(request.query.type || '1'),
-              jobId: request.params.id,
-              user: user,
-              itemId: itemId,
-              copyId: request.params.copyid,
-            }) : '']).then(function(result) {
+          }), itemId ? UploadController.updateOrDeleteProductItems({
+            type: parseInt(request.query.type || '1'),
+            jobId: request.params.id,
+            user: user,
+            itemId: itemId,
+            copyId: request.params.copyid
+          }) : '']).then(function (result) {
             var count = result[2];
             var attributes = count > 0 ? {
               user_status: 8,
@@ -859,22 +831,15 @@ var UploadController = function () {
               qe_status: null,
               updated_by: user.id || user.ID
             };
-            var copiesData = result[0].copies.find(function(copyItem) {
-              return copyItem.id.toString() ===
-                  request.params.copyid.toString();
+            var copiesData = result[0].copies.find(function (copyItem) {
+              return copyItem.id.toString() === request.params.copyid.toString();
             });
             if (copiesData) {
-              fsImpl.unlink(copiesData.file_name).catch(function(err) {
-                console.log('Error while deleting ' + copiesData.file_name +
-                    ' on ' + new Date() + ' for user ' + (user.id || user.ID) +
-                    ' is as follow: \n \n ' + err);
+              fsImpl.unlink(copiesData.file_name).catch(function (err) {
+                console.log('Error while deleting ' + copiesData.file_name + ' on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
               });
-              fsImpl.unlink('jobs/' + result[0].job_id + '/' +
-                  copiesData.file_name).catch(function(err) {
-                console.log('Error while deleting jobs/' + result[0].job_id +
-                    '/' + copiesData.file_name + ' on ' + new Date() +
-                    ' for user ' + (user.id || user.ID) +
-                    ' is as follow: \n \n ' + err);
+              fsImpl.unlink('jobs/' + result[0].job_id + '/' + copiesData.file_name).catch(function (err) {
+                console.log('Error while deleting jobs/' + result[0].job_id + '/' + copiesData.file_name + ' on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
               });
             }
             var jobItem = result[0].toJSON();
@@ -884,18 +849,10 @@ var UploadController = function () {
 
             var deletionResponse = {
               status: true,
-              message: result[3][0] === true ?
-                  'Product item deleted successfully' :
-                  result[3][0] && itemId ?
-                      'File deleted successfully from product item' :
-                      'File deleted successfully',
+              message: result[3][0] === true ? 'Product item deleted successfully' : result[3][0] && itemId ? 'File deleted successfully from product item' : 'File deleted successfully',
               isProductItemDeleted: result[3][0] === true,
-              productItemCopiesCount: result[3][0] && result[3][0] !== true ?
-                  result[3][0].copies.length :
-                  0,
-              productItem: result[3][0] && result[3][0] !== true ?
-                  result[3][0] :
-                  undefined,
+              productItemCopiesCount: result[3][0] && result[3][0] !== true ? result[3][0].copies.length : 0,
+              productItem: result[3][0] && result[3][0] !== true ? result[3][0] : undefined,
               forceUpdate: request.pre.forceUpdate
             };
 
@@ -932,11 +889,7 @@ var UploadController = function () {
             return reply(deletionResponse);
           }).catch(function (err) {
             console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
-            return reply({
-              status: false,
-              err: err,
-              forceUpdate: request.pre.forceUpdate,
-            });
+            return reply({ status: false, err: err, forceUpdate: request.pre.forceUpdate });
           });
         } else {
           return reply({
@@ -962,65 +915,60 @@ var UploadController = function () {
           productItemPromise.push(amcAdaptor.removeAMCs(itemId, copyId, {
             job_id: jobId,
             user_id: user.id || user.ID,
-            updated_by: user.id || user.ID,
+            updated_by: user.id || user.ID
           }));
           break;
 
         case 3:
-          productItemPromise.push(
-              insuranceAdaptor.removeInsurances(itemId, copyId, {
-                job_id: jobId,
-                user_id: user.id || user.ID,
-                updated_by: user.id || user.ID,
-              }));
+          productItemPromise.push(insuranceAdaptor.removeInsurances(itemId, copyId, {
+            job_id: jobId,
+            user_id: user.id || user.ID,
+            updated_by: user.id || user.ID
+          }));
           break;
 
         case 4:
           productItemPromise.push(repairAdaptor.removeRepairs(itemId, copyId, {
             job_id: jobId,
             user_id: user.id || user.ID,
-            updated_by: user.id || user.ID,
+            updated_by: user.id || user.ID
           }));
           break;
         case 5:
-          productItemPromise.push(
-              warrantyAdaptor.removeWarranties(itemId, copyId, {
-                job_id: jobId,
-                user_id: user.id || user.ID,
-                updated_by: user.id || user.ID,
-              }));
+          productItemPromise.push(warrantyAdaptor.removeWarranties(itemId, copyId, {
+            job_id: jobId,
+            user_id: user.id || user.ID,
+            updated_by: user.id || user.ID
+          }));
           break;
 
         case 6:
-          productItemPromise.push(
-              warrantyAdaptor.removeWarranties(itemId, copyId, {
-                job_id: jobId,
-                user_id: user.id || user.ID,
-                updated_by: user.id || user.ID,
-              }));
+          productItemPromise.push(warrantyAdaptor.removeWarranties(itemId, copyId, {
+            job_id: jobId,
+            user_id: user.id || user.ID,
+            updated_by: user.id || user.ID
+          }));
           break;
         case 7:
           productItemPromise.push(pucAdaptor.removePUCs(itemId, {
             job_id: jobId,
             user_id: user.id || user.ID,
-            updated_by: user.id || user.ID,
+            updated_by: user.id || user.ID
           }));
           break;
         case 8:
-          productItemPromise.push(
-              warrantyAdaptor.removeWarranties(itemId, copyId, {
-                job_id: jobId,
-                user_id: user.id || user.ID,
-                updated_by: user.id || user.ID,
-              }));
+          productItemPromise.push(warrantyAdaptor.removeWarranties(itemId, copyId, {
+            job_id: jobId,
+            user_id: user.id || user.ID,
+            updated_by: user.id || user.ID
+          }));
           break;
         default:
-          productItemPromise.push(
-              productAdaptor.removeProducts(itemId, copyId, {
-                job_id: jobId,
-                user_id: user.id || user.ID,
-                updated_by: user.id || user.ID,
-              }));
+          productItemPromise.push(productAdaptor.removeProducts(itemId, copyId, {
+            job_id: jobId,
+            user_id: user.id || user.ID,
+            updated_by: user.id || user.ID
+          }));
           break;
       }
 
@@ -1036,14 +984,11 @@ var UploadController = function () {
             category_id: request.params.id
           }
         }).then(function (result) {
-          return fsImplCategory.readFile(result.category_image_name, 'utf8').
-              then(function(fileResult) {
+          return fsImplCategory.readFile(result.category_image_name, 'utf8').then(function (fileResult) {
             return reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', 'attachment; filename=' + result.CopyName);
           });
         }).catch(function (err) {
-          console.log('Error on ' + new Date() +
-              ' for user while retrieving category image is as follow: \n \n ' +
-              err);
+          console.log('Error on ' + new Date() + ' for user while retrieving category image is as follow: \n \n ' + err);
           return reply({
             status: false,
             message: 'Unable to retrieve image',

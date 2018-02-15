@@ -382,6 +382,8 @@ class InsuranceAdaptor {
     }).then(result => {
       let document_date = productNewPurchaseDate;
       let insuranceExpiryDate;
+
+      console.log('\n\n\n', JSON.stringify({insurance: result}));
       return Promise.all(result.map((item) => {
         const insuranceItem = item.toJSON();
         const id = insuranceItem.id;

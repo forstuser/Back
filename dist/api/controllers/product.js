@@ -56,16 +56,7 @@ var ProductController = function () {
           seller_id: request.payload.seller_id,
           status_type: 11,
           document_number: request.payload.document_number,
-          document_date: request.payload.document_date ?
-              _moment2.default.utc(request.payload.document_date,
-                  _moment2.default.ISO_8601).isValid() ?
-                  _moment2.default.utc(request.payload.document_date,
-                      _moment2.default.ISO_8601).
-                      startOf('day').
-                      format('YYYY-MM-DD') :
-                  _moment2.default.utc(request.payload.document_date,
-                      'DD MMM YY').startOf('day').format('YYYY-MM-DD') :
-              undefined,
+          document_date: request.payload.document_date ? _moment2.default.utc(request.payload.document_date, _moment2.default.ISO_8601).isValid() ? _moment2.default.utc(request.payload.document_date, _moment2.default.ISO_8601).startOf('day').format('YYYY-MM-DD') : _moment2.default.utc(request.payload.document_date, 'DD MMM YY').startOf('day').format('YYYY-MM-DD') : undefined,
           brand_name: request.payload.brand_name,
           copies: []
         };
@@ -123,40 +114,38 @@ var ProductController = function () {
         return reply({
           status: false,
           message: 'Unauthorized',
-          forceUpdate: request.pre.forceUpdate,
+          forceUpdate: request.pre.forceUpdate
         });
       } else if (request.pre.userExist && !request.pre.forceUpdate) {
-        return productAdaptor.deleteProduct(request.params.id, user.id ||
-            user.ID).then(function(deleted) {
+        return productAdaptor.deleteProduct(request.params.id, user.id || user.ID).then(function (deleted) {
           if (deleted) {
             return reply({
               status: true,
               message: 'successfull',
               deleted: deleted,
-              forceUpdate: request.pre.forceUpdate,
+              forceUpdate: request.pre.forceUpdate
             });
           } else {
             return reply({
               status: false,
               message: 'Product delete failed',
-              forceUpdate: request.pre.forceUpdate,
+              forceUpdate: request.pre.forceUpdate
             });
           }
-        }).catch(function(err) {
-          console.log('Error on ' + new Date() + ' for user ' +
-              (user.id || user.ID) + ' is as follow: \n \n ' + err);
+        }).catch(function (err) {
+          console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
           return reply({
             status: false,
             message: 'An error occurred in product deletion.',
             forceUpdate: request.pre.forceUpdate,
-            err: err,
+            err: err
           });
         });
       } else {
         reply({
           status: false,
           message: 'Forbidden',
-          forceUpdate: request.pre.forceUpdate,
+          forceUpdate: request.pre.forceUpdate
         });
       }
     }
@@ -191,17 +180,8 @@ var ProductController = function () {
           model: request.payload.model || '',
           new_drop_down: request.payload.isNewModel,
           document_number: request.payload.document_number,
-          document_date: request.payload.document_date ?
-              _moment2.default.utc(request.payload.document_date,
-                  _moment2.default.ISO_8601).isValid() ?
-                  _moment2.default.utc(request.payload.document_date,
-                      _moment2.default.ISO_8601).
-                      startOf('day').
-                      format('YYYY-MM-DD') :
-                  _moment2.default.utc(request.payload.document_date,
-                      'DD MMM YY').startOf('day').format('YYYY-MM-DD') :
-              undefined,
-          brand_name: request.payload.brand_name,
+          document_date: request.payload.document_date ? _moment2.default.utc(request.payload.document_date, _moment2.default.ISO_8601).isValid() ? _moment2.default.utc(request.payload.document_date, _moment2.default.ISO_8601).startOf('day').format('YYYY-MM-DD') : _moment2.default.utc(request.payload.document_date, 'DD MMM YY').startOf('day').format('YYYY-MM-DD') : undefined,
+          brand_name: request.payload.brand_name
         };
 
         var otherItems = {
@@ -217,12 +197,19 @@ var ProductController = function () {
 
           return item;
         }) : [];
+
         return productAdaptor.updateProductDetails(productBody, metaDataBody, otherItems, request.params.id).then(function (result) {
           if (result) {
             return reply({
               status: true,
-              message: 'successfull',
+              message: 'successful',
               product: result,
+              forceUpdate: request.pre.forceUpdate
+            });
+          } else if (result === false) {
+            return reply({
+              status: false,
+              message: 'Brand/Model can\'t be changed as they are already verified.',
               forceUpdate: request.pre.forceUpdate
             });
           } else {
@@ -264,8 +251,7 @@ var ProductController = function () {
         if (request.params.reviewfor === 'brands') {
           return reply(productAdaptor.updateBrandReview(user, id, request));
         } else if (request.params.reviewfor === 'sellers') {
-          return reply(productAdaptor.updateSellerReview(user, id,
-              request.query.isonlineseller, request));
+          return reply(productAdaptor.updateSellerReview(user, id, request.query.isonlineseller, request));
         } else {
           return reply(productAdaptor.updateProductReview(user, id, request));
         }
@@ -290,7 +276,7 @@ var ProductController = function () {
       } else if (request.pre.userExist && !request.pre.forceUpdate) {
         return reply(productAdaptor.prepareProductDetail({
           user: user,
-          request: request,
+          request: request
         })).code(200);
       } else {
         return reply({

@@ -77,8 +77,7 @@ function executeCron() {
     rule6.month = _moment2.default.utc().endOf('month');
     _nodeSchedule2.default.scheduleJob(rule6, function () {
       console.log('Send Notification of monthly expenses Start');
-      return notificationAdaptor.createExpenseNotification(
-          _moment2.default.utc().endOf('month').date()).then(function() {
+      return notificationAdaptor.createExpenseNotification(_moment2.default.utc().endOf('month').date()).then(function () {
         console.log('success');
       }).catch(console.log);
     });

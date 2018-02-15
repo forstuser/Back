@@ -1683,289 +1683,502 @@ class ProductAdaptor {
   }
 
   updateProductDetails(productBody, metadataBody, otherItems, productId) {
-    const sellerPromise = [];
-    const isProductAMCSellerSame = false;
-    const isProductRepairSellerSame = false;
-    const isAMCRepairSellerSame = otherItems.repair && otherItems.amc &&
-        otherItems.repair.seller_contact ===
-        otherItems.amc.seller_contact;
-    const isProductPUCSellerSame = false;
-    const insuranceProviderPromise = otherItems.insurance &&
-    otherItems.insurance.provider_name ?
-        this.insuranceAdaptor.findCreateInsuranceBrand({
-          main_category_id: productBody.main_category_id,
-          category_id: productBody.category_id,
-          type: 1,
-          status_type: 11,
-          updated_by: productBody.user_id,
-          name: otherItems.insurance.provider_name,
-        }) :
-        undefined;
-    const warrantyProviderPromise = otherItems.warranty &&
-    otherItems.warranty.extended_provider_name ?
-        this.insuranceAdaptor.findCreateInsuranceBrand({
-          main_category_id: productBody.main_category_id,
-          category_id: productBody.category_id,
-          type: 2,
-          status_type: 11,
-          updated_by: productBody.user_id,
-          name: otherItems.warranty.extended_provider_name,
-        }) :
-        undefined;
+    return Promise.all([
+      productBody.brand_id ? this.modals.products.count({
+        where: {
+          id: productId,
+          brand_id: productBody.brand_id,
+          model: productBody.model,
+          status_type: {
+            $notIn: [8,5]
+          },
+        },
+      }) : 0, this.verifyCopiesExist(productId), this.modals.products.count({
+        where: {
+          id: productId,
+          status_type: 8,
+        },
+      })]).then((result) => {
+      if (!result[1] && result[0] === 0 && result[2] === 0) {
+        return false;
+      }
+      const sellerPromise = [];
+      const isProductAMCSellerSame = false;
+      const isProductRepairSellerSame = false;
+      const isAMCRepairSellerSame = otherItems.repair && otherItems.amc &&
+          otherItems.repair.seller_contact ===
+          otherItems.amc.seller_contact;
+      const isProductPUCSellerSame = false;
+      const insuranceProviderPromise = otherItems.insurance &&
+      otherItems.insurance.provider_name ?
+          this.insuranceAdaptor.findCreateInsuranceBrand({
+            main_category_id: productBody.main_category_id,
+            category_id: productBody.category_id,
+            type: 1,
+            status_type: 11,
+            updated_by: productBody.user_id,
+            name: otherItems.insurance.provider_name,
+          }) :
+          undefined;
+      const warrantyProviderPromise = otherItems.warranty &&
+      otherItems.warranty.extended_provider_name ?
+          this.insuranceAdaptor.findCreateInsuranceBrand({
+            main_category_id: productBody.main_category_id,
+            category_id: productBody.category_id,
+            type: 2,
+            status_type: 11,
+            updated_by: productBody.user_id,
+            name: otherItems.warranty.extended_provider_name,
+          }) :
+          undefined;
 
-    const brandPromise = !productBody.brand_id &&
-    productBody.brand_name ?
-        this.brandAdaptor.findCreateBrand({
-          status_type: 11,
-          brand_name: productBody.brand_name,
-          updated_by: productBody.user_id,
-          created_by: productBody.user_id,
-        }) :
-        undefined;
-    this.prepareSellerPromise({
-      sellerPromise,
-      productBody,
-      otherItems,
-      isProductAMCSellerSame,
-      isProductRepairSellerSame,
-      isProductPUCSellerSame,
-    });
-    sellerPromise.push(insuranceProviderPromise);
-    sellerPromise.push(brandPromise);
-    sellerPromise.push(warrantyProviderPromise);
-    let renewalTypes;
-    let product = productBody;
-    let metadata;
-    let sellerList;
-    return Promise.all(sellerPromise).
-        then((newItemResults) => {
-          sellerList = newItemResults;
-          const newSeller = productBody.seller_contact ||
-          productBody.seller_name ?
-              sellerList[0] : undefined;
-          product = _.omit(product, 'seller_name');
-          product = _.omit(product, 'seller_contact');
-          product = _.omit(product, 'brand_name');
-          product.seller_id = newSeller ?
-              newSeller.sid :
-              product.seller_id;
-          product.brand_id = sellerList[5] ?
-              sellerList[5].brand_id :
-              product.brand_id;
-          metadata = metadataBody.map((mdItem) => {
-            mdItem = _.omit(mdItem, 'new_drop_down');
-            return mdItem;
-          });
-          if (product.new_drop_down && product.model) {
-            return this.modals.brandDropDown.findCreateFind({
-              where: {
-                title: {
-                  $iLike: product.model,
-                },
-                category_id: product.category_id,
-                brand_id: product.brand_id,
-              },
-              defaults: {
-                title: product.model,
-                category_id: product.category_id,
-                brand_id: product.brand_id,
-                updated_by: product.updated_by,
-                created_by: product.created_by,
-                status_type: 11,
-              },
+      const brandPromise = !productBody.brand_id &&
+      productBody.brand_name ?
+          this.brandAdaptor.findCreateBrand({
+            status_type: 11,
+            brand_name: productBody.brand_name,
+            updated_by: productBody.user_id,
+            created_by: productBody.user_id,
+          }) :
+          undefined;
+      this.prepareSellerPromise({
+        sellerPromise,
+        productBody,
+        otherItems,
+        isProductAMCSellerSame,
+        isProductRepairSellerSame,
+        isProductPUCSellerSame,
+      });
+      sellerPromise.push(insuranceProviderPromise);
+      sellerPromise.push(brandPromise);
+      sellerPromise.push(warrantyProviderPromise);
+      let renewalTypes;
+      let product = productBody;
+      let metadata;
+      let sellerList;
+      return Promise.all(sellerPromise).
+          then((newItemResults) => {
+            sellerList = newItemResults;
+            const newSeller = productBody.seller_contact ||
+            productBody.seller_name ?
+                sellerList[0] : undefined;
+            product = _.omit(product, 'seller_name');
+            product = _.omit(product, 'seller_contact');
+            product = _.omit(product, 'brand_name');
+            product.seller_id = newSeller ?
+                newSeller.sid :
+                product.seller_id;
+            product.brand_id = sellerList[5] ?
+                sellerList[5].brand_id :
+                product.brand_id;
+            metadata = metadataBody.map((mdItem) => {
+              mdItem = _.omit(mdItem, 'new_drop_down');
+              return mdItem;
             });
-          }
-
-          return '';
-        }).then(() => {
-          product = !product.colour_id ? _.omit(product, 'colour_id') : product;
-          product = !product.purchase_cost ?
-              _.omit(product, 'purchase_cost') :
-              product;
-          product = _.omit(product, 'new_drop_down');
-          product = !product.model && product.model !== '' ?
-              _.omit(product, 'model') :
-              product;
-          product = !product.taxes ? _.omit(product, 'taxes') : product;
-          product = !product.document_number ?
-              _.omit(product, 'document_number') :
-              product;
-          product = !product.document_date ?
-              _.omit(product, 'document_date') :
-              product;
-          product = !product.seller_id ? _.omit(product, 'seller_id') : product;
-          product = !product.brand_id ? _.omit(product, 'brand_id') : product;
-          return Promise.all([
-            this.categoryAdaptor.retrieveRenewalTypes({
-              status_type: 1,
-            }), this.updateProduct(productId, product)]);
-        }).then((updateProductResult) => {
-          renewalTypes = updateProductResult[0];
-          product = updateProductResult[1] || undefined;
-          if (product) {
-            let serviceSchedule;
-            if (product.main_category_id === 3 && product.model) {
-              const diffDays = moment.utc().
-                  diff(moment.utc(product.document_date), 'days', true);
-              const diffMonths = moment.utc().
-                  diff(moment.utc(product.document_date), 'months', true);
-              serviceSchedule = this.serviceScheduleAdaptor.retrieveServiceSchedules(
-                  {
-                    category_id: product.category_id,
-                    brand_id: product.brand_id,
-                    title: {
-                      $iLike: `${product.model}%`,
-                    },
-                    $or: {
-                      due_in_days: {
-                        $gte: diffDays,
-                      },
-                      due_in_months: {
-                        $gte: diffMonths,
-                      },
-                    },
-                    status_type: 1,
-                  });
-            }
-            const warrantyItemPromise = [];
-            if (otherItems.warranty) {
-              this.prepareWarrantyPromise({
-                otherItems,
-                renewalTypes,
-                warrantyItemPromise,
-                productBody: product,
-                productId,
-                sellerList,
-              });
-            }
-
-            const insurancePromise = [];
-            if (otherItems.insurance) {
-              this.prepareInsurancePromise({
-                otherItems,
-                renewalTypes,
-                insurancePromise,
-                productBody: product,
-                sellerList,
-              });
-            }
-
-            const amcPromise = [];
-            if (otherItems.amc) {
-              this.prepareAMCPromise({
-                renewalTypes,
-                otherItems,
-                amcPromise,
-                productBody: product,
-                productId,
-                isProductAMCSellerSame,
-                sellerList,
-              });
-            }
-
-            const repairPromise = [];
-            if (otherItems.repair) {
-              this.prepareRepairPromise({
-                otherItems,
-                isProductRepairSellerSame,
-                sellerList,
-                isAMCRepairSellerSame,
-                repairPromise,
-                productBody: product,
-                productId,
-              });
-            }
-            const metadataPromise = metadata.map((mdItem) => {
-              mdItem.status_type = 11;
-              if (mdItem.id) {
-                return this.updateProductMetaData(mdItem.id, mdItem);
-              }
-              mdItem.product_id = productId;
-              return this.modals.metaData.create(mdItem);
-            });
-
-            const pucPromise = [];
-            if (otherItems.puc) {
-              this.preparePUCPromise({
-                renewalTypes,
-                otherItems,
-                pucPromise,
-                productBody: product,
-                isProductPUCSellerSame,
-                sellerList,
-                productId,
-              });
-            }
-
-            return Promise.all([
-              Promise.all(metadataPromise),
-              Promise.all(insurancePromise),
-              Promise.all(warrantyItemPromise),
-              Promise.all(amcPromise),
-              Promise.all(repairPromise),
-              Promise.all(pucPromise),
-              serviceSchedule, this.modals.serviceCenters.count({
-                include: [
-                  {
-                    model: this.modals.brands,
-                    as: 'brands',
-                    where: {
-                      brand_id: product.brand_id,
-                    },
-                    attributes: [],
-                    required: true,
+            if (product.new_drop_down && product.model) {
+              return this.modals.brandDropDown.findCreateFind({
+                where: {
+                  title: {
+                    $iLike: product.model,
                   },
-                  {
-                    model: this.modals.centerDetails,
-                    where: {
-                      category_id: product.category_id,
-                    },
-                    attributes: [],
-                    required: true,
-                    as: 'centerDetails',
-                  }],
-              })]);
-          }
-
-          return undefined;
-        }).then((productItemsResult) => {
-          if (productItemsResult) {
-            product.metaData = productItemsResult[0].map(
-                (mdItem) => mdItem.toJSON());
-            product.insurances = productItemsResult[1];
-            product.warranties = productItemsResult[2];
-            product.amcs = productItemsResult[3];
-            product.repairs = productItemsResult[4];
-            product.pucDetail = productItemsResult[5];
-            if (productItemsResult[6] && productItemsResult[6].length > 0) {
-              return this.updateProduct(product.id, {
-                service_schedule_id: productItemsResult[6][0].id,
-              });
-            } else if (product.service_schedule_id && !product.model) {
-              return this.updateProduct(product.id, {
-                service_schedule_id: null,
+                  category_id: product.category_id,
+                  brand_id: product.brand_id,
+                },
+                defaults: {
+                  title: product.model,
+                  category_id: product.category_id,
+                  brand_id: product.brand_id,
+                  updated_by: product.updated_by,
+                  created_by: product.created_by,
+                  status_type: 11,
+                },
               });
             }
-            product.serviceCenterUrl = productItemsResult[7] &&
-            productItemsResult[7] > 0 ?
-                `/consumer/servicecenters?brandid=${product.brand_id}&categoryid=${product.category_id}` :
-                '';
-            return product;
-          }
 
-          return undefined;
-        }).then((finalResult) => {
-          if (finalResult) {
-            finalResult.metaData = product.metaData;
-            finalResult.insurances = product.insurances;
-            finalResult.warranties = product.warranties;
-            finalResult.amcs = product.amcs;
-            finalResult.repairs = product.repairs;
-            finalResult.pucDetails = product.pucDetails;
-          }
+            return '';
+          }).then(() => {
+            product = !product.colour_id ?
+                _.omit(product, 'colour_id') :
+                product;
+            product = !product.purchase_cost && product.purchase_cost !== 0 ?
+                _.omit(product, 'purchase_cost') :
+                product;
+            product = _.omit(product, 'new_drop_down');
+            product = !product.model && product.model !== '' ?
+                _.omit(product, 'model') :
+                product;
+            product = !product.taxes && product.taxes !== 0 ?
+                _.omit(product, 'taxes') :
+                product;
+            product = !product.document_number ?
+                _.omit(product, 'document_number') :
+                product;
+            product = !product.document_date ?
+                _.omit(product, 'document_date') :
+                product;
+            product = !product.seller_id ?
+                _.omit(product, 'seller_id') :
+                product;
+            product = !product.brand_id ? _.omit(product, 'brand_id') : product;
+            const brandModelPromise = product.model ? [
+              this.modals.brandDropDown.findOne({
+                where: {
+                  brand_id: product.brand_id,
+                  title: {
+                    $iLike: `${product.model}%`,
+                  },
+                  category_id: product.category_id,
+                },
+              }), this.modals.categories.findOne({
+                where: {
+                  category_id: product.category_id,
+                },
+              })] : [
+              , this.modals.categories.findOne({
+                where: {
+                  category_id: product.category_id,
+                },
+              })];
+            brandModelPromise.push(this.modals.warranties.findAll({
+              where: {
+                product_id: productId,
+                warranty_type: 1,
+              },
+              order: [['expiry_date', 'ASC']],
+            }), this.modals.warranties.findAll({
+              where: {
+                product_id: productId,
+                warranty_type: 3,
+              },
+              order: [['expiry_date', 'ASC']],
+            }), this.modals.metaData.findAll({
+              where: {
+                product_id: productId,
+              },
+            }));
+            return Promise.all([
+              this.categoryAdaptor.retrieveRenewalTypes({
+                status_type: 1,
+              }),
+              this.updateProduct(productId, product),
+              ...brandModelPromise]);
+          }).then((updateProductResult) => {
+            renewalTypes = updateProductResult[0];
+            product = updateProductResult[1] || undefined;
+            if (product) {
+              const warrantyItemPromise = [];
+              let serviceSchedule;
+              if (product.main_category_id === 3 && product.model) {
+                const diffDays = moment.utc().
+                    diff(moment.utc(product.document_date), 'days', true);
+                const diffMonths = moment.utc().
+                    diff(moment.utc(product.document_date), 'months', true);
+                serviceSchedule = this.serviceScheduleAdaptor.retrieveServiceSchedules(
+                    {
+                      category_id: product.category_id,
+                      brand_id: product.brand_id,
+                      title: {
+                        $iLike: `${product.model}%`,
+                      },
+                      $or: {
+                        due_in_days: {
+                          $gte: diffDays,
+                        },
+                        due_in_months: {
+                          $gte: diffMonths,
+                        },
+                      },
+                      status_type: 1,
+                    });
+              }
 
-          return finalResult;
-        });
+              const productModel = updateProductResult[2];
+              const productCategory = updateProductResult[3];
+              const normalWarranties = updateProductResult[4] ?
+                  updateProductResult[4].map(
+                      (item) => item.toJSON()) :
+                  [];
+              const dualWarranties = updateProductResult[5] ?
+                  updateProductResult[5].map(
+                      (item) => item.toJSON()) :
+                  [];
+
+              const currentMetaData = updateProductResult[6] ?
+                  updateProductResult[6].map(
+                      item => item.toJSON()) :
+                  [];
+              if (!product.isModalSame) {
+                if (productCategory) {
+                  if (productCategory.type_category_form) {
+                    const typeMDExist = metadata.find(
+                        (mdItem) => mdItem.category_form_id ===
+                            productCategory.type_category_form);
+                    if (!typeMDExist || !product.model) {
+                      metadata.push({
+                        category_form_id: productCategory.type_category_form,
+                        form_value: productModel ?
+                            productModel.product_type :
+                            null,
+                        updated_by: product.user_id,
+                      });
+                    }
+                  }
+
+                  if (productCategory.category_form_1) {
+                    const typeMDExist = metadata.find(
+                        (mdItem) => mdItem.category_form_id ===
+                            productCategory.category_form_1);
+                    if (!typeMDExist || !product.model) {
+                      metadata.push({
+                        category_form_id: productCategory.category_form_1,
+                        form_value: productModel ?
+                            productModel.category_form_1_value :
+                            null,
+                        updated_by: product.user_id,
+                      });
+                    }
+                  }
+
+                  if (productCategory.category_form_2) {
+                    const typeMDExist = metadata.find(
+                        (mdItem) => mdItem.category_form_id ===
+                            productCategory.category_form_2);
+                    if (!typeMDExist || !product.model) {
+                      metadata.push({
+                        category_form_id: productCategory.category_form_2,
+                        form_value: productModel ?
+                            productModel.category_form_2_value :
+                            null,
+                        updated_by: product.user_id,
+                      });
+                    }
+                  }
+                }
+
+                if (!otherItems.warranty) {
+                  if ((productModel || !product.model) &&
+                      normalWarranties.length > 0) {
+                    warrantyItemPromise.push(...normalWarranties.map(
+                        (wItem) => this.warrantyAdaptor.deleteWarranties(
+                            wItem.id,
+                            product.user_id)));
+                  }
+
+                  if ((productModel || !product.model) &&
+                      dualWarranties.length > 0) {
+                    warrantyItemPromise.push(...dualWarranties.map(
+                        (wItem) => this.warrantyAdaptor.deleteWarranties(
+                            wItem.id,
+                            product.user_id)));
+                  }
+
+                  otherItems.warranty = {
+                    renewal_type: productModel ?
+                        productModel.warranty_renewal_type :
+                        undefined,
+                    dual_renewal_type: productModel ?
+                        productModel.dual_renewal_type :
+                        undefined,
+                  };
+
+                }
+              }
+
+              if (otherItems.warranty) {
+                this.prepareWarrantyPromise({
+                  otherItems,
+                  renewalTypes,
+                  warrantyItemPromise,
+                  productBody: product,
+                  productId,
+                  sellerList,
+                });
+              }
+
+              const insurancePromise = [];
+              if (otherItems.insurance) {
+                this.prepareInsurancePromise({
+                  otherItems,
+                  renewalTypes,
+                  insurancePromise,
+                  productBody: product,
+                  sellerList,
+                });
+              }
+
+              const amcPromise = [];
+              if (otherItems.amc) {
+                this.prepareAMCPromise({
+                  renewalTypes,
+                  otherItems,
+                  amcPromise,
+                  productBody: product,
+                  productId,
+                  isProductAMCSellerSame,
+                  sellerList,
+                });
+              }
+
+              const repairPromise = [];
+              if (otherItems.repair) {
+                this.prepareRepairPromise({
+                  otherItems,
+                  isProductRepairSellerSame,
+                  sellerList,
+                  isAMCRepairSellerSame,
+                  repairPromise,
+                  productBody: product,
+                  productId,
+                });
+              }
+
+              const metadataPromise = metadata.filter(
+                  (mdItem) => mdItem.category_form_id).map((mdItem) => {
+                mdItem.status_type = 11;
+                const currentMetaDataItem = currentMetaData.find(
+                    (cmdItem) => cmdItem.category_form_id ===
+                        mdItem.category_form_id);
+                if (currentMetaDataItem && currentMetaDataItem.id) {
+                  return this.updateProductMetaData(currentMetaDataItem.id,
+                      mdItem);
+                }
+
+                mdItem.product_id = productId;
+                return this.modals.metaData.create(mdItem);
+              });
+
+              const pucPromise = [];
+              if (otherItems.puc) {
+                this.preparePUCPromise({
+                  renewalTypes,
+                  otherItems,
+                  pucPromise,
+                  productBody: product,
+                  isProductPUCSellerSame,
+                  sellerList,
+                  productId,
+                });
+              }
+
+              return Promise.all([
+                Promise.all(metadataPromise),
+                Promise.all(insurancePromise),
+                Promise.all(warrantyItemPromise),
+                Promise.all(amcPromise),
+                Promise.all(repairPromise),
+                Promise.all(pucPromise),
+                serviceSchedule,
+                this.modals.serviceCenters.count({
+                  include: [
+                    {
+                      model: this.modals.brands,
+                      as: 'brands',
+                      where: {
+                        brand_id: product.brand_id,
+                      },
+                      attributes: [],
+                      required: true,
+                    },
+                    {
+                      model: this.modals.centerDetails,
+                      where: {
+                        category_id: product.category_id,
+                      },
+                      attributes: [],
+                      required: true,
+                      as: 'centerDetails',
+                    }],
+                })]);
+            }
+
+            return undefined;
+
+          }).then((productItemsResult) => {
+            if (productItemsResult) {
+              const productPromise = [];
+              console.log('\n\n\n',
+                  JSON.stringify({metadata: productItemsResult[0]}));
+              product.metaData = productItemsResult[0] &&
+              productItemsResult[0].length > 0 ?
+                  productItemsResult[0].map(
+                      (mdItem) => mdItem.toJSON()) :
+                  [];
+              product.insurances = productItemsResult[1];
+              product.warranties = productItemsResult[2];
+              product.amcs = productItemsResult[3];
+              product.repairs = productItemsResult[4];
+              product.pucDetail = productItemsResult[5];
+              if (productItemsResult[6] && productItemsResult[6].length > 0) {
+                productPromise.push(this.updateProduct(product.id, {
+                  service_schedule_id: productItemsResult[6][0].id,
+                }));
+              } else if (product.service_schedule_id && !product.model) {
+                productPromise.push(this.updateProduct(product.id, {
+                  service_schedule_id: null,
+                }));
+              } else if (productItemsResult[6] &&
+                  productItemsResult[6].length === 0) {
+                productPromise.push(this.updateProduct(product.id, {
+                  service_schedule_id: null,
+                }));
+              }
+              product.serviceCenterUrl = productItemsResult[7] &&
+              productItemsResult[7] > 0 ?
+                  `/consumer/servicecenters?brandid=${product.brand_id}&categoryid=${product.category_id}` :
+                  '';
+              return product;
+            }
+
+            return undefined;
+          }).then((finalResult) => {
+            if (finalResult) {
+              finalResult.metaData = product.metaData;
+              finalResult.insurances = product.insurances;
+              finalResult.warranties = product.warranties;
+              finalResult.amcs = product.amcs;
+              finalResult.repairs = product.repairs;
+              finalResult.pucDetails = product.pucDetails;
+            }
+
+            return finalResult;
+          }).catch((err) => console.log(
+              `Error on update product detail ${new Date()} for user ${product.user_id} is as follow: \n \n ${err}`));
+    });
+  }
+
+  verifyCopiesExist(product_id, model, brand_id) {
+    return Promise.all([
+      this.modals.products.count({
+        where: {
+          id: product_id,
+          status_type: 5,
+        },
+      }), this.modals.amcs.count({
+        where: {
+          product_id,
+          status_type: 5,
+        },
+      }), this.modals.insurances.count({
+        where: {
+          product_id,
+          status_type: 5,
+        },
+      }), this.modals.pucs.count({
+        where: {
+          product_id,
+          status_type: 5,
+        },
+      }), this.modals.repairs.count({
+        where: {
+          product_id,
+          status_type: 5,
+        },
+      }), this.modals.warranties.count({
+        where: {
+          product_id,
+          status_type: 5,
+        },
+      })]).then((results) => (results.filter(item => item > 0).length > 0));
   }
 
   preparePUCPromise(parameters) {
@@ -2131,19 +2344,20 @@ class ProductAdaptor {
     let {otherItems, renewalTypes, warrantyItemPromise, productBody, productId, sellerList} = parameters;
     let warrantyRenewalType;
     let expiry_date;
-    if (otherItems.warranty.id) {
-      this.warrantyAdaptor.updateWarranties(
-          otherItems.warranty.id, {status_type: 11});
+    if (otherItems.warranty.id && !otherItems.warranty.renewal_type) {
+      warrantyItemPromise.push(this.warrantyAdaptor.updateWarranties(
+          otherItems.warranty.id, {status_type: 11}));
     }
 
-    if (otherItems.warranty.extended_id) {
-      this.warrantyAdaptor.updateWarranties(
-          otherItems.warranty.extended_id, {status_type: 11});
+    if (otherItems.warranty.extended_id &&
+        !otherItems.warranty.extended_renewal_type) {
+      warrantyItemPromise.push(this.warrantyAdaptor.updateWarranties(
+          otherItems.warranty.extended_id, {status_type: 11}));
     }
 
-    if (otherItems.warranty.dual_id) {
-      this.warrantyAdaptor.updateWarranties(
-          otherItems.warranty.dual_id, {status_type: 11});
+    if (otherItems.warranty.dual_id && !otherItems.warranty.dual_renewal_type) {
+      warrantyItemPromise.push(this.warrantyAdaptor.updateWarranties(
+          otherItems.warranty.dual_id, {status_type: 11}));
     }
 
     if (otherItems.warranty.renewal_type) {
@@ -2322,30 +2536,38 @@ class ProductAdaptor {
         user_id: productBody.user_id,
       }));
     }
+
+    warrantyItemPromise.push(this.warrantyAdaptor.updateWarrantyPeriod(
+        {product_id: productId, user_id: productBody.user_id},
+        productBody.document_date, productBody.document_date));
   }
 
   prepareSellerPromise(parameters) {
     let {sellerPromise, productBody, otherItems, isProductAMCSellerSame, isProductRepairSellerSame, isProductPUCSellerSame, isAMCRepairSellerSame} = parameters;
-    sellerPromise.push(productBody.seller_contact ||
-    productBody.seller_name || productBody.seller_email ||
-    productBody.seller_address ?
-        this.sellerAdaptor.retrieveOrCreateOfflineSellers({
-              seller_name: productBody.seller_name || productBody.product_name,
-              contact_no: productBody.seller_contact,
-            },
-            {
-              seller_name: productBody.seller_name || productBody.product_name,
-              contact_no: productBody.seller_contact,
-              email: productBody.seller_email,
-              address: productBody.seller_address,
-              updated_by: productBody.user_id,
-              created_by: productBody.user_id,
-              status_type: 11,
-            }) :
-        '');
+    sellerPromise.push(
+        (productBody.seller_contact && productBody.seller_contact.trim()) ||
+        (productBody.seller_name && productBody.seller_name.trim()) ||
+        (productBody.seller_email && productBody.seller_email.trim()) ||
+        (productBody.seller_address && productBody.seller_address.trim()) ?
+            this.sellerAdaptor.retrieveOrCreateOfflineSellers({
+                  seller_name: productBody.seller_name ||
+                  productBody.product_name,
+                  contact_no: productBody.seller_contact,
+                },
+                {
+                  seller_name: productBody.seller_name ||
+                  productBody.product_name,
+                  contact_no: productBody.seller_contact,
+                  email: productBody.seller_email,
+                  address: productBody.seller_address,
+                  updated_by: productBody.user_id,
+                  created_by: productBody.user_id,
+                  status_type: 11,
+                }) :
+            '');
     sellerPromise.push(otherItems.amc && !isProductAMCSellerSame &&
-    (otherItems.amc.seller_contact ||
-        otherItems.amc.seller_name) ?
+    ((otherItems.amc.seller_contact && otherItems.amc.seller_contact.trim()) ||
+        (otherItems.amc.seller_name && otherItems.amc.seller_name.trim())) ?
         this.sellerAdaptor.retrieveOrCreateOfflineSellers({
               seller_name: otherItems.amc.seller_name,
               contact_no: otherItems.amc.seller_contact,
@@ -2360,8 +2582,10 @@ class ProductAdaptor {
         '');
     sellerPromise.push(otherItems.repair && !otherItems.repair.is_amc_seller &&
     !isProductRepairSellerSame && !isAMCRepairSellerSame &&
-    (otherItems.repair.seller_contact ||
-        otherItems.repair.seller_name) ?
+    ((otherItems.repair.seller_contact &&
+        otherItems.repair.seller_contact.trim()) ||
+        (otherItems.repair.seller_name &&
+            otherItems.repair.seller_name.trim())) ?
         this.sellerAdaptor.retrieveOrCreateOfflineSellers({
               seller_name: otherItems.repair.seller_name,
               contact_no: otherItems.repair.seller_contact,
@@ -2375,8 +2599,8 @@ class ProductAdaptor {
             }) :
         '');
     sellerPromise.push(otherItems.puc && !isProductPUCSellerSame &&
-    (otherItems.puc.seller_contact ||
-        otherItems.puc.seller_name) ?
+    ((otherItems.puc.seller_contact && otherItems.puc.seller_contact.trim()) ||
+        (otherItems.puc.seller_name && otherItems.puc.seller_name.trim())) ?
         this.sellerAdaptor.retrieveOrCreateOfflineSellers({
               seller_name: otherItems.puc.seller_name,
               contact_no: otherItems.puc.seller_contact,
@@ -2838,6 +3062,8 @@ class ProductAdaptor {
     }).then((productResult) => {
       const itemDetail = productResult.toJSON();
       const currentPurchaseDate = itemDetail.document_date;
+      console.log('\n\n\n', JSON.stringify({productDetail}));
+      const isModalSame = itemDetail.model === productDetail.model;
       if (productDetail.copies && productDetail.copies.length > 0 &&
           itemDetail.copies && itemDetail.copies.length > 0) {
         const newCopies = productDetail.copies;
@@ -2850,6 +3076,7 @@ class ProductAdaptor {
           productDetail.status_type || itemDetail.status_type;
       productResult.updateAttributes(productDetail);
       productDetail = productResult.toJSON();
+      productDetail.isModalSame = isModalSame;
       if (productDetail.document_date &&
           moment.utc(currentPurchaseDate, moment.ISO_8601).valueOf() !==
           moment.utc(productDetail.document_date, moment.ISO_8601).valueOf()) {
@@ -2867,7 +3094,7 @@ class ProductAdaptor {
               {product_id: id, user_id: productDetail.user_id},
               currentPurchaseDate, productDetail.document_date)]).
             catch((err) => console.log(
-                `Error on ${new Date()} for user ${productDetail.user_id} is as follow: \n \n ${err}`));
+                `Error on update product ${new Date()} for user ${productDetail.user_id} is as follow: \n \n ${err}`));
       }
 
       return undefined;

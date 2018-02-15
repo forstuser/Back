@@ -140,7 +140,6 @@ class UploadController {
           request.payload.file;
 
       let filteredFileData = fileData;
-      console.log('BEFORE FILTERING: ', JSON.stringify({filteredFileData}));
       if (filteredFileData) {
         if (Array.isArray(filteredFileData)) {
           filteredFileData = fileData.filter((datum) => {

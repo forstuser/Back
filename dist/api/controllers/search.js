@@ -34,15 +34,14 @@ var SearchController = function () {
 		key: 'retrieveSearch',
 		value: function retrieveSearch(request, reply) {
 			var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!request.pre.userExist) {
-        return reply({
+			if (!request.pre.userExist) {
+				return reply({
 					status: false,
-          message: 'Unauthorized',
-          forceUpdate: request.pre.forceUpdate,
-        }).code(401);
+					message: 'Unauthorized',
+					forceUpdate: request.pre.forceUpdate
+				}).code(401);
 			} else {
-        return reply(
-            searchAdaptor.prepareSearchResult(user, request.query.searchvalue));
+				return reply(searchAdaptor.prepareSearchResult(user, request.query.searchvalue));
 			}
 		}
 	}]);

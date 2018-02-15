@@ -103,14 +103,14 @@ var GeneralController = function () {
           } else if (request.query.categoryId) {
             isBrandRequest = true;
             return Promise.all([categoryAdaptor.retrieveSubCategories({ category_id: request.query.categoryId }, true), categoryAdaptor.retrieveRenewalTypes({
-              status_type: 1,
+              status_type: 1
             })]);
           } else if (request.query.mainCategoryId) {
             return categoryAdaptor.retrieveCategories({ category_id: request.query.mainCategoryId }, false);
           }
         }
 
-        return categoryAdaptor.retrieveCategories({category_level: 1}, false);
+        return categoryAdaptor.retrieveCategories({ category_level: 1 }, false);
       }).then(function (results) {
         return reply({
           status: true,
@@ -161,7 +161,7 @@ var GeneralController = function () {
             $ne: 3
           }
         },
-        order: [['id']],
+        order: [['id']]
       }).then(function (faq) {
         return reply({ status: true, faq: faq }).code(200);
       }).catch(function (err) {
@@ -172,12 +172,11 @@ var GeneralController = function () {
   }, {
     key: 'retrieveTips',
     value: function retrieveTips(request, reply) {
-      return modals.tips.findAll({order: [['id']]}).then(function(tips) {
-        return reply({status: true, tips: tips}).code(200);
-      }).catch(function(err) {
-        console.log('Error on ' + new Date() + ' for user ' +
-            (user.id || user.ID) + ' is as follow: \n \n ' + err);
-        return reply({status: false}).code(200);
+      return modals.tips.findAll({ order: [['id']] }).then(function (tips) {
+        return reply({ status: true, tips: tips }).code(200);
+      }).catch(function (err) {
+        console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+        return reply({ status: false }).code(200);
       });
     }
   }, {
@@ -186,87 +185,64 @@ var GeneralController = function () {
       var user = _shared2.default.verifyAuthorization(request.headers);
 
       if (request.pre.userExist && !request.pre.forceUpdate) {
-        return _bluebird2.default.try(function() {
+        return _bluebird2.default.try(function () {
           return jobAdaptor.createJobs({
-            job_id: '' + Math.random().toString(36).substr(2, 9) +
-            (user.id || user.ID).toString(36),
+            job_id: '' + Math.random().toString(36).substr(2, 9) + (user.id || user.ID).toString(36),
             user_id: user.id || user.ID,
             updated_by: user.id || user.ID,
             uploaded_by: user.id || user.ID,
             user_status: 8,
             admin_status: 2,
-            comments: request.query ?
-                request.query.productId ?
-                    'This job is sent for product id ' +
-                    request.query.productId :
-                    request.query.productName ?
-                        'This job is sent for product name ' +
-                        request.query.productName :
-                        '' :
-                '',
+            comments: request.query ? request.query.productId ? 'This job is sent for product id ' + request.query.productId : request.query.productName ? 'This job is sent for product name ' + request.query.productName : '' : ''
           });
-        }).then(function(jobResult) {
-          return Promise.all([
-            productAdaptor.createEmptyProduct({
-              job_id: jobResult.id,
-              product_name: request.payload.product_name,
-              user_id: user.id || user.ID,
-              main_category_id: request.payload.main_category_id,
-              category_id: request.payload.category_id,
-              brand_id: request.payload.brand_id,
-              colour_id: request.payload.colour_id,
-              purchase_cost: request.payload.purchase_cost,
-              taxes: request.payload.taxes,
-              updated_by: user.id || user.ID,
-              seller_id: request.payload.seller_id,
-              status_type: 8,
-              document_number: request.payload.document_number,
-              document_date: request.payload.document_date ?
-                  _moment2.default.utc(request.payload.document_date,
-                      _moment2.default.ISO_8601).isValid() ?
-                      _moment2.default.utc(request.payload.document_date,
-                          _moment2.default.ISO_8601).
-                          startOf('day').
-                          format('YYYY-MM-DD') :
-                      _moment2.default.utc(request.payload.document_date,
-                          'DD MMM YY').startOf('day').format('YYYY-MM-DD') :
-                  undefined,
-              brand_name: request.payload.brand_name,
-              copies: [],
-            }),
-            categoryAdaptor.retrieveSubCategories(
-                {category_id: request.payload.category_id}, true),
-            categoryAdaptor.retrieveRenewalTypes({
-              status_type: 1,
-            })]);
-        }).then(function(initResult) {
+        }).then(function (jobResult) {
+          return Promise.all([productAdaptor.createEmptyProduct({
+            job_id: jobResult.id,
+            product_name: request.payload.product_name,
+            user_id: user.id || user.ID,
+            main_category_id: request.payload.main_category_id,
+            category_id: request.payload.category_id,
+            brand_id: request.payload.brand_id,
+            colour_id: request.payload.colour_id,
+            purchase_cost: request.payload.purchase_cost,
+            taxes: request.payload.taxes,
+            updated_by: user.id || user.ID,
+            seller_id: request.payload.seller_id,
+            status_type: 8,
+            document_number: request.payload.document_number,
+            document_date: request.payload.document_date ? _moment2.default.utc(request.payload.document_date, _moment2.default.ISO_8601).isValid() ? _moment2.default.utc(request.payload.document_date, _moment2.default.ISO_8601).startOf('day').format('YYYY-MM-DD') : _moment2.default.utc(request.payload.document_date, 'DD MMM YY').startOf('day').format('YYYY-MM-DD') : undefined,
+            brand_name: request.payload.brand_name,
+            copies: []
+          }), categoryAdaptor.retrieveSubCategories({ category_id: request.payload.category_id }, true), categoryAdaptor.retrieveRenewalTypes({
+            status_type: 1
+          })]);
+        }).then(function (initResult) {
           return reply({
             status: true,
             product: initResult[0],
             categories: initResult[1],
             renewalTypes: initResult[2],
-            message: 'Product and Job is initialized.',
+            message: 'Product and Job is initialized.'
           });
-        }).catch(function(err) {
-          console.log('Error on ' + new Date() + ' for user ' +
-              (user.id || user.ID) + ' is as follow: \n \n ' + err);
+        }).catch(function (err) {
+          console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
           return reply({
             status: false,
             message: 'Unable to initialize product or job.',
-            forceUpdate: request.pre.forceUpdate,
+            forceUpdate: request.pre.forceUpdate
           }).code(200);
         });
       } else if (!request.pre.userExist) {
         return reply({
           status: false,
           message: 'Unauthorized',
-          forceUpdate: request.pre.forceUpdate,
+          forceUpdate: request.pre.forceUpdate
         }).code(401);
       } else {
         return reply({
           status: false,
           message: 'Forbidden',
-          forceUpdate: request.pre.forceUpdate,
+          forceUpdate: request.pre.forceUpdate
         });
       }
     }
@@ -275,20 +251,19 @@ var GeneralController = function () {
     value: function serviceCenterAccessed(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist && !request.pre.forceUpdate) {
-        return _bluebird2.default.try(function() {
-          return userAdaptor.updateUserDetail({service_center_accessed: true}, {
+        return _bluebird2.default.try(function () {
+          return userAdaptor.updateUserDetail({ service_center_accessed: true }, {
             where: {
-              id: user.id || user.ID,
+              id: user.id || user.ID
             }
           });
-        }).then(function() {
+        }).then(function () {
           return reply({
             status: true,
-            message: 'Status updated successfully.',
+            message: 'Status updated successfully.'
           });
         }).catch(function (err) {
-          console.log('Error on ' + new Date() + ' for user ' +
-              (user.id || user.ID) + ' is as follow: \n \n ' + err);
+          console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
           return reply({
             status: false,
             message: 'Failed to update status',
@@ -315,21 +290,20 @@ var GeneralController = function () {
       var user = _shared2.default.verifyAuthorization(request.headers);
 
       if (request.pre.userExist && !request.pre.forceUpdate) {
-        return _bluebird2.default.try(function() {
+        return _bluebird2.default.try(function () {
           return productAdaptor.retrieveProducts({
             main_category_id: [1, 2, 3],
             status_type: [5, 11],
-            user_id: user.id || user.ID,
+            user_id: user.id || user.ID
           });
-        }).then(function(productResult) {
+        }).then(function (productResult) {
           return reply({
             status: true,
             product: productResult,
-            message: 'Success.',
+            message: 'Success.'
           });
         }).catch(function (err) {
-          console.log('Error on ' + new Date() + ' for user ' +
-              (user.id || user.ID) + ' is as follow: \n \n ' + err);
+          console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
 
           return reply({
             status: false,

@@ -1,54 +1,54 @@
 'use strict';
 
-Object.defineProperty(exports, '__esModule', {
-  value: true,
+Object.defineProperty(exports, "__esModule", {
+  value: true
 });
 
-exports.default = function(sequelize, DataTypes) {
+exports.default = function (sequelize, DataTypes) {
   var serviceSchedules = sequelize.define('serviceSchedules', {
     category_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.INTEGER
     },
     title: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING
     },
     inclusions: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING
     },
     exclusions: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING
     },
     brand_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.INTEGER
     },
     service_number: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING
     },
     service_type: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.INTEGER
     },
     distance: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.INTEGER
     },
     due_in_months: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.FLOAT
     },
     due_in_days: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.FLOAT
     },
     created_by: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.INTEGER
     },
     status_type: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.INTEGER
     },
     created_at: {
       type: DataTypes.DATE,
-      defaultValue: sequelize.literal('NOW()'),
+      defaultValue: sequelize.literal('NOW()')
     },
     updated_at: {
       type: DataTypes.DATE,
-      defaultValue: sequelize.literal('NOW()'),
+      defaultValue: sequelize.literal('NOW()')
     }
   }, {
     freezeTableName: true,
@@ -56,19 +56,17 @@ exports.default = function(sequelize, DataTypes) {
     timestamps: true,
     paranoid: true,
     underscored: true,
-    tableName: 'service_schedules',
+    tableName: 'service_schedules'
   });
 
-  serviceSchedules.associate = function(models) {
-    serviceSchedules.belongsTo(models.users, {foreignKey: 'updated_by'});
+  serviceSchedules.associate = function (models) {
+    serviceSchedules.belongsTo(models.users, { foreignKey: 'updated_by' });
 
-    serviceSchedules.belongsTo(models.users, {foreignKey: 'created_by'});
+    serviceSchedules.belongsTo(models.users, { foreignKey: 'created_by' });
 
-    serviceSchedules.belongsTo(models.brands,
-        {foreignKey: 'brand_id', as: 'brand'});
-    serviceSchedules.belongsTo(models.categories, {foreignKey: 'category_id'});
-    serviceSchedules.belongsTo(models.statuses,
-        {foreignKey: 'status_type', targetKey: 'status_type'});
+    serviceSchedules.belongsTo(models.brands, { foreignKey: 'brand_id', as: 'brand' });
+    serviceSchedules.belongsTo(models.categories, { foreignKey: 'category_id' });
+    serviceSchedules.belongsTo(models.statuses, { foreignKey: 'status_type', targetKey: 'status_type' });
   };
   return serviceSchedules;
 };

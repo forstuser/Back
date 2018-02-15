@@ -166,16 +166,16 @@ var BrandAdaptor = function () {
       return this.modals.brands.findOne({
         where: {
           brand_name: {
-            $iLike: '' + values.brand_name,
+            $iLike: '' + values.brand_name
           }
         }
-      }).then(function(result) {
+      }).then(function (result) {
         if (!result) {
           return _this2.modals.brands.create(values);
         }
 
         return result;
-      }).then(function(updatedResult) {
+      }).then(function (updatedResult) {
         return updatedResult.toJSON();
       });
     }

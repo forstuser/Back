@@ -19,13 +19,13 @@ exports.default = function (sequelize, DataTypes) {
       'type': DataTypes.INTEGER
     },
     type_category_form: {
-      'type': DataTypes.INTEGER,
+      'type': DataTypes.INTEGER
     },
     category_form_1: {
-      'type': DataTypes.INTEGER,
+      'type': DataTypes.INTEGER
     },
     category_form_2: {
-      'type': DataTypes.INTEGER,
+      'type': DataTypes.INTEGER
     },
     category_level: {
       'type': DataTypes.INTEGER

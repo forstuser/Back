@@ -193,8 +193,7 @@ var EHomeAdaptor = function () {
             return amcItem.masterCategoryId === category.id;
           });
           var expenses = _lodash2.default.chain([].concat(_toConsumableArray(products), _toConsumableArray(inProgressProduct)) || []).sortBy(function (item) {
-            return _moment2.default.utc(item.lastUpdatedAt,
-                _moment2.default.ISO_8601);
+            return _moment2.default.utc(item.lastUpdatedAt, _moment2.default.ISO_8601);
           }).reverse().value();
           category.expenses = expenses;
           category.cLastUpdate = expenses && expenses.length > 0 ? expenses[0].lastUpdatedAt : null;
@@ -237,8 +236,8 @@ var EHomeAdaptor = function () {
         offlineSellerIds: offlineSellerIds,
         onlineSellerIds: onlineSellerIds,
         sortBy: sortBy,
-        searchValue: '%' + (searchValue || '') + '%',
-      }).then(function(result) {
+        searchValue: '%' + (searchValue || '') + '%'
+      }).then(function (result) {
         var productList = result.productList;
         /* const listIndex = (pageNo * 10) - 10; */
 
@@ -386,8 +385,7 @@ var EHomeAdaptor = function () {
             return productItem.masterCategoryId === category.id;
           }).value();
           category.productList = _lodash2.default.chain([].concat(_toConsumableArray(products), _toConsumableArray(inProgressProduct)) || []).sortBy(function (item) {
-            return _moment2.default.utc(item.purchaseDate,
-                _moment2.default.ISO_8601);
+            return _moment2.default.utc(item.purchaseDate, _moment2.default.ISO_8601);
           }).reverse().value();
 
           return category;

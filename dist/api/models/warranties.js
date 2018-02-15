@@ -56,7 +56,7 @@ exports.default = function (sequelize, DataTypes) {
     },
     expiry_date: {
       type: DataTypes.DATE,
-      allowNull: true,
+      allowNull: true
     },
     document_date: {
       type: DataTypes.DATE,

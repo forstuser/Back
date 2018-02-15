@@ -13,13 +13,13 @@ exports.default = function (sequelize, DataTypes) {
       type: DataTypes.STRING
     },
     category_form_1_value: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING
     },
     category_form_2_value: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING
     },
     product_type: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING
     },
     brand_id: {
       type: DataTypes.INTEGER

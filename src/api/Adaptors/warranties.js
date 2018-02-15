@@ -337,6 +337,7 @@ class WarrantyAdaptor {
       let dual_date;
       let warrantyExpiryDate;
       let dualWarrantyExpiryDate;
+      console.log('\n\n\n', JSON.stringify({warranty: result}));
       return Promise.all(result.map((item) => {
         const warrantyItem = item.toJSON();
         const id = warrantyItem.id;

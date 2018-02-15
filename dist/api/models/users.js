@@ -63,7 +63,7 @@ exports.default = function (sequelize, DataTypes) {
       type: DataTypes.STRING
     },
     last_api: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING
     },
     last_login_at: {
       type: DataTypes.DATE
@@ -72,7 +72,7 @@ exports.default = function (sequelize, DataTypes) {
       type: DataTypes.DATE
     },
     last_active_date: {
-      type: DataTypes.DATE,
+      type: DataTypes.DATE
     },
     last_password_change_at: {
       type: DataTypes.DATE
@@ -87,7 +87,7 @@ exports.default = function (sequelize, DataTypes) {
     },
     service_center_accessed: {
       type: DataTypes.BOOLEAN,
-      defaultValue: false,
+      defaultValue: false
     }
   }, {
     freezeTableName: true,

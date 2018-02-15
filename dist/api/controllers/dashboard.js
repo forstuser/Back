@@ -51,8 +51,7 @@ var DashboardController = function () {
     value: function getDashboard(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist && !request.pre.forceUpdate) {
-        return reply(dashboardAdaptor.retrieveDashboardResult(user, request)).
-            code(200);
+        return reply(dashboardAdaptor.retrieveDashboardResult(user, request)).code(200);
       } else if (!request.pre.userExist) {
         return reply({
           status: false,
@@ -102,17 +101,13 @@ var DashboardController = function () {
           user: user,
           masterCategoryId: request.params.id,
           ctype: request.query.subCategoryId,
-          brandIds: (request.query.brandids || '[]').split('[')[1].split(
-              ']')[0].split(',').filter(Boolean),
-          categoryIds: (request.query.categoryids || '[]').split('[')[1].split(
-              ']')[0].split(',').filter(Boolean),
-          offlineSellerIds: (request.query.offlinesellerids || '[]').split(
-              '[')[1].split(']')[0].split(',').filter(Boolean),
-          onlineSellerIds: (request.query.onlinesellerids || '[]').split(
-              '[')[1].split(']')[0].split(',').filter(Boolean),
+          brandIds: (request.query.brandids || '[]').split('[')[1].split(']')[0].split(',').filter(Boolean),
+          categoryIds: (request.query.categoryids || '[]').split('[')[1].split(']')[0].split(',').filter(Boolean),
+          offlineSellerIds: (request.query.offlinesellerids || '[]').split('[')[1].split(']')[0].split(',').filter(Boolean),
+          onlineSellerIds: (request.query.onlinesellerids || '[]').split('[')[1].split(']')[0].split(',').filter(Boolean),
           sortBy: request.query.sortby,
           searchValue: request.query.searchvalue,
-          request: request,
+          request: request
         })).code(200);
       } else {
         return reply({
@@ -130,16 +125,14 @@ var DashboardController = function () {
         return reply({
           status: false,
           message: 'Unauthorized',
-          forceUpdate: request.pre.forceUpdate,
+          forceUpdate: request.pre.forceUpdate
         }).code(401);
       } else {
-        return notificationAdaptor.updateNotificationStatus(user,
-            request.payload.notificationIds).then(function() {
-          return reply({status: true}).code(201); //, forceUpdate: request.pre.forceUpdate}).code(201);
-        }).catch(function(err) {
-          console.log('Error on ' + new Date() + ' for user ' +
-              (user.id || user.ID) + ' is as follow: \n \n ' + err);
-          return reply({status: false}).code(500); //, forceUpdate: request.pre.forceUpdate}).code(500);
+        return notificationAdaptor.updateNotificationStatus(user, request.payload.notificationIds).then(function () {
+          return reply({ status: true }).code(201); //, forceUpdate: request.pre.forceUpdate}).code(201);
+        }).catch(function (err) {
+          console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+          return reply({ status: false }).code(500); //, forceUpdate: request.pre.forceUpdate}).code(500);
         });
       }
     }
@@ -151,11 +144,10 @@ var DashboardController = function () {
         return reply({
           status: false,
           message: 'Unauthorized',
-          forceUpdate: request.pre.forceUpdate,
+          forceUpdate: request.pre.forceUpdate
         }).code(401);
       } else if (!request.pre.forceUpdate && user) {
-        return reply(notificationAdaptor.retrieveNotifications(user, request)).
-            code(200);
+        return reply(notificationAdaptor.retrieveNotifications(user, request)).code(200);
       } else {
         return reply({
           status: false,

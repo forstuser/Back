@@ -13,19 +13,19 @@ exports.default = function (sequelize, DataTypes) {
       type: DataTypes.INTEGER
     },
     main_category_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.INTEGER
     },
     sub_category_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.INTEGER
     },
     category_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.INTEGER
     },
     brand_id: {
       type: DataTypes.INTEGER
     },
     service_schedule_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.INTEGER
     },
     colour_id: {
       type: DataTypes.INTEGER
@@ -37,7 +37,7 @@ exports.default = function (sequelize, DataTypes) {
       type: DataTypes.STRING
     },
     model: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING
     },
     purchase_cost: {
       type: DataTypes.FLOAT,
@@ -86,16 +86,11 @@ exports.default = function (sequelize, DataTypes) {
     products.belongsTo(models.bills);
     products.belongsTo(models.users, { foreignKey: 'user_id', as: 'consumer' });
     products.belongsTo(models.users, { foreignKey: 'updated_by', as: 'updatedByUser' });
-    products.hasMany(models.amcs,
-        {foreignKey: 'product_id', onDelete: 'cascade'});
-    products.hasMany(models.insurances,
-        {foreignKey: 'product_id', onDelete: 'cascade'});
-    products.hasMany(models.warranties,
-        {foreignKey: 'product_id', onDelete: 'cascade'});
-    products.hasMany(models.pucs,
-        {foreignKey: 'product_id', onDelete: 'cascade'});
-    products.hasMany(models.repairs,
-        {foreignKey: 'product_id', onDelete: 'cascade'});
+    products.hasMany(models.amcs, { foreignKey: 'product_id', onDelete: 'cascade' });
+    products.hasMany(models.insurances, { foreignKey: 'product_id', onDelete: 'cascade' });
+    products.hasMany(models.warranties, { foreignKey: 'product_id', onDelete: 'cascade' });
+    products.hasMany(models.pucs, { foreignKey: 'product_id', onDelete: 'cascade' });
+    products.hasMany(models.repairs, { foreignKey: 'product_id', onDelete: 'cascade' });
 
     products.belongsTo(models.statuses, { foreignKey: 'status_type', targetKey: 'status_type' });
     products.belongsTo(models.jobs, { as: 'jobs', foreignKey: 'job_id' });
@@ -103,18 +98,15 @@ exports.default = function (sequelize, DataTypes) {
     products.belongsTo(models.brands, { foreignKey: 'brand_id', as: 'brand' });
     products.belongsTo(models.categories, { foreignKey: 'main_category_id', as: 'mainCategory' });
     products.belongsTo(models.categories, { foreignKey: 'category_id', as: 'category' });
-    products.belongsTo(models.categories,
-        {foreignKey: 'sub_category_id', as: 'sub_category'});
+    products.belongsTo(models.categories, { foreignKey: 'sub_category_id', as: 'sub_category' });
     products.belongsTo(models.colours, { foreignKey: 'colour_id', as: 'color' });
-    products.belongsTo(models.serviceSchedules,
-        {foreignKey: 'service_schedule_id', as: 'schedule'});
-    products.hasMany(models.metaData,
-        {foreignKey: 'product_id', as: 'metaData', onDelete: 'cascade'});
+    products.belongsTo(models.serviceSchedules, { foreignKey: 'service_schedule_id', as: 'schedule' });
+    products.hasMany(models.metaData, { foreignKey: 'product_id', as: 'metaData', onDelete: 'cascade' });
 
     products.hasMany(models.productReviews, {
       foreignKey: 'bill_product_id',
       as: 'productReviews',
-      onDelete: 'cascade',
+      onDelete: 'cascade'
     });
   };
 

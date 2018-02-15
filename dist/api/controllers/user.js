@@ -135,8 +135,8 @@ var loginOrRegisterUser = function loginOrRegisterUser(parameters) {
       fcmManager.insertFcmDetails({
         userId: updatedUser.id || updatedUser.ID,
         fcmId: request.payload.fcmId,
-        platformId: request.payload.platform || 1,
-      }).then(function(data) {
+        platformId: request.payload.platform || 1
+      }).then(function (data) {
         console.log(data);
       }).catch(function (err) {
         return console.log('Error on ' + new Date() + ' for user ' + (updatedUser.id || updatedUser.ID) + ' is as follow: \n ' + err);
@@ -150,7 +150,7 @@ var loginOrRegisterUser = function loginOrRegisterUser(parameters) {
       isNewUser: userData[1],
       user: userData[0].toJSON(),
       token: replyObject.authorization,
-      request: request,
+      request: request
     });
   }).then(function (result) {
     return reply(result).code(201).header('authorization', replyObject.authorization);
@@ -204,12 +204,11 @@ var UserController = function () {
           fcmManager.insertFcmDetails({
             userId: user.id || user.ID,
             fcmId: request.payload.fcmId,
-            platformId: request.payload.platform,
-          }).then(function(data) {
+            platformId: request.payload.platform
+          }).then(function (data) {
             console.log(data);
-          }).catch(function(err) {
-            console.log('Error on ' + new Date() + ' for user ' +
-                (user.id || user.ID) + ' is as follow: \n \n ' + err);
+          }).catch(function (err) {
+            console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
           });
         }
         return reply(replyObject).code(201);
@@ -233,13 +232,7 @@ var UserController = function () {
         return reply(replyObject);
       }
 
-      return Promise.all([
-        _otp2.default.sendOTPToUser(request.payload.PhoneNo,
-            request.headers.ios_app_version &&
-            request.headers.ios_app_version < 14 ||
-            request.headers.app_version && request.headers.app_version < 13 ?
-                6 :
-                4), userAdaptor.retrieveSingleUser({
+      return Promise.all([_otp2.default.sendOTPToUser(request.payload.PhoneNo, request.headers.ios_app_version && request.headers.ios_app_version < 14 || request.headers.app_version && request.headers.app_version < 13 ? 6 : 4), userAdaptor.retrieveSingleUser({
         where: {
           mobile_no: request.payload.PhoneNo
         }
@@ -304,7 +297,7 @@ var UserController = function () {
                   userInput: userInput,
                   trueObject: trueObject,
                   request: request,
-                  reply: reply,
+                  reply: reply
                 });
               } else {
                 replyObject.status = false;
@@ -325,7 +318,7 @@ var UserController = function () {
               userInput: userInput,
               trueObject: trueObject,
               request: request,
-              reply: reply,
+              reply: reply
             });
           }
         } else if (request.payload.BBLogin_Type === 2) {
@@ -347,8 +340,8 @@ var UserController = function () {
               userInput: userInput,
               trueObject: trueObject,
               request: request,
-              reply: reply,
-            }).catch(function(err) {
+              reply: reply
+            }).catch(function (err) {
               console.log('Error on ' + new Date() + ' for mobile no: ' + trueObject.PhoneNo + ' is as follow: \n \n ' + err);
               replyObject.status = false;
               replyObject.message = 'Issue in updating data';
@@ -381,8 +374,8 @@ var UserController = function () {
           fcmManager.deleteFcmDetails({
             user_id: user.id || user.ID,
             fcm_id: request.payload.fcmId,
-            platform_id: request.payload.platform || 1,
-          }).then(function(rows) {
+            platform_id: request.payload.platform || 1
+          }).then(function (rows) {
             console.log('TOTAL FCM ID\'s DELETED: ', rows);
           });
         }

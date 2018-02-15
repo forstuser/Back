@@ -205,14 +205,21 @@ class ProductController {
             return item;
           }) :
           [];
+
       return productAdaptor.updateProductDetails(productBody, metaDataBody,
           otherItems, request.params.id).
           then((result) => {
             if (result) {
               return reply({
                 status: true,
-                message: 'successfull',
+                message: 'successful',
                 product: result,
+                forceUpdate: request.pre.forceUpdate,
+              });
+            } else if (result === false) {
+              return reply({
+                status: false,
+                message: 'Brand/Model can\'t be changed as they are already verified.',
                 forceUpdate: request.pre.forceUpdate,
               });
             } else {

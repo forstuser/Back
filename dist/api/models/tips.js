@@ -1,22 +1,22 @@
 /*jshint esversion: 6 */
 'use strict';
 
-Object.defineProperty(exports, '__esModule', {
-  value: true,
+Object.defineProperty(exports, "__esModule", {
+  value: true
 });
 
-exports.default = function(sequelize, DataTypes) {
+exports.default = function (sequelize, DataTypes) {
   return sequelize.define('tips', {
     tip: {
-      type: DataTypes.TEXT,
+      type: DataTypes.TEXT
     },
     color: {
-      type: DataTypes.TEXT,
+      type: DataTypes.TEXT
     }
   }, {
     freezeTableName: true,
     timestamps: true,
     underscored: true,
-    tableName: 'table_tips',
+    tableName: 'table_tips'
   });
 };
