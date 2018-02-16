@@ -1684,22 +1684,30 @@ class ProductAdaptor {
 
   updateProductDetails(productBody, metadataBody, otherItems, productId) {
     return Promise.all([
-      productBody.brand_id ? this.modals.products.count({
-        where: {
-          id: productId,
-          brand_id: productBody.brand_id,
-          model: productBody.model,
-          status_type: {
-            $notIn: [8,5]
-          },
-        },
-      }) : 0, this.verifyCopiesExist(productId), this.modals.products.count({
+      productBody.brand_id ?
+          this.modals.products.count({
+            where: {
+              id: productId,
+              brand_id: productBody.brand_id,
+              model: productBody.model,
+              status_type: {
+                $notIn: [8],
+              },
+            },
+          }) :
+          productBody.category_id.toString() === '1' ||
+          productBody.category_id.toString() === '2' ||
+          productBody.category_id.toString() === '3' ?
+              0 :
+              1,
+      this.verifyCopiesExist(productId),
+      this.modals.products.count({
         where: {
           id: productId,
           status_type: 8,
         },
       })]).then((result) => {
-      if (!result[1] && result[0] === 0 && result[2] === 0) {
+      if (result[1] && result[0] === 0 && result[2] === 0) {
         return false;
       }
       const sellerPromise = [];
@@ -1737,6 +1745,7 @@ class ProductAdaptor {
           this.brandAdaptor.findCreateBrand({
             status_type: 11,
             brand_name: productBody.brand_name,
+            category_id: productBody.category_id,
             updated_by: productBody.user_id,
             created_by: productBody.user_id,
           }) :
@@ -3071,9 +3080,11 @@ class ProductAdaptor {
         productDetail.copies.push(...newCopies);
       }
 
-      productDetail.status_type = itemDetail.status_type !== 8 ?
-          11 :
-          productDetail.status_type || itemDetail.status_type;
+      productDetail.status_type = itemDetail.status_type === 5 ?
+          itemDetail.status_type :
+          itemDetail.status_type !== 8 ?
+              11 :
+              productDetail.status_type || itemDetail.status_type;
       productResult.updateAttributes(productDetail);
       productDetail = productResult.toJSON();
       productDetail.isModalSame = isModalSame;

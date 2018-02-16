@@ -194,21 +194,62 @@ class BrandAdaptor {
   }
 
   findCreateBrand(values) {
-    return this.modals.brands.findOne({
+    let brandData;
+    let brandDetail;
+    let category;
+    return Promise.all([this.modals.brands.findAll({
       where: {
         brand_name: {
           $iLike: `${values.brand_name}`,
         },
       },
+    }), this.modals.categories.findOne({
+      where: {
+        category_id : values.category_id
+      }
+    })]).then((result) => {
+      brandData = result[0].map((item) => item.toJSON());
+      category = result[1].toJSON();
+        return this.modals.brandDetails.findOne({
+          where: {
+            brand_id: brandData.map((item) => {
+              return item.brand_id;
+            }),
+            category_id: values.category_id
+          },
+        });
     }).then((result) => {
       if (!result) {
-        return this.modals.brands.create(values);
+        return this.modals.brands.create({
+          status_type: 11,
+          brand_name: `${values.brand_name}(${category.category_name})`,
+          updated_by: values.updated_by,
+          created_by: values.created_by,
+        });
       }
 
-      return result;
+      brandDetail = result.toJSON();
+      return brandData;
     }).then((updatedResult) => {
-      return updatedResult.toJSON();
-    });
+      if(brandDetail){
+        brandData = updatedResult.find((item) => brandDetail.brand_id === item.brand_id);
+      }
+
+      brandData = updatedResult.toJSON();
+
+      if(brandData.status_type === 11) {
+        return this.modals.brandDetails.create({
+          brand_id: brandData.brand_id,
+          detail_type: 1,
+          updated_by: values.updated_by,
+          created_by: values.created_by,
+          status_type: 11,
+          category_id: values.category_id,
+        });
+      }
+
+      return undefined;
+    }).then(() => brandData);
   }
 }
 
