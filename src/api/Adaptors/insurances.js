@@ -366,9 +366,11 @@ class InsuranceAdaptor {
         values.copies.push(...newCopies);
       }
 
-      values.status_type = itemDetail.status_type !== 8 ?
-          11 :
-          values.status_type || itemDetail.status_type;
+      values.status_type = itemDetail.status_type === 5 ?
+          itemDetail.status_type :
+          itemDetail.status_type !== 8 ?
+              11 :
+              values.status_type || itemDetail.status_type;
 
       result.updateAttributes(values);
       return result.toJSON();

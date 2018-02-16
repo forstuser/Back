@@ -163,20 +163,67 @@ var BrandAdaptor = function () {
     value: function findCreateBrand(values) {
       var _this2 = this;
 
-      return this.modals.brands.findOne({
+      var brandData = void 0;
+      var brandDetail = void 0;
+      var category = void 0;
+      return Promise.all([this.modals.brands.findAll({
         where: {
           brand_name: {
-            $iLike: '' + values.brand_name
+            $iLike: values.brand_name + '%'
           }
         }
+      }), this.modals.categories.findOne({
+        where: {
+          category_id: values.category_id
+        }
+      })]).then(function (result) {
+        brandData = result[0].map(function (item) {
+          return item.toJSON();
+        });
+        category = result[1].toJSON();
+        return _this2.modals.brandDetails.findOne({
+          where: {
+            brand_id: brandData.map(function (item) {
+              return item.brand_id;
+            }),
+            category_id: values.category_id
+          }
+        });
       }).then(function (result) {
         if (!result) {
-          return _this2.modals.brands.create(values);
+          return _this2.modals.brands.create({
+            status_type: 11,
+            brand_name: values.brand_name + '(' + category.category_name + ')',
+            updated_by: values.updated_by,
+            created_by: values.created_by
+          });
         }
 
-        return result;
+        brandDetail = result.toJSON();
+        return brandData;
       }).then(function (updatedResult) {
-        return updatedResult.toJSON();
+        if (brandDetail) {
+          brandData = updatedResult.find(function (item) {
+            return brandDetail.brand_id === item.brand_id;
+          });
+        } else {
+          brandData = updatedResult.toJSON();
+        }
+
+        if (brandData.status_type === 11) {
+          return _this2.modals.brandDetails.create({
+            brand_id: brandData.brand_id,
+            detail_type: 1,
+            updated_by: values.updated_by,
+            created_by: values.created_by,
+            status_type: 11,
+            category_id: values.category_id
+          });
+        }
+
+        return undefined;
+      }).then(function () {
+        return brandData;
       });
     }
   }]);

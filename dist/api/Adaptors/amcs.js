@@ -186,7 +186,7 @@ var AmcAdaptor = function () {
           (_values$copies = values.copies).push.apply(_values$copies, _toConsumableArray(newCopies));
         }
 
-        values.status_type = itemDetail.status_type !== 8 ? 11 : values.status_type || itemDetail.status_type;
+        values.status_type = itemDetail.status_type === 5 ? itemDetail.status_type : itemDetail.status_type !== 8 ? 11 : values.status_type || itemDetail.status_type;
 
         result.updateAttributes(values);
         return result.toJSON();

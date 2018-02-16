@@ -21,21 +21,16 @@ exports.default = function (sequelize, DataTypes) {
     updated_by: {
       type: DataTypes.INTEGER
     },
-    status_type: {
+    created_by: {
       type: DataTypes.INTEGER
     },
-    created_at: {
-      type: DataTypes.DATE,
-      defaultValue: sequelize.literal('NOW()')
-    },
-    updated_at: {
-      type: DataTypes.DATE,
-      defaultValue: sequelize.literal('NOW()')
+    status_type: {
+      type: DataTypes.INTEGER
     }
   }, {
     freezeTableName: true,
     defaultPrimaryKey: true,
-    timestamps: true,
+    timestamps: false,
     underscored: true,
     tableName: 'brand_details'
   });
