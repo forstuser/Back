@@ -72,7 +72,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var fsImpl = new _s3fs2.default(_main2.default.AWS.S3.BUCKET, _main2.default.AWS.ACCESS_DETAILS);
 
-var ALLOWED_FILE_TYPES = ['txt', 'pdf', 'doc', 'docx', 'rtf', 'xls', 'xlsx', 'png', 'bmp', 'jpg', 'jpeg'];
+var ALLOWED_FILE_TYPES = ['txt', 'pdf', 'doc', 'docx', 'rtf', 'xls', 'xlsx', 'png', 'bmp', 'jpg', 'jpeg', 'heif', 'heic'];
 
 var categoryImageType = ['xxhdpi', 'xxhdpi-small'];
 
@@ -358,8 +358,8 @@ var UploadController = function () {
       var fileType = requiredDetail.fileType;
       var fileTypeData = getTypeFromBuffer(fileData._data);
       var fileName = (user.id || user.ID) + '-' + (jobResult.copies.length + 1) + '.' + (fileType ? fileType.toString() : fileTypeData.ext);
-
-      return fsImpl.writeFile('jobs/' + jobResult.job_id + '/' + fileName, fileData._data, { ContentType: _mimeTypes2.default.lookup(fileName) }).then(function (fileResult) {
+      console.log(_mimeTypes2.default.lookup(fileName));
+      return fsImpl.writeFile('jobs/' + jobResult.job_id + '/' + fileName, fileData._data, { ContentType: _mimeTypes2.default.lookup(fileName) || 'image/jpeg' }).then(function (fileResult) {
         var jobCopyDetail = {
           job_id: jobResult.id,
           file_name: fileName,
@@ -437,7 +437,7 @@ var UploadController = function () {
         fileTypes.push(fileType);
         fileTypeDataArray.push(fileTypeData);
         // const file = fs.createReadStream();
-        return fsImpl.writeFile('jobs/' + jobResult.job_id + '/' + fileName, elem._data, { ContentType: _mimeTypes2.default.lookup(fileName) });
+        return fsImpl.writeFile('jobs/' + jobResult.job_id + '/' + fileName, elem._data, { ContentType: _mimeTypes2.default.lookup(fileName) || 'image/jpeg' });
       });
       Promise.all(fileUploadPromises).then(function (fileResult) {
         var promisedQuery = [];

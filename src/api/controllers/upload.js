@@ -29,7 +29,9 @@ const ALLOWED_FILE_TYPES = [
   'png',
   'bmp',
   'jpg',
-  'jpeg'];
+  'jpeg',
+  'heif',
+  'heic'];
 
 const categoryImageType = ['xxhdpi', 'xxhdpi-small'];
 
@@ -222,45 +224,48 @@ class UploadController {
     return jobAdaptor.retrieveJobDetail(request.params.id, true).
         then((jobResult) => {
           console.log(`JOB detail is as follow${JSON.stringify({jobResult})}`);
-      if (Array.isArray(fileData)) {
-        console.log(`Request has multiple files`);
-        return UploadController.uploadArrayOfFile({
-          requiredDetail: {
-            fileData,
-            user,
-            result: jobResult,
-            type: request.query ? parseInt(request.query.type || '1') : 1,
-            itemId: request.query ? request.query.itemid : undefined,
-          }, reply,
+          if (Array.isArray(fileData)) {
+            console.log(`Request has multiple files`);
+            return UploadController.uploadArrayOfFile({
+              requiredDetail: {
+                fileData,
+                user,
+                result: jobResult,
+                type: request.query ? parseInt(request.query.type || '1') : 1,
+                itemId: request.query ? request.query.itemid : undefined,
+              }, reply,
+            });
+          } else {
+            console.log(`Request has single file ${fileData.hapi.filename}`);
+            const name = fileData.hapi.filename;
+            const fileType = (/[.]/.exec(name)) ?
+                /[^.]+$/.exec(name) :
+                undefined;
+            // console.log("OUTSIDE FILE ALLOWED: ", fileType);
+            if (fileType && !isFileTypeAllowed(fileType)) {
+              return reply({status: false, message: 'Data Upload Failed'});
+            } else if (!fileType &&
+                !isFileTypeAllowedMagicNumber(fileData._data)) {
+              return reply({status: false, message: 'Data Upload Failed'});
+            } else {
+              return UploadController.uploadSingleFile({
+                requiredDetail: {
+                  fileData,
+                  result: jobResult,
+                  fileType,
+                  user,
+                  type: request.query ? parseInt(request.query.type || '1') : 1,
+                  itemId: request.query ? request.query.itemid : undefined,
+                }, reply,
+              });
+            }
+          }
+        }).catch((err) => {
+          console.log(
+              `Error on ${new Date()} for user ${user.id ||
+              user.ID} is as follow: \n \n ${err}`);
+          return reply({status: false, message: 'Upload Failed', err});// , forceUpdate: request.pre.forceUpdate});
         });
-      } else {
-        console.log(`Request has single file ${fileData.hapi.filename}`);
-        const name = fileData.hapi.filename;
-        const fileType = (/[.]/.exec(name)) ? /[^.]+$/.exec(name) : undefined;
-        // console.log("OUTSIDE FILE ALLOWED: ", fileType);
-        if (fileType && !isFileTypeAllowed(fileType)) {
-          return reply({status: false, message: 'Data Upload Failed'});
-        } else if (!fileType && !isFileTypeAllowedMagicNumber(fileData._data)) {
-          return reply({status: false, message: 'Data Upload Failed'});
-        } else {
-          return UploadController.uploadSingleFile({
-            requiredDetail: {
-              fileData,
-              result: jobResult,
-              fileType,
-              user,
-              type: request.query ? parseInt(request.query.type || '1') : 1,
-              itemId: request.query ? request.query.itemid : undefined,
-            }, reply,
-          });
-        }
-      }
-    }).catch((err) => {
-      console.log(
-          `Error on ${new Date()} for user ${user.id ||
-          user.ID} is as follow: \n \n ${err}`);
-      return reply({status: false, message: 'Upload Failed', err});// , forceUpdate: request.pre.forceUpdate});
-    });
   }
 
   static createJobWithCopies(parameters) {
@@ -334,10 +339,10 @@ class UploadController {
     1}.${(fileType)
         ? fileType.toString()
         : fileTypeData.ext}`;
-
+    console.log(mime.lookup(fileName));
     return fsImpl.writeFile(`jobs/${jobResult.job_id}/${fileName}`,
         fileData._data,
-        {ContentType: mime.lookup(fileName)}).then((fileResult) => {
+        {ContentType: mime.lookup(fileName) || 'image/jpeg'}).then((fileResult) => {
       const jobCopyDetail = {
         job_id: jobResult.id,
         file_name: fileName,
@@ -423,7 +428,7 @@ class UploadController {
       // const file = fs.createReadStream();
       return fsImpl.writeFile(`jobs/${jobResult.job_id}/${fileName}`,
           elem._data,
-          {ContentType: mime.lookup(fileName)});
+          {ContentType: mime.lookup(fileName) || 'image/jpeg'});
     });
     Promise.all(fileUploadPromises).then((fileResult) => {
       const promisedQuery = [];
@@ -733,26 +738,26 @@ class UploadController {
                     header('Content-Disposition',
                         `attachment; filename=${result.bill_copy_name}`);
               }).catch((err) => {
-                console.log(
-                    `Error on ${new Date()} while retrieving image is as follow: \n \n ${err}`);
-                return fsImpl.readFile(
-                    `jobs/${result.job_id}/${result.copies[0].file_name}`).
-                    then(fileResult => {
-                      return reply(fileResult.Body).
-                          header('Content-Type', fileResult.ContentType).
-                          header('Content-Disposition',
-                              `attachment; filename=${result.bill_copy_name}`);
-                    }).catch((err) => {
-                      console.log(
-                          `Error on ${new Date()} while retrieving image is as follow: \n \n ${err}`);
-                      return reply({
-                        status: false,
-                        message: 'No Result Found',
-                        forceUpdate: request.pre.forceUpdate,
-                        err,
-                      }).code(404);
-                    });
-              });
+            console.log(
+                `Error on ${new Date()} while retrieving image is as follow: \n \n ${err}`);
+            return fsImpl.readFile(
+                `jobs/${result.job_id}/${result.copies[0].file_name}`).
+                then(fileResult => {
+                  return reply(fileResult.Body).
+                      header('Content-Type', fileResult.ContentType).
+                      header('Content-Disposition',
+                          `attachment; filename=${result.bill_copy_name}`);
+                }).catch((err) => {
+                  console.log(
+                      `Error on ${new Date()} while retrieving image is as follow: \n \n ${err}`);
+                  return reply({
+                    status: false,
+                    message: 'No Result Found',
+                    forceUpdate: request.pre.forceUpdate,
+                    err,
+                  }).code(404);
+                });
+          });
         } else {
           return reply({
             status: false,
