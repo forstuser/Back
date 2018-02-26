@@ -4,6 +4,9 @@ import moment from 'moment';
 
 export default (sequelize, DataTypes) => {
   const users = sequelize.define('users', {
+    fb_id: {
+      type: DataTypes.STRING,
+    },
     role_type: {
       type: DataTypes.INTEGER,
     },

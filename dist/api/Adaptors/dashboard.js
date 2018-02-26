@@ -234,7 +234,7 @@ var DashboardAdaptor = function () {
         });
       }
 
-      if (user.email) {
+      if (user.email && !user.email_verified) {
         _notification2.default.sendMailOnDifferentSteps('Welcome to BinBill!', user.email, user, 1);
       }
 

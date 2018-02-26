@@ -211,7 +211,7 @@ class DashboardAdaptor {
       });
     }
 
-    if (user.email) {
+    if (user.email && !user.email_verified) {
       notificationAdaptor.sendMailOnDifferentSteps('Welcome to BinBill!',
           user.email, user, 1);
     }

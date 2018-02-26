@@ -67,6 +67,8 @@ export default class SellerAdaptor {
       where: options,
     }).then(result => {
       if (result) {
+        const sellerDetail = result.toJSON();
+        defaults.status_type = sellerDetail.status_type;
         result.updateAttributes(defaults);
         return result;
       }

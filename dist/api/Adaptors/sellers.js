@@ -50,6 +50,8 @@ var SellerAdaptor = function () {
         where: options
       }).then(function (result) {
         if (result) {
+          var sellerDetail = result.toJSON();
+          defaults.status_type = sellerDetail.status_type;
           result.updateAttributes(defaults);
           return result;
         }

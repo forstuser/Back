@@ -54,7 +54,16 @@
     "url-join": "^2.0.2",
     "uuid": "^3.1.0",
     "validator": "^8.2.0",
-    "vision": "^4.1.1"
+    "vision": "^4.1.1",
+    "request-promise": "latest",
+    "bluebird": "latest",
+    "lodash": "latest",
+    "s3fs": "latest",
+    "uuid": "latest",
+    "request-promise": "latest",
+    "node-rsa": "latest",
+    "moment": "latest",
+    "lodash": "latest"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",

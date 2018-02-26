@@ -123,8 +123,9 @@ var loginOrRegisterUser = function loginOrRegisterUser(parameters) {
     }
 
     updatedUser = userData[0].toJSON();
+
     if (!updatedUser.email_verified && updatedUser.email) {
-      _notification2.default.sendVerificationMail(trueObject.EmailAddress, updatedUser);
+      _notification2.default.sendVerificationMail(updatedUser.email, updatedUser);
     }
 
     if (trueObject.ImageLink) {
@@ -273,11 +274,12 @@ var UserController = function () {
       };
       console.log('REQUEST PAYLOAD FOR VALIDATE OTP: ');
       console.log(request.payload);
-      var trueObject = request.payload.TrueObject;
+      var trueObject = request.payload.TrueObject || {};
 
       var userWhere = {
         mobile_no: trueObject.PhoneNo,
-        user_status_type: 1
+        user_status_type: 1,
+        role_type: 5
       };
       var userInput = {
         role_type: 5,
@@ -343,6 +345,41 @@ var UserController = function () {
               reply: reply
             }).catch(function (err) {
               console.log('Error on ' + new Date() + ' for mobile no: ' + trueObject.PhoneNo + ' is as follow: \n \n ' + err);
+              replyObject.status = false;
+              replyObject.message = 'Issue in updating data';
+              replyObject.error = err;
+              return reply(replyObject).code(401);
+            });
+          }
+        } else if (request.payload.BBLogin_Type === 3) {
+          var fbSecret = request.payload.TrueSecret;
+
+          if (fbSecret) {
+            (0, _requestPromise2.default)({
+              uri: _main2.default.FB_GRAPH_ROUTE,
+              qs: {
+                access_token: fbSecret
+              },
+              json: true
+            }).then(function (fbResult) {
+              userWhere.email = fbResult.email;
+              userInput.email = fbResult.email;
+              userInput.full_name = fbResult.name;
+              userInput.email_secret = _uuid2.default.v4();
+              userInput.mobile_no = userInput.mobile_no || fbResult.mobile_phone;
+              userWhere.mobile_no = userInput.mobile_no || fbResult.mobile_phone;
+              userInput.fb_id = fbResult.id;
+              userInput.user_status_type = 1;
+              fbResult.ImageLink = fbResult.picture.data.url;
+              return loginOrRegisterUser({
+                userWhere: userWhere,
+                userInput: userInput,
+                trueObject: fbResult,
+                request: request,
+                reply: reply
+              });
+            }).catch(function (err) {
+              console.log('Error on ' + new Date() + ' for access token: ' + fbSecret + ' is as follow: \n \n ' + err);
               replyObject.status = false;
               replyObject.message = 'Issue in updating data';
               replyObject.error = err;
@@ -460,6 +497,7 @@ var UserController = function () {
   }, {
     key: 'uploadTrueCallerImage',
     value: function uploadTrueCallerImage(trueObject, userData) {
+      console.log(trueObject);
       if (trueObject.ImageLink) {
         var options = {
           uri: trueObject.ImageLink,
@@ -468,19 +506,36 @@ var UserController = function () {
           encoding: null
         };
         console.log(userData.id);
-        fsImpl.readdirp(userData.id.toString()).then(function (images) {
-          if (images.length <= 0) {
+        modals.users.findById(userData.id || userData.ID, {
+          attributes: ['image_name']
+        }).then(function (userImage) {
+          var userDetail = userImage.toJSON();
+          console.log({
+            userDetail: userDetail
+          });
+          if (!userDetail.image_name) {
             (0, _requestPromise2.default)(options).then(function (result) {
               UserController.uploadUserImage(userData, result);
+            }).catch(function (err) {
+              console.log('Error on ' + new Date() + ' for user id: ' + userData.id + ' is as follow: \n \n ' + err);
+            });
+          } else {
+            fsImpl.headObject(userDetail.image_name).catch(function (err) {
+              console.log('Error on ' + new Date() + ' for user id: ' + userData.id + ' is as follow: \n \n ' + err);
+              (0, _requestPromise2.default)(options).then(function (result) {
+                UserController.uploadUserImage(userData, result);
+              }).catch(function (err) {
+                console.log('Error on ' + new Date() + ' for user id: ' + userData.id + ' is as follow: \n \n ' + err);
+              });
             });
           }
         }).catch(function (err) {
-          console.log({
-            apiErr: err
-          });
+          console.log('Error on ' + new Date() + ' for user id: ' + userData.id + ' is as follow: \n \n ' + err);
 
           (0, _requestPromise2.default)(options).then(function (result) {
             UserController.uploadUserImage(userData, result);
+          }).catch(function (err) {
+            console.log('Error on ' + new Date() + ' for user id: ' + userData.id + ' is as follow: \n \n ' + err);
           });
         });
       }
@@ -489,12 +544,13 @@ var UserController = function () {
     key: 'uploadUserImage',
     value: function uploadUserImage(user, result) {
       var fileType = result.headers['content-type'].split('/')[1];
-      var fileName = (user.id || user.ID) + '/active-' + (user.id || user.ID) + '-' + new Date().getTime() + '.' + fileType;
+      var fileName = 'active-' + (user.id || user.ID) + '-' + new Date().getTime() + '.' + fileType;
       // const file = fs.createReadStream();
       fsImpl.writeFile(fileName, result.body, { ContentType: result.headers['content-type'] }).then(function (fileResult) {
         console.log(fileResult);
+        modals.users.update({ image_name: fileName }, { where: { id: user.id } });
       }).catch(function (err) {
-        console.log({ API_TC_Upload_Logs: err });
+        console.log('Error on ' + new Date() + ' for user id: ' + user.id + ' is as follow: \n \n ' + err);
       });
     }
   }]);

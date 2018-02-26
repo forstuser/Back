@@ -87,38 +87,50 @@ class UploadController {
         // forceUpdate: request.pre.forceUpdate
       }).code(401);
     } else if (request.payload) {
-      const fieldNameHere = request.payload.fieldNameHere;
-      const fileData = fieldNameHere || request.payload.filesName;
-
-      const name = fileData.hapi.filename;
-      const fileType = name.split('.')[name.split('.').length - 1];
-      const fileName = `active-${user.id ||
-      user.ID}-${new Date().getTime()}.${fileType}`;
-      // const file = fs.createReadStream();
-      return fsImpl.writeFile(fileName, fileData._data,
-          {ContentType: mime.lookup(fileName)}).then((fileResult) => {
-
-        return userAdaptor.updateUserDetail({
-          image_name: fileName,
-        }, {
-          where: {
-            id: user.id || user.ID,
-          },
+      return modals.users.findOne({
+        where: {
+          id: user.id || user.ID,
+        },
+      }).then((userResult) => {
+        const userDetail = userResult.toJSON();
+        fsImpl.unlink(userDetail.image_name).catch((err) => {
+          console.log(
+              `Error while deleting ${userDetail.image_name} on ${new Date()} for user ${user.id ||
+              user.ID} is as follow: \n \n ${err}`);
         });
-      }).then(() => {
-        return reply({
-          status: true,
-          message: 'Uploaded Successfully',
-        });
-      }).catch((err) => {
-        console.log(
-            `Error on ${new Date()} for user ${user.id ||
-            user.ID} is as follow: \n \n ${err}`);
-        return reply({
-          status: false,
-          message: 'Upload Failed',
-          err,
-          // forceUpdate: request.pre.forceUpdate
+        const fieldNameHere = request.payload.fieldNameHere;
+        const fileData = fieldNameHere || request.payload.filesName;
+
+        const name = fileData.hapi.filename;
+        const fileType = name.split('.')[name.split('.').length - 1];
+        const fileName = `active-${user.id ||
+        user.ID}-${new Date().getTime()}.${fileType}`;
+        // const file = fs.createReadStream();
+        return fsImpl.writeFile(fileName, fileData._data,
+            {ContentType: mime.lookup(fileName)}).then((fileResult) => {
+
+          return userAdaptor.updateUserDetail({
+            image_name: fileName,
+          }, {
+            where: {
+              id: user.id || user.ID,
+            },
+          });
+        }).then(() => {
+          return reply({
+            status: true,
+            message: 'Uploaded Successfully',
+          });
+        }).catch((err) => {
+          console.log(
+              `Error on ${new Date()} for user ${user.id ||
+              user.ID} is as follow: \n \n ${err}`);
+          return reply({
+            status: false,
+            message: 'Upload Failed',
+            err,
+            // forceUpdate: request.pre.forceUpdate
+          });
         });
       });
     } else {
@@ -342,63 +354,69 @@ class UploadController {
     console.log(mime.lookup(fileName));
     return fsImpl.writeFile(`jobs/${jobResult.job_id}/${fileName}`,
         fileData._data,
-        {ContentType: mime.lookup(fileName) || 'image/jpeg'}).then((fileResult) => {
-      const jobCopyDetail = {
-        job_id: jobResult.id,
-        file_name: fileName,
-        file_type: (fileType)
-            ? fileType.toString()
-            : fileTypeData.ext,
-        status_type: 6,
-        updated_by: user.id || user.ID,
-        type,
-      };
-      let copyData;
-      return jobAdaptor.createJobCopies(jobCopyDetail).then((copyResult) => {
-        copyData = [copyResult];
-        return modals.users.findById(user.id || user.ID);
-      }).then(() => {
-        UploadController.notifyTeam(user, jobResult);
-
-        if (type && (requiredDetail.productId || jobResult.productId)) {
-          return UploadController.createProductItems({
+        {ContentType: mime.lookup(fileName) || 'image/jpeg'}).
+        then((fileResult) => {
+          const jobCopyDetail = {
+            job_id: jobResult.id,
+            file_name: fileName,
+            file_type: (fileType)
+                ? fileType.toString()
+                : fileTypeData.ext,
+            status_type: 6,
+            updated_by: user.id || user.ID,
             type,
-            jobId: jobResult.id,
-            user,
-            productId: requiredDetail.productId || jobResult.productId,
-            itemId: requiredDetail.itemId,
-            copies: copyData.map((copyItem) => ({
-              copyId: copyItem.id,
-              copyUrl: `/jobs/${copyItem.job_id}/files/${copyItem.id}`,
-              file_type: copyItem.file_type,
-              jobId: copyItem.job_id,
-              copyName: copyItem.file_name,
-            })),
-          });
-        }
+          };
+          let copyData;
+          return jobAdaptor.createJobCopies(jobCopyDetail).
+              then((copyResult) => {
+                copyData = [copyResult];
+                return modals.users.findById(user.id || user.ID);
+              }).
+              then(() => {
+                UploadController.notifyTeam(user, jobResult);
 
-        return undefined;
-      }).then((productItemResult) => {
-        return UploadController.uploadResponse(jobResult, copyData,
-            productItemResult, type,
-            reply);
-      }).catch((err) => {
-        console.log(
-            `Error on ${new Date()} for user ${user.id ||
-            user.ID} is as follow: \n \n ${err}`);
-        return reply({
-          status: false,
-          message: 'Data Update Failed',
-          err,
-          // forceUpdate: request.pre.forceUpdate
+                if (type && (requiredDetail.productId || jobResult.productId)) {
+                  return UploadController.createProductItems({
+                    type,
+                    jobId: jobResult.id,
+                    user,
+                    productId: requiredDetail.productId || jobResult.productId,
+                    itemId: requiredDetail.itemId,
+                    copies: copyData.map((copyItem) => ({
+                      copyId: copyItem.id,
+                      copyUrl: `/jobs/${copyItem.job_id}/files/${copyItem.id}`,
+                      file_type: copyItem.file_type,
+                      jobId: copyItem.job_id,
+                      copyName: copyItem.file_name,
+                    })),
+                  });
+                }
+
+                return undefined;
+              }).
+              then((productItemResult) => {
+                return UploadController.uploadResponse(jobResult, copyData,
+                    productItemResult, type,
+                    reply);
+              }).
+              catch((err) => {
+                console.log(
+                    `Error on ${new Date()} for user ${user.id ||
+                    user.ID} is as follow: \n \n ${err}`);
+                return reply({
+                  status: false,
+                  message: 'Data Update Failed',
+                  err,
+                  // forceUpdate: request.pre.forceUpdate
+                });
+              });
+        }).
+        catch((err) => {
+          console.log(
+              `Error on ${new Date()} for user ${user.id ||
+              user.ID} is as follow: \n \n ${err}`);
+          return reply({status: false, message: 'Upload Failed', err}); //forceUpdate: request.pre.forceUpdate});
         });
-      });
-    }).catch((err) => {
-      console.log(
-          `Error on ${new Date()} for user ${user.id ||
-          user.ID} is as follow: \n \n ${err}`);
-      return reply({status: false, message: 'Upload Failed', err}); //forceUpdate: request.pre.forceUpdate});
-    });
   }
 
   static uploadArrayOfFile(parameters) {

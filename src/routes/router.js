@@ -416,19 +416,19 @@ function prepareAuthRoutes(userController, authRoutes) {
         tags: ['api', 'User', 'Authentication'],
         validate: {
           payload: {
-            Token: joi.string(),
-            TrueObject: {
+            Token: joi.string().allow(null),
+            TrueObject: joi.object({
               EmailAddress: joi.string().email(),
               PhoneNo: joi.string().required(),
               Name: joi.string(),
               ImageLink: joi.string(),
-            },
-            TruePayload: joi.string(),
-            fcmId: joi.string(),
+            }).allow(null),
+            TruePayload: joi.string().allow(null),
+            fcmId: joi.string().allow(null),
             platform: [joi.number(), joi.allow(null)],
             BBLogin_Type: joi.number().required(),
-            transactionId: joi.string(),
-            TrueSecret: joi.string(),
+            transactionId: joi.string().allow(null),
+            TrueSecret: joi.string().allow(null),
             output: 'data',
             parse: true,
           },

@@ -12,6 +12,9 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 exports.default = function (sequelize, DataTypes) {
   var users = sequelize.define('users', {
+    fb_id: {
+      type: DataTypes.STRING
+    },
     role_type: {
       type: DataTypes.INTEGER
     },

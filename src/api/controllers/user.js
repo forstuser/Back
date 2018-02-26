@@ -64,8 +64,9 @@ let loginOrRegisterUser = parameters => {
     }
 
     updatedUser = userData[0].toJSON();
+
     if ((!updatedUser.email_verified) && (updatedUser.email)) {
-      NotificationAdaptor.sendVerificationMail(trueObject.EmailAddress,
+      NotificationAdaptor.sendVerificationMail(updatedUser.email,
           updatedUser);
     }
 
@@ -95,7 +96,7 @@ let loginOrRegisterUser = parameters => {
       isNewUser: userData[1],
       user: userData[0].toJSON(),
       token: replyObject.authorization,
-      request: request,
+      request,
     });
   }).then((result) => {
     return reply(result).
@@ -118,8 +119,7 @@ let loginOrRegisterUser = parameters => {
       showDashboard: false,
       err,
       forceUpdate: request.pre.forceUpdate,
-    }).
-        code(401).
+    }).code(401).
         header('authorization', replyObject.authorization);
   });
 };
@@ -232,11 +232,12 @@ class UserController {
     };
     console.log('REQUEST PAYLOAD FOR VALIDATE OTP: ');
     console.log(request.payload);
-    const trueObject = request.payload.TrueObject;
+    const trueObject = request.payload.TrueObject || {};
 
-    const userWhere = {
+    let userWhere = {
       mobile_no: trueObject.PhoneNo,
       user_status_type: 1,
+      role_type: 5,
     };
     const userInput = {
       role_type: 5,
@@ -253,11 +254,11 @@ class UserController {
             console.log('VALIDATE OTP RESPONSE: ', data);
             if (data.type === 'success') {
               return loginOrRegisterUser({
-                userWhere: userWhere,
-                userInput: userInput,
-                trueObject: trueObject,
-                request: request,
-                reply: reply,
+                userWhere,
+                userInput,
+                trueObject,
+                request,
+                reply,
               });
             } else {
               replyObject.status = false;
@@ -276,11 +277,11 @@ class UserController {
           });
         } else if (request.payload.Token === '050118') {
           return loginOrRegisterUser({
-            userWhere: userWhere,
-            userInput: userInput,
-            trueObject: trueObject,
-            request: request,
-            reply: reply,
+            userWhere,
+            userInput,
+            trueObject,
+            request,
+            reply,
           });
         }
       } else if (request.payload.BBLogin_Type === 2) {
@@ -298,14 +299,50 @@ class UserController {
           userInput.mobile_no = trueObject.PhoneNo;
           userInput.user_status_type = 1;
           return loginOrRegisterUser({
-            userWhere: userWhere,
-            userInput: userInput,
-            trueObject: trueObject,
-            request: request,
-            reply: reply,
+            userWhere,
+            userInput,
+            trueObject,
+            request,
+            reply,
           }).catch((err) => {
             console.log(
                 `Error on ${new Date()} for mobile no: ${trueObject.PhoneNo} is as follow: \n \n ${err}`);
+            replyObject.status = false;
+            replyObject.message = 'Issue in updating data';
+            replyObject.error = err;
+            return reply(replyObject).code(401);
+          });
+        }
+      } else if (request.payload.BBLogin_Type === 3) {
+        const fbSecret = request.payload.TrueSecret;
+
+        if (fbSecret) {
+          requestPromise({
+            uri: config.FB_GRAPH_ROUTE,
+            qs: {
+              access_token: fbSecret,
+            },
+            json: true,
+          }).then((fbResult) => {
+            userWhere.email = fbResult.email;
+            userInput.email = fbResult.email;
+            userInput.full_name = fbResult.name;
+            userInput.email_secret = uuid.v4();
+            userInput.mobile_no = userInput.mobile_no || fbResult.mobile_phone;
+            userWhere.mobile_no = userInput.mobile_no || fbResult.mobile_phone;
+            userInput.fb_id = fbResult.id;
+            userInput.user_status_type = 1;
+            fbResult.ImageLink = fbResult.picture.data.url;
+            return loginOrRegisterUser({
+              userWhere,
+              userInput,
+              trueObject: fbResult,
+              request,
+              reply,
+            });
+          }).catch((err) => {
+            console.log(
+                `Error on ${new Date()} for access token: ${fbSecret} is as follow: \n \n ${err}`);
             replyObject.status = false;
             replyObject.message = 'Issue in updating data';
             replyObject.error = err;
@@ -427,6 +464,7 @@ class UserController {
   }
 
   static uploadTrueCallerImage(trueObject, userData) {
+    console.log(trueObject);
     if (trueObject.ImageLink) {
       const options = {
         uri: trueObject.ImageLink,
@@ -435,19 +473,44 @@ class UserController {
         encoding: null,
       };
       console.log(userData.id);
-      fsImpl.readdirp(userData.id.toString()).then((images) => {
-        if (images.length <= 0) {
+      modals.users.findById(userData.id || userData.ID, {
+        attributes: [
+          'image_name',
+        ],
+      }).then((userImage) => {
+        const userDetail = userImage.toJSON();
+        console.log({
+          userDetail,
+        });
+        if (!userDetail.image_name) {
           requestPromise(options).then((result) => {
             UserController.uploadUserImage(userData, result);
+          }).catch((err) => {
+            console.log(
+                `Error on ${new Date()} for user id: ${userData.id} is as follow: \n \n ${err}`);
+          });
+        } else {
+          fsImpl.headObject(userDetail.image_name).catch((err) => {
+            console.log(
+                `Error on ${new Date()} for user id: ${userData.id} is as follow: \n \n ${err}`);
+            requestPromise(options).then((result) => {
+              UserController.uploadUserImage(userData, result);
+            }).catch((err) => {
+              console.log(
+                  `Error on ${new Date()} for user id: ${userData.id} is as follow: \n \n ${err}`);
+            });
           });
         }
+
       }).catch((err) => {
-        console.log({
-          apiErr: err,
-        });
+        console.log(
+            `Error on ${new Date()} for user id: ${userData.id} is as follow: \n \n ${err}`);
 
         requestPromise(options).then((result) => {
           UserController.uploadUserImage(userData, result);
+        }).catch((err) => {
+          console.log(
+              `Error on ${new Date()} for user id: ${userData.id} is as follow: \n \n ${err}`);
         });
       });
     }
@@ -455,14 +518,16 @@ class UserController {
 
   static uploadUserImage(user, result) {
     const fileType = result.headers['content-type'].split('/')[1];
-    const fileName = `${user.id || user.ID}/active-${user.id ||
+    const fileName = `active-${user.id ||
     user.ID}-${new Date().getTime()}.${fileType}`;
     // const file = fs.createReadStream();
     fsImpl.writeFile(fileName, result.body,
         {ContentType: result.headers['content-type']}).then((fileResult) => {
       console.log(fileResult);
+      modals.users.update({image_name: fileName}, {where: {id: user.id}});
     }).catch((err) => {
-      console.log({API_TC_Upload_Logs: err});
+      console.log(
+          `Error on ${new Date()} for user id: ${user.id} is as follow: \n \n ${err}`);
     });
   }
 }

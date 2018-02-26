@@ -8,6 +8,7 @@ exports.default = {
 	SMS: {
 		AUTH_KEY: process.env.SMS_AUTH_KEY
 	},
+	FB_GRAPH_ROUTE: process.env.FB_GRAPH_ROUTE,
 	MESSAGE: process.env.MESSAGE,
 	AWS: {
 		S3: {

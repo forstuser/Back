@@ -6,9 +6,9 @@ Object.defineProperty(exports, "__esModule", {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _fileType5 = require('file-type');
+var _fileType4 = require('file-type');
 
-var _fileType6 = _interopRequireDefault(_fileType5);
+var _fileType5 = _interopRequireDefault(_fileType4);
 
 var _mimeTypes = require('mime-types');
 
@@ -89,12 +89,12 @@ var isFileTypeAllowed = function isFileTypeAllowed(fileTypeData) {
 
 var isFileTypeAllowedMagicNumber = function isFileTypeAllowedMagicNumber(buffer) {
   console.log('GOT BUFFER');
-  var result = (0, _fileType6.default)(buffer);
+  var result = (0, _fileType5.default)(buffer);
   return ALLOWED_FILE_TYPES.indexOf(result.ext.toString()) > -1;
 };
 
 var getTypeFromBuffer = function getTypeFromBuffer(buffer) {
-  return (0, _fileType6.default)(buffer);
+  return (0, _fileType5.default)(buffer);
 };
 var modals = void 0;
 var userAdaptor = void 0;
@@ -132,34 +132,44 @@ var UploadController = function () {
           // forceUpdate: request.pre.forceUpdate
         }).code(401);
       } else if (request.payload) {
-        var fieldNameHere = request.payload.fieldNameHere;
-        var fileData = fieldNameHere || request.payload.filesName;
-
-        var name = fileData.hapi.filename;
-        var _fileType = name.split('.')[name.split('.').length - 1];
-        var fileName = 'active-' + (user.id || user.ID) + '-' + new Date().getTime() + '.' + _fileType;
-        // const file = fs.createReadStream();
-        return fsImpl.writeFile(fileName, fileData._data, { ContentType: _mimeTypes2.default.lookup(fileName) }).then(function (fileResult) {
-
-          return userAdaptor.updateUserDetail({
-            image_name: fileName
-          }, {
-            where: {
-              id: user.id || user.ID
-            }
+        return modals.users.findOne({
+          where: {
+            id: user.id || user.ID
+          }
+        }).then(function (userResult) {
+          var userDetail = userResult.toJSON();
+          fsImpl.unlink(userDetail.image_name).catch(function (err) {
+            console.log('Error while deleting ' + userDetail.image_name + ' on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
           });
-        }).then(function () {
-          return reply({
-            status: true,
-            message: 'Uploaded Successfully'
-          });
-        }).catch(function (err) {
-          console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
-          return reply({
-            status: false,
-            message: 'Upload Failed',
-            err: err
-            // forceUpdate: request.pre.forceUpdate
+          var fieldNameHere = request.payload.fieldNameHere;
+          var fileData = fieldNameHere || request.payload.filesName;
+
+          var name = fileData.hapi.filename;
+          var fileType = name.split('.')[name.split('.').length - 1];
+          var fileName = 'active-' + (user.id || user.ID) + '-' + new Date().getTime() + '.' + fileType;
+          // const file = fs.createReadStream();
+          return fsImpl.writeFile(fileName, fileData._data, { ContentType: _mimeTypes2.default.lookup(fileName) }).then(function (fileResult) {
+
+            return userAdaptor.updateUserDetail({
+              image_name: fileName
+            }, {
+              where: {
+                id: user.id || user.ID
+              }
+            });
+          }).then(function () {
+            return reply({
+              status: true,
+              message: 'Uploaded Successfully'
+            });
+          }).catch(function (err) {
+            console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+            return reply({
+              status: false,
+              message: 'Upload Failed',
+              err: err
+              // forceUpdate: request.pre.forceUpdate
+            });
           });
         });
       } else {
@@ -198,11 +208,11 @@ var UploadController = function () {
           } else {
             var name = filteredFileData.hapi.filename;
             console.log('\n\n\n', name);
-            var _fileType2 = /[.]/.exec(name) ? /[^.]+$/.exec(name) : undefined;
+            var _fileType = /[.]/.exec(name) ? /[^.]+$/.exec(name) : undefined;
             // console.log("OUTSIDE FILE ALLOWED: ", fileType);
-            if (_fileType2 && !isFileTypeAllowed(_fileType2)) {
+            if (_fileType && !isFileTypeAllowed(_fileType)) {
               filteredFileData = [];
-            } else if (!_fileType2 && !isFileTypeAllowedMagicNumber(filteredFileData._data)) {
+            } else if (!_fileType && !isFileTypeAllowedMagicNumber(filteredFileData._data)) {
               filteredFileData = [];
             }
           }
@@ -267,18 +277,18 @@ var UploadController = function () {
         } else {
           console.log('Request has single file ' + fileData.hapi.filename);
           var name = fileData.hapi.filename;
-          var _fileType3 = /[.]/.exec(name) ? /[^.]+$/.exec(name) : undefined;
+          var _fileType2 = /[.]/.exec(name) ? /[^.]+$/.exec(name) : undefined;
           // console.log("OUTSIDE FILE ALLOWED: ", fileType);
-          if (_fileType3 && !isFileTypeAllowed(_fileType3)) {
+          if (_fileType2 && !isFileTypeAllowed(_fileType2)) {
             return reply({ status: false, message: 'Data Upload Failed' });
-          } else if (!_fileType3 && !isFileTypeAllowedMagicNumber(fileData._data)) {
+          } else if (!_fileType2 && !isFileTypeAllowedMagicNumber(fileData._data)) {
             return reply({ status: false, message: 'Data Upload Failed' });
           } else {
             return UploadController.uploadSingleFile({
               requiredDetail: {
                 fileData: fileData,
                 result: jobResult,
-                fileType: _fileType3,
+                fileType: _fileType2,
                 user: user,
                 type: request.query ? parseInt(request.query.type || '1') : 1,
                 itemId: request.query ? request.query.itemid : undefined
@@ -322,16 +332,16 @@ var UploadController = function () {
           });
         } else {
           var name = fileData.hapi.filename;
-          var _fileType4 = /[.]/.exec(name) ? /[^.]+$/.exec(name) : undefined;
+          var _fileType3 = /[.]/.exec(name) ? /[^.]+$/.exec(name) : undefined;
           // console.log("OUTSIDE FILE ALLOWED: ", fileType);
-          if (_fileType4 && !isFileTypeAllowed(_fileType4)) {
+          if (_fileType3 && !isFileTypeAllowed(_fileType3)) {
             return reply({ status: false, message: 'Data Upload Failed' });
-          } else if (!_fileType4 && !isFileTypeAllowedMagicNumber(fileData._data)) {
+          } else if (!_fileType3 && !isFileTypeAllowedMagicNumber(fileData._data)) {
             return reply({ status: false, message: 'Data Upload Failed' });
           } else {
             return UploadController.uploadSingleFile({
               requiredDetail: {
-                fileData: fileData, result: jobResult, fileType: _fileType4,
+                fileData: fileData, result: jobResult, fileType: _fileType3,
                 user: user, type: request.query ? request.query.type || 1 : 1,
                 itemId: request.query ? request.query.itemid : undefined,
                 productId: request.query ? request.query.productid : undefined
