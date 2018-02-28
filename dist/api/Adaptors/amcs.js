@@ -251,11 +251,16 @@ var AmcAdaptor = function () {
           return result.toJSON();
         }
 
-        return _this2.modals.amcs.destroy({
+        return Promise.all([_this2.modals.mailBox.create({
+          title: 'User tried to Delete AMC ' + id,
+          job_id: itemDetail.job_id,
+          bill_product_id: itemDetail.product_id,
+          notification_type: 100
+        }), _this2.modals.amcs.destroy({
           where: {
             id: id
           }
-        }).then(function () {
+        })]).then(function () {
           return true;
         });
       });
@@ -267,7 +272,12 @@ var AmcAdaptor = function () {
 
       return this.modals.amcs.findById(id).then(function (result) {
         if (result) {
-          return Promise.all([_this3.modals.amcs.destroy({
+          return Promise.all([_this3.modals.mailBox.create({
+            title: 'User tried to Delete AMC ' + id,
+            job_id: result.job_id,
+            bill_product_id: result.product_id,
+            notification_type: 100
+          }), _this3.modals.amcs.destroy({
             where: {
               id: id,
               user_id: user_id

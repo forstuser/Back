@@ -139,17 +139,64 @@ var GeneralController = function () {
   }, {
     key: 'contactUs',
     value: function contactUs(request, reply) {
-      _notification2.default.sendLinkOnMessage(request.payload.phone);
-      return contactModel.create({
-        name: request.payload.name,
-        phone: request.payload.phone,
-        email: request.payload.email,
-        message: request.payload.message
-      }).then(function () {
-        return reply({ status: true }).code(201);
-      }).catch(function (err) {
-        console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
-        return reply({ status: false }).code(500);
+      return _bluebird2.default.try(function () {
+        if (request.payload.captcha_response) {
+          return _notification2.default.verifyCaptcha(request.payload.captcha_response);
+        }
+
+        return false;
+      }).then(function (isVerified) {
+        if (isVerified) {
+          _notification2.default.sendLinkOnMessage(request.payload.phone);
+        }
+
+        return contactModel.findOne({
+          where: {
+            phone: request.payload.phone
+          }
+        }).then(function (item) {
+          if (item) {
+            return contactModel.update({ msg_day: item.msg_day + 1 }, {
+              where: {
+                phone: request.payload.phone
+              }
+            });
+          } else if (!item) {
+            return contactModel.create({
+              name: request.payload.name,
+              phone: request.payload.phone,
+              email: request.payload.email,
+              message: request.payload.message
+            });
+          }
+
+          return false;
+        }).then(function (isValid) {
+          if (isValid === false) {
+            return reply({
+              status: false,
+              message: 'You have reached to max attempt for a day'
+            });
+          }
+
+          if (request.payload.message || isVerified) {
+            if (request.payload.message) {
+              _notification2.default.sendUserCommentToTeam('Comment received', request.payload);
+            }
+            return reply({ status: true }).code(201);
+          }
+
+          return reply({
+            status: false,
+            message: 'Invalid Request'
+          });
+        }).catch(function (error) {
+          console.log('Error on ' + new Date() + ' is as follow: \n \n ' + error);
+          return reply({
+            status: false,
+            message: 'Invalid Request'
+          });
+        });
       });
     }
   }, {

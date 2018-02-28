@@ -1157,6 +1157,7 @@ function prepareGeneralRoutes(generalController, generalRoutes) {
             email: [joi.string().email(), joi.allow(null)],
             phone: joi.string().required(),
             message: [joi.string(), joi.allow(null)],
+            captcha_response: joi.string(),
           },
         },
       },

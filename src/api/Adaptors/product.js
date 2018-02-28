@@ -2364,10 +2364,10 @@ class ProductAdaptor {
           otherItems.warranty.extended_id, {status_type: 11}));
     }
 
-    if (otherItems.warranty.dual_id && !otherItems.warranty.dual_renewal_type) {
+   /* if (otherItems.warranty.dual_id && !otherItems.warranty.dual_renewal_type) {
       warrantyItemPromise.push(this.warrantyAdaptor.updateWarranties(
           otherItems.warranty.dual_id, {status_type: 11}));
-    }
+    }*/
 
     if (otherItems.warranty.renewal_type) {
       warrantyRenewalType = renewalTypes.find(
@@ -2470,7 +2470,7 @@ class ProductAdaptor {
           }));
     }
 
-    if (otherItems.warranty.dual_renewal_type) {
+    /*if (otherItems.warranty.dual_renewal_type) {
       warrantyRenewalType = renewalTypes.find(item => item.type ===
           otherItems.warranty.dual_renewal_type);
       let effective_date = otherItems.warranty.effective_date ||
@@ -2515,7 +2515,7 @@ class ProductAdaptor {
             warranty_type: 3,
             user_id: productBody.user_id,
           }));
-    }
+    }*/
 
     if (otherItems.warranty.accessory_renewal_type) {
       warrantyRenewalType = renewalTypes.find(item => item.type ===
@@ -2553,16 +2553,22 @@ class ProductAdaptor {
 
   prepareSellerPromise(parameters) {
     let {sellerPromise, productBody, otherItems, isProductAMCSellerSame, isProductRepairSellerSame, isProductPUCSellerSame, isAMCRepairSellerSame} = parameters;
+    let sellerOption = {
+      seller_name: {
+        $iLike: productBody.seller_name ||
+        productBody.product_name,
+      },
+    };
+
+    if (productBody.seller_contact) {
+      sellerOption.contact_no = productBody.seller_contact;
+    }
     sellerPromise.push(
         (productBody.seller_contact && productBody.seller_contact.trim()) ||
         (productBody.seller_name && productBody.seller_name.trim()) ||
         (productBody.seller_email && productBody.seller_email.trim()) ||
         (productBody.seller_address && productBody.seller_address.trim()) ?
-            this.sellerAdaptor.retrieveOrCreateOfflineSellers({
-                  seller_name: productBody.seller_name ||
-                  productBody.product_name,
-                  contact_no: productBody.seller_contact,
-                },
+            this.sellerAdaptor.retrieveOrCreateOfflineSellers(sellerOption,
                 {
                   seller_name: productBody.seller_name ||
                   productBody.product_name,
@@ -2574,54 +2580,73 @@ class ProductAdaptor {
                   status_type: 11,
                 }) :
             '');
-    sellerPromise.push(otherItems.amc && !isProductAMCSellerSame &&
-    ((otherItems.amc.seller_contact && otherItems.amc.seller_contact.trim()) ||
-        (otherItems.amc.seller_name && otherItems.amc.seller_name.trim())) ?
-        this.sellerAdaptor.retrieveOrCreateOfflineSellers({
-              seller_name: otherItems.amc.seller_name,
-              contact_no: otherItems.amc.seller_contact,
-            },
-            {
-              seller_name: otherItems.amc.seller_name,
-              contact_no: otherItems.amc.seller_contact,
-              updated_by: productBody.user_id,
-              created_by: productBody.user_id,
-              status_type: 11,
-            }) :
-        '');
-    sellerPromise.push(otherItems.repair && !otherItems.repair.is_amc_seller &&
-    !isProductRepairSellerSame && !isAMCRepairSellerSame &&
-    ((otherItems.repair.seller_contact &&
-        otherItems.repair.seller_contact.trim()) ||
-        (otherItems.repair.seller_name &&
-            otherItems.repair.seller_name.trim())) ?
-        this.sellerAdaptor.retrieveOrCreateOfflineSellers({
-              seller_name: otherItems.repair.seller_name,
-              contact_no: otherItems.repair.seller_contact,
-            },
-            {
-              seller_name: otherItems.repair.seller_name,
-              contact_no: otherItems.repair.seller_contact,
-              updated_by: productBody.user_id,
-              created_by: productBody.user_id,
-              status_type: 11,
-            }) :
-        '');
-    sellerPromise.push(otherItems.puc && !isProductPUCSellerSame &&
-    ((otherItems.puc.seller_contact && otherItems.puc.seller_contact.trim()) ||
-        (otherItems.puc.seller_name && otherItems.puc.seller_name.trim())) ?
-        this.sellerAdaptor.retrieveOrCreateOfflineSellers({
-              seller_name: otherItems.puc.seller_name,
-              contact_no: otherItems.puc.seller_contact,
-            },
-            {
-              seller_name: otherItems.puc.seller_name,
-              contact_no: otherItems.puc.seller_contact,
-              updated_by: productBody.user_id,
-              created_by: productBody.user_id,
-              status_type: 11,
-            }) :
-        '');
+
+    if(otherItems.amc) {
+      sellerOption.seller_name.$iLike = otherItems.amc.seller_name;
+      if (otherItems.amc.seller_contact) {
+        sellerOption.contact_no = otherItems.amc.seller_contact;
+      } else {
+        sellerOption = _.omit(sellerOption, 'contact_no');
+      }
+      sellerPromise.push(!isProductAMCSellerSame &&
+      ((otherItems.amc.seller_contact &&
+          otherItems.amc.seller_contact.trim()) ||
+          (otherItems.amc.seller_name && otherItems.amc.seller_name.trim())) ?
+          this.sellerAdaptor.retrieveOrCreateOfflineSellers(sellerOption,
+              {
+                seller_name: otherItems.amc.seller_name,
+                contact_no: otherItems.amc.seller_contact,
+                updated_by: productBody.user_id,
+                created_by: productBody.user_id,
+                status_type: 11,
+              }) :
+          '');
+    }
+    if(otherItems.repair) {
+      sellerOption.seller_name.$iLike = otherItems.repair.seller_name;
+      if (otherItems.repair.seller_contact) {
+        sellerOption.contact_no = otherItems.repair.seller_contact;
+      } else {
+        sellerOption = _.omit(sellerOption, 'contact_no');
+      }
+      sellerPromise.push(!otherItems.repair.is_amc_seller &&
+          !isProductRepairSellerSame && !isAMCRepairSellerSame &&
+          ((otherItems.repair.seller_contact &&
+              otherItems.repair.seller_contact.trim()) ||
+              (otherItems.repair.seller_name &&
+                  otherItems.repair.seller_name.trim())) ?
+              this.sellerAdaptor.retrieveOrCreateOfflineSellers(sellerOption,
+                  {
+                    seller_name: otherItems.repair.seller_name,
+                    contact_no: otherItems.repair.seller_contact,
+                    updated_by: productBody.user_id,
+                    created_by: productBody.user_id,
+                    status_type: 11,
+                  }) :
+              '');
+    }
+
+    if(otherItems.puc) {
+      sellerOption.seller_name.$iLike = otherItems.puc.seller_name;
+      if (otherItems.puc.seller_contact) {
+        sellerOption.contact_no = otherItems.puc.seller_contact;
+      } else {
+        sellerOption = _.omit(sellerOption, 'contact_no');
+      }
+      sellerPromise.push(!isProductPUCSellerSame &&
+      ((otherItems.puc.seller_contact &&
+          otherItems.puc.seller_contact.trim()) ||
+          (otherItems.puc.seller_name && otherItems.puc.seller_name.trim())) ?
+          this.sellerAdaptor.retrieveOrCreateOfflineSellers(sellerOption,
+              {
+                seller_name: otherItems.puc.seller_name,
+                contact_no: otherItems.puc.seller_contact,
+                updated_by: productBody.user_id,
+                created_by: productBody.user_id,
+                status_type: 11,
+              }) :
+          '');
+    }
   }
 
   retrieveProductMetadata(options) {
@@ -3147,7 +3172,12 @@ class ProductAdaptor {
               job_id: result.job_id,
             },
           })] : [undefined, undefined];
-        return Promise.all([
+        return Promise.all([this.modals.mailBox.create({
+          title: `User Deleted Product #${id}`,
+          job_id: result.job_id,
+          bill_product_id: result.product_id,
+          notification_type: 100
+        }),
           this.modals.products.destroy({
             where: {
               id,

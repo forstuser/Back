@@ -24,12 +24,14 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var productAdaptor = void 0;
+var models = void 0;
 
 var ProductController = function () {
   function ProductController(modal) {
     _classCallCheck(this, ProductController);
 
     productAdaptor = new _product2.default(modal);
+    models = modal;
   }
 
   _createClass(ProductController, null, [{
@@ -134,6 +136,14 @@ var ProductController = function () {
           }
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+
+          models.logs.create({
+            api_action: request.method,
+            api_path: request.url.pathname,
+            log_type: 2,
+            user_id: user.id || user.ID,
+            log_content: err
+          });
           return reply({
             status: false,
             message: 'An error occurred in product deletion.',

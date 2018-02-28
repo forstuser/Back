@@ -1010,7 +1010,8 @@ function prepareGeneralRoutes(generalController, generalRoutes) {
             name: [_joi2.default.string(), _joi2.default.allow(null)],
             email: [_joi2.default.string().email(), _joi2.default.allow(null)],
             phone: _joi2.default.string().required(),
-            message: [_joi2.default.string(), _joi2.default.allow(null)]
+            message: [_joi2.default.string(), _joi2.default.allow(null)],
+            captcha_response: _joi2.default.string()
           }
         }
       }

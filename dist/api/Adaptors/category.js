@@ -96,8 +96,8 @@ var CategoryAdaptor = function () {
               }
             }, {
               $and: {
-                category_id: categoryData.map(function (item) {
-                  return item.id;
+                main_category_id: categoryData.map(function (item) {
+                  return item.refId;
                 }),
                 title: {
                   $iLike: 'IMEI Number'
@@ -105,8 +105,8 @@ var CategoryAdaptor = function () {
               }
             }, {
               $and: {
-                category_id: categoryData.map(function (item) {
-                  return item.id;
+                main_category_id: categoryData.map(function (item) {
+                  return item.refId;
                 }),
                 title: {
                   $iLike: 'Serial Number'

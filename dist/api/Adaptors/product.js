@@ -1539,9 +1539,10 @@ var ProductAdaptor = function () {
         warrantyItemPromise.push(this.warrantyAdaptor.updateWarranties(otherItems.warranty.extended_id, { status_type: 11 }));
       }
 
-      if (otherItems.warranty.dual_id && !otherItems.warranty.dual_renewal_type) {
-        warrantyItemPromise.push(this.warrantyAdaptor.updateWarranties(otherItems.warranty.dual_id, { status_type: 11 }));
-      }
+      /* if (otherItems.warranty.dual_id && !otherItems.warranty.dual_renewal_type) {
+         warrantyItemPromise.push(this.warrantyAdaptor.updateWarranties(
+             otherItems.warranty.dual_id, {status_type: 11}));
+       }*/
 
       if (otherItems.warranty.renewal_type) {
         warrantyRenewalType = renewalTypes.find(function (item) {
@@ -1609,45 +1610,60 @@ var ProductAdaptor = function () {
         }));
       }
 
-      if (otherItems.warranty.dual_renewal_type) {
-        warrantyRenewalType = renewalTypes.find(function (item) {
-          return item.type === otherItems.warranty.dual_renewal_type;
-        });
-        var _effective_date8 = otherItems.warranty.effective_date || productBody.document_date;
-        _effective_date8 = _moment2.default.utc(_effective_date8, _moment2.default.ISO_8601).isValid() ? _moment2.default.utc(_effective_date8, _moment2.default.ISO_8601).startOf('day') : _moment2.default.utc(_effective_date8, 'DD MMM YY').startOf('day');
-        expiry_date = _moment2.default.utc(_effective_date8, _moment2.default.ISO_8601).add(warrantyRenewalType.effective_months, 'months').subtract(1, 'day').endOf('days');
-        warrantyItemPromise.push(otherItems.warranty.dual_id ? this.warrantyAdaptor.updateWarranties(otherItems.warranty.dual_id, {
-          renewal_type: otherItems.warranty.dual_renewal_type,
-          updated_by: productBody.user_id,
-          status_type: 11,
-          product_id: productId,
-          job_id: productBody.job_id,
-          expiry_date: _moment2.default.utc(expiry_date).format('YYYY-MM-DD'),
-          effective_date: _moment2.default.utc(_effective_date8).format('YYYY-MM-DD'),
-          document_date: _moment2.default.utc(_effective_date8).format('YYYY-MM-DD'),
-          warranty_type: 3,
-          user_id: productBody.user_id
-        }) : this.warrantyAdaptor.createWarranties({
-          renewal_type: otherItems.warranty.dual_renewal_type,
-          updated_by: productBody.user_id,
-          status_type: 11,
-          product_id: productId,
-          job_id: productBody.job_id,
-          expiry_date: _moment2.default.utc(expiry_date).format('YYYY-MM-DD'),
-          effective_date: _moment2.default.utc(_effective_date8).format('YYYY-MM-DD'),
-          document_date: _moment2.default.utc(_effective_date8).format('YYYY-MM-DD'),
-          warranty_type: 3,
-          user_id: productBody.user_id
-        }));
-      }
+      /*if (otherItems.warranty.dual_renewal_type) {
+        warrantyRenewalType = renewalTypes.find(item => item.type ===
+            otherItems.warranty.dual_renewal_type);
+        let effective_date = otherItems.warranty.effective_date ||
+            productBody.document_date;
+        effective_date = moment.utc(effective_date, moment.ISO_8601).
+            isValid() ?
+            moment.utc(effective_date,
+                moment.ISO_8601).startOf('day') :
+            moment.utc(effective_date, 'DD MMM YY').
+                startOf('day');
+        expiry_date = moment.utc(effective_date, moment.ISO_8601).
+            add(warrantyRenewalType.effective_months, 'months').
+            subtract(1, 'day').
+            endOf('days');
+        warrantyItemPromise.push(otherItems.warranty.dual_id ?
+            this.warrantyAdaptor.updateWarranties(
+                otherItems.warranty.dual_id, {
+                  renewal_type: otherItems.warranty.dual_renewal_type,
+                  updated_by: productBody.user_id,
+                  status_type: 11,
+                  product_id: productId,
+                  job_id: productBody.job_id,
+                  expiry_date: moment.utc(expiry_date).format('YYYY-MM-DD'),
+                  effective_date: moment.utc(effective_date).
+                      format('YYYY-MM-DD'),
+                  document_date: moment.utc(effective_date).
+                      format('YYYY-MM-DD'),
+                  warranty_type: 3,
+                  user_id: productBody.user_id,
+                }) :
+            this.warrantyAdaptor.createWarranties({
+              renewal_type: otherItems.warranty.dual_renewal_type,
+              updated_by: productBody.user_id,
+              status_type: 11,
+              product_id: productId,
+              job_id: productBody.job_id,
+              expiry_date: moment.utc(expiry_date).format('YYYY-MM-DD'),
+              effective_date: moment.utc(effective_date).
+                  format('YYYY-MM-DD'),
+              document_date: moment.utc(effective_date).
+                  format('YYYY-MM-DD'),
+              warranty_type: 3,
+              user_id: productBody.user_id,
+            }));
+      }*/
 
       if (otherItems.warranty.accessory_renewal_type) {
         warrantyRenewalType = renewalTypes.find(function (item) {
           return item.type === otherItems.warranty.accessory_renewal_type;
         });
-        var _effective_date9 = otherItems.warranty.effective_date || productBody.document_date;
-        _effective_date9 = _moment2.default.utc(_effective_date9, _moment2.default.ISO_8601).isValid() ? _moment2.default.utc(_effective_date9, _moment2.default.ISO_8601).startOf('day') : _moment2.default.utc(_effective_date9, 'DD MMM YY').startOf('day');
-        expiry_date = _moment2.default.utc(_effective_date9).add(warrantyRenewalType.effective_months, 'months').subtract(1, 'day').endOf('days');
+        var _effective_date8 = otherItems.warranty.effective_date || productBody.document_date;
+        _effective_date8 = _moment2.default.utc(_effective_date8, _moment2.default.ISO_8601).isValid() ? _moment2.default.utc(_effective_date8, _moment2.default.ISO_8601).startOf('day') : _moment2.default.utc(_effective_date8, 'DD MMM YY').startOf('day');
+        expiry_date = _moment2.default.utc(_effective_date8).add(warrantyRenewalType.effective_months, 'months').subtract(1, 'day').endOf('days');
         warrantyItemPromise.push(this.warrantyAdaptor.createWarranties({
           renewal_type: otherItems.warranty.accessory_renewal_type,
           updated_by: productBody.user_id,
@@ -1655,8 +1671,8 @@ var ProductAdaptor = function () {
           job_id: productBody.job_id,
           product_id: productId,
           expiry_date: _moment2.default.utc(expiry_date).format('YYYY-MM-DD'),
-          effective_date: _moment2.default.utc(_effective_date9).format('YYYY-MM-DD'),
-          document_date: _moment2.default.utc(_effective_date9).format('YYYY-MM-DD'),
+          effective_date: _moment2.default.utc(_effective_date8).format('YYYY-MM-DD'),
+          document_date: _moment2.default.utc(_effective_date8).format('YYYY-MM-DD'),
           warranty_type: 4,
           user_id: productBody.user_id
         }));
@@ -1675,10 +1691,16 @@ var ProductAdaptor = function () {
           isProductPUCSellerSame = parameters.isProductPUCSellerSame,
           isAMCRepairSellerSame = parameters.isAMCRepairSellerSame;
 
-      sellerPromise.push(productBody.seller_contact && productBody.seller_contact.trim() || productBody.seller_name && productBody.seller_name.trim() || productBody.seller_email && productBody.seller_email.trim() || productBody.seller_address && productBody.seller_address.trim() ? this.sellerAdaptor.retrieveOrCreateOfflineSellers({
-        seller_name: productBody.seller_name || productBody.product_name,
-        contact_no: productBody.seller_contact
-      }, {
+      var sellerOption = {
+        seller_name: {
+          $iLike: productBody.seller_name || productBody.product_name
+        }
+      };
+
+      if (productBody.seller_contact) {
+        sellerOption.contact_no = productBody.seller_contact;
+      }
+      sellerPromise.push(productBody.seller_contact && productBody.seller_contact.trim() || productBody.seller_name && productBody.seller_name.trim() || productBody.seller_email && productBody.seller_email.trim() || productBody.seller_address && productBody.seller_address.trim() ? this.sellerAdaptor.retrieveOrCreateOfflineSellers(sellerOption, {
         seller_name: productBody.seller_name || productBody.product_name,
         contact_no: productBody.seller_contact,
         email: productBody.seller_email,
@@ -1687,36 +1709,53 @@ var ProductAdaptor = function () {
         created_by: productBody.user_id,
         status_type: 11
       }) : '');
-      sellerPromise.push(otherItems.amc && !isProductAMCSellerSame && (otherItems.amc.seller_contact && otherItems.amc.seller_contact.trim() || otherItems.amc.seller_name && otherItems.amc.seller_name.trim()) ? this.sellerAdaptor.retrieveOrCreateOfflineSellers({
-        seller_name: otherItems.amc.seller_name,
-        contact_no: otherItems.amc.seller_contact
-      }, {
-        seller_name: otherItems.amc.seller_name,
-        contact_no: otherItems.amc.seller_contact,
-        updated_by: productBody.user_id,
-        created_by: productBody.user_id,
-        status_type: 11
-      }) : '');
-      sellerPromise.push(otherItems.repair && !otherItems.repair.is_amc_seller && !isProductRepairSellerSame && !isAMCRepairSellerSame && (otherItems.repair.seller_contact && otherItems.repair.seller_contact.trim() || otherItems.repair.seller_name && otherItems.repair.seller_name.trim()) ? this.sellerAdaptor.retrieveOrCreateOfflineSellers({
-        seller_name: otherItems.repair.seller_name,
-        contact_no: otherItems.repair.seller_contact
-      }, {
-        seller_name: otherItems.repair.seller_name,
-        contact_no: otherItems.repair.seller_contact,
-        updated_by: productBody.user_id,
-        created_by: productBody.user_id,
-        status_type: 11
-      }) : '');
-      sellerPromise.push(otherItems.puc && !isProductPUCSellerSame && (otherItems.puc.seller_contact && otherItems.puc.seller_contact.trim() || otherItems.puc.seller_name && otherItems.puc.seller_name.trim()) ? this.sellerAdaptor.retrieveOrCreateOfflineSellers({
-        seller_name: otherItems.puc.seller_name,
-        contact_no: otherItems.puc.seller_contact
-      }, {
-        seller_name: otherItems.puc.seller_name,
-        contact_no: otherItems.puc.seller_contact,
-        updated_by: productBody.user_id,
-        created_by: productBody.user_id,
-        status_type: 11
-      }) : '');
+
+      if (otherItems.amc) {
+        sellerOption.seller_name.$iLike = otherItems.amc.seller_name;
+        if (otherItems.amc.seller_contact) {
+          sellerOption.contact_no = otherItems.amc.seller_contact;
+        } else {
+          sellerOption = _lodash2.default.omit(sellerOption, 'contact_no');
+        }
+        sellerPromise.push(!isProductAMCSellerSame && (otherItems.amc.seller_contact && otherItems.amc.seller_contact.trim() || otherItems.amc.seller_name && otherItems.amc.seller_name.trim()) ? this.sellerAdaptor.retrieveOrCreateOfflineSellers(sellerOption, {
+          seller_name: otherItems.amc.seller_name,
+          contact_no: otherItems.amc.seller_contact,
+          updated_by: productBody.user_id,
+          created_by: productBody.user_id,
+          status_type: 11
+        }) : '');
+      }
+      if (otherItems.repair) {
+        sellerOption.seller_name.$iLike = otherItems.repair.seller_name;
+        if (otherItems.repair.seller_contact) {
+          sellerOption.contact_no = otherItems.repair.seller_contact;
+        } else {
+          sellerOption = _lodash2.default.omit(sellerOption, 'contact_no');
+        }
+        sellerPromise.push(!otherItems.repair.is_amc_seller && !isProductRepairSellerSame && !isAMCRepairSellerSame && (otherItems.repair.seller_contact && otherItems.repair.seller_contact.trim() || otherItems.repair.seller_name && otherItems.repair.seller_name.trim()) ? this.sellerAdaptor.retrieveOrCreateOfflineSellers(sellerOption, {
+          seller_name: otherItems.repair.seller_name,
+          contact_no: otherItems.repair.seller_contact,
+          updated_by: productBody.user_id,
+          created_by: productBody.user_id,
+          status_type: 11
+        }) : '');
+      }
+
+      if (otherItems.puc) {
+        sellerOption.seller_name.$iLike = otherItems.puc.seller_name;
+        if (otherItems.puc.seller_contact) {
+          sellerOption.contact_no = otherItems.puc.seller_contact;
+        } else {
+          sellerOption = _lodash2.default.omit(sellerOption, 'contact_no');
+        }
+        sellerPromise.push(!isProductPUCSellerSame && (otherItems.puc.seller_contact && otherItems.puc.seller_contact.trim() || otherItems.puc.seller_name && otherItems.puc.seller_name.trim()) ? this.sellerAdaptor.retrieveOrCreateOfflineSellers(sellerOption, {
+          seller_name: otherItems.puc.seller_name,
+          contact_no: otherItems.puc.seller_contact,
+          updated_by: productBody.user_id,
+          created_by: productBody.user_id,
+          status_type: 11
+        }) : '');
+      }
     }
   }, {
     key: 'retrieveProductMetadata',
@@ -2161,7 +2200,12 @@ var ProductAdaptor = function () {
               job_id: result.job_id
             }
           })] : [undefined, undefined];
-          return Promise.all([_this11.modals.products.destroy({
+          return Promise.all([_this11.modals.mailBox.create({
+            title: 'User Deleted Product #' + id,
+            job_id: result.job_id,
+            bill_product_id: result.product_id,
+            notification_type: 100
+          }), _this11.modals.products.destroy({
             where: {
               id: id,
               user_id: userId

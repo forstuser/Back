@@ -464,6 +464,12 @@ class InsuranceAdaptor {
     return this.modals.insurances.findById(id).then((result) => {
       if (result) {
         return Promise.all([
+          this.modals.mailBox.create({
+            title: `User Deleted Insurance #${id}`,
+            job_id: result.job_id,
+            bill_product_id: result.product_id,
+            notification_type: 100,
+          }),
           this.modals.insurances.destroy({
             where: {
               id,
@@ -472,13 +478,13 @@ class InsuranceAdaptor {
           }),
           result.copies && result.copies.length > 0 ?
               this.modals.jobCopies.update({
-            status_type: 3,
-            updated_by: user_id,
-          }, {
-            where: {
-              id: result.copies.map(item => item.copyId),
-            },
-          }) : undefined]).then(() => {
+                status_type: 3,
+                updated_by: user_id,
+              }, {
+                where: {
+                  id: result.copies.map(item => item.copyId),
+                },
+              }) : undefined]).then(() => {
           return true;
         });
       }

@@ -321,7 +321,12 @@ var InsuranceAdaptor = function () {
 
       return this.modals.insurances.findById(id).then(function (result) {
         if (result) {
-          return Promise.all([_this4.modals.insurances.destroy({
+          return Promise.all([_this4.modals.mailBox.create({
+            title: 'User Deleted Insurance #' + id,
+            job_id: result.job_id,
+            bill_product_id: result.product_id,
+            notification_type: 100
+          }), _this4.modals.insurances.destroy({
             where: {
               id: id,
               user_id: user_id

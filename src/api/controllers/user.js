@@ -264,7 +264,7 @@ class UserController {
               replyObject.status = false;
               replyObject.message = 'Invalid/Expired OTP';
 
-              return reply(replyObject).code(401);
+              return reply(replyObject).code(400);
             }
 
           }).catch((err) => {

@@ -107,19 +107,67 @@ class GeneralController {
   }
 
   static contactUs(request, reply) {
-    NotificationAdaptor.sendLinkOnMessage(request.payload.phone);
-    return contactModel.create({
-      name: request.payload.name,
-      phone: request.payload.phone,
-      email: request.payload.email,
-      message: request.payload.message,
-    }).then(() => {
-      return reply({status: true}).code(201);
-    }).catch((err) => {
-      console.log(
-          `Error on ${new Date()} for user ${user.id ||
-          user.ID} is as follow: \n \n ${err}`);
-      return reply({status: false}).code(500);
+    return Bluebird.try(() => {
+      if (request.payload.captcha_response) {
+        return NotificationAdaptor.verifyCaptcha(
+            request.payload.captcha_response);
+      }
+
+      return false;
+    }).then((isVerified) => {
+      if (isVerified) {
+        NotificationAdaptor.sendLinkOnMessage(request.payload.phone);
+      }
+
+      return contactModel.findOne({
+        where: {
+          phone: request.payload.phone,
+        },
+      }).then((item) => {
+        if (item) {
+          return contactModel.update({msg_day: item.msg_day + 1}, {
+            where: {
+              phone: request.payload.phone,
+            },
+          });
+        } else if (!item) {
+          return contactModel.create({
+            name: request.payload.name,
+            phone: request.payload.phone,
+            email: request.payload.email,
+            message: request.payload.message,
+          });
+        }
+
+        return false;
+      }).then((isValid) => {
+        if (isValid === false) {
+          return reply({
+            status: false,
+            message: 'You have reached to max attempt for a day',
+          });
+        }
+
+        if(request.payload.message || isVerified) {
+          if(request.payload.message) {
+            NotificationAdaptor.sendUserCommentToTeam('Comment received',
+                request.payload);
+          }
+          return reply({status: true}).code(201);
+        }
+
+        return reply({
+          status: false,
+          message: 'Invalid Request',
+        });
+      }).catch((error) => {
+        console.log(
+            `Error on ${new Date()} is as follow: \n \n ${error}`);
+        return reply({
+          status: false,
+          message: 'Invalid Request',
+        });
+      });
     });
   }
 

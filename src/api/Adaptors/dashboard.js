@@ -212,7 +212,7 @@ class DashboardAdaptor {
     }
 
     if (user.email && !user.email_verified) {
-      notificationAdaptor.sendMailOnDifferentSteps('Welcome to BinBill!',
+      notificationAdaptor.sendMailOnDifferentSteps('Welcome to BinBill - Your eHome',
           user.email, user, 1);
     }
 

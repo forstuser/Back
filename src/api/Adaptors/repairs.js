@@ -298,6 +298,12 @@ class RepairAdaptor {
     return this.modals.repairs.findById(id).then((result) => {
       if (result) {
         return Promise.all([
+            this.modals.mailBox.create({
+          title: `User Deleted Repair #${id}`,
+          job_id: result.job_id,
+          bill_product_id: result.product_id,
+          notification_type: 100
+        }),
           this.modals.repairs.destroy({
             where: {
               id,

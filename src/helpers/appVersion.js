@@ -72,20 +72,32 @@ const updateUserActiveStatus = (request, reply) => {
               'iOS' :
               'android'}`);
       if (userDetail) {
-        return MODAL.users.update({
+        return Promise.all([MODAL.users.update({
           last_active_date: moment.utc(),
           last_api: request.url.pathname,
         }, {
           where: {
             id: user.id || user.ID,
           },
-        }).then((item) => {
+        }), MODAL.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 1,
+          user_id: user.id || user.ID
+        })]).then((item) => {
           console.log(
-              `User updated detail is as follow ${JSON.stringify(item)}`);
+              `User updated detail is as follow ${JSON.stringify(item[0])}`);
           return reply(true);
         }).catch((err) => {
           console.log(
               `Error on ${new Date()} for user ${user.mobile_no} is as follow: \n \n ${err}`);
+          MODAL.logs.create({
+            api_action: request.method,
+            api_path: request.url.pathname,
+            log_type: 2,
+            user_id: user.id || user.ID,
+            log_content: err
+          });
           return reply(false);
         });
       } else {

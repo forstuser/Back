@@ -354,6 +354,12 @@ class PUCAdaptor {
     return this.modals.pucs.findById(id).then((result) => {
       if (result) {
         return Promise.all([
+            this.modals.mailBox.create({
+          title: `User Deleted PUC #${id}`,
+          job_id: result.job_id,
+          bill_product_id: result.product_id,
+          notification_type: 100
+        }),
           this.modals.pucs.destroy({
             where: {
               id,

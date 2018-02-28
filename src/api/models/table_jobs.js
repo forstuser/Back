@@ -22,7 +22,6 @@ export default (sequelize, DataTypes) => {
         admin_status: {
           type: DataTypes.INTEGER,
         },
-
         assigned_to_ce: {
           type: DataTypes.INTEGER,
         },

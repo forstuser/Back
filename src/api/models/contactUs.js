@@ -21,6 +21,10 @@ export default (sequelize, DataTypes) => sequelize.define('contactUs', {
   resolved_by: {
     type: DataTypes.INTEGER,
   },
+  msg_day: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+  },
   created_at: {
     type: DataTypes.DATE,
     defaultValue: sequelize.literal('NOW()'),

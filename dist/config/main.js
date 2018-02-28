@@ -25,12 +25,15 @@ exports.default = {
 	},
 	GOOGLE: {
 		API_KEY: process.env.GOOGLE_API_KEY,
-		FCM_KEY: process.env.FCM_KEY
+		FCM_KEY: process.env.FCM_KEY,
+		SECRET: process.env.GOOGLE_SECRET,
+		SITE_VERIFY: process.env.SITE_VERIFY
 	},
 	SERVER_HOST: process.env.SERVER_HOST,
 	EMAIL: {
 		USER: process.env.EMAIL_ID,
-		PASSWORD: process.env.EMAIL_PASSWORD
+		PASSWORD: process.env.EMAIL_PASSWORD,
+		TEAM_EMAIL: process.env.TEAM_EMAIL
 	},
 	// Secret key for JWT signing and encryption
 	JWT_SECRET: process.env.JWT_SECRET,

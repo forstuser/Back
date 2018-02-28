@@ -6,10 +6,12 @@ import shared from '../../helpers/shared';
 import moment from 'moment/moment';
 
 let productAdaptor;
+let models;
 
 class ProductController {
   constructor(modal) {
     productAdaptor = new ProductAdaptor(modal);
+    models = modal;
   }
 
   static createProduct(request, reply) {
@@ -132,6 +134,14 @@ class ProductController {
             console.log(
                 `Error on ${new Date()} for user ${user.id ||
                 user.ID} is as follow: \n \n ${err}`);
+
+            models.logs.create({
+              api_action: request.method,
+              api_path: request.url.pathname,
+              log_type: 2,
+              user_id: user.id || user.ID,
+              log_content: err
+            });
             return reply({
               status: false,
               message: 'An error occurred in product deletion.',

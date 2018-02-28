@@ -128,14 +128,14 @@ export default class CategoryAdaptor {
                 },
               }, {
                 $and: {
-                  category_id: categoryData.map(item => item.id),
+                  main_category_id: categoryData.map(item => item.refId),
                   title: {
                     $iLike: 'IMEI Number',
                   },
                 },
               }, {
                 $and: {
-                  category_id: categoryData.map(item => item.id),
+                  main_category_id: categoryData.map(item => item.refId),
                   title: {
                     $iLike: 'Serial Number',
                   },

@@ -14,8 +14,7 @@ exports.default = function (sequelize, DataTypes) {
       autoIncrement: true
     },
     user_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false
+      type: DataTypes.INTEGER
     },
     bill_product_id: {
       type: DataTypes.INTEGER
@@ -46,6 +45,9 @@ exports.default = function (sequelize, DataTypes) {
       defaultValue: 4
     },
     bill_id: {
+      type: DataTypes.INTEGER
+    },
+    job_id: {
       type: DataTypes.INTEGER
     },
     created_at: {

@@ -11,7 +11,6 @@ export default (sequelize, DataTypes) => {
     },
     user_id: {
       type: DataTypes.INTEGER,
-      allowNull: false,
     },
     bill_product_id: {
       type: DataTypes.INTEGER,
@@ -42,6 +41,9 @@ export default (sequelize, DataTypes) => {
       defaultValue: 4,
     },
     bill_id: {
+      type: DataTypes.INTEGER,
+    },
+    job_id: {
       type: DataTypes.INTEGER,
     },
     created_at: {

@@ -235,7 +235,7 @@ var DashboardAdaptor = function () {
       }
 
       if (user.email && !user.email_verified) {
-        _notification2.default.sendMailOnDifferentSteps('Welcome to BinBill!', user.email, user, 1);
+        _notification2.default.sendMailOnDifferentSteps('Welcome to BinBill - Your eHome', user.email, user, 1);
       }
 
       return {

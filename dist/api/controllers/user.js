@@ -305,7 +305,7 @@ var UserController = function () {
                 replyObject.status = false;
                 replyObject.message = 'Invalid/Expired OTP';
 
-                return reply(replyObject).code(401);
+                return reply(replyObject).code(400);
               }
             }).catch(function (err) {
               console.log('Error on ' + new Date() + ' for mobile no: ' + trueObject.PhoneNo + ' is as follow: \n \n ' + err);

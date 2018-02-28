@@ -214,7 +214,12 @@ var RepairAdaptor = function () {
 
       return this.modals.repairs.findById(id).then(function (result) {
         if (result) {
-          return Promise.all([_this2.modals.repairs.destroy({
+          return Promise.all([_this2.modals.mailBox.create({
+            title: 'User Deleted Repair #' + id,
+            job_id: result.job_id,
+            bill_product_id: result.product_id,
+            notification_type: 100
+          }), _this2.modals.repairs.destroy({
             where: {
               id: id,
               user_id: user_id

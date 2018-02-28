@@ -147,8 +147,250 @@ export function retrieveMailTemplate(user, templateType) {
       'User'},</p><p class="main-class" style="-webkit-margin-before: 0; -webkit-margin-after: 0;margin:0 auto;"> We are happy to have you here, and see that you have started building your eHome. But it’s important to secure your eHome and verify the builder’s identity. </p><p class="main-class" style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0;padding: 10px 0;"> For security purpose, please verify your email address by clicking below:- </p><a href="https://www.binbill.com/dashboard?verificationId=${user.email_secret}" style="text-decoration:none;"><p style="width: 200px;max-height: 60px;border-radius: 100px;background-image: linear-gradient(256deg, #ff622e, #ff822e);box-shadow: 0 5px 15px 0 rgba(180, 75, 35, 0.35);color: #ffffff;padding: 15px 20px;margin-bottom: 0;font-size: 12px;font-weight: 700;line-height: 1.25;text-align: left;font-family: 'Quicksand', sans-serif;letter-spacing: 1px;text-decoration: none;"> Verify Email <img src="https://s3.ap-south-1.amazonaws.com/binbill-static/white.png" alt="arrow" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;border: 0;vertical-align: middle;page-break-inside: avoid;border-style: none;float: right;font-size: 1.25rem;max-width: 100%!important;margin-top: -4px;"> </p></a> </td></tr></table> </td></tr></table> <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" width="100%" style="background:linear-gradient(256deg, #56BDFE, rgb(51, 137, 233)); font-family: sans-serif; color: white; line-height:18px;"> <tr> <td class="main-class" style="padding: 25px 10px;width: 100%; font-family: sans-serif; line-height:18px; text-align: center; color: white;" class="x-gmail-data-detectors"> <p style="margin:0 auto;-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;orphans: 3;widows: 3;-webkit-margin-before: 0; -webkit-margin-after: 0;font-family: 'Quicksand', sans-serif;line-height: 1.44;letter-spacing: 0.3px;text-align: center;color: white"> We look forward to serving you better. For any queries, you can either visit our <a href="https://www.binbill.com/faq" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;background-color: transparent;color: white;text-decoration: none;-webkit-text-decoration-skip: objects;-ms-touch-action: manipulation;touch-action: manipulation;font-family: 'Quicksand', sans-serif;font-size: 1.125rem;line-height: 1.44;letter-spacing: 0.3px;text-align: center;"> <u class="main-class" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;">FAQs</u> </a> section, or write to us at <a href="mailto:support@binbill.com" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;background-color: transparent;color:white;text-decoration: none;-webkit-text-decoration-skip: objects;-ms-touch-action: manipulation;touch-action: manipulation;font-family: 'Quicksand', sans-serif;line-height: 1.44;letter-spacing: 0.3px;text-align: center;"> <u style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;">support@binbill.com</u> </a> </p><p style="margin:0 auto;-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;orphans: 3;widows: 3;-webkit-margin-before: 0; -webkit-margin-after: 0;font-family: 'Quicksand', sans-serif;line-height: 1.44;letter-spacing: 0.3px;text-align: center;color:white; padding: 20px 0 0 0;"> Where there is a bill, there is BinBill! <br><u style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;"> <b style="-webkit-box-sizing: border-box;font-weight:bold;-moz-box-sizing: border-box;box-sizing: inherit;"> The BinBill Team </b> </u> </p></td></tr><tr style="border-top:1px solid white"> <td> <p class="center" style="margin:0 auto;-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;orphans: 3;widows: 3;-webkit-margin-before: 0; -webkit-margin-after: 0;font-family: 'Quicksand', sans-serif;font-size: 1.125rem;line-height: 1.44;letter-spacing: 0.3px;text-align: center;color: rgba(255, 255, 255, 1);padding-top: 15px;padding-bottom: 15px;"> <a href="https://www.facebook.com/binbill.ehome/?ref=br_rs" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;background-color: transparent;color: rgba(255, 255, 255, 1);text-decoration: none;-webkit-text-decoration-skip: objects;-ms-touch-action: manipulation;touch-action: manipulation;font-family: 'Quicksand', sans-serif;font-size: 1.125rem;line-height: 1.44;letter-spacing: 0.3px;text-align: center;padding-left: 30px;"> <img src="https://s3.ap-south-1.amazonaws.com/binbill-static/facebook%403x.png" alt="fb-binbill" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;vertical-align: middle;page-break-inside: avoid;border: 0 none;max-width: 100%!important; width: 23px;"> </a> <a href="https://twitter.com/binbill_ehome" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;background-color: transparent;color: rgba(255, 255, 255, 1);text-decoration: none;-webkit-text-decoration-skip: objects;-ms-touch-action: manipulation;touch-action: manipulation;font-family: 'Quicksand', sans-serif;font-size: 1.125rem;line-height: 1.44;letter-spacing: 0.3px;text-align: center;padding-left: 30px;"> <img src="https://s3.ap-south-1.amazonaws.com/binbill-static/twitter-logo.png" alt="tweet-binbill" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;vertical-align: middle;page-break-inside: avoid;border: 0 none;max-width: 100%!important; width: 23px;"> </a> <a href="https://www.instagram.com/binbill_ehome/" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;background-color: transparent;color: rgba(255, 255, 255, 1);text-decoration: none;-webkit-text-decoration-skip: objects;-ms-touch-action: manipulation;touch-action: manipulation;font-family: 'Quicksand', sans-serif;font-size: 1.125rem;line-height: 1.44;letter-spacing: 0.3px;text-align: center;padding-left: 30px;"> <img src="https://s3.ap-south-1.amazonaws.com/binbill-static/instagram-logo.png" alt="insta-binbill" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;vertical-align: middle;page-break-inside: avoid;border: 0 none;max-width: 100%!important; width: 23px;"> </a> <a href="https://www.linkedin.com/company/13320885/" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;background-color: transparent;color: rgba(255, 255, 255, 1);text-decoration: none;-webkit-text-decoration-skip: objects;-ms-touch-action: manipulation;touch-action: manipulation;font-family: 'Quicksand', sans-serif;font-size: 1.125rem;line-height: 1.44;letter-spacing: 0.3px;text-align: center;padding-left: 30px;"> <img src="https://s3.ap-south-1.amazonaws.com/binbill-static/linkedin-logo.png" alt="in-binbill" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;vertical-align: middle;page-break-inside: avoid;border: 0 none;max-width: 100%!important; width: 23px;"> </a></p></td></tr></div></center></body></html>`;
     }
     case 1: {
-      return `<!DOCTYPE html><html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office"><head> <meta charset="utf-8"> <meta name="viewport" content="width=device-width"> <meta http-equiv="X-UA-Compatible" content="IE=edge"> <meta name="x-apple-disable-message-reformatting"> <title>BinBill</title> <style>@font-face{font-family: 'Quicksand'; font-style: normal; font-weight: 400; src: local('Quicksand Regular'), local('Quicksand-Regular'), url(https://fonts.gstatic.com/s/quicksand/v6/NUrn2XQrRfyGZp5MknntaRJtnKITppOI_IvcXXDNrsc.woff2) format('woff2'); unicode-range: U+0102-0103, U+1EA0-1EF9, U+20AB;}@font-face{font-family: 'Quicksand'; font-style: normal; font-weight: 400; src: local('Quicksand Regular'), local('Quicksand-Regular'), url(https://fonts.gstatic.com/s/quicksand/v6/s2PXW4WrV3VLrOUpHiqsfRJtnKITppOI_IvcXXDNrsc.woff2) format('woff2'); unicode-range: U+0100-024F, U+1E00-1EFF, U+20A0-20AB, U+20AD-20CF, U+2C60-2C7F, U+A720-A7FF;}/* latin */ @font-face{font-family: 'Quicksand'; font-style: normal; font-weight: 400; src: local('Quicksand Regular'), local('Quicksand-Regular'), url(https://fonts.gstatic.com/s/quicksand/v6/sKd0EMYPAh5PYCRKSryvW1tXRa8TVwTICgirnJhmVJw.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215;}@font-face{font-family: 'Quicksand'; font-style: normal; font-weight: 500; src: local('Quicksand Medium'), local('Quicksand-Medium'), url(https://fonts.gstatic.com/s/quicksand/v6/FRGja7LlrG1Mypm0hCq0Dv8zf_FOSsgRmwsS7Aa9k2w.woff2) format('woff2'); unicode-range: U+0102-0103, U+1EA0-1EF9, U+20AB;}@font-face{font-family: 'Quicksand'; font-style: normal; font-weight: 500; src: local('Quicksand Medium'), local('Quicksand-Medium'), url(https://fonts.gstatic.com/s/quicksand/v6/FRGja7LlrG1Mypm0hCq0Dj0LW-43aMEzIO6XUTLjad8.woff2) format('woff2'); unicode-range: U+0100-024F, U+1E00-1EFF, U+20A0-20AB, U+20AD-20CF, U+2C60-2C7F, U+A720-A7FF;}@font-face{font-family: 'Quicksand'; font-style: normal; font-weight: 500; src: local('Quicksand Medium'), local('Quicksand-Medium'), url(https://fonts.gstatic.com/s/quicksand/v6/FRGja7LlrG1Mypm0hCq0Dugdm0LZdjqr5-oayXSOefg.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215;}@font-face{font-family: 'Quicksand'; font-style: normal; font-weight: 700; src: local('Quicksand Bold'), local('Quicksand-Bold'), url(https://fonts.gstatic.com/s/quicksand/v6/32nyIRHyCu6iqEka_hbKsv8zf_FOSsgRmwsS7Aa9k2w.woff2) format('woff2'); unicode-range: U+0102-0103, U+1EA0-1EF9, U+20AB;}@font-face{font-family: 'Quicksand'; font-style: normal; font-weight: 700; src: local('Quicksand Bold'), local('Quicksand-Bold'), url(https://fonts.gstatic.com/s/quicksand/v6/32nyIRHyCu6iqEka_hbKsj0LW-43aMEzIO6XUTLjad8.woff2) format('woff2'); unicode-range: U+0100-024F, U+1E00-1EFF, U+20A0-20AB, U+20AD-20CF, U+2C60-2C7F, U+A720-A7FF;}@font-face{font-family: 'Quicksand'; font-style: normal; font-weight: 700; src: local('Quicksand Bold'), local('Quicksand-Bold'), url(https://fonts.gstatic.com/s/quicksand/v6/32nyIRHyCu6iqEka_hbKsugdm0LZdjqr5-oayXSOefg.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215;}html, body{margin: 0 auto !important; padding: 0 !important; height: 100% !important; /* width: 100% !important; */}*{-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;}div[style*="margin: 16px 0"]{margin: 0 !important;}table, td{mso-table-lspace: 0 !important; mso-table-rspace: 0 !important;}table{border-spacing: 0 !important; border-collapse: collapse !important; table-layout: fixed !important; margin: 0 auto !important;}table table table{table-layout: auto;}img{-ms-interpolation-mode: bicubic;}*[x-apple-data-detectors], /* iOS */ .x-gmail-data-detectors, /* Gmail */ .x-gmail-data-detectors *, .aBn{border-bottom: 0 !important; cursor: default !important; color: inherit !important; /* text-decoration: none !important; */ font-size: inherit !important; font-family: inherit !important; font-weight: inherit !important; line-height: inherit !important;}/* What it does: Prevents Gmail from displaying an download button on large, non-linked images. */ .a6S{display: none !important; opacity: 0.01 !important;}/* If the above doesn't work, add a .g-img class to any image in question. */ img.g-img+div{display: none !important;}/* What it does: Prevents underlining the button text in Windows 10 */ .button-link{text-decoration: none !important;}/* What it does: Removes right gutter in Gmail iOS app: https://github.com/TedGoas/Cerberus/issues/89 */ /* Create one of these media queries for each additional viewport size you'd like to fix */ /* Thanks to Eric Lepetit (@ericlepetitsf) for help troubleshooting */ @media only screen and (min-width: 320px) and (max-width: 600px){/* iPhone 6 and 6+ */ .email-container{max-width: 600px; margin: auto;}}@media only screen and (min-width: 600px) and (max-width: 1400px){/* iPhone 6 and 6+ */ .email-container{width:100%;}.main-class{font-size:16px;}.mains-class{font-size:16px;}}</style> <style>/* What it does: Hover styles for buttons */ .button-td, .button-a{transition: all 100ms ease-in;}.button-td:hover, .button-a:hover{background: #555555 !important; border-color: #555555 !important;}/* Media Queries */ @media screen and (max-width: 600px){/* What it does: Adjust typography on small screens to improve readability */ .email-container p{line-height: 14px !important;}.main-class{font-size:12px;}.mains-class{font-size:11px;}}</style></head><body width="100%" bgcolor="#222222" style="margin: 0; mso-line-height-rule: exactly;"> <center style="width: 100%; background: #cecece; text-align: left;"> <div style="border:1px solid black;" class="email-container"> <table role="presentation" cellspacing="0" cellpadding="0" style="background:white;" border="0" align="center" width="100%" background-color="white" style="max-width: 600px;"> <tr> <td style="padding:0 15px;" class="text-left"> <div style="padding:20px 0;"> <img src="https://s3.ap-south-1.amazonaws.com/binbill-static/logo-color.png" width="150" height="auto" alt="alt_text" border="0" style="height: auto; font-family: sans-serif; font-size: 15px; line-height: 20px; color: #555555;"> </div></td><td style="text-align:right; position:absolute;right:0;"> <img src="https://s3.ap-south-1.amazonaws.com/binbill-static/email-header.png" width="150" height="auto" alt="alt_text" border="0" style="height: auto; font-family: sans-serif; font-size: 15px; line-height: 20px; color: #555555;"> </td></tr></table> <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" width="100%"> <tr> <td bgcolor="#ffffff"> <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"> <tr> <td style="padding: 20px; font-family: sans-serif; font-size: 15px; line-height: 20px; color: #555555;"> <hr class="title-border" style="-webkit-box-sizing: content-box;-moz-box-sizing: content-box;box-sizing: content-box;height: 0;margin:15px 15px 0 0;border: 0;border-top: 5px solid #ff732e;overflow: visible;width: 8.33333333%"> <p style="margin: 0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0;color: #ff732e;font-family: 'Quicksand', sans-serif; font-weight: 500;font-size:22px; text-align: left; color: #ff732e;padding-top:10px; "> Welcome to BinBill! </p><p class="main-class" style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0; font-family: 'Quicksand', sans-serif;font-weight: 500;letter-spacing: 0.3px;text-align: left;color: #3b3b3b; padding: 10px 0;"> Hi ${user.name ||
-      'User'},</p><q style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;font-family: 'Quicksand', sans-serif;font-size: 18px;font-weight: 700;text-align: left;color: #dadada;margin:0 auto;">Life was chaotic with bills, <br>that’s why we created BinBill</q> <p class="main-class" style="-webkit-margin-before: 0; -webkit-margin-after: 0;margin:0 auto;padding-top: 10px; padding-bottom: 15px;"> It gives us immense pleasure to see you start your BinBill journey. We created it with just one single aim ‘where there is a bill, there is BinBill’. There are lot of things that you can do with BinBill, like </p><ul class="mains-class" style="text-indent:-12px;-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;margin-top: 0;margin-bottom: 1rem;font-family: 'Quicksand', sans-serif;line-height:1.45;font-weight: 700;text-align: left;color: #3b3b3b;list-style: none;"> <li style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;"> <p style="line-height: 1.4;-webkit-margin-before: 0; -webkit-margin-after: 0; margin:0 auto;color: #ff732e; padding-right: 10px;display: inline-block;">▸</p>Smartly Store All Your Bills in Your eHome.</li><li style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;"> <p style="line-height: 1.4;-webkit-margin-before: 0; -webkit-margin-after: 0; margin:0 auto;color: #ff732e; padding-right: 10px;display: inline-block;">▸</p>Receive Useful Expense Insights.</li><li style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;"> <p style="line-height: 1.4;-webkit-margin-before: 0; -webkit-margin-after: 0; margin:0 auto;color: #ff732e; padding-right: 10px;display: inline-block;">▸</p>Receive Reminders for Warranty, Renewals etc.</li><li style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;"> <p style="line-height: 1.4;-webkit-margin-before: 0; -webkit-margin-after: 0; margin:0 auto;color: #ff732e; padding-right: 10px;display: inline-block;">▸</p>Connect with the Sellers for various after sales needs.</li><li style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;"> <p style="line-height: 1.4;-webkit-margin-before: 0; -webkit-margin-after: 0; margin:0 auto;color: #ff732e; padding-right: 10px;display: inline-block;">▸</p>Locate Nearest Authorized Service Centers and much more.</li></ul> <p class="main-class" style="-webkit-margin-before: 0; -webkit-margin-after: 0;margin:0 auto;"> We are striving towards adding value to bills, and easing out after sales communication, so that you can avail hassle free customer benefits. Decorate your eHome, the way you want, store bills, or create your own personal catalogue of government IDs, or important documents. </p><p class="main-class" style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0;padding: 10px 0;"> Wait no more, upload your first bill </p><a href="https://www.binbill.com/upload?verificationId=${user.email_secret}" style="text-decoration:none;"><p style="width: 200px;max-height: 60px;border-radius: 100px;background-image: linear-gradient(256deg, #ff622e, #ff822e);box-shadow: 0 5px 15px 0 rgba(180, 75, 35, 0.35);color: #ffffff;padding: 15px 20px;margin-bottom: 0;font-size: 12px;font-weight: 700;line-height: 1.25;text-align: left;font-family: 'Quicksand', sans-serif;letter-spacing: 1px;text-decoration: none;"> Upload Now <img src="https://s3.ap-south-1.amazonaws.com/binbill-static/white.png" alt="arrow" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;border: 0;vertical-align: middle;page-break-inside: avoid;border-style: none;float: right;font-size: 1.25rem;max-width: 100%!important;margin-top: -4px;"> </p></a> </td></tr></table> </td></tr></table> <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" width="100%" style="background:linear-gradient(256deg, #56BDFE, rgb(51, 137, 233)); font-family: sans-serif; color: white; line-height:18px;"> <tr> <td class="main-class" style="padding: 25px 10px;width: 100%; font-family: sans-serif; line-height:18px; text-align: center; color: white;" class="x-gmail-data-detectors"> <p style="margin:0 auto;-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;orphans: 3;widows: 3;-webkit-margin-before: 0; -webkit-margin-after: 0;font-family: 'Quicksand', sans-serif;line-height: 1.44;letter-spacing: 0.3px;text-align: center;color: white"> We look forward to serving you better. For any queries, you can either visit our <a href="https://www.binbill.com/faq" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;background-color: transparent;color: white;text-decoration: none;-webkit-text-decoration-skip: objects;-ms-touch-action: manipulation;touch-action: manipulation;font-family: 'Quicksand', sans-serif;font-size: 1.125rem;line-height: 1.44;letter-spacing: 0.3px;text-align: center;"> <u class="main-class" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;">FAQs</u> </a> section, or write to us at <a href="mailto:support@binbill.com" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;background-color: transparent;color:white;text-decoration: none;-webkit-text-decoration-skip: objects;-ms-touch-action: manipulation;touch-action: manipulation;font-family: 'Quicksand', sans-serif;line-height: 1.44;letter-spacing: 0.3px;text-align: center;"> <u style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;">support@binbill.com</u> </a> </p><p style="margin:0 auto;-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;orphans: 3;widows: 3;-webkit-margin-before: 0; -webkit-margin-after: 0;font-family: 'Quicksand', sans-serif;line-height: 1.44;letter-spacing: 0.3px;text-align: center;color:white; padding: 20px 0 0 0;"> Where there is a bill, there is BinBill! <br><u style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;"> <b style="-webkit-box-sizing: border-box;font-weight:bold;-moz-box-sizing: border-box;box-sizing: inherit;"> The BinBill Team </b> </u> </p></td></tr><tr style="border-top:1px solid white"> <td> <p class="center" style="margin:0 auto;-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;orphans: 3;widows: 3;-webkit-margin-before: 0; -webkit-margin-after: 0;font-family: 'Quicksand', sans-serif;font-size: 1.125rem;line-height: 1.44;letter-spacing: 0.3px;text-align: center;color: rgba(255, 255, 255, 1);padding-top: 15px;padding-bottom: 15px;"> <a href="https://www.facebook.com/binbill.ehome/?ref=br_rs" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;background-color: transparent;color: rgba(255, 255, 255, 1);text-decoration: none;-webkit-text-decoration-skip: objects;-ms-touch-action: manipulation;touch-action: manipulation;font-family: 'Quicksand', sans-serif;font-size: 1.125rem;line-height: 1.44;letter-spacing: 0.3px;text-align: center;padding-left: 30px;"> <img src="https://s3.ap-south-1.amazonaws.com/binbill-static/facebook%403x.png" alt="fb-binbill" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;vertical-align: middle;page-break-inside: avoid;border: 0 none;max-width: 100%!important; width: 23px;"> </a> <a href="https://twitter.com/binbill_ehome" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;background-color: transparent;color: rgba(255, 255, 255, 1);text-decoration: none;-webkit-text-decoration-skip: objects;-ms-touch-action: manipulation;touch-action: manipulation;font-family: 'Quicksand', sans-serif;font-size: 1.125rem;line-height: 1.44;letter-spacing: 0.3px;text-align: center;padding-left: 30px;"> <img src="https://s3.ap-south-1.amazonaws.com/binbill-static/twitter-logo.png" alt="tweet-binbill" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;vertical-align: middle;page-break-inside: avoid;border: 0 none;max-width: 100%!important; width: 23px;"> </a> <a href="https://www.instagram.com/binbill_ehome/" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;background-color: transparent;color: rgba(255, 255, 255, 1);text-decoration: none;-webkit-text-decoration-skip: objects;-ms-touch-action: manipulation;touch-action: manipulation;font-family: 'Quicksand', sans-serif;font-size: 1.125rem;line-height: 1.44;letter-spacing: 0.3px;text-align: center;padding-left: 30px;"> <img src="https://s3.ap-south-1.amazonaws.com/binbill-static/instagram-logo.png" alt="insta-binbill" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;vertical-align: middle;page-break-inside: avoid;border: 0 none;max-width: 100%!important; width: 23px;"> </a> <a href="https://www.linkedin.com/company/13320885/" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;background-color: transparent;color: rgba(255, 255, 255, 1);text-decoration: none;-webkit-text-decoration-skip: objects;-ms-touch-action: manipulation;touch-action: manipulation;font-family: 'Quicksand', sans-serif;font-size: 1.125rem;line-height: 1.44;letter-spacing: 0.3px;text-align: center;padding-left: 30px;"> <img src="https://s3.ap-south-1.amazonaws.com/binbill-static/linkedin-logo.png" alt="in-binbill" style="-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: inherit;vertical-align: middle;page-break-inside: avoid;border: 0 none;max-width: 100%!important; width: 23px;"> </a></p></td></tr></div></center></body></html>`;
+      return `<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="x-apple-disable-message-reformatting">
+    <title>BinBill</title>
+    <style>@font-face {
+        font-family: 'Quicksand';
+        font-style: normal;
+        font-weight: 400;
+        src: local('Quicksand Regular'), local('Quicksand-Regular'), url(https://fonts.gstatic.com/s/quicksand/v6/NUrn2XQrRfyGZp5MknntaRJtnKITppOI_IvcXXDNrsc.woff2) format('woff2');
+        unicode-range: U+0102-0103, U+1EA0-1EF9, U+20AB;
+    }
+
+    @font-face {
+        font-family: 'Quicksand';
+        font-style: normal;
+        font-weight: 400;
+        src: local('Quicksand Regular'), local('Quicksand-Regular'), url(https://fonts.gstatic.com/s/quicksand/v6/s2PXW4WrV3VLrOUpHiqsfRJtnKITppOI_IvcXXDNrsc.woff2) format('woff2');
+        unicode-range: U+0100-024F, U+1E00-1EFF, U+20A0-20AB, U+20AD-20CF, U+2C60-2C7F, U+A720-A7FF;
+    }
+
+    /* latin */
+    @font-face {
+        font-family: 'Quicksand';
+        font-style: normal;
+        font-weight: 400;
+        src: local('Quicksand Regular'), local('Quicksand-Regular'), url(https://fonts.gstatic.com/s/quicksand/v6/sKd0EMYPAh5PYCRKSryvW1tXRa8TVwTICgirnJhmVJw.woff2) format('woff2');
+        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215;
+    }
+
+    @font-face {
+        font-family: 'Quicksand';
+        font-style: normal;
+        font-weight: 500;
+        src: local('Quicksand Medium'), local('Quicksand-Medium'), url(https://fonts.gstatic.com/s/quicksand/v6/FRGja7LlrG1Mypm0hCq0Dv8zf_FOSsgRmwsS7Aa9k2w.woff2) format('woff2');
+        unicode-range: U+0102-0103, U+1EA0-1EF9, U+20AB;
+    }
+
+    @font-face {
+        font-family: 'Quicksand';
+        font-style: normal;
+        font-weight: 500;
+        src: local('Quicksand Medium'), local('Quicksand-Medium'), url(https://fonts.gstatic.com/s/quicksand/v6/FRGja7LlrG1Mypm0hCq0Dj0LW-43aMEzIO6XUTLjad8.woff2) format('woff2');
+        unicode-range: U+0100-024F, U+1E00-1EFF, U+20A0-20AB, U+20AD-20CF, U+2C60-2C7F, U+A720-A7FF;
+    }
+
+    @font-face {
+        font-family: 'Quicksand';
+        font-style: normal;
+        font-weight: 500;
+        src: local('Quicksand Medium'), local('Quicksand-Medium'), url(https://fonts.gstatic.com/s/quicksand/v6/FRGja7LlrG1Mypm0hCq0Dugdm0LZdjqr5-oayXSOefg.woff2) format('woff2');
+        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215;
+    }
+
+    @font-face {
+        font-family: 'Quicksand';
+        font-style: normal;
+        font-weight: 700;
+        src: local('Quicksand Bold'), local('Quicksand-Bold'), url(https://fonts.gstatic.com/s/quicksand/v6/32nyIRHyCu6iqEka_hbKsv8zf_FOSsgRmwsS7Aa9k2w.woff2) format('woff2');
+        unicode-range: U+0102-0103, U+1EA0-1EF9, U+20AB;
+    }
+
+    @font-face {
+        font-family: 'Quicksand';
+        font-style: normal;
+        font-weight: 700;
+        src: local('Quicksand Bold'), local('Quicksand-Bold'), url(https://fonts.gstatic.com/s/quicksand/v6/32nyIRHyCu6iqEka_hbKsj0LW-43aMEzIO6XUTLjad8.woff2) format('woff2');
+        unicode-range: U+0100-024F, U+1E00-1EFF, U+20A0-20AB, U+20AD-20CF, U+2C60-2C7F, U+A720-A7FF;
+    }
+
+    @font-face {
+        font-family: 'Quicksand';
+        font-style: normal;
+        font-weight: 700;
+        src: local('Quicksand Bold'), local('Quicksand-Bold'), url(https://fonts.gstatic.com/s/quicksand/v6/32nyIRHyCu6iqEka_hbKsugdm0LZdjqr5-oayXSOefg.woff2) format('woff2');
+        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215;
+    }
+
+    html, body {
+        margin: 0 auto !important;
+        padding: 0 !important;
+        height: 100% !important; /* width: 100% !important; */
+    }
+
+    * {
+        -ms-text-size-adjust: 100%;
+        -webkit-text-size-adjust: 100%;
+    }
+
+    div[style*="margin: 16px 0"] {
+        margin: 0 !important;
+    }
+
+    table, td {
+        mso-table-lspace: 0 !important;
+        mso-table-rspace: 0 !important;
+    }
+
+    table {
+        border-spacing: 0 !important;
+        border-collapse: collapse !important;
+        table-layout: fixed !important;
+        margin: 0 auto !important;
+    }
+
+    table table table {
+        table-layout: auto;
+    }
+
+    img {
+        -ms-interpolation-mode: bicubic;
+    }
+
+    *[x-apple-data-detectors], /* iOS */
+    .x-gmail-data-detectors, /* Gmail */
+    .x-gmail-data-detectors *, .aBn {
+        border-bottom: 0 !important;
+        cursor: default !important;
+        color: inherit !important; /* text-decoration: none !important; */
+        font-size: inherit !important;
+        font-family: inherit !important;
+        font-weight: inherit !important;
+        line-height: inherit !important;
+    }
+
+    /* What it does: Prevents Gmail from displaying an download button on large, non-linked images. */
+    .a6S {
+        display: none !important;
+        opacity: 0.01 !important;
+    }
+
+    /* If the above doesn't work, add a .g-img class to any image in question. */
+    img.g-img + div {
+        display: none !important;
+    }
+
+    /* What it does: Prevents underlining the button text in Windows 10 */
+    .button-link {
+        text-decoration: none !important;
+    }
+
+    /* What it does: Removes right gutter in Gmail iOS app: https://github.com/TedGoas/Cerberus/issues/89 */ /* Create one of these media queries for each additional viewport size you'd like to fix */ /* Thanks to Eric Lepetit (@ericlepetitsf) for help troubleshooting */
+    @media only screen and (min-width: 320px) and (max-width: 600px) {
+        /* iPhone 6 and 6+ */
+        .email-container {
+            max-width: 600px;
+            margin: auto;
+        }
+    }
+
+    @media only screen and (min-width: 600px) and (max-width: 1400px) {
+        /* iPhone 6 and 6+ */
+        .email-container {
+            width: 100%;
+        }
+
+        .main-class {
+            font-size: 16px;
+        }
+
+        .mains-class {
+            font-size: 16px;
+        }
+    }</style>
+    <style>/* What it does: Hover styles for buttons */
+    .button-td, .button-a {
+        transition: all 100ms ease-in;
+    }
+
+    .button-td:hover, .button-a:hover {
+        background: #555555 !important;
+        border-color: #555555 !important;
+    }
+
+    /* Media Queries */
+    @media screen and (max-width: 600px) {
+        /* What it does: Adjust typography on small screens to improve readability */
+        .email-container p {
+            line-height: 14px !important;
+        }
+
+        .main-class {
+            font-size: 12px;
+        }
+
+        .mains-class {
+            font-size: 11px;
+        }
+    }</style>
+</head>
+<body width="100%" bgcolor="#222222" style="margin: 0; mso-line-height-rule: exactly;">
+<center style="width: 100%; background: #cecece; text-align: left;">
+    <div style="border:1px solid black;" class="email-container">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" width="100%">
+            <tr>
+                <td bgcolor="#ffffff">
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                        <tr>
+                            <td style="padding: 20px; font-family: sans-serif; font-size: 15px; line-height: 20px; color: #555555;">
+                                <p class="main-class"
+                                   style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0; font-family: 'Quicksand', sans-serif;font-weight: 500;letter-spacing: 0.3px;text-align: left;color: #3b3b3b; padding: 10px 0;">
+                                    Dear ${user.name || user.full_name || 'User'},
+                                    </p>
+                                <p class="main-class"
+                                   style="-webkit-margin-before: 0; -webkit-margin-after: 0;margin:0 auto;padding-top: 10px; padding-bottom: 15px;">
+                                    Welcome to BinBill. I am Rohit, Founder of BinBill. I really appreciate that you
+                                    chose to live the BinBill way of life. I hope you have an amazing journey ahead with
+                                    us.
+                                </p>
+                                <p class="main-class"
+                                   style="-webkit-margin-before: 0; -webkit-margin-after: 0;margin:0 auto;">
+                                    Our team is working hard to make your life seamless and hassle free. Please let us
+                                    know if you face any problems and issues. </p>
+                                <p class="main-class"
+                                   style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0;padding: 10px 0;">
+                                    The first step towards building your eHome is to start adding Products and Expenses.
+                                    We have tips from our experts to ease out creating your eHome, do have a look at
+                                    them.
+                                </p>
+                                <p class="main-class"
+                                   style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0;padding: 10px 0;">
+                                    I really look forward to you building your eHome with BinBill.
+                                </p>
+                                <p style="margin:0 auto; font-weight: bold; -webkit-margin-before: 0; -webkit-margin-after: 0;padding: 10px 0;">
+                                    One Home : Multiple Needs : One App</p>
+                                <p style="margin:0 auto; -webkit-margin-before: 0; -webkit-margin-after: 0;padding: 10px 0;">
+                                    Regards
+                                     <br/>
+                                    Rohit</p>
+                                <img style="width: 100px" atr="logo"
+                                     src="https://s3.ap-south-1.amazonaws.com/binbill-static/logo-color.png"/>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </div>
+</center>
+</body>
+</html>`;
     }
     case 2: {
       return `<!DOCTYPE html><html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office"><head> <meta charset="utf-8"> <meta name="viewport" content="width=device-width"> <meta http-equiv="X-UA-Compatible" content="IE=edge"> <meta name="x-apple-disable-message-reformatting"> <title>BinBill</title> <style>@font-face{font-family: 'Quicksand'; font-style: normal; font-weight: 400; src: local('Quicksand Regular'), local('Quicksand-Regular'), url(https://fonts.gstatic.com/s/quicksand/v6/NUrn2XQrRfyGZp5MknntaRJtnKITppOI_IvcXXDNrsc.woff2) format('woff2'); unicode-range: U+0102-0103, U+1EA0-1EF9, U+20AB;}@font-face{font-family: 'Quicksand'; font-style: normal; font-weight: 400; src: local('Quicksand Regular'), local('Quicksand-Regular'), url(https://fonts.gstatic.com/s/quicksand/v6/s2PXW4WrV3VLrOUpHiqsfRJtnKITppOI_IvcXXDNrsc.woff2) format('woff2'); unicode-range: U+0100-024F, U+1E00-1EFF, U+20A0-20AB, U+20AD-20CF, U+2C60-2C7F, U+A720-A7FF;}/* latin */ @font-face{font-family: 'Quicksand'; font-style: normal; font-weight: 400; src: local('Quicksand Regular'), local('Quicksand-Regular'), url(https://fonts.gstatic.com/s/quicksand/v6/sKd0EMYPAh5PYCRKSryvW1tXRa8TVwTICgirnJhmVJw.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215;}@font-face{font-family: 'Quicksand'; font-style: normal; font-weight: 500; src: local('Quicksand Medium'), local('Quicksand-Medium'), url(https://fonts.gstatic.com/s/quicksand/v6/FRGja7LlrG1Mypm0hCq0Dv8zf_FOSsgRmwsS7Aa9k2w.woff2) format('woff2'); unicode-range: U+0102-0103, U+1EA0-1EF9, U+20AB;}@font-face{font-family: 'Quicksand'; font-style: normal; font-weight: 500; src: local('Quicksand Medium'), local('Quicksand-Medium'), url(https://fonts.gstatic.com/s/quicksand/v6/FRGja7LlrG1Mypm0hCq0Dj0LW-43aMEzIO6XUTLjad8.woff2) format('woff2'); unicode-range: U+0100-024F, U+1E00-1EFF, U+20A0-20AB, U+20AD-20CF, U+2C60-2C7F, U+A720-A7FF;}@font-face{font-family: 'Quicksand'; font-style: normal; font-weight: 500; src: local('Quicksand Medium'), local('Quicksand-Medium'), url(https://fonts.gstatic.com/s/quicksand/v6/FRGja7LlrG1Mypm0hCq0Dugdm0LZdjqr5-oayXSOefg.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215;}@font-face{font-family: 'Quicksand'; font-style: normal; font-weight: 700; src: local('Quicksand Bold'), local('Quicksand-Bold'), url(https://fonts.gstatic.com/s/quicksand/v6/32nyIRHyCu6iqEka_hbKsv8zf_FOSsgRmwsS7Aa9k2w.woff2) format('woff2'); unicode-range: U+0102-0103, U+1EA0-1EF9, U+20AB;}@font-face{font-family: 'Quicksand'; font-style: normal; font-weight: 700; src: local('Quicksand Bold'), local('Quicksand-Bold'), url(https://fonts.gstatic.com/s/quicksand/v6/32nyIRHyCu6iqEka_hbKsj0LW-43aMEzIO6XUTLjad8.woff2) format('woff2'); unicode-range: U+0100-024F, U+1E00-1EFF, U+20A0-20AB, U+20AD-20CF, U+2C60-2C7F, U+A720-A7FF;}@font-face{font-family: 'Quicksand'; font-style: normal; font-weight: 700; src: local('Quicksand Bold'), local('Quicksand-Bold'), url(https://fonts.gstatic.com/s/quicksand/v6/32nyIRHyCu6iqEka_hbKsugdm0LZdjqr5-oayXSOefg.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215;}html, body{margin: 0 auto !important; padding: 0 !important; height: 100% !important; /* width: 100% !important; */}*{-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;}div[style*="margin: 16px 0"]{margin: 0 !important;}table, td{mso-table-lspace: 0 !important; mso-table-rspace: 0 !important;}table{border-spacing: 0 !important; border-collapse: collapse !important; table-layout: fixed !important; margin: 0 auto !important;}table table table{table-layout: auto;}img{-ms-interpolation-mode: bicubic;}*[x-apple-data-detectors], /* iOS */ .x-gmail-data-detectors, /* Gmail */ .x-gmail-data-detectors *, .aBn{border-bottom: 0 !important; cursor: default !important; color: inherit !important; /* text-decoration: none !important; */ font-size: inherit !important; font-family: inherit !important; font-weight: inherit !important; line-height: inherit !important;}/* What it does: Prevents Gmail from displaying an download button on large, non-linked images. */ .a6S{display: none !important; opacity: 0.01 !important;}/* If the above doesn't work, add a .g-img class to any image in question. */ img.g-img+div{display: none !important;}/* What it does: Prevents underlining the button text in Windows 10 */ .button-link{text-decoration: none !important;}.btns{width: 100px; max-height: 60px;}/* What it does: Removes right gutter in Gmail iOS app: https://github.com/TedGoas/Cerberus/issues/89 */ /* Create one of these media queries for each additional viewport size you'd like to fix */ /* Thanks to Eric Lepetit (@ericlepetitsf) for help troubleshooting */ @media only screen and (min-width: 320px) and (max-width: 600px){/* iPhone 6 and 6+ */ .email-container{max-width: 600px; margin: auto;}}@media only screen and (min-width: 600px) and (max-width: 1400px){/* iPhone 6 and 6+ */ .email-container{width:100%;}.main-class{font-size:16px;}}</style> <style>/* What it does: Hover styles for buttons */ .button-td, .button-a{transition: all 100ms ease-in;}.button-td:hover, .button-a:hover{background: #555555 !important; border-color: #555555 !important;}/* Media Queries */ @media screen and (max-width: 600px){/* What it does: Adjust typography on small screens to improve readability */ .email-container p{line-height: 14px !important;}.main-class{font-size:12px;}}</style></head><body width="100%" bgcolor="#222222" style="margin: 0; mso-line-height-rule: exactly;"> <center style="width: 100%; background: #cecece; text-align: left;"> <div style="border:1px solid black;" class="email-container"> <table role="presentation" cellspacing="0" cellpadding="0" style="background:white;" border="0" align="center" width="100%" background-color="white" > <tr> <td style="padding:0 15px;" class="text-left"> <div style="padding:20px 0;"> <img src="https://s3.ap-south-1.amazonaws.com/binbill-static/logo-color.png" width="150" height="auto" alt="alt_text" border="0" style="height: auto; font-family: sans-serif; font-size: 15px; line-height: 20px; color: #555555;"> </div></td><td style="text-align:right; position:absolute;right:0;"> <img src="https://s3.ap-south-1.amazonaws.com/binbill-static/email-header.png" width="150" height="auto" alt="alt_text" border="0" style="height: auto; font-family: sans-serif; font-size: 15px; line-height: 20px; color: #555555;"> </td></tr></table> <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" width="100%"> <tr> <td bgcolor="#ffffff"> <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"> <tr> <td style="padding: 20px; font-family: sans-serif; font-size: 15px; line-height: 20px; color: #555555;"> <hr class="title-border" style="-webkit-box-sizing: content-box;-moz-box-sizing: content-box;box-sizing: content-box;height: 0;margin:15px 15px 0 0;border: 0;border-top: 5px solid #ff732e;overflow: visible;width: 8.33333333%"> <p style="margin: 0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0;color: #ff732e;font-family: 'Quicksand', sans-serif; font-weight: 500;font-size:22px; text-align: left; color: #ff732e;padding-top:10px; "> Start building your eHome </p><p class="main-class" style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0; font-family: 'Quicksand', sans-serif;font-weight: 500;letter-spacing: 0.3px;text-align: left;color: #3b3b3b; padding: 10px 0;"> Hi ${user.name ||

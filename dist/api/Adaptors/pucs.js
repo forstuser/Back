@@ -250,7 +250,12 @@ var PUCAdaptor = function () {
 
       return this.modals.pucs.findById(id).then(function (result) {
         if (result) {
-          return Promise.all([_this3.modals.pucs.destroy({
+          return Promise.all([_this3.modals.mailBox.create({
+            title: 'User Deleted PUC #' + id,
+            job_id: result.job_id,
+            bill_product_id: result.product_id,
+            notification_type: 100
+          }), _this3.modals.pucs.destroy({
             where: {
               id: id,
               user_id: user_id

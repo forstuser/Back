@@ -71,18 +71,30 @@ var updateUserActiveStatus = function updateUserActiveStatus(request, reply) {
       var userDetail = userResult ? userResult.toJSON() : userResult;
       console.log('Last route ' + request.url.pathname + ' accessed by user id ' + (user.id || user.ID) + ' from ' + (request.headers.ios_app_version ? 'iOS' : 'android'));
       if (userDetail) {
-        return MODAL.users.update({
+        return Promise.all([MODAL.users.update({
           last_active_date: _moment2.default.utc(),
           last_api: request.url.pathname
         }, {
           where: {
             id: user.id || user.ID
           }
-        }).then(function (item) {
-          console.log('User updated detail is as follow ' + JSON.stringify(item));
+        }), MODAL.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 1,
+          user_id: user.id || user.ID
+        })]).then(function (item) {
+          console.log('User updated detail is as follow ' + JSON.stringify(item[0]));
           return reply(true);
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' for user ' + user.mobile_no + ' is as follow: \n \n ' + err);
+          MODAL.logs.create({
+            api_action: request.method,
+            api_path: request.url.pathname,
+            log_type: 2,
+            user_id: user.id || user.ID,
+            log_content: err
+          });
           return reply(false);
         });
       } else {

@@ -26,6 +26,10 @@ exports.default = function (sequelize, DataTypes) {
     resolved_by: {
       type: DataTypes.INTEGER
     },
+    msg_day: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0
+    },
     created_at: {
       type: DataTypes.DATE,
       defaultValue: sequelize.literal('NOW()')
