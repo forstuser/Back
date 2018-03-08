@@ -6,7 +6,7 @@ export default class CategoryAdaptor {
     this.brandAdaptor = new BrandAdaptor(modals);
   }
 
-  retrieveCategories(options, isBrandFormRequired) {
+  retrieveCategories(options, isBrandFormRequired, language) {
     options.status_type = 1;
     let categoryData;
     return this.modals.categories.findAll({
@@ -17,7 +17,8 @@ export default class CategoryAdaptor {
           'id'],
         [
           'category_name',
-          'name'],
+          'default_name'],
+        [`${language ? `category_name_${language}` : `category_name`}`, 'name'],
         [
           'ref_id',
           'refId'],
@@ -41,7 +42,11 @@ export default class CategoryAdaptor {
           'categoryImageUrl']],
       order: ['category_id'],
     }).then((result) => {
-      categoryData = result.map(item => item.toJSON());
+      categoryData = result.map(item => {
+        const categoryItem = item.toJSON();
+        categoryItem.name = categoryItem.name || categoryItem.default_name;
+        return categoryItem;
+      });
       const subCategoryOption = {
         status_type: 1,
         ref_id: categoryData.map(item => item.id),
@@ -61,7 +66,8 @@ export default class CategoryAdaptor {
         subCategoryOption.category_id = excluded_category_id;
       }
 
-      return this.retrieveSubCategories(subCategoryOption, isBrandFormRequired);
+      return this.retrieveSubCategories(subCategoryOption, isBrandFormRequired,
+          language);
     }).then((subCategories) => {
       categoryData = categoryData.map((item) => {
         item.subCategories = subCategories.filter(
@@ -73,7 +79,7 @@ export default class CategoryAdaptor {
     });
   }
 
-  retrieveSubCategories(options, isBrandFormRequired) {
+  retrieveSubCategories(options, isBrandFormRequired, language) {
     let categoryData;
     options.status_type = 1;
     return this.modals.categories.findAll({
@@ -84,7 +90,8 @@ export default class CategoryAdaptor {
           'id'],
         [
           'category_name',
-          'name'],
+          'default_name'],
+        [`${language ? `category_name_${language}` : `category_name`}`, 'name'],
         [
           'ref_id',
           'refId'],

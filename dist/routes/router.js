@@ -587,6 +587,24 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
         handler: _upload2.default.retrieveBrandImage
       }
     });
+
+    /*Retrieve Provider images*/
+    uploadFileRoute.push({
+      method: 'GET',
+      path: '/providers/{id}/images',
+      config: {
+        handler: _upload2.default.retrieveProviderImage
+      }
+    });
+
+    /*Retrieve Know Item images*/
+    uploadFileRoute.push({
+      method: 'GET',
+      path: '/knowitem/{id}/images',
+      config: {
+        handler: _upload2.default.retrieveKnowItemImage
+      }
+    });
   }
 }
 
@@ -1032,6 +1050,97 @@ function prepareGeneralRoutes(generalController, generalRoutes) {
       config: {
         handler: _general2.default.retrieveTips,
         description: 'Retrieve tip\'s'
+      }
+    });
+
+    generalRoutes.push({
+      method: 'GET',
+      path: '/know/items',
+      config: {
+        handler: _general2.default.retrieveKnowItemUnAuthorized,
+        description: 'Retrieve Do You Know Items'
+      }
+    });
+
+    generalRoutes.push({
+      method: 'GET',
+      path: '/know/items/{id}',
+      config: {
+        handler: _general2.default.retrieveKnowItemsById,
+        description: 'Retrieve Do You Know Items'
+      }
+    });
+
+    generalRoutes.push({
+      method: 'POST',
+      path: '/know/items',
+      config: {
+        auth: 'jwt',
+        pre: [{
+          method: appVersionHelper.checkAppVersion,
+          assign: 'forceUpdate'
+        }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _general2.default.retrieveKnowItems,
+        description: 'Retrieve Do You Know Items',
+        validate: {
+          payload: {
+            tag_id: [_joi2.default.array().items(_joi2.default.number()), _joi2.default.allow(null)]
+          }
+        }
+      }
+    });
+
+    generalRoutes.push({
+      method: 'GET',
+      path: '/tags',
+      config: {
+        auth: 'jwt',
+        pre: [{
+          method: appVersionHelper.checkAppVersion,
+          assign: 'forceUpdate'
+        }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _general2.default.retrieveTags,
+        description: 'Retrieve Tags for Do You Know Items'
+      }
+    });
+
+    generalRoutes.push({
+      method: 'PUT',
+      path: '/know/items/{id}',
+      config: {
+        auth: 'jwt',
+        pre: [{
+          method: appVersionHelper.checkAppVersion,
+          assign: 'forceUpdate'
+        }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _general2.default.likeKnowItems,
+        description: 'Update Like of Know Items for user'
+      }
+    });
+
+    generalRoutes.push({
+      method: 'DELETE',
+      path: '/know/items/{id}',
+      config: {
+        auth: 'jwt',
+        pre: [{
+          method: appVersionHelper.checkAppVersion,
+          assign: 'forceUpdate'
+        }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _general2.default.disLikeKnowItems,
+        description: 'Update Like of Know Items for user'
       }
     });
 

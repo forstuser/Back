@@ -9,9 +9,6 @@ export default (sequelize, DataTypes) => {
         job_id: {
           type: DataTypes.INTEGER,
         },
-        online_seller_id: {
-          type: DataTypes.INTEGER,
-        },
         document_number: {
           type: DataTypes.STRING,
         },
@@ -30,9 +27,6 @@ export default (sequelize, DataTypes) => {
           type: DataTypes.INTEGER,
         },
         updated_by: {
-          type: DataTypes.INTEGER,
-        },
-        seller_id: {
           type: DataTypes.INTEGER,
         },
         status_type: {
@@ -87,10 +81,6 @@ export default (sequelize, DataTypes) => {
     warranties.belongsTo(models.statuses,
         {foreignKey: 'status_type', targetKey: 'status_type'});
     warranties.belongsTo(models.jobs, {as: 'jobs', foreignKey: 'job_id'});
-    warranties.belongsTo(models.onlineSellers,
-        {foreignKey: 'online_seller_id', as: 'onlineSellers'});
-    warranties.belongsTo(models.offlineSellers,
-        {foreignKey: 'seller_id', as: 'sellers'});
     warranties.belongsTo(models.renewalTypes,
         {foreignKey: 'renewal_type', targetKey: 'type'});
     warranties.belongsTo(models.insuranceBrands,

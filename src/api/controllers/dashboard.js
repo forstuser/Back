@@ -42,8 +42,10 @@ class DashboardController {
 
   static getEHome(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
+    const language = request.language;
+    console.log(language);
     if (request.pre.userExist && !request.pre.forceUpdate) {
-      return reply(eHomeAdaptor.prepareEHomeResult(user, request)).
+      return reply(eHomeAdaptor.prepareEHomeResult(user, request, language)).
           code(200);
     } else if (!request.pre.userExist) {
       return reply({

@@ -1,12 +1,12 @@
 'use strict';
 
 export default (sequelize, DataTypes) => {
-  const categoryForms = sequelize.define('categoryForms', {
-        display_index: {
+  const tags = sequelize.define('tags', {
+        id: {
           type: DataTypes.INTEGER,
-        },
-        category_id: {
-          type: DataTypes.INTEGER,
+          primaryKey: true,
+          autoIncrement: true,
+          unique: true,
         },
         title: {
           type: DataTypes.STRING,
@@ -38,20 +38,39 @@ export default (sequelize, DataTypes) => {
         title_mr: {
           type: DataTypes.STRING,
         },
-        form_type: {
-          type: DataTypes.INTEGER,
-        },
         description: {
+          type: DataTypes.STRING,
+        },
+        description_en: {
+          type: DataTypes.STRING,
+        },
+        description_hi: {
+          type: DataTypes.STRING,
+        },
+        description_ta: {
+          type: DataTypes.STRING,
+        },
+        description_bn: {
+          type: DataTypes.STRING,
+        },
+        description_ml: {
+          type: DataTypes.STRING,
+        },
+        description_te: {
+          type: DataTypes.STRING,
+        },
+        description_gu: {
+          type: DataTypes.STRING,
+        },
+        description_kn: {
+          type: DataTypes.STRING,
+        },
+        description_mr: {
           type: DataTypes.STRING,
         },
         updated_by: {
           type: DataTypes.INTEGER,
-        },
-        status_type: {
-          type: DataTypes.INTEGER,
-        },
-        main_category_id: {
-          type: DataTypes.INTEGER,
+          defaultValue: 1,
         },
         created_at: {
           type: DataTypes.DATE,
@@ -61,31 +80,31 @@ export default (sequelize, DataTypes) => {
           type: DataTypes.DATE,
           defaultValue: sequelize.literal('NOW()'),
         },
+        status_type: {
+          type: DataTypes.INTEGER,
+          defaultValue: 1,
+        },
       },
       {
         freezeTableName: true,
-        defaultPrimaryKey: true,
+        defaultPrimaryKey: false,
         timestamps: true,
         underscored: true,
-        tableName: 'category_forms',
+        tableName: 'tags',
       });
 
-  categoryForms.associate = (models) => {
-    categoryForms.belongsTo(models.users,
+  tags.associate = (models) => {
+    tags.belongsTo(models.users,
         {foreignKey: 'updated_by'});
-
-    categoryForms.belongsTo(models.categories,
-        {foreignKey: 'category_id'});
-
-    categoryForms.belongsTo(models.formTypes,
-        {foreignKey: 'form_type', targetKey: 'type'});
-
-    categoryForms.belongsTo(models.statuses,
+    tags.belongsTo(models.statuses,
         {foreignKey: 'status_type', targetKey: 'status_type'});
-
-    categoryForms.hasMany(models.dropDowns, {
-      foreignKey: 'category_form_id', as: 'dropDown',
-    });
+    tags.belongsToMany(models.tags,
+        {
+          foreignKey: 'tag_id',
+          otherKey: 'know_item_id',
+          through: 'know_tag_map',
+          as: 'tags',
+        });
   };
-  return categoryForms;
+  return tags;
 };

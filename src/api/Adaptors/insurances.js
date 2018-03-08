@@ -95,7 +95,12 @@ class InsuranceAdaptor {
             'state',
             'pincode',
             'latitude',
-            'longitude'],
+            'longitude',
+            [
+              this.modals.sequelize.fn('CONCAT', 'providers/',
+                  this.modals.sequelize.col('"provider"."id"'), '/images'),
+              'imageUrl'],
+            'status_type'],
           required: false,
         },
         {

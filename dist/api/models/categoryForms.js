@@ -15,6 +15,33 @@ exports.default = function (sequelize, DataTypes) {
     title: {
       type: DataTypes.STRING
     },
+    title_en: {
+      type: DataTypes.STRING
+    },
+    title_hi: {
+      type: DataTypes.STRING
+    },
+    title_ta: {
+      type: DataTypes.STRING
+    },
+    title_bn: {
+      type: DataTypes.STRING
+    },
+    title_ml: {
+      type: DataTypes.STRING
+    },
+    title_te: {
+      type: DataTypes.STRING
+    },
+    title_gu: {
+      type: DataTypes.STRING
+    },
+    title_kn: {
+      type: DataTypes.STRING
+    },
+    title_mr: {
+      type: DataTypes.STRING
+    },
     form_type: {
       type: DataTypes.INTEGER
     },

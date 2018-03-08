@@ -355,28 +355,36 @@ export function retrieveMailTemplate(user, templateType) {
                                     </p>
                                 <p class="main-class"
                                    style="-webkit-margin-before: 0; -webkit-margin-after: 0;margin:0 auto;padding-top: 10px; padding-bottom: 15px;">
-                                    Welcome to BinBill. I am Rohit, Founder of BinBill. I really appreciate that you
-                                    chose to live the BinBill way of life. I hope you have an amazing journey ahead with
-                                    us.
+                                    I am Rohit, CEO of BinBill. Allow me to take a moment to thank you for subscribing to BinBill App  and share key features thats make your life easy.
                                 </p>
                                 <p class="main-class"
                                    style="-webkit-margin-before: 0; -webkit-margin-after: 0;margin:0 auto;">
-                                    Our team is working hard to make your life seamless and hassle free. Please let us
-                                    know if you face any problems and issues. </p>
+                                    BinBill saves your time and aids your memory by sorting important things of your life. It starts with building your eHome by adding Products, Important Documents & Expenses
+                                     </p>
                                 <p class="main-class"
                                    style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0;padding: 10px 0;">
-                                    The first step towards building your eHome is to start adding Products and Expenses.
-                                    We have tips from our experts to ease out creating your eHome, do have a look at
-                                    them.
+                                    Product: Be old or new, Important details like Purchase Bill, Warranty, Model Number, Insurance etc are never handy whenever needed. You can upload them or enter details by manually. This is a one time activity to get all important Notification, Reminders, ASC & Service Expense etc.
                                 </p>
                                 <p class="main-class"
                                    style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0;padding: 10px 0;">
-                                    I really look forward to you building your eHome with BinBill.
+                                    Authorized Service Center Connect : For all the Products that you own,  You can connect with Brand and nearest Authorized Service Center with just one touch.
+                                </p>
+                                <p class="main-class"
+                                   style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0;padding: 10px 0;">
+                                    Important Documents like Educational Certificates, Birth Certificate, RC Book, Insurance, Rent Agreement etc can be uploaded. This is a one time activity. View, download,email, print them whenever you want.
+                                </p>
+                                <p class="main-class"
+                                   style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0;padding: 10px 0;">
+                                    Expense Management : Small or Big, Online or Offline, Cash or Card either upload the bill or add expense manually. Get to know insight on What When Where & How much you have been spending.
+                                </p>
+                                <p class="main-class"
+                                   style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0;padding: 10px 0;">
+                                    Further, we use world class data integrity systems and encryption standards. So that you can use our services with full confidence. I really look forward to you building your eHome. I am confident that BinBill will evolve into a useful companion.
                                 </p>
                                 <p style="margin:0 auto; font-weight: bold; -webkit-margin-before: 0; -webkit-margin-after: 0;padding: 10px 0;">
                                     One Home : Multiple Needs : One App</p>
                                 <p style="margin:0 auto; -webkit-margin-before: 0; -webkit-margin-after: 0;padding: 10px 0;">
-                                    Regards
+                                    With Gratitude
                                      <br/>
                                     Rohit</p>
                                 <img style="width: 100px" atr="logo"

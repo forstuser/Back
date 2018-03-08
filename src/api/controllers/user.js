@@ -275,7 +275,7 @@ class UserController {
             replyObject.error = err;
             return reply(replyObject).code(401);
           });
-        } else if (request.payload.Token === '050118') {
+        } else if (request.payload.Token === '0501') {
           return loginOrRegisterUser({
             userWhere,
             userInput,

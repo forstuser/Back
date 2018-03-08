@@ -1088,6 +1088,66 @@ class UploadController {
     }
   }
 
+  static retrieveProviderImage(request, reply) {
+    if (!request.pre.forceUpdate) {
+      const fsImplBrand = new S3FS(
+          `${config.AWS.S3.BUCKET}/${config.AWS.S3.PROVIDER_IMAGE}`,
+          config.AWS.ACCESS_DETAILS);
+      fsImplBrand.readFile(`${request.params.id}.png`, 'utf8').
+          then(fileResult => reply(fileResult.Body).
+              header('Content-Type', fileResult.ContentType).
+              header('Content-Disposition',
+                  `attachment; filename=${result.CopyName}`)).
+          catch((err) => {
+            console.log(
+                `Error on ${new Date()} for user ${user.id ||
+                user.ID} is as follow: \n \n ${err}`);
+            reply({
+              status: false,
+              message: 'Unable to retrieve image',
+              err,
+              forceUpdate: request.pre.forceUpdate,
+            });
+          });
+    } else {
+      reply({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
+  static retrieveKnowItemImage(request, reply) {
+    if (!request.pre.forceUpdate) {
+      const fsImplBrand = new S3FS(
+          `${config.AWS.S3.BUCKET}/${config.AWS.S3.KNOW_ITEM_IMAGE}`,
+          config.AWS.ACCESS_DETAILS);
+      fsImplBrand.readFile(`${request.params.id}.png`, 'utf8').
+          then(fileResult => reply(fileResult.Body).
+              header('Content-Type', fileResult.ContentType).
+              header('Content-Disposition',
+                  `attachment; filename=${result.CopyName}`)).
+          catch((err) => {
+            console.log(
+                `Error on ${new Date()} for user ${user.id ||
+                user.ID} is as follow: \n \n ${err}`);
+            reply({
+              status: false,
+              message: 'Unable to retrieve image',
+              err,
+              forceUpdate: request.pre.forceUpdate,
+            });
+          });
+    } else {
+      reply({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
   static retrieveUserImage(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (!request.pre.userExist) {

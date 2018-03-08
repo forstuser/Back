@@ -13,6 +13,8 @@ export default {
 			USER_IMAGE: 'userimages',
       CATEGORY_IMAGE: 'categoryimages',
       BRAND_IMAGE: 'brandimages',
+			PROVIDER_IMAGE: 'providerimages',
+      KNOW_ITEM_IMAGE: 'knowitemimages'
 		},
 		ACCESS_DETAILS: {
 			accessKeyId: process.env.AWS_ACCESS_KEY,
@@ -34,6 +36,7 @@ export default {
 	},
 	// Secret key for JWT signing and encryption
 	JWT_SECRET: process.env.JWT_SECRET,
+  SUPPORTED_LANGUAGES: process.env.SUPPORTED_LANGUAGES,
 	// Database connection information
 	DATABASE: {
     username: process.env.DATABASE_USER,

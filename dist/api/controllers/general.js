@@ -47,6 +47,10 @@ var _moment = require('moment/moment');
 
 var _moment2 = _interopRequireDefault(_moment);
 
+var _main = require('../../config/main');
+
+var _main2 = _interopRequireDefault(_main);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -102,15 +106,15 @@ var GeneralController = function () {
             });
           } else if (request.query.categoryId) {
             isBrandRequest = true;
-            return Promise.all([categoryAdaptor.retrieveSubCategories({ category_id: request.query.categoryId }, true), categoryAdaptor.retrieveRenewalTypes({
+            return Promise.all([categoryAdaptor.retrieveSubCategories({ category_id: request.query.categoryId }, true, request.language), categoryAdaptor.retrieveRenewalTypes({
               status_type: 1
             })]);
           } else if (request.query.mainCategoryId) {
-            return categoryAdaptor.retrieveCategories({ category_id: request.query.mainCategoryId }, false);
+            return categoryAdaptor.retrieveCategories({ category_id: request.query.mainCategoryId }, false, request.language);
           }
         }
 
-        return categoryAdaptor.retrieveCategories({ category_level: 1 }, false);
+        return categoryAdaptor.retrieveCategories({ category_level: 1 }, false, request.language);
       }).then(function (results) {
         return reply({
           status: true,
@@ -225,6 +229,260 @@ var GeneralController = function () {
         console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
         return reply({ status: false }).code(200);
       });
+    }
+  }, {
+    key: 'retrieveKnowItems',
+    value: function retrieveKnowItems(request, reply) {
+      var user = _shared2.default.verifyAuthorization(request.headers);
+
+      if (request.pre.userExist && !request.pre.forceUpdate) {
+        var language = request.language;
+        var options = {
+          include: [{
+            model: modals.tags,
+            as: 'tags',
+            attributes: [['title', 'default_title'], ['' + (language ? 'title_' + language : 'title'), 'title'], ['description', 'default_description'], ['' + (language ? 'description_' + language : 'description'), 'description']]
+          }, {
+            model: modals.users,
+            as: 'users',
+            attributes: ['id']
+          }],
+          attributes: ['id', ['title', 'default_title'], ['' + (language ? 'title_' + language : 'title'), 'title'], ['description', 'default_description'], ['' + (language ? 'description_' + language : 'description'), 'description'], 'short_url'],
+          order: [['created_at', 'desc']]
+        };
+
+        if (request.payload && request.payload.tag_id && request.payload.tag_id.length > 0) {
+          options.where = modals.sequelize.where(modals.sequelize.literal('"tags"."id"'), { $in: request.payload.tag_id });
+        }
+        return modals.knowItems.findAll(options).then(function (knowItems) {
+          return reply({
+            status: true, items: knowItems.map(function (item) {
+              item = item.toJSON();
+              item.imageUrl = '/knowitem/' + item.id + '/images';
+              item.title = item.title || item.default_title;
+              item.description = item.description || item.default_description;
+              item.tags = item.tags.map(function (tagItem) {
+                tagItem.title = tagItem.title || tagItem.default_title;
+                return tagItem;
+              });
+              item.hashTags = '';
+              item.tags.forEach(function (tagItem) {
+                item.hashTags += '#' + tagItem.title + ' ';
+              });
+              item.hashTags = item.hashTags.trim();
+              item.totalLikes = item.users.length;
+              item.isLikedByUser = item.users.findIndex(function (userItem) {
+                return userItem.id === (user.id || user.ID);
+              }) >= 0;
+              return item;
+            })
+          }).code(200);
+        }).catch(function (err) {
+          console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+          return reply({ status: false }).code(200);
+        });
+      } else if (!request.pre.userExist) {
+        return reply({
+          status: false,
+          message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate
+        }).code(401);
+      } else {
+        return reply({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    }
+  }, {
+    key: 'retrieveKnowItemUnAuthorized',
+    value: function retrieveKnowItemUnAuthorized(request, reply) {
+      var supportedLanguages = _main2.default.SUPPORTED_LANGUAGES.split(',');
+      var language = (request.headers.language || '').split('-')[0];
+      language = supportedLanguages.indexOf(language) >= 0 ? language : '';
+      var options = {
+        include: [{
+          model: modals.tags,
+          as: 'tags',
+          attributes: [['title', 'default_title'], ['' + (language ? 'title_' + language : 'title'), 'title'], ['description', 'default_description'], ['' + (language ? 'description_' + language : 'description'), 'description']]
+        }, {
+          model: modals.users,
+          as: 'users',
+          attributes: ['id']
+        }],
+        attributes: ['id', ['title', 'default_title'], ['' + (language ? 'title_' + language : 'title'), 'title'], ['description', 'default_description'], ['' + (language ? 'description_' + language : 'description'), 'description'], 'short_url'],
+        order: [['created_at', 'desc']]
+      };
+
+      return modals.knowItems.findAll(options).then(function (knowItems) {
+        return reply({
+          status: true, items: knowItems.map(function (item) {
+            item = item.toJSON();
+            item.imageUrl = '/knowitem/' + item.id + '/images';
+            item.title = item.title || item.default_title;
+            item.description = item.description || item.default_description;
+            item.tags = item.tags.map(function (tagItem) {
+              tagItem.title = tagItem.title || tagItem.default_title;
+              return tagItem;
+            });
+            item.hashTags = '';
+            item.tags.forEach(function (tagItem) {
+              item.hashTags += '#' + tagItem.title + ' ';
+            });
+            item.hashTags = item.hashTags.trim();
+            item.totalLikes = item.users.length;
+            return item;
+          })
+        }).code(200);
+      }).catch(function (err) {
+        console.log('Error on ' + new Date() + ' is as follow: \n \n ' + err);
+        return reply({ status: false }).code(200);
+      });
+    }
+  }, {
+    key: 'retrieveKnowItemsById',
+    value: function retrieveKnowItemsById(request, reply) {
+      var supportedLanguages = _main2.default.SUPPORTED_LANGUAGES.split(',');
+      var language = (request.headers.language || '').split('-')[0];
+      language = supportedLanguages.indexOf(language) >= 0 ? language : '';
+      var options = {
+        include: [{
+          model: modals.tags,
+          as: 'tags',
+          attributes: [['title', 'default_title'], ['' + (language ? 'title_' + language : 'title'), 'title'], ['description', 'default_description'], ['' + (language ? 'description_' + language : 'description'), 'description']]
+        }, {
+          model: modals.users,
+          as: 'users',
+          attributes: ['id']
+        }],
+        attributes: ['id', ['title', 'default_title'], ['' + (language ? 'title_' + language : 'title'), 'title'], ['description', 'default_description'], ['' + (language ? 'description_' + language : 'description'), 'description'], 'short_url'],
+        order: [['created_at', 'desc']]
+      };
+
+      return modals.knowItems.findById(request.params.id, options).then(function (knowItems) {
+        knowItems.imageUrl = '/knowitem/' + knowItems.id + '/images';
+        knowItems.hashTags = '';
+        knowItems.title = knowItems.title || knowItems.default_title;
+        knowItems.description = knowItems.description || knowItems.default_description;
+        knowItems.tags = knowItems.tags.map(function (tagItem) {
+          tagItem.title = tagItem.title || tagItem.default_title;
+          return tagItem;
+        });
+        knowItems.tags.forEach(function (tagItem) {
+          knowItems.hashTags += '#' + tagItem.title + ' ';
+        });
+        knowItems.hashTags = knowItems.hashTags.trim();
+        knowItems.totalLikes = knowItems.users.length;
+        return reply({
+          status: true, item: knowItems
+        }).code(200);
+      }).catch(function (err) {
+        console.log('Error on ' + new Date() + ' is as follow: \n \n ' + err);
+        return reply({ status: false }).code(200);
+      });
+    }
+  }, {
+    key: 'retrieveTags',
+    value: function retrieveTags(request, reply) {
+      var user = _shared2.default.verifyAuthorization(request.headers);
+      if (request.pre.userExist && !request.pre.forceUpdate) {
+        var language = request.language;
+        return modals.tags.findAll({
+          attributes: ['id', ['title', 'default_title'], ['' + (language ? 'title_' + language : 'title'), 'title'], ['description', 'default_description'], ['' + (language ? 'description_' + language : 'description'), 'description']],
+          order: [['created_at', 'desc']]
+        }).then(function (tagItems) {
+          return reply({
+            status: true, items: tagItems.map(function (item) {
+              item = item.toJSON();
+              item.title = item.title || item.default_title;
+              item.description = item.description || item.default_description;
+              return item;
+            })
+          }).code(200);
+        }).catch(function (err) {
+          console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+          return reply({ status: false }).code(200);
+        });
+      } else if (!request.pre.userExist) {
+        return reply({
+          status: false,
+          message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate
+        }).code(401);
+      } else {
+        return reply({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    }
+  }, {
+    key: 'likeKnowItems',
+    value: function likeKnowItems(request, reply) {
+      var user = _shared2.default.verifyAuthorization(request.headers);
+
+      if (request.pre.userExist && !request.pre.forceUpdate) {
+        return modals.know_user_likes.create({
+          user_id: user.id || user.ID,
+          know_item_id: request.params.id
+        }).then(function () {
+          return reply({
+            status: true,
+            message: 'You have successfully liked this item.'
+          }).code(200);
+        }).catch(function (err) {
+          console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+          return reply({ status: false }).code(200);
+        });
+      } else if (!request.pre.userExist) {
+        return reply({
+          status: false,
+          message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate
+        }).code(401);
+      } else {
+        return reply({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    }
+  }, {
+    key: 'disLikeKnowItems',
+    value: function disLikeKnowItems(request, reply) {
+      var user = _shared2.default.verifyAuthorization(request.headers);
+
+      if (request.pre.userExist && !request.pre.forceUpdate) {
+        return modals.know_user_likes.destroy({
+          where: {
+            user_id: user.id || user.ID,
+            know_item_id: request.params.id
+          }
+        }).then(function () {
+          return reply({
+            status: true,
+            message: 'You have successfully Un-liked this item.'
+          }).code(200);
+        }).catch(function (err) {
+          console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+          return reply({ status: false }).code(200);
+        });
+      } else if (!request.pre.userExist) {
+        return reply({
+          status: false,
+          message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate
+        }).code(401);
+      } else {
+        return reply({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
     }
   }, {
     key: 'intializeUserProduct',

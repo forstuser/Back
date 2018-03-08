@@ -973,7 +973,7 @@ class ProductAdaptor {
     });
   }
 
-  retrieveProductById(id, options) {
+  retrieveProductById(id, options, language) {
     options.id = id;
     let products;
     let productItem;
@@ -1159,7 +1159,7 @@ class ProductAdaptor {
           'masterCategoryId'],
         'sub_category_id',
         [
-          this.modals.sequelize.literal('"sub_category"."category_name"'),
+          this.modals.sequelize.literal(`${language ? `"sub_category"."category_name_${language}"`:`"sub_category"."category_name"`}`),
           'sub_category_name'],
         [
           'brand_id',
@@ -1171,10 +1171,13 @@ class ProductAdaptor {
           'purchase_cost',
           'value'],
         [
-          this.modals.sequelize.literal('"category"."category_name"'),
+          this.modals.sequelize.literal(`${language ? `"category"."category_name_${language}"`:`"category"."category_name"`}`),
           'categoryName'],
         [
-          this.modals.sequelize.literal('"mainCategory"."category_name"'),
+          this.modals.sequelize.literal('"category"."category_name"'),
+          'default_categoryName'],
+        [
+          this.modals.sequelize.literal(`${language ? `"mainCategory"."category_name_${language}"`:`"mainCategory"."category_name"`}`),
           'masterCategoryName'],
         'taxes',
         [
@@ -2649,7 +2652,7 @@ class ProductAdaptor {
     }
   }
 
-  retrieveProductMetadata(options) {
+  retrieveProductMetadata(options, language) {
     return this.modals.metaData.findAll({
       where: options,
       include: [
@@ -2673,6 +2676,9 @@ class ProductAdaptor {
         [
           this.modals.sequelize.literal('"categoryForm"."form_type"'),
           'formType'],
+        [
+          this.modals.sequelize.literal(`${language ? `"categoryForm"."title_${language}"`: `"categoryForm"."title"`}`),
+          'default_name'],
         [
           this.modals.sequelize.literal('"categoryForm"."title"'),
           'name'],
@@ -3048,7 +3054,7 @@ class ProductAdaptor {
     return this.retrieveProductById(productId, {
       user_id: user.id || user.ID,
       status_type: [5, 8, 11],
-    }).then((result) => {
+    }, request.language).then((result) => {
       if (result) {
         return ({
           status: true,

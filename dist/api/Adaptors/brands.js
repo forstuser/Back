@@ -92,7 +92,7 @@ var BrandAdaptor = function () {
       detailOptions.brand_id = id;
       return Promise.all([this.modals.brands.findById(id, {
         where: options,
-        attributes: [['brand_id', 'id'], ['brand_name', 'name'], ['brand_description', 'description'], [this.modals.sequelize.fn('CONCAT', 'brands/', this.modals.sequelize.col('"brands"."brand_id"'), '/reviews'), 'reviewUrl'], [this.modals.sequelize.fn('CONCAT', 'brands/', this.modals.sequelize.col('"brands"."brand_id"'), '/images'), 'imageUrl']],
+        attributes: [['brand_id', 'id'], ['brand_name', 'name'], ['brand_description', 'description'], 'status_type', [this.modals.sequelize.fn('CONCAT', 'brands/', this.modals.sequelize.col('"brands"."brand_id"'), '/reviews'), 'reviewUrl'], [this.modals.sequelize.fn('CONCAT', 'brands/', this.modals.sequelize.col('"brands"."brand_id"'), '/images'), 'imageUrl']],
         include: [{
           model: this.modals.brandReviews,
           as: 'brandReviews',

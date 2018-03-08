@@ -15,6 +15,30 @@ exports.default = function (sequelize, DataTypes) {
     category_name: {
       type: DataTypes.STRING
     },
+    category_name_hi: {
+      type: DataTypes.STRING
+    },
+    category_name_ta: {
+      type: DataTypes.STRING
+    },
+    category_name_bn: {
+      type: DataTypes.STRING
+    },
+    category_name_ml: {
+      type: DataTypes.STRING
+    },
+    category_name_te: {
+      type: DataTypes.STRING
+    },
+    category_name_gu: {
+      type: DataTypes.STRING
+    },
+    category_name_kn: {
+      type: DataTypes.STRING
+    },
+    category_name_mr: {
+      type: DataTypes.STRING
+    },
     ref_id: {
       'type': DataTypes.INTEGER
     },

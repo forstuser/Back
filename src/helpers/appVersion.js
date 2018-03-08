@@ -3,6 +3,7 @@
 let MODAL;
 import shared from './shared';
 import moment from 'moment';
+import config from '../config/main';
 
 const checkAppVersion = (request, reply) => {
   if (request.headers.app_version !== undefined ||
@@ -57,6 +58,9 @@ const checkAppVersion = (request, reply) => {
 
 const updateUserActiveStatus = (request, reply) => {
   const user = shared.verifyAuthorization(request.headers);
+  const supportedLanguages = config.SUPPORTED_LANGUAGES.split(',');
+  const language = (request.headers.language || '').split('-')[0];
+  request.language = supportedLanguages.indexOf(language) >= 0 ? language : '';
   if (!user) {
     return reply(null);
   } else {

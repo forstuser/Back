@@ -68,20 +68,6 @@ class WarrantyAdaptor {
           ],
         },
         {
-          model: this.modals.onlineSellers,
-          as: 'onlineSellers',
-          attributes: [
-            ['sid', 'id'],
-            [
-              'seller_name',
-              'sellerName'],
-            'url',
-            'gstin',
-            'contact',
-            'email'],
-          required: false,
-        },
-        {
           model: this.modals.insuranceBrands,
           as: 'provider',
           attributes: [
@@ -102,39 +88,12 @@ class WarrantyAdaptor {
             'state',
             'pincode',
             'latitude',
-            'longitude'],
-          required: false,
-        },
-        {
-          model: this.modals.offlineSellers,
-          as: 'sellers',
-          attributes: [
-            ['sid', 'id'],
+            'longitude',
             [
-              'seller_name',
-              'sellerName'],
-            [
-              'owner_name',
-              'ownerName'],
-            [
-              'pan_no',
-              'panNo'],
-            [
-              'reg_no',
-              'regNo'],
-            [
-              'is_service',
-              'isService'],
-            'url',
-            'gstin',
-            ['contact_no', 'contact'],
-            'email',
-            'address',
-            'city',
-            'state',
-            'pincode',
-            'latitude',
-            'longitude'],
+              this.modals.sequelize.fn('CONCAT', 'providers/',
+                  this.modals.sequelize.col('"provider"."id"'), '/images'),
+              'imageUrl'],
+            'status_type',],
           required: false,
         }],
       attributes: [
@@ -451,12 +410,12 @@ class WarrantyAdaptor {
     return this.modals.warranties.findById(id).then((result) => {
       if (result) {
         return Promise.all([
-            this.modals.mailBox.create({
-          title: `User Deleted Warranty #${id}`,
-          job_id: result.job_id,
-          bill_product_id: result.product_id,
-          notification_type: 100
-        }),
+          this.modals.mailBox.create({
+            title: `User Deleted Warranty #${id}`,
+            job_id: result.job_id,
+            bill_product_id: result.product_id,
+            notification_type: 100,
+          }),
           this.modals.warranties.destroy({
             where: {
               id,
@@ -465,13 +424,13 @@ class WarrantyAdaptor {
           }),
           result.copies && result.copies.length > 0 ?
               this.modals.jobCopies.update({
-            status_type: 3,
-            updated_by: user_id,
-          }, {
-            where: {
-              id: result.copies.map(item => item.copyId),
-            },
-          }) : undefined]).then(() => {
+                status_type: 3,
+                updated_by: user_id,
+              }, {
+                where: {
+                  id: result.copies.map(item => item.copyId),
+                },
+              }) : undefined]).then(() => {
           return true;
         });
       }

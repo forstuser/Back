@@ -46,6 +46,7 @@ var ServiceCenterController = function () {
       var user = _shared2.default.verifyAuthorization(request.headers);
       var isWebMode = request.params && request.params.mode && request.params.mode.toLowerCase() === 'web';
       if ((request.pre.userExist || isWebMode) && !request.pre.forceUpdate) {
+        console.log(request.payload);
         var payload = request.payload || {
           location: '',
           city: '',

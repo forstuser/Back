@@ -86,7 +86,7 @@ var InsuranceAdaptor = function () {
         }, {
           model: this.modals.insuranceBrands,
           as: 'provider',
-          attributes: ['id', 'name', ['pan_no', 'panNo'], ['reg_no', 'regNo'], 'url', 'gstin', ['contact_no', 'contact'], 'email', 'address', 'city', 'state', 'pincode', 'latitude', 'longitude'],
+          attributes: ['id', 'name', ['pan_no', 'panNo'], ['reg_no', 'regNo'], 'url', 'gstin', ['contact_no', 'contact'], 'email', 'address', 'city', 'state', 'pincode', 'latitude', 'longitude', [this.modals.sequelize.fn('CONCAT', 'providers/', this.modals.sequelize.col('"provider"."id"'), '/images'), 'imageUrl'], 'status_type'],
           required: false
         }, {
           model: this.modals.offlineSellers,

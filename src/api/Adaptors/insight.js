@@ -345,7 +345,7 @@ class InsightAdaptor {
     });
   }
 
-  prepareCategoryData(user, options) {
+  prepareCategoryData(user, options, language) {
     const categoryOption = {
       category_level: 1,
       status_type: 1,
@@ -366,7 +366,7 @@ class InsightAdaptor {
       };
     }
     return Promise.all([
-      this.categoryAdaptor.retrieveCategories(categoryOption),
+      this.categoryAdaptor.retrieveCategories(categoryOption, false, language),
       this.productAdaptor.retrieveProducts(productOptions),
       this.amcAdaptor.retrieveAMCs(productOptions),
       this.insuranceAdaptor.retrieveInsurances(productOptions),

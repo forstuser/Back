@@ -70,8 +70,10 @@ var DashboardController = function () {
     key: 'getEHome',
     value: function getEHome(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
+      var language = request.language;
+      console.log(language);
       if (request.pre.userExist && !request.pre.forceUpdate) {
-        return reply(eHomeAdaptor.prepareEHomeResult(user, request)).code(200);
+        return reply(eHomeAdaptor.prepareEHomeResult(user, request, language)).code(200);
       } else if (!request.pre.userExist) {
         return reply({
           status: false,

@@ -298,7 +298,7 @@ var InsightAdaptor = function () {
         }
     }, {
         key: 'prepareCategoryData',
-        value: function prepareCategoryData(user, options) {
+        value: function prepareCategoryData(user, options, language) {
             var categoryOption = {
                 category_level: 1,
                 status_type: 1
@@ -318,7 +318,7 @@ var InsightAdaptor = function () {
                     $notIn: [10]
                 };
             }
-            return Promise.all([this.categoryAdaptor.retrieveCategories(categoryOption), this.productAdaptor.retrieveProducts(productOptions), this.amcAdaptor.retrieveAMCs(productOptions), this.insuranceAdaptor.retrieveInsurances(productOptions), this.repairAdaptor.retrieveRepairs(productOptions), this.warrantyAdaptor.retrieveWarranties(productOptions), this.pucAdaptor.retrievePUCs(productOptions)]).then(function (results) {
+            return Promise.all([this.categoryAdaptor.retrieveCategories(categoryOption, false, language), this.productAdaptor.retrieveProducts(productOptions), this.amcAdaptor.retrieveAMCs(productOptions), this.insuranceAdaptor.retrieveInsurances(productOptions), this.repairAdaptor.retrieveRepairs(productOptions), this.warrantyAdaptor.retrieveWarranties(productOptions), this.pucAdaptor.retrievePUCs(productOptions)]).then(function (results) {
                 return results[0].map(function (categoryItem) {
                     var category = categoryItem;
                     var products = _lodash2.default.chain(results[1]).map(function (productItem) {

@@ -649,6 +649,24 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
         handler: UploadController.retrieveBrandImage,
       },
     });
+
+    /*Retrieve Provider images*/
+    uploadFileRoute.push({
+      method: 'GET',
+      path: '/providers/{id}/images',
+      config: {
+        handler: UploadController.retrieveProviderImage,
+      },
+    });
+
+    /*Retrieve Know Item images*/
+    uploadFileRoute.push({
+      method: 'GET',
+      path: '/knowitem/{id}/images',
+      config: {
+        handler: UploadController.retrieveKnowItemImage,
+      },
+    });
   }
 }
 
@@ -1178,6 +1196,109 @@ function prepareGeneralRoutes(generalController, generalRoutes) {
       config: {
         handler: GeneralController.retrieveTips,
         description: 'Retrieve tip\'s',
+      },
+    });
+
+    generalRoutes.push({
+      method: 'GET',
+      path: '/know/items',
+      config: {
+        handler: GeneralController.retrieveKnowItemUnAuthorized,
+        description: 'Retrieve Do You Know Items',
+      },
+    });
+
+    generalRoutes.push({
+      method: 'GET',
+      path: '/know/items/{id}',
+      config: {
+        handler: GeneralController.retrieveKnowItemsById,
+        description: 'Retrieve Do You Know Items',
+      },
+    });
+
+    generalRoutes.push({
+      method: 'POST',
+      path: '/know/items',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {
+            method: appVersionHelper.checkAppVersion,
+            assign: 'forceUpdate',
+          },
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: GeneralController.retrieveKnowItems,
+        description: 'Retrieve Do You Know Items',
+        validate: {
+          payload: {
+            tag_id: [joi.array().items(joi.number()), joi.allow(null)],
+          },
+        },
+      },
+    });
+
+    generalRoutes.push({
+      method: 'GET',
+      path: '/tags',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {
+            method: appVersionHelper.checkAppVersion,
+            assign: 'forceUpdate',
+          },
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: GeneralController.retrieveTags,
+        description: 'Retrieve Tags for Do You Know Items',
+      },
+    });
+
+    generalRoutes.push({
+      method: 'PUT',
+      path: '/know/items/{id}',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {
+            method: appVersionHelper.checkAppVersion,
+            assign: 'forceUpdate',
+          },
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: GeneralController.likeKnowItems,
+        description: 'Update Like of Know Items for user',
+      },
+    });
+
+    generalRoutes.push({
+      method: 'DELETE',
+      path: '/know/items/{id}',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {
+            method: appVersionHelper.checkAppVersion,
+            assign: 'forceUpdate',
+          },
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: GeneralController.disLikeKnowItems,
+        description: 'Update Like of Know Items for user',
       },
     });
 

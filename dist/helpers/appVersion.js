@@ -13,6 +13,10 @@ var _moment = require('moment');
 
 var _moment2 = _interopRequireDefault(_moment);
 
+var _main = require('../config/main');
+
+var _main2 = _interopRequireDefault(_main);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var MODAL = void 0;
@@ -60,6 +64,9 @@ var checkAppVersion = function checkAppVersion(request, reply) {
 
 var updateUserActiveStatus = function updateUserActiveStatus(request, reply) {
   var user = _shared2.default.verifyAuthorization(request.headers);
+  var supportedLanguages = _main2.default.SUPPORTED_LANGUAGES.split(',');
+  var language = (request.headers.language || '').split('-')[0];
+  request.language = supportedLanguages.indexOf(language) >= 0 ? language : '';
   if (!user) {
     return reply(null);
   } else {

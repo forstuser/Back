@@ -117,6 +117,15 @@ export default (sequelize, DataTypes) => {
 
     users.hasMany(models.jobs, {foreignKey: 'assigned_to_ce'});
     users.hasMany(models.jobs, {foreignKey: 'assigned_to_qe'});
+
+
+    users.belongsToMany(models.knowItems,
+        {
+          foreignKey: 'user_id',
+          otherKey: 'know_item_id',
+          through: 'know_user_likes',
+          as: 'knowItems',
+        });
   };
 
   return users;

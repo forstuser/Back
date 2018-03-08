@@ -11,6 +11,7 @@ import UserAdaptor from '../Adaptors/user';
 import Bluebird from 'bluebird';
 import shared from '../../helpers/shared';
 import moment from 'moment/moment';
+import config from '../../config/main';
 
 let contactModel;
 let modals;
@@ -59,18 +60,20 @@ class GeneralController {
           isBrandRequest = true;
           return Promise.all([
             categoryAdaptor.retrieveSubCategories(
-                {category_id: request.query.categoryId}, true),
+                {category_id: request.query.categoryId}, true,
+                request.language),
             categoryAdaptor.retrieveRenewalTypes({
               status_type: 1,
             })]);
         } else if (request.query.mainCategoryId) {
           return categoryAdaptor.retrieveCategories(
-              {category_id: request.query.mainCategoryId}, false);
+              {category_id: request.query.mainCategoryId}, false,
+              request.language);
         }
       }
 
       return categoryAdaptor.retrieveCategories(
-          {category_level: 1}, false);
+          {category_level: 1}, false, request.language);
     }).
         then((results) => {
           return reply({
@@ -148,8 +151,8 @@ class GeneralController {
           });
         }
 
-        if(request.payload.message || isVerified) {
-          if(request.payload.message) {
+        if (request.payload.message || isVerified) {
+          if (request.payload.message) {
             NotificationAdaptor.sendUserCommentToTeam('Comment received',
                 request.payload);
           }
@@ -198,6 +201,340 @@ class GeneralController {
           user.ID} is as follow: \n \n ${err}`);
       return reply({status: false}).code(200);
     });
+  }
+
+  static retrieveKnowItems(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+
+    if (request.pre.userExist && !request.pre.forceUpdate) {
+      const language = request.language;
+      const options = {
+        include: [
+          {
+            model: modals.tags,
+            as: 'tags',
+            attributes: [
+              [
+                'title',
+                'default_title'],
+              [`${language ? `title_${language}` : `title`}`, 'title'],
+              [
+                'description',
+                'default_description'],
+              [`${language ? `description_${language}` : `description`}`, 'description']
+            ],
+          },
+          {
+            model: modals.users,
+            as: 'users',
+            attributes: ['id'],
+          }],
+        attributes: [
+          'id',
+          [
+            'title',
+            'default_title'],
+          [`${language ? `title_${language}` : `title`}`, 'title'],
+          [
+            'description',
+            'default_description'],
+          [`${language ? `description_${language}` : `description`}`, 'description'],
+          'short_url'],
+        order: [['created_at', 'desc']],
+      };
+
+      if (request.payload && request.payload.tag_id &&
+          request.payload.tag_id.length > 0) {
+        options.where = modals.sequelize.where(
+            modals.sequelize.literal('"tags"."id"'),
+            {$in: request.payload.tag_id});
+      }
+      return modals.knowItems.findAll(options).then((knowItems) => {
+        return reply({
+          status: true, items: knowItems.map((item) => {
+            item = item.toJSON();
+            item.imageUrl = `/knowitem/${item.id}/images`;
+            item.title = item.title || item.default_title;
+            item.description = item.description || item.default_description;
+            item.tags = item.tags.map((tagItem) => {
+              tagItem.title = tagItem.title || tagItem.default_title;
+              return tagItem;
+            });
+            item.hashTags = '';
+            item.tags.forEach((tagItem) => {
+              item.hashTags += `#${tagItem.title} `;
+            });
+            item.hashTags = item.hashTags.trim();
+            item.totalLikes = item.users.length;
+            item.isLikedByUser = item.users.findIndex(
+                (userItem) => userItem.id === (user.id || user.ID)) >= 0;
+            return item;
+          }),
+        }).code(200);
+      }).catch((err) => {
+        console.log(
+            `Error on ${new Date()} for user ${user.id ||
+            user.ID} is as follow: \n \n ${err}`);
+        return reply({status: false}).code(200);
+      });
+    } else if (!request.pre.userExist) {
+      return reply({
+        status: false,
+        message: 'Unauthorized',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(401);
+    } else {
+      return reply({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
+  static retrieveKnowItemUnAuthorized(request, reply) {
+    const supportedLanguages = config.SUPPORTED_LANGUAGES.split(',');
+    let language = (request.headers.language || '').split('-')[0];
+    language = supportedLanguages.indexOf(language) >= 0 ? language : '';
+    const options = {
+      include: [
+        {
+          model: modals.tags,
+          as: 'tags',
+          attributes: [
+            [
+              'title',
+              'default_title'],
+            [`${language ? `title_${language}` : `title`}`, 'title'],
+            [
+              'description',
+              'default_description'],
+            [`${language ? `description_${language}` : `description`}`, 'description']
+          ],
+        },
+        {
+          model: modals.users,
+          as: 'users',
+          attributes: ['id'],
+        }],
+      attributes: [
+        'id',
+        [
+          'title',
+          'default_title'],
+        [`${language ? `title_${language}` : `title`}`, 'title'],
+        [
+          'description',
+          'default_description'],
+        [`${language ? `description_${language}` : `description`}`, 'description'],
+        'short_url'],
+      order: [['created_at', 'desc']],
+    };
+
+    return modals.knowItems.findAll(options).then((knowItems) => {
+      return reply({
+        status: true, items: knowItems.map((item) => {
+          item = item.toJSON();
+          item.imageUrl = `/knowitem/${item.id}/images`;
+          item.title = item.title || item.default_title;
+          item.description = item.description || item.default_description;
+          item.tags = item.tags.map((tagItem) => {
+            tagItem.title = tagItem.title || tagItem.default_title;
+            return tagItem;
+          });
+          item.hashTags = '';
+          item.tags.forEach((tagItem) => {
+            item.hashTags += `#${tagItem.title} `;
+          });
+          item.hashTags = item.hashTags.trim();
+          item.totalLikes = item.users.length;
+          return item;
+        }),
+      }).code(200);
+    }).catch((err) => {
+      console.log(
+          `Error on ${new Date()} is as follow: \n \n ${err}`);
+      return reply({status: false}).code(200);
+    });
+  }
+
+  static retrieveKnowItemsById(request, reply) {
+    const supportedLanguages = config.SUPPORTED_LANGUAGES.split(',');
+    let language = (request.headers.language || '').split('-')[0];
+    language = supportedLanguages.indexOf(language) >= 0 ? language : '';
+    const options = {
+      include: [
+        {
+          model: modals.tags,
+          as: 'tags',
+          attributes: [
+            [
+              'title',
+              'default_title'],
+            [`${language ? `title_${language}` : `title`}`, 'title'],
+            [
+              'description',
+              'default_description'],
+            [`${language ? `description_${language}` : `description`}`, 'description']
+          ],
+        },
+        {
+          model: modals.users,
+          as: 'users',
+          attributes: ['id'],
+        }],
+      attributes: [
+        'id',
+        [
+          'title',
+          'default_title'],
+        [`${language ? `title_${language}` : `title`}`, 'title'],
+        [
+          'description',
+          'default_description'],
+        [`${language ? `description_${language}` : `description`}`, 'description'],
+        'short_url'],
+      order: [['created_at', 'desc']],
+    };
+
+    return modals.knowItems.findById(request.params.id, options).
+        then((knowItems) => {
+          knowItems.imageUrl = `/knowitem/${knowItems.id}/images`;
+          knowItems.hashTags = '';
+          knowItems.title = knowItems.title || knowItems.default_title;
+          knowItems.description = knowItems.description || knowItems.default_description;
+          knowItems.tags = knowItems.tags.map((tagItem) => {
+            tagItem.title = tagItem.title || tagItem.default_title;
+            return tagItem;
+          });
+          knowItems.tags.forEach((tagItem) => {
+            knowItems.hashTags += `#${tagItem.title} `;
+          });
+          knowItems.hashTags = knowItems.hashTags.trim();
+          knowItems.totalLikes = knowItems.users.length;
+          return reply({
+            status: true, item: knowItems,
+          }).code(200);
+        }).
+        catch((err) => {
+          console.log(
+              `Error on ${new Date()} is as follow: \n \n ${err}`);
+          return reply({status: false}).code(200);
+        });
+  }
+
+  static retrieveTags(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    if (request.pre.userExist && !request.pre.forceUpdate) {
+      const language = request.language;
+      return modals.tags.findAll({
+        attributes: [
+          'id',
+          [
+            'title',
+            'default_title'],
+          [`${language ? `title_${language}` : `title`}`, 'title'],
+          [
+            'description',
+            'default_description'],
+          [`${language ? `description_${language}` : `description`}`, 'description'],],
+        order: [['created_at', 'desc']],
+      }).then((tagItems) => {
+        return reply({
+          status: true, items: tagItems.map((item) => {
+            item = item.toJSON();
+            item.title = item.title || item.default_title;
+            item.description = item.description || item.default_description;
+            return item;
+          }),
+        }).code(200);
+      }).catch((err) => {
+        console.log(
+            `Error on ${new Date()} for user ${user.id ||
+            user.ID} is as follow: \n \n ${err}`);
+        return reply({status: false}).code(200);
+      });
+    } else if (!request.pre.userExist) {
+      return reply({
+        status: false,
+        message: 'Unauthorized',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(401);
+    } else {
+      return reply({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
+  static likeKnowItems(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+
+    if (request.pre.userExist && !request.pre.forceUpdate) {
+      return modals.know_user_likes.create({
+        user_id: user.id || user.ID,
+        know_item_id: request.params.id,
+      }).then(() => {
+        return reply({
+          status: true,
+          message: 'You have successfully liked this item.',
+        }).code(200);
+      }).catch((err) => {
+        console.log(
+            `Error on ${new Date()} for user ${user.id ||
+            user.ID} is as follow: \n \n ${err}`);
+        return reply({status: false}).code(200);
+      });
+    } else if (!request.pre.userExist) {
+      return reply({
+        status: false,
+        message: 'Unauthorized',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(401);
+    } else {
+      return reply({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
+  static disLikeKnowItems(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+
+    if (request.pre.userExist && !request.pre.forceUpdate) {
+      return modals.know_user_likes.destroy({
+        where: {
+          user_id: user.id || user.ID,
+          know_item_id: request.params.id,
+        },
+      }).then(() => {
+        return reply({
+          status: true,
+          message: 'You have successfully Un-liked this item.',
+        }).code(200);
+      }).catch((err) => {
+        console.log(
+            `Error on ${new Date()} for user ${user.id ||
+            user.ID} is as follow: \n \n ${err}`);
+        return reply({status: false}).code(200);
+      });
+    } else if (!request.pre.userExist) {
+      return reply({
+        status: false,
+        message: 'Unauthorized',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(401);
+    } else {
+      return reply({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
   }
 
   static intializeUserProduct(request, reply) {

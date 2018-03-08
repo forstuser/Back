@@ -24,8 +24,7 @@ class EHomeAdaptor {
 
   prepareEHomeResult(user, request) {
     return Promise.all([
-      this.retrieveUnProcessedBills(user),
-      this.prepareCategoryData(user, {}),
+      this.prepareCategoryData(user, request.language),
       this.retrieveRecentSearch(user),
       this.modals.mailBox.count({
         where: {
@@ -37,7 +36,7 @@ class EHomeAdaptor {
 
       let OtherCategory = null;
 
-      const categoryList = result[1].map((item) => {
+      const categoryList = result[0].map((item) => {
         const categoryData = item;
         if (categoryData.id === 9) {
           OtherCategory = categoryData;
@@ -70,7 +69,7 @@ class EHomeAdaptor {
         }
       }
 
-      const recentSearches = result[2].map(item => {
+      const recentSearches = result[1].map(item => {
         const searches = item.toJSON();
         return searches.searchValue;
       }).slice(0, 5);
@@ -78,10 +77,10 @@ class EHomeAdaptor {
       return {
         status: true,
         message: 'EHome restore successful',
-        notificationCount: result[3],
+        notificationCount: result[2],
         // categories: result[3],
         recentSearches,
-        unProcessedBills: result[0],
+        /*unProcessedBills: result[0],*/
         categoryList: newCategoryData,
         forceUpdate: request.pre.forceUpdate,
       };
@@ -145,7 +144,7 @@ class EHomeAdaptor {
     });
   }
 
-  prepareCategoryData(user) {
+  prepareCategoryData(user, language) {
     const categoryOption = {
       category_level: 1,
       status_type: 1,
@@ -162,7 +161,7 @@ class EHomeAdaptor {
     inProgressProductOption.status_type = 8;
 
     return Promise.all([
-      this.categoryAdaptor.retrieveCategories(categoryOption, false),
+      this.categoryAdaptor.retrieveCategories(categoryOption, false, language),
       this.productAdaptor.retrieveProductCounts(productOptions),
       this.productAdaptor.retrieveProductCounts(inProgressProductOption)]).
         then((results) => {

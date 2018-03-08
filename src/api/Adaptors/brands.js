@@ -93,6 +93,7 @@ class BrandAdaptor {
           [
             'brand_description',
             'description'],
+            'status_type',
           [
             this.modals.sequelize.fn('CONCAT', 'brands/',
                 this.modals.sequelize.col('"brands"."brand_id"'), '/reviews'),

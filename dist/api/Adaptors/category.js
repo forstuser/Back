@@ -24,18 +24,20 @@ var CategoryAdaptor = function () {
 
   _createClass(CategoryAdaptor, [{
     key: 'retrieveCategories',
-    value: function retrieveCategories(options, isBrandFormRequired) {
+    value: function retrieveCategories(options, isBrandFormRequired, language) {
       var _this = this;
 
       options.status_type = 1;
       var categoryData = void 0;
       return this.modals.categories.findAll({
         where: options,
-        attributes: [['category_id', 'id'], ['category_name', 'name'], ['ref_id', 'refId'], ['category_level', 'level'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.literal('"categories"."category_id"'), '/products'), 'categoryProductUrl'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.literal('"categories"."category_id"'), '/insights'), 'categoryInsightUrl'], [this.modals.sequelize.fn('CONCAT', '/categories/', this.modals.sequelize.literal('"categories"."category_id"'), '/images/'), 'categoryImageUrl']],
+        attributes: [['category_id', 'id'], ['category_name', 'default_name'], ['' + (language ? 'category_name_' + language : 'category_name'), 'name'], ['ref_id', 'refId'], ['category_level', 'level'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.literal('"categories"."category_id"'), '/products'), 'categoryProductUrl'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.literal('"categories"."category_id"'), '/insights'), 'categoryInsightUrl'], [this.modals.sequelize.fn('CONCAT', '/categories/', this.modals.sequelize.literal('"categories"."category_id"'), '/images/'), 'categoryImageUrl']],
         order: ['category_id']
       }).then(function (result) {
         categoryData = result.map(function (item) {
-          return item.toJSON();
+          var categoryItem = item.toJSON();
+          categoryItem.name = categoryItem.name || categoryItem.default_name;
+          return categoryItem;
         });
         var subCategoryOption = {
           status_type: 1,
@@ -51,7 +53,7 @@ var CategoryAdaptor = function () {
           subCategoryOption.category_id = excluded_category_id;
         }
 
-        return _this.retrieveSubCategories(subCategoryOption, isBrandFormRequired);
+        return _this.retrieveSubCategories(subCategoryOption, isBrandFormRequired, language);
       }).then(function (subCategories) {
         categoryData = categoryData.map(function (item) {
           item.subCategories = subCategories.filter(function (categoryItem) {
@@ -65,14 +67,14 @@ var CategoryAdaptor = function () {
     }
   }, {
     key: 'retrieveSubCategories',
-    value: function retrieveSubCategories(options, isBrandFormRequired) {
+    value: function retrieveSubCategories(options, isBrandFormRequired, language) {
       var _this2 = this;
 
       var categoryData = void 0;
       options.status_type = 1;
       return this.modals.categories.findAll({
         where: options,
-        attributes: [['category_id', 'id'], ['category_name', 'name'], ['ref_id', 'refId'], 'dual_warranty_item', ['category_level', 'level'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.literal('ref_id'), '/products?subCategoryId=', this.modals.sequelize.literal('category_id')), 'categoryProductUrl'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.literal('ref_id'), '/insights?subCategoryId=', this.modals.sequelize.literal('category_id')), 'categoryInsightUrl'], [this.modals.sequelize.fn('CONCAT', '/categories/', this.modals.sequelize.literal('category_id'), '/images/'), 'categoryImageUrl']],
+        attributes: [['category_id', 'id'], ['category_name', 'default_name'], ['' + (language ? 'category_name_' + language : 'category_name'), 'name'], ['ref_id', 'refId'], 'dual_warranty_item', ['category_level', 'level'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.literal('ref_id'), '/products?subCategoryId=', this.modals.sequelize.literal('category_id')), 'categoryProductUrl'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.literal('ref_id'), '/insights?subCategoryId=', this.modals.sequelize.literal('category_id')), 'categoryInsightUrl'], [this.modals.sequelize.fn('CONCAT', '/categories/', this.modals.sequelize.literal('category_id'), '/images/'), 'categoryImageUrl']],
         order: ['category_id']
       }).then(function (result) {
         categoryData = result.map(function (item) {

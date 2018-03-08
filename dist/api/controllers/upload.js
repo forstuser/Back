@@ -1039,6 +1039,54 @@ var UploadController = function () {
       }
     }
   }, {
+    key: 'retrieveProviderImage',
+    value: function retrieveProviderImage(request, reply) {
+      if (!request.pre.forceUpdate) {
+        var fsImplBrand = new _s3fs2.default(_main2.default.AWS.S3.BUCKET + '/' + _main2.default.AWS.S3.PROVIDER_IMAGE, _main2.default.AWS.ACCESS_DETAILS);
+        fsImplBrand.readFile(request.params.id + '.png', 'utf8').then(function (fileResult) {
+          return reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', 'attachment; filename=' + result.CopyName);
+        }).catch(function (err) {
+          console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+          reply({
+            status: false,
+            message: 'Unable to retrieve image',
+            err: err,
+            forceUpdate: request.pre.forceUpdate
+          });
+        });
+      } else {
+        reply({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    }
+  }, {
+    key: 'retrieveKnowItemImage',
+    value: function retrieveKnowItemImage(request, reply) {
+      if (!request.pre.forceUpdate) {
+        var fsImplBrand = new _s3fs2.default(_main2.default.AWS.S3.BUCKET + '/' + _main2.default.AWS.S3.KNOW_ITEM_IMAGE, _main2.default.AWS.ACCESS_DETAILS);
+        fsImplBrand.readFile(request.params.id + '.png', 'utf8').then(function (fileResult) {
+          return reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', 'attachment; filename=' + result.CopyName);
+        }).catch(function (err) {
+          console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+          reply({
+            status: false,
+            message: 'Unable to retrieve image',
+            err: err,
+            forceUpdate: request.pre.forceUpdate
+          });
+        });
+      } else {
+        reply({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    }
+  }, {
     key: 'retrieveUserImage',
     value: function retrieveUserImage(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);

@@ -259,6 +259,7 @@ class ProductController {
       });
     }
   }
+
   static updateUserReview(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (!request.pre.userExist) {

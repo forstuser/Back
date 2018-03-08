@@ -65,7 +65,7 @@ var EHomeAdaptor = function () {
   _createClass(EHomeAdaptor, [{
     key: 'prepareEHomeResult',
     value: function prepareEHomeResult(user, request) {
-      return Promise.all([this.retrieveUnProcessedBills(user), this.prepareCategoryData(user, {}), this.retrieveRecentSearch(user), this.modals.mailBox.count({
+      return Promise.all([this.prepareCategoryData(user, request.language), this.retrieveRecentSearch(user), this.modals.mailBox.count({
         where: {
           user_id: user.id || user.ID,
           status_id: 4
@@ -74,7 +74,7 @@ var EHomeAdaptor = function () {
 
         var OtherCategory = null;
 
-        var categoryList = result[1].map(function (item) {
+        var categoryList = result[0].map(function (item) {
           var categoryData = item;
           if (categoryData.id === 9) {
             OtherCategory = categoryData;
@@ -106,7 +106,7 @@ var EHomeAdaptor = function () {
           }
         }
 
-        var recentSearches = result[2].map(function (item) {
+        var recentSearches = result[1].map(function (item) {
           var searches = item.toJSON();
           return searches.searchValue;
         }).slice(0, 5);
@@ -114,10 +114,10 @@ var EHomeAdaptor = function () {
         return {
           status: true,
           message: 'EHome restore successful',
-          notificationCount: result[3],
+          notificationCount: result[2],
           // categories: result[3],
           recentSearches: recentSearches,
-          unProcessedBills: result[0],
+          /*unProcessedBills: result[0],*/
           categoryList: newCategoryData,
           forceUpdate: request.pre.forceUpdate
         };
@@ -167,7 +167,7 @@ var EHomeAdaptor = function () {
     }
   }, {
     key: 'prepareCategoryData',
-    value: function prepareCategoryData(user) {
+    value: function prepareCategoryData(user, language) {
       var categoryOption = {
         category_level: 1,
         status_type: 1
@@ -183,7 +183,7 @@ var EHomeAdaptor = function () {
       _lodash2.default.assignIn(inProgressProductOption, productOptions);
       inProgressProductOption.status_type = 8;
 
-      return Promise.all([this.categoryAdaptor.retrieveCategories(categoryOption, false), this.productAdaptor.retrieveProductCounts(productOptions), this.productAdaptor.retrieveProductCounts(inProgressProductOption)]).then(function (results) {
+      return Promise.all([this.categoryAdaptor.retrieveCategories(categoryOption, false, language), this.productAdaptor.retrieveProductCounts(productOptions), this.productAdaptor.retrieveProductCounts(inProgressProductOption)]).then(function (results) {
         return results[0].map(function (categoryItem) {
           var category = categoryItem;
           var products = _lodash2.default.chain(results[1]).filter(function (productItem) {
