@@ -4,7 +4,6 @@
 import uuid from 'uuid';
 import validator from 'validator';
 import NotificationAdaptor from './notification';
-import _ from 'lodash';
 
 /**
  * This is being used to validate email address.
@@ -45,7 +44,6 @@ class UserAdaptor {
       return false;
     });
   }
-
   /**
    * This is for getting user login or register for OTP and true caller
    * @param whereObject
@@ -53,18 +51,9 @@ class UserAdaptor {
    * @returns {Promise.<Model, created>}
    */
   loginOrRegister(whereObject, defaultObject) {
-    if (!whereObject.mobile_no) {
-      whereObject = _.omit(whereObject, 'mobile_no');
-    }
-    if (defaultObject.fb_id) {
-      whereObject.$or = [
-        {
-          fb_id: defaultObject.fb_id,
-        }, {fb_id: null}];
-    }
-
-    return this.modals.users.findOne({
+    return this.modals.users.findCreateFind({
       where: whereObject,
+      defaults: defaultObject,
       attributes: [
         'id',
         [
@@ -75,33 +64,7 @@ class UserAdaptor {
         'email',
         'email_verified',
         'email_secret',
-        'image_name',
       ],
-    }).then((result) => {
-
-      if (!result) {
-        return this.modals.users.findCreateFind({
-          where: whereObject,
-          defaults: defaultObject,
-          attributes: [
-            'id',
-            [
-              'full_name',
-              'name',
-            ],
-            'mobile_no',
-            'email',
-            'email_verified',
-            'email_secret',
-            'image_name',
-          ],
-        });
-      }
-      result.updateAttributes({
-        fb_id: defaultObject.fb_id,
-      });
-
-      return [result, true];
     });
   }
 

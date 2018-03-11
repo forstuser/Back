@@ -66,7 +66,6 @@ var UserAdaptor = function () {
         return false;
       });
     }
-
     /**
      * This is for getting user login or register for OTP and true caller
      * @param whereObject
@@ -77,34 +76,10 @@ var UserAdaptor = function () {
   }, {
     key: 'loginOrRegister',
     value: function loginOrRegister(whereObject, defaultObject) {
-      var _this = this;
-
-      if (!whereObject.mobile_no) {
-        whereObject = _lodash2.default.omit(whereObject, 'mobile_no');
-      }
-      if (defaultObject.fb_id) {
-        whereObject.$or = [{
-          fb_id: defaultObject.fb_id
-        }, { fb_id: null }];
-      }
-
-      return this.modals.users.findOne({
+      return this.modals.users.findCreateFind({
         where: whereObject,
-        attributes: ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', 'image_name']
-      }).then(function (result) {
-
-        if (!result) {
-          return _this.modals.users.findCreateFind({
-            where: whereObject,
-            defaults: defaultObject,
-            attributes: ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', 'image_name']
-          });
-        }
-        result.updateAttributes({
-          fb_id: defaultObject.fb_id
-        });
-
-        return [result, true];
+        defaults: defaultObject,
+        attributes: ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret']
       });
     }
 
@@ -209,7 +184,7 @@ var UserAdaptor = function () {
   }, {
     key: 'updateUserProfile',
     value: function updateUserProfile(user, request, reply) {
-      var _this2 = this;
+      var _this = this;
 
       var payload = request.payload;
       var emailID = null;
@@ -249,14 +224,14 @@ var UserAdaptor = function () {
               return existingItem.address_type === item.address_type;
             });
             if (existingAddress) {
-              return _this2.updateUserAddress(item, {
+              return _this.updateUserAddress(item, {
                 where: {
                   user_id: user.id || user.ID,
                   id: existingAddress.id
                 }
               });
             } else {
-              return _this2.createUserAddress(item);
+              return _this.createUserAddress(item);
             }
           });
         }
@@ -271,7 +246,7 @@ var UserAdaptor = function () {
           userUpdates.email_verified = result.email_verified || false;
         }
 
-        userPromise.push(_this2.updateUserDetail(userUpdates, filterOptions));
+        userPromise.push(_this.updateUserDetail(userUpdates, filterOptions));
 
         return Promise.all(userPromise);
       }).then(function () {

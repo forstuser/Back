@@ -252,7 +252,7 @@ var AmcAdaptor = function () {
         }
 
         return Promise.all([_this2.modals.mailBox.create({
-          title: 'User tried to Delete AMC ' + id,
+          title: 'User Deleted AMC #' + id,
           job_id: itemDetail.job_id,
           bill_product_id: itemDetail.product_id,
           notification_type: 100
@@ -273,7 +273,7 @@ var AmcAdaptor = function () {
       return this.modals.amcs.findById(id).then(function (result) {
         if (result) {
           return Promise.all([_this3.modals.mailBox.create({
-            title: 'User tried to Delete AMC ' + id,
+            title: 'User Deleted AMC #' + id,
             job_id: result.job_id,
             bill_product_id: result.product_id,
             notification_type: 100

@@ -375,7 +375,7 @@ class AmcAdaptor {
       }
 
       return Promise.all([this.modals.mailBox.create({
-        title: `User tried to Delete AMC ${id}`,
+        title: `User Deleted AMC #${id}`,
         job_id: itemDetail.job_id,
         bill_product_id: itemDetail.product_id,
         notification_type: 100
@@ -393,7 +393,7 @@ class AmcAdaptor {
     return this.modals.amcs.findById(id).then((result) => {
       if (result) {
         return Promise.all([this.modals.mailBox.create({
-          title: `User tried to Delete AMC ${id}`,
+          title: `User Deleted AMC #${id}`,
           job_id: result.job_id,
           bill_product_id: result.product_id,
           notification_type: 100

@@ -123,7 +123,6 @@ var loginOrRegisterUser = function loginOrRegisterUser(parameters) {
     }
 
     updatedUser = userData[0].toJSON();
-
     if (!updatedUser.email_verified && updatedUser.email) {
       _notification2.default.sendVerificationMail(updatedUser.email, updatedUser);
     }
@@ -345,41 +344,6 @@ var UserController = function () {
               reply: reply
             }).catch(function (err) {
               console.log('Error on ' + new Date() + ' for mobile no: ' + trueObject.PhoneNo + ' is as follow: \n \n ' + err);
-              replyObject.status = false;
-              replyObject.message = 'Issue in updating data';
-              replyObject.error = err;
-              return reply(replyObject).code(401);
-            });
-          }
-        } else if (request.payload.BBLogin_Type === 3) {
-          var fbSecret = request.payload.TrueSecret;
-
-          if (fbSecret) {
-            (0, _requestPromise2.default)({
-              uri: _main2.default.FB_GRAPH_ROUTE,
-              qs: {
-                access_token: fbSecret
-              },
-              json: true
-            }).then(function (fbResult) {
-              userWhere.email = fbResult.email;
-              userInput.email = fbResult.email;
-              userInput.full_name = fbResult.name;
-              userInput.email_secret = _uuid2.default.v4();
-              userInput.mobile_no = userInput.mobile_no || fbResult.mobile_phone;
-              userWhere.mobile_no = userInput.mobile_no || fbResult.mobile_phone;
-              userInput.fb_id = fbResult.id;
-              userInput.user_status_type = 1;
-              fbResult.ImageLink = fbResult.picture.data.url;
-              return loginOrRegisterUser({
-                userWhere: userWhere,
-                userInput: userInput,
-                trueObject: fbResult,
-                request: request,
-                reply: reply
-              });
-            }).catch(function (err) {
-              console.log('Error on ' + new Date() + ' for access token: ' + fbSecret + ' is as follow: \n \n ' + err);
               replyObject.status = false;
               replyObject.message = 'Issue in updating data';
               replyObject.error = err;

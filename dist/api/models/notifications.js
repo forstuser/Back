@@ -14,7 +14,8 @@ exports.default = function (sequelize, DataTypes) {
       autoIncrement: true
     },
     user_id: {
-      type: DataTypes.INTEGER
+      type: DataTypes.INTEGER,
+      allowNull: false
     },
     bill_product_id: {
       type: DataTypes.INTEGER

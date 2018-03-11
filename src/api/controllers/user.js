@@ -64,7 +64,6 @@ let loginOrRegisterUser = parameters => {
     }
 
     updatedUser = userData[0].toJSON();
-
     if ((!updatedUser.email_verified) && (updatedUser.email)) {
       NotificationAdaptor.sendVerificationMail(updatedUser.email,
           updatedUser);
@@ -307,42 +306,6 @@ class UserController {
           }).catch((err) => {
             console.log(
                 `Error on ${new Date()} for mobile no: ${trueObject.PhoneNo} is as follow: \n \n ${err}`);
-            replyObject.status = false;
-            replyObject.message = 'Issue in updating data';
-            replyObject.error = err;
-            return reply(replyObject).code(401);
-          });
-        }
-      } else if (request.payload.BBLogin_Type === 3) {
-        const fbSecret = request.payload.TrueSecret;
-
-        if (fbSecret) {
-          requestPromise({
-            uri: config.FB_GRAPH_ROUTE,
-            qs: {
-              access_token: fbSecret,
-            },
-            json: true,
-          }).then((fbResult) => {
-            userWhere.email = fbResult.email;
-            userInput.email = fbResult.email;
-            userInput.full_name = fbResult.name;
-            userInput.email_secret = uuid.v4();
-            userInput.mobile_no = userInput.mobile_no || fbResult.mobile_phone;
-            userWhere.mobile_no = userInput.mobile_no || fbResult.mobile_phone;
-            userInput.fb_id = fbResult.id;
-            userInput.user_status_type = 1;
-            fbResult.ImageLink = fbResult.picture.data.url;
-            return loginOrRegisterUser({
-              userWhere,
-              userInput,
-              trueObject: fbResult,
-              request,
-              reply,
-            });
-          }).catch((err) => {
-            console.log(
-                `Error on ${new Date()} for access token: ${fbSecret} is as follow: \n \n ${err}`);
             replyObject.status = false;
             replyObject.message = 'Issue in updating data';
             replyObject.error = err;
