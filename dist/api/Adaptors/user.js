@@ -11,6 +11,10 @@ var _uuid = require('uuid');
 
 var _uuid2 = _interopRequireDefault(_uuid);
 
+var _lodash = require('lodash');
+
+var _lodash2 = _interopRequireDefault(_lodash);
+
 var _validator = require('validator');
 
 var _validator2 = _interopRequireDefault(_validator);
@@ -18,10 +22,6 @@ var _validator2 = _interopRequireDefault(_validator);
 var _notification = require('./notification');
 
 var _notification2 = _interopRequireDefault(_notification);
-
-var _lodash = require('lodash');
-
-var _lodash2 = _interopRequireDefault(_lodash);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 

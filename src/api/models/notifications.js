@@ -11,7 +11,6 @@ export default (sequelize, DataTypes) => {
     },
     user_id: {
       type: DataTypes.INTEGER,
-      allowNull: false,
     },
     bill_product_id: {
       type: DataTypes.INTEGER,

@@ -68,20 +68,6 @@ class WarrantyAdaptor {
           ],
         },
         {
-          model: this.modals.onlineSellers,
-          as: 'onlineSellers',
-          attributes: [
-            ['sid', 'id'],
-            [
-              'seller_name',
-              'sellerName'],
-            'url',
-            'gstin',
-            'contact',
-            'email'],
-          required: false,
-        },
-        {
           model: this.modals.insuranceBrands,
           as: 'provider',
           attributes: [
@@ -93,38 +79,6 @@ class WarrantyAdaptor {
             [
               'reg_no',
               'regNo'],
-            'url',
-            'gstin',
-            ['contact_no', 'contact'],
-            'email',
-            'address',
-            'city',
-            'state',
-            'pincode',
-            'latitude',
-            'longitude'],
-          required: false,
-        },
-        {
-          model: this.modals.offlineSellers,
-          as: 'sellers',
-          attributes: [
-            ['sid', 'id'],
-            [
-              'seller_name',
-              'sellerName'],
-            [
-              'owner_name',
-              'ownerName'],
-            [
-              'pan_no',
-              'panNo'],
-            [
-              'reg_no',
-              'regNo'],
-            [
-              'is_service',
-              'isService'],
             'url',
             'gstin',
             ['contact_no', 'contact'],
