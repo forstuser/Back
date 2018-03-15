@@ -17,6 +17,7 @@ import UserController from '../api/controllers/user';
 import PassportService from '../config/passport';
 import AppVersionHelper from '../helpers/appVersion';
 import ProductItemController from '../api/controllers/productItem';
+import CalendarServiceController from '../api/controllers/calendarServices';
 
 let User;
 let appVersionHelper;
@@ -167,7 +168,6 @@ function prepareBrandRoutes(brandController, brandRoutes) {
   }
 }
 
-// NO APP VERSION CHECK
 function prepareCategoryRoutes(categoryController, categoryRoutes) {
   if (categoryController) {
     categoryRoutes.push({
@@ -1768,6 +1768,228 @@ function prepareProductItemRoutes(productItemController, productItemRoutes) {
   }
 }
 
+function prepareCalendarServiceRoutes(calendarController, calendarRoutes) {
+//= ========================
+  // Product Routes
+  //= ========================
+
+  if (calendarController) {
+    calendarRoutes.push({
+      method: 'GET',
+      path: '/calendar/referencedata',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: CalendarServiceController.retrieveCalendarServices,
+        description: 'Get Calender Service as Reference Data.',
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              {code: 200, message: 'Successful'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
+            ],
+          },
+        },
+      },
+    });
+
+    calendarRoutes.push({
+      method: 'POST',
+      path: '/calendar/{service_id}/items',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: CalendarServiceController.createItem,
+        description: 'Create Calendar Item.',
+        validate: {
+          payload: {
+            product_name: [joi.string(), joi.allow(null)],
+            provider_name: [joi.string(), joi.allow(null)],
+            wages_type: [joi.number(), joi.allow(null)],
+            selected_days: [joi.array().items(joi.number()).required().min(0), joi.allow(null)],
+            unit_price: joi.number().required(),
+            quantity: [joi.number(), joi.allow(null)],
+            absent_dates: [joi.array().items(joi.string()).required().min(0), joi.allow(null)],
+            effective_date: joi.string().required(),
+          },
+        },
+      },
+    });
+
+    calendarRoutes.push({
+      method: 'GET',
+      path: '/calendar/items',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: CalendarServiceController.retrieveCalendarItemList,
+        description: 'Retrieve List of Calendar Items.',
+      },
+    });
+
+    calendarRoutes.push({
+      method: 'GET',
+      path: '/calendar/items/{id}',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: CalendarServiceController.retrieveCalendarItem,
+        description: 'Retrieve Calendar Item by id.',
+      },
+    });
+
+    calendarRoutes.push({
+      method: 'POST',
+      path: '/calendar/items/{id}/calc',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: CalendarServiceController.addServiceCalc,
+        description: 'Add new calculation detail for calendar services.',
+        validate: {
+          payload: {
+            unit_price: joi.number().required(),
+            quantity: [joi.number(), joi.allow(null)],
+            effective_date: joi.string().required(),
+          },
+        },
+      },
+    });
+
+    calendarRoutes.push({
+      method: 'PUT',
+      path: '/calendar/items/{id}',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: ProductController.updateProduct,
+        description: 'Update Product.',
+        validate: {
+          payload: {
+            product_name: [joi.string(), joi.allow(null)],
+            provider_name: [joi.string(), joi.allow(null)],
+            wages_type: [joi.number(), joi.allow(null)],
+            selected_days: [joi.array().items(joi.number()).required().min(0), joi.allow(null)],
+            unit_price: joi.number().required(),
+            quantity: [joi.number(), joi.allow(null)],
+            absent_dates: [joi.array().items(joi.string()).required().min(0), joi.allow(null)],
+            effective_date: joi.string().required(),
+          },
+        },
+      },
+    });
+
+    calendarRoutes.push({
+      method: 'DELETE',
+      path: '/calendar/items/{id}',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {
+            method: appVersionHelper.checkAppVersion,
+            assign: 'forceUpdate',
+          },
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: ProductController.deleteProduct,
+        description: 'Delete Product.',
+      },
+    });
+
+    calendarRoutes.push({
+      method: 'PUT',
+      path: '/calendar/items/{ref_id}/payments/{id}/absent',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {
+            method: appVersionHelper.checkAppVersion,
+            assign: 'forceUpdate',
+          },
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: CalendarServiceController.markAbsent,
+        description: 'Mark Absent.',
+        validate: {
+          payload: {
+            absent_date: joi.string().required()
+          },
+        },
+      },
+    });
+
+    calendarRoutes.push({
+      method: 'PUT',
+      path: '/calendar/items/{ref_id}/payments/{id}/present',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {
+            method: appVersionHelper.checkAppVersion,
+            assign: 'forceUpdate',
+          },
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: CalendarServiceController.markPresent,
+        description: 'Mark Absent.',
+        validate: {
+          payload: {
+            absent_date: joi.string().required()
+          },
+        },
+      },
+    });
+  }
+}
+
 export default (app, modals) => {
   appVersionHelper = new AppVersionHelper(modals);
   User = modals.users;
@@ -1787,8 +2009,9 @@ export default (app, modals) => {
   const searchRoutes = [];
   const generalRoutes = [];
   const repairRoutes = [];
-
+  const calendarRoutes = [];
   const uploadFileRoute = [];
+
   const userController = new UserController(modals);
   const categoryController = new CategoryController(modals);
   const brandController = new BrandController(modals);
@@ -1800,6 +2023,7 @@ export default (app, modals) => {
   const searchController = new SearchController(modals);
   const generalController = new GeneralController(modals);
   const repairController = new ProductItemController(modals);
+  const calendarServiceController = new CalendarServiceController(modals);
 
   prepareAuthRoutes(userController, authRoutes);
 
@@ -1820,6 +2044,8 @@ export default (app, modals) => {
   prepareGeneralRoutes(generalController, generalRoutes);
 
   prepareProductItemRoutes(repairController, repairRoutes);
+
+  prepareCalendarServiceRoutes(calendarServiceController, calendarRoutes);
 
   if (searchController) {
     searchRoutes.push({
@@ -1865,5 +2091,6 @@ export default (app, modals) => {
     ...searchRoutes,
     ...generalRoutes,
     ...repairRoutes,
+    ...calendarRoutes,
   ]);
 };

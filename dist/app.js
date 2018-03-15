@@ -91,7 +91,8 @@ _models2.default.sequelize.sync().then(function () {
     register: _hapiCors2.default,
     options: {
       origins: ['*'],
-      methods: ['POST, GET, OPTIONS', 'PUT', 'DELETE']
+      methods: ['POST, GET, OPTIONS', 'PUT', 'DELETE'],
+      headers: ['Accept', 'Content-Type', 'Authorization', 'language']
     }
   }], function (err) {
     if (!err) {

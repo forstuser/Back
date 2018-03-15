@@ -1687,7 +1687,7 @@ class ProductAdaptor {
 
   updateProductDetails(productBody, metadataBody, otherItems, productId) {
     return Promise.all([
-      productBody.brand_id ?
+      productBody.brand_id && productBody.brand_id === 0 ?
           this.modals.products.count({
             where: {
               id: productId,
@@ -1743,7 +1743,7 @@ class ProductAdaptor {
           }) :
           undefined;
 
-      const brandPromise = !productBody.brand_id &&
+      const brandPromise = !productBody.brand_id  && productBody.brand_id !== 0 &&
       productBody.brand_name ?
           this.brandAdaptor.findCreateBrand({
             status_type: 11,
@@ -1831,7 +1831,7 @@ class ProductAdaptor {
             product = !product.seller_id ?
                 _.omit(product, 'seller_id') :
                 product;
-            product = !product.brand_id ? _.omit(product, 'brand_id') : product;
+            product = !product.brand_id && product.brand_id !== 0 ? _.omit(product, 'brand_id') : product;
             const brandModelPromise = product.model ? [
               this.modals.brandDropDown.findOne({
                 where: {
@@ -1894,10 +1894,16 @@ class ProductAdaptor {
                       },
                       $or: {
                         due_in_days: {
-                          $gte: diffDays,
+                          $or: {
+                            $not: null,
+                            $gte: diffDays,
+                          }
                         },
                         due_in_months: {
-                          $gte: diffMonths,
+                          $or: {
+                            $not: null,
+                            $gte: diffMonths,
+                          }
                         },
                       },
                       status_type: 1,

@@ -968,7 +968,7 @@ var ProductAdaptor = function () {
     value: function updateProductDetails(productBody, metadataBody, otherItems, productId) {
       var _this6 = this;
 
-      return Promise.all([productBody.brand_id ? this.modals.products.count({
+      return Promise.all([productBody.brand_id && productBody.brand_id === 0 ? this.modals.products.count({
         where: {
           id: productId,
           brand_id: productBody.brand_id,
@@ -1008,7 +1008,7 @@ var ProductAdaptor = function () {
           name: otherItems.warranty.extended_provider_name
         }) : undefined;
 
-        var brandPromise = !productBody.brand_id && productBody.brand_name ? _this6.brandAdaptor.findCreateBrand({
+        var brandPromise = !productBody.brand_id && productBody.brand_id !== 0 && productBody.brand_name ? _this6.brandAdaptor.findCreateBrand({
           status_type: 11,
           brand_name: productBody.brand_name,
           category_id: productBody.category_id,
@@ -1072,7 +1072,7 @@ var ProductAdaptor = function () {
           product = !product.document_number ? _lodash2.default.omit(product, 'document_number') : product;
           product = !product.document_date ? _lodash2.default.omit(product, 'document_date') : product;
           product = !product.seller_id ? _lodash2.default.omit(product, 'seller_id') : product;
-          product = !product.brand_id ? _lodash2.default.omit(product, 'brand_id') : product;
+          product = !product.brand_id && product.brand_id !== 0 ? _lodash2.default.omit(product, 'brand_id') : product;
           var brandModelPromise = product.model ? [_this6.modals.brandDropDown.findOne({
             where: {
               brand_id: product.brand_id,
@@ -1127,10 +1127,16 @@ var ProductAdaptor = function () {
                 },
                 $or: {
                   due_in_days: {
-                    $gte: diffDays
+                    $or: {
+                      $not: null,
+                      $gte: diffDays
+                    }
                   },
                   due_in_months: {
-                    $gte: diffMonths
+                    $or: {
+                      $not: null,
+                      $gte: diffMonths
+                    }
                   }
                 },
                 status_type: 1

@@ -57,6 +57,7 @@ models.sequelize.sync().then(() => {
       options: {
         origins: ['*'],
         methods: ['POST, GET, OPTIONS', 'PUT', 'DELETE'],
+        headers: ['Accept', 'Content-Type', 'Authorization', 'language']
       },
     }], (err) => {
     if (!err) {

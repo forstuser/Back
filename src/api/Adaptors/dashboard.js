@@ -88,19 +88,18 @@ class DashboardAdaptor {
 
         return insightItem;
       });
-      const insightItems = shared.retrieveDaysInsight(distinctInsight);
 
-      const insightResult = insightItems && insightItems.length > 0 ? {
-        startDate: moment.utc().subtract(6, 'd').startOf('d'),
+      const insightResult = distinctInsight && distinctInsight.length > 0 ? {
+        startDate: moment.utc().startOf('M'),
         endDate: moment.utc(),
-        totalSpend: shared.sumProps(insightItems, 'value'),
-        totalDays: 7,
-        insightData: insightItems,
+        totalSpend: shared.sumProps(distinctInsight, 'value'),
+        totalDays: moment.utc().endOf('d').diff(moment.utc().startOf('M'), 'days'),
+        insightData: distinctInsight,
       } : {
-        startDate: moment.utc().subtract(6, 'd').startOf('d'),
+        startDate: moment.utc().startOf('M'),
         endDate: moment.utc(),
         totalSpend: 0,
-        totalDays: 7,
+        totalDays: moment.utc().endOf('d').diff(moment.utc().startOf('M'), 'days'),
         insightData,
       };
 
@@ -420,7 +419,7 @@ class DashboardAdaptor {
         user_id: user.id || user.ID,
         document_date: {
           $lte: moment.utc(),
-          $gte: moment.utc().subtract(6, 'd').startOf('d'),
+          $gte: moment.utc().startOf('M'),
         },
       }),
       this.amcAdaptor.retrieveAMCs({
@@ -428,7 +427,7 @@ class DashboardAdaptor {
         user_id: user.id || user.ID,
         document_date: {
           $lte: moment.utc(),
-          $gte: moment.utc().subtract(6, 'd').startOf('d'),
+          $gte: moment.utc().startOf('M'),
         },
       }),
       this.insuranceAdaptor.retrieveInsurances({
@@ -436,7 +435,7 @@ class DashboardAdaptor {
         user_id: user.id || user.ID,
         document_date: {
           $lte: moment.utc(),
-          $gte: moment.utc().subtract(6, 'd').startOf('d'),
+          $gte: moment.utc().startOf('M'),
         },
       }),
       this.repairAdaptor.retrieveRepairs({
@@ -444,7 +443,7 @@ class DashboardAdaptor {
         user_id: user.id || user.ID,
         document_date: {
           $lte: moment.utc(),
-          $gte: moment.utc().subtract(6, 'd').startOf('d'),
+          $gte: moment.utc().startOf('M'),
         },
       }),
       this.warrantyAdaptor.retrieveWarranties({
@@ -452,7 +451,7 @@ class DashboardAdaptor {
         user_id: user.id || user.ID,
         document_date: {
           $lte: moment.utc(),
-          $gte: moment.utc().subtract(6, 'd').startOf('d'),
+          $gte: moment.utc().startOf('M'),
         },
       }),
       this.pucAdaptor.retrievePUCs({
@@ -460,7 +459,7 @@ class DashboardAdaptor {
         user_id: user.id || user.ID,
         document_date: {
           $lte: moment.utc(),
-          $gte: moment.utc().subtract(6, 'd').startOf('d'),
+          $gte: moment.utc().startOf('M'),
         },
       })]).
         then((results) => [

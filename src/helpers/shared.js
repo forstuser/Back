@@ -140,6 +140,71 @@ function retrieveDaysInsight(distinctInsight) {
   }));
 }
 
+export function preparePaymentDetails(parameters) {
+  let {currentYear, monthItem, effectiveDate, productBody, serviceCalculationBody, user} = parameters;
+  const monthStartDate = moment([currentYear, monthItem, 1]);
+  let month_end_date = moment([currentYear, 0, 31]).month(monthItem);
+  let end_date = moment([currentYear, 0, 31]).month(monthItem);
+  let start_date = effectiveDate;
+  if (monthStartDate.diff(effectiveDate, 'days') > 0) {
+    start_date = monthStartDate;
+  }
+
+  if (end_date.diff(moment(), 'days') > 0) {
+    end_date = moment().endOf('days');
+  }
+
+  const daysInMonth = moment().
+      isoWeekdayCalc(start_date, month_end_date, productBody.selected_days);
+  const daysInPeriod = moment().
+      isoWeekdayCalc(start_date, end_date, productBody.selected_days);
+  let unit_price = serviceCalculationBody.unit_price;
+  if (productBody.wages_type === 1) {
+    unit_price = unit_price / daysInMonth;
+  }
+
+  let total_amount = unit_price * daysInPeriod;
+  if (serviceCalculationBody.quantity) {
+    total_amount = serviceCalculationBody.quantity * total_amount;
+  }
+
+  return {
+    start_date,
+    end_date,
+    updated_by: user.id || user.ID,
+    status_type: 1,
+    total_amount,
+    total_days: daysInPeriod,
+    amount_paid: 0,
+  };
+}
+
+export function monthlyPaymentCalc(parameters) {
+  let {currentMth, effectiveMth, effectiveDate, productBody, serviceCalculationBody, user, currentYear} = parameters;
+  const monthDiff = currentMth >= effectiveMth ?
+      currentMth - effectiveMth :
+      null;
+  const monthArr = [];
+  if (monthDiff) {
+    for (let i = 0; i <= monthDiff; i++) {
+      monthArr.push(effectiveMth + i);
+    }
+  } else {
+    monthArr.push(effectiveMth);
+  }
+
+  return monthArr.map((monthItem) => {
+    return preparePaymentDetails({
+      currentYear,
+      monthItem,
+      effectiveDate,
+      productBody,
+      serviceCalculationBody,
+      user,
+    });
+  });
+}
+
 export function retrieveMailTemplate(user, templateType) {
   switch (templateType) {
     case 0: {
@@ -351,7 +416,8 @@ export function retrieveMailTemplate(user, templateType) {
                             <td style="padding: 20px; font-family: sans-serif; font-size: 15px; line-height: 20px; color: #555555;">
                                 <p class="main-class"
                                    style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0; font-family: 'Quicksand', sans-serif;font-weight: 500;letter-spacing: 0.3px;text-align: left;color: #3b3b3b; padding: 10px 0;">
-                                    Dear ${user.name || user.full_name || 'User'},
+                                    Dear ${user.name || user.full_name ||
+      'User'},
                                     </p>
                                 <p class="main-class"
                                    style="-webkit-margin-before: 0; -webkit-margin-after: 0;margin:0 auto;padding-top: 10px; padding-bottom: 15px;">

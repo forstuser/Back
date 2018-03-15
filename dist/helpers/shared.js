@@ -4,6 +4,8 @@
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
+exports.preparePaymentDetails = preparePaymentDetails;
+exports.monthlyPaymentCalc = monthlyPaymentCalc;
 exports.retrieveMailTemplate = retrieveMailTemplate;
 
 var _dateformat = require('dateformat');
@@ -169,6 +171,80 @@ function retrieveDaysInsight(distinctInsight) {
             purchaseDate: _moment2.default.utc(weekItem.purchaseDate, _moment2.default.ISO_8601),
             purchaseDay: _moment2.default.utc(weekItem.purchaseDate, _moment2.default.ISO_8601).format('ddd')
         };
+    });
+}
+
+function preparePaymentDetails(parameters) {
+    var currentYear = parameters.currentYear,
+        monthItem = parameters.monthItem,
+        effectiveDate = parameters.effectiveDate,
+        productBody = parameters.productBody,
+        serviceCalculationBody = parameters.serviceCalculationBody,
+        user = parameters.user;
+
+    var monthStartDate = (0, _moment2.default)([currentYear, monthItem, 1]);
+    var month_end_date = (0, _moment2.default)([currentYear, 0, 31]).month(monthItem);
+    var end_date = (0, _moment2.default)([currentYear, 0, 31]).month(monthItem);
+    var start_date = effectiveDate;
+    if (monthStartDate.diff(effectiveDate, 'days') > 0) {
+        start_date = monthStartDate;
+    }
+
+    if (end_date.diff((0, _moment2.default)(), 'days') > 0) {
+        end_date = (0, _moment2.default)().endOf('days');
+    }
+
+    var daysInMonth = (0, _moment2.default)().isoWeekdayCalc(start_date, month_end_date, productBody.selected_days);
+    var daysInPeriod = (0, _moment2.default)().isoWeekdayCalc(start_date, end_date, productBody.selected_days);
+    var unit_price = serviceCalculationBody.unit_price;
+    if (productBody.wages_type === 1) {
+        unit_price = unit_price / daysInMonth;
+    }
+
+    var total_amount = unit_price * daysInPeriod;
+    if (serviceCalculationBody.quantity) {
+        total_amount = serviceCalculationBody.quantity * total_amount;
+    }
+
+    return {
+        start_date: start_date,
+        end_date: end_date,
+        updated_by: user.id || user.ID,
+        status_type: 1,
+        total_amount: total_amount,
+        total_days: daysInPeriod,
+        amount_paid: 0
+    };
+}
+
+function monthlyPaymentCalc(parameters) {
+    var currentMth = parameters.currentMth,
+        effectiveMth = parameters.effectiveMth,
+        effectiveDate = parameters.effectiveDate,
+        productBody = parameters.productBody,
+        serviceCalculationBody = parameters.serviceCalculationBody,
+        user = parameters.user,
+        currentYear = parameters.currentYear;
+
+    var monthDiff = currentMth >= effectiveMth ? currentMth - effectiveMth : null;
+    var monthArr = [];
+    if (monthDiff) {
+        for (var i = 0; i <= monthDiff; i++) {
+            monthArr.push(effectiveMth + i);
+        }
+    } else {
+        monthArr.push(effectiveMth);
+    }
+
+    return monthArr.map(function (monthItem) {
+        return preparePaymentDetails({
+            currentYear: currentYear,
+            monthItem: monthItem,
+            effectiveDate: effectiveDate,
+            productBody: productBody,
+            serviceCalculationBody: serviceCalculationBody,
+            user: user
+        });
     });
 }
 

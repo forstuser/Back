@@ -116,19 +116,18 @@ var DashboardAdaptor = function () {
 
           return insightItem;
         });
-        var insightItems = _shared2.default.retrieveDaysInsight(distinctInsight);
 
-        var insightResult = insightItems && insightItems.length > 0 ? {
-          startDate: _moment2.default.utc().subtract(6, 'd').startOf('d'),
+        var insightResult = distinctInsight && distinctInsight.length > 0 ? {
+          startDate: _moment2.default.utc().startOf('M'),
           endDate: _moment2.default.utc(),
-          totalSpend: _shared2.default.sumProps(insightItems, 'value'),
-          totalDays: 7,
-          insightData: insightItems
+          totalSpend: _shared2.default.sumProps(distinctInsight, 'value'),
+          totalDays: _moment2.default.utc().endOf('d').diff(_moment2.default.utc().startOf('M'), 'days'),
+          insightData: distinctInsight
         } : {
-          startDate: _moment2.default.utc().subtract(6, 'd').startOf('d'),
+          startDate: _moment2.default.utc().startOf('M'),
           endDate: _moment2.default.utc(),
           totalSpend: 0,
-          totalDays: 7,
+          totalDays: _moment2.default.utc().endOf('d').diff(_moment2.default.utc().startOf('M'), 'days'),
           insightData: insightData
         };
 
@@ -415,42 +414,42 @@ var DashboardAdaptor = function () {
         user_id: user.id || user.ID,
         document_date: {
           $lte: _moment2.default.utc(),
-          $gte: _moment2.default.utc().subtract(6, 'd').startOf('d')
+          $gte: _moment2.default.utc().startOf('M')
         }
       }), this.amcAdaptor.retrieveAMCs({
         status_type: [5, 11],
         user_id: user.id || user.ID,
         document_date: {
           $lte: _moment2.default.utc(),
-          $gte: _moment2.default.utc().subtract(6, 'd').startOf('d')
+          $gte: _moment2.default.utc().startOf('M')
         }
       }), this.insuranceAdaptor.retrieveInsurances({
         status_type: [5, 11],
         user_id: user.id || user.ID,
         document_date: {
           $lte: _moment2.default.utc(),
-          $gte: _moment2.default.utc().subtract(6, 'd').startOf('d')
+          $gte: _moment2.default.utc().startOf('M')
         }
       }), this.repairAdaptor.retrieveRepairs({
         status_type: [5, 11],
         user_id: user.id || user.ID,
         document_date: {
           $lte: _moment2.default.utc(),
-          $gte: _moment2.default.utc().subtract(6, 'd').startOf('d')
+          $gte: _moment2.default.utc().startOf('M')
         }
       }), this.warrantyAdaptor.retrieveWarranties({
         status_type: [5, 11],
         user_id: user.id || user.ID,
         document_date: {
           $lte: _moment2.default.utc(),
-          $gte: _moment2.default.utc().subtract(6, 'd').startOf('d')
+          $gte: _moment2.default.utc().startOf('M')
         }
       }), this.pucAdaptor.retrievePUCs({
         status_type: [5, 11],
         user_id: user.id || user.ID,
         document_date: {
           $lte: _moment2.default.utc(),
-          $gte: _moment2.default.utc().subtract(6, 'd').startOf('d')
+          $gte: _moment2.default.utc().startOf('M')
         }
       })]).then(function (results) {
         return [].concat(_toConsumableArray(results[0]), _toConsumableArray(results[1]), _toConsumableArray(results[2]), _toConsumableArray(results[3]), _toConsumableArray(results[4]), _toConsumableArray(results[5]));
