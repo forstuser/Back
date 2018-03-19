@@ -23,7 +23,7 @@ class SearchController {
       }).code(401);
 		} else {
       return reply(
-          searchAdaptor.prepareSearchResult(user, request.query.searchvalue));
+          searchAdaptor.prepareSearchResult(user, request.query.searchvalue, request.language));
 		}
 	}
 }

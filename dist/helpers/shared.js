@@ -180,7 +180,8 @@ function preparePaymentDetails(parameters) {
         effectiveDate = parameters.effectiveDate,
         productBody = parameters.productBody,
         serviceCalculationBody = parameters.serviceCalculationBody,
-        user = parameters.user;
+        user = parameters.user,
+        currentDate = parameters.currentDate;
 
     var monthStartDate = (0, _moment2.default)([currentYear, monthItem, 1]);
     var month_end_date = (0, _moment2.default)([currentYear, 0, 31]).month(monthItem);
@@ -189,9 +190,9 @@ function preparePaymentDetails(parameters) {
     if (monthStartDate.diff(effectiveDate, 'days') > 0) {
         start_date = monthStartDate;
     }
-
-    if (end_date.diff((0, _moment2.default)(), 'days') > 0) {
-        end_date = (0, _moment2.default)().endOf('days');
+    currentDate = currentDate || (0, _moment2.default)();
+    if (end_date.diff(currentDate, 'days') > 0) {
+        end_date = currentDate.endOf('days');
     }
 
     var daysInMonth = (0, _moment2.default)().isoWeekdayCalc(start_date, month_end_date, productBody.selected_days);
@@ -213,6 +214,7 @@ function preparePaymentDetails(parameters) {
         status_type: 1,
         total_amount: total_amount,
         total_days: daysInPeriod,
+        total_units: daysInPeriod * serviceCalculationBody.quantity,
         amount_paid: 0
     };
 }
@@ -224,7 +226,8 @@ function monthlyPaymentCalc(parameters) {
         productBody = parameters.productBody,
         serviceCalculationBody = parameters.serviceCalculationBody,
         user = parameters.user,
-        currentYear = parameters.currentYear;
+        currentYear = parameters.currentYear,
+        currentDate = parameters.currentDate;
 
     var monthDiff = currentMth >= effectiveMth ? currentMth - effectiveMth : null;
     var monthArr = [];
@@ -243,7 +246,8 @@ function monthlyPaymentCalc(parameters) {
             effectiveDate: effectiveDate,
             productBody: productBody,
             serviceCalculationBody: serviceCalculationBody,
-            user: user
+            user: user,
+            currentDate: currentDate
         });
     });
 }

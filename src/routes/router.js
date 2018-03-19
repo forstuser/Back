@@ -1823,6 +1823,7 @@ function prepareCalendarServiceRoutes(calendarController, calendarRoutes) {
             wages_type: [joi.number(), joi.allow(null)],
             selected_days: [joi.array().items(joi.number()).required().min(0), joi.allow(null)],
             unit_price: joi.number().required(),
+            unit_type: [joi.number(), joi.allow(null)],
             quantity: [joi.number(), joi.allow(null)],
             absent_dates: [joi.array().items(joi.string()).required().min(0), joi.allow(null)],
             effective_date: joi.string().required(),
@@ -1882,6 +1883,32 @@ function prepareCalendarServiceRoutes(calendarController, calendarRoutes) {
         validate: {
           payload: {
             unit_price: joi.number().required(),
+            unit_type: [joi.number(), joi.allow(null)],
+            quantity: [joi.number(), joi.allow(null)],
+            effective_date: joi.string().required(),
+          },
+        },
+      },
+    });
+
+    calendarRoutes.push({
+      method: 'PUT',
+      path: '/calendar/items/{id}/calc/{calc_id}',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: CalendarServiceController.updateServiceCalc,
+        description: 'Update calculation detail for calendar services.',
+        validate: {
+          payload: {
+            unit_price: joi.number().required(),
+            unit_type: [joi.number(), joi.allow(null)],
             quantity: [joi.number(), joi.allow(null)],
             effective_date: joi.string().required(),
           },
@@ -1910,6 +1937,7 @@ function prepareCalendarServiceRoutes(calendarController, calendarRoutes) {
             wages_type: [joi.number(), joi.allow(null)],
             selected_days: [joi.array().items(joi.number()).required().min(0), joi.allow(null)],
             unit_price: joi.number().required(),
+            unit_type: [joi.number(), joi.allow(null)],
             quantity: [joi.number(), joi.allow(null)],
             absent_dates: [joi.array().items(joi.string()).required().min(0), joi.allow(null)],
             effective_date: joi.string().required(),

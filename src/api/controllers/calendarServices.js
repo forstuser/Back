@@ -28,7 +28,8 @@ class CalendarServiceController {
       return calendarServiceAdaptor.retrieveCalendarServices({status_type: 1},
           request.language).then((referenceData) => reply({
         status: true,
-        items: referenceData,
+        items: referenceData.items,
+        unit_types: referenceData.unit_types,
       }).code(200));
     } else {
       return reply({
@@ -64,6 +65,7 @@ class CalendarServiceController {
             startOf('days'),
         quantity: request.payload.quantity,
         unit_price: request.payload.unit_price,
+        unit_type: request.payload.unit_type,
         updated_by: user.id || user.ID,
         status_type: 1,
       };
@@ -148,7 +150,7 @@ class CalendarServiceController {
             });
           });
     } else {
-      reply({
+      return reply({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -209,7 +211,7 @@ class CalendarServiceController {
             });
           });
     } else {
-      reply({
+      return reply({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -265,7 +267,7 @@ class CalendarServiceController {
             });
           });
     } else {
-      reply({
+      return reply({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -369,6 +371,7 @@ class CalendarServiceController {
             startOf('days'),
         quantity: request.payload.quantity,
         unit_price: request.payload.unit_price,
+        unit_type: request.payload.unit_type,
         updated_by: user.id || user.ID,
         status_type: 1,
         ref_id: request.params.id,
@@ -382,8 +385,12 @@ class CalendarServiceController {
           then((result) => {
             if (result) {
               return calendarServiceAdaptor.manipulatePaymentDetail(
-                  {ref_id: request.params.id, effective_date: moment(request.payload.effective_date, moment.ISO_8601).
-                        startOf('days')}, result.toJSON()).then(() => {
+                  {
+                    ref_id: request.params.id,
+                    effective_date: moment(request.payload.effective_date,
+                        moment.ISO_8601).
+                        startOf('days'),
+                  }, result.toJSON()).then(() => {
                 return reply({
                   status: true,
                   message: 'successful',
@@ -405,7 +412,68 @@ class CalendarServiceController {
             });
           });
     } else {
-      reply({
+      return reply({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
+  static updateServiceCalc(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    if (!request.pre.userExist) {
+      return reply({
+        status: false,
+        message: 'Unauthorized',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    } else if (request.pre.userExist && !request.pre.forceUpdate) {
+      const serviceCalculationBody = {
+        effective_date: moment(request.payload.effective_date, moment.ISO_8601).
+            startOf('days'),
+        quantity: request.payload.quantity,
+        unit_price: request.payload.unit_price,
+        unit_type: request.payload.unit_type,
+        updated_by: user.id || user.ID,
+        status_type: 1,
+        ref_id: request.params.id,
+      };
+
+      return calendarServiceAdaptor.addServiceCalc({
+        id: request.params.calc_id,
+        ref_id: request.params.id,
+      }, serviceCalculationBody).then((result) => {
+            if (result) {
+              return calendarServiceAdaptor.manipulatePaymentDetail(
+                  {
+                    id: request.params.calc_id,
+                    effective_date: moment(request.payload.effective_date, moment.ISO_8601).
+                        startOf('days'),
+                    ref_id: request.params.id,
+                  }, result.toJSON()).then(() => {
+                return reply({
+                  status: true,
+                  message: 'successful',
+                  product: result,
+                  forceUpdate: request.pre.forceUpdate,
+                });
+              });
+            }
+          }).
+          catch((err) => {
+            console.log(
+                `Error on ${new Date()} for user ${user.id ||
+                user.ID} is as follow: \n \n ${err}`);
+            return reply({
+              status: false,
+              message: 'An error occurred in adding effective calculation method for service.',
+              forceUpdate: request.pre.forceUpdate,
+              err,
+            });
+          });
+    } else {
+      return reply({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,

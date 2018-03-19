@@ -15,6 +15,9 @@ exports.default = function (sequelize, DataTypes) {
     status_type: {
       type: DataTypes.INTEGER
     },
+    unit_type: {
+      type: DataTypes.INTEGER
+    },
     unit_price: {
       type: DataTypes.FLOAT
     },
@@ -45,6 +48,7 @@ exports.default = function (sequelize, DataTypes) {
     service_calculation.belongsTo(models.user_calendar_item, { foreignKey: 'ref_id' });
     service_calculation.belongsTo(models.users, { foreignKey: 'updated_by' });
     service_calculation.belongsTo(models.statuses, { foreignKey: 'status_type', targetKey: 'status_type' });
+    service_calculation.belongsTo(models.quantities, { foreignKey: 'unit_type', as: 'unit' });
   };
   return service_calculation;
 };

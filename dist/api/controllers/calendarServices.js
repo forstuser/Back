@@ -51,7 +51,8 @@ var CalendarServiceController = function () {
         return calendarServiceAdaptor.retrieveCalendarServices({ status_type: 1 }, request.language).then(function (referenceData) {
           return reply({
             status: true,
-            items: referenceData
+            items: referenceData.items,
+            unit_types: referenceData.unit_types
           }).code(200);
         });
       } else {
@@ -88,6 +89,7 @@ var CalendarServiceController = function () {
           effective_date: (0, _moment2.default)(request.payload.effective_date, _moment2.default.ISO_8601).startOf('days'),
           quantity: request.payload.quantity,
           unit_price: request.payload.unit_price,
+          unit_type: request.payload.unit_type,
           updated_by: user.id || user.ID,
           status_type: 1
         };
@@ -164,7 +166,7 @@ var CalendarServiceController = function () {
           });
         });
       } else {
-        reply({
+        return reply({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -219,7 +221,7 @@ var CalendarServiceController = function () {
           });
         });
       } else {
-        reply({
+        return reply({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -271,7 +273,7 @@ var CalendarServiceController = function () {
           });
         });
       } else {
-        reply({
+        return reply({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -367,6 +369,7 @@ var CalendarServiceController = function () {
           effective_date: (0, _moment2.default)(request.payload.effective_date, _moment2.default.ISO_8601).startOf('days'),
           quantity: request.payload.quantity,
           unit_price: request.payload.unit_price,
+          unit_type: request.payload.unit_type,
           updated_by: user.id || user.ID,
           status_type: 1,
           ref_id: request.params.id
@@ -377,7 +380,10 @@ var CalendarServiceController = function () {
           ref_id: request.params.id
         }, serviceCalculationBody).then(function (result) {
           if (result) {
-            return calendarServiceAdaptor.manipulatePaymentDetail({ ref_id: request.params.id, effective_date: (0, _moment2.default)(request.payload.effective_date, _moment2.default.ISO_8601).startOf('days') }, result.toJSON()).then(function () {
+            return calendarServiceAdaptor.manipulatePaymentDetail({
+              ref_id: request.params.id,
+              effective_date: (0, _moment2.default)(request.payload.effective_date, _moment2.default.ISO_8601).startOf('days')
+            }, result.toJSON()).then(function () {
               return reply({
                 status: true,
                 message: 'successful',
@@ -396,7 +402,63 @@ var CalendarServiceController = function () {
           });
         });
       } else {
-        reply({
+        return reply({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    }
+  }, {
+    key: 'updateServiceCalc',
+    value: function updateServiceCalc(request, reply) {
+      var user = _shared2.default.verifyAuthorization(request.headers);
+      if (!request.pre.userExist) {
+        return reply({
+          status: false,
+          message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate
+        });
+      } else if (request.pre.userExist && !request.pre.forceUpdate) {
+        var serviceCalculationBody = {
+          effective_date: (0, _moment2.default)(request.payload.effective_date, _moment2.default.ISO_8601).startOf('days'),
+          quantity: request.payload.quantity,
+          unit_price: request.payload.unit_price,
+          unit_type: request.payload.unit_type,
+          updated_by: user.id || user.ID,
+          status_type: 1,
+          ref_id: request.params.id
+        };
+
+        return calendarServiceAdaptor.addServiceCalc({
+          id: request.params.calc_id,
+          ref_id: request.params.id
+        }, serviceCalculationBody).then(function (result) {
+          if (result) {
+            return calendarServiceAdaptor.manipulatePaymentDetail({
+              id: request.params.calc_id,
+              effective_date: (0, _moment2.default)(request.payload.effective_date, _moment2.default.ISO_8601).startOf('days'),
+              ref_id: request.params.id
+            }, result.toJSON()).then(function () {
+              return reply({
+                status: true,
+                message: 'successful',
+                product: result,
+                forceUpdate: request.pre.forceUpdate
+              });
+            });
+          }
+        }).catch(function (err) {
+          console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+          return reply({
+            status: false,
+            message: 'An error occurred in adding effective calculation method for service.',
+            forceUpdate: request.pre.forceUpdate,
+            err: err
+          });
+        });
+      } else {
+        return reply({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate

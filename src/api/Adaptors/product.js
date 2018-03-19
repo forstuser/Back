@@ -27,7 +27,7 @@ class ProductAdaptor {
     this.serviceScheduleAdaptor = new ServiceScheduleAdaptor(modals);
   }
 
-  retrieveProducts(options) {
+  retrieveProducts(options, language) {
     if (!options.status_type) {
       options.status_type = [5, 11];
     }
@@ -40,6 +40,15 @@ class ProductAdaptor {
     if (options.online_seller_id) {
       billOption.seller_id = options.online_seller_id;
     }
+
+    if (!options.main_category_id) {
+      options = _.omit(options, 'main_category_id');
+    }
+
+    if (!options.category_id) {
+      options = _.omit(options, 'category_id');
+    }
+
     options = _.omit(options, 'online_seller_id');
 
     let inProgressProductOption = {};
@@ -235,6 +244,12 @@ class ProductAdaptor {
         },
         {
           model: this.modals.categories,
+          as: 'mainCategory',
+          attributes: [],
+          required: false,
+        },
+        {
+          model: this.modals.categories,
           as: 'sub_category',
           attributes: [],
           required: false,
@@ -253,9 +268,6 @@ class ProductAdaptor {
           'masterCategoryId'],
         'sub_category_id',
         [
-          this.modals.sequelize.literal('"sub_category"."category_name"'),
-          'sub_category_name'],
-        [
           'brand_id',
           'brandId'],
         [
@@ -265,9 +277,6 @@ class ProductAdaptor {
           'purchase_cost',
           'value'],
         'taxes',
-        [
-          this.modals.sequelize.literal('"category"."category_name"'),
-          'categoryName'],
         [
           this.modals.sequelize.fn('CONCAT', '/categories/',
               this.modals.sequelize.literal('"category"."category_id"'),
@@ -298,8 +307,23 @@ class ProductAdaptor {
               this.modals.sequelize.literal('"products"."id"'), '/reviews'),
           'reviewUrl'],
         [
-          this.modals.sequelize.literal('"category"."category_name"'),
+          this.modals.sequelize.literal(`${language ?
+              `"sub_category"."category_name_${language}"` :
+              `"sub_category"."category_name"`}`),
+          'sub_category_name'],
+        [
+          this.modals.sequelize.literal(`${language ?
+              `"category"."category_name_${language}"` :
+              `"category"."category_name"`}`),
           'categoryName'],
+        [
+          this.modals.sequelize.literal('"category"."category_name"'),
+          'default_categoryName'],
+        [
+          this.modals.sequelize.literal(`${language ?
+              `"mainCategory"."category_name_${language}"` :
+              `"mainCategory"."category_name"`}`),
+          'masterCategoryName'],
         [
           this.modals.sequelize.fn('CONCAT',
               '/consumer/servicecenters?brandid=',
@@ -342,7 +366,7 @@ class ProductAdaptor {
         return Promise.all([
           this.retrieveProductMetadata({
             product_id: products.map((item) => item.id),
-          }),
+          }, language),
           this.insuranceAdaptor.retrieveInsurances(inProgressProductOption),
           this.warrantyAdaptor.retrieveWarranties(warrantyOptions),
           this.amcAdaptor.retrieveAMCs(inProgressProductOption),
@@ -394,7 +418,7 @@ class ProductAdaptor {
     });
   }
 
-  retrieveUpcomingProducts(options) {
+  retrieveUpcomingProducts(options, language) {
     if (!options.status_type) {
       options.status_type = [5, 11];
     }
@@ -427,6 +451,12 @@ class ProductAdaptor {
         },
         {
           model: this.modals.categories,
+          as: 'mainCategory',
+          attributes: [],
+          required: false,
+        },
+        {
+          model: this.modals.categories,
           as: 'sub_category',
           attributes: [],
           required: false,
@@ -445,9 +475,6 @@ class ProductAdaptor {
           'masterCategoryId'],
         'sub_category_id',
         [
-          this.modals.sequelize.literal('"sub_category"."category_name"'),
-          'sub_category_name'],
-        [
           'brand_id',
           'brandId'],
         [
@@ -458,8 +485,23 @@ class ProductAdaptor {
           'value'],
         'taxes',
         [
-          this.modals.sequelize.literal('"category"."category_name"'),
+          this.modals.sequelize.literal(`${language ?
+              `"sub_category"."category_name_${language}"` :
+              `"sub_category"."category_name"`}`),
+          'sub_category_name'],
+        [
+          this.modals.sequelize.literal(`${language ?
+              `"category"."category_name_${language}"` :
+              `"category"."category_name"`}`),
           'categoryName'],
+        [
+          this.modals.sequelize.literal('"category"."category_name"'),
+          'default_categoryName'],
+        [
+          this.modals.sequelize.literal(`${language ?
+              `"mainCategory"."category_name_${language}"` :
+              `"mainCategory"."category_name"`}`),
+          'masterCategoryName'],
         [
           this.modals.sequelize.fn('CONCAT', '/categories/',
               this.modals.sequelize.literal('"category"."category_id"'),
@@ -526,7 +568,7 @@ class ProductAdaptor {
     }));
   }
 
-  retrieveUsersLastProduct(options) {
+  retrieveUsersLastProduct(options, language) {
     let billOption = {};
 
     if (options.online_seller_id) {
@@ -712,6 +754,12 @@ class ProductAdaptor {
           as: 'sub_category',
           attributes: [],
           required: false,
+        },
+        {
+          model: this.modals.categories,
+          as: 'mainCategory',
+          attributes: [],
+          required: false,
         }, {
           model: this.modals.categories,
           as: 'category',
@@ -729,15 +777,9 @@ class ProductAdaptor {
           'category_id',
           'categoryId'],
         [
-          this.modals.sequelize.literal('"category"."category_name"'),
-          'categoryName'],
-        [
           'main_category_id',
           'masterCategoryId'],
         'sub_category_id',
-        [
-          this.modals.sequelize.literal('"sub_category"."category_name"'),
-          'sub_category_name'],
         [
           'brand_id',
           'brandId'],
@@ -757,6 +799,24 @@ class ProductAdaptor {
           this.modals.sequelize.fn('CONCAT', 'products/',
               this.modals.sequelize.literal('"products"."id"')),
           'productURL'],
+        [
+          this.modals.sequelize.literal(`${language ?
+              `"sub_category"."category_name_${language}"` :
+              `"sub_category"."category_name"`}`),
+          'sub_category_name'],
+        [
+          this.modals.sequelize.literal(`${language ?
+              `"category"."category_name_${language}"` :
+              `"category"."category_name"`}`),
+          'categoryName'],
+        [
+          this.modals.sequelize.literal('"category"."category_name"'),
+          'default_categoryName'],
+        [
+          this.modals.sequelize.literal(`${language ?
+              `"mainCategory"."category_name_${language}"` :
+              `"mainCategory"."category_name"`}`),
+          'masterCategoryName'],
         [
           'document_date',
           'purchaseDate'],
@@ -821,7 +881,7 @@ class ProductAdaptor {
         return Promise.all([
           this.retrieveProductMetadata({
             product_id: product.id,
-          }),
+          }, language),
           this.insuranceAdaptor.retrieveInsurances({
             product_id: product.id,
           }),
@@ -1159,9 +1219,6 @@ class ProductAdaptor {
           'masterCategoryId'],
         'sub_category_id',
         [
-          this.modals.sequelize.literal(`${language ? `"sub_category"."category_name_${language}"`:`"sub_category"."category_name"`}`),
-          'sub_category_name'],
-        [
           'brand_id',
           'brandId'],
         [
@@ -1171,13 +1228,22 @@ class ProductAdaptor {
           'purchase_cost',
           'value'],
         [
-          this.modals.sequelize.literal(`${language ? `"category"."category_name_${language}"`:`"category"."category_name"`}`),
+          this.modals.sequelize.literal(`${language ?
+              `"sub_category"."category_name_${language}"` :
+              `"sub_category"."category_name"`}`),
+          'sub_category_name'],
+        [
+          this.modals.sequelize.literal(`${language ?
+              `"category"."category_name_${language}"` :
+              `"category"."category_name"`}`),
           'categoryName'],
         [
           this.modals.sequelize.literal('"category"."category_name"'),
           'default_categoryName'],
         [
-          this.modals.sequelize.literal(`${language ? `"mainCategory"."category_name_${language}"`:`"mainCategory"."category_name"`}`),
+          this.modals.sequelize.literal(`${language ?
+              `"mainCategory"."category_name_${language}"` :
+              `"mainCategory"."category_name"`}`),
           'masterCategoryName'],
         'taxes',
         [
@@ -1248,7 +1314,7 @@ class ProductAdaptor {
         return Promise.all([
           this.retrieveProductMetadata({
             product_id: products.id,
-          }), this.brandAdaptor.retrieveBrandById(products.brandId, {
+          }, language), this.brandAdaptor.retrieveBrandById(products.brandId, {
             category_id: products.categoryId,
           }), this.insuranceAdaptor.retrieveInsurances({
             product_id: products.id,
@@ -1743,7 +1809,8 @@ class ProductAdaptor {
           }) :
           undefined;
 
-      const brandPromise = !productBody.brand_id  && productBody.brand_id !== 0 &&
+      const brandPromise = !productBody.brand_id &&
+      productBody.brand_id !== 0 &&
       productBody.brand_name ?
           this.brandAdaptor.findCreateBrand({
             status_type: 11,
@@ -1831,7 +1898,9 @@ class ProductAdaptor {
             product = !product.seller_id ?
                 _.omit(product, 'seller_id') :
                 product;
-            product = !product.brand_id && product.brand_id !== 0 ? _.omit(product, 'brand_id') : product;
+            product = !product.brand_id && product.brand_id !== 0 ?
+                _.omit(product, 'brand_id') :
+                product;
             const brandModelPromise = product.model ? [
               this.modals.brandDropDown.findOne({
                 where: {
@@ -1897,13 +1966,13 @@ class ProductAdaptor {
                           $or: {
                             $not: null,
                             $gte: diffDays,
-                          }
+                          },
                         },
                         due_in_months: {
                           $or: {
                             $not: null,
                             $gte: diffMonths,
-                          }
+                          },
                         },
                       },
                       status_type: 1,
@@ -2373,10 +2442,10 @@ class ProductAdaptor {
           otherItems.warranty.extended_id, {status_type: 11}));
     }
 
-   /* if (otherItems.warranty.dual_id && !otherItems.warranty.dual_renewal_type) {
-      warrantyItemPromise.push(this.warrantyAdaptor.updateWarranties(
-          otherItems.warranty.dual_id, {status_type: 11}));
-    }*/
+    /* if (otherItems.warranty.dual_id && !otherItems.warranty.dual_renewal_type) {
+       warrantyItemPromise.push(this.warrantyAdaptor.updateWarranties(
+           otherItems.warranty.dual_id, {status_type: 11}));
+     }*/
 
     if (otherItems.warranty.renewal_type) {
       warrantyRenewalType = renewalTypes.find(
@@ -2590,7 +2659,7 @@ class ProductAdaptor {
                 }) :
             '');
 
-    if(otherItems.amc) {
+    if (otherItems.amc) {
       sellerOption.seller_name.$iLike = otherItems.amc.seller_name;
       if (otherItems.amc.seller_contact) {
         sellerOption.contact_no = otherItems.amc.seller_contact;
@@ -2611,7 +2680,7 @@ class ProductAdaptor {
               }) :
           '');
     }
-    if(otherItems.repair) {
+    if (otherItems.repair) {
       sellerOption.seller_name.$iLike = otherItems.repair.seller_name;
       if (otherItems.repair.seller_contact) {
         sellerOption.contact_no = otherItems.repair.seller_contact;
@@ -2619,23 +2688,23 @@ class ProductAdaptor {
         sellerOption = _.omit(sellerOption, 'contact_no');
       }
       sellerPromise.push(!otherItems.repair.is_amc_seller &&
-          !isProductRepairSellerSame && !isAMCRepairSellerSame &&
-          ((otherItems.repair.seller_contact &&
-              otherItems.repair.seller_contact.trim()) ||
-              (otherItems.repair.seller_name &&
-                  otherItems.repair.seller_name.trim())) ?
-              this.sellerAdaptor.retrieveOrCreateOfflineSellers(sellerOption,
-                  {
-                    seller_name: otherItems.repair.seller_name,
-                    contact_no: otherItems.repair.seller_contact,
-                    updated_by: productBody.user_id,
-                    created_by: productBody.user_id,
-                    status_type: 11,
-                  }) :
-              '');
+      !isProductRepairSellerSame && !isAMCRepairSellerSame &&
+      ((otherItems.repair.seller_contact &&
+          otherItems.repair.seller_contact.trim()) ||
+          (otherItems.repair.seller_name &&
+              otherItems.repair.seller_name.trim())) ?
+          this.sellerAdaptor.retrieveOrCreateOfflineSellers(sellerOption,
+              {
+                seller_name: otherItems.repair.seller_name,
+                contact_no: otherItems.repair.seller_contact,
+                updated_by: productBody.user_id,
+                created_by: productBody.user_id,
+                status_type: 11,
+              }) :
+          '');
     }
 
-    if(otherItems.puc) {
+    if (otherItems.puc) {
       sellerOption.seller_name.$iLike = otherItems.puc.seller_name;
       if (otherItems.puc.seller_contact) {
         sellerOption.contact_no = otherItems.puc.seller_contact;
@@ -2683,7 +2752,9 @@ class ProductAdaptor {
           this.modals.sequelize.literal('"categoryForm"."form_type"'),
           'formType'],
         [
-          this.modals.sequelize.literal(`${language ? `"categoryForm"."title_${language}"`: `"categoryForm"."title"`}`),
+          this.modals.sequelize.literal(`${language ?
+              `"categoryForm"."title_${language}"` :
+              `"categoryForm"."title"`}`),
           'default_name'],
         [
           this.modals.sequelize.literal('"categoryForm"."title"'),
@@ -3184,12 +3255,13 @@ class ProductAdaptor {
               job_id: result.job_id,
             },
           })] : [undefined, undefined];
-        return Promise.all([this.modals.mailBox.create({
-          title: `User Deleted Product #${id}`,
-          job_id: result.job_id,
-          bill_product_id: result.product_id,
-          notification_type: 100
-        }),
+        return Promise.all([
+          this.modals.mailBox.create({
+            title: `User Deleted Product #${id}`,
+            job_id: result.job_id,
+            bill_product_id: result.product_id,
+            notification_type: 100,
+          }),
           this.modals.products.destroy({
             where: {
               id,

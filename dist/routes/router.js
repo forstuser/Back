@@ -1602,6 +1602,7 @@ function prepareCalendarServiceRoutes(calendarController, calendarRoutes) {
             wages_type: [_joi2.default.number(), _joi2.default.allow(null)],
             selected_days: [_joi2.default.array().items(_joi2.default.number()).required().min(0), _joi2.default.allow(null)],
             unit_price: _joi2.default.number().required(),
+            unit_type: [_joi2.default.number(), _joi2.default.allow(null)],
             quantity: [_joi2.default.number(), _joi2.default.allow(null)],
             absent_dates: [_joi2.default.array().items(_joi2.default.string()).required().min(0), _joi2.default.allow(null)],
             effective_date: _joi2.default.string().required()
@@ -1652,6 +1653,29 @@ function prepareCalendarServiceRoutes(calendarController, calendarRoutes) {
         validate: {
           payload: {
             unit_price: _joi2.default.number().required(),
+            unit_type: [_joi2.default.number(), _joi2.default.allow(null)],
+            quantity: [_joi2.default.number(), _joi2.default.allow(null)],
+            effective_date: _joi2.default.string().required()
+          }
+        }
+      }
+    });
+
+    calendarRoutes.push({
+      method: 'PUT',
+      path: '/calendar/items/{id}/calc/{calc_id}',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _calendarServices2.default.updateServiceCalc,
+        description: 'Update calculation detail for calendar services.',
+        validate: {
+          payload: {
+            unit_price: _joi2.default.number().required(),
+            unit_type: [_joi2.default.number(), _joi2.default.allow(null)],
             quantity: [_joi2.default.number(), _joi2.default.allow(null)],
             effective_date: _joi2.default.string().required()
           }
@@ -1677,6 +1701,7 @@ function prepareCalendarServiceRoutes(calendarController, calendarRoutes) {
             wages_type: [_joi2.default.number(), _joi2.default.allow(null)],
             selected_days: [_joi2.default.array().items(_joi2.default.number()).required().min(0), _joi2.default.allow(null)],
             unit_price: _joi2.default.number().required(),
+            unit_type: [_joi2.default.number(), _joi2.default.allow(null)],
             quantity: [_joi2.default.number(), _joi2.default.allow(null)],
             absent_dates: [_joi2.default.array().items(_joi2.default.string()).required().min(0), _joi2.default.allow(null)],
             effective_date: _joi2.default.string().required()

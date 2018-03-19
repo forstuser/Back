@@ -24,8 +24,8 @@ class DashboardAdaptor {
 
   retrieveDashboardResult(user, request) {
     return Promise.all([
-      this.filterUpcomingService(user),
-      this.prepareInsightData(user),
+      this.filterUpcomingService(user, request),
+      this.prepareInsightData(user, request),
       this.retrieveRecentSearch(user),
       this.modals.mailBox.count(
           {where: {user_id: user.id || user.ID, status_id: 4}}),
@@ -52,7 +52,7 @@ class DashboardAdaptor {
       this.productAdaptor.retrieveUsersLastProduct({
         user_id: user.id || user.ID,
         status_type: [5, 8, 11],
-      }),
+      }, request.language),
     ]).then((result) => {
       const upcomingServices = result[0].map((elem) => {
         if (elem.productType === 1) {
@@ -227,7 +227,7 @@ class DashboardAdaptor {
     };
   }
 
-  filterUpcomingService(user) {
+  filterUpcomingService(user, request) {
     return Promise.all([
       this.amcAdaptor.retrieveAMCs({
         user_id: user.id || user.ID,
@@ -269,7 +269,7 @@ class DashboardAdaptor {
         service_schedule_id: {
           $not: null,
         },
-      }),
+      }, request.language),
       this.productAdaptor.retrieveNotificationProducts({
         user_id: user.id || user.ID,
         status_type: [5, 11],
@@ -412,7 +412,7 @@ class DashboardAdaptor {
     });
   }
 
-  prepareInsightData(user) {
+  prepareInsightData(user, request) {
     return Promise.all([
       this.productAdaptor.retrieveProducts({
         status_type: [5, 11],
@@ -421,7 +421,7 @@ class DashboardAdaptor {
           $lte: moment.utc(),
           $gte: moment.utc().startOf('M'),
         },
-      }),
+      }, request.language),
       this.amcAdaptor.retrieveAMCs({
         status_type: [5, 11],
         user_id: user.id || user.ID,

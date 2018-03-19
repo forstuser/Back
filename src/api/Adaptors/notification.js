@@ -166,7 +166,7 @@ class NotificationAdaptor {
 
   retrieveNotifications(user, request) {
     return Promise.all([
-      this.filterUpcomingService(user),
+      this.filterUpcomingService(user, request),
       this.prepareNotificationData(user),
     ]).then((result) => {
       const upcomingServices = result[0].map((elem) => {
@@ -230,7 +230,7 @@ class NotificationAdaptor {
     });
   }
 
-  filterUpcomingService(user) {
+  filterUpcomingService(user, request) {
     return Promise.all([
       this.productAdaptor.retrieveNotificationProducts({
         user_id: user.id || user.ID,
@@ -278,7 +278,7 @@ class NotificationAdaptor {
         service_schedule_id: {
           $not: null,
         },
-      })]).then((result) => {
+      }, request.language)]).then((result) => {
       const metaData = result[0][0];
       let productList = result[0][1].map((productItem) => {
         productItem.productMetaData = metaData.filter(

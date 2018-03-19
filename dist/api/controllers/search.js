@@ -41,7 +41,7 @@ var SearchController = function () {
 					forceUpdate: request.pre.forceUpdate
 				}).code(401);
 			} else {
-				return reply(searchAdaptor.prepareSearchResult(user, request.query.searchvalue));
+				return reply(searchAdaptor.prepareSearchResult(user, request.query.searchvalue, request.language));
 			}
 		}
 	}]);
