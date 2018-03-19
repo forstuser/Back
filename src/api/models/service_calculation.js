@@ -11,6 +11,9 @@ export default (sequelize, DataTypes) => {
         status_type: {
           type: DataTypes.INTEGER,
         },
+        unit_type: {
+          type: DataTypes.INTEGER,
+        },
         unit_price: {
           type: DataTypes.FLOAT,
         },
@@ -20,6 +23,9 @@ export default (sequelize, DataTypes) => {
         effective_date: {
           type: DataTypes.DATEONLY,
           defaultValue: sequelize.literal('NOW()'),
+        },
+        selected_days: {
+          type: DataTypes.ARRAY(DataTypes.INTEGER),
         },
         created_at: {
           type: DataTypes.DATE,
@@ -45,6 +51,8 @@ export default (sequelize, DataTypes) => {
         {foreignKey: 'updated_by'});
     service_calculation.belongsTo(models.statuses,
         {foreignKey: 'status_type', targetKey: 'status_type'});
+    service_calculation.belongsTo(models.quantities,
+        {foreignKey: 'unit_type', as: 'unit'});
   };
   return service_calculation;
 };

@@ -22,6 +22,9 @@ export default (sequelize, DataTypes) => {
           type: DataTypes.DATEONLY,
           defaultValue: sequelize.literal('NOW()'),
         },
+        paid_on: {
+          type: DataTypes.DATEONLY,
+        },
         total_amount: {
           type: DataTypes.FLOAT,
         },
@@ -56,7 +59,11 @@ export default (sequelize, DataTypes) => {
     service_payment.belongsTo(models.statuses,
         {foreignKey: 'status_type', targetKey: 'status_type'});
     service_payment.hasMany(models.service_absent_days,
-        {foreignKey: 'payment_id', as: 'absent_day_detail', onDelete: 'cascade'});
+        {
+          foreignKey: 'payment_id',
+          as: 'absent_day_detail',
+          onDelete: 'cascade',
+        });
   };
   return service_payment;
 };

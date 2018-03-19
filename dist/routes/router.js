@@ -582,6 +582,15 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
       }
     });
 
+    /*Retrieve Calendar Item Image*/
+    uploadFileRoute.push({
+      method: 'GET',
+      path: '/calendarservice/{id}/images',
+      config: {
+        handler: _upload2.default.retrieveCalendarItemImage
+      }
+    });
+
     /*Retrieve Brand images*/
     uploadFileRoute.push({
       method: 'GET',
@@ -1602,6 +1611,7 @@ function prepareCalendarServiceRoutes(calendarController, calendarRoutes) {
             wages_type: [_joi2.default.number(), _joi2.default.allow(null)],
             selected_days: [_joi2.default.array().items(_joi2.default.number()).required().min(0), _joi2.default.allow(null)],
             unit_price: _joi2.default.number().required(),
+            unit_type: [_joi2.default.number(), _joi2.default.allow(null)],
             quantity: [_joi2.default.number(), _joi2.default.allow(null)],
             absent_dates: [_joi2.default.array().items(_joi2.default.string()).required().min(0), _joi2.default.allow(null)],
             effective_date: _joi2.default.string().required()
@@ -1652,8 +1662,33 @@ function prepareCalendarServiceRoutes(calendarController, calendarRoutes) {
         validate: {
           payload: {
             unit_price: _joi2.default.number().required(),
+            unit_type: [_joi2.default.number(), _joi2.default.allow(null)],
             quantity: [_joi2.default.number(), _joi2.default.allow(null)],
-            effective_date: _joi2.default.string().required()
+            effective_date: _joi2.default.string().required(),
+            selected_days: [_joi2.default.array().items(_joi2.default.number()), _joi2.default.allow(null)]
+          }
+        }
+      }
+    });
+
+    calendarRoutes.push({
+      method: 'PUT',
+      path: '/calendar/items/{id}/calc/{calc_id}',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _calendarServices2.default.updateServiceCalc,
+        description: 'Update calculation detail for calendar services.',
+        validate: {
+          payload: {
+            unit_price: _joi2.default.number().required(),
+            unit_type: [_joi2.default.number(), _joi2.default.allow(null)],
+            quantity: [_joi2.default.number(), _joi2.default.allow(null)],
+            effective_date: _joi2.default.string().required(),
+            selected_days: [_joi2.default.array().items(_joi2.default.number()), _joi2.default.allow(null)]
           }
         }
       }
@@ -1675,10 +1710,11 @@ function prepareCalendarServiceRoutes(calendarController, calendarRoutes) {
             product_name: [_joi2.default.string(), _joi2.default.allow(null)],
             provider_name: [_joi2.default.string(), _joi2.default.allow(null)],
             wages_type: [_joi2.default.number(), _joi2.default.allow(null)],
-            selected_days: [_joi2.default.array().items(_joi2.default.number()).required().min(0), _joi2.default.allow(null)],
+            selected_days: [_joi2.default.array().items(_joi2.default.number()), _joi2.default.allow(null)],
             unit_price: _joi2.default.number().required(),
+            unit_type: [_joi2.default.number(), _joi2.default.allow(null)],
             quantity: [_joi2.default.number(), _joi2.default.allow(null)],
-            absent_dates: [_joi2.default.array().items(_joi2.default.string()).required().min(0), _joi2.default.allow(null)],
+            absent_dates: [_joi2.default.array().items(_joi2.default.string()), _joi2.default.allow(null)],
             effective_date: _joi2.default.string().required()
           }
         }
@@ -1726,6 +1762,29 @@ function prepareCalendarServiceRoutes(calendarController, calendarRoutes) {
 
     calendarRoutes.push({
       method: 'PUT',
+      path: '/calendar/items/{ref_id}/payments/{id}/paid',
+      config: {
+        auth: 'jwt',
+        pre: [{
+          method: appVersionHelper.checkAppVersion,
+          assign: 'forceUpdate'
+        }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _calendarServices2.default.markPaid,
+        description: 'Mark Paid.',
+        validate: {
+          payload: {
+            amount_paid: _joi2.default.number().required(),
+            paid_on: _joi2.default.string().required()
+          }
+        }
+      }
+    });
+
+    calendarRoutes.push({
+      method: 'PUT',
       path: '/calendar/items/{ref_id}/payments/{id}/present',
       config: {
         auth: 'jwt',
@@ -1737,10 +1796,10 @@ function prepareCalendarServiceRoutes(calendarController, calendarRoutes) {
           assign: 'userExist'
         }],
         handler: _calendarServices2.default.markPresent,
-        description: 'Mark Absent.',
+        description: 'Mark Present.',
         validate: {
           payload: {
-            absent_date: _joi2.default.string().required()
+            present_date: _joi2.default.string().required()
           }
         }
       }

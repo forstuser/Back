@@ -178,9 +178,11 @@ function preparePaymentDetails(parameters) {
     var currentYear = parameters.currentYear,
         monthItem = parameters.monthItem,
         effectiveDate = parameters.effectiveDate,
-        productBody = parameters.productBody,
+        selected_days = parameters.selected_days,
+        wages_type = parameters.wages_type,
         serviceCalculationBody = parameters.serviceCalculationBody,
-        user = parameters.user;
+        user = parameters.user,
+        currentDate = parameters.currentDate;
 
     var monthStartDate = (0, _moment2.default)([currentYear, monthItem, 1]);
     var month_end_date = (0, _moment2.default)([currentYear, 0, 31]).month(monthItem);
@@ -189,15 +191,15 @@ function preparePaymentDetails(parameters) {
     if (monthStartDate.diff(effectiveDate, 'days') > 0) {
         start_date = monthStartDate;
     }
-
-    if (end_date.diff((0, _moment2.default)(), 'days') > 0) {
-        end_date = (0, _moment2.default)().endOf('days');
+    currentDate = currentDate || (0, _moment2.default)();
+    if (end_date.diff(currentDate, 'days') > 0) {
+        end_date = currentDate.endOf('days');
     }
 
-    var daysInMonth = (0, _moment2.default)().isoWeekdayCalc(start_date, month_end_date, productBody.selected_days);
-    var daysInPeriod = (0, _moment2.default)().isoWeekdayCalc(start_date, end_date, productBody.selected_days);
+    var daysInMonth = (0, _moment2.default)().isoWeekdayCalc(start_date, month_end_date, selected_days);
+    var daysInPeriod = (0, _moment2.default)().isoWeekdayCalc(start_date, end_date, selected_days);
     var unit_price = serviceCalculationBody.unit_price;
-    if (productBody.wages_type === 1) {
+    if (wages_type === 1) {
         unit_price = unit_price / daysInMonth;
     }
 
@@ -213,6 +215,7 @@ function preparePaymentDetails(parameters) {
         status_type: 1,
         total_amount: total_amount,
         total_days: daysInPeriod,
+        total_units: daysInPeriod * serviceCalculationBody.quantity,
         amount_paid: 0
     };
 }
@@ -221,10 +224,12 @@ function monthlyPaymentCalc(parameters) {
     var currentMth = parameters.currentMth,
         effectiveMth = parameters.effectiveMth,
         effectiveDate = parameters.effectiveDate,
-        productBody = parameters.productBody,
+        selected_days = parameters.selected_days,
+        wages_type = parameters.wages_type,
         serviceCalculationBody = parameters.serviceCalculationBody,
         user = parameters.user,
-        currentYear = parameters.currentYear;
+        currentYear = parameters.currentYear,
+        currentDate = parameters.currentDate;
 
     var monthDiff = currentMth >= effectiveMth ? currentMth - effectiveMth : null;
     var monthArr = [];
@@ -241,9 +246,10 @@ function monthlyPaymentCalc(parameters) {
             currentYear: currentYear,
             monthItem: monthItem,
             effectiveDate: effectiveDate,
-            productBody: productBody,
+            selected_days: selected_days, wages_type: wages_type,
             serviceCalculationBody: serviceCalculationBody,
-            user: user
+            user: user,
+            currentDate: currentDate
         });
     });
 }

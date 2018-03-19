@@ -36,6 +36,15 @@ exports.default = function (sequelize, DataTypes) {
     service_name_mr: {
       type: DataTypes.STRING
     },
+    category_id: {
+      type: DataTypes.INTEGER
+    },
+    main_category_id: {
+      type: DataTypes.INTEGER
+    },
+    sub_category_id: {
+      type: DataTypes.INTEGER
+    },
     quantity_type: {
       type: DataTypes.INTEGER
     },
@@ -68,6 +77,9 @@ exports.default = function (sequelize, DataTypes) {
     calendar_services.belongsTo(models.users, { foreignKey: 'updated_by' });
     calendar_services.belongsTo(models.statuses, { foreignKey: 'status_type', targetKey: 'status_type' });
     calendar_services.belongsTo(models.quantities, { foreignKey: 'quantity_type', as: 'quantity' });
+    calendar_services.belongsTo(models.categories, { foreignKey: 'category_id', as: 'category' });
+    calendar_services.belongsTo(models.categories, { foreignKey: 'main_category_id', as: 'main_category' });
+    calendar_services.belongsTo(models.categories, { foreignKey: 'sub_category_id', as: 'sub_category' });
   };
   return calendar_services;
 };

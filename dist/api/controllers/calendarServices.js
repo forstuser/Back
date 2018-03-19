@@ -51,7 +51,8 @@ var CalendarServiceController = function () {
         return calendarServiceAdaptor.retrieveCalendarServices({ status_type: 1 }, request.language).then(function (referenceData) {
           return reply({
             status: true,
-            items: referenceData
+            items: referenceData.items,
+            unit_types: referenceData.unit_types
           }).code(200);
         });
       } else {
@@ -88,6 +89,8 @@ var CalendarServiceController = function () {
           effective_date: (0, _moment2.default)(request.payload.effective_date, _moment2.default.ISO_8601).startOf('days'),
           quantity: request.payload.quantity,
           unit_price: request.payload.unit_price,
+          unit_type: request.payload.unit_type,
+          selected_days: request.payload.selected_days,
           updated_by: user.id || user.ID,
           status_type: 1
         };
@@ -108,11 +111,16 @@ var CalendarServiceController = function () {
           var currentMth = (0, _moment2.default)().month();
           var _currentYear = (0, _moment2.default)().year();
           var effectiveMth = effectiveDate.month();
+
+          var selected_days = productBody.selected_days,
+              wages_type = productBody.wages_type;
+
+          selected_days = serviceCalculationBody.selected_days || selected_days;
           servicePaymentArray = (0, _shared.monthlyPaymentCalc)({
             currentMth: currentMth,
             effectiveMth: effectiveMth,
             effectiveDate: effectiveDate,
-            productBody: productBody,
+            selected_days: selected_days, wages_type: wages_type,
             serviceCalculationBody: serviceCalculationBody,
             user: user,
             currentYear: _currentYear
@@ -129,11 +137,15 @@ var CalendarServiceController = function () {
             var yearEnd = (0, _moment2.default)([currentYear, 0, 31]).endOf('Y');
             var currentMth = (0, _moment2.default)().endOf('M').diff(yearEnd, 'M') > 0 ? yearEnd.month() : (0, _moment2.default)().month();
             var effectiveMth = currentYear > effectiveYear ? yearStart.month() : effectiveDate.month();
+            var selected_days = productBody.selected_days,
+                wages_type = productBody.wages_type;
+
+            selected_days = serviceCalculationBody.selected_days || selected_days;
             (_servicePaymentArray = servicePaymentArray).push.apply(_servicePaymentArray, _toConsumableArray((0, _shared.monthlyPaymentCalc)({
               currentMth: currentMth,
               effectiveMth: effectiveMth,
               effectiveDate: effectiveDate,
-              productBody: productBody,
+              selected_days: selected_days, wages_type: wages_type,
               serviceCalculationBody: serviceCalculationBody,
               user: user,
               currentYear: currentYear
@@ -164,7 +176,7 @@ var CalendarServiceController = function () {
           });
         });
       } else {
-        reply({
+        return reply({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -219,7 +231,48 @@ var CalendarServiceController = function () {
           });
         });
       } else {
-        reply({
+        return reply({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    }
+  }, {
+    key: 'markPaid',
+    value: function markPaid(request, reply) {
+      var user = _shared2.default.verifyAuthorization(request.headers);
+      if (!request.pre.userExist) {
+        return reply({
+          status: false,
+          message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate
+        });
+      } else if (request.pre.userExist && !request.pre.forceUpdate) {
+        var servicePaymentDetail = {
+          paid_on: (0, _moment2.default)(request.payload.paid_on, _moment2.default.ISO_8601),
+          amount_paid: request.payload.amount_paid,
+          updated_by: user.id || user.ID,
+          status_type: 5
+        };
+        return calendarServiceAdaptor.markPaymentPaid(request.params.id, request.params.ref_id, servicePaymentDetail).then(function (result) {
+          return reply({
+            status: true,
+            message: 'successful',
+            payment_detail: result,
+            forceUpdate: request.pre.forceUpdate
+          });
+        }).catch(function (err) {
+          console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+          return reply({
+            status: false,
+            message: 'Unable to mark paid.',
+            forceUpdate: request.pre.forceUpdate,
+            err: err
+          });
+        });
+      } else {
+        return reply({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -238,12 +291,12 @@ var CalendarServiceController = function () {
         });
       } else if (request.pre.userExist && !request.pre.forceUpdate) {
         var serviceAbsentDetail = {
-          absent_date: (0, _moment2.default)(request.payload.absent_date, _moment2.default.ISO_8601).startOf('days'),
+          absent_date: (0, _moment2.default)(request.payload.present_date, _moment2.default.ISO_8601).startOf('days'),
           payment_id: request.params.id
         };
         return calendarServiceAdaptor.retrieveCurrentCalculationDetail({
           ref_id: request.params.ref_id, effective_date: {
-            $lte: request.payload.absent_date
+            $lte: request.payload.present_date
           }
         }).then(function (calcResults) {
           var currentCalcDetail = calcResults;
@@ -251,7 +304,7 @@ var CalendarServiceController = function () {
           return Promise.all([calendarServiceAdaptor.updatePaymentDetail(request.params.id, {
             quantity: currentCalcDetail.quantity,
             unit_price: -currentCalcDetail.unit_price,
-            end_date: request.payload.absent_date,
+            end_date: request.payload.present_date,
             absent_day: -1
           }), calendarServiceAdaptor.markPresentForItem(serviceAbsentDetail)]);
         }).then(function (result) {
@@ -271,7 +324,7 @@ var CalendarServiceController = function () {
           });
         });
       } else {
-        reply({
+        return reply({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -367,6 +420,8 @@ var CalendarServiceController = function () {
           effective_date: (0, _moment2.default)(request.payload.effective_date, _moment2.default.ISO_8601).startOf('days'),
           quantity: request.payload.quantity,
           unit_price: request.payload.unit_price,
+          unit_type: request.payload.unit_type,
+          selected_days: request.payload.selected_days,
           updated_by: user.id || user.ID,
           status_type: 1,
           ref_id: request.params.id
@@ -377,7 +432,10 @@ var CalendarServiceController = function () {
           ref_id: request.params.id
         }, serviceCalculationBody).then(function (result) {
           if (result) {
-            return calendarServiceAdaptor.manipulatePaymentDetail({ ref_id: request.params.id, effective_date: (0, _moment2.default)(request.payload.effective_date, _moment2.default.ISO_8601).startOf('days') }, result.toJSON()).then(function () {
+            return calendarServiceAdaptor.manipulatePaymentDetail({
+              ref_id: request.params.id,
+              effective_date: (0, _moment2.default)(request.payload.effective_date, _moment2.default.ISO_8601).startOf('days')
+            }, result.toJSON()).then(function () {
               return reply({
                 status: true,
                 message: 'successful',
@@ -396,7 +454,64 @@ var CalendarServiceController = function () {
           });
         });
       } else {
-        reply({
+        return reply({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    }
+  }, {
+    key: 'updateServiceCalc',
+    value: function updateServiceCalc(request, reply) {
+      var user = _shared2.default.verifyAuthorization(request.headers);
+      if (!request.pre.userExist) {
+        return reply({
+          status: false,
+          message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate
+        });
+      } else if (request.pre.userExist && !request.pre.forceUpdate) {
+        var serviceCalculationBody = {
+          effective_date: (0, _moment2.default)(request.payload.effective_date, _moment2.default.ISO_8601).startOf('days'),
+          quantity: request.payload.quantity,
+          unit_price: request.payload.unit_price,
+          unit_type: request.payload.unit_type,
+          selected_days: request.payload.selected_days,
+          updated_by: user.id || user.ID,
+          status_type: 1,
+          ref_id: request.params.id
+        };
+
+        return calendarServiceAdaptor.addServiceCalc({
+          id: request.params.calc_id,
+          ref_id: request.params.id
+        }, serviceCalculationBody).then(function (result) {
+          if (result) {
+            return calendarServiceAdaptor.manipulatePaymentDetail({
+              id: request.params.calc_id,
+              effective_date: (0, _moment2.default)(request.payload.effective_date, _moment2.default.ISO_8601).startOf('days'),
+              ref_id: request.params.id
+            }, result.toJSON()).then(function () {
+              return reply({
+                status: true,
+                message: 'successful',
+                product: result,
+                forceUpdate: request.pre.forceUpdate
+              });
+            });
+          }
+        }).catch(function (err) {
+          console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+          return reply({
+            status: false,
+            message: 'An error occurred in adding effective calculation method for service.',
+            forceUpdate: request.pre.forceUpdate,
+            err: err
+          });
+        });
+      } else {
+        return reply({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate

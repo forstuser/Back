@@ -141,7 +141,7 @@ function retrieveDaysInsight(distinctInsight) {
 }
 
 export function preparePaymentDetails(parameters) {
-  let {currentYear, monthItem, effectiveDate, productBody, serviceCalculationBody, user} = parameters;
+  let {currentYear, monthItem, effectiveDate, selected_days, wages_type, serviceCalculationBody, user, currentDate} = parameters;
   const monthStartDate = moment([currentYear, monthItem, 1]);
   let month_end_date = moment([currentYear, 0, 31]).month(monthItem);
   let end_date = moment([currentYear, 0, 31]).month(monthItem);
@@ -149,17 +149,17 @@ export function preparePaymentDetails(parameters) {
   if (monthStartDate.diff(effectiveDate, 'days') > 0) {
     start_date = monthStartDate;
   }
-
-  if (end_date.diff(moment(), 'days') > 0) {
-    end_date = moment().endOf('days');
+  currentDate = (currentDate || moment());
+  if (end_date.diff(currentDate, 'days') > 0) {
+    end_date = currentDate.endOf('days');
   }
 
   const daysInMonth = moment().
-      isoWeekdayCalc(start_date, month_end_date, productBody.selected_days);
+      isoWeekdayCalc(start_date, month_end_date, selected_days);
   const daysInPeriod = moment().
-      isoWeekdayCalc(start_date, end_date, productBody.selected_days);
+      isoWeekdayCalc(start_date, end_date, selected_days);
   let unit_price = serviceCalculationBody.unit_price;
-  if (productBody.wages_type === 1) {
+  if (wages_type === 1) {
     unit_price = unit_price / daysInMonth;
   }
 
@@ -175,12 +175,13 @@ export function preparePaymentDetails(parameters) {
     status_type: 1,
     total_amount,
     total_days: daysInPeriod,
+    total_units: daysInPeriod * serviceCalculationBody.quantity,
     amount_paid: 0,
   };
 }
 
 export function monthlyPaymentCalc(parameters) {
-  let {currentMth, effectiveMth, effectiveDate, productBody, serviceCalculationBody, user, currentYear} = parameters;
+  let {currentMth, effectiveMth, effectiveDate, selected_days, wages_type, serviceCalculationBody, user, currentYear, currentDate} = parameters;
   const monthDiff = currentMth >= effectiveMth ?
       currentMth - effectiveMth :
       null;
@@ -198,9 +199,10 @@ export function monthlyPaymentCalc(parameters) {
       currentYear,
       monthItem,
       effectiveDate,
-      productBody,
+      selected_days, wages_type,
       serviceCalculationBody,
       user,
+      currentDate,
     });
   });
 }

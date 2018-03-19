@@ -80,7 +80,7 @@ var NotificationAdaptor = function () {
   _createClass(NotificationAdaptor, [{
     key: 'retrieveNotifications',
     value: function retrieveNotifications(user, request) {
-      return Promise.all([this.filterUpcomingService(user), this.prepareNotificationData(user)]).then(function (result) {
+      return Promise.all([this.filterUpcomingService(user, request), this.prepareNotificationData(user)]).then(function (result) {
         var upcomingServices = result[0].map(function (elem) {
           if (elem.productType === 4) {
             var dueAmountArr = elem.productMetaData.filter(function (e) {
@@ -140,7 +140,7 @@ var NotificationAdaptor = function () {
     }
   }, {
     key: 'filterUpcomingService',
-    value: function filterUpcomingService(user) {
+    value: function filterUpcomingService(user, request) {
       return Promise.all([this.productAdaptor.retrieveNotificationProducts({
         user_id: user.id || user.ID,
         status_type: [5, 11],
@@ -182,7 +182,7 @@ var NotificationAdaptor = function () {
         service_schedule_id: {
           $not: null
         }
-      })]).then(function (result) {
+      }, request.language)]).then(function (result) {
         var metaData = result[0][0];
         var productList = result[0][1].map(function (productItem) {
           productItem.productMetaData = metaData.filter(function (item) {

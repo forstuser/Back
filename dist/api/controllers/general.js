@@ -360,22 +360,24 @@ var GeneralController = function () {
         order: [['created_at', 'desc']]
       };
 
-      return modals.knowItems.findById(request.params.id, options).then(function (knowItems) {
-        knowItems.imageUrl = '/knowitem/' + knowItems.id + '/images';
-        knowItems.hashTags = '';
-        knowItems.title = knowItems.title || knowItems.default_title;
-        knowItems.description = knowItems.description || knowItems.default_description;
-        knowItems.tags = knowItems.tags.map(function (tagItem) {
+      return modals.knowItems.findById(request.params.id, options).then(function (result) {
+        var knowItem = result.toJSON();
+        knowItem.imageUrl = '/knowitem/' + knowItem.id + '/images';
+        knowItem.hashTags = '';
+        knowItem.title = knowItem.title || knowItem.default_title;
+        knowItem.description = knowItem.description || knowItem.default_description;
+        knowItem.tags = knowItem.tags.map(function (tagItem) {
           tagItem.title = tagItem.title || tagItem.default_title;
           return tagItem;
         });
-        knowItems.tags.forEach(function (tagItem) {
-          knowItems.hashTags += '#' + tagItem.title + ' ';
+        knowItem.tags.forEach(function (tagItem) {
+          knowItem.hashTags += '#' + tagItem.title + ' ';
         });
-        knowItems.hashTags = knowItems.hashTags.trim();
-        knowItems.totalLikes = knowItems.users.length;
+        knowItem.hashTags = knowItem.hashTags.trim();
+        knowItem.totalLikes = knowItem.users.length;
+
         return reply({
-          status: true, item: knowItems
+          status: true, item: knowItem
         }).code(200);
       }).catch(function (err) {
         console.log('Error on ' + new Date() + ' is as follow: \n \n ' + err);

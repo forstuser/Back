@@ -66,7 +66,7 @@ var DashboardAdaptor = function () {
   _createClass(DashboardAdaptor, [{
     key: 'retrieveDashboardResult',
     value: function retrieveDashboardResult(user, request) {
-      return Promise.all([this.filterUpcomingService(user), this.prepareInsightData(user), this.retrieveRecentSearch(user), this.modals.mailBox.count({ where: { user_id: user.id || user.ID, status_id: 4 } }), this.modals.products.count({
+      return Promise.all([this.filterUpcomingService(user, request), this.prepareInsightData(user, request), this.retrieveRecentSearch(user), this.modals.mailBox.count({ where: { user_id: user.id || user.ID, status_id: 4 } }), this.modals.products.count({
         where: {
           user_id: user.id || user.ID,
           status_type: [5, 8]
@@ -86,7 +86,7 @@ var DashboardAdaptor = function () {
       }), this.productAdaptor.retrieveUsersLastProduct({
         user_id: user.id || user.ID,
         status_type: [5, 8, 11]
-      })]).then(function (result) {
+      }, request.language)]).then(function (result) {
         var upcomingServices = result[0].map(function (elem) {
           if (elem.productType === 1) {
             var dueAmountArr = elem.productMetaData.filter(function (e) {
@@ -250,7 +250,7 @@ var DashboardAdaptor = function () {
     }
   }, {
     key: 'filterUpcomingService',
-    value: function filterUpcomingService(user) {
+    value: function filterUpcomingService(user, request) {
       return Promise.all([this.amcAdaptor.retrieveAMCs({
         user_id: user.id || user.ID,
         status_type: [5, 11],
@@ -287,7 +287,7 @@ var DashboardAdaptor = function () {
         service_schedule_id: {
           $not: null
         }
-      }), this.productAdaptor.retrieveNotificationProducts({
+      }, request.language), this.productAdaptor.retrieveNotificationProducts({
         user_id: user.id || user.ID,
         status_type: [5, 11],
         main_category_id: [6, 8]
@@ -408,7 +408,7 @@ var DashboardAdaptor = function () {
     }
   }, {
     key: 'prepareInsightData',
-    value: function prepareInsightData(user) {
+    value: function prepareInsightData(user, request) {
       return Promise.all([this.productAdaptor.retrieveProducts({
         status_type: [5, 11],
         user_id: user.id || user.ID,
@@ -416,7 +416,7 @@ var DashboardAdaptor = function () {
           $lte: _moment2.default.utc(),
           $gte: _moment2.default.utc().startOf('M')
         }
-      }), this.amcAdaptor.retrieveAMCs({
+      }, request.language), this.amcAdaptor.retrieveAMCs({
         status_type: [5, 11],
         user_id: user.id || user.ID,
         document_date: {

@@ -1015,6 +1015,30 @@ var UploadController = function () {
       }
     }
   }, {
+    key: 'retrieveCalendarItemImage',
+    value: function retrieveCalendarItemImage(request, reply) {
+      if (!request.pre.forceUpdate) {
+        var fsImplCategory = new _s3fs2.default(_main2.default.AWS.S3.BUCKET + '/' + _main2.default.AWS.S3.CALENDAR_ITEM_IMAGE, _main2.default.AWS.ACCESS_DETAILS);
+        return fsImplCategory.readFile(request.params.id + '.png', 'utf8').then(function (fileResult) {
+          return reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', 'attachment; filename=' + request.params.id + '.png');
+        }).catch(function (err) {
+          console.log('Error on ' + new Date() + ' for user while retrieving calendar item image is as follow: \n \n ' + err);
+          return reply({
+            status: false,
+            message: 'Unable to retrieve image',
+            err: err,
+            forceUpdate: request.pre.forceUpdate
+          });
+        });
+      } else {
+        return reply({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    }
+  }, {
     key: 'retrieveBrandImage',
     value: function retrieveBrandImage(request, reply) {
       if (!request.pre.forceUpdate) {

@@ -1058,6 +1058,33 @@ class UploadController {
     }
   }
 
+  static retrieveCalendarItemImage(request, reply) {
+    if (!request.pre.forceUpdate) {
+      const fsImplCategory = new S3FS(
+          `${config.AWS.S3.BUCKET}/${config.AWS.S3.CALENDAR_ITEM_IMAGE}`, config.AWS.ACCESS_DETAILS);
+      return fsImplCategory.readFile(`${request.params.id}.png`, 'utf8').
+          then(fileResult => reply(fileResult.Body).
+              header('Content-Type', fileResult.ContentType).
+              header('Content-Disposition',
+                  `attachment; filename=${request.params.id}.png`)).catch((err) => {
+            console.log(
+                `Error on ${new Date()} for user while retrieving calendar item image is as follow: \n \n ${err}`);
+            return reply({
+              status: false,
+              message: 'Unable to retrieve image',
+              err,
+              forceUpdate: request.pre.forceUpdate,
+            });
+          });
+    } else {
+      return reply({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
   static retrieveBrandImage(request, reply) {
     if (!request.pre.forceUpdate) {
       const fsImplBrand = new S3FS(

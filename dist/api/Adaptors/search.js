@@ -58,7 +58,7 @@ var SearchAdaptor = function () {
 
   _createClass(SearchAdaptor, [{
     key: 'prepareSearchResult',
-    value: function prepareSearchResult(user, searchValue) {
+    value: function prepareSearchResult(user, searchValue, language) {
       var _this = this;
 
       return Promise.all([this.fetchProductDetailOnline(user, '%' + searchValue + '%'), this.fetchProductDetailOffline(user, '%' + searchValue + '%'), this.fetchProductDetailBrand(user, '%' + searchValue + '%')]).then(function (results) {
@@ -71,7 +71,7 @@ var SearchAdaptor = function () {
         var brandProductId = results[2].map(function (item) {
           return item.id;
         });
-        return Promise.all([_this.fetchProductDetails(user, '%' + searchValue + '%', [].concat(_toConsumableArray(onlineSellerProductId), _toConsumableArray(offlineSellerProductId), _toConsumableArray(brandProductId))), _this.prepareCategoryData(user, '%' + searchValue + '%'), _this.updateRecentSearch(user, searchValue), _this.retrieveRecentSearch(user)]);
+        return Promise.all([_this.fetchProductDetails(user, '%' + searchValue + '%', [].concat(_toConsumableArray(onlineSellerProductId), _toConsumableArray(offlineSellerProductId), _toConsumableArray(brandProductId)), language), _this.prepareCategoryData(user, '%' + searchValue + '%', language), _this.updateRecentSearch(user, searchValue), _this.retrieveRecentSearch(user)]);
       }).then(function (result) {
         var productIds = [];
         var productList = result[0].map(function (item) {
@@ -120,12 +120,14 @@ var SearchAdaptor = function () {
     }
   }, {
     key: 'prepareCategoryData',
-    value: function prepareCategoryData(user, searchValue) {
+    value: function prepareCategoryData(user, searchValue, language) {
       var _this2 = this;
 
       var categoryOption = {
         status_type: 1,
-        $and: [this.modals.sequelize.where(this.modals.sequelize.fn('lower', this.modals.sequelize.col('categories.category_name')), { $iLike: this.modals.sequelize.fn('lower', searchValue) })]
+        $and: [{
+          $or: [this.modals.sequelize.where(this.modals.sequelize.fn('lower', this.modals.sequelize.col('categories.category_name')), { $iLike: this.modals.sequelize.fn('lower', searchValue) }), this.modals.sequelize.where(this.modals.sequelize.fn('lower', this.modals.sequelize.col('' + (language ? '"categories"."category_name_' + language + '"' : '"categories"."category_name"'))), { $iLike: this.modals.sequelize.fn('lower', searchValue) })]
+        }]
       };
 
       var productOptions = {
@@ -135,7 +137,7 @@ var SearchAdaptor = function () {
 
       var categories = void 0;
 
-      return this.categoryAdaptor.retrieveCategories(categoryOption).then(function (results) {
+      return this.categoryAdaptor.retrieveCategories(categoryOption, language).then(function (results) {
         categories = results;
         var categoryIds = categories.filter(function (item) {
           return item.level === 2;
@@ -148,8 +150,10 @@ var SearchAdaptor = function () {
         }) : undefined;
         productOptions.main_category_id = mainCategoryIds.length > 0 ? mainCategoryIds.map(function (item) {
           return item.id;
+        }) : categoryIds.length > 0 ? categoryIds.map(function (item) {
+          return item.refId;
         }) : undefined;
-        return _this2.productAdaptor.retrieveProducts(productOptions);
+        return _this2.productAdaptor.retrieveProducts(productOptions, language);
       }).then(function (productResult) {
         return categories.map(function (categoryItem) {
           var category = categoryItem;
@@ -192,7 +196,7 @@ var SearchAdaptor = function () {
     }
   }, {
     key: 'fetchProductDetails',
-    value: function fetchProductDetails(user, searchValue, productIds) {
+    value: function fetchProductDetails(user, searchValue, productIds, language) {
       return this.productAdaptor.retrieveProducts({
         user_id: user.id || user.ID,
         product_name: {
@@ -203,7 +207,7 @@ var SearchAdaptor = function () {
           id: productIds,
           $and: [this.modals.sequelize.where(this.modals.sequelize.fn('lower', this.modals.sequelize.col('product_name')), { $iLike: this.modals.sequelize.fn('lower', searchValue) })]
         }
-      });
+      }, language);
     }
   }, {
     key: 'fetchProductDetailOnline',

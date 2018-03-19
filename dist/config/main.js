@@ -15,6 +15,7 @@ exports.default = {
 			BUCKET: process.env.AWS_S3_BUCKET,
 			USER_IMAGE: 'userimages',
 			CATEGORY_IMAGE: 'categoryimages',
+			CALENDAR_ITEM_IMAGE: 'calendarserviceimages',
 			BRAND_IMAGE: 'brandimages',
 			PROVIDER_IMAGE: 'providerimages',
 			KNOW_ITEM_IMAGE: 'knowitemimages'
