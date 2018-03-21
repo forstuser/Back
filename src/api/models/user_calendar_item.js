@@ -27,11 +27,11 @@ export default (sequelize, DataTypes) => {
           type: DataTypes.INTEGER,
         },
         created_at: {
-          type: DataTypes.DATE,
+          type: DataTypes.DATEONLY,
           defaultValue: sequelize.literal('NOW()'),
         },
         updated_at: {
-          type: DataTypes.DATE,
+          type: DataTypes.DATEONLY,
           defaultValue: sequelize.literal('NOW()'),
         },
       },
@@ -52,6 +52,8 @@ export default (sequelize, DataTypes) => {
         {foreignKey: 'service_id', as: 'service_type'});
     user_calendar_item.hasMany(models.service_payment,
         {foreignKey: 'ref_id', as: 'payment_detail', onDelete: 'cascade'});
+    user_calendar_item.hasMany(models.calendar_item_payment,
+        {foreignKey: 'ref_id', as: 'payments', onDelete: 'cascade'});
     user_calendar_item.hasMany(models.service_calculation,
         {foreignKey: 'ref_id', as: 'calculation_detail', onDelete: 'cascade'});
     user_calendar_item.belongsTo(models.statuses,

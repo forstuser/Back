@@ -25,7 +25,7 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.FLOAT,
     },
     due_date: {
-      type: DataTypes.DATE,
+      type: DataTypes.DATEONLY,
     },
     notification_type: {
       type: DataTypes.INTEGER,
@@ -47,11 +47,11 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
     },
     created_at: {
-      type: DataTypes.DATE,
+      type: DataTypes.DATEONLY,
       defaultValue: sequelize.literal('NOW()'),
     },
     updated_at: {
-      type: DataTypes.DATE,
+      type: DataTypes.DATEONLY,
       defaultValue: sequelize.literal('NOW()'),
     },
     copies: {

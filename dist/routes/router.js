@@ -1696,50 +1696,6 @@ function prepareCalendarServiceRoutes(calendarController, calendarRoutes) {
 
     calendarRoutes.push({
       method: 'PUT',
-      path: '/calendar/items/{id}',
-      config: {
-        auth: 'jwt',
-        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }, {
-          method: appVersionHelper.updateUserActiveStatus,
-          assign: 'userExist'
-        }],
-        handler: _product2.default.updateProduct,
-        description: 'Update Product.',
-        validate: {
-          payload: {
-            product_name: [_joi2.default.string(), _joi2.default.allow(null)],
-            provider_name: [_joi2.default.string(), _joi2.default.allow(null)],
-            wages_type: [_joi2.default.number(), _joi2.default.allow(null)],
-            selected_days: [_joi2.default.array().items(_joi2.default.number()), _joi2.default.allow(null)],
-            unit_price: _joi2.default.number().required(),
-            unit_type: [_joi2.default.number(), _joi2.default.allow(null)],
-            quantity: [_joi2.default.number(), _joi2.default.allow(null)],
-            absent_dates: [_joi2.default.array().items(_joi2.default.string()), _joi2.default.allow(null)],
-            effective_date: _joi2.default.string().required()
-          }
-        }
-      }
-    });
-
-    calendarRoutes.push({
-      method: 'DELETE',
-      path: '/calendar/items/{id}',
-      config: {
-        auth: 'jwt',
-        pre: [{
-          method: appVersionHelper.checkAppVersion,
-          assign: 'forceUpdate'
-        }, {
-          method: appVersionHelper.updateUserActiveStatus,
-          assign: 'userExist'
-        }],
-        handler: _product2.default.deleteProduct,
-        description: 'Delete Product.'
-      }
-    });
-
-    calendarRoutes.push({
-      method: 'PUT',
       path: '/calendar/items/{ref_id}/payments/{id}/absent',
       config: {
         auth: 'jwt',
@@ -1762,7 +1718,27 @@ function prepareCalendarServiceRoutes(calendarController, calendarRoutes) {
 
     calendarRoutes.push({
       method: 'PUT',
-      path: '/calendar/items/{ref_id}/payments/{id}/paid',
+      path: '/calendar/items/{id}',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _calendarServices2.default.updateItem,
+        description: 'Update Calendar Item.',
+        validate: {
+          payload: {
+            product_name: [_joi2.default.string(), _joi2.default.allow(null)],
+            provider_name: [_joi2.default.string(), _joi2.default.allow(null)]
+          }
+        }
+      }
+    });
+
+    calendarRoutes.push({
+      method: 'PUT',
+      path: '/calendar/items/{id}/paid',
       config: {
         auth: 'jwt',
         pre: [{

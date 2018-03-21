@@ -31,11 +31,11 @@ exports.default = function (sequelize, DataTypes) {
       type: DataTypes.INTEGER
     },
     created_at: {
-      type: DataTypes.DATE,
+      type: DataTypes.DATEONLY,
       defaultValue: sequelize.literal('NOW()')
     },
     updated_at: {
-      type: DataTypes.DATE,
+      type: DataTypes.DATEONLY,
       defaultValue: sequelize.literal('NOW()')
     }
   }, {
@@ -51,6 +51,7 @@ exports.default = function (sequelize, DataTypes) {
     user_calendar_item.belongsTo(models.users, { foreignKey: 'user_id' });
     user_calendar_item.belongsTo(models.calendar_services, { foreignKey: 'service_id', as: 'service_type' });
     user_calendar_item.hasMany(models.service_payment, { foreignKey: 'ref_id', as: 'payment_detail', onDelete: 'cascade' });
+    user_calendar_item.hasMany(models.calendar_item_payment, { foreignKey: 'ref_id', as: 'payments', onDelete: 'cascade' });
     user_calendar_item.hasMany(models.service_calculation, { foreignKey: 'ref_id', as: 'calculation_detail', onDelete: 'cascade' });
     user_calendar_item.belongsTo(models.statuses, { foreignKey: 'status_type', targetKey: 'status_type' });
   };

@@ -48,7 +48,7 @@ exports.default = function (sequelize, DataTypes) {
       defaultValue: 0
     },
     document_date: {
-      type: DataTypes.DATE,
+      type: DataTypes.DATEONLY,
       defaultValue: sequelize.literal('NOW()')
     },
     user_id: {
@@ -64,11 +64,11 @@ exports.default = function (sequelize, DataTypes) {
       type: DataTypes.INTEGER
     },
     created_at: {
-      type: DataTypes.DATE,
+      type: DataTypes.DATEONLY,
       defaultValue: sequelize.literal('NOW()')
     },
     updated_at: {
-      type: DataTypes.DATE,
+      type: DataTypes.DATEONLY,
       defaultValue: sequelize.literal('NOW()')
     },
     copies: {

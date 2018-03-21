@@ -1,24 +1,21 @@
 'use strict';
 
 export default (sequelize, DataTypes) => {
-  const jobCopies = sequelize.define('jobCopies', {
+  const calendar_item_payment = sequelize.define('calendar_item_payment', {
+        ref_id: {
+          type: DataTypes.INTEGER,
+        },
         updated_by: {
           type: DataTypes.INTEGER,
         },
         status_type: {
           type: DataTypes.INTEGER,
         },
-        type: {
-          type: DataTypes.INTEGER,
+        paid_on: {
+          type: DataTypes.DATEONLY,
         },
-        file_name: {
-          type: DataTypes.STRING,
-        },
-        file_type: {
-          type: DataTypes.STRING,
-        },
-        comments: {
-          type: DataTypes.STRING(2000),
+        amount_paid: {
+          type: DataTypes.FLOAT,
         },
         created_at: {
           type: DataTypes.DATEONLY,
@@ -33,17 +30,17 @@ export default (sequelize, DataTypes) => {
         freezeTableName: true,
         defaultPrimaryKey: true,
         timestamps: true,
-        paranoid: true,
         underscored: true,
-        tableName: 'job_copies',
+        tableName: 'table_calendar_item_payment',
       });
 
-  jobCopies.associate = (models) => {
-    jobCopies.belongsTo(models.users,
+  calendar_item_payment.associate = (models) => {
+    calendar_item_payment.belongsTo(models.user_calendar_item,
+        {foreignKey: 'ref_id', as: 'calendar_item'});
+    calendar_item_payment.belongsTo(models.users,
         {foreignKey: 'updated_by'});
-    jobCopies.belongsTo(models.jobs);
-    jobCopies.belongsTo(models.statuses,
+    calendar_item_payment.belongsTo(models.statuses,
         {foreignKey: 'status_type', targetKey: 'status_type'});
   };
-  return jobCopies;
+  return calendar_item_payment;
 };

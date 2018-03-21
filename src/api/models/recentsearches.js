@@ -26,16 +26,16 @@ export default (sequelize, DataTypes) => {
       field: 'result_count',
     },
     searchDate: {
-      type: DataTypes.DATE,
+      type: DataTypes.DATEONLY,
       defaultValue: sequelize.literal('NOW()'),
       field: 'search_date',
     },
     created_at: {
-      type: DataTypes.DATE,
+      type: DataTypes.DATEONLY,
       defaultValue: sequelize.literal('NOW()'),
     },
     updated_at: {
-      type: DataTypes.DATE,
+      type: DataTypes.DATEONLY,
       defaultValue: sequelize.literal('NOW()'),
     },
   }, {

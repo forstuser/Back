@@ -20,11 +20,11 @@ exports.default = function (sequelize, DataTypes) {
       defaultValue: sequelize.literal('NOW()')
     },
     created_at: {
-      type: DataTypes.DATE,
+      type: DataTypes.DATEONLY,
       defaultValue: sequelize.literal('NOW()')
     },
     updated_at: {
-      type: DataTypes.DATE,
+      type: DataTypes.DATEONLY,
       defaultValue: sequelize.literal('NOW()')
     }
   }, {

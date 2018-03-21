@@ -26,11 +26,11 @@ export default (sequelize, DataTypes) => sequelize.define('contactUs', {
     defaultValue: 0,
   },
   created_at: {
-    type: DataTypes.DATE,
+    type: DataTypes.DATEONLY,
     defaultValue: sequelize.literal('NOW()'),
   },
   updated_at: {
-    type: DataTypes.DATE,
+    type: DataTypes.DATEONLY,
     defaultValue: sequelize.literal('NOW()'),
   },
 }, {

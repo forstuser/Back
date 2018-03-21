@@ -19,7 +19,7 @@ export default (sequelize, DataTypes) => {
           type: DataTypes.STRING,
         },
         document_date: {
-          type: DataTypes.DATE,
+          type: DataTypes.DATEONLY,
           defaultValue: sequelize.literal('NOW()'),
         },
         user_id: {
@@ -35,11 +35,11 @@ export default (sequelize, DataTypes) => {
           type: DataTypes.INTEGER,
         },
         created_at: {
-          type: DataTypes.DATE,
+          type: DataTypes.DATEONLY,
           defaultValue: sequelize.literal('NOW()'),
         },
         updated_at: {
-          type: DataTypes.DATE,
+          type: DataTypes.DATEONLY,
           defaultValue: sequelize.literal('NOW()'),
         },
       },

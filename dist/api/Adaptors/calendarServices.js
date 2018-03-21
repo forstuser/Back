@@ -14,6 +14,10 @@ var _lodash = require('lodash');
 
 var _lodash2 = _interopRequireDefault(_lodash);
 
+var _bluebird = require('bluebird');
+
+var _bluebird2 = _interopRequireDefault(_bluebird);
+
 var _product = require('./product');
 
 var _product2 = _interopRequireDefault(_product);
@@ -39,9 +43,38 @@ var CalendarServiceAdaptor = function () {
   _createClass(CalendarServiceAdaptor, [{
     key: 'retrieveCalendarServices',
     value: function retrieveCalendarServices(options, language) {
-      return Promise.all([this.modals.calendar_services.findAll({
+      var _this = this;
+
+      return _bluebird2.default.try(function () {
+        return [_this.retrieveAllCalendarServices(options, language), _this.retrieveAllQuantities(options, language)];
+      }).spread(function (calendar_services, unit_types) {
+        return [calendar_services.map(function (item) {
+          var calendarServiceItem = item.toJSON();
+          calendarServiceItem.name = calendarServiceItem.name || calendarServiceItem.default_name;
+          calendarServiceItem.quantity_type = calendarServiceItem.quantity_type || calendarServiceItem.default_quantity_type;
+          return calendarServiceItem;
+        }), unit_types.map(function (item) {
+          var unitTypes = item.toJSON();
+          unitTypes.title = unitTypes.title || unitTypes.default_title;
+          return unitTypes;
+        })];
+      });
+    }
+  }, {
+    key: 'retrieveAllQuantities',
+    value: function retrieveAllQuantities(options, language) {
+      return this.modals.quantities.findAll({
         where: options,
-        attributes: ['id', ['service_name', 'default_name'], ['' + (language ? 'service_name_' + language : 'service_name'), 'name'], [this.modals.sequelize.literal('"quantity"."quantity_name"'), 'default_quantity_type'], [this.modals.sequelize.literal('"quantity"."' + (language ? 'quantity_name_' + language : 'quantity_name') + '"'), 'quantity_type'], [this.modals.sequelize.fn('CONCAT', '/calendarservice/', this.modals.sequelize.literal('"calendar_services"."id"'), '/images'), 'calendarServiceImageUrl']],
+        attributes: ['id', ['quantity_name', 'default_title'], ['' + (language ? 'quantity_name_' + language : 'quantity_name'), 'title']],
+        order: ['id']
+      });
+    }
+  }, {
+    key: 'retrieveAllCalendarServices',
+    value: function retrieveAllCalendarServices(options, language) {
+      return this.modals.calendar_services.findAll({
+        where: options,
+        attributes: ['id', ['service_name', 'default_name'], ['' + (language ? 'service_name_' + language : 'service_name'), 'name'], [this.modals.sequelize.literal('"quantity"."quantity_name"'), 'default_quantity_name'], [this.modals.sequelize.literal('"quantity"."' + (language ? 'quantity_name_' + language : 'quantity_name') + '"'), 'quantity_name'], 'quantity_type', [this.modals.sequelize.fn('CONCAT', '/calendarservice/', this.modals.sequelize.literal('"calendar_services"."id"'), '/images'), 'calendarServiceImageUrl']],
         include: {
           model: this.modals.quantities,
           as: 'quantity',
@@ -49,31 +82,13 @@ var CalendarServiceAdaptor = function () {
           required: false
         },
         order: ['id']
-      }), this.modals.quantities.findAll({
-        where: options,
-        attributes: ['id', ['quantity_name', 'default_title'], ['' + (language ? 'quantity_name_' + language : 'quantity_name'), 'title']],
-        order: ['id']
-      })]).then(function (result) {
-        return {
-          items: result[0].map(function (item) {
-            var calendarServiceItem = item.toJSON();
-            calendarServiceItem.name = calendarServiceItem.name || calendarServiceItem.default_name;
-            calendarServiceItem.quantity_type = calendarServiceItem.quantity_type || calendarServiceItem.default_quantity_type;
-            return calendarServiceItem;
-          }),
-          unit_types: result[1].map(function (item) {
-            var unitTypes = item.toJSON();
-            unitTypes.title = unitTypes.title || unitTypes.default_title;
-            return unitTypes;
-          })
-        };
       });
     }
   }, {
     key: 'retrieveCalendarServiceById',
     value: function retrieveCalendarServiceById(id, language) {
       return this.modals.calendar_services.findById(id, {
-        attributes: ['id', ['service_name', 'default_name'], ['' + (language ? 'service_name_' + language : 'service_name'), 'name'], [this.modals.sequelize.literal('"quantity"."quantity_name"'), 'default_quantity_type'], [this.modals.sequelize.literal('"quantity"."' + (language ? 'quantity_name_' + language : 'quantity_name') + '"'), 'quantity_type'], [this.modals.sequelize.fn('CONCAT', '/calendarservice/', this.modals.sequelize.literal('"calendar_services"."id"'), '/images'), 'calendarServiceImageUrl'], 'category_id', 'main_category_id', 'sub_category_id'],
+        attributes: ['id', ['service_name', 'default_name'], ['' + (language ? 'service_name_' + language : 'service_name'), 'name'], [this.modals.sequelize.literal('"quantity"."quantity_name"'), 'default_quantity_name'], [this.modals.sequelize.literal('"quantity"."' + (language ? 'quantity_name_' + language : 'quantity_name') + '"'), 'quantity_name'], 'quantity_type', [this.modals.sequelize.fn('CONCAT', '/calendarservice/', this.modals.sequelize.literal('"calendar_services"."id"'), '/images'), 'calendarServiceImageUrl'], 'category_id', 'main_category_id', 'sub_category_id'],
         include: {
           model: this.modals.quantities,
           as: 'quantity',
@@ -81,8 +96,8 @@ var CalendarServiceAdaptor = function () {
           required: true
         },
         order: ['id']
-      }).then(function (result) {
-        var calendarServiceItem = result.toJSON();
+      }).then(function (calendar_services) {
+        var calendarServiceItem = calendar_services.toJSON();
         calendarServiceItem.name = calendarServiceItem.name || calendarServiceItem.default_name;
         calendarServiceItem.quantity_type = calendarServiceItem.quantity_type || calendarServiceItem.default_quantity_type;
         return calendarServiceItem;
@@ -91,7 +106,7 @@ var CalendarServiceAdaptor = function () {
   }, {
     key: 'createCalendarItem',
     value: function createCalendarItem(calendarItemDetail) {
-      var _this = this;
+      var _this2 = this;
 
       var productBody = calendarItemDetail.productBody,
           servicePaymentArray = calendarItemDetail.servicePaymentArray,
@@ -99,124 +114,174 @@ var CalendarServiceAdaptor = function () {
           serviceCalculationBody = calendarItemDetail.serviceCalculationBody,
           user = calendarItemDetail.user;
 
-      return this.modals.user_calendar_item.findCreateFind({
-        where: productBody
-      }).then(function (calendarItem) {
-        console.log(calendarItem);
-        calendarItem = calendarItem[0].toJSON();
+      return _bluebird2.default.try(function () {
+        return _this2.findAndCreateCalendarItem({ where: productBody });
+      }).spread(function (calendarItem) {
+        calendarItem = calendarItem.toJSON();
         serviceCalculationBody.ref_id = calendarItem.id;
-        var subPromiseArray = [calendarItem, _this.modals.service_calculation.findCreateFind({
-          where: serviceCalculationBody
-        })];
+        var subPromiseArray = [calendarItem, _this2.findCreateCalculationDetail({ where: serviceCalculationBody })];
         servicePaymentArray.forEach(function (item) {
           item.ref_id = calendarItem.id;
-          subPromiseArray.push(_this.modals.service_payment.findCreateFind({ where: item }));
+          subPromiseArray.push(_this2.findCreateServicePayment({ where: item }));
         });
         serviceAbsentDayArray.forEach(function (item) {
           item.ref_id = calendarItem.id;
-          subPromiseArray.push(_this.modals.service_absent_days.findCreateFind({ where: item }));
+          subPromiseArray.push(_this2.markAbsentForItem({ where: item }));
         });
 
-        return Promise.all(subPromiseArray);
+        return subPromiseArray;
       });
     }
   }, {
+    key: 'updateCalendarItem',
+    value: function updateCalendarItem(calendarItemDetail, id) {
+      var _this3 = this;
+
+      return _bluebird2.default.try(function () {
+        return _this3.modals.user_calendar_item.update(calendarItemDetail, { where: { id: id } });
+      });
+    }
+  }, {
+    key: 'findCreateAbsentDateDetails',
+    value: function findCreateAbsentDateDetails(parameters) {
+      return this.modals.service_absent_days.findCreateFind(parameters);
+    }
+  }, {
+    key: 'findCreateServicePayment',
+    value: function findCreateServicePayment(parameters) {
+      return this.modals.service_payment.findCreateFind(parameters);
+    }
+  }, {
+    key: 'findCreateCalculationDetail',
+    value: function findCreateCalculationDetail(parameters) {
+      return this.modals.service_calculation.findCreateFind(parameters);
+    }
+  }, {
+    key: 'findAndCreateCalendarItem',
+    value: function findAndCreateCalendarItem(parameters) {
+      return this.modals.user_calendar_item.findCreateFind(parameters);
+    }
+  }, {
     key: 'markAbsentForItem',
-    value: function markAbsentForItem(absentDayDetail) {
-      return this.modals.service_absent_days.findCreateFind({ where: absentDayDetail });
+    value: function markAbsentForItem(parameters) {
+      return this.modals.service_absent_days.findCreateFind(parameters);
     }
   }, {
     key: 'markPresentForItem',
-    value: function markPresentForItem(absentDayDetail) {
-      return this.modals.service_absent_days.destroy({ where: absentDayDetail });
+    value: function markPresentForItem(parameters) {
+      return this.modals.service_absent_days.destroy(parameters);
     }
   }, {
     key: 'retrieveCalendarItemList',
     value: function retrieveCalendarItemList(options, language) {
-      var _this2 = this;
+      var _this4 = this;
 
       var calendarItemList = void 0;
-      return this.modals.user_calendar_item.findAll({
-        where: options,
-        include: [{
-          model: this.modals.service_payment,
-          as: 'payment_detail',
-          include: {
-            model: this.modals.service_absent_days,
-            as: 'absent_day_detail',
-            required: false
-          },
-          where: {
-            end_date: { $lte: (0, _moment2.default)().endOf('M').valueOf() }
-          },
-          required: true
-        }, {
-          model: this.modals.service_calculation,
-          as: 'calculation_detail',
-          include: {
-            model: this.modals.quantities,
-            as: 'unit',
-            attributes: ['id', ['quantity_name', 'default_title'], ['' + (language ? 'quantity_name_' + language : 'quantity_name'), 'title']],
-            required: false
-          },
-          required: true,
-          order: [['effective_date', 'desc']]
-        }]
+      return _bluebird2.default.try(function () {
+        return _this4.retrieveAllCalendarItems(options);
       }).then(function (result) {
-        calendarItemList = result.map(function (item) {
-          var calendarItemDetail = item.toJSON();
+        calendarItemList = result;
 
-          calendarItemDetail.calculation_detail = _lodash2.default.orderBy(calendarItemDetail.calculation_detail, ['effective_date'], ['desc']);
-          calendarItemDetail.payment_detail = _lodash2.default.orderBy(calendarItemDetail.payment_detail, ['end_date'], ['desc']);
-          calendarItemDetail.last_payment_detail = calendarItemDetail.payment_detail[0];
-          return calendarItemDetail;
-        });
-
-        return Promise.all([_this2.retrieveCalendarServices({ id: calendarItemList.map(function (item) {
+        return [_this4.retrieveCalendarServices({ id: calendarItemList.map(function (item) {
             return item.service_id;
-          }) }, language)].concat(_toConsumableArray(calendarItemList.map(function (item) {
-          return _this2.updateServicePaymentForLatest({
-            ref_id: item.id,
-            last_payment_detail: item.last_payment_detail,
-            serviceCalculationBody: item.calculation_detail[0],
-            productBody: item
+          }) }, language), _bluebird2.default.all(calendarItemList.map(function (item) {
+          return _this4.retrieveLatestServicePaymentDetails({
+            include: {
+              model: _this4.modals.service_absent_days,
+              as: 'absent_day_detail',
+              required: false
+            },
+            where: {
+              end_date: { $lte: (0, _moment2.default)().endOf('M').valueOf() },
+              ref_id: item.id
+            }
           });
-        }))));
-      }).then(function (serviceResult) {
-        var services = serviceResult[0];
+        })), _bluebird2.default.all(calendarItemList.map(function (item) {
+          return _this4.retrieveLatestServiceCalculation({
+            where: {
+              ref_id: item.id
+            },
+            include: {
+              model: _this4.modals.quantities,
+              as: 'unit',
+              attributes: ['id', ['quantity_name', 'default_title'], ['' + (language ? 'quantity_name_' + language : 'quantity_name'), 'title']],
+              required: false
+            }
+          });
+        }))];
+      }).spread(function (services, latest_payment_details, latest_calculation_details) {
         return calendarItemList.map(function (item) {
-          item.service_type = services.items.find(function (serviceItem) {
+          item.service_type = services[0].find(function (serviceItem) {
             return serviceItem.id === item.service_id;
           });
 
-          var item_start_date = (0, _moment2.default)(item.payment_detail[0].start_date, _moment2.default.ISO_8601);
-          var item_end_date = (0, _moment2.default)(item.payment_detail[0].end_date, _moment2.default.ISO_8601);
-          item.present_days = (0, _moment2.default)().isoWeekdayCalc(item_start_date, item_end_date, item.selected_days);
-          if ((0, _moment2.default)().endOf('days').diff((0, _moment2.default)(item_end_date, _moment2.default.ISO_8601), 'days') >= 0) {
-            item.present_days = (0, _moment2.default)().isoWeekdayCalc(item_start_date, (0, _moment2.default)().endOf('days'), item.selected_days);
-          }
-
-          item.absent_days = item.payment_detail[0].absent_day_detail.length;
-          item.present_days = item.present_days - item.absent_days;
+          item.latest_payment_detail = latest_payment_details.find(function (paymentItem) {
+            return paymentItem.ref_id === item.id;
+          });
+          item.latest_calculation_detail = latest_calculation_details.find(function (calcItem) {
+            return calcItem.ref_id === item.id;
+          });
+          item.present_days = item.latest_payment_detail ? item.latest_payment_detail.total_days : 0;
+          item.absent_days = item.latest_payment_detail ? item.latest_payment_detail.absent_day_detail.length : 0;
 
           return item;
         });
+      }).then(function (calendarItemList) {
+        return [_bluebird2.default.all(calendarItemList.map(function (item) {
+          return _this4.updateServicePaymentForLatest({
+            ref_id: item.id,
+            latest_payment_detail: item.latest_payment_detail,
+            serviceCalculationBody: item.latest_calculation_detail,
+            productBody: item
+          });
+        })), calendarItemList];
+      });
+    }
+  }, {
+    key: 'retrieveAllCalendarItems',
+    value: function retrieveAllCalendarItems(options) {
+      return this.modals.user_calendar_item.findAll({
+        where: options
+      }).then(function (result) {
+        return result.map(function (item) {
+          return item.toJSON();
+        });
+      });
+    }
+  }, {
+    key: 'retrieveServicePaymentDetails',
+    value: function retrieveServicePaymentDetails(options) {
+      return this.modals.service_payment.findAll(options);
+    }
+  }, {
+    key: 'retrieveLatestServicePaymentDetails',
+    value: function retrieveLatestServicePaymentDetails(options) {
+      options.order = [['end_date', 'DESC']];
+      return this.modals.service_payment.findOne(options).then(function (result) {
+        return result ? result.toJSON() : {};
+      });
+    }
+  }, {
+    key: 'retrieveLatestServiceCalculation',
+    value: function retrieveLatestServiceCalculation(options) {
+      options.order = [['effective_date', 'DESC']];
+      return this.modals.service_calculation.findOne(options).then(function (result) {
+        return result ? result.toJSON() : {};
       });
     }
   }, {
     key: 'updateServicePaymentForLatest',
     value: function updateServicePaymentForLatest(options) {
-      var _this3 = this;
+      var _this5 = this;
 
-      var effectiveDate = (0, _moment2.default)(options.last_payment_detail.end_date, _moment2.default.ISO_8601);
+      var productBody = options.productBody,
+          serviceCalculationBody = options.serviceCalculationBody;
+
+      var effectiveDate = serviceCalculationBody ? (0, _moment2.default)(options.latest_payment_detail ? options.latest_payment_detail.end_date : serviceCalculationBody.effective_date, _moment2.default.ISO_8601) : (0, _moment2.default)();
       var currentYear = (0, _moment2.default)().year();
       var effectiveYear = effectiveDate.year();
       var servicePaymentArray = [];
       var yearDiff = currentYear > effectiveYear ? currentYear - effectiveYear : null;
-      var productBody = options.productBody,
-          serviceCalculationBody = options.serviceCalculationBody;
-
-      console.log(JSON.stringify({ productBody: productBody, serviceCalculationBody: serviceCalculationBody }));
       if (!yearDiff) {
         var currentMth = (0, _moment2.default)().month();
         var _currentYear = (0, _moment2.default)().year();
@@ -267,20 +332,20 @@ var CalendarServiceAdaptor = function () {
         });
       }
 
-      return Promise.all(servicePaymentArray.map(function (payItem) {
-        if (effectiveDate.diff((0, _moment2.default)(payItem.start_date, _moment2.default.ISO_8601), 'days') === 0) {
-          var _options$last_payment = options.last_payment_detail,
-              start_date = _options$last_payment.start_date,
-              total_amount = _options$last_payment.total_amount,
-              total_days = _options$last_payment.total_days,
-              total_units = _options$last_payment.total_units,
-              amount_paid = _options$last_payment.amount_paid;
+      return _bluebird2.default.all(servicePaymentArray.map(function (payItem) {
+        if (options.latest_payment_detail && effectiveDate.diff((0, _moment2.default)(payItem.start_date, _moment2.default.ISO_8601), 'days') === 0) {
+          var _options$latest_payme = options.latest_payment_detail,
+              start_date = _options$latest_payme.start_date,
+              total_amount = _options$latest_payme.total_amount,
+              total_days = _options$latest_payme.total_days,
+              total_units = _options$latest_payme.total_units,
+              amount_paid = _options$latest_payme.amount_paid;
           var end_date = payItem.end_date;
 
           total_amount = payItem.total_amount;
           total_days = payItem.total_days;
           total_units = payItem.total_units;
-          return _this3.modals.service_payment.update({
+          return _this5.modals.service_payment.update({
             start_date: start_date,
             end_date: end_date,
             total_amount: total_amount,
@@ -289,22 +354,27 @@ var CalendarServiceAdaptor = function () {
             amount_paid: amount_paid
           }, {
             where: {
-              id: options.id
+              id: options.latest_payment_detail.id
             }
           });
         }
         payItem.ref_id = options.ref_id;
-        return _this3.modals.service_payment.create(payItem);
+        return _this5.modals.service_payment.create(payItem);
       }));
     }
   }, {
     key: 'retrieveCalendarItemById',
     value: function retrieveCalendarItemById(id, language) {
-      var _this4 = this;
+      var _this6 = this;
 
       var calendarItemDetail = void 0;
       return this.modals.user_calendar_item.findById(id, {
         include: [{
+          model: this.modals.calendar_item_payment,
+          as: 'payments',
+          order: [['paid_on', 'asc']],
+          required: false
+        }, {
           model: this.modals.service_payment,
           as: 'payment_detail',
           include: {
@@ -328,7 +398,7 @@ var CalendarServiceAdaptor = function () {
         }]
       }).then(function (result) {
         calendarItemDetail = result.toJSON();
-        return _this4.retrieveCalendarServiceById(calendarItemDetail.service_id, language);
+        return _this6.retrieveCalendarServiceById(calendarItemDetail.service_id, language);
       }).then(function (services) {
         calendarItemDetail.service_type = services;
         calendarItemDetail.calculation_detail = _lodash2.default.orderBy(calendarItemDetail.calculation_detail, ['effective_date'], ['desc']);
@@ -371,7 +441,7 @@ var CalendarServiceAdaptor = function () {
   }, {
     key: 'updatePaymentDetail',
     value: function updatePaymentDetail(id, paymentDetail) {
-      var _this5 = this;
+      var _this7 = this;
 
       return this.modals.service_payment.findById(id, {
         include: {
@@ -402,10 +472,10 @@ var CalendarServiceAdaptor = function () {
         if (newEndDate) {
           var monthDiff = newEndDate.month() - (0, _moment2.default)(currentDetail.end_date, _moment2.default.ISO_8601).month();
           if (monthDiff > 0) {
-            return _this5.addPaymentDetail({
+            return _this7.addPaymentDetail({
               start_date: newEndDate.startOf('M'),
               end_date: newEndDate.endOf('days'),
-              last_end_date: currentEndDate,
+              latest_end_date: currentEndDate,
               ref_id: currentDetail.ref_id,
               monthDiff: monthDiff
             }, paymentDetail);
@@ -481,13 +551,13 @@ var CalendarServiceAdaptor = function () {
   }, {
     key: 'addServiceCalc',
     value: function addServiceCalc(options, calcDetail) {
-      var _this6 = this;
+      var _this8 = this;
 
       return this.modals.service_calculation.findOne({
         where: options
       }).then(function (calcResult) {
         if (calcResult) {
-          return new Promise(function (resolve, reject) {
+          return new _bluebird2.default(function (resolve, reject) {
             return setImmediate(function () {
               resolve(calcResult.updateAttributes(calcDetail));
               // (calcResult);
@@ -495,18 +565,18 @@ var CalendarServiceAdaptor = function () {
           });
         }
 
-        return _this6.modals.service_calculation.create(calcDetail);
+        return _this8.modals.service_calculation.create(calcDetail);
       });
     }
   }, {
     key: 'manipulatePaymentDetail',
     value: function manipulatePaymentDetail(options) {
-      var _this7 = this;
+      var _this9 = this;
 
       var serviceCalcList = void 0;
       var servicePayments = void 0;
       var absentDetail = [];
-      return Promise.all([this.modals.service_payment.count({
+      return _bluebird2.default.all([this.modals.service_payment.count({
         where: {
           ref_id: options.ref_id,
           start_date: {
@@ -559,7 +629,7 @@ var CalendarServiceAdaptor = function () {
         var servicePaymentArray = [];
         var destroyServicePayment = void 0;
         if (serviceResult[0] === 0) {
-          destroyServicePayment = _this7.modals.service_payment.destroy({
+          destroyServicePayment = _this9.modals.service_payment.destroy({
             where: {
               ref_id: servicePayments[0].calendar_item.id
             }
@@ -627,9 +697,9 @@ var CalendarServiceAdaptor = function () {
         }
 
         serviceCalcList = _lodash2.default.orderBy(serviceCalcList, ['effective_date'], ['desc']);
-        return Promise.all([Promise.all(servicePaymentArray.map(function (item) {
+        return _bluebird2.default.all([_bluebird2.default.all(servicePaymentArray.map(function (item) {
           item.ref_id = servicePayments[0].calendar_item.id;
-          return _this7.modals.service_payment.findCreateFind({ where: item });
+          return _this9.modals.service_payment.findCreateFind({ where: item });
         })), destroyServicePayment, serviceResult[0], servicePayments[0].calendar_item]);
       }).then(function (results) {
         console.log(JSON.stringify(results));
@@ -651,27 +721,27 @@ var CalendarServiceAdaptor = function () {
           });
         }
 
-        return _this7.updatePaymentDetailForCalc({
+        return _this9.updatePaymentDetailForCalc({
           servicePayments: servicePayments,
           serviceCalcList: serviceCalcList,
           absentDetailToUpdate: absentDetailToUpdate
         });
       }).then(function (result) {
-        return Promise.all(result[0].length > 0 ? result[0].map(function (absentItem) {
-          return _this7.markAbsentForItem(absentItem);
+        return _bluebird2.default.all(result[0].length > 0 ? result[0].map(function (absentItem) {
+          return _this9.markAbsentForItem({ where: absentItem });
         }) : []);
       });
     }
   }, {
     key: 'updatePaymentDetailForCalc',
     value: function updatePaymentDetailForCalc(parameters) {
-      var _this8 = this;
+      var _this10 = this;
 
       var servicePayments = parameters.servicePayments,
           serviceCalcList = parameters.serviceCalcList,
           absentDetailToUpdate = parameters.absentDetailToUpdate;
 
-      return Promise.all([absentDetailToUpdate].concat(_toConsumableArray(servicePayments.map(function (paymentItem) {
+      return _bluebird2.default.all([absentDetailToUpdate].concat(_toConsumableArray(servicePayments.map(function (paymentItem) {
         var start_date = (0, _moment2.default)(paymentItem.start_date, _moment2.default.ISO_8601).valueOf();
         var end_date = (0, _moment2.default)(paymentItem.end_date, _moment2.default.ISO_8601).valueOf();
         var prevServiceCalc = serviceCalcList.find(function (calcItem) {
@@ -717,7 +787,7 @@ var CalendarServiceAdaptor = function () {
           if (effective_date <= start_date && start_date !== next_effective_date) {
             periodEndDate = (0, _moment2.default)(serviceCalc[nextIndex].effective_date, _moment2.default.ISO_8601).subtract(1, 'd');
             periodStartDate = startDate;
-            var __ret = _this8.retrieveDayInPeriod({
+            var __ret = _this10.retrieveDayInPeriod({
               daysInMonth: daysInMonth, startDate: startDate, monthEndDate: monthEndDate, selected_days: selected_days, daysInPeriod: daysInPeriod,
               periodStartDate: periodStartDate, periodEndDate: periodEndDate, absentDays: absentDays, paymentItem: paymentItem
             });
@@ -725,7 +795,7 @@ var CalendarServiceAdaptor = function () {
             daysInPeriod = __ret.daysInPeriod;
             absentDays = __ret.absentDays;
           } else if (index === 0) {
-            var _ret = _this8.retrieveDayInPeriod({
+            var _ret = _this10.retrieveDayInPeriod({
               daysInMonth: daysInMonth,
               startDate: startDate,
               monthEndDate: monthEndDate,
@@ -741,7 +811,7 @@ var CalendarServiceAdaptor = function () {
             absentDays = _ret.absentDays;
           } else {
             periodEndDate = (0, _moment2.default)(serviceCalc[nextIndex].effective_date, _moment2.default.ISO_8601).subtract(1, 'd');
-            var _ret2 = _this8.retrieveDayInPeriod({
+            var _ret2 = _this10.retrieveDayInPeriod({
               daysInMonth: daysInMonth,
               startDate: startDate,
               monthEndDate: monthEndDate,
@@ -772,7 +842,7 @@ var CalendarServiceAdaptor = function () {
           total_days += daysInPeriod;
         });
 
-        return _this8.modals.service_payment.update({
+        return _this10.modals.service_payment.update({
           start_date: start_date,
           end_date: end_date,
           updated_by: paymentItem.updated_by,
@@ -815,14 +885,10 @@ var CalendarServiceAdaptor = function () {
     }
   }, {
     key: 'markPaymentPaid',
-    value: function markPaymentPaid(id, ref_id, servicePaymentDetail) {
-      var _this9 = this;
+    value: function markPaymentPaid(id, servicePaymentDetail) {
+      var _this11 = this;
 
-      return Promise.all([this.modals.service_payment.update(servicePaymentDetail, {
-        where: {
-          id: id
-        }
-      }), this.retrieveCalendarItemById(ref_id, 'en')]).then(function (result) {
+      return _bluebird2.default.all([this.modals.calendar_item_payment.create(servicePaymentDetail), this.retrieveCalendarItemById(id, 'en')]).then(function (result) {
         var _result$ = result[1],
             product_name = _result$.product_name,
             service_type = _result$.service_type,
@@ -831,7 +897,7 @@ var CalendarServiceAdaptor = function () {
             main_category_id = service_type.main_category_id,
             sub_category_id = service_type.sub_category_id;
 
-        return _this9.productAdaptor.createEmptyProduct({
+        return _this11.productAdaptor.createEmptyProduct({
           document_date: servicePaymentDetail.paid_on,
           category_id: category_id, main_category_id: main_category_id, sub_category_id: sub_category_id,
           product_name: product_name,

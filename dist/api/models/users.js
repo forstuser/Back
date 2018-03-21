@@ -69,23 +69,23 @@ exports.default = function (sequelize, DataTypes) {
       type: DataTypes.STRING
     },
     last_login_at: {
-      type: DataTypes.DATE
+      type: DataTypes.DATEONLY
     },
     last_logout_at: {
-      type: DataTypes.DATE
+      type: DataTypes.DATEONLY
     },
     last_active_date: {
-      type: DataTypes.DATE
+      type: DataTypes.DATEONLY
     },
     last_password_change_at: {
-      type: DataTypes.DATE
+      type: DataTypes.DATEONLY
     },
     created_at: {
-      type: DataTypes.DATE,
+      type: DataTypes.DATEONLY,
       defaultValue: sequelize.literal('NOW()')
     },
     updated_at: {
-      type: DataTypes.DATE,
+      type: DataTypes.DATEONLY,
       defaultValue: sequelize.literal('NOW()')
     },
     service_center_accessed: {

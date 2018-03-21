@@ -22,11 +22,11 @@ exports.default = function (sequelize, DataTypes) {
       type: DataTypes.INTEGER
     },
     created_at: {
-      type: DataTypes.DATE,
+      type: DataTypes.DATEONLY,
       defaultValue: sequelize.literal('NOW()')
     },
     updated_at: {
-      type: DataTypes.DATE,
+      type: DataTypes.DATEONLY,
       defaultValue: sequelize.literal('NOW()')
     }
   }, {

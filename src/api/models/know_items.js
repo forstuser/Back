@@ -77,11 +77,11 @@ export default (sequelize, DataTypes) => {
           defaultValue: 1,
         },
         created_at: {
-          type: DataTypes.DATE,
+          type: DataTypes.DATEONLY,
           defaultValue: sequelize.literal('NOW()'),
         },
         updated_at: {
-          type: DataTypes.DATE,
+          type: DataTypes.DATEONLY,
           defaultValue: sequelize.literal('NOW()'),
         },
         category_id: {

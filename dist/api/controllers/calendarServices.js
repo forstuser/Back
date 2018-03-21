@@ -15,6 +15,10 @@ var _shared = require('../../helpers/shared');
 
 var _shared2 = _interopRequireDefault(_shared);
 
+var _bluebird = require('bluebird');
+
+var _bluebird2 = _interopRequireDefault(_bluebird);
+
 var _moment = require('moment/moment');
 
 var _moment2 = _interopRequireDefault(_moment);
@@ -41,6 +45,7 @@ var CalendarServiceController = function () {
   _createClass(CalendarServiceController, null, [{
     key: 'retrieveCalendarServices',
     value: function retrieveCalendarServices(request, reply) {
+      var user = _shared2.default.verifyAuthorization(request.headers);
       if (!request.pre.userExist) {
         return reply({
           status: false,
@@ -48,12 +53,23 @@ var CalendarServiceController = function () {
           forceUpdate: request.pre.forceUpdate
         });
       } else if (request.pre.userExist && !request.pre.forceUpdate) {
-        return calendarServiceAdaptor.retrieveCalendarServices({ status_type: 1 }, request.language).then(function (referenceData) {
+        return _bluebird2.default.try(function () {
+          return calendarServiceAdaptor.retrieveCalendarServices({ status_type: 1 }, request.language);
+        }).spread(function (items, unit_types) {
           return reply({
             status: true,
-            items: referenceData.items,
-            unit_types: referenceData.unit_types
+            items: items,
+            unit_types: unit_types
           }).code(200);
+        }).catch(function (err) {
+          console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+
+          return reply({
+            status: false,
+            message: 'An error occurred in retrieving calendar service list.',
+            forceUpdate: request.pre.forceUpdate,
+            err: err
+          });
         });
       } else {
         return reply({
@@ -120,7 +136,8 @@ var CalendarServiceController = function () {
             currentMth: currentMth,
             effectiveMth: effectiveMth,
             effectiveDate: effectiveDate,
-            selected_days: selected_days, wages_type: wages_type,
+            selected_days: selected_days,
+            wages_type: wages_type,
             serviceCalculationBody: serviceCalculationBody,
             user: user,
             currentYear: _currentYear
@@ -145,7 +162,8 @@ var CalendarServiceController = function () {
               currentMth: currentMth,
               effectiveMth: effectiveMth,
               effectiveDate: effectiveDate,
-              selected_days: selected_days, wages_type: wages_type,
+              selected_days: selected_days,
+              wages_type: wages_type,
               serviceCalculationBody: serviceCalculationBody,
               user: user,
               currentYear: currentYear
@@ -153,17 +171,61 @@ var CalendarServiceController = function () {
           });
         }
 
-        return calendarServiceAdaptor.createCalendarItem({
-          productBody: productBody,
-          servicePaymentArray: servicePaymentArray,
-          serviceAbsentDayArray: serviceAbsentDayArray,
-          serviceCalculationBody: serviceCalculationBody,
-          user: user
-        }).then(function (result) {
+        return _bluebird2.default.try(function () {
+          return calendarServiceAdaptor.createCalendarItem({
+            productBody: productBody,
+            servicePaymentArray: servicePaymentArray,
+            serviceAbsentDayArray: serviceAbsentDayArray,
+            serviceCalculationBody: serviceCalculationBody,
+            user: user
+          });
+        }).spread(function (calendar_item) {
           return reply({
             status: true,
             message: 'successful',
-            calendar_item: result[0],
+            calendar_item: calendar_item,
+            forceUpdate: request.pre.forceUpdate
+          });
+        }).catch(function (err) {
+          console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+          return reply({
+            status: false,
+            message: 'An error occurred in calendar item creation.',
+            forceUpdate: request.pre.forceUpdate,
+            err: err
+          });
+        });
+      } else {
+        return reply({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    }
+  }, {
+    key: 'updateItem',
+    value: function updateItem(request, reply) {
+      var user = _shared2.default.verifyAuthorization(request.headers);
+      if (!request.pre.userExist) {
+        return reply({
+          status: false,
+          message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate
+        });
+      } else if (request.pre.userExist && !request.pre.forceUpdate) {
+        var productBody = {
+          product_name: request.payload.product_name,
+          provider_name: request.payload.provider_name,
+          updated_by: user.id || user.ID,
+          status_type: 11
+        };
+        return _bluebird2.default.try(function () {
+          return calendarServiceAdaptor.updateCalendarItem(productBody, request.params.id);
+        }).then(function () {
+          return reply({
+            status: true,
+            message: 'successful',
             forceUpdate: request.pre.forceUpdate
           });
         }).catch(function (err) {
@@ -200,25 +262,26 @@ var CalendarServiceController = function () {
           updated_by: user.id || user.ID,
           status_type: 1
         };
-        var monthStartDate = (0, _moment2.default)(request.payload.absent_date, _moment2.default.ISO_8601).startOf('M').format();
-        return calendarServiceAdaptor.retrieveCurrentCalculationDetail({
-          ref_id: request.params.ref_id, effective_date: {
-            $lte: request.payload.absent_date
-          }
+        return _bluebird2.default.try(function () {
+          return calendarServiceAdaptor.retrieveCurrentCalculationDetail({
+            ref_id: request.params.ref_id, effective_date: {
+              $lte: request.payload.absent_date
+            }
+          });
         }).then(function (calcResults) {
           var currentCalcDetail = calcResults;
 
-          return Promise.all([calendarServiceAdaptor.updatePaymentDetail(request.params.id, {
+          return [calendarServiceAdaptor.updatePaymentDetail(request.params.id, {
             quantity: currentCalcDetail.quantity,
             end_date: request.payload.absent_date,
             unit_price: currentCalcDetail.unit_price,
             absent_day: 1
-          }), calendarServiceAdaptor.markAbsentForItem(serviceAbsentDetail)]);
-        }).then(function (result) {
+          }), calendarServiceAdaptor.markAbsentForItem({ where: serviceAbsentDetail })];
+        }).spread(function (payment_detail) {
           return reply({
             status: true,
             message: 'successful',
-            payment_detail: result[0],
+            payment_detail: payment_detail,
             forceUpdate: request.pre.forceUpdate
           });
         }).catch(function (err) {
@@ -253,13 +316,16 @@ var CalendarServiceController = function () {
           paid_on: (0, _moment2.default)(request.payload.paid_on, _moment2.default.ISO_8601),
           amount_paid: request.payload.amount_paid,
           updated_by: user.id || user.ID,
-          status_type: 5
+          status_type: 5,
+          ref_id: request.params.id
         };
-        return calendarServiceAdaptor.markPaymentPaid(request.params.id, request.params.ref_id, servicePaymentDetail).then(function (result) {
+        return _bluebird2.default.try(function () {
+          return calendarServiceAdaptor.markPaymentPaid(request.params.id, servicePaymentDetail);
+        }).then(function (payment_detail) {
           return reply({
             status: true,
             message: 'successful',
-            payment_detail: result,
+            payment_detail: payment_detail,
             forceUpdate: request.pre.forceUpdate
           });
         }).catch(function (err) {
@@ -294,24 +360,26 @@ var CalendarServiceController = function () {
           absent_date: (0, _moment2.default)(request.payload.present_date, _moment2.default.ISO_8601).startOf('days'),
           payment_id: request.params.id
         };
-        return calendarServiceAdaptor.retrieveCurrentCalculationDetail({
-          ref_id: request.params.ref_id, effective_date: {
-            $lte: request.payload.present_date
-          }
+        return _bluebird2.default.try(function () {
+          return calendarServiceAdaptor.retrieveCurrentCalculationDetail({
+            ref_id: request.params.ref_id, effective_date: {
+              $lte: request.payload.present_date
+            }
+          });
         }).then(function (calcResults) {
           var currentCalcDetail = calcResults;
 
-          return Promise.all([calendarServiceAdaptor.updatePaymentDetail(request.params.id, {
+          return [calendarServiceAdaptor.updatePaymentDetail(request.params.id, {
             quantity: currentCalcDetail.quantity,
             unit_price: -currentCalcDetail.unit_price,
             end_date: request.payload.present_date,
             absent_day: -1
-          }), calendarServiceAdaptor.markPresentForItem(serviceAbsentDetail)]);
-        }).then(function (result) {
+          }), calendarServiceAdaptor.markPresentForItem({ where: serviceAbsentDetail })];
+        }).spread(function (payment_detail) {
           return reply({
             status: true,
             message: 'successful',
-            payment_detail: result[0],
+            payment_detail: payment_detail,
             forceUpdate: request.pre.forceUpdate
           });
         }).catch(function (err) {
@@ -342,13 +410,15 @@ var CalendarServiceController = function () {
           forceUpdate: request.pre.forceUpdate
         });
       } else if (request.pre.userExist && !request.pre.forceUpdate) {
-        return calendarServiceAdaptor.retrieveCalendarItemList({
-          user_id: user.id || user.ID
-        }, request.language).then(function (result) {
+        return _bluebird2.default.try(function () {
+          return calendarServiceAdaptor.retrieveCalendarItemList({
+            user_id: user.id || user.ID
+          }, request.language);
+        }).spread(function (result, items) {
           return reply({
             status: true,
             message: 'successful',
-            items: result,
+            items: items,
             forceUpdate: request.pre.forceUpdate
           });
         }).catch(function (err) {
@@ -362,7 +432,7 @@ var CalendarServiceController = function () {
           });
         });
       } else {
-        reply({
+        return reply({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -380,7 +450,9 @@ var CalendarServiceController = function () {
           forceUpdate: request.pre.forceUpdate
         });
       } else if (request.pre.userExist && !request.pre.forceUpdate) {
-        return calendarServiceAdaptor.retrieveCalendarItemById(request.params.id, request.language).then(function (result) {
+        return _bluebird2.default.try(function () {
+          return calendarServiceAdaptor.retrieveCalendarItemById(request.params.id, request.language);
+        }).then(function (result) {
           return reply({
             status: true,
             message: 'successful',
@@ -398,7 +470,7 @@ var CalendarServiceController = function () {
           });
         });
       } else {
-        reply({
+        return reply({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -426,24 +498,23 @@ var CalendarServiceController = function () {
           status_type: 1,
           ref_id: request.params.id
         };
-
-        return calendarServiceAdaptor.addServiceCalc({
-          effective_date: (0, _moment2.default)(request.payload.effective_date, _moment2.default.ISO_8601).startOf('days'),
-          ref_id: request.params.id
-        }, serviceCalculationBody).then(function (result) {
-          if (result) {
-            return calendarServiceAdaptor.manipulatePaymentDetail({
-              ref_id: request.params.id,
-              effective_date: (0, _moment2.default)(request.payload.effective_date, _moment2.default.ISO_8601).startOf('days')
-            }, result.toJSON()).then(function () {
-              return reply({
-                status: true,
-                message: 'successful',
-                product: result,
-                forceUpdate: request.pre.forceUpdate
-              });
-            });
-          }
+        return _bluebird2.default.try(function () {
+          return calendarServiceAdaptor.addServiceCalc({
+            effective_date: (0, _moment2.default)(request.payload.effective_date, _moment2.default.ISO_8601).startOf('days'),
+            ref_id: request.params.id
+          }, serviceCalculationBody);
+        }).then(function (result) {
+          return [calendarServiceAdaptor.manipulatePaymentDetail({
+            ref_id: request.params.id,
+            effective_date: (0, _moment2.default)(request.payload.effective_date, _moment2.default.ISO_8601).startOf('days')
+          }), result.toJSON()];
+        }).spread(function (manipulatedResult, calculation_detail) {
+          return reply({
+            status: true,
+            message: 'successful',
+            calculation_detail: calculation_detail,
+            forceUpdate: request.pre.forceUpdate
+          });
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
           return reply({
@@ -483,24 +554,24 @@ var CalendarServiceController = function () {
           ref_id: request.params.id
         };
 
-        return calendarServiceAdaptor.addServiceCalc({
-          id: request.params.calc_id,
-          ref_id: request.params.id
-        }, serviceCalculationBody).then(function (result) {
-          if (result) {
-            return calendarServiceAdaptor.manipulatePaymentDetail({
-              id: request.params.calc_id,
-              effective_date: (0, _moment2.default)(request.payload.effective_date, _moment2.default.ISO_8601).startOf('days'),
-              ref_id: request.params.id
-            }, result.toJSON()).then(function () {
-              return reply({
-                status: true,
-                message: 'successful',
-                product: result,
-                forceUpdate: request.pre.forceUpdate
-              });
-            });
-          }
+        return _bluebird2.default.try(function () {
+          return calendarServiceAdaptor.addServiceCalc({
+            id: request.params.calc_id,
+            ref_id: request.params.id
+          }, serviceCalculationBody);
+        }).then(function (result) {
+          return [calendarServiceAdaptor.manipulatePaymentDetail({
+            id: request.params.calc_id,
+            effective_date: (0, _moment2.default)(request.payload.effective_date, _moment2.default.ISO_8601).startOf('days'),
+            ref_id: request.params.id
+          }), result];
+        }).spread(function (manipulatedResult, calculation_detail) {
+          return reply({
+            status: true,
+            message: 'successful',
+            calculation_detail: calculation_detail,
+            forceUpdate: request.pre.forceUpdate
+          });
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
           return reply({
@@ -508,112 +579,6 @@ var CalendarServiceController = function () {
             message: 'An error occurred in adding effective calculation method for service.',
             forceUpdate: request.pre.forceUpdate,
             err: err
-          });
-        });
-      } else {
-        return reply({
-          status: false,
-          message: 'Forbidden',
-          forceUpdate: request.pre.forceUpdate
-        });
-      }
-    }
-  }, {
-    key: 'updateUserReview',
-    value: function updateUserReview(request, reply) {
-      var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!request.pre.userExist) {
-        return reply({
-          status: false,
-          message: 'Unauthorized',
-          forceUpdate: request.pre.forceUpdate
-        });
-      } else if (request.pre.userExist && !request.pre.forceUpdate) {
-        var id = request.params.id;
-        if (request.params.reviewfor === 'brands') {
-          return reply(calendarServiceAdaptor.updateBrandReview(user, id, request));
-        } else if (request.params.reviewfor === 'sellers') {
-          return reply(calendarServiceAdaptor.updateSellerReview(user, id, request.query.isonlineseller, request));
-        } else {
-          return reply(calendarServiceAdaptor.updateProductReview(user, id, request));
-        }
-      } else {
-        return reply({
-          status: false,
-          message: 'Forbidden',
-          forceUpdate: request.pre.forceUpdate
-        });
-      }
-    }
-  }, {
-    key: 'retrieveProductDetail',
-    value: function retrieveProductDetail(request, reply) {
-      var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!request.pre.userExist) {
-        return reply({
-          status: false,
-          message: 'Unauthorized',
-          forceUpdate: request.pre.forceUpdate
-        });
-      } else if (request.pre.userExist && !request.pre.forceUpdate) {
-        return reply(calendarServiceAdaptor.prepareProductDetail({
-          user: user,
-          request: request
-        })).code(200);
-      } else {
-        return reply({
-          status: false,
-          message: 'Forbidden',
-          forceUpdate: request.pre.forceUpdate
-        });
-      }
-    }
-  }, {
-    key: 'retrieveCenterProducts',
-    value: function retrieveCenterProducts(request, reply) {
-      var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!request.pre.userExist) {
-        return reply({
-          status: false,
-          message: 'Unauthorized',
-          forceUpdate: request.pre.forceUpdate
-        });
-      } else if (request.pre.userExist && !request.pre.forceUpdate) {
-        var brandId = (request.query.brandids || '[]').split('[')[1].split(']')[0].split(',').filter(Boolean);
-        var categoryId = (request.query.categoryids || '[]').split('[')[1].split(']')[0].split(',').filter(Boolean);
-        var options = {
-          main_category_id: [2, 3],
-          status_type: [5, 11],
-          user_id: user.id || user.ID
-        };
-
-        if (brandId.length > 0) {
-          options.brand_id = brandId;
-        }
-
-        if (categoryId.length > 0) {
-          options.category_id = categoryId;
-        }
-
-        return calendarServiceAdaptor.retrieveProducts(options).then(function (result) {
-          return reply({
-            status: true,
-            productList: result /* :productList.slice((pageNo * 10) - 10, 10) */
-            , forceUpdate: request.pre.forceUpdate
-            /* ,
-                nextPageUrl: productList.length > listIndex + 10 ?
-                 `categories/${masterCategoryId}/products?pageno=${parseInt(pageNo, 10) + 1}
-                 &ctype=${ctype}&categoryids=${categoryIds}&brandids=${brandIds}
-                 &offlinesellerids=${offlineSellerIds}&onlinesellerids=
-                 ${onlineSellerIds}&sortby=${sortBy}&searchvalue=${searchValue}` : '' */
-          });
-        }).catch(function (err) {
-          console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
-
-          return reply({
-            status: false,
-            message: 'Unable to fetch product list',
-            forceUpdate: request.pre.forceUpdate
           });
         });
       } else {

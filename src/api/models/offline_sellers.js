@@ -72,7 +72,7 @@ export default (sequelize, DataTypes) => {
           type: DataTypes.INTEGER,
         },
         updated_at: {
-          type: DataTypes.DATE,
+          type: DataTypes.DATEONLY,
           defaultValue: sequelize.literal('NOW()'),
         },
       },
