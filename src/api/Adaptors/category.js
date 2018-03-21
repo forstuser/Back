@@ -1,4 +1,5 @@
 import BrandAdaptor from './brands';
+import config from '../../config/main';
 
 export default class CategoryAdaptor {
   constructor(modals) {
@@ -54,12 +55,12 @@ export default class CategoryAdaptor {
       const main_category_id = options.category_id;
       const excluded_category_id = main_category_id ? {
         $notIn:
-            main_category_id === 1 ?
-                [20, 72, 73] :
-                main_category_id === 2 ?
-                    [327, 162, 530, 581, 491, 541] :
-                    main_category_id === 3 ?
-                        [139, 138, 154, 150, 153] :
+            main_category_id === '1' ?
+                config.CATEGORIES.FURNITURE :
+                main_category_id === '2' ?
+                    config.CATEGORIES.ELECTRONIC :
+                    main_category_id === '3' ?
+                        config.CATEGORIES.AUTOMOBILE :
                         [],
       } : undefined;
       if (excluded_category_id) {

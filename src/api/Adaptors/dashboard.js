@@ -53,6 +53,29 @@ class DashboardAdaptor {
         user_id: user.id || user.ID,
         status_type: [5, 8, 11],
       }, request.language),
+      this.modals.user_calendar_item.count({
+        where: {
+          user_id: user.id || user.ID,
+        },
+      }),
+      this.modals.user_calendar_item.findOne({
+        where: {
+          user_id: user.id || user.ID,
+        },
+        order: [['updated_at', 'desc']],
+      }),
+      this.modals.service_calculation.findOne({
+        where: {
+          updated_by: user.id || user.ID,
+        },
+        order: [['updated_at', 'desc']],
+      }),
+      this.modals.sequelize.query(`SELECT "user_calendar_item"."id",
+       "user_calendar_item"."provider_name", "user_calendar_item"."product_name",
+        "user_calendar_item"."wages_type", "user_calendar_item"."selected_days",
+         "user_calendar_item"."user_id", "user_calendar_item"."service_id", "user_calendar_item"."updated_by", "user_calendar_item"."status_type", "user_calendar_item"."created_at", "user_calendar_item"."updated_at", "payment_detail"."id" AS "payment_detail.id", "payment_detail"."ref_id" AS "payment_detail.ref_id", "payment_detail"."updated_by" AS "payment_detail.updated_by", "payment_detail"."total_days" AS "payment_detail.total_days", "payment_detail"."status_type" AS "payment_detail.status_type", "payment_detail"."start_date" AS "payment_detail.start_date", "payment_detail"."end_date" AS "payment_detail.end_date", "payment_detail"."paid_on" AS "payment_detail.paid_on", "payment_detail"."total_amount" AS "payment_detail.total_amount", "payment_detail"."total_units" AS "payment_detail.total_units", "payment_detail"."amount_paid" AS "payment_detail.amount_paid", "payment_detail"."created_at" AS "payment_detail.created_at", "payment_detail"."updated_at" AS "payment_detail.updated_at", "payment_detail->absent_day_detail"."id" AS "payment_detail.absent_day_detail.id", "payment_detail->absent_day_detail"."payment_id" AS "payment_detail.absent_day_detail.payment_id", "payment_detail->absent_day_detail"."updated_by" AS "payment_detail.absent_day_detail.updated_by", "payment_detail->absent_day_detail"."status_type" AS "payment_detail.absent_day_detail.status_type", "payment_detail->absent_day_detail"."absent_date" AS "payment_detail.absent_day_detail.absent_date", "payment_detail->absent_day_detail"."created_at" AS "payment_detail.absent_day_detail.created_at", "payment_detail->absent_day_detail"."updated_at" AS "payment_detail.absent_day_detail.updated_at", "calculation_detail"."id" AS "calculation_detail.id", "calculation_detail"."ref_id" AS "calculation_detail.ref_id", "calculation_detail"."updated_by" AS "calculation_detail.updated_by", "calculation_detail"."status_type" AS "calculation_detail.status_type", "calculation_detail"."unit_type" AS "calculation_detail.unit_type", "calculation_detail"."unit_price" AS "calculation_detail.unit_price", "calculation_detail"."quantity" AS "calculation_detail.quantity", "calculation_detail"."effective_date" AS "calculation_detail.effective_date", "calculation_detail"."selected_days" AS "calculation_detail.selected_days", "calculation_detail"."created_at" AS "calculation_detail.created_at", "calculation_detail"."updated_at" AS "calculation_detail.updated_at", "calculation_detail->unit"."id" AS "calculation_detail.unit.id", "calculation_detail->unit"."quantity_name" AS "calculation_detail.unit.default_title", "calculation_detail->unit"."quantity_name_hi" AS "calculation_detail.unit.title" FROM "table_user_calendar_item" AS "user_calendar_item" INNER JOIN "table_service_payment" AS "payment_detail" ON "user_calendar_item"."id" = "payment_detail"."ref_id"
+       LEFT OUTER JOIN "table_service_absent_days" AS "payment_detail->absent_day_detail" ON "payment_detail"."id" = "payment_detail->absent_day_detail"."payment_id" INNER JOIN "table_service_calculation" AS "calculation_detail" ON "user_calendar_item"."id" = "calculation_detail"."ref_id" LEFT OUTER JOIN "table_quantity" AS "calculation_detail->unit" ON "calculation_detail"."unit_type" = "calculation_detail->unit"."id" LEFT OUTER JOIN "table_calendar_item_payment" AS "payments" ON "user_calendar_item"."id" = "payments"."ref_id" WHERE "user_calendar_item"."user_id" = ${user.id || user.ID} order by "payments"."updated_at" desc, "payment_detail"."updated_at" desc, "calculation_detail"."updated_at" desc, "user_calendar_item"."updated_at" desc limit 1;
+`, {type: this.modals.sequelize.QueryTypes.SELECT}),
     ]).then((result) => {
       const upcomingServices = result[0].map((elem) => {
         if (elem.productType === 1) {
@@ -93,13 +116,17 @@ class DashboardAdaptor {
         startDate: moment.utc().startOf('M'),
         endDate: moment.utc(),
         totalSpend: shared.sumProps(distinctInsight, 'value'),
-        totalDays: moment.utc().endOf('d').diff(moment.utc().startOf('M'), 'days'),
+        totalDays: moment.utc().
+            endOf('d').
+            diff(moment.utc().startOf('M'), 'days'),
         insightData: distinctInsight,
       } : {
         startDate: moment.utc().startOf('M'),
         endDate: moment.utc(),
         totalSpend: 0,
-        totalDays: moment.utc().endOf('d').diff(moment.utc().startOf('M'), 'days'),
+        totalDays: moment.utc().
+            endOf('d').
+            diff(moment.utc().startOf('M'), 'days'),
         insightData,
       };
 
@@ -126,7 +153,14 @@ class DashboardAdaptor {
         return 1;
       });
       let product = result[6];
-
+      const latestCalendarItem = result[8] ? result[8].toJSON() : {};
+      const latestCalendarCalc = result[9] ? result[9].toJSON() : {};
+      const calendar_item_updated_at = latestCalendarItem &&
+      moment(latestCalendarItem.updated_at, moment.ISO_8601).
+          diff(moment(latestCalendarCalc.updated_at, moment.ISO_8601),
+              'days') < 0 ?
+          latestCalendarCalc.updated_at : latestCalendarItem ?
+              latestCalendarItem.updated_at : moment();
       return {
         status: true,
         message: 'Dashboard restore Successful',
@@ -141,6 +175,9 @@ class DashboardAdaptor {
         showDashboard: !!(result[4] && parseInt(result[4]) > 0) ||
         !!(result[5] && parseInt(result[5]) > 0),
         hasProducts: !!(result[5] && parseInt(result[5]) > 0),
+        total_calendar_item: result[7] || 0,
+        calendar_item_updated_at,
+        recent_calendar_item: result[10][0],
         product,
       };
     }).catch(err => {
@@ -211,7 +248,8 @@ class DashboardAdaptor {
     }
 
     if (user.email && !user.email_verified) {
-      notificationAdaptor.sendMailOnDifferentSteps('Welcome to BinBill - Your eHome',
+      notificationAdaptor.sendMailOnDifferentSteps(
+          'Welcome to BinBill - Your eHome',
           user.email, user, 1);
     }
 

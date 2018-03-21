@@ -246,6 +246,8 @@ function prepareAuthRoutes(userController, authRoutes) {
     });
 
     /*Update FCM of consumer*/
+
+    /*Update FCM of consumer*/
     authRoutes.push({
       method: 'POST',
       path: '/consumer/subscribe',
@@ -264,6 +266,7 @@ function prepareAuthRoutes(userController, authRoutes) {
           payload: {
             fcmId: [joi.string(), joi.allow(null)],
             platform: [joi.number(), joi.allow(null)],
+            selected_language: [joi.string(), joi.allow(null)],
             output: 'data',
             parse: true,
           },
@@ -518,6 +521,43 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
       },
     });
 
+    /*Upload Product Image*/
+    uploadFileRoute.push({
+      method: 'POST',
+      path: '/consumer/products/{id}/images',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        files: {
+          relativeTo: Path.join(__dirname, '../static/src'),
+        },
+        handler: UploadController.uploadProductImage,
+        payload: {
+          output: 'stream',
+          parse: true,
+          uploads: 'up_files',
+          timeout: 30034,
+          allow: 'multipart/form-data',
+          failAction: 'log',
+          maxBytes: 209715200,
+        },
+      },
+    });
+
+    /*Retrieve Product Image*/
+    uploadFileRoute.push({
+      method: 'GET',
+      path: '/consumer/products/{id}/images',
+      config: {
+        handler: UploadController.retrieveProductImage,
+      },
+    });
     /*Allow user to upload document*/
     uploadFileRoute.push({
       method: 'POST',

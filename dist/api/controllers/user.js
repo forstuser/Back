@@ -115,6 +115,7 @@ var loginOrRegisterUser = function loginOrRegisterUser(parameters) {
       request = parameters.request,
       reply = parameters.reply;
 
+  var selected_language = request.language;
   var token = void 0;
   var updatedUser = void 0;
   return userAdaptor.loginOrRegister(userWhere, userInput).then(function (userData) {
@@ -136,7 +137,8 @@ var loginOrRegisterUser = function loginOrRegisterUser(parameters) {
       fcmManager.insertFcmDetails({
         userId: updatedUser.id || updatedUser.ID,
         fcmId: request.payload.fcmId,
-        platformId: request.payload.platform || 1
+        platformId: request.payload.platform || 1,
+        selected_language: selected_language
       }).then(function (data) {
         console.log(data);
       }).catch(function (err) {
@@ -205,7 +207,8 @@ var UserController = function () {
           fcmManager.insertFcmDetails({
             userId: user.id || user.ID,
             fcmId: request.payload.fcmId,
-            platformId: request.payload.platform
+            platformId: request.payload.platform || 1,
+            selected_language: request.payload.selected_language
           }).then(function (data) {
             console.log(data);
           }).catch(function (err) {

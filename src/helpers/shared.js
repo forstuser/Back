@@ -162,7 +162,7 @@ export function preparePaymentDetails(parameters) {
   if (wages_type === 1) {
     unit_price = unit_price / daysInMonth;
   }
-
+  console.log(daysInPeriod);
   let total_amount = unit_price * daysInPeriod;
   if (serviceCalculationBody.quantity) {
     total_amount = serviceCalculationBody.quantity * total_amount;
@@ -173,9 +173,11 @@ export function preparePaymentDetails(parameters) {
     end_date,
     updated_by: user.id || user.ID,
     status_type: 1,
-    total_amount,
+    total_amount: Math.round(total_amount),
     total_days: daysInPeriod,
-    total_units: daysInPeriod * serviceCalculationBody.quantity,
+    total_units: serviceCalculationBody.quantity ?
+        daysInPeriod * serviceCalculationBody.quantity :
+        0,
     amount_paid: 0,
   };
 }

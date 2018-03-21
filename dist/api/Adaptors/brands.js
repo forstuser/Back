@@ -33,7 +33,8 @@ var BrandAdaptor = function () {
       options.status_type = [1, 11];
       return this.modals.brands.findAll({
         where: options,
-        attributes: [['brand_id', 'id'], ['brand_name', 'name'], ['brand_description', 'description']]
+        attributes: [['brand_id', 'id'], ['brand_name', 'name'], ['brand_description', 'description']],
+        order: [['brand_index', 'desc'], ['brand_name']]
       }).then(function (brandResult) {
         return brandResult.map(function (item) {
           return item.toJSON();
@@ -53,7 +54,8 @@ var BrandAdaptor = function () {
             $iLike: options.brand_name.toLowerCase() + '%'
           }
         },
-        attributes: [['brand_id', 'id'], ['brand_name', 'name'], ['brand_description', 'description']]
+        attributes: [['brand_id', 'id'], ['brand_name', 'name'], ['brand_description', 'description']],
+        order: [['brand_index', 'desc'], ['brand_name']]
       }).then(function (brandResults) {
         if (brandResults.length > 0) {
           brand = brandResults.map(function (item) {
@@ -140,7 +142,8 @@ var BrandAdaptor = function () {
           as: 'details',
           required: true
         }],
-        attributes: [['brand_id', 'id'], ['brand_name', 'name'], ['brand_description', 'description'], [this.modals.sequelize.literal('"details"."category_id"'), 'categoryId']]
+        attributes: [['brand_id', 'id'], ['brand_name', 'name'], ['brand_description', 'description'], [this.modals.sequelize.literal('"details"."category_id"'), 'categoryId']],
+        order: [['brand_index', 'desc'], ['brand_name']]
       }).then(function (result) {
         return result.map(function (item) {
           return item.toJSON();

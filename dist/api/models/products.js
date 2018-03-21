@@ -33,6 +33,9 @@ exports.default = function (sequelize, DataTypes) {
     document_number: {
       type: DataTypes.STRING
     },
+    file_type: {
+      type: DataTypes.STRING
+    },
     product_name: {
       type: DataTypes.STRING
     },

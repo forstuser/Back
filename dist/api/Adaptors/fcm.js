@@ -20,7 +20,8 @@ var FCMManager = function () {
     value: function insertFcmDetails(parameters) {
       var userId = parameters.userId,
           fcmId = parameters.fcmId,
-          platformId = parameters.platformId;
+          platformId = parameters.platformId,
+          selected_language = parameters.selected_language;
 
       if (!fcmId || fcmId === '') {
         return Promise.resolve('NULL FCM ID');
@@ -45,6 +46,9 @@ var FCMManager = function () {
         where: defaults,
         defaults: defaults
       })]).then(function (data) {
+        var fcmDetail = data[1][0].toJSON();
+        selected_language = selected_language || fcmDetail.selected_language || 'en';
+        data[1][0].updateAttributes({ selected_language: selected_language });
         return data;
       }).catch(function (err) {
         console.log('Error on ' + new Date() + ' for user ' + userId + ' is as follow: \n \n ' + err);

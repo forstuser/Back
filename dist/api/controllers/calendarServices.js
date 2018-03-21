@@ -23,6 +23,10 @@ var _moment = require('moment/moment');
 
 var _moment2 = _interopRequireDefault(_moment);
 
+var _main = require('../../config/main');
+
+var _main2 = _interopRequireDefault(_main);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
@@ -59,7 +63,8 @@ var CalendarServiceController = function () {
           return reply({
             status: true,
             items: items,
-            unit_types: unit_types
+            unit_types: unit_types,
+            default_ids: _main2.default.CATEGORIES.CALENDAR_ITEM
           }).code(200);
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
@@ -104,7 +109,7 @@ var CalendarServiceController = function () {
         var serviceCalculationBody = {
           effective_date: (0, _moment2.default)(request.payload.effective_date, _moment2.default.ISO_8601).startOf('days'),
           quantity: request.payload.quantity,
-          unit_price: request.payload.unit_price,
+          unit_price: parseFloat(Number(request.payload.unit_price).toFixed(2)),
           unit_type: request.payload.unit_type,
           selected_days: request.payload.selected_days,
           updated_by: user.id || user.ID,
@@ -131,7 +136,7 @@ var CalendarServiceController = function () {
           var selected_days = productBody.selected_days,
               wages_type = productBody.wages_type;
 
-          selected_days = serviceCalculationBody.selected_days || selected_days;
+          selected_days = serviceCalculationBody ? serviceCalculationBody.selected_days || selected_days : selected_days;
           servicePaymentArray = (0, _shared.monthlyPaymentCalc)({
             currentMth: currentMth,
             effectiveMth: effectiveMth,
@@ -157,7 +162,7 @@ var CalendarServiceController = function () {
             var selected_days = productBody.selected_days,
                 wages_type = productBody.wages_type;
 
-            selected_days = serviceCalculationBody.selected_days || selected_days;
+            selected_days = serviceCalculationBody ? serviceCalculationBody.selected_days || selected_days : selected_days;
             (_servicePaymentArray = servicePaymentArray).push.apply(_servicePaymentArray, _toConsumableArray((0, _shared.monthlyPaymentCalc)({
               currentMth: currentMth,
               effectiveMth: effectiveMth,
@@ -276,7 +281,7 @@ var CalendarServiceController = function () {
             end_date: request.payload.absent_date,
             unit_price: currentCalcDetail.unit_price,
             absent_day: 1
-          }), calendarServiceAdaptor.markAbsentForItem({ where: serviceAbsentDetail })];
+          }, true), calendarServiceAdaptor.markAbsentForItem({ where: serviceAbsentDetail })];
         }).spread(function (payment_detail) {
           return reply({
             status: true,
@@ -374,7 +379,7 @@ var CalendarServiceController = function () {
             unit_price: -currentCalcDetail.unit_price,
             end_date: request.payload.present_date,
             absent_day: -1
-          }), calendarServiceAdaptor.markPresentForItem({ where: serviceAbsentDetail })];
+          }, true), calendarServiceAdaptor.markPresentForItem({ where: serviceAbsentDetail })];
         }).spread(function (payment_detail) {
           return reply({
             status: true,

@@ -15,6 +15,7 @@ exports.default = {
 			BUCKET: process.env.AWS_S3_BUCKET,
 			USER_IMAGE: 'userimages',
 			CATEGORY_IMAGE: 'categoryimages',
+			PRODUCT_IMAGE: 'productimages',
 			CALENDAR_ITEM_IMAGE: 'calendarserviceimages',
 			BRAND_IMAGE: 'brandimages',
 			PROVIDER_IMAGE: 'providerimages',
@@ -60,6 +61,12 @@ exports.default = {
 	},
 	APP: {
 		PORT: process.env.APP_PORT || 3000
+	},
+	CATEGORIES: {
+		AUTOMOBILE: process.env.AUTOMOBILE_CATEGORY.split(','),
+		FURNITURE: process.env.FURNITURE_CATEGORY.split(','),
+		ELECTRONIC: process.env.ELECTRONIC_CATEGORY.split(','),
+		CALENDAR_ITEM: process.env.CALENDAR_ITEM_CATEGORY.split(',')
 	},
 	TRUECALLER_PUBLIC_KEY: '-----BEGIN PUBLIC KEY-----\nMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDEpFwIarbm48m6ueG+jhpt2vCGaqXZlwR/HPuL4zH1DQ/eWFbgQtVnrta8QhQz3ywLnbX6s7aecxUzzNJsTtS8VxKAYll4E1lJUqrNdWt8CU+TaUQuFm8vzLoPiYKEXl4bX5rzMQUMqA228gWuYmRFQnpduQTgnYIMO8XVUQXl5wIDAQAB\n-----END PUBLIC KEY-----'
 };

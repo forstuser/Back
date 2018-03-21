@@ -70,6 +70,9 @@ export default class CalendarServiceAdaptor {
               `quantity_name_${language}` :
               `quantity_name`}"`), 'quantity_name'],
         'quantity_type',
+        'category_id',
+        'main_category_id',
+        'sub_category_id',
         [
           this.modals.sequelize.fn('CONCAT', '/calendarservice/',
               this.modals.sequelize.literal('"calendar_services"."id"'),
@@ -117,7 +120,7 @@ export default class CalendarServiceAdaptor {
         model: this.modals.quantities,
         as: 'quantity',
         attributes: [],
-        required: true,
+        required: false,
       },
       order: ['id'],
     }).then((calendar_services) => {
@@ -155,7 +158,8 @@ export default class CalendarServiceAdaptor {
 
   updateCalendarItem(calendarItemDetail, id) {
     return Promise.try(
-        () => this.modals.user_calendar_item.update(calendarItemDetail, {where: {id}}));
+        () => this.modals.user_calendar_item.update(calendarItemDetail,
+            {where: {id}}));
   }
 
   findCreateAbsentDateDetails(parameters) {
@@ -226,32 +230,38 @@ export default class CalendarServiceAdaptor {
                   },
                 })))];
         }).
-        spread((services, latest_payment_details, latest_calculation_details) => {
-          return calendarItemList.map((item) => {
-            item.service_type = services[0].find(
-                (serviceItem) => serviceItem.id === item.service_id);
+        spread(
+            (services, latest_payment_details, latest_calculation_details) => {
+              return calendarItemList.map((item) => {
+                item.service_type = services[0].find(
+                    (serviceItem) => serviceItem.id === item.service_id);
 
-            item.latest_payment_detail = latest_payment_details.find(
-                (paymentItem) => paymentItem.ref_id === item.id);
-            item.latest_calculation_detail = latest_calculation_details.find(
-                (calcItem) => calcItem.ref_id === item.id);
-            item.present_days = item.latest_payment_detail ?
-                item.latest_payment_detail.total_days :
-                0;
-            item.absent_days = item.latest_payment_detail ?
-                item.latest_payment_detail.absent_day_detail.length :
-                0;
+                item.latest_payment_detail = latest_payment_details.find(
+                    (paymentItem) => paymentItem.ref_id === item.id);
+                item.latest_calculation_detail = latest_calculation_details.find(
+                    (calcItem) => calcItem.ref_id === item.id);
+                item.present_days = item.latest_payment_detail ?
+                    item.latest_payment_detail.total_days :
+                    0;
+                item.absent_days = item.latest_payment_detail ?
+                    item.latest_payment_detail.absent_day_detail.length :
+                    0;
 
-            return item;
-          });
-        }).then((calendarItemList) => [
+                return item;
+              });
+            }).then((calendarItemList) => [
           Promise.all(calendarItemList.map(item => {
-            return this.updateServicePaymentForLatest({
-              ref_id: item.id,
-              latest_payment_detail: item.latest_payment_detail,
-              serviceCalculationBody: item.latest_calculation_detail,
-              productBody: item,
-            });
+            if (moment(item.latest_payment_detail.end_date, moment.ISO_8601).
+                    diff(moment(), 'days') < 0) {
+              return this.updateServicePaymentForLatest({
+                ref_id: item.id,
+                latest_payment_detail: item.latest_payment_detail,
+                serviceCalculationBody: item.latest_calculation_detail,
+                productBody: item,
+              });
+            }
+
+            return '';
           })), calendarItemList]);
   }
 
@@ -287,8 +297,13 @@ export default class CalendarServiceAdaptor {
 
   updateServicePaymentForLatest(options) {
     const {productBody, serviceCalculationBody} = options;
-    const effectiveDate = serviceCalculationBody ? moment(options.latest_payment_detail ? options.latest_payment_detail.end_date : serviceCalculationBody.effective_date,
-        moment.ISO_8601) : moment();
+    console.log(serviceCalculationBody);
+    const effectiveDate = serviceCalculationBody ?
+        moment(options.latest_payment_detail ?
+            options.latest_payment_detail.end_date :
+            serviceCalculationBody.effective_date,
+            moment.ISO_8601) :
+        moment();
     const currentYear = moment().year();
     const effectiveYear = effectiveDate.year();
     let servicePaymentArray = [];
@@ -346,7 +361,8 @@ export default class CalendarServiceAdaptor {
     }
 
     return Promise.all(servicePaymentArray.map((payItem) => {
-      if (options.latest_payment_detail && effectiveDate.diff(moment(payItem.start_date, moment.ISO_8601),
+      if (options.latest_payment_detail &&
+          effectiveDate.diff(moment(payItem.start_date, moment.ISO_8601),
               'days') === 0) {
         let {
           start_date, total_amount,
@@ -357,13 +373,13 @@ export default class CalendarServiceAdaptor {
         const {
           end_date,
         } = payItem;
-        total_amount = payItem.total_amount;
-        total_days = payItem.total_days;
-        total_units = payItem.total_units;
+        total_amount += Math.round(payItem.total_amount);
+        total_days += payItem.total_days;
+        total_units += payItem.total_units;
         return this.modals.service_payment.update({
           start_date,
           end_date,
-          total_amount,
+          total_amount: Math.round(total_amount),
           total_days,
           total_units,
           amount_paid,
@@ -468,7 +484,7 @@ export default class CalendarServiceAdaptor {
     }).then((result) => result.map(item => item.toJSON()));
   }
 
-  updatePaymentDetail(id, paymentDetail) {
+  updatePaymentDetail(id, paymentDetail, isForAbsent) {
     return this.modals.service_payment.findById(id, {
       include: {
         model: this.modals.user_calendar_item,
@@ -483,7 +499,7 @@ export default class CalendarServiceAdaptor {
           diff(currentEndDate, 'days') > 0 ?
           moment(paymentDetail.end_date, moment.ISO_8601) :
           moment().
-              diff(currentEndDate, 'days') > 0 ?
+              diff(currentEndDate, 'days') > 0 && !isForAbsent ?
               moment() :
               currentEndDate;
 
@@ -500,13 +516,14 @@ export default class CalendarServiceAdaptor {
       if (paymentDetail.quantity) {
         paymentDetail.unit_price = paymentDetail.quantity *
             paymentDetail.unit_price;
-
-        currentDetail.total_units = currentDetail.total_units -
+        paymentDetail.total_units = currentDetail.total_units -
             ((paymentDetail.absent_day || 0) > 0 ?
                 paymentDetail.quantity :
                 (paymentDetail.absent_day || 0) < 0 ?
                     -paymentDetail.quantity :
                     0);
+
+        console.log(JSON.stringify({absent_day: paymentDetail.absent_day, quantity: paymentDetail.quantity, total_units:currentDetail.total_units}));
       }
 
       let additional_unit_price = 0;
@@ -525,25 +542,28 @@ export default class CalendarServiceAdaptor {
             monthDiff,
           }, paymentDetail);
         } else if (newEndDate.endOf('days').diff(currentEndDate, 'days') > 0) {
+
           daysInPeriod = moment().
               isoWeekdayCalc(currentDetail.end_date,
                   moment(paymentDetail.end_date, moment.ISO_8601).endOf('days'),
                   currentDetail.calendar_item.selected_days) - 1;
+
+          console.log(JSON.stringify({cEnd_date:currentDetail.end_date, PEnd_date:paymentDetail.end_date, daysInPeriod}));
           additional_unit_price = paymentDetail.unit_price * daysInPeriod;
         }
       }
 
       result.updateAttributes({
-        total_amount: paymentDetail.total_amount ||
-        ((currentDetail.total_amount + additional_unit_price) -
-            paymentDetail.unit_price),
+        total_amount: Math.round(paymentDetail.total_amount ||
+            ((currentDetail.total_amount + additional_unit_price) -
+                paymentDetail.unit_price)),
         total_days: paymentDetail.total_days ||
         (currentDetail.total_days + daysInPeriod) -
         (paymentDetail.absent_day || 0),
         end_date: newEndDate,
         status_type: paymentDetail.status_type || currentDetail.status_type,
         amount_paid: paymentDetail.amount_paid || currentDetail.amount_paid,
-        total_units: paymentDetail.total_units,
+        total_units: paymentDetail.total_units || currentDetail.total_units,
       });
 
       return result;
@@ -600,9 +620,9 @@ export default class CalendarServiceAdaptor {
         }
 
         result.updateAttributes({
-          total_amount: paymentDetail.total_amount ||
-          ((currentDetail.total_amount + additional_unit_price) -
-              paymentDetail.unit_price),
+          total_amount: Math.round(paymentDetail.total_amount ||
+              ((currentDetail.total_amount + additional_unit_price) -
+                  paymentDetail.unit_price)),
           total_days: (currentDetail.total_days + daysInPeriod) -
           (paymentDetail.absent_day || 0),
           end_date: paymentDetail.end_date || currentDetail.end_date,
@@ -820,19 +840,19 @@ export default class CalendarServiceAdaptor {
           return effective_date <= start_date;
         });
 
-      let isPrevCalcExist = false;
-      let serviceCalc = serviceCalcList.filter((calcItem) => {
-        const effective_date = moment(calcItem.effective_date,
-            moment.ISO_8601).valueOf();
-        return effective_date >= start_date && effective_date <= end_date;
-      });
-      serviceCalc = serviceCalc.map((calcItem) => {
-        if (prevServiceCalc && prevServiceCalc.id === calcItem.id) {
-          isPrevCalcExist = true;
-        }
+        let isPrevCalcExist = false;
+        let serviceCalc = serviceCalcList.filter((calcItem) => {
+          const effective_date = moment(calcItem.effective_date,
+              moment.ISO_8601).valueOf();
+          return effective_date >= start_date && effective_date <= end_date;
+        });
+        serviceCalc = serviceCalc.map((calcItem) => {
+          if (prevServiceCalc && prevServiceCalc.id === calcItem.id) {
+            isPrevCalcExist = true;
+          }
 
-        return calcItem;
-      });
+          return calcItem;
+        });
 
         if (prevServiceCalc && !isPrevCalcExist) {
           serviceCalc.push(prevServiceCalc);
@@ -919,15 +939,15 @@ export default class CalendarServiceAdaptor {
             total_units += (calcItem.quantity * daysInPeriod);
           }
 
-        total_days += daysInPeriod;
-      });
+          total_days += daysInPeriod;
+        });
 
         return this.modals.service_payment.update({
           start_date,
           end_date,
           updated_by: paymentItem.updated_by,
           status_type: paymentItem.status_type,
-          total_amount,
+          total_amount: Math.round(total_amount),
           total_days,
           total_units,
           amount_paid: 0,
@@ -957,7 +977,8 @@ export default class CalendarServiceAdaptor {
 
   markPaymentPaid(id, servicePaymentDetail) {
     return Promise.all([
-      this.modals.calendar_item_payment.create(servicePaymentDetail), this.retrieveCalendarItemById(id, 'en')]).then((result) => {
+      this.modals.calendar_item_payment.create(servicePaymentDetail),
+      this.retrieveCalendarItemById(id, 'en')]).then((result) => {
       const {product_name, service_type, user_id} = result[1];
       const {category_id, main_category_id, sub_category_id} = service_type;
       return this.productAdaptor.createEmptyProduct({

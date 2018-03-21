@@ -5,6 +5,7 @@ import CalendarServiceAdaptor from '../Adaptors/calendarServices';
 import shared, {monthlyPaymentCalc} from '../../helpers/shared';
 import Promise from 'bluebird';
 import moment from 'moment/moment';
+import config from '../../config/main';
 
 require('moment-weekday-calc');
 
@@ -33,6 +34,7 @@ class CalendarServiceController {
         status: true,
         items,
         unit_types,
+        default_ids: config.CATEGORIES.CALENDAR_ITEM
       }).code(200)).catch((err) => {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
@@ -78,7 +80,7 @@ class CalendarServiceController {
         effective_date: moment(request.payload.effective_date, moment.ISO_8601).
             startOf('days'),
         quantity: request.payload.quantity,
-        unit_price: request.payload.unit_price,
+        unit_price: parseFloat(Number(request.payload.unit_price).toFixed(2)),
         unit_type: request.payload.unit_type,
         selected_days: request.payload.selected_days,
         updated_by: user.id || user.ID,
@@ -106,8 +108,8 @@ class CalendarServiceController {
         const effectiveMth = effectiveDate.month();
 
         let {selected_days, wages_type} = productBody;
-        selected_days = serviceCalculationBody.selected_days ||
-            selected_days;
+        selected_days = serviceCalculationBody ? serviceCalculationBody.selected_days ||
+            selected_days : selected_days;
         servicePaymentArray = monthlyPaymentCalc({
           currentMth,
           effectiveMth,
@@ -133,8 +135,8 @@ class CalendarServiceController {
               yearStart.month() :
               effectiveDate.month();
           let {selected_days, wages_type} = productBody;
-          selected_days = serviceCalculationBody.selected_days ||
-              selected_days;
+          selected_days = serviceCalculationBody ? serviceCalculationBody.selected_days ||
+              selected_days : selected_days;
           servicePaymentArray.push(...monthlyPaymentCalc({
             currentMth,
             effectiveMth,
@@ -250,7 +252,7 @@ class CalendarServiceController {
             end_date: request.payload.absent_date,
             unit_price: currentCalcDetail.unit_price,
             absent_day: 1,
-          }),
+          }, true),
           calendarServiceAdaptor.markAbsentForItem(
               {where: serviceAbsentDetail})];
       }).spread((payment_detail) => reply({
@@ -351,7 +353,7 @@ class CalendarServiceController {
             unit_price: -(currentCalcDetail.unit_price),
             end_date: request.payload.present_date,
             absent_day: -1,
-          }),
+          }, true),
           calendarServiceAdaptor.markPresentForItem(
               {where: serviceAbsentDetail})];
       }).spread((payment_detail) => reply({

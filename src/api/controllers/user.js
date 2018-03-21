@@ -55,6 +55,7 @@ const trackTransaction = (transactionId, userId) => {
 
 let loginOrRegisterUser = parameters => {
   let {userWhere, userInput, trueObject, request, reply} = parameters;
+  const selected_language = request.language;
   let token;
   let updatedUser;
   return userAdaptor.loginOrRegister(userWhere,
@@ -79,6 +80,7 @@ let loginOrRegisterUser = parameters => {
         userId: updatedUser.id || updatedUser.ID,
         fcmId: request.payload.fcmId,
         platformId: request.payload.platform || 1,
+        selected_language
       }).then((data) => {
         console.log(data);
       }).
@@ -153,7 +155,8 @@ class UserController {
         fcmManager.insertFcmDetails({
           userId: user.id || user.ID,
           fcmId: request.payload.fcmId,
-          platformId: request.payload.platform,
+          platformId: request.payload.platform || 1,
+          selected_language: request.payload.selected_language
         }).
             then((data) => {
               console.log(data);

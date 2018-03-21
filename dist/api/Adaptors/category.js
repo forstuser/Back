@@ -10,6 +10,10 @@ var _brands = require('./brands');
 
 var _brands2 = _interopRequireDefault(_brands);
 
+var _main = require('../../config/main');
+
+var _main2 = _interopRequireDefault(_main);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -47,7 +51,7 @@ var CategoryAdaptor = function () {
         };
         var main_category_id = options.category_id;
         var excluded_category_id = main_category_id ? {
-          $notIn: main_category_id === 1 ? [20, 72, 73] : main_category_id === 2 ? [327, 162, 530, 581, 491, 541] : main_category_id === 3 ? [139, 138, 154, 150, 153] : []
+          $notIn: main_category_id === '1' ? _main2.default.CATEGORIES.FURNITURE : main_category_id === '2' ? _main2.default.CATEGORIES.ELECTRONIC : main_category_id === '3' ? _main2.default.CATEGORIES.AUTOMOBILE : []
         } : undefined;
         if (excluded_category_id) {
           subCategoryOption.category_id = excluded_category_id;

@@ -15,6 +15,7 @@ import RepairAdaptor from '../Adaptors/repairs';
 import PUCAdaptor from '../Adaptors/pucs';
 import ProductAdaptor from '../Adaptors/product';
 import Guid from 'guid';
+import Promise from 'bluebird';
 
 const fsImpl = new S3FS(config.AWS.S3.BUCKET, config.AWS.ACCESS_DETAILS);
 
@@ -102,9 +103,9 @@ class UploadController {
         const fileData = fieldNameHere || request.payload.filesName;
 
         const name = fileData.hapi.filename;
-        const fileType = name.split('.')[name.split('.').length - 1];
+        const file_type = name.split('.')[name.split('.').length - 1];
         const fileName = `active-${user.id ||
-        user.ID}-${new Date().getTime()}.${fileType}`;
+        user.ID}-${new Date().getTime()}.${file_type}`;
         // const file = fs.createReadStream();
         return fsImpl.writeFile(fileName, fileData._data,
             {ContentType: mime.lookup(fileName)}).then((fileResult) => {
@@ -138,6 +139,69 @@ class UploadController {
     }
   }
 
+  static uploadProductImage(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    if (!request.pre.userExist) {
+      return reply({
+        status: false,
+        message: 'Unauthorized',
+        // forceUpdate: request.pre.forceUpdate
+      }).code(401);
+    } else if (request.payload) {
+      return modals.products.findOne({
+        where: {
+          id: request.params.id,
+          user_id: user.id || user.ID,
+        },
+      }).then((productResult) => {
+        if (productResult) {
+          const productDetail = productResult.toJSON();
+          const fieldNameHere = request.payload.fieldNameHere;
+          const fileData = fieldNameHere || request.payload.filesName;
+
+          const name = fileData.hapi.filename;
+          const file_type = name.split('.')[name.split('.').length - 1];
+          const fileName = `${productDetail.id}.${file_type}`;
+          // const file = fs.createReadStream();
+
+          const fsImplProduct = new S3FS(
+              `${config.AWS.S3.BUCKET}/${config.AWS.S3.PRODUCT_IMAGE}`,
+              config.AWS.ACCESS_DETAILS);
+          return Promise.try(
+              () => fsImplProduct.writeFile(fileName, fileData._data,
+                  {ContentType: mime.lookup(fileName)})).then(() => {
+
+            return productResult.updateAttributes({file_type});
+          }).then(() => {
+            return reply({
+              status: true,
+              message: 'Uploaded Successfully',
+            });
+          }).catch((err) => {
+            console.log(
+                `Error on ${new Date()} for user ${user.id ||
+                user.ID} is as follow: \n \n ${err}`);
+            return reply({
+              status: false,
+              message: 'Upload Failed',
+              err,
+              // forceUpdate: request.pre.forceUpdate
+            });
+          });
+        }
+
+        return reply({
+          status: false,
+          message: 'Invalid Product Id Upload Failed',
+          err,
+          // forceUpdate: request.pre.forceUpdate
+        });
+      });
+    } else {
+      return reply({status: false, message: 'No documents in request'}); //, forceUpdate: request.pre.forceUpdate});
+    }
+  }
+
   static uploadFiles(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (!request.pre.userExist) {
@@ -158,12 +222,12 @@ class UploadController {
         if (Array.isArray(filteredFileData)) {
           filteredFileData = fileData.filter((datum) => {
             const name = datum.hapi.filename;
-            const fileType = (/[.]/.exec(name))
+            const file_type = (/[.]/.exec(name))
                 ? /[^.]+$/.exec(name)
                 : undefined;
-            if (fileType && !isFileTypeAllowed(fileType)) {
+            if (file_type && !isFileTypeAllowed(file_type)) {
               return false;
-            } else if (!fileType &&
+            } else if (!file_type &&
                 !isFileTypeAllowedMagicNumber(datum._data)) {
               return false;
             }
@@ -173,11 +237,13 @@ class UploadController {
         } else {
           const name = filteredFileData.hapi.filename;
           console.log('\n\n\n', name);
-          const fileType = (/[.]/.exec(name)) ? /[^.]+$/.exec(name) : undefined;
-          // console.log("OUTSIDE FILE ALLOWED: ", fileType);
-          if (fileType && !isFileTypeAllowed(fileType)) {
+          const file_type = (/[.]/.exec(name)) ?
+              /[^.]+$/.exec(name) :
+              undefined;
+          // console.log("OUTSIDE FILE ALLOWED: ", file_type);
+          if (file_type && !isFileTypeAllowed(file_type)) {
             filteredFileData = [];
-          } else if (!fileType &&
+          } else if (!file_type &&
               !isFileTypeAllowedMagicNumber(filteredFileData._data)) {
             filteredFileData = [];
           }
@@ -250,13 +316,13 @@ class UploadController {
           } else {
             console.log(`Request has single file ${fileData.hapi.filename}`);
             const name = fileData.hapi.filename;
-            const fileType = (/[.]/.exec(name)) ?
+            const file_type = (/[.]/.exec(name)) ?
                 /[^.]+$/.exec(name) :
                 undefined;
-            // console.log("OUTSIDE FILE ALLOWED: ", fileType);
-            if (fileType && !isFileTypeAllowed(fileType)) {
+            // console.log("OUTSIDE FILE ALLOWED: ", file_type);
+            if (file_type && !isFileTypeAllowed(file_type)) {
               return reply({status: false, message: 'Data Upload Failed'});
-            } else if (!fileType &&
+            } else if (!file_type &&
                 !isFileTypeAllowedMagicNumber(fileData._data)) {
               return reply({status: false, message: 'Data Upload Failed'});
             } else {
@@ -264,7 +330,7 @@ class UploadController {
                 requiredDetail: {
                   fileData,
                   result: jobResult,
-                  fileType,
+                  fileType: file_type,
                   user,
                   type: request.query ? parseInt(request.query.type || '1') : 1,
                   itemId: request.query ? request.query.itemid : undefined,
@@ -313,16 +379,17 @@ class UploadController {
         });
       } else {
         const name = fileData.hapi.filename;
-        const fileType = (/[.]/.exec(name)) ? /[^.]+$/.exec(name) : undefined;
-        // console.log("OUTSIDE FILE ALLOWED: ", fileType);
-        if (fileType && !isFileTypeAllowed(fileType)) {
+        const file_type = (/[.]/.exec(name)) ? /[^.]+$/.exec(name) : undefined;
+        // console.log("OUTSIDE FILE ALLOWED: ", file_type);
+        if (file_type && !isFileTypeAllowed(file_type)) {
           return reply({status: false, message: 'Data Upload Failed'});
-        } else if (!fileType && !isFileTypeAllowedMagicNumber(fileData._data)) {
+        } else if (!file_type &&
+            !isFileTypeAllowedMagicNumber(fileData._data)) {
           return reply({status: false, message: 'Data Upload Failed'});
         } else {
           return UploadController.uploadSingleFile({
             requiredDetail: {
-              fileData, result: jobResult, fileType,
+              fileData, result: jobResult, fileType: file_type,
               user, type: request.query ? request.query.type || 1 : 1,
               itemId: request.query ? request.query.itemid : undefined,
               productId: request.query ? request.query.productid : undefined,
@@ -345,11 +412,11 @@ class UploadController {
     const fileData = requiredDetail.fileData;
     const jobResult = requiredDetail.result;
     const type = requiredDetail.type;
-    const fileType = requiredDetail.fileType;
+    const file_type = requiredDetail.fileType;
     const fileTypeData = getTypeFromBuffer(fileData._data);
     const fileName = `${user.id || user.ID}-${jobResult.copies.length +
-    1}.${(fileType)
-        ? fileType.toString()
+    1}.${(file_type)
+        ? file_type.toString()
         : fileTypeData.ext}`;
     console.log(mime.lookup(fileName));
     return fsImpl.writeFile(`jobs/${jobResult.job_id}/${fileName}`,
@@ -359,8 +426,8 @@ class UploadController {
           const jobCopyDetail = {
             job_id: jobResult.id,
             file_name: fileName,
-            file_type: (fileType)
-                ? fileType.toString()
+            file_type: (file_type)
+                ? file_type.toString()
                 : fileTypeData.ext,
             status_type: 6,
             updated_by: user.id || user.ID,
@@ -433,15 +500,15 @@ class UploadController {
     const fileUploadPromises = fileData.map((elem, index) => {
       index = jobResult.copies.length + index;
       const name = elem.hapi.filename;
-      const fileType = (/[.]/.exec(name)) ? /[^.]+$/.exec(name) : undefined;
+      const file_type = (/[.]/.exec(name)) ? /[^.]+$/.exec(name) : undefined;
       const fileTypeData = getTypeFromBuffer(elem._data);
       const fileName = `${user.id || user.ID}-${index +
-      1}.${(fileType)
-          ? fileType.toString()
+      1}.${(file_type)
+          ? file_type.toString()
           : fileTypeData.ext}`;
 
       fileNames.push(fileName);
-      fileTypes.push(fileType);
+      fileTypes.push(file_type);
       fileTypeDataArray.push(fileTypeData);
       // const file = fs.createReadStream();
       return fsImpl.writeFile(`jobs/${jobResult.job_id}/${fileName}`,
@@ -1058,15 +1125,56 @@ class UploadController {
     }
   }
 
+  static retrieveProductImage(request, reply) {
+    if (!request.pre.forceUpdate) {
+      const fsImplProduct = new S3FS(
+          `${config.AWS.S3.BUCKET}/${config.AWS.S3.PRODUCT_IMAGE}`,
+          config.AWS.ACCESS_DETAILS);
+      return modals.products.findOne({
+        where: {
+          id: request.params.id,
+        },
+      }).then((productResult) => {
+        if (productResult) {
+          const productDetail = productResult.toJSON();
+          return fsImplProduct.readFile(
+              `${request.params.id}.${productDetail.file_type}`, 'utf8').
+              then(fileResult => reply(fileResult.Body).
+                  header('Content-Type', fileResult.ContentType).
+                  header('Content-Disposition',
+                      `attachment; filename=${request.params.id}.${productDetail.file_type}`)).
+              catch((err) => {
+                console.log(
+                    `Error on ${new Date()} for user while retrieving product item image is as follow: \n \n ${err}`);
+                return reply({
+                  status: false,
+                  message: 'Unable to retrieve image',
+                  err,
+                  forceUpdate: request.pre.forceUpdate,
+                });
+              });
+        }
+      });
+    } else {
+      return reply({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
   static retrieveCalendarItemImage(request, reply) {
     if (!request.pre.forceUpdate) {
       const fsImplCategory = new S3FS(
-          `${config.AWS.S3.BUCKET}/${config.AWS.S3.CALENDAR_ITEM_IMAGE}`, config.AWS.ACCESS_DETAILS);
+          `${config.AWS.S3.BUCKET}/${config.AWS.S3.CALENDAR_ITEM_IMAGE}`,
+          config.AWS.ACCESS_DETAILS);
       return fsImplCategory.readFile(`${request.params.id}.png`, 'utf8').
           then(fileResult => reply(fileResult.Body).
               header('Content-Type', fileResult.ContentType).
               header('Content-Disposition',
-                  `attachment; filename=${request.params.id}.png`)).catch((err) => {
+                  `attachment; filename=${request.params.id}.png`)).
+          catch((err) => {
             console.log(
                 `Error on ${new Date()} for user while retrieving calendar item image is as follow: \n \n ${err}`);
             return reply({
@@ -1097,8 +1205,7 @@ class UploadController {
                   `attachment; filename=${result.CopyName}`)).
           catch((err) => {
             console.log(
-                `Error on ${new Date()} for user ${user.id ||
-                user.ID} is as follow: \n \n ${err}`);
+                `Error on ${new Date()} retrieving brand image is as follow: \n \n ${err}`);
             reply({
               status: false,
               message: 'Unable to retrieve image',
@@ -1127,8 +1234,7 @@ class UploadController {
                   `attachment; filename=${result.CopyName}`)).
           catch((err) => {
             console.log(
-                `Error on ${new Date()} for user ${user.id ||
-                user.ID} is as follow: \n \n ${err}`);
+                `Error on ${new Date()} retrieving provider image is as follow: \n \n ${err}`);
             reply({
               status: false,
               message: 'Unable to retrieve image',
@@ -1150,15 +1256,14 @@ class UploadController {
       const fsImplBrand = new S3FS(
           `${config.AWS.S3.BUCKET}/${config.AWS.S3.KNOW_ITEM_IMAGE}`,
           config.AWS.ACCESS_DETAILS);
-      fsImplBrand.readFile(`${request.params.id}.png`, 'utf8').
+      fsImplBrand.readFile(`i${request.params.id}.png`, 'utf8').
           then(fileResult => reply(fileResult.Body).
               header('Content-Type', fileResult.ContentType).
               header('Content-Disposition',
-                  `attachment; filename=${result.CopyName}`)).
+                  `attachment; filename=i${request.params.id}.png`)).
           catch((err) => {
             console.log(
-                `Error on ${new Date()} for user ${user.id ||
-                user.ID} is as follow: \n \n ${err}`);
+                `Error on ${new Date()} retrieving fact image is as follow: \n \n ${err}`);
             reply({
               status: false,
               message: 'Unable to retrieve image',

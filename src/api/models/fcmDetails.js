@@ -14,6 +14,9 @@ module.exports = (sequelize, DataTypes) => {
     fcm_id: {
       type: DataTypes.STRING,
     },
+    selected_language: {
+      type: DataTypes.STRING,
+    },
     created_at: {
       type: DataTypes.DATEONLY,
       defaultValue: sequelize.literal('NOW()'),

@@ -24,6 +24,7 @@ class BrandAdaptor {
         [
           'brand_description',
           'description']],
+      order:[['brand_index', 'desc'],['brand_name']]
     }).then((brandResult) => brandResult.map((item) => item.toJSON()));
   }
 
@@ -46,6 +47,7 @@ class BrandAdaptor {
         [
           'brand_description',
           'description']],
+      order:[['brand_index', 'desc'],['brand_name']],
     }).then((brandResults) => {
       if (brandResults.length > 0) {
         brand = brandResults.map(item => item.toJSON())[0];
@@ -185,6 +187,7 @@ class BrandAdaptor {
           'categoryId',
         ],
       ],
+      order:[['brand_index', 'desc'],['brand_name']],
     }).then((result) => result.map((item) => item.toJSON()));
   }
 

@@ -23,6 +23,13 @@ export default (sequelize, DataTypes) => {
         status_type: {
           type: DataTypes.INTEGER,
         },
+        brand_index: {
+          type: DataTypes.INTEGER,
+          defaultValue: 0,
+        },
+        file_type: {
+          type: DataTypes.STRING,
+        },
         created_at: {
           type: DataTypes.DATEONLY,
           defaultValue: sequelize.literal('NOW()'),
