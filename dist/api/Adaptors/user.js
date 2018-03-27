@@ -315,7 +315,7 @@ var UserAdaptor = function () {
   }, {
     key: 'updateUserDetail',
     value: function updateUserDetail(updateValues, filterOptions) {
-      return this.modals.users.update(updateValues, filterOptions);
+      return this.modals.users.update(updateValues, filterOptions).catch(console.log);
     }
 
     /**

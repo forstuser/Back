@@ -202,10 +202,10 @@ class BrandAdaptor {
     let brandDetail;
     let category;
     return Promise.all([
-      this.modals.brands.findAll({
+      this.modals.brands.findOne({
         where: {
           brand_name: {
-            $iLike: `${values.brand_name}%`,
+            $iLike: `${values.brand_name}`,
           },
         },
       }), this.modals.categories.findOne({
@@ -213,16 +213,18 @@ class BrandAdaptor {
           category_id: values.category_id,
         },
       })]).then((result) => {
-      brandData = result[0].map((item) => item.toJSON());
-      category = result[1].toJSON();
-      return this.modals.brandDetails.findOne({
-        where: {
-          brand_id: brandData.map((item) => {
-            return item.brand_id;
-          }),
-          category_id: values.category_id,
-        },
-      });
+        if(result[0]) {
+          brandData = result[0].toJSON();
+          category = result[1].toJSON();
+          return this.modals.brandDetails.findOne({
+            where: {
+              brand_id: brandData.brand_id,
+              category_id: values.category_id,
+            },
+          });
+        }
+
+        return false;
     }).then((result) => {
       if (!result) {
         return this.modals.brands.create({
@@ -237,8 +239,7 @@ class BrandAdaptor {
       return brandData;
     }).then((updatedResult) => {
       if (brandDetail) {
-        brandData = updatedResult.find(
-            (item) => brandDetail.brand_id === item.brand_id);
+        brandData = updatedResult;
       } else {
         brandData = updatedResult.toJSON();
       }

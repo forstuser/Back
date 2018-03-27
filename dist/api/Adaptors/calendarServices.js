@@ -466,11 +466,15 @@ var CalendarServiceAdaptor = function () {
           paymentDetail.unit_price = paymentDetail.unit_price / daysInMonth;
         }
 
-        if (paymentDetail.quantity) {
+        if (paymentDetail.quantity || paymentDetail.quantity === 0) {
           paymentDetail.unit_price = paymentDetail.quantity * paymentDetail.unit_price;
           paymentDetail.total_units = currentDetail.total_units - ((paymentDetail.absent_day || 0) > 0 ? paymentDetail.quantity : (paymentDetail.absent_day || 0) < 0 ? -paymentDetail.quantity : 0);
 
-          console.log(JSON.stringify({ absent_day: paymentDetail.absent_day, quantity: paymentDetail.quantity, total_units: currentDetail.total_units }));
+          console.log(JSON.stringify({
+            absent_day: paymentDetail.absent_day,
+            quantity: paymentDetail.quantity,
+            total_units: currentDetail.total_units
+          }));
         }
 
         var additional_unit_price = 0;
@@ -489,13 +493,19 @@ var CalendarServiceAdaptor = function () {
 
             daysInPeriod = (0, _moment2.default)().isoWeekdayCalc(currentDetail.end_date, (0, _moment2.default)(paymentDetail.end_date, _moment2.default.ISO_8601).endOf('days'), currentDetail.calendar_item.selected_days) - 1;
 
-            console.log(JSON.stringify({ cEnd_date: currentDetail.end_date, PEnd_date: paymentDetail.end_date, daysInPeriod: daysInPeriod }));
+            console.log(JSON.stringify({
+              cEnd_date: currentDetail.end_date,
+              PEnd_date: paymentDetail.end_date,
+              daysInPeriod: daysInPeriod
+            }));
+            paymentDetail.total_units = paymentDetail.total_units + (paymentDetail.quantity ? paymentDetail.quantity * daysInPeriod : 0);
             additional_unit_price = paymentDetail.unit_price * daysInPeriod;
           }
         }
 
+        paymentDetail.total_amount = paymentDetail.total_amount || currentDetail.total_amount + additional_unit_price - paymentDetail.unit_price;
         result.updateAttributes({
-          total_amount: Math.round(paymentDetail.total_amount || currentDetail.total_amount + additional_unit_price - paymentDetail.unit_price),
+          total_amount: paymentDetail.total_amount > 1 ? Math.round(paymentDetail.total_amount) : 0,
           total_days: paymentDetail.total_days || currentDetail.total_days + daysInPeriod - (paymentDetail.absent_day || 0),
           end_date: newEndDate,
           status_type: paymentDetail.status_type || currentDetail.status_type,
@@ -532,7 +542,7 @@ var CalendarServiceAdaptor = function () {
             paymentDetail.unit_price = paymentDetail.unit_price / daysInMonth;
           }
 
-          if (paymentDetail.quantity) {
+          if (paymentDetail.quantity || paymentDetail.quantity === 0) {
             paymentDetail.unit_price = paymentDetail.quantity * paymentDetail.unit_price;
           }
 
@@ -542,6 +552,7 @@ var CalendarServiceAdaptor = function () {
             if ((0, _moment2.default)(paymentDetail.end_date, _moment2.default.ISO_8601).endOf('days').diff((0, _moment2.default)(currentDetail.end_date, _moment2.default.ISO_8601), 'days') > 0) {
               daysInPeriod = (0, _moment2.default)().isoWeekdayCalc(currentDetail.end_date, (0, _moment2.default)(paymentDetail.end_date, _moment2.default.ISO_8601).endOf('days'), currentDetail.calendar_item.selected_days) - 1;
               additional_unit_price = paymentDetail.unit_price * daysInPeriod;
+              paymentDetail.total_units = (paymentDetail.quantity || 0) * daysInPeriod;
             }
           }
 
@@ -550,7 +561,8 @@ var CalendarServiceAdaptor = function () {
             total_days: currentDetail.total_days + daysInPeriod - (paymentDetail.absent_day || 0),
             end_date: paymentDetail.end_date || currentDetail.end_date,
             status_type: paymentDetail.status_type || currentDetail.status_type,
-            amount_paid: paymentDetail.amount_paid || currentDetail.amount_paid
+            amount_paid: paymentDetail.amount_paid || currentDetail.amount_paid,
+            total_units: paymentDetail.total_units
           });
 
           return result;
@@ -803,7 +815,9 @@ var CalendarServiceAdaptor = function () {
             daysInMonth = __ret.daysInMonth;
             daysInPeriod = __ret.daysInPeriod;
             absentDays = __ret.absentDays;
+            console.log('I am here', JSON.stringify({ paymentItem: paymentItem, startDate: startDate, monthEndDate: monthEndDate, periodStartDate: periodStartDate, periodEndDate: periodEndDate, selected_days: selected_days, daysInMonth: daysInMonth, daysInPeriod: daysInPeriod, absentDays: absentDays }));
           } else if (index === 0) {
+            periodEndDate = periodEndDate.diff((0, _moment2.default)(), 'days') > 0 ? (0, _moment2.default)() : periodEndDate;
             var _ret = _this10.retrieveDayInPeriod({
               daysInMonth: daysInMonth,
               startDate: startDate,
@@ -818,6 +832,7 @@ var CalendarServiceAdaptor = function () {
             daysInMonth = _ret.daysInMonth;
             daysInPeriod = _ret.daysInPeriod;
             absentDays = _ret.absentDays;
+            console.log('You Are here', JSON.stringify({ paymentItem: paymentItem, startDate: startDate, monthEndDate: monthEndDate, periodStartDate: periodStartDate, periodEndDate: periodEndDate, selected_days: selected_days, daysInMonth: daysInMonth, daysInPeriod: daysInPeriod, absentDays: absentDays }));
           } else {
             periodEndDate = (0, _moment2.default)(serviceCalc[nextIndex].effective_date, _moment2.default.ISO_8601).subtract(1, 'd');
             var _ret2 = _this10.retrieveDayInPeriod({
@@ -834,6 +849,8 @@ var CalendarServiceAdaptor = function () {
             daysInMonth = _ret2.daysInMonth;
             daysInPeriod = _ret2.daysInPeriod;
             absentDays = _ret2.absentDays;
+
+            console.log('We are here', JSON.stringify({ paymentItem: paymentItem, startDate: startDate, monthEndDate: monthEndDate, periodStartDate: periodStartDate, periodEndDate: periodEndDate, selected_days: selected_days, daysInMonth: daysInMonth, daysInPeriod: daysInPeriod, absentDays: absentDays }));
           }
 
           daysInPeriod = daysInPeriod - absentDays;
@@ -843,7 +860,7 @@ var CalendarServiceAdaptor = function () {
           }
 
           var current_total_amount = unit_price * daysInPeriod;
-          if (calcItem.quantity) {
+          if (calcItem.quantity || calcItem.quantity === 0) {
             total_amount += calcItem.quantity * current_total_amount;
             total_units += calcItem.quantity * daysInPeriod;
           }

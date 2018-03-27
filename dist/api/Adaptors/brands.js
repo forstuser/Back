@@ -169,10 +169,10 @@ var BrandAdaptor = function () {
       var brandData = void 0;
       var brandDetail = void 0;
       var category = void 0;
-      return Promise.all([this.modals.brands.findAll({
+      return Promise.all([this.modals.brands.findOne({
         where: {
           brand_name: {
-            $iLike: values.brand_name + '%'
+            $iLike: '' + values.brand_name
           }
         }
       }), this.modals.categories.findOne({
@@ -180,18 +180,18 @@ var BrandAdaptor = function () {
           category_id: values.category_id
         }
       })]).then(function (result) {
-        brandData = result[0].map(function (item) {
-          return item.toJSON();
-        });
-        category = result[1].toJSON();
-        return _this2.modals.brandDetails.findOne({
-          where: {
-            brand_id: brandData.map(function (item) {
-              return item.brand_id;
-            }),
-            category_id: values.category_id
-          }
-        });
+        if (result[0]) {
+          brandData = result[0].toJSON();
+          category = result[1].toJSON();
+          return _this2.modals.brandDetails.findOne({
+            where: {
+              brand_id: brandData.brand_id,
+              category_id: values.category_id
+            }
+          });
+        }
+
+        return false;
       }).then(function (result) {
         if (!result) {
           return _this2.modals.brands.create({
@@ -206,9 +206,7 @@ var BrandAdaptor = function () {
         return brandData;
       }).then(function (updatedResult) {
         if (brandDetail) {
-          brandData = updatedResult.find(function (item) {
-            return brandDetail.brand_id === item.brand_id;
-          });
+          brandData = updatedResult;
         } else {
           brandData = updatedResult.toJSON();
         }

@@ -15,6 +15,7 @@ import NotificationAdaptor from '../Adaptors/notification';
 import UserAdaptor from '../Adaptors/user';
 import authentication from './authentication';
 import S3FS from 's3fs';
+import Promise from 'bluebird';
 
 const PUBLIC_KEY = new RSA(config.TRUECALLER_PUBLIC_KEY,
     {signingScheme: 'sha512'});
@@ -80,7 +81,7 @@ let loginOrRegisterUser = parameters => {
         userId: updatedUser.id || updatedUser.ID,
         fcmId: request.payload.fcmId,
         platformId: request.payload.platform || 1,
-        selected_language
+        selected_language,
       }).then((data) => {
         console.log(data);
       }).
@@ -156,7 +157,7 @@ class UserController {
           userId: user.id || user.ID,
           fcmId: request.payload.fcmId,
           platformId: request.payload.platform || 1,
-          selected_language: request.payload.selected_language
+          selected_language: request.payload.selected_language,
         }).
             then((data) => {
               console.log(data);
@@ -188,43 +189,51 @@ class UserController {
       return reply(replyObject);
     }
 
-    return Promise.all([
-      OTPHelper.sendOTPToUser(request.payload.PhoneNo,
-          (request.headers.ios_app_version && request.headers.ios_app_version <
-              14) ||
-          (request.headers.app_version && request.headers.app_version < 13) ?
-              6 :
-              4),
-      userAdaptor.retrieveSingleUser({
-        where: {
-          mobile_no: request.payload.PhoneNo,
-        },
-      })]).then((response) => {
-      if (response[0].type === 'success') {
-        console.log('SMS SENT WITH ID: ', response[0].message);
-        replyObject.PhoneNo = request.payload.PhoneNo;
-        const user = response[1];
-        if (response[1]) {
-          replyObject.Name = user.name;
-          replyObject.imageUrl = user.imageUrl;
-          return reply(replyObject).code(201);
+    if(!request.pre.hasMultipleAccounts) {
+      return Promise.all([
+        OTPHelper.sendOTPToUser(request.payload.PhoneNo,
+            (request.headers.ios_app_version &&
+                request.headers.ios_app_version <
+                14) ||
+            (request.headers.app_version && request.headers.app_version < 13) ?
+                6 :
+                4),
+        userAdaptor.retrieveSingleUser({
+          where: {
+            mobile_no: request.payload.PhoneNo,
+          },
+        })]).then((response) => {
+        if (response[0].type === 'success') {
+          console.log('SMS SENT WITH ID: ', response[0].message);
+          replyObject.PhoneNo = request.payload.PhoneNo;
+          const user = response[1];
+          if (response[1]) {
+            replyObject.Name = user.name;
+            replyObject.imageUrl = user.imageUrl;
+            return reply(replyObject).code(201);
+          } else {
+            return reply(replyObject).code(201);
+          }
         } else {
-          return reply(replyObject).code(201);
+          replyObject.status = false;
+          replyObject.message = response[0].ErrorMessage;
+          replyObject.error = response[0].ErrorMessage;
+          return reply(replyObject).code(403);
         }
-      } else {
-        replyObject.status = false;
-        replyObject.message = response[0].ErrorMessage;
-        replyObject.error = response[0].ErrorMessage;
-        return reply(replyObject).code(403);
-      }
-    }).catch((err) => {
-      console.log({API_Logs: err});
+      }).catch((err) => {
+        console.log({API_Logs: err});
 
+        replyObject.status = false;
+        replyObject.message = 'Some issue with sending OTP';
+        replyObject.error = err;
+        return reply(replyObject);
+      });
+    } else {
       replyObject.status = false;
-      replyObject.message = 'Some issue with sending OTP';
+      replyObject.message = 'User with same mobile number exist.';
       replyObject.error = err;
       return reply(replyObject);
-    });
+    }
   }
 
   static validateOTP(request, reply) {
@@ -357,6 +366,146 @@ class UserController {
       replyObject.status = false;
       replyObject.message = 'Forbidden';
       reply(replyObject);
+    }
+  }
+
+  static validateToken(request, reply) {
+    replyObject = {
+      status: true,
+      message: 'success',
+      forceUpdate: request.pre.forceUpdate,
+    };
+
+    if (!request.pre.forceUpdate && !request.pre.hasMultipleAccounts) {
+      return Promise.try(() => {
+          return OTPHelper.verifyOTPForUser(request.payload.mobile_no,
+              request.payload.token);
+      }).then((data) => {
+        if (data.type === 'success') {
+          return Promise.all([
+            true,
+            userAdaptor.updateUserDetail({
+              mobile_no: request.payload.mobile_no,
+            }, {where: {id: request.user.id}})]);
+        } else {
+          return [false];
+        }
+      }).then((result) => {
+        if (result[0]) {
+          replyObject.authorization = request.headers.authorization;
+
+          return reply(replyObject);
+        } else {
+          replyObject.status = false;
+          replyObject.message = 'Invalid/Expired OTP';
+
+          return reply(replyObject).code(400);
+        }
+      }).catch((err) => {
+        console.log(
+            `Error on ${new Date()} for mobile no: ${request.user.mobile_no} is as follow: \n \n ${err}`);
+        replyObject.status = false;
+        replyObject.message = 'Issue in updating data';
+        replyObject.error = err;
+        return reply(replyObject).code(401);
+      });
+
+    } else {
+      replyObject.status = false;
+      replyObject.message = 'Forbidden';
+      return reply(replyObject);
+    }
+  }
+
+  static setPIN(request, reply) {
+    replyObject = {
+      status: true,
+      message: 'success',
+      forceUpdate: request.pre.forceUpdate,
+    };
+
+    if (!request.pre.forceUpdate) {
+      return Promise.try(() => {
+        if (request.pre.pinVerified) {
+          return Promise.all([
+            true,
+            userAdaptor.updateUserDetail({
+              password: request.hashedPassword,
+            }, {where: {id: request.user.id}})]);
+        } else {
+          return [false];
+        }
+      }).then((result) => {
+        if (result[0]) {
+          replyObject.authorization = `bearer ${authentication.generateToken(
+              request.user).token}`;
+
+          return reply(replyObject);
+        } else {
+          replyObject.status = false;
+          replyObject.message = 'Invalid PIN';
+
+          return reply(replyObject).code(400);
+        }
+      }).catch((err) => {
+        console.log(
+            `Error on ${new Date()} for mobile no: ${request.user.mobile_no} is as follow: \n \n ${err}`);
+        replyObject.status = false;
+        replyObject.message = 'Issue in updating data';
+        replyObject.error = err;
+        return reply(replyObject).code(401);
+      });
+
+    } else {
+      replyObject.status = false;
+      replyObject.message = 'Forbidden';
+      return reply(replyObject);
+    }
+  }
+
+  static resetPIN(request, reply) {
+    replyObject = {
+      status: true,
+      message: 'success',
+      forceUpdate: request.pre.forceUpdate,
+    };
+
+    if (!request.pre.forceUpdate) {
+      return Promise.try(() => {
+        if (request.pre.pinVerified) {
+          return Promise.all([
+            true,
+            userAdaptor.updateUserDetail({
+              password: request.hashedPassword,
+            }, {where: {id: request.user.id}})]);
+        } else {
+          return [false];
+        }
+      }).then((result) => {
+        if (result[0]) {
+          replyObject.authorization = `bearer ${authentication.generateToken(
+              request.user).token}`;
+
+          return reply(replyObject);
+        } else {
+          replyObject.status = false;
+          replyObject.message = 'Invalid PIN';
+
+          return reply(replyObject).code(400);
+        }
+      }).catch((err) => {
+        console.log(
+            `Error on ${new Date()} for mobile no: ${request.user.mobile_no} is as follow: \n \n ${err}`);
+        replyObject.status = false;
+        replyObject.message = 'Issue in updating data';
+        replyObject.error = err;
+        return reply(replyObject).code(401);
+      });
+
+    } else {
+      replyObject.status = false;
+      replyObject.message = 'Forbidden';
+      return reply(replyObject);
     }
   }
 

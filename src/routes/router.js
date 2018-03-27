@@ -217,8 +217,8 @@ function prepareAuthRoutes(userController, authRoutes) {
         pre: [
           {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
-            method: appVersionHelper.updateUserActiveStatus,
-            assign: 'userExist',
+            method: appVersionHelper.hasMultipleAccounts,
+            assign: 'hasMultipleAccounts',
           },
         ],
         handler: UserController.dispatchOTP,
@@ -432,6 +432,131 @@ function prepareAuthRoutes(userController, authRoutes) {
             BBLogin_Type: joi.number().required(),
             transactionId: joi.string().allow(null),
             TrueSecret: joi.string().allow(null),
+            output: 'data',
+            parse: true,
+          },
+        },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              {code: 200, message: 'Authenticated'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
+            ],
+          },
+        },
+      },
+    });
+
+    authRoutes.push({
+      method: 'PUT',
+      path: '/consumer/validate',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+          {
+            method: appVersionHelper.hasMultipleAccounts,
+            assign: 'hasMultipleAccounts',
+          },
+        ],
+        handler: UserController.validateToken,
+        description: 'Set PIN of User for Consumer Portal.',
+        tags: ['api', 'User', 'Authentication'],
+        validate: {
+          payload: {
+            token: joi.string().required(),
+            mobile_no: joi.string().required(),
+            output: 'data',
+            parse: true,
+          },
+        },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              {code: 200, message: 'Authenticated'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
+            ],
+          },
+        },
+      },
+    });
+
+    authRoutes.push({
+      method: 'POST',
+      path: '/consumer/pin',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+          {
+            method: appVersionHelper.verifyUserPIN,
+            assign: 'pinVerified',
+          },
+        ],
+        handler: UserController.setPIN,
+        description: 'Set PIN of User for Consumer Portal.',
+        tags: ['api', 'User', 'Authentication'],
+        validate: {
+          payload: {
+            token: joi.string().allow(null),
+            old_pin: joi.string().allow(null),
+            pin: joi.string().required(),
+            mobile_no: joi.string().allow(null),
+            output: 'data',
+            parse: true,
+          },
+        },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              {code: 200, message: 'Authenticated'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
+            ],
+          },
+        },
+      },
+    });
+
+    authRoutes.push({
+      method: 'POST',
+      path: '/consumer/reset',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+          {
+            method: appVersionHelper.updateUserPIN,
+            assign: 'pinVerified',
+          },
+        ],
+        handler: UserController.resetPIN,
+        description: 'Reset PIN of User for Consumer Portal.',
+        tags: ['api', 'User', 'Authentication'],
+        validate: {
+          payload: {
+            old_pin: joi.string().allow(null),
+            pin: joi.string().required(),
             output: 'data',
             parse: true,
           },

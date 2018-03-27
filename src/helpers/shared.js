@@ -164,7 +164,7 @@ export function preparePaymentDetails(parameters) {
   }
   console.log(daysInPeriod);
   let total_amount = unit_price * daysInPeriod;
-  if (serviceCalculationBody.quantity) {
+  if (serviceCalculationBody.quantity ||serviceCalculationBody.quantity === 0) {
     total_amount = serviceCalculationBody.quantity * total_amount;
   }
 

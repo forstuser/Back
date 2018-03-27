@@ -240,8 +240,8 @@ function prepareAuthRoutes(userController, authRoutes) {
       path: '/consumer/getotp',
       config: {
         pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }, {
-          method: appVersionHelper.updateUserActiveStatus,
-          assign: 'userExist'
+          method: appVersionHelper.hasMultipleAccounts,
+          assign: 'hasMultipleAccounts'
         }],
         handler: _user2.default.dispatchOTP,
         description: 'Generate OTP.',
@@ -406,6 +406,101 @@ function prepareAuthRoutes(userController, authRoutes) {
             BBLogin_Type: _joi2.default.number().required(),
             transactionId: _joi2.default.string().allow(null),
             TrueSecret: _joi2.default.string().allow(null),
+            output: 'data',
+            parse: true
+          }
+        },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [{ code: 200, message: 'Authenticated' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
+          }
+        }
+      }
+    });
+
+    authRoutes.push({
+      method: 'PUT',
+      path: '/consumer/validate',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }, {
+          method: appVersionHelper.hasMultipleAccounts,
+          assign: 'hasMultipleAccounts'
+        }],
+        handler: _user2.default.validateToken,
+        description: 'Set PIN of User for Consumer Portal.',
+        tags: ['api', 'User', 'Authentication'],
+        validate: {
+          payload: {
+            token: _joi2.default.string().required(),
+            mobile_no: _joi2.default.string().required(),
+            output: 'data',
+            parse: true
+          }
+        },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [{ code: 200, message: 'Authenticated' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
+          }
+        }
+      }
+    });
+
+    authRoutes.push({
+      method: 'POST',
+      path: '/consumer/pin',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }, {
+          method: appVersionHelper.verifyUserPIN,
+          assign: 'pinVerified'
+        }],
+        handler: _user2.default.setPIN,
+        description: 'Set PIN of User for Consumer Portal.',
+        tags: ['api', 'User', 'Authentication'],
+        validate: {
+          payload: {
+            token: _joi2.default.string().allow(null),
+            old_pin: _joi2.default.string().allow(null),
+            pin: _joi2.default.string().required(),
+            mobile_no: _joi2.default.string().allow(null),
+            output: 'data',
+            parse: true
+          }
+        },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [{ code: 200, message: 'Authenticated' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
+          }
+        }
+      }
+    });
+
+    authRoutes.push({
+      method: 'POST',
+      path: '/consumer/reset',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }, {
+          method: appVersionHelper.updateUserPIN,
+          assign: 'pinVerified'
+        }],
+        handler: _user2.default.resetPIN,
+        description: 'Reset PIN of User for Consumer Portal.',
+        tags: ['api', 'User', 'Authentication'],
+        validate: {
+          payload: {
+            old_pin: _joi2.default.string().allow(null),
+            pin: _joi2.default.string().required(),
             output: 'data',
             parse: true
           }

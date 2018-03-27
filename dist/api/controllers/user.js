@@ -70,6 +70,10 @@ var _s3fs = require('s3fs');
 
 var _s3fs2 = _interopRequireDefault(_s3fs);
 
+var _bluebird = require('bluebird');
+
+var _bluebird2 = _interopRequireDefault(_bluebird);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -236,36 +240,43 @@ var UserController = function () {
         return reply(replyObject);
       }
 
-      return Promise.all([_otp2.default.sendOTPToUser(request.payload.PhoneNo, request.headers.ios_app_version && request.headers.ios_app_version < 14 || request.headers.app_version && request.headers.app_version < 13 ? 6 : 4), userAdaptor.retrieveSingleUser({
-        where: {
-          mobile_no: request.payload.PhoneNo
-        }
-      })]).then(function (response) {
-        if (response[0].type === 'success') {
-          console.log('SMS SENT WITH ID: ', response[0].message);
-          replyObject.PhoneNo = request.payload.PhoneNo;
-          var user = response[1];
-          if (response[1]) {
-            replyObject.Name = user.name;
-            replyObject.imageUrl = user.imageUrl;
-            return reply(replyObject).code(201);
-          } else {
-            return reply(replyObject).code(201);
+      if (!request.pre.hasMultipleAccounts) {
+        return _bluebird2.default.all([_otp2.default.sendOTPToUser(request.payload.PhoneNo, request.headers.ios_app_version && request.headers.ios_app_version < 14 || request.headers.app_version && request.headers.app_version < 13 ? 6 : 4), userAdaptor.retrieveSingleUser({
+          where: {
+            mobile_no: request.payload.PhoneNo
           }
-        } else {
-          replyObject.status = false;
-          replyObject.message = response[0].ErrorMessage;
-          replyObject.error = response[0].ErrorMessage;
-          return reply(replyObject).code(403);
-        }
-      }).catch(function (err) {
-        console.log({ API_Logs: err });
+        })]).then(function (response) {
+          if (response[0].type === 'success') {
+            console.log('SMS SENT WITH ID: ', response[0].message);
+            replyObject.PhoneNo = request.payload.PhoneNo;
+            var user = response[1];
+            if (response[1]) {
+              replyObject.Name = user.name;
+              replyObject.imageUrl = user.imageUrl;
+              return reply(replyObject).code(201);
+            } else {
+              return reply(replyObject).code(201);
+            }
+          } else {
+            replyObject.status = false;
+            replyObject.message = response[0].ErrorMessage;
+            replyObject.error = response[0].ErrorMessage;
+            return reply(replyObject).code(403);
+          }
+        }).catch(function (err) {
+          console.log({ API_Logs: err });
 
+          replyObject.status = false;
+          replyObject.message = 'Some issue with sending OTP';
+          replyObject.error = err;
+          return reply(replyObject);
+        });
+      } else {
         replyObject.status = false;
-        replyObject.message = 'Some issue with sending OTP';
+        replyObject.message = 'User with same mobile number exist.';
         replyObject.error = err;
         return reply(replyObject);
-      });
+      }
     }
   }, {
     key: 'validateOTP',
@@ -394,6 +405,134 @@ var UserController = function () {
         replyObject.status = false;
         replyObject.message = 'Forbidden';
         reply(replyObject);
+      }
+    }
+  }, {
+    key: 'validateToken',
+    value: function validateToken(request, reply) {
+      replyObject = {
+        status: true,
+        message: 'success',
+        forceUpdate: request.pre.forceUpdate
+      };
+
+      if (!request.pre.forceUpdate && !request.pre.hasMultipleAccounts) {
+        return _bluebird2.default.try(function () {
+          return _otp2.default.verifyOTPForUser(request.payload.mobile_no, request.payload.token);
+        }).then(function (data) {
+          if (data.type === 'success') {
+            return _bluebird2.default.all([true, userAdaptor.updateUserDetail({
+              mobile_no: request.payload.mobile_no
+            }, { where: { id: request.user.id } })]);
+          } else {
+            return [false];
+          }
+        }).then(function (result) {
+          if (result[0]) {
+            replyObject.authorization = request.headers.authorization;
+
+            return reply(replyObject);
+          } else {
+            replyObject.status = false;
+            replyObject.message = 'Invalid/Expired OTP';
+
+            return reply(replyObject).code(400);
+          }
+        }).catch(function (err) {
+          console.log('Error on ' + new Date() + ' for mobile no: ' + request.user.mobile_no + ' is as follow: \n \n ' + err);
+          replyObject.status = false;
+          replyObject.message = 'Issue in updating data';
+          replyObject.error = err;
+          return reply(replyObject).code(401);
+        });
+      } else {
+        replyObject.status = false;
+        replyObject.message = 'Forbidden';
+        return reply(replyObject);
+      }
+    }
+  }, {
+    key: 'setPIN',
+    value: function setPIN(request, reply) {
+      replyObject = {
+        status: true,
+        message: 'success',
+        forceUpdate: request.pre.forceUpdate
+      };
+
+      if (!request.pre.forceUpdate) {
+        return _bluebird2.default.try(function () {
+          if (request.pre.pinVerified) {
+            return _bluebird2.default.all([true, userAdaptor.updateUserDetail({
+              password: request.hashedPassword
+            }, { where: { id: request.user.id } })]);
+          } else {
+            return [false];
+          }
+        }).then(function (result) {
+          if (result[0]) {
+            replyObject.authorization = 'bearer ' + _authentication2.default.generateToken(request.user).token;
+
+            return reply(replyObject);
+          } else {
+            replyObject.status = false;
+            replyObject.message = 'Invalid PIN';
+
+            return reply(replyObject).code(400);
+          }
+        }).catch(function (err) {
+          console.log('Error on ' + new Date() + ' for mobile no: ' + request.user.mobile_no + ' is as follow: \n \n ' + err);
+          replyObject.status = false;
+          replyObject.message = 'Issue in updating data';
+          replyObject.error = err;
+          return reply(replyObject).code(401);
+        });
+      } else {
+        replyObject.status = false;
+        replyObject.message = 'Forbidden';
+        return reply(replyObject);
+      }
+    }
+  }, {
+    key: 'resetPIN',
+    value: function resetPIN(request, reply) {
+      replyObject = {
+        status: true,
+        message: 'success',
+        forceUpdate: request.pre.forceUpdate
+      };
+
+      if (!request.pre.forceUpdate) {
+        return _bluebird2.default.try(function () {
+          if (request.pre.pinVerified) {
+            return _bluebird2.default.all([true, userAdaptor.updateUserDetail({
+              password: request.hashedPassword
+            }, { where: { id: request.user.id } })]);
+          } else {
+            return [false];
+          }
+        }).then(function (result) {
+          if (result[0]) {
+            replyObject.authorization = 'bearer ' + _authentication2.default.generateToken(request.user).token;
+
+            return reply(replyObject);
+          } else {
+            replyObject.status = false;
+            replyObject.message = 'Invalid PIN';
+
+            return reply(replyObject).code(400);
+          }
+        }).catch(function (err) {
+          console.log('Error on ' + new Date() + ' for mobile no: ' + request.user.mobile_no + ' is as follow: \n \n ' + err);
+          replyObject.status = false;
+          replyObject.message = 'Issue in updating data';
+          replyObject.error = err;
+          return reply(replyObject).code(401);
+        });
+      } else {
+        replyObject.status = false;
+        replyObject.message = 'Forbidden';
+        return reply(replyObject);
       }
     }
   }, {

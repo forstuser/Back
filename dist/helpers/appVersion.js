@@ -17,6 +17,12 @@ var _main = require('../config/main');
 
 var _main2 = _interopRequireDefault(_main);
 
+var _bluebird = require('bluebird');
+
+var _bluebird2 = _interopRequireDefault(_bluebird);
+
+var _password = require('./password');
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var MODAL = void 0;
@@ -78,7 +84,8 @@ var updateUserActiveStatus = function updateUserActiveStatus(request, reply) {
       var userDetail = userResult ? userResult.toJSON() : userResult;
       console.log('Last route ' + request.url.pathname + ' accessed by user id ' + (user.id || user.ID) + ' from ' + (request.headers.ios_app_version ? 'iOS' : 'android'));
       if (userDetail) {
-        return Promise.all([MODAL.users.update({
+        var last_active_date = _moment2.default.utc(userDetail.last_active_date, _moment2.default.ISO_8601);
+        return _bluebird2.default.all([MODAL.users.update({
           last_active_date: _moment2.default.utc(),
           last_api: request.url.pathname
         }, {
@@ -105,8 +112,8 @@ var updateUserActiveStatus = function updateUserActiveStatus(request, reply) {
           return reply(false);
         });
       } else {
-        console.log('User ' + user.mobile_no + ' doesn\'t exist');
-        return reply(null);
+        console.log('User ' + user.mobile_no + ' inactive for more than 10 minutes');
+        return reply('');
       }
     }).catch(function (err) {
       console.log('Error on ' + new Date() + ' for user ' + user.mobile_no + ' is as follow: \n \n ' + err);
@@ -115,10 +122,114 @@ var updateUserActiveStatus = function updateUserActiveStatus(request, reply) {
   }
 };
 
+var hasMultipleAccounts = function hasMultipleAccounts(request, reply) {
+  var user = _shared2.default.verifyAuthorization(request.headers);
+  if (!user) {
+    return reply(false);
+  } else {
+    return _bluebird2.default.try(function () {
+      return MODAL.users.count({
+        where: {
+          $or: {
+            id: user.id || user.ID,
+            mobile_no: request.payload.mobile_no
+          }
+        }
+      });
+    }).then(function (userCounts) {
+      if (userCounts > 1) {
+        return reply(true);
+      }
+
+      return reply(false);
+    }).catch(function (err) {
+      console.log('Error on ' + new Date() + ' for user ' + request.payload.mobile_no + ' is as follow: \n \n ' + err);
+      return reply(false);
+    });
+  }
+};
+
+var updateUserPIN = function updateUserPIN(request, reply) {
+  var user = _shared2.default.verifyAuthorization(request.headers);
+  if (!user) {
+    return reply(null);
+  }
+  return _bluebird2.default.try(function () {
+    return (0, _password.hashPassword)(request.payload.pin);
+  }).then(function (hashedPassword) {
+    request.hashedPassword = hashedPassword;
+    return MODAL.users.findOne({
+      where: {
+        id: user.id || user.ID
+      }
+    });
+  }).then(function (userResult) {
+    if (userResult) {
+      console.log('Last route ' + request.url.pathname + ' accessed by user id ' + (user.id || user.ID) + ' from ' + (request.headers.ios_app_version ? 'iOS' : 'android'));
+      request.user = userResult;
+      var currentUser = request.user.toJSON();
+      console.log(currentUser);
+      if (request.payload.old_pin) {
+        return (0, _password.comparePasswords)(request.payload.old_pin, currentUser.password);
+      }
+
+      return true;
+    }
+
+    return false;
+  }).then(function (pinResult) {
+    return pinResult ? reply(true) : reply(false);
+  }).catch(function (err) {
+    console.log('Error on ' + new Date() + ' for user ' + request.payload.mobile_no + ' is as follow: \n \n ' + err);
+    return reply(false);
+  });
+};
+
+var verifyUserPIN = function verifyUserPIN(request, reply) {
+  var user = _shared2.default.verifyAuthorization(request.headers);
+  if (!user) {
+    return reply(null);
+  }
+  return _bluebird2.default.try(function () {
+    return (0, _password.hashPassword)(request.payload.pin);
+  }).then(function (hashedPassword) {
+    request.hashedPassword = hashedPassword;
+    return MODAL.users.findOne({
+      where: {
+        id: user.id || user.ID
+      }
+    });
+  }).then(function (userResult) {
+    if (userResult) {
+      console.log('Last route ' + request.url.pathname + ' accessed by user id ' + (user.id || user.ID) + ' from ' + (request.headers.ios_app_version ? 'iOS' : 'android'));
+      request.user = userResult;
+      var currentUser = request.user.toJSON();
+      console.log(currentUser);
+      if (!currentUser.password) {
+        return true;
+      } else if (request.payload.old_pin) {
+        return (0, _password.comparePasswords)(request.payload.old_pin, currentUser.password);
+      }
+
+      return (0, _password.comparePasswords)(request.payload.pin, currentUser.password);
+    }
+
+    return false;
+  }).then(function (pinResult) {
+    return pinResult ? reply(true) : reply(false);
+  }).catch(function (err) {
+    console.log('Error on ' + new Date() + ' for user ' + request.payload.mobile_no + ' is as follow: \n \n ' + err);
+    return reply(false);
+  });
+};
+
 exports.default = function (models) {
   MODAL = models;
   return {
     checkAppVersion: checkAppVersion,
-    updateUserActiveStatus: updateUserActiveStatus
+    updateUserActiveStatus: updateUserActiveStatus,
+    verifyUserPIN: verifyUserPIN,
+    updateUserPIN: updateUserPIN,
+    hasMultipleAccounts: hasMultipleAccounts
   };
 };
