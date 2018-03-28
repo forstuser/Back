@@ -267,22 +267,23 @@ var CalendarServiceController = function () {
           updated_by: user.id || user.ID,
           status_type: 1
         };
+        var payment_detail = void 0;
         return _bluebird2.default.try(function () {
-          return calendarServiceAdaptor.retrieveCurrentCalculationDetail({
+          return _bluebird2.default.all([calendarServiceAdaptor.retrieveCurrentCalculationDetail({
             ref_id: request.params.ref_id, effective_date: {
               $lte: request.payload.absent_date
             }
-          });
-        }).then(function (calcResults) {
+          }), calendarServiceAdaptor.markAbsentForItem({ where: serviceAbsentDetail })]);
+        }).spread(function (calcResults) {
           var currentCalcDetail = calcResults;
 
-          return [calendarServiceAdaptor.updatePaymentDetail(request.params.id, {
+          return calendarServiceAdaptor.updatePaymentDetail(request.params.id, {
             quantity: currentCalcDetail.quantity,
             end_date: request.payload.absent_date,
             unit_price: currentCalcDetail.unit_price,
-            absent_day: 1
-          }, true), calendarServiceAdaptor.markAbsentForItem({ where: serviceAbsentDetail })];
-        }).spread(function (payment_detail) {
+            selected_days: currentCalcDetail.selected_days
+          }, true);
+        }).then(function (payment_detail) {
           return reply({
             status: true,
             message: 'successful',
@@ -366,21 +367,21 @@ var CalendarServiceController = function () {
           payment_id: request.params.id
         };
         return _bluebird2.default.try(function () {
-          return calendarServiceAdaptor.retrieveCurrentCalculationDetail({
+          return _bluebird2.default.all([calendarServiceAdaptor.retrieveCurrentCalculationDetail({
             ref_id: request.params.ref_id, effective_date: {
               $lte: request.payload.present_date
             }
-          });
-        }).then(function (calcResults) {
+          }), calendarServiceAdaptor.markPresentForItem({ where: serviceAbsentDetail })]);
+        }).spread(function (calcResults) {
           var currentCalcDetail = calcResults;
 
-          return [calendarServiceAdaptor.updatePaymentDetail(request.params.id, {
+          return calendarServiceAdaptor.updatePaymentDetail(request.params.id, {
             quantity: currentCalcDetail.quantity,
-            unit_price: -currentCalcDetail.unit_price,
+            unit_price: currentCalcDetail.unit_price,
             end_date: request.payload.present_date,
-            absent_day: -1
-          }, true), calendarServiceAdaptor.markPresentForItem({ where: serviceAbsentDetail })];
-        }).spread(function (payment_detail) {
+            selected_days: currentCalcDetail.selected_days
+          }, true);
+        }).then(function (payment_detail) {
           return reply({
             status: true,
             message: 'successful',
@@ -419,7 +420,7 @@ var CalendarServiceController = function () {
           return calendarServiceAdaptor.retrieveCalendarItemList({
             user_id: user.id || user.ID
           }, request.language);
-        }).spread(function (result, items) {
+        }).then(function (items) {
           return reply({
             status: true,
             message: 'successful',
@@ -575,6 +576,42 @@ var CalendarServiceController = function () {
             status: true,
             message: 'successful',
             calculation_detail: calculation_detail,
+            forceUpdate: request.pre.forceUpdate
+          });
+        }).catch(function (err) {
+          console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+          return reply({
+            status: false,
+            message: 'An error occurred in adding effective calculation method for service.',
+            forceUpdate: request.pre.forceUpdate,
+            err: err
+          });
+        });
+      } else {
+        return reply({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    }
+  }, {
+    key: 'deleteCalendarItem',
+    value: function deleteCalendarItem(request, reply) {
+      var user = _shared2.default.verifyAuthorization(request.headers);
+      if (!request.pre.userExist) {
+        return reply({
+          status: false,
+          message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate
+        });
+      } else if (request.pre.userExist && !request.pre.forceUpdate) {
+        return _bluebird2.default.try(function () {
+          return calendarServiceAdaptor.deleteCalendarItemById(request.params.id, user.id || user.ID);
+        }).then(function () {
+          return reply({
+            status: true,
+            message: 'successful',
             forceUpdate: request.pre.forceUpdate
           });
         }).catch(function (err) {

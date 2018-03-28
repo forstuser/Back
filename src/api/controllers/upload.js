@@ -1202,7 +1202,7 @@ class UploadController {
           then(fileResult => reply(fileResult.Body).
               header('Content-Type', fileResult.ContentType).
               header('Content-Disposition',
-                  `attachment; filename=${result.CopyName}`)).
+                  `attachment; filename=${request.params.id}.png`)).
           catch((err) => {
             console.log(
                 `Error on ${new Date()} retrieving brand image is as follow: \n \n ${err}`);
@@ -1231,7 +1231,7 @@ class UploadController {
           then(fileResult => reply(fileResult.Body).
               header('Content-Type', fileResult.ContentType).
               header('Content-Disposition',
-                  `attachment; filename=${result.CopyName}`)).
+                  `attachment; filename=${request.params.id}.png`)).
           catch((err) => {
             console.log(
                 `Error on ${new Date()} retrieving provider image is as follow: \n \n ${err}`);
@@ -1256,11 +1256,11 @@ class UploadController {
       const fsImplBrand = new S3FS(
           `${config.AWS.S3.BUCKET}/${config.AWS.S3.KNOW_ITEM_IMAGE}`,
           config.AWS.ACCESS_DETAILS);
-      fsImplBrand.readFile(`i${request.params.id}.png`, 'utf8').
+      fsImplBrand.readFile(`${request.params.id}.png`, 'utf8').
           then(fileResult => reply(fileResult.Body).
               header('Content-Type', fileResult.ContentType).
               header('Content-Disposition',
-                  `attachment; filename=i${request.params.id}.png`)).
+                  `attachment; filename=${request.params.id}.png`)).
           catch((err) => {
             console.log(
                 `Error on ${new Date()} retrieving fact image is as follow: \n \n ${err}`);

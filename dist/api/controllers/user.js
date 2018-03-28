@@ -279,6 +279,92 @@ var UserController = function () {
       }
     }
   }, {
+    key: 'dispatchOTPOverEmail',
+    value: function dispatchOTPOverEmail(request, reply) {
+      replyObject = {
+        status: true,
+        message: 'success'
+      };
+      if (request.pre.isValidEmail) {
+        return _bluebird2.default.try(function () {
+          return _otp2.default.sendOTPOverEmail(request.payload.email, request.user.name, request.headers.ios_app_version && request.headers.ios_app_version < 14 || request.headers.app_version && request.headers.app_version < 13 ? 6 : 4);
+        }).then(function (response) {
+
+          console.log('OTP Sent over email', response[0]);
+          return userAdaptor.updateUserDetail({
+            email: request.payload.email,
+            email_secret: response[0],
+            otp_created_at: _moment2.default.utc()
+          }, {
+            where: {
+              id: request.user.id
+            }
+          });
+        }).then(function () {
+          replyObject.email = request.payload.email;
+          var user = request.user;
+          replyObject.Name = user.name;
+          replyObject.imageUrl = user.imageUrl;
+          return reply(replyObject).code(201);
+        }).catch(function (err) {
+          console.log({ API_Logs: err });
+
+          replyObject.status = false;
+          replyObject.message = 'Some issue with sending verification code over email';
+          replyObject.error = err;
+          return reply(replyObject);
+        });
+      } else if (request.pre.isValidEmail === null) {
+        replyObject.status = false;
+        replyObject.message = 'Another user with email exist';
+        return reply(replyObject);
+      } else {
+        replyObject.status = false;
+        replyObject.message = 'Invalid Email, Please provide correct one.';
+        return reply(replyObject);
+      }
+    }
+  }, {
+    key: 'verifyEmailSecret',
+    value: function verifyEmailSecret(request, reply) {
+      replyObject = {
+        status: true,
+        message: 'success'
+      };
+      if (request.pre.isValidOTP) {
+        var currentUser = request.user.toJSON();
+        return _bluebird2.default.try(function () {
+          return userAdaptor.updateUserDetail({
+            email_verified: true
+          }, {
+            where: {
+              id: currentUser.id
+            }
+          });
+        }).then(function () {
+          replyObject.email = currentUser.email;
+          replyObject.Name = currentUser.name;
+          replyObject.imageUrl = currentUser.imageUrl;
+          return reply(replyObject).code(201);
+        }).catch(function (err) {
+          console.log({ API_Logs: err });
+
+          replyObject.status = false;
+          replyObject.message = 'Invalid OTP.';
+          replyObject.error = err;
+          return reply(replyObject);
+        });
+      } else if (request.pre.isValidOTP === null) {
+        replyObject.status = false;
+        replyObject.message = 'Provided OTP is expired, Please request new one.';
+        return reply(replyObject);
+      } else {
+        replyObject.status = false;
+        replyObject.message = 'Invalid OTP.';
+        return reply(replyObject);
+      }
+    }
+  }, {
     key: 'validateOTP',
     value: function validateOTP(request, reply) {
       replyObject = {
@@ -376,10 +462,10 @@ var UserController = function () {
               },
               json: true
             }).then(function (fbResult) {
-              userWhere.email = fbResult.email;
-              userInput.email = fbResult.email;
+              userWhere.email = fbResult.email.toLowerCase();
+              userInput.email = fbResult.email.toLowerCase();
               userInput.full_name = fbResult.name;
-              userInput.email_secret = _uuid2.default.v4();
+              userInput.email_verified = true;
               userInput.mobile_no = userInput.mobile_no || fbResult.mobile_phone;
               userWhere.mobile_no = userInput.mobile_no || fbResult.mobile_phone;
               userInput.fb_id = fbResult.id;
@@ -452,8 +538,8 @@ var UserController = function () {
       }
     }
   }, {
-    key: 'setPIN',
-    value: function setPIN(request, reply) {
+    key: 'verifyPin',
+    value: function verifyPin(request, reply) {
       replyObject = {
         status: true,
         message: 'success',
@@ -478,14 +564,14 @@ var UserController = function () {
             replyObject.status = false;
             replyObject.message = 'Invalid PIN';
 
-            return reply(replyObject).code(400);
+            return reply(replyObject);
           }
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' for mobile no: ' + request.user.mobile_no + ' is as follow: \n \n ' + err);
           replyObject.status = false;
           replyObject.message = 'Issue in updating data';
           replyObject.error = err;
-          return reply(replyObject).code(401);
+          return reply(replyObject);
         });
       } else {
         replyObject.status = false;
@@ -520,14 +606,14 @@ var UserController = function () {
             replyObject.status = false;
             replyObject.message = 'Invalid PIN';
 
-            return reply(replyObject).code(400);
+            return reply(replyObject);
           }
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' for mobile no: ' + request.user.mobile_no + ' is as follow: \n \n ' + err);
           replyObject.status = false;
           replyObject.message = 'Issue in updating data';
           replyObject.error = err;
-          return reply(replyObject).code(401);
+          return reply(replyObject);
         });
       } else {
         replyObject.status = false;
@@ -576,6 +662,32 @@ var UserController = function () {
         replyObject.status = false;
         replyObject.message = 'Forbidden';
         reply(replyObject);
+      }
+    }
+  }, {
+    key: 'removePin',
+    value: function removePin(request, reply) {
+      var user = _shared2.default.verifyAuthorization(request.headers);
+      if (request.pre.userExist && !request.pre.forceUpdate && request.pre.pinVerified) {
+        return userAdaptor.updateUserDetail({ password: null }, { where: { id: user.id || user.ID } }).then(function () {
+          return reply({
+            message: 'Successful',
+            status: true,
+            forceUpdate: request.pre.forceUpdate
+          });
+        });
+      } else if (!request.pre.userExist) {
+        return reply({
+          message: 'Invalid Token',
+          status: false,
+          forceUpdate: request.pre.forceUpdate
+        }).code(401);
+      } else {
+        return reply({
+          message: 'Forbidden',
+          status: false,
+          forceUpdate: request.pre.forceUpdate
+        });
       }
     }
   }, {

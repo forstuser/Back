@@ -149,22 +149,24 @@ export function preparePaymentDetails(parameters) {
   if (monthStartDate.diff(effectiveDate, 'days') > 0) {
     start_date = monthStartDate;
   }
-  currentDate = (currentDate || moment());
-  if (end_date.diff(currentDate, 'days') > 0) {
+  currentDate = moment(currentDate || moment()).startOf('days');
+  if (end_date.endOf('days').diff(currentDate, 'days') > 0) {
     end_date = currentDate.endOf('days');
   }
 
   const daysInMonth = moment().
-      isoWeekdayCalc(start_date, month_end_date, selected_days);
+      isoWeekdayCalc(monthStartDate, month_end_date, selected_days);
   const daysInPeriod = moment().
-      isoWeekdayCalc(start_date, end_date, selected_days);
+      isoWeekdayCalc(start_date.format('YYYY-MM-DD'), end_date.format('YYYY-MM-DD'),
+          selected_days);
   let unit_price = serviceCalculationBody.unit_price;
   if (wages_type === 1) {
     unit_price = unit_price / daysInMonth;
   }
-  console.log(daysInPeriod);
+  console.log({daysInPeriod, start_date, end_date});
   let total_amount = unit_price * daysInPeriod;
-  if (serviceCalculationBody.quantity ||serviceCalculationBody.quantity === 0) {
+  if (serviceCalculationBody.quantity ||
+      serviceCalculationBody.quantity === 0) {
     total_amount = serviceCalculationBody.quantity * total_amount;
   }
 
@@ -173,7 +175,7 @@ export function preparePaymentDetails(parameters) {
     end_date,
     updated_by: user.id || user.ID,
     status_type: 1,
-    total_amount: Math.round(total_amount),
+    total_amount: total_amount,
     total_days: daysInPeriod,
     total_units: serviceCalculationBody.quantity ?
         daysInPeriod * serviceCalculationBody.quantity :

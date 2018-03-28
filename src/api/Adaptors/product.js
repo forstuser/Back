@@ -344,8 +344,8 @@ class ProductAdaptor {
         productItem.cImageURL = productItem.file_type ?
             `/consumer/products/${productItem.id}/images` :
             productItem.sub_category_id ?
-                `/categories/${productItem.sub_category_id}/images/` :
-                productItem.cImageURL;
+                `/categories/${productItem.sub_category_id}/images/1` :
+                `${productItem.cImageURL}1`;
         if (productItem.schedule) {
           productItem.schedule.due_date = moment.utc(productItem.purchaseDate,
               moment.ISO_8601).
@@ -560,8 +560,8 @@ class ProductAdaptor {
       productItem.cImageURL = productItem.file_type ?
           `/consumer/products/${productItem.id}/images` :
           productItem.sub_category_id ?
-              `/categories/${productItem.sub_category_id}/images/` :
-              productItem.cImageURL;
+              `/categories/${productItem.sub_category_id}/images/1` :
+              `${productItem.cImageURL}1`;
       productItem.purchaseDate = moment.utc(productItem.purchaseDate,
           moment.ISO_8601).
           startOf('days');
@@ -576,6 +576,7 @@ class ProductAdaptor {
 
   retrieveUsersLastProduct(options, language) {
     let billOption = {};
+    let products;
 
     if (options.online_seller_id) {
       billOption.seller_id = options.online_seller_id;
@@ -586,7 +587,6 @@ class ProductAdaptor {
 
     options = _.omit(options, 'product_status_type');
 
-    let product;
     return this.modals.products.findAll({
       where: options,
       include: [
@@ -855,7 +855,7 @@ class ProductAdaptor {
       ],
       order: [['updated_at', 'DESC']],
     }).then((productResult) => {
-      const products = productResult.map((item) => {
+      products = productResult.map((item) => {
         const productItem = item.toJSON();
         if (productItem.copies) {
           productItem.copies = productItem.copies.map((copyItem) => {
@@ -866,8 +866,8 @@ class ProductAdaptor {
         productItem.cImageURL = productItem.file_type ?
             `/consumer/products/${productItem.id}/images` :
             productItem.sub_category_id ?
-                `/categories/${productItem.sub_category_id}/images/` :
-                productItem.cImageURL;
+                `/categories/${productItem.sub_category_id}/images/1` :
+                `${productItem.cImageURL}1`;
         productItem.purchaseDate = moment.utc(productItem.purchaseDate,
             moment.ISO_8601).
             startOf('days');
@@ -882,59 +882,65 @@ class ProductAdaptor {
               (productItem.status_type === 8 && productItem.bill &&
                   productItem.bill.billStatus ===
                   5));
-      product = products.length > 0 ?
-          products[0] :
-          undefined;
-
-      if (product) {
+      if (products.length > 0) {
         return Promise.all([
           this.retrieveProductMetadata({
-            product_id: product.id,
+            product_id: products.map((item) => item.id),
           }, language),
-          this.insuranceAdaptor.retrieveInsurances({
-            product_id: product.id,
-          }),
-          this.warrantyAdaptor.retrieveWarranties({
-            product_id: product.id,
-            warranty_type: [1, 2],
-          }),
-          this.amcAdaptor.retrieveAMCs({
-            product_id: product.id,
-          }),
-          this.repairAdaptor.retrieveRepairs({
-            product_id: product.id,
-          }),
-          this.pucAdaptor.retrievePUCs({
-            product_id: product.id,
-          })]);
+          this.insuranceAdaptor.retrieveInsurances(
+              {product_id: products.map((item) => item.id)}),
+          this.warrantyAdaptor.retrieveWarranties(
+              {product_id: products.map((item) => item.id)}),
+          this.amcAdaptor.retrieveAMCs(
+              {product_id: products.map((item) => item.id)}),
+          this.repairAdaptor.retrieveRepairs(
+              {product_id: products.map((item) => item.id)}),
+          this.pucAdaptor.retrievePUCs(
+              {product_id: products.map((item) => item.id)})]);
       }
-
       return undefined;
     }).then((results) => {
       if (results) {
         const metaData = results[0];
-        const pucItem = metaData.find(
-            (item) => item.name.toLowerCase().includes('puc'));
-        if (pucItem) {
-          product.pucDetail = {
-            expiry_date: pucItem.value,
-          };
-        }
-        product.metaData = metaData.filter(
-            (item) => !item.name.toLowerCase().includes('puc'));
-        product.insuranceDetails = results[1];
-        product.warrantyDetails = results[2];
-        product.amcDetails = results[3];
-        product.repairBills = results[4];
-        product.pucDetails = results[5];
+        products = products.map((productItem) => {
+          if (productItem.copies) {
+            productItem.copies = productItem.copies.map((copyItem) => {
+              copyItem.file_type = copyItem.file_type || copyItem.fileType;
+              return copyItem;
+            });
+          }
+          const pucItem = metaData.find(
+              (item) => item.name.toLowerCase().includes('puc'));
+          if (pucItem) {
+            productItem.pucDetail = {
+              expiry_date: pucItem.value,
+            };
+          }
+          productItem.productMetaData = metaData.filter(
+              (item) => item.productId === productItem.id &&
+                  !item.name.toLowerCase().includes('puc'));
+          productItem.insuranceDetails = results[1].filter(
+              (item) => item.productId === productItem.id);
+          productItem.warrantyDetails = results[2].filter(
+              (item) => item.productId === productItem.id);
+          productItem.amcDetails = results[3].filter(
+              (item) => item.productId === productItem.id);
+          productItem.repairBills = results[4].filter(
+              (item) => item.productId === productItem.id);
+          productItem.pucDetails = results[5].filter(
+              (item) => item.productId === productItem.id);
 
-        product.requiredCount = product.insuranceDetails.length +
-            product.warrantyDetails.length +
-            product.amcDetails.length +
-            product.repairBills.length + product.pucDetails.length;
+          productItem.requiredCount = productItem.insuranceDetails.length +
+              productItem.warrantyDetails.length +
+              productItem.amcDetails.length +
+              productItem.repairBills.length +
+              productItem.pucDetails.length;
+
+          return productItem;
+        });
       }
 
-      return product;
+      return products;
     });
   }
 
@@ -1259,7 +1265,7 @@ class ProductAdaptor {
         [
           this.modals.sequelize.fn('CONCAT', '/categories/',
               this.modals.sequelize.col('"category"."category_id"'),
-              '/images/'),
+              '/images/0'),
           'cImageURL'],
         [
           this.modals.sequelize.fn('CONCAT', 'products/',
@@ -1299,7 +1305,7 @@ class ProductAdaptor {
         products.cImageURL = products.file_type ?
             `/consumer/products/${products.id}/images` :
             products.sub_category_id ?
-                `/categories/${products.sub_category_id}/images/` :
+                `/categories/${products.sub_category_id}/images/0` :
                 products.cImageURL;
         productItem = productResult;
         if (products.copies) {

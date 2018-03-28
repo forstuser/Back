@@ -151,6 +151,7 @@ class UserAdaptor {
           'latitude',
           'longitude',
           'image_name',
+            'password',
           [
             this.modals.sequelize.fn('CONCAT', '/consumer/',
                 this.modals.sequelize.col('id'), '/images'), 'imageUrl'],
@@ -163,6 +164,8 @@ class UserAdaptor {
       if (result[0]) {
         let user = result[0].toJSON();
         user.addresses = result[1].map(item => item.toJSON());
+        user.hasPin = !!(user.password);
+        user = _.omit(user, 'password');
         return user;
       }
 

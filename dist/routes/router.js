@@ -451,6 +451,66 @@ function prepareAuthRoutes(userController, authRoutes) {
 
     authRoutes.push({
       method: 'POST',
+      path: '/consumer/otp/send',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }, {
+          method: appVersionHelper.verifyUserEmail,
+          assign: 'isValidEmail'
+        }],
+        handler: _user2.default.dispatchOTPOverEmail,
+        description: 'Send OTP over User mail for Consumer Portal.',
+        tags: ['api', 'User', 'Authentication'],
+        validate: {
+          payload: {
+            email: _joi2.default.string().required(),
+            output: 'data',
+            parse: true
+          }
+        },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [{ code: 200, message: 'Authenticated' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
+          }
+        }
+      }
+    });
+
+    authRoutes.push({
+      method: 'POST',
+      path: '/consumer/otp/validate',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }, {
+          method: appVersionHelper.verifyUserOTP,
+          assign: 'isValidOTP'
+        }],
+        handler: _user2.default.verifyEmailSecret,
+        description: 'Verify OTP sent over user mail for Consumer Portal.',
+        tags: ['api', 'User', 'Authentication'],
+        validate: {
+          payload: {
+            token: _joi2.default.string().required(),
+            output: 'data',
+            parse: true
+          }
+        },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [{ code: 200, message: 'Authenticated' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
+          }
+        }
+      }
+    });
+
+    authRoutes.push({
+      method: 'POST',
       path: '/consumer/pin',
       config: {
         auth: 'jwt',
@@ -461,7 +521,7 @@ function prepareAuthRoutes(userController, authRoutes) {
           method: appVersionHelper.verifyUserPIN,
           assign: 'pinVerified'
         }],
-        handler: _user2.default.setPIN,
+        handler: _user2.default.verifyPin,
         description: 'Set PIN of User for Consumer Portal.',
         tags: ['api', 'User', 'Authentication'],
         validate: {
@@ -483,8 +543,41 @@ function prepareAuthRoutes(userController, authRoutes) {
     });
 
     authRoutes.push({
+      method: 'DELETE',
+      path: '/consumer/pin',
+      config: {
+        auth: 'jwt',
+        pre: [{
+          method: appVersionHelper.checkAppVersion,
+          assign: 'forceUpdate'
+        }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }, {
+          method: appVersionHelper.verifyUserPIN,
+          assign: 'pinVerified'
+        }],
+        handler: _user2.default.removePin,
+        description: 'Remove PIN of User for Consumer Portal.',
+        tags: ['api', 'User', 'Authentication'],
+        validate: {
+          payload: {
+            pin: _joi2.default.string().required(),
+            output: 'data',
+            parse: true
+          }
+        },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [{ code: 200, message: 'Authenticated' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
+          }
+        }
+      }
+    });
+
+    authRoutes.push({
       method: 'POST',
-      path: '/consumer/reset',
+      path: '/consumer/pin/reset',
       config: {
         auth: 'jwt',
         pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }, {
@@ -1777,6 +1870,20 @@ function prepareCalendarServiceRoutes(calendarController, calendarRoutes) {
         }],
         handler: _calendarServices2.default.retrieveCalendarItem,
         description: 'Retrieve Calendar Item by id.'
+      }
+    });
+
+    calendarRoutes.push({
+      method: 'DELETE',
+      path: '/calendar/items/{id}',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _calendarServices2.default.deleteCalendarItem,
+        description: 'Delete Calendar Item by id.'
       }
     });
 

@@ -73,16 +73,22 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.DATEONLY,
     },
     created_at: {
-      type: DataTypes.DATEONLY,
+      type: DataTypes.DATE,
       defaultValue: sequelize.literal('NOW()'),
     },
     updated_at: {
-      type: DataTypes.DATEONLY,
+      type: DataTypes.DATE,
       defaultValue: sequelize.literal('NOW()'),
     },
     service_center_accessed: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
+    },
+    temp_password: {
+      type: DataTypes.STRING,
+    },
+    otp_created_at: {
+      type: DataTypes.DATE,
     },
   }, {
     freezeTableName: true,

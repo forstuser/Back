@@ -75,11 +75,11 @@ exports.default = function (sequelize, DataTypes) {
       defaultValue: 1
     },
     created_at: {
-      type: DataTypes.DATEONLY,
+      type: DataTypes.DATE,
       defaultValue: sequelize.literal('NOW()')
     },
     updated_at: {
-      type: DataTypes.DATEONLY,
+      type: DataTypes.DATE,
       defaultValue: sequelize.literal('NOW()')
     },
     main_category_id: {

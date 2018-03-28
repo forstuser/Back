@@ -76,7 +76,7 @@ exports.default = function (sequelize, DataTypes) {
       type: DataTypes.INTEGER
     },
     updated_at: {
-      type: DataTypes.DATEONLY,
+      type: DataTypes.DATE,
       defaultValue: sequelize.literal('NOW()')
     }
   }, {

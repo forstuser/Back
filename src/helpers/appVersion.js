@@ -80,40 +80,53 @@ const updateUserActiveStatus = (request, reply) => {
       if (userDetail) {
         const last_active_date = moment.utc(userDetail.last_active_date,
             moment.ISO_8601);
-          return Promise.all([
-            MODAL.users.update({
-              last_active_date: moment.utc(),
-              last_api: request.url.pathname,
-            }, {
-              where: {
-                id: user.id || user.ID,
-              },
-            }), MODAL.logs.create({
-              api_action: request.method,
-              api_path: request.url.pathname,
-              log_type: 1,
-              user_id: user.id || user.ID,
-            })]).then((item) => {
-            console.log(
-                `User updated detail is as follow ${JSON.stringify(item[0])}`);
-            return reply(true);
-          }).catch((err) => {
-            console.log(
-                `Error on ${new Date()} for user ${user.mobile_no} is as follow: \n \n ${err}`);
-            MODAL.logs.create({
-              api_action: request.method,
-              api_path: request.url.pathname,
-              log_type: 2,
-              user_id: user.id || user.ID,
-              log_content: err,
-            });
-            return reply(false);
+        const timeDiffMin = moment.duration(
+            moment.utc().diff(last_active_date)).asMinutes();
+
+        console.log('\n\n\n\n\n', {timeDiffMin, last_active_date});
+
+        return Promise.all([
+          MODAL.users.update({
+            last_active_date: moment.utc(),
+            last_api: request.url.pathname,
+          }, {
+            where: {
+              id: user.id || user.ID,
+            },
+          }), MODAL.logs.create({
+            api_action: request.method,
+            api_path: request.url.pathname,
+            log_type: 1,
+            user_id: user.id || user.ID,
+          })]).then((item) => {
+          console.log(
+              `User updated detail is as follow ${JSON.stringify(item[0])}`);
+          return reply(true);
+        }).catch((err) => {
+          console.log(
+              `Error on ${new Date()} for user ${user.mobile_no} is as follow: \n \n ${err}`);
+          MODAL.logs.create({
+            api_action: request.method,
+            api_path: request.url.pathname,
+            log_type: 2,
+            user_id: user.id || user.ID,
+            log_content: err,
           });
-        } else {
+          return reply(false);
+        });
+        /*if (request.url.pathname === '/consumer/otp/send' ||
+            request.url.pathname === '/consumer/otp/validate' ||
+            request.url.pathname === '/consumer/validate' ||
+            request.url.pathname === '/consumer/pin' ||
+            request.url.pathname === '/consumer/pin/reset') {} else {
           console.log(
               `User ${user.mobile_no} inactive for more than 10 minutes`);
           return reply('');
-        }
+        }*/
+      } else {
+        console.log(`User ${user.mobile_no} doesn't exist`);
+        return reply(null);
+      }
     }).catch((err) => {
       console.log(
           `Error on ${new Date()} for user ${user.mobile_no} is as follow: \n \n ${err}`);
@@ -240,6 +253,103 @@ const verifyUserPIN = (request, reply) => {
       });
 };
 
+const verifyUserOTP = (request, reply) => {
+  const user = shared.verifyAuthorization(request.headers);
+  if (!user) {
+    return reply(null);
+  }
+  return Promise.try(() => MODAL.users.findOne({
+    where: {
+      id: user.id || user.ID,
+    },
+  })).
+      then((userResult) => {
+        if (userResult) {
+          console.log(
+              `Last route ${request.url.pathname} accessed by user id ${user.id ||
+              user.ID} from ${request.headers.ios_app_version ?
+                  'iOS' :
+                  'android'}`);
+          request.user = userResult;
+          const currentUser = request.user.toJSON();
+          console.log(currentUser);
+          if (currentUser.email_secret) {
+
+            const timeDiffMin = moment.duration(
+                moment.utc().diff(moment.utc(currentUser.otp_created_at))).
+                asMinutes();
+            console.log(timeDiffMin);
+            if (timeDiffMin > 5) {
+              return null;
+            }
+            return comparePasswords(request.payload.token,
+                currentUser.email_secret);
+          }
+        }
+
+        return false;
+      }).
+      then((pinResult) => reply(pinResult)).
+      catch((err) => {
+        console.log(
+            `Error on ${new Date()} for user ${request.payload.mobile_no} is as follow: \n \n ${err}`);
+        return reply(false);
+      });
+};
+
+const verifyUserEmail = (request, reply) => {
+  const user = shared.verifyAuthorization(request.headers);
+  if (!user) {
+    return reply(null);
+  } else {
+    return Promise.try(() => MODAL.users.count({
+      where: {
+        $or: {
+          id: user.id || user.ID,
+          email: {
+            $iLike: request.payload.email,
+          },
+        },
+      },
+    })).then((userCounts) => {
+      if (userCounts <= 1) {
+        return MODAL.users.findOne({
+          where: {
+            id: user.id || user.ID,
+          },
+        }).then((userResult) => {
+          const userDetail = userResult ? userResult.toJSON() : userResult;
+          console.log(
+              `Last route ${request.url.pathname} accessed by user id ${user.id ||
+              user.ID} from ${request.headers.ios_app_version ?
+                  'iOS' :
+                  'android'}`);
+          if (userDetail) {
+            request.user = userDetail;
+            if (userDetail.email_verified) {
+              return reply(userDetail.email.toLowerCase() === request.payload.email.toLowerCase());
+            } else {
+              userResult.updateAttributes({email: request.payload.email});
+              return reply(true);
+            }
+          } else {
+            console.log(`User ${user.email} is invalid.`);
+            return reply(false);
+          }
+        });
+      } else {
+        console.log(
+            `User with ${request.params.email} already exist.`);
+        return reply(null);
+      }
+    }).catch((err) => {
+      console.log(
+          `Error on ${new Date()} for user ${user.mobile_no} is as follow: \n \n ${err}`);
+      return reply(false);
+    });
+  }
+};
+
 export default (models) => {
   MODAL = models;
   return {
@@ -248,5 +358,7 @@ export default (models) => {
     verifyUserPIN,
     updateUserPIN,
     hasMultipleAccounts,
+    verifyUserEmail,
+    verifyUserOTP,
   };
 };

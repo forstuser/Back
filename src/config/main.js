@@ -34,7 +34,10 @@ export default {
 	EMAIL: {
 		USER: process.env.EMAIL_ID,
 		PASSWORD: process.env.EMAIL_PASSWORD,
-    TEAM_EMAIL: process.env.TEAM_EMAIL
+    TEAM_EMAIL: process.env.TEAM_EMAIL,
+		OTP: {
+			SUBJECT: process.env.OTP_SUBJECT
+		}
 	},
 	// Secret key for JWT signing and encryption
 	JWT_SECRET: process.env.JWT_SECRET,

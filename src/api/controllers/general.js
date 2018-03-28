@@ -209,6 +209,11 @@ class GeneralController {
     if (request.pre.userExist && !request.pre.forceUpdate) {
       const language = request.language;
       const options = {
+        where: {
+          batch_date: {
+            $lte: moment(),
+          },
+        },
         include: [
           {
             model: modals.tags,
@@ -217,11 +222,15 @@ class GeneralController {
               [
                 'title',
                 'default_title'],
-              [`${language ? `title_${language}` : `title`}`, 'title'],
+              [
+                `${language ? `title_${language}` : `title`}`,
+                'title'],
               [
                 'description',
                 'default_description'],
-              [`${language ? `description_${language}` : `description`}`, 'description']
+              [
+                `${language ? `description_${language}` : `description`}`,
+                'description'],
             ],
           },
           {
@@ -234,19 +243,23 @@ class GeneralController {
           [
             'title',
             'default_title'],
-          [`${language ? `title_${language}` : `title`}`, 'title'],
+          [
+            `${language ? `title_${language}` : `title`}`,
+            'title'],
           [
             'description',
             'default_description'],
-          [`${language ? `description_${language}` : `description`}`, 'description'],
+          [
+            `${language ? `description_${language}` : `description`}`,
+            'description'],
           'short_url'],
-        order: [['created_at', 'desc']],
+        order: [['id', 'asc']],
       };
 
       if (request.payload && request.payload.tag_id &&
           request.payload.tag_id.length > 0) {
-        options.where = modals.sequelize.where(
-            modals.sequelize.literal('"tags"."id"'),
+        options.where.$and = modals.sequelize.where(
+            modals.sequelize.col('"tags"."id"'),
             {$in: request.payload.tag_id});
       }
       return modals.knowItems.findAll(options).then((knowItems) => {
@@ -297,6 +310,11 @@ class GeneralController {
     let language = (request.headers.language || '').split('-')[0];
     language = supportedLanguages.indexOf(language) >= 0 ? language : '';
     const options = {
+      where: {
+        batch_date: {
+          $lte: moment(),
+        },
+      },
       include: [
         {
           model: modals.tags,
@@ -305,11 +323,15 @@ class GeneralController {
             [
               'title',
               'default_title'],
-            [`${language ? `title_${language}` : `title`}`, 'title'],
+            [
+              `${language ? `title_${language}` : `title`}`,
+              'title'],
             [
               'description',
               'default_description'],
-            [`${language ? `description_${language}` : `description`}`, 'description']
+            [
+              `${language ? `description_${language}` : `description`}`,
+              'description'],
           ],
         },
         {
@@ -322,13 +344,17 @@ class GeneralController {
         [
           'title',
           'default_title'],
-        [`${language ? `title_${language}` : `title`}`, 'title'],
+        [
+          `${language ? `title_${language}` : `title`}`,
+          'title'],
         [
           'description',
           'default_description'],
-        [`${language ? `description_${language}` : `description`}`, 'description'],
+        [
+          `${language ? `description_${language}` : `description`}`,
+          'description'],
         'short_url'],
-      order: [['created_at', 'desc']],
+      order: [['id', 'asc']],
     };
 
     return modals.knowItems.findAll(options).then((knowItems) => {
@@ -349,7 +375,7 @@ class GeneralController {
           item.hashTags = item.hashTags.trim();
           item.totalLikes = item.users.length;
           return item;
-        }),
+        }).slice((request.query.offset || 0)-1, request.query.limit || 10),
       }).code(200);
     }).catch((err) => {
       console.log(
@@ -371,11 +397,15 @@ class GeneralController {
             [
               'title',
               'default_title'],
-            [`${language ? `title_${language}` : `title`}`, 'title'],
+            [
+              `${language ? `title_${language}` : `title`}`,
+              'title'],
             [
               'description',
               'default_description'],
-            [`${language ? `description_${language}` : `description`}`, 'description']
+            [
+              `${language ? `description_${language}` : `description`}`,
+              'description'],
           ],
         },
         {
@@ -388,11 +418,15 @@ class GeneralController {
         [
           'title',
           'default_title'],
-        [`${language ? `title_${language}` : `title`}`, 'title'],
+        [
+          `${language ? `title_${language}` : `title`}`,
+          'title'],
         [
           'description',
           'default_description'],
-        [`${language ? `description_${language}` : `description`}`, 'description'],
+        [
+          `${language ? `description_${language}` : `description`}`,
+          'description'],
         'short_url'],
       order: [['created_at', 'desc']],
     };
@@ -403,7 +437,8 @@ class GeneralController {
           knowItem.imageUrl = `/knowitem/${knowItem.id}/images`;
           knowItem.hashTags = '';
           knowItem.title = knowItem.title || knowItem.default_title;
-          knowItem.description = knowItem.description || knowItem.default_description;
+          knowItem.description = knowItem.description ||
+              knowItem.default_description;
           knowItem.tags = knowItem.tags.map((tagItem) => {
             tagItem.title = tagItem.title || tagItem.default_title;
             return tagItem;
@@ -430,16 +465,33 @@ class GeneralController {
     if (request.pre.userExist && !request.pre.forceUpdate) {
       const language = request.language;
       return modals.tags.findAll({
+        include:
+            {
+              model: modals.knowItems,
+              as: 'knowItems',
+              where: {
+                batch_date: {
+                  $lte: moment()
+                }
+              },
+              attributes: [],
+              required: true,
+            },
         attributes: [
           'id',
           [
             'title',
             'default_title'],
-          [`${language ? `title_${language}` : `title`}`, 'title'],
+          [
+            `${language ? `title_${language}` : `title`}`,
+            'title'],
           [
             'description',
             'default_description'],
-          [`${language ? `description_${language}` : `description`}`, 'description'],],
+          [
+            `${language ? `description_${language}` : `description`}`,
+            'description'],],
+        distinct: true,
         order: [['created_at', 'desc']],
       }).then((tagItems) => {
         return reply({

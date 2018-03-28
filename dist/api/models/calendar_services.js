@@ -54,15 +54,18 @@ exports.default = function (sequelize, DataTypes) {
     updated_by: {
       type: DataTypes.INTEGER
     },
+    wages_type: {
+      type: DataTypes.INTEGER
+    },
     status_type: {
       type: DataTypes.INTEGER
     },
     created_at: {
-      type: DataTypes.DATEONLY,
+      type: DataTypes.DATE,
       defaultValue: sequelize.literal('NOW()')
     },
     updated_at: {
-      type: DataTypes.DATEONLY,
+      type: DataTypes.DATE,
       defaultValue: sequelize.literal('NOW()')
     }
   }, {

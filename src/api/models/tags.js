@@ -73,11 +73,11 @@ export default (sequelize, DataTypes) => {
           defaultValue: 1,
         },
         created_at: {
-          type: DataTypes.DATEONLY,
+          type: DataTypes.DATE,
           defaultValue: sequelize.literal('NOW()'),
         },
         updated_at: {
-          type: DataTypes.DATEONLY,
+          type: DataTypes.DATE,
           defaultValue: sequelize.literal('NOW()'),
         },
         status_type: {
@@ -98,12 +98,12 @@ export default (sequelize, DataTypes) => {
         {foreignKey: 'updated_by'});
     tags.belongsTo(models.statuses,
         {foreignKey: 'status_type', targetKey: 'status_type'});
-    tags.belongsToMany(models.tags,
+    tags.belongsToMany(models.knowItems,
         {
           foreignKey: 'tag_id',
           otherKey: 'know_item_id',
           through: 'know_tag_map',
-          as: 'tags',
+          as: 'knowItems',
         });
   };
   return tags;

@@ -191,18 +191,18 @@ function preparePaymentDetails(parameters) {
     if (monthStartDate.diff(effectiveDate, 'days') > 0) {
         start_date = monthStartDate;
     }
-    currentDate = currentDate || (0, _moment2.default)();
-    if (end_date.diff(currentDate, 'days') > 0) {
+    currentDate = (0, _moment2.default)(currentDate || (0, _moment2.default)()).startOf('days');
+    if (end_date.endOf('days').diff(currentDate, 'days') > 0) {
         end_date = currentDate.endOf('days');
     }
 
-    var daysInMonth = (0, _moment2.default)().isoWeekdayCalc(start_date, month_end_date, selected_days);
-    var daysInPeriod = (0, _moment2.default)().isoWeekdayCalc(start_date, end_date, selected_days);
+    var daysInMonth = (0, _moment2.default)().isoWeekdayCalc(monthStartDate, month_end_date, selected_days);
+    var daysInPeriod = (0, _moment2.default)().isoWeekdayCalc(start_date.format('YYYY-MM-DD'), end_date.format('YYYY-MM-DD'), selected_days);
     var unit_price = serviceCalculationBody.unit_price;
     if (wages_type === 1) {
         unit_price = unit_price / daysInMonth;
     }
-    console.log(daysInPeriod);
+    console.log({ daysInPeriod: daysInPeriod, start_date: start_date, end_date: end_date });
     var total_amount = unit_price * daysInPeriod;
     if (serviceCalculationBody.quantity || serviceCalculationBody.quantity === 0) {
         total_amount = serviceCalculationBody.quantity * total_amount;
@@ -213,7 +213,7 @@ function preparePaymentDetails(parameters) {
         end_date: end_date,
         updated_by: user.id || user.ID,
         status_type: 1,
-        total_amount: Math.round(total_amount),
+        total_amount: total_amount,
         total_days: daysInPeriod,
         total_units: serviceCalculationBody.quantity ? daysInPeriod * serviceCalculationBody.quantity : 0,
         amount_paid: 0

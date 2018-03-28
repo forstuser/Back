@@ -133,7 +133,7 @@ var UserAdaptor = function () {
     key: 'retrieveUserById',
     value: function retrieveUserById(user) {
       return Promise.all([this.modals.users.findById(user.id || user.ID, {
-        attributes: ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', 'location', 'latitude', 'longitude', 'image_name', [this.modals.sequelize.fn('CONCAT', '/consumer/', this.modals.sequelize.col('id'), '/images'), 'imageUrl']]
+        attributes: ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', 'location', 'latitude', 'longitude', 'image_name', 'password', [this.modals.sequelize.fn('CONCAT', '/consumer/', this.modals.sequelize.col('id'), '/images'), 'imageUrl']]
       }), this.retrieveUserAddress({
         where: {
           user_id: user.id || user.ID
@@ -144,6 +144,8 @@ var UserAdaptor = function () {
           _user.addresses = result[1].map(function (item) {
             return item.toJSON();
           });
+          _user.hasPin = !!_user.password;
+          _user = _lodash2.default.omit(_user, 'password');
           return _user;
         }
 

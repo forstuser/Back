@@ -1141,7 +1141,7 @@ var UploadController = function () {
       if (!request.pre.forceUpdate) {
         var fsImplBrand = new _s3fs2.default(_main2.default.AWS.S3.BUCKET + '/' + _main2.default.AWS.S3.BRAND_IMAGE, _main2.default.AWS.ACCESS_DETAILS);
         fsImplBrand.readFile(request.params.id + '.png', 'utf8').then(function (fileResult) {
-          return reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', 'attachment; filename=' + result.CopyName);
+          return reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', 'attachment; filename=' + request.params.id + '.png');
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' retrieving brand image is as follow: \n \n ' + err);
           reply({
@@ -1165,7 +1165,7 @@ var UploadController = function () {
       if (!request.pre.forceUpdate) {
         var fsImplBrand = new _s3fs2.default(_main2.default.AWS.S3.BUCKET + '/' + _main2.default.AWS.S3.PROVIDER_IMAGE, _main2.default.AWS.ACCESS_DETAILS);
         fsImplBrand.readFile(request.params.id + '.png', 'utf8').then(function (fileResult) {
-          return reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', 'attachment; filename=' + result.CopyName);
+          return reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', 'attachment; filename=' + request.params.id + '.png');
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' retrieving provider image is as follow: \n \n ' + err);
           reply({
@@ -1188,8 +1188,8 @@ var UploadController = function () {
     value: function retrieveKnowItemImage(request, reply) {
       if (!request.pre.forceUpdate) {
         var fsImplBrand = new _s3fs2.default(_main2.default.AWS.S3.BUCKET + '/' + _main2.default.AWS.S3.KNOW_ITEM_IMAGE, _main2.default.AWS.ACCESS_DETAILS);
-        fsImplBrand.readFile('i' + request.params.id + '.png', 'utf8').then(function (fileResult) {
-          return reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', 'attachment; filename=i' + request.params.id + '.png');
+        fsImplBrand.readFile(request.params.id + '.png', 'utf8').then(function (fileResult) {
+          return reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', 'attachment; filename=' + request.params.id + '.png');
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' retrieving fact image is as follow: \n \n ' + err);
           reply({

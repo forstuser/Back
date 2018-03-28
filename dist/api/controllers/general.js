@@ -238,6 +238,11 @@ var GeneralController = function () {
       if (request.pre.userExist && !request.pre.forceUpdate) {
         var language = request.language;
         var options = {
+          where: {
+            batch_date: {
+              $lte: (0, _moment2.default)()
+            }
+          },
           include: [{
             model: modals.tags,
             as: 'tags',
@@ -248,11 +253,11 @@ var GeneralController = function () {
             attributes: ['id']
           }],
           attributes: ['id', ['title', 'default_title'], ['' + (language ? 'title_' + language : 'title'), 'title'], ['description', 'default_description'], ['' + (language ? 'description_' + language : 'description'), 'description'], 'short_url'],
-          order: [['created_at', 'desc']]
+          order: [['id', 'asc']]
         };
 
         if (request.payload && request.payload.tag_id && request.payload.tag_id.length > 0) {
-          options.where = modals.sequelize.where(modals.sequelize.literal('"tags"."id"'), { $in: request.payload.tag_id });
+          options.where.$and = modals.sequelize.where(modals.sequelize.col('"tags"."id"'), { $in: request.payload.tag_id });
         }
         return modals.knowItems.findAll(options).then(function (knowItems) {
           return reply({
@@ -302,6 +307,11 @@ var GeneralController = function () {
       var language = (request.headers.language || '').split('-')[0];
       language = supportedLanguages.indexOf(language) >= 0 ? language : '';
       var options = {
+        where: {
+          batch_date: {
+            $lte: (0, _moment2.default)()
+          }
+        },
         include: [{
           model: modals.tags,
           as: 'tags',
@@ -312,7 +322,7 @@ var GeneralController = function () {
           attributes: ['id']
         }],
         attributes: ['id', ['title', 'default_title'], ['' + (language ? 'title_' + language : 'title'), 'title'], ['description', 'default_description'], ['' + (language ? 'description_' + language : 'description'), 'description'], 'short_url'],
-        order: [['created_at', 'desc']]
+        order: [['id', 'asc']]
       };
 
       return modals.knowItems.findAll(options).then(function (knowItems) {
@@ -333,7 +343,7 @@ var GeneralController = function () {
             item.hashTags = item.hashTags.trim();
             item.totalLikes = item.users.length;
             return item;
-          })
+          }).slice((request.query.offset || 0) - 1, request.query.limit || 10)
         }).code(200);
       }).catch(function (err) {
         console.log('Error on ' + new Date() + ' is as follow: \n \n ' + err);
@@ -391,7 +401,19 @@ var GeneralController = function () {
       if (request.pre.userExist && !request.pre.forceUpdate) {
         var language = request.language;
         return modals.tags.findAll({
+          include: {
+            model: modals.knowItems,
+            as: 'knowItems',
+            where: {
+              batch_date: {
+                $lte: (0, _moment2.default)()
+              }
+            },
+            attributes: [],
+            required: true
+          },
           attributes: ['id', ['title', 'default_title'], ['' + (language ? 'title_' + language : 'title'), 'title'], ['description', 'default_description'], ['' + (language ? 'description_' + language : 'description'), 'description']],
+          distinct: true,
           order: [['created_at', 'desc']]
         }).then(function (tagItems) {
           return reply({

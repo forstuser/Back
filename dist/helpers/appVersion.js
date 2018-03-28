@@ -85,6 +85,10 @@ var updateUserActiveStatus = function updateUserActiveStatus(request, reply) {
       console.log('Last route ' + request.url.pathname + ' accessed by user id ' + (user.id || user.ID) + ' from ' + (request.headers.ios_app_version ? 'iOS' : 'android'));
       if (userDetail) {
         var last_active_date = _moment2.default.utc(userDetail.last_active_date, _moment2.default.ISO_8601);
+        var timeDiffMin = _moment2.default.duration(_moment2.default.utc().diff(last_active_date)).asMinutes();
+
+        console.log('\n\n\n\n\n', { timeDiffMin: timeDiffMin, last_active_date: last_active_date });
+
         return _bluebird2.default.all([MODAL.users.update({
           last_active_date: _moment2.default.utc(),
           last_api: request.url.pathname
@@ -111,9 +115,18 @@ var updateUserActiveStatus = function updateUserActiveStatus(request, reply) {
           });
           return reply(false);
         });
+        /*if (request.url.pathname === '/consumer/otp/send' ||
+            request.url.pathname === '/consumer/otp/validate' ||
+            request.url.pathname === '/consumer/validate' ||
+            request.url.pathname === '/consumer/pin' ||
+            request.url.pathname === '/consumer/pin/reset') {} else {
+          console.log(
+              `User ${user.mobile_no} inactive for more than 10 minutes`);
+          return reply('');
+        }*/
       } else {
-        console.log('User ' + user.mobile_no + ' inactive for more than 10 minutes');
-        return reply('');
+        console.log('User ' + user.mobile_no + ' doesn\'t exist');
+        return reply(null);
       }
     }).catch(function (err) {
       console.log('Error on ' + new Date() + ' for user ' + user.mobile_no + ' is as follow: \n \n ' + err);
@@ -223,6 +236,92 @@ var verifyUserPIN = function verifyUserPIN(request, reply) {
   });
 };
 
+var verifyUserOTP = function verifyUserOTP(request, reply) {
+  var user = _shared2.default.verifyAuthorization(request.headers);
+  if (!user) {
+    return reply(null);
+  }
+  return _bluebird2.default.try(function () {
+    return MODAL.users.findOne({
+      where: {
+        id: user.id || user.ID
+      }
+    });
+  }).then(function (userResult) {
+    if (userResult) {
+      console.log('Last route ' + request.url.pathname + ' accessed by user id ' + (user.id || user.ID) + ' from ' + (request.headers.ios_app_version ? 'iOS' : 'android'));
+      request.user = userResult;
+      var currentUser = request.user.toJSON();
+      console.log(currentUser);
+      if (currentUser.email_secret) {
+
+        var timeDiffMin = _moment2.default.duration(_moment2.default.utc().diff(_moment2.default.utc(currentUser.otp_created_at))).asMinutes();
+        console.log(timeDiffMin);
+        if (timeDiffMin > 5) {
+          return null;
+        }
+        return (0, _password.comparePasswords)(request.payload.token, currentUser.email_secret);
+      }
+    }
+
+    return false;
+  }).then(function (pinResult) {
+    return reply(pinResult);
+  }).catch(function (err) {
+    console.log('Error on ' + new Date() + ' for user ' + request.payload.mobile_no + ' is as follow: \n \n ' + err);
+    return reply(false);
+  });
+};
+
+var verifyUserEmail = function verifyUserEmail(request, reply) {
+  var user = _shared2.default.verifyAuthorization(request.headers);
+  if (!user) {
+    return reply(null);
+  } else {
+    return _bluebird2.default.try(function () {
+      return MODAL.users.count({
+        where: {
+          $or: {
+            id: user.id || user.ID,
+            email: {
+              $iLike: request.payload.email
+            }
+          }
+        }
+      });
+    }).then(function (userCounts) {
+      if (userCounts <= 1) {
+        return MODAL.users.findOne({
+          where: {
+            id: user.id || user.ID
+          }
+        }).then(function (userResult) {
+          var userDetail = userResult ? userResult.toJSON() : userResult;
+          console.log('Last route ' + request.url.pathname + ' accessed by user id ' + (user.id || user.ID) + ' from ' + (request.headers.ios_app_version ? 'iOS' : 'android'));
+          if (userDetail) {
+            request.user = userDetail;
+            if (userDetail.email_verified) {
+              return reply(userDetail.email.toLowerCase() === request.payload.email.toLowerCase());
+            } else {
+              userResult.updateAttributes({ email: request.payload.email });
+              return reply(true);
+            }
+          } else {
+            console.log('User ' + user.email + ' is invalid.');
+            return reply(false);
+          }
+        });
+      } else {
+        console.log('User with ' + request.params.email + ' already exist.');
+        return reply(null);
+      }
+    }).catch(function (err) {
+      console.log('Error on ' + new Date() + ' for user ' + user.mobile_no + ' is as follow: \n \n ' + err);
+      return reply(false);
+    });
+  }
+};
+
 exports.default = function (models) {
   MODAL = models;
   return {
@@ -230,6 +329,8 @@ exports.default = function (models) {
     updateUserActiveStatus: updateUserActiveStatus,
     verifyUserPIN: verifyUserPIN,
     updateUserPIN: updateUserPIN,
-    hasMultipleAccounts: hasMultipleAccounts
+    hasMultipleAccounts: hasMultipleAccounts,
+    verifyUserEmail: verifyUserEmail,
+    verifyUserOTP: verifyUserOTP
   };
 };
