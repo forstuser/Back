@@ -1,12 +1,10 @@
 'use strict';
 
-import fs from 'fs';
 import Hapi from 'hapi';
 import hapiJWT from 'hapi-auth-jwt2';
 import cors from 'hapi-cors';
 import hapiSwagger from 'hapi-swagger';
 import inert from 'inert';
-import path from 'path';
 import vision from 'vision';
 import models from './api/models';
 import config from './config/main';

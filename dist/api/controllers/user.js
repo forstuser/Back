@@ -202,7 +202,13 @@ var UserController = function () {
         message: 'success',
         forceUpdate: request.pre.forceUpdate
       };
-      if (!request.pre.userExist) {
+      if (request.pre.userExist === '') {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
         replyObject.status = false;
         replyObject.message = 'Unauthorized';
         return reply(replyObject);
@@ -233,50 +239,59 @@ var UserController = function () {
         status: true,
         message: 'success'
       };
-      if (!_google2.default.isValidPhoneNumber(request.payload.PhoneNo)) {
-        console.log('Phone number: ' + request.payload.PhoneNo + ' is not a valid phone number');
+      return _bluebird2.default.try(function () {
+        return _google2.default.isValidPhoneNumber(request.payload.PhoneNo);
+      }).then(function (result) {
+        if (!result) {
+          console.log('Phone number: ' + request.payload.PhoneNo + ' is not a valid phone number');
+          replyObject.status = false;
+          replyObject.message = 'Invalid Phone number';
+          return reply(replyObject);
+        }
+
+        if (!request.pre.hasMultipleAccounts) {
+          return _bluebird2.default.all([_otp2.default.sendOTPToUser(request.payload.PhoneNo, request.headers.ios_app_version && request.headers.ios_app_version < 14 || request.headers.app_version && request.headers.app_version < 13 ? 6 : 4), userAdaptor.retrieveSingleUser({
+            where: {
+              mobile_no: request.payload.PhoneNo
+            }
+          })]).then(function (response) {
+            if (response[0].type === 'success') {
+              console.log('SMS SENT WITH ID: ', response[0].message);
+              replyObject.PhoneNo = request.payload.PhoneNo;
+              var user = response[1];
+              if (response[1]) {
+                replyObject.Name = user.name;
+                replyObject.imageUrl = user.imageUrl;
+                return reply(replyObject).code(201);
+              } else {
+                return reply(replyObject).code(201);
+              }
+            } else {
+              replyObject.status = false;
+              replyObject.message = response[0].ErrorMessage;
+              replyObject.error = response[0].ErrorMessage;
+              return reply(replyObject).code(403);
+            }
+          }).catch(function (err) {
+            console.log({ API_Logs: err });
+
+            replyObject.status = false;
+            replyObject.message = 'Some issue with sending OTP';
+            replyObject.error = err;
+            return reply(replyObject);
+          });
+        } else {
+          replyObject.status = false;
+          replyObject.message = 'User with same mobile number exist.';
+          replyObject.error = err;
+          return reply(replyObject);
+        }
+      }).catch(function (err) {
+        console.log('Phone number: ' + request.payload.PhoneNo + ' is not a valid phone number ' + err);
         replyObject.status = false;
         replyObject.message = 'Invalid Phone number';
         return reply(replyObject);
-      }
-
-      if (!request.pre.hasMultipleAccounts) {
-        return _bluebird2.default.all([_otp2.default.sendOTPToUser(request.payload.PhoneNo, request.headers.ios_app_version && request.headers.ios_app_version < 14 || request.headers.app_version && request.headers.app_version < 13 ? 6 : 4), userAdaptor.retrieveSingleUser({
-          where: {
-            mobile_no: request.payload.PhoneNo
-          }
-        })]).then(function (response) {
-          if (response[0].type === 'success') {
-            console.log('SMS SENT WITH ID: ', response[0].message);
-            replyObject.PhoneNo = request.payload.PhoneNo;
-            var user = response[1];
-            if (response[1]) {
-              replyObject.Name = user.name;
-              replyObject.imageUrl = user.imageUrl;
-              return reply(replyObject).code(201);
-            } else {
-              return reply(replyObject).code(201);
-            }
-          } else {
-            replyObject.status = false;
-            replyObject.message = response[0].ErrorMessage;
-            replyObject.error = response[0].ErrorMessage;
-            return reply(replyObject).code(403);
-          }
-        }).catch(function (err) {
-          console.log({ API_Logs: err });
-
-          replyObject.status = false;
-          replyObject.message = 'Some issue with sending OTP';
-          replyObject.error = err;
-          return reply(replyObject);
-        });
-      } else {
-        replyObject.status = false;
-        replyObject.message = 'User with same mobile number exist.';
-        replyObject.error = err;
-        return reply(replyObject);
-      }
+      });
     }
   }, {
     key: 'dispatchOTPOverEmail',
@@ -385,7 +400,9 @@ var UserController = function () {
         role_type: 5,
         mobile_no: trueObject.PhoneNo,
         user_status_type: 1,
-        last_login_at: _moment2.default.utc().format('YYYY-MM-DD HH:mm:ss')
+        last_login_at: _moment2.default.utc().format('YYYY-MM-DD HH:mm:ss'),
+        last_active_date: _moment2.default.utc(),
+        last_api: request.url.pathname
       };
 
       if (!request.pre.forceUpdate) {
@@ -405,7 +422,7 @@ var UserController = function () {
                 replyObject.status = false;
                 replyObject.message = 'Invalid/Expired OTP';
 
-                return reply(replyObject).code(400);
+                return reply(replyObject);
               }
             }).catch(function (err) {
               console.log('Error on ' + new Date() + ' for mobile no: ' + trueObject.PhoneNo + ' is as follow: \n \n ' + err);
@@ -550,7 +567,9 @@ var UserController = function () {
         return _bluebird2.default.try(function () {
           if (request.pre.pinVerified) {
             return _bluebird2.default.all([true, userAdaptor.updateUserDetail({
-              password: request.hashedPassword
+              password: request.hashedPassword,
+              last_active_date: _moment2.default.utc(),
+              last_api: request.url.pathname
             }, { where: { id: request.user.id } })]);
           } else {
             return [false];
@@ -592,7 +611,9 @@ var UserController = function () {
         return _bluebird2.default.try(function () {
           if (request.pre.pinVerified) {
             return _bluebird2.default.all([true, userAdaptor.updateUserDetail({
-              password: request.hashedPassword
+              password: request.hashedPassword,
+              last_active_date: _moment2.default.utc(),
+              last_api: request.url.pathname
             }, { where: { id: request.user.id } })]);
           } else {
             return [false];
@@ -630,11 +651,7 @@ var UserController = function () {
         message: 'success',
         forceUpdate: request.pre.forceUpdate
       };
-      if (!request.pre.userExist) {
-        replyObject.status = false;
-        replyObject.message = 'Unauthorized';
-        return reply(replyObject);
-      } else if (request.pre.userExist && !request.pre.forceUpdate) {
+      if ((request.pre.userExist || request.pre.userExist === '') && !request.pre.forceUpdate) {
         if (request.payload && request.payload.fcmId) {
           fcmManager.deleteFcmDetails({
             user_id: user.id || user.ID,
@@ -658,6 +675,10 @@ var UserController = function () {
           replyObject.message = 'Forbidden';
           return reply(replyObject);
         });
+      } else if (!request.pre.userExist) {
+        replyObject.status = false;
+        replyObject.message = 'Unauthorized';
+        return reply(replyObject).code(401);
       } else {
         replyObject.status = false;
         replyObject.message = 'Forbidden';
@@ -676,6 +697,12 @@ var UserController = function () {
             forceUpdate: request.pre.forceUpdate
           });
         });
+      } else if (request.pre.userExist === '') {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
       } else if (!request.pre.userExist) {
         return reply({
           message: 'Invalid Token',
@@ -696,6 +723,12 @@ var UserController = function () {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist && !request.pre.forceUpdate) {
         return reply(userAdaptor.retrieveUserProfile(user, request));
+      } else if (request.pre.userExist === '') {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
       } else if (!request.pre.userExist) {
         return reply({ message: 'Invalid Token', forceUpdate: request.pre.forceUpdate }).code(401);
       } else {
@@ -712,6 +745,12 @@ var UserController = function () {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist && !request.pre.forceUpdate) {
         return userAdaptor.updateUserProfile(user, request, reply);
+      } else if (request.pre.userExist === '') {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
       } else if (!request.pre.userExist) {
         return reply({ message: 'Invalid Token', forceUpdate: request.pre.forceUpdate }).code(401);
       } else {
@@ -726,7 +765,13 @@ var UserController = function () {
     key: 'retrieveNearBy',
     value: function retrieveNearBy(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!request.pre.userExist) {
+      if (request.pre.userExist === '') {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
         reply({
           status: false,
           message: 'Unauthorized',

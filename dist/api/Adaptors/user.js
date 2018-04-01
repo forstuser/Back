@@ -23,6 +23,10 @@ var _lodash = require('lodash');
 
 var _lodash2 = _interopRequireDefault(_lodash);
 
+var _moment = require('moment/moment');
+
+var _moment2 = _interopRequireDefault(_moment);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -101,7 +105,9 @@ var UserAdaptor = function () {
           });
         }
         result.updateAttributes({
-          fb_id: defaultObject.fb_id
+          fb_id: defaultObject.fb_id,
+          last_active_date: _moment2.default.utc(),
+          last_api: defaultObject.last_api
         });
 
         return [result, true];

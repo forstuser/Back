@@ -147,7 +147,13 @@ class UserController {
       message: 'success',
       forceUpdate: request.pre.forceUpdate,
     };
-    if (!request.pre.userExist) {
+    if (request.pre.userExist === '') {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
       replyObject.status = false;
       replyObject.message = 'Unauthorized';
       return reply(replyObject);
@@ -181,59 +187,71 @@ class UserController {
       status: true,
       message: 'success',
     };
-    if (!GoogleHelper.isValidPhoneNumber(request.payload.PhoneNo)) {
-      console.log(
-          `Phone number: ${request.payload.PhoneNo} is not a valid phone number`);
-      replyObject.status = false;
-      replyObject.message = 'Invalid Phone number';
-      return reply(replyObject);
-    }
-
-    if (!request.pre.hasMultipleAccounts) {
-      return Promise.all([
-        OTPHelper.sendOTPToUser(request.payload.PhoneNo,
-            (request.headers.ios_app_version &&
-                request.headers.ios_app_version <
-                14) ||
-            (request.headers.app_version && request.headers.app_version < 13) ?
-                6 :
-                4),
-        userAdaptor.retrieveSingleUser({
-          where: {
-            mobile_no: request.payload.PhoneNo,
-          },
-        })]).then((response) => {
-        if (response[0].type === 'success') {
-          console.log('SMS SENT WITH ID: ', response[0].message);
-          replyObject.PhoneNo = request.payload.PhoneNo;
-          const user = response[1];
-          if (response[1]) {
-            replyObject.Name = user.name;
-            replyObject.imageUrl = user.imageUrl;
-            return reply(replyObject).code(201);
-          } else {
-            return reply(replyObject).code(201);
+    return Promise.try(
+        () => GoogleHelper.isValidPhoneNumber(request.payload.PhoneNo)).
+        then((result) => {
+          if (!result) {
+            console.log(
+                `Phone number: ${request.payload.PhoneNo} is not a valid phone number`);
+            replyObject.status = false;
+            replyObject.message = 'Invalid Phone number';
+            return reply(replyObject);
           }
-        } else {
-          replyObject.status = false;
-          replyObject.message = response[0].ErrorMessage;
-          replyObject.error = response[0].ErrorMessage;
-          return reply(replyObject).code(403);
-        }
-      }).catch((err) => {
-        console.log({API_Logs: err});
 
-        replyObject.status = false;
-        replyObject.message = 'Some issue with sending OTP';
-        replyObject.error = err;
-        return reply(replyObject);
-      });
-    } else {
-      replyObject.status = false;
-      replyObject.message = 'User with same mobile number exist.';
-      replyObject.error = err;
-      return reply(replyObject);
-    }
+          if (!request.pre.hasMultipleAccounts) {
+            return Promise.all([
+              OTPHelper.sendOTPToUser(request.payload.PhoneNo,
+                  (request.headers.ios_app_version &&
+                      request.headers.ios_app_version <
+                      14) ||
+                  (request.headers.app_version && request.headers.app_version <
+                      13) ?
+                      6 :
+                      4),
+              userAdaptor.retrieveSingleUser({
+                where: {
+                  mobile_no: request.payload.PhoneNo,
+                },
+              })]).then((response) => {
+              if (response[0].type === 'success') {
+                console.log('SMS SENT WITH ID: ', response[0].message);
+                replyObject.PhoneNo = request.payload.PhoneNo;
+                const user = response[1];
+                if (response[1]) {
+                  replyObject.Name = user.name;
+                  replyObject.imageUrl = user.imageUrl;
+                  return reply(replyObject).code(201);
+                } else {
+                  return reply(replyObject).code(201);
+                }
+              } else {
+                replyObject.status = false;
+                replyObject.message = response[0].ErrorMessage;
+                replyObject.error = response[0].ErrorMessage;
+                return reply(replyObject).code(403);
+              }
+            }).catch((err) => {
+              console.log({API_Logs: err});
+
+              replyObject.status = false;
+              replyObject.message = 'Some issue with sending OTP';
+              replyObject.error = err;
+              return reply(replyObject);
+            });
+          } else {
+            replyObject.status = false;
+            replyObject.message = 'User with same mobile number exist.';
+            replyObject.error = err;
+            return reply(replyObject);
+          }
+        }).
+        catch((err) => {
+          console.log(
+              `Phone number: ${request.payload.PhoneNo} is not a valid phone number ${err}`);
+          replyObject.status = false;
+          replyObject.message = 'Invalid Phone number';
+          return reply(replyObject);
+        });
   }
 
   static dispatchOTPOverEmail(request, reply) {
@@ -342,6 +360,8 @@ class UserController {
       mobile_no: trueObject.PhoneNo,
       user_status_type: 1,
       last_login_at: moment.utc().format('YYYY-MM-DD HH:mm:ss'),
+      last_active_date: moment.utc(),
+      last_api: request.url.pathname,
     };
 
     if (!request.pre.forceUpdate) {
@@ -362,7 +382,7 @@ class UserController {
               replyObject.status = false;
               replyObject.message = 'Invalid/Expired OTP';
 
-              return reply(replyObject).code(400);
+              return reply(replyObject);
             }
 
           }).catch((err) => {
@@ -517,6 +537,8 @@ class UserController {
             true,
             userAdaptor.updateUserDetail({
               password: request.hashedPassword,
+              last_active_date: moment.utc(),
+              last_api: request.url.pathname,
             }, {where: {id: request.user.id}})]);
         } else {
           return [false];
@@ -563,6 +585,8 @@ class UserController {
             true,
             userAdaptor.updateUserDetail({
               password: request.hashedPassword,
+              last_active_date: moment.utc(),
+              last_api: request.url.pathname,
             }, {where: {id: request.user.id}})]);
         } else {
           return [false];
@@ -602,11 +626,8 @@ class UserController {
       message: 'success',
       forceUpdate: request.pre.forceUpdate,
     };
-    if (!request.pre.userExist) {
-      replyObject.status = false;
-      replyObject.message = 'Unauthorized';
-      return reply(replyObject);
-    } else if (request.pre.userExist && !request.pre.forceUpdate) {
+    if ((request.pre.userExist || request.pre.userExist === '') &&
+        !request.pre.forceUpdate) {
       if (request.payload && request.payload.fcmId) {
         fcmManager.deleteFcmDetails({
           user_id: user.id || user.ID,
@@ -632,6 +653,10 @@ class UserController {
         return reply(replyObject);
       });
 
+    } else if (!request.pre.userExist) {
+      replyObject.status = false;
+      replyObject.message = 'Unauthorized';
+      return reply(replyObject).code(401);
     } else {
       replyObject.status = false;
       replyObject.message = 'Forbidden';
@@ -650,6 +675,12 @@ class UserController {
             status: true,
             forceUpdate: request.pre.forceUpdate,
           }));
+    } else if (request.pre.userExist === '') {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
     } else if (!request.pre.userExist) {
       return reply(
           {
@@ -671,6 +702,12 @@ class UserController {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
       return reply(userAdaptor.retrieveUserProfile(user, request));
+    } else if (request.pre.userExist === '') {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
     } else if (!request.pre.userExist) {
       return reply(
           {message: 'Invalid Token', forceUpdate: request.pre.forceUpdate}).
@@ -688,6 +725,12 @@ class UserController {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
       return userAdaptor.updateUserProfile(user, request, reply);
+    } else if (request.pre.userExist === '') {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
     } else if (!request.pre.userExist) {
       return reply(
           {message: 'Invalid Token', forceUpdate: request.pre.forceUpdate}).
@@ -703,7 +746,13 @@ class UserController {
 
   static retrieveNearBy(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (!request.pre.userExist) {
+    if (request.pre.userExist === '') {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
       reply({
         status: false,
         message: 'Unauthorized',

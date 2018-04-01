@@ -56,9 +56,9 @@ exports.default = {
 		logging: process.env.NODE_ENV !== 'production',
 		port: process.env.DATABASE_PORT,
 		pool: {
-			max: 90,
+			max: 300,
 			min: 0,
-			idle: 10000
+			idle: 30000
 		},
 		operatorsAliases: {}
 	},

@@ -84,45 +84,47 @@ const updateUserActiveStatus = (request, reply) => {
             moment.utc().diff(last_active_date)).asMinutes();
 
         console.log('\n\n\n\n\n', {timeDiffMin, last_active_date});
-
-        return Promise.all([
-          MODAL.users.update({
-            last_active_date: moment.utc(),
-            last_api: request.url.pathname,
-          }, {
-            where: {
-              id: user.id || user.ID,
-            },
-          }), MODAL.logs.create({
-            api_action: request.method,
-            api_path: request.url.pathname,
-            log_type: 1,
-            user_id: user.id || user.ID,
-          })]).then((item) => {
-          console.log(
-              `User updated detail is as follow ${JSON.stringify(item[0])}`);
-          return reply(true);
-        }).catch((err) => {
-          console.log(
-              `Error on ${new Date()} for user ${user.mobile_no} is as follow: \n \n ${err}`);
-          MODAL.logs.create({
-            api_action: request.method,
-            api_path: request.url.pathname,
-            log_type: 2,
-            user_id: user.id || user.ID,
-            log_content: err,
+        if ((userDetail.password && timeDiffMin <= 10) ||
+            !userDetail.password ||
+            (request.url.pathname === '/consumer/otp/send' ||
+                request.url.pathname === '/consumer/otp/validate' ||
+                request.url.pathname === '/consumer/validate' ||
+                request.url.pathname === '/consumer/pin' ||
+                request.url.pathname === '/consumer/pin/reset')) {
+          return Promise.all([
+            MODAL.users.update({
+              last_active_date: moment.utc(),
+              last_api: request.url.pathname,
+            }, {
+              where: {
+                id: user.id || user.ID,
+              },
+            }), MODAL.logs.create({
+              api_action: request.method,
+              api_path: request.url.pathname,
+              log_type: 1,
+              user_id: user.id || user.ID,
+            })]).then((item) => {
+            console.log(
+                `User updated detail is as follow ${JSON.stringify(item[0])}`);
+            return reply(true);
+          }).catch((err) => {
+            console.log(
+                `Error on ${new Date()} for user ${user.mobile_no} is as follow: \n \n ${err}`);
+            MODAL.logs.create({
+              api_action: request.method,
+              api_path: request.url.pathname,
+              log_type: 2,
+              user_id: user.id || user.ID,
+              log_content: err,
+            });
+            return reply(false);
           });
-          return reply(false);
-        });
-        /*if (request.url.pathname === '/consumer/otp/send' ||
-            request.url.pathname === '/consumer/otp/validate' ||
-            request.url.pathname === '/consumer/validate' ||
-            request.url.pathname === '/consumer/pin' ||
-            request.url.pathname === '/consumer/pin/reset') {} else {
+        } else {
           console.log(
               `User ${user.mobile_no} inactive for more than 10 minutes`);
           return reply('');
-        }*/
+        }
       } else {
         console.log(`User ${user.mobile_no} doesn't exist`);
         return reply(null);
@@ -274,9 +276,9 @@ const verifyUserOTP = (request, reply) => {
           const currentUser = request.user.toJSON();
           console.log(currentUser);
           if (currentUser.email_secret) {
-
+            console.log(currentUser.otp_created_at);
             const timeDiffMin = moment.duration(
-                moment.utc().diff(moment.utc(currentUser.otp_created_at))).
+                moment.utc().diff(moment(currentUser.otp_created_at))).
                 asMinutes();
             console.log(timeDiffMin);
             if (timeDiffMin > 5) {
@@ -327,7 +329,8 @@ const verifyUserEmail = (request, reply) => {
           if (userDetail) {
             request.user = userDetail;
             if (userDetail.email_verified) {
-              return reply(userDetail.email.toLowerCase() === request.payload.email.toLowerCase());
+              return reply(userDetail.email.toLowerCase() ===
+                  request.payload.email.toLowerCase());
             } else {
               userResult.updateAttributes({email: request.payload.email});
               return reply(true);

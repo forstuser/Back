@@ -129,7 +129,13 @@ var UploadController = function () {
     key: 'uploadUserImage',
     value: function uploadUserImage(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!request.pre.userExist) {
+      if (request.pre.userExist === '') {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
         return reply({
           status: false,
           message: 'Unauthorized'
@@ -184,7 +190,13 @@ var UploadController = function () {
     key: 'uploadProductImage',
     value: function uploadProductImage(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!request.pre.userExist) {
+      if (request.pre.userExist === '') {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
         return reply({
           status: false,
           message: 'Unauthorized'
@@ -244,7 +256,13 @@ var UploadController = function () {
     key: 'uploadFiles',
     value: function uploadFiles(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!request.pre.userExist) {
+      if (request.pre.userExist === '') {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
         return reply({
           status: false,
           message: 'Unauthorized'
@@ -851,7 +869,13 @@ var UploadController = function () {
     key: 'deleteFile',
     value: function deleteFile(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!request.pre.userExist) {
+      if (request.pre.userExist === '') {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
         return reply({
           status: false,
           message: 'Unauthorized'
@@ -1211,7 +1235,13 @@ var UploadController = function () {
     key: 'retrieveUserImage',
     value: function retrieveUserImage(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!request.pre.userExist) {
+      if (request.pre.userExist === '') {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
         return reply({
           status: false,
           message: 'Unauthorized'

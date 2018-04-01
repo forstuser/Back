@@ -13,7 +13,13 @@ class InsightController {
 
   static retrieveCategoryWiseInsight(request, reply) {
 		const user = shared.verifyAuthorization(request.headers);
-    if (!request.pre.userExist) {
+    if (request.pre.userExist === '') {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
       return reply({
         status: false,
         message: 'Unauthorized',
@@ -34,7 +40,13 @@ class InsightController {
 
 	static retrieveInsightForSelectedCategory(request, reply) {
 		const user = shared.verifyAuthorization(request.headers);
-    if (!request.pre.userExist) {
+    if (request.pre.userExist === '') {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
       return reply({
 				status: false,
 				message: 'Unauthorized',

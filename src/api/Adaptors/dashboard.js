@@ -187,7 +187,7 @@ class DashboardAdaptor {
         hasProducts: !!(result[5] && parseInt(result[5]) > 0),
         total_calendar_item: result[7] || 0,
         calendar_item_updated_at,
-        recent_calendar_item: result[10][1],
+        recent_calendar_item: result[10],
         recent_products: product.slice(0, 4),
         product: product[0],
         service_center_products: result[11],

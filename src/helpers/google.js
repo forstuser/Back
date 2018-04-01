@@ -3,6 +3,7 @@
 
 import {createClient} from '@google/maps';
 import Bluebird from 'bluebird';
+import Promise from 'bluebird';
 import {PhoneNumberUtil} from 'google-libphonenumber';
 import _ from 'lodash';
 import config from '../config/main';
@@ -37,21 +38,27 @@ const distanceMatrix = (origins, destinations) => {
 };
 
 const isValidPhoneNumber = phone => {
-  const regionCode = phoneUtil.getRegionCodeForCountryCode('91');
-  if (regionCode.toUpperCase() === 'ZZ') {
-		return false;
-	}
+  return Promise.try(() => {
+    const regionCode = phoneUtil.getRegionCodeForCountryCode('91');
+    if (regionCode.toUpperCase() === 'ZZ') {
+      return false;
+    }
 
-  console.log('REGION CODE: ', regionCode);
+    console.log('REGION CODE: ', regionCode);
 
-	const phoneNumber = phoneUtil.parse(phone, regionCode);
+    return phoneUtil.parse(phone, regionCode);
+  }).then((phoneNumber) => {
 
-  console.log('IS PHONE VALID: ', phoneUtil.isValidNumber(phoneNumber));
-  console.log('PHONE NUMBER TYPE: ', phoneUtil.getNumberType(phoneNumber));
-	// Allow only mobile and fixed_line_or_mobile to pass
+    console.log('IS PHONE VALID: ', phoneUtil.isValidNumber(phoneNumber));
+    console.log('PHONE NUMBER TYPE: ', phoneUtil.getNumberType(phoneNumber));
+    // Allow only mobile and fixed_line_or_mobile to pass
 
-	// return true;
-	return phoneUtil.isValidNumber(phoneNumber) && (phoneUtil.getNumberType(phoneNumber) === 0 || phoneUtil.getNumberType(phoneNumber) === 1 || phoneUtil.getNumberType(phoneNumber) === 2);
+    // return true;
+    return phoneUtil.isValidNumber(phoneNumber) &&
+        (phoneUtil.getNumberType(phoneNumber) === 0 ||
+            phoneUtil.getNumberType(phoneNumber) === 1 ||
+            phoneUtil.getNumberType(phoneNumber) === 2);
+  });
 };
 
 export default {

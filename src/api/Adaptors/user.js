@@ -5,6 +5,7 @@ import uuid from 'uuid';
 import validator from 'validator';
 import NotificationAdaptor from './notification';
 import _ from 'lodash';
+import moment from 'moment/moment';
 
 /**
  * This is being used to validate email address.
@@ -99,6 +100,8 @@ class UserAdaptor {
       }
       result.updateAttributes({
         fb_id: defaultObject.fb_id,
+        last_active_date: moment.utc(),
+        last_api: defaultObject.last_api,
       });
 
       return [result, true];

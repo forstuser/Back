@@ -21,7 +21,13 @@ class CalendarServiceController {
 
   static retrieveCalendarServices(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (!request.pre.userExist) {
+    if (request.pre.userExist === '') {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
       return reply({
         status: false,
         message: 'Unauthorized',
@@ -58,7 +64,13 @@ class CalendarServiceController {
 
   static createItem(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (!request.pre.userExist) {
+    if (request.pre.userExist === '') {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
       return reply({
         status: false,
         message: 'Unauthorized',
@@ -187,7 +199,13 @@ class CalendarServiceController {
 
   static updateItem(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (!request.pre.userExist) {
+    if (request.pre.userExist === '') {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
       return reply({
         status: false,
         message: 'Unauthorized',
@@ -228,7 +246,13 @@ class CalendarServiceController {
 
   static markAbsent(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (!request.pre.userExist) {
+    if (request.pre.userExist === '') {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
       return reply({
         status: false,
         message: 'Unauthorized',
@@ -242,7 +266,6 @@ class CalendarServiceController {
         updated_by: user.id || user.ID,
         status_type: 1,
       };
-      let payment_detail;
       return Promise.try(
           () => Promise.all([
             calendarServiceAdaptor.retrieveCurrentCalculationDetail({
@@ -286,7 +309,13 @@ class CalendarServiceController {
 
   static markPaid(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (!request.pre.userExist) {
+    if (request.pre.userExist === '') {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
       return reply({
         status: false,
         message: 'Unauthorized',
@@ -331,7 +360,13 @@ class CalendarServiceController {
 
   static markPresent(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (!request.pre.userExist) {
+    if (request.pre.userExist === '') {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
       return reply({
         status: false,
         message: 'Unauthorized',
@@ -386,7 +421,13 @@ class CalendarServiceController {
 
   static retrieveCalendarItemList(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (!request.pre.userExist) {
+    if (request.pre.userExist === '') {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
       return reply({
         status: false,
         message: 'Unauthorized',
@@ -424,7 +465,13 @@ class CalendarServiceController {
 
   static retrieveCalendarItem(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (!request.pre.userExist) {
+    if (request.pre.userExist === '') {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
       return reply({
         status: false,
         message: 'Unauthorized',
@@ -461,7 +508,13 @@ class CalendarServiceController {
 
   static addServiceCalc(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (!request.pre.userExist) {
+    if (request.pre.userExist === '') {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
       return reply({
         status: false,
         message: 'Unauthorized',
@@ -523,7 +576,13 @@ class CalendarServiceController {
 
   static updateServiceCalc(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (!request.pre.userExist) {
+    if (request.pre.userExist === '') {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
       return reply({
         status: false,
         message: 'Unauthorized',
@@ -585,7 +644,13 @@ class CalendarServiceController {
 
   static deleteCalendarItem(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (!request.pre.userExist) {
+    if (request.pre.userExist === '') {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
       return reply({
         status: false,
         message: 'Unauthorized',

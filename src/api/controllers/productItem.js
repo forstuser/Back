@@ -35,7 +35,13 @@ class ProductItemController {
 
   static updateRepair(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (!request.pre.userExist) {
+    if (request.pre.userExist === '') {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
       return reply({
         status: false,
         message: 'Unauthorized',
@@ -125,7 +131,13 @@ class ProductItemController {
 
   static deleteRepair(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (!request.pre.userExist) {
+    if (request.pre.userExist === '') {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
       return reply({
         status: false,
         message: 'Unauthorized',
@@ -154,7 +166,13 @@ class ProductItemController {
 
   static updateInsurance(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (!request.pre.userExist) {
+    if (request.pre.userExist === '') {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
       return reply({
         status: false,
         message: 'Unauthorized',
@@ -284,7 +302,13 @@ class ProductItemController {
 
   static deleteInsurance(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (!request.pre.userExist) {
+    if (request.pre.userExist === '') {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
       return reply({
         status: false,
         message: 'Unauthorized',
@@ -314,7 +338,13 @@ class ProductItemController {
 
   static updateAmc(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (!request.pre.userExist) {
+    if (request.pre.userExist === '') {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
       return reply({
         status: false,
         message: 'Unauthorized',
@@ -435,7 +465,13 @@ class ProductItemController {
 
   static deleteAMC(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (!request.pre.userExist) {
+    if (request.pre.userExist === '') {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
       return reply({
         status: false,
         message: 'Unauthorized',
@@ -464,7 +500,13 @@ class ProductItemController {
 
   static updatePUC(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (!request.pre.userExist) {
+    if (request.pre.userExist === '') {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
       return reply({
         status: false,
         message: 'Unauthorized',
@@ -584,7 +626,13 @@ class ProductItemController {
 
   static deletePUC(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (!request.pre.userExist) {
+    if (request.pre.userExist === '') {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
       return reply({
         status: false,
         message: 'Unauthorized',
@@ -613,7 +661,13 @@ class ProductItemController {
 
   static updateWarranty(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (!request.pre.userExist) {
+    if (request.pre.userExist === '') {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
       return reply({
         status: false,
         message: 'Unauthorized',
@@ -747,7 +801,13 @@ class ProductItemController {
 
   static deleteWarranty(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (!request.pre.userExist) {
+    if (request.pre.userExist === '') {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
       return reply({
         status: false,
         message: 'Unauthorized',

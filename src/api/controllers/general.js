@@ -8,7 +8,7 @@ import SellerAdaptor from '../Adaptors/sellers';
 import JobAdaptor from '../Adaptors/job';
 import ProductAdaptor from '../Adaptors/product';
 import UserAdaptor from '../Adaptors/user';
-import Bluebird from 'bluebird';
+import Promise from 'bluebird';
 import shared from '../../helpers/shared';
 import moment from 'moment/moment';
 import config from '../../config/main';
@@ -42,7 +42,7 @@ class GeneralController {
   static retrieveReferenceData(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     let isBrandRequest = false;
-    return Bluebird.try(() => {
+    return Promise.try(() => {
       if (request.query && user) {
         if (request.query.categoryId && request.query.brandId) {
           return brandAdaptor.retrieveBrandDropDowns({
@@ -110,7 +110,7 @@ class GeneralController {
   }
 
   static contactUs(request, reply) {
-    return Bluebird.try(() => {
+    return Promise.try(() => {
       if (request.payload.captcha_response) {
         return NotificationAdaptor.verifyCaptcha(
             request.payload.captcha_response);
@@ -211,7 +211,7 @@ class GeneralController {
       const options = {
         where: {
           batch_date: {
-            $lte: moment(),
+            $lte: moment().endOf('days'),
           },
         },
         include: [
@@ -254,42 +254,62 @@ class GeneralController {
             'description'],
           'short_url'],
         order: [['id', 'asc']],
+        limit: request.query.limit || 10,
       };
 
+      if (request.query.offset) {
+        options.offset = request.query.offset;
+      }
+
+      const tagMapOptions = {};
       if (request.payload && request.payload.tag_id &&
           request.payload.tag_id.length > 0) {
-        options.where.$and = modals.sequelize.where(
-            modals.sequelize.col('"tags"."id"'),
+        tagMapOptions.where = modals.sequelize.where(
+            modals.sequelize.col('"tag_id"'),
             {$in: request.payload.tag_id});
       }
-      return modals.knowItems.findAll(options).then((knowItems) => {
-        return reply({
-          status: true, items: knowItems.map((item) => {
-            item = item.toJSON();
-            item.imageUrl = `/knowitem/${item.id}/images`;
-            item.title = item.title || item.default_title;
-            item.description = item.description || item.default_description;
-            item.tags = item.tags.map((tagItem) => {
-              tagItem.title = tagItem.title || tagItem.default_title;
-              return tagItem;
-            });
-            item.hashTags = '';
-            item.tags.forEach((tagItem) => {
-              item.hashTags += `#${tagItem.title} `;
-            });
-            item.hashTags = item.hashTags.trim();
-            item.totalLikes = item.users.length;
-            item.isLikedByUser = item.users.findIndex(
-                (userItem) => userItem.id === (user.id || user.ID)) >= 0;
-            return item;
-          }),
-        }).code(200);
-      }).catch((err) => {
-        console.log(
-            `Error on ${new Date()} for user ${user.id ||
-            user.ID} is as follow: \n \n ${err}`);
-        return reply({status: false}).code(200);
-      });
+      return Promise.try(() => modals.know_tag_map.findAll(tagMapOptions)).
+          then((tagMapResult) => {
+            tagMapResult = tagMapResult.map((tMItem) => tMItem.toJSON());
+            options.where.id = tagMapResult.map(
+                (tMItem) => tMItem.know_item_id);
+            return modals.knowItems.findAll(options);
+          }).
+          then((knowItems) => {
+            return reply({
+              status: true, items: knowItems.map((item) => {
+                item = item.toJSON();
+                item.imageUrl = `/knowitem/${item.id}/images`;
+                item.title = item.title || item.default_title;
+                item.description = item.description || item.default_description;
+                item.tags = item.tags.map((tagItem) => {
+                  tagItem.title = tagItem.title || tagItem.default_title;
+                  return tagItem;
+                });
+                item.hashTags = '';
+                item.tags.forEach((tagItem) => {
+                  item.hashTags += `#${tagItem.title} `;
+                });
+                item.hashTags = item.hashTags.trim();
+                item.totalLikes = item.users.length;
+                item.isLikedByUser = item.users.findIndex(
+                    (userItem) => userItem.id === (user.id || user.ID)) >= 0;
+                return item;
+              }),
+            }).code(200);
+          }).
+          catch((err) => {
+            console.log(
+                `Error on ${new Date()} for user ${user.id ||
+                user.ID} is as follow: \n \n ${err}`);
+            return reply({status: false}).code(200);
+          });
+    } else if (request.pre.userExist === '') {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
     } else if (!request.pre.userExist) {
       return reply({
         status: false,
@@ -375,7 +395,7 @@ class GeneralController {
           item.hashTags = item.hashTags.trim();
           item.totalLikes = item.users.length;
           return item;
-        }).slice((request.query.offset || 0)-1, request.query.limit || 10),
+        }).slice((request.query.offset || 1) - 1, request.query.limit || 10),
       }).code(200);
     }).catch((err) => {
       console.log(
@@ -471,8 +491,8 @@ class GeneralController {
               as: 'knowItems',
               where: {
                 batch_date: {
-                  $lte: moment()
-                }
+                  $lte: moment(),
+                },
               },
               attributes: [],
               required: true,
@@ -508,6 +528,12 @@ class GeneralController {
             user.ID} is as follow: \n \n ${err}`);
         return reply({status: false}).code(200);
       });
+    } else if (request.pre.userExist === '') {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
     } else if (!request.pre.userExist) {
       return reply({
         status: false,
@@ -541,6 +567,12 @@ class GeneralController {
             user.ID} is as follow: \n \n ${err}`);
         return reply({status: false}).code(200);
       });
+    } else if (request.pre.userExist === '') {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
     } else if (!request.pre.userExist) {
       return reply({
         status: false,
@@ -576,6 +608,12 @@ class GeneralController {
             user.ID} is as follow: \n \n ${err}`);
         return reply({status: false}).code(200);
       });
+    } else if (request.pre.userExist === '') {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
     } else if (!request.pre.userExist) {
       return reply({
         status: false,
@@ -595,7 +633,7 @@ class GeneralController {
     const user = shared.verifyAuthorization(request.headers);
 
     if (request.pre.userExist && !request.pre.forceUpdate) {
-      return Bluebird.try(() => {
+      return Promise.try(() => {
         return jobAdaptor.createJobs({
           job_id: `${Math.random().
               toString(36).
@@ -666,6 +704,12 @@ class GeneralController {
           forceUpdate: request.pre.forceUpdate,
         }).code(200);
       });
+    } else if (request.pre.userExist === '') {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
     } else if (!request.pre.userExist) {
       return reply({
         status: false,
@@ -684,7 +728,7 @@ class GeneralController {
   static serviceCenterAccessed(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
-      return Bluebird.try(() => {
+      return Promise.try(() => {
         return userAdaptor.updateUserDetail(
             {service_center_accessed: true}, {
               where: {
@@ -704,6 +748,12 @@ class GeneralController {
           forceUpdate: request.pre.forceUpdate,
         });
       });
+    } else if (request.pre.userExist === '') {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
     } else if (!request.pre.userExist) {
       return reply({
         status: false,
@@ -723,7 +773,7 @@ class GeneralController {
     const user = shared.verifyAuthorization(request.headers);
 
     if (request.pre.userExist && !request.pre.forceUpdate) {
-      return Bluebird.try(() => {
+      return Promise.try(() => {
         return productAdaptor.retrieveProducts({
           main_category_id: [1, 2, 3],
           status_type: [5, 11],
@@ -745,6 +795,12 @@ class GeneralController {
         });
       });
 
+    } else if (request.pre.userExist === '') {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
     } else if (!request.pre.userExist) {
       return reply({
         status: false,

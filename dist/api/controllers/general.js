@@ -106,7 +106,7 @@ var GeneralController = function () {
             });
           } else if (request.query.categoryId) {
             isBrandRequest = true;
-            return Promise.all([categoryAdaptor.retrieveSubCategories({ category_id: request.query.categoryId }, true, request.language), categoryAdaptor.retrieveRenewalTypes({
+            return _bluebird2.default.all([categoryAdaptor.retrieveSubCategories({ category_id: request.query.categoryId }, true, request.language), categoryAdaptor.retrieveRenewalTypes({
               status_type: 1
             })]);
           } else if (request.query.mainCategoryId) {
@@ -240,7 +240,7 @@ var GeneralController = function () {
         var options = {
           where: {
             batch_date: {
-              $lte: (0, _moment2.default)()
+              $lte: (0, _moment2.default)().endOf('days')
             }
           },
           include: [{
@@ -253,13 +253,29 @@ var GeneralController = function () {
             attributes: ['id']
           }],
           attributes: ['id', ['title', 'default_title'], ['' + (language ? 'title_' + language : 'title'), 'title'], ['description', 'default_description'], ['' + (language ? 'description_' + language : 'description'), 'description'], 'short_url'],
-          order: [['id', 'asc']]
+          order: [['id', 'asc']],
+          limit: request.query.limit || 10
         };
 
-        if (request.payload && request.payload.tag_id && request.payload.tag_id.length > 0) {
-          options.where.$and = modals.sequelize.where(modals.sequelize.col('"tags"."id"'), { $in: request.payload.tag_id });
+        if (request.query.offset) {
+          options.offset = request.query.offset;
         }
-        return modals.knowItems.findAll(options).then(function (knowItems) {
+
+        var tagMapOptions = {};
+        if (request.payload && request.payload.tag_id && request.payload.tag_id.length > 0) {
+          tagMapOptions.where = modals.sequelize.where(modals.sequelize.col('"tag_id"'), { $in: request.payload.tag_id });
+        }
+        return _bluebird2.default.try(function () {
+          return modals.know_tag_map.findAll(tagMapOptions);
+        }).then(function (tagMapResult) {
+          tagMapResult = tagMapResult.map(function (tMItem) {
+            return tMItem.toJSON();
+          });
+          options.where.id = tagMapResult.map(function (tMItem) {
+            return tMItem.know_item_id;
+          });
+          return modals.knowItems.findAll(options);
+        }).then(function (knowItems) {
           return reply({
             status: true, items: knowItems.map(function (item) {
               item = item.toJSON();
@@ -286,6 +302,12 @@ var GeneralController = function () {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
           return reply({ status: false }).code(200);
         });
+      } else if (request.pre.userExist === '') {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
       } else if (!request.pre.userExist) {
         return reply({
           status: false,
@@ -343,7 +365,7 @@ var GeneralController = function () {
             item.hashTags = item.hashTags.trim();
             item.totalLikes = item.users.length;
             return item;
-          }).slice((request.query.offset || 0) - 1, request.query.limit || 10)
+          }).slice((request.query.offset || 1) - 1, request.query.limit || 10)
         }).code(200);
       }).catch(function (err) {
         console.log('Error on ' + new Date() + ' is as follow: \n \n ' + err);
@@ -428,6 +450,12 @@ var GeneralController = function () {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
           return reply({ status: false }).code(200);
         });
+      } else if (request.pre.userExist === '') {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
       } else if (!request.pre.userExist) {
         return reply({
           status: false,
@@ -460,6 +488,12 @@ var GeneralController = function () {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
           return reply({ status: false }).code(200);
         });
+      } else if (request.pre.userExist === '') {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
       } else if (!request.pre.userExist) {
         return reply({
           status: false,
@@ -494,6 +528,12 @@ var GeneralController = function () {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
           return reply({ status: false }).code(200);
         });
+      } else if (request.pre.userExist === '') {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
       } else if (!request.pre.userExist) {
         return reply({
           status: false,
@@ -525,7 +565,7 @@ var GeneralController = function () {
             comments: request.query ? request.query.productId ? 'This job is sent for product id ' + request.query.productId : request.query.productName ? 'This job is sent for product name ' + request.query.productName : '' : ''
           });
         }).then(function (jobResult) {
-          return Promise.all([productAdaptor.createEmptyProduct({
+          return _bluebird2.default.all([productAdaptor.createEmptyProduct({
             job_id: jobResult.id,
             product_name: request.payload.product_name,
             user_id: user.id || user.ID,
@@ -561,6 +601,12 @@ var GeneralController = function () {
             forceUpdate: request.pre.forceUpdate
           }).code(200);
         });
+      } else if (request.pre.userExist === '') {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
       } else if (!request.pre.userExist) {
         return reply({
           status: false,
@@ -599,6 +645,12 @@ var GeneralController = function () {
             forceUpdate: request.pre.forceUpdate
           });
         });
+      } else if (request.pre.userExist === '') {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
       } else if (!request.pre.userExist) {
         return reply({
           status: false,
@@ -640,6 +692,12 @@ var GeneralController = function () {
             forceUpdate: request.pre.forceUpdate
           });
         });
+      } else if (request.pre.userExist === '') {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
       } else if (!request.pre.userExist) {
         return reply({
           status: false,

@@ -431,11 +431,19 @@ export function retrieveMailTemplate(user, templateType) {
                                 </p>
                                 <p class="main-class"
                                    style="-webkit-margin-before: 0; -webkit-margin-after: 0;margin:0 auto;">
-                                    BinBill saves your time and aids your memory by sorting important things of your life. It starts with building your eHome by adding Products, Important Documents & Expenses
+                                    BinBill saves your time and aids your memory by sorting important things of your life. It starts with building your eHome by adding Products, Important Documents & Expenses.
                                      </p>
                                 <p class="main-class"
                                    style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0;padding: 10px 0;">
-                                    Product: Be old or new, Important details like Purchase Bill, Warranty, Model Number, Insurance etc are never handy whenever needed. You can upload them or enter details by manually. This is a one time activity to get all important Notification, Reminders, ASC & Service Expense etc.
+                                    Product: Be old or new, Important details like Purchase Bill, Warranty, Model Number , Insurance etc are never handy whenever needed. You can upload them or enter details by manually. This is a one time activity to get all important Notification, Reminders, ASC & Service Expense etc.
+                                </p>
+                                <p class="main-class"
+                                   style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0;padding: 10px 0;">
+                                    Rate, Review & Share: Now you can help your friends, family and followers on social media such as Facebook, Whatsapp, Instagram make wise purchase deicision like never before. You can be the expert advisor of the brands and products you are already using.
+                                </p>
+                                <p class="main-class"
+                                   style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0;padding: 10px 0;">
+                                    Attendance Manager: With us you can manage attendance and payouts of your monthly services say Milk, Newspaper, Maid etc with much ease. Now no more writing notes on wall calendar and manual calculation for lethora of services. Your attendance Manager helps you with all the calculation.
                                 </p>
                                 <p class="main-class"
                                    style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0;padding: 10px 0;">
@@ -448,6 +456,10 @@ export function retrieveMailTemplate(user, templateType) {
                                 <p class="main-class"
                                    style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0;padding: 10px 0;">
                                     Expense Management : Small or Big, Online or Offline, Cash or Card either upload the bill or add expense manually. Get to know insight on What When Where & How much you have been spending.
+                                </p>
+                                <p class="main-class"
+                                   style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0;padding: 10px 0;">
+                                    Do You Know series: We come up with one of the most interesting and unknown secrets from the history across categories ranging from Automobile to Fashion and Electronics to Healthcare. You will not only love these diligently chosen trivia but will also be tempted to share with your friends and family.
                                 </p>
                                 <p class="main-class"
                                    style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0;padding: 10px 0;">

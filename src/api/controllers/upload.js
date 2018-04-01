@@ -81,7 +81,13 @@ class UploadController {
 
   static uploadUserImage(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (!request.pre.userExist) {
+    if (request.pre.userExist === '') {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
       return reply({
         status: false,
         message: 'Unauthorized',
@@ -141,7 +147,13 @@ class UploadController {
 
   static uploadProductImage(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (!request.pre.userExist) {
+    if (request.pre.userExist === '') {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
       return reply({
         status: false,
         message: 'Unauthorized',
@@ -204,7 +216,13 @@ class UploadController {
 
   static uploadFiles(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (!request.pre.userExist) {
+    if (request.pre.userExist === '') {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
       return reply({
         status: false,
         message: 'Unauthorized',
@@ -870,7 +888,13 @@ class UploadController {
   //Will required to be change if discard is required
   static deleteFile(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (!request.pre.userExist) {
+    if (request.pre.userExist === '') {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
       return reply({
         status: false,
         message: 'Unauthorized',
@@ -1282,7 +1306,13 @@ class UploadController {
 
   static retrieveUserImage(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (!request.pre.userExist) {
+    if (request.pre.userExist === '') {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
       return reply({
         status: false,
         message: 'Unauthorized',

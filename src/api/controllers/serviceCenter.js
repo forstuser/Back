@@ -209,6 +209,12 @@ class ServiceCenterController {
           forceUpdate: request.pre.forceUpdate,
         });
       });
+    } else if (request.pre.userExist === '') {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
     } else if (!request.pre.userExist) {
       return reply({
         status: false,

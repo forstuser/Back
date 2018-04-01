@@ -88,42 +88,37 @@ var updateUserActiveStatus = function updateUserActiveStatus(request, reply) {
         var timeDiffMin = _moment2.default.duration(_moment2.default.utc().diff(last_active_date)).asMinutes();
 
         console.log('\n\n\n\n\n', { timeDiffMin: timeDiffMin, last_active_date: last_active_date });
-
-        return _bluebird2.default.all([MODAL.users.update({
-          last_active_date: _moment2.default.utc(),
-          last_api: request.url.pathname
-        }, {
-          where: {
-            id: user.id || user.ID
-          }
-        }), MODAL.logs.create({
-          api_action: request.method,
-          api_path: request.url.pathname,
-          log_type: 1,
-          user_id: user.id || user.ID
-        })]).then(function (item) {
-          console.log('User updated detail is as follow ' + JSON.stringify(item[0]));
-          return reply(true);
-        }).catch(function (err) {
-          console.log('Error on ' + new Date() + ' for user ' + user.mobile_no + ' is as follow: \n \n ' + err);
-          MODAL.logs.create({
+        if (userDetail.password && timeDiffMin <= 10 || !userDetail.password || request.url.pathname === '/consumer/otp/send' || request.url.pathname === '/consumer/otp/validate' || request.url.pathname === '/consumer/validate' || request.url.pathname === '/consumer/pin' || request.url.pathname === '/consumer/pin/reset') {
+          return _bluebird2.default.all([MODAL.users.update({
+            last_active_date: _moment2.default.utc(),
+            last_api: request.url.pathname
+          }, {
+            where: {
+              id: user.id || user.ID
+            }
+          }), MODAL.logs.create({
             api_action: request.method,
             api_path: request.url.pathname,
-            log_type: 2,
-            user_id: user.id || user.ID,
-            log_content: err
+            log_type: 1,
+            user_id: user.id || user.ID
+          })]).then(function (item) {
+            console.log('User updated detail is as follow ' + JSON.stringify(item[0]));
+            return reply(true);
+          }).catch(function (err) {
+            console.log('Error on ' + new Date() + ' for user ' + user.mobile_no + ' is as follow: \n \n ' + err);
+            MODAL.logs.create({
+              api_action: request.method,
+              api_path: request.url.pathname,
+              log_type: 2,
+              user_id: user.id || user.ID,
+              log_content: err
+            });
+            return reply(false);
           });
-          return reply(false);
-        });
-        /*if (request.url.pathname === '/consumer/otp/send' ||
-            request.url.pathname === '/consumer/otp/validate' ||
-            request.url.pathname === '/consumer/validate' ||
-            request.url.pathname === '/consumer/pin' ||
-            request.url.pathname === '/consumer/pin/reset') {} else {
-          console.log(
-              `User ${user.mobile_no} inactive for more than 10 minutes`);
+        } else {
+          console.log('User ' + user.mobile_no + ' inactive for more than 10 minutes');
           return reply('');
-        }*/
+        }
       } else {
         console.log('User ' + user.mobile_no + ' doesn\'t exist');
         return reply(null);
@@ -254,8 +249,8 @@ var verifyUserOTP = function verifyUserOTP(request, reply) {
       var currentUser = request.user.toJSON();
       console.log(currentUser);
       if (currentUser.email_secret) {
-
-        var timeDiffMin = _moment2.default.duration(_moment2.default.utc().diff(_moment2.default.utc(currentUser.otp_created_at))).asMinutes();
+        console.log(currentUser.otp_created_at);
+        var timeDiffMin = _moment2.default.duration(_moment2.default.utc().diff((0, _moment2.default)(currentUser.otp_created_at))).asMinutes();
         console.log(timeDiffMin);
         if (timeDiffMin > 5) {
           return null;

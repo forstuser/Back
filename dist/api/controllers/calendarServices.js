@@ -50,7 +50,13 @@ var CalendarServiceController = function () {
     key: 'retrieveCalendarServices',
     value: function retrieveCalendarServices(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!request.pre.userExist) {
+      if (request.pre.userExist === '') {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
         return reply({
           status: false,
           message: 'Unauthorized',
@@ -88,7 +94,13 @@ var CalendarServiceController = function () {
     key: 'createItem',
     value: function createItem(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!request.pre.userExist) {
+      if (request.pre.userExist === '') {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
         return reply({
           status: false,
           message: 'Unauthorized',
@@ -212,7 +224,13 @@ var CalendarServiceController = function () {
     key: 'updateItem',
     value: function updateItem(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!request.pre.userExist) {
+      if (request.pre.userExist === '') {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
         return reply({
           status: false,
           message: 'Unauthorized',
@@ -254,7 +272,13 @@ var CalendarServiceController = function () {
     key: 'markAbsent',
     value: function markAbsent(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!request.pre.userExist) {
+      if (request.pre.userExist === '') {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
         return reply({
           status: false,
           message: 'Unauthorized',
@@ -267,7 +291,6 @@ var CalendarServiceController = function () {
           updated_by: user.id || user.ID,
           status_type: 1
         };
-        var payment_detail = void 0;
         return _bluebird2.default.try(function () {
           return _bluebird2.default.all([calendarServiceAdaptor.retrieveCurrentCalculationDetail({
             ref_id: request.params.ref_id, effective_date: {
@@ -311,7 +334,13 @@ var CalendarServiceController = function () {
     key: 'markPaid',
     value: function markPaid(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!request.pre.userExist) {
+      if (request.pre.userExist === '') {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
         return reply({
           status: false,
           message: 'Unauthorized',
@@ -355,7 +384,13 @@ var CalendarServiceController = function () {
     key: 'markPresent',
     value: function markPresent(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!request.pre.userExist) {
+      if (request.pre.userExist === '') {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
         return reply({
           status: false,
           message: 'Unauthorized',
@@ -409,7 +444,13 @@ var CalendarServiceController = function () {
     key: 'retrieveCalendarItemList',
     value: function retrieveCalendarItemList(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!request.pre.userExist) {
+      if (request.pre.userExist === '') {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
         return reply({
           status: false,
           message: 'Unauthorized',
@@ -449,7 +490,13 @@ var CalendarServiceController = function () {
     key: 'retrieveCalendarItem',
     value: function retrieveCalendarItem(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!request.pre.userExist) {
+      if (request.pre.userExist === '') {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
         return reply({
           status: false,
           message: 'Unauthorized',
@@ -487,7 +534,13 @@ var CalendarServiceController = function () {
     key: 'addServiceCalc',
     value: function addServiceCalc(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!request.pre.userExist) {
+      if (request.pre.userExist === '') {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
         return reply({
           status: false,
           message: 'Unauthorized',
@@ -542,7 +595,13 @@ var CalendarServiceController = function () {
     key: 'updateServiceCalc',
     value: function updateServiceCalc(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!request.pre.userExist) {
+      if (request.pre.userExist === '') {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
         return reply({
           status: false,
           message: 'Unauthorized',
@@ -599,7 +658,13 @@ var CalendarServiceController = function () {
     key: 'deleteCalendarItem',
     value: function deleteCalendarItem(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!request.pre.userExist) {
+      if (request.pre.userExist === '') {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
         return reply({
           status: false,
           message: 'Unauthorized',
