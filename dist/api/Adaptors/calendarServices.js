@@ -717,8 +717,8 @@ var CalendarServiceAdaptor = function () {
           var currentYear = (0, _moment2.default)().year();
           var effectiveYear = effectiveDate.year();
           var yearDiff = currentYear > effectiveYear ? currentYear - effectiveYear : null;
-          var absent_date = absentDetail.length > 0 ? (0, _moment2.default)(absentDetail[absentDetail.length - 1].absent_date, _moment2.default.ISO_8601) : (0, _moment2.default)();
-          var currentDate = absent_date.diff((0, _moment2.default)(), 'days') > 0 ? absent_date : (0, _moment2.default)();
+          var absent_date = (0, _moment2.default)(servicePayments[0].end_date, _moment2.default.ISO_8601).startOf();
+          var currentDate = absent_date.diff((0, _moment2.default)().startOf('days'), 'days') > 0 ? absent_date : (0, _moment2.default)();
           if (!yearDiff) {
             var currentMth = currentDate.month();
             var _currentYear2 = currentDate.year();

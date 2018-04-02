@@ -99,7 +99,8 @@ const updateUserActiveStatus = (request, reply) => {
               where: {
                 id: user.id || user.ID,
               },
-            }), MODAL.logs.create({
+            }),
+            MODAL.logs.create({
               api_action: request.method,
               api_path: request.url.pathname,
               log_type: 1,
@@ -107,6 +108,7 @@ const updateUserActiveStatus = (request, reply) => {
             })]).then((item) => {
             console.log(
                 `User updated detail is as follow ${JSON.stringify(item[0])}`);
+            MODAL.sequelize;
             return reply(true);
           }).catch((err) => {
             console.log(
@@ -116,7 +118,7 @@ const updateUserActiveStatus = (request, reply) => {
               api_path: request.url.pathname,
               log_type: 2,
               user_id: user.id || user.ID,
-              log_content: err,
+              log_content: JSON.stringify(err),
             });
             return reply(false);
           });

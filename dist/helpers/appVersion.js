@@ -103,6 +103,7 @@ var updateUserActiveStatus = function updateUserActiveStatus(request, reply) {
             user_id: user.id || user.ID
           })]).then(function (item) {
             console.log('User updated detail is as follow ' + JSON.stringify(item[0]));
+            MODAL.sequelize;
             return reply(true);
           }).catch(function (err) {
             console.log('Error on ' + new Date() + ' for user ' + user.mobile_no + ' is as follow: \n \n ' + err);
@@ -111,7 +112,7 @@ var updateUserActiveStatus = function updateUserActiveStatus(request, reply) {
               api_path: request.url.pathname,
               log_type: 2,
               user_id: user.id || user.ID,
-              log_content: err
+              log_content: JSON.stringify(err)
             });
             return reply(false);
           });

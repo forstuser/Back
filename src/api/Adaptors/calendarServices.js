@@ -807,10 +807,8 @@ export default class CalendarServiceAdaptor {
         const yearDiff = currentYear > effectiveYear ?
             currentYear - effectiveYear :
             null;
-        const absent_date = absentDetail.length > 0 ? moment(
-            absentDetail[absentDetail.length - 1].absent_date,
-            moment.ISO_8601) : moment();
-        const currentDate = absent_date.diff(moment(), 'days') > 0 ?
+        const absent_date = moment(servicePayments[0].end_date, moment.ISO_8601).startOf();
+        const currentDate = absent_date.diff(moment().startOf('days'), 'days') > 0 ?
             absent_date :
             moment();
         if (!yearDiff) {

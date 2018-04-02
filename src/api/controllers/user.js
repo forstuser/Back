@@ -442,6 +442,7 @@ class UserController {
             },
             json: true,
           }).then((fbResult) => {
+            console.log(fbResult);
             userWhere.email = fbResult.email.toLowerCase();
             userInput.email = fbResult.email.toLowerCase();
             userInput.full_name = fbResult.name;

@@ -154,7 +154,7 @@ var ProductController = function () {
             api_path: request.url.pathname,
             log_type: 2,
             user_id: user.id || user.ID,
-            log_content: err
+            log_content: JSON.stringify(err)
           });
           return reply({
             status: false,
