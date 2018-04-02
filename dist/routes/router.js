@@ -1416,7 +1416,7 @@ function prepareGeneralRoutes(generalController, generalRoutes) {
           method: appVersionHelper.updateUserActiveStatus,
           assign: 'userExist'
         }],
-        handler: _general2.default.intializeUserProduct,
+        handler: _general2.default.initializeUserProduct,
         description: 'Create Product.',
         validate: {
           payload: {
@@ -1795,7 +1795,7 @@ function prepareProductItemRoutes(productItemController, productItemRoutes) {
 
 function prepareCalendarServiceRoutes(calendarController, calendarRoutes) {
   //= ========================
-  // Product Routes
+  // Calendar Item Routes
   //= ========================
 
   if (calendarController) {
@@ -1833,6 +1833,7 @@ function prepareCalendarServiceRoutes(calendarController, calendarRoutes) {
           payload: {
             product_name: [_joi2.default.string(), _joi2.default.allow(null)],
             provider_name: [_joi2.default.string(), _joi2.default.allow(null)],
+            provider_number: [_joi2.default.string(), _joi2.default.allow(null)],
             wages_type: [_joi2.default.number(), _joi2.default.allow(null)],
             selected_days: [_joi2.default.array().items(_joi2.default.number()).required().min(0), _joi2.default.allow(null)],
             unit_price: _joi2.default.number().required(),
@@ -1969,7 +1970,8 @@ function prepareCalendarServiceRoutes(calendarController, calendarRoutes) {
         validate: {
           payload: {
             product_name: [_joi2.default.string(), _joi2.default.allow(null)],
-            provider_name: [_joi2.default.string(), _joi2.default.allow(null)]
+            provider_name: [_joi2.default.string(), _joi2.default.allow(null)],
+            provider_number: [_joi2.default.string(), _joi2.default.allow(null)]
           }
         }
       }

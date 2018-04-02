@@ -16,7 +16,7 @@ class ProductController {
 
   static createProduct(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (request.pre.userExist === '') {
+    if (request.pre.userExist === 0) {
       return reply({
         status: false,
         message: 'Inactive User',
@@ -111,7 +111,7 @@ class ProductController {
 
   static deleteProduct(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (request.pre.userExist === '') {
+    if (request.pre.userExist === 0) {
       return reply({
         status: false,
         message: 'Inactive User',
@@ -172,7 +172,7 @@ class ProductController {
 
   static updateProduct(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (request.pre.userExist === '') {
+    if (request.pre.userExist === 0) {
       return reply({
         status: false,
         message: 'Inactive User',
@@ -280,7 +280,7 @@ class ProductController {
 
   static updateUserReview(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (request.pre.userExist === '') {
+    if (request.pre.userExist === 0) {
       return reply({
         status: false,
         message: 'Inactive User',
@@ -313,7 +313,7 @@ class ProductController {
 
   static retrieveProductDetail(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (request.pre.userExist === '') {
+    if (request.pre.userExist === 0) {
       return reply({
         status: false,
         message: 'Inactive User',
@@ -341,7 +341,7 @@ class ProductController {
 
   static retrieveCenterProducts(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (request.pre.userExist === '') {
+    if (request.pre.userExist === 0) {
       return reply({
         status: false,
         message: 'Inactive User',

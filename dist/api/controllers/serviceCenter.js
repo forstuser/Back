@@ -204,7 +204,7 @@ var ServiceCenterController = function () {
             forceUpdate: request.pre.forceUpdate
           });
         });
-      } else if (request.pre.userExist === '') {
+      } else if (request.pre.userExist === 0) {
         return reply({
           status: false,
           message: 'Inactive User',

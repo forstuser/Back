@@ -81,7 +81,7 @@ class UploadController {
 
   static uploadUserImage(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (request.pre.userExist === '') {
+    if (request.pre.userExist === 0) {
       return reply({
         status: false,
         message: 'Inactive User',
@@ -147,7 +147,7 @@ class UploadController {
 
   static uploadProductImage(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (request.pre.userExist === '') {
+    if (request.pre.userExist === 0) {
       return reply({
         status: false,
         message: 'Inactive User',
@@ -216,7 +216,7 @@ class UploadController {
 
   static uploadFiles(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (request.pre.userExist === '') {
+    if (request.pre.userExist === 0) {
       return reply({
         status: false,
         message: 'Inactive User',
@@ -888,7 +888,7 @@ class UploadController {
   //Will required to be change if discard is required
   static deleteFile(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (request.pre.userExist === '') {
+    if (request.pre.userExist === 0) {
       return reply({
         status: false,
         message: 'Inactive User',
@@ -1306,7 +1306,7 @@ class UploadController {
 
   static retrieveUserImage(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (request.pre.userExist === '') {
+    if (request.pre.userExist === 0) {
       return reply({
         status: false,
         message: 'Inactive User',

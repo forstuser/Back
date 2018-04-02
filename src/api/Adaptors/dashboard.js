@@ -10,6 +10,7 @@ import CalendarServiceAdaptor from './calendarServices';
 import PUCAdaptor from './pucs';
 import shared from '../../helpers/shared';
 import moment from 'moment';
+import Promise from 'bluebird';
 
 class DashboardAdaptor {
   constructor(modals) {
@@ -513,13 +514,13 @@ class DashboardAdaptor {
           $gte: moment.utc().startOf('M'),
         },
       })]).
-        then((results) => [
+        then((results) => Promise.all([
           ...results[0],
           ...results[1],
           ...results[2],
           ...results[3],
           ...results[4],
-          ...results[5]]);
+          ...results[5]]));
   }
 
   retrieveRecentSearch(user) {

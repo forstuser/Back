@@ -4,7 +4,14 @@ import config from '../../config/main';
 import Sequelize from 'sequelize';
 import path from 'path';
 import fs from 'fs';
+import Promise from 'bluebird';
+import clsBluebird from 'cls-bluebird';
+import cls from 'continuation-local-storage';
 
+const ns = cls.createNamespace('transaction-namespace');
+
+clsBluebird(ns, Promise);
+Sequelize.useCLS(ns);
 const database = config.DATABASE;
 const Op = Sequelize.Op;
 database.operatorsAliases = {

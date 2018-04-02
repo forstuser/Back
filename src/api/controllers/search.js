@@ -15,7 +15,7 @@ class SearchController {
 
 	static retrieveSearch(request, reply) {
 		const user = shared.verifyAuthorization(request.headers);
-    if (request.pre.userExist === '') {
+    if (request.pre.userExist === 0) {
       return reply({
         status: false,
         message: 'Inactive User',

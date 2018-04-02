@@ -47,6 +47,10 @@ var _moment = require('moment');
 
 var _moment2 = _interopRequireDefault(_moment);
 
+var _bluebird = require('bluebird');
+
+var _bluebird2 = _interopRequireDefault(_bluebird);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
@@ -71,7 +75,7 @@ var DashboardAdaptor = function () {
   _createClass(DashboardAdaptor, [{
     key: 'retrieveDashboardResult',
     value: function retrieveDashboardResult(user, request) {
-      return Promise.all([this.filterUpcomingService(user, request), this.prepareInsightData(user, request), this.retrieveRecentSearch(user), this.modals.mailBox.count({ where: { user_id: user.id || user.ID, status_id: 4 } }), this.modals.products.count({
+      return _bluebird2.default.all([this.filterUpcomingService(user, request), this.prepareInsightData(user, request), this.retrieveRecentSearch(user), this.modals.mailBox.count({ where: { user_id: user.id || user.ID, status_id: 4 } }), this.modals.products.count({
         where: {
           user_id: user.id || user.ID,
           status_type: [5, 8]
@@ -226,7 +230,7 @@ var DashboardAdaptor = function () {
           request = parameters.request;
 
       if (!isNewUser) {
-        return Promise.all([this.modals.products.count({
+        return _bluebird2.default.all([this.modals.products.count({
           where: {
             user_id: user.id || user.ID,
             status_type: [5, 8, 11]
@@ -288,7 +292,7 @@ var DashboardAdaptor = function () {
   }, {
     key: 'filterUpcomingService',
     value: function filterUpcomingService(user, request) {
-      return Promise.all([this.amcAdaptor.retrieveAMCs({
+      return _bluebird2.default.all([this.amcAdaptor.retrieveAMCs({
         user_id: user.id || user.ID,
         status_type: [5, 11],
         expiry_date: {
@@ -446,7 +450,7 @@ var DashboardAdaptor = function () {
   }, {
     key: 'prepareInsightData',
     value: function prepareInsightData(user, request) {
-      return Promise.all([this.productAdaptor.retrieveProducts({
+      return _bluebird2.default.all([this.productAdaptor.retrieveProducts({
         status_type: [5, 11],
         user_id: user.id || user.ID,
         document_date: {
@@ -489,7 +493,7 @@ var DashboardAdaptor = function () {
           $gte: _moment2.default.utc().startOf('M')
         }
       })]).then(function (results) {
-        return [].concat(_toConsumableArray(results[0]), _toConsumableArray(results[1]), _toConsumableArray(results[2]), _toConsumableArray(results[3]), _toConsumableArray(results[4]), _toConsumableArray(results[5]));
+        return _bluebird2.default.all([].concat(_toConsumableArray(results[0]), _toConsumableArray(results[1]), _toConsumableArray(results[2]), _toConsumableArray(results[3]), _toConsumableArray(results[4]), _toConsumableArray(results[5])));
       });
     }
   }, {

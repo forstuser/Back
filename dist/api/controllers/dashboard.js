@@ -52,7 +52,7 @@ var DashboardController = function () {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist && !request.pre.forceUpdate) {
         return reply(dashboardAdaptor.retrieveDashboardResult(user, request)).code(200);
-      } else if (request.pre.userExist === '') {
+      } else if (request.pre.userExist === 0) {
         return reply({
           status: false,
           message: 'Inactive User',
@@ -80,7 +80,7 @@ var DashboardController = function () {
       console.log(language);
       if (request.pre.userExist && !request.pre.forceUpdate) {
         return reply(eHomeAdaptor.prepareEHomeResult(user, request, language)).code(200);
-      } else if (request.pre.userExist === '') {
+      } else if (request.pre.userExist === 0) {
         return reply({
           status: false,
           message: 'Inactive User',
@@ -104,7 +104,7 @@ var DashboardController = function () {
     key: 'getProductsInCategory',
     value: function getProductsInCategory(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (request.pre.userExist === '') {
+      if (request.pre.userExist === 0) {
         return reply({
           status: false,
           message: 'Inactive User',
@@ -141,7 +141,7 @@ var DashboardController = function () {
     key: 'updateNotificationStatus',
     value: function updateNotificationStatus(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (request.pre.userExist === '') {
+      if (request.pre.userExist === 0) {
         return reply({
           status: false,
           message: 'Inactive User',
@@ -166,7 +166,7 @@ var DashboardController = function () {
     key: 'getMailbox',
     value: function getMailbox(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (request.pre.userExist === '') {
+      if (request.pre.userExist === 0) {
         return reply({
           status: false,
           message: 'Inactive User',

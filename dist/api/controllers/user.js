@@ -122,11 +122,18 @@ var loginOrRegisterUser = function loginOrRegisterUser(parameters) {
   var selected_language = request.language;
   var token = void 0;
   var updatedUser = void 0;
-  return userAdaptor.loginOrRegister(userWhere, userInput).then(function (userData) {
+  return _bluebird2.default.try(function () {
+    return userAdaptor.loginOrRegister(userWhere, userInput);
+  }).then(function (userData) {
     if (!userData[1]) {
-      userData[0].updateAttributes(userInput);
+      return _bluebird2.default.all([_bluebird2.default.try(function () {
+        return userData[0].updateAttributes(userInput);
+      }), userData[1]]);
     }
 
+    return _bluebird2.default.all([userData[0], userData[1]]);
+  }).then(function (userData) {
+    console.log('\n\n\n\n\n User Data', JSON.stringify({ userData: userData }));
     updatedUser = userData[0].toJSON();
 
     if (!updatedUser.email_verified && updatedUser.email) {
@@ -202,7 +209,7 @@ var UserController = function () {
         message: 'success',
         forceUpdate: request.pre.forceUpdate
       };
-      if (request.pre.userExist === '') {
+      if (request.pre.userExist === 0) {
         return reply({
           status: false,
           message: 'Inactive User',
@@ -652,7 +659,7 @@ var UserController = function () {
         message: 'success',
         forceUpdate: request.pre.forceUpdate
       };
-      if ((request.pre.userExist || request.pre.userExist === '') && !request.pre.forceUpdate) {
+      if ((request.pre.userExist || request.pre.userExist === 0) && !request.pre.forceUpdate) {
         if (request.payload && request.payload.fcmId) {
           fcmManager.deleteFcmDetails({
             user_id: user.id || user.ID,
@@ -698,7 +705,7 @@ var UserController = function () {
             forceUpdate: request.pre.forceUpdate
           });
         });
-      } else if (request.pre.userExist === '') {
+      } else if (request.pre.userExist === 0) {
         return reply({
           status: false,
           message: 'Inactive User',
@@ -706,13 +713,13 @@ var UserController = function () {
         }).code(402);
       } else if (!request.pre.userExist) {
         return reply({
-          message: 'Invalid Token',
+          message: 'Invalid PIN',
           status: false,
           forceUpdate: request.pre.forceUpdate
         }).code(401);
       } else {
         return reply({
-          message: 'Forbidden',
+          message: 'Invalid PIN',
           status: false,
           forceUpdate: request.pre.forceUpdate
         });
@@ -724,7 +731,7 @@ var UserController = function () {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist && !request.pre.forceUpdate) {
         return reply(userAdaptor.retrieveUserProfile(user, request));
-      } else if (request.pre.userExist === '') {
+      } else if (request.pre.userExist === 0) {
         return reply({
           status: false,
           message: 'Inactive User',
@@ -746,7 +753,7 @@ var UserController = function () {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist && !request.pre.forceUpdate) {
         return userAdaptor.updateUserProfile(user, request, reply);
-      } else if (request.pre.userExist === '') {
+      } else if (request.pre.userExist === 0) {
         return reply({
           status: false,
           message: 'Inactive User',
@@ -766,7 +773,7 @@ var UserController = function () {
     key: 'retrieveNearBy',
     value: function retrieveNearBy(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (request.pre.userExist === '') {
+      if (request.pre.userExist === 0) {
         return reply({
           status: false,
           message: 'Inactive User',

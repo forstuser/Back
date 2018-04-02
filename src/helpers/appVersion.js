@@ -108,24 +108,22 @@ const updateUserActiveStatus = (request, reply) => {
             })]).then((item) => {
             console.log(
                 `User updated detail is as follow ${JSON.stringify(item[0])}`);
-            MODAL.sequelize;
             return reply(true);
           }).catch((err) => {
             console.log(
                 `Error on ${new Date()} for user ${user.mobile_no} is as follow: \n \n ${err}`);
-            MODAL.logs.create({
+            return MODAL.logs.create({
               api_action: request.method,
               api_path: request.url.pathname,
               log_type: 2,
               user_id: user.id || user.ID,
               log_content: JSON.stringify(err),
-            });
-            return reply(false);
+            }).then(() => reply(false));
           });
         } else {
           console.log(
               `User ${user.mobile_no} inactive for more than 10 minutes`);
-          return reply('');
+          return reply(0);
         }
       } else {
         console.log(`User ${user.mobile_no} doesn't exist`);
@@ -157,7 +155,6 @@ const hasMultipleAccounts = (request, reply) => {
       if (userCounts > 1) {
         return reply(true);
       }
-
       return reply(false);
     }).catch((err) => {
       console.log(

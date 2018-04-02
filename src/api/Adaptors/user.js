@@ -6,6 +6,7 @@ import validator from 'validator';
 import NotificationAdaptor from './notification';
 import _ from 'lodash';
 import moment from 'moment/moment';
+import Promise from 'bluebird';
 
 /**
  * This is being used to validate email address.
@@ -98,13 +99,13 @@ class UserAdaptor {
           ],
         });
       }
-      result.updateAttributes({
-        fb_id: defaultObject.fb_id,
-        last_active_date: moment.utc(),
-        last_api: defaultObject.last_api,
-      });
 
-      return [result, true];
+      return Promise.all([
+        Promise.try(() => result.updateAttributes({
+          fb_id: defaultObject.fb_id,
+          last_active_date: moment.utc(),
+          last_api: defaultObject.last_api,
+        })), true]);
     });
   }
 
@@ -154,7 +155,7 @@ class UserAdaptor {
           'latitude',
           'longitude',
           'image_name',
-            'password',
+          'password',
           [
             this.modals.sequelize.fn('CONCAT', '/consumer/',
                 this.modals.sequelize.col('id'), '/images'), 'imageUrl'],
@@ -332,7 +333,8 @@ class UserAdaptor {
    * @param filterOptions
    */
   updateUserDetail(updateValues, filterOptions) {
-    return this.modals.users.update(updateValues, filterOptions).catch(console.log);
+    return this.modals.users.update(updateValues, filterOptions).
+        catch(console.log);
   }
 
   /**

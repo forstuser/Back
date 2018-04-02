@@ -304,7 +304,7 @@ class GeneralController {
                 user.ID} is as follow: \n \n ${err}`);
             return reply({status: false}).code(200);
           });
-    } else if (request.pre.userExist === '') {
+    } else if (request.pre.userExist === 0) {
       return reply({
         status: false,
         message: 'Inactive User',
@@ -528,7 +528,7 @@ class GeneralController {
             user.ID} is as follow: \n \n ${err}`);
         return reply({status: false}).code(200);
       });
-    } else if (request.pre.userExist === '') {
+    } else if (request.pre.userExist === 0) {
       return reply({
         status: false,
         message: 'Inactive User',
@@ -567,7 +567,7 @@ class GeneralController {
             user.ID} is as follow: \n \n ${err}`);
         return reply({status: false}).code(200);
       });
-    } else if (request.pre.userExist === '') {
+    } else if (request.pre.userExist === 0) {
       return reply({
         status: false,
         message: 'Inactive User',
@@ -608,7 +608,7 @@ class GeneralController {
             user.ID} is as follow: \n \n ${err}`);
         return reply({status: false}).code(200);
       });
-    } else if (request.pre.userExist === '') {
+    } else if (request.pre.userExist === 0) {
       return reply({
         status: false,
         message: 'Inactive User',
@@ -629,7 +629,7 @@ class GeneralController {
     }
   }
 
-  static intializeUserProduct(request, reply) {
+  static initializeUserProduct(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
 
     if (request.pre.userExist && !request.pre.forceUpdate) {
@@ -704,7 +704,7 @@ class GeneralController {
           forceUpdate: request.pre.forceUpdate,
         }).code(200);
       });
-    } else if (request.pre.userExist === '') {
+    } else if (request.pre.userExist === 0) {
       return reply({
         status: false,
         message: 'Inactive User',
@@ -748,7 +748,7 @@ class GeneralController {
           forceUpdate: request.pre.forceUpdate,
         });
       });
-    } else if (request.pre.userExist === '') {
+    } else if (request.pre.userExist === 0) {
       return reply({
         status: false,
         message: 'Inactive User',
@@ -795,7 +795,7 @@ class GeneralController {
         });
       });
 
-    } else if (request.pre.userExist === '') {
+    } else if (request.pre.userExist === 0) {
       return reply({
         status: false,
         message: 'Inactive User',

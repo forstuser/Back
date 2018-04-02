@@ -1640,7 +1640,7 @@ function prepareGeneralRoutes(generalController, generalRoutes) {
             assign: 'userExist',
           },
         ],
-        handler: GeneralController.intializeUserProduct,
+        handler: GeneralController.initializeUserProduct,
         description: 'Create Product.',
         validate: {
           payload: {
@@ -2067,7 +2067,7 @@ function prepareProductItemRoutes(productItemController, productItemRoutes) {
 
 function prepareCalendarServiceRoutes(calendarController, calendarRoutes) {
 //= ========================
-  // Product Routes
+  // Calendar Item Routes
   //= ========================
 
   if (calendarController) {
@@ -2117,6 +2117,7 @@ function prepareCalendarServiceRoutes(calendarController, calendarRoutes) {
           payload: {
             product_name: [joi.string(), joi.allow(null)],
             provider_name: [joi.string(), joi.allow(null)],
+            provider_number: [joi.string(), joi.allow(null)],
             wages_type: [joi.number(), joi.allow(null)],
             selected_days: [
               joi.array().items(joi.number()).required().min(0),
@@ -2279,6 +2280,7 @@ function prepareCalendarServiceRoutes(calendarController, calendarRoutes) {
           payload: {
             product_name: [joi.string(), joi.allow(null)],
             provider_name: [joi.string(), joi.allow(null)],
+            provider_number: [joi.string(), joi.allow(null)],
           },
         },
       },

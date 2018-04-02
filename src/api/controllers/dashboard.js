@@ -25,7 +25,7 @@ class DashboardController {
     if (request.pre.userExist && !request.pre.forceUpdate) {
       return reply(dashboardAdaptor.retrieveDashboardResult(user, request)).
           code(200);
-    } else if (request.pre.userExist === '') {
+    } else if (request.pre.userExist === 0) {
       return reply({
         status: false,
         message: 'Inactive User',
@@ -53,7 +53,7 @@ class DashboardController {
     if (request.pre.userExist && !request.pre.forceUpdate) {
       return reply(eHomeAdaptor.prepareEHomeResult(user, request, language)).
           code(200);
-    } else if (request.pre.userExist === '') {
+    } else if (request.pre.userExist === 0) {
       return reply({
         status: false,
         message: 'Inactive User',
@@ -76,7 +76,7 @@ class DashboardController {
 
   static getProductsInCategory(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (request.pre.userExist === '') {
+    if (request.pre.userExist === 0) {
       return reply({
         status: false,
         message: 'Inactive User',
@@ -117,7 +117,7 @@ class DashboardController {
 
   static updateNotificationStatus(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (request.pre.userExist === '') {
+    if (request.pre.userExist === 0) {
       return reply({
         status: false,
         message: 'Inactive User',
@@ -144,7 +144,7 @@ class DashboardController {
 
   static getMailbox(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (request.pre.userExist === '') {
+    if (request.pre.userExist === 0) {
       return reply({
         status: false,
         message: 'Inactive User',

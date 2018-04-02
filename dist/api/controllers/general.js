@@ -302,7 +302,7 @@ var GeneralController = function () {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
           return reply({ status: false }).code(200);
         });
-      } else if (request.pre.userExist === '') {
+      } else if (request.pre.userExist === 0) {
         return reply({
           status: false,
           message: 'Inactive User',
@@ -450,7 +450,7 @@ var GeneralController = function () {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
           return reply({ status: false }).code(200);
         });
-      } else if (request.pre.userExist === '') {
+      } else if (request.pre.userExist === 0) {
         return reply({
           status: false,
           message: 'Inactive User',
@@ -488,7 +488,7 @@ var GeneralController = function () {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
           return reply({ status: false }).code(200);
         });
-      } else if (request.pre.userExist === '') {
+      } else if (request.pre.userExist === 0) {
         return reply({
           status: false,
           message: 'Inactive User',
@@ -528,7 +528,7 @@ var GeneralController = function () {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
           return reply({ status: false }).code(200);
         });
-      } else if (request.pre.userExist === '') {
+      } else if (request.pre.userExist === 0) {
         return reply({
           status: false,
           message: 'Inactive User',
@@ -549,8 +549,8 @@ var GeneralController = function () {
       }
     }
   }, {
-    key: 'intializeUserProduct',
-    value: function intializeUserProduct(request, reply) {
+    key: 'initializeUserProduct',
+    value: function initializeUserProduct(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
 
       if (request.pre.userExist && !request.pre.forceUpdate) {
@@ -601,7 +601,7 @@ var GeneralController = function () {
             forceUpdate: request.pre.forceUpdate
           }).code(200);
         });
-      } else if (request.pre.userExist === '') {
+      } else if (request.pre.userExist === 0) {
         return reply({
           status: false,
           message: 'Inactive User',
@@ -645,7 +645,7 @@ var GeneralController = function () {
             forceUpdate: request.pre.forceUpdate
           });
         });
-      } else if (request.pre.userExist === '') {
+      } else if (request.pre.userExist === 0) {
         return reply({
           status: false,
           message: 'Inactive User',
@@ -692,7 +692,7 @@ var GeneralController = function () {
             forceUpdate: request.pre.forceUpdate
           });
         });
-      } else if (request.pre.userExist === '') {
+      } else if (request.pre.userExist === 0) {
         return reply({
           status: false,
           message: 'Inactive User',

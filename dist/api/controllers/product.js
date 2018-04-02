@@ -38,7 +38,7 @@ var ProductController = function () {
     key: 'createProduct',
     value: function createProduct(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (request.pre.userExist === '') {
+      if (request.pre.userExist === 0) {
         return reply({
           status: false,
           message: 'Inactive User',
@@ -118,7 +118,7 @@ var ProductController = function () {
     key: 'deleteProduct',
     value: function deleteProduct(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (request.pre.userExist === '') {
+      if (request.pre.userExist === 0) {
         return reply({
           status: false,
           message: 'Inactive User',
@@ -175,7 +175,7 @@ var ProductController = function () {
     key: 'updateProduct',
     value: function updateProduct(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (request.pre.userExist === '') {
+      if (request.pre.userExist === 0) {
         return reply({
           status: false,
           message: 'Inactive User',
@@ -268,7 +268,7 @@ var ProductController = function () {
     key: 'updateUserReview',
     value: function updateUserReview(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (request.pre.userExist === '') {
+      if (request.pre.userExist === 0) {
         return reply({
           status: false,
           message: 'Inactive User',
@@ -301,7 +301,7 @@ var ProductController = function () {
     key: 'retrieveProductDetail',
     value: function retrieveProductDetail(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (request.pre.userExist === '') {
+      if (request.pre.userExist === 0) {
         return reply({
           status: false,
           message: 'Inactive User',
@@ -330,7 +330,7 @@ var ProductController = function () {
     key: 'retrieveCenterProducts',
     value: function retrieveCenterProducts(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (request.pre.userExist === '') {
+      if (request.pre.userExist === 0) {
         return reply({
           status: false,
           message: 'Inactive User',

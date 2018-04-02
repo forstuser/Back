@@ -53,7 +53,7 @@ export default {
     logging: process.env.NODE_ENV !== 'production',
     port: process.env.DATABASE_PORT,
     pool: {
-      max: 300,
+      max: 25,
       min: 0,
       idle: 10000,
       acquire: 30000,

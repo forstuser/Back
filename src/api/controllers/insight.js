@@ -13,7 +13,7 @@ class InsightController {
 
   static retrieveCategoryWiseInsight(request, reply) {
 		const user = shared.verifyAuthorization(request.headers);
-    if (request.pre.userExist === '') {
+    if (request.pre.userExist === 0) {
       return reply({
         status: false,
         message: 'Inactive User',
@@ -40,7 +40,7 @@ class InsightController {
 
 	static retrieveInsightForSelectedCategory(request, reply) {
 		const user = shared.verifyAuthorization(request.headers);
-    if (request.pre.userExist === '') {
+    if (request.pre.userExist === 0) {
       return reply({
         status: false,
         message: 'Inactive User',

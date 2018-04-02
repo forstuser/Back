@@ -9,6 +9,9 @@ exports.default = function (sequelize, DataTypes) {
     provider_name: {
       type: DataTypes.STRING
     },
+    provider_number: {
+      type: DataTypes.STRING
+    },
     product_name: {
       type: DataTypes.STRING
     },

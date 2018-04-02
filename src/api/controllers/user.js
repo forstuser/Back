@@ -59,72 +59,78 @@ let loginOrRegisterUser = parameters => {
   const selected_language = request.language;
   let token;
   let updatedUser;
-  return userAdaptor.loginOrRegister(userWhere,
-      userInput).then((userData) => {
-    if (!userData[1]) {
-      userData[0].updateAttributes(userInput);
-    }
+  return Promise.try(() => userAdaptor.loginOrRegister(userWhere, userInput)).
+      then((userData) => {
+        if (!userData[1]) {
+          return Promise.all([Promise.try(() => userData[0].updateAttributes(userInput)), userData[1]]);
+        }
 
-    updatedUser = userData[0].toJSON();
-
-    if ((!updatedUser.email_verified) && (updatedUser.email)) {
-      NotificationAdaptor.sendVerificationMail(updatedUser.email,
-          updatedUser);
-    }
-
-    if (trueObject.ImageLink) {
-      UserController.uploadTrueCallerImage(trueObject, updatedUser);
-    }
-
-    if (request.payload.fcmId) {
-      fcmManager.insertFcmDetails({
-        userId: updatedUser.id || updatedUser.ID,
-        fcmId: request.payload.fcmId,
-        platformId: request.payload.platform || 1,
-        selected_language,
-      }).then((data) => {
-        console.log(data);
+        return Promise.all([userData[0], userData[1]]);
       }).
-          catch((err) =>
-              console.log(
-                  `Error on ${new Date()} for user ${updatedUser.id ||
-                  updatedUser.ID} is as follow: \n ${err}`));
-    }
+      then((userData) => {
+        console.log('\n\n\n\n\n User Data', JSON.stringify({userData}));
+        updatedUser = userData[0].toJSON();
 
-    trackTransaction(request.payload.transactionId, updatedUser.id);
-    replyObject.authorization = `bearer ${authentication.generateToken(
-        userData[0]).token}`;
-    token = replyObject.authorization;
-    return dashboardAdaptor.prepareDashboardResult({
-      isNewUser: userData[1],
-      user: userData[0].toJSON(),
-      token: replyObject.authorization,
-      request,
-    });
-  }).then((result) => {
-    return reply(result).
-        code(201).
-        header('authorization', replyObject.authorization);
-  }).catch((err) => {
-    console.log(
-        `Error on ${new Date()} for user ${updatedUser.id ||
-        updatedUser.ID} is as follow: \n \n ${err}`);
-    if (err.authorization) {
-      return reply({status: false, message: 'Unable to Login User', err}).
-          code(401).
-          header('authorization', replyObject.authorization);
-    }
+        if ((!updatedUser.email_verified) && (updatedUser.email)) {
+          NotificationAdaptor.sendVerificationMail(updatedUser.email,
+              updatedUser);
+        }
 
-    return reply({
-      status: false,
-      authorization: token,
-      message: 'Unable to Login User',
-      showDashboard: false,
-      err,
-      forceUpdate: request.pre.forceUpdate,
-    }).code(401).
-        header('authorization', replyObject.authorization);
-  });
+        if (trueObject.ImageLink) {
+          UserController.uploadTrueCallerImage(trueObject, updatedUser);
+        }
+
+        if (request.payload.fcmId) {
+          fcmManager.insertFcmDetails({
+            userId: updatedUser.id || updatedUser.ID,
+            fcmId: request.payload.fcmId,
+            platformId: request.payload.platform || 1,
+            selected_language,
+          }).then((data) => {
+            console.log(data);
+          }).
+              catch((err) =>
+                  console.log(
+                      `Error on ${new Date()} for user ${updatedUser.id ||
+                      updatedUser.ID} is as follow: \n ${err}`));
+        }
+
+        trackTransaction(request.payload.transactionId, updatedUser.id);
+        replyObject.authorization = `bearer ${authentication.generateToken(
+            userData[0]).token}`;
+        token = replyObject.authorization;
+        return dashboardAdaptor.prepareDashboardResult({
+          isNewUser: userData[1],
+          user: userData[0].toJSON(),
+          token: replyObject.authorization,
+          request,
+        });
+      }).
+      then((result) => {
+        return reply(result).
+            code(201).
+            header('authorization', replyObject.authorization);
+      }).
+      catch((err) => {
+        console.log(
+            `Error on ${new Date()} for user ${updatedUser.id ||
+            updatedUser.ID} is as follow: \n \n ${err}`);
+        if (err.authorization) {
+          return reply({status: false, message: 'Unable to Login User', err}).
+              code(401).
+              header('authorization', replyObject.authorization);
+        }
+
+        return reply({
+          status: false,
+          authorization: token,
+          message: 'Unable to Login User',
+          showDashboard: false,
+          err,
+          forceUpdate: request.pre.forceUpdate,
+        }).code(401).
+            header('authorization', replyObject.authorization);
+      });
 };
 
 class UserController {
@@ -147,7 +153,7 @@ class UserController {
       message: 'success',
       forceUpdate: request.pre.forceUpdate,
     };
-    if (request.pre.userExist === '') {
+    if (request.pre.userExist === 0) {
       return reply({
         status: false,
         message: 'Inactive User',
@@ -627,7 +633,7 @@ class UserController {
       message: 'success',
       forceUpdate: request.pre.forceUpdate,
     };
-    if ((request.pre.userExist || request.pre.userExist === '') &&
+    if ((request.pre.userExist || request.pre.userExist === 0) &&
         !request.pre.forceUpdate) {
       if (request.payload && request.payload.fcmId) {
         fcmManager.deleteFcmDetails({
@@ -676,7 +682,7 @@ class UserController {
             status: true,
             forceUpdate: request.pre.forceUpdate,
           }));
-    } else if (request.pre.userExist === '') {
+    } else if (request.pre.userExist === 0) {
       return reply({
         status: false,
         message: 'Inactive User',
@@ -685,14 +691,14 @@ class UserController {
     } else if (!request.pre.userExist) {
       return reply(
           {
-            message: 'Invalid Token',
+            message: 'Invalid PIN',
             status: false,
             forceUpdate: request.pre.forceUpdate,
           }).
           code(401);
     } else {
       return reply({
-        message: 'Forbidden',
+        message: 'Invalid PIN',
         status: false,
         forceUpdate: request.pre.forceUpdate,
       });
@@ -703,7 +709,7 @@ class UserController {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
       return reply(userAdaptor.retrieveUserProfile(user, request));
-    } else if (request.pre.userExist === '') {
+    } else if (request.pre.userExist === 0) {
       return reply({
         status: false,
         message: 'Inactive User',
@@ -726,7 +732,7 @@ class UserController {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
       return userAdaptor.updateUserProfile(user, request, reply);
-    } else if (request.pre.userExist === '') {
+    } else if (request.pre.userExist === 0) {
       return reply({
         status: false,
         message: 'Inactive User',
@@ -747,7 +753,7 @@ class UserController {
 
   static retrieveNearBy(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (request.pre.userExist === '') {
+    if (request.pre.userExist === 0) {
       return reply({
         status: false,
         message: 'Inactive User',

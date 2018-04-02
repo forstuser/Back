@@ -207,13 +207,13 @@ function preparePaymentDetails(parameters) {
     if (serviceCalculationBody.quantity || serviceCalculationBody.quantity === 0) {
         total_amount = serviceCalculationBody.quantity * total_amount;
     }
-
+    total_amount = total_amount.toFixed(2);
     return {
         start_date: start_date,
         end_date: end_date,
         updated_by: user.id || user.ID,
         status_type: 1,
-        total_amount: total_amount,
+        total_amount: parseFloat(total_amount),
         total_days: daysInPeriod,
         total_units: serviceCalculationBody.quantity ? daysInPeriod * serviceCalculationBody.quantity : 0,
         amount_paid: 0

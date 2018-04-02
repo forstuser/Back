@@ -35,7 +35,7 @@ class ProductItemController {
 
   static updateRepair(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (request.pre.userExist === '') {
+    if (request.pre.userExist === 0) {
       return reply({
         status: false,
         message: 'Inactive User',
@@ -131,7 +131,7 @@ class ProductItemController {
 
   static deleteRepair(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (request.pre.userExist === '') {
+    if (request.pre.userExist === 0) {
       return reply({
         status: false,
         message: 'Inactive User',
@@ -166,7 +166,7 @@ class ProductItemController {
 
   static updateInsurance(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (request.pre.userExist === '') {
+    if (request.pre.userExist === 0) {
       return reply({
         status: false,
         message: 'Inactive User',
@@ -302,7 +302,7 @@ class ProductItemController {
 
   static deleteInsurance(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (request.pre.userExist === '') {
+    if (request.pre.userExist === 0) {
       return reply({
         status: false,
         message: 'Inactive User',
@@ -338,7 +338,7 @@ class ProductItemController {
 
   static updateAmc(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (request.pre.userExist === '') {
+    if (request.pre.userExist === 0) {
       return reply({
         status: false,
         message: 'Inactive User',
@@ -465,7 +465,7 @@ class ProductItemController {
 
   static deleteAMC(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (request.pre.userExist === '') {
+    if (request.pre.userExist === 0) {
       return reply({
         status: false,
         message: 'Inactive User',
@@ -500,7 +500,7 @@ class ProductItemController {
 
   static updatePUC(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (request.pre.userExist === '') {
+    if (request.pre.userExist === 0) {
       return reply({
         status: false,
         message: 'Inactive User',
@@ -626,7 +626,7 @@ class ProductItemController {
 
   static deletePUC(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (request.pre.userExist === '') {
+    if (request.pre.userExist === 0) {
       return reply({
         status: false,
         message: 'Inactive User',
@@ -661,7 +661,7 @@ class ProductItemController {
 
   static updateWarranty(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (request.pre.userExist === '') {
+    if (request.pre.userExist === 0) {
       return reply({
         status: false,
         message: 'Inactive User',
@@ -801,7 +801,7 @@ class ProductItemController {
 
   static deleteWarranty(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (request.pre.userExist === '') {
+    if (request.pre.userExist === 0) {
       return reply({
         status: false,
         message: 'Inactive User',

@@ -27,6 +27,10 @@ var _moment = require('moment/moment');
 
 var _moment2 = _interopRequireDefault(_moment);
 
+var _bluebird = require('bluebird');
+
+var _bluebird2 = _interopRequireDefault(_bluebird);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -104,13 +108,14 @@ var UserAdaptor = function () {
             attributes: ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', 'image_name']
           });
         }
-        result.updateAttributes({
-          fb_id: defaultObject.fb_id,
-          last_active_date: _moment2.default.utc(),
-          last_api: defaultObject.last_api
-        });
 
-        return [result, true];
+        return _bluebird2.default.all([_bluebird2.default.try(function () {
+          return result.updateAttributes({
+            fb_id: defaultObject.fb_id,
+            last_active_date: _moment2.default.utc(),
+            last_api: defaultObject.last_api
+          });
+        }), true]);
       });
     }
 
@@ -138,7 +143,7 @@ var UserAdaptor = function () {
   }, {
     key: 'retrieveUserById',
     value: function retrieveUserById(user) {
-      return Promise.all([this.modals.users.findById(user.id || user.ID, {
+      return _bluebird2.default.all([this.modals.users.findById(user.id || user.ID, {
         attributes: ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', 'location', 'latitude', 'longitude', 'image_name', 'password', [this.modals.sequelize.fn('CONCAT', '/consumer/', this.modals.sequelize.col('id'), '/images'), 'imageUrl']]
       }), this.retrieveUserAddress({
         where: {
@@ -281,7 +286,7 @@ var UserAdaptor = function () {
 
         userPromise.push(_this2.updateUserDetail(userUpdates, filterOptions));
 
-        return Promise.all(userPromise);
+        return _bluebird2.default.all(userPromise);
       }).then(function () {
         var updatedUser = userUpdates;
         if (!updatedUser.email_verified) {

@@ -157,7 +157,8 @@ export function preparePaymentDetails(parameters) {
   const daysInMonth = moment().
       isoWeekdayCalc(monthStartDate, month_end_date, selected_days);
   const daysInPeriod = moment().
-      isoWeekdayCalc(start_date.format('YYYY-MM-DD'), end_date.format('YYYY-MM-DD'),
+      isoWeekdayCalc(start_date.format('YYYY-MM-DD'),
+          end_date.format('YYYY-MM-DD'),
           selected_days);
   let unit_price = serviceCalculationBody.unit_price;
   if (wages_type === 1) {
@@ -169,13 +170,13 @@ export function preparePaymentDetails(parameters) {
       serviceCalculationBody.quantity === 0) {
     total_amount = serviceCalculationBody.quantity * total_amount;
   }
-
+  total_amount = (total_amount).toFixed(2);
   return {
     start_date,
     end_date,
     updated_by: user.id || user.ID,
     status_type: 1,
-    total_amount: total_amount,
+    total_amount: parseFloat(total_amount),
     total_days: daysInPeriod,
     total_units: serviceCalculationBody.quantity ?
         daysInPeriod * serviceCalculationBody.quantity :
