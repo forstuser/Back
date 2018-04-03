@@ -131,18 +131,17 @@ var BrandAdaptor = function () {
     value: function retrieveCategoryBrands(options) {
       return this.modals.brands.findAll({
         where: {
-          status_type: 1
+          status_type: [1, 11]
         }, include: [{
           model: this.modals.brandDetails,
           where: {
-            status_type: 1,
             category_id: options.category_id
           },
           attributes: [],
           as: 'details',
           required: true
         }],
-        attributes: [['brand_id', 'id'], ['brand_name', 'name'], ['brand_description', 'description'], [this.modals.sequelize.literal('"details"."category_id"'), 'categoryId']],
+        attributes: [['brand_id', 'id'], ['brand_name', 'name'], ['brand_description', 'description'], [this.modals.sequelize.literal('"details"."category_id"'), 'categoryId'], 'status_type', 'created_by', 'updated_by'],
         order: [['brand_index', 'desc'], ['brand_name']]
       }).then(function (result) {
         return result.map(function (item) {
@@ -180,9 +179,9 @@ var BrandAdaptor = function () {
           category_id: values.category_id
         }
       })]).then(function (result) {
+        category = result[1].toJSON();
         if (result[0]) {
           brandData = result[0].toJSON();
-          category = result[1].toJSON();
           return _this2.modals.brandDetails.findOne({
             where: {
               brand_id: brandData.brand_id,

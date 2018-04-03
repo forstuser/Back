@@ -328,8 +328,8 @@ const verifyUserEmail = (request, reply) => {
           if (userDetail) {
             request.user = userDetail;
             if (userDetail.email_verified) {
-              return reply(userDetail.email.toLowerCase() ===
-                  request.payload.email.toLowerCase());
+              return reply((userDetail.email || '').toLowerCase() ===
+                  (request.payload.email || '').toLowerCase());
             } else {
               userResult.updateAttributes({email: request.payload.email});
               return reply(true);

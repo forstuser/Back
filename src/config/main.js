@@ -58,6 +58,17 @@ export default {
       idle: 10000,
       acquire: 30000,
     },
+    retry: {
+      match: [
+        /SequelizeConnectionError/,
+        /SequelizeConnectionRefusedError/,
+        /SequelizeHostNotFoundError/,
+        /SequelizeHostNotReachableError/,
+        /SequelizeInvalidConnectionError/,
+        /SequelizeConnectionTimedOutError/,
+      ],
+      max: 999,
+    },
     operatorsAliases: {},
   },
   APP: {

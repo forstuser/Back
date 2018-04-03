@@ -318,7 +318,13 @@ class ProductAdaptor {
               `"category"."category_name"`}`),
           'categoryName'],
         [
-          this.modals.sequelize.literal('"category"."category_name"'),
+          this.modals.sequelize.literal(`"sub_category"."category_name"`),
+          'default_sub_category_name'],
+        [
+          this.modals.sequelize.literal(`"mainCategory"."category_name"`),
+          'default_masterCategoryName'],
+        [
+          this.modals.sequelize.literal(`"category"."category_name"`),
           'default_categoryName'],
         [
           this.modals.sequelize.literal(`${language ?
@@ -338,6 +344,12 @@ class ProductAdaptor {
     }).then((productResult) => {
       products = productResult.map((item) => {
         const productItem = item.toJSON();
+        productItem.sub_category_name = productItem.sub_category_name ||
+            productItem.default_sub_category_name;
+        productItem.masterCategoryName = productItem.masterCategoryName ||
+            productItem.default_masterCategoryName;
+        productItem.categoryName = productItem.categoryName ||
+            productItem.default_categoryName;
         productItem.purchaseDate = moment.utc(productItem.purchaseDate,
             moment.ISO_8601).
             startOf('days');
@@ -499,13 +511,19 @@ class ProductAdaptor {
               `"category"."category_name"`}`),
           'categoryName'],
         [
-          this.modals.sequelize.literal('"category"."category_name"'),
-          'default_categoryName'],
-        [
           this.modals.sequelize.literal(`${language ?
               `"mainCategory"."category_name_${language}"` :
               `"mainCategory"."category_name"`}`),
           'masterCategoryName'],
+        [
+          this.modals.sequelize.literal(`"sub_category"."category_name"`),
+          'default_sub_category_name'],
+        [
+          this.modals.sequelize.literal(`"mainCategory"."category_name"`),
+          'default_masterCategoryName'],
+        [
+          this.modals.sequelize.literal(`"category"."category_name"`),
+          'default_categoryName'],
         [
           this.modals.sequelize.fn('CONCAT', '/categories/',
               this.modals.sequelize.literal('"category"."category_id"'),
@@ -551,6 +569,12 @@ class ProductAdaptor {
     }).then((productResult) => productResult.map((item) => {
       const productItem = item.toJSON();
 
+      productItem.sub_category_name = productItem.sub_category_name ||
+          productItem.default_sub_category_name;
+      productItem.masterCategoryName = productItem.masterCategoryName ||
+          productItem.default_masterCategoryName;
+      productItem.categoryName = productItem.categoryName ||
+          productItem.default_categoryName;
       if (productItem.copies) {
         productItem.copies = productItem.copies.map((copyItem) => {
           copyItem.file_type = copyItem.file_type || copyItem.fileType;
@@ -817,7 +841,13 @@ class ProductAdaptor {
               `"category"."category_name"`}`),
           'categoryName'],
         [
-          this.modals.sequelize.literal('"category"."category_name"'),
+          this.modals.sequelize.literal(`"sub_category"."category_name"`),
+          'default_sub_category_name'],
+        [
+          this.modals.sequelize.literal(`"mainCategory"."category_name"`),
+          'default_masterCategoryName'],
+        [
+          this.modals.sequelize.literal(`"category"."category_name"`),
           'default_categoryName'],
         [
           this.modals.sequelize.literal(`${language ?
@@ -857,6 +887,12 @@ class ProductAdaptor {
     }).then((productResult) => {
       products = productResult.map((item) => {
         const productItem = item.toJSON();
+        productItem.sub_category_name = productItem.sub_category_name ||
+            productItem.default_sub_category_name;
+        productItem.masterCategoryName = productItem.masterCategoryName ||
+            productItem.default_masterCategoryName;
+        productItem.categoryName = productItem.categoryName ||
+            productItem.default_categoryName;
         if (productItem.copies) {
           productItem.copies = productItem.copies.map((copyItem) => {
             copyItem.file_type = copyItem.file_type || copyItem.fileType;
@@ -1254,7 +1290,13 @@ class ProductAdaptor {
               `"category"."category_name"`}`),
           'categoryName'],
         [
-          this.modals.sequelize.literal('"category"."category_name"'),
+          this.modals.sequelize.literal(`"sub_category"."category_name"`),
+          'default_sub_category_name'],
+        [
+          this.modals.sequelize.literal(`"mainCategory"."category_name"`),
+          'default_masterCategoryName'],
+        [
+          this.modals.sequelize.literal(`"category"."category_name"`),
           'default_categoryName'],
         [
           this.modals.sequelize.literal(`${language ?
@@ -1307,6 +1349,12 @@ class ProductAdaptor {
             products.sub_category_id ?
                 `/categories/${products.sub_category_id}/images/0` :
                 products.cImageURL;
+        products.sub_category_name = products.sub_category_name ||
+            products.default_sub_category_name;
+        products.masterCategoryName = products.masterCategoryName ||
+            products.default_masterCategoryName;
+        products.categoryName = products.categoryName ||
+            products.default_categoryName;
         productItem = productResult;
         if (products.copies) {
           products.copies = products.copies.map((copyItem) => {
@@ -2697,6 +2745,8 @@ class ProductAdaptor {
                 status_type: 11,
               }) :
           '');
+    } else {
+      sellerPromise.push('');
     }
     if (otherItems.repair) {
       sellerOption.seller_name.$iLike = otherItems.repair.seller_name;
@@ -2720,8 +2770,9 @@ class ProductAdaptor {
                 status_type: 11,
               }) :
           '');
+    } else {
+      sellerPromise.push('');
     }
-
     if (otherItems.puc) {
       sellerOption.seller_name.$iLike = otherItems.puc.seller_name;
       if (otherItems.puc.seller_contact) {
@@ -2742,6 +2793,8 @@ class ProductAdaptor {
                 status_type: 11,
               }) :
           '');
+    } else {
+      sellerPromise.push('');
     }
   }
 

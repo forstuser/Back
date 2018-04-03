@@ -70,7 +70,7 @@ var EHomeAdaptor = function () {
           user_id: user.id || user.ID,
           status_id: 4
         }
-      })]).then(function (result) {
+      }), this.retrieveUnProcessedBills(user)]).then(function (result) {
 
         var OtherCategory = null;
 
@@ -117,7 +117,7 @@ var EHomeAdaptor = function () {
           notificationCount: result[2],
           // categories: result[3],
           recentSearches: recentSearches,
-          /*unProcessedBills: result[0],*/
+          unProcessedBills: result[3],
           categoryList: newCategoryData,
           forceUpdate: request.pre.forceUpdate
         };
@@ -367,7 +367,7 @@ var EHomeAdaptor = function () {
       _lodash2.default.assignIn(inProgressProductOption, productOptions);
       inProgressProductOption.status_type = 8;
 
-      return Promise.all([this.categoryAdaptor.retrieveCategories(categoryOption, false, language), this.productAdaptor.retrieveProducts(productOptions, language), this.productAdaptor.retrieveProducts(inProgressProductOption, language)]).then(function (results) {
+      return Promise.all([this.categoryAdaptor.retrieveCategories(categoryOption, false, language, true), this.productAdaptor.retrieveProducts(productOptions, language), this.productAdaptor.retrieveProducts(inProgressProductOption, language)]).then(function (results) {
         return results[0].map(function (categoryItem) {
           var category = categoryItem;
           var products = _lodash2.default.chain(results[1]).map(function (productItem) {

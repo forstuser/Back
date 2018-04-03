@@ -314,7 +314,7 @@ var UserController = function () {
 
           console.log('OTP Sent over email', response[0]);
           return userAdaptor.updateUserDetail({
-            email: request.payload.email,
+            email: request.payload.email.toLowerCase(),
             email_secret: response[0],
             otp_created_at: _moment2.default.utc()
           }, {
@@ -456,7 +456,7 @@ var UserController = function () {
             replyObject.message = 'Payload verification failed';
             return reply(replyObject);
           } else {
-            userInput.email = trueObject.EmailAddress;
+            userInput.email = (trueObject.EmailAddress || '').toLowerCase();
             userInput.full_name = trueObject.Name;
             userInput.email_secret = _uuid2.default.v4();
             userInput.mobile_no = trueObject.PhoneNo;
@@ -480,14 +480,14 @@ var UserController = function () {
 
           if (fbSecret) {
             (0, _requestPromise2.default)({
-              uri: _main2.default.FB_GRAPH_ROUTE,
+              uri: _main2.default.FB_GRAPH_ROUTE + 'me?fields=id,email,name,picture{url}',
               qs: {
                 access_token: fbSecret
               },
               json: true
             }).then(function (fbResult) {
               console.log(fbResult);
-              userWhere.email = fbResult.email.toLowerCase();
+              userWhere.email = { $iLike: fbResult.email };
               userInput.email = fbResult.email.toLowerCase();
               userInput.full_name = fbResult.name;
               userInput.email_verified = true;
@@ -495,7 +495,7 @@ var UserController = function () {
               userWhere.mobile_no = userInput.mobile_no || fbResult.mobile_phone;
               userInput.fb_id = fbResult.id;
               userInput.user_status_type = 1;
-              fbResult.ImageLink = fbResult.picture.data.url;
+              fbResult.ImageLink = _main2.default.FB_GRAPH_ROUTE + '/v2.12/' + fbResult.id + '/picture?height=2000&width=2000';
               return loginOrRegisterUser({
                 userWhere: userWhere,
                 userInput: userInput,

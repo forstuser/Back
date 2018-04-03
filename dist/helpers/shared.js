@@ -184,7 +184,7 @@ function preparePaymentDetails(parameters) {
         user = parameters.user,
         currentDate = parameters.currentDate;
 
-    var monthStartDate = (0, _moment2.default)([currentYear, monthItem, 1]);
+    var monthStartDate = (0, _moment2.default)([currentYear, 0, 1]).month(monthItem);
     var month_end_date = (0, _moment2.default)([currentYear, 0, 31]).month(monthItem);
     var end_date = (0, _moment2.default)([currentYear, 0, 31]).month(monthItem);
     var start_date = effectiveDate;
@@ -202,7 +202,14 @@ function preparePaymentDetails(parameters) {
     if (wages_type === 1) {
         unit_price = unit_price / daysInMonth;
     }
-    console.log({ daysInPeriod: daysInPeriod, start_date: start_date, end_date: end_date });
+    console.log({
+        daysInPeriod: daysInPeriod,
+        start_date: start_date,
+        end_date: end_date,
+        monthStartDate: monthStartDate,
+        month_end_date: month_end_date,
+        monthItem: monthItem
+    });
     var total_amount = unit_price * daysInPeriod;
     if (serviceCalculationBody.quantity || serviceCalculationBody.quantity === 0) {
         total_amount = serviceCalculationBody.quantity * total_amount;
@@ -231,14 +238,15 @@ function monthlyPaymentCalc(parameters) {
         currentYear = parameters.currentYear,
         currentDate = parameters.currentDate;
 
-    var monthDiff = currentMth >= effectiveMth ? currentMth - effectiveMth : null;
+    var monthDiff = (0, _moment2.default)().startOf('months').diff((0, _moment2.default)(effectiveDate, _moment2.default.ISO_8601).startOf('months'), 'months');
+    console.log('\n\n\n\n\n\n\n\n\n\n monthdiff:', monthDiff);
     var monthArr = [];
-    if (monthDiff) {
-        for (var i = 0; i <= monthDiff; i++) {
-            monthArr.push(effectiveMth + i);
+    if (monthDiff > 0) {
+        for (var i = monthDiff; i >= 0; i--) {
+            monthArr.push(currentMth - i);
         }
     } else {
-        monthArr.push(effectiveMth);
+        monthArr.push(currentMth);
     }
 
     return monthArr.map(function (monthItem) {

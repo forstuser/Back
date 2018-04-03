@@ -29,8 +29,6 @@ var _main2 = _interopRequireDefault(_main);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
-
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 require('moment-weekday-calc');
@@ -139,55 +137,23 @@ var CalendarServiceController = function () {
         var currentYear = (0, _moment2.default)().year();
         var effectiveYear = effectiveDate.year();
         var servicePaymentArray = [];
-        var yearDiff = currentYear > effectiveYear ? currentYear - effectiveYear : null;
-        if (!yearDiff) {
-          var currentMth = (0, _moment2.default)().month();
-          var _currentYear = (0, _moment2.default)().year();
-          var effectiveMth = effectiveDate.month();
+        var currentMth = (0, _moment2.default)().month();
+        var effectiveMth = effectiveDate.month();
 
-          var selected_days = productBody.selected_days,
-              wages_type = productBody.wages_type;
+        var selected_days = productBody.selected_days,
+            wages_type = productBody.wages_type;
 
-          selected_days = serviceCalculationBody ? serviceCalculationBody.selected_days || selected_days : selected_days;
-          servicePaymentArray = (0, _shared.monthlyPaymentCalc)({
-            currentMth: currentMth,
-            effectiveMth: effectiveMth,
-            effectiveDate: effectiveDate,
-            selected_days: selected_days,
-            wages_type: wages_type,
-            serviceCalculationBody: serviceCalculationBody,
-            user: user,
-            currentYear: _currentYear
-          });
-        } else {
-          var yearArr = [];
-          for (var i = 0; i <= yearDiff; i++) {
-            yearArr.push(effectiveYear + i);
-          }
-          yearArr.forEach(function (currentYear) {
-            var _servicePaymentArray;
-
-            var yearStart = (0, _moment2.default)([currentYear, 0, 1]);
-            var yearEnd = (0, _moment2.default)([currentYear, 0, 31]).endOf('Y');
-            var currentMth = (0, _moment2.default)().endOf('M').diff(yearEnd, 'M') > 0 ? yearEnd.month() : (0, _moment2.default)().month();
-            var effectiveMth = currentYear > effectiveYear ? yearStart.month() : effectiveDate.month();
-            var selected_days = productBody.selected_days,
-                wages_type = productBody.wages_type;
-
-            selected_days = serviceCalculationBody ? serviceCalculationBody.selected_days || selected_days : selected_days;
-            (_servicePaymentArray = servicePaymentArray).push.apply(_servicePaymentArray, _toConsumableArray((0, _shared.monthlyPaymentCalc)({
-              currentMth: currentMth,
-              effectiveMth: effectiveMth,
-              effectiveDate: effectiveDate,
-              selected_days: selected_days,
-              wages_type: wages_type,
-              serviceCalculationBody: serviceCalculationBody,
-              user: user,
-              currentYear: currentYear
-            })));
-          });
-        }
-
+        selected_days = serviceCalculationBody ? serviceCalculationBody.selected_days || selected_days : selected_days;
+        servicePaymentArray = (0, _shared.monthlyPaymentCalc)({
+          currentMth: currentMth,
+          effectiveMth: effectiveMth,
+          effectiveDate: effectiveDate,
+          selected_days: selected_days,
+          wages_type: wages_type,
+          serviceCalculationBody: serviceCalculationBody,
+          user: user,
+          currentYear: currentYear
+        });
         return _bluebird2.default.try(function () {
           return calendarServiceAdaptor.createCalendarItem({
             productBody: productBody,
@@ -462,7 +428,7 @@ var CalendarServiceController = function () {
         return _bluebird2.default.try(function () {
           return calendarServiceAdaptor.retrieveCalendarItemList({
             user_id: user.id || user.ID
-          }, request.language);
+          }, request.language, request.query.limit, request.query.offset);
         }).then(function (items) {
           return reply({
             status: true,

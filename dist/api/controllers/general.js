@@ -106,11 +106,11 @@ var GeneralController = function () {
             });
           } else if (request.query.categoryId) {
             isBrandRequest = true;
-            return _bluebird2.default.all([categoryAdaptor.retrieveSubCategories({ category_id: request.query.categoryId }, true, request.language), categoryAdaptor.retrieveRenewalTypes({
+            return _bluebird2.default.all([categoryAdaptor.retrieveSubCategories({ category_id: request.query.categoryId }, true, request.language, user), categoryAdaptor.retrieveRenewalTypes({
               status_type: 1
             })]);
           } else if (request.query.mainCategoryId) {
-            return categoryAdaptor.retrieveCategories({ category_id: request.query.mainCategoryId }, false, request.language);
+            return categoryAdaptor.retrieveCategories({ category_id: request.query.mainCategoryId }, false, request.language, false, user);
           }
         }
 
@@ -257,6 +257,7 @@ var GeneralController = function () {
           limit: request.query.limit || 10
         };
 
+        console.log({ offset: request.query.offset });
         if (request.query.offset) {
           options.offset = request.query.offset;
         }

@@ -48,16 +48,16 @@ var CalendarServiceAdaptor = function () {
       return _bluebird2.default.try(function () {
         return _bluebird2.default.all([_this.retrieveAllCalendarServices(options, language), _this.retrieveAllQuantities(options, language)]);
       }).spread(function (calendar_services, unit_types) {
-        return _bluebird2.default.all([calendar_services.map(function (item) {
+        return [calendar_services.map(function (item) {
           var calendarServiceItem = item.toJSON();
-          calendarServiceItem.name = calendarServiceItem.name || calendarServiceItem.default_name;
-          calendarServiceItem.quantity_type = calendarServiceItem.quantity_type || calendarServiceItem.default_quantity_type;
+          calendarServiceItem.name = calendarServiceItem ? calendarServiceItem.name || calendarServiceItem.default_name : '';
+          calendarServiceItem.quantity_type = calendarServiceItem ? calendarServiceItem.quantity_type || calendarServiceItem.default_quantity_type : '';
           return calendarServiceItem;
         }), unit_types.map(function (item) {
           var unitTypes = item.toJSON();
           unitTypes.title = unitTypes.title || unitTypes.default_title;
           return unitTypes;
-        })]);
+        })];
       });
     }
   }, {
@@ -194,52 +194,59 @@ var CalendarServiceAdaptor = function () {
       }).then(function (result) {
         calendarItemList = result;
 
+        var calendarItemIds = calendarItemList.map(function (item) {
+          return item.id;
+        });
         return _bluebird2.default.all([_this4.retrieveCalendarServices({ id: calendarItemList.map(function (item) {
             return item.service_id;
-          }) }, language), _bluebird2.default.all(calendarItemList.map(function (item) {
-          return _this4.retrieveLatestServicePaymentDetails({
-            include: {
-              model: _this4.modals.service_absent_days,
-              as: 'absent_day_detail',
-              required: false
-            },
-            where: {
-              end_date: { $lte: (0, _moment2.default)().endOf('M').valueOf() },
-              ref_id: item.id
+          }) }, language), _this4.retrieveServicePaymentDetails({
+          include: {
+            model: _this4.modals.service_absent_days,
+            as: 'absent_day_detail',
+            required: false
+          },
+          where: {
+            ref_id: calendarItemIds,
+            end_date: {
+              $in: [_this4.modals.sequelize.literal('SELECT MAX("service_payment"."end_date") FROM "table_service_payment" \n                        as "service_payment" ' + (calendarItemIds.length > 0 ? 'WHERE "service_payment"."ref_id" in \n                        (' + calendarItemIds.toString() + ')' : '') + ' GROUP BY ref_id')]
             }
-          });
-        })), _bluebird2.default.all(calendarItemList.map(function (item) {
-          return _this4.retrieveLatestServiceCalculation({
-            where: {
-              ref_id: item.id
-            },
-            include: {
-              model: _this4.modals.quantities,
-              as: 'unit',
-              attributes: ['id', ['quantity_name', 'default_title'], ['' + (language ? 'quantity_name_' + language : 'quantity_name'), 'title']],
-              required: false
+          }
+        }), _this4.modals.service_calculation.findAll({
+          where: {
+            ref_id: calendarItemIds,
+            effective_date: {
+              $in: [_this4.modals.sequelize.literal('SELECT MAX("service_calc"."effective_date") FROM "table_service_calculation" \n                        as "service_calc" ' + (calendarItemIds.length > 0 ? 'WHERE "service_calc"."ref_id" in \n                        (' + calendarItemIds.toString() + ')' : '') + ' GROUP BY ref_id')]
             }
-          });
-        })), _bluebird2.default.all(calendarItemList.map(function (item) {
-          return _this4.retrieveLatestServicePaymentDetails({
-            where: {
-              ref_id: item.id
-            },
-            attributes: ['ref_id', [_this4.modals.sequelize.fn('SUM', _this4.modals.sequelize.col('total_amount')), 'total_amount']],
-            group: ['ref_id', 'end_date']
-          });
-        })), _bluebird2.default.all(calendarItemList.map(function (item) {
-          return _this4.modals.calendar_item_payment.findOne({
-            where: {
-              ref_id: item.id
-            },
-            attributes: ['ref_id', [_this4.modals.sequelize.fn('SUM', _this4.modals.sequelize.col('amount_paid')), 'total_amount_paid']],
-            group: ['ref_id']
-          });
-        }))]);
+          },
+          include: {
+            model: _this4.modals.quantities,
+            as: 'unit',
+            attributes: ['id', ['quantity_name', 'default_title'], ['' + (language ? 'quantity_name_' + language : 'quantity_name'), 'title']],
+            required: false
+          }
+        }), _this4.retrieveServicePaymentDetails({
+          where: {
+            ref_id: calendarItemIds
+          },
+          attributes: ['ref_id', [_this4.modals.sequelize.fn('SUM', _this4.modals.sequelize.col('total_amount')), 'total_amount']],
+          group: ['ref_id']
+        }), _this4.modals.calendar_item_payment.findAll({
+          where: {
+            ref_id: calendarItemIds
+          },
+          attributes: ['ref_id', [_this4.modals.sequelize.fn('SUM', _this4.modals.sequelize.col('amount_paid')), 'total_amount_paid']],
+          group: ['ref_id']
+        })]);
       }).spread(function (services, latest_payment_details, latest_calculation_details, attendance_totals, payment_totals) {
         payment_totals = payment_totals.map(function (paymentItem) {
           return paymentItem ? paymentItem.toJSON() : undefined;
+        });
+        latest_calculation_details = latest_calculation_details.map(function (calcItem) {
+          var calculationItem = calcItem.toJSON();
+          if (calculationItem.unit) {
+            calculationItem.unit.title = calculationItem.unit.title || calculationItem.unit.default_title;
+          }
+          return calculationItem;
         });
         return calendarItemList.map(function (item) {
           item.service_type = services[0].find(function (serviceItem) {
@@ -268,7 +275,7 @@ var CalendarServiceAdaptor = function () {
             attendance_total: attendance_total,
             payment_total: payment_total
           });
-          item.outstanding_amount = attendance_total - payment_total;
+          item.outstanding_amount = payment_total - attendance_total;
 
           return item;
         });
@@ -286,7 +293,11 @@ var CalendarServiceAdaptor = function () {
   }, {
     key: 'retrieveServicePaymentDetails',
     value: function retrieveServicePaymentDetails(options) {
-      return this.modals.service_payment.findAll(options);
+      return this.modals.service_payment.findAll(options).then(function (result) {
+        return result.map(function (item) {
+          return item.toJSON();
+        });
+      });
     }
   }, {
     key: 'retrieveLatestServicePaymentDetails',
@@ -443,12 +454,7 @@ var CalendarServiceAdaptor = function () {
 
         if ((0, _moment2.default)().startOf('days').diff((0, _moment2.default)(item_end_date, _moment2.default.ISO_8601), 'days') >= 0) {
           var lastItemMonth = item_end_date.month();
-          var monthDiff = (0, _moment2.default)().month() - lastItemMonth;
-          /* Logic to be build.
-          const lastItemYear = item_end_date.year();
-          const yearDiff = (moment().year() - lastItemYear);
-          if (yearDiff > 0) {
-           } else*/
+          var monthDiff = (0, _moment2.default)().startOf('months').diff((0, _moment2.default)(item_end_date, _moment2.default.ISO_8601).startOf('months'), 'months');
           if (monthDiff > 0) {
             calendarItemDetail.payment_detail[0].end_date = (0, _moment2.default)([(0, _moment2.default)().year(), 0, 31]).month(lastItemMonth);
             for (var i = 1; i <= monthDiff; i++) {
@@ -510,7 +516,7 @@ var CalendarServiceAdaptor = function () {
         payment_total = payment_total ? payment_total.toJSON() : undefined;
         var payment_total_amount = payment_total ? payment_total.total_amount_paid : 0;
 
-        calendarItemDetail.outstanding_amount = attendance_total_amount - payment_total_amount;
+        calendarItemDetail.outstanding_amount = payment_total_amount - attendance_total_amount;
         return calendarItemDetail;
       });
     }
@@ -767,65 +773,30 @@ var CalendarServiceAdaptor = function () {
             }
           });
           var effectiveDate = (0, _moment2.default)(options.effective_date, _moment2.default.ISO_8601);
-          var currentYear = (0, _moment2.default)().year();
-          var effectiveYear = effectiveDate.year();
-          var yearDiff = currentYear > effectiveYear ? currentYear - effectiveYear : null;
           var absent_date = (0, _moment2.default)(servicePayments[0].end_date, _moment2.default.ISO_8601).startOf();
           var currentDate = absent_date.diff((0, _moment2.default)().startOf('days'), 'days') > 0 ? absent_date : (0, _moment2.default)();
-          if (!yearDiff) {
-            var currentMth = currentDate.month();
-            var _currentYear2 = currentDate.year();
-            var effectiveMth = effectiveDate.month();
-            var _servicePayments$0$ca = servicePayments[0].calendar_item,
-                selected_days = _servicePayments$0$ca.selected_days,
-                wages_type = _servicePayments$0$ca.wages_type;
+          var currentMth = currentDate.month();
+          var currentYear = currentDate.year();
+          var effectiveMth = effectiveDate.month();
+          var _servicePayments$0$ca = servicePayments[0].calendar_item,
+              selected_days = _servicePayments$0$ca.selected_days,
+              wages_type = _servicePayments$0$ca.wages_type;
 
-            var serviceCalculationBody = serviceCalcList[0];
-            selected_days = serviceCalculationBody.selected_days || selected_days;
-            servicePaymentArray = (0, _shared.monthlyPaymentCalc)({
-              currentMth: currentMth,
-              effectiveMth: effectiveMth,
-              effectiveDate: effectiveDate,
-              selected_days: selected_days,
-              wages_type: wages_type,
-              serviceCalculationBody: serviceCalculationBody,
-              user: {
-                id: servicePayments[0].calendar_item.user_id
-              },
-              currentYear: _currentYear2,
-              currentDate: currentDate
-            });
-          } else {
-            var yearArr = [];
-            for (var i = 0; i <= yearDiff; i++) {
-              yearArr.push(effectiveYear + i);
-            }
-            yearArr.forEach(function (currentYear) {
-              var _servicePaymentArray2;
-
-              var yearStart = (0, _moment2.default)([currentYear, 0, 1]);
-              var yearEnd = (0, _moment2.default)([currentYear, 0, 31]).endOf('Y');
-              var currentMth = (0, _moment2.default)().endOf('M').diff(yearEnd, 'M') > 0 ? yearEnd.month() : currentDate.month();
-              var effectiveMth = currentYear > effectiveYear ? yearStart.month() : effectiveDate.month();
-              var _servicePayments$0$ca2 = servicePayments[0].calendar_item,
-                  selected_days = _servicePayments$0$ca2.selected_days,
-                  wages_type = _servicePayments$0$ca2.wages_type;
-
-              var serviceCalculationBody = serviceCalcList[0];
-              selected_days = serviceCalculationBody.selected_days || selected_days;
-              (_servicePaymentArray2 = servicePaymentArray).push.apply(_servicePaymentArray2, _toConsumableArray((0, _shared.monthlyPaymentCalc)({
-                currentMth: currentMth,
-                effectiveMth: effectiveMth,
-                effectiveDate: effectiveDate, selected_days: selected_days, wages_type: wages_type,
-                serviceCalculationBody: serviceCalculationBody,
-                user: {
-                  id: servicePayments[0].calendar_item.user_id
-                },
-                currentYear: currentYear,
-                currentDate: currentDate
-              })));
-            });
-          }
+          var serviceCalculationBody = serviceCalcList[0];
+          selected_days = serviceCalculationBody.selected_days || selected_days;
+          servicePaymentArray = (0, _shared.monthlyPaymentCalc)({
+            currentMth: currentMth,
+            effectiveMth: effectiveMth,
+            effectiveDate: effectiveDate,
+            selected_days: selected_days,
+            wages_type: wages_type,
+            serviceCalculationBody: serviceCalculationBody,
+            user: {
+              id: servicePayments[0].calendar_item.user_id
+            },
+            currentYear: currentYear,
+            currentDate: currentDate
+          });
         }
 
         console.log('\n\n\n\n\n\n\n\n', JSON.stringify(servicePaymentArray));
@@ -865,7 +836,7 @@ var CalendarServiceAdaptor = function () {
           absentDetailToUpdate: absentDetailToUpdate
         });
       }).then(function (result) {
-        return _bluebird2.default.all(result[0].length > 0 ? result[0].map(function (absentItem) {
+        return _bluebird2.default.all(result.length > 0 ? result.map(function (absentItem) {
           return _this9.markAbsentForItem({ where: absentItem });
         }) : []);
       });
@@ -876,22 +847,23 @@ var CalendarServiceAdaptor = function () {
       var _this10 = this;
 
       var servicePayments = parameters.servicePayments,
-          serviceCalcList = parameters.serviceCalcList,
-          absentDetailToUpdate = parameters.absentDetailToUpdate;
+          serviceCalcList = parameters.serviceCalcList;
 
-      return _bluebird2.default.all([absentDetailToUpdate].concat(_toConsumableArray(servicePayments.map(function (paymentItem) {
+      var absentDetailToUpdate = [];
+      return _bluebird2.default.all([].concat(_toConsumableArray(servicePayments.map(function (paymentItem) {
         var start_date = (0, _moment2.default)(paymentItem.start_date, _moment2.default.ISO_8601).valueOf();
         var end_date = (0, _moment2.default)(paymentItem.end_date, _moment2.default.ISO_8601).valueOf();
         var prevServiceCalc = serviceCalcList.find(function (calcItem) {
-          var effective_date = (0, _moment2.default)(calcItem.effective_date, _moment2.default.ISO_8601).valueOf();
-          return effective_date <= start_date;
+          var effective_date = (0, _moment2.default)(calcItem.effective_date, _moment2.default.ISO_8601);
+          return effective_date.diff((0, _moment2.default)(start_date), 'days') <= 0;
         });
 
         var isPrevCalcExist = false;
         var serviceCalc = serviceCalcList.filter(function (calcItem) {
-          var effective_date = (0, _moment2.default)(calcItem.effective_date, _moment2.default.ISO_8601).valueOf();
-          return effective_date >= start_date && effective_date <= end_date;
+          var effective_date = (0, _moment2.default)(calcItem.effective_date, _moment2.default.ISO_8601);
+          return effective_date.diff((0, _moment2.default)(start_date), 'days') >= 0 && effective_date.diff((0, _moment2.default)(end_date), 'days') <= 0;
         });
+
         serviceCalc = serviceCalc.map(function (calcItem) {
           if (prevServiceCalc && prevServiceCalc.id === calcItem.id) {
             isPrevCalcExist = true;
@@ -904,175 +876,190 @@ var CalendarServiceAdaptor = function () {
           serviceCalc.push(prevServiceCalc);
           serviceCalc = _lodash2.default.orderBy(serviceCalc, ['effective_date'], ['desc']);
         }
-        return _bluebird2.default.try(function () {
-          return setImmediate(function () {
-            var total_amount = 0;
-            var total_days = 0;
-            var total_units = 0;
+        /*return Promise.try(() => setImmediate(() => {*/
+        var total_amount = 0;
+        var total_days = 0;
+        var total_units = 0;
 
-            var absentDaysToDestroy = [];
-            serviceCalc.forEach(function (calcItem, index) {
-              var nextIndex = index > 0 ? index - 1 : index;
-              var periodStartDate = (0, _moment2.default)(calcItem.effective_date, _moment2.default.ISO_8601);
-              var effective_date = periodStartDate.valueOf();
-              var next_effective_date = (0, _moment2.default)(serviceCalc[nextIndex].effective_date, _moment2.default.ISO_8601).valueOf();
-              var absentDays = 0;
-              var daysInMonth = 0;
-              var daysInPeriod = 0;
+        var absentDaysToDestroy = [];
+        serviceCalc.forEach(function (calcItem, index) {
+          var nextIndex = index > 0 ? index - 1 : index;
+          var periodStartDate = (0, _moment2.default)(calcItem.effective_date, _moment2.default.ISO_8601);
+          var effective_date = periodStartDate.valueOf();
+          var next_effective_date = (0, _moment2.default)(serviceCalc[nextIndex].effective_date, _moment2.default.ISO_8601).valueOf();
+          var absentDays = 0;
+          var daysInMonth = 0;
+          var daysInPeriod = 0;
 
-              var selected_days = paymentItem.calendar_item.selected_days;
-              selected_days = calcItem.selected_days || selected_days;
-              var startDate = (0, _moment2.default)(paymentItem.start_date, _moment2.default.ISO_8601);
-              var periodEndDate = (0, _moment2.default)(paymentItem.end_date, _moment2.default.ISO_8601);
-              var monthEndDate = (0, _moment2.default)(paymentItem.end_date, _moment2.default.ISO_8601).endOf('M');
-              console.log('\n\n\n\n\n\n', JSON.stringify({
-                effective_date: effective_date,
-                start_date: start_date,
-                next_effective_date: next_effective_date,
-                nextEffective: serviceCalc[nextIndex].effective_date
-              }));
-              if (effective_date <= start_date && start_date !== next_effective_date) {
-                var nextEffectDate = (0, _moment2.default)(serviceCalc[nextIndex].effective_date, _moment2.default.ISO_8601).subtract(1, 'days');
-                periodEndDate = monthEndDate.diff(nextEffectDate, 'months') > 0 ? (0, _moment2.default)(paymentItem.end_date, _moment2.default.ISO_8601) : nextEffectDate;
-                periodStartDate = (0, _moment2.default)(start_date);
-                var __ret = _this10.retrieveDayInPeriod({
-                  daysInMonth: daysInMonth,
-                  startDate: startDate,
-                  monthEndDate: monthEndDate,
-                  selected_days: selected_days,
-                  daysInPeriod: daysInPeriod,
-                  periodStartDate: periodStartDate,
-                  periodEndDate: periodEndDate,
-                  absentDays: absentDays,
-                  paymentItem: paymentItem
-                });
-                daysInMonth = __ret.daysInMonth;
-                daysInPeriod = __ret.daysInPeriod;
-                absentDays = __ret.absentDays;
-                console.log('I am here', JSON.stringify({
-                  paymentItem: paymentItem,
-                  startDate: startDate,
-                  monthEndDate: monthEndDate,
-                  periodStartDate: periodStartDate,
-                  periodEndDate: periodEndDate,
-                  selected_days: selected_days,
-                  daysInMonth: daysInMonth,
-                  daysInPeriod: daysInPeriod,
-                  absentDays: absentDays
-                }));
-              } else if (index === 0) {
-                console.log({
-                  periodEndDate: periodEndDate,
-                  startDate: (0, _moment2.default)(startDate, _moment2.default.ISO_8601).startOf('months'),
-                  difference: (0, _moment2.default)(startDate, _moment2.default.ISO_8601).startOf('months').diff((0, _moment2.default)(), 'months')
-                });
-
-                periodEndDate = periodEndDate.diff((0, _moment2.default)(), 'days') > 0 || (0, _moment2.default)(startDate, _moment2.default.ISO_8601).startOf('months').diff((0, _moment2.default)(), 'months') <= 0 ? periodEndDate : (0, _moment2.default)();
-                var _ret = _this10.retrieveDayInPeriod({
-                  daysInMonth: daysInMonth,
-                  startDate: startDate,
-                  monthEndDate: monthEndDate,
-                  selected_days: selected_days,
-                  daysInPeriod: daysInPeriod,
-                  periodStartDate: periodStartDate,
-                  periodEndDate: periodEndDate,
-                  absentDays: absentDays,
-                  paymentItem: paymentItem
-                });
-                daysInMonth = _ret.daysInMonth;
-                daysInPeriod = _ret.daysInPeriod;
-                absentDays = _ret.absentDays;
-                console.log('\n\n\n\n\n You Are here', JSON.stringify({
-                  paymentItem: paymentItem,
-                  startDate: startDate,
-                  monthEndDate: monthEndDate,
-                  periodStartDate: periodStartDate,
-                  periodEndDate: periodEndDate,
-                  selected_days: selected_days,
-                  daysInMonth: daysInMonth,
-                  daysInPeriod: daysInPeriod,
-                  absentDays: absentDays
-                }));
-              } else {
-                periodEndDate = (0, _moment2.default)(serviceCalc[nextIndex].effective_date, _moment2.default.ISO_8601).subtract(1, 'd');
-                var _ret2 = _this10.retrieveDayInPeriod({
-                  daysInMonth: daysInMonth,
-                  startDate: startDate,
-                  monthEndDate: monthEndDate,
-                  selected_days: selected_days,
-                  daysInPeriod: daysInPeriod,
-                  periodStartDate: periodStartDate,
-                  periodEndDate: periodEndDate,
-                  absentDays: absentDays,
-                  paymentItem: paymentItem
-                });
-                daysInMonth = _ret2.daysInMonth;
-                daysInPeriod = _ret2.daysInPeriod;
-                absentDays = _ret2.absentDays;
-
-                console.log('We are here', JSON.stringify({
-                  paymentItem: paymentItem,
-                  startDate: startDate,
-                  monthEndDate: monthEndDate,
-                  periodStartDate: periodStartDate,
-                  periodEndDate: periodEndDate,
-                  selected_days: selected_days,
-                  daysInMonth: daysInMonth,
-                  daysInPeriod: daysInPeriod,
-                  absentDays: absentDays
-                }));
-              }
-
-              daysInPeriod = daysInPeriod - absentDays;
-              var unit_price = calcItem.unit_price;
-              if (paymentItem.calendar_item.wages_type === 1) {
-                unit_price = unit_price / daysInMonth;
-              }
-
-              var current_total_amount = unit_price * daysInPeriod;
-              if (calcItem.quantity || calcItem.quantity === 0) {
-                total_amount += calcItem.quantity * current_total_amount;
-                total_units += calcItem.quantity * daysInPeriod;
-              } else {
-                total_amount += current_total_amount;
-              }
-
-              total_days += daysInPeriod;
-              absentDaysToDestroy.push.apply(absentDaysToDestroy, _toConsumableArray(paymentItem.absent_day_detail.filter(function (absentDayItem) {
-                var absent_date = (0, _moment2.default)(absentDayItem.absent_date, _moment2.default.ISO_8601);
-                return !selected_days.includes(absent_date.isoWeekday());
-              })));
+          var selected_days = paymentItem.calendar_item.selected_days;
+          selected_days = calcItem.selected_days || selected_days;
+          var startDate = (0, _moment2.default)(paymentItem.start_date, _moment2.default.ISO_8601);
+          var periodEndDate = (0, _moment2.default)(paymentItem.end_date, _moment2.default.ISO_8601);
+          var monthEndDate = (0, _moment2.default)(paymentItem.end_date, _moment2.default.ISO_8601).endOf('M');
+          console.log('\n\n\n\n\n\n', JSON.stringify({
+            effective_date: effective_date,
+            start_date: start_date,
+            next_effective_date: next_effective_date,
+            nextEffective: serviceCalc[nextIndex].effective_date
+          }));
+          if (effective_date <= start_date && start_date !== next_effective_date) {
+            var nextEffectDate = (0, _moment2.default)(next_effective_date).subtract(1, 'days');
+            var nextEffectStartDate = (0, _moment2.default)(nextEffectDate.format('YYYY-MM-DD'), _moment2.default.ISO_8601).startOf('months');
+            console.log(paymentItem.end_date);
+            var monthDiff = (0, _moment2.default)(start_date).startOf('M').diff(nextEffectStartDate, 'M');
+            periodEndDate = monthDiff > 0 ? (0, _moment2.default)(paymentItem.end_date, _moment2.default.ISO_8601) : nextEffectDate;
+            periodStartDate = (0, _moment2.default)(start_date);
+            console.log({
+              monthEndDate: monthEndDate,
+              nextEffectStartDate: nextEffectStartDate
+            });
+            var __ret = _this10.retrieveDayInPeriod({
+              daysInMonth: daysInMonth,
+              startDate: startDate,
+              monthEndDate: monthEndDate,
+              selected_days: selected_days,
+              daysInPeriod: daysInPeriod,
+              periodStartDate: periodStartDate,
+              periodEndDate: periodEndDate,
+              absentDays: absentDays,
+              paymentItem: paymentItem
+            });
+            daysInMonth = __ret.daysInMonth;
+            daysInPeriod = __ret.daysInPeriod;
+            absentDays = __ret.absentDays;
+            console.log('I am here', JSON.stringify({
+              paymentItem: paymentItem,
+              startDate: startDate,
+              periodStartDate: periodStartDate,
+              periodEndDate: periodEndDate,
+              selected_days: selected_days,
+              daysInMonth: daysInMonth,
+              daysInPeriod: daysInPeriod,
+              absentDays: absentDays,
+              monthDiff: monthDiff
+            }));
+          } else if (index === 0) {
+            console.log({
+              periodEndDate: periodEndDate,
+              startDate: (0, _moment2.default)(startDate, _moment2.default.ISO_8601).startOf('months'),
+              difference: (0, _moment2.default)(startDate, _moment2.default.ISO_8601).startOf('months').diff((0, _moment2.default)(), 'months')
             });
 
-            return _bluebird2.default.all([paymentItem.id ? _this10.modals.service_payment.update({
-              start_date: start_date,
-              end_date: end_date,
-              updated_by: paymentItem.updated_by,
-              status_type: paymentItem.status_type,
-              total_amount: total_amount.toFixed(2),
-              total_days: total_days,
-              total_units: total_units,
-              amount_paid: 0
-            }, {
-              where: {
-                id: paymentItem.id
-              }
-            }) : _this10.modals.service_payment.create({
-              start_date: start_date,
-              end_date: end_date,
-              updated_by: paymentItem.updated_by,
-              status_type: paymentItem.status_type,
-              total_amount: total_amount.toFixed(2),
-              total_days: total_days,
-              total_units: total_units,
-              ref_id: paymentItem.ref_id,
-              amount_paid: 0
-            }), _bluebird2.default.all(absentDaysToDestroy.map(function (absentItem) {
-              return _this10.markPresentForItem({ where: { id: absentItem.id } });
-            }))]);
-          });
+            periodEndDate = periodEndDate.diff((0, _moment2.default)(), 'days') > 0 || (0, _moment2.default)(startDate, _moment2.default.ISO_8601).startOf('months').diff((0, _moment2.default)(), 'months') <= 0 ? periodEndDate : (0, _moment2.default)();
+            var _ret = _this10.retrieveDayInPeriod({
+              daysInMonth: daysInMonth,
+              startDate: startDate,
+              monthEndDate: monthEndDate,
+              selected_days: selected_days,
+              daysInPeriod: daysInPeriod,
+              periodStartDate: periodStartDate,
+              periodEndDate: periodEndDate,
+              absentDays: absentDays,
+              paymentItem: paymentItem
+            });
+            daysInMonth = _ret.daysInMonth;
+            daysInPeriod = _ret.daysInPeriod;
+            absentDays = _ret.absentDays;
+            console.log('\n\n\n\n\n You Are here', JSON.stringify({
+              paymentItem: paymentItem,
+              startDate: startDate,
+              monthEndDate: monthEndDate,
+              periodStartDate: periodStartDate,
+              periodEndDate: periodEndDate,
+              selected_days: selected_days,
+              daysInMonth: daysInMonth,
+              daysInPeriod: daysInPeriod,
+              absentDays: absentDays
+            }));
+          } else {
+            periodEndDate = (0, _moment2.default)(serviceCalc[nextIndex].effective_date, _moment2.default.ISO_8601).subtract(1, 'd');
+            var _ret2 = _this10.retrieveDayInPeriod({
+              daysInMonth: daysInMonth,
+              startDate: startDate,
+              monthEndDate: monthEndDate,
+              selected_days: selected_days,
+              daysInPeriod: daysInPeriod,
+              periodStartDate: periodStartDate,
+              periodEndDate: periodEndDate,
+              absentDays: absentDays,
+              paymentItem: paymentItem
+            });
+            daysInMonth = _ret2.daysInMonth;
+            daysInPeriod = _ret2.daysInPeriod;
+            absentDays = _ret2.absentDays;
+
+            console.log('We are here', JSON.stringify({
+              paymentItem: paymentItem,
+              startDate: startDate,
+              monthEndDate: monthEndDate,
+              periodStartDate: periodStartDate,
+              periodEndDate: periodEndDate,
+              selected_days: selected_days,
+              daysInMonth: daysInMonth,
+              daysInPeriod: daysInPeriod,
+              absentDays: absentDays
+            }));
+          }
+
+          daysInPeriod = daysInPeriod - absentDays;
+          var unit_price = calcItem.unit_price;
+          if (paymentItem.calendar_item.wages_type === 1) {
+            unit_price = unit_price / daysInMonth;
+          }
+
+          var current_total_amount = unit_price * daysInPeriod;
+          if (calcItem.quantity || calcItem.quantity === 0) {
+            total_amount += calcItem.quantity * current_total_amount;
+            total_units += calcItem.quantity * daysInPeriod;
+          } else {
+            total_amount += current_total_amount;
+          }
+
+          total_days += daysInPeriod;
+          absentDetailToUpdate.push.apply(absentDetailToUpdate, _toConsumableArray(paymentItem.absent_day_detail.filter(function (absentDayItem) {
+            var absent_date = (0, _moment2.default)(absentDayItem.absent_date, _moment2.default.ISO_8601);
+            return selected_days.includes(absent_date.isoWeekday());
+          }).map(function (absentDayItem) {
+            absentDayItem.payment_id = paymentItem.id;
+            return absentDayItem;
+          })));
+
+          absentDaysToDestroy.push.apply(absentDaysToDestroy, _toConsumableArray(paymentItem.absent_day_detail.filter(function (absentDayItem) {
+            var absent_date = (0, _moment2.default)(absentDayItem.absent_date, _moment2.default.ISO_8601);
+            return !selected_days.includes(absent_date.isoWeekday());
+          })));
         });
-      })))).catch(function (err) {
+
+        return _bluebird2.default.all([paymentItem.id ? _this10.modals.service_payment.update({
+          start_date: start_date,
+          end_date: end_date,
+          updated_by: paymentItem.updated_by,
+          status_type: paymentItem.status_type,
+          total_amount: total_amount.toFixed(2),
+          total_days: total_days,
+          total_units: total_units,
+          amount_paid: 0
+        }, {
+          where: {
+            id: paymentItem.id
+          }
+        }) : _this10.modals.service_payment.create({
+          start_date: start_date,
+          end_date: end_date,
+          updated_by: paymentItem.updated_by,
+          status_type: paymentItem.status_type,
+          total_amount: total_amount.toFixed(2),
+          total_days: total_days,
+          total_units: total_units,
+          ref_id: paymentItem.ref_id,
+          amount_paid: 0
+        })].concat(_toConsumableArray(absentDaysToDestroy.map(function (absentItem) {
+          return _this10.markPresentForItem({ where: { id: absentItem.id } });
+        }))));
+        /*}));*/
+      })))).then(function () {
+        return absentDetailToUpdate;
+      }).catch(function (err) {
         return Console.log('Error is here', err);
       });
     }

@@ -7,7 +7,7 @@ export default class CategoryAdaptor {
     this.brandAdaptor = new BrandAdaptor(modals);
   }
 
-  retrieveCategories(options, isBrandFormRequired, language) {
+  retrieveCategories(options, isBrandFormRequired, language, isFilterRequest, user) {
     options.status_type = 1;
     let categoryData;
     return this.modals.categories.findAll({
@@ -55,11 +55,11 @@ export default class CategoryAdaptor {
       const main_category_id = options.category_id;
       const excluded_category_id = main_category_id ? {
         $notIn:
-            main_category_id === '1' ?
+            main_category_id === '1' && !isFilterRequest ?
                 config.CATEGORIES.FURNITURE :
-                main_category_id === '2' ?
+                main_category_id === '2' && !isFilterRequest ?
                     config.CATEGORIES.ELECTRONIC :
-                    main_category_id === '3' ?
+                    main_category_id === '3' && !isFilterRequest ?
                         config.CATEGORIES.AUTOMOBILE :
                         [],
       } : undefined;
@@ -68,7 +68,7 @@ export default class CategoryAdaptor {
       }
 
       return this.retrieveSubCategories(subCategoryOption, isBrandFormRequired,
-          language);
+          language, user);
     }).then((subCategories) => {
       categoryData = categoryData.map((item) => {
         item.subCategories = subCategories.filter(
@@ -80,7 +80,7 @@ export default class CategoryAdaptor {
     });
   }
 
-  retrieveSubCategories(options, isBrandFormRequired, language) {
+  retrieveSubCategories(options, isBrandFormRequired, language, user) {
     let categoryData;
     options.status_type = 1;
     return this.modals.categories.findAll({
@@ -119,12 +119,16 @@ export default class CategoryAdaptor {
           'categoryImageUrl']],
       order: ['category_id'],
     }).then((result) => {
-      categoryData = result.map(item => item.toJSON());
+      categoryData = result.map(item => {
+        const categoryItem = item.toJSON();
+        categoryItem.name = categoryItem.name || categoryItem.default_name;
+        return categoryItem;
+      });
       if (isBrandFormRequired) {
         return Promise.all([
           this.brandAdaptor.retrieveCategoryBrands({
             category_id: categoryData.map(item => item.id),
-            status_type: 1,
+            status_type: [1, 11],
           }), this.retrieveCategoryForms({
             $or: [
               {
@@ -271,14 +275,24 @@ export default class CategoryAdaptor {
     }).then((results) => {
       if (results) {
         categoryData = categoryData.map((item) => {
-          item.brands = results[0].filter(
-              (brandItem) => brandItem.categoryId === item.id);
+          item.name = item.name || item.default_name;
+          item.brands = user ? results[0].filter(
+              (brandItem) => brandItem.categoryId === item.id &&
+                  (brandItem.status_type === 1 ||
+                      (brandItem.status_type === 11 &&
+                          (brandItem.created_by === (user.ID || user.id) ||
+                              brandItem.updated_by ===
+                              (user.ID || user.id))))) : results[0].filter(
+              (brandItem) => brandItem.categoryId === item.id && brandItem.status_type === 1);
           item.categoryForms = results[1].filter(
               (formItem) => formItem.categoryId === item.id ||
                   formItem.main_category_id === item.refId);
           item.insuranceProviders = results[2];
           item.warrantyProviders = results[3];
-          item.subCategories = results[4];
+          item.subCategories = results[4].map((categoryItem) => {
+            categoryItem.name = categoryItem.name || categoryItem.default_name;
+            return categoryItem;
+          });
           return item;
         });
       }

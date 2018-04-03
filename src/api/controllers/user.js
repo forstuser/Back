@@ -62,7 +62,9 @@ let loginOrRegisterUser = parameters => {
   return Promise.try(() => userAdaptor.loginOrRegister(userWhere, userInput)).
       then((userData) => {
         if (!userData[1]) {
-          return Promise.all([Promise.try(() => userData[0].updateAttributes(userInput)), userData[1]]);
+          return Promise.all([
+            Promise.try(() => userData[0].updateAttributes(userInput)),
+            userData[1]]);
         }
 
         return Promise.all([userData[0], userData[1]]);
@@ -276,7 +278,7 @@ class UserController {
 
         console.log('OTP Sent over email', response[0]);
         return userAdaptor.updateUserDetail({
-          email: request.payload.email,
+          email: request.payload.email.toLowerCase(),
           email_secret: response[0],
           otp_created_at: moment.utc(),
         }, {
@@ -417,7 +419,7 @@ class UserController {
           replyObject.message = 'Payload verification failed';
           return reply(replyObject);
         } else {
-          userInput.email = trueObject.EmailAddress;
+          userInput.email = (trueObject.EmailAddress || '').toLowerCase();
           userInput.full_name = trueObject.Name;
           userInput.email_secret = uuid.v4();
           userInput.mobile_no = trueObject.PhoneNo;
@@ -442,14 +444,14 @@ class UserController {
 
         if (fbSecret) {
           requestPromise({
-            uri: config.FB_GRAPH_ROUTE,
+            uri: config.FB_GRAPH_ROUTE + 'me?fields=id,email,name,picture{url}',
             qs: {
               access_token: fbSecret,
             },
             json: true,
           }).then((fbResult) => {
             console.log(fbResult);
-            userWhere.email = fbResult.email.toLowerCase();
+            userWhere.email = {$iLike: fbResult.email};
             userInput.email = fbResult.email.toLowerCase();
             userInput.full_name = fbResult.name;
             userInput.email_verified = true;
@@ -457,7 +459,8 @@ class UserController {
             userWhere.mobile_no = userInput.mobile_no || fbResult.mobile_phone;
             userInput.fb_id = fbResult.id;
             userInput.user_status_type = 1;
-            fbResult.ImageLink = fbResult.picture.data.url;
+            fbResult.ImageLink = config.FB_GRAPH_ROUTE +'/v2.12/'+ fbResult.id +
+                '/picture?height=2000&width=2000';
             return loginOrRegisterUser({
               userWhere,
               userInput,

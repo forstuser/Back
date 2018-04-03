@@ -71,7 +71,7 @@ const otp = generateOTP(otpLength);
 <tr><td style="padding: 20px; font-family: sans-serif; font-size: 15px; line-height: 20px; color: #555555;">
 <p class="main-class" style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0; font-family: 'Quicksand', sans-serif;font-weight: 500;letter-spacing: 0.3px;text-align: left;color: #3b3b3b; padding: 10px 0;">Dear ${name ||
     'User'},</p>
-<p class="main-class" style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0;padding: 10px 0;">Your verification code is <q>${otp}</q>. Please enter this code to create/reset your PIN of your Binbill account.</p>
+<p class="main-class" style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0;padding: 10px 0;">Your verification code is <q>${otp}</q>. Please enter this code to create/reset PIN for your Binbill account.</p>
 <p style="margin:0 auto; font-weight: bold; -webkit-margin-before: 0; -webkit-margin-after: 0;padding: 10px 0;">                                    One Home : Multiple Needs : One App</p>
 <p style="margin:0 auto; -webkit-margin-before: 0; -webkit-margin-after: 0;padding: 10px 0;">
 Regards<br/>Support BinBill </p>

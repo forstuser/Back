@@ -61,14 +61,14 @@ class GeneralController {
           return Promise.all([
             categoryAdaptor.retrieveSubCategories(
                 {category_id: request.query.categoryId}, true,
-                request.language),
+                request.language, user),
             categoryAdaptor.retrieveRenewalTypes({
               status_type: 1,
             })]);
         } else if (request.query.mainCategoryId) {
           return categoryAdaptor.retrieveCategories(
               {category_id: request.query.mainCategoryId}, false,
-              request.language);
+              request.language, false, user);
         }
       }
 
@@ -257,6 +257,7 @@ class GeneralController {
         limit: request.query.limit || 10,
       };
 
+      console.log({offset: request.query.offset});
       if (request.query.offset) {
         options.offset = request.query.offset;
       }

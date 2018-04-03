@@ -24,7 +24,7 @@ class BrandAdaptor {
         [
           'brand_description',
           'description']],
-      order:[['brand_index', 'desc'],['brand_name']]
+      order: [['brand_index', 'desc'], ['brand_name']],
     }).then((brandResult) => brandResult.map((item) => item.toJSON()));
   }
 
@@ -47,7 +47,7 @@ class BrandAdaptor {
         [
           'brand_description',
           'description']],
-      order:[['brand_index', 'desc'],['brand_name']],
+      order: [['brand_index', 'desc'], ['brand_name']],
     }).then((brandResults) => {
       if (brandResults.length > 0) {
         brand = brandResults.map(item => item.toJSON())[0];
@@ -95,7 +95,7 @@ class BrandAdaptor {
           [
             'brand_description',
             'description'],
-            'status_type',
+          'status_type',
           [
             this.modals.sequelize.fn('CONCAT', 'brands/',
                 this.modals.sequelize.col('"brands"."brand_id"'), '/reviews'),
@@ -159,12 +159,11 @@ class BrandAdaptor {
   retrieveCategoryBrands(options) {
     return this.modals.brands.findAll({
       where: {
-        status_type: 1,
+        status_type: [1,11],
       }, include: [
         {
           model: this.modals.brandDetails,
           where: {
-            status_type: 1,
             category_id: options.category_id,
           },
           attributes: [],
@@ -186,8 +185,11 @@ class BrandAdaptor {
           this.modals.sequelize.literal('"details"."category_id"'),
           'categoryId',
         ],
+          'status_type',
+          'created_by',
+          'updated_by'
       ],
-      order:[['brand_index', 'desc'],['brand_name']],
+      order: [['brand_index', 'desc'], ['brand_name']],
     }).then((result) => result.map((item) => item.toJSON()));
   }
 
@@ -213,18 +215,18 @@ class BrandAdaptor {
           category_id: values.category_id,
         },
       })]).then((result) => {
-        if(result[0]) {
-          brandData = result[0].toJSON();
-          category = result[1].toJSON();
-          return this.modals.brandDetails.findOne({
-            where: {
-              brand_id: brandData.brand_id,
-              category_id: values.category_id,
-            },
-          });
-        }
+      category = result[1].toJSON();
+      if (result[0]) {
+        brandData = result[0].toJSON();
+        return this.modals.brandDetails.findOne({
+          where: {
+            brand_id: brandData.brand_id,
+            category_id: values.category_id,
+          },
+        });
+      }
 
-        return false;
+      return false;
     }).then((result) => {
       if (!result) {
         return this.modals.brands.create({

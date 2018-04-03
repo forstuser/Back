@@ -32,6 +32,7 @@ class EHomeAdaptor {
           status_id: 4,
         },
       }),
+      this.retrieveUnProcessedBills(user),
     ]).then((result) => {
 
       let OtherCategory = null;
@@ -80,7 +81,7 @@ class EHomeAdaptor {
         notificationCount: result[2],
         // categories: result[3],
         recentSearches,
-        /*unProcessedBills: result[0],*/
+        unProcessedBills: result[3],
         categoryList: newCategoryData,
         forceUpdate: request.pre.forceUpdate,
       };
@@ -325,7 +326,8 @@ class EHomeAdaptor {
     inProgressProductOption.status_type = 8;
 
     return Promise.all([
-      this.categoryAdaptor.retrieveCategories(categoryOption, false, language),
+      this.categoryAdaptor.retrieveCategories(categoryOption, false, language,
+          true),
       this.productAdaptor.retrieveProducts(productOptions, language),
       this.productAdaptor.retrieveProducts(inProgressProductOption,
           language),]).

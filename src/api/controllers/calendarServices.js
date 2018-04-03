@@ -111,61 +111,24 @@ class CalendarServiceController {
       const currentYear = moment().year();
       const effectiveYear = effectiveDate.year();
       let servicePaymentArray = [];
-      const yearDiff = currentYear > effectiveYear ?
-          currentYear - effectiveYear :
-          null;
-      if (!yearDiff) {
-        const currentMth = moment().month();
-        const currentYear = moment().year();
-        const effectiveMth = effectiveDate.month();
+      const currentMth = moment().month();
+      const effectiveMth = effectiveDate.month();
 
-        let {selected_days, wages_type} = productBody;
-        selected_days = serviceCalculationBody ?
-            serviceCalculationBody.selected_days ||
-            selected_days :
-            selected_days;
-        servicePaymentArray = monthlyPaymentCalc({
-          currentMth,
-          effectiveMth,
-          effectiveDate,
-          selected_days,
-          wages_type,
-          serviceCalculationBody,
-          user,
-          currentYear,
-        });
-      } else {
-        const yearArr = [];
-        for (let i = 0; i <= yearDiff; i++) {
-          yearArr.push(effectiveYear + i);
-        }
-        yearArr.forEach((currentYear) => {
-          const yearStart = moment([currentYear, 0, 1]);
-          const yearEnd = moment([currentYear, 0, 31]).endOf('Y');
-          const currentMth = moment().endOf('M').diff(yearEnd, 'M') > 0 ?
-              yearEnd.month() :
-              moment().month();
-          const effectiveMth = currentYear > effectiveYear ?
-              yearStart.month() :
-              effectiveDate.month();
-          let {selected_days, wages_type} = productBody;
-          selected_days = serviceCalculationBody ?
-              serviceCalculationBody.selected_days ||
-              selected_days :
-              selected_days;
-          servicePaymentArray.push(...monthlyPaymentCalc({
-            currentMth,
-            effectiveMth,
-            effectiveDate,
-            selected_days,
-            wages_type,
-            serviceCalculationBody,
-            user,
-            currentYear,
-          }));
-        });
-      }
-
+      let {selected_days, wages_type} = productBody;
+      selected_days = serviceCalculationBody ?
+          serviceCalculationBody.selected_days ||
+          selected_days :
+          selected_days;
+      servicePaymentArray = monthlyPaymentCalc({
+        currentMth,
+        effectiveMth,
+        effectiveDate,
+        selected_days,
+        wages_type,
+        serviceCalculationBody,
+        user,
+        currentYear,
+      });
       return Promise.try(() => calendarServiceAdaptor.createCalendarItem({
         productBody,
         servicePaymentArray,
@@ -173,11 +136,11 @@ class CalendarServiceController {
         serviceCalculationBody,
         user,
       })).spread((calendar_item) => reply({
-            status: true,
-            message: 'successful',
-            calendar_item,
-            forceUpdate: request.pre.forceUpdate,
-          })).
+        status: true,
+        message: 'successful',
+        calendar_item,
+        forceUpdate: request.pre.forceUpdate,
+      })).
           catch((err) => {
             console.log(
                 `Error on ${new Date()} for user ${user.id ||
@@ -450,23 +413,25 @@ class CalendarServiceController {
       return Promise.try(() => calendarServiceAdaptor.retrieveCalendarItemList({
         user_id: user.id ||
         user.ID,
-      }, request.language)).then((items) => reply({
-        status: true,
-        message: 'successful',
-        items,
-        forceUpdate: request.pre.forceUpdate,
-      })).catch((err) => {
-        console.log(
-            `Error on ${new Date()} for user ${user.id ||
-            user.ID} is as follow: \n \n ${err}`);
+      }, request.language, request.query.limit, request.query.offset)).
+          then((items) => reply({
+            status: true,
+            message: 'successful',
+            items,
+            forceUpdate: request.pre.forceUpdate,
+          })).
+          catch((err) => {
+            console.log(
+                `Error on ${new Date()} for user ${user.id ||
+                user.ID} is as follow: \n \n ${err}`);
 
-        return reply({
-          status: false,
-          message: 'An error occurred in retrieving calendar item list.',
-          forceUpdate: request.pre.forceUpdate,
-          err,
-        });
-      });
+            return reply({
+              status: false,
+              message: 'An error occurred in retrieving calendar item list.',
+              forceUpdate: request.pre.forceUpdate,
+              err,
+            });
+          });
     } else {
       return reply({
         status: false,
@@ -633,11 +598,11 @@ class CalendarServiceController {
             ref_id: request.params.id,
           }), result]);
       }).spread((manipulatedResult, calculation_detail) => reply({
-              status: true,
-              message: 'successful',
-              calculation_detail,
-              forceUpdate: request.pre.forceUpdate,
-            })).
+        status: true,
+        message: 'successful',
+        calculation_detail,
+        forceUpdate: request.pre.forceUpdate,
+      })).
           catch((err) => {
             console.log(
                 `Error on ${new Date()} for user ${user.id ||
