@@ -32,6 +32,7 @@ class EHomeAdaptor {
           status_id: 4,
         },
       }),
+      this.retrieveUnProcessedBills(user),
     ]).then((result) => {
 
       let OtherCategory = null;
@@ -80,7 +81,7 @@ class EHomeAdaptor {
         notificationCount: result[2],
         // categories: result[3],
         recentSearches,
-        /*unProcessedBills: result[0],*/
+        unProcessedBills: result[3],
         categoryList: newCategoryData,
         forceUpdate: request.pre.forceUpdate,
       };
@@ -213,7 +214,7 @@ class EHomeAdaptor {
       onlineSellerIds: onlineSellerIds,
       sortBy: sortBy,
       searchValue: `%${searchValue || ''}%`,
-    }).then((result) => {
+    }, request.language).then((result) => {
       const productList = result.productList;
       /* const listIndex = (pageNo * 10) - 10; */
 
@@ -277,7 +278,7 @@ class EHomeAdaptor {
     });
   }
 
-  fetchProductDetails(parameters) {
+  fetchProductDetails(parameters, language) {
     let {user, masterCategoryId, subCategoryId, brandIds, categoryIds, offlineSellerIds, onlineSellerIds, sortBy, searchValue} = parameters;
     const categoryOption = {
       category_level: 1,
@@ -325,9 +326,11 @@ class EHomeAdaptor {
     inProgressProductOption.status_type = 8;
 
     return Promise.all([
-      this.categoryAdaptor.retrieveCategories(categoryOption),
-      this.productAdaptor.retrieveProducts(productOptions),
-      this.productAdaptor.retrieveProducts(inProgressProductOption),]).
+      this.categoryAdaptor.retrieveCategories(categoryOption, false, language,
+          true),
+      this.productAdaptor.retrieveProducts(productOptions, language),
+      this.productAdaptor.retrieveProducts(inProgressProductOption,
+          language),]).
         then((results) => {
           return results[0].map((categoryItem) => {
             const category = categoryItem;

@@ -4,7 +4,7 @@ class FCMManager {
   }
 
   insertFcmDetails(parameters) {
-    let {userId, fcmId, platformId} = parameters;
+    let {userId, fcmId, platformId, selected_language} = parameters;
     if (!fcmId || fcmId === '') {
       return Promise.resolve('NULL FCM ID');
     }
@@ -26,9 +26,13 @@ class FCMManager {
           fcm_id: fcmId,
         },
       }), this.fcmModal.findCreateFind({
-      where: defaults,
-      defaults,
+        where: defaults,
+        defaults,
       })]).then((data) => {
+      const fcmDetail = data[1][0].toJSON();
+      selected_language = selected_language || fcmDetail.selected_language ||
+          'en';
+      data[1][0].updateAttributes({selected_language});
       return data;
     }).catch((err) => {
       console.log(

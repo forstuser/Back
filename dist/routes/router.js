@@ -69,6 +69,10 @@ var _productItem = require('../api/controllers/productItem');
 
 var _productItem2 = _interopRequireDefault(_productItem);
 
+var _calendarServices = require('../api/controllers/calendarServices');
+
+var _calendarServices2 = _interopRequireDefault(_calendarServices);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var User = void 0;
@@ -195,7 +199,6 @@ function prepareBrandRoutes(brandController, brandRoutes) {
   }
 }
 
-// NO APP VERSION CHECK
 function prepareCategoryRoutes(categoryController, categoryRoutes) {
   if (categoryController) {
     categoryRoutes.push({
@@ -237,8 +240,8 @@ function prepareAuthRoutes(userController, authRoutes) {
       path: '/consumer/getotp',
       config: {
         pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }, {
-          method: appVersionHelper.updateUserActiveStatus,
-          assign: 'userExist'
+          method: appVersionHelper.hasMultipleAccounts,
+          assign: 'hasMultipleAccounts'
         }],
         handler: _user2.default.dispatchOTP,
         description: 'Generate OTP.',
@@ -259,6 +262,8 @@ function prepareAuthRoutes(userController, authRoutes) {
     });
 
     /*Update FCM of consumer*/
+
+    /*Update FCM of consumer*/
     authRoutes.push({
       method: 'POST',
       path: '/consumer/subscribe',
@@ -274,6 +279,7 @@ function prepareAuthRoutes(userController, authRoutes) {
           payload: {
             fcmId: [_joi2.default.string(), _joi2.default.allow(null)],
             platform: [_joi2.default.number(), _joi2.default.allow(null)],
+            selected_language: [_joi2.default.string(), _joi2.default.allow(null)],
             output: 'data',
             parse: true
           }
@@ -412,6 +418,194 @@ function prepareAuthRoutes(userController, authRoutes) {
       }
     });
 
+    authRoutes.push({
+      method: 'PUT',
+      path: '/consumer/validate',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }, {
+          method: appVersionHelper.hasMultipleAccounts,
+          assign: 'hasMultipleAccounts'
+        }],
+        handler: _user2.default.validateToken,
+        description: 'Set PIN of User for Consumer Portal.',
+        tags: ['api', 'User', 'Authentication'],
+        validate: {
+          payload: {
+            token: _joi2.default.string().required(),
+            mobile_no: _joi2.default.string().required(),
+            output: 'data',
+            parse: true
+          }
+        },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [{ code: 200, message: 'Authenticated' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
+          }
+        }
+      }
+    });
+
+    authRoutes.push({
+      method: 'POST',
+      path: '/consumer/otp/send',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }, {
+          method: appVersionHelper.verifyUserEmail,
+          assign: 'isValidEmail'
+        }],
+        handler: _user2.default.dispatchOTPOverEmail,
+        description: 'Send OTP over User mail for Consumer Portal.',
+        tags: ['api', 'User', 'Authentication'],
+        validate: {
+          payload: {
+            email: _joi2.default.string().required(),
+            output: 'data',
+            parse: true
+          }
+        },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [{ code: 200, message: 'Authenticated' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
+          }
+        }
+      }
+    });
+
+    authRoutes.push({
+      method: 'POST',
+      path: '/consumer/otp/validate',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }, {
+          method: appVersionHelper.verifyUserOTP,
+          assign: 'isValidOTP'
+        }],
+        handler: _user2.default.verifyEmailSecret,
+        description: 'Verify OTP sent over user mail for Consumer Portal.',
+        tags: ['api', 'User', 'Authentication'],
+        validate: {
+          payload: {
+            token: _joi2.default.string().required(),
+            output: 'data',
+            parse: true
+          }
+        },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [{ code: 200, message: 'Authenticated' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
+          }
+        }
+      }
+    });
+
+    authRoutes.push({
+      method: 'POST',
+      path: '/consumer/pin',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }, {
+          method: appVersionHelper.verifyUserPIN,
+          assign: 'pinVerified'
+        }],
+        handler: _user2.default.verifyPin,
+        description: 'Set PIN of User for Consumer Portal.',
+        tags: ['api', 'User', 'Authentication'],
+        validate: {
+          payload: {
+            token: _joi2.default.string().allow(null),
+            old_pin: _joi2.default.string().allow(null),
+            pin: _joi2.default.string().required(),
+            mobile_no: _joi2.default.string().allow(null),
+            output: 'data',
+            parse: true
+          }
+        },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [{ code: 200, message: 'Authenticated' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
+          }
+        }
+      }
+    });
+
+    authRoutes.push({
+      method: 'DELETE',
+      path: '/consumer/pin',
+      config: {
+        auth: 'jwt',
+        pre: [{
+          method: appVersionHelper.checkAppVersion,
+          assign: 'forceUpdate'
+        }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }, {
+          method: appVersionHelper.verifyUserPIN,
+          assign: 'pinVerified'
+        }],
+        handler: _user2.default.removePin,
+        description: 'Remove PIN of User for Consumer Portal.',
+        tags: ['api', 'User', 'Authentication'],
+        validate: {
+          payload: {
+            pin: _joi2.default.string().required(),
+            output: 'data',
+            parse: true
+          }
+        },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [{ code: 200, message: 'Authenticated' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
+          }
+        }
+      }
+    });
+
+    authRoutes.push({
+      method: 'POST',
+      path: '/consumer/pin/reset',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }, {
+          method: appVersionHelper.updateUserPIN,
+          assign: 'pinVerified'
+        }],
+        handler: _user2.default.resetPIN,
+        description: 'Reset PIN of User for Consumer Portal.',
+        tags: ['api', 'User', 'Authentication'],
+        validate: {
+          payload: {
+            old_pin: _joi2.default.string().allow(null),
+            pin: _joi2.default.string().required(),
+            output: 'data',
+            parse: true
+          }
+        },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [{ code: 200, message: 'Authenticated' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
+          }
+        }
+      }
+    });
+
     /*Logout Consumer from app*/
     authRoutes.push({
       method: 'POST',
@@ -471,6 +665,40 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
       }
     });
 
+    /*Upload Product Image*/
+    uploadFileRoute.push({
+      method: 'POST',
+      path: '/consumer/products/{id}/images',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        files: {
+          relativeTo: _path2.default.join(__dirname, '../static/src')
+        },
+        handler: _upload2.default.uploadProductImage,
+        payload: {
+          output: 'stream',
+          parse: true,
+          uploads: 'up_files',
+          timeout: 30034,
+          allow: 'multipart/form-data',
+          failAction: 'log',
+          maxBytes: 209715200
+        }
+      }
+    });
+
+    /*Retrieve Product Image*/
+    uploadFileRoute.push({
+      method: 'GET',
+      path: '/consumer/products/{id}/images',
+      config: {
+        handler: _upload2.default.retrieveProductImage
+      }
+    });
     /*Allow user to upload document*/
     uploadFileRoute.push({
       method: 'POST',
@@ -576,6 +804,15 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
       path: '/categories/{id}/images/{type}',
       config: {
         handler: _upload2.default.retrieveCategoryImage
+      }
+    });
+
+    /*Retrieve Calendar Item Image*/
+    uploadFileRoute.push({
+      method: 'GET',
+      path: '/calendarservice/{id}/images',
+      config: {
+        handler: _upload2.default.retrieveCalendarItemImage
       }
     });
 
@@ -1179,7 +1416,7 @@ function prepareGeneralRoutes(generalController, generalRoutes) {
           method: appVersionHelper.updateUserActiveStatus,
           assign: 'userExist'
         }],
-        handler: _general2.default.intializeUserProduct,
+        handler: _general2.default.initializeUserProduct,
         description: 'Create Product.',
         validate: {
           payload: {
@@ -1556,6 +1793,237 @@ function prepareProductItemRoutes(productItemController, productItemRoutes) {
   }
 }
 
+function prepareCalendarServiceRoutes(calendarController, calendarRoutes) {
+  //= ========================
+  // Calendar Item Routes
+  //= ========================
+
+  if (calendarController) {
+    calendarRoutes.push({
+      method: 'GET',
+      path: '/calendar/referencedata',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _calendarServices2.default.retrieveCalendarServices,
+        description: 'Get Calender Service as Reference Data.',
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [{ code: 200, message: 'Successful' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
+          }
+        }
+      }
+    });
+
+    calendarRoutes.push({
+      method: 'POST',
+      path: '/calendar/{service_id}/items',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _calendarServices2.default.createItem,
+        description: 'Create Calendar Item.',
+        validate: {
+          payload: {
+            product_name: [_joi2.default.string(), _joi2.default.allow(null)],
+            provider_name: [_joi2.default.string(), _joi2.default.allow(null)],
+            provider_number: [_joi2.default.string(), _joi2.default.allow(null)],
+            wages_type: [_joi2.default.number(), _joi2.default.allow(null)],
+            selected_days: [_joi2.default.array().items(_joi2.default.number()).required().min(0), _joi2.default.allow(null)],
+            unit_price: _joi2.default.number().required(),
+            unit_type: [_joi2.default.number(), _joi2.default.allow(null)],
+            quantity: [_joi2.default.number(), _joi2.default.allow(null)],
+            absent_dates: [_joi2.default.array().items(_joi2.default.string()).required().min(0), _joi2.default.allow(null)],
+            effective_date: _joi2.default.string().required()
+          }
+        }
+      }
+    });
+
+    calendarRoutes.push({
+      method: 'GET',
+      path: '/calendar/items',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _calendarServices2.default.retrieveCalendarItemList,
+        description: 'Retrieve List of Calendar Items.'
+      }
+    });
+
+    calendarRoutes.push({
+      method: 'GET',
+      path: '/calendar/items/{id}',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _calendarServices2.default.retrieveCalendarItem,
+        description: 'Retrieve Calendar Item by id.'
+      }
+    });
+
+    calendarRoutes.push({
+      method: 'DELETE',
+      path: '/calendar/items/{id}',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _calendarServices2.default.deleteCalendarItem,
+        description: 'Delete Calendar Item by id.'
+      }
+    });
+
+    calendarRoutes.push({
+      method: 'POST',
+      path: '/calendar/items/{id}/calc',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _calendarServices2.default.addServiceCalc,
+        description: 'Add new calculation detail for calendar services.',
+        validate: {
+          payload: {
+            unit_price: _joi2.default.number().required(),
+            unit_type: [_joi2.default.number(), _joi2.default.allow(null)],
+            quantity: [_joi2.default.number(), _joi2.default.allow(null)],
+            effective_date: _joi2.default.string().required(),
+            selected_days: [_joi2.default.array().items(_joi2.default.number()), _joi2.default.allow(null)]
+          }
+        }
+      }
+    });
+
+    calendarRoutes.push({
+      method: 'PUT',
+      path: '/calendar/items/{id}/calc/{calc_id}',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _calendarServices2.default.updateServiceCalc,
+        description: 'Update calculation detail for calendar services.',
+        validate: {
+          payload: {
+            unit_price: _joi2.default.number().required(),
+            unit_type: [_joi2.default.number(), _joi2.default.allow(null)],
+            quantity: [_joi2.default.number(), _joi2.default.allow(null)],
+            effective_date: _joi2.default.string().required(),
+            selected_days: [_joi2.default.array().items(_joi2.default.number()), _joi2.default.allow(null)]
+          }
+        }
+      }
+    });
+
+    calendarRoutes.push({
+      method: 'PUT',
+      path: '/calendar/items/{ref_id}/payments/{id}/absent',
+      config: {
+        auth: 'jwt',
+        pre: [{
+          method: appVersionHelper.checkAppVersion,
+          assign: 'forceUpdate'
+        }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _calendarServices2.default.markAbsent,
+        description: 'Mark Absent.',
+        validate: {
+          payload: {
+            absent_date: _joi2.default.string().required()
+          }
+        }
+      }
+    });
+
+    calendarRoutes.push({
+      method: 'PUT',
+      path: '/calendar/items/{id}',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _calendarServices2.default.updateItem,
+        description: 'Update Calendar Item.',
+        validate: {
+          payload: {
+            product_name: [_joi2.default.string(), _joi2.default.allow(null)],
+            provider_name: [_joi2.default.string(), _joi2.default.allow(null)],
+            provider_number: [_joi2.default.string(), _joi2.default.allow(null)]
+          }
+        }
+      }
+    });
+
+    calendarRoutes.push({
+      method: 'PUT',
+      path: '/calendar/items/{id}/paid',
+      config: {
+        auth: 'jwt',
+        pre: [{
+          method: appVersionHelper.checkAppVersion,
+          assign: 'forceUpdate'
+        }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _calendarServices2.default.markPaid,
+        description: 'Mark Paid.',
+        validate: {
+          payload: {
+            amount_paid: _joi2.default.number().required(),
+            paid_on: _joi2.default.string().required()
+          }
+        }
+      }
+    });
+
+    calendarRoutes.push({
+      method: 'PUT',
+      path: '/calendar/items/{ref_id}/payments/{id}/present',
+      config: {
+        auth: 'jwt',
+        pre: [{
+          method: appVersionHelper.checkAppVersion,
+          assign: 'forceUpdate'
+        }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _calendarServices2.default.markPresent,
+        description: 'Mark Present.',
+        validate: {
+          payload: {
+            present_date: _joi2.default.string().required()
+          }
+        }
+      }
+    });
+  }
+}
+
 exports.default = function (app, modals) {
   appVersionHelper = new _appVersion2.default(modals);
   User = modals.users;
@@ -1575,8 +2043,9 @@ exports.default = function (app, modals) {
   var searchRoutes = [];
   var generalRoutes = [];
   var repairRoutes = [];
-
+  var calendarRoutes = [];
   var uploadFileRoute = [];
+
   var userController = new _user2.default(modals);
   var categoryController = new _category2.default(modals);
   var brandController = new _brand2.default(modals);
@@ -1588,6 +2057,7 @@ exports.default = function (app, modals) {
   var searchController = new _search2.default(modals);
   var generalController = new _general2.default(modals);
   var repairController = new _productItem2.default(modals);
+  var calendarServiceController = new _calendarServices2.default(modals);
 
   prepareAuthRoutes(userController, authRoutes);
 
@@ -1608,6 +2078,8 @@ exports.default = function (app, modals) {
   prepareGeneralRoutes(generalController, generalRoutes);
 
   prepareProductItemRoutes(repairController, repairRoutes);
+
+  prepareCalendarServiceRoutes(calendarServiceController, calendarRoutes);
 
   if (searchController) {
     searchRoutes.push({
@@ -1630,5 +2102,5 @@ exports.default = function (app, modals) {
     });
   }
 
-  app.route([].concat(authRoutes, categoryRoutes, brandRoutes, sellerRoutes, serviceCenterRoutes, billManagementRoutes, uploadFileRoute, dashboardRoutes, productRoutes, insightRoutes, searchRoutes, generalRoutes, repairRoutes));
+  app.route([].concat(authRoutes, categoryRoutes, brandRoutes, sellerRoutes, serviceCenterRoutes, billManagementRoutes, uploadFileRoute, dashboardRoutes, productRoutes, insightRoutes, searchRoutes, generalRoutes, repairRoutes, calendarRoutes));
 };

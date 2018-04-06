@@ -32,7 +32,13 @@ var InsightController = function () {
     key: 'retrieveCategoryWiseInsight',
     value: function retrieveCategoryWiseInsight(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!request.pre.userExist) {
+      if (request.pre.userExist === 0) {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
         return reply({
           status: false,
           message: 'Unauthorized',
@@ -52,7 +58,13 @@ var InsightController = function () {
     key: 'retrieveInsightForSelectedCategory',
     value: function retrieveInsightForSelectedCategory(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!request.pre.userExist) {
+      if (request.pre.userExist === 0) {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
         return reply({
           status: false,
           message: 'Unauthorized',

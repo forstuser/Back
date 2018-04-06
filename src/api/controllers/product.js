@@ -16,7 +16,13 @@ class ProductController {
 
   static createProduct(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (!request.pre.userExist) {
+    if (request.pre.userExist === 0) {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
       return reply({
         status: false,
         message: 'Unauthorized',
@@ -105,7 +111,13 @@ class ProductController {
 
   static deleteProduct(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (!request.pre.userExist) {
+    if (request.pre.userExist === 0) {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
       return reply({
         status: false,
         message: 'Unauthorized',
@@ -140,7 +152,7 @@ class ProductController {
               api_path: request.url.pathname,
               log_type: 2,
               user_id: user.id || user.ID,
-              log_content: err
+              log_content: JSON.stringify(err),
             });
             return reply({
               status: false,
@@ -160,7 +172,13 @@ class ProductController {
 
   static updateProduct(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (!request.pre.userExist) {
+    if (request.pre.userExist === 0) {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
       return reply({
         status: false,
         message: 'Unauthorized',
@@ -262,7 +280,13 @@ class ProductController {
 
   static updateUserReview(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (!request.pre.userExist) {
+    if (request.pre.userExist === 0) {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
       return reply({
         status: false,
         message: 'Unauthorized',
@@ -289,7 +313,13 @@ class ProductController {
 
   static retrieveProductDetail(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (!request.pre.userExist) {
+    if (request.pre.userExist === 0) {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
       return reply({
         status: false,
         message: 'Unauthorized',
@@ -311,7 +341,13 @@ class ProductController {
 
   static retrieveCenterProducts(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (!request.pre.userExist) {
+    if (request.pre.userExist === 0) {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
       return reply({
         status: false,
         message: 'Unauthorized',

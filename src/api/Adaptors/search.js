@@ -21,7 +21,7 @@ class SearchAdaptor {
     this.brandAdaptor = new BrandAdaptor(modals);
   }
 
-  prepareSearchResult(user, searchValue) {
+  prepareSearchResult(user, searchValue, language) {
     return Promise.all([
       this.fetchProductDetailOnline(user, `%${searchValue}%`),
       this.fetchProductDetailOffline(user, `%${searchValue}%`),
@@ -35,8 +35,8 @@ class SearchAdaptor {
             [
               ...onlineSellerProductId,
               ...offlineSellerProductId,
-              ...brandProductId]),
-        this.prepareCategoryData(user, `%${searchValue}%`),
+              ...brandProductId], language),
+        this.prepareCategoryData(user, `%${searchValue}%`, language),
         this.updateRecentSearch(user, searchValue),
         this.retrieveRecentSearch(user),
       ]);
@@ -88,13 +88,22 @@ class SearchAdaptor {
     });
   }
 
-  prepareCategoryData(user, searchValue) {
+  prepareCategoryData(user, searchValue, language) {
     const categoryOption = {
       status_type: 1,
       $and: [
-        this.modals.sequelize.where(this.modals.sequelize.fn('lower',
-            this.modals.sequelize.col('categories.category_name')),
-            {$iLike: this.modals.sequelize.fn('lower', searchValue)})],
+        {
+          $or: [
+            this.modals.sequelize.where(this.modals.sequelize.fn('lower',
+                this.modals.sequelize.col('categories.category_name')),
+                {$iLike: this.modals.sequelize.fn('lower', searchValue)}),
+            this.modals.sequelize.where(this.modals.sequelize.fn('lower',
+                this.modals.sequelize.col(`${language ?
+                    `"categories"."category_name_${language}"` :
+                    `"categories"."category_name"`}`)),
+                {$iLike: this.modals.sequelize.fn('lower', searchValue)}),
+          ],
+        }],
     };
 
     const productOptions = {
@@ -104,7 +113,7 @@ class SearchAdaptor {
 
     let categories;
 
-    return this.categoryAdaptor.retrieveCategories(categoryOption).
+    return this.categoryAdaptor.retrieveCategories(categoryOption, language).
         then((results) => {
           categories = results;
           const categoryIds = categories.filter(item => item.level === 2);
@@ -115,8 +124,10 @@ class SearchAdaptor {
               undefined;
           productOptions.main_category_id = mainCategoryIds.length > 0 ?
               mainCategoryIds.map(item => item.id) :
-              undefined;
-          return this.productAdaptor.retrieveProducts(productOptions);
+              categoryIds.length > 0 ?
+                  categoryIds.map(item => item.refId) :
+                  undefined;
+          return this.productAdaptor.retrieveProducts(productOptions, language);
         }).then((productResult) => {
           return categories.map((categoryItem) => {
             const category = categoryItem;
@@ -157,7 +168,7 @@ class SearchAdaptor {
     });
   }
 
-  fetchProductDetails(user, searchValue, productIds) {
+  fetchProductDetails(user, searchValue, productIds, language) {
     return this.productAdaptor.retrieveProducts({
       user_id: user.id || user.ID,
       product_name: {
@@ -172,7 +183,7 @@ class SearchAdaptor {
               {$iLike: this.modals.sequelize.fn('lower', searchValue)}),
         ],
       },
-    });
+    }, language);
   }
 
   fetchProductDetailOnline(user, searchValue) {

@@ -8,7 +8,7 @@ import SellerAdaptor from '../Adaptors/sellers';
 import JobAdaptor from '../Adaptors/job';
 import ProductAdaptor from '../Adaptors/product';
 import UserAdaptor from '../Adaptors/user';
-import Bluebird from 'bluebird';
+import Promise from 'bluebird';
 import shared from '../../helpers/shared';
 import moment from 'moment/moment';
 import config from '../../config/main';
@@ -42,7 +42,7 @@ class GeneralController {
   static retrieveReferenceData(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     let isBrandRequest = false;
-    return Bluebird.try(() => {
+    return Promise.try(() => {
       if (request.query && user) {
         if (request.query.categoryId && request.query.brandId) {
           return brandAdaptor.retrieveBrandDropDowns({
@@ -61,14 +61,14 @@ class GeneralController {
           return Promise.all([
             categoryAdaptor.retrieveSubCategories(
                 {category_id: request.query.categoryId}, true,
-                request.language),
+                request.language, user),
             categoryAdaptor.retrieveRenewalTypes({
               status_type: 1,
             })]);
         } else if (request.query.mainCategoryId) {
           return categoryAdaptor.retrieveCategories(
               {category_id: request.query.mainCategoryId}, false,
-              request.language);
+              request.language, false, user);
         }
       }
 
@@ -110,7 +110,7 @@ class GeneralController {
   }
 
   static contactUs(request, reply) {
-    return Bluebird.try(() => {
+    return Promise.try(() => {
       if (request.payload.captcha_response) {
         return NotificationAdaptor.verifyCaptcha(
             request.payload.captcha_response);
@@ -209,6 +209,11 @@ class GeneralController {
     if (request.pre.userExist && !request.pre.forceUpdate) {
       const language = request.language;
       const options = {
+        where: {
+          batch_date: {
+            $lte: moment().endOf('days'),
+          },
+        },
         include: [
           {
             model: modals.tags,
@@ -217,11 +222,15 @@ class GeneralController {
               [
                 'title',
                 'default_title'],
-              [`${language ? `title_${language}` : `title`}`, 'title'],
+              [
+                `${language ? `title_${language}` : `title`}`,
+                'title'],
               [
                 'description',
                 'default_description'],
-              [`${language ? `description_${language}` : `description`}`, 'description']
+              [
+                `${language ? `description_${language}` : `description`}`,
+                'description'],
             ],
           },
           {
@@ -234,49 +243,74 @@ class GeneralController {
           [
             'title',
             'default_title'],
-          [`${language ? `title_${language}` : `title`}`, 'title'],
+          [
+            `${language ? `title_${language}` : `title`}`,
+            'title'],
           [
             'description',
             'default_description'],
-          [`${language ? `description_${language}` : `description`}`, 'description'],
+          [
+            `${language ? `description_${language}` : `description`}`,
+            'description'],
           'short_url'],
-        order: [['created_at', 'desc']],
+        order: [['id', 'asc']],
+        limit: request.query.limit || 10,
       };
 
+      console.log({offset: request.query.offset});
+      if (request.query.offset) {
+        options.offset = request.query.offset;
+      }
+
+      const tagMapOptions = {};
       if (request.payload && request.payload.tag_id &&
           request.payload.tag_id.length > 0) {
-        options.where = modals.sequelize.where(
-            modals.sequelize.literal('"tags"."id"'),
+        tagMapOptions.where = modals.sequelize.where(
+            modals.sequelize.col('"tag_id"'),
             {$in: request.payload.tag_id});
       }
-      return modals.knowItems.findAll(options).then((knowItems) => {
-        return reply({
-          status: true, items: knowItems.map((item) => {
-            item = item.toJSON();
-            item.imageUrl = `/knowitem/${item.id}/images`;
-            item.title = item.title || item.default_title;
-            item.description = item.description || item.default_description;
-            item.tags = item.tags.map((tagItem) => {
-              tagItem.title = tagItem.title || tagItem.default_title;
-              return tagItem;
-            });
-            item.hashTags = '';
-            item.tags.forEach((tagItem) => {
-              item.hashTags += `#${tagItem.title} `;
-            });
-            item.hashTags = item.hashTags.trim();
-            item.totalLikes = item.users.length;
-            item.isLikedByUser = item.users.findIndex(
-                (userItem) => userItem.id === (user.id || user.ID)) >= 0;
-            return item;
-          }),
-        }).code(200);
-      }).catch((err) => {
-        console.log(
-            `Error on ${new Date()} for user ${user.id ||
-            user.ID} is as follow: \n \n ${err}`);
-        return reply({status: false}).code(200);
-      });
+      return Promise.try(() => modals.know_tag_map.findAll(tagMapOptions)).
+          then((tagMapResult) => {
+            tagMapResult = tagMapResult.map((tMItem) => tMItem.toJSON());
+            options.where.id = tagMapResult.map(
+                (tMItem) => tMItem.know_item_id);
+            return modals.knowItems.findAll(options);
+          }).
+          then((knowItems) => {
+            return reply({
+              status: true, items: knowItems.map((item) => {
+                item = item.toJSON();
+                item.imageUrl = `/knowitem/${item.id}/images`;
+                item.title = item.title || item.default_title;
+                item.description = item.description || item.default_description;
+                item.tags = item.tags.map((tagItem) => {
+                  tagItem.title = tagItem.title || tagItem.default_title;
+                  return tagItem;
+                });
+                item.hashTags = '';
+                item.tags.forEach((tagItem) => {
+                  item.hashTags += `#${tagItem.title} `;
+                });
+                item.hashTags = item.hashTags.trim();
+                item.totalLikes = item.users.length;
+                item.isLikedByUser = item.users.findIndex(
+                    (userItem) => userItem.id === (user.id || user.ID)) >= 0;
+                return item;
+              }),
+            }).code(200);
+          }).
+          catch((err) => {
+            console.log(
+                `Error on ${new Date()} for user ${user.id ||
+                user.ID} is as follow: \n \n ${err}`);
+            return reply({status: false}).code(200);
+          });
+    } else if (request.pre.userExist === 0) {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
     } else if (!request.pre.userExist) {
       return reply({
         status: false,
@@ -297,6 +331,11 @@ class GeneralController {
     let language = (request.headers.language || '').split('-')[0];
     language = supportedLanguages.indexOf(language) >= 0 ? language : '';
     const options = {
+      where: {
+        batch_date: {
+          $lte: moment(),
+        },
+      },
       include: [
         {
           model: modals.tags,
@@ -305,11 +344,15 @@ class GeneralController {
             [
               'title',
               'default_title'],
-            [`${language ? `title_${language}` : `title`}`, 'title'],
+            [
+              `${language ? `title_${language}` : `title`}`,
+              'title'],
             [
               'description',
               'default_description'],
-            [`${language ? `description_${language}` : `description`}`, 'description']
+            [
+              `${language ? `description_${language}` : `description`}`,
+              'description'],
           ],
         },
         {
@@ -322,13 +365,17 @@ class GeneralController {
         [
           'title',
           'default_title'],
-        [`${language ? `title_${language}` : `title`}`, 'title'],
+        [
+          `${language ? `title_${language}` : `title`}`,
+          'title'],
         [
           'description',
           'default_description'],
-        [`${language ? `description_${language}` : `description`}`, 'description'],
+        [
+          `${language ? `description_${language}` : `description`}`,
+          'description'],
         'short_url'],
-      order: [['created_at', 'desc']],
+      order: [['id', 'asc']],
     };
 
     return modals.knowItems.findAll(options).then((knowItems) => {
@@ -349,7 +396,7 @@ class GeneralController {
           item.hashTags = item.hashTags.trim();
           item.totalLikes = item.users.length;
           return item;
-        }),
+        }).slice((request.query.offset || 1) - 1, request.query.limit || 10),
       }).code(200);
     }).catch((err) => {
       console.log(
@@ -371,11 +418,15 @@ class GeneralController {
             [
               'title',
               'default_title'],
-            [`${language ? `title_${language}` : `title`}`, 'title'],
+            [
+              `${language ? `title_${language}` : `title`}`,
+              'title'],
             [
               'description',
               'default_description'],
-            [`${language ? `description_${language}` : `description`}`, 'description']
+            [
+              `${language ? `description_${language}` : `description`}`,
+              'description'],
           ],
         },
         {
@@ -388,32 +439,39 @@ class GeneralController {
         [
           'title',
           'default_title'],
-        [`${language ? `title_${language}` : `title`}`, 'title'],
+        [
+          `${language ? `title_${language}` : `title`}`,
+          'title'],
         [
           'description',
           'default_description'],
-        [`${language ? `description_${language}` : `description`}`, 'description'],
+        [
+          `${language ? `description_${language}` : `description`}`,
+          'description'],
         'short_url'],
       order: [['created_at', 'desc']],
     };
 
     return modals.knowItems.findById(request.params.id, options).
-        then((knowItems) => {
-          knowItems.imageUrl = `/knowitem/${knowItems.id}/images`;
-          knowItems.hashTags = '';
-          knowItems.title = knowItems.title || knowItems.default_title;
-          knowItems.description = knowItems.description || knowItems.default_description;
-          knowItems.tags = knowItems.tags.map((tagItem) => {
+        then((result) => {
+          const knowItem = result.toJSON();
+          knowItem.imageUrl = `/knowitem/${knowItem.id}/images`;
+          knowItem.hashTags = '';
+          knowItem.title = knowItem.title || knowItem.default_title;
+          knowItem.description = knowItem.description ||
+              knowItem.default_description;
+          knowItem.tags = knowItem.tags.map((tagItem) => {
             tagItem.title = tagItem.title || tagItem.default_title;
             return tagItem;
           });
-          knowItems.tags.forEach((tagItem) => {
-            knowItems.hashTags += `#${tagItem.title} `;
+          knowItem.tags.forEach((tagItem) => {
+            knowItem.hashTags += `#${tagItem.title} `;
           });
-          knowItems.hashTags = knowItems.hashTags.trim();
-          knowItems.totalLikes = knowItems.users.length;
+          knowItem.hashTags = knowItem.hashTags.trim();
+          knowItem.totalLikes = knowItem.users.length;
+
           return reply({
-            status: true, item: knowItems,
+            status: true, item: knowItem,
           }).code(200);
         }).
         catch((err) => {
@@ -428,16 +486,33 @@ class GeneralController {
     if (request.pre.userExist && !request.pre.forceUpdate) {
       const language = request.language;
       return modals.tags.findAll({
+        include:
+            {
+              model: modals.knowItems,
+              as: 'knowItems',
+              where: {
+                batch_date: {
+                  $lte: moment(),
+                },
+              },
+              attributes: [],
+              required: true,
+            },
         attributes: [
           'id',
           [
             'title',
             'default_title'],
-          [`${language ? `title_${language}` : `title`}`, 'title'],
+          [
+            `${language ? `title_${language}` : `title`}`,
+            'title'],
           [
             'description',
             'default_description'],
-          [`${language ? `description_${language}` : `description`}`, 'description'],],
+          [
+            `${language ? `description_${language}` : `description`}`,
+            'description'],],
+        distinct: true,
         order: [['created_at', 'desc']],
       }).then((tagItems) => {
         return reply({
@@ -454,6 +529,12 @@ class GeneralController {
             user.ID} is as follow: \n \n ${err}`);
         return reply({status: false}).code(200);
       });
+    } else if (request.pre.userExist === 0) {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
     } else if (!request.pre.userExist) {
       return reply({
         status: false,
@@ -487,6 +568,12 @@ class GeneralController {
             user.ID} is as follow: \n \n ${err}`);
         return reply({status: false}).code(200);
       });
+    } else if (request.pre.userExist === 0) {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
     } else if (!request.pre.userExist) {
       return reply({
         status: false,
@@ -522,6 +609,12 @@ class GeneralController {
             user.ID} is as follow: \n \n ${err}`);
         return reply({status: false}).code(200);
       });
+    } else if (request.pre.userExist === 0) {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
     } else if (!request.pre.userExist) {
       return reply({
         status: false,
@@ -537,11 +630,11 @@ class GeneralController {
     }
   }
 
-  static intializeUserProduct(request, reply) {
+  static initializeUserProduct(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
 
     if (request.pre.userExist && !request.pre.forceUpdate) {
-      return Bluebird.try(() => {
+      return Promise.try(() => {
         return jobAdaptor.createJobs({
           job_id: `${Math.random().
               toString(36).
@@ -612,6 +705,12 @@ class GeneralController {
           forceUpdate: request.pre.forceUpdate,
         }).code(200);
       });
+    } else if (request.pre.userExist === 0) {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
     } else if (!request.pre.userExist) {
       return reply({
         status: false,
@@ -630,7 +729,7 @@ class GeneralController {
   static serviceCenterAccessed(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
-      return Bluebird.try(() => {
+      return Promise.try(() => {
         return userAdaptor.updateUserDetail(
             {service_center_accessed: true}, {
               where: {
@@ -650,6 +749,12 @@ class GeneralController {
           forceUpdate: request.pre.forceUpdate,
         });
       });
+    } else if (request.pre.userExist === 0) {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
     } else if (!request.pre.userExist) {
       return reply({
         status: false,
@@ -669,7 +774,7 @@ class GeneralController {
     const user = shared.verifyAuthorization(request.headers);
 
     if (request.pre.userExist && !request.pre.forceUpdate) {
-      return Bluebird.try(() => {
+      return Promise.try(() => {
         return productAdaptor.retrieveProducts({
           main_category_id: [1, 2, 3],
           status_type: [5, 11],
@@ -691,6 +796,12 @@ class GeneralController {
         });
       });
 
+    } else if (request.pre.userExist === 0) {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
     } else if (!request.pre.userExist) {
       return reply({
         status: false,

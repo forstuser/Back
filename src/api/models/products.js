@@ -29,6 +29,9 @@ export default (sequelize, DataTypes) => {
         document_number: {
           type: DataTypes.STRING,
         },
+        file_type: {
+          type: DataTypes.STRING,
+        },
         product_name: {
           type: DataTypes.STRING,
         },
@@ -44,7 +47,7 @@ export default (sequelize, DataTypes) => {
           defaultValue: 0,
         },
         document_date: {
-          type: DataTypes.DATE,
+          type: DataTypes.DATEONLY,
           defaultValue: sequelize.literal('NOW()'),
         },
         user_id: {

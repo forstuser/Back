@@ -38,7 +38,13 @@ var ProductController = function () {
     key: 'createProduct',
     value: function createProduct(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!request.pre.userExist) {
+      if (request.pre.userExist === 0) {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
         return reply({
           status: false,
           message: 'Unauthorized',
@@ -112,7 +118,13 @@ var ProductController = function () {
     key: 'deleteProduct',
     value: function deleteProduct(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!request.pre.userExist) {
+      if (request.pre.userExist === 0) {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
         return reply({
           status: false,
           message: 'Unauthorized',
@@ -142,7 +154,7 @@ var ProductController = function () {
             api_path: request.url.pathname,
             log_type: 2,
             user_id: user.id || user.ID,
-            log_content: err
+            log_content: JSON.stringify(err)
           });
           return reply({
             status: false,
@@ -163,7 +175,13 @@ var ProductController = function () {
     key: 'updateProduct',
     value: function updateProduct(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!request.pre.userExist) {
+      if (request.pre.userExist === 0) {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
         return reply({
           status: false,
           message: 'Unauthorized',
@@ -250,7 +268,13 @@ var ProductController = function () {
     key: 'updateUserReview',
     value: function updateUserReview(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!request.pre.userExist) {
+      if (request.pre.userExist === 0) {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
         return reply({
           status: false,
           message: 'Unauthorized',
@@ -277,7 +301,13 @@ var ProductController = function () {
     key: 'retrieveProductDetail',
     value: function retrieveProductDetail(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!request.pre.userExist) {
+      if (request.pre.userExist === 0) {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
         return reply({
           status: false,
           message: 'Unauthorized',
@@ -300,7 +330,13 @@ var ProductController = function () {
     key: 'retrieveCenterProducts',
     value: function retrieveCenterProducts(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!request.pre.userExist) {
+      if (request.pre.userExist === 0) {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
         return reply({
           status: false,
           message: 'Unauthorized',

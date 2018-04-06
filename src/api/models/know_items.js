@@ -84,6 +84,10 @@ export default (sequelize, DataTypes) => {
           type: DataTypes.DATE,
           defaultValue: sequelize.literal('NOW()'),
         },
+        batch_date: {
+          type: DataTypes.DATE,
+          defaultValue: sequelize.literal('NOW()'),
+        },
         category_id: {
           type: DataTypes.INTEGER,
           allowNull: true,

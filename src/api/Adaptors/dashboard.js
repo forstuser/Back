@@ -6,9 +6,11 @@ import AMCAdaptor from './amcs';
 import InsuranceAdaptor from './insurances';
 import RepairAdaptor from './repairs';
 import WarrantyAdaptor from './warranties';
+import CalendarServiceAdaptor from './calendarServices';
 import PUCAdaptor from './pucs';
 import shared from '../../helpers/shared';
 import moment from 'moment';
+import Promise from 'bluebird';
 
 class DashboardAdaptor {
   constructor(modals) {
@@ -19,13 +21,14 @@ class DashboardAdaptor {
     this.repairAdaptor = new RepairAdaptor(modals);
     this.warrantyAdaptor = new WarrantyAdaptor(modals);
     this.pucAdaptor = new PUCAdaptor(modals);
+    this.calendarServiceAdaptor = new CalendarServiceAdaptor(modals);
     this.date = moment.utc();
   }
 
   retrieveDashboardResult(user, request) {
     return Promise.all([
-      this.filterUpcomingService(user),
-      this.prepareInsightData(user),
+      this.filterUpcomingService(user, request),
+      this.prepareInsightData(user, request),
       this.retrieveRecentSearch(user),
       this.modals.mailBox.count(
           {where: {user_id: user.id || user.ID, status_id: 4}}),
@@ -51,7 +54,38 @@ class DashboardAdaptor {
       }),
       this.productAdaptor.retrieveUsersLastProduct({
         user_id: user.id || user.ID,
-        status_type: [5, 8, 11],
+        status_type: [5, 11],
+      }, request.language),
+      this.modals.user_calendar_item.count({
+        where: {
+          user_id: user.id || user.ID,
+        },
+      }),
+      this.modals.user_calendar_item.findOne({
+        where: {
+          user_id: user.id || user.ID,
+        },
+        order: [['updated_at', 'desc']],
+      }),
+      this.modals.service_calculation.findOne({
+        where: {
+          updated_by: user.id || user.ID,
+        },
+        order: [['updated_at', 'desc']],
+      }),
+      this.calendarServiceAdaptor.retrieveCalendarItemList(
+          {user_id: user.id || user.ID}, request.language, 4),
+      this.modals.products.count({
+        where: {
+          user_id: user.id || user.ID,
+          main_category_id: [2, 3],
+          status_type: [5, 11],
+        },
+      }),
+      this.modals.knowItems.count({
+        where: {
+          id: {$gt: request.query.lastfact || 0},
+        },
       }),
     ]).then((result) => {
       const upcomingServices = result[0].map((elem) => {
@@ -88,19 +122,22 @@ class DashboardAdaptor {
 
         return insightItem;
       });
-      const insightItems = shared.retrieveDaysInsight(distinctInsight);
 
-      const insightResult = insightItems && insightItems.length > 0 ? {
-        startDate: moment.utc().subtract(6, 'd').startOf('d'),
+      const insightResult = distinctInsight && distinctInsight.length > 0 ? {
+        startDate: moment.utc().startOf('M'),
         endDate: moment.utc(),
-        totalSpend: shared.sumProps(insightItems, 'value'),
-        totalDays: 7,
-        insightData: insightItems,
+        totalSpend: shared.sumProps(distinctInsight, 'value'),
+        totalDays: moment.utc().
+            endOf('d').
+            diff(moment.utc().startOf('M'), 'days'),
+        insightData: distinctInsight,
       } : {
-        startDate: moment.utc().subtract(6, 'd').startOf('d'),
+        startDate: moment.utc().startOf('M'),
         endDate: moment.utc(),
         totalSpend: 0,
-        totalDays: 7,
+        totalDays: moment.utc().
+            endOf('d').
+            diff(moment.utc().startOf('M'), 'days'),
         insightData,
       };
 
@@ -127,7 +164,14 @@ class DashboardAdaptor {
         return 1;
       });
       let product = result[6];
-
+      const latestCalendarItem = result[8] ? result[8].toJSON() : {};
+      const latestCalendarCalc = result[9] ? result[9].toJSON() : {};
+      const calendar_item_updated_at = latestCalendarItem &&
+      moment(latestCalendarItem.updated_at, moment.ISO_8601).
+          diff(moment(latestCalendarCalc.updated_at, moment.ISO_8601),
+              'days') < 0 ?
+          latestCalendarCalc.updated_at : latestCalendarItem ?
+              latestCalendarItem.updated_at : moment();
       return {
         status: true,
         message: 'Dashboard restore Successful',
@@ -142,7 +186,13 @@ class DashboardAdaptor {
         showDashboard: !!(result[4] && parseInt(result[4]) > 0) ||
         !!(result[5] && parseInt(result[5]) > 0),
         hasProducts: !!(result[5] && parseInt(result[5]) > 0),
-        product,
+        total_calendar_item: result[7] || 0,
+        calendar_item_updated_at,
+        recent_calendar_item: result[10],
+        recent_products: product.slice(0, 4),
+        product: product[0],
+        service_center_products: result[11],
+        know_item_count: result[12],
       };
     }).catch(err => {
       console.log(
@@ -212,7 +262,8 @@ class DashboardAdaptor {
     }
 
     if (user.email && !user.email_verified) {
-      notificationAdaptor.sendMailOnDifferentSteps('Welcome to BinBill - Your eHome',
+      notificationAdaptor.sendMailOnDifferentSteps(
+          'Welcome to BinBill - Your eHome',
           user.email, user, 1);
     }
 
@@ -228,7 +279,7 @@ class DashboardAdaptor {
     };
   }
 
-  filterUpcomingService(user) {
+  filterUpcomingService(user, request) {
     return Promise.all([
       this.amcAdaptor.retrieveAMCs({
         user_id: user.id || user.ID,
@@ -270,7 +321,7 @@ class DashboardAdaptor {
         service_schedule_id: {
           $not: null,
         },
-      }),
+      }, request.language),
       this.productAdaptor.retrieveNotificationProducts({
         user_id: user.id || user.ID,
         status_type: [5, 11],
@@ -413,22 +464,22 @@ class DashboardAdaptor {
     });
   }
 
-  prepareInsightData(user) {
+  prepareInsightData(user, request) {
     return Promise.all([
       this.productAdaptor.retrieveProducts({
         status_type: [5, 11],
         user_id: user.id || user.ID,
         document_date: {
           $lte: moment.utc(),
-          $gte: moment.utc().subtract(6, 'd').startOf('d'),
+          $gte: moment.utc().startOf('M'),
         },
-      }),
+      }, request.language),
       this.amcAdaptor.retrieveAMCs({
         status_type: [5, 11],
         user_id: user.id || user.ID,
         document_date: {
           $lte: moment.utc(),
-          $gte: moment.utc().subtract(6, 'd').startOf('d'),
+          $gte: moment.utc().startOf('M'),
         },
       }),
       this.insuranceAdaptor.retrieveInsurances({
@@ -436,7 +487,7 @@ class DashboardAdaptor {
         user_id: user.id || user.ID,
         document_date: {
           $lte: moment.utc(),
-          $gte: moment.utc().subtract(6, 'd').startOf('d'),
+          $gte: moment.utc().startOf('M'),
         },
       }),
       this.repairAdaptor.retrieveRepairs({
@@ -444,7 +495,7 @@ class DashboardAdaptor {
         user_id: user.id || user.ID,
         document_date: {
           $lte: moment.utc(),
-          $gte: moment.utc().subtract(6, 'd').startOf('d'),
+          $gte: moment.utc().startOf('M'),
         },
       }),
       this.warrantyAdaptor.retrieveWarranties({
@@ -452,7 +503,7 @@ class DashboardAdaptor {
         user_id: user.id || user.ID,
         document_date: {
           $lte: moment.utc(),
-          $gte: moment.utc().subtract(6, 'd').startOf('d'),
+          $gte: moment.utc().startOf('M'),
         },
       }),
       this.pucAdaptor.retrievePUCs({
@@ -460,16 +511,16 @@ class DashboardAdaptor {
         user_id: user.id || user.ID,
         document_date: {
           $lte: moment.utc(),
-          $gte: moment.utc().subtract(6, 'd').startOf('d'),
+          $gte: moment.utc().startOf('M'),
         },
       })]).
-        then((results) => [
+        then((results) => Promise.all([
           ...results[0],
           ...results[1],
           ...results[2],
           ...results[3],
           ...results[4],
-          ...results[5]]);
+          ...results[5]]));
   }
 
   retrieveRecentSearch(user) {

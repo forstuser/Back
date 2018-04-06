@@ -31,6 +31,10 @@ var _warranties = require('./warranties');
 
 var _warranties2 = _interopRequireDefault(_warranties);
 
+var _calendarServices = require('./calendarServices');
+
+var _calendarServices2 = _interopRequireDefault(_calendarServices);
+
 var _pucs = require('./pucs');
 
 var _pucs2 = _interopRequireDefault(_pucs);
@@ -42,6 +46,10 @@ var _shared2 = _interopRequireDefault(_shared);
 var _moment = require('moment');
 
 var _moment2 = _interopRequireDefault(_moment);
+
+var _bluebird = require('bluebird');
+
+var _bluebird2 = _interopRequireDefault(_bluebird);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -60,13 +68,14 @@ var DashboardAdaptor = function () {
     this.repairAdaptor = new _repairs2.default(modals);
     this.warrantyAdaptor = new _warranties2.default(modals);
     this.pucAdaptor = new _pucs2.default(modals);
+    this.calendarServiceAdaptor = new _calendarServices2.default(modals);
     this.date = _moment2.default.utc();
   }
 
   _createClass(DashboardAdaptor, [{
     key: 'retrieveDashboardResult',
     value: function retrieveDashboardResult(user, request) {
-      return Promise.all([this.filterUpcomingService(user), this.prepareInsightData(user), this.retrieveRecentSearch(user), this.modals.mailBox.count({ where: { user_id: user.id || user.ID, status_id: 4 } }), this.modals.products.count({
+      return _bluebird2.default.all([this.filterUpcomingService(user, request), this.prepareInsightData(user, request), this.retrieveRecentSearch(user), this.modals.mailBox.count({ where: { user_id: user.id || user.ID, status_id: 4 } }), this.modals.products.count({
         where: {
           user_id: user.id || user.ID,
           status_type: [5, 8]
@@ -85,7 +94,31 @@ var DashboardAdaptor = function () {
         }
       }), this.productAdaptor.retrieveUsersLastProduct({
         user_id: user.id || user.ID,
-        status_type: [5, 8, 11]
+        status_type: [5, 11]
+      }, request.language), this.modals.user_calendar_item.count({
+        where: {
+          user_id: user.id || user.ID
+        }
+      }), this.modals.user_calendar_item.findOne({
+        where: {
+          user_id: user.id || user.ID
+        },
+        order: [['updated_at', 'desc']]
+      }), this.modals.service_calculation.findOne({
+        where: {
+          updated_by: user.id || user.ID
+        },
+        order: [['updated_at', 'desc']]
+      }), this.calendarServiceAdaptor.retrieveCalendarItemList({ user_id: user.id || user.ID }, request.language, 4), this.modals.products.count({
+        where: {
+          user_id: user.id || user.ID,
+          main_category_id: [2, 3],
+          status_type: [5, 11]
+        }
+      }), this.modals.knowItems.count({
+        where: {
+          id: { $gt: request.query.lastfact || 0 }
+        }
       })]).then(function (result) {
         var upcomingServices = result[0].map(function (elem) {
           if (elem.productType === 1) {
@@ -116,19 +149,18 @@ var DashboardAdaptor = function () {
 
           return insightItem;
         });
-        var insightItems = _shared2.default.retrieveDaysInsight(distinctInsight);
 
-        var insightResult = insightItems && insightItems.length > 0 ? {
-          startDate: _moment2.default.utc().subtract(6, 'd').startOf('d'),
+        var insightResult = distinctInsight && distinctInsight.length > 0 ? {
+          startDate: _moment2.default.utc().startOf('M'),
           endDate: _moment2.default.utc(),
-          totalSpend: _shared2.default.sumProps(insightItems, 'value'),
-          totalDays: 7,
-          insightData: insightItems
+          totalSpend: _shared2.default.sumProps(distinctInsight, 'value'),
+          totalDays: _moment2.default.utc().endOf('d').diff(_moment2.default.utc().startOf('M'), 'days'),
+          insightData: distinctInsight
         } : {
-          startDate: _moment2.default.utc().subtract(6, 'd').startOf('d'),
+          startDate: _moment2.default.utc().startOf('M'),
           endDate: _moment2.default.utc(),
           totalSpend: 0,
-          totalDays: 7,
+          totalDays: _moment2.default.utc().endOf('d').diff(_moment2.default.utc().startOf('M'), 'days'),
           insightData: insightData
         };
 
@@ -154,7 +186,9 @@ var DashboardAdaptor = function () {
           return 1;
         });
         var product = result[6];
-
+        var latestCalendarItem = result[8] ? result[8].toJSON() : {};
+        var latestCalendarCalc = result[9] ? result[9].toJSON() : {};
+        var calendar_item_updated_at = latestCalendarItem && (0, _moment2.default)(latestCalendarItem.updated_at, _moment2.default.ISO_8601).diff((0, _moment2.default)(latestCalendarCalc.updated_at, _moment2.default.ISO_8601), 'days') < 0 ? latestCalendarCalc.updated_at : latestCalendarItem ? latestCalendarItem.updated_at : (0, _moment2.default)();
         return {
           status: true,
           message: 'Dashboard restore Successful',
@@ -168,7 +202,13 @@ var DashboardAdaptor = function () {
           forceUpdate: request.pre.forceUpdate,
           showDashboard: !!(result[4] && parseInt(result[4]) > 0) || !!(result[5] && parseInt(result[5]) > 0),
           hasProducts: !!(result[5] && parseInt(result[5]) > 0),
-          product: product
+          total_calendar_item: result[7] || 0,
+          calendar_item_updated_at: calendar_item_updated_at,
+          recent_calendar_item: result[10],
+          recent_products: product.slice(0, 4),
+          product: product[0],
+          service_center_products: result[11],
+          know_item_count: result[12]
         };
       }).catch(function (err) {
         console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
@@ -190,7 +230,7 @@ var DashboardAdaptor = function () {
           request = parameters.request;
 
       if (!isNewUser) {
-        return Promise.all([this.modals.products.count({
+        return _bluebird2.default.all([this.modals.products.count({
           where: {
             user_id: user.id || user.ID,
             status_type: [5, 8, 11]
@@ -251,8 +291,8 @@ var DashboardAdaptor = function () {
     }
   }, {
     key: 'filterUpcomingService',
-    value: function filterUpcomingService(user) {
-      return Promise.all([this.amcAdaptor.retrieveAMCs({
+    value: function filterUpcomingService(user, request) {
+      return _bluebird2.default.all([this.amcAdaptor.retrieveAMCs({
         user_id: user.id || user.ID,
         status_type: [5, 11],
         expiry_date: {
@@ -288,7 +328,7 @@ var DashboardAdaptor = function () {
         service_schedule_id: {
           $not: null
         }
-      }), this.productAdaptor.retrieveNotificationProducts({
+      }, request.language), this.productAdaptor.retrieveNotificationProducts({
         user_id: user.id || user.ID,
         status_type: [5, 11],
         main_category_id: [6, 8]
@@ -409,51 +449,51 @@ var DashboardAdaptor = function () {
     }
   }, {
     key: 'prepareInsightData',
-    value: function prepareInsightData(user) {
-      return Promise.all([this.productAdaptor.retrieveProducts({
+    value: function prepareInsightData(user, request) {
+      return _bluebird2.default.all([this.productAdaptor.retrieveProducts({
         status_type: [5, 11],
         user_id: user.id || user.ID,
         document_date: {
           $lte: _moment2.default.utc(),
-          $gte: _moment2.default.utc().subtract(6, 'd').startOf('d')
+          $gte: _moment2.default.utc().startOf('M')
         }
-      }), this.amcAdaptor.retrieveAMCs({
+      }, request.language), this.amcAdaptor.retrieveAMCs({
         status_type: [5, 11],
         user_id: user.id || user.ID,
         document_date: {
           $lte: _moment2.default.utc(),
-          $gte: _moment2.default.utc().subtract(6, 'd').startOf('d')
+          $gte: _moment2.default.utc().startOf('M')
         }
       }), this.insuranceAdaptor.retrieveInsurances({
         status_type: [5, 11],
         user_id: user.id || user.ID,
         document_date: {
           $lte: _moment2.default.utc(),
-          $gte: _moment2.default.utc().subtract(6, 'd').startOf('d')
+          $gte: _moment2.default.utc().startOf('M')
         }
       }), this.repairAdaptor.retrieveRepairs({
         status_type: [5, 11],
         user_id: user.id || user.ID,
         document_date: {
           $lte: _moment2.default.utc(),
-          $gte: _moment2.default.utc().subtract(6, 'd').startOf('d')
+          $gte: _moment2.default.utc().startOf('M')
         }
       }), this.warrantyAdaptor.retrieveWarranties({
         status_type: [5, 11],
         user_id: user.id || user.ID,
         document_date: {
           $lte: _moment2.default.utc(),
-          $gte: _moment2.default.utc().subtract(6, 'd').startOf('d')
+          $gte: _moment2.default.utc().startOf('M')
         }
       }), this.pucAdaptor.retrievePUCs({
         status_type: [5, 11],
         user_id: user.id || user.ID,
         document_date: {
           $lte: _moment2.default.utc(),
-          $gte: _moment2.default.utc().subtract(6, 'd').startOf('d')
+          $gte: _moment2.default.utc().startOf('M')
         }
       })]).then(function (results) {
-        return [].concat(_toConsumableArray(results[0]), _toConsumableArray(results[1]), _toConsumableArray(results[2]), _toConsumableArray(results[3]), _toConsumableArray(results[4]), _toConsumableArray(results[5]));
+        return _bluebird2.default.all([].concat(_toConsumableArray(results[0]), _toConsumableArray(results[1]), _toConsumableArray(results[2]), _toConsumableArray(results[3]), _toConsumableArray(results[4]), _toConsumableArray(results[5])));
       });
     }
   }, {

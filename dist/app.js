@@ -8,6 +8,10 @@ var _fs = require('fs');
 
 var _fs2 = _interopRequireDefault(_fs);
 
+var _path = require('path');
+
+var _path2 = _interopRequireDefault(_path);
+
 var _hapi = require('hapi');
 
 var _hapi2 = _interopRequireDefault(_hapi);
@@ -27,10 +31,6 @@ var _hapiSwagger2 = _interopRequireDefault(_hapiSwagger);
 var _inert = require('inert');
 
 var _inert2 = _interopRequireDefault(_inert);
-
-var _path = require('path');
-
-var _path2 = _interopRequireDefault(_path);
 
 var _vision = require('vision');
 
@@ -91,7 +91,8 @@ _models2.default.sequelize.sync().then(function () {
     register: _hapiCors2.default,
     options: {
       origins: ['*'],
-      methods: ['POST, GET, OPTIONS', 'PUT', 'DELETE']
+      methods: ['POST, GET, OPTIONS', 'PUT', 'DELETE'],
+      headers: ['Accept', 'Content-Type', 'Authorization', 'language']
     }
   }], function (err) {
     if (!err) {

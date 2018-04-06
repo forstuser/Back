@@ -99,11 +99,11 @@ exports.default = function (sequelize, DataTypes) {
   tags.associate = function (models) {
     tags.belongsTo(models.users, { foreignKey: 'updated_by' });
     tags.belongsTo(models.statuses, { foreignKey: 'status_type', targetKey: 'status_type' });
-    tags.belongsToMany(models.tags, {
+    tags.belongsToMany(models.knowItems, {
       foreignKey: 'tag_id',
       otherKey: 'know_item_id',
       through: 'know_tag_map',
-      as: 'tags'
+      as: 'knowItems'
     });
   };
   return tags;

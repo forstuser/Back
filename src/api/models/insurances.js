@@ -53,15 +53,15 @@ export default (sequelize, DataTypes) => {
           defaultValue: sequelize.literal('NOW()'),
         },
         effective_date: {
-          type: DataTypes.DATE,
+          type: DataTypes.DATEONLY,
           defaultValue: sequelize.literal('NOW()'),
         },
         expiry_date: {
-          type: DataTypes.DATE,
+          type: DataTypes.DATEONLY,
           allowNull: true,
         },
         document_date: {
-          type: DataTypes.DATE,
+          type: DataTypes.DATEONLY,
           defaultValue: sequelize.literal('NOW()'),
         },
         copies: {

@@ -69,16 +69,16 @@ exports.default = function (sequelize, DataTypes) {
       type: DataTypes.STRING
     },
     last_login_at: {
-      type: DataTypes.DATE
+      type: DataTypes.DATEONLY
     },
     last_logout_at: {
-      type: DataTypes.DATE
+      type: DataTypes.DATEONLY
     },
     last_active_date: {
       type: DataTypes.DATE
     },
     last_password_change_at: {
-      type: DataTypes.DATE
+      type: DataTypes.DATEONLY
     },
     created_at: {
       type: DataTypes.DATE,
@@ -91,6 +91,12 @@ exports.default = function (sequelize, DataTypes) {
     service_center_accessed: {
       type: DataTypes.BOOLEAN,
       defaultValue: false
+    },
+    temp_password: {
+      type: DataTypes.STRING
+    },
+    otp_created_at: {
+      type: DataTypes.DATE
     }
   }, {
     freezeTableName: true,

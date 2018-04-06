@@ -75,7 +75,7 @@ var ProductAdaptor = function () {
 
   _createClass(ProductAdaptor, [{
     key: 'retrieveProducts',
-    value: function retrieveProducts(options) {
+    value: function retrieveProducts(options, language) {
       var _this = this;
 
       if (!options.status_type) {
@@ -90,6 +90,15 @@ var ProductAdaptor = function () {
       if (options.online_seller_id) {
         billOption.seller_id = options.online_seller_id;
       }
+
+      if (!options.main_category_id) {
+        options = _lodash2.default.omit(options, 'main_category_id');
+      }
+
+      if (!options.category_id) {
+        options = _lodash2.default.omit(options, 'category_id');
+      }
+
       options = _lodash2.default.omit(options, 'online_seller_id');
 
       var inProgressProductOption = {};
@@ -166,17 +175,25 @@ var ProductAdaptor = function () {
           required: false
         }, {
           model: this.modals.categories,
+          as: 'mainCategory',
+          attributes: [],
+          required: false
+        }, {
+          model: this.modals.categories,
           as: 'sub_category',
           attributes: [],
           required: false
         }],
-        attributes: ['id', ['product_name', 'productName'], [this.modals.sequelize.literal('"category"."category_id"'), 'categoryId'], ['main_category_id', 'masterCategoryId'], 'sub_category_id', [this.modals.sequelize.literal('"sub_category"."category_name"'), 'sub_category_name'], ['brand_id', 'brandId'], ['colour_id', 'colorId'], ['purchase_cost', 'value'], 'taxes', [this.modals.sequelize.literal('"category"."category_name"'), 'categoryName'], [this.modals.sequelize.fn('CONCAT', '/categories/', this.modals.sequelize.literal('"category"."category_id"'), '/images/'), 'cImageURL'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"products"."id"')), 'productURL'], ['document_date', 'purchaseDate'], 'model', ['document_number', 'documentNo'], ['updated_at', 'updatedDate'], ['bill_id', 'billId'], ['job_id', 'jobId'], ['seller_id', 'sellerId'], 'copies', [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"products"."id"'), '/reviews'), 'reviewUrl'], [this.modals.sequelize.literal('"category"."category_name"'), 'categoryName'], [this.modals.sequelize.fn('CONCAT', '/consumer/servicecenters?brandid=', this.modals.sequelize.literal('"products"."brand_id"'), '&categoryid=', this.modals.sequelize.col('"products"."category_id"')), 'serviceCenterUrl'], 'status_type'],
+        attributes: ['id', ['product_name', 'productName'], 'file_type', [this.modals.sequelize.literal('"category"."category_id"'), 'categoryId'], ['main_category_id', 'masterCategoryId'], 'sub_category_id', ['brand_id', 'brandId'], ['colour_id', 'colorId'], ['purchase_cost', 'value'], 'taxes', [this.modals.sequelize.fn('CONCAT', '/categories/', this.modals.sequelize.literal('"category"."category_id"'), '/images/'), 'cImageURL'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"products"."id"')), 'productURL'], ['document_date', 'purchaseDate'], 'model', ['document_number', 'documentNo'], ['updated_at', 'updatedDate'], ['bill_id', 'billId'], ['job_id', 'jobId'], ['seller_id', 'sellerId'], 'copies', [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"products"."id"'), '/reviews'), 'reviewUrl'], [this.modals.sequelize.literal('' + (language ? '"sub_category"."category_name_' + language + '"' : '"sub_category"."category_name"')), 'sub_category_name'], [this.modals.sequelize.literal('' + (language ? '"category"."category_name_' + language + '"' : '"category"."category_name"')), 'categoryName'], [this.modals.sequelize.literal('"sub_category"."category_name"'), 'default_sub_category_name'], [this.modals.sequelize.literal('"mainCategory"."category_name"'), 'default_masterCategoryName'], [this.modals.sequelize.literal('"category"."category_name"'), 'default_categoryName'], [this.modals.sequelize.literal('' + (language ? '"mainCategory"."category_name_' + language + '"' : '"mainCategory"."category_name"')), 'masterCategoryName'], [this.modals.sequelize.fn('CONCAT', '/consumer/servicecenters?brandid=', this.modals.sequelize.literal('"products"."brand_id"'), '&categoryid=', this.modals.sequelize.col('"products"."category_id"')), 'serviceCenterUrl'], 'status_type'],
         order: [['document_date', 'DESC']]
       }).then(function (productResult) {
         products = productResult.map(function (item) {
           var productItem = item.toJSON();
+          productItem.sub_category_name = productItem.sub_category_name || productItem.default_sub_category_name;
+          productItem.masterCategoryName = productItem.masterCategoryName || productItem.default_masterCategoryName;
+          productItem.categoryName = productItem.categoryName || productItem.default_categoryName;
           productItem.purchaseDate = _moment2.default.utc(productItem.purchaseDate, _moment2.default.ISO_8601).startOf('days');
-          productItem.cImageURL = productItem.sub_category_id ? '/categories/' + productItem.sub_category_id + '/images/' : productItem.cImageURL;
+          productItem.cImageURL = productItem.file_type ? '/consumer/products/' + productItem.id + '/images' : productItem.sub_category_id ? '/categories/' + productItem.sub_category_id + '/images/1' : productItem.cImageURL + '1';
           if (productItem.schedule) {
             productItem.schedule.due_date = _moment2.default.utc(productItem.purchaseDate, _moment2.default.ISO_8601).add(productItem.schedule.due_in_months, 'months');
           }
@@ -203,7 +220,7 @@ var ProductAdaptor = function () {
             product_id: products.map(function (item) {
               return item.id;
             })
-          }), _this.insuranceAdaptor.retrieveInsurances(inProgressProductOption), _this.warrantyAdaptor.retrieveWarranties(warrantyOptions), _this.amcAdaptor.retrieveAMCs(inProgressProductOption), _this.repairAdaptor.retrieveRepairs(inProgressProductOption), _this.pucAdaptor.retrievePUCs(inProgressProductOption)]);
+          }, language), _this.insuranceAdaptor.retrieveInsurances(inProgressProductOption), _this.warrantyAdaptor.retrieveWarranties(warrantyOptions), _this.amcAdaptor.retrieveAMCs(inProgressProductOption), _this.repairAdaptor.retrieveRepairs(inProgressProductOption), _this.pucAdaptor.retrievePUCs(inProgressProductOption)]);
         }
         return undefined;
       }).then(function (results) {
@@ -254,7 +271,7 @@ var ProductAdaptor = function () {
     }
   }, {
     key: 'retrieveUpcomingProducts',
-    value: function retrieveUpcomingProducts(options) {
+    value: function retrieveUpcomingProducts(options, language) {
       if (!options.status_type) {
         options.status_type = [5, 11];
       }
@@ -280,23 +297,31 @@ var ProductAdaptor = function () {
           required: false
         }, {
           model: this.modals.categories,
+          as: 'mainCategory',
+          attributes: [],
+          required: false
+        }, {
+          model: this.modals.categories,
           as: 'sub_category',
           attributes: [],
           required: false
         }],
-        attributes: ['id', ['product_name', 'productName'], [this.modals.sequelize.literal('"category"."category_id"'), 'categoryId'], ['main_category_id', 'masterCategoryId'], 'sub_category_id', [this.modals.sequelize.literal('"sub_category"."category_name"'), 'sub_category_name'], ['brand_id', 'brandId'], ['colour_id', 'colorId'], ['purchase_cost', 'value'], 'taxes', [this.modals.sequelize.literal('"category"."category_name"'), 'categoryName'], [this.modals.sequelize.fn('CONCAT', '/categories/', this.modals.sequelize.literal('"category"."category_id"'), '/images/'), 'cImageURL'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"products"."id"')), 'productURL'], ['document_date', 'purchaseDate'], 'model', ['document_number', 'documentNo'], ['updated_at', 'updatedDate'], ['bill_id', 'billId'], ['job_id', 'jobId'], ['seller_id', 'sellerId'], 'copies', [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"products"."id"'), '/reviews'), 'reviewUrl'], [this.modals.sequelize.literal('"category"."category_name"'), 'categoryName'], [this.modals.sequelize.fn('CONCAT', '/consumer/servicecenters?brandid=', this.modals.sequelize.literal('"products"."brand_id"'), '&categoryid=', this.modals.sequelize.col('"products"."category_id"')), 'serviceCenterUrl'], 'status_type'],
+        attributes: ['id', ['product_name', 'productName'], 'file_type', [this.modals.sequelize.literal('"category"."category_id"'), 'categoryId'], ['main_category_id', 'masterCategoryId'], 'sub_category_id', ['brand_id', 'brandId'], ['colour_id', 'colorId'], ['purchase_cost', 'value'], 'taxes', [this.modals.sequelize.literal('' + (language ? '"sub_category"."category_name_' + language + '"' : '"sub_category"."category_name"')), 'sub_category_name'], [this.modals.sequelize.literal('' + (language ? '"category"."category_name_' + language + '"' : '"category"."category_name"')), 'categoryName'], [this.modals.sequelize.literal('' + (language ? '"mainCategory"."category_name_' + language + '"' : '"mainCategory"."category_name"')), 'masterCategoryName'], [this.modals.sequelize.literal('"sub_category"."category_name"'), 'default_sub_category_name'], [this.modals.sequelize.literal('"mainCategory"."category_name"'), 'default_masterCategoryName'], [this.modals.sequelize.literal('"category"."category_name"'), 'default_categoryName'], [this.modals.sequelize.fn('CONCAT', '/categories/', this.modals.sequelize.literal('"category"."category_id"'), '/images/'), 'cImageURL'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"products"."id"')), 'productURL'], ['document_date', 'purchaseDate'], 'model', ['document_number', 'documentNo'], ['updated_at', 'updatedDate'], ['bill_id', 'billId'], ['job_id', 'jobId'], ['seller_id', 'sellerId'], 'copies', [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"products"."id"'), '/reviews'), 'reviewUrl'], [this.modals.sequelize.literal('"category"."category_name"'), 'categoryName'], [this.modals.sequelize.fn('CONCAT', '/consumer/servicecenters?brandid=', this.modals.sequelize.literal('"products"."brand_id"'), '&categoryid=', this.modals.sequelize.col('"products"."category_id"')), 'serviceCenterUrl'], 'status_type'],
         order: [['document_date', 'DESC']]
       }).then(function (productResult) {
         return productResult.map(function (item) {
           var productItem = item.toJSON();
 
+          productItem.sub_category_name = productItem.sub_category_name || productItem.default_sub_category_name;
+          productItem.masterCategoryName = productItem.masterCategoryName || productItem.default_masterCategoryName;
+          productItem.categoryName = productItem.categoryName || productItem.default_categoryName;
           if (productItem.copies) {
             productItem.copies = productItem.copies.map(function (copyItem) {
               copyItem.file_type = copyItem.file_type || copyItem.fileType;
               return copyItem;
             });
           }
-          productItem.cImageURL = productItem.sub_category_id ? '/categories/' + productItem.sub_category_id + '/images/' : productItem.cImageURL;
+          productItem.cImageURL = productItem.file_type ? '/consumer/products/' + productItem.id + '/images' : productItem.sub_category_id ? '/categories/' + productItem.sub_category_id + '/images/1' : productItem.cImageURL + '1';
           productItem.purchaseDate = _moment2.default.utc(productItem.purchaseDate, _moment2.default.ISO_8601).startOf('days');
           if (productItem.schedule) {
             productItem.schedule.due_date = _moment2.default.utc(productItem.purchaseDate, _moment2.default.ISO_8601).add(productItem.schedule.due_in_months, 'months');
@@ -307,10 +332,11 @@ var ProductAdaptor = function () {
     }
   }, {
     key: 'retrieveUsersLastProduct',
-    value: function retrieveUsersLastProduct(options) {
+    value: function retrieveUsersLastProduct(options, language) {
       var _this2 = this;
 
       var billOption = {};
+      var products = void 0;
 
       if (options.online_seller_id) {
         billOption.seller_id = options.online_seller_id;
@@ -321,7 +347,6 @@ var ProductAdaptor = function () {
 
       options = _lodash2.default.omit(options, 'product_status_type');
 
-      var product = void 0;
       return this.modals.products.findAll({
         where: options,
         include: [{
@@ -379,22 +404,30 @@ var ProductAdaptor = function () {
           required: false
         }, {
           model: this.modals.categories,
+          as: 'mainCategory',
+          attributes: [],
+          required: false
+        }, {
+          model: this.modals.categories,
           as: 'category',
           attributes: [],
           required: false
         }],
-        attributes: ['id', ['product_name', 'productName'], 'model', ['category_id', 'categoryId'], [this.modals.sequelize.literal('"category"."category_name"'), 'categoryName'], ['main_category_id', 'masterCategoryId'], 'sub_category_id', [this.modals.sequelize.literal('"sub_category"."category_name"'), 'sub_category_name'], ['brand_id', 'brandId'], ['colour_id', 'colorId'], ['purchase_cost', 'value'], 'taxes', [this.modals.sequelize.fn('CONCAT', '/categories/', this.modals.sequelize.col('"products"."category_id"'), '/images/'), 'cImageURL'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"products"."id"')), 'productURL'], ['document_date', 'purchaseDate'], ['document_number', 'documentNo'], ['updated_at', 'updatedDate'], ['bill_id', 'billId'], ['job_id', 'jobId'], ['seller_id', 'sellerId'], 'copies', [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"products"."id"'), '/reviews'), 'reviewUrl'], [this.modals.sequelize.fn('CONCAT', '/consumer/servicecenters?brandid=', this.modals.sequelize.literal('"products"."brand_id"'), '&categoryid=', this.modals.sequelize.col('"products"."category_id"')), 'serviceCenterUrl'], 'updated_at', 'status_type'],
+        attributes: ['id', 'file_type', ['product_name', 'productName'], 'model', ['category_id', 'categoryId'], ['main_category_id', 'masterCategoryId'], 'sub_category_id', ['brand_id', 'brandId'], ['colour_id', 'colorId'], ['purchase_cost', 'value'], 'taxes', [this.modals.sequelize.fn('CONCAT', '/categories/', this.modals.sequelize.col('"products"."category_id"'), '/images/'), 'cImageURL'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"products"."id"')), 'productURL'], [this.modals.sequelize.literal('' + (language ? '"sub_category"."category_name_' + language + '"' : '"sub_category"."category_name"')), 'sub_category_name'], [this.modals.sequelize.literal('' + (language ? '"category"."category_name_' + language + '"' : '"category"."category_name"')), 'categoryName'], [this.modals.sequelize.literal('"sub_category"."category_name"'), 'default_sub_category_name'], [this.modals.sequelize.literal('"mainCategory"."category_name"'), 'default_masterCategoryName'], [this.modals.sequelize.literal('"category"."category_name"'), 'default_categoryName'], [this.modals.sequelize.literal('' + (language ? '"mainCategory"."category_name_' + language + '"' : '"mainCategory"."category_name"')), 'masterCategoryName'], ['document_date', 'purchaseDate'], ['document_number', 'documentNo'], ['updated_at', 'updatedDate'], ['bill_id', 'billId'], ['job_id', 'jobId'], ['seller_id', 'sellerId'], 'copies', [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"products"."id"'), '/reviews'), 'reviewUrl'], [this.modals.sequelize.fn('CONCAT', '/consumer/servicecenters?brandid=', this.modals.sequelize.literal('"products"."brand_id"'), '&categoryid=', this.modals.sequelize.col('"products"."category_id"')), 'serviceCenterUrl'], 'updated_at', 'status_type'],
         order: [['updated_at', 'DESC']]
       }).then(function (productResult) {
-        var products = productResult.map(function (item) {
+        products = productResult.map(function (item) {
           var productItem = item.toJSON();
+          productItem.sub_category_name = productItem.sub_category_name || productItem.default_sub_category_name;
+          productItem.masterCategoryName = productItem.masterCategoryName || productItem.default_masterCategoryName;
+          productItem.categoryName = productItem.categoryName || productItem.default_categoryName;
           if (productItem.copies) {
             productItem.copies = productItem.copies.map(function (copyItem) {
               copyItem.file_type = copyItem.file_type || copyItem.fileType;
               return copyItem;
             });
           }
-          productItem.cImageURL = productItem.sub_category_id ? '/categories/' + productItem.sub_category_id + '/images/' : productItem.cImageURL;
+          productItem.cImageURL = productItem.file_type ? '/consumer/products/' + productItem.id + '/images' : productItem.sub_category_id ? '/categories/' + productItem.sub_category_id + '/images/1' : productItem.cImageURL + '1';
           productItem.purchaseDate = _moment2.default.utc(productItem.purchaseDate, _moment2.default.ISO_8601).startOf('days');
           if (productItem.schedule) {
             productItem.schedule.due_date = _moment2.default.utc(productItem.purchaseDate, _moment2.default.ISO_8601).add(productItem.schedule.due_in_months, 'months');
@@ -403,50 +436,68 @@ var ProductAdaptor = function () {
         }).filter(function (productItem) {
           return productItem.status_type !== 8 || productItem.status_type === 8 && productItem.bill && productItem.bill.billStatus === 5;
         });
-        product = products.length > 0 ? products[0] : undefined;
-
-        if (product) {
+        if (products.length > 0) {
           return Promise.all([_this2.retrieveProductMetadata({
-            product_id: product.id
-          }), _this2.insuranceAdaptor.retrieveInsurances({
-            product_id: product.id
-          }), _this2.warrantyAdaptor.retrieveWarranties({
-            product_id: product.id,
-            warranty_type: [1, 2]
-          }), _this2.amcAdaptor.retrieveAMCs({
-            product_id: product.id
-          }), _this2.repairAdaptor.retrieveRepairs({
-            product_id: product.id
-          }), _this2.pucAdaptor.retrievePUCs({
-            product_id: product.id
-          })]);
+            product_id: products.map(function (item) {
+              return item.id;
+            })
+          }, language), _this2.insuranceAdaptor.retrieveInsurances({ product_id: products.map(function (item) {
+              return item.id;
+            }) }), _this2.warrantyAdaptor.retrieveWarranties({ product_id: products.map(function (item) {
+              return item.id;
+            }) }), _this2.amcAdaptor.retrieveAMCs({ product_id: products.map(function (item) {
+              return item.id;
+            }) }), _this2.repairAdaptor.retrieveRepairs({ product_id: products.map(function (item) {
+              return item.id;
+            }) }), _this2.pucAdaptor.retrievePUCs({ product_id: products.map(function (item) {
+              return item.id;
+            }) })]);
         }
-
         return undefined;
       }).then(function (results) {
         if (results) {
           var metaData = results[0];
-          var pucItem = metaData.find(function (item) {
-            return item.name.toLowerCase().includes('puc');
-          });
-          if (pucItem) {
-            product.pucDetail = {
-              expiry_date: pucItem.value
-            };
-          }
-          product.metaData = metaData.filter(function (item) {
-            return !item.name.toLowerCase().includes('puc');
-          });
-          product.insuranceDetails = results[1];
-          product.warrantyDetails = results[2];
-          product.amcDetails = results[3];
-          product.repairBills = results[4];
-          product.pucDetails = results[5];
+          products = products.map(function (productItem) {
+            if (productItem.copies) {
+              productItem.copies = productItem.copies.map(function (copyItem) {
+                copyItem.file_type = copyItem.file_type || copyItem.fileType;
+                return copyItem;
+              });
+            }
+            var pucItem = metaData.find(function (item) {
+              return item.name.toLowerCase().includes('puc');
+            });
+            if (pucItem) {
+              productItem.pucDetail = {
+                expiry_date: pucItem.value
+              };
+            }
+            productItem.productMetaData = metaData.filter(function (item) {
+              return item.productId === productItem.id && !item.name.toLowerCase().includes('puc');
+            });
+            productItem.insuranceDetails = results[1].filter(function (item) {
+              return item.productId === productItem.id;
+            });
+            productItem.warrantyDetails = results[2].filter(function (item) {
+              return item.productId === productItem.id;
+            });
+            productItem.amcDetails = results[3].filter(function (item) {
+              return item.productId === productItem.id;
+            });
+            productItem.repairBills = results[4].filter(function (item) {
+              return item.productId === productItem.id;
+            });
+            productItem.pucDetails = results[5].filter(function (item) {
+              return item.productId === productItem.id;
+            });
 
-          product.requiredCount = product.insuranceDetails.length + product.warrantyDetails.length + product.amcDetails.length + product.repairBills.length + product.pucDetails.length;
+            productItem.requiredCount = productItem.insuranceDetails.length + productItem.warrantyDetails.length + productItem.amcDetails.length + productItem.repairBills.length + productItem.pucDetails.length;
+
+            return productItem;
+          });
         }
 
-        return product;
+        return products;
       });
     }
   }, {
@@ -608,11 +659,14 @@ var ProductAdaptor = function () {
           attributes: [],
           required: false
         }],
-        attributes: ['id', ['product_name', 'productName'], 'model', [this.modals.sequelize.literal('"category"."category_id"'), 'categoryId'], [this.modals.sequelize.literal('"category"."dual_warranty_item"'), 'dualWarrantyItem'], ['main_category_id', 'masterCategoryId'], 'sub_category_id', [this.modals.sequelize.literal('' + (language ? '"sub_category"."category_name_' + language + '"' : '"sub_category"."category_name"')), 'sub_category_name'], ['brand_id', 'brandId'], ['colour_id', 'colorId'], ['purchase_cost', 'value'], [this.modals.sequelize.literal('' + (language ? '"category"."category_name_' + language + '"' : '"category"."category_name"')), 'categoryName'], [this.modals.sequelize.literal('"category"."category_name"'), 'default_categoryName'], [this.modals.sequelize.literal('' + (language ? '"mainCategory"."category_name_' + language + '"' : '"mainCategory"."category_name"')), 'masterCategoryName'], 'taxes', [this.modals.sequelize.fn('CONCAT', '/categories/', this.modals.sequelize.col('"category"."category_id"'), '/images/'), 'cImageURL'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"products"."id"')), 'productURL'], ['document_date', 'purchaseDate'], ['document_number', 'documentNo'], ['updated_at', 'updatedDate'], ['bill_id', 'billId'], ['job_id', 'jobId'], ['seller_id', 'sellerId'], 'copies', 'status_type', [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"products"."id"'), '/reviews'), 'reviewUrl'], [this.modals.sequelize.fn('CONCAT', '/consumer/servicecenters?brandid=', this.modals.sequelize.literal('"products"."brand_id"'), '&categoryid=', this.modals.sequelize.col('"products"."category_id"')), 'serviceCenterUrl']]
+        attributes: ['id', ['product_name', 'productName'], 'file_type', 'model', [this.modals.sequelize.literal('"category"."category_id"'), 'categoryId'], [this.modals.sequelize.literal('"category"."dual_warranty_item"'), 'dualWarrantyItem'], ['main_category_id', 'masterCategoryId'], 'sub_category_id', ['brand_id', 'brandId'], ['colour_id', 'colorId'], ['purchase_cost', 'value'], [this.modals.sequelize.literal('' + (language ? '"sub_category"."category_name_' + language + '"' : '"sub_category"."category_name"')), 'sub_category_name'], [this.modals.sequelize.literal('' + (language ? '"category"."category_name_' + language + '"' : '"category"."category_name"')), 'categoryName'], [this.modals.sequelize.literal('"sub_category"."category_name"'), 'default_sub_category_name'], [this.modals.sequelize.literal('"mainCategory"."category_name"'), 'default_masterCategoryName'], [this.modals.sequelize.literal('"category"."category_name"'), 'default_categoryName'], [this.modals.sequelize.literal('' + (language ? '"mainCategory"."category_name_' + language + '"' : '"mainCategory"."category_name"')), 'masterCategoryName'], 'taxes', [this.modals.sequelize.fn('CONCAT', '/categories/', this.modals.sequelize.col('"category"."category_id"'), '/images/0'), 'cImageURL'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"products"."id"')), 'productURL'], ['document_date', 'purchaseDate'], ['document_number', 'documentNo'], ['updated_at', 'updatedDate'], ['bill_id', 'billId'], ['job_id', 'jobId'], ['seller_id', 'sellerId'], 'copies', 'status_type', [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"products"."id"'), '/reviews'), 'reviewUrl'], [this.modals.sequelize.fn('CONCAT', '/consumer/servicecenters?brandid=', this.modals.sequelize.literal('"products"."brand_id"'), '&categoryid=', this.modals.sequelize.col('"products"."category_id"')), 'serviceCenterUrl']]
       }).then(function (productResult) {
         products = productResult ? productResult.toJSON() : productResult;
         if (products) {
-          products.cImageURL = products.sub_category_id ? '/categories/' + products.sub_category_id + '/images/' : products.cImageURL;
+          products.cImageURL = products.file_type ? '/consumer/products/' + products.id + '/images' : products.sub_category_id ? '/categories/' + products.sub_category_id + '/images/0' : products.cImageURL;
+          products.sub_category_name = products.sub_category_name || products.default_sub_category_name;
+          products.masterCategoryName = products.masterCategoryName || products.default_masterCategoryName;
+          products.categoryName = products.categoryName || products.default_categoryName;
           productItem = productResult;
           if (products.copies) {
             products.copies = products.copies.map(function (copyItem) {
@@ -634,7 +688,7 @@ var ProductAdaptor = function () {
           }) : undefined;
           return Promise.all([_this4.retrieveProductMetadata({
             product_id: products.id
-          }), _this4.brandAdaptor.retrieveBrandById(products.brandId, {
+          }, language), _this4.brandAdaptor.retrieveBrandById(products.brandId, {
             category_id: products.categoryId
           }), _this4.insuranceAdaptor.retrieveInsurances({
             product_id: products.id
@@ -968,7 +1022,7 @@ var ProductAdaptor = function () {
     value: function updateProductDetails(productBody, metadataBody, otherItems, productId) {
       var _this6 = this;
 
-      return Promise.all([productBody.brand_id ? this.modals.products.count({
+      return Promise.all([productBody.brand_id && productBody.brand_id === 0 ? this.modals.products.count({
         where: {
           id: productId,
           brand_id: productBody.brand_id,
@@ -1008,7 +1062,7 @@ var ProductAdaptor = function () {
           name: otherItems.warranty.extended_provider_name
         }) : undefined;
 
-        var brandPromise = !productBody.brand_id && productBody.brand_name ? _this6.brandAdaptor.findCreateBrand({
+        var brandPromise = !productBody.brand_id && productBody.brand_id !== 0 && productBody.brand_name ? _this6.brandAdaptor.findCreateBrand({
           status_type: 11,
           brand_name: productBody.brand_name,
           category_id: productBody.category_id,
@@ -1072,7 +1126,7 @@ var ProductAdaptor = function () {
           product = !product.document_number ? _lodash2.default.omit(product, 'document_number') : product;
           product = !product.document_date ? _lodash2.default.omit(product, 'document_date') : product;
           product = !product.seller_id ? _lodash2.default.omit(product, 'seller_id') : product;
-          product = !product.brand_id ? _lodash2.default.omit(product, 'brand_id') : product;
+          product = !product.brand_id && product.brand_id !== 0 ? _lodash2.default.omit(product, 'brand_id') : product;
           var brandModelPromise = product.model ? [_this6.modals.brandDropDown.findOne({
             where: {
               brand_id: product.brand_id,
@@ -1127,10 +1181,16 @@ var ProductAdaptor = function () {
                 },
                 $or: {
                   due_in_days: {
-                    $gte: diffDays
+                    $or: {
+                      $not: null,
+                      $gte: diffDays
+                    }
                   },
                   due_in_months: {
-                    $gte: diffMonths
+                    $or: {
+                      $not: null,
+                      $gte: diffMonths
+                    }
                   }
                 },
                 status_type: 1
@@ -1724,6 +1784,8 @@ var ProductAdaptor = function () {
           created_by: productBody.user_id,
           status_type: 11
         }) : '');
+      } else {
+        sellerPromise.push('');
       }
       if (otherItems.repair) {
         sellerOption.seller_name.$iLike = otherItems.repair.seller_name;
@@ -1739,8 +1801,9 @@ var ProductAdaptor = function () {
           created_by: productBody.user_id,
           status_type: 11
         }) : '');
+      } else {
+        sellerPromise.push('');
       }
-
       if (otherItems.puc) {
         sellerOption.seller_name.$iLike = otherItems.puc.seller_name;
         if (otherItems.puc.seller_contact) {
@@ -1755,6 +1818,8 @@ var ProductAdaptor = function () {
           created_by: productBody.user_id,
           status_type: 11
         }) : '');
+      } else {
+        sellerPromise.push('');
       }
     }
   }, {

@@ -16,8 +16,24 @@ var _fs = require('fs');
 
 var _fs2 = _interopRequireDefault(_fs);
 
+var _bluebird = require('bluebird');
+
+var _bluebird2 = _interopRequireDefault(_bluebird);
+
+var _clsBluebird = require('cls-bluebird');
+
+var _clsBluebird2 = _interopRequireDefault(_clsBluebird);
+
+var _continuationLocalStorage = require('continuation-local-storage');
+
+var _continuationLocalStorage2 = _interopRequireDefault(_continuationLocalStorage);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+var ns = _continuationLocalStorage2.default.createNamespace('transaction-namespace');
+
+(0, _clsBluebird2.default)(ns, _bluebird2.default);
+_sequelize2.default.useCLS(ns);
 var database = _main2.default.DATABASE;
 var Op = _sequelize2.default.Op;
 database.operatorsAliases = {

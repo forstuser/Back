@@ -106,11 +106,11 @@ var GeneralController = function () {
             });
           } else if (request.query.categoryId) {
             isBrandRequest = true;
-            return Promise.all([categoryAdaptor.retrieveSubCategories({ category_id: request.query.categoryId }, true, request.language), categoryAdaptor.retrieveRenewalTypes({
+            return _bluebird2.default.all([categoryAdaptor.retrieveSubCategories({ category_id: request.query.categoryId }, true, request.language, user), categoryAdaptor.retrieveRenewalTypes({
               status_type: 1
             })]);
           } else if (request.query.mainCategoryId) {
-            return categoryAdaptor.retrieveCategories({ category_id: request.query.mainCategoryId }, false, request.language);
+            return categoryAdaptor.retrieveCategories({ category_id: request.query.mainCategoryId }, false, request.language, false, user);
           }
         }
 
@@ -238,6 +238,11 @@ var GeneralController = function () {
       if (request.pre.userExist && !request.pre.forceUpdate) {
         var language = request.language;
         var options = {
+          where: {
+            batch_date: {
+              $lte: (0, _moment2.default)().endOf('days')
+            }
+          },
           include: [{
             model: modals.tags,
             as: 'tags',
@@ -248,13 +253,30 @@ var GeneralController = function () {
             attributes: ['id']
           }],
           attributes: ['id', ['title', 'default_title'], ['' + (language ? 'title_' + language : 'title'), 'title'], ['description', 'default_description'], ['' + (language ? 'description_' + language : 'description'), 'description'], 'short_url'],
-          order: [['created_at', 'desc']]
+          order: [['id', 'asc']],
+          limit: request.query.limit || 10
         };
 
-        if (request.payload && request.payload.tag_id && request.payload.tag_id.length > 0) {
-          options.where = modals.sequelize.where(modals.sequelize.literal('"tags"."id"'), { $in: request.payload.tag_id });
+        console.log({ offset: request.query.offset });
+        if (request.query.offset) {
+          options.offset = request.query.offset;
         }
-        return modals.knowItems.findAll(options).then(function (knowItems) {
+
+        var tagMapOptions = {};
+        if (request.payload && request.payload.tag_id && request.payload.tag_id.length > 0) {
+          tagMapOptions.where = modals.sequelize.where(modals.sequelize.col('"tag_id"'), { $in: request.payload.tag_id });
+        }
+        return _bluebird2.default.try(function () {
+          return modals.know_tag_map.findAll(tagMapOptions);
+        }).then(function (tagMapResult) {
+          tagMapResult = tagMapResult.map(function (tMItem) {
+            return tMItem.toJSON();
+          });
+          options.where.id = tagMapResult.map(function (tMItem) {
+            return tMItem.know_item_id;
+          });
+          return modals.knowItems.findAll(options);
+        }).then(function (knowItems) {
           return reply({
             status: true, items: knowItems.map(function (item) {
               item = item.toJSON();
@@ -281,6 +303,12 @@ var GeneralController = function () {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
           return reply({ status: false }).code(200);
         });
+      } else if (request.pre.userExist === 0) {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
       } else if (!request.pre.userExist) {
         return reply({
           status: false,
@@ -302,6 +330,11 @@ var GeneralController = function () {
       var language = (request.headers.language || '').split('-')[0];
       language = supportedLanguages.indexOf(language) >= 0 ? language : '';
       var options = {
+        where: {
+          batch_date: {
+            $lte: (0, _moment2.default)()
+          }
+        },
         include: [{
           model: modals.tags,
           as: 'tags',
@@ -312,7 +345,7 @@ var GeneralController = function () {
           attributes: ['id']
         }],
         attributes: ['id', ['title', 'default_title'], ['' + (language ? 'title_' + language : 'title'), 'title'], ['description', 'default_description'], ['' + (language ? 'description_' + language : 'description'), 'description'], 'short_url'],
-        order: [['created_at', 'desc']]
+        order: [['id', 'asc']]
       };
 
       return modals.knowItems.findAll(options).then(function (knowItems) {
@@ -333,7 +366,7 @@ var GeneralController = function () {
             item.hashTags = item.hashTags.trim();
             item.totalLikes = item.users.length;
             return item;
-          })
+          }).slice((request.query.offset || 1) - 1, request.query.limit || 10)
         }).code(200);
       }).catch(function (err) {
         console.log('Error on ' + new Date() + ' is as follow: \n \n ' + err);
@@ -360,22 +393,24 @@ var GeneralController = function () {
         order: [['created_at', 'desc']]
       };
 
-      return modals.knowItems.findById(request.params.id, options).then(function (knowItems) {
-        knowItems.imageUrl = '/knowitem/' + knowItems.id + '/images';
-        knowItems.hashTags = '';
-        knowItems.title = knowItems.title || knowItems.default_title;
-        knowItems.description = knowItems.description || knowItems.default_description;
-        knowItems.tags = knowItems.tags.map(function (tagItem) {
+      return modals.knowItems.findById(request.params.id, options).then(function (result) {
+        var knowItem = result.toJSON();
+        knowItem.imageUrl = '/knowitem/' + knowItem.id + '/images';
+        knowItem.hashTags = '';
+        knowItem.title = knowItem.title || knowItem.default_title;
+        knowItem.description = knowItem.description || knowItem.default_description;
+        knowItem.tags = knowItem.tags.map(function (tagItem) {
           tagItem.title = tagItem.title || tagItem.default_title;
           return tagItem;
         });
-        knowItems.tags.forEach(function (tagItem) {
-          knowItems.hashTags += '#' + tagItem.title + ' ';
+        knowItem.tags.forEach(function (tagItem) {
+          knowItem.hashTags += '#' + tagItem.title + ' ';
         });
-        knowItems.hashTags = knowItems.hashTags.trim();
-        knowItems.totalLikes = knowItems.users.length;
+        knowItem.hashTags = knowItem.hashTags.trim();
+        knowItem.totalLikes = knowItem.users.length;
+
         return reply({
-          status: true, item: knowItems
+          status: true, item: knowItem
         }).code(200);
       }).catch(function (err) {
         console.log('Error on ' + new Date() + ' is as follow: \n \n ' + err);
@@ -389,7 +424,19 @@ var GeneralController = function () {
       if (request.pre.userExist && !request.pre.forceUpdate) {
         var language = request.language;
         return modals.tags.findAll({
+          include: {
+            model: modals.knowItems,
+            as: 'knowItems',
+            where: {
+              batch_date: {
+                $lte: (0, _moment2.default)()
+              }
+            },
+            attributes: [],
+            required: true
+          },
           attributes: ['id', ['title', 'default_title'], ['' + (language ? 'title_' + language : 'title'), 'title'], ['description', 'default_description'], ['' + (language ? 'description_' + language : 'description'), 'description']],
+          distinct: true,
           order: [['created_at', 'desc']]
         }).then(function (tagItems) {
           return reply({
@@ -404,6 +451,12 @@ var GeneralController = function () {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
           return reply({ status: false }).code(200);
         });
+      } else if (request.pre.userExist === 0) {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
       } else if (!request.pre.userExist) {
         return reply({
           status: false,
@@ -436,6 +489,12 @@ var GeneralController = function () {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
           return reply({ status: false }).code(200);
         });
+      } else if (request.pre.userExist === 0) {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
       } else if (!request.pre.userExist) {
         return reply({
           status: false,
@@ -470,6 +529,12 @@ var GeneralController = function () {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
           return reply({ status: false }).code(200);
         });
+      } else if (request.pre.userExist === 0) {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
       } else if (!request.pre.userExist) {
         return reply({
           status: false,
@@ -485,8 +550,8 @@ var GeneralController = function () {
       }
     }
   }, {
-    key: 'intializeUserProduct',
-    value: function intializeUserProduct(request, reply) {
+    key: 'initializeUserProduct',
+    value: function initializeUserProduct(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
 
       if (request.pre.userExist && !request.pre.forceUpdate) {
@@ -501,7 +566,7 @@ var GeneralController = function () {
             comments: request.query ? request.query.productId ? 'This job is sent for product id ' + request.query.productId : request.query.productName ? 'This job is sent for product name ' + request.query.productName : '' : ''
           });
         }).then(function (jobResult) {
-          return Promise.all([productAdaptor.createEmptyProduct({
+          return _bluebird2.default.all([productAdaptor.createEmptyProduct({
             job_id: jobResult.id,
             product_name: request.payload.product_name,
             user_id: user.id || user.ID,
@@ -537,6 +602,12 @@ var GeneralController = function () {
             forceUpdate: request.pre.forceUpdate
           }).code(200);
         });
+      } else if (request.pre.userExist === 0) {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
       } else if (!request.pre.userExist) {
         return reply({
           status: false,
@@ -575,6 +646,12 @@ var GeneralController = function () {
             forceUpdate: request.pre.forceUpdate
           });
         });
+      } else if (request.pre.userExist === 0) {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
       } else if (!request.pre.userExist) {
         return reply({
           status: false,
@@ -616,6 +693,12 @@ var GeneralController = function () {
             forceUpdate: request.pre.forceUpdate
           });
         });
+      } else if (request.pre.userExist === 0) {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
       } else if (!request.pre.userExist) {
         return reply({
           status: false,

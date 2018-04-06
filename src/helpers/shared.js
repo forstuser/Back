@@ -140,6 +140,85 @@ function retrieveDaysInsight(distinctInsight) {
   }));
 }
 
+export function preparePaymentDetails(parameters) {
+  let {currentYear, monthItem, effectiveDate, selected_days, wages_type, serviceCalculationBody, user, currentDate} = parameters;
+  const monthStartDate = moment([currentYear, 0, 1]).month(monthItem);
+  let month_end_date = moment([currentYear, 0, 31]).month(monthItem);
+  let end_date = moment([currentYear, 0, 31]).month(monthItem);
+  let start_date = effectiveDate;
+  if (monthStartDate.diff(effectiveDate, 'days') > 0) {
+    start_date = monthStartDate;
+  }
+  currentDate = moment(currentDate || moment()).startOf('days');
+  if (end_date.endOf('days').diff(currentDate, 'days') > 0) {
+    end_date = currentDate.endOf('days');
+  }
+
+  const daysInMonth = moment().
+      isoWeekdayCalc(monthStartDate, month_end_date, selected_days);
+  const daysInPeriod = moment().
+      isoWeekdayCalc(start_date.format('YYYY-MM-DD'),
+          end_date.format('YYYY-MM-DD'),
+          selected_days);
+  let unit_price = serviceCalculationBody.unit_price;
+  if (wages_type === 1) {
+    unit_price = unit_price / daysInMonth;
+  }
+  console.log({
+    daysInPeriod,
+    start_date,
+    end_date,
+    monthStartDate,
+    month_end_date,
+    monthItem,
+  });
+  let total_amount = unit_price * daysInPeriod;
+  if (serviceCalculationBody.quantity ||
+      serviceCalculationBody.quantity === 0) {
+    total_amount = serviceCalculationBody.quantity * total_amount;
+  }
+  total_amount = (total_amount).toFixed(2);
+  return {
+    start_date,
+    end_date,
+    updated_by: user.id || user.ID,
+    status_type: 1,
+    total_amount: parseFloat(total_amount),
+    total_days: daysInPeriod,
+    total_units: serviceCalculationBody.quantity ?
+        daysInPeriod * serviceCalculationBody.quantity :
+        0,
+    amount_paid: 0,
+  };
+}
+
+export function monthlyPaymentCalc(parameters) {
+  let {currentMth, effectiveMth, effectiveDate, selected_days, wages_type, serviceCalculationBody, user, currentYear, currentDate} = parameters;
+  const monthDiff = moment().startOf('months').
+      diff(moment(effectiveDate, moment.ISO_8601).startOf('months'), 'months');
+  console.log('\n\n\n\n\n\n\n\n\n\n monthdiff:', monthDiff);
+  const monthArr = [];
+  if (monthDiff > 0) {
+    for (let i = monthDiff; i >= 0; i--) {
+      monthArr.push(currentMth - i);
+    }
+  } else {
+    monthArr.push(currentMth);
+  }
+
+  return monthArr.map((monthItem) => {
+    return preparePaymentDetails({
+      currentYear,
+      monthItem,
+      effectiveDate,
+      selected_days, wages_type,
+      serviceCalculationBody,
+      user,
+      currentDate,
+    });
+  });
+}
+
 export function retrieveMailTemplate(user, templateType) {
   switch (templateType) {
     case 0: {
@@ -351,7 +430,8 @@ export function retrieveMailTemplate(user, templateType) {
                             <td style="padding: 20px; font-family: sans-serif; font-size: 15px; line-height: 20px; color: #555555;">
                                 <p class="main-class"
                                    style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0; font-family: 'Quicksand', sans-serif;font-weight: 500;letter-spacing: 0.3px;text-align: left;color: #3b3b3b; padding: 10px 0;">
-                                    Dear ${user.name || user.full_name || 'User'},
+                                    Dear ${user.name || user.full_name ||
+      'User'},
                                     </p>
                                 <p class="main-class"
                                    style="-webkit-margin-before: 0; -webkit-margin-after: 0;margin:0 auto;padding-top: 10px; padding-bottom: 15px;">
@@ -359,11 +439,19 @@ export function retrieveMailTemplate(user, templateType) {
                                 </p>
                                 <p class="main-class"
                                    style="-webkit-margin-before: 0; -webkit-margin-after: 0;margin:0 auto;">
-                                    BinBill saves your time and aids your memory by sorting important things of your life. It starts with building your eHome by adding Products, Important Documents & Expenses
+                                    BinBill saves your time and aids your memory by sorting important things of your life. It starts with building your eHome by adding Products, Important Documents & Expenses.
                                      </p>
                                 <p class="main-class"
                                    style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0;padding: 10px 0;">
-                                    Product: Be old or new, Important details like Purchase Bill, Warranty, Model Number, Insurance etc are never handy whenever needed. You can upload them or enter details by manually. This is a one time activity to get all important Notification, Reminders, ASC & Service Expense etc.
+                                    Product: Be old or new, Important details like Purchase Bill, Warranty, Model Number , Insurance etc are never handy whenever needed. You can upload them or enter details by manually. This is a one time activity to get all important Notification, Reminders, ASC & Service Expense etc.
+                                </p>
+                                <p class="main-class"
+                                   style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0;padding: 10px 0;">
+                                    Rate, Review & Share: Now you can help your friends, family and followers on social media such as Facebook, Whatsapp, Instagram make wise purchase deicision like never before. You can be the expert advisor of the brands and products you are already using.
+                                </p>
+                                <p class="main-class"
+                                   style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0;padding: 10px 0;">
+                                    Attendance Manager: With us you can manage attendance and payouts of your monthly services say Milk, Newspaper, Maid etc with much ease. Now no more writing notes on wall calendar and manual calculation for lethora of services. Your attendance Manager helps you with all the calculation.
                                 </p>
                                 <p class="main-class"
                                    style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0;padding: 10px 0;">
@@ -376,6 +464,10 @@ export function retrieveMailTemplate(user, templateType) {
                                 <p class="main-class"
                                    style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0;padding: 10px 0;">
                                     Expense Management : Small or Big, Online or Offline, Cash or Card either upload the bill or add expense manually. Get to know insight on What When Where & How much you have been spending.
+                                </p>
+                                <p class="main-class"
+                                   style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0;padding: 10px 0;">
+                                    Do You Know series: We come up with one of the most interesting and unknown secrets from the history across categories ranging from Automobile to Fashion and Electronics to Healthcare. You will not only love these diligently chosen trivia but will also be tempted to share with your friends and family.
                                 </p>
                                 <p class="main-class"
                                    style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0;padding: 10px 0;">

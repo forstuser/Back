@@ -10,6 +10,10 @@ var _brands = require('./brands');
 
 var _brands2 = _interopRequireDefault(_brands);
 
+var _main = require('../../config/main');
+
+var _main2 = _interopRequireDefault(_main);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -24,7 +28,7 @@ var CategoryAdaptor = function () {
 
   _createClass(CategoryAdaptor, [{
     key: 'retrieveCategories',
-    value: function retrieveCategories(options, isBrandFormRequired, language) {
+    value: function retrieveCategories(options, isBrandFormRequired, language, isFilterRequest, user) {
       var _this = this;
 
       options.status_type = 1;
@@ -47,13 +51,13 @@ var CategoryAdaptor = function () {
         };
         var main_category_id = options.category_id;
         var excluded_category_id = main_category_id ? {
-          $notIn: main_category_id === 1 ? [20, 72, 73] : main_category_id === 2 ? [327, 162, 530, 581, 491, 541] : main_category_id === 3 ? [139, 138, 154, 150, 153] : []
+          $notIn: main_category_id === '1' && !isFilterRequest ? _main2.default.CATEGORIES.FURNITURE : main_category_id === '2' && !isFilterRequest ? _main2.default.CATEGORIES.ELECTRONIC : main_category_id === '3' && !isFilterRequest ? _main2.default.CATEGORIES.AUTOMOBILE : []
         } : undefined;
         if (excluded_category_id) {
           subCategoryOption.category_id = excluded_category_id;
         }
 
-        return _this.retrieveSubCategories(subCategoryOption, isBrandFormRequired, language);
+        return _this.retrieveSubCategories(subCategoryOption, isBrandFormRequired, language, user);
       }).then(function (subCategories) {
         categoryData = categoryData.map(function (item) {
           item.subCategories = subCategories.filter(function (categoryItem) {
@@ -67,7 +71,7 @@ var CategoryAdaptor = function () {
     }
   }, {
     key: 'retrieveSubCategories',
-    value: function retrieveSubCategories(options, isBrandFormRequired, language) {
+    value: function retrieveSubCategories(options, isBrandFormRequired, language, user) {
       var _this2 = this;
 
       var categoryData = void 0;
@@ -78,14 +82,16 @@ var CategoryAdaptor = function () {
         order: ['category_id']
       }).then(function (result) {
         categoryData = result.map(function (item) {
-          return item.toJSON();
+          var categoryItem = item.toJSON();
+          categoryItem.name = categoryItem.name || categoryItem.default_name;
+          return categoryItem;
         });
         if (isBrandFormRequired) {
           return Promise.all([_this2.brandAdaptor.retrieveCategoryBrands({
             category_id: categoryData.map(function (item) {
               return item.id;
             }),
-            status_type: 1
+            status_type: [1, 11]
           }), _this2.retrieveCategoryForms({
             $or: [{
               $and: {
@@ -206,15 +212,21 @@ var CategoryAdaptor = function () {
       }).then(function (results) {
         if (results) {
           categoryData = categoryData.map(function (item) {
-            item.brands = results[0].filter(function (brandItem) {
-              return brandItem.categoryId === item.id;
+            item.name = item.name || item.default_name;
+            item.brands = user ? results[0].filter(function (brandItem) {
+              return brandItem.categoryId === item.id && (brandItem.status_type === 1 || brandItem.status_type === 11 && (brandItem.created_by === (user.ID || user.id) || brandItem.updated_by === (user.ID || user.id)));
+            }) : results[0].filter(function (brandItem) {
+              return brandItem.categoryId === item.id && brandItem.status_type === 1;
             });
             item.categoryForms = results[1].filter(function (formItem) {
               return formItem.categoryId === item.id || formItem.main_category_id === item.refId;
             });
             item.insuranceProviders = results[2];
             item.warrantyProviders = results[3];
-            item.subCategories = results[4];
+            item.subCategories = results[4].map(function (categoryItem) {
+              categoryItem.name = categoryItem.name || categoryItem.default_name;
+              return categoryItem;
+            });
             return item;
           });
         }

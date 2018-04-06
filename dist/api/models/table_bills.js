@@ -23,7 +23,7 @@ exports.default = function (sequelize, DataTypes) {
       type: DataTypes.STRING
     },
     document_date: {
-      type: DataTypes.DATE,
+      type: DataTypes.DATEONLY,
       defaultValue: sequelize.literal('NOW()')
     },
     user_id: {

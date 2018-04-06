@@ -83,7 +83,13 @@ var ProductItemController = function () {
     key: 'updateRepair',
     value: function updateRepair(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!request.pre.userExist) {
+      if (request.pre.userExist === 0) {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
         return reply({
           status: false,
           message: 'Unauthorized',
@@ -157,7 +163,13 @@ var ProductItemController = function () {
     key: 'deleteRepair',
     value: function deleteRepair(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!request.pre.userExist) {
+      if (request.pre.userExist === 0) {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
         return reply({
           status: false,
           message: 'Unauthorized',
@@ -186,7 +198,13 @@ var ProductItemController = function () {
     key: 'updateInsurance',
     value: function updateInsurance(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!request.pre.userExist) {
+      if (request.pre.userExist === 0) {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
         return reply({
           status: false,
           message: 'Unauthorized',
@@ -283,7 +301,13 @@ var ProductItemController = function () {
     key: 'deleteInsurance',
     value: function deleteInsurance(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!request.pre.userExist) {
+      if (request.pre.userExist === 0) {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
         return reply({
           status: false,
           message: 'Unauthorized',
@@ -312,7 +336,13 @@ var ProductItemController = function () {
     key: 'updateAmc',
     value: function updateAmc(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!request.pre.userExist) {
+      if (request.pre.userExist === 0) {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
         return reply({
           status: false,
           message: 'Unauthorized',
@@ -396,7 +426,13 @@ var ProductItemController = function () {
     key: 'deleteAMC',
     value: function deleteAMC(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!request.pre.userExist) {
+      if (request.pre.userExist === 0) {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
         return reply({
           status: false,
           message: 'Unauthorized',
@@ -425,7 +461,13 @@ var ProductItemController = function () {
     key: 'updatePUC',
     value: function updatePUC(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!request.pre.userExist) {
+      if (request.pre.userExist === 0) {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
         return reply({
           status: false,
           message: 'Unauthorized',
@@ -508,7 +550,13 @@ var ProductItemController = function () {
     key: 'deletePUC',
     value: function deletePUC(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!request.pre.userExist) {
+      if (request.pre.userExist === 0) {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
         return reply({
           status: false,
           message: 'Unauthorized',
@@ -537,7 +585,13 @@ var ProductItemController = function () {
     key: 'updateWarranty',
     value: function updateWarranty(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!request.pre.userExist) {
+      if (request.pre.userExist === 0) {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
         return reply({
           status: false,
           message: 'Unauthorized',
@@ -636,7 +690,13 @@ var ProductItemController = function () {
     key: 'deleteWarranty',
     value: function deleteWarranty(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (!request.pre.userExist) {
+      if (request.pre.userExist === 0) {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
         return reply({
           status: false,
           message: 'Unauthorized',

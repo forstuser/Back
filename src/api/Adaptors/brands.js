@@ -24,6 +24,7 @@ class BrandAdaptor {
         [
           'brand_description',
           'description']],
+      order: [['brand_index', 'desc'], ['brand_name']],
     }).then((brandResult) => brandResult.map((item) => item.toJSON()));
   }
 
@@ -46,6 +47,7 @@ class BrandAdaptor {
         [
           'brand_description',
           'description']],
+      order: [['brand_index', 'desc'], ['brand_name']],
     }).then((brandResults) => {
       if (brandResults.length > 0) {
         brand = brandResults.map(item => item.toJSON())[0];
@@ -93,7 +95,7 @@ class BrandAdaptor {
           [
             'brand_description',
             'description'],
-            'status_type',
+          'status_type',
           [
             this.modals.sequelize.fn('CONCAT', 'brands/',
                 this.modals.sequelize.col('"brands"."brand_id"'), '/reviews'),
@@ -157,12 +159,11 @@ class BrandAdaptor {
   retrieveCategoryBrands(options) {
     return this.modals.brands.findAll({
       where: {
-        status_type: 1,
+        status_type: [1,11],
       }, include: [
         {
           model: this.modals.brandDetails,
           where: {
-            status_type: 1,
             category_id: options.category_id,
           },
           attributes: [],
@@ -184,7 +185,11 @@ class BrandAdaptor {
           this.modals.sequelize.literal('"details"."category_id"'),
           'categoryId',
         ],
+          'status_type',
+          'created_by',
+          'updated_by'
       ],
+      order: [['brand_index', 'desc'], ['brand_name']],
     }).then((result) => result.map((item) => item.toJSON()));
   }
 
@@ -199,10 +204,10 @@ class BrandAdaptor {
     let brandDetail;
     let category;
     return Promise.all([
-      this.modals.brands.findAll({
+      this.modals.brands.findOne({
         where: {
           brand_name: {
-            $iLike: `${values.brand_name}%`,
+            $iLike: `${values.brand_name}`,
           },
         },
       }), this.modals.categories.findOne({
@@ -210,16 +215,18 @@ class BrandAdaptor {
           category_id: values.category_id,
         },
       })]).then((result) => {
-      brandData = result[0].map((item) => item.toJSON());
       category = result[1].toJSON();
-      return this.modals.brandDetails.findOne({
-        where: {
-          brand_id: brandData.map((item) => {
-            return item.brand_id;
-          }),
-          category_id: values.category_id,
-        },
-      });
+      if (result[0]) {
+        brandData = result[0].toJSON();
+        return this.modals.brandDetails.findOne({
+          where: {
+            brand_id: brandData.brand_id,
+            category_id: values.category_id,
+          },
+        });
+      }
+
+      return false;
     }).then((result) => {
       if (!result) {
         return this.modals.brands.create({
@@ -234,8 +241,7 @@ class BrandAdaptor {
       return brandData;
     }).then((updatedResult) => {
       if (brandDetail) {
-        brandData = updatedResult.find(
-            (item) => brandDetail.brand_id === item.brand_id);
+        brandData = updatedResult;
       } else {
         brandData = updatedResult.toJSON();
       }

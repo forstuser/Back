@@ -50,7 +50,7 @@ export default (sequelize, DataTypes) => {
           defaultValue: sequelize.literal('NOW()'),
         },
         document_date: {
-          type: DataTypes.DATE,
+          type: DataTypes.DATEONLY,
           defaultValue: sequelize.literal('NOW()'),
         },
         copies: {
