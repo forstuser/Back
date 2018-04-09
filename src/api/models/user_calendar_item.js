@@ -34,8 +34,7 @@ export default (sequelize, DataTypes) => {
       defaultValue: sequelize.literal('NOW()'),
     },
     end_date: {
-      type: sequelize.DATEONLY
-
+      type: DataTypes.DATEONLY
     },
     updated_at: {
       type: DataTypes.DATE,

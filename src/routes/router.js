@@ -18,7 +18,6 @@ import PassportService from '../config/passport';
 import AppVersionHelper from '../helpers/appVersion';
 import ProductItemController from '../api/controllers/productItem';
 import CalendarServiceController from '../api/controllers/calendarServices';
-import { puts } from 'util';
 
 let User;
 let appVersionHelper;
@@ -2286,27 +2285,7 @@ function prepareCalendarServiceRoutes(calendarController, calendarRoutes) {
         },
       },
     });
-    calendarRoutes.push({
-      method: PUT,
-      Path: '/calendar/items/{id}/finish',
-      config: {
-        auth: 'jwt',
-        pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
-          {
-            method: appVersionHelper.updateUserActiveStatus,
-            assign: 'userExist',
-          },
-        ],
-        handler: CalendarServiceController.updateItem,
-        description: 'Finish  end_date.',
-        validate: {
-          payload: {
-            end_date: [joi.string(), joi.allow(null)]
-          },
-        },
-      },
-    });
+
     calendarRoutes.push({
       method: 'PUT',
       path: '/calendar/items/{id}/finish',
