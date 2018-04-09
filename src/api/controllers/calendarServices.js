@@ -109,7 +109,6 @@ class CalendarServiceController {
       const effectiveDate = moment(request.payload.effective_date,
           moment.ISO_8601);
       const currentYear = moment().year();
-      const effectiveYear = effectiveDate.year();
       let servicePaymentArray = [];
       const currentMth = moment().month();
       const effectiveMth = effectiveDate.month();
@@ -182,6 +181,53 @@ class CalendarServiceController {
         provider_number: request.payload.provider_number,
         updated_by: user.id || user.ID,
         status_type: 11,
+      };
+      return Promise.try(
+          () => calendarServiceAdaptor.updateCalendarItem(productBody,
+              request.params.id)).
+          then(() => reply({
+            status: true,
+            message: 'successful',
+            forceUpdate: request.pre.forceUpdate,
+          })).
+          catch((err) => {
+            console.log(
+                `Error on ${new Date()} for user ${user.id ||
+                user.ID} is as follow: \n \n ${err}`);
+            return reply({
+              status: false,
+              message: 'An error occurred in calendar item creation.',
+              forceUpdate: request.pre.forceUpdate,
+              err,
+            });
+          });
+    } else {
+      return reply({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
+  static finishCalendarItem(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    if (request.pre.userExist === 0) {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
+      return reply({
+        status: false,
+        message: 'Unauthorized',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(401);
+    } else if (request.pre.userExist && !request.pre.forceUpdate) {
+      const productBody = {
+        end_date: request.payload.end_date,
+        updated_by: user.id || user.ID,
       };
       return Promise.try(
           () => calendarServiceAdaptor.updateCalendarItem(productBody,
