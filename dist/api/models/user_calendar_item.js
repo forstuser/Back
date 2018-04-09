@@ -33,6 +33,9 @@ exports.default = function (sequelize, DataTypes) {
     status_type: {
       type: DataTypes.INTEGER
     },
+    end_date: {
+      type: DataTypes.DATEONLY
+    },
     created_at: {
       type: DataTypes.DATE,
       defaultValue: sequelize.literal('NOW()')
@@ -42,12 +45,12 @@ exports.default = function (sequelize, DataTypes) {
       defaultValue: sequelize.literal('NOW()')
     }
   }, {
-    freezeTableName: true,
-    defaultPrimaryKey: true,
-    timestamps: true,
-    underscored: true,
-    tableName: 'table_user_calendar_item'
-  });
+      freezeTableName: true,
+      defaultPrimaryKey: true,
+      timestamps: true,
+      underscored: true,
+      tableName: 'table_user_calendar_item'
+    });
 
   user_calendar_item.associate = function (models) {
     user_calendar_item.belongsTo(models.users, { foreignKey: 'updated_by' });

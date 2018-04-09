@@ -2,7 +2,7 @@
 'use strict';
 
 import CalendarServiceAdaptor from '../Adaptors/calendarServices';
-import shared, {monthlyPaymentCalc} from '../../helpers/shared';
+import shared, { monthlyPaymentCalc } from '../../helpers/shared';
 import Promise from 'bluebird';
 import moment from 'moment/moment';
 import config from '../../config/main';
@@ -35,23 +35,23 @@ class CalendarServiceController {
       }).code(401);
     } else if (request.pre.userExist && !request.pre.forceUpdate) {
       return Promise.try(() => calendarServiceAdaptor.retrieveCalendarServices(
-          {status_type: 1},
-          request.language)).spread((items, unit_types) => reply({
-        status: true,
-        items,
-        unit_types,
-        default_ids: config.CATEGORIES.CALENDAR_ITEM,
-      }).code(200)).catch((err) => {
-        console.log(
+        { status_type: 1 },
+        request.language)).spread((items, unit_types) => reply({
+          status: true,
+          items,
+          unit_types,
+          default_ids: config.CATEGORIES.CALENDAR_ITEM,
+        }).code(200)).catch((err) => {
+          console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
-        return reply({
-          status: false,
-          message: 'An error occurred in retrieving calendar service list.',
-          forceUpdate: request.pre.forceUpdate,
-          err,
+          return reply({
+            status: false,
+            message: 'An error occurred in retrieving calendar service list.',
+            forceUpdate: request.pre.forceUpdate,
+            err,
+          });
         });
-      });
     } else {
       return reply({
         status: false,
@@ -90,7 +90,7 @@ class CalendarServiceController {
 
       const serviceCalculationBody = {
         effective_date: moment(request.payload.effective_date, moment.ISO_8601).
-            startOf('days'),
+          startOf('days'),
         quantity: request.payload.quantity,
         unit_price: parseFloat(Number(request.payload.unit_price).toFixed(2)),
         unit_type: request.payload.unit_type,
@@ -100,25 +100,25 @@ class CalendarServiceController {
       };
 
       const serviceAbsentDayArray = (request.payload.absent_dates || []).map(
-          (item) => ({
-            absent_date: moment(item, moment.ISO_8601).
-                startOf('days'),
-            updated_by: user.id || user.ID,
-            status_type: 1,
-          }));
+        (item) => ({
+          absent_date: moment(item, moment.ISO_8601).
+            startOf('days'),
+          updated_by: user.id || user.ID,
+          status_type: 1,
+        }));
       const effectiveDate = moment(request.payload.effective_date,
-          moment.ISO_8601);
+        moment.ISO_8601);
       const currentYear = moment().year();
       const effectiveYear = effectiveDate.year();
       let servicePaymentArray = [];
       const currentMth = moment().month();
       const effectiveMth = effectiveDate.month();
 
-      let {selected_days, wages_type} = productBody;
+      let { selected_days, wages_type } = productBody;
       selected_days = serviceCalculationBody ?
-          serviceCalculationBody.selected_days ||
-          selected_days :
-          selected_days;
+        serviceCalculationBody.selected_days ||
+        selected_days :
+        selected_days;
       servicePaymentArray = monthlyPaymentCalc({
         currentMth,
         effectiveMth,
@@ -141,17 +141,17 @@ class CalendarServiceController {
         calendar_item,
         forceUpdate: request.pre.forceUpdate,
       })).
-          catch((err) => {
-            console.log(
-                `Error on ${new Date()} for user ${user.id ||
-                user.ID} is as follow: \n \n ${err}`);
-            return reply({
-              status: false,
-              message: 'An error occurred in calendar item creation.',
-              forceUpdate: request.pre.forceUpdate,
-              err,
-            });
+        catch((err) => {
+          console.log(
+            `Error on ${new Date()} for user ${user.id ||
+            user.ID} is as follow: \n \n ${err}`);
+          return reply({
+            status: false,
+            message: 'An error occurred in calendar item creation.',
+            forceUpdate: request.pre.forceUpdate,
+            err,
           });
+        });
     } else {
       return reply({
         status: false,
@@ -184,24 +184,24 @@ class CalendarServiceController {
         status_type: 11,
       };
       return Promise.try(
-          () => calendarServiceAdaptor.updateCalendarItem(productBody,
-              request.params.id)).
-          then(() => reply({
-            status: true,
-            message: 'successful',
+        () => calendarServiceAdaptor.updateCalendarItem(productBody,
+          request.params.id)).
+        then(() => reply({
+          status: true,
+          message: 'successful',
+          forceUpdate: request.pre.forceUpdate,
+        })).
+        catch((err) => {
+          console.log(
+            `Error on ${new Date()} for user ${user.id ||
+            user.ID} is as follow: \n \n ${err}`);
+          return reply({
+            status: false,
+            message: 'An error occurred in calendar item creation.',
             forceUpdate: request.pre.forceUpdate,
-          })).
-          catch((err) => {
-            console.log(
-                `Error on ${new Date()} for user ${user.id ||
-                user.ID} is as follow: \n \n ${err}`);
-            return reply({
-              status: false,
-              message: 'An error occurred in calendar item creation.',
-              forceUpdate: request.pre.forceUpdate,
-              err,
-            });
+            err,
           });
+        });
     } else {
       return reply({
         status: false,
@@ -228,47 +228,47 @@ class CalendarServiceController {
     } else if (request.pre.userExist && !request.pre.forceUpdate) {
       const serviceAbsentDetail = {
         absent_date: moment(request.payload.absent_date, moment.ISO_8601).
-            startOf('days'),
+          startOf('days'),
         payment_id: request.params.id,
         updated_by: user.id || user.ID,
         status_type: 1,
       };
       return Promise.try(
-          () => Promise.all([
-            calendarServiceAdaptor.retrieveCurrentCalculationDetail({
-              ref_id: request.params.ref_id, effective_date: {
-                $lte: request.payload.absent_date,
-              },
-            }), calendarServiceAdaptor.markAbsentForItem(
-                {where: serviceAbsentDetail})])).
-          spread((calcResults) => {
-            const currentCalcDetail = calcResults;
+        () => Promise.all([
+          calendarServiceAdaptor.retrieveCurrentCalculationDetail({
+            ref_id: request.params.ref_id, effective_date: {
+              $lte: request.payload.absent_date,
+            },
+          }), calendarServiceAdaptor.markAbsentForItem(
+            { where: serviceAbsentDetail })])).
+        spread((calcResults) => {
+          const currentCalcDetail = calcResults;
 
-            return calendarServiceAdaptor.updatePaymentDetail(request.params.id,
-                {
-                  quantity: currentCalcDetail.quantity,
-                  end_date: request.payload.absent_date,
-                  unit_price: currentCalcDetail.unit_price,
-                  selected_days: currentCalcDetail.selected_days,
-                }, true);
-          }).
-          then((payment_detail) => reply({
-            status: true,
-            message: 'successful',
-            payment_detail,
+          return calendarServiceAdaptor.updatePaymentDetail(request.params.id,
+            {
+              quantity: currentCalcDetail.quantity,
+              end_date: request.payload.absent_date,
+              unit_price: currentCalcDetail.unit_price,
+              selected_days: currentCalcDetail.selected_days,
+            }, true);
+        }).
+        then((payment_detail) => reply({
+          status: true,
+          message: 'successful',
+          payment_detail,
+          forceUpdate: request.pre.forceUpdate,
+        })).
+        catch((err) => {
+          console.log(
+            `Error on ${new Date()} for user ${user.id ||
+            user.ID} is as follow: \n \n ${err}`);
+          return reply({
+            status: false,
+            message: 'Unable to mark absent.',
             forceUpdate: request.pre.forceUpdate,
-          })).
-          catch((err) => {
-            console.log(
-                `Error on ${new Date()} for user ${user.id ||
-                user.ID} is as follow: \n \n ${err}`);
-            return reply({
-              status: false,
-              message: 'Unable to mark absent.',
-              forceUpdate: request.pre.forceUpdate,
-              err,
-            });
+            err,
           });
+        });
     } else {
       return reply({
         status: false,
@@ -301,25 +301,25 @@ class CalendarServiceController {
         ref_id: request.params.id,
       };
       return Promise.try(
-          () => calendarServiceAdaptor.markPaymentPaid(request.params.id,
-              servicePaymentDetail)).
-          then((payment_detail) => reply({
-            status: true,
-            message: 'successful',
-            payment_detail,
+        () => calendarServiceAdaptor.markPaymentPaid(request.params.id,
+          servicePaymentDetail)).
+        then((payment_detail) => reply({
+          status: true,
+          message: 'successful',
+          payment_detail,
+          forceUpdate: request.pre.forceUpdate,
+        })).
+        catch((err) => {
+          console.log(
+            `Error on ${new Date()} for user ${user.id ||
+            user.ID} is as follow: \n \n ${err}`);
+          return reply({
+            status: false,
+            message: 'Unable to mark paid.',
             forceUpdate: request.pre.forceUpdate,
-          })).
-          catch((err) => {
-            console.log(
-                `Error on ${new Date()} for user ${user.id ||
-                user.ID} is as follow: \n \n ${err}`);
-            return reply({
-              status: false,
-              message: 'Unable to mark paid.',
-              forceUpdate: request.pre.forceUpdate,
-              err,
-            });
+            err,
           });
+        });
     } else {
       return reply({
         status: false,
@@ -346,45 +346,45 @@ class CalendarServiceController {
     } else if (request.pre.userExist && !request.pre.forceUpdate) {
       const serviceAbsentDetail = {
         absent_date: moment(request.payload.present_date, moment.ISO_8601).
-            startOf('days'),
+          startOf('days'),
         payment_id: request.params.id,
       };
       return Promise.try(
-          () => Promise.all([
-            calendarServiceAdaptor.retrieveCurrentCalculationDetail({
-              ref_id: request.params.ref_id, effective_date: {
-                $lte: request.payload.present_date,
-              },
-            }), calendarServiceAdaptor.markPresentForItem(
-                {where: serviceAbsentDetail})])).
-          spread((calcResults) => {
-            const currentCalcDetail = calcResults;
+        () => Promise.all([
+          calendarServiceAdaptor.retrieveCurrentCalculationDetail({
+            ref_id: request.params.ref_id, effective_date: {
+              $lte: request.payload.present_date,
+            },
+          }), calendarServiceAdaptor.markPresentForItem(
+            { where: serviceAbsentDetail })])).
+        spread((calcResults) => {
+          const currentCalcDetail = calcResults;
 
-            return calendarServiceAdaptor.updatePaymentDetail(request.params.id,
-                {
-                  quantity: currentCalcDetail.quantity,
-                  unit_price: currentCalcDetail.unit_price,
-                  end_date: request.payload.present_date,
-                  selected_days: currentCalcDetail.selected_days,
-                }, true);
-          }).
-          then((payment_detail) => reply({
-            status: true,
-            message: 'successful',
-            payment_detail,
+          return calendarServiceAdaptor.updatePaymentDetail(request.params.id,
+            {
+              quantity: currentCalcDetail.quantity,
+              unit_price: currentCalcDetail.unit_price,
+              end_date: request.payload.present_date,
+              selected_days: currentCalcDetail.selected_days,
+            }, true);
+        }).
+        then((payment_detail) => reply({
+          status: true,
+          message: 'successful',
+          payment_detail,
+          forceUpdate: request.pre.forceUpdate,
+        })).
+        catch((err) => {
+          console.log(
+            `Error on ${new Date()} for user ${user.id ||
+            user.ID} is as follow: \n \n ${err}`);
+          return reply({
+            status: false,
+            message: 'Unable to mark absent.',
             forceUpdate: request.pre.forceUpdate,
-          })).
-          catch((err) => {
-            console.log(
-                `Error on ${new Date()} for user ${user.id ||
-                user.ID} is as follow: \n \n ${err}`);
-            return reply({
-              status: false,
-              message: 'Unable to mark absent.',
-              forceUpdate: request.pre.forceUpdate,
-              err,
-            });
+            err,
           });
+        });
     } else {
       return reply({
         status: false,
@@ -396,7 +396,7 @@ class CalendarServiceController {
 
   static retrieveCalendarItemList(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    console.log({user_exist: request.pre.userExist});
+    console.log({ user_exist: request.pre.userExist });
     if (request.pre.userExist === 0) {
       return reply({
         status: false,
@@ -412,26 +412,26 @@ class CalendarServiceController {
     } else if (request.pre.userExist && !request.pre.forceUpdate) {
       return Promise.try(() => calendarServiceAdaptor.retrieveCalendarItemList({
         user_id: user.id ||
-        user.ID,
+          user.ID,
       }, request.language, request.query.limit, request.query.offset)).
-          then((items) => reply({
-            status: true,
-            message: 'successful',
-            items,
-            forceUpdate: request.pre.forceUpdate,
-          })).
-          catch((err) => {
-            console.log(
-                `Error on ${new Date()} for user ${user.id ||
-                user.ID} is as follow: \n \n ${err}`);
+        then((items) => reply({
+          status: true,
+          message: 'successful',
+          items,
+          forceUpdate: request.pre.forceUpdate,
+        })).
+        catch((err) => {
+          console.log(
+            `Error on ${new Date()} for user ${user.id ||
+            user.ID} is as follow: \n \n ${err}`);
 
-            return reply({
-              status: false,
-              message: 'An error occurred in retrieving calendar item list.',
-              forceUpdate: request.pre.forceUpdate,
-              err,
-            });
+          return reply({
+            status: false,
+            message: 'An error occurred in retrieving calendar item list.',
+            forceUpdate: request.pre.forceUpdate,
+            err,
           });
+        });
     } else {
       return reply({
         status: false,
@@ -457,25 +457,25 @@ class CalendarServiceController {
       }).code(401);
     } else if (request.pre.userExist && !request.pre.forceUpdate) {
       return Promise.try(() => calendarServiceAdaptor.retrieveCalendarItemById(
-          request.params.id,
-          request.language)).
-          then((result) => reply({
-            status: true,
-            message: 'successful',
-            item: result,
+        request.params.id,
+        request.language)).
+        then((result) => reply({
+          status: true,
+          message: 'successful',
+          item: result,
+          forceUpdate: request.pre.forceUpdate,
+        })).
+        catch((err) => {
+          console.log(
+            `Error on ${new Date()} for user ${user.id ||
+            user.ID} is as follow: \n \n ${err}`);
+          return reply({
+            status: false,
+            message: 'An error occurred in retrieving calendar item list.',
             forceUpdate: request.pre.forceUpdate,
-          })).
-          catch((err) => {
-            console.log(
-                `Error on ${new Date()} for user ${user.id ||
-                user.ID} is as follow: \n \n ${err}`);
-            return reply({
-              status: false,
-              message: 'An error occurred in retrieving calendar item list.',
-              forceUpdate: request.pre.forceUpdate,
-              err,
-            });
+            err,
           });
+        });
     } else {
       return reply({
         status: false,
@@ -502,7 +502,7 @@ class CalendarServiceController {
     } else if (request.pre.userExist && !request.pre.forceUpdate) {
       const serviceCalculationBody = {
         effective_date: moment(request.payload.effective_date, moment.ISO_8601).
-            startOf('days'),
+          startOf('days'),
         quantity: request.payload.quantity,
         unit_price: request.payload.unit_price,
         unit_type: request.payload.unit_type,
@@ -514,39 +514,39 @@ class CalendarServiceController {
       return Promise.try(() => {
         return calendarServiceAdaptor.addServiceCalc({
           effective_date: moment(request.payload.effective_date,
-              moment.ISO_8601).
-              startOf('days'),
+            moment.ISO_8601).
+            startOf('days'),
           ref_id: request.params.id,
         }, serviceCalculationBody);
       }).
-          then((result) => {
-            return Promise.all([
-              calendarServiceAdaptor.manipulatePaymentDetail({
-                ref_id: request.params.id,
-                effective_date: moment(request.payload.effective_date,
-                    moment.ISO_8601).
-                    startOf('days'),
-              }), result.toJSON()]);
-          }).
-          spread((manipulatedResult, calculation_detail) => {
-            return reply({
-              status: true,
-              message: 'successful',
-              calculation_detail,
-              forceUpdate: request.pre.forceUpdate,
-            });
-          }).
-          catch((err) => {
-            console.log(
-                `Error on ${new Date()} for user ${user.id ||
-                user.ID} is as follow: \n \n ${err}`);
-            return reply({
-              status: false,
-              message: 'An error occurred in adding effective calculation method for service.',
-              forceUpdate: request.pre.forceUpdate,
-              err,
-            });
+        then((result) => {
+          return Promise.all([
+            calendarServiceAdaptor.manipulatePaymentDetail({
+              ref_id: request.params.id,
+              effective_date: moment(request.payload.effective_date,
+                moment.ISO_8601).
+                startOf('days'),
+            }), result.toJSON()]);
+        }).
+        spread((manipulatedResult, calculation_detail) => {
+          return reply({
+            status: true,
+            message: 'successful',
+            calculation_detail,
+            forceUpdate: request.pre.forceUpdate,
           });
+        }).
+        catch((err) => {
+          console.log(
+            `Error on ${new Date()} for user ${user.id ||
+            user.ID} is as follow: \n \n ${err}`);
+          return reply({
+            status: false,
+            message: 'An error occurred in adding effective calculation method for service.',
+            forceUpdate: request.pre.forceUpdate,
+            err,
+          });
+        });
     } else {
       return reply({
         status: false,
@@ -573,7 +573,7 @@ class CalendarServiceController {
     } else if (request.pre.userExist && !request.pre.forceUpdate) {
       const serviceCalculationBody = {
         effective_date: moment(request.payload.effective_date, moment.ISO_8601).
-            startOf('days'),
+          startOf('days'),
         quantity: request.payload.quantity,
         unit_price: request.payload.unit_price,
         unit_type: request.payload.unit_type,
@@ -593,8 +593,8 @@ class CalendarServiceController {
           calendarServiceAdaptor.manipulatePaymentDetail({
             id: request.params.calc_id,
             effective_date: moment(request.payload.effective_date,
-                moment.ISO_8601).
-                startOf('days'),
+              moment.ISO_8601).
+              startOf('days'),
             ref_id: request.params.id,
           }), result]);
       }).spread((manipulatedResult, calculation_detail) => reply({
@@ -603,17 +603,17 @@ class CalendarServiceController {
         calculation_detail,
         forceUpdate: request.pre.forceUpdate,
       })).
-          catch((err) => {
-            console.log(
-                `Error on ${new Date()} for user ${user.id ||
-                user.ID} is as follow: \n \n ${err}`);
-            return reply({
-              status: false,
-              message: 'An error occurred in adding effective calculation method for service.',
-              forceUpdate: request.pre.forceUpdate,
-              err,
-            });
+        catch((err) => {
+          console.log(
+            `Error on ${new Date()} for user ${user.id ||
+            user.ID} is as follow: \n \n ${err}`);
+          return reply({
+            status: false,
+            message: 'An error occurred in adding effective calculation method for service.',
+            forceUpdate: request.pre.forceUpdate,
+            err,
           });
+        });
     } else {
       return reply({
         status: false,
@@ -639,23 +639,23 @@ class CalendarServiceController {
       }).code(401);
     } else if (request.pre.userExist && !request.pre.forceUpdate) {
       return Promise.try(() => calendarServiceAdaptor.deleteCalendarItemById(
-          request.params.id, user.id || user.ID)).then(() => {
-        return reply({
-          status: true,
-          message: 'successful',
-          forceUpdate: request.pre.forceUpdate,
-        });
-      }).catch((err) => {
-        console.log(
+        request.params.id, user.id || user.ID)).then(() => {
+          return reply({
+            status: true,
+            message: 'successful',
+            forceUpdate: request.pre.forceUpdate,
+          });
+        }).catch((err) => {
+          console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
-        return reply({
-          status: false,
-          message: 'An error occurred in adding effective calculation method for service.',
-          forceUpdate: request.pre.forceUpdate,
-          err,
+          return reply({
+            status: false,
+            message: 'An error occurred in adding effective calculation method for service.',
+            forceUpdate: request.pre.forceUpdate,
+            err,
+          });
         });
-      });
     } else {
       return reply({
         status: false,
@@ -665,5 +665,79 @@ class CalendarServiceController {
     }
   }
 }
+
+
+finishCalendarItem(request, reply)
+{
+  const user = shared.verifyAuthorization(request.headers);
+  if (request.pre.userExist === 0) {
+    return reply({
+      status: false,
+      message: 'Inactive User',
+      forceUpdate: request.pre.forceUpdate,
+    }).code(402);
+  } else if (!request.pre.userExist) {
+    return reply({
+      status: false,
+      message: 'Unauthorized',
+      forceUpdate: request.pre.forceUpdate,
+    }).code(401);
+  } else if (request.pre.userExist && !request.pre.forceUpdate) {
+    return Promise.try(() => CalendarServiceAdaptor.retrieveLatestServiceCalculation({
+      where: {
+        ref_id: request.params.id
+      }
+    })).then((data) => {
+      let finalEffectiveDate = data.effective_date;
+      if (moment(finalEffectiveDate, moment.ISO_8601).isBefore(request.payload.end_date)) {
+        const productBody = {
+          end_date: request.payload.end_date
+        };
+
+        return calendarServiceAdaptor.updateCalendarItem(productBody,
+          request.params.id);
+      }
+      else {
+        console.log('end_date should be greater than effective date');
+        return null;
+      }
+    }).then((result) => {
+      if (result === null) {
+        return reply({
+          status: false,
+          message: 'An error occurred in calendar item creation.',
+          forceUpdate: request.pre.forceUpdate,
+          err,
+        });
+      }
+      return reply({
+        status: true,
+        message: 'successful',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }).catch((err) => {
+      console.log(
+        `Error on ${new Date()} for user ${user.id ||
+        user.ID} is as follow: \n \n ${err}`);
+      return reply({
+        status: false,
+        message: 'An error occurred in calendar item creation.',
+        forceUpdate: request.pre.forceUpdate,
+        err,
+      });
+    });
+  } else {
+    return reply({
+      status: false,
+      message: 'Forbidden',
+      forceUpdate: request.pre.forceUpdate,
+    });
+  }
+}
+
+
+
+
+
 
 export default CalendarServiceController;
