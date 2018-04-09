@@ -2309,6 +2309,28 @@ function prepareCalendarServiceRoutes(calendarController, calendarRoutes) {
     });
     calendarRoutes.push({
       method: 'PUT',
+      path: '/calendar/items/{id}/finish',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: CalendarServiceController.finishCalendarItem,
+        description: 'Finish Calendar Item.',
+        validate: {
+          payload: {
+            end_date: joi.string().required()
+          },
+        },
+      },
+    });
+
+    calendarRoutes.push({
+      method: 'PUT',
       path: '/calendar/items/{id}/paid',
       config: {
         auth: 'jwt',

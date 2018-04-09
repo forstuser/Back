@@ -188,12 +188,16 @@ function preparePaymentDetails(parameters) {
     var month_end_date = (0, _moment2.default)([currentYear, 0, 31]).month(monthItem);
     var end_date = (0, _moment2.default)([currentYear, 0, 31]).month(monthItem);
     var start_date = effectiveDate;
-    if (monthStartDate.diff(effectiveDate, 'days') > 0) {
+    if (monthStartDate.isAfter(effectiveDate)) {
         start_date = monthStartDate;
     }
     currentDate = (0, _moment2.default)(currentDate || (0, _moment2.default)()).startOf('days');
-    if (end_date.endOf('days').diff(currentDate, 'days') > 0) {
+    if (end_date.isAfter(currentDate)) {
         end_date = currentDate.endOf('days');
+    }
+
+    if (end_date.isBefore(start_date)) {
+        end_date = (0, _moment2.default)(start_date).endOf('days');
     }
 
     var daysInMonth = (0, _moment2.default)().isoWeekdayCalc(monthStartDate, month_end_date, selected_days);
@@ -229,7 +233,6 @@ function preparePaymentDetails(parameters) {
 
 function monthlyPaymentCalc(parameters) {
     var currentMth = parameters.currentMth,
-        effectiveMth = parameters.effectiveMth,
         effectiveDate = parameters.effectiveDate,
         selected_days = parameters.selected_days,
         wages_type = parameters.wages_type,
@@ -241,7 +244,7 @@ function monthlyPaymentCalc(parameters) {
     var monthDiff = (0, _moment2.default)().startOf('months').diff((0, _moment2.default)(effectiveDate, _moment2.default.ISO_8601).startOf('months'), 'months');
     console.log('\n\n\n\n\n\n\n\n\n\n monthdiff:', monthDiff);
     var monthArr = [];
-    if (monthDiff > 0) {
+    if ((0, _moment2.default)().isAfter((0, _moment2.default)(effectiveDate, _moment2.default.ISO_8601), 'months')) {
         for (var i = monthDiff; i >= 0; i--) {
             monthArr.push(currentMth - i);
         }
