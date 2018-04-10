@@ -87,14 +87,15 @@ export default class CalendarServiceController {
         updated_by: user.id || user.ID,
         status_type: 11,
       };
-
+      request.payload.quantity = parseFloat((request.payload.quantity).toFixed(2));
+      request.payload.unit_price = parseFloat((request.payload.unit_price).toFixed(2));
       const serviceCalculationBody = {
         effective_date: moment(request.payload.effective_date, moment.ISO_8601).
             startOf('days'),
         quantity: request.payload.quantity,
-        unit_price: parseFloat(Number(request.payload.unit_price).toFixed(2)),
+        unit_price: request.payload.unit_price,
         unit_type: request.payload.unit_type,
-        selected_days: request.payload.selected_days,
+        selected_days: request.payload.selected_days || [1, 2, 3, 4, 5, 6, 7],
         updated_by: user.id || user.ID,
         status_type: 1,
       };
@@ -502,10 +503,10 @@ export default class CalendarServiceController {
       const serviceCalculationBody = {
         effective_date: moment(request.payload.effective_date, moment.ISO_8601).
             startOf('days'),
-        quantity: request.payload.quantity,
-        unit_price: request.payload.unit_price,
+        quantity: parseFloat((request.payload.quantity).toFixed(2)),
+        unit_price: parseFloat((request.payload.unit_price).toFixed(2)),
         unit_type: request.payload.unit_type,
-        selected_days: request.payload.selected_days,
+        selected_days: request.payload.selected_days || [1,2,3,4,5,6,7],
         updated_by: user.id || user.ID,
         status_type: 1,
         ref_id: request.params.id,
@@ -519,13 +520,17 @@ export default class CalendarServiceController {
         }, serviceCalculationBody);
       }).
           then((result) => {
-            return Promise.all([
-              calendarServiceAdaptor.manipulatePaymentDetail({
-                ref_id: request.params.id,
-                effective_date: moment(request.payload.effective_date,
-                    moment.ISO_8601).
-                    startOf('days'),
-              }), result.toJSON()]);
+            if (moment(request.payload.effective_date,
+                    moment.ISO_8601).isSameOrBefore(moment())) {
+              return Promise.all([
+                calendarServiceAdaptor.manipulatePaymentDetail({
+                  ref_id: request.params.id,
+                  effective_date: moment(request.payload.effective_date,
+                      moment.ISO_8601).
+                      startOf('days'),
+                }), result.toJSON()]);
+            }
+            return Promise.all([[], result.toJSON()]);
           }).
           spread((manipulatedResult, calculation_detail) => {
             return reply({
@@ -680,39 +685,18 @@ export default class CalendarServiceController {
       }).code(401);
     } else if (request.pre.userExist && !request.pre.forceUpdate) {
       return Promise.try(
-          () => calendarServiceAdaptor.retrieveLatestServiceCalculation({
-            where: {
-              ref_id: request.params.id,
-            },
-          })).then((data) => {
-        let finalEffectiveDate = data.effective_date;
-        if (moment(finalEffectiveDate, moment.ISO_8601).
-                isSameOrBefore(request.payload.end_date)) {
+          () => {
           const productBody = {
             end_date: request.payload.end_date,
           };
 
           return calendarServiceAdaptor.updateCalendarItem(productBody,
               request.params.id);
-        }
-        else {
-          console.log('end_date should be greater than effective date');
-          return null;
-        }
-      }).then((result) => {
-        if (result === null) {
-          return reply({
-            status: false,
-            message: 'An error occurred in calendar item creation.',
-            forceUpdate: request.pre.forceUpdate,
-          });
-        }
-        return reply({
+      }).then(() => reply({
           status: true,
           message: 'successful',
           forceUpdate: request.pre.forceUpdate,
-        });
-      }).catch((err) => {
+        })).catch((err) => {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);

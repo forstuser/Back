@@ -70,7 +70,7 @@ var EHomeAdaptor = function () {
           user_id: user.id || user.ID,
           status_id: 4
         }
-      }), this.retrieveUnProcessedBills(user)]).then(function (result) {
+      })]).then(function (result) {
 
         var OtherCategory = null;
 
@@ -117,7 +117,6 @@ var EHomeAdaptor = function () {
           notificationCount: result[2],
           // categories: result[3],
           recentSearches: recentSearches,
-          unProcessedBills: result[3],
           categoryList: newCategoryData,
           forceUpdate: request.pre.forceUpdate
         };
