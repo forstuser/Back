@@ -379,6 +379,8 @@ export default class CalendarServiceAdaptor {
 
   retrieveCalendarItemById(id, language) {
     let calendarItemDetail;
+    let destroyablePaymentDetail = [];
+    let destroyableAbsentDetails = [];
     return this.modals.user_calendar_item.findById(id, {
       include: [
         {
@@ -429,55 +431,137 @@ export default class CalendarServiceAdaptor {
           calendarItemDetail.calculation_detail = _.orderBy(
               calendarItemDetail.calculation_detail, ['effective_date'],
               ['desc']);
+          calendarItemDetail.calculation_detail = calendarItemDetail.end_date ?
+              calendarItemDetail.calculation_detail.
+                  filter((cDItem) => moment(calendarItemDetail.end_date,
+                      moment.ISO_8601).
+                      isSameOrAfter(
+                          moment(cDItem.effective_date, moment.ISO_8601))) :
+              calendarItemDetail.calculation_detail;
+          destroyablePaymentDetail = calendarItemDetail.end_date ?
+              calendarItemDetail.payment_detail.filter(
+                  (pDItem) => moment(calendarItemDetail.end_date,
+                      moment.ISO_8601).
+                      isBefore(moment(pDItem.start_date, moment.ISO_8601))) :
+              [];
           calendarItemDetail.payment_detail = _.orderBy(
               calendarItemDetail.payment_detail, ['end_date'], ['desc']);
+          calendarItemDetail.payment_detail = calendarItemDetail.end_date ?
+              calendarItemDetail.payment_detail.
+                  filter((pDItem) => moment(calendarItemDetail.end_date,
+                      moment.ISO_8601).
+                      isSameOrAfter(
+                          moment(pDItem.start_date, moment.ISO_8601))) :
+              calendarItemDetail.payment_detail;
           const item_end_date = moment(
               calendarItemDetail.payment_detail[0].end_date,
               moment.ISO_8601);
           console.log(item_end_date);
+          const current_date = calendarItemDetail.end_date &&
+          moment().isAfter(calendarItemDetail.end_date) ?
+              moment(calendarItemDetail.end_date, moment.ISO_8601) :
+              moment();
+          if (current_date.isSameOrAfter(
+                  moment(item_end_date, moment.ISO_8601))) {
 
-          if (moment().isSameOrAfter(moment(item_end_date, moment.ISO_8601))) {
+            console.log('If is here', {current_date});
             const lastItemMonth = item_end_date.month();
-            const monthDiff = moment().startOf('months').
+            const monthDiff = moment(current_date, moment.ISO_8601).
+                startOf('months').
                 diff(moment(item_end_date, moment.ISO_8601).startOf('months'),
                     'months');
             if (monthDiff > 0) {
               calendarItemDetail.payment_detail[0].end_date = moment(
-                  [moment().year(), 0, 31]).month(lastItemMonth);
+                  [current_date.year(), 0, 31]).month(lastItemMonth);
               for (let i = 1; i <= monthDiff; i++) {
                 const start_date = moment(
-                    [moment().year(), lastItemMonth + i, 1]);
-                const month_end_date = moment([moment().year(), 0, 31]).
+                    [current_date.year(), lastItemMonth + i, 1]);
+                const month_end_date = moment([current_date.year(), 0, 31]).
                     month(lastItemMonth + i);
                 calendarItemDetail.payment_detail.push({
                   start_date,
-                  end_date: month_end_date.diff(moment(), 'days') > 0 ?
-                      moment() :
+                  end_date: month_end_date.isAfter(current_date) ?
+                      current_date :
                       month_end_date,
                   absent_day_detail: [],
                   ref_id: id,
                 });
               }
             } else {
-              calendarItemDetail.payment_detail[0].end_date = moment();
+              console.log('Else is here', {current_date});
+              calendarItemDetail.payment_detail[0].end_date = current_date;
             }
           }
 
           calendarItemDetail.payment_detail = calendarItemDetail.payment_detail.map(
               (pItem) => {
+                pItem.end_date = !calendarItemDetail.end_date ||
+                (calendarItemDetail.end_date && current_date.isSameOrAfter(
+                    moment(pItem.end_date, moment.ISO_8601))) ?
+                    pItem.end_date :
+                    current_date;
+
+                pItem.absent_day_detail = calendarItemDetail.end_date ?
+                    pItem.absent_day_detail.filter(
+                        (aDayDetail) => moment(calendarItemDetail.end_date,
+                            moment.ISO_8601).
+                            isSameOrAfter(
+                                moment(aDayDetail.absent_date,
+                                    moment.ISO_8601))) :
+                    pItem.absent_day_detail;
+                const last_absent_date = pItem.absent_day_detail[pItem.absent_day_detail.length -
+                1];
+                if (last_absent_date) {
+                  pItem.end_date = moment(pItem.end_date, moment.ISO_8601).
+                      isSameOrAfter(
+                          moment(last_absent_date.absent_date,
+                              moment.ISO_8601)) ?
+                      pItem.end_date :
+                      last_absent_date.absent_date;
+                }
+
+                pItem.end_date = moment(pItem.start_date, moment.ISO_8601).
+                    endOf('months').
+                    isSameOrAfter(
+                        moment(pItem.end_date, moment.ISO_8601)) ?
+                    pItem.end_date :
+                    moment(pItem.start_date, moment.ISO_8601).endOf('months');
+
+                destroyableAbsentDetails = calendarItemDetail.end_date ?
+                    pItem.absent_day_detail.filter(
+                        (aDayDetail) => moment(calendarItemDetail.end_date,
+                            moment.ISO_8601).
+                            isBefore(
+                                moment(aDayDetail.absent_date,
+                                    moment.ISO_8601))) :
+                    [];
                 pItem.calendar_item = {
                   selected_days: calendarItemDetail.selected_days,
                   wages_type: calendarItemDetail.wages_type,
+                  end_date: calendarItemDetail.end_date,
                 };
                 return pItem;
               });
 
           return Promise.all([
-            calendarItemDetail, this.updatePaymentDetailForCalc({
+            calendarItemDetail,
+            this.updatePaymentDetailForCalc({
               servicePayments: calendarItemDetail.payment_detail,
               serviceCalcList: calendarItemDetail.calculation_detail,
               absentDetailToUpdate: [],
-            })]);
+            }),
+            ...destroyablePaymentDetail.map(
+                (dPDItem) => this.modals.service_payment.destroy({
+                  where: {
+                    id: dPDItem.id,
+                  },
+                })),
+            ...destroyableAbsentDetails.map(
+                (dAbsentDetail) => this.markPresentForItem({
+                  where: {
+                    id: dAbsentDetail.id,
+                  },
+                }))]);
         }).
         spread((calendarItemDetail) => {
           return Promise.all([
@@ -520,9 +604,14 @@ export default class CalendarServiceAdaptor {
         }).
         spread((calendarItemDetail, paymentDetailResult, attendance_total,
                 payment_total) => {
-          console.log(
-              JSON.stringify({calendarItemDetail, paymentDetailResult}));
           calendarItemDetail.payment_detail = paymentDetailResult;
+          calendarItemDetail.payment_detail[0].absent_day_detail = calendarItemDetail.end_date ?
+              calendarItemDetail.payment_detail[0].absent_day_detail.filter(
+                  (aDayDetail) => moment(calendarItemDetail.end_date,
+                      moment.ISO_8601).
+                      isSameOrAfter(
+                          moment(aDayDetail.absent_date, moment.ISO_8601))) :
+              calendarItemDetail.payment_detail[0].absent_day_detail;
           const attendance_total_amount = attendance_total ?
               attendance_total.total_amount :
               0;
@@ -619,11 +708,6 @@ export default class CalendarServiceAdaptor {
                       currentDetail.calendar_item.selected_days) -
               paymentDetail.absent_day;
 
-          console.log('\n\n\n\n', JSON.stringify({
-            cEnd_date: currentDetail.end_date,
-            PEnd_date: paymentDetail.end_date,
-            daysInPeriod,
-          }));
           paymentDetail.total_days = daysInPeriod;
           paymentDetail.total_units = (paymentDetail.quantity ?
               paymentDetail.quantity * daysInPeriod :
@@ -968,8 +1052,8 @@ export default class CalendarServiceAdaptor {
                 next_effective_date,
                 nextEffective: serviceCalc[nextIndex].effective_date,
               }));
-          if (effective_date <= start_date &&
-              start_date !== next_effective_date) {
+          if (moment(effective_date).isSameOrBefore(moment(start_date)) &&
+              !moment(start_date).isSame(moment(next_effective_date))) {
             const nextEffectDate = moment(next_effective_date).
                 subtract(1, 'days');
             const nextEffectStartDate = moment(

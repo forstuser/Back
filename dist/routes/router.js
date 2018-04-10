@@ -73,8 +73,6 @@ var _calendarServices = require('../api/controllers/calendarServices');
 
 var _calendarServices2 = _interopRequireDefault(_calendarServices);
 
-var _util = require('util');
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var User = void 0;

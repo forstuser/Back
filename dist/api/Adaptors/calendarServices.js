@@ -321,6 +321,8 @@ var CalendarServiceAdaptor = function () {
       var _this5 = this;
 
       var calendarItemDetail = void 0;
+      var destroyablePaymentDetail = [];
+      var destroyableAbsentDetails = [];
       return this.modals.user_calendar_item.findById(id, {
         include: [{
           model: this.modals.calendar_item_payment,
@@ -355,34 +357,62 @@ var CalendarServiceAdaptor = function () {
       }).then(function (services) {
         calendarItemDetail.service_type = services;
         calendarItemDetail.calculation_detail = _lodash2.default.orderBy(calendarItemDetail.calculation_detail, ['effective_date'], ['desc']);
+        calendarItemDetail.calculation_detail = calendarItemDetail.end_date ? calendarItemDetail.calculation_detail.filter(function (cDItem) {
+          return (0, _moment2.default)(calendarItemDetail.end_date, _moment2.default.ISO_8601).isSameOrAfter((0, _moment2.default)(cDItem.effective_date, _moment2.default.ISO_8601));
+        }) : calendarItemDetail.calculation_detail;
+        destroyablePaymentDetail = calendarItemDetail.end_date ? calendarItemDetail.payment_detail.filter(function (pDItem) {
+          return (0, _moment2.default)(calendarItemDetail.end_date, _moment2.default.ISO_8601).isBefore((0, _moment2.default)(pDItem.start_date, _moment2.default.ISO_8601));
+        }) : [];
         calendarItemDetail.payment_detail = _lodash2.default.orderBy(calendarItemDetail.payment_detail, ['end_date'], ['desc']);
+        calendarItemDetail.payment_detail = calendarItemDetail.end_date ? calendarItemDetail.payment_detail.filter(function (pDItem) {
+          return (0, _moment2.default)(calendarItemDetail.end_date, _moment2.default.ISO_8601).isSameOrAfter((0, _moment2.default)(pDItem.start_date, _moment2.default.ISO_8601));
+        }) : calendarItemDetail.payment_detail;
         var item_end_date = (0, _moment2.default)(calendarItemDetail.payment_detail[0].end_date, _moment2.default.ISO_8601);
         console.log(item_end_date);
+        var current_date = calendarItemDetail.end_date && (0, _moment2.default)().isAfter(calendarItemDetail.end_date) ? (0, _moment2.default)(calendarItemDetail.end_date, _moment2.default.ISO_8601) : (0, _moment2.default)();
+        if (current_date.isSameOrAfter((0, _moment2.default)(item_end_date, _moment2.default.ISO_8601))) {
 
-        if ((0, _moment2.default)().isSameOrAfter((0, _moment2.default)(item_end_date, _moment2.default.ISO_8601))) {
+          console.log('If is here', { current_date: current_date });
           var lastItemMonth = item_end_date.month();
-          var monthDiff = (0, _moment2.default)().startOf('months').diff((0, _moment2.default)(item_end_date, _moment2.default.ISO_8601).startOf('months'), 'months');
+          var monthDiff = (0, _moment2.default)(current_date, _moment2.default.ISO_8601).startOf('months').diff((0, _moment2.default)(item_end_date, _moment2.default.ISO_8601).startOf('months'), 'months');
           if (monthDiff > 0) {
-            calendarItemDetail.payment_detail[0].end_date = (0, _moment2.default)([(0, _moment2.default)().year(), 0, 31]).month(lastItemMonth);
+            calendarItemDetail.payment_detail[0].end_date = (0, _moment2.default)([current_date.year(), 0, 31]).month(lastItemMonth);
             for (var i = 1; i <= monthDiff; i++) {
-              var start_date = (0, _moment2.default)([(0, _moment2.default)().year(), lastItemMonth + i, 1]);
-              var month_end_date = (0, _moment2.default)([(0, _moment2.default)().year(), 0, 31]).month(lastItemMonth + i);
+              var start_date = (0, _moment2.default)([current_date.year(), lastItemMonth + i, 1]);
+              var month_end_date = (0, _moment2.default)([current_date.year(), 0, 31]).month(lastItemMonth + i);
               calendarItemDetail.payment_detail.push({
                 start_date: start_date,
-                end_date: month_end_date.diff((0, _moment2.default)(), 'days') > 0 ? (0, _moment2.default)() : month_end_date,
+                end_date: month_end_date.isAfter(current_date) ? current_date : month_end_date,
                 absent_day_detail: [],
                 ref_id: id
               });
             }
           } else {
-            calendarItemDetail.payment_detail[0].end_date = (0, _moment2.default)();
+            console.log('Else is here', { current_date: current_date });
+            calendarItemDetail.payment_detail[0].end_date = current_date;
           }
         }
 
         calendarItemDetail.payment_detail = calendarItemDetail.payment_detail.map(function (pItem) {
+          pItem.end_date = !calendarItemDetail.end_date || calendarItemDetail.end_date && current_date.isSameOrAfter((0, _moment2.default)(pItem.end_date, _moment2.default.ISO_8601)) ? pItem.end_date : current_date;
+
+          pItem.absent_day_detail = calendarItemDetail.end_date ? pItem.absent_day_detail.filter(function (aDayDetail) {
+            return (0, _moment2.default)(calendarItemDetail.end_date, _moment2.default.ISO_8601).isSameOrAfter((0, _moment2.default)(aDayDetail.absent_date, _moment2.default.ISO_8601));
+          }) : pItem.absent_day_detail;
+          var last_absent_date = pItem.absent_day_detail[pItem.absent_day_detail.length - 1];
+          if (last_absent_date) {
+            pItem.end_date = (0, _moment2.default)(pItem.end_date, _moment2.default.ISO_8601).isSameOrAfter((0, _moment2.default)(last_absent_date.absent_date, _moment2.default.ISO_8601)) ? pItem.end_date : last_absent_date.absent_date;
+          }
+
+          pItem.end_date = (0, _moment2.default)(pItem.start_date, _moment2.default.ISO_8601).endOf('months').isSameOrAfter((0, _moment2.default)(pItem.end_date, _moment2.default.ISO_8601)) ? pItem.end_date : (0, _moment2.default)(pItem.start_date, _moment2.default.ISO_8601).endOf('months');
+
+          destroyableAbsentDetails = calendarItemDetail.end_date ? pItem.absent_day_detail.filter(function (aDayDetail) {
+            return (0, _moment2.default)(calendarItemDetail.end_date, _moment2.default.ISO_8601).isBefore((0, _moment2.default)(aDayDetail.absent_date, _moment2.default.ISO_8601));
+          }) : [];
           pItem.calendar_item = {
             selected_days: calendarItemDetail.selected_days,
-            wages_type: calendarItemDetail.wages_type
+            wages_type: calendarItemDetail.wages_type,
+            end_date: calendarItemDetail.end_date
           };
           return pItem;
         });
@@ -391,7 +421,19 @@ var CalendarServiceAdaptor = function () {
           servicePayments: calendarItemDetail.payment_detail,
           serviceCalcList: calendarItemDetail.calculation_detail,
           absentDetailToUpdate: []
-        })]);
+        })].concat(_toConsumableArray(destroyablePaymentDetail.map(function (dPDItem) {
+          return _this5.modals.service_payment.destroy({
+            where: {
+              id: dPDItem.id
+            }
+          });
+        })), _toConsumableArray(destroyableAbsentDetails.map(function (dAbsentDetail) {
+          return _this5.markPresentForItem({
+            where: {
+              id: dAbsentDetail.id
+            }
+          });
+        }))));
       }).spread(function (calendarItemDetail) {
         return _bluebird2.default.all([calendarItemDetail, _this5.retrieveServicePaymentDetails({
           where: {
@@ -417,8 +459,10 @@ var CalendarServiceAdaptor = function () {
           group: ['ref_id']
         })]);
       }).spread(function (calendarItemDetail, paymentDetailResult, attendance_total, payment_total) {
-        console.log(JSON.stringify({ calendarItemDetail: calendarItemDetail, paymentDetailResult: paymentDetailResult }));
         calendarItemDetail.payment_detail = paymentDetailResult;
+        calendarItemDetail.payment_detail[0].absent_day_detail = calendarItemDetail.end_date ? calendarItemDetail.payment_detail[0].absent_day_detail.filter(function (aDayDetail) {
+          return (0, _moment2.default)(calendarItemDetail.end_date, _moment2.default.ISO_8601).isSameOrAfter((0, _moment2.default)(aDayDetail.absent_date, _moment2.default.ISO_8601));
+        }) : calendarItemDetail.payment_detail[0].absent_day_detail;
         var attendance_total_amount = attendance_total ? attendance_total.total_amount : 0;
         payment_total = payment_total ? payment_total.toJSON() : undefined;
         var payment_total_amount = payment_total ? payment_total.total_amount_paid : 0;
@@ -500,11 +544,6 @@ var CalendarServiceAdaptor = function () {
             paymentDetail.absent_day = currentDetail.absent_day_detail.length;
             daysInPeriod = (0, _moment2.default)().isoWeekdayCalc(currentDetail.start_date, (0, _moment2.default)(newEndDate, _moment2.default.ISO_8601).endOf('days'), paymentDetail.selected_days || currentDetail.calendar_item.selected_days) - paymentDetail.absent_day;
 
-            console.log('\n\n\n\n', JSON.stringify({
-              cEnd_date: currentDetail.end_date,
-              PEnd_date: paymentDetail.end_date,
-              daysInPeriod: daysInPeriod
-            }));
             paymentDetail.total_days = daysInPeriod;
             paymentDetail.total_units = paymentDetail.quantity ? paymentDetail.quantity * daysInPeriod : 0;
             paymentDetail.total_amount = paymentDetail.unit_price * daysInPeriod;
@@ -809,7 +848,7 @@ var CalendarServiceAdaptor = function () {
             next_effective_date: next_effective_date,
             nextEffective: serviceCalc[nextIndex].effective_date
           }));
-          if (effective_date <= start_date && start_date !== next_effective_date) {
+          if ((0, _moment2.default)(effective_date).isSameOrBefore((0, _moment2.default)(start_date)) && !(0, _moment2.default)(start_date).isSame((0, _moment2.default)(next_effective_date))) {
             var nextEffectDate = (0, _moment2.default)(next_effective_date).subtract(1, 'days');
             var nextEffectStartDate = (0, _moment2.default)(nextEffectDate.format('YYYY-MM-DD'), _moment2.default.ISO_8601).startOf('months');
             console.log(paymentItem.end_date);

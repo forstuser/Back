@@ -31,8 +31,7 @@ class EHomeAdaptor {
           user_id: user.id || user.ID,
           status_id: 4,
         },
-      }),
-      this.retrieveUnProcessedBills(user),
+      })
     ]).then((result) => {
 
       let OtherCategory = null;
@@ -81,7 +80,6 @@ class EHomeAdaptor {
         notificationCount: result[2],
         // categories: result[3],
         recentSearches,
-        unProcessedBills: result[3],
         categoryList: newCategoryData,
         forceUpdate: request.pre.forceUpdate,
       };

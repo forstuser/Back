@@ -68,7 +68,7 @@ exports.default = {
     operatorsAliases: {}
   },
   APP: {
-    PORT: process.env.APP_PORT || 4500
+    PORT: process.env.APP_PORT || 3000
   },
   CATEGORIES: {
     AUTOMOBILE: process.env.AUTOMOBILE_CATEGORY.split(','),

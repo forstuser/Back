@@ -115,13 +115,14 @@ var CalendarServiceController = function () {
           updated_by: user.id || user.ID,
           status_type: 11
         };
-
+        request.payload.quantity = request.payload.quantity ? parseFloat(request.payload.quantity.toFixed(2)) : request.payload.quantity;
+        request.payload.unit_price = parseFloat(request.payload.unit_price.toFixed(2));
         var serviceCalculationBody = {
           effective_date: (0, _moment2.default)(request.payload.effective_date, _moment2.default.ISO_8601).startOf('days'),
           quantity: request.payload.quantity,
-          unit_price: parseFloat(Number(request.payload.unit_price).toFixed(2)),
+          unit_price: request.payload.unit_price,
           unit_type: request.payload.unit_type,
-          selected_days: request.payload.selected_days,
+          selected_days: request.payload.selected_days || [1, 2, 3, 4, 5, 6, 7],
           updated_by: user.id || user.ID,
           status_type: 1
         };
@@ -513,12 +514,13 @@ var CalendarServiceController = function () {
           forceUpdate: request.pre.forceUpdate
         }).code(401);
       } else if (request.pre.userExist && !request.pre.forceUpdate) {
+        request.payload.quantity = request.payload.quantity ? parseFloat(request.payload.quantity.toFixed(2)) : request.payload.quantity;
         var serviceCalculationBody = {
           effective_date: (0, _moment2.default)(request.payload.effective_date, _moment2.default.ISO_8601).startOf('days'),
           quantity: request.payload.quantity,
-          unit_price: request.payload.unit_price,
+          unit_price: parseFloat(request.payload.unit_price.toFixed(2)),
           unit_type: request.payload.unit_type,
-          selected_days: request.payload.selected_days,
+          selected_days: request.payload.selected_days || [1, 2, 3, 4, 5, 6, 7],
           updated_by: user.id || user.ID,
           status_type: 1,
           ref_id: request.params.id
@@ -529,10 +531,13 @@ var CalendarServiceController = function () {
             ref_id: request.params.id
           }, serviceCalculationBody);
         }).then(function (result) {
-          return _bluebird2.default.all([calendarServiceAdaptor.manipulatePaymentDetail({
-            ref_id: request.params.id,
-            effective_date: (0, _moment2.default)(request.payload.effective_date, _moment2.default.ISO_8601).startOf('days')
-          }), result.toJSON()]);
+          if ((0, _moment2.default)(request.payload.effective_date, _moment2.default.ISO_8601).isSameOrBefore((0, _moment2.default)())) {
+            return _bluebird2.default.all([calendarServiceAdaptor.manipulatePaymentDetail({
+              ref_id: request.params.id,
+              effective_date: (0, _moment2.default)(request.payload.effective_date, _moment2.default.ISO_8601).startOf('days')
+            }), result.toJSON()]);
+          }
+          return _bluebird2.default.all([[], result.toJSON()]);
         }).spread(function (manipulatedResult, calculation_detail) {
           return reply({
             status: true,
@@ -680,31 +685,12 @@ var CalendarServiceController = function () {
         }).code(401);
       } else if (request.pre.userExist && !request.pre.forceUpdate) {
         return _bluebird2.default.try(function () {
-          return calendarServiceAdaptor.retrieveLatestServiceCalculation({
-            where: {
-              ref_id: request.params.id
-            }
-          });
-        }).then(function (data) {
-          var finalEffectiveDate = data.effective_date;
-          if ((0, _moment2.default)(finalEffectiveDate, _moment2.default.ISO_8601).isSameOrBefore(request.payload.end_date)) {
-            var productBody = {
-              end_date: request.payload.end_date
-            };
+          var productBody = {
+            end_date: request.payload.end_date
+          };
 
-            return calendarServiceAdaptor.updateCalendarItem(productBody, request.params.id);
-          } else {
-            console.log('end_date should be greater than effective date');
-            return null;
-          }
-        }).then(function (result) {
-          if (result === null) {
-            return reply({
-              status: false,
-              message: 'An error occurred in calendar item creation.',
-              forceUpdate: request.pre.forceUpdate
-            });
-          }
+          return calendarServiceAdaptor.updateCalendarItem(productBody, request.params.id);
+        }).then(function () {
           return reply({
             status: true,
             message: 'successful',
