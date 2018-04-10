@@ -530,10 +530,13 @@ var CalendarServiceController = function () {
             ref_id: request.params.id
           }, serviceCalculationBody);
         }).then(function (result) {
-          return _bluebird2.default.all([calendarServiceAdaptor.manipulatePaymentDetail({
-            ref_id: request.params.id,
-            effective_date: (0, _moment2.default)(request.payload.effective_date, _moment2.default.ISO_8601).startOf('days')
-          }), result.toJSON()]);
+          if ((0, _moment2.default)(request.payload.effective_date, _moment2.default.ISO_8601).isSameOrBefore((0, _moment2.default)())) {
+            return _bluebird2.default.all([calendarServiceAdaptor.manipulatePaymentDetail({
+              ref_id: request.params.id,
+              effective_date: (0, _moment2.default)(request.payload.effective_date, _moment2.default.ISO_8601).startOf('days')
+            }), result.toJSON()]);
+          }
+          return _bluebird2.default.all([[], result.toJSON()]);
         }).spread(function (manipulatedResult, calculation_detail) {
           return reply({
             status: true,
@@ -651,6 +654,71 @@ var CalendarServiceController = function () {
           return reply({
             status: false,
             message: 'An error occurred in adding effective calculation method for service.',
+            forceUpdate: request.pre.forceUpdate,
+            err: err
+          });
+        });
+      } else {
+        return reply({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    }
+  }, {
+    key: 'finishCalendarItem',
+    value: function finishCalendarItem(request, reply) {
+      var user = _shared2.default.verifyAuthorization(request.headers);
+      if (request.pre.userExist === 0) {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
+        return reply({
+          status: false,
+          message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate
+        }).code(401);
+      } else if (request.pre.userExist && !request.pre.forceUpdate) {
+        return _bluebird2.default.try(function () {
+          return calendarServiceAdaptor.retrieveLatestServiceCalculation({
+            where: {
+              ref_id: request.params.id
+            }
+          });
+        }).then(function (data) {
+          var finalEffectiveDate = data.effective_date;
+          if ((0, _moment2.default)(finalEffectiveDate, _moment2.default.ISO_8601).isSameOrBefore(request.payload.end_date)) {
+            var productBody = {
+              end_date: request.payload.end_date
+            };
+
+            return calendarServiceAdaptor.updateCalendarItem(productBody, request.params.id);
+          } else {
+            return null;
+          }
+        }).then(function (result) {
+          if (result === null) {
+            console.log('End Date should be greater than Latest Effective Date');
+            return reply({
+              status: false,
+              message: 'End Date should be greater than Latest Effective Date.',
+              forceUpdate: request.pre.forceUpdate
+            });
+          }
+          return reply({
+            status: true,
+            message: 'successful',
+            forceUpdate: request.pre.forceUpdate
+          });
+        }).catch(function (err) {
+          console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+          return reply({
+            status: false,
+            message: 'An error occurred in calendar item creation.',
             forceUpdate: request.pre.forceUpdate,
             err: err
           });

@@ -33,6 +33,9 @@ export default (sequelize, DataTypes) => {
           type: DataTypes.DATE,
           defaultValue: sequelize.literal('NOW()'),
         },
+        end_date: {
+          type: DataTypes.DATEONLY
+        },
         updated_at: {
           type: DataTypes.DATE,
           defaultValue: sequelize.literal('NOW()'),
@@ -48,19 +51,19 @@ export default (sequelize, DataTypes) => {
 
   user_calendar_item.associate = (models) => {
     user_calendar_item.belongsTo(models.users,
-        {foreignKey: 'updated_by'});
+        { foreignKey: 'updated_by' });
     user_calendar_item.belongsTo(models.users,
-        {foreignKey: 'user_id'});
+        { foreignKey: 'user_id' });
     user_calendar_item.belongsTo(models.calendar_services,
-        {foreignKey: 'service_id', as: 'service_type'});
+        { foreignKey: 'service_id', as: 'service_type' });
     user_calendar_item.hasMany(models.service_payment,
-        {foreignKey: 'ref_id', as: 'payment_detail', onDelete: 'cascade'});
+        { foreignKey: 'ref_id', as: 'payment_detail', onDelete: 'cascade' });
     user_calendar_item.hasMany(models.calendar_item_payment,
-        {foreignKey: 'ref_id', as: 'payments', onDelete: 'cascade'});
+        { foreignKey: 'ref_id', as: 'payments', onDelete: 'cascade' });
     user_calendar_item.hasMany(models.service_calculation,
-        {foreignKey: 'ref_id', as: 'calculation_detail', onDelete: 'cascade'});
+        { foreignKey: 'ref_id', as: 'calculation_detail', onDelete: 'cascade' });
     user_calendar_item.belongsTo(models.statuses,
-        {foreignKey: 'status_type', targetKey: 'status_type'});
+        { foreignKey: 'status_type', targetKey: 'status_type' });
   };
   return user_calendar_item;
 };

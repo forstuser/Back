@@ -141,17 +141,24 @@ function retrieveDaysInsight(distinctInsight) {
 }
 
 export function preparePaymentDetails(parameters) {
-  let {currentYear, monthItem, effectiveDate, selected_days, wages_type, serviceCalculationBody, user, currentDate} = parameters;
+  let {
+    currentYear, monthItem, effectiveDate, selected_days,
+    wages_type, serviceCalculationBody, user, currentDate,
+  } = parameters;
   const monthStartDate = moment([currentYear, 0, 1]).month(monthItem);
   let month_end_date = moment([currentYear, 0, 31]).month(monthItem);
   let end_date = moment([currentYear, 0, 31]).month(monthItem);
   let start_date = effectiveDate;
-  if (monthStartDate.diff(effectiveDate, 'days') > 0) {
+  if (monthStartDate.isAfter(effectiveDate)) {
     start_date = monthStartDate;
   }
   currentDate = moment(currentDate || moment()).startOf('days');
-  if (end_date.endOf('days').diff(currentDate, 'days') > 0) {
+  if (end_date.isAfter(currentDate)) {
     end_date = currentDate.endOf('days');
+  }
+
+  if (end_date.isBefore(start_date)) {
+    end_date = moment(start_date).endOf('days');
   }
 
   const daysInMonth = moment().
@@ -193,12 +200,12 @@ export function preparePaymentDetails(parameters) {
 }
 
 export function monthlyPaymentCalc(parameters) {
-  let {currentMth, effectiveMth, effectiveDate, selected_days, wages_type, serviceCalculationBody, user, currentYear, currentDate} = parameters;
+  let {currentMth, effectiveDate, selected_days, wages_type, serviceCalculationBody, user, currentYear, currentDate} = parameters;
   const monthDiff = moment().startOf('months').
       diff(moment(effectiveDate, moment.ISO_8601).startOf('months'), 'months');
   console.log('\n\n\n\n\n\n\n\n\n\n monthdiff:', monthDiff);
   const monthArr = [];
-  if (monthDiff > 0) {
+  if (moment().isAfter(moment(effectiveDate, moment.ISO_8601), 'months')) {
     for (let i = monthDiff; i >= 0; i--) {
       monthArr.push(currentMth - i);
     }

@@ -520,13 +520,17 @@ class CalendarServiceController {
         }, serviceCalculationBody);
       }).
           then((result) => {
-            return Promise.all([
-              calendarServiceAdaptor.manipulatePaymentDetail({
-                ref_id: request.params.id,
-                effective_date: moment(request.payload.effective_date,
-                    moment.ISO_8601).
-                    startOf('days'),
-              }), result.toJSON()]);
+            if (moment(request.payload.effective_date,
+                    moment.ISO_8601).isSameOrBefore(moment())) {
+              return Promise.all([
+                calendarServiceAdaptor.manipulatePaymentDetail({
+                  ref_id: request.params.id,
+                  effective_date: moment(request.payload.effective_date,
+                      moment.ISO_8601).
+                      startOf('days'),
+                }), result.toJSON()]);
+            }
+            return Promise.all([[], result.toJSON()]);
           }).
           spread((manipulatedResult, calculation_detail) => {
             return reply({
@@ -652,6 +656,74 @@ class CalendarServiceController {
         return reply({
           status: false,
           message: 'An error occurred in adding effective calculation method for service.',
+          forceUpdate: request.pre.forceUpdate,
+          err,
+        });
+      });
+    } else {
+      return reply({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
+  static finishCalendarItem(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    if (request.pre.userExist === 0) {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
+      return reply({
+        status: false,
+        message: 'Unauthorized',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(401);
+    } else if (request.pre.userExist && !request.pre.forceUpdate) {
+      return Promise.try(
+          () => calendarServiceAdaptor.retrieveLatestServiceCalculation({
+            where: {
+              ref_id: request.params.id,
+            },
+          })).then((data) => {
+        let finalEffectiveDate = data.effective_date;
+        if (moment(finalEffectiveDate, moment.ISO_8601).
+                isSameOrBefore(request.payload.end_date)) {
+          const productBody = {
+            end_date: request.payload.end_date,
+          };
+
+          return calendarServiceAdaptor.updateCalendarItem(productBody,
+              request.params.id);
+        }
+        else {
+          return null;
+        }
+      }).then((result) => {
+        if (result === null) {
+          console.log('End Date should be greater than Latest Effective Date');
+          return reply({
+            status: false,
+            message: 'End Date should be greater than Latest Effective Date.',
+            forceUpdate: request.pre.forceUpdate,
+          });
+        }
+        return reply({
+          status: true,
+          message: 'successful',
+          forceUpdate: request.pre.forceUpdate,
+        });
+      }).catch((err) => {
+        console.log(
+            `Error on ${new Date()} for user ${user.id ||
+            user.ID} is as follow: \n \n ${err}`);
+        return reply({
+          status: false,
+          message: 'An error occurred in calendar item creation.',
           forceUpdate: request.pre.forceUpdate,
           err,
         });
