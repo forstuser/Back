@@ -32,6 +32,9 @@ export default (sequelize, DataTypes) => {
         file_type: {
           type: DataTypes.STRING,
         },
+        file_ref: {
+          type: DataTypes.STRING,
+        },
         product_name: {
           type: DataTypes.STRING,
         },

@@ -806,6 +806,15 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
         handler: UploadController.retrieveProductImage,
       },
     });
+
+    /*Retrieve Product Image*/
+    uploadFileRoute.push({
+      method: 'GET',
+      path: '/consumer/products/{id}/images/{file_ref}',
+      config: {
+        handler: UploadController.retrieveProductImage,
+      },
+    });
     /*Allow user to upload document*/
     uploadFileRoute.push({
       method: 'POST',
@@ -906,7 +915,7 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
     /*Retrieve User Image*/
     uploadFileRoute.push({
       method: 'GET',
-      path: '/consumer/{id}/images',
+      path: '/consumer/{id}/images/{image_ref}',
       config: {
         // auth: 'jwt',
         pre: [

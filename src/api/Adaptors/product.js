@@ -261,6 +261,7 @@ class ProductAdaptor {
           'product_name',
           'productName'],
         'file_type',
+        'file_ref',
         [
           this.modals.sequelize.literal('"category"."category_id"'),
           'categoryId'],
@@ -353,9 +354,7 @@ class ProductAdaptor {
         productItem.purchaseDate = moment.utc(productItem.purchaseDate,
             moment.ISO_8601).
             startOf('days');
-        productItem.cImageURL = productItem.file_type ?
-            `/consumer/products/${productItem.id}/images` :
-            productItem.sub_category_id ?
+        productItem.cImageURL = productItem.sub_category_id ?
                 `/categories/${productItem.sub_category_id}/images/1` :
                 `${productItem.cImageURL}1`;
         if (productItem.schedule) {
@@ -483,6 +482,7 @@ class ProductAdaptor {
           'product_name',
           'productName'],
         'file_type',
+        'file_ref',
         [
           this.modals.sequelize.literal('"category"."category_id"'),
           'categoryId'],
@@ -581,9 +581,7 @@ class ProductAdaptor {
           return copyItem;
         });
       }
-      productItem.cImageURL = productItem.file_type ?
-          `/consumer/products/${productItem.id}/images` :
-          productItem.sub_category_id ?
+      productItem.cImageURL = productItem.sub_category_id ?
               `/categories/${productItem.sub_category_id}/images/1` :
               `${productItem.cImageURL}1`;
       productItem.purchaseDate = moment.utc(productItem.purchaseDate,
@@ -800,6 +798,7 @@ class ProductAdaptor {
       attributes: [
         'id',
         'file_type',
+        'file_ref',
         [
           'product_name',
           'productName'],
@@ -899,9 +898,7 @@ class ProductAdaptor {
             return copyItem;
           });
         }
-        productItem.cImageURL = productItem.file_type ?
-            `/consumer/products/${productItem.id}/images` :
-            productItem.sub_category_id ?
+        productItem.cImageURL =  productItem.sub_category_id ?
                 `/categories/${productItem.sub_category_id}/images/1` :
                 `${productItem.cImageURL}1`;
         productItem.purchaseDate = moment.utc(productItem.purchaseDate,
@@ -1259,6 +1256,7 @@ class ProductAdaptor {
           'product_name',
           'productName'],
         'file_type',
+        'file_ref',
         'model',
         [
           this.modals.sequelize.literal('"category"."category_id"'),
@@ -1345,7 +1343,7 @@ class ProductAdaptor {
       products = productResult ? productResult.toJSON() : productResult;
       if (products) {
         products.cImageURL = products.file_type ?
-            `/consumer/products/${products.id}/images` :
+            `/consumer/products/${products.id}/images/${products.file_ref}` :
             products.sub_category_id ?
                 `/categories/${products.sub_category_id}/images/0` :
                 products.cImageURL;

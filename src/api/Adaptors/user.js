@@ -167,10 +167,12 @@ class UserAdaptor {
       })]).then((result) => {
       if (result[0]) {
         let user = result[0].toJSON();
+        const imageDiff = user.image_name ? user.image_name.split('.')[0].split('-') : '';
+        user.imageUrl = user.image_name ? `${user.imageUrl}/${imageDiff[imageDiff.length-1]}` : undefined;
         user.addresses = result[1].map(item => item.toJSON());
         user.hasPin = !!(user.password);
         user = _.omit(user, 'password');
-        return user;
+        return JSON.parse(JSON.stringify(user));
       }
 
       return result[0];

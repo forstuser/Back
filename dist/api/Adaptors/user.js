@@ -152,12 +152,14 @@ var UserAdaptor = function () {
       })]).then(function (result) {
         if (result[0]) {
           var _user = result[0].toJSON();
+          var imageDiff = _user.image_name ? _user.image_name.split('.')[0].split('-') : '';
+          _user.imageUrl = _user.image_name ? _user.imageUrl + '/' + imageDiff[imageDiff.length - 1] : undefined;
           _user.addresses = result[1].map(function (item) {
             return item.toJSON();
           });
           _user.hasPin = !!_user.password;
           _user = _lodash2.default.omit(_user, 'password');
-          return _user;
+          return JSON.parse(JSON.stringify(_user));
         }
 
         return result[0];

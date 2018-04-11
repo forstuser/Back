@@ -210,6 +210,7 @@ var UploadController = function () {
           }
         }).then(function (productResult) {
           if (productResult) {
+            var file_ref = '' + Math.random().toString(36).substr(2, 9) + (user.id || user.ID).toString(36);
             var productDetail = productResult.toJSON();
             var fieldNameHere = request.payload.fieldNameHere;
             var fileData = fieldNameHere || request.payload.filesName;
@@ -224,7 +225,7 @@ var UploadController = function () {
               return fsImplProduct.writeFile(fileName, fileData._data, { ContentType: _mimeTypes2.default.lookup(fileName) });
             }).then(function () {
 
-              return productResult.updateAttributes({ file_type: file_type });
+              return productResult.updateAttributes({ file_type: file_type, file_ref: file_ref });
             }).then(function () {
               return reply({
                 status: true,

@@ -167,6 +167,9 @@ class UploadController {
         },
       }).then((productResult) => {
         if (productResult) {
+          const file_ref = `${Math.random().toString(36).substr(2, 9)}${(user.id ||
+          user.ID).toString(
+          36)}`;
           const productDetail = productResult.toJSON();
           const fieldNameHere = request.payload.fieldNameHere;
           const fileData = fieldNameHere || request.payload.filesName;
@@ -183,7 +186,7 @@ class UploadController {
               () => fsImplProduct.writeFile(fileName, fileData._data,
                   {ContentType: mime.lookup(fileName)})).then(() => {
 
-            return productResult.updateAttributes({file_type});
+            return productResult.updateAttributes({file_type,file_ref});
           }).then(() => {
             return reply({
               status: true,
