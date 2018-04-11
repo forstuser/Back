@@ -169,7 +169,7 @@ var loginOrRegisterUser = function loginOrRegisterUser(parameters) {
   }).then(function (result) {
     return reply(result).code(201).header('authorization', replyObject.authorization);
   }).catch(function (err) {
-    console.log('Error on ' + new Date() + ' for user ' + (updatedUser.id || updatedUser.ID) + ' is as follow: \n \n ' + err);
+    console.log('Error on ' + new Date() + ' for user is as follow: \n \n ' + err);
     if (err.authorization) {
       return reply({ status: false, message: 'Unable to Login User', err: err }).code(401).header('authorization', replyObject.authorization);
     }
@@ -487,18 +487,25 @@ var UserController = function () {
               json: true
             }).then(function (fbResult) {
               console.log(fbResult);
-              userWhere.email = { $iLike: fbResult.email };
-              userInput.email = fbResult.email.toLowerCase();
+              if (fbResult.email) {
+                userWhere.email = { $iLike: fbResult.email };
+                userWhere.$or = [{
+                  fb_id: fbResult.id
+                }, { fb_id: null }];
+              } else {
+                userWhere.fb_id = fbResult.id;
+              }
+
+              userInput.email = fbResult.email ? fbResult.email.toLowerCase() : undefined;
               userInput.full_name = fbResult.name;
-              userInput.email_verified = true;
+              userInput.email_verified = !!fbResult.email;
               userInput.mobile_no = userInput.mobile_no || fbResult.mobile_phone;
-              userWhere.mobile_no = userInput.mobile_no || fbResult.mobile_phone;
               userInput.fb_id = fbResult.id;
               userInput.user_status_type = 1;
               fbResult.ImageLink = _main2.default.FB_GRAPH_ROUTE + '/v2.12/' + fbResult.id + '/picture?height=2000&width=2000';
               return loginOrRegisterUser({
-                userWhere: userWhere,
-                userInput: userInput,
+                userWhere: JSON.parse(JSON.stringify(userWhere)),
+                userInput: JSON.parse(JSON.stringify(userInput)),
                 trueObject: fbResult,
                 request: request,
                 reply: reply

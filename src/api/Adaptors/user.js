@@ -58,12 +58,6 @@ class UserAdaptor {
     if (!whereObject.mobile_no) {
       whereObject = _.omit(whereObject, 'mobile_no');
     }
-    if (defaultObject.fb_id) {
-      whereObject.$or = [
-        {
-          fb_id: defaultObject.fb_id,
-        }, {fb_id: null}];
-    }
 
     return this.modals.users.findOne({
       where: whereObject,
@@ -78,10 +72,13 @@ class UserAdaptor {
         'email_verified',
         'email_secret',
         'image_name',
+        'fb_id',
       ],
     }).then((result) => {
 
-      if (!result) {
+      console.log(result);
+      if (!result || (result && !result.id)) {
+        console.log('User is getting created.');
         return this.modals.users.findCreateFind({
           where: whereObject,
           defaults: defaultObject,
@@ -100,6 +97,7 @@ class UserAdaptor {
         });
       }
 
+      console.log('User is getting updated.');
       return Promise.all([
         Promise.try(() => result.updateAttributes({
           fb_id: defaultObject.fb_id,
@@ -167,8 +165,12 @@ class UserAdaptor {
       })]).then((result) => {
       if (result[0]) {
         let user = result[0].toJSON();
-        const imageDiff = user.image_name ? user.image_name.split('.')[0].split('-') : '';
-        user.imageUrl = user.image_name ? `${user.imageUrl}/${imageDiff[imageDiff.length-1]}` : undefined;
+        const imageDiff = user.image_name ?
+            user.image_name.split('.')[0].split('-') :
+            '';
+        user.imageUrl = user.image_name ?
+            `${user.imageUrl}/${imageDiff[imageDiff.length - 1]}` :
+            undefined;
         user.addresses = result[1].map(item => item.toJSON());
         user.hasPin = !!(user.password);
         user = _.omit(user, 'password');

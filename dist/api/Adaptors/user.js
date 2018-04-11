@@ -90,18 +90,15 @@ var UserAdaptor = function () {
       if (!whereObject.mobile_no) {
         whereObject = _lodash2.default.omit(whereObject, 'mobile_no');
       }
-      if (defaultObject.fb_id) {
-        whereObject.$or = [{
-          fb_id: defaultObject.fb_id
-        }, { fb_id: null }];
-      }
 
       return this.modals.users.findOne({
         where: whereObject,
-        attributes: ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', 'image_name']
+        attributes: ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', 'image_name', 'fb_id']
       }).then(function (result) {
 
-        if (!result) {
+        console.log(result);
+        if (!result || result && !result.id) {
+          console.log('User is getting created.');
           return _this.modals.users.findCreateFind({
             where: whereObject,
             defaults: defaultObject,
@@ -109,6 +106,7 @@ var UserAdaptor = function () {
           });
         }
 
+        console.log('User is getting updated.');
         return _bluebird2.default.all([_bluebird2.default.try(function () {
           return result.updateAttributes({
             fb_id: defaultObject.fb_id,

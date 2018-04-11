@@ -278,26 +278,27 @@ var GeneralController = function () {
           return modals.knowItems.findAll(options);
         }).then(function (knowItems) {
           return reply({
-            status: true, items: knowItems.map(function (item) {
-              item = item.toJSON();
-              item.imageUrl = '/knowitem/' + item.id + '/images';
-              item.title = item.title || item.default_title;
-              item.description = item.description || item.default_description;
-              item.tags = item.tags.map(function (tagItem) {
+            status: true,
+            items: JSON.parse(JSON.stringify(knowItems.map(function (item) {
+              var knowItemDetail = item.toJSON();
+              knowItemDetail.imageUrl = '/knowitem/' + knowItemDetail.id + '/images';
+              knowItemDetail.title = knowItemDetail.title || knowItemDetail.default_title;
+              knowItemDetail.description = knowItemDetail.description || knowItemDetail.default_description;
+              knowItemDetail.tags = knowItemDetail.tags.map(function (tagItem) {
                 tagItem.title = tagItem.title || tagItem.default_title;
                 return tagItem;
               });
-              item.hashTags = '';
-              item.tags.forEach(function (tagItem) {
-                item.hashTags += '#' + tagItem.title + ' ';
+              knowItemDetail.hashTags = '';
+              knowItemDetail.tags.forEach(function (tagItem) {
+                knowItemDetail.hashTags += '#' + tagItem.title + ' ';
               });
-              item.hashTags = item.hashTags.trim();
-              item.totalLikes = item.users.length;
-              item.isLikedByUser = item.users.findIndex(function (userItem) {
+              knowItemDetail.hashTags = knowItemDetail.hashTags.trim();
+              knowItemDetail.totalLikes = knowItemDetail.users.length;
+              knowItemDetail.isLikedByUser = knowItemDetail.users.findIndex(function (userItem) {
                 return userItem.id === (user.id || user.ID);
               }) >= 0;
-              return item;
-            })
+              return knowItemDetail;
+            })))
           }).code(200);
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);

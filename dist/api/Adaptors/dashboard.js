@@ -309,6 +309,7 @@ var DashboardAdaptor = function () {
       }), this.warrantyAdaptor.retrieveWarranties({
         user_id: user.id || user.ID,
         status_type: [5, 11],
+        warranty_type: [1, 2],
         expiry_date: {
           $gte: _moment2.default.utc().startOf('days'),
           $lte: _moment2.default.utc().add(30, 'days').endOf('days')

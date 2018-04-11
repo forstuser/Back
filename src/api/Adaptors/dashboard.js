@@ -300,6 +300,7 @@ class DashboardAdaptor {
       this.warrantyAdaptor.retrieveWarranties({
         user_id: user.id || user.ID,
         status_type: [5, 11],
+        warranty_type: [1,2],
         expiry_date: {
           $gte: moment.utc().startOf('days'),
           $lte: moment.utc().add(30, 'days').endOf('days'),
