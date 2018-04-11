@@ -1022,7 +1022,7 @@ var ProductAdaptor = function () {
     value: function updateProductDetails(productBody, metadataBody, otherItems, productId) {
       var _this6 = this;
 
-      return Promise.all([productBody.brand_id && productBody.brand_id === 0 ? this.modals.products.count({
+      return Promise.all([productBody.brand_id || productBody.brand_id === 0 ? this.modals.products.count({
         where: {
           id: productId,
           brand_id: productBody.brand_id,
@@ -1031,7 +1031,7 @@ var ProductAdaptor = function () {
             $notIn: [8]
           }
         }
-      }) : productBody.category_id.toString() === '1' || productBody.category_id.toString() === '2' || productBody.category_id.toString() === '3' ? 0 : 1, this.verifyCopiesExist(productId), this.modals.products.count({
+      }) : productBody.main_category_id && (productBody.main_category_id.toString() === '1' || productBody.main_category_id.toString() === '2' || productBody.main_category_id.toString() === '3') ? 0 : 1, this.verifyCopiesExist(productId), this.modals.products.count({
         where: {
           id: productId,
           status_type: 8
