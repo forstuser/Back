@@ -278,25 +278,28 @@ class GeneralController {
           }).
           then((knowItems) => {
             return reply({
-              status: true, items: knowItems.map((item) => {
-                item = item.toJSON();
-                item.imageUrl = `/knowitem/${item.id}/images`;
-                item.title = item.title || item.default_title;
-                item.description = item.description || item.default_description;
-                item.tags = item.tags.map((tagItem) => {
+              status: true,
+              items: JSON.parse(JSON.stringify(knowItems.map((item) => {
+                const knowItemDetail = item.toJSON();
+                knowItemDetail.imageUrl = `/knowitem/${knowItemDetail.id}/images`;
+                knowItemDetail.title = knowItemDetail.title ||
+                    knowItemDetail.default_title;
+                knowItemDetail.description = knowItemDetail.description ||
+                    knowItemDetail.default_description;
+                knowItemDetail.tags = knowItemDetail.tags.map((tagItem) => {
                   tagItem.title = tagItem.title || tagItem.default_title;
                   return tagItem;
                 });
-                item.hashTags = '';
-                item.tags.forEach((tagItem) => {
-                  item.hashTags += `#${tagItem.title} `;
+                knowItemDetail.hashTags = '';
+                knowItemDetail.tags.forEach((tagItem) => {
+                  knowItemDetail.hashTags += `#${tagItem.title} `;
                 });
-                item.hashTags = item.hashTags.trim();
-                item.totalLikes = item.users.length;
-                item.isLikedByUser = item.users.findIndex(
+                knowItemDetail.hashTags = knowItemDetail.hashTags.trim();
+                knowItemDetail.totalLikes = knowItemDetail.users.length;
+                knowItemDetail.isLikedByUser = knowItemDetail.users.findIndex(
                     (userItem) => userItem.id === (user.id || user.ID)) >= 0;
-                return item;
-              }),
+                return knowItemDetail;
+              }))),
             }).code(200);
           }).
           catch((err) => {
