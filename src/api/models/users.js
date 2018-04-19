@@ -123,7 +123,8 @@ export default (sequelize, DataTypes) => {
 
     users.hasMany(models.jobs, {foreignKey: 'assigned_to_ce'});
     users.hasMany(models.jobs, {foreignKey: 'assigned_to_qe'});
-
+    users.hasMany(models.mealUserMap,
+        {foreignKey: 'user_id', onDelete: 'cascade', onUpdate: 'cascade'});
 
     users.belongsToMany(models.knowItems,
         {
