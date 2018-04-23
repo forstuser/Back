@@ -189,6 +189,27 @@ export default class WhatToServiceAdaptor {
         then((result) => result.map(item => item.toJSON()));
   }
 
+  addUserMealItem(options) {
+    Promise.try(() => this.modals.meals.findCreateFind({
+      where: {
+        user_id: options.user_id,
+        meal_name: options.meal_name,
+        is_veg: options.is_veg && options.is_veg === false ? false : true,
+        status_type: 11,
+      },
+    })).then((mealResult) => {
+      const mealItem = mealResult[0].toJSON();
+      Promise.all([
+        mealItem, this.modals.mealStateMap.create({
+          meal_id: mealItem.id,
+          state_id: options.state_id,
+        }), this.modals.mealUserMap.create({
+          meal_id: mealItem.id,
+          user_id: options.user_id,
+        })]);
+    }).spread((mealItem) => mealItem);
+  }
+
   prepareUserMealList(options) {
     Promise.try(() => this.retrieveUserMeals({
       user_id: options.user_id,
@@ -245,8 +266,10 @@ export default class WhatToServiceAdaptor {
     })).then((mealResult) => {
       const meal = mealResult.toJSON();
       return this.modals.mealUserDate.findCreateFind({
-        selected_date: options.current_date,
-        user_meal_id: meal.id,
+        where: {
+          selected_date: options.current_date,
+          user_meal_id: meal.id,
+        },
       });
     }).then(() => this.retrieveUserMealItems({
       user_id: options.user_id,

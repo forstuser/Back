@@ -205,12 +205,39 @@ var WhatToServiceAdaptor = function () {
       });
     }
   }, {
-    key: 'prepareUserMealList',
-    value: function prepareUserMealList(options) {
+    key: 'addUserMealItem',
+    value: function addUserMealItem(options) {
       var _this3 = this;
 
       _bluebird2.default.try(function () {
-        return _this3.retrieveUserMeals({
+        return _this3.modals.meals.findCreateFind({
+          where: {
+            user_id: options.user_id,
+            meal_name: options.meal_name,
+            is_veg: options.is_veg && options.is_veg === false ? false : true,
+            status_type: 11
+          }
+        });
+      }).then(function (mealResult) {
+        var mealItem = mealResult[0].toJSON();
+        _bluebird2.default.all([mealItem, _this3.modals.mealStateMap.create({
+          meal_id: mealItem.id,
+          state_id: options.state_id
+        }), _this3.modals.mealUserMap.create({
+          meal_id: mealItem.id,
+          user_id: options.user_id
+        })]);
+      }).spread(function (mealItem) {
+        return mealItem;
+      });
+    }
+  }, {
+    key: 'prepareUserMealList',
+    value: function prepareUserMealList(options) {
+      var _this4 = this;
+
+      _bluebird2.default.try(function () {
+        return _this4.retrieveUserMeals({
           user_id: options.user_id,
           meal_id: [].concat(_toConsumableArray(options.selected_ids), _toConsumableArray(options.unselected_ids))
         });
@@ -220,7 +247,7 @@ var WhatToServiceAdaptor = function () {
             return item.meal_id === id;
           });
           if (meal) {
-            return _this3.modals.mealUserMap.update({
+            return _this4.modals.mealUserMap.update({
               status_type: 1,
               state_id: options.state_id
             }, {
@@ -230,7 +257,7 @@ var WhatToServiceAdaptor = function () {
             });
           }
 
-          return _this3.modals.mealUserMap.create({
+          return _this4.modals.mealUserMap.create({
             user_id: options.user_id,
             meal_id: id,
             status_type: 1,
@@ -241,7 +268,7 @@ var WhatToServiceAdaptor = function () {
             return item.meal_id === id;
           });
           if (meal) {
-            return _this3.modals.mealUserMap.update({
+            return _this4.modals.mealUserMap.update({
               status_type: 2,
               state_id: options.state_id
             }, {
@@ -251,7 +278,7 @@ var WhatToServiceAdaptor = function () {
             });
           }
 
-          return _this3.modals.mealUserMap.create({
+          return _this4.modals.mealUserMap.create({
             user_id: options.user_id,
             meal_id: id,
             status_type: 2,
@@ -259,7 +286,7 @@ var WhatToServiceAdaptor = function () {
           });
         }))));
       }).then(function () {
-        return _this3.retrieveUserMealItems({
+        return _this4.retrieveUserMealItems({
           user_id: options.user_id
         });
       });
@@ -267,28 +294,6 @@ var WhatToServiceAdaptor = function () {
   }, {
     key: 'updateUserMealCurrentDate',
     value: function updateUserMealCurrentDate(options) {
-      var _this4 = this;
-
-      _bluebird2.default.try(function () {
-        return _this4.modals.mealUserMap.findOne({
-          user_id: options.user_id,
-          meal_id: options.meal_id
-        });
-      }).then(function (mealResult) {
-        var meal = mealResult.toJSON();
-        return _this4.modals.mealUserDate.findCreateFind({
-          selected_date: options.current_date,
-          user_meal_id: meal.id
-        });
-      }).then(function () {
-        return _this4.retrieveUserMealItems({
-          user_id: options.user_id
-        });
-      });
-    }
-  }, {
-    key: 'deleteUserMealCurrentDate',
-    value: function deleteUserMealCurrentDate(options) {
       var _this5 = this;
 
       _bluebird2.default.try(function () {
@@ -298,12 +303,36 @@ var WhatToServiceAdaptor = function () {
         });
       }).then(function (mealResult) {
         var meal = mealResult.toJSON();
-        return _this5.modals.mealUserDate.destroy({
+        return _this5.modals.mealUserDate.findCreateFind({
+          where: {
+            selected_date: options.current_date,
+            user_meal_id: meal.id
+          }
+        });
+      }).then(function () {
+        return _this5.retrieveUserMealItems({
+          user_id: options.user_id
+        });
+      });
+    }
+  }, {
+    key: 'deleteUserMealCurrentDate',
+    value: function deleteUserMealCurrentDate(options) {
+      var _this6 = this;
+
+      _bluebird2.default.try(function () {
+        return _this6.modals.mealUserMap.findOne({
+          user_id: options.user_id,
+          meal_id: options.meal_id
+        });
+      }).then(function (mealResult) {
+        var meal = mealResult.toJSON();
+        return _this6.modals.mealUserDate.destroy({
           selected_date: options.current_date,
           user_meal_id: meal.id
         });
       }).then(function () {
-        return _this5.retrieveUserMealItems({
+        return _this6.retrieveUserMealItems({
           user_id: options.user_id
         });
       });

@@ -2467,7 +2467,29 @@ function prepareWhatToServiceRoutes(
         },
       },
     });
-
+    whatToServiceRoutes.push({
+      method: 'POST',
+      path: '/user/meals/add',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: WhatToServiceController.prepareUserMealList,
+        description: 'Create or update user meal list.',
+        validate: {
+          payload: {
+            meal_name: [joi.string(), joi.allow(null)],
+            state_id: joi.number().required(),
+            is_veg:[joi.boolean,joi.allow(null)]
+          },
+        },
+      },
+    });
     whatToServiceRoutes.push({
       method: 'PUT',
       path: '/user/meals/{meal_id}',

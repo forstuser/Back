@@ -227,6 +227,50 @@ var WhatToController = function () {
       }
     }
   }, {
+    key: 'addUserMealItem',
+    value: function addUserMealItem(request, reply) {
+      var user = _shared2.default.verifyAuthorization(request.headers);
+      if (request.pre.userExist && !request.pre.forceUpdate) {
+        return _bluebird2.default.try(function () {
+          return whatToServiceAdaptor.prepareUserMealList({
+            user_id: user.ID || user.id,
+            meal_name: request.payload.meal_name,
+            is_veg: request.payload.is_veg,
+            state_id: request.payload.state_id
+          });
+        }).then(function (mealList) {
+          return reply({
+            status: true,
+            mealList: mealList
+          });
+        }).catch(function (err) {
+          console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+
+          return reply({
+            status: false
+          });
+        });
+      } else if (request.pre.userExist === 0) {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
+        return reply({
+          status: false,
+          message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate
+        }).code(401);
+      } else {
+        return reply({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    }
+  }, {
     key: 'updateMealCurrentDate',
     value: function updateMealCurrentDate(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
