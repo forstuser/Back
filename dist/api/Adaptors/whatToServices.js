@@ -147,12 +147,12 @@ var WhatToServiceAdaptor = function () {
           });
           if (currentDateItem) {
             item.current_date = currentDateItem.selected_date;
-            item.future_date = futureDateItem ? futureDateItem.selected_date : undefined;
-            item.last_date = lastDateItem ? lastDateItem.selected_date : undefined;
+            item.future_date = futureDateItem ? futureDateItem.selected_date : currentDateItem.selected_date;
+            item.last_date = lastDateItem ? lastDateItem.selected_date : currentDateItem.selected_date;
           } else if (futureDateItem) {
             item.current_date = futureDateItem.selected_date;
             item.future_date = futureDateItem.selected_date;
-            item.last_date = lastDateItem ? lastDateItem.selected_date : undefined;
+            item.last_date = lastDateItem ? lastDateItem.selected_date : futureDateItem.selected_date;
           } else if (lastDateItem) {
             item.current_date = lastDateItem.selected_date;
             item.last_date = lastDateItem.selected_date;
@@ -160,17 +160,19 @@ var WhatToServiceAdaptor = function () {
             item.current_date = (0, _moment2.default)().subtract(30, 'd');
           }
 
+          item.state_id = userMeal.state_id;
+
           return item;
         });
       }).then(function (result) {
         var mealItemList = _lodash2.default.orderBy(result, ['current_date'], ['desc']);
-        var mealList = item.current_date ? mealItemList.filter(function (item) {
+        var mealList = mealItemList.filter(function (item) {
           return (0, _moment2.default)(item.current_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day') || (0, _moment2.default)(item.future_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day') || (0, _moment2.default)(item.last_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day');
-        }) : [];
+        });
         var remainingMealList = mealItemList.filter(function (item) {
           return item.current_date && (0, _moment2.default)(item.current_date, _moment2.default.ISO_8601).isBefore(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day') || (0, _moment2.default)(item.current_date, _moment2.default.ISO_8601).isAfter(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day');
         });
-        mealList.push(_lodash2.default.orderBy(remainingMealList, ['current_date'], ['desc']));
+        mealList.push.apply(mealList, _toConsumableArray(_lodash2.default.orderBy(remainingMealList, ['current_date'], ['desc'])));
 
         return mealList;
       });
@@ -219,7 +221,8 @@ var WhatToServiceAdaptor = function () {
           });
           if (meal) {
             return _this3.modals.mealUserMap.update({
-              status_type: 1
+              status_type: 1,
+              state_id: options.state_id
             }, {
               where: {
                 id: meal.id
@@ -230,7 +233,8 @@ var WhatToServiceAdaptor = function () {
           return _this3.modals.mealUserMap.create({
             user_id: options.user_id,
             meal_id: id,
-            status_type: 1
+            status_type: 1,
+            state_id: options.state_id
           });
         })), _toConsumableArray(options.unselected_ids.map(function (id) {
           var meal = mealResult.find(function (item) {
@@ -238,7 +242,8 @@ var WhatToServiceAdaptor = function () {
           });
           if (meal) {
             return _this3.modals.mealUserMap.update({
-              status_type: 2
+              status_type: 2,
+              state_id: options.state_id
             }, {
               where: {
                 id: meal.id
@@ -249,7 +254,8 @@ var WhatToServiceAdaptor = function () {
           return _this3.modals.mealUserMap.create({
             user_id: options.user_id,
             meal_id: id,
-            status_type: 2
+            status_type: 2,
+            state_id: options.state_id
           });
         }))));
       }).then(function () {

@@ -156,6 +156,7 @@ export default class WhatToController {
         user_id: user.ID || user.id,
         selected_ids: request.payload.selected_ids || [],
         unselected_ids: request.payload.unselected_ids || [],
+        state_id: request.payload.state_id
       })).then((mealList) => reply({
         status: true,
         mealList,

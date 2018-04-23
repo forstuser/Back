@@ -7,8 +7,7 @@ Object.defineProperty(exports, "__esModule", {
 exports.default = function (sequelize, DataTypes) {
   var meals = sequelize.define('meals', {
     meal_name: {
-      type: DataTypes.STRING,
-      unique: true
+      type: DataTypes.STRING
     },
     created_at: {
       type: DataTypes.DATE,
@@ -43,7 +42,7 @@ exports.default = function (sequelize, DataTypes) {
     defaultPrimaryKey: true,
     timestamps: true,
     underscored: true,
-    table_name: 'table_meal_options'
+    tableName: 'table_meal_options'
   });
 
   meals.associate = function (models) {

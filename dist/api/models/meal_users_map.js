@@ -12,6 +12,9 @@ exports.default = function (sequelize, DataTypes) {
     meal_id: {
       type: DataTypes.INTEGER
     },
+    state_id: {
+      type: DataTypes.INTEGER
+    },
     created_at: {
       type: DataTypes.DATE,
       defaultValue: sequelize.literal('NOW()')
@@ -37,7 +40,7 @@ exports.default = function (sequelize, DataTypes) {
     defaultPrimaryKey: true,
     timestamps: true,
     underscored: true,
-    Table_name: 'table_meal_user_map'
+    tableName: 'table_meal_user_map'
   });
 
   mealUserMap.associate = function (models) {
@@ -57,6 +60,7 @@ exports.default = function (sequelize, DataTypes) {
       onUpdate: 'cascade',
       as: 'meal_dates'
     });
+    mealUserMap.belongsTo(models.states, { foreignKey: 'state_id', onDelete: 'cascade', onUpdate: 'cascade' });
   };
   return mealUserMap;
 };

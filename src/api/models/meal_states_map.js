@@ -34,7 +34,7 @@ export default (sequelize, DataTypes) => {
         defaultPrimaryKey: true,
         timestamps: true,
         underscored: true,
-        table_name: 'table_meal_state_map',
+        tableName: 'table_meal_state_map',
 
       });
 

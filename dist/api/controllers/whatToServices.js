@@ -191,7 +191,8 @@ var WhatToController = function () {
           return whatToServiceAdaptor.prepareUserMealList({
             user_id: user.ID || user.id,
             selected_ids: request.payload.selected_ids || [],
-            unselected_ids: request.payload.unselected_ids || []
+            unselected_ids: request.payload.unselected_ids || [],
+            state_id: request.payload.state_id
           });
         }).then(function (mealList) {
           return reply({

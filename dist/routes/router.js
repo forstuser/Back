@@ -2123,7 +2123,8 @@ function prepareWhatToServiceRoutes(whatToServiceController, whatToServiceRoutes
         validate: {
           payload: {
             selected_ids: [_joi2.default.array().items(_joi2.default.number()).required().min(0), _joi2.default.allow(null)],
-            unselected_ids: [_joi2.default.array().items(_joi2.default.string()).required().min(0), _joi2.default.allow(null)]
+            unselected_ids: [_joi2.default.array().items(_joi2.default.number()).required().min(0), _joi2.default.allow(null)],
+            state_id: _joi2.default.number().required()
           }
         }
       }

@@ -119,16 +119,16 @@ export default class WhatToServiceAdaptor {
             item.current_date = currentDateItem.selected_date;
             item.future_date = futureDateItem ?
                 futureDateItem.selected_date :
-                undefined;
+                currentDateItem.selected_date;
             item.last_date = lastDateItem ?
                 lastDateItem.selected_date :
-                undefined;
+                currentDateItem.selected_date;
           } else if (futureDateItem) {
             item.current_date = futureDateItem.selected_date;
             item.future_date = futureDateItem.selected_date;
             item.last_date = lastDateItem ?
                 lastDateItem.selected_date :
-                undefined;
+                futureDateItem.selected_date;
           } else if (lastDateItem) {
             item.current_date = lastDateItem.selected_date;
             item.last_date = lastDateItem.selected_date;
@@ -136,12 +136,14 @@ export default class WhatToServiceAdaptor {
             item.current_date = moment().subtract(30, 'd');
           }
 
+          item.state_id = userMeal.state_id;
+
           return item;
         })).then((result) => {
           const mealItemList = _.orderBy(
               result, ['current_date'],
               ['desc']);
-          const mealList = item.current_date ? mealItemList.filter(
+          const mealList = mealItemList.filter(
               (item) => moment(item.current_date, moment.ISO_8601).
                       isSame(options.current_date ?
                           moment(options.current_date, moment.ISO_8601) :
@@ -153,7 +155,7 @@ export default class WhatToServiceAdaptor {
                   moment(item.last_date, moment.ISO_8601).
                       isSame(options.current_date ?
                           moment(options.current_date, moment.ISO_8601) :
-                          moment(), 'day')) : [];
+                          moment(), 'day'));
           const remainingMealList = mealItemList.filter(
               (item) => (item.current_date &&
                   moment(item.current_date, moment.ISO_8601).
@@ -164,9 +166,9 @@ export default class WhatToServiceAdaptor {
                       isAfter(options.current_date ?
                           moment(options.current_date, moment.ISO_8601) :
                           moment(), 'day')));
-          mealList.push(_.orderBy(
+          mealList.push(...(_.orderBy(
               remainingMealList, ['current_date'],
-              ['desc']));
+              ['desc'])));
 
           return mealList;
         });
@@ -197,6 +199,7 @@ export default class WhatToServiceAdaptor {
         if (meal) {
           return this.modals.mealUserMap.update({
             status_type: 1,
+            state_id: options.state_id,
           }, {
             where: {
               id: meal.id,
@@ -208,6 +211,7 @@ export default class WhatToServiceAdaptor {
           user_id: options.user_id,
           meal_id: id,
           status_type: 1,
+          state_id: options.state_id,
         });
       }),
       ...options.unselected_ids.map((id) => {
@@ -215,6 +219,7 @@ export default class WhatToServiceAdaptor {
         if (meal) {
           return this.modals.mealUserMap.update({
             status_type: 2,
+            state_id: options.state_id,
           }, {
             where: {
               id: meal.id,
@@ -226,6 +231,7 @@ export default class WhatToServiceAdaptor {
           user_id: options.user_id,
           meal_id: id,
           status_type: 2,
+          state_id: options.state_id,
         });
       })])).then(() => this.retrieveUserMealItems({
       user_id: options.user_id,

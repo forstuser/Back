@@ -3,7 +3,6 @@ export default (sequelize, DataTypes) => {
   const meals = sequelize.define('meals', {
         meal_name: {
           type: DataTypes.STRING,
-          unique: true,
         },
         created_at: {
           type: DataTypes.DATE,
@@ -39,7 +38,7 @@ export default (sequelize, DataTypes) => {
         defaultPrimaryKey: true,
         timestamps: true,
         underscored: true,
-        table_name: 'table_meal_options',
+        tableName: 'table_meal_options',
       });
 
   meals.associate = (models) => {

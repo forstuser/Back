@@ -2460,8 +2460,9 @@ function prepareWhatToServiceRoutes(
               joi.array().items(joi.number()).required().min(0),
               joi.allow(null)],
             unselected_ids: [
-              joi.array().items(joi.string()).required().min(0),
+              joi.array().items(joi.number()).required().min(0),
               joi.allow(null)],
+            state_id: joi.number().required(),
           },
         },
       },

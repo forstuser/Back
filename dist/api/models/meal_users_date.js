@@ -26,7 +26,7 @@ exports.default = function (sequelize, DataTypes) {
     defaultPrimaryKey: true,
     timestamps: true,
     underscored: true,
-    Table_name: 'table_meal_user_date'
+    tableName: 'table_meal_user_date'
   });
 
   mealUserDate.associate = function (models) {
