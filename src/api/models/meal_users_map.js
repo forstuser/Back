@@ -7,14 +7,6 @@ export default (sequelize, DataTypes) => {
         meal_id: {
           type: DataTypes.INTEGER,
         },
-        current_date: {
-          type: DataTypes.DATEONLY,
-          defaultValue: sequelize.literal('NOW()'),
-        },
-        last_date: {
-          type: DataTypes.DATEONLY,
-          defaultValue: sequelize.literal('NOW()'),
-        },
         created_at: {
           type: DataTypes.DATE,
           defaultValue: sequelize.literal('NOW()'),
@@ -45,15 +37,27 @@ export default (sequelize, DataTypes) => {
       });
 
   mealUserMap.associate = (models) => {
-    mealUserMap.belongsTo(models.users, {foreignKey: 'user_id'});
     mealUserMap.belongsTo(models.users,
-        {foreignKey: 'created_by'});
+        {foreignKey: 'user_id', onDelete: 'cascade', onUpdate: 'cascade'});
     mealUserMap.belongsTo(models.users,
-        {foreignKey: 'updated_by'});
+        {foreignKey: 'created_by', onDelete: 'cascade', onUpdate: 'cascade'});
+    mealUserMap.belongsTo(models.users,
+        {foreignKey: 'updated_by', onDelete: 'cascade', onUpdate: 'cascade'});
     mealUserMap.belongsTo(models.statuses,
-        {foreignKey: 'status_type', targetKey: 'status_type'});
+        {
+          foreignKey: 'status_type',
+          targetKey: 'status_type',
+          onDelete: 'cascade',
+          onUpdate: 'cascade',
+        });
     mealUserMap.belongsTo(models.meals,
-        {foreignKey: 'meal_id'});
+        {foreignKey: 'meal_id', onDelete: 'cascade', onUpdate: 'cascade'});
+    mealUserMap.hasMany(models.mealUserDate, {
+      foreignKey: 'user_meal_id',
+      onDelete: 'cascade',
+      onUpdate: 'cascade',
+      as: 'meal_dates',
+    });
   };
   return mealUserMap;
 }

@@ -27,6 +27,11 @@ export default (sequelize, DataTypes) => {
         },
         meal_type: {
           type: DataTypes.INTEGER,
+          defaultValue: 2,
+        },
+        is_veg: {
+          type: DataTypes.BOOLEAN,
+          defaultValue: true,
         },
       },
       {
@@ -43,7 +48,12 @@ export default (sequelize, DataTypes) => {
     meals.belongsTo(models.users,
         {foreignKey: 'updated_by', onDelete: 'cascade', onUpdate: 'cascade'});
     meals.belongsTo(models.statuses,
-        {foreignKey: 'status_type', targetKey: 'status_type', onDelete: 'cascade', onUpdate: 'cascade'});
+        {
+          foreignKey: 'status_type',
+          targetKey: 'status_type',
+          onDelete: 'cascade',
+          onUpdate: 'cascade',
+        });
     meals.hasMany(models.mealStateMap,
         {foreignKey: 'meal_id', onDelete: 'cascade', onUpdate: 'cascade'});
     meals.hasMany(models.mealUserMap,

@@ -18,12 +18,13 @@ import PassportService from '../config/passport';
 import AppVersionHelper from '../helpers/appVersion';
 import ProductItemController from '../api/controllers/productItem';
 import CalendarServiceController from '../api/controllers/calendarServices';
-import MealController from '../api/controllers/meals';
+import WhatToServiceController from '../api/controllers/whatToServices';
 
 let User;
 let appVersionHelper;
 
-function prepareServiceCenterRoutes(serviceCenterController, serviceCenterRoutes) {
+function prepareServiceCenterRoutes(
+    serviceCenterController, serviceCenterRoutes) {
   if (serviceCenterController) {
     serviceCenterRoutes.push({
       method: 'POST',
@@ -31,7 +32,7 @@ function prepareServiceCenterRoutes(serviceCenterController, serviceCenterRoutes
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -61,7 +62,7 @@ function prepareServiceCenterRoutes(serviceCenterController, serviceCenterRoutes
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -76,7 +77,7 @@ function prepareServiceCenterRoutes(serviceCenterController, serviceCenterRoutes
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -91,7 +92,7 @@ function prepareServiceCenterRoutes(serviceCenterController, serviceCenterRoutes
       path: '/consumer/{mode}/centers',
       config: {
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -105,7 +106,7 @@ function prepareServiceCenterRoutes(serviceCenterController, serviceCenterRoutes
       path: '/consumer/web/centers/filters',
       config: {
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -126,7 +127,7 @@ function prepareBrandRoutes(brandController, brandRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -141,7 +142,7 @@ function prepareBrandRoutes(brandController, brandRoutes) {
       path: '/{mode}/brands',
       config: {
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -156,7 +157,7 @@ function prepareBrandRoutes(brandController, brandRoutes) {
       path: '/brandcenter',
       config: {
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -176,7 +177,7 @@ function prepareCategoryRoutes(categoryController, categoryRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -190,7 +191,7 @@ function prepareCategoryRoutes(categoryController, categoryRoutes) {
       path: '/{mode}/categories',
       config: {
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -215,7 +216,7 @@ function prepareAuthRoutes(userController, authRoutes) {
       path: '/consumer/getotp',
       config: {
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.hasMultipleAccounts,
             assign: 'hasMultipleAccounts',
@@ -234,11 +235,11 @@ function prepareAuthRoutes(userController, authRoutes) {
         plugins: {
           'hapi-swagger': {
             responseMessages: [
-              { code: 200, message: 'Authenticated' },
-              { code: 400, message: 'Bad Request' },
-              { code: 401, message: 'Invalid Credentials' },
-              { code: 404, message: 'Not Found' },
-              { code: 500, message: 'Internal Server Error' },
+              {code: 200, message: 'Authenticated'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
             ],
           },
         },
@@ -254,7 +255,7 @@ function prepareAuthRoutes(userController, authRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -274,11 +275,11 @@ function prepareAuthRoutes(userController, authRoutes) {
         plugins: {
           'hapi-swagger': {
             responseMessages: [
-              { code: 202, message: 'Authenticated' },
-              { code: 400, message: 'Bad Request' },
-              { code: 401, message: 'Invalid Credentials' },
-              { code: 404, message: 'Not Found' },
-              { code: 500, message: 'Internal Server Error' },
+              {code: 202, message: 'Authenticated'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
             ],
           },
         },
@@ -292,7 +293,7 @@ function prepareAuthRoutes(userController, authRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -319,11 +320,11 @@ function prepareAuthRoutes(userController, authRoutes) {
         plugins: {
           'hapi-swagger': {
             responseMessages: [
-              { code: 202, message: 'Authenticated' },
-              { code: 400, message: 'Bad Request' },
-              { code: 401, message: 'Invalid Credentials' },
-              { code: 404, message: 'Not Found' },
-              { code: 500, message: 'Internal Server Error' },
+              {code: 202, message: 'Authenticated'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
             ],
           },
         },
@@ -337,7 +338,7 @@ function prepareAuthRoutes(userController, authRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -348,11 +349,11 @@ function prepareAuthRoutes(userController, authRoutes) {
         plugins: {
           'hapi-swagger': {
             responseMessages: [
-              { code: 200, message: 'Successful' },
-              { code: 400, message: 'Bad Request' },
-              { code: 401, message: 'Invalid Credentials' },
-              { code: 404, message: 'Not Found' },
-              { code: 500, message: 'Internal Server Error' },
+              {code: 200, message: 'Successful'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
             ],
           },
         },
@@ -369,11 +370,11 @@ function prepareAuthRoutes(userController, authRoutes) {
         plugins: {
           'hapi-swagger': {
             responseMessages: [
-              { code: 200, message: 'Successful' },
-              { code: 400, message: 'Bad Request' },
-              { code: 401, message: 'Invalid Credentials' },
-              { code: 404, message: 'Not Found' },
-              { code: 500, message: 'Internal Server Error' },
+              {code: 200, message: 'Successful'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
             ],
           },
         },
@@ -387,7 +388,7 @@ function prepareAuthRoutes(userController, authRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -398,11 +399,11 @@ function prepareAuthRoutes(userController, authRoutes) {
         plugins: {
           'hapi-swagger': {
             responseMessages: [
-              { code: 200, message: 'Successful' },
-              { code: 400, message: 'Bad Request' },
-              { code: 401, message: 'Invalid Credentials' },
-              { code: 404, message: 'Not Found' },
-              { code: 500, message: 'Internal Server Error' },
+              {code: 200, message: 'Successful'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
             ],
           },
         },
@@ -439,11 +440,11 @@ function prepareAuthRoutes(userController, authRoutes) {
         plugins: {
           'hapi-swagger': {
             responseMessages: [
-              { code: 200, message: 'Authenticated' },
-              { code: 400, message: 'Bad Request' },
-              { code: 401, message: 'Invalid Credentials' },
-              { code: 404, message: 'Not Found' },
-              { code: 500, message: 'Internal Server Error' },
+              {code: 200, message: 'Authenticated'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
             ],
           },
         },
@@ -456,7 +457,7 @@ function prepareAuthRoutes(userController, authRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -480,11 +481,11 @@ function prepareAuthRoutes(userController, authRoutes) {
         plugins: {
           'hapi-swagger': {
             responseMessages: [
-              { code: 200, message: 'Authenticated' },
-              { code: 400, message: 'Bad Request' },
-              { code: 401, message: 'Invalid Credentials' },
-              { code: 404, message: 'Not Found' },
-              { code: 500, message: 'Internal Server Error' },
+              {code: 200, message: 'Authenticated'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
             ],
           },
         },
@@ -497,7 +498,7 @@ function prepareAuthRoutes(userController, authRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -520,11 +521,11 @@ function prepareAuthRoutes(userController, authRoutes) {
         plugins: {
           'hapi-swagger': {
             responseMessages: [
-              { code: 200, message: 'Authenticated' },
-              { code: 400, message: 'Bad Request' },
-              { code: 401, message: 'Invalid Credentials' },
-              { code: 404, message: 'Not Found' },
-              { code: 500, message: 'Internal Server Error' },
+              {code: 200, message: 'Authenticated'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
             ],
           },
         },
@@ -537,7 +538,7 @@ function prepareAuthRoutes(userController, authRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -560,11 +561,11 @@ function prepareAuthRoutes(userController, authRoutes) {
         plugins: {
           'hapi-swagger': {
             responseMessages: [
-              { code: 200, message: 'Authenticated' },
-              { code: 400, message: 'Bad Request' },
-              { code: 401, message: 'Invalid Credentials' },
-              { code: 404, message: 'Not Found' },
-              { code: 500, message: 'Internal Server Error' },
+              {code: 200, message: 'Authenticated'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
             ],
           },
         },
@@ -577,7 +578,7 @@ function prepareAuthRoutes(userController, authRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -603,11 +604,11 @@ function prepareAuthRoutes(userController, authRoutes) {
         plugins: {
           'hapi-swagger': {
             responseMessages: [
-              { code: 200, message: 'Authenticated' },
-              { code: 400, message: 'Bad Request' },
-              { code: 401, message: 'Invalid Credentials' },
-              { code: 404, message: 'Not Found' },
-              { code: 500, message: 'Internal Server Error' },
+              {code: 200, message: 'Authenticated'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
             ],
           },
         },
@@ -646,11 +647,11 @@ function prepareAuthRoutes(userController, authRoutes) {
         plugins: {
           'hapi-swagger': {
             responseMessages: [
-              { code: 200, message: 'Authenticated' },
-              { code: 400, message: 'Bad Request' },
-              { code: 401, message: 'Invalid Credentials' },
-              { code: 404, message: 'Not Found' },
-              { code: 500, message: 'Internal Server Error' },
+              {code: 200, message: 'Authenticated'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
             ],
           },
         },
@@ -663,7 +664,7 @@ function prepareAuthRoutes(userController, authRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -687,11 +688,11 @@ function prepareAuthRoutes(userController, authRoutes) {
         plugins: {
           'hapi-swagger': {
             responseMessages: [
-              { code: 200, message: 'Authenticated' },
-              { code: 400, message: 'Bad Request' },
-              { code: 401, message: 'Invalid Credentials' },
-              { code: 404, message: 'Not Found' },
-              { code: 500, message: 'Internal Server Error' },
+              {code: 200, message: 'Authenticated'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
             ],
           },
         },
@@ -706,7 +707,7 @@ function prepareAuthRoutes(userController, authRoutes) {
         handler: UserController.logout,
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -725,11 +726,11 @@ function prepareAuthRoutes(userController, authRoutes) {
         plugins: {
           'hapi-swagger': {
             responseMessages: [
-              { code: 202, message: 'Authenticated' },
-              { code: 400, message: 'Bad Request' },
-              { code: 401, message: 'Invalid Credentials' },
-              { code: 404, message: 'Not Found' },
-              { code: 500, message: 'Internal Server Error' },
+              {code: 202, message: 'Authenticated'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
             ],
           },
         },
@@ -747,7 +748,7 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -776,7 +777,7 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -822,7 +823,7 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -853,7 +854,7 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -885,7 +886,7 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
       config: {
         // auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -902,7 +903,7 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -919,7 +920,7 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
       config: {
         // auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -986,7 +987,7 @@ function prepareDashboardRoutes(dashboardController, dashboardRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -1003,7 +1004,7 @@ function prepareDashboardRoutes(dashboardController, dashboardRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -1020,7 +1021,7 @@ function prepareDashboardRoutes(dashboardController, dashboardRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -1037,7 +1038,7 @@ function prepareDashboardRoutes(dashboardController, dashboardRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -1054,7 +1055,7 @@ function prepareDashboardRoutes(dashboardController, dashboardRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -1078,7 +1079,7 @@ function prepareDashboardRoutes(dashboardController, dashboardRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -1111,7 +1112,7 @@ function prepareProductRoutes(productController, productRoutes) {
         handler: ProductController.updateUserReview,
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -1130,11 +1131,11 @@ function prepareProductRoutes(productController, productRoutes) {
         plugins: {
           'hapi-swagger': {
             responseMessages: [
-              { code: 204, message: 'No Content' },
-              { code: 400, message: 'Bad Request' },
-              { code: 401, message: 'Invalid Credentials' },
-              { code: 404, message: 'Not Found' },
-              { code: 500, message: 'Internal Server Error' },
+              {code: 204, message: 'No Content'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
             ],
           },
         },
@@ -1147,7 +1148,7 @@ function prepareProductRoutes(productController, productRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -1158,11 +1159,11 @@ function prepareProductRoutes(productController, productRoutes) {
         plugins: {
           'hapi-swagger': {
             responseMessages: [
-              { code: 200, message: 'Successful' },
-              { code: 400, message: 'Bad Request' },
-              { code: 401, message: 'Invalid Credentials' },
-              { code: 404, message: 'Not Found' },
-              { code: 500, message: 'Internal Server Error' },
+              {code: 200, message: 'Successful'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
             ],
           },
         },
@@ -1175,7 +1176,7 @@ function prepareProductRoutes(productController, productRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -1186,11 +1187,11 @@ function prepareProductRoutes(productController, productRoutes) {
         plugins: {
           'hapi-swagger': {
             responseMessages: [
-              { code: 200, message: 'Successful' },
-              { code: 400, message: 'Bad Request' },
-              { code: 401, message: 'Invalid Credentials' },
-              { code: 404, message: 'Not Found' },
-              { code: 500, message: 'Internal Server Error' },
+              {code: 200, message: 'Successful'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
             ],
           },
         },
@@ -1203,7 +1204,7 @@ function prepareProductRoutes(productController, productRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -1290,7 +1291,7 @@ function prepareProductRoutes(productController, productRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -1416,7 +1417,7 @@ function prepareInsightRoutes(insightController, insightRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -1427,11 +1428,11 @@ function prepareInsightRoutes(insightController, insightRoutes) {
         plugins: {
           'hapi-swagger': {
             responseMessages: [
-              { code: 200, message: 'Successful' },
-              { code: 400, message: 'Bad Request' },
-              { code: 401, message: 'Invalid Credentials' },
-              { code: 404, message: 'Not Found' },
-              { code: 500, message: 'Internal Server Error' },
+              {code: 200, message: 'Successful'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
             ],
           },
         },
@@ -1443,7 +1444,7 @@ function prepareInsightRoutes(insightController, insightRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -1454,11 +1455,11 @@ function prepareInsightRoutes(insightController, insightRoutes) {
         plugins: {
           'hapi-swagger': {
             responseMessages: [
-              { code: 200, message: 'Successful' },
-              { code: 400, message: 'Bad Request' },
-              { code: 401, message: 'Invalid Credentials' },
-              { code: 404, message: 'Not Found' },
-              { code: 500, message: 'Internal Server Error' },
+              {code: 200, message: 'Successful'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
             ],
           },
         },
@@ -1643,7 +1644,7 @@ function prepareGeneralRoutes(generalController, generalRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -1704,7 +1705,7 @@ function prepareProductItemRoutes(productItemController, productItemRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -1734,7 +1735,7 @@ function prepareProductItemRoutes(productItemController, productItemRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -1763,7 +1764,7 @@ function prepareProductItemRoutes(productItemController, productItemRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -1780,7 +1781,7 @@ function prepareProductItemRoutes(productItemController, productItemRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -1812,7 +1813,7 @@ function prepareProductItemRoutes(productItemController, productItemRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -1844,7 +1845,7 @@ function prepareProductItemRoutes(productItemController, productItemRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -1861,7 +1862,7 @@ function prepareProductItemRoutes(productItemController, productItemRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -1888,7 +1889,7 @@ function prepareProductItemRoutes(productItemController, productItemRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -1915,7 +1916,7 @@ function prepareProductItemRoutes(productItemController, productItemRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -1932,7 +1933,7 @@ function prepareProductItemRoutes(productItemController, productItemRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -1959,7 +1960,7 @@ function prepareProductItemRoutes(productItemController, productItemRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -1986,7 +1987,7 @@ function prepareProductItemRoutes(productItemController, productItemRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -2003,7 +2004,7 @@ function prepareProductItemRoutes(productItemController, productItemRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -2032,7 +2033,7 @@ function prepareProductItemRoutes(productItemController, productItemRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -2061,7 +2062,7 @@ function prepareProductItemRoutes(productItemController, productItemRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -2086,7 +2087,7 @@ function prepareCalendarServiceRoutes(calendarController, calendarRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -2097,11 +2098,11 @@ function prepareCalendarServiceRoutes(calendarController, calendarRoutes) {
         plugins: {
           'hapi-swagger': {
             responseMessages: [
-              { code: 200, message: 'Successful' },
-              { code: 400, message: 'Bad Request' },
-              { code: 401, message: 'Invalid Credentials' },
-              { code: 404, message: 'Not Found' },
-              { code: 500, message: 'Internal Server Error' },
+              {code: 200, message: 'Successful'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
             ],
           },
         },
@@ -2114,7 +2115,7 @@ function prepareCalendarServiceRoutes(calendarController, calendarRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -2149,7 +2150,7 @@ function prepareCalendarServiceRoutes(calendarController, calendarRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -2166,7 +2167,7 @@ function prepareCalendarServiceRoutes(calendarController, calendarRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -2183,7 +2184,7 @@ function prepareCalendarServiceRoutes(calendarController, calendarRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -2200,7 +2201,7 @@ function prepareCalendarServiceRoutes(calendarController, calendarRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -2226,7 +2227,7 @@ function prepareCalendarServiceRoutes(calendarController, calendarRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -2277,7 +2278,7 @@ function prepareCalendarServiceRoutes(calendarController, calendarRoutes) {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -2311,7 +2312,7 @@ function prepareCalendarServiceRoutes(calendarController, calendarRoutes) {
         description: 'Finish Calendar Item.',
         validate: {
           payload: {
-            end_date: joi.string().required()
+            end_date: joi.string().required(),
           },
         },
       },
@@ -2370,230 +2371,44 @@ function prepareCalendarServiceRoutes(calendarController, calendarRoutes) {
   }
 }
 
-function prepareMealRoutes(mealController, mealRoutes) {
+function prepareWhatToServiceRoutes(
+    whatToServiceController, whatToServiceRoutes) {
   //= ========================
-  // Meal Routes
+  // What To Service Routes
   //= ========================
 
-  if (mealController) {
-    mealRoutes.push({
+  if (whatToServiceController) {
+    whatToServiceRoutes.push({
       method: 'GET',
       path: '/states',
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
           },
         ],
-        handler: MealController.retrieveStates,
+        handler: WhatToServiceController.retrieveStateReference,
         description: 'Retrieve States.',
         plugins: {
           'hapi-swagger': {
             responseMessages: [
-              { code: 200, message: 'Successful' },
-              { code: 400, message: 'Bad Request' },
-              { code: 401, message: 'Invalid Credentials' },
-              { code: 404, message: 'Not Found' },
-              { code: 500, message: 'Internal Server Error' },
+              {code: 200, message: 'Successful'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
             ],
           },
         },
       },
     });
 
-    mealRoutes.push({
-      method: 'POST',
-      path: '/calendar/{service_id}/items',
-      config: {
-        auth: 'jwt',
-        pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
-          {
-            method: appVersionHelper.updateUserActiveStatus,
-            assign: 'userExist',
-          },
-        ],
-        handler: CalendarServiceController.createItem,
-        description: 'Create Calendar Item.',
-        validate: {
-          payload: {
-            product_name: [joi.string(), joi.allow(null)],
-            provider_name: [joi.string(), joi.allow(null)],
-            provider_number: [joi.string(), joi.allow(null)],
-            wages_type: [joi.number(), joi.allow(null)],
-            selected_days: [
-              joi.array().items(joi.number()).required().min(0),
-              joi.allow(null)],
-            unit_price: joi.number().required(),
-            unit_type: [joi.number(), joi.allow(null)],
-            quantity: [joi.number(), joi.allow(null)],
-            absent_dates: [
-              joi.array().items(joi.string()).required().min(0),
-              joi.allow(null)],
-            effective_date: joi.string().required(),
-          },
-        },
-      },
-    });
-
-    mealRoutes.push({
+    whatToServiceRoutes.push({
       method: 'GET',
-      path: '/states/{id}/meals',
-      config: {
-        auth: 'jwt',
-        pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
-          {
-            method: appVersionHelper.updateUserActiveStatus,
-            assign: 'userExist',
-          },
-        ],
-        handler: CalendarServiceController.retrieveMealsForState,
-        description: 'Retrieve Meals available in State.',
-      },
-    });
-
-    mealRoutes.push({
-      method: 'GET',
-      path: '/calendar/items/{id}',
-      config: {
-        auth: 'jwt',
-        pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
-          {
-            method: appVersionHelper.updateUserActiveStatus,
-            assign: 'userExist',
-          },
-        ],
-        handler: CalendarServiceController.retrieveCalendarItem,
-        description: 'Retrieve Calendar Item by id.',
-      },
-    });
-
-    mealRoutes.push({
-      method: 'DELETE',
-      path: '/calendar/items/{id}',
-      config: {
-        auth: 'jwt',
-        pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
-          {
-            method: appVersionHelper.updateUserActiveStatus,
-            assign: 'userExist',
-          },
-        ],
-        handler: CalendarServiceController.deleteCalendarItem,
-        description: 'Delete Calendar Item by id.',
-      },
-    });
-
-    mealRoutes.push({
-      method: 'POST',
-      path: '/calendar/items/{id}/calc',
-      config: {
-        auth: 'jwt',
-        pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
-          {
-            method: appVersionHelper.updateUserActiveStatus,
-            assign: 'userExist',
-          },
-        ],
-        handler: CalendarServiceController.addServiceCalc,
-        description: 'Add new calculation detail for calendar services.',
-        validate: {
-          payload: {
-            unit_price: joi.number().required(),
-            unit_type: [joi.number(), joi.allow(null)],
-            quantity: [joi.number(), joi.allow(null)],
-            effective_date: joi.string().required(),
-            selected_days: [joi.array().items(joi.number()), joi.allow(null)],
-          },
-        },
-      },
-    });
-
-    mealRoutes.push({
-      method: 'PUT',
-      path: '/calendar/items/{id}/calc/{calc_id}',
-      config: {
-        auth: 'jwt',
-        pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
-          {
-            method: appVersionHelper.updateUserActiveStatus,
-            assign: 'userExist',
-          },
-        ],
-        handler: CalendarServiceController.updateServiceCalc,
-        description: 'Update calculation detail for calendar services.',
-        validate: {
-          payload: {
-            unit_price: joi.number().required(),
-            unit_type: [joi.number(), joi.allow(null)],
-            quantity: [joi.number(), joi.allow(null)],
-            effective_date: joi.string().required(),
-            selected_days: [joi.array().items(joi.number()), joi.allow(null)],
-          },
-        },
-      },
-    });
-
-    mealRoutes.push({
-      method: 'PUT',
-      path: '/calendar/items/{ref_id}/payments/{id}/absent',
-      config: {
-        auth: 'jwt',
-        pre: [
-          {
-            method: appVersionHelper.checkAppVersion,
-            assign: 'forceUpdate',
-          },
-          {
-            method: appVersionHelper.updateUserActiveStatus,
-            assign: 'userExist',
-          },
-        ],
-        handler: CalendarServiceController.markAbsent,
-        description: 'Mark Absent.',
-        validate: {
-          payload: {
-            absent_date: joi.string().required(),
-          },
-        },
-      },
-    });
-
-    mealRoutes.push({
-      method: 'PUT',
-      path: '/calendar/items/{id}',
-      config: {
-        auth: 'jwt',
-        pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
-          {
-            method: appVersionHelper.updateUserActiveStatus,
-            assign: 'userExist',
-          },
-        ],
-        handler: CalendarServiceController.updateItem,
-        description: 'Update Calendar Item.',
-        validate: {
-          payload: {
-            product_name: [joi.string(), joi.allow(null)],
-            provider_name: [joi.string(), joi.allow(null)],
-            provider_number: [joi.string(), joi.allow(null)],
-          },
-        },
-      },
-    });
-
-    mealRoutes.push({
-      method: 'PUT',
-      path: '/calendar/items/{id}/finish',
+      path: '/states/{state_id}/meals',
       config: {
         auth: 'jwt',
         pre: [
@@ -2603,74 +2418,107 @@ function prepareMealRoutes(mealController, mealRoutes) {
             assign: 'userExist',
           },
         ],
-        handler: CalendarServiceController.finishCalendarItem,
-        description: 'Finish Calendar Item.',
-        validate: {
-          payload: {
-            end_date: joi.string().required()
-          },
-        },
+        handler: WhatToServiceController.retrieveStateMealData,
+        description: 'Retrieve Meals available in State.',
       },
     });
 
-    mealRoutes.push({
-      method: 'PUT',
-      path: '/calendar/items/{id}/paid',
+    whatToServiceRoutes.push({
+      method: 'GET',
+      path: '/user/meals',
       config: {
         auth: 'jwt',
         pre: [
-          {
-            method: appVersionHelper.checkAppVersion,
-            assign: 'forceUpdate',
-          },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
           },
         ],
-        handler: CalendarServiceController.markPaid,
-        description: 'Mark Paid.',
-        validate: {
-          payload: {
-            amount_paid: joi.number().required(),
-            paid_on: joi.string().required(),
-          },
-        },
+        handler: WhatToServiceController.retrieveUserMealList,
+        description: 'Retrieve Meals available in State.',
       },
     });
 
-    mealRoutes.push({
-      method: 'PUT',
-      path: '/calendar/items/{ref_id}/payments/{id}/present',
+    whatToServiceRoutes.push({
+      method: 'POST',
+      path: '/user/meals',
       config: {
         auth: 'jwt',
         pre: [
-          {
-            method: appVersionHelper.checkAppVersion,
-            assign: 'forceUpdate',
-          },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
           },
         ],
-        handler: CalendarServiceController.markPresent,
-        description: 'Mark Present.',
+        handler: WhatToServiceController.prepareUserMealList,
+        description: 'Create or update user meal list.',
         validate: {
           payload: {
-            present_date: joi.string().required(),
+            selected_ids: [
+              joi.array().items(joi.number()).required().min(0),
+              joi.allow(null)],
+            unselected_ids: [
+              joi.array().items(joi.string()).required().min(0),
+              joi.allow(null)],
+          },
+        },
+      },
+    });
+
+    whatToServiceRoutes.push({
+      method: 'PUT',
+      path: '/user/meals/{meal_id}',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: WhatToServiceController.updateMealCurrentDate,
+        description: 'Update user meal item current date.',
+        validate: {
+          payload: {
+            current_date: joi.string().required(),
+          },
+        },
+      },
+    });
+
+    whatToServiceRoutes.push({
+      method: 'delete',
+      path: '/user/meals/{meal_id}',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: WhatToServiceController.removeMealCurrentDate,
+        description: 'Remove user meal item current date.',
+        validate: {
+          payload: {
+            current_date: joi.string().required(),
           },
         },
       },
     });
   }
 }
+
 export default (app, modals) => {
   appVersionHelper = new AppVersionHelper(modals);
   User = modals.users;
   // Middleware to require login/auth
   new PassportService(User);
-  passport.authenticate('jwt', { session: false });
+  passport.authenticate('jwt', {session: false});
   // Initializing route groups
   const authRoutes = [];
   const categoryRoutes = [];
@@ -2686,7 +2534,7 @@ export default (app, modals) => {
   const repairRoutes = [];
   const calendarRoutes = [];
   const uploadFileRoute = [];
-  const mealRoutes=[];
+  const whatToServiceRoutes = [];
   const userController = new UserController(modals);
   const categoryController = new CategoryController(modals);
   const brandController = new BrandController(modals);
@@ -2699,7 +2547,7 @@ export default (app, modals) => {
   const generalController = new GeneralController(modals);
   const repairController = new ProductItemController(modals);
   const calendarServiceController = new CalendarServiceController(modals);
-  const mealController=new MealController(modals);
+  const whatToServiceController = new WhatToServiceController(modals);
   prepareAuthRoutes(userController, authRoutes);
 
   prepareCategoryRoutes(categoryController, categoryRoutes);
@@ -2722,7 +2570,7 @@ export default (app, modals) => {
 
   prepareCalendarServiceRoutes(calendarServiceController, calendarRoutes);
 
-  prepareMealRoutes(mealController,mealRoutes);
+  prepareWhatToServiceRoutes(whatToServiceController, whatToServiceRoutes);
 
   if (searchController) {
     searchRoutes.push({
@@ -2731,7 +2579,7 @@ export default (app, modals) => {
       config: {
         auth: 'jwt',
         pre: [
-          { method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' },
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
           {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
@@ -2742,11 +2590,11 @@ export default (app, modals) => {
         plugins: {
           'hapi-swagger': {
             responseMessages: [
-              { code: 200, message: 'Successful' },
-              { code: 400, message: 'Bad Request' },
-              { code: 401, message: 'Invalid Credentials' },
-              { code: 404, message: 'Not Found' },
-              { code: 500, message: 'Internal Server Error' },
+              {code: 200, message: 'Successful'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
             ],
           },
         },
@@ -2769,6 +2617,6 @@ export default (app, modals) => {
     ...generalRoutes,
     ...repairRoutes,
     ...calendarRoutes,
-      ...mealRoutes,
+    ...whatToServiceRoutes,
   ]);
 };

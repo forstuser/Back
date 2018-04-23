@@ -40,15 +40,15 @@ export default (sequelize, DataTypes) => {
 
   mealStateMap.associate = (models) => {
     mealStateMap.belongsTo(models.users,
-        {foreignKey: 'created_by'});
+        {foreignKey: 'created_by', onDelete: 'cascade', onUpdate: 'cascade'});
     mealStateMap.belongsTo(models.users,
-        {foreignKey: 'updated_by'});
+        {foreignKey: 'updated_by', onDelete: 'cascade', onUpdate: 'cascade'});
     mealStateMap.belongsTo(models.statuses,
-        {foreignKey: 'status_type', targetKey: 'status_type'});
+        {foreignKey: 'status_type', targetKey: 'status_type', onDelete: 'cascade', onUpdate: 'cascade'});
     mealStateMap.belongsTo(models.meals,
-        {foreignKey: 'meal_id'});
+        {foreignKey: 'meal_id', onDelete: 'cascade', onUpdate: 'cascade'});
     mealStateMap.belongsTo(models.states,
-        {foreignKey: 'state_id'});
+        {foreignKey: 'state_id', onDelete: 'cascade', onUpdate: 'cascade'});
   };
   return mealStateMap;
 }

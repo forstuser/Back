@@ -73,6 +73,10 @@ var _calendarServices = require('../api/controllers/calendarServices');
 
 var _calendarServices2 = _interopRequireDefault(_calendarServices);
 
+var _whatToServices = require('../api/controllers/whatToServices');
+
+var _whatToServices2 = _interopRequireDefault(_whatToServices);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var User = void 0;
@@ -2052,6 +2056,119 @@ function prepareCalendarServiceRoutes(calendarController, calendarRoutes) {
   }
 }
 
+function prepareWhatToServiceRoutes(whatToServiceController, whatToServiceRoutes) {
+  //= ========================
+  // What To Service Routes
+  //= ========================
+
+  if (whatToServiceController) {
+    whatToServiceRoutes.push({
+      method: 'GET',
+      path: '/states',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _whatToServices2.default.retrieveStateReference,
+        description: 'Retrieve States.',
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [{ code: 200, message: 'Successful' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
+          }
+        }
+      }
+    });
+
+    whatToServiceRoutes.push({
+      method: 'GET',
+      path: '/states/{state_id}/meals',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _whatToServices2.default.retrieveStateMealData,
+        description: 'Retrieve Meals available in State.'
+      }
+    });
+
+    whatToServiceRoutes.push({
+      method: 'GET',
+      path: '/user/meals',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _whatToServices2.default.retrieveUserMealList,
+        description: 'Retrieve Meals available in State.'
+      }
+    });
+
+    whatToServiceRoutes.push({
+      method: 'POST',
+      path: '/user/meals',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _whatToServices2.default.prepareUserMealList,
+        description: 'Create or update user meal list.',
+        validate: {
+          payload: {
+            selected_ids: [_joi2.default.array().items(_joi2.default.number()).required().min(0), _joi2.default.allow(null)],
+            unselected_ids: [_joi2.default.array().items(_joi2.default.string()).required().min(0), _joi2.default.allow(null)]
+          }
+        }
+      }
+    });
+
+    whatToServiceRoutes.push({
+      method: 'PUT',
+      path: '/user/meals/{meal_id}',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _whatToServices2.default.updateMealCurrentDate,
+        description: 'Update user meal item current date.',
+        validate: {
+          payload: {
+            current_date: _joi2.default.string().required()
+          }
+        }
+      }
+    });
+
+    whatToServiceRoutes.push({
+      method: 'delete',
+      path: '/user/meals/{meal_id}',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _whatToServices2.default.removeMealCurrentDate,
+        description: 'Remove user meal item current date.',
+        validate: {
+          payload: {
+            current_date: _joi2.default.string().required()
+          }
+        }
+      }
+    });
+  }
+}
+
 exports.default = function (app, modals) {
   appVersionHelper = new _appVersion2.default(modals);
   User = modals.users;
@@ -2073,7 +2190,7 @@ exports.default = function (app, modals) {
   var repairRoutes = [];
   var calendarRoutes = [];
   var uploadFileRoute = [];
-
+  var whatToServiceRoutes = [];
   var userController = new _user2.default(modals);
   var categoryController = new _category2.default(modals);
   var brandController = new _brand2.default(modals);
@@ -2086,7 +2203,7 @@ exports.default = function (app, modals) {
   var generalController = new _general2.default(modals);
   var repairController = new _productItem2.default(modals);
   var calendarServiceController = new _calendarServices2.default(modals);
-
+  var whatToServiceController = new _whatToServices2.default(modals);
   prepareAuthRoutes(userController, authRoutes);
 
   prepareCategoryRoutes(categoryController, categoryRoutes);
@@ -2109,6 +2226,8 @@ exports.default = function (app, modals) {
 
   prepareCalendarServiceRoutes(calendarServiceController, calendarRoutes);
 
+  prepareWhatToServiceRoutes(whatToServiceController, whatToServiceRoutes);
+
   if (searchController) {
     searchRoutes.push({
       method: 'GET',
@@ -2130,5 +2249,5 @@ exports.default = function (app, modals) {
     });
   }
 
-  app.route([].concat(authRoutes, categoryRoutes, brandRoutes, sellerRoutes, serviceCenterRoutes, billManagementRoutes, uploadFileRoute, dashboardRoutes, productRoutes, insightRoutes, searchRoutes, generalRoutes, repairRoutes, calendarRoutes));
+  app.route([].concat(authRoutes, categoryRoutes, brandRoutes, sellerRoutes, serviceCenterRoutes, billManagementRoutes, uploadFileRoute, dashboardRoutes, productRoutes, insightRoutes, searchRoutes, generalRoutes, repairRoutes, calendarRoutes, whatToServiceRoutes));
 };
