@@ -2186,6 +2186,126 @@ function prepareWhatToServiceRoutes(whatToServiceController, whatToServiceRoutes
         }
       }
     });
+
+    whatToServiceRoutes.push({
+      method: 'GET',
+      path: '/todos',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _whatToServices2.default.retrieveToDoListItems,
+        description: 'Retrieve To Do List.'
+      }
+    });
+
+    whatToServiceRoutes.push({
+      method: 'GET',
+      path: '/user/todos',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _whatToServices2.default.retrieveUserToDoList,
+        description: 'Retrieve Meals available in State.'
+      }
+    });
+
+    whatToServiceRoutes.push({
+      method: 'POST',
+      path: '/user/todos',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _whatToServices2.default.prepareUserToDoList,
+        description: 'Create or update user todos list.',
+        validate: {
+          payload: {
+            selected_ids: [_joi2.default.array().items(_joi2.default.number()).required().min(0), _joi2.default.allow(null)],
+            unselected_ids: [_joi2.default.array().items(_joi2.default.number()).required().min(0), _joi2.default.allow(null)]
+          }
+        }
+      }
+    });
+
+    whatToServiceRoutes.push({
+      method: 'POST',
+      path: '/user/todos/add',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _whatToServices2.default.addUserToDoList,
+        description: 'Create or update user todos list.',
+        validate: {
+          payload: {
+            names: [_joi2.default.array().items(_joi2.default.string()).required().min(0), _joi2.default.allow(null)]
+          }
+        }
+      }
+    });
+
+    whatToServiceRoutes.push({
+      method: 'PUT',
+      path: '/user/todos/{todo_id}',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _whatToServices2.default.updateToDoItem,
+        description: 'Update user todos.',
+        validate: {
+          payload: {
+            current_date: _joi2.default.string().required()
+          }
+        }
+      }
+    });
+
+    whatToServiceRoutes.push({
+      method: 'delete',
+      path: '/user/todos/{todo_id}/remove',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _whatToServices2.default.removeWhatToDos,
+        description: 'Remove user todos item.'
+
+      }
+    });
+
+    whatToServiceRoutes.push({
+      method: 'delete',
+      path: '/user/todos/{todo_id}',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }, {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _whatToServices2.default.removeToDos,
+        description: 'Remove user todos item.',
+        validate: {
+          payload: {
+            current_date: _joi2.default.string().required()
+          }
+        }
+      }
+    });
   }
 }
 
