@@ -463,6 +463,283 @@ var WhatToServiceAdaptor = function () {
         });
       });
     }
+  }, {
+    key: 'retrieveToDoList',
+    value: function retrieveToDoList(options, limit, offset) {
+      var _this12 = this;
+
+      return _bluebird2.default.try(function () {
+        var todoItemOptions = {
+          where: {
+            status_type: 1,
+            $or: {
+              created_by: options.user_id,
+              status_type: [1, 11]
+            }
+          },
+          order: [['name', 'asc']]
+        };
+
+        if (limit) {
+          todoItemOptions.limit = limit;
+        }
+
+        if (offset) {
+          todoItemOptions.offset = offset;
+        }
+
+        return _bluebird2.default.all([_this12.retrieveAllTodoListItems(todoItemOptions), _this12.retrieveUserTodoItems({
+          where: {
+            user_id: options.user_id,
+            status_type: 1
+          }
+        })]);
+      }).spread(function (todoItems, userTodoList) {
+        return todoItems.map(function (item) {
+          var userTodo = userTodoList.find(function (userItem) {
+            return userItem.todo_id === item.id;
+          });
+          item.isSelected = !!userTodo;
+
+          return item;
+        });
+      });
+    }
+  }, {
+    key: 'deleteUsertodoCurrentDate',
+    value: function deleteUsertodoCurrentDate(options) {
+      var _this13 = this;
+
+      return _bluebird2.default.try(function () {
+        return _this13.modals.todoUserMap.findOne({
+          user_id: options.user_id,
+          todo_id: options.todo_id
+        });
+      }).then(function (todoResult) {
+        var meal = todoResult.toJSON();
+        return _this13.modals.todoUserDate.destroy({
+          selected_date: options.current_date,
+          user_meal_id: meal.id
+        });
+      }).then(function () {
+        return _this13.retrieveUserTodoItems({
+          user_id: options.user_id
+        });
+      });
+    }
+  }, {
+    key: 'retrieveUserToDoList',
+    value: function retrieveUserToDoList(options, limit, offset) {
+      var _this14 = this;
+
+      return _bluebird2.default.try(function () {
+        return _this14.retrieveUserTodoItems({
+          where: {
+            user_id: options.user_id,
+            status_type: 1
+          },
+          include: {
+            model: _this14.modals.todoUserDate,
+            as: 'todo_dates',
+            required: false
+          }
+        });
+      }).then(function (userTodos) {
+        var todoItemOptions = {
+          where: {
+            id: userTodos.map(function (item) {
+              return item.meal_id;
+            }),
+            status_type: 1,
+            $or: {
+              created_by: options.user_id,
+              status_type: [1, 11]
+            }
+          },
+          order: [['name', 'asc']]
+        };
+
+        if (limit) {
+          todoItemOptions.limit = limit;
+        }
+
+        if (offset) {
+          todoItemOptions.offset = offset;
+        }
+
+        return _bluebird2.default.all([_this14.retrieveAllTodoListItems(todoItemOptions), userTodos]);
+      }).spread(function (todoItems, userTodos) {
+        return todoItems.map(function (item) {
+          var userTodo = userTodos.find(function (userItem) {
+            return userItem.todo_id === item.id;
+          });
+          var todoDates = _lodash2.default.orderBy(userTodo.todo_dates || [], ['selected_date'], ['asc']);
+          var currentDateItem = todoDates.find(function (dateItem) {
+            return (0, _moment2.default)(dateItem.selected_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day');
+          });
+          var futureDateItem = todoDates.find(function (dateItem) {
+            return (0, _moment2.default)(dateItem.selected_date, _moment2.default.ISO_8601).isAfter(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day');
+          });
+          todoDates = _lodash2.default.orderBy(userTodo.todo_dates || [], ['selected_date'], ['desc']);
+          var lastDateItem = todoDates.find(function (dateItem) {
+            return (0, _moment2.default)(dateItem.selected_date, _moment2.default.ISO_8601).isBefore(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day');
+          });
+          if (currentDateItem) {
+            item.current_date = currentDateItem.selected_date;
+            item.future_date = futureDateItem ? futureDateItem.selected_date : currentDateItem.selected_date;
+            item.last_date = lastDateItem ? lastDateItem.selected_date : currentDateItem.selected_date;
+          } else if (futureDateItem) {
+            item.current_date = futureDateItem.selected_date;
+            item.future_date = futureDateItem.selected_date;
+            item.last_date = lastDateItem ? lastDateItem.selected_date : futureDateItem.selected_date;
+          } else if (lastDateItem) {
+            item.current_date = lastDateItem.selected_date;
+            item.last_date = lastDateItem.selected_date;
+          } else {
+            item.current_date = (0, _moment2.default)().subtract(30, 'd');
+          }
+
+          return item;
+        });
+      }).then(function (result) {
+        var mealItemList = _lodash2.default.orderBy(result, ['current_date'], ['desc']);
+        var mealList = mealItemList.filter(function (item) {
+          return (0, _moment2.default)(item.current_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day') || (0, _moment2.default)(item.future_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day') || (0, _moment2.default)(item.last_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day');
+        });
+        var remainingMealList = mealItemList.filter(function (item) {
+          return item.current_date && (0, _moment2.default)(item.current_date, _moment2.default.ISO_8601).isBefore(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day') || (0, _moment2.default)(item.current_date, _moment2.default.ISO_8601).isAfter(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day');
+        });
+        mealList.push.apply(mealList, _toConsumableArray(_lodash2.default.orderBy(remainingMealList, ['current_date'], ['desc'])));
+
+        return mealList;
+      });
+    }
+  }, {
+    key: 'deleteWhatTodo',
+    value: function deleteWhatTodo(options) {
+      var _this15 = this;
+
+      return _bluebird2.default.try(function () {
+        return _this15.modals.todo.destroy(options);
+      });
+    }
+  }, {
+    key: 'prepareUserToDoList',
+    value: function prepareUserToDoList(options) {
+      var _this16 = this;
+
+      return _bluebird2.default.try(function () {
+        return _this16.retrieveUserTodoItems({
+          user_id: options.user_id,
+          todo_id: [].concat(_toConsumableArray(options.selected_ids), _toConsumableArray(options.unselected_ids))
+        });
+      }).then(function (userTodo) {
+        return _bluebird2.default.all([].concat(_toConsumableArray(options.selected_ids.map(function (id) {
+          var todoItem = userTodo.find(function (item) {
+            return item.todo_id === id;
+          });
+          if (todoItem) {
+            return _this16.modals.todoUserMap.update({
+              status_type: 1
+            }, {
+              where: {
+                id: todoItem.id
+              }
+            });
+          }
+
+          return _this16.modals.todoUserMap.create({
+            user_id: options.user_id,
+            todo_id: id,
+            status_type: 1
+          });
+        })), _toConsumableArray(options.unselected_ids.map(function (id) {
+          var todoItem = userTodo.find(function (item) {
+            return item.todo_id === id;
+          });
+          if (todoItem) {
+            return _this16.modals.todoUserMap.update({
+              status_type: 2
+            }, {
+              where: {
+                id: todoItem.id
+              }
+            });
+          }
+
+          return _this16.modals.todoUserMap.create({
+            user_id: options.user_id,
+            todo_id: id,
+            status_type: 2
+          });
+        }))));
+      }).then(function () {
+        return _this16.retrieveUserTodoItems({
+          user_id: options.user_id
+        });
+      });
+    }
+  }, {
+    key: 'updateToDoItem',
+    value: function updateToDoItem(options) {
+      var _this17 = this;
+
+      return _bluebird2.default.try(function () {
+        return _this17.modals.todolUserMap.findOne({
+          user_id: options.user_id,
+          todo_id: options.todo_id
+        });
+      }).then(function (todoResult) {
+        var todoUser = todoResult.toJSON();
+        return _this17.modals.todoUserDate.findCreateFind({
+          where: {
+            selected_date: options.current_date,
+            user_todo_id: todoUser.id
+          }
+        });
+      }).then(function () {
+        return _this17.retrieveUserTodoItems({
+          user_id: options.user_id
+        });
+      });
+    }
+  }, {
+    key: 'addUserToDoList',
+    value: function addUserToDoList(options) {
+      var _this18 = this;
+
+      return _bluebird2.default.try(function () {
+        return _this18.modals.todo.bulkCreate(options.todo_items, { returning: true });
+      }).then(function (todoList) {
+        var userTodo = todoList;
+        return _bluebird2.default.all([userTodo].concat(_toConsumableArray(userTodo.map(function (todoItem) {
+          return _this18.modals.todoUserMap.create({
+            todo_id: todoItem.id,
+            user_id: options.user_id
+          });
+        }))));
+      }).spread(function (userTodo) {
+        return userTodo;
+      });
+    }
+  }, {
+    key: 'retrieveAllTodoListItems',
+    value: function retrieveAllTodoListItems(options) {
+      return this.modals.todo.findAll(options).then(function (result) {
+        return result.map(function (item) {
+          return item.toJSON();
+        });
+      });
+    }
+  }, {
+    key: 'retrieveUserTodoItems',
+    value: function retrieveUserTodoItems(options) {
+      return this.modals.todoUserMap.findAll(options).then(function (result) {
+        return result.map(function (item) {
+          return item.toJSON();
+        });
+      });
+    }
   }]);
 
   return WhatToServiceAdaptor;

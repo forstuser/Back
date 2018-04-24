@@ -2594,6 +2594,153 @@ function prepareWhatToServiceRoutes(
 
     whatToServiceRoutes.push({
       method: 'GET',
+      path: '/todos',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: WhatToServiceController.retrieveToDoListItems,
+        description: 'Retrieve To Do List.',
+      },
+    });
+
+    whatToServiceRoutes.push({
+      method: 'GET',
+      path: '/user/todos',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: WhatToServiceController.retrieveUserToDoList,
+        description: 'Retrieve Meals available in State.',
+      },
+    });
+
+    whatToServiceRoutes.push({
+      method: 'POST',
+      path: '/user/todos',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: WhatToServiceController.prepareUserToDoList,
+        description: 'Create or update user todos list.',
+        validate: {
+          payload: {
+            selected_ids: [
+              joi.array().items(joi.number()).required().min(0),
+              joi.allow(null)],
+            unselected_ids: [
+              joi.array().items(joi.number()).required().min(0),
+              joi.allow(null)],
+          },
+        },
+      },
+    });
+
+    whatToServiceRoutes.push({
+      method: 'POST',
+      path: '/user/todos/add',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: WhatToServiceController.addUserToDoList,
+        description: 'Create or update user todos list.',
+        validate: {
+          payload: {
+            names: [
+              joi.array().items(joi.string()).required().min(0),
+              joi.allow(null)],
+          },
+        },
+      },
+    });
+
+    whatToServiceRoutes.push({
+      method: 'PUT',
+      path: '/user/todos/{todo_id}',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: WhatToServiceController.updateToDoItem,
+        description: 'Update user todos.',
+        validate: {
+          payload: {
+            current_date: joi.string().required(),
+          },
+        },
+      },
+    });
+
+    whatToServiceRoutes.push({
+      method: 'delete',
+      path: '/user/todos/{todo_id}/remove',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: WhatToServiceController.removeWhatToDos,
+        description: 'Remove user todos item.',
+
+      },
+    });
+
+    whatToServiceRoutes.push({
+      method: 'delete',
+      path: '/user/todos/{todo_id}',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: WhatToServiceController.removeToDos,
+        description: 'Remove user todos item.',
+        validate: {
+          payload: {
+            current_date: joi.string().required(),
+          },
+        },
+      },
+    });
+
+    whatToServiceRoutes.push({
+      method: 'GET',
       path: '/wearables',
       config: {
         auth: 'jwt',
