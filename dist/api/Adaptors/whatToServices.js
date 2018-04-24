@@ -112,7 +112,8 @@ var WhatToServiceAdaptor = function () {
           where: {
             id: userMeals.map(function (item) {
               return item.meal_id;
-            })
+            }),
+            $or: $or
           },
           order: [['meal_name', 'asc']]
         };
@@ -212,9 +213,10 @@ var WhatToServiceAdaptor = function () {
       _bluebird2.default.try(function () {
         return _this3.modals.meals.findCreateFind({
           where: {
-            user_id: options.user_id,
+            created_by: options.user_id,
+            updated_by: options.user_id,
             meal_name: options.meal_name,
-            is_veg: options.is_veg && options.is_veg === false ? false : true,
+            is_veg: !(options.is_veg && options.is_veg === false),
             status_type: 11
           }
         });

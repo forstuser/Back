@@ -2144,7 +2144,7 @@ function prepareWhatToServiceRoutes(whatToServiceController, whatToServiceRoutes
           payload: {
             meal_name: [_joi2.default.string(), _joi2.default.allow(null)],
             state_id: _joi2.default.number().required(),
-            is_veg: [_joi2.default.boolean, _joi2.default.allow(null)]
+            is_veg: [_joi2.default.boolean(), _joi2.default.allow(null)]
           }
         }
       }

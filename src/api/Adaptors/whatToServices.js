@@ -74,6 +74,7 @@ export default class WhatToServiceAdaptor {
           const mealItemOptions = {
             where: {
               id: userMeals.map((item) => item.meal_id),
+              $or
             },
             order: [['meal_name', 'asc']],
           };
@@ -192,9 +193,10 @@ export default class WhatToServiceAdaptor {
   addUserMealItem(options) {
     Promise.try(() => this.modals.meals.findCreateFind({
       where: {
-        user_id: options.user_id,
+        created_by: options.user_id,
+        updated_by: options.user_id,
         meal_name: options.meal_name,
-        is_veg: options.is_veg && options.is_veg === false ? false : true,
+        is_veg: !(options.is_veg && options.is_veg === false),
         status_type: 11,
       },
     })).then((mealResult) => {
