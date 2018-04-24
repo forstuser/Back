@@ -32,8 +32,13 @@ export default class WhatToServiceAdaptor {
           const mealItemOptions = {
             where: {
               id: stateMeals.map((item) => item.meal_id),
+              $or: {
+                created_by: options.user_id,
+                status_type: [1, 11],
+              },
+              status_type: 1,
             },
-            order: [['meal_name', 'asc']],
+            order: [['name', 'asc']],
           };
           if (options.is_veg) {
             mealItemOptions.where.is_veg = options.is_veg;
@@ -62,7 +67,8 @@ export default class WhatToServiceAdaptor {
     return Promise.try(() => this.retrieveUserMeals(
         {
           where: {
-            user_id: options.user_id, status_type: 1,
+            user_id: options.user_id,
+            status_type: 1,
           },
           include: {
             model: this.modals.mealUserDate,
@@ -74,9 +80,12 @@ export default class WhatToServiceAdaptor {
           const mealItemOptions = {
             where: {
               id: userMeals.map((item) => item.meal_id),
-              $or
+              $or: {
+                created_by: options.user_id,
+                status_type: [1, 11],
+              },
             },
-            order: [['meal_name', 'asc']],
+            order: [['name', 'asc']],
           };
           if (options.is_veg) {
             mealItemOptions.where.is_veg = options.is_veg;
@@ -191,29 +200,28 @@ export default class WhatToServiceAdaptor {
   }
 
   addUserMealItem(options) {
-    Promise.try(() => this.modals.meals.findCreateFind({
-      where: {
-        created_by: options.user_id,
-        updated_by: options.user_id,
-        meal_name: options.meal_name,
-        is_veg: !(options.is_veg && options.is_veg === false),
-        status_type: 11,
-      },
-    })).then((mealResult) => {
-      const mealItem = mealResult[0].toJSON();
-      Promise.all([
-        mealItem, this.modals.mealStateMap.create({
-          meal_id: mealItem.id,
-          state_id: options.state_id,
-        }), this.modals.mealUserMap.create({
-          meal_id: mealItem.id,
-          user_id: options.user_id,
-        })]);
-    }).spread((mealItem) => mealItem);
+    return Promise.try(() => this.modals.meals.bulkCreate(options.meal_items,
+        {returning: true})).
+        then((mealResult) => {
+          console.log(JSON.stringify({mealResult}));
+          const mealItems = mealResult;
+          return Promise.all([
+            mealItems,
+            ...mealItems.map((mealItem) => this.modals.mealStateMap.create({
+              meal_id: mealItem.id,
+              state_id: options.state_id,
+            })),
+            ...mealItems.map((mealItem) => this.modals.mealUserMap.create({
+              meal_id: mealItem.id,
+              user_id: options.user_id,
+              state_id: options.state_id,
+            }))]);
+        }).
+        spread((mealItem) => mealItem);
   }
 
   prepareUserMealList(options) {
-    Promise.try(() => this.retrieveUserMeals({
+    return Promise.try(() => this.retrieveUserMeals({
       user_id: options.user_id,
       meal_id: [...options.selected_ids, ...options.unselected_ids],
     })).then((mealResult) => Promise.all([
@@ -262,7 +270,7 @@ export default class WhatToServiceAdaptor {
   }
 
   updateUserMealCurrentDate(options) {
-    Promise.try(() => this.modals.mealUserMap.findOne({
+    return Promise.try(() => this.modals.mealUserMap.findOne({
       user_id: options.user_id,
       meal_id: options.meal_id,
     })).then((mealResult) => {
@@ -279,7 +287,7 @@ export default class WhatToServiceAdaptor {
   }
 
   deleteUserMealCurrentDate(options) {
-    Promise.try(() => this.modals.mealUserMap.findOne({
+    return Promise.try(() => this.modals.mealUserMap.findOne({
       user_id: options.user_id,
       meal_id: options.meal_id,
     })).then((mealResult) => {
@@ -290,6 +298,133 @@ export default class WhatToServiceAdaptor {
       });
     }).then(() => this.retrieveUserMealItems({
       user_id: options.user_id,
+    }));
+  }
+
+  removeMeals(options) {
+    return Promise.try(() => this.modals.meals.destroy(options));
+  }
+
+  addWearable(options) {
+    return Promise.try(() => this.modals.wearables.create({
+      name: options.item_name,
+      created_by: options.user_id,
+      updated_by: options.user_id,
+    }));
+  }
+
+  retrieveWearables(options) {
+    return Promise.try(() => this.modals.wearables.findAll({
+      where: {
+        created_by: options.user_id,
+        image_code: {
+          $ne: null,
+        },
+      },
+      include: {
+        model: this.modals.wearableDate,
+        as: 'wearable_dates',
+        required: false,
+      },
+      order: [['name', 'asc']],
+    })).then((results) => results.map((item) => {
+      item.image_link = `/wearable/${item.id}/images/${item.image_code}`;
+      let wearableDates = _.orderBy(
+          (item.wearable_dates || []), ['selected_date'],
+          ['asc']);
+      const currentDateItem = wearableDates.find(
+          (dateItem) => moment(dateItem.selected_date, moment.ISO_8601).
+              isSame(options.current_date ?
+                  moment(options.current_date, moment.ISO_8601) :
+                  moment(), 'day'));
+      const futureDateItem = wearableDates.find(
+          (dateItem) => moment(dateItem.selected_date, moment.ISO_8601).
+              isAfter(options.current_date ?
+                  moment(options.current_date, moment.ISO_8601) :
+                  moment(), 'day'));
+      wearableDates = _.orderBy(
+          (item.wearable_dates || []), ['selected_date'],
+          ['desc']);
+      const lastDateItem = wearableDates.find(
+          (dateItem) => moment(dateItem.selected_date, moment.ISO_8601).
+              isBefore(options.current_date ?
+                  moment(options.current_date, moment.ISO_8601) :
+                  moment(), 'day'));
+      if (currentDateItem) {
+        item.current_date = currentDateItem.selected_date;
+        item.future_date = futureDateItem ?
+            futureDateItem.selected_date :
+            currentDateItem.selected_date;
+        item.last_date = lastDateItem ?
+            lastDateItem.selected_date :
+            currentDateItem.selected_date;
+      } else if (futureDateItem) {
+        item.current_date = futureDateItem.selected_date;
+        item.future_date = futureDateItem.selected_date;
+        item.last_date = lastDateItem ?
+            lastDateItem.selected_date :
+            futureDateItem.selected_date;
+      } else if (lastDateItem) {
+        item.current_date = lastDateItem.selected_date;
+        item.last_date = lastDateItem.selected_date;
+      } else {
+        item.current_date = moment().subtract(30, 'd');
+      }
+
+      return item;
+    })).then((result) => {
+      const wearableItems = _.orderBy(
+          result, ['current_date'],
+          ['desc']);
+      const wearableList = wearableItems.filter(
+          (item) => moment(item.current_date, moment.ISO_8601).
+                  isSame(options.current_date ?
+                      moment(options.current_date, moment.ISO_8601) :
+                      moment(), 'day') ||
+              moment(item.future_date, moment.ISO_8601).
+                  isSame(options.current_date ?
+                      moment(options.current_date, moment.ISO_8601) :
+                      moment(), 'day') ||
+              moment(item.last_date, moment.ISO_8601).
+                  isSame(options.current_date ?
+                      moment(options.current_date, moment.ISO_8601) :
+                      moment(), 'day'));
+      const remainingWearableList = wearableItems.filter(
+          (item) => (item.current_date &&
+              moment(item.current_date, moment.ISO_8601).
+                  isBefore(options.current_date ?
+                      moment(options.current_date, moment.ISO_8601) :
+                      moment(), 'day') ||
+              moment(item.current_date, moment.ISO_8601).
+                  isAfter(options.current_date ?
+                      moment(options.current_date, moment.ISO_8601) :
+                      moment(), 'day')));
+      wearableList.push(...(_.orderBy(
+          remainingWearableList, ['current_date'],
+          ['desc'])));
+
+      return wearableList;
+    });
+  }
+
+  updateWearable(options) {
+    return Promise.try(() => this.modals.wearables.update({
+      name: options.item_name,
+      updated_by: options.user_id,
+    }, {
+      where: {
+        id: options.id,
+      },
+    }));
+  }
+
+  deleteWearable(options) {
+    return Promise.try(() => this.modals.wearables.destroy({
+      where: {
+        id: options.id,
+        created_by: options.user_id,
+        updated_by: options.user_id,
+      },
     }));
   }
 }

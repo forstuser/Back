@@ -798,6 +798,43 @@ function prepareUploadRoutes(uploadController, uploadFileRoute) {
         },
       },
     });
+    /*Upload Wearable Image*/
+    uploadFileRoute.push({
+      method: 'POST',
+      path: '/wearable/{id}/images',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        files: {
+          relativeTo: Path.join(__dirname, '../static/src'),
+        },
+        handler: UploadController.uploadWearableImage,
+        payload: {
+          output: 'stream',
+          parse: true,
+          uploads: 'up_files',
+          timeout: 30034,
+          allow: 'multipart/form-data',
+          failAction: 'log',
+          maxBytes: 209715200,
+        },
+      },
+    });
+
+    /*Retrieve Wearable Image*/
+    uploadFileRoute.push({
+      method: 'GET',
+      path: '/wearable/{id}/images/{image_code}',
+      config: {
+        handler: UploadController.retrieveWearableImage,
+      },
+    });
 
     /*Retrieve Product Image*/
     uploadFileRoute.push({
@@ -2467,6 +2504,7 @@ function prepareWhatToServiceRoutes(
         },
       },
     });
+
     whatToServiceRoutes.push({
       method: 'POST',
       path: '/user/meals/add',
@@ -2479,17 +2517,20 @@ function prepareWhatToServiceRoutes(
             assign: 'userExist',
           },
         ],
-        handler: WhatToServiceController.prepareUserMealList,
+        handler: WhatToServiceController.addUserMealItem,
         description: 'Create or update user meal list.',
         validate: {
           payload: {
-            meal_name: [joi.string(), joi.allow(null)],
+            names: [
+              joi.array().items(joi.string()).required().min(0),
+              joi.allow(null)],
             state_id: joi.number().required(),
-            is_veg:[joi.boolean(),joi.allow(null)]
+            is_veg: [joi.boolean(), joi.allow(null)],
           },
         },
       },
     });
+
     whatToServiceRoutes.push({
       method: 'PUT',
       path: '/user/meals/{meal_id}',
@@ -2514,6 +2555,23 @@ function prepareWhatToServiceRoutes(
 
     whatToServiceRoutes.push({
       method: 'delete',
+      path: '/user/meals/{meal_id}/remove',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: WhatToServiceController.removeMeal,
+        description: 'Remove user meal item.',
+      },
+    });
+
+    whatToServiceRoutes.push({
+      method: 'delete',
       path: '/user/meals/{meal_id}',
       config: {
         auth: 'jwt',
@@ -2531,6 +2589,84 @@ function prepareWhatToServiceRoutes(
             current_date: joi.string().required(),
           },
         },
+      },
+    });
+
+    whatToServiceRoutes.push({
+      method: 'GET',
+      path: '/wearables',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: WhatToServiceController.retrieveUserWearables,
+        description: 'Retrieve user wearable list.',
+      },
+    });
+
+    whatToServiceRoutes.push({
+      method: 'POST',
+      path: '/wearables',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: WhatToServiceController.addUserWearables,
+        description: 'Create user wearable list.',
+        validate: {
+          payload: {
+            name: [joi.string(), joi.allow(null)],
+          },
+        },
+      },
+    });
+
+    whatToServiceRoutes.push({
+      method: 'PUT',
+      path: '/wearables/{id}',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: WhatToServiceController.updateUserWearables,
+        description: 'Update user wearable list.',
+        validate: {
+          payload: {
+            name: [joi.string(), joi.allow(null)],
+          },
+        },
+      },
+    });
+
+    whatToServiceRoutes.push({
+      method: 'DELETE',
+      path: '/wearables/{id}',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: WhatToServiceController.destroyUserWearables,
+        description: 'DELETE user wearable list.',
       },
     });
   }

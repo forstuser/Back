@@ -254,6 +254,74 @@ var UploadController = function () {
       }
     }
   }, {
+    key: 'uploadWearableImage',
+    value: function uploadWearableImage(request, reply) {
+      var user = _shared2.default.verifyAuthorization(request.headers);
+      if (request.pre.userExist === 0) {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
+        return reply({
+          status: false,
+          message: 'Unauthorized'
+          // forceUpdate: request.pre.forceUpdate
+        }).code(401);
+      } else if (request.payload) {
+        return modals.wearables.findOne({
+          where: {
+            id: request.params.id,
+            created_by: user.id || user.ID
+          }
+        }).then(function (wearableResult) {
+          if (wearableResult) {
+            var image_code = '' + Math.random().toString(36).substr(2, 9) + (user.id || user.ID).toString(36);
+            var wearableItem = wearableResult.toJSON();
+            var fieldNameHere = request.payload.fieldNameHere;
+            var fileData = fieldNameHere || request.payload.filesName;
+
+            var name = fileData.hapi.filename;
+            var file_type = name.split('.')[name.split('.').length - 1];
+            var image_name = wearableItem.id + '.' + file_type;
+
+            var fsImplProduct = new _s3fs2.default(_main2.default.AWS.S3.BUCKET + '/' + _main2.default.AWS.S3.WEARABLE_IMAGE, _main2.default.AWS.ACCESS_DETAILS);
+            return _bluebird2.default.try(function () {
+              return fsImplProduct.writeFile(image_name, fileData._data, { ContentType: _mimeTypes2.default.lookup(image_name) });
+            }).then(function () {
+
+              return wearableResult.updateAttributes({ image_name: image_name, image_code: image_code });
+            }).then(function (wearableResult) {
+              wearableResult.image_link = '/wearable/' + wearableResult.id + '/images/' + wearableResult.image_code;
+              return reply({
+                status: true,
+                message: 'Uploaded Successfully',
+                wearable: wearable
+              });
+            }).catch(function (err) {
+              console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+              return reply({
+                status: false,
+                message: 'Upload Failed',
+                err: err
+                // forceUpdate: request.pre.forceUpdate
+              });
+            });
+          }
+
+          return reply({
+            status: false,
+            message: 'Invalid Wearable Id Upload Failed',
+            err: err
+            // forceUpdate: request.pre.forceUpdate
+          });
+        });
+      } else {
+        return reply({ status: false, message: 'No documents in request' }); //, forceUpdate: request.pre.forceUpdate});
+      }
+    }
+  }, {
     key: 'uploadFiles',
     value: function uploadFiles(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
@@ -1119,6 +1187,39 @@ var UploadController = function () {
               return reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', 'attachment; filename=' + request.params.id + '.' + productDetail.file_type);
             }).catch(function (err) {
               console.log('Error on ' + new Date() + ' for user while retrieving product item image is as follow: \n \n ' + err);
+              return reply({
+                status: false,
+                message: 'Unable to retrieve image',
+                err: err,
+                forceUpdate: request.pre.forceUpdate
+              });
+            });
+          }
+        });
+      } else {
+        return reply({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    }
+  }, {
+    key: 'retrieveWearableImage',
+    value: function retrieveWearableImage(request, reply) {
+      if (!request.pre.forceUpdate) {
+        var fsImplProduct = new _s3fs2.default(_main2.default.AWS.S3.BUCKET + '/' + _main2.default.AWS.S3.PRODUCT_IMAGE, _main2.default.AWS.ACCESS_DETAILS);
+        return modals.wearables.findOne({
+          where: {
+            id: request.params.id
+          }
+        }).then(function (wearableResult) {
+          if (wearableResult) {
+            var wearableDetail = wearableResult.toJSON();
+            return fsImplProduct.readFile(request.params.id + '.' + wearableDetail.file_type, 'utf8').then(function (fileResult) {
+              return reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', 'attachment; filename=' + wearableDetail.image_name);
+            }).catch(function (err) {
+              console.log('Error on ' + new Date() + ' for user while retrieving wearable item image is as follow: \n \n ' + err);
               return reply({
                 status: false,
                 message: 'Unable to retrieve image',

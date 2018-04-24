@@ -156,7 +156,7 @@ export default class WhatToController {
         user_id: user.ID || user.id,
         selected_ids: request.payload.selected_ids || [],
         unselected_ids: request.payload.unselected_ids || [],
-        state_id: request.payload.state_id
+        state_id: request.payload.state_id,
       })).then((mealList) => reply({
         status: true,
         mealList,
@@ -193,11 +193,17 @@ export default class WhatToController {
   static addUserMealItem(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
-      return Promise.try(() => whatToServiceAdaptor.prepareUserMealList({
+      return Promise.try(() => whatToServiceAdaptor.addUserMealItem({
         user_id: user.ID || user.id,
-        meal_name: request.payload.meal_name ,
-        is_veg: request.payload.is_veg ,
-        state_id: request.payload.state_id
+        meal_items: request.payload.names.map((mealItem) => ({
+          created_by: user.ID || user.id,
+          updated_by: user.ID || user.id,
+          name: mealItem,
+          is_veg: !(request.payload.is_veg && request.payload.is_veg === false),
+          status_type: 11,
+        })),
+        is_veg: request.payload.is_veg,
+        state_id: request.payload.state_id,
       })).then((mealList) => reply({
         status: true,
         mealList,
@@ -281,6 +287,209 @@ export default class WhatToController {
       })).then((mealList) => reply({
         status: true,
         mealList,
+      })).catch((err) => {
+        console.log(
+            `Error on ${new Date()} for user ${user.id ||
+            user.ID} is as follow: \n \n ${err}`);
+
+        return reply({
+          status: false,
+        });
+      });
+    } else if (request.pre.userExist === 0) {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
+      return reply({
+        status: false,
+        message: 'Unauthorized',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(401);
+    } else {
+      return reply({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
+  static removeMeal(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    if (request.pre.userExist && !request.pre.forceUpdate) {
+      return Promise.try(() => whatToServiceAdaptor.removeMeals({
+        where: {
+          created_by: user.ID || user.id,
+          id: request.params.meal_id,
+          status_type: 11,
+        },
+      })).then(() => reply({
+        status: true,
+      })).catch((err) => {
+        console.log(
+            `Error on ${new Date()} for user ${user.id ||
+            user.ID} is as follow: \n \n ${err}`);
+
+        return reply({
+          status: false,
+        });
+      });
+    } else if (request.pre.userExist === 0) {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
+      return reply({
+        status: false,
+        message: 'Unauthorized',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(401);
+    } else {
+      return reply({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
+  static retrieveUserWearables(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    if (request.pre.userExist && !request.pre.forceUpdate) {
+      return Promise.try(() => whatToServiceAdaptor.retrieveWearables({
+        user_id: user.ID || user.id,
+        current_date: request.query.current_date,
+      })).then((wearableList) => reply({
+        status: true,
+        wearableList,
+      })).catch((err) => {
+        console.log(
+            `Error on ${new Date()} for user ${user.id ||
+            user.ID} is as follow: \n \n ${err}`);
+
+        return reply({
+          status: false,
+        });
+      });
+    } else if (request.pre.userExist === 0) {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
+      return reply({
+        status: false,
+        message: 'Unauthorized',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(401);
+    } else {
+      return reply({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
+  static addUserWearables(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    if (request.pre.userExist && !request.pre.forceUpdate) {
+      return Promise.try(() => whatToServiceAdaptor.addWearable({
+        item_name: request.payload.name,
+        user_id: user.ID || user.id,
+      })).then((wearable) => reply({
+        status: true,
+        wearable,
+      })).catch((err) => {
+        console.log(
+            `Error on ${new Date()} for user ${user.id ||
+            user.ID} is as follow: \n \n ${err}`);
+
+        return reply({
+          status: false,
+        });
+      });
+    } else if (request.pre.userExist === 0) {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
+      return reply({
+        status: false,
+        message: 'Unauthorized',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(401);
+    } else {
+      return reply({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
+  static updateUserWearables(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    if (request.pre.userExist && !request.pre.forceUpdate) {
+      return Promise.try(() => whatToServiceAdaptor.updateWearable({
+        item_name: request.payload.name,
+        user_id: user.ID || user.id, id: request.params.id,
+      })).then(() => reply({
+        status: true,
+        wearable: {
+          name: request.payload.name,
+          id: request.params.id,
+        },
+      })).catch((err) => {
+        console.log(
+            `Error on ${new Date()} for user ${user.id ||
+            user.ID} is as follow: \n \n ${err}`);
+
+        return reply({
+          status: false,
+        });
+      });
+    } else if (request.pre.userExist === 0) {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
+      return reply({
+        status: false,
+        message: 'Unauthorized',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(401);
+    } else {
+      return reply({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
+  static destroyUserWearables(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    if (request.pre.userExist && !request.pre.forceUpdate) {
+      return Promise.try(() => whatToServiceAdaptor.deleteWearable({
+        item_name: request.payload.name,
+        user_id: user.ID || user.id, id: request.params.id,
+      })).then(() => reply({
+        status: true,
+        wearable: {
+          name: request.payload.name,
+          id: request.params.id,
+        },
       })).catch((err) => {
         console.log(
             `Error on ${new Date()} for user ${user.id ||

@@ -232,9 +232,17 @@ var WhatToController = function () {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist && !request.pre.forceUpdate) {
         return _bluebird2.default.try(function () {
-          return whatToServiceAdaptor.prepareUserMealList({
+          return whatToServiceAdaptor.addUserMealItem({
             user_id: user.ID || user.id,
-            meal_name: request.payload.meal_name,
+            meal_items: request.payload.names.map(function (mealItem) {
+              return {
+                created_by: user.ID || user.id,
+                updated_by: user.ID || user.id,
+                name: mealItem,
+                is_veg: !(request.payload.is_veg && request.payload.is_veg === false),
+                status_type: 11
+              };
+            }),
             is_veg: request.payload.is_veg,
             state_id: request.payload.state_id
           });
@@ -328,6 +336,224 @@ var WhatToController = function () {
           return reply({
             status: true,
             mealList: mealList
+          });
+        }).catch(function (err) {
+          console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+
+          return reply({
+            status: false
+          });
+        });
+      } else if (request.pre.userExist === 0) {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
+        return reply({
+          status: false,
+          message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate
+        }).code(401);
+      } else {
+        return reply({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    }
+  }, {
+    key: 'removeMeal',
+    value: function removeMeal(request, reply) {
+      var user = _shared2.default.verifyAuthorization(request.headers);
+      if (request.pre.userExist && !request.pre.forceUpdate) {
+        return _bluebird2.default.try(function () {
+          return whatToServiceAdaptor.removeMeals({
+            where: {
+              created_by: user.ID || user.id,
+              id: request.params.meal_id,
+              status_type: 11
+            }
+          });
+        }).then(function () {
+          return reply({
+            status: true
+          });
+        }).catch(function (err) {
+          console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+
+          return reply({
+            status: false
+          });
+        });
+      } else if (request.pre.userExist === 0) {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
+        return reply({
+          status: false,
+          message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate
+        }).code(401);
+      } else {
+        return reply({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    }
+  }, {
+    key: 'retrieveUserWearables',
+    value: function retrieveUserWearables(request, reply) {
+      var user = _shared2.default.verifyAuthorization(request.headers);
+      if (request.pre.userExist && !request.pre.forceUpdate) {
+        return _bluebird2.default.try(function () {
+          return whatToServiceAdaptor.retrieveWearables({
+            user_id: user.ID || user.id,
+            current_date: request.query.current_date
+          });
+        }).then(function (wearableList) {
+          return reply({
+            status: true,
+            wearableList: wearableList
+          });
+        }).catch(function (err) {
+          console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+
+          return reply({
+            status: false
+          });
+        });
+      } else if (request.pre.userExist === 0) {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
+        return reply({
+          status: false,
+          message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate
+        }).code(401);
+      } else {
+        return reply({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    }
+  }, {
+    key: 'addUserWearables',
+    value: function addUserWearables(request, reply) {
+      var user = _shared2.default.verifyAuthorization(request.headers);
+      if (request.pre.userExist && !request.pre.forceUpdate) {
+        return _bluebird2.default.try(function () {
+          return whatToServiceAdaptor.addWearable({
+            item_name: request.payload.name,
+            user_id: user.ID || user.id
+          });
+        }).then(function (wearable) {
+          return reply({
+            status: true,
+            wearable: wearable
+          });
+        }).catch(function (err) {
+          console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+
+          return reply({
+            status: false
+          });
+        });
+      } else if (request.pre.userExist === 0) {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
+        return reply({
+          status: false,
+          message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate
+        }).code(401);
+      } else {
+        return reply({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    }
+  }, {
+    key: 'updateUserWearables',
+    value: function updateUserWearables(request, reply) {
+      var user = _shared2.default.verifyAuthorization(request.headers);
+      if (request.pre.userExist && !request.pre.forceUpdate) {
+        return _bluebird2.default.try(function () {
+          return whatToServiceAdaptor.updateWearable({
+            item_name: request.payload.name,
+            user_id: user.ID || user.id, id: request.params.id
+          });
+        }).then(function () {
+          return reply({
+            status: true,
+            wearable: {
+              name: request.payload.name,
+              id: request.params.id
+            }
+          });
+        }).catch(function (err) {
+          console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+
+          return reply({
+            status: false
+          });
+        });
+      } else if (request.pre.userExist === 0) {
+        return reply({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
+        return reply({
+          status: false,
+          message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate
+        }).code(401);
+      } else {
+        return reply({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    }
+  }, {
+    key: 'destroyUserWearables',
+    value: function destroyUserWearables(request, reply) {
+      var user = _shared2.default.verifyAuthorization(request.headers);
+      if (request.pre.userExist && !request.pre.forceUpdate) {
+        return _bluebird2.default.try(function () {
+          return whatToServiceAdaptor.deleteWearable({
+            item_name: request.payload.name,
+            user_id: user.ID || user.id, id: request.params.id
+          });
+        }).then(function () {
+          return reply({
+            status: true,
+            wearable: {
+              name: request.payload.name,
+              id: request.params.id
+            }
           });
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);

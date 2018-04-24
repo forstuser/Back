@@ -16,6 +16,7 @@ exports.default = {
       USER_IMAGE: 'userimages',
       CATEGORY_IMAGE: 'categoryimages',
       PRODUCT_IMAGE: 'productimages',
+      WEARABLE_IMAGE: 'wearableimages',
       CALENDAR_ITEM_IMAGE: 'calendarserviceimages',
       BRAND_IMAGE: 'brandimages',
       PROVIDER_IMAGE: 'providerimages',

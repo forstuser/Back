@@ -167,9 +167,11 @@ class UploadController {
         },
       }).then((productResult) => {
         if (productResult) {
-          const file_ref = `${Math.random().toString(36).substr(2, 9)}${(user.id ||
-          user.ID).toString(
-          36)}`;
+          const file_ref = `${Math.random().
+              toString(36).
+              substr(2, 9)}${(user.id ||
+              user.ID).toString(
+              36)}`;
           const productDetail = productResult.toJSON();
           const fieldNameHere = request.payload.fieldNameHere;
           const fileData = fieldNameHere || request.payload.filesName;
@@ -186,7 +188,7 @@ class UploadController {
               () => fsImplProduct.writeFile(fileName, fileData._data,
                   {ContentType: mime.lookup(fileName)})).then(() => {
 
-            return productResult.updateAttributes({file_type,file_ref});
+            return productResult.updateAttributes({file_type, file_ref});
           }).then(() => {
             return reply({
               status: true,
@@ -208,6 +210,81 @@ class UploadController {
         return reply({
           status: false,
           message: 'Invalid Product Id Upload Failed',
+          err,
+          // forceUpdate: request.pre.forceUpdate
+        });
+      });
+    } else {
+      return reply({status: false, message: 'No documents in request'}); //, forceUpdate: request.pre.forceUpdate});
+    }
+  }
+
+  static uploadWearableImage(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    if (request.pre.userExist === 0) {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
+      return reply({
+        status: false,
+        message: 'Unauthorized',
+        // forceUpdate: request.pre.forceUpdate
+      }).code(401);
+    } else if (request.payload) {
+      return modals.wearables.findOne({
+        where: {
+          id: request.params.id,
+          created_by: user.id || user.ID,
+        },
+      }).then((wearableResult) => {
+        if (wearableResult) {
+          const image_code = `${Math.random().
+              toString(36).
+              substr(2, 9)}${(user.id ||
+              user.ID).toString(
+              36)}`;
+          const wearableItem = wearableResult.toJSON();
+          const fieldNameHere = request.payload.fieldNameHere;
+          const fileData = fieldNameHere || request.payload.filesName;
+
+          const name = fileData.hapi.filename;
+          const file_type = name.split('.')[name.split('.').length - 1];
+          const image_name = `${wearableItem.id}.${file_type}`;
+
+          const fsImplProduct = new S3FS(
+              `${config.AWS.S3.BUCKET}/${config.AWS.S3.WEARABLE_IMAGE}`,
+              config.AWS.ACCESS_DETAILS);
+          return Promise.try(
+              () => fsImplProduct.writeFile(image_name, fileData._data,
+                  {ContentType: mime.lookup(image_name)})).then(() => {
+
+            return wearableResult.updateAttributes({image_name, image_code});
+          }).then((wearableResult) => {
+            wearableResult.image_link = `/wearable/${wearableResult.id}/images/${wearableResult.image_code}`;
+            return reply({
+              status: true,
+              message: 'Uploaded Successfully',
+              wearable,
+            });
+          }).catch((err) => {
+            console.log(
+                `Error on ${new Date()} for user ${user.id ||
+                user.ID} is as follow: \n \n ${err}`);
+            return reply({
+              status: false,
+              message: 'Upload Failed',
+              err,
+              // forceUpdate: request.pre.forceUpdate
+            });
+          });
+        }
+
+        return reply({
+          status: false,
+          message: 'Invalid Wearable Id Upload Failed',
           err,
           // forceUpdate: request.pre.forceUpdate
         });
@@ -1173,6 +1250,45 @@ class UploadController {
               catch((err) => {
                 console.log(
                     `Error on ${new Date()} for user while retrieving product item image is as follow: \n \n ${err}`);
+                return reply({
+                  status: false,
+                  message: 'Unable to retrieve image',
+                  err,
+                  forceUpdate: request.pre.forceUpdate,
+                });
+              });
+        }
+      });
+    } else {
+      return reply({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
+  static retrieveWearableImage(request, reply) {
+    if (!request.pre.forceUpdate) {
+      const fsImplProduct = new S3FS(
+          `${config.AWS.S3.BUCKET}/${config.AWS.S3.PRODUCT_IMAGE}`,
+          config.AWS.ACCESS_DETAILS);
+      return modals.wearables.findOne({
+        where: {
+          id: request.params.id,
+        },
+      }).then((wearableResult) => {
+        if (wearableResult) {
+          const wearableDetail = wearableResult.toJSON();
+          return fsImplProduct.readFile(
+              `${request.params.id}.${wearableDetail.file_type}`, 'utf8').
+              then(fileResult => reply(fileResult.Body).
+                  header('Content-Type', fileResult.ContentType).
+                  header('Content-Disposition',
+                      `attachment; filename=${wearableDetail.image_name}`)).
+              catch((err) => {
+                console.log(
+                    `Error on ${new Date()} for user while retrieving wearable item image is as follow: \n \n ${err}`);
                 return reply({
                   status: false,
                   message: 'Unable to retrieve image',

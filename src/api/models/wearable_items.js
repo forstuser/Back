@@ -1,6 +1,6 @@
 'use strict';
 export default (sequelize, DataTypes) => {
-  const meals = sequelize.define('meals', {
+  const wearables = sequelize.define('wearables', {
         name: {
           type: DataTypes.STRING,
         },
@@ -10,7 +10,6 @@ export default (sequelize, DataTypes) => {
         },
         created_by: {
           type: DataTypes.INTEGER,
-          defaultValue: 1,
         },
         updated_at: {
           type: DataTypes.DATE,
@@ -24,13 +23,11 @@ export default (sequelize, DataTypes) => {
           type: DataTypes.INTEGER,
           defaultValue: 1,
         },
-        item_type: {
-          type: DataTypes.INTEGER,
-          defaultValue: 2,
+        image_code: {
+          type: DataTypes.STRING,
         },
-        is_veg: {
-          type: DataTypes.BOOLEAN,
-          defaultValue: true,
+        image_name: {
+          type: DataTypes.STRING,
         },
       },
       {
@@ -38,27 +35,39 @@ export default (sequelize, DataTypes) => {
         defaultPrimaryKey: true,
         timestamps: true,
         underscored: true,
-        tableName: 'table_meal_options',
+        tableName: 'table_wearable_items',
       });
 
-  meals.associate = (models) => {
-    meals.belongsTo(models.users,
-        {foreignKey: 'created_by', onDelete: 'cascade', onUpdate: 'cascade'});
-    meals.belongsTo(models.users,
-        {foreignKey: 'updated_by', onDelete: 'cascade', onUpdate: 'cascade'});
-    meals.belongsTo(models.statuses,
+  wearables.associate = (models) => {
+    wearables.belongsTo(models.users,
+        {
+          foreignKey: 'created_by',
+          as: 'creator',
+          onDelete: 'cascade',
+          onUpdate: 'cascade',
+        });
+    wearables.belongsTo(models.users,
+        {
+          foreignKey: 'updated_by',
+          as: 'updater',
+          onDelete: 'cascade',
+          onUpdate: 'cascade',
+        });
+    wearables.belongsTo(models.statuses,
         {
           foreignKey: 'status_type',
           targetKey: 'status_type',
           onDelete: 'cascade',
           onUpdate: 'cascade',
         });
-    meals.hasMany(models.mealStateMap,
-        {foreignKey: 'meal_id', onDelete: 'cascade', onUpdate: 'cascade'});
-    meals.hasMany(models.mealUserMap,
-        {foreignKey: 'meal_id', onDelete: 'cascade', onUpdate: 'cascade'});
+    wearables.hasMany(models.wearableDate, {
+      foreignKey: 'wearable_id',
+      onDelete: 'cascade',
+      onUpdate: 'cascade',
+      as: 'wearable_dates',
+    });
   };
-  return meals;
+  return wearables;
 }
 
 
