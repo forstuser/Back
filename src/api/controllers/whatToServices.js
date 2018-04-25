@@ -478,6 +478,46 @@ export default class WhatToController {
     }
   }
 
+  static updateWearableCurrentDate(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    if (request.pre.userExist && !request.pre.forceUpdate) {
+      return Promise.try(() => whatToServiceAdaptor.updateWearableCurrentDate({
+        user_id: user.ID || user.id,
+        id: request.params.id,
+        current_date: request.payload.current_date,
+      })).then((wearablelList) => reply({
+        status: true,
+        wearablelList,
+      })).catch((err) => {
+        console.log(
+            `Error on ${new Date()} for user ${user.id ||
+            user.ID} is as follow: \n \n ${err}`);
+
+        return reply({
+          status: false,
+        });
+      });
+    } else if (request.pre.userExist === 0) {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
+      return reply({
+        status: false,
+        message: 'Unauthorized',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(401);
+    } else {
+      return reply({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
   static destroyUserWearables(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
@@ -490,6 +530,126 @@ export default class WhatToController {
           name: request.payload.name,
           id: request.params.id,
         },
+      })).catch((err) => {
+        console.log(
+            `Error on ${new Date()} for user ${user.id ||
+            user.ID} is as follow: \n \n ${err}`);
+
+        return reply({
+          status: false,
+        });
+      });
+    } else if (request.pre.userExist === 0) {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
+      return reply({
+        status: false,
+        message: 'Unauthorized',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(401);
+    } else {
+      return reply({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
+  static removeWearable(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    if (request.pre.userExist && !request.pre.forceUpdate) {
+      return Promise.try(() => whatToServiceAdaptor.removeWearableCurrentDate({
+        user_id: user.ID || user.id,
+        id: request.params.id,
+        current_date: request.payload.current_date,
+      })).then((wearablelList) => reply({
+        status: true,
+        wearablelList,
+      })).catch((err) => {
+        console.log(
+            `Error on ${new Date()} for user ${user.id ||
+            user.ID} is as follow: \n \n ${err}`);
+
+        return reply({
+          status: false,
+        });
+      });
+    } else if (request.pre.userExist === 0) {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
+      return reply({
+        status: false,
+        message: 'Unauthorized',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(401);
+    } else {
+      return reply({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
+  static removeToDos(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    if (request.pre.userExist && !request.pre.forceUpdate) {
+      return Promise.try(() => whatToServiceAdaptor.deleteUserTodoCurrentDate({
+        user_id: user.ID || user.id,
+        todo_id: request.params.todo_id,
+        current_date: request.payload.current_date,
+      })).then((removelist) => reply({
+        status: true,
+        removelist,
+      })).catch((err) => {
+        console.log(
+            `Error on ${new Date()} for user ${user.id ||
+            user.ID} is as follow: \n \n ${err}`);
+
+        return reply({
+          status: false,
+        });
+      });
+    } else if (request.pre.userExist === 0) {
+      return reply({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
+      return reply({
+        status: false,
+        message: 'Unauthorized',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(401);
+    } else {
+      return reply({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
+  static removeToDos(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    if (request.pre.userExist && !request.pre.forceUpdate) {
+      return Promise.try(() => whatToServiceAdaptor.deleteUserTodoCurrentDate({
+        user_id: user.ID || user.id,
+        todo_id: request.params.todo_id,
+        current_date: request.payload.current_date,
+      })).then((removelist) => reply({
+        status: true,
+        removelist,
       })).catch((err) => {
         console.log(
             `Error on ${new Date()} for user ${user.id ||

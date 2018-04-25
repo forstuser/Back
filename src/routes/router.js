@@ -2817,6 +2817,50 @@ function prepareWhatToServiceRoutes(
       },
     });
   }
+  whatToServiceRoutes.push({
+    method: 'PUT',
+    path: '/user/wearables/{id}',
+    config: {
+      auth: 'jwt',
+      pre: [
+        {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+        {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist',
+        },
+      ],
+      handler: WhatToServiceController.updateWearableCurrentDate,
+      description: 'Update user wearable item current date.',
+      validate: {
+        payload: {
+          current_date: joi.string().required(),
+        },
+      },
+    },
+  });
+  whatToServiceRoutes.push({
+    method: 'delete',
+    path: '/user/wearables/{id}',
+    config: {
+      auth: 'jwt',
+      pre: [
+        {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+        {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist',
+        },
+      ],
+      handler: WhatToServiceController.removeWearable,
+      description: 'Remove user Wearable item.',
+      validate: {
+        payload: {
+          current_date: joi.string().required(),
+        },
+      },
+    },
+  });
+
+
 }
 
 export default (app, modals) => {

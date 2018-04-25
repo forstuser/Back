@@ -307,8 +307,10 @@ var WhatToServiceAdaptor = function () {
 
       return _bluebird2.default.try(function () {
         return _this5.modals.mealUserMap.findOne({
-          user_id: options.user_id,
-          meal_id: options.meal_id
+          where: {
+            user_id: options.user_id,
+            meal_id: options.meal_id
+          }
         });
       }).then(function (mealResult) {
         var meal = mealResult.toJSON();
@@ -331,14 +333,18 @@ var WhatToServiceAdaptor = function () {
 
       return _bluebird2.default.try(function () {
         return _this6.modals.mealUserMap.findOne({
-          user_id: options.user_id,
-          meal_id: options.meal_id
+          where: {
+            user_id: options.user_id,
+            meal_id: options.meal_id
+          }
         });
       }).then(function (mealResult) {
         var meal = mealResult.toJSON();
         return _this6.modals.mealUserDate.destroy({
-          selected_date: options.current_date,
-          user_meal_id: meal.id
+          where: {
+            selected_date: options.current_date,
+            user_meal_id: meal.id
+          }
         });
       }).then(function () {
         return _this6.retrieveUserMealItems({
@@ -369,12 +375,38 @@ var WhatToServiceAdaptor = function () {
       });
     }
   }, {
-    key: 'retrieveWearables',
-    value: function retrieveWearables(options) {
+    key: 'updateWearableCurrentDate',
+    value: function updateWearableCurrentDate(options) {
       var _this9 = this;
 
       return _bluebird2.default.try(function () {
-        return _this9.modals.wearables.findAll({
+        return _this9.modals.wearables.findOne({
+          where: {
+            created_by: options.user_id,
+            id: options.id
+          }
+        });
+      }).then(function (wearableItems) {
+        var wearable = wearableItems.toJSON();
+        return _this9.modals.wearableDate.findCreateFind({
+          where: {
+            selected_date: options.current_date,
+            werable_id: wearable.id
+          }
+        });
+      }).then(function () {
+        return _this9.retrieveWearables({
+          user_id: options.user_id
+        });
+      });
+    }
+  }, {
+    key: 'retrieveWearables',
+    value: function retrieveWearables(options) {
+      var _this10 = this;
+
+      return _bluebird2.default.try(function () {
+        return _this10.modals.wearables.findAll({
           where: {
             created_by: options.user_id,
             image_code: {
@@ -382,7 +414,7 @@ var WhatToServiceAdaptor = function () {
             }
           },
           include: {
-            model: _this9.modals.wearableDate,
+            model: _this10.modals.wearableDate,
             as: 'wearable_dates',
             required: false
           },
@@ -435,10 +467,10 @@ var WhatToServiceAdaptor = function () {
   }, {
     key: 'updateWearable',
     value: function updateWearable(options) {
-      var _this10 = this;
+      var _this11 = this;
 
       return _bluebird2.default.try(function () {
-        return _this10.modals.wearables.update({
+        return _this11.modals.wearables.update({
           name: options.item_name,
           updated_by: options.user_id
         }, {
@@ -451,10 +483,10 @@ var WhatToServiceAdaptor = function () {
   }, {
     key: 'deleteWearable',
     value: function deleteWearable(options) {
-      var _this11 = this;
+      var _this12 = this;
 
       return _bluebird2.default.try(function () {
-        return _this11.modals.wearables.destroy({
+        return _this12.modals.wearables.destroy({
           where: {
             id: options.id,
             created_by: options.user_id,
@@ -464,9 +496,35 @@ var WhatToServiceAdaptor = function () {
       });
     }
   }, {
+    key: 'removeWearableCurrentDate',
+    value: function removeWearableCurrentDate(options) {
+      var _this13 = this;
+
+      return _bluebird2.default.try(function () {
+        return _this13.modals.wearables.findOne({
+          where: {
+            created_by: options.user_id,
+            id: options.id
+          }
+        });
+      }).then(function (wearabbleItem) {
+        var wearable = wearabbleItem.toJSON();
+        return _this13.modals.wearableDate.destroy({
+          where: {
+            selected_date: options.current_date,
+            wearable_id: wearable.id
+          }
+        });
+      }).then(function () {
+        return _this13.retrieveWearables({
+          user_id: options.user_id
+        });
+      });
+    }
+  }, {
     key: 'retrieveToDoList',
     value: function retrieveToDoList(options, limit, offset) {
-      var _this12 = this;
+      var _this14 = this;
 
       return _bluebird2.default.try(function () {
         var todoItemOptions = {
@@ -488,7 +546,7 @@ var WhatToServiceAdaptor = function () {
           todoItemOptions.offset = offset;
         }
 
-        return _bluebird2.default.all([_this12.retrieveAllTodoListItems(todoItemOptions), _this12.retrieveUserTodoItems({
+        return _bluebird2.default.all([_this14.retrieveAllTodoListItems(todoItemOptions), _this14.retrieveUserTodoItems({
           where: {
             user_id: options.user_id,
             status_type: 1
@@ -506,23 +564,27 @@ var WhatToServiceAdaptor = function () {
       });
     }
   }, {
-    key: 'deleteUsertodoCurrentDate',
-    value: function deleteUsertodoCurrentDate(options) {
-      var _this13 = this;
+    key: 'deleteUserTodoCurrentDate',
+    value: function deleteUserTodoCurrentDate(options) {
+      var _this15 = this;
 
       return _bluebird2.default.try(function () {
-        return _this13.modals.todoUserMap.findOne({
-          user_id: options.user_id,
-          todo_id: options.todo_id
+        return _this15.modals.todoUserMap.findOne({
+          where: {
+            user_id: options.user_id,
+            todo_id: options.todo_id
+          }
         });
       }).then(function (todoResult) {
         var meal = todoResult.toJSON();
-        return _this13.modals.todoUserDate.destroy({
-          selected_date: options.current_date,
-          user_meal_id: meal.id
+        return _this15.modals.todoUserDate.destroy({
+          where: {
+            selected_date: options.current_date,
+            user_meal_id: meal.id
+          }
         });
       }).then(function () {
-        return _this13.retrieveUserTodoItems({
+        return _this15.retrieveUserTodoItems({
           user_id: options.user_id
         });
       });
@@ -530,16 +592,16 @@ var WhatToServiceAdaptor = function () {
   }, {
     key: 'retrieveUserToDoList',
     value: function retrieveUserToDoList(options, limit, offset) {
-      var _this14 = this;
+      var _this16 = this;
 
       return _bluebird2.default.try(function () {
-        return _this14.retrieveUserTodoItems({
+        return _this16.retrieveUserTodoItems({
           where: {
             user_id: options.user_id,
             status_type: 1
           },
           include: {
-            model: _this14.modals.todoUserDate,
+            model: _this16.modals.todoUserDate,
             as: 'todo_dates',
             required: false
           }
@@ -567,7 +629,7 @@ var WhatToServiceAdaptor = function () {
           todoItemOptions.offset = offset;
         }
 
-        return _bluebird2.default.all([_this14.retrieveAllTodoListItems(todoItemOptions), userTodos]);
+        return _bluebird2.default.all([_this16.retrieveAllTodoListItems(todoItemOptions), userTodos]);
       }).spread(function (todoItems, userTodos) {
         return todoItems.map(function (item) {
           var userTodo = userTodos.find(function (userItem) {
@@ -617,19 +679,19 @@ var WhatToServiceAdaptor = function () {
   }, {
     key: 'deleteWhatTodo',
     value: function deleteWhatTodo(options) {
-      var _this15 = this;
+      var _this17 = this;
 
       return _bluebird2.default.try(function () {
-        return _this15.modals.todo.destroy(options);
+        return _this17.modals.todo.destroy(options);
       });
     }
   }, {
     key: 'prepareUserToDoList',
     value: function prepareUserToDoList(options) {
-      var _this16 = this;
+      var _this18 = this;
 
       return _bluebird2.default.try(function () {
-        return _this16.retrieveUserTodoItems({
+        return _this18.retrieveUserTodoItems({
           user_id: options.user_id,
           todo_id: [].concat(_toConsumableArray(options.selected_ids), _toConsumableArray(options.unselected_ids))
         });
@@ -639,7 +701,7 @@ var WhatToServiceAdaptor = function () {
             return item.todo_id === id;
           });
           if (todoItem) {
-            return _this16.modals.todoUserMap.update({
+            return _this18.modals.todoUserMap.update({
               status_type: 1
             }, {
               where: {
@@ -648,7 +710,7 @@ var WhatToServiceAdaptor = function () {
             });
           }
 
-          return _this16.modals.todoUserMap.create({
+          return _this18.modals.todoUserMap.create({
             user_id: options.user_id,
             todo_id: id,
             status_type: 1
@@ -658,7 +720,7 @@ var WhatToServiceAdaptor = function () {
             return item.todo_id === id;
           });
           if (todoItem) {
-            return _this16.modals.todoUserMap.update({
+            return _this18.modals.todoUserMap.update({
               status_type: 2
             }, {
               where: {
@@ -667,14 +729,14 @@ var WhatToServiceAdaptor = function () {
             });
           }
 
-          return _this16.modals.todoUserMap.create({
+          return _this18.modals.todoUserMap.create({
             user_id: options.user_id,
             todo_id: id,
             status_type: 2
           });
         }))));
       }).then(function () {
-        return _this16.retrieveUserTodoItems({
+        return _this18.retrieveUserTodoItems({
           user_id: options.user_id
         });
       });
@@ -682,23 +744,25 @@ var WhatToServiceAdaptor = function () {
   }, {
     key: 'updateToDoItem',
     value: function updateToDoItem(options) {
-      var _this17 = this;
+      var _this19 = this;
 
       return _bluebird2.default.try(function () {
-        return _this17.modals.todolUserMap.findOne({
-          user_id: options.user_id,
-          todo_id: options.todo_id
+        return _this19.modals.todolUserMap.findOne({
+          where: {
+            user_id: options.user_id,
+            todo_id: options.todo_id
+          }
         });
       }).then(function (todoResult) {
         var todoUser = todoResult.toJSON();
-        return _this17.modals.todoUserDate.findCreateFind({
+        return _this19.modals.todoUserDate.findCreateFind({
           where: {
             selected_date: options.current_date,
             user_todo_id: todoUser.id
           }
         });
       }).then(function () {
-        return _this17.retrieveUserTodoItems({
+        return _this19.retrieveUserTodoItems({
           user_id: options.user_id
         });
       });
@@ -706,14 +770,14 @@ var WhatToServiceAdaptor = function () {
   }, {
     key: 'addUserToDoList',
     value: function addUserToDoList(options) {
-      var _this18 = this;
+      var _this20 = this;
 
       return _bluebird2.default.try(function () {
-        return _this18.modals.todo.bulkCreate(options.todo_items, { returning: true });
+        return _this20.modals.todo.bulkCreate(options.todo_items, { returning: true });
       }).then(function (todoList) {
         var userTodo = todoList;
         return _bluebird2.default.all([userTodo].concat(_toConsumableArray(userTodo.map(function (todoItem) {
-          return _this18.modals.todoUserMap.create({
+          return _this20.modals.todoUserMap.create({
             todo_id: todoItem.id,
             user_id: options.user_id
           });
