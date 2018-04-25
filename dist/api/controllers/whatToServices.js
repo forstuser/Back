@@ -587,14 +587,12 @@ var WhatToController = function () {
       if (request.pre.userExist && !request.pre.forceUpdate) {
         return _bluebird2.default.try(function () {
           return whatToServiceAdaptor.deleteWearable({
-            item_name: request.payload.name,
             user_id: user.ID || user.id, id: request.params.id
           });
         }).then(function () {
           return reply({
             status: true,
             wearable: {
-              name: request.payload.name,
               id: request.params.id
             }
           });
@@ -766,7 +764,8 @@ var WhatToController = function () {
                 name: todoItem,
                 status_type: 11
               };
-            })
+            }),
+            current_date: request.payload.current_date
           });
         }).then(function (todoList) {
           return reply({

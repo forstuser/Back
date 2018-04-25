@@ -2672,6 +2672,7 @@ function prepareWhatToServiceRoutes(
             names: [
               joi.array().items(joi.string()).required().min(0),
               joi.allow(null)],
+            current_date: [joi.string(), joi.allow(null)],
           },
         },
       },
@@ -2861,7 +2862,6 @@ function prepareWhatToServiceRoutes(
       },
     });
   }
-
 
 }
 

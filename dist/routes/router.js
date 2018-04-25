@@ -2298,7 +2298,8 @@ function prepareWhatToServiceRoutes(whatToServiceController, whatToServiceRoutes
         description: 'Create or update user todos list.',
         validate: {
           payload: {
-            names: [_joi2.default.array().items(_joi2.default.string()).required().min(0), _joi2.default.allow(null)]
+            names: [_joi2.default.array().items(_joi2.default.string()).required().min(0), _joi2.default.allow(null)],
+            current_date: [_joi2.default.string(), _joi2.default.allow(null)]
           }
         }
       }

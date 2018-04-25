@@ -522,12 +522,10 @@ export default class WhatToController {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
       return Promise.try(() => whatToServiceAdaptor.deleteWearable({
-        item_name: request.payload.name,
         user_id: user.ID || user.id, id: request.params.id,
       })).then(() => reply({
         status: true,
         wearable: {
-          name: request.payload.name,
           id: request.params.id,
         },
       })).catch((err) => {
@@ -689,6 +687,7 @@ export default class WhatToController {
           name: todoItem,
           status_type: 11,
         })),
+        current_date: request.payload.current_date,
       })).then((todoList) => reply({
         status: true,
         todoList,
