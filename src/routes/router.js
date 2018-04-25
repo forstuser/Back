@@ -2554,7 +2554,7 @@ function prepareWhatToServiceRoutes(
     });
 
     whatToServiceRoutes.push({
-      method: 'delete',
+      method: 'DELETE',
       path: '/user/meals/{meal_id}/remove',
       config: {
         auth: 'jwt',
@@ -2571,7 +2571,7 @@ function prepareWhatToServiceRoutes(
     });
 
     whatToServiceRoutes.push({
-      method: 'delete',
+      method: 'DELETE',
       path: '/user/meals/{meal_id}',
       config: {
         auth: 'jwt',
@@ -2700,7 +2700,7 @@ function prepareWhatToServiceRoutes(
     });
 
     whatToServiceRoutes.push({
-      method: 'delete',
+      method: 'DELETE',
       path: '/user/todos/{todo_id}/remove',
       config: {
         auth: 'jwt',
@@ -2718,7 +2718,7 @@ function prepareWhatToServiceRoutes(
     });
 
     whatToServiceRoutes.push({
-      method: 'delete',
+      method: 'DELETE',
       path: '/user/todos/{todo_id}',
       config: {
         auth: 'jwt',
@@ -2816,7 +2816,53 @@ function prepareWhatToServiceRoutes(
         description: 'DELETE user wearable list.',
       },
     });
+
+    whatToServiceRoutes.push({
+      method: 'PUT',
+      path: '/user/wearables/{id}',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: WhatToServiceController.updateWearableCurrentDate,
+        description: 'Update user wearable item current date.',
+        validate: {
+          payload: {
+            current_date: joi.string().required(),
+          },
+        },
+      },
+    });
+
+    whatToServiceRoutes.push({
+      method: 'DELETE',
+      path: '/user/wearables/{id}',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: WhatToServiceController.removeWearable,
+        description: 'Remove user Wearable item.',
+        validate: {
+          payload: {
+            current_date: joi.string().required(),
+          },
+        },
+      },
+    });
   }
+
+
 }
 
 export default (app, modals) => {

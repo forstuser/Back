@@ -44,7 +44,7 @@ export default class WhatToServiceAdaptor {
                   },
                 }],
             },
-            order: [['name', 'asc']],
+            order: [['item_type', 'asc'],['name', 'asc']],
           };
           if (options.is_veg) {
             mealItemOptions.where.is_veg = options.is_veg;
@@ -342,6 +342,25 @@ export default class WhatToServiceAdaptor {
     }));
   }
 
+  updateWearableCurrentDate(options) {
+    return Promise.try(() => this.modals.wearables.findOne({
+      where: {
+        created_by: options.user_id,
+        id: options.id,
+      },
+    })).then((wearableItems) => {
+      const wearable = wearableItems.toJSON();
+      return this.modals.wearableDate.findCreateFind({
+        where: {
+          selected_date: options.current_date,
+          werable_id: wearable.id,
+        },
+      });
+    }).then(() => this.retrieveWearables({
+      user_id: options.user_id,
+    }));
+  }
+
   retrieveWearables(options) {
     return Promise.try(() => this.modals.wearables.findAll({
       where: {
@@ -459,6 +478,25 @@ export default class WhatToServiceAdaptor {
     }));
   }
 
+  removeWearableCurrentDate(options) {
+    return Promise.try(() => this.modals.wearables.findOne({
+      where: {
+        created_by: options.user_id,
+        id: options.id,
+      },
+    })).then((wearabbleItem) => {
+      const wearable = wearabbleItem.toJSON();
+      return this.modals.wearableDate.destroy({
+        where: {
+          selected_date: options.current_date,
+          wearable_id: wearable.id,
+        },
+      });
+    }).then(() => this.retrieveWearables({
+      user_id: options.user_id,
+    }));
+  }
+
   retrieveToDoList(options, limit, offset) {
     return Promise.try(() => {
       const todoItemOptions = {
@@ -471,7 +509,7 @@ export default class WhatToServiceAdaptor {
             },
           },
         },
-        order: [['name', 'asc']],
+        order: [['item_type', 'asc'],['name', 'asc']],
       };
 
       if (limit) {
@@ -503,13 +541,17 @@ export default class WhatToServiceAdaptor {
 
   deleteUserTodoCurrentDate(options) {
     return Promise.try(() => this.modals.todoUserMap.findOne({
-      user_id: options.user_id,
-      todo_id: options.todo_id,
+      where: {
+        user_id: options.user_id,
+        todo_id: options.todo_id,
+      },
     })).then((todoResult) => {
       const meal = todoResult.toJSON();
       return this.modals.todoUserDate.destroy({
-        selected_date: options.current_date,
-        user_meal_id: meal.id,
+        where: {
+          selected_date: options.current_date,
+          user_meal_id: meal.id,
+        },
       });
     }).then(() => this.retrieveUserTodoItems({
       user_id: options.user_id,
@@ -532,7 +574,7 @@ export default class WhatToServiceAdaptor {
         then((userTodos) => {
           const todoItemOptions = {
             where: {
-              id: userTodos.map((item) => item.meal_id),
+              id: userTodos.map((item) => item.todo_id),
               $or: {
                 status_type: 1,
                 $and: {
@@ -700,8 +742,10 @@ export default class WhatToServiceAdaptor {
 
   updateToDoItem(options) {
     return Promise.try(() => this.modals.todolUserMap.findOne({
-      user_id: options.user_id,
-      todo_id: options.todo_id,
+      where: {
+        user_id: options.user_id,
+        todo_id: options.todo_id,
+      },
     })).then((todoResult) => {
       const todoUser = todoResult.toJSON();
       return this.modals.todoUserDate.findCreateFind({
