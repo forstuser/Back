@@ -31,12 +31,18 @@ export default class WhatToServiceAdaptor {
         spread((stateMeals, userMeals) => {
           const mealItemOptions = {
             where: {
-              id: stateMeals.map((item) => item.meal_id),
-              $or: {
-                created_by: options.user_id,
-                status_type: [1, 11],
-              },
-              status_type: 1,
+              $or: [
+                {
+                  $and: {
+                    id: stateMeals.map((item) => item.meal_id),
+                    status_type: 1,
+                  },
+                }, {
+                  $and: {
+                    created_by: options.user_id,
+                    status_type: [1, 11],
+                  },
+                }],
             },
             order: [['name', 'asc']],
           };
@@ -81,8 +87,11 @@ export default class WhatToServiceAdaptor {
             where: {
               id: userMeals.map((item) => item.meal_id),
               $or: {
-                created_by: options.user_id,
-                status_type: [1, 11],
+                status_type: 1,
+                $and: {
+                  created_by: options.user_id,
+                  status_type: [1, 11],
+                },
               },
             },
             order: [['name', 'asc']],
@@ -142,8 +151,6 @@ export default class WhatToServiceAdaptor {
           } else if (lastDateItem) {
             item.current_date = lastDateItem.selected_date;
             item.last_date = lastDateItem.selected_date;
-          } else {
-            item.current_date = moment().subtract(30, 'd');
           }
 
           item.state_id = userMeal.state_id;
@@ -154,19 +161,20 @@ export default class WhatToServiceAdaptor {
               result, ['current_date'],
               ['desc']);
           const mealList = mealItemList.filter(
-              (item) => moment(item.current_date, moment.ISO_8601).
-                      isSame(options.current_date ?
-                          moment(options.current_date, moment.ISO_8601) :
-                          moment(), 'day') ||
-                  moment(item.future_date, moment.ISO_8601).
-                      isSame(options.current_date ?
-                          moment(options.current_date, moment.ISO_8601) :
-                          moment(), 'day') ||
-                  moment(item.last_date, moment.ISO_8601).
-                      isSame(options.current_date ?
-                          moment(options.current_date, moment.ISO_8601) :
-                          moment(), 'day'));
-          const remainingMealList = mealItemList.filter(
+              (item) => item.current_date &&
+                  (moment(item.current_date, moment.ISO_8601).
+                          isSame(options.current_date ?
+                              moment(options.current_date, moment.ISO_8601) :
+                              moment(), 'day') ||
+                      moment(item.future_date, moment.ISO_8601).
+                          isSame(options.current_date ?
+                              moment(options.current_date, moment.ISO_8601) :
+                              moment(), 'day') ||
+                      moment(item.last_date, moment.ISO_8601).
+                          isSame(options.current_date ?
+                              moment(options.current_date, moment.ISO_8601) :
+                              moment(), 'day')));
+          const previousMealList = mealItemList.filter(
               (item) => (item.current_date &&
                   moment(item.current_date, moment.ISO_8601).
                       isBefore(options.current_date ?
@@ -176,8 +184,11 @@ export default class WhatToServiceAdaptor {
                       isAfter(options.current_date ?
                           moment(options.current_date, moment.ISO_8601) :
                           moment(), 'day')));
+          const remainingMealList = mealItemList.filter(
+              (item) => (!item.current_date));
+          mealList.push(...remainingMealList);
           mealList.push(...(_.orderBy(
-              remainingMealList, ['current_date'],
+              previousMealList, ['current_date'],
               ['desc'])));
 
           return mealList;
@@ -221,10 +232,22 @@ export default class WhatToServiceAdaptor {
   }
 
   prepareUserMealList(options) {
-    return Promise.try(() => this.retrieveUserMeals({
-      user_id: options.user_id,
-      meal_id: [...options.selected_ids, ...options.unselected_ids],
-    })).then((mealResult) => Promise.all([
+    return Promise.try(() => Promise.all([
+      this.retrieveUserMeals({
+        user_id: options.user_id,
+        meal_id: [...options.selected_ids, ...options.unselected_ids],
+      }), this.modals.mealUserMap.update({
+        status_type: 2,
+      }, {
+        where: {
+          user_id: options.user_id,
+          meal_id: {
+            $notIn: [
+              ...options.selected_ids,
+              ...options.unselected_ids],
+          },
+        },
+      })])).then((mealResult) => Promise.all([
       ...options.selected_ids.map((id) => {
         const meal = mealResult.find((item) => item.meal_id === id);
         if (meal) {
@@ -271,8 +294,10 @@ export default class WhatToServiceAdaptor {
 
   updateUserMealCurrentDate(options) {
     return Promise.try(() => this.modals.mealUserMap.findOne({
-      user_id: options.user_id,
-      meal_id: options.meal_id,
+      where: {
+        user_id: options.user_id,
+        meal_id: options.meal_id,
+      },
     })).then((mealResult) => {
       const meal = mealResult.toJSON();
       return this.modals.mealUserDate.findCreateFind({
@@ -288,13 +313,17 @@ export default class WhatToServiceAdaptor {
 
   deleteUserMealCurrentDate(options) {
     return Promise.try(() => this.modals.mealUserMap.findOne({
-      user_id: options.user_id,
-      meal_id: options.meal_id,
+      where: {
+        user_id: options.user_id,
+        meal_id: options.meal_id,
+      },
     })).then((mealResult) => {
       const meal = mealResult.toJSON();
       return this.modals.mealUserDate.destroy({
-        selected_date: options.current_date,
-        user_meal_id: meal.id,
+        where: {
+          selected_date: options.current_date,
+          user_meal_id: meal.id,
+        },
       });
     }).then(() => this.retrieveUserMealItems({
       user_id: options.user_id,
@@ -367,8 +396,6 @@ export default class WhatToServiceAdaptor {
       } else if (lastDateItem) {
         item.current_date = lastDateItem.selected_date;
         item.last_date = lastDateItem.selected_date;
-      } else {
-        item.current_date = moment().subtract(30, 'd');
       }
 
       return item;
@@ -377,19 +404,20 @@ export default class WhatToServiceAdaptor {
           result, ['current_date'],
           ['desc']);
       const wearableList = wearableItems.filter(
-          (item) => moment(item.current_date, moment.ISO_8601).
-                  isSame(options.current_date ?
-                      moment(options.current_date, moment.ISO_8601) :
-                      moment(), 'day') ||
-              moment(item.future_date, moment.ISO_8601).
-                  isSame(options.current_date ?
-                      moment(options.current_date, moment.ISO_8601) :
-                      moment(), 'day') ||
-              moment(item.last_date, moment.ISO_8601).
-                  isSame(options.current_date ?
-                      moment(options.current_date, moment.ISO_8601) :
-                      moment(), 'day'));
-      const remainingWearableList = wearableItems.filter(
+          (item) => item.current_date &&
+              (moment(item.current_date, moment.ISO_8601).
+                      isSame(options.current_date ?
+                          moment(options.current_date, moment.ISO_8601) :
+                          moment(), 'day') ||
+                  moment(item.future_date, moment.ISO_8601).
+                      isSame(options.current_date ?
+                          moment(options.current_date, moment.ISO_8601) :
+                          moment(), 'day') ||
+                  moment(item.last_date, moment.ISO_8601).
+                      isSame(options.current_date ?
+                          moment(options.current_date, moment.ISO_8601) :
+                          moment(), 'day')));
+      const previousWearableList = wearableItems.filter(
           (item) => (item.current_date &&
               moment(item.current_date, moment.ISO_8601).
                   isBefore(options.current_date ?
@@ -399,8 +427,11 @@ export default class WhatToServiceAdaptor {
                   isAfter(options.current_date ?
                       moment(options.current_date, moment.ISO_8601) :
                       moment(), 'day')));
+      const remainingWearableList = wearableItems.filter(
+          (item) => (!item.current_date));
+      wearableList.push(...remainingWearableList);
       wearableList.push(...(_.orderBy(
-          remainingWearableList, ['current_date'],
+          previousWearableList, ['current_date'],
           ['desc'])));
 
       return wearableList;
@@ -432,10 +463,12 @@ export default class WhatToServiceAdaptor {
     return Promise.try(() => {
       const todoItemOptions = {
         where: {
-          status_type: 1,
           $or: {
-            created_by: options.user_id,
-            status_type: [1, 11],
+            status_type: 1,
+            $and: {
+              created_by: options.user_id,
+              status_type: [1, 11],
+            },
           },
         },
         order: [['name', 'asc']],
@@ -500,10 +533,12 @@ export default class WhatToServiceAdaptor {
           const todoItemOptions = {
             where: {
               id: userTodos.map((item) => item.meal_id),
-              status_type: 1,
               $or: {
-                created_by: options.user_id,
-                status_type: [1, 11],
+                status_type: 1,
+                $and: {
+                  created_by: options.user_id,
+                  status_type: [1, 11],
+                },
               },
             },
             order: [['name', 'asc']],
@@ -560,29 +595,28 @@ export default class WhatToServiceAdaptor {
           } else if (lastDateItem) {
             item.current_date = lastDateItem.selected_date;
             item.last_date = lastDateItem.selected_date;
-          } else {
-            item.current_date = moment().subtract(30, 'd');
           }
 
           return item;
         })).then((result) => {
-          const mealItemList = _.orderBy(
+          const todoItemList = _.orderBy(
               result, ['current_date'],
               ['desc']);
-          const mealList = mealItemList.filter(
-              (item) => moment(item.current_date, moment.ISO_8601).
-                      isSame(options.current_date ?
-                          moment(options.current_date, moment.ISO_8601) :
-                          moment(), 'day') ||
-                  moment(item.future_date, moment.ISO_8601).
-                      isSame(options.current_date ?
-                          moment(options.current_date, moment.ISO_8601) :
-                          moment(), 'day') ||
-                  moment(item.last_date, moment.ISO_8601).
-                      isSame(options.current_date ?
-                          moment(options.current_date, moment.ISO_8601) :
-                          moment(), 'day'));
-          const remainingMealList = mealItemList.filter(
+          const todoList = todoItemList.filter(
+              (item) => item.current_date &&
+                  (moment(item.current_date, moment.ISO_8601).
+                          isSame(options.current_date ?
+                              moment(options.current_date, moment.ISO_8601) :
+                              moment(), 'day') ||
+                      moment(item.future_date, moment.ISO_8601).
+                          isSame(options.current_date ?
+                              moment(options.current_date, moment.ISO_8601) :
+                              moment(), 'day') ||
+                      moment(item.last_date, moment.ISO_8601).
+                          isSame(options.current_date ?
+                              moment(options.current_date, moment.ISO_8601) :
+                              moment(), 'day')));
+          const previousTodoList = todoItemList.filter(
               (item) => (item.current_date &&
                   moment(item.current_date, moment.ISO_8601).
                       isBefore(options.current_date ?
@@ -592,11 +626,14 @@ export default class WhatToServiceAdaptor {
                       isAfter(options.current_date ?
                           moment(options.current_date, moment.ISO_8601) :
                           moment(), 'day')));
-          mealList.push(...(_.orderBy(
-              remainingMealList, ['current_date'],
+          const remainingTodoList = todoItemList.filter(
+              (item) => (!item.current_date));
+          todoList.push(...remainingTodoList);
+          todoList.push(...(_.orderBy(
+              previousTodoList, ['current_date'],
               ['desc'])));
 
-          return mealList;
+          return todoList;
         });
   }
 
@@ -605,10 +642,22 @@ export default class WhatToServiceAdaptor {
   }
 
   prepareUserToDoList(options) {
-    return Promise.try(() => this.retrieveUserTodoItems({
-      user_id: options.user_id,
-      todo_id: [...options.selected_ids, ...options.unselected_ids],
-    })).then((userTodo) => Promise.all([
+    return Promise.try(() => Promise.all([
+      this.retrieveUserTodoItems({
+        user_id: options.user_id,
+        todo_id: [...options.selected_ids, ...options.unselected_ids],
+      }), this.modals.todoUserMap.update({
+        status_type: 2,
+      }, {
+        where: {
+          user_id: options.user_id,
+          todo_id: {
+            $notIn: [
+              ...options.selected_ids,
+              ...options.unselected_ids],
+          },
+        },
+      })])).spread((userTodo) => Promise.all([
       ...options.selected_ids.map((id) => {
         const todoItem = userTodo.find((item) => item.todo_id === id);
         if (todoItem) {

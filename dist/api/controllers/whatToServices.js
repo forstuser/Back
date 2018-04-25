@@ -806,7 +806,7 @@ var WhatToController = function () {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist && !request.pre.forceUpdate) {
         return _bluebird2.default.try(function () {
-          return whatToServiceAdaptor.deleteUsertodoCurrentDate({
+          return whatToServiceAdaptor.deleteUserTodoCurrentDate({
             user_id: user.ID || user.id,
             todo_id: request.params.todo_id,
             current_date: request.payload.current_date

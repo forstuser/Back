@@ -61,14 +61,19 @@ var WhatToServiceAdaptor = function () {
       }).spread(function (stateMeals, userMeals) {
         var mealItemOptions = {
           where: {
-            id: stateMeals.map(function (item) {
-              return item.meal_id;
-            }),
-            $or: {
-              created_by: options.user_id,
-              status_type: [1, 11]
-            },
-            status_type: 1
+            $or: [{
+              $and: {
+                id: stateMeals.map(function (item) {
+                  return item.meal_id;
+                }),
+                status_type: 1
+              }
+            }, {
+              $and: {
+                created_by: options.user_id,
+                status_type: [1, 11]
+              }
+            }]
           },
           order: [['name', 'asc']]
         };
@@ -120,8 +125,11 @@ var WhatToServiceAdaptor = function () {
               return item.meal_id;
             }),
             $or: {
-              created_by: options.user_id,
-              status_type: [1, 11]
+              status_type: 1,
+              $and: {
+                created_by: options.user_id,
+                status_type: [1, 11]
+              }
             }
           },
           order: [['name', 'asc']]
@@ -166,8 +174,6 @@ var WhatToServiceAdaptor = function () {
           } else if (lastDateItem) {
             item.current_date = lastDateItem.selected_date;
             item.last_date = lastDateItem.selected_date;
-          } else {
-            item.current_date = (0, _moment2.default)().subtract(30, 'd');
           }
 
           item.state_id = userMeal.state_id;
@@ -177,12 +183,16 @@ var WhatToServiceAdaptor = function () {
       }).then(function (result) {
         var mealItemList = _lodash2.default.orderBy(result, ['current_date'], ['desc']);
         var mealList = mealItemList.filter(function (item) {
-          return (0, _moment2.default)(item.current_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day') || (0, _moment2.default)(item.future_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day') || (0, _moment2.default)(item.last_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day');
+          return item.current_date && ((0, _moment2.default)(item.current_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day') || (0, _moment2.default)(item.future_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day') || (0, _moment2.default)(item.last_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day'));
         });
-        var remainingMealList = mealItemList.filter(function (item) {
+        var previousMealList = mealItemList.filter(function (item) {
           return item.current_date && (0, _moment2.default)(item.current_date, _moment2.default.ISO_8601).isBefore(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day') || (0, _moment2.default)(item.current_date, _moment2.default.ISO_8601).isAfter(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day');
         });
-        mealList.push.apply(mealList, _toConsumableArray(_lodash2.default.orderBy(remainingMealList, ['current_date'], ['desc'])));
+        var remainingMealList = mealItemList.filter(function (item) {
+          return !item.current_date;
+        });
+        mealList.push.apply(mealList, _toConsumableArray(remainingMealList));
+        mealList.push.apply(mealList, _toConsumableArray(_lodash2.default.orderBy(previousMealList, ['current_date'], ['desc'])));
 
         return mealList;
       });
@@ -246,10 +256,19 @@ var WhatToServiceAdaptor = function () {
       var _this4 = this;
 
       return _bluebird2.default.try(function () {
-        return _this4.retrieveUserMeals({
+        return _bluebird2.default.all([_this4.retrieveUserMeals({
           user_id: options.user_id,
           meal_id: [].concat(_toConsumableArray(options.selected_ids), _toConsumableArray(options.unselected_ids))
-        });
+        }), _this4.modals.mealUserMap.update({
+          status_type: 2
+        }, {
+          where: {
+            user_id: options.user_id,
+            meal_id: {
+              $notIn: [].concat(_toConsumableArray(options.selected_ids), _toConsumableArray(options.unselected_ids))
+            }
+          }
+        })]);
       }).then(function (mealResult) {
         return _bluebird2.default.all([].concat(_toConsumableArray(options.selected_ids.map(function (id) {
           var meal = mealResult.find(function (item) {
@@ -307,8 +326,10 @@ var WhatToServiceAdaptor = function () {
 
       return _bluebird2.default.try(function () {
         return _this5.modals.mealUserMap.findOne({
-          user_id: options.user_id,
-          meal_id: options.meal_id
+          where: {
+            user_id: options.user_id,
+            meal_id: options.meal_id
+          }
         });
       }).then(function (mealResult) {
         var meal = mealResult.toJSON();
@@ -331,14 +352,18 @@ var WhatToServiceAdaptor = function () {
 
       return _bluebird2.default.try(function () {
         return _this6.modals.mealUserMap.findOne({
-          user_id: options.user_id,
-          meal_id: options.meal_id
+          where: {
+            user_id: options.user_id,
+            meal_id: options.meal_id
+          }
         });
       }).then(function (mealResult) {
         var meal = mealResult.toJSON();
         return _this6.modals.mealUserDate.destroy({
-          selected_date: options.current_date,
-          user_meal_id: meal.id
+          where: {
+            selected_date: options.current_date,
+            user_meal_id: meal.id
+          }
         });
       }).then(function () {
         return _this6.retrieveUserMealItems({
@@ -413,8 +438,6 @@ var WhatToServiceAdaptor = function () {
           } else if (lastDateItem) {
             item.current_date = lastDateItem.selected_date;
             item.last_date = lastDateItem.selected_date;
-          } else {
-            item.current_date = (0, _moment2.default)().subtract(30, 'd');
           }
 
           return item;
@@ -422,12 +445,16 @@ var WhatToServiceAdaptor = function () {
       }).then(function (result) {
         var wearableItems = _lodash2.default.orderBy(result, ['current_date'], ['desc']);
         var wearableList = wearableItems.filter(function (item) {
-          return (0, _moment2.default)(item.current_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day') || (0, _moment2.default)(item.future_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day') || (0, _moment2.default)(item.last_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day');
+          return item.current_date && ((0, _moment2.default)(item.current_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day') || (0, _moment2.default)(item.future_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day') || (0, _moment2.default)(item.last_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day'));
         });
-        var remainingWearableList = wearableItems.filter(function (item) {
+        var previousWearableList = wearableItems.filter(function (item) {
           return item.current_date && (0, _moment2.default)(item.current_date, _moment2.default.ISO_8601).isBefore(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day') || (0, _moment2.default)(item.current_date, _moment2.default.ISO_8601).isAfter(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day');
         });
-        wearableList.push.apply(wearableList, _toConsumableArray(_lodash2.default.orderBy(remainingWearableList, ['current_date'], ['desc'])));
+        var remainingWearableList = wearableItems.filter(function (item) {
+          return !item.current_date;
+        });
+        wearableList.push.apply(wearableList, _toConsumableArray(remainingWearableList));
+        wearableList.push.apply(wearableList, _toConsumableArray(_lodash2.default.orderBy(previousWearableList, ['current_date'], ['desc'])));
 
         return wearableList;
       });
@@ -471,10 +498,12 @@ var WhatToServiceAdaptor = function () {
       return _bluebird2.default.try(function () {
         var todoItemOptions = {
           where: {
-            status_type: 1,
             $or: {
-              created_by: options.user_id,
-              status_type: [1, 11]
+              status_type: 1,
+              $and: {
+                created_by: options.user_id,
+                status_type: [1, 11]
+              }
             }
           },
           order: [['name', 'asc']]
@@ -506,8 +535,8 @@ var WhatToServiceAdaptor = function () {
       });
     }
   }, {
-    key: 'deleteUsertodoCurrentDate',
-    value: function deleteUsertodoCurrentDate(options) {
+    key: 'deleteUserTodoCurrentDate',
+    value: function deleteUserTodoCurrentDate(options) {
       var _this13 = this;
 
       return _bluebird2.default.try(function () {
@@ -550,10 +579,12 @@ var WhatToServiceAdaptor = function () {
             id: userTodos.map(function (item) {
               return item.meal_id;
             }),
-            status_type: 1,
             $or: {
-              created_by: options.user_id,
-              status_type: [1, 11]
+              status_type: 1,
+              $and: {
+                created_by: options.user_id,
+                status_type: [1, 11]
+              }
             }
           },
           order: [['name', 'asc']]
@@ -595,23 +626,25 @@ var WhatToServiceAdaptor = function () {
           } else if (lastDateItem) {
             item.current_date = lastDateItem.selected_date;
             item.last_date = lastDateItem.selected_date;
-          } else {
-            item.current_date = (0, _moment2.default)().subtract(30, 'd');
           }
 
           return item;
         });
       }).then(function (result) {
-        var mealItemList = _lodash2.default.orderBy(result, ['current_date'], ['desc']);
-        var mealList = mealItemList.filter(function (item) {
-          return (0, _moment2.default)(item.current_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day') || (0, _moment2.default)(item.future_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day') || (0, _moment2.default)(item.last_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day');
+        var todoItemList = _lodash2.default.orderBy(result, ['current_date'], ['desc']);
+        var todoList = todoItemList.filter(function (item) {
+          return item.current_date && ((0, _moment2.default)(item.current_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day') || (0, _moment2.default)(item.future_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day') || (0, _moment2.default)(item.last_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day'));
         });
-        var remainingMealList = mealItemList.filter(function (item) {
+        var previousTodoList = todoItemList.filter(function (item) {
           return item.current_date && (0, _moment2.default)(item.current_date, _moment2.default.ISO_8601).isBefore(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day') || (0, _moment2.default)(item.current_date, _moment2.default.ISO_8601).isAfter(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day');
         });
-        mealList.push.apply(mealList, _toConsumableArray(_lodash2.default.orderBy(remainingMealList, ['current_date'], ['desc'])));
+        var remainingTodoList = todoItemList.filter(function (item) {
+          return !item.current_date;
+        });
+        todoList.push.apply(todoList, _toConsumableArray(remainingTodoList));
+        todoList.push.apply(todoList, _toConsumableArray(_lodash2.default.orderBy(previousTodoList, ['current_date'], ['desc'])));
 
-        return mealList;
+        return todoList;
       });
     }
   }, {
@@ -629,11 +662,20 @@ var WhatToServiceAdaptor = function () {
       var _this16 = this;
 
       return _bluebird2.default.try(function () {
-        return _this16.retrieveUserTodoItems({
+        return _bluebird2.default.all([_this16.retrieveUserTodoItems({
           user_id: options.user_id,
           todo_id: [].concat(_toConsumableArray(options.selected_ids), _toConsumableArray(options.unselected_ids))
-        });
-      }).then(function (userTodo) {
+        }), _this16.modals.todoUserMap.update({
+          status_type: 2
+        }, {
+          where: {
+            user_id: options.user_id,
+            todo_id: {
+              $notIn: [].concat(_toConsumableArray(options.selected_ids), _toConsumableArray(options.unselected_ids))
+            }
+          }
+        })]);
+      }).spread(function (userTodo) {
         return _bluebird2.default.all([].concat(_toConsumableArray(options.selected_ids.map(function (id) {
           var todoItem = userTodo.find(function (item) {
             return item.todo_id === id;
