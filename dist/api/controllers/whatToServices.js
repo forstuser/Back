@@ -669,92 +669,6 @@ var WhatToController = function () {
       }
     }
   }, {
-    key: 'removeToDos',
-    value: function removeToDos(request, reply) {
-      var user = _shared2.default.verifyAuthorization(request.headers);
-      if (request.pre.userExist && !request.pre.forceUpdate) {
-        return _bluebird2.default.try(function () {
-          return whatToServiceAdaptor.deleteUserTodoCurrentDate({
-            user_id: user.ID || user.id,
-            todo_id: request.params.todo_id,
-            current_date: request.payload.current_date
-          });
-        }).then(function (removelist) {
-          return reply({
-            status: true,
-            removelist: removelist
-          });
-        }).catch(function (err) {
-          console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
-
-          return reply({
-            status: false
-          });
-        });
-      } else if (request.pre.userExist === 0) {
-        return reply({
-          status: false,
-          message: 'Inactive User',
-          forceUpdate: request.pre.forceUpdate
-        }).code(402);
-      } else if (!request.pre.userExist) {
-        return reply({
-          status: false,
-          message: 'Unauthorized',
-          forceUpdate: request.pre.forceUpdate
-        }).code(401);
-      } else {
-        return reply({
-          status: false,
-          message: 'Forbidden',
-          forceUpdate: request.pre.forceUpdate
-        });
-      }
-    }
-  }, {
-    key: 'removeToDos',
-    value: function removeToDos(request, reply) {
-      var user = _shared2.default.verifyAuthorization(request.headers);
-      if (request.pre.userExist && !request.pre.forceUpdate) {
-        return _bluebird2.default.try(function () {
-          return whatToServiceAdaptor.deleteUserTodoCurrentDate({
-            user_id: user.ID || user.id,
-            todo_id: request.params.todo_id,
-            current_date: request.payload.current_date
-          });
-        }).then(function (removelist) {
-          return reply({
-            status: true,
-            removelist: removelist
-          });
-        }).catch(function (err) {
-          console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
-
-          return reply({
-            status: false
-          });
-        });
-      } else if (request.pre.userExist === 0) {
-        return reply({
-          status: false,
-          message: 'Inactive User',
-          forceUpdate: request.pre.forceUpdate
-        }).code(402);
-      } else if (!request.pre.userExist) {
-        return reply({
-          status: false,
-          message: 'Unauthorized',
-          forceUpdate: request.pre.forceUpdate
-        }).code(401);
-      } else {
-        return reply({
-          status: false,
-          message: 'Forbidden',
-          forceUpdate: request.pre.forceUpdate
-        });
-      }
-    }
-  }, {
     key: 'retrieveToDoListItems',
     value: function retrieveToDoListItems(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
@@ -1022,9 +936,11 @@ var WhatToController = function () {
       if (request.pre.userExist && !request.pre.forceUpdate) {
         return _bluebird2.default.try(function () {
           return whatToServiceAdaptor.deleteWhatTodo({
-            created_by: user.ID || user.id,
-            id: request.params.todo_id,
-            status_type: 11
+            where: {
+              created_by: user.ID || user.id,
+              id: request.params.todo_id,
+              status_type: 11
+            }
           });
         }).then(function () {
           return reply({

@@ -600,86 +600,6 @@ export default class WhatToController {
     }
   }
 
-  static removeToDos(request, reply) {
-    const user = shared.verifyAuthorization(request.headers);
-    if (request.pre.userExist && !request.pre.forceUpdate) {
-      return Promise.try(() => whatToServiceAdaptor.deleteUserTodoCurrentDate({
-        user_id: user.ID || user.id,
-        todo_id: request.params.todo_id,
-        current_date: request.payload.current_date,
-      })).then((removelist) => reply({
-        status: true,
-        removelist,
-      })).catch((err) => {
-        console.log(
-            `Error on ${new Date()} for user ${user.id ||
-            user.ID} is as follow: \n \n ${err}`);
-
-        return reply({
-          status: false,
-        });
-      });
-    } else if (request.pre.userExist === 0) {
-      return reply({
-        status: false,
-        message: 'Inactive User',
-        forceUpdate: request.pre.forceUpdate,
-      }).code(402);
-    } else if (!request.pre.userExist) {
-      return reply({
-        status: false,
-        message: 'Unauthorized',
-        forceUpdate: request.pre.forceUpdate,
-      }).code(401);
-    } else {
-      return reply({
-        status: false,
-        message: 'Forbidden',
-        forceUpdate: request.pre.forceUpdate,
-      });
-    }
-  }
-
-  static removeToDos(request, reply) {
-    const user = shared.verifyAuthorization(request.headers);
-    if (request.pre.userExist && !request.pre.forceUpdate) {
-      return Promise.try(() => whatToServiceAdaptor.deleteUserTodoCurrentDate({
-        user_id: user.ID || user.id,
-        todo_id: request.params.todo_id,
-        current_date: request.payload.current_date,
-      })).then((removelist) => reply({
-        status: true,
-        removelist,
-      })).catch((err) => {
-        console.log(
-            `Error on ${new Date()} for user ${user.id ||
-            user.ID} is as follow: \n \n ${err}`);
-
-        return reply({
-          status: false,
-        });
-      });
-    } else if (request.pre.userExist === 0) {
-      return reply({
-        status: false,
-        message: 'Inactive User',
-        forceUpdate: request.pre.forceUpdate,
-      }).code(402);
-    } else if (!request.pre.userExist) {
-      return reply({
-        status: false,
-        message: 'Unauthorized',
-        forceUpdate: request.pre.forceUpdate,
-      }).code(401);
-    } else {
-      return reply({
-        status: false,
-        message: 'Forbidden',
-        forceUpdate: request.pre.forceUpdate,
-      });
-    }
-  }
-
   static retrieveToDoListItems(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
@@ -927,9 +847,11 @@ export default class WhatToController {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
       return Promise.try(() => whatToServiceAdaptor.deleteWhatTodo({
-        created_by: user.ID || user.id,
-        id: request.params.todo_id,
-        status_type: 11,
+        where: {
+          created_by: user.ID || user.id,
+          id: request.params.todo_id,
+          status_type: 11,
+        },
       })).then(() => reply({
         status: true,
       })).catch((err) => {
