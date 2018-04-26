@@ -204,6 +204,7 @@ export default class WhatToController {
         })),
         is_veg: request.payload.is_veg,
         state_id: request.payload.state_id,
+        current_date:request.payload.current_date,
       })).then((mealList) => reply({
         status: true,
         mealList,
@@ -403,6 +404,7 @@ export default class WhatToController {
       return Promise.try(() => whatToServiceAdaptor.addWearable({
         item_name: request.payload.name,
         user_id: user.ID || user.id,
+        current_date:request.payload.current_date,
       })).then((wearable) => reply({
         status: true,
         wearable,

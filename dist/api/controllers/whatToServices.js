@@ -244,7 +244,8 @@ var WhatToController = function () {
               };
             }),
             is_veg: request.payload.is_veg,
-            state_id: request.payload.state_id
+            state_id: request.payload.state_id,
+            current_date: request.payload.current_date
           });
         }).then(function (mealList) {
           return reply({
@@ -458,7 +459,8 @@ var WhatToController = function () {
         return _bluebird2.default.try(function () {
           return whatToServiceAdaptor.addWearable({
             item_name: request.payload.name,
-            user_id: user.ID || user.id
+            user_id: user.ID || user.id,
+            current_date: request.payload.current_date
           });
         }).then(function (wearable) {
           return reply({

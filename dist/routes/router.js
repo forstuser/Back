@@ -2179,7 +2179,8 @@ function prepareWhatToServiceRoutes(whatToServiceController, whatToServiceRoutes
           payload: {
             names: [_joi2.default.array().items(_joi2.default.string()).required().min(0), _joi2.default.allow(null)],
             state_id: _joi2.default.number().required(),
-            is_veg: [_joi2.default.boolean(), _joi2.default.allow(null)]
+            is_veg: [_joi2.default.boolean(), _joi2.default.allow(null)],
+            current_date: [_joi2.default.string(), _joi2.default.allow(null)]
           }
         }
       }
@@ -2385,7 +2386,8 @@ function prepareWhatToServiceRoutes(whatToServiceController, whatToServiceRoutes
         description: 'Create user wearable list.',
         validate: {
           payload: {
-            name: [_joi2.default.string(), _joi2.default.allow(null)]
+            name: [_joi2.default.string(), _joi2.default.allow(null)],
+            current_date: [_joi2.default.string(), _joi2.default.allow(null)]
           }
         }
       }

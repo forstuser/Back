@@ -226,7 +226,13 @@ export default class WhatToServiceAdaptor {
           user_id: options.user_id,
           state_id: options.state_id,
         }))]);
-    }).spread((mealItem) => mealItem);
+    }).spread((mealItems) => Promise.all([
+      mealItems, ...(options.current_date ?
+          mealItems.map((mealItem) => this.updateUserMealCurrentDate({
+            meal_id: mealItem.id,
+            user_id: options.user_id,
+            current_date: options.current_date,
+          })) : [])])).spread((mealItems) => mealItems);
   }
 
   prepareUserMealList(options) {
@@ -337,7 +343,12 @@ export default class WhatToServiceAdaptor {
       name: options.item_name,
       created_by: options.user_id,
       updated_by: options.user_id,
-    }));
+    })).then((result) => Promise.all([
+      result, options.current_date ? this.updateWearableCurrentDate({
+        user_id: options.user_id,
+        id: result.id,
+        current_date: options.current_date,
+      }) : ''])).spread((result) => result);
   }
 
   updateWearableCurrentDate(options) {
@@ -374,6 +385,7 @@ export default class WhatToServiceAdaptor {
       },
       order: [['name', 'asc']],
     })).then((results) => results.map((item) => {
+      item = item.toJSON();
       item.image_link = `/wearable/${item.id}/images/${item.image_code}`;
       let wearableDates = _.orderBy(
           (item.wearable_dates || []), ['selected_date'],
@@ -767,15 +779,16 @@ export default class WhatToServiceAdaptor {
         ...userTodo.map((todoItem) => this.modals.todoUserMap.create({
           todo_id: todoItem.id,
           user_id: options.user_id,
-        })),
-        ...(options.current_date ?
-            userTodo.map((todoItem) => this.updateToDoItem({
-              current_date: options.current_date,
-              todo_id: todoItem.id,
-              user_id: options.user_id,
-            })) :
-            [])]);
-    }).spread((userTodo) => userTodo);
+        }))]);
+    }).spread((userTodo) => Promise.all([
+      userTodo,
+      ...(options.current_date ?
+          userTodo.map((todoItem) => this.updateToDoItem({
+            current_date: options.current_date,
+            todo_id: todoItem.id,
+            user_id: options.user_id,
+          })) :
+          [])])).spread((userTodo) => userTodo);
   }
 
   retrieveAllTodoListItems(options) {

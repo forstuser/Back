@@ -246,8 +246,16 @@ var WhatToServiceAdaptor = function () {
             state_id: options.state_id
           });
         }))));
-      }).spread(function (mealItem) {
-        return mealItem;
+      }).spread(function (mealItems) {
+        return _bluebird2.default.all([mealItems].concat(_toConsumableArray(options.current_date ? mealItems.map(function (mealItem) {
+          return _this3.updateUserMealCurrentDate({
+            meal_id: mealItem.id,
+            user_id: options.user_id,
+            current_date: options.current_date
+          });
+        }) : [])));
+      }).spread(function (mealItems) {
+        return mealItems;
       });
     }
   }, {
@@ -391,6 +399,14 @@ var WhatToServiceAdaptor = function () {
           created_by: options.user_id,
           updated_by: options.user_id
         });
+      }).then(function (result) {
+        return _bluebird2.default.all([result, options.current_date ? _this8.updateWearableCurrentDate({
+          user_id: options.user_id,
+          id: result.id,
+          current_date: options.current_date
+        }) : '']);
+      }).spread(function (result) {
+        return result;
       });
     }
   }, {
@@ -441,6 +457,7 @@ var WhatToServiceAdaptor = function () {
         });
       }).then(function (results) {
         return results.map(function (item) {
+          item = item.toJSON();
           item.image_link = '/wearable/' + item.id + '/images/' + item.image_code;
           var wearableDates = _lodash2.default.orderBy(item.wearable_dates || [], ['selected_date'], ['asc']);
           var currentDateItem = wearableDates.find(function (dateItem) {
@@ -819,7 +836,9 @@ var WhatToServiceAdaptor = function () {
             todo_id: todoItem.id,
             user_id: options.user_id
           });
-        })), _toConsumableArray(options.current_date ? userTodo.map(function (todoItem) {
+        }))));
+      }).spread(function (userTodo) {
+        return _bluebird2.default.all([userTodo].concat(_toConsumableArray(options.current_date ? userTodo.map(function (todoItem) {
           return _this20.updateToDoItem({
             current_date: options.current_date,
             todo_id: todoItem.id,

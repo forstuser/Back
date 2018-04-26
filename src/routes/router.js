@@ -2526,6 +2526,7 @@ function prepareWhatToServiceRoutes(
               joi.allow(null)],
             state_id: joi.number().required(),
             is_veg: [joi.boolean(), joi.allow(null)],
+            current_date:[joi.string(), joi.allow(null)],
           },
         },
       },
@@ -2774,6 +2775,7 @@ function prepareWhatToServiceRoutes(
         validate: {
           payload: {
             name: [joi.string(), joi.allow(null)],
+            current_date:[joi.string(), joi.allow(null)],
           },
         },
       },
