@@ -424,6 +424,10 @@ export function retrieveMailTemplate(user, templateType) {
         .mains-class {
             font-size: 11px;
         }
+
+        .binbill {
+            text-align: left;
+        }
     }</style>
 </head>
 <body width="100%" bgcolor="#222222" style="margin: 0; mso-line-height-rule: exactly;">
@@ -437,55 +441,73 @@ export function retrieveMailTemplate(user, templateType) {
                             <td style="padding: 20px; font-family: sans-serif; font-size: 15px; line-height: 20px; color: #555555;">
                                 <p class="main-class"
                                    style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0; font-family: 'Quicksand', sans-serif;font-weight: 500;letter-spacing: 0.3px;text-align: left;color: #3b3b3b; padding: 10px 0;">
-                                    Dear ${user.name || user.full_name ||
+                                    Hello ${user.name || user.full_name ||
       'User'},
-                                    </p>
+                                </p>
                                 <p class="main-class"
                                    style="-webkit-margin-before: 0; -webkit-margin-after: 0;margin:0 auto;padding-top: 10px; padding-bottom: 15px;">
-                                    I am Rohit, CEO of BinBill. Allow me to take a moment to thank you for subscribing to BinBill App  and share key features thats make your life easy.
+                                    Thank you so much for subscribing! We are very excited that you have signed up for
+                                    BinBill – the best and most convenient way to access your important bills and
+                                    documents at any time on your phone. The first step is to build your eHome and
+                                    upload your product bills, important documents & other expenses. Here are some of
+                                    the ways in which BinBill makes your life easy and hassle free:
                                 </p>
+                                <ul>
+                                    <li>Product lifecycle management: Be it an old or new product, important details
+                                        like purchase bill, warranty, model number, insurance etc. will now be handy
+                                        when you wish. You will receive important notifications, reminders, information
+                                        on ASCs, service expense details etc.
+                                    </li>
+                                    <li>Authorized Service Center connect: We connect you with all brands’ Authorized
+                                        Service Centers in your vicinity with just one touch.
+                                    </li>
+                                    <li>Expense Management: Whether the expense is small or big, online or offline, cash
+                                        or card, once uploaded or added manually will fetch you spending insights on
+                                        what you have spent on, when, where and how much have you spent in a given
+                                        period
+                                    </li>
+                                    <li>Important documents’ record: Educational certificates, birth certificates, RC
+                                        book, insurance, rent agreement etc. can all be uploaded on the app for you to
+                                        view, download, email and print at your will.
+                                    </li>
+                                    <li>Eazy Day Planner: This feature helps you plan out the activities for day
+                                        including what to cook, what to wear and what to do. It also helps maintain
+                                        attendance and payouts record for all your household services like the milkman,
+                                        newspaper wala and maids.
+                                    </li>
+                                    <li>Share Product Reviews: Help your family and friends make a wise purchase
+                                        decision by sharing your reviews.
+                                    </li>
+                                </ul>
                                 <p class="main-class"
                                    style="-webkit-margin-before: 0; -webkit-margin-after: 0;margin:0 auto;">
-                                    BinBill saves your time and aids your memory by sorting important things of your life. It starts with building your eHome by adding Products, Important Documents & Expenses.
-                                     </p>
-                                <p class="main-class"
-                                   style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0;padding: 10px 0;">
-                                    Product: Be old or new, Important details like Purchase Bill, Warranty, Model Number , Insurance etc are never handy whenever needed. You can upload them or enter details by manually. This is a one time activity to get all important Notification, Reminders, ASC & Service Expense etc.
+                                    In addition, with our world class data integrity systems and encryption standards,
+                                    we ensure complete security for your information.
                                 </p>
                                 <p class="main-class"
                                    style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0;padding: 10px 0;">
-                                    Rate, Review & Share: Now you can help your friends, family and followers on social media such as Facebook, Whatsapp, Instagram make wise purchase deicision like never before. You can be the expert advisor of the brands and products you are already using.
+                                    No matter how mismanaged your life is, remember you have the control in your hands
+                                    and the power to bring about a change. I sincerely hope that our app can help you do
+                                    just that.
                                 </p>
                                 <p class="main-class"
                                    style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0;padding: 10px 0;">
-                                    Attendance Manager: With us you can manage attendance and payouts of your monthly services say Milk, Newspaper, Maid etc with much ease. Now no more writing notes on wall calendar and manual calculation for lethora of services. Your attendance Manager helps you with all the calculation.
+                                    For any queries, you could write to us at <a href="mailto:support@binbill.com">support@binbill.com</a>
+                                    or call us at <a href="tel:+91-124-4343177">+91-124-4343177</a>. We would be glad to be of assistance.
                                 </p>
                                 <p class="main-class"
                                    style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0;padding: 10px 0;">
-                                    Authorized Service Center Connect : For all the Products that you own,  You can connect with Brand and nearest Authorized Service Center with just one touch.
-                                </p>
-                                <p class="main-class"
-                                   style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0;padding: 10px 0;">
-                                    Important Documents like Educational Certificates, Birth Certificate, RC Book, Insurance, Rent Agreement etc can be uploaded. This is a one time activity. View, download,email, print them whenever you want.
-                                </p>
-                                <p class="main-class"
-                                   style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0;padding: 10px 0;">
-                                    Expense Management : Small or Big, Online or Offline, Cash or Card either upload the bill or add expense manually. Get to know insight on What When Where & How much you have been spending.
-                                </p>
-                                <p class="main-class"
-                                   style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0;padding: 10px 0;">
-                                    Do You Know series: We come up with one of the most interesting and unknown secrets from the history across categories ranging from Automobile to Fashion and Electronics to Healthcare. You will not only love these diligently chosen trivia but will also be tempted to share with your friends and family.
-                                </p>
-                                <p class="main-class"
-                                   style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0;padding: 10px 0;">
-                                    Further, we use world class data integrity systems and encryption standards. So that you can use our services with full confidence. I really look forward to you building your eHome. I am confident that BinBill will evolve into a useful companion.
+                                    Thank you for signing up once again and I look forward to a long term fruitful
+                                    association.
                                 </p>
                                 <p style="margin:0 auto; font-weight: bold; -webkit-margin-before: 0; -webkit-margin-after: 0;padding: 10px 0;">
-                                    One Home : Multiple Needs : One App</p>
+                                    One Home : Multiple Needs : One App
+                                </p>
                                 <p style="margin:0 auto; -webkit-margin-before: 0; -webkit-margin-after: 0;padding: 10px 0;">
-                                    With Gratitude
-                                     <br/>
-                                    Rohit</p>
+                                    Sincerely,<br>
+                                    Rohit Kumar,<br>
+                                    CEO, BinBill<br>
+                                </p>
                                 <img style="width: 100px" atr="logo"
                                      src="https://s3.ap-south-1.amazonaws.com/binbill-static/logo-color.png"/>
                             </td>
