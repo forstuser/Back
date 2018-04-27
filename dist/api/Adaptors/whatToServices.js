@@ -44,11 +44,18 @@ var WhatToServiceAdaptor = function () {
             return this.modals.states.findAll({
                 where: options,
                 attributes: ['id', 'state_name'],
-                order: [['state_name']]
+                order: [['id']]
             }).then(function (result) {
-                return result.map(function (item) {
+                var stateData = result.map(function (item) {
                     return item.toJSON();
                 });
+                var stateList = stateData.filter(function (stateItem) {
+                    return stateItem.id === 0;
+                });
+                stateList.push.apply(stateList, _toConsumableArray(_lodash2.default.orderBy(stateData.filter(function (stateItem) {
+                    return stateItem.id !== 0;
+                }), ['state_name'], ['asc'])));
+                return stateList;
             });
         }
     }, {
