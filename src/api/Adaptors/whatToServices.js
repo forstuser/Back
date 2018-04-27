@@ -19,7 +19,14 @@ export default class WhatToServiceAdaptor {
         'state_name',
       ],
       order: [['state_name']],
-    }).then((result) => result.map((item) => item.toJSON()));
+    }).then((result) => {
+      const stateData = result.map((item) => item.toJSON());
+      const stateList = stateData.filter((stateItem) => stateItem.id === 0);
+      stateList.push(...(_.orderBy(
+          stateData.filter((stateItem) => stateItem.id !== 0), ['state_name'],
+          ['asc'])));
+      return stateList;
+    });
   }
 
   retrieveStateMealItems(options, limit, offset) {

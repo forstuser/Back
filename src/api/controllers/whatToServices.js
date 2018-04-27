@@ -33,6 +33,7 @@ export default class WhatToController {
 
             return reply({
               status: false,
+              message:'Unable to retrieve all states data'
             });
           });
     } else if (request.pre.userExist === 0) {
@@ -80,6 +81,7 @@ export default class WhatToController {
 
             return reply({
               status: false,
+              message:'Unable to retrieve state meal items'
             });
           });
     } else if (request.pre.userExist === 0) {
@@ -126,6 +128,7 @@ export default class WhatToController {
 
         return reply({
           status: false,
+          message:'Unable to  retrieve user meal items'
         });
       });
     } else if (request.pre.userExist === 0) {
@@ -167,6 +170,7 @@ export default class WhatToController {
 
         return reply({
           status: false,
+          message:'Unable to  prepare user meal list '
         });
       });
     } else if (request.pre.userExist === 0) {
@@ -215,6 +219,7 @@ export default class WhatToController {
 
         return reply({
           status: false,
+          message:'Unable to add user meal item'
         });
       });
     } else if (request.pre.userExist === 0) {
@@ -255,6 +260,7 @@ export default class WhatToController {
 
         return reply({
           status: false,
+          message:'Unable to update user meal current date '
         });
       });
     } else if (request.pre.userExist === 0) {
@@ -336,6 +342,7 @@ export default class WhatToController {
 
         return reply({
           status: false,
+          message:'Unable to remove meals '
         });
       });
     } else if (request.pre.userExist === 0) {
@@ -375,6 +382,7 @@ export default class WhatToController {
 
         return reply({
           status: false,
+          message:'unable to  retrieve Wearables'
         });
       });
     } else if (request.pre.userExist === 0) {
@@ -415,6 +423,7 @@ export default class WhatToController {
 
         return reply({
           status: false,
+          message:'Unable to add wearable'
         });
       });
     } else if (request.pre.userExist === 0) {
@@ -457,6 +466,7 @@ export default class WhatToController {
 
         return reply({
           status: false,
+          message:'Unable to update wearable'
         });
       });
     } else if (request.pre.userExist === 0) {
@@ -497,6 +507,7 @@ export default class WhatToController {
 
         return reply({
           status: false,
+          message:'Unable to update wearable current date'
         });
       });
     } else if (request.pre.userExist === 0) {
@@ -537,6 +548,7 @@ export default class WhatToController {
 
         return reply({
           status: false,
+          message:'Unable to Delete wearable'
         });
       });
     } else if (request.pre.userExist === 0) {
@@ -577,6 +589,7 @@ export default class WhatToController {
 
         return reply({
           status: false,
+          message:'Unable to remove wearable current date'
         });
       });
     } else if (request.pre.userExist === 0) {
@@ -616,6 +629,7 @@ export default class WhatToController {
 
             return reply({
               status: false,
+              message:'Unable to retrieve ToDoList'
             });
           });
     } else if (request.pre.userExist === 0) {
@@ -655,6 +669,7 @@ export default class WhatToController {
 
         return reply({
           status: false,
+          message:'Unable to retrieve UserToDoList'
         });
       });
     } else if (request.pre.userExist === 0) {
@@ -700,6 +715,7 @@ export default class WhatToController {
 
         return reply({
           status: false,
+          message:'Unable to User ToDoList '
         });
       });
     } else if (request.pre.userExist === 0) {
@@ -740,6 +756,7 @@ export default class WhatToController {
 
         return reply({
           status: false,
+          message:'Unable to update ToDoItem'
         });
       });
     } else if (request.pre.userExist === 0) {
@@ -780,6 +797,7 @@ export default class WhatToController {
 
         return reply({
           status: false,
+          message:'Unable to prepare user ToDoList'
         });
       });
     } else if (request.pre.userExist === 0) {
@@ -821,6 +839,7 @@ export default class WhatToController {
 
         return reply({
           status: false,
+          message:'Unable to delete user ToDo current Date'
         });
       });
     } else if (request.pre.userExist === 0) {
@@ -862,6 +881,7 @@ export default class WhatToController {
 
         return reply({
           status: false,
+          message:'Unable to delete what ToDo'
         });
       });
     } else if (request.pre.userExist === 0) {
