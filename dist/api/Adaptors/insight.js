@@ -401,8 +401,8 @@ var InsightAdaptor = function () {
                             tax: expense.taxes
                         });
                     } else {
-                        distinctInsight[index].value += expense.value;
-                        distinctInsight[index].tax += expense.taxes;
+                        distinctInsight[index].value += expense.value || 0;
+                        distinctInsight[index].tax += expense.taxes || 0;
                     }
 
                     return expense;
@@ -410,61 +410,61 @@ var InsightAdaptor = function () {
 
                 var distinctInsightTemp = distinctInsight.map(function (item) {
                     var dayItem = {
-                        value: item.value,
+                        value: item.value || 0,
                         month: item.month,
                         monthId: item.monthId,
                         purchaseDate: item.purchaseDate,
                         week: item.week,
                         day: item.day,
                         year: item.year,
-                        tax: item.tax
+                        tax: item.tax || 0
                     };
 
                     var weekItem = {
-                        value: item.value,
+                        value: item.value || 0,
                         month: item.month,
                         monthId: item.monthId,
                         purchaseDate: item.purchaseDate,
                         week: item.week,
                         day: item.day,
                         year: item.year,
-                        tax: item.tax
+                        tax: item.tax || 0
                     };
 
                     var monthItem = {
-                        value: item.value,
+                        value: item.value || 0,
                         month: item.month,
                         monthId: item.monthId,
                         purchaseDate: item.purchaseDate,
                         week: item.week,
                         day: item.day,
                         year: item.year,
-                        tax: item.tax
+                        tax: item.tax || 0
                     };
 
                     var yearItem = {
-                        value: item.value,
+                        value: item.value || 0,
                         month: item.month,
                         monthId: item.monthId,
                         purchaseDate: item.purchaseDate,
                         week: item.week,
                         year: item.year,
                         day: item.day,
-                        tax: item.tax
+                        tax: item.tax || 0
                     };
                     var monthIndex = distinctInsightMonthly.findIndex(function (distinctItem) {
                         return distinctItem.month === monthItem.month && distinctItem.year === monthItem.year;
                     });
                     var weekIndex = distinctInsightWeekly.findIndex(function (distinctItem) {
-                        return distinctItem.week === weekItem.week && distinctItem.year === weekItem.year;
+                        return distinctItem.week === weekItem.week && distinctItem.month === weekItem.month && distinctItem.year === weekItem.year;
                     });
                     var yearIndex = distinctInsightYearly.findIndex(function (distinctItem) {
                         return distinctItem.year === yearItem.year;
                     });
                     if (weekIndex !== -1 && monthIndex !== -1) {
                         var currentWeekInsight = distinctInsightWeekly[weekIndex];
-                        currentWeekInsight.value += weekItem.value;
-                        currentWeekInsight.tax += weekItem.tax;
+                        currentWeekInsight.value += weekItem.value || 0;
+                        currentWeekInsight.tax += weekItem.tax || 0;
                     } else {
                         distinctInsightWeekly.push(weekItem);
                     }
@@ -473,16 +473,16 @@ var InsightAdaptor = function () {
                         distinctInsightMonthly.push(monthItem);
                     } else {
                         var currentMonthInsight = distinctInsightMonthly[monthIndex];
-                        currentMonthInsight.value += monthItem.value;
-                        currentMonthInsight.tax += monthItem.tax;
+                        currentMonthInsight.value += monthItem.value || 0;
+                        currentMonthInsight.tax += monthItem.tax || 0;
                     }
 
                     if (yearIndex === -1) {
                         distinctInsightYearly.push(yearItem);
                     } else {
                         var currentYearInsight = distinctInsightYearly[yearIndex];
-                        currentYearInsight.value += yearItem.value;
-                        currentYearInsight.tax += yearItem.tax;
+                        currentYearInsight.value += yearItem.value || 0;
+                        currentYearInsight.tax += yearItem.tax || 0;
                     }
 
                     return dayItem;
@@ -517,14 +517,12 @@ var InsightAdaptor = function () {
                 distinctInsightYearly.sort(function (a, b) {
                     return _moment2.default.utc(b.purchaseDate) - _moment2.default.utc(a.purchaseDate);
                 });
-
                 var insightData = _shared2.default.retrieveDaysInsight(distinctInsightTemp.filter(function (item) {
                     return _moment2.default.utc(item.purchaseDate, _moment2.default.ISO_8601).valueOf() >= _moment2.default.utc().subtract(6, 'd').startOf('day').valueOf() && _moment2.default.utc(item.purchaseDate, _moment2.default.ISO_8601).valueOf() <= _moment2.default.utc().valueOf();
                 }));
                 insightData.sort(function (a, b) {
                     return _moment2.default.utc(a.purchaseDate) - _moment2.default.utc(b.purchaseDate);
                 });
-
                 var insightWeekly = distinctInsightWeekly.filter(function (item) {
                     return _moment2.default.utc(item.purchaseDate, _moment2.default.ISO_8601).valueOf() >= _moment2.default.utc().startOf('month').valueOf() && _moment2.default.utc(item.purchaseDate, _moment2.default.ISO_8601).valueOf() <= _moment2.default.utc().valueOf();
                 });

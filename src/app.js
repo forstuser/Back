@@ -20,7 +20,7 @@ const SERVER_OPTIONS = {
 };
 
 // Remove local reading of certificates from production environment as we use ElasticBeanstalk for that
-if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
+/*if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
   const TLS_OPTIONS = {
     key: fs.readFileSync(path.resolve(__dirname, 'cert/key.key')),
     cert: fs.readFileSync(path.resolve(__dirname, 'cert/cert.crt')),
@@ -28,7 +28,7 @@ if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
   };
 
   SERVER_OPTIONS.tls = TLS_OPTIONS;
-}
+}*/
 
 if (process.env.NODE_ENV !== 'production') {
   server.connection(SERVER_OPTIONS);
