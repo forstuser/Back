@@ -272,8 +272,10 @@ var WhatToServiceAdaptor = function () {
 
             return _bluebird2.default.try(function () {
                 return _bluebird2.default.all([_this4.retrieveUserMeals({
-                    user_id: options.user_id,
-                    meal_id: [].concat(_toConsumableArray(options.selected_ids), _toConsumableArray(options.unselected_ids))
+                    where: {
+                        user_id: options.user_id,
+                        meal_id: [].concat(_toConsumableArray(options.selected_ids), _toConsumableArray(options.unselected_ids))
+                    }
                 }), _this4.modals.mealUserMap.update({
                     status_type: 2
                 }, {
@@ -284,7 +286,7 @@ var WhatToServiceAdaptor = function () {
                         }
                     }
                 })]);
-            }).then(function (mealResult) {
+            }).spread(function (mealResult) {
                 return _bluebird2.default.all([].concat(_toConsumableArray(options.selected_ids.map(function (id) {
                     var meal = mealResult.find(function (item) {
                         return item.meal_id === id;

@@ -232,8 +232,10 @@ export default class WhatToServiceAdaptor {
     prepareUserMealList(options) {
         return Promise.try(() => Promise.all([
             this.retrieveUserMeals({
-                user_id: options.user_id,
-                meal_id: [...options.selected_ids, ...options.unselected_ids],
+                where: {
+                    user_id: options.user_id,
+                    meal_id: [...options.selected_ids, ...options.unselected_ids],
+                }
             }), this.modals.mealUserMap.update({
                 status_type: 2,
             }, {
@@ -243,7 +245,7 @@ export default class WhatToServiceAdaptor {
                         $notIn: [...options.selected_ids],
                     },
                 },
-            })])).then((mealResult) => Promise.all([
+            })])).spread((mealResult) => Promise.all([
             ...options.selected_ids.map((id) => {
                 const meal = mealResult.find((item) => item.meal_id === id);
                 if (meal) {
