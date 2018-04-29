@@ -199,7 +199,7 @@ var WhatToServiceAdaptor = function () {
                     return !item.current_date;
                 });
                 mealList.push.apply(mealList, _toConsumableArray(remainingMealList));
-                mealList.push.apply(mealList, _toConsumableArray(_lodash2.default.orderBy(previousMealList, ['current_date'], ['desc'])));
+                mealList.push.apply(mealList, _toConsumableArray(_lodash2.default.orderBy(previousMealList, ['current_date'], ['asc'])));
 
                 return mealList;
             });
@@ -504,7 +504,7 @@ var WhatToServiceAdaptor = function () {
                     return !item.current_date;
                 });
                 wearableList.push.apply(wearableList, _toConsumableArray(remainingWearableList));
-                wearableList.push.apply(wearableList, _toConsumableArray(_lodash2.default.orderBy(previousWearableList, ['current_date'], ['desc'])));
+                wearableList.push.apply(wearableList, _toConsumableArray(_lodash2.default.orderBy(previousWearableList, ['current_date'], ['asc'])));
 
                 return wearableList;
             });
@@ -722,7 +722,7 @@ var WhatToServiceAdaptor = function () {
                     return !item.current_date;
                 });
                 todoList.push.apply(todoList, _toConsumableArray(remainingTodoList));
-                todoList.push.apply(todoList, _toConsumableArray(_lodash2.default.orderBy(previousTodoList, ['current_date'], ['desc'])));
+                todoList.push.apply(todoList, _toConsumableArray(_lodash2.default.orderBy(previousTodoList, ['current_date'], ['asc'])));
 
                 return todoList;
             });

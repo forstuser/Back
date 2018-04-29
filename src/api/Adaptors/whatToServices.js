@@ -186,7 +186,7 @@ export default class WhatToServiceAdaptor {
             mealList.push(...remainingMealList);
             mealList.push(...(_.orderBy(
                 previousMealList, ['current_date'],
-                ['desc'])));
+                ['asc'])));
 
             return mealList;
         });
@@ -445,7 +445,7 @@ export default class WhatToServiceAdaptor {
             wearableList.push(...remainingWearableList);
             wearableList.push(...(_.orderBy(
                 previousWearableList, ['current_date'],
-                ['desc'])));
+                ['asc'])));
 
             return wearableList;
         });
@@ -658,7 +658,7 @@ export default class WhatToServiceAdaptor {
             todoList.push(...remainingTodoList);
             todoList.push(...(_.orderBy(
                 previousTodoList, ['current_date'],
-                ['desc'])));
+                ['asc'])));
 
             return todoList;
         });
