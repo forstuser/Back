@@ -23,8 +23,7 @@ import WhatToServiceController from '../api/controllers/whatToServices';
 let User;
 let appVersionHelper;
 
-function prepareServiceCenterRoutes(
-    serviceCenterController, serviceCenterRoutes) {
+function prepareServiceCenterRoutes(serviceCenterController, serviceCenterRoutes) {
     if (serviceCenterController) {
         serviceCenterRoutes.push({
             method: 'POST',
@@ -2408,8 +2407,7 @@ function prepareCalendarServiceRoutes(calendarController, calendarRoutes) {
     }
 }
 
-function prepareWhatToServiceRoutes(
-    whatToServiceController, whatToServiceRoutes) {
+function prepareWhatToServiceRoutes(whatToServiceController, whatToServiceRoutes) {
     //= ========================
     // What To Service Routes
     //= ========================
@@ -2867,6 +2865,7 @@ function prepareWhatToServiceRoutes(
 
 }
 
+
 export default (app, modals) => {
     appVersionHelper = new AppVersionHelper(modals);
     User = modals.users;
@@ -2902,6 +2901,8 @@ export default (app, modals) => {
     const repairController = new ProductItemController(modals);
     const calendarServiceController = new CalendarServiceController(modals);
     const whatToServiceController = new WhatToServiceController(modals);
+
+
     prepareAuthRoutes(userController, authRoutes);
 
     prepareCategoryRoutes(categoryController, categoryRoutes);
