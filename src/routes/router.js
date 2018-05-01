@@ -19,6 +19,9 @@ import AppVersionHelper from '../helpers/appVersion';
 import ProductItemController from '../api/controllers/productItem';
 import CalendarServiceController from '../api/controllers/calendarServices';
 import WhatToServiceController from '../api/controllers/whatToServices';
+import AffiliatedServicesController
+  from '../api/controllers/affiliatedServices';
+import {prepareAffiliatedServiceRoute} from './affiliated_services';
 
 let User;
 let appVersionHelper;
@@ -2888,6 +2891,7 @@ export default (app, modals) => {
     const calendarRoutes = [];
     const uploadFileRoute = [];
     const whatToServiceRoutes = [];
+    const affiliatedServicesRoutes = [];
     const userController = new UserController(modals);
     const categoryController = new CategoryController(modals);
     const brandController = new BrandController(modals);
@@ -2901,6 +2905,7 @@ export default (app, modals) => {
     const repairController = new ProductItemController(modals);
     const calendarServiceController = new CalendarServiceController(modals);
     const whatToServiceController = new WhatToServiceController(modals);
+    const affiliatedServicesController = new AffiliatedServicesController(modals);
 
 
     prepareAuthRoutes(userController, authRoutes);
@@ -2926,6 +2931,8 @@ export default (app, modals) => {
     prepareCalendarServiceRoutes(calendarServiceController, calendarRoutes);
 
     prepareWhatToServiceRoutes(whatToServiceController, whatToServiceRoutes);
+
+    prepareAffiliatedServiceRoute(affiliatedServicesController, AffiliatedServicesController, affiliatedServicesRoutes,appVersionHelpers);
 
     if (searchController) {
         searchRoutes.push({
@@ -2973,5 +2980,6 @@ export default (app, modals) => {
         ...repairRoutes,
         ...calendarRoutes,
         ...whatToServiceRoutes,
+        ...affiliatedServicesRoutes,
     ]);
 };

@@ -77,6 +77,12 @@ var _whatToServices = require('../api/controllers/whatToServices');
 
 var _whatToServices2 = _interopRequireDefault(_whatToServices);
 
+var _affiliatedServices = require('../api/controllers/affiliatedServices');
+
+var _affiliatedServices2 = _interopRequireDefault(_affiliatedServices);
+
+var _affiliated_services = require('./affiliated_services');
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var User = void 0;
@@ -2488,6 +2494,7 @@ exports.default = function (app, modals) {
     var calendarRoutes = [];
     var uploadFileRoute = [];
     var whatToServiceRoutes = [];
+    var affiliatedServicesRoutes = [];
     var userController = new _user2.default(modals);
     var categoryController = new _category2.default(modals);
     var brandController = new _brand2.default(modals);
@@ -2501,6 +2508,8 @@ exports.default = function (app, modals) {
     var repairController = new _productItem2.default(modals);
     var calendarServiceController = new _calendarServices2.default(modals);
     var whatToServiceController = new _whatToServices2.default(modals);
+    var affiliatedServicesController = new _affiliatedServices2.default(modals);
+
     prepareAuthRoutes(userController, authRoutes);
 
     prepareCategoryRoutes(categoryController, categoryRoutes);
@@ -2525,6 +2534,8 @@ exports.default = function (app, modals) {
 
     prepareWhatToServiceRoutes(whatToServiceController, whatToServiceRoutes);
 
+    (0, _affiliated_services.prepareAffiliatedServiceRoute)(affiliatedServicesController, _affiliatedServices2.default, affiliatedServicesRoutes, appVersionHelpers);
+
     if (searchController) {
         searchRoutes.push({
             method: 'GET',
@@ -2546,5 +2557,5 @@ exports.default = function (app, modals) {
         });
     }
 
-    app.route([].concat(authRoutes, categoryRoutes, brandRoutes, sellerRoutes, serviceCenterRoutes, billManagementRoutes, uploadFileRoute, dashboardRoutes, productRoutes, insightRoutes, searchRoutes, generalRoutes, repairRoutes, calendarRoutes, whatToServiceRoutes));
+    app.route([].concat(authRoutes, categoryRoutes, brandRoutes, sellerRoutes, serviceCenterRoutes, billManagementRoutes, uploadFileRoute, dashboardRoutes, productRoutes, insightRoutes, searchRoutes, generalRoutes, repairRoutes, calendarRoutes, whatToServiceRoutes, affiliatedServicesRoutes));
 };

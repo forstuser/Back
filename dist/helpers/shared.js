@@ -334,6 +334,28 @@ var stringHasSubString = function stringHasSubString(stringItem, subString) {
     return _lodash2.default.includes(stringItem, subString);
 };
 
+var preValidation = function preValidation(preRequest, reply) {
+    if (preRequest.userExist === 0) {
+        return reply({
+            status: false,
+            message: 'Inactive User',
+            forceUpdate: preRequest.forceUpdate
+        }).code(402);
+    } else if (!preRequest.userExist) {
+        return reply({
+            status: false,
+            message: 'Unauthorized',
+            forceUpdate: preRequest.forceUpdate
+        }).code(401);
+    }
+
+    return reply({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: preRequest.forceUpdate
+    });
+};
+
 exports.default = {
     readJSONFile: readJSONFile,
     formatDate: formatDate,
@@ -347,5 +369,6 @@ exports.default = {
     getAllDays: getAllDays,
     sumProps: sumProps,
     retrieveDaysInsight: retrieveDaysInsight,
-    retrieveMailTemplate: retrieveMailTemplate
+    retrieveMailTemplate: retrieveMailTemplate,
+    preValidation: preValidation
 };
