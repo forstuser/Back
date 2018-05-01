@@ -106,7 +106,7 @@ class ProductAdaptor {
             'id', 'inclusions', 'exclusions', 'service_number', 'service_type',
             'distance',
             'due_in_months',
-            'due_in_days',],
+            'due_in_days'],
           required: false,
         },
         {
@@ -454,7 +454,7 @@ class ProductAdaptor {
             'id', 'inclusions', 'exclusions', 'service_number', 'service_type',
             'distance',
             'due_in_months',
-            'due_in_days',],
+            'due_in_days'],
           required: false,
         },
         {
@@ -647,7 +647,7 @@ class ProductAdaptor {
             'id', 'inclusions', 'exclusions', 'service_number', 'service_type',
             'distance',
             'due_in_months',
-            'due_in_days',],
+            'due_in_days'],
           required: false,
         },
         {
@@ -1108,7 +1108,7 @@ class ProductAdaptor {
             'service_type',
             'distance',
             'due_in_months',
-            'due_in_days',],
+            'due_in_days'],
           required: false,
         },
         {
@@ -1816,25 +1816,45 @@ class ProductAdaptor {
   }
 
   updateProductDetails(productBody, metadataBody, otherItems, productId) {
-    return Promise.all([
-      productBody.brand_id || productBody.brand_id === 0 ?
-          this.modals.products.count({
-            where: {
-              id: productId,
-              brand_id: productBody.brand_id,
-              model: productBody.model,
-              status_type: {
-                $notIn: [8],
+    let dbProduct;
+    return Promise.try(() => this.modals.products.findOne({
+      where: {
+        id: productId,
+      },
+    })).then((result) => {
+      dbProduct = result.toJSON();
+      productBody.brand_id = productBody.brand_id || productBody.brand_id === 0
+          ? productBody.brand_id
+          : dbProduct.brand_id;
+      productBody.model = productBody.model || productBody.model !== ''
+          ? productBody.model
+          : dbProduct.model;
+      productBody.category_id = productBody.category_id ||
+          dbProduct.category_id;
+      productBody.main_category_id = productBody.main_category_id ||
+          dbProduct.main_category_id;
+      productBody.sub_category_id = productBody.sub_category_id ||
+          dbProduct.sub_category_id;
+      return Promise.all([
+        productBody.brand_id || productBody.brand_id === 0 ?
+            this.modals.products.count({
+              where: {
+                id: productId,
+                brand_id: productBody.brand_id,
+                model: productBody.model,
+                status_type: {
+                  $notIn: [8],
+                },
               },
-            },
-          }) : 1,
-      this.verifyCopiesExist(productId),
-      this.modals.products.count({
-        where: {
-          id: productId,
-          status_type: 8,
-        },
-      })]).then((result) => {
+            }) : 1,
+        this.verifyCopiesExist(productId),
+        this.modals.products.count({
+          where: {
+            id: productId,
+            status_type: 8,
+          },
+        })]);
+    }).then((result) => {
       if (result[1] && result[0] === 0 && result[2] === 0) {
         return false;
       }
@@ -1934,77 +1954,76 @@ class ProductAdaptor {
             }
 
             return '';
+          }).then(() => {
+            product = !product.colour_id ?
+                _.omit(product, 'colour_id') :
+                product;
+            product = !product.purchase_cost &&
+            product.purchase_cost !== 0 ?
+                _.omit(product, 'purchase_cost') :
+                product;
+            product = _.omit(product, 'new_drop_down');
+            product = !product.model && product.model !== '' ?
+                _.omit(product, 'model') :
+                product;
+            product = !product.taxes && product.taxes !== 0 ?
+                _.omit(product, 'taxes') :
+                product;
+            product = !product.document_number ?
+                _.omit(product, 'document_number') :
+                product;
+            product = !product.document_date ?
+                _.omit(product, 'document_date') :
+                product;
+            product = !product.seller_id ?
+                _.omit(product, 'seller_id') :
+                product;
+            product = !product.brand_id && product.brand_id !== 0 ?
+                _.omit(product, 'brand_id') :
+                product;
+            const brandModelPromise = product.model ? [
+              this.modals.brandDropDown.findOne({
+                where: {
+                  brand_id: product.brand_id,
+                  title: {
+                    $iLike: `${product.model}%`,
+                  },
+                  category_id: product.category_id,
+                },
+              }), this.modals.categories.findOne({
+                where: {
+                  category_id: product.category_id,
+                },
+              })] : [
+              , this.modals.categories.findOne({
+                where: {
+                  category_id: product.category_id,
+                },
+              })];
+            brandModelPromise.push(this.modals.warranties.findAll({
+              where: {
+                product_id: productId,
+                warranty_type: 1,
+              },
+              order: [['expiry_date', 'ASC']],
+            }), this.modals.warranties.findAll({
+              where: {
+                product_id: productId,
+                warranty_type: 3,
+              },
+              order: [['expiry_date', 'ASC']],
+            }), this.modals.metaData.findAll({
+              where: {
+                product_id: productId,
+              },
+            }));
+            return Promise.all([
+              this.categoryAdaptor.retrieveRenewalTypes({
+                status_type: 1,
+              }),
+              this.updateProduct(productId, product),
+              ...brandModelPromise]);
           }).then(
-              () => {
-                product = !product.colour_id ?
-                    _.omit(product, 'colour_id') :
-                    product;
-                product = !product.purchase_cost &&
-                product.purchase_cost !== 0 ?
-                    _.omit(product, 'purchase_cost') :
-                    product;
-                product = _.omit(product, 'new_drop_down');
-                product = !product.model && product.model !== '' ?
-                    _.omit(product, 'model') :
-                    product;
-                product = !product.taxes && product.taxes !== 0 ?
-                    _.omit(product, 'taxes') :
-                    product;
-                product = !product.document_number ?
-                    _.omit(product, 'document_number') :
-                    product;
-                product = !product.document_date ?
-                    _.omit(product, 'document_date') :
-                    product;
-                product = !product.seller_id ?
-                    _.omit(product, 'seller_id') :
-                    product;
-                product = !product.brand_id && product.brand_id !== 0 ?
-                    _.omit(product, 'brand_id') :
-                    product;
-                const brandModelPromise = product.model ? [
-                  this.modals.brandDropDown.findOne({
-                    where: {
-                      brand_id: product.brand_id,
-                      title: {
-                        $iLike: `${product.model}%`,
-                      },
-                      category_id: product.category_id,
-                    },
-                  }), this.modals.categories.findOne({
-                    where: {
-                      category_id: product.category_id,
-                    },
-                  })] : [
-                  , this.modals.categories.findOne({
-                    where: {
-                      category_id: product.category_id,
-                    },
-                  })];
-                brandModelPromise.push(this.modals.warranties.findAll({
-                  where: {
-                    product_id: productId,
-                    warranty_type: 1,
-                  },
-                  order: [['expiry_date', 'ASC']],
-                }), this.modals.warranties.findAll({
-                  where: {
-                    product_id: productId,
-                    warranty_type: 3,
-                  },
-                  order: [['expiry_date', 'ASC']],
-                }), this.modals.metaData.findAll({
-                  where: {
-                    product_id: productId,
-                  },
-                }));
-                return Promise.all([
-                  this.categoryAdaptor.retrieveRenewalTypes({
-                    status_type: 1,
-                  }),
-                  this.updateProduct(productId, product),
-                  ...brandModelPromise]);
-              }).then(
               (updateProductResult) => {
                 renewalTypes = updateProductResult[0];
                 product = updateProductResult[1] || undefined;
@@ -2273,8 +2292,10 @@ class ProductAdaptor {
                     }));
                   }
                   product.serviceCenterUrl = productItemsResult[7] &&
-                  productItemsResult[7] > 0 ?
-                      `/consumer/servicecenters?brandid=${product.brand_id}&categoryid=${product.category_id}` :
+                  productItemsResult[7] > 0
+                      ?
+                      `/consumer/servicecenters?brandid=${product.brand_id}&categoryid=${product.category_id}`
+                      :
                       '';
                   return product;
                 }

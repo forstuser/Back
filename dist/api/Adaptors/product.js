@@ -1022,21 +1022,36 @@ var ProductAdaptor = function () {
     value: function updateProductDetails(productBody, metadataBody, otherItems, productId) {
       var _this6 = this;
 
-      return Promise.all([productBody.brand_id || productBody.brand_id === 0 ? this.modals.products.count({
-        where: {
-          id: productId,
-          brand_id: productBody.brand_id,
-          model: productBody.model,
-          status_type: {
-            $notIn: [8]
+      var dbProduct = void 0;
+      return Promise.try(function () {
+        return _this6.modals.products.findOne({
+          where: {
+            id: productId
           }
-        }
-      }) : 1, this.verifyCopiesExist(productId), this.modals.products.count({
-        where: {
-          id: productId,
-          status_type: 8
-        }
-      })]).then(function (result) {
+        });
+      }).then(function (result) {
+        dbProduct = result.toJSON();
+        productBody.brand_id = productBody.brand_id || productBody.brand_id === 0 ? productBody.brand_id : dbProduct.brand_id;
+        productBody.model = productBody.model || productBody.model !== '' ? productBody.model : dbProduct.model;
+        productBody.category_id = productBody.category_id || dbProduct.category_id;
+        productBody.main_category_id = productBody.main_category_id || dbProduct.main_category_id;
+        productBody.sub_category_id = productBody.sub_category_id || dbProduct.sub_category_id;
+        return Promise.all([productBody.brand_id || productBody.brand_id === 0 ? _this6.modals.products.count({
+          where: {
+            id: productId,
+            brand_id: productBody.brand_id,
+            model: productBody.model,
+            status_type: {
+              $notIn: [8]
+            }
+          }
+        }) : 1, _this6.verifyCopiesExist(productId), _this6.modals.products.count({
+          where: {
+            id: productId,
+            status_type: 8
+          }
+        })]);
+      }).then(function (result) {
         if (result[1] && result[0] === 0 && result[2] === 0) {
           return false;
         }
