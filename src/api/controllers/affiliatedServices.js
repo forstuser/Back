@@ -1,7 +1,7 @@
 /*jshint esversion: 6 */
 'use strict';
 
-// create adapter for this controller
+// affiliate service controller
 import AffiliatedServicesAdaptor from '../Adaptors/affiliatedServices';
 import shared from '../../helpers/shared';
 
@@ -31,7 +31,7 @@ export default class affiliatedServicesController {
 
         return reply({
           status: false,
-          message:'Unable to retrieve all cities data'
+          message: 'Unable to retrieve all cities data',
         });
       });
     } else {
@@ -39,4 +39,29 @@ export default class affiliatedServicesController {
     }
   }
 
+  static getServices(request, reply) {
+
+    const user = shared.verifyAuthorization(request.headers);
+    if (request.pre.userExist && !request.pre.forceUpdate) {
+      return affiliatedServicesAdaptor.getServices(
+          {city_id: request.params.id}).then((services) => reply({
+        status: true,
+        services,
+      }));
+    } else {
+      return shared.preValidation(request.pre, reply);
+    }
+  }
+
+// use this function template below to write controllers
+
+  // static functionName(request, reply) {
+  //
+  //   const user = shared.verifyAuthorization(request.headers);
+  //   if (request.pre.userExist && !request.pre.forceUpdate) {
+  //
+  //   } else {
+  //     return shared.preValidation(request.pre, reply);
+  //   }
+  // }
 }

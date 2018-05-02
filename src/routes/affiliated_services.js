@@ -1,8 +1,8 @@
 /*jshint esversion: 6 */
 'use strict';
 
-
-export function prepareAffiliatedServiceRoute (varController, controller, route,appVersionHelper) {
+//affiliate service route
+export function prepareAffiliatedServiceRoute (varController, controller, route, appVersionHelper) {
 
     if (varController) {
 
@@ -21,6 +21,27 @@ export function prepareAffiliatedServiceRoute (varController, controller, route,
                 handler: controller.getCities,
             },
         });
+
+        route.push({
+          method: 'GET',
+          path:'/cities/{id}/services',
+          config: {
+            auth: 'jwt',
+            pre : [
+              {
+                method : appVersionHelper.checkAppVersion,
+                assign: 'forceUpdate'
+              },
+              {
+                method: appVersionHelper.updateUserActiveStatus,
+                assign: 'userExist'
+              },
+            ],
+            handler : controller.getServices,
+          }
+        });
+
+
 
     }
 }
