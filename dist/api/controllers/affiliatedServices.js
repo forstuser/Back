@@ -58,6 +58,32 @@ var affiliatedServicesController = function () {
         return _shared2.default.preValidation(request.pre, reply);
       }
     }
+  }, {
+    key: 'getAllCategory',
+    value: function getAllCategory(request, reply) {
+
+      var user = _shared2.default.verifyAuthorization(request.headers);
+      if (request.pre.userExist && !request.pre.forceUpdate) {
+        // this is where make us of adapter
+        return affiliatedServicesAdaptor.getAllCategory({
+          city_id: request.params.id
+        }).then(function (categories) {
+          return reply({
+            status: true,
+            categories: categories
+          });
+        }).catch(function (err) {
+          console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+
+          return reply({
+            status: false,
+            message: 'Unable to retrieve all cities data'
+          });
+        });
+      } else {
+        return _shared2.default.preValidation(request.pre, reply);
+      }
+    }
   }]);
 
   return affiliatedServicesController;
