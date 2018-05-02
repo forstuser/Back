@@ -38,5 +38,33 @@ export default class affiliatedServicesController {
       return shared.preValidation(request.pre, reply);
     }
   }
+  static getAllCategory(request, reply) {
+
+    const user = shared.verifyAuthorization(request.headers);
+    if (request.pre.userExist && !request.pre.forceUpdate) {
+      // this is where make us of adapter
+      return affiliatedServicesAdaptor.getAllCategory({
+        city_id:request.params.id
+      }).then((categories) => reply({
+        status: true,
+        categories,
+      })).catch((err) => {
+        console.log(
+            `Error on ${new Date()} for user ${user.id ||
+            user.ID} is as follow: \n \n ${err}`);
+
+        return reply({
+          status: false,
+          message:'Unable to retrieve all cities data'
+        });
+      });
+    } else {
+      return shared.preValidation(request.pre, reply);
+    }
+  }
+
+
+
+
 
 }
