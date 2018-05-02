@@ -19,8 +19,7 @@ import AppVersionHelper from '../helpers/appVersion';
 import ProductItemController from '../api/controllers/productItem';
 import CalendarServiceController from '../api/controllers/calendarServices';
 import WhatToServiceController from '../api/controllers/whatToServices';
-import AffiliatedServicesController
-  from '../api/controllers/affiliatedServices';
+import AffiliatedServicesController from '../api/controllers/affiliatedServices';
 import {prepareAffiliatedServiceRoute} from './affiliated_services';
 
 let User;
@@ -2932,7 +2931,7 @@ export default (app, modals) => {
 
     prepareWhatToServiceRoutes(whatToServiceController, whatToServiceRoutes);
 
-    prepareAffiliatedServiceRoute(affiliatedServicesController, AffiliatedServicesController, affiliatedServicesRoutes,appVersionHelpers);
+    prepareAffiliatedServiceRoute(affiliatedServicesController, AffiliatedServicesController, affiliatedServicesRoutes, appVersionHelper);
 
     if (searchController) {
         searchRoutes.push({

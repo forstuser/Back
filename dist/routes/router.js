@@ -2534,7 +2534,7 @@ exports.default = function (app, modals) {
 
     prepareWhatToServiceRoutes(whatToServiceController, whatToServiceRoutes);
 
-    (0, _affiliated_services.prepareAffiliatedServiceRoute)(affiliatedServicesController, _affiliatedServices2.default, affiliatedServicesRoutes, appVersionHelpers);
+    (0, _affiliated_services.prepareAffiliatedServiceRoute)(affiliatedServicesController, _affiliatedServices2.default, affiliatedServicesRoutes, appVersionHelper);
 
     if (searchController) {
         searchRoutes.push({

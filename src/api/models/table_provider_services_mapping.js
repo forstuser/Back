@@ -50,16 +50,22 @@ export default (sequelize, DataTypes) => {
             defaultPrimaryKey: true,
             timestamps: true,
             underscored: true,
-            tableName: 'table_provider_cities',
+            tableName: 'table_provider_services_mapping',
         });
 
     table_provider_services_mapping.associate = (models) => {
 
-        table_provider_services_mapping.belongsTo(models.table_affiliated_services,
-            {foreignKey: 'service_id', onDelete: 'cascade', onUpdate: 'cascade'});
+        table_provider_services_mapping.belongsTo(models.table_affiliated_services, {
+            foreignKey: 'service_id',
+            onDelete: 'cascade',
+            onUpdate: 'cascade'
+        });
 
-        table_provider_services_mapping.belongsTo(models.table_provider_category,
-            {foreignKey: 'provider_category_id', onDelete: 'cascade', onUpdate: 'cascade'});
+        table_provider_services_mapping.belongsTo(models.table_provider_categories, {
+            foreignKey: 'provider_category_id',
+            onDelete: 'cascade',
+            onUpdate: 'cascade'
+        });
 
         table_provider_services_mapping.belongsTo(models.users,
             {foreignKey: 'updated_by', onDelete: 'cascade', onUpdate: 'cascade'});

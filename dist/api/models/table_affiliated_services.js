@@ -47,8 +47,16 @@ exports.default = function (sequelize, DataTypes) {
 
     table_affiliated_services.associate = function (models) {
 
-        table_affiliated_services.belongsTo(models.table_affiliated_services, { foreignKey: 'ref_id', onDelete: 'cascade', onUpdate: 'cascade' });
-        table_affiliated_services.hasMany(models.table_affiliated_services, { foreignKey: 'ref_id', onDelete: 'cascade', onUpdate: 'cascade' });
+        table_affiliated_services.belongsTo(models.table_affiliated_services, {
+            foreignKey: 'ref_id',
+            onDelete: 'cascade',
+            onUpdate: 'cascade'
+        });
+        table_affiliated_services.hasMany(models.table_affiliated_services, {
+            foreignKey: 'ref_id',
+            onDelete: 'cascade',
+            onUpdate: 'cascade'
+        });
 
         table_affiliated_services.belongsTo(models.users, { foreignKey: 'updated_by', onDelete: 'cascade', onUpdate: 'cascade' });
         table_affiliated_services.belongsTo(models.users, { foreignKey: 'created_by', onDelete: 'cascade', onUpdate: 'cascade' });

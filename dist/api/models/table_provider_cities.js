@@ -44,15 +44,34 @@ exports.default = function (sequelize, DataTypes) {
 
     table_provider_cities.associate = function (models) {
 
-        table_provider_cities.belongsTo(models.table_cities, { foreignKey: 'city_id', onDelete: 'cascade', onUpdate: 'cascade' });
+        table_provider_cities.belongsTo(models.table_cities, {
+            foreignKey: 'city_id',
+            onDelete: 'cascade',
+            onUpdate: 'cascade'
+        });
 
-        table_provider_cities.belongsTo(models.table_service_providers, { foreignKey: 'provider_id', onDelete: 'cascade', onUpdate: 'cascade' });
+        table_provider_cities.belongsTo(models.table_service_providers, {
+            foreignKey: 'provider_id',
+            onDelete: 'cascade',
+            onUpdate: 'cascade'
+        });
 
-        table_provider_cities.belongsTo(models.users, { foreignKey: 'updated_by', onDelete: 'cascade', onUpdate: 'cascade' });
-        table_provider_cities.belongsTo(models.users, { foreignKey: 'created_by', onDelete: 'cascade', onUpdate: 'cascade' });
-        table_provider_cities.belongsTo(models.statuses, { foreignKey: 'status_type', targetKey: 'status_type', onDelete: 'cascade', onUpdate: 'cascade' });
-
-        table_provider_cities.hasMany(models.table_provider_categories, { foreignKey: 'provider_city_id', as: 'categories', onDelete: 'cascade', onUpdate: 'cascade' });
+        table_provider_cities.belongsTo(models.users, {
+            foreignKey: 'updated_by',
+            onDelete: 'cascade',
+            onUpdate: 'cascade'
+        });
+        table_provider_cities.belongsTo(models.users, {
+            foreignKey: 'created_by',
+            onDelete: 'cascade',
+            onUpdate: 'cascade'
+        });
+        table_provider_cities.belongsTo(models.statuses, {
+            foreignKey: 'status_type',
+            targetKey: 'status_type',
+            onDelete: 'cascade',
+            onUpdate: 'cascade'
+        });
     };
     return table_provider_cities;
 };
