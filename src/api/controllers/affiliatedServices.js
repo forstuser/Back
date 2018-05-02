@@ -52,7 +52,7 @@ export default class affiliatedServicesController {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
-
+        console.log(err);
         return reply({
           status: false,
           message:'Unable to retrieve all cities data'
@@ -62,10 +62,6 @@ export default class affiliatedServicesController {
       return shared.preValidation(request.pre, reply);
     }
   }
-
-
-
-
 
   static getServices(request, reply) {
 
@@ -80,6 +76,22 @@ export default class affiliatedServicesController {
       return shared.preValidation(request.pre, reply);
     }
   }
+
+  static getAllProviders(request, reply) {
+
+    const user = shared.verifyAuthorization(request.headers);
+    if (request.pre.userExist && !request.pre.forceUpdate) {
+      return affiliatedServicesAdaptor.getAllProviders(
+          {city_id: request.params.id}).then((providers) => reply({
+        status: true,
+        providers,
+      })).catch(console.log);
+    } else {
+      return shared.preValidation(request.pre, reply);
+    }
+  }
+
+
 
 // use this function template below to write controllers
 

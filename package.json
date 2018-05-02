@@ -6,7 +6,7 @@
     "setup": "[ -d uploads ] || mkdir uploads",
     "build": "rm -rf dist/ && ./node_modules/.bin/babel src -d dist/",
     "start": "node dist/index.js --max_old_space_size=2048",
-    "dev": " export $(cat .env | grep -v ^# | xargs) && babel-node  ./src/index.js",
+    "dev": " export $(cat .env | grep -v ^# | xargs) && nodemon --exec babel-node ./src/index.js",
     "test": "mocha --recursive --compilers js:babel-core/register"
   },
   "dependencies": {
@@ -47,6 +47,7 @@
     "node-schedule": "^1.2.5",
     "nodemailer": "^4.3.1",
     "nodemailer-smtp-transport": "^2.7.4",
+    "nodemon": "^1.17.3",
     "otplib": "^5.0.0",
     "passport": "^0.3.2",
     "passport-jwt": "^2.2.1",

@@ -41,7 +41,44 @@ export function prepareAffiliatedServiceRoute (varController, controller, route,
           }
         });
 
+      route.push({
+        method: 'GET',
+        path: '/cities/{id}/categories',
+        config: {
+          auth: 'jwt',
+          pre: [
+            {
+              method: appVersionHelper.checkAppVersion,
+              assign: 'forceUpdate',
+            },
+            {
+              method: appVersionHelper.updateUserActiveStatus,
+              assign: 'userExist',
+            },
+          ],
+          handler: controller.getAllCategory,
+        },
+      });
 
+      route.push({
+        method: 'GET',
+        path: '/cities/{id}/providers',
+        config: {
+          auth: 'jwt',
+          pre: [
+            {
+              method: appVersionHelper.checkAppVersion,
+              assign: 'forceUpdate',
+            },
+            {
+              method: appVersionHelper.updateUserActiveStatus,
+              assign: 'userExist',
+            },
+          ],
+          handler: controller.getAllProviders,
+        },
+
+      });
 
     }
 }
