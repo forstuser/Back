@@ -19,7 +19,8 @@ import AppVersionHelper from '../helpers/appVersion';
 import ProductItemController from '../api/controllers/productItem';
 import CalendarServiceController from '../api/controllers/calendarServices';
 import WhatToServiceController from '../api/controllers/whatToServices';
-import AffiliatedServicesController from '../api/controllers/affiliatedServices';
+import AffiliatedServicesController
+  from '../api/controllers/affiliatedServices';
 import {prepareAffiliatedServiceRoute} from './affiliated_services';
 
 let User;
@@ -2869,116 +2870,118 @@ function prepareWhatToServiceRoutes(whatToServiceController, whatToServiceRoutes
 
 
 export default (app, modals) => {
-    appVersionHelper = new AppVersionHelper(modals);
-    User = modals.users;
-    // Middleware to require login/auth
-    new PassportService(User);
-    passport.authenticate('jwt', {session: false});
-    // Initializing route groups
-    const authRoutes = [];
-    const categoryRoutes = [];
-    const brandRoutes = [];
-    const sellerRoutes = [];
-    const serviceCenterRoutes = [];
-    const billManagementRoutes = [];
-    const dashboardRoutes = [];
-    const productRoutes = [];
-    const insightRoutes = [];
-    const searchRoutes = [];
-    const generalRoutes = [];
-    const repairRoutes = [];
-    const calendarRoutes = [];
-    const uploadFileRoute = [];
-    const whatToServiceRoutes = [];
-    const affiliatedServicesRoutes = [];
-    const userController = new UserController(modals);
-    const categoryController = new CategoryController(modals);
-    const brandController = new BrandController(modals);
-    const uploadController = new UploadController(modals);
-    const serviceCenterController = new ServiceCenterController(modals);
-    const dashboardController = new DashboardController(modals);
-    const productController = new ProductController(modals);
-    const insightController = new InsightController(modals);
-    const searchController = new SearchController(modals);
-    const generalController = new GeneralController(modals);
-    const repairController = new ProductItemController(modals);
-    const calendarServiceController = new CalendarServiceController(modals);
-    const whatToServiceController = new WhatToServiceController(modals);
-    const affiliatedServicesController = new AffiliatedServicesController(modals);
+  appVersionHelper = new AppVersionHelper(modals);
+  User = modals.users;
+  // Middleware to require login/auth
+  new PassportService(User);
+  passport.authenticate('jwt', {session: false});
+  // Initializing route groups
+  const authRoutes = [];
+  const categoryRoutes = [];
+  const brandRoutes = [];
+  const sellerRoutes = [];
+  const serviceCenterRoutes = [];
+  const billManagementRoutes = [];
+  const dashboardRoutes = [];
+  const productRoutes = [];
+  const insightRoutes = [];
+  const searchRoutes = [];
+  const generalRoutes = [];
+  const repairRoutes = [];
+  const calendarRoutes = [];
+  const uploadFileRoute = [];
+  const whatToServiceRoutes = [];
+  const affiliatedServicesRoutes = [];
+  const userController = new UserController(modals);
+  const categoryController = new CategoryController(modals);
+  const brandController = new BrandController(modals);
+  const uploadController = new UploadController(modals);
+  const serviceCenterController = new ServiceCenterController(modals);
+  const dashboardController = new DashboardController(modals);
+  const productController = new ProductController(modals);
+  const insightController = new InsightController(modals);
+  const searchController = new SearchController(modals);
+  const generalController = new GeneralController(modals);
+  const repairController = new ProductItemController(modals);
+  const calendarServiceController = new CalendarServiceController(modals);
+  const whatToServiceController = new WhatToServiceController(modals);
+  const affiliatedServicesController = new AffiliatedServicesController(modals);
 
+  prepareAuthRoutes(userController, authRoutes);
 
-    prepareAuthRoutes(userController, authRoutes);
+  prepareCategoryRoutes(categoryController, categoryRoutes);
 
-    prepareCategoryRoutes(categoryController, categoryRoutes);
+  prepareBrandRoutes(brandController, brandRoutes);
 
-    prepareBrandRoutes(brandController, brandRoutes);
+  prepareServiceCenterRoutes(serviceCenterController, serviceCenterRoutes);
 
-    prepareServiceCenterRoutes(serviceCenterController, serviceCenterRoutes);
+  prepareUploadRoutes(uploadController, uploadFileRoute);
 
-    prepareUploadRoutes(uploadController, uploadFileRoute);
+  prepareDashboardRoutes(dashboardController, dashboardRoutes);
 
-    prepareDashboardRoutes(dashboardController, dashboardRoutes);
+  prepareProductRoutes(productController, productRoutes);
 
-    prepareProductRoutes(productController, productRoutes);
+  prepareInsightRoutes(insightController, insightRoutes);
 
-    prepareInsightRoutes(insightController, insightRoutes);
+  prepareGeneralRoutes(generalController, generalRoutes);
 
-    prepareGeneralRoutes(generalController, generalRoutes);
+  prepareProductItemRoutes(repairController, repairRoutes);
 
-    prepareProductItemRoutes(repairController, repairRoutes);
+  prepareCalendarServiceRoutes(calendarServiceController, calendarRoutes);
 
-    prepareCalendarServiceRoutes(calendarServiceController, calendarRoutes);
+  prepareWhatToServiceRoutes(whatToServiceController, whatToServiceRoutes);
 
-    prepareWhatToServiceRoutes(whatToServiceController, whatToServiceRoutes);
+  prepareAffiliatedServiceRoute(affiliatedServicesController,
+      AffiliatedServicesController, affiliatedServicesRoutes, appVersionHelper);
 
-    prepareAffiliatedServiceRoute(affiliatedServicesController, AffiliatedServicesController, affiliatedServicesRoutes, appVersionHelper);
+  if (searchController) {
+    searchRoutes.push({
+      method: 'GET',
+      path: '/search',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: SearchController.retrieveSearch,
+        description: 'Get Search Data.',
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              {code: 200, message: 'Successful'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
+            ],
+          },
+        },
+      },
+    });
 
-    if (searchController) {
-        searchRoutes.push({
-            method: 'GET',
-            path: '/search',
-            config: {
-                auth: 'jwt',
-                pre: [
-                    {method: appVersionHelper.checkAppVersion, assign: 'forceUpdate'},
-                    {
-                        method: appVersionHelper.updateUserActiveStatus,
-                        assign: 'userExist',
-                    },
-                ],
-                handler: SearchController.retrieveSearch,
-                description: 'Get Search Data.',
-                plugins: {
-                    'hapi-swagger': {
-                        responseMessages: [
-                            {code: 200, message: 'Successful'},
-                            {code: 400, message: 'Bad Request'},
-                            {code: 401, message: 'Invalid Credentials'},
-                            {code: 404, message: 'Not Found'},
-                            {code: 500, message: 'Internal Server Error'},
-                        ],
-                    },
-                },
-            },
-        });
     }
 
     app.route([
-        ...authRoutes,
-        ...categoryRoutes,
-        ...brandRoutes,
-        ...sellerRoutes,
-        ...serviceCenterRoutes,
-        ...billManagementRoutes,
-        ...uploadFileRoute,
-        ...dashboardRoutes,
-        ...productRoutes,
-        ...insightRoutes,
-        ...searchRoutes,
-        ...generalRoutes,
-        ...repairRoutes,
-        ...calendarRoutes,
-        ...whatToServiceRoutes,
-        ...affiliatedServicesRoutes,
+      ...authRoutes,
+      ...categoryRoutes,
+      ...brandRoutes,
+      ...sellerRoutes,
+      ...serviceCenterRoutes,
+      ...billManagementRoutes,
+      ...uploadFileRoute,
+      ...dashboardRoutes,
+      ...productRoutes,
+      ...insightRoutes,
+      ...searchRoutes,
+      ...generalRoutes,
+      ...repairRoutes,
+      ...calendarRoutes,
+      ...whatToServiceRoutes,
+      ...affiliatedServicesRoutes,
     ]);
-};
+  }
+  ;
