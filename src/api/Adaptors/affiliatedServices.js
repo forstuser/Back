@@ -62,8 +62,13 @@ export default class affiliatedServicesAdaptor {
     }));
   }
 
+  getChildServices(options) {
+    return this.getAllChildServices({
+      where: {ref_id: options.ref_id},
+    });
+  }
 
-
+// below are all the helper functions which are used to avoid redundancy of code
   getAllProviderCities(options) {
     return Promise.try(
         () => this.modals.table_provider_cities.findAll(options)).
@@ -98,6 +103,15 @@ export default class affiliatedServicesAdaptor {
             then((providers) => {
               return providers.map(item => item.toJSON());
             }));
+  }
+
+  getAllChildServices(options) {
+    return Promise.try(
+        () => this.modals.table_affiliated_services.findAll(options).
+            then((childServices) => {
+              return childServices.map(item => item.toJSON());
+            }),
+    );
   }
 
 }

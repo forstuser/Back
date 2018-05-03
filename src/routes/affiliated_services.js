@@ -80,5 +80,24 @@ export function prepareAffiliatedServiceRoute (varController, controller, route,
 
       });
 
+      route.push({
+        method: 'GET',
+        path: '/childservices/{id}',
+        config: {
+          auth: 'jwt',
+          pre: [
+            {
+              method: appVersionHelper.checkAppVersion,
+              assign: 'forceUpdate',
+            },
+            {
+              method: appVersionHelper.updateUserActiveStatus,
+              assign: 'userExist',
+            },
+          ],
+          handler: controller.getChildServices,
+        },
+
+      });
     }
 }

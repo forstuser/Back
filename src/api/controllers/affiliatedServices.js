@@ -38,13 +38,14 @@ export default class affiliatedServicesController {
       return shared.preValidation(request.pre, reply);
     }
   }
+
   static getAllCategory(request, reply) {
 
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
       // this is where make us of adapter
       return affiliatedServicesAdaptor.getAllCategory({
-        city_id:request.params.id
+        city_id: request.params.id,
       }).then((categories) => reply({
         status: true,
         categories,
@@ -55,7 +56,7 @@ export default class affiliatedServicesController {
         console.log(err);
         return reply({
           status: false,
-          message:'Unable to retrieve all cities data'
+          message: 'Unable to retrieve all cities data',
         });
       });
     } else {
@@ -65,7 +66,7 @@ export default class affiliatedServicesController {
 
   static getServices(request, reply) {
 
-    const user = shared.verifyAuthorization(request.headers);
+    //const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
       return affiliatedServicesAdaptor.getServices(
           {city_id: request.params.id}).then((services) => reply({
@@ -79,7 +80,7 @@ export default class affiliatedServicesController {
 
   static getAllProviders(request, reply) {
 
-    const user = shared.verifyAuthorization(request.headers);
+    //  const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
       return affiliatedServicesAdaptor.getAllProviders(
           {city_id: request.params.id}).then((providers) => reply({
@@ -91,7 +92,29 @@ export default class affiliatedServicesController {
     }
   }
 
+  static getChildServices(request, reply) {
 
+    // const user = shared.verifyAuthorization(request.headers);
+    if (request.pre.userExist && !request.pre.forceUpdate) {
+      return affiliatedServicesAdaptor.getChildServices({
+        ref_id: request.params.id,
+      }).then((childServices) => reply({
+        status: true,
+        childServices,
+      })).catch((err) => {
+        console.log(
+            `Error on ${new Date()} for user ${user.id ||
+            user.ID} is as follow: \n \n ${err}`);
+        console.log(err);
+        return reply({
+          status: false,
+          message: 'Unable to retrieve childServices data',
+        });
+      });
+    } else {
+      return shared.preValidation(request.pre, reply);
+    }
+  }
 
 // use this function template below to write controllers
 
