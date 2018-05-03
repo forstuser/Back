@@ -63,23 +63,45 @@ export default class affiliatedServicesAdaptor {
   }
 
   getChildServices(options) {
-    return Promise.try(() => this.getAllChildServices({
-      where: {ref_id: options.ref_id},
-    })).
-        then((result) => Promise.all([
-          result, this.getAllProviderServices({
-            where: {
-              service_id: result.map((item) => item.id),
-            },
-          })])).
+    return Promise.try(() => Promise.all([
+      this.getAllChildServices({
+        where: {ref_id: options.ref_id},
+      }), this.getAllProviderCategories({
+        where: {
+          category_id: options.category_ids,
+        },
+        attributes: ['id'],
+      })])).
+        spread((childServiceList, categoryIdList) => {
+          const providerServiceOptions = {
+            service_id: childServiceList.map((item) => item.id),
+          };
+          if (categoryIdList.length > 0) {
+            providerServiceOptions.provider_category_id = categoryIdList.map(
+                (item) => item.id);
+          }
+
+          return Promise.all([
+            childServiceList, this.getAllProviderServices({
+              where: providerServiceOptions,
+              attributes: [
+                'service_id',
+                'price_options',
+                'affiliated_service_id'],
+            })]);
+        }).
         spread((serviceList, providerServiceList) => serviceList.map(
             (serviceItem) => {
               const providerServiceItem = providerServiceList.find(
                   (psItem) => psItem.service_id === serviceItem.id);
-              serviceItem.price_options = providerServiceItem.price_options;
-              serviceItem.affiliated_service_id = providerServiceItem.affiliated_service_id;
-              return serviceItem;
-            }));
+              if (providerServiceItem) {
+                serviceItem.price_options = providerServiceItem.price_options;
+                serviceItem.affiliated_service_id = providerServiceItem.affiliated_service_id;
+                return serviceItem;
+              }
+
+              return null;
+            }).filter(serviceItem => !!serviceItem)).catch(console.log);
   }
 
 // below are all the helper functions which are used to avoid redundancy of code

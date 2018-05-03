@@ -98,6 +98,7 @@ export default class affiliatedServicesController {
     if (request.pre.userExist && !request.pre.forceUpdate) {
       return affiliatedServicesAdaptor.getChildServices({
         ref_id: request.params.id,
+        category_ids: (request.query.category_ids || '').split(','),
       }).then((childServices) => reply({
         status: true,
         childServices,
