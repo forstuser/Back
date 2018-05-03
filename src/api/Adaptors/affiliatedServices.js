@@ -63,9 +63,23 @@ export default class affiliatedServicesAdaptor {
   }
 
   getChildServices(options) {
-    return this.getAllChildServices({
+    return Promise.try(() => this.getAllChildServices({
       where: {ref_id: options.ref_id},
-    });
+    })).
+        then((result) => Promise.all([
+          result, this.getAllProviderServices({
+            where: {
+              service_id: result.map((item) => item.id),
+            },
+          })])).
+        spread((serviceList, providerServiceList) => serviceList.map(
+            (serviceItem) => {
+              const providerServiceItem = providerServiceList.find(
+                  (psItem) => psItem.service_id === serviceItem.id);
+              serviceItem.price_options = providerServiceItem.price_options;
+              serviceItem.affiliated_service_id = providerServiceItem.affiliated_service_id;
+              return serviceItem;
+            }));
   }
 
 // below are all the helper functions which are used to avoid redundancy of code
