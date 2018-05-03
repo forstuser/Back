@@ -11,6 +11,9 @@ export default (sequelize, DataTypes) => {
             provider_category_id: {
                 type: DataTypes.INTEGER,
             },
+          affiliated_service_id: {
+            type: DataTypes.INTEGER,
+          },
             inclusions: {
                 type: DataTypes.JSONB,
             },
