@@ -1,10 +1,47 @@
 import Promise from 'bluebird';
 import CategoryAdaptor from './category';
 
+const rp = require('request-promise');
+const MrRightEndPoint = 'https://www.mrright.in/api/partner/V_1/';
+
 export default class affiliatedServicesAdaptor {
+
   constructor(modals) {
     this.modals = modals;
     this.categoryAdaptor = new CategoryAdaptor(modals);
+    this.rp = rp;
+  }
+
+  validateCoupon(parameters) {
+    console.log(parameters);
+    let {couponCode, service_id} = parameters;
+    const options = {
+      url: MrRightEndPoint + 'coupon/validate',
+      method: 'POST',
+      headers: {
+        ApiKey: 'f168fb76-378a-456c-8c68-6441cf60b214',
+      },
+      json: {
+        couponCode: couponCode,
+        serviceId: service_id,
+      },
+    };
+    return this.rp(options).then(data => {
+      console.log(data);
+    }).catch((err) => console.log(err));
+  }
+
+  createBooking(serviceToBook) {
+    console.log(serviceToBook);
+    const options = {
+      url: MrRightEndPoint + 'case/book',
+      method: 'POST',
+      headers: {
+        ApiKey: 'f168fb76-378a-456c-8c68-6441cf60b214',
+      },
+      json: serviceToBook,
+    };
+    return this.rp(options);
   }
 
   getCities(options) {
@@ -16,7 +53,6 @@ export default class affiliatedServicesAdaptor {
   }
 
   getServices(options) {
-
     return this.getAllProviderCities({
       where: {id: options.city_id},
     }).
