@@ -31,7 +31,7 @@ class EHomeAdaptor {
           user_id: user.id || user.ID,
           status_id: 4,
         },
-      })
+      }),
     ]).then((result) => {
 
       let OtherCategory = null;
@@ -45,30 +45,11 @@ class EHomeAdaptor {
         return categoryData;
       });
 
-      const categoryDataWithoutOthers = _.orderBy(
+      let newCategoryData = _.orderBy(
           categoryList.filter((elem) => {
             return (elem.id !== 9);
-          }), ['productCounts'], ['desc']);
-
-      let newCategoryData = categoryDataWithoutOthers;
-
-      let pushed = false;
-
-      if (OtherCategory) {
-        newCategoryData = [];
-        categoryDataWithoutOthers.forEach((elem) => {
-          if (OtherCategory.productCounts > elem.productCounts && !pushed) {
-            newCategoryData.push(OtherCategory);
-            pushed = true;
-          }
-          newCategoryData.push(elem);
-        });
-
-        if (!pushed) {
-          newCategoryData.push(OtherCategory);
-        }
-      }
-
+          }), ['name'], ['asc']);
+      newCategoryData.push(OtherCategory);
       const recentSearches = result[1].map(item => {
         const searches = item.toJSON();
         return searches.searchValue;
@@ -105,7 +86,7 @@ class EHomeAdaptor {
           $notIn: [3, 5, 9],
         },
         admin_status: {
-          $notIn: [3, 5, 9] // 3=Delete, 5=Complete, 9=Discard
+          $notIn: [3, 5, 9], // 3=Delete, 5=Complete, 9=Discard
         },
         $or: [
           {
@@ -328,7 +309,7 @@ class EHomeAdaptor {
           true),
       this.productAdaptor.retrieveProducts(productOptions, language),
       this.productAdaptor.retrieveProducts(inProgressProductOption,
-          language),]).
+          language)]).
         then((results) => {
           return results[0].map((categoryItem) => {
             const category = categoryItem;

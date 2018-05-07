@@ -83,29 +83,10 @@ var EHomeAdaptor = function () {
           return categoryData;
         });
 
-        var categoryDataWithoutOthers = _lodash2.default.orderBy(categoryList.filter(function (elem) {
+        var newCategoryData = _lodash2.default.orderBy(categoryList.filter(function (elem) {
           return elem.id !== 9;
-        }), ['productCounts'], ['desc']);
-
-        var newCategoryData = categoryDataWithoutOthers;
-
-        var pushed = false;
-
-        if (OtherCategory) {
-          newCategoryData = [];
-          categoryDataWithoutOthers.forEach(function (elem) {
-            if (OtherCategory.productCounts > elem.productCounts && !pushed) {
-              newCategoryData.push(OtherCategory);
-              pushed = true;
-            }
-            newCategoryData.push(elem);
-          });
-
-          if (!pushed) {
-            newCategoryData.push(OtherCategory);
-          }
-        }
-
+        }), ['name'], ['asc']);
+        newCategoryData.push(OtherCategory);
         var recentSearches = result[1].map(function (item) {
           var searches = item.toJSON();
           return searches.searchValue;

@@ -63,11 +63,13 @@ var warrantyAdaptor = void 0;
 var categoryAdaptor = void 0;
 var productAdaptor = void 0;
 var jobAdaptor = void 0;
+var modals = void 0;
 
 var ProductItemController = function () {
   function ProductItemController(modal) {
     _classCallCheck(this, ProductItemController);
 
+    modals = modal;
     repairAdaptor = new _repairs2.default(modal);
     sellerAdaptor = new _sellers2.default(modal);
     insuranceAdaptor = new _insurances2.default(modal);
@@ -111,21 +113,21 @@ var ProductItemController = function () {
           var product_id = parseInt(request.params.id);
           var repairId = parseInt(request.params.repairId);
           var newSellerId = sellerList[0] ? sellerList[0].sid : undefined;
-          var document_date = _moment2.default.utc(request.payload.document_date, _moment2.default.ISO_8601).isValid() ? _moment2.default.utc(request.payload.document_date, _moment2.default.ISO_8601).startOf('day') : _moment2.default.utc(request.payload.document_date, 'DD MMM YY').startOf('day');
+          var document_date = request.payload.document_date ? _moment2.default.utc(request.payload.document_date, _moment2.default.ISO_8601).isValid() ? _moment2.default.utc(request.payload.document_date, _moment2.default.ISO_8601).startOf('day') : _moment2.default.utc(request.payload.document_date, 'DD MMM YY').startOf('day') : '';
 
           var values = {
             updated_by: user.id || user.ID,
             status_type: 11,
             product_id: product_id,
             seller_id: request.payload.seller_id || newSellerId,
-            document_date: document_date ? _moment2.default.utc(document_date).format('YYYY-MM-DD') : _moment2.default.utc().format('YYYY-MM-DD'),
-            repair_for: request.payload.repair_for,
-            repair_cost: request.payload.value,
-            warranty_upto: request.payload.warranty_upto,
+            document_date: document_date ? _moment2.default.utc(document_date).format('YYYY-MM-DD') : document_date === '' && repairId ? undefined : _moment2.default.utc().format('YYYY-MM-DD'),
+            repair_for: request.payload.repair_for || undefined,
+            repair_cost: request.payload.value || undefined,
+            warranty_upto: request.payload.warranty_upto || undefined,
             user_id: user.id || user.ID,
-            job_id: request.payload.job_id
+            job_id: request.payload.job_id || undefined
           };
-          var repairPromise = repairId ? repairAdaptor.updateRepairs(repairId, values) : repairAdaptor.createRepairs(values);
+          var repairPromise = repairId ? repairAdaptor.updateRepairs(repairId, JSON.parse(JSON.stringify(values))) : repairAdaptor.createRepairs(values);
           return repairPromise.then(function (result) {
             if (result) {
               return reply({
@@ -144,6 +146,21 @@ var ProductItemController = function () {
           });
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+          modals.logs.create({
+            api_action: request.method,
+            api_path: request.url.pathname,
+            log_type: 2,
+            user_id: user.id || user.ID,
+            log_content: JSON.stringify({
+              params: request.params,
+              query: request.query,
+              headers: request.headers,
+              payload: request.payload,
+              err: err
+            })
+          }).catch(function (ex) {
+            return console.log('error while logging on db,', ex);
+          });
           return reply({
             status: false,
             message: 'An error occurred in Repair creation.',
@@ -182,6 +199,21 @@ var ProductItemController = function () {
           });
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+          modals.logs.create({
+            api_action: request.method,
+            api_path: request.url.pathname,
+            log_type: 2,
+            user_id: user.id || user.ID,
+            log_content: JSON.stringify({
+              params: request.params,
+              query: request.query,
+              headers: request.headers,
+              payload: request.payload,
+              err: err
+            })
+          }).catch(function (ex) {
+            return console.log('error while logging on db,', ex);
+          });
           return reply({
             status: false
           });
@@ -282,6 +314,21 @@ var ProductItemController = function () {
           }
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+          modals.logs.create({
+            api_action: request.method,
+            api_path: request.url.pathname,
+            log_type: 2,
+            user_id: user.id || user.ID,
+            log_content: JSON.stringify({
+              params: request.params,
+              query: request.query,
+              headers: request.headers,
+              payload: request.payload,
+              err: err
+            })
+          }).catch(function (ex) {
+            return console.log('error while logging on db,', ex);
+          });
           return reply({
             status: false,
             message: 'An error occurred in Insurance creation.',
@@ -320,6 +367,21 @@ var ProductItemController = function () {
           });
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+          modals.logs.create({
+            api_action: request.method,
+            api_path: request.url.pathname,
+            log_type: 2,
+            user_id: user.id || user.ID,
+            log_content: JSON.stringify({
+              params: request.params,
+              query: request.query,
+              headers: request.headers,
+              payload: request.payload,
+              err: err
+            })
+          }).catch(function (ex) {
+            return console.log('error while logging on db,', ex);
+          });
           return reply({
             status: false
           });
@@ -407,6 +469,21 @@ var ProductItemController = function () {
           }
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+          modals.logs.create({
+            api_action: request.method,
+            api_path: request.url.pathname,
+            log_type: 2,
+            user_id: user.id || user.ID,
+            log_content: JSON.stringify({
+              params: request.params,
+              query: request.query,
+              headers: request.headers,
+              payload: request.payload,
+              err: err
+            })
+          }).catch(function (ex) {
+            return console.log('error while logging on db,', ex);
+          });
           return reply({
             status: false,
             message: 'An error occurred in AMC creation.',
@@ -445,6 +522,21 @@ var ProductItemController = function () {
           });
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+          modals.logs.create({
+            api_action: request.method,
+            api_path: request.url.pathname,
+            log_type: 2,
+            user_id: user.id || user.ID,
+            log_content: JSON.stringify({
+              params: request.params,
+              query: request.query,
+              headers: request.headers,
+              payload: request.payload,
+              err: err
+            })
+          }).catch(function (ex) {
+            return console.log('error while logging on db,', ex);
+          });
           return reply({
             status: false
           });
@@ -531,6 +623,21 @@ var ProductItemController = function () {
           });
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+          modals.logs.create({
+            api_action: request.method,
+            api_path: request.url.pathname,
+            log_type: 2,
+            user_id: user.id || user.ID,
+            log_content: JSON.stringify({
+              params: request.params,
+              query: request.query,
+              headers: request.headers,
+              payload: request.payload,
+              err: err
+            })
+          }).catch(function (ex) {
+            return console.log('error while logging on db,', ex);
+          });
           return reply({
             status: false,
             message: 'An error occurred in PUC creation.',
@@ -569,6 +676,21 @@ var ProductItemController = function () {
           });
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+          modals.logs.create({
+            api_action: request.method,
+            api_path: request.url.pathname,
+            log_type: 2,
+            user_id: user.id || user.ID,
+            log_content: JSON.stringify({
+              params: request.params,
+              query: request.query,
+              headers: request.headers,
+              payload: request.payload,
+              err: err
+            })
+          }).catch(function (ex) {
+            return console.log('error while logging on db,', ex);
+          });
           return reply({
             status: false
           });
@@ -641,6 +763,7 @@ var ProductItemController = function () {
           console.log('\n\n\n\n\n\n\n\n\n\n\n\n\n\n ' + effective_date + ', ' + expiry_date);
           var values = {
             renewal_type: request.payload.renewal_type,
+            renewal_cost: request.payload.value,
             updated_by: user.id || user.ID,
             status_type: warrantyRenewalType ? 11 : 8,
             job_id: request.payload.job_id,
@@ -671,6 +794,21 @@ var ProductItemController = function () {
           });
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+          modals.logs.create({
+            api_action: request.method,
+            api_path: request.url.pathname,
+            log_type: 2,
+            user_id: user.id || user.ID,
+            log_content: JSON.stringify({
+              params: request.params,
+              query: request.query,
+              headers: request.headers,
+              payload: request.payload,
+              err: err
+            })
+          }).catch(function (ex) {
+            return console.log('error while logging on db,', ex);
+          });
           return reply({
             status: false,
             message: 'An error occurred in warranty creation.',
@@ -709,6 +847,21 @@ var ProductItemController = function () {
           });
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+          modals.logs.create({
+            api_action: request.method,
+            api_path: request.url.pathname,
+            log_type: 2,
+            user_id: user.id || user.ID,
+            log_content: JSON.stringify({
+              params: request.params,
+              query: request.query,
+              headers: request.headers,
+              payload: request.payload,
+              err: err
+            })
+          }).catch(function (ex) {
+            return console.log('error while logging on db,', ex);
+          });
           return reply({
             status: false
           });

@@ -58,7 +58,7 @@ var sendOTPToUser = function sendOTPToUser(mobileNo, otpLength) {
     var phone = '91' + mobileNo;
     var otp = generateOTP(otpLength); // OTP of length = 4
     return sendOTP.sendAsync(phone, 'BINBILL', otp).catch(function (err) {
-      console.log('Error on ' + new Date() + ' is as follow: \n \n ' + err);
+      console.log('Error on ' + new Date() + ' for ' + JSON.stringify({ phone: phone }) + ' is as follow: \n \n ' + err);
 
       return sendOTP.retryAsync(phone, true);
     });

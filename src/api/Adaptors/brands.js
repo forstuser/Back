@@ -159,7 +159,7 @@ class BrandAdaptor {
   retrieveCategoryBrands(options) {
     return this.modals.brands.findAll({
       where: {
-        status_type: [1,11],
+        status_type: [1, 11],
       }, include: [
         {
           model: this.modals.brandDetails,
@@ -185,9 +185,9 @@ class BrandAdaptor {
           this.modals.sequelize.literal('"details"."category_id"'),
           'categoryId',
         ],
-          'status_type',
-          'created_by',
-          'updated_by'
+        'status_type',
+        'created_by',
+        'updated_by',
       ],
       order: [['brand_index', 'desc'], ['brand_name']],
     }).then((result) => result.map((item) => item.toJSON()));
@@ -196,6 +196,7 @@ class BrandAdaptor {
   retrieveBrandDropDowns(options) {
     return this.modals.brandDropDown.findAll({
       where: options,
+      order: [['title', 'asc']],
     }).then((result) => result.map((item) => item.toJSON()));
   }
 

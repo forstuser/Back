@@ -102,6 +102,19 @@ class GeneralController {
           console.log(
               `Error on ${new Date()} for user ${user.id ||
               user.ID} is as follow: \n \n ${err}`);
+          modals.logs.create({
+            api_action: request.method,
+            api_path: request.url.pathname,
+            log_type: 2,
+            user_id: user.id || user.ID,
+            log_content: JSON.stringify({
+              params: request.params,
+              query: request.query,
+              headers: request.headers,
+              payload: request.payload,
+              err,
+            }),
+          }).catch((ex) => console.log('error while logging on db,', ex));
 
           return reply({
             status: false,
@@ -166,6 +179,19 @@ class GeneralController {
       }).catch((error) => {
         console.log(
             `Error on ${new Date()} is as follow: \n \n ${error}`);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: 1,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
         return reply({
           status: false,
           message: 'Invalid Request',
@@ -186,8 +212,20 @@ class GeneralController {
       return reply({status: true, faq}).code(200);
     }).catch((err) => {
       console.log(
-          `Error on ${new Date()} for user ${user.id ||
-          user.ID} is as follow: \n \n ${err}`);
+          `Error on ${new Date()} for user is as follow: \n \n ${err}`);
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: 1,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
       return reply({status: false}).code(200);
     });
   }
@@ -197,8 +235,20 @@ class GeneralController {
       return reply({status: true, tips}).code(200);
     }).catch((err) => {
       console.log(
-          `Error on ${new Date()} for user ${user.id ||
-          user.ID} is as follow: \n \n ${err}`);
+          `Error on ${new Date()} for user is as follow: \n \n ${err}`);
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: 1,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
       return reply({status: false}).code(200);
     });
   }
@@ -306,6 +356,19 @@ class GeneralController {
             console.log(
                 `Error on ${new Date()} for user ${user.id ||
                 user.ID} is as follow: \n \n ${err}`);
+            modals.logs.create({
+              api_action: request.method,
+              api_path: request.url.pathname,
+              log_type: 2,
+              user_id: user.id || user.ID,
+              log_content: JSON.stringify({
+                params: request.params,
+                query: request.query,
+                headers: request.headers,
+                payload: request.payload,
+                err,
+              }),
+            }).catch((ex) => console.log('error while logging on db,', ex));
             return reply({status: false}).code(200);
           });
     } else if (request.pre.userExist === 0) {
@@ -404,6 +467,19 @@ class GeneralController {
     }).catch((err) => {
       console.log(
           `Error on ${new Date()} is as follow: \n \n ${err}`);
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: 1,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
       return reply({status: false}).code(200);
     });
   }
@@ -480,6 +556,19 @@ class GeneralController {
         catch((err) => {
           console.log(
               `Error on ${new Date()} is as follow: \n \n ${err}`);
+          modals.logs.create({
+            api_action: request.method,
+            api_path: request.url.pathname,
+            log_type: 2,
+            user_id: 1,
+            log_content: JSON.stringify({
+              params: request.params,
+              query: request.query,
+              headers: request.headers,
+              payload: request.payload,
+              err,
+            }),
+          }).catch((ex) => console.log('error while logging on db,', ex));
           return reply({status: false}).code(200);
         });
   }
@@ -530,6 +619,19 @@ class GeneralController {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user.id || user.ID,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
         return reply({status: false}).code(200);
       });
     } else if (request.pre.userExist === 0) {
@@ -569,6 +671,19 @@ class GeneralController {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user.id || user.ID,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
         return reply({status: false}).code(200);
       });
     } else if (request.pre.userExist === 0) {
@@ -610,6 +725,19 @@ class GeneralController {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user.id || user.ID,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
         return reply({status: false}).code(200);
       });
     } else if (request.pre.userExist === 0) {
@@ -702,6 +830,19 @@ class GeneralController {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user.id || user.ID,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
         return reply({
           status: false,
           message: 'Unable to initialize product or job.',
@@ -746,6 +887,19 @@ class GeneralController {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user.id || user.ID,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
         return reply({
           status: false,
           message: 'Failed to update status',
@@ -791,7 +945,19 @@ class GeneralController {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
-
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user.id || user.ID,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
         return reply({
           status: false,
           message: 'Unable to fetch product list',

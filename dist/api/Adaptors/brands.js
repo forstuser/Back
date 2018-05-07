@@ -153,7 +153,8 @@ var BrandAdaptor = function () {
     key: 'retrieveBrandDropDowns',
     value: function retrieveBrandDropDowns(options) {
       return this.modals.brandDropDown.findAll({
-        where: options
+        where: options,
+        order: [['title', 'asc']]
       }).then(function (result) {
         return result.map(function (item) {
           return item.toJSON();

@@ -165,7 +165,21 @@ var ServiceCenterController = function () {
                 // }
               }).catch(function (err) {
                 console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
-
+                modals.logs.create({
+                  api_action: request.method,
+                  api_path: request.url.pathname,
+                  log_type: 2,
+                  user_id: user.id || user.ID,
+                  log_content: JSON.stringify({
+                    params: request.params,
+                    query: request.query,
+                    headers: request.headers,
+                    payload: request.payload,
+                    err: err
+                  })
+                }).catch(function (ex) {
+                  return console.log('error while logging on db,', ex);
+                });
                 return reply({
                   status: false,
                   err: err,
@@ -198,6 +212,21 @@ var ServiceCenterController = function () {
           }
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+          modals.logs.create({
+            api_action: request.method,
+            api_path: request.url.pathname,
+            log_type: 2,
+            user_id: user.id || user.ID,
+            log_content: JSON.stringify({
+              params: request.params,
+              query: request.query,
+              headers: request.headers,
+              payload: request.payload,
+              err: err
+            })
+          }).catch(function (ex) {
+            return console.log('error while logging on db,', ex);
+          });
           return reply({
             status: false,
             err: err,

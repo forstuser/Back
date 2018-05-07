@@ -49,7 +49,8 @@ const trackTransaction = (transactionId, userId) => {
       console.log(response);
     }).catch((err) => {
       console.log('Error in sending iCUBESWIRE POSTBACK');
-      console.log({API_Logs: err});
+      console.log('Error in sending iCUBESWIRE POSTBACK is as follow: \n',
+          JSON.stringify({API_Logs: err}));
     });
   }
 };
@@ -88,13 +89,13 @@ let loginOrRegisterUser = parameters => {
             fcmId: request.payload.fcmId,
             platformId: request.payload.platform || 1,
             selected_language,
-          }).then((data) => {
-            console.log(data);
           }).
-              catch((err) =>
-                  console.log(
-                      `Error on ${new Date()} for user ${updatedUser.id ||
-                      updatedUser.ID} is as follow: \n ${err}`));
+              then((data) => {
+                console.log(data);
+              }).
+              catch((err) => console.log(
+                  `Error on ${new Date()} for user ${updatedUser.id ||
+                  updatedUser.ID} is as follow: \n ${err}`));
         }
 
         trackTransaction(request.payload.transactionId, updatedUser.id);
@@ -121,6 +122,20 @@ let loginOrRegisterUser = parameters => {
               code(401).
               header('authorization', replyObject.authorization);
         }
+
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: 1,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
 
         return reply({
           status: false,
@@ -179,6 +194,21 @@ class UserController {
               console.log(
                   `Error on ${new Date()} for user ${user.id ||
                   user.ID} is as follow: \n \n ${err}`);
+
+              modals.logs.create({
+                api_action: request.method,
+                api_path: request.url.pathname,
+                log_type: 2,
+                user_id: user.id || user.ID,
+                log_content: JSON.stringify({
+                  params: request.params,
+                  query: request.query,
+                  headers: request.headers,
+                  payload: request.payload,
+                  err,
+                }),
+              }).catch((ex) => console.log('error while logging on db,', ex));
+              return reply({status: false});
             });
       }
       return reply(replyObject).code(201);
@@ -238,8 +268,25 @@ class UserController {
                 return reply(replyObject).code(403);
               }
             }).catch((err) => {
-              console.log({API_Logs: err});
+              console.log('Error while sending OTP is as follow: \n',
+                  JSON.stringify({
+                    mobile: request.payload.PhoneNo,
+                    API_Logs: err,
+                  }));
 
+              modals.logs.create({
+                api_action: request.method,
+                api_path: request.url.pathname,
+                log_type: 2,
+                user_id: 1,
+                log_content: JSON.stringify({
+                  params: request.params,
+                  query: request.query,
+                  headers: request.headers,
+                  payload: request.payload,
+                  err,
+                }),
+              }).catch((ex) => console.log('error while logging on db,', ex));
               replyObject.status = false;
               replyObject.message = 'Some issue with sending OTP';
               replyObject.error = err;
@@ -255,6 +302,20 @@ class UserController {
         catch((err) => {
           console.log(
               `Phone number: ${request.payload.PhoneNo} is not a valid phone number ${err}`);
+
+          modals.logs.create({
+            api_action: request.method,
+            api_path: request.url.pathname,
+            log_type: 2,
+            user_id: 1,
+            log_content: JSON.stringify({
+              params: request.params,
+              query: request.query,
+              headers: request.headers,
+              payload: request.payload,
+              err,
+            }),
+          }).catch((ex) => console.log('error while logging on db,', ex));
           replyObject.status = false;
           replyObject.message = 'Invalid Phone number';
           return reply(replyObject);
@@ -292,7 +353,23 @@ class UserController {
         replyObject.imageUrl = user.imageUrl;
         return reply(replyObject).code(201);
       }).catch((err) => {
-        console.log({API_Logs: err});
+        console.log(
+            'Some issue with sending verification code over email is as follow: \n',
+            JSON.stringify(
+                {email: request.payload.email.toLowerCase(), API_Logs: err}));
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: 1,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
 
         replyObject.status = false;
         replyObject.message = 'Some issue with sending verification code over email';
@@ -329,7 +406,21 @@ class UserController {
         replyObject.imageUrl = currentUser.imageUrl;
         return reply(replyObject).code(201);
       }).catch((err) => {
-        console.log({API_Logs: err});
+        console.log('Invalid OTP is as follow: \n',
+            JSON.stringify({API_Logs: err}));
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: 1,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
 
         replyObject.status = false;
         replyObject.message = 'Invalid OTP.';
@@ -395,6 +486,19 @@ class UserController {
           }).catch((err) => {
             console.log(
                 `Error on ${new Date()} for mobile no: ${trueObject.PhoneNo} is as follow: \n \n ${err}`);
+            modals.logs.create({
+              api_action: request.method,
+              api_path: request.url.pathname,
+              log_type: 2,
+              user_id: 1,
+              log_content: JSON.stringify({
+                params: request.params,
+                query: request.query,
+                headers: request.headers,
+                payload: request.payload,
+                err,
+              }),
+            }).catch((ex) => console.log('error while logging on db,', ex));
             replyObject.status = false;
             replyObject.message = 'Issue in updating data';
             replyObject.error = err;
@@ -432,6 +536,19 @@ class UserController {
           }).catch((err) => {
             console.log(
                 `Error on ${new Date()} for mobile no: ${trueObject.PhoneNo} is as follow: \n \n ${err}`);
+            modals.logs.create({
+              api_action: request.method,
+              api_path: request.url.pathname,
+              log_type: 2,
+              user_id: 1,
+              log_content: JSON.stringify({
+                params: request.params,
+                query: request.query,
+                headers: request.headers,
+                payload: request.payload,
+                err,
+              }),
+            }).catch((ex) => console.log('error while logging on db,', ex));
             replyObject.status = false;
             replyObject.message = 'Issue in updating data';
             replyObject.error = err;
@@ -482,6 +599,19 @@ class UserController {
           }).catch((err) => {
             console.log(
                 `Error on ${new Date()} for access token: ${fbSecret} is as follow: \n \n ${err}`);
+            modals.logs.create({
+              api_action: request.method,
+              api_path: request.url.pathname,
+              log_type: 2,
+              user_id: 1,
+              log_content: JSON.stringify({
+                params: request.params,
+                query: request.query,
+                headers: request.headers,
+                payload: request.payload,
+                err,
+              }),
+            }).catch((ex) => console.log('error while logging on db,', ex));
             replyObject.status = false;
             replyObject.message = 'Issue in updating data';
             replyObject.error = err;
@@ -531,6 +661,19 @@ class UserController {
       }).catch((err) => {
         console.log(
             `Error on ${new Date()} for mobile no: ${request.user.mobile_no} is as follow: \n \n ${err}`);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: 1,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
         replyObject.status = false;
         replyObject.message = 'Issue in updating data';
         replyObject.error = err;
@@ -579,6 +722,19 @@ class UserController {
       }).catch((err) => {
         console.log(
             `Error on ${new Date()} for mobile no: ${request.user.mobile_no} is as follow: \n \n ${err}`);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: 1,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
         replyObject.status = false;
         replyObject.message = 'Issue in updating data';
         replyObject.error = err;
@@ -627,6 +783,19 @@ class UserController {
       }).catch((err) => {
         console.log(
             `Error on ${new Date()} for mobile no: ${request.user.mobile_no} is as follow: \n \n ${err}`);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: 1,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
         replyObject.status = false;
         replyObject.message = 'Issue in updating data';
         replyObject.error = err;
@@ -669,6 +838,21 @@ class UserController {
       }).then(() => {
         return reply(replyObject).code(201);
       }).catch(() => {
+
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user.id || user.ID,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
+
         replyObject.status = false;
         replyObject.message = 'Forbidden';
         return reply(replyObject);
@@ -745,7 +929,29 @@ class UserController {
   static updateUserProfile(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
-      return userAdaptor.updateUserProfile(user, request, reply);
+      return userAdaptor.updateUserProfile(user, request, reply).
+          catch((err) => {
+            console.log(
+                `Error on ${new Date()} for user ${user.id ||
+                user.ID} is as follow: \n \n ${err}`);
+
+            modals.logs.create({
+              api_action: request.method,
+              api_path: request.url.pathname,
+              log_type: 2,
+              user_id: user.id || user.ID,
+              log_content: JSON.stringify({
+                params: request.params,
+                query: request.query,
+                headers: request.headers,
+                payload: request.payload,
+                err,
+              }),
+            }).catch((ex) => console.log('error while logging on db,', ex));
+
+            return reply(
+                {status: false, message: 'Unable to update user profile'});
+          });
     } else if (request.pre.userExist === 0) {
       return reply({
         status: false,

@@ -115,6 +115,8 @@ var InsightAdaptor = function () {
     _createClass(InsightAdaptor, [{
         key: 'prepareInsightData',
         value: function prepareInsightData(user, request) {
+            var _this = this;
+
             var minDate = request.query.mindate;
             var maxDate = request.query.maxdate;
             return this.prepareCategoryData(user, {}).then(function (result) {
@@ -288,6 +290,22 @@ var InsightAdaptor = function () {
                 };
             }).catch(function (err) {
                 console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+
+                _this.modals.logs.create({
+                    api_action: request.method,
+                    api_path: request.url.pathname,
+                    log_type: 2,
+                    user_id: user.id || user.ID,
+                    log_content: JSON.stringify({
+                        params: request.params,
+                        query: request.query,
+                        headers: request.headers,
+                        payload: request.payload,
+                        err: err
+                    })
+                }).catch(function (ex) {
+                    return console.log('error while logging on db,', ex);
+                });
                 return {
                     status: false,
                     message: 'Insight restore failed',
@@ -374,6 +392,8 @@ var InsightAdaptor = function () {
     }, {
         key: 'prepareCategoryInsight',
         value: function prepareCategoryInsight(user, request) {
+            var _this2 = this;
+
             var masterCategoryId = request.params.id;
             return this.prepareCategoryData(user, { category_id: masterCategoryId }).then(function (result) {
                 var productList = _lodash2.default.chain(result[0].expenses).filter(function (item) {
@@ -585,6 +605,21 @@ var InsightAdaptor = function () {
                 };
             }).catch(function (err) {
                 console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+                _this2.modals.logs.create({
+                    api_action: request.method,
+                    api_path: request.url.pathname,
+                    log_type: 2,
+                    user_id: user.id || user.ID,
+                    log_content: JSON.stringify({
+                        params: request.params,
+                        query: request.query,
+                        headers: request.headers,
+                        payload: request.payload,
+                        err: err
+                    })
+                }).catch(function (ex) {
+                    return console.log('error while logging on db,', ex);
+                });
                 return {
                     status: false,
                     err: err,

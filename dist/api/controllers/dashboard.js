@@ -35,6 +35,7 @@ var dashboardAdaptor = void 0;
 var eHomeAdaptor = void 0;
 var notificationAdaptor = void 0;
 var userAdaptor = void 0;
+var modals = void 0;
 
 var DashboardController = function () {
   function DashboardController(modal) {
@@ -44,6 +45,7 @@ var DashboardController = function () {
     eHomeAdaptor = new _ehome2.default(modal);
     notificationAdaptor = new _notification2.default(modal);
     userAdaptor = new _user2.default(modal);
+    modals = modal;
   }
 
   _createClass(DashboardController, null, [{
@@ -158,6 +160,22 @@ var DashboardController = function () {
           return reply({ status: true }).code(201); //, forceUpdate: request.pre.forceUpdate}).code(201);
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+
+          modals.logs.create({
+            api_action: request.method,
+            api_path: request.url.pathname,
+            log_type: 2,
+            user_id: user.id || user.ID,
+            log_content: JSON.stringify({
+              params: request.params,
+              query: request.query,
+              headers: request.headers,
+              payload: request.payload,
+              err: err
+            })
+          }).catch(function (ex) {
+            return console.log('error while logging on db,', ex);
+          });
           return reply({ status: false }).code(500); //, forceUpdate: request.pre.forceUpdate}).code(500);
         });
       }

@@ -107,7 +107,7 @@ var trackTransaction = function trackTransaction(transactionId, userId) {
       console.log(response);
     }).catch(function (err) {
       console.log('Error in sending iCUBESWIRE POSTBACK');
-      console.log({ API_Logs: err });
+      console.log('Error in sending iCUBESWIRE POSTBACK is as follow: \n', JSON.stringify({ API_Logs: err }));
     });
   }
 };
@@ -174,6 +174,22 @@ var loginOrRegisterUser = function loginOrRegisterUser(parameters) {
       return reply({ status: false, message: 'Unable to Login User', err: err }).code(401).header('authorization', replyObject.authorization);
     }
 
+    modals.logs.create({
+      api_action: request.method,
+      api_path: request.url.pathname,
+      log_type: 2,
+      user_id: 1,
+      log_content: JSON.stringify({
+        params: request.params,
+        query: request.query,
+        headers: request.headers,
+        payload: request.payload,
+        err: err
+      })
+    }).catch(function (ex) {
+      return console.log('error while logging on db,', ex);
+    });
+
     return reply({
       status: false,
       authorization: token,
@@ -230,6 +246,23 @@ var UserController = function () {
             console.log(data);
           }).catch(function (err) {
             console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+
+            modals.logs.create({
+              api_action: request.method,
+              api_path: request.url.pathname,
+              log_type: 2,
+              user_id: user.id || user.ID,
+              log_content: JSON.stringify({
+                params: request.params,
+                query: request.query,
+                headers: request.headers,
+                payload: request.payload,
+                err: err
+              })
+            }).catch(function (ex) {
+              return console.log('error while logging on db,', ex);
+            });
+            return reply({ status: false });
           });
         }
         return reply(replyObject).code(201);
@@ -280,8 +313,26 @@ var UserController = function () {
               return reply(replyObject).code(403);
             }
           }).catch(function (err) {
-            console.log({ API_Logs: err });
+            console.log('Error while sending OTP is as follow: \n', JSON.stringify({
+              mobile: request.payload.PhoneNo,
+              API_Logs: err
+            }));
 
+            modals.logs.create({
+              api_action: request.method,
+              api_path: request.url.pathname,
+              log_type: 2,
+              user_id: 1,
+              log_content: JSON.stringify({
+                params: request.params,
+                query: request.query,
+                headers: request.headers,
+                payload: request.payload,
+                err: err
+              })
+            }).catch(function (ex) {
+              return console.log('error while logging on db,', ex);
+            });
             replyObject.status = false;
             replyObject.message = 'Some issue with sending OTP';
             replyObject.error = err;
@@ -295,6 +346,22 @@ var UserController = function () {
         }
       }).catch(function (err) {
         console.log('Phone number: ' + request.payload.PhoneNo + ' is not a valid phone number ' + err);
+
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: 1,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err: err
+          })
+        }).catch(function (ex) {
+          return console.log('error while logging on db,', ex);
+        });
         replyObject.status = false;
         replyObject.message = 'Invalid Phone number';
         return reply(replyObject);
@@ -329,7 +396,22 @@ var UserController = function () {
           replyObject.imageUrl = user.imageUrl;
           return reply(replyObject).code(201);
         }).catch(function (err) {
-          console.log({ API_Logs: err });
+          console.log('Some issue with sending verification code over email is as follow: \n', JSON.stringify({ email: request.payload.email.toLowerCase(), API_Logs: err }));
+          modals.logs.create({
+            api_action: request.method,
+            api_path: request.url.pathname,
+            log_type: 2,
+            user_id: 1,
+            log_content: JSON.stringify({
+              params: request.params,
+              query: request.query,
+              headers: request.headers,
+              payload: request.payload,
+              err: err
+            })
+          }).catch(function (ex) {
+            return console.log('error while logging on db,', ex);
+          });
 
           replyObject.status = false;
           replyObject.message = 'Some issue with sending verification code over email';
@@ -369,7 +451,22 @@ var UserController = function () {
           replyObject.imageUrl = currentUser.imageUrl;
           return reply(replyObject).code(201);
         }).catch(function (err) {
-          console.log({ API_Logs: err });
+          console.log('Invalid OTP is as follow: \n', JSON.stringify({ API_Logs: err }));
+          modals.logs.create({
+            api_action: request.method,
+            api_path: request.url.pathname,
+            log_type: 2,
+            user_id: 1,
+            log_content: JSON.stringify({
+              params: request.params,
+              query: request.query,
+              headers: request.headers,
+              payload: request.payload,
+              err: err
+            })
+          }).catch(function (ex) {
+            return console.log('error while logging on db,', ex);
+          });
 
           replyObject.status = false;
           replyObject.message = 'Invalid OTP.';
@@ -433,6 +530,21 @@ var UserController = function () {
               }
             }).catch(function (err) {
               console.log('Error on ' + new Date() + ' for mobile no: ' + trueObject.PhoneNo + ' is as follow: \n \n ' + err);
+              modals.logs.create({
+                api_action: request.method,
+                api_path: request.url.pathname,
+                log_type: 2,
+                user_id: 1,
+                log_content: JSON.stringify({
+                  params: request.params,
+                  query: request.query,
+                  headers: request.headers,
+                  payload: request.payload,
+                  err: err
+                })
+              }).catch(function (ex) {
+                return console.log('error while logging on db,', ex);
+              });
               replyObject.status = false;
               replyObject.message = 'Issue in updating data';
               replyObject.error = err;
@@ -469,6 +581,21 @@ var UserController = function () {
               reply: reply
             }).catch(function (err) {
               console.log('Error on ' + new Date() + ' for mobile no: ' + trueObject.PhoneNo + ' is as follow: \n \n ' + err);
+              modals.logs.create({
+                api_action: request.method,
+                api_path: request.url.pathname,
+                log_type: 2,
+                user_id: 1,
+                log_content: JSON.stringify({
+                  params: request.params,
+                  query: request.query,
+                  headers: request.headers,
+                  payload: request.payload,
+                  err: err
+                })
+              }).catch(function (ex) {
+                return console.log('error while logging on db,', ex);
+              });
               replyObject.status = false;
               replyObject.message = 'Issue in updating data';
               replyObject.error = err;
@@ -512,6 +639,21 @@ var UserController = function () {
               });
             }).catch(function (err) {
               console.log('Error on ' + new Date() + ' for access token: ' + fbSecret + ' is as follow: \n \n ' + err);
+              modals.logs.create({
+                api_action: request.method,
+                api_path: request.url.pathname,
+                log_type: 2,
+                user_id: 1,
+                log_content: JSON.stringify({
+                  params: request.params,
+                  query: request.query,
+                  headers: request.headers,
+                  payload: request.payload,
+                  err: err
+                })
+              }).catch(function (ex) {
+                return console.log('error while logging on db,', ex);
+              });
               replyObject.status = false;
               replyObject.message = 'Issue in updating data';
               replyObject.error = err;
@@ -558,6 +700,21 @@ var UserController = function () {
           }
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' for mobile no: ' + request.user.mobile_no + ' is as follow: \n \n ' + err);
+          modals.logs.create({
+            api_action: request.method,
+            api_path: request.url.pathname,
+            log_type: 2,
+            user_id: 1,
+            log_content: JSON.stringify({
+              params: request.params,
+              query: request.query,
+              headers: request.headers,
+              payload: request.payload,
+              err: err
+            })
+          }).catch(function (ex) {
+            return console.log('error while logging on db,', ex);
+          });
           replyObject.status = false;
           replyObject.message = 'Issue in updating data';
           replyObject.error = err;
@@ -602,6 +759,21 @@ var UserController = function () {
           }
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' for mobile no: ' + request.user.mobile_no + ' is as follow: \n \n ' + err);
+          modals.logs.create({
+            api_action: request.method,
+            api_path: request.url.pathname,
+            log_type: 2,
+            user_id: 1,
+            log_content: JSON.stringify({
+              params: request.params,
+              query: request.query,
+              headers: request.headers,
+              payload: request.payload,
+              err: err
+            })
+          }).catch(function (ex) {
+            return console.log('error while logging on db,', ex);
+          });
           replyObject.status = false;
           replyObject.message = 'Issue in updating data';
           replyObject.error = err;
@@ -646,6 +818,21 @@ var UserController = function () {
           }
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' for mobile no: ' + request.user.mobile_no + ' is as follow: \n \n ' + err);
+          modals.logs.create({
+            api_action: request.method,
+            api_path: request.url.pathname,
+            log_type: 2,
+            user_id: 1,
+            log_content: JSON.stringify({
+              params: request.params,
+              query: request.query,
+              headers: request.headers,
+              payload: request.payload,
+              err: err
+            })
+          }).catch(function (ex) {
+            return console.log('error while logging on db,', ex);
+          });
           replyObject.status = false;
           replyObject.message = 'Issue in updating data';
           replyObject.error = err;
@@ -686,6 +873,23 @@ var UserController = function () {
         }).then(function () {
           return reply(replyObject).code(201);
         }).catch(function () {
+
+          modals.logs.create({
+            api_action: request.method,
+            api_path: request.url.pathname,
+            log_type: 2,
+            user_id: user.id || user.ID,
+            log_content: JSON.stringify({
+              params: request.params,
+              query: request.query,
+              headers: request.headers,
+              payload: request.payload,
+              err: err
+            })
+          }).catch(function (ex) {
+            return console.log('error while logging on db,', ex);
+          });
+
           replyObject.status = false;
           replyObject.message = 'Forbidden';
           return reply(replyObject);
@@ -759,7 +963,27 @@ var UserController = function () {
     value: function updateUserProfile(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist && !request.pre.forceUpdate) {
-        return userAdaptor.updateUserProfile(user, request, reply);
+        return userAdaptor.updateUserProfile(user, request, reply).catch(function (err) {
+          console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+
+          modals.logs.create({
+            api_action: request.method,
+            api_path: request.url.pathname,
+            log_type: 2,
+            user_id: user.id || user.ID,
+            log_content: JSON.stringify({
+              params: request.params,
+              query: request.query,
+              headers: request.headers,
+              payload: request.payload,
+              err: err
+            })
+          }).catch(function (ex) {
+            return console.log('error while logging on db,', ex);
+          });
+
+          return reply({ status: false, message: 'Unable to update user profile' });
+        });
       } else if (request.pre.userExist === 0) {
         return reply({
           status: false,

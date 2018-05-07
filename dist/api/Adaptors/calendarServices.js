@@ -50,6 +50,7 @@ var CalendarServiceAdaptor = function () {
       }).spread(function (calendar_services, unit_types) {
         return [calendar_services.map(function (item) {
           var calendarServiceItem = item.toJSON();
+          calendarServiceItem.calendarServiceImageUrl = calendarServiceItem.calendarServiceImageUrl + '/thumbnail';
           calendarServiceItem.name = calendarServiceItem ? calendarServiceItem.name || calendarServiceItem.default_name : '';
           calendarServiceItem.quantity_type = calendarServiceItem ? calendarServiceItem.quantity_type || calendarServiceItem.default_quantity_type : '';
           return calendarServiceItem;

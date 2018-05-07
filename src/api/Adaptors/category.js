@@ -39,7 +39,7 @@ export default class CategoryAdaptor {
         [
           this.modals.sequelize.fn('CONCAT', '/categories/',
               this.modals.sequelize.literal('"categories"."category_id"'),
-              '/images/'),
+              '/images/1'),
           'categoryImageUrl']],
       order: ['category_id'],
     }).then((result) => {
@@ -115,7 +115,7 @@ export default class CategoryAdaptor {
         [
           this.modals.sequelize.fn('CONCAT', '/categories/',
               this.modals.sequelize.literal('category_id'),
-              '/images/'),
+              '/images/1/thumbnail'),
           'categoryImageUrl']],
       order: ['category_id'],
     }).then((result) => {
@@ -265,7 +265,7 @@ export default class CategoryAdaptor {
               [
                 this.modals.sequelize.fn('CONCAT', '/categories/',
                     this.modals.sequelize.literal('category_id'),
-                    '/images/'),
+                    '/images/1/thumbnail'),
                 'categoryImageUrl']],
             order: ['category_id'],
           })]);

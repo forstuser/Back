@@ -75,51 +75,55 @@ var DashboardAdaptor = function () {
   _createClass(DashboardAdaptor, [{
     key: 'retrieveDashboardResult',
     value: function retrieveDashboardResult(user, request) {
-      return _bluebird2.default.all([this.filterUpcomingService(user, request), this.prepareInsightData(user, request), this.retrieveRecentSearch(user), this.modals.mailBox.count({ where: { user_id: user.id || user.ID, status_id: 4 } }), this.modals.products.count({
-        where: {
-          user_id: user.id || user.ID,
-          status_type: [5, 8]
-        },
-        include: [{
-          model: this.modals.bills,
+      var _this = this;
+
+      return _bluebird2.default.try(function () {
+        return _bluebird2.default.all([_this.filterUpcomingService(user, request), _this.prepareInsightData(user, request), _this.retrieveRecentSearch(user), _this.modals.mailBox.count({ where: { user_id: user.id || user.ID, status_id: 4 } }), _this.modals.products.count({
           where: {
-            status_type: 5
+            user_id: user.id || user.ID,
+            status_type: [5, 8]
           },
-          required: true
-        }]
-      }), this.modals.products.count({
-        where: {
+          include: [{
+            model: _this.modals.bills,
+            where: {
+              status_type: 5
+            },
+            required: true
+          }]
+        }), _this.modals.products.count({
+          where: {
+            user_id: user.id || user.ID,
+            status_type: 11
+          }
+        }), _this.productAdaptor.retrieveUsersLastProduct({
           user_id: user.id || user.ID,
-          status_type: 11
-        }
-      }), this.productAdaptor.retrieveUsersLastProduct({
-        user_id: user.id || user.ID,
-        status_type: [5, 11]
-      }, request.language), this.modals.user_calendar_item.count({
-        where: {
-          user_id: user.id || user.ID
-        }
-      }), this.modals.user_calendar_item.findOne({
-        where: {
-          user_id: user.id || user.ID
-        },
-        order: [['updated_at', 'desc']]
-      }), this.modals.service_calculation.findOne({
-        where: {
-          updated_by: user.id || user.ID
-        },
-        order: [['updated_at', 'desc']]
-      }), this.calendarServiceAdaptor.retrieveCalendarItemList({ user_id: user.id || user.ID }, request.language, 4), this.modals.products.count({
-        where: {
-          user_id: user.id || user.ID,
-          main_category_id: [2, 3],
           status_type: [5, 11]
-        }
-      }), this.modals.knowItems.count({
-        where: {
-          id: { $gt: request.query.lastfact || 0 }
-        }
-      })]).then(function (result) {
+        }, request.language), _this.modals.user_calendar_item.count({
+          where: {
+            user_id: user.id || user.ID
+          }
+        }), _this.modals.user_calendar_item.findOne({
+          where: {
+            user_id: user.id || user.ID
+          },
+          order: [['updated_at', 'desc']]
+        }), _this.modals.service_calculation.findOne({
+          where: {
+            updated_by: user.id || user.ID
+          },
+          order: [['updated_at', 'desc']]
+        }), _this.calendarServiceAdaptor.retrieveCalendarItemList({ user_id: user.id || user.ID }, request.language, 4), _this.modals.products.count({
+          where: {
+            user_id: user.id || user.ID,
+            main_category_id: [2, 3],
+            status_type: [5, 11]
+          }
+        }), _this.modals.knowItems.count({
+          where: {
+            id: { $gt: request.query.lastfact || 0 }
+          }
+        })]);
+      }).then(function (result) {
         var upcomingServices = result[0].map(function (elem) {
           if (elem.productType === 1) {
             var dueAmountArr = elem.productMetaData.filter(function (e) {
@@ -212,6 +216,22 @@ var DashboardAdaptor = function () {
         };
       }).catch(function (err) {
         console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+
+        _this.modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user.id || user.ID,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err: err
+          })
+        }).catch(function (ex) {
+          return console.log('error while logging on db,', ex);
+        });
         return {
           status: false,
           message: 'Dashboard restore failed',
@@ -224,6 +244,8 @@ var DashboardAdaptor = function () {
   }, {
     key: 'prepareDashboardResult',
     value: function prepareDashboardResult(parameters) {
+      var _this2 = this;
+
       var isNewUser = parameters.isNewUser,
           user = parameters.user,
           token = parameters.token,
@@ -263,6 +285,22 @@ var DashboardAdaptor = function () {
           };
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+
+          _this2.modals.logs.create({
+            api_action: request.method,
+            api_path: request.url.pathname,
+            log_type: 2,
+            user_id: user.id || user.ID,
+            log_content: JSON.stringify({
+              params: request.params,
+              query: request.query,
+              headers: request.headers,
+              payload: request.payload,
+              err: err
+            })
+          }).catch(function (ex) {
+            return console.log('error while logging on db,', ex);
+          });
           return {
             status: false,
             authorization: token,
@@ -292,49 +330,59 @@ var DashboardAdaptor = function () {
   }, {
     key: 'filterUpcomingService',
     value: function filterUpcomingService(user, request) {
-      return _bluebird2.default.all([this.amcAdaptor.retrieveAMCs({
-        user_id: user.id || user.ID,
-        status_type: [5, 11],
-        expiry_date: {
-          $gte: _moment2.default.utc().startOf('days'),
-          $lte: _moment2.default.utc().add(30, 'days').endOf('days')
-        }
-      }), this.insuranceAdaptor.retrieveInsurances({
-        user_id: user.id || user.ID,
-        status_type: [5, 11],
-        expiry_date: {
-          $gte: _moment2.default.utc().startOf('days'),
-          $lte: _moment2.default.utc().add(30, 'days').endOf('days')
-        }
-      }), this.warrantyAdaptor.retrieveWarranties({
-        user_id: user.id || user.ID,
-        status_type: [5, 11],
-        warranty_type: [1, 2],
-        expiry_date: {
-          $gte: _moment2.default.utc().startOf('days'),
-          $lte: _moment2.default.utc().add(30, 'days').endOf('days')
-        }
-      }), this.pucAdaptor.retrievePUCs({
-        user_id: user.id || user.ID,
-        status_type: [5, 11],
-        main_category_id: [3],
-        expiry_date: {
-          $gte: _moment2.default.utc().startOf('days'),
-          $lte: _moment2.default.utc().add(30, 'days').endOf('days')
-        }
-      }), this.productAdaptor.retrieveUpcomingProducts({
-        user_id: user.id || user.ID,
-        status_type: [5, 11],
-        main_category_id: [3],
-        service_schedule_id: {
-          $not: null
-        }
-      }, request.language), this.productAdaptor.retrieveNotificationProducts({
-        user_id: user.id || user.ID,
-        status_type: [5, 11],
-        main_category_id: [6, 8]
-      })]).then(function (result) {
-        var amcs = result[0].map(function (item) {
+      var _this3 = this;
+
+      return _bluebird2.default.try(function () {
+        return _bluebird2.default.all([_this3.amcAdaptor.retrieveAMCs({
+          user_id: user.id || user.ID,
+          status_type: [5, 11],
+          expiry_date: {
+            $gte: _moment2.default.utc().startOf('days'),
+            $lte: _moment2.default.utc().add(30, 'days').endOf('days')
+          }
+        }), _this3.insuranceAdaptor.retrieveInsurances({
+          user_id: user.id || user.ID,
+          status_type: [5, 11],
+          expiry_date: {
+            $gte: _moment2.default.utc().startOf('days'),
+            $lte: _moment2.default.utc().add(30, 'days').endOf('days')
+          }
+        }), _this3.warrantyAdaptor.retrieveWarranties({
+          user_id: user.id || user.ID,
+          status_type: [5, 11],
+          warranty_type: [1, 2],
+          expiry_date: {
+            $gte: _moment2.default.utc().startOf('days'),
+            $lte: _moment2.default.utc().add(30, 'days').endOf('days')
+          }
+        }), _this3.pucAdaptor.retrievePUCs({
+          user_id: user.id || user.ID,
+          status_type: [5, 11],
+          main_category_id: [3],
+          expiry_date: {
+            $gte: _moment2.default.utc().startOf('days'),
+            $lte: _moment2.default.utc().add(30, 'days').endOf('days')
+          }
+        }), _this3.productAdaptor.retrieveUpcomingProducts({
+          user_id: user.id || user.ID,
+          status_type: [5, 11],
+          main_category_id: [3],
+          service_schedule_id: {
+            $not: null
+          }
+        }, request.language), _this3.productAdaptor.retrieveNotificationProducts({
+          user_id: user.id || user.ID,
+          status_type: [5, 11],
+          main_category_id: [6, 8]
+        }), _this3.repairAdaptor.retrieveRepairs({
+          user_id: user.id || user.ID,
+          status_type: [5, 11],
+          warranty_upto: {
+            $ne: null
+          }
+        })]);
+      }).spread(function (amcList, insuranceList, warrantyList, pucList, productServiceScheduleList, productDetails, repairList) {
+        var amcs = amcList.map(function (item) {
           var amc = item;
           if (_moment2.default.utc(amc.expiryDate, _moment2.default.ISO_8601).isValid()) {
             var dueDate_time = _moment2.default.utc(amc.expiryDate, _moment2.default.ISO_8601).endOf('day');
@@ -349,7 +397,7 @@ var DashboardAdaptor = function () {
           return item.dueIn !== undefined && item.dueIn !== null && item.dueIn <= 30 && item.dueIn >= 0;
         });
 
-        var insurances = result[1].map(function (item) {
+        var insurances = insuranceList.map(function (item) {
           var insurance = item;
           if (_moment2.default.utc(insurance.expiryDate, _moment2.default.ISO_8601).isValid()) {
             var dueDate_time = _moment2.default.utc(insurance.expiryDate, _moment2.default.ISO_8601).endOf('day');
@@ -364,7 +412,7 @@ var DashboardAdaptor = function () {
           return item.dueIn !== undefined && item.dueIn !== null && item.dueIn <= 30 && item.dueIn >= 0;
         });
 
-        var warranties = result[2].map(function (item) {
+        var warranties = warrantyList.map(function (item) {
           var warranty = item;
           if (_moment2.default.utc(warranty.expiryDate, _moment2.default.ISO_8601).isValid()) {
             var dueDate_time = _moment2.default.utc(warranty.expiryDate, _moment2.default.ISO_8601).endOf('day');
@@ -379,7 +427,22 @@ var DashboardAdaptor = function () {
           return item.dueIn !== undefined && item.dueIn !== null && item.dueIn <= 30 && item.dueIn >= 0;
         });
 
-        var pucProducts = result[3].map(function (item) {
+        var repairWarranties = repairList.map(function (item) {
+          var warranty = item;
+          if (_moment2.default.utc(warranty.warranty_upto, _moment2.default.ISO_8601).isValid()) {
+            var dueDate_time = _moment2.default.utc(warranty.warranty_upto, _moment2.default.ISO_8601).endOf('day');
+            warranty.dueDate = warranty.warranty_upto;
+            warranty.dueIn = dueDate_time.diff(_moment2.default.utc(), 'days', true);
+            warranty.productType = 7;
+          }
+          return warranty;
+        });
+
+        repairWarranties = repairWarranties.filter(function (item) {
+          return item.dueIn !== undefined && item.dueIn !== null && item.dueIn <= 30 && item.dueIn >= 0;
+        });
+
+        var pucProducts = pucList.map(function (item) {
           var puc = item;
           if (_moment2.default.utc(puc.expiryDate, _moment2.default.ISO_8601).isValid()) {
             var dueDate_time = _moment2.default.utc(puc.expiryDate, _moment2.default.ISO_8601).endOf('day');
@@ -395,7 +458,7 @@ var DashboardAdaptor = function () {
           return item.dueIn !== undefined && item.dueIn !== null && item.dueIn <= 30 && item.dueIn >= 0;
         });
 
-        var productServiceSchedule = result[4].filter(function (item) {
+        var productServiceSchedule = productServiceScheduleList.filter(function (item) {
           return item.schedule;
         }).map(function (item) {
           var scheduledProduct = item;
@@ -413,8 +476,8 @@ var DashboardAdaptor = function () {
         productServiceSchedule = productServiceSchedule.filter(function (item) {
           return item.dueIn !== undefined && item.dueIn !== null && item.dueIn <= 7 && item.dueIn >= 0;
         });
-        var metaData = result[5][0];
-        var productList = result[5][1].map(function (productItem) {
+        var metaData = productDetails[0];
+        var productList = productDetails[1].map(function (productItem) {
           productItem.productMetaData = metaData.filter(function (item) {
             return item.productId === productItem.id;
           });
@@ -445,7 +508,7 @@ var DashboardAdaptor = function () {
           return item.dueIn !== undefined && item.dueIn !== null && item.dueIn <= 30 && item.dueIn >= 0;
         });
 
-        return [].concat(_toConsumableArray(productList), _toConsumableArray(warranties), _toConsumableArray(insurances), _toConsumableArray(amcs), _toConsumableArray(pucProducts), _toConsumableArray(productServiceSchedule));
+        return [].concat(_toConsumableArray(productList), _toConsumableArray(warranties), _toConsumableArray(insurances), _toConsumableArray(amcs), _toConsumableArray(pucProducts), _toConsumableArray(productServiceSchedule), _toConsumableArray(repairWarranties));
       });
     }
   }, {

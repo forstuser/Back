@@ -134,6 +134,21 @@ var GeneralController = function () {
         });
       }).catch(function (err) {
         console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user.id || user.ID,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err: err
+          })
+        }).catch(function (ex) {
+          return console.log('error while logging on db,', ex);
+        });
 
         return reply({
           status: false
@@ -196,6 +211,21 @@ var GeneralController = function () {
           });
         }).catch(function (error) {
           console.log('Error on ' + new Date() + ' is as follow: \n \n ' + error);
+          modals.logs.create({
+            api_action: request.method,
+            api_path: request.url.pathname,
+            log_type: 2,
+            user_id: 1,
+            log_content: JSON.stringify({
+              params: request.params,
+              query: request.query,
+              headers: request.headers,
+              payload: request.payload,
+              err: err
+            })
+          }).catch(function (ex) {
+            return console.log('error while logging on db,', ex);
+          });
           return reply({
             status: false,
             message: 'Invalid Request'
@@ -216,7 +246,22 @@ var GeneralController = function () {
       }).then(function (faq) {
         return reply({ status: true, faq: faq }).code(200);
       }).catch(function (err) {
-        console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+        console.log('Error on ' + new Date() + ' for user is as follow: \n \n ' + err);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: 1,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err: err
+          })
+        }).catch(function (ex) {
+          return console.log('error while logging on db,', ex);
+        });
         return reply({ status: false }).code(200);
       });
     }
@@ -226,7 +271,22 @@ var GeneralController = function () {
       return modals.tips.findAll({ order: [['id']] }).then(function (tips) {
         return reply({ status: true, tips: tips }).code(200);
       }).catch(function (err) {
-        console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+        console.log('Error on ' + new Date() + ' for user is as follow: \n \n ' + err);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: 1,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err: err
+          })
+        }).catch(function (ex) {
+          return console.log('error while logging on db,', ex);
+        });
         return reply({ status: false }).code(200);
       });
     }
@@ -302,6 +362,21 @@ var GeneralController = function () {
           }).code(200);
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+          modals.logs.create({
+            api_action: request.method,
+            api_path: request.url.pathname,
+            log_type: 2,
+            user_id: user.id || user.ID,
+            log_content: JSON.stringify({
+              params: request.params,
+              query: request.query,
+              headers: request.headers,
+              payload: request.payload,
+              err: err
+            })
+          }).catch(function (ex) {
+            return console.log('error while logging on db,', ex);
+          });
           return reply({ status: false }).code(200);
         });
       } else if (request.pre.userExist === 0) {
@@ -371,6 +446,21 @@ var GeneralController = function () {
         }).code(200);
       }).catch(function (err) {
         console.log('Error on ' + new Date() + ' is as follow: \n \n ' + err);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: 1,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err: err
+          })
+        }).catch(function (ex) {
+          return console.log('error while logging on db,', ex);
+        });
         return reply({ status: false }).code(200);
       });
     }
@@ -415,6 +505,21 @@ var GeneralController = function () {
         }).code(200);
       }).catch(function (err) {
         console.log('Error on ' + new Date() + ' is as follow: \n \n ' + err);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: 1,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err: err
+          })
+        }).catch(function (ex) {
+          return console.log('error while logging on db,', ex);
+        });
         return reply({ status: false }).code(200);
       });
     }
@@ -450,6 +555,21 @@ var GeneralController = function () {
           }).code(200);
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+          modals.logs.create({
+            api_action: request.method,
+            api_path: request.url.pathname,
+            log_type: 2,
+            user_id: user.id || user.ID,
+            log_content: JSON.stringify({
+              params: request.params,
+              query: request.query,
+              headers: request.headers,
+              payload: request.payload,
+              err: err
+            })
+          }).catch(function (ex) {
+            return console.log('error while logging on db,', ex);
+          });
           return reply({ status: false }).code(200);
         });
       } else if (request.pre.userExist === 0) {
@@ -488,6 +608,21 @@ var GeneralController = function () {
           }).code(200);
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+          modals.logs.create({
+            api_action: request.method,
+            api_path: request.url.pathname,
+            log_type: 2,
+            user_id: user.id || user.ID,
+            log_content: JSON.stringify({
+              params: request.params,
+              query: request.query,
+              headers: request.headers,
+              payload: request.payload,
+              err: err
+            })
+          }).catch(function (ex) {
+            return console.log('error while logging on db,', ex);
+          });
           return reply({ status: false }).code(200);
         });
       } else if (request.pre.userExist === 0) {
@@ -528,6 +663,21 @@ var GeneralController = function () {
           }).code(200);
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+          modals.logs.create({
+            api_action: request.method,
+            api_path: request.url.pathname,
+            log_type: 2,
+            user_id: user.id || user.ID,
+            log_content: JSON.stringify({
+              params: request.params,
+              query: request.query,
+              headers: request.headers,
+              payload: request.payload,
+              err: err
+            })
+          }).catch(function (ex) {
+            return console.log('error while logging on db,', ex);
+          });
           return reply({ status: false }).code(200);
         });
       } else if (request.pre.userExist === 0) {
@@ -597,6 +747,21 @@ var GeneralController = function () {
           });
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+          modals.logs.create({
+            api_action: request.method,
+            api_path: request.url.pathname,
+            log_type: 2,
+            user_id: user.id || user.ID,
+            log_content: JSON.stringify({
+              params: request.params,
+              query: request.query,
+              headers: request.headers,
+              payload: request.payload,
+              err: err
+            })
+          }).catch(function (ex) {
+            return console.log('error while logging on db,', ex);
+          });
           return reply({
             status: false,
             message: 'Unable to initialize product or job.',
@@ -641,6 +806,21 @@ var GeneralController = function () {
           });
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+          modals.logs.create({
+            api_action: request.method,
+            api_path: request.url.pathname,
+            log_type: 2,
+            user_id: user.id || user.ID,
+            log_content: JSON.stringify({
+              params: request.params,
+              query: request.query,
+              headers: request.headers,
+              payload: request.payload,
+              err: err
+            })
+          }).catch(function (ex) {
+            return console.log('error while logging on db,', ex);
+          });
           return reply({
             status: false,
             message: 'Failed to update status',
@@ -687,7 +867,21 @@ var GeneralController = function () {
           });
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
-
+          modals.logs.create({
+            api_action: request.method,
+            api_path: request.url.pathname,
+            log_type: 2,
+            user_id: user.id || user.ID,
+            log_content: JSON.stringify({
+              params: request.params,
+              query: request.query,
+              headers: request.headers,
+              payload: request.payload,
+              err: err
+            })
+          }).catch(function (ex) {
+            return console.log('error while logging on db,', ex);
+          });
           return reply({
             status: false,
             message: 'Unable to fetch product list',

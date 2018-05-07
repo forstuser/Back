@@ -12,6 +12,7 @@ import SellerAdaptor from './sellers';
 import ServiceScheduleAdaptor from './serviceSchedules';
 import _ from 'lodash';
 import moment from 'moment/moment';
+import Promise from 'bluebird';
 
 class ProductAdaptor {
   constructor(modals) {
@@ -355,8 +356,8 @@ class ProductAdaptor {
             moment.ISO_8601).
             startOf('days');
         productItem.cImageURL = productItem.sub_category_id ?
-            `/categories/${productItem.sub_category_id}/images/1` :
-            `${productItem.cImageURL}1`;
+            `/categories/${productItem.sub_category_id}/images/1/thumbnail` :
+            `${productItem.cImageURL}1/thumbnail`;
         if (productItem.schedule) {
           productItem.schedule.due_date = moment.utc(productItem.purchaseDate,
               moment.ISO_8601).
@@ -582,8 +583,8 @@ class ProductAdaptor {
         });
       }
       productItem.cImageURL = productItem.sub_category_id ?
-          `/categories/${productItem.sub_category_id}/images/1` :
-          `${productItem.cImageURL}1`;
+          `/categories/${productItem.sub_category_id}/images/1/thumbnail` :
+          `${productItem.cImageURL}1/thumbnail`;
       productItem.purchaseDate = moment.utc(productItem.purchaseDate,
           moment.ISO_8601).
           startOf('days');
@@ -899,8 +900,8 @@ class ProductAdaptor {
           });
         }
         productItem.cImageURL = productItem.sub_category_id ?
-            `/categories/${productItem.sub_category_id}/images/1` :
-            `${productItem.cImageURL}1`;
+            `/categories/${productItem.sub_category_id}/images/1/thumbnail` :
+            `${productItem.cImageURL}1/thumbnail`;
         productItem.purchaseDate = moment.utc(productItem.purchaseDate,
             moment.ISO_8601).
             startOf('days');
@@ -1823,6 +1824,7 @@ class ProductAdaptor {
       },
     })).then((result) => {
       dbProduct = result.toJSON();
+      productBody.seller_id = dbProduct.seller_id;
       productBody.brand_id = productBody.brand_id || productBody.brand_id === 0
           ? productBody.brand_id
           : dbProduct.brand_id;
@@ -1918,7 +1920,7 @@ class ProductAdaptor {
           then((newItemResults) => {
             sellerList = newItemResults;
             const newSeller = productBody.seller_contact ||
-            productBody.seller_name ?
+            productBody.seller_name || productBody.seller_email ?
                 sellerList[0] : undefined;
             product = _.omit(product, 'seller_name');
             product = _.omit(product, 'seller_contact');
@@ -2717,15 +2719,29 @@ class ProductAdaptor {
   prepareSellerPromise(parameters) {
     let {sellerPromise, productBody, otherItems, isProductAMCSellerSame, isProductRepairSellerSame, isProductPUCSellerSame, isAMCRepairSellerSame} = parameters;
     let sellerOption = {
-      seller_name: {
-        $iLike: productBody.seller_name ||
-        productBody.product_name,
+      $or: {
+        $and: {
+          seller_name: {
+            $iLike: productBody.seller_name || '',
+          },
+        },
       },
     };
 
-    if (productBody.seller_contact) {
-      sellerOption.contact_no = productBody.seller_contact;
+    if (productBody.seller_id) {
+      sellerOption.$or.sid = productBody.seller_id;
     }
+
+    if (productBody.seller_contact && productBody.seller_contact.trim()) {
+      sellerOption.$or.$and.contact_no = productBody.seller_contact.trim();
+    }
+
+    if (productBody.seller_email && productBody.seller_email.trim()) {
+      sellerOption.$or.$and.email = {
+        $iLike: productBody.seller_email.trim(),
+      };
+    }
+
     sellerPromise.push(
         (productBody.seller_contact && productBody.seller_contact.trim()) ||
         (productBody.seller_name && productBody.seller_name.trim()) ||
@@ -2733,8 +2749,7 @@ class ProductAdaptor {
         (productBody.seller_address && productBody.seller_address.trim()) ?
             this.sellerAdaptor.retrieveOrCreateOfflineSellers(sellerOption,
                 {
-                  seller_name: productBody.seller_name ||
-                  productBody.product_name,
+                  seller_name: productBody.seller_name || '',
                   contact_no: productBody.seller_contact,
                   email: productBody.seller_email,
                   address: productBody.seller_address,

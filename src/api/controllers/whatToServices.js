@@ -30,7 +30,19 @@ export default class WhatToController {
             console.log(
                 `Error on ${new Date()} for user ${user.id ||
                 user.ID} is as follow: \n \n ${err}`);
-
+            modals.logs.create({
+              api_action: request.method,
+              api_path: request.url.pathname,
+              log_type: 2,
+              user_id: user.id || user.ID,
+              log_content: JSON.stringify({
+                params: request.params,
+                query: request.query,
+                headers: request.headers,
+                payload: request.payload,
+                err,
+              }),
+            }).catch((ex) => console.log('error while logging on db,', ex));
             return reply({
               status: false,
               message:'Unable to retrieve all states data'
@@ -78,7 +90,19 @@ export default class WhatToController {
             console.log(
                 `Error on ${new Date()} for user ${user.id ||
                 user.ID} is as follow: \n \n ${err}`);
-
+            modals.logs.create({
+              api_action: request.method,
+              api_path: request.url.pathname,
+              log_type: 2,
+              user_id: user.id || user.ID,
+              log_content: JSON.stringify({
+                params: request.params,
+                query: request.query,
+                headers: request.headers,
+                payload: request.payload,
+                err,
+              }),
+            }).catch((ex) => console.log('error while logging on db,', ex));
             return reply({
               status: false,
               message:'Unable to retrieve state meal items'
@@ -125,7 +149,19 @@ export default class WhatToController {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
-
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user.id || user.ID,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
         return reply({
           status: false,
           message:'Unable to  retrieve user meal items'
@@ -167,7 +203,19 @@ export default class WhatToController {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
-
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user.id || user.ID,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
         return reply({
           status: false,
           message:'Unable to  prepare user meal list '
@@ -216,7 +264,19 @@ export default class WhatToController {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
-
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user.id || user.ID,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
         return reply({
           status: false,
           message:'Unable to add user meal item'
@@ -257,7 +317,19 @@ export default class WhatToController {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
-
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user.id || user.ID,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
         return reply({
           status: false,
           message:'Unable to update user meal current date '
@@ -298,7 +370,19 @@ export default class WhatToController {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
-
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user.id || user.ID,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
         return reply({
           status: false,
         });
@@ -339,7 +423,19 @@ export default class WhatToController {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
-
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user.id || user.ID,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
         return reply({
           status: false,
           message:'Unable to remove meals '
@@ -379,7 +475,19 @@ export default class WhatToController {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
-
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user.id || user.ID,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
         return reply({
           status: false,
           message:'unable to  retrieve Wearables'
@@ -420,7 +528,19 @@ export default class WhatToController {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
-
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user.id || user.ID,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
         return reply({
           status: false,
           message:'Unable to add wearable'
@@ -463,7 +583,19 @@ export default class WhatToController {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
-
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user.id || user.ID,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
         return reply({
           status: false,
           message:'Unable to update wearable'
@@ -504,7 +636,19 @@ export default class WhatToController {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
-
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user.id || user.ID,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
         return reply({
           status: false,
           message:'Unable to update wearable current date'
@@ -545,7 +689,19 @@ export default class WhatToController {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
-
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user.id || user.ID,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
         return reply({
           status: false,
           message:'Unable to Delete wearable'
@@ -586,7 +742,19 @@ export default class WhatToController {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
-
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user.id || user.ID,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
         return reply({
           status: false,
           message:'Unable to remove wearable current date'
@@ -626,7 +794,19 @@ export default class WhatToController {
             console.log(
                 `Error on ${new Date()} for user ${user.id ||
                 user.ID} is as follow: \n \n ${err}`);
-
+            modals.logs.create({
+              api_action: request.method,
+              api_path: request.url.pathname,
+              log_type: 2,
+              user_id: user.id || user.ID,
+              log_content: JSON.stringify({
+                params: request.params,
+                query: request.query,
+                headers: request.headers,
+                payload: request.payload,
+                err,
+              }),
+            }).catch((ex) => console.log('error while logging on db,', ex));
             return reply({
               status: false,
               message:'Unable to retrieve ToDoList'
@@ -666,6 +846,20 @@ export default class WhatToController {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
+
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user.id || user.ID,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
 
         return reply({
           status: false,
@@ -712,7 +906,19 @@ export default class WhatToController {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
-
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user.id || user.ID,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
         return reply({
           status: false,
           message:'Unable to User ToDoList '
@@ -753,7 +959,19 @@ export default class WhatToController {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
-
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user.id || user.ID,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
         return reply({
           status: false,
           message:'Unable to update ToDoItem'
@@ -794,7 +1012,19 @@ export default class WhatToController {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
-
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user.id || user.ID,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
         return reply({
           status: false,
           message:'Unable to prepare user ToDoList'
@@ -836,7 +1066,19 @@ export default class WhatToController {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
-
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user.id || user.ID,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
         return reply({
           status: false,
           message:'Unable to delete user ToDo current Date'
@@ -878,7 +1120,19 @@ export default class WhatToController {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
-
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user.id || user.ID,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
         return reply({
           status: false,
           message:'Unable to delete what ToDo'

@@ -11,6 +11,7 @@ let dashboardAdaptor;
 let eHomeAdaptor;
 let notificationAdaptor;
 let userAdaptor;
+let modals;
 
 class DashboardController {
   constructor(modal) {
@@ -18,6 +19,7 @@ class DashboardController {
     eHomeAdaptor = new EHomeAdaptor(modal);
     notificationAdaptor = new NotificationAdaptor(modal);
     userAdaptor = new UserAdaptor(modal);
+    modals = modal
   }
 
   static getDashboard(request, reply) {
@@ -137,6 +139,20 @@ class DashboardController {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
+
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user.id || user.ID,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
         return reply({status: false}).code(500); //, forceUpdate: request.pre.forceUpdate}).code(500);
       });
     }

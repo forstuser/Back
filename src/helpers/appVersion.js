@@ -105,6 +105,11 @@ const updateUserActiveStatus = (request, reply) => {
               api_path: request.url.pathname,
               log_type: 1,
               user_id: user.id || user.ID,
+              log_content: JSON.stringify({
+                params: request.params,
+                query: request.query,
+                headers: request.headers,
+              }),
             })]).then((item) => {
             console.log(
                 `User updated detail is as follow ${JSON.stringify(item[0])}`);
@@ -117,7 +122,7 @@ const updateUserActiveStatus = (request, reply) => {
               api_path: request.url.pathname,
               log_type: 2,
               user_id: user.id || user.ID,
-              log_content: JSON.stringify(err),
+              log_content: JSON.stringify({err}),
             }).then(() => reply(false));
           });
         } else {

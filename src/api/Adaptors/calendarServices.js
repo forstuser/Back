@@ -19,6 +19,7 @@ export default class CalendarServiceAdaptor {
         spread((calendar_services, unit_types) => [
           calendar_services.map(item => {
             const calendarServiceItem = item.toJSON();
+            calendarServiceItem.calendarServiceImageUrl = `${calendarServiceItem.calendarServiceImageUrl}/thumbnail`;
             calendarServiceItem.name = calendarServiceItem ?
                 calendarServiceItem.name ||
                 calendarServiceItem.default_name :
@@ -462,7 +463,7 @@ export default class CalendarServiceAdaptor {
               moment(calendarItemDetail.end_date, moment.ISO_8601) :
               moment();
           if (current_date.isSameOrAfter(
-                  moment(item_end_date, moment.ISO_8601))) {
+              moment(item_end_date, moment.ISO_8601))) {
 
             console.log('If is here', {current_date});
             const lastItemMonth = item_end_date.month();
@@ -605,12 +606,14 @@ export default class CalendarServiceAdaptor {
         spread((calendarItemDetail, paymentDetailResult, attendance_total,
                 payment_total) => {
           calendarItemDetail.payment_detail = paymentDetailResult;
-          calendarItemDetail.payment_detail[0].absent_day_detail = calendarItemDetail.end_date ?
+          calendarItemDetail.payment_detail[0].absent_day_detail = calendarItemDetail.end_date
+              ?
               calendarItemDetail.payment_detail[0].absent_day_detail.filter(
                   (aDayDetail) => moment(calendarItemDetail.end_date,
                       moment.ISO_8601).
                       isSameOrAfter(
-                          moment(aDayDetail.absent_date, moment.ISO_8601))) :
+                          moment(aDayDetail.absent_date, moment.ISO_8601)))
+              :
               calendarItemDetail.payment_detail[0].absent_day_detail;
           const attendance_total_amount = attendance_total ?
               attendance_total.total_amount :
@@ -780,7 +783,7 @@ export default class CalendarServiceAdaptor {
         let daysInPeriod = 0;
         if (paymentDetail.end_date) {
           if (moment(paymentDetail.end_date, moment.ISO_8601).
-                  isAfter(moment(currentDetail.end_date, moment.ISO_8601))) {
+              isAfter(moment(currentDetail.end_date, moment.ISO_8601))) {
             daysInPeriod = moment().isoWeekdayCalc(
                 moment(currentDetail.start_date, moment.ISO_8601).endOf('days'),
                 moment(currentDetail.end_date, moment.ISO_8601).

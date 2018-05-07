@@ -51,6 +51,10 @@ var _moment = require('moment/moment');
 
 var _moment2 = _interopRequireDefault(_moment);
 
+var _bluebird = require('bluebird');
+
+var _bluebird2 = _interopRequireDefault(_bluebird);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
@@ -193,7 +197,7 @@ var ProductAdaptor = function () {
           productItem.masterCategoryName = productItem.masterCategoryName || productItem.default_masterCategoryName;
           productItem.categoryName = productItem.categoryName || productItem.default_categoryName;
           productItem.purchaseDate = _moment2.default.utc(productItem.purchaseDate, _moment2.default.ISO_8601).startOf('days');
-          productItem.cImageURL = productItem.sub_category_id ? '/categories/' + productItem.sub_category_id + '/images/1' : productItem.cImageURL + '1';
+          productItem.cImageURL = productItem.sub_category_id ? '/categories/' + productItem.sub_category_id + '/images/1/thumbnail' : productItem.cImageURL + '1/thumbnail';
           if (productItem.schedule) {
             productItem.schedule.due_date = _moment2.default.utc(productItem.purchaseDate, _moment2.default.ISO_8601).add(productItem.schedule.due_in_months, 'months');
           }
@@ -216,7 +220,7 @@ var ProductAdaptor = function () {
           inProgressProductOption.product_id = products.map(function (item) {
             return item.id;
           });
-          return Promise.all([_this.retrieveProductMetadata({
+          return _bluebird2.default.all([_this.retrieveProductMetadata({
             product_id: products.map(function (item) {
               return item.id;
             })
@@ -321,7 +325,7 @@ var ProductAdaptor = function () {
               return copyItem;
             });
           }
-          productItem.cImageURL = productItem.sub_category_id ? '/categories/' + productItem.sub_category_id + '/images/1' : productItem.cImageURL + '1';
+          productItem.cImageURL = productItem.sub_category_id ? '/categories/' + productItem.sub_category_id + '/images/1/thumbnail' : productItem.cImageURL + '1/thumbnail';
           productItem.purchaseDate = _moment2.default.utc(productItem.purchaseDate, _moment2.default.ISO_8601).startOf('days');
           if (productItem.schedule) {
             productItem.schedule.due_date = _moment2.default.utc(productItem.purchaseDate, _moment2.default.ISO_8601).add(productItem.schedule.due_in_months, 'months');
@@ -427,7 +431,7 @@ var ProductAdaptor = function () {
               return copyItem;
             });
           }
-          productItem.cImageURL = productItem.sub_category_id ? '/categories/' + productItem.sub_category_id + '/images/1' : productItem.cImageURL + '1';
+          productItem.cImageURL = productItem.sub_category_id ? '/categories/' + productItem.sub_category_id + '/images/1/thumbnail' : productItem.cImageURL + '1/thumbnail';
           productItem.purchaseDate = _moment2.default.utc(productItem.purchaseDate, _moment2.default.ISO_8601).startOf('days');
           if (productItem.schedule) {
             productItem.schedule.due_date = _moment2.default.utc(productItem.purchaseDate, _moment2.default.ISO_8601).add(productItem.schedule.due_in_months, 'months');
@@ -437,7 +441,7 @@ var ProductAdaptor = function () {
           return productItem.status_type !== 8 || productItem.status_type === 8 && productItem.bill && productItem.bill.billStatus === 5;
         });
         if (products.length > 0) {
-          return Promise.all([_this2.retrieveProductMetadata({
+          return _bluebird2.default.all([_this2.retrieveProductMetadata({
             product_id: products.map(function (item) {
               return item.id;
             })
@@ -577,7 +581,7 @@ var ProductAdaptor = function () {
         });
         inProgressProductOption.status_type = 5;
         inProgressProductOption.product_status_type = options.status_type;
-        return Promise.all([_this3.amcAdaptor.retrieveAMCCounts(inProgressProductOption), _this3.insuranceAdaptor.retrieveInsuranceCount(inProgressProductOption), _this3.warrantyAdaptor.retrieveWarrantyCount(inProgressProductOption), _this3.repairAdaptor.retrieveRepairCount(inProgressProductOption), _this3.pucAdaptor.retrievePUCs(inProgressProductOption)]);
+        return _bluebird2.default.all([_this3.amcAdaptor.retrieveAMCCounts(inProgressProductOption), _this3.insuranceAdaptor.retrieveInsuranceCount(inProgressProductOption), _this3.warrantyAdaptor.retrieveWarrantyCount(inProgressProductOption), _this3.repairAdaptor.retrieveRepairCount(inProgressProductOption), _this3.pucAdaptor.retrievePUCs(inProgressProductOption)]);
       }).then(function (results) {
         if (options.status_type !== 8) {
           return productResult;
@@ -686,7 +690,7 @@ var ProductAdaptor = function () {
             },
             status_type: 1
           }) : undefined;
-          return Promise.all([_this4.retrieveProductMetadata({
+          return _bluebird2.default.all([_this4.retrieveProductMetadata({
             product_id: products.id
           }, language), _this4.brandAdaptor.retrieveBrandById(products.brandId, {
             category_id: products.categoryId
@@ -814,7 +818,7 @@ var ProductAdaptor = function () {
           mdItem = _lodash2.default.omit(mdItem, 'new_drop_down');
           return mdItem;
         });
-        return Promise.all(dropDownPromise);
+        return _bluebird2.default.all(dropDownPromise);
       }).then(function () {
         product = !product.colour_id ? _lodash2.default.omit(product, 'colour_id') : product;
         product = !product.purchase_cost ? _lodash2.default.omit(product, 'purchase_cost') : product;
@@ -823,7 +827,7 @@ var ProductAdaptor = function () {
         product = !product.document_date ? _lodash2.default.omit(product, 'document_date') : product;
         product = !product.seller_id ? _lodash2.default.omit(product, 'seller_id') : product;
 
-        return Promise.all([_this5.modals.products.count({
+        return _bluebird2.default.all([_this5.modals.products.count({
           where: product,
           include: [{
             model: _this5.modals.metaData, where: {
@@ -998,7 +1002,7 @@ var ProductAdaptor = function () {
             }));
           }
 
-          return Promise.all([metadataPromise, insurancePromise, warrantyItemPromise, amcPromise, pucPromise]);
+          return _bluebird2.default.all([metadataPromise, insurancePromise, warrantyItemPromise, amcPromise, pucPromise]);
         }
 
         return undefined;
@@ -1023,7 +1027,7 @@ var ProductAdaptor = function () {
       var _this6 = this;
 
       var dbProduct = void 0;
-      return Promise.try(function () {
+      return _bluebird2.default.try(function () {
         return _this6.modals.products.findOne({
           where: {
             id: productId
@@ -1031,12 +1035,13 @@ var ProductAdaptor = function () {
         });
       }).then(function (result) {
         dbProduct = result.toJSON();
+        productBody.seller_id = dbProduct.seller_id;
         productBody.brand_id = productBody.brand_id || productBody.brand_id === 0 ? productBody.brand_id : dbProduct.brand_id;
         productBody.model = productBody.model || productBody.model !== '' ? productBody.model : dbProduct.model;
         productBody.category_id = productBody.category_id || dbProduct.category_id;
         productBody.main_category_id = productBody.main_category_id || dbProduct.main_category_id;
         productBody.sub_category_id = productBody.sub_category_id || dbProduct.sub_category_id;
-        return Promise.all([productBody.brand_id || productBody.brand_id === 0 ? _this6.modals.products.count({
+        return _bluebird2.default.all([productBody.brand_id || productBody.brand_id === 0 ? _this6.modals.products.count({
           where: {
             id: productId,
             brand_id: productBody.brand_id,
@@ -1099,9 +1104,9 @@ var ProductAdaptor = function () {
         var product = productBody;
         var metadata = void 0;
         var sellerList = void 0;
-        return Promise.all(sellerPromise).then(function (newItemResults) {
+        return _bluebird2.default.all(sellerPromise).then(function (newItemResults) {
           sellerList = newItemResults;
-          var newSeller = productBody.seller_contact || productBody.seller_name ? sellerList[0] : undefined;
+          var newSeller = productBody.seller_contact || productBody.seller_name || productBody.seller_email ? sellerList[0] : undefined;
           product = _lodash2.default.omit(product, 'seller_name');
           product = _lodash2.default.omit(product, 'seller_contact');
           product = _lodash2.default.omit(product, 'brand_name');
@@ -1176,7 +1181,7 @@ var ProductAdaptor = function () {
               product_id: productId
             }
           }));
-          return Promise.all([_this6.categoryAdaptor.retrieveRenewalTypes({
+          return _bluebird2.default.all([_this6.categoryAdaptor.retrieveRenewalTypes({
             status_type: 1
           }), _this6.updateProduct(productId, product)].concat(brandModelPromise));
         }).then(function (updateProductResult) {
@@ -1361,7 +1366,7 @@ var ProductAdaptor = function () {
               });
             }
 
-            return Promise.all([Promise.all(metadataPromise), Promise.all(insurancePromise), Promise.all(warrantyItemPromise), Promise.all(amcPromise), Promise.all(repairPromise), Promise.all(pucPromise), serviceSchedule, _this6.modals.serviceCenters.count({
+            return _bluebird2.default.all([_bluebird2.default.all(metadataPromise), _bluebird2.default.all(insurancePromise), _bluebird2.default.all(warrantyItemPromise), _bluebird2.default.all(amcPromise), _bluebird2.default.all(repairPromise), _bluebird2.default.all(pucPromise), serviceSchedule, _this6.modals.serviceCenters.count({
               include: [{
                 model: _this6.modals.brands,
                 as: 'brands',
@@ -1432,7 +1437,7 @@ var ProductAdaptor = function () {
   }, {
     key: 'verifyCopiesExist',
     value: function verifyCopiesExist(product_id, model, brand_id) {
-      return Promise.all([this.modals.products.count({
+      return _bluebird2.default.all([this.modals.products.count({
         where: {
           id: product_id,
           status_type: 5
@@ -1766,16 +1771,31 @@ var ProductAdaptor = function () {
           isAMCRepairSellerSame = parameters.isAMCRepairSellerSame;
 
       var sellerOption = {
-        seller_name: {
-          $iLike: productBody.seller_name || productBody.product_name
+        $or: {
+          $and: {
+            seller_name: {
+              $iLike: productBody.seller_name || ''
+            }
+          }
         }
       };
 
-      if (productBody.seller_contact) {
-        sellerOption.contact_no = productBody.seller_contact;
+      if (productBody.seller_id) {
+        sellerOption.$or.sid = productBody.seller_id;
       }
+
+      if (productBody.seller_contact && productBody.seller_contact.trim()) {
+        sellerOption.$or.$and.contact_no = productBody.seller_contact.trim();
+      }
+
+      if (productBody.seller_email && productBody.seller_email.trim()) {
+        sellerOption.$or.$and.email = {
+          $iLike: productBody.seller_email.trim()
+        };
+      }
+
       sellerPromise.push(productBody.seller_contact && productBody.seller_contact.trim() || productBody.seller_name && productBody.seller_name.trim() || productBody.seller_email && productBody.seller_email.trim() || productBody.seller_address && productBody.seller_address.trim() ? this.sellerAdaptor.retrieveOrCreateOfflineSellers(sellerOption, {
-        seller_name: productBody.seller_name || productBody.product_name,
+        seller_name: productBody.seller_name || '',
         contact_no: productBody.seller_contact,
         email: productBody.seller_email,
         address: productBody.seller_address,
@@ -1861,7 +1881,7 @@ var ProductAdaptor = function () {
         console.log({
           metaData: metaData, categoryFormIds: categoryFormIds
         });
-        return Promise.all([metaData, _this7.modals.dropDowns.findAll({
+        return _bluebird2.default.all([metaData, _this7.modals.dropDowns.findAll({
           where: {
             category_form_id: categoryFormIds
           },
@@ -2073,7 +2093,7 @@ var ProductAdaptor = function () {
         console.log({
           product_id: product_id
         });
-        return Promise.all([_this8.retrieveProductMetadata({
+        return _bluebird2.default.all([_this8.retrieveProductMetadata({
           product_id: product_id
         }), products]);
       });
@@ -2099,7 +2119,7 @@ var ProductAdaptor = function () {
           product.hasDocs = product.copies.length > 0;
           return product;
         });
-        return Promise.all([_this9.insuranceAdaptor.retrieveInsurances({
+        return _bluebird2.default.all([_this9.insuranceAdaptor.retrieveInsurances({
           product_id: {
             $in: products.filter(function (item) {
               return item.masterCategoryId === 2 || item.masterCategoryId === 3;
@@ -2232,7 +2252,7 @@ var ProductAdaptor = function () {
         productDetail = productResult.toJSON();
         productDetail.isModalSame = isModalSame;
         if (productDetail.document_date && _moment2.default.utc(currentPurchaseDate, _moment2.default.ISO_8601).valueOf() !== _moment2.default.utc(productDetail.document_date, _moment2.default.ISO_8601).valueOf()) {
-          return Promise.all([_this10.warrantyAdaptor.updateWarrantyPeriod({ product_id: id, user_id: productDetail.user_id }, currentPurchaseDate, productDetail.document_date), _this10.insuranceAdaptor.updateInsurancePeriod({ product_id: id, user_id: productDetail.user_id }, currentPurchaseDate, productDetail.document_date), _this10.pucAdaptor.updatePUCPeriod({ product_id: id, user_id: productDetail.user_id }, currentPurchaseDate, productDetail.document_date), _this10.amcAdaptor.updateAMCPeriod({ product_id: id, user_id: productDetail.user_id }, currentPurchaseDate, productDetail.document_date)]).catch(function (err) {
+          return _bluebird2.default.all([_this10.warrantyAdaptor.updateWarrantyPeriod({ product_id: id, user_id: productDetail.user_id }, currentPurchaseDate, productDetail.document_date), _this10.insuranceAdaptor.updateInsurancePeriod({ product_id: id, user_id: productDetail.user_id }, currentPurchaseDate, productDetail.document_date), _this10.pucAdaptor.updatePUCPeriod({ product_id: id, user_id: productDetail.user_id }, currentPurchaseDate, productDetail.document_date), _this10.amcAdaptor.updateAMCPeriod({ product_id: id, user_id: productDetail.user_id }, currentPurchaseDate, productDetail.document_date)]).catch(function (err) {
             return console.log('Error on update product ' + new Date() + ' for user ' + productDetail.user_id + ' is as follow: \n \n ' + err);
           });
         }
@@ -2279,7 +2299,7 @@ var ProductAdaptor = function () {
               job_id: result.job_id
             }
           })] : [undefined, undefined];
-          return Promise.all([_this11.modals.mailBox.create({
+          return _bluebird2.default.all([_this11.modals.mailBox.create({
             title: 'User Deleted Product #' + id,
             job_id: result.job_id,
             bill_product_id: result.product_id,

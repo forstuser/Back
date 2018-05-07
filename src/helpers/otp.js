@@ -37,7 +37,8 @@ const sendOTPToUser = (mobileNo, otpLength) => Promise.try(() => {
   const otp = generateOTP(otpLength); // OTP of length = 4
   return sendOTP.sendAsync(phone, 'BINBILL', otp).catch((err) => {
     console.log(
-        `Error on ${new Date()} is as follow: \n \n ${err}`);
+        `Error on ${new Date()} for ${JSON.stringify(
+            {phone})} is as follow: \n \n ${err}`);
 
     return sendOTP.retryAsync(phone, true);
   });
@@ -53,7 +54,7 @@ const sendOTPOverEmail = (email, name, otpLength) => Promise.try(() => {
     secure: true,
     port: 465,
   }));
-const otp = generateOTP(otpLength);
+  const otp = generateOTP(otpLength);
   // setup email data with unicode symbols
   const mailOptions = {
     from: `"BinBill" <${config.EMAIL.USER}>`, // sender address
@@ -79,7 +80,9 @@ Regards<br/>Support BinBill </p>
 </td></tr></table></td></tr></table></div></center></body></html>`,
   };
 
-  return Promise.all([PasswordModule.hashPassword(otp), smtpTransporter.sendMail(mailOptions)]);
+  return Promise.all([
+    PasswordModule.hashPassword(otp),
+    smtpTransporter.sendMail(mailOptions)]);
 });
 
 const verifyOTPForUser = (mobileNo, otp) => Promise.try(() => {
@@ -91,5 +94,5 @@ const verifyOTPForUser = (mobileNo, otp) => Promise.try(() => {
 module.exports = {
   sendOTPToUser,
   verifyOTPForUser,
-  sendOTPOverEmail
+  sendOTPOverEmail,
 };

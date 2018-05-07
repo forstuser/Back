@@ -35,7 +35,7 @@ var CategoryAdaptor = function () {
       var categoryData = void 0;
       return this.modals.categories.findAll({
         where: options,
-        attributes: [['category_id', 'id'], ['category_name', 'default_name'], ['' + (language ? 'category_name_' + language : 'category_name'), 'name'], ['ref_id', 'refId'], ['category_level', 'level'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.literal('"categories"."category_id"'), '/products'), 'categoryProductUrl'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.literal('"categories"."category_id"'), '/insights'), 'categoryInsightUrl'], [this.modals.sequelize.fn('CONCAT', '/categories/', this.modals.sequelize.literal('"categories"."category_id"'), '/images/'), 'categoryImageUrl']],
+        attributes: [['category_id', 'id'], ['category_name', 'default_name'], ['' + (language ? 'category_name_' + language : 'category_name'), 'name'], ['ref_id', 'refId'], ['category_level', 'level'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.literal('"categories"."category_id"'), '/products'), 'categoryProductUrl'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.literal('"categories"."category_id"'), '/insights'), 'categoryInsightUrl'], [this.modals.sequelize.fn('CONCAT', '/categories/', this.modals.sequelize.literal('"categories"."category_id"'), '/images/1'), 'categoryImageUrl']],
         order: ['category_id']
       }).then(function (result) {
         categoryData = result.map(function (item) {
@@ -78,7 +78,7 @@ var CategoryAdaptor = function () {
       options.status_type = 1;
       return this.modals.categories.findAll({
         where: options,
-        attributes: [['category_id', 'id'], ['category_name', 'default_name'], ['' + (language ? 'category_name_' + language : 'category_name'), 'name'], ['ref_id', 'refId'], 'dual_warranty_item', ['category_level', 'level'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.literal('ref_id'), '/products?subCategoryId=', this.modals.sequelize.literal('category_id')), 'categoryProductUrl'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.literal('ref_id'), '/insights?subCategoryId=', this.modals.sequelize.literal('category_id')), 'categoryInsightUrl'], [this.modals.sequelize.fn('CONCAT', '/categories/', this.modals.sequelize.literal('category_id'), '/images/'), 'categoryImageUrl']],
+        attributes: [['category_id', 'id'], ['category_name', 'default_name'], ['' + (language ? 'category_name_' + language : 'category_name'), 'name'], ['ref_id', 'refId'], 'dual_warranty_item', ['category_level', 'level'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.literal('ref_id'), '/products?subCategoryId=', this.modals.sequelize.literal('category_id')), 'categoryProductUrl'], [this.modals.sequelize.fn('CONCAT', 'categories/', this.modals.sequelize.literal('ref_id'), '/insights?subCategoryId=', this.modals.sequelize.literal('category_id')), 'categoryInsightUrl'], [this.modals.sequelize.fn('CONCAT', '/categories/', this.modals.sequelize.literal('category_id'), '/images/1/thumbnail'), 'categoryImageUrl']],
         order: ['category_id']
       }).then(function (result) {
         categoryData = result.map(function (item) {
@@ -203,7 +203,7 @@ var CategoryAdaptor = function () {
               ref_id: options.category_id,
               category_level: 3
             },
-            attributes: [['category_id', 'id'], ['category_name', 'name'], ['ref_id', 'refId'], 'dual_warranty_item', ['category_level', 'level'], [_this2.modals.sequelize.fn('CONCAT', 'categories/', _this2.modals.sequelize.literal('ref_id'), '/products?subCategoryId=', _this2.modals.sequelize.literal('category_id')), 'categoryProductUrl'], [_this2.modals.sequelize.fn('CONCAT', 'categories/', _this2.modals.sequelize.literal('ref_id'), '/insights?subCategoryId=', _this2.modals.sequelize.literal('category_id')), 'categoryInsightUrl'], [_this2.modals.sequelize.fn('CONCAT', '/categories/', _this2.modals.sequelize.literal('category_id'), '/images/'), 'categoryImageUrl']],
+            attributes: [['category_id', 'id'], ['category_name', 'name'], ['ref_id', 'refId'], 'dual_warranty_item', ['category_level', 'level'], [_this2.modals.sequelize.fn('CONCAT', 'categories/', _this2.modals.sequelize.literal('ref_id'), '/products?subCategoryId=', _this2.modals.sequelize.literal('category_id')), 'categoryProductUrl'], [_this2.modals.sequelize.fn('CONCAT', 'categories/', _this2.modals.sequelize.literal('ref_id'), '/insights?subCategoryId=', _this2.modals.sequelize.literal('category_id')), 'categoryInsightUrl'], [_this2.modals.sequelize.fn('CONCAT', '/categories/', _this2.modals.sequelize.literal('category_id'), '/images/1/thumbnail'), 'categoryImageUrl']],
             order: ['category_id']
           })]);
         }

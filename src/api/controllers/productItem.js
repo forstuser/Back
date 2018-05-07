@@ -19,9 +19,11 @@ let warrantyAdaptor;
 let categoryAdaptor;
 let productAdaptor;
 let jobAdaptor;
+let modals;
 
 class ProductItemController {
   constructor(modal) {
+    modals = modal;
     repairAdaptor = new RepairAdaptor(modal);
     sellerAdaptor = new SellerAdaptor(modal);
     insuranceAdaptor = new InsuranceAdaptor(modal);
@@ -68,12 +70,13 @@ class ProductItemController {
         const product_id = parseInt(request.params.id);
         const repairId = parseInt(request.params.repairId);
         const newSellerId = sellerList[0] ? sellerList[0].sid : undefined;
-        const document_date = moment.utc(request.payload.document_date,
+        const document_date = request.payload.document_date ? moment.utc(
+            request.payload.document_date,
             moment.ISO_8601).isValid() ?
             moment.utc(request.payload.document_date, moment.ISO_8601).
                 startOf('day') :
             moment.utc(request.payload.document_date, 'DD MMM YY').
-                startOf('day');
+                startOf('day') : '';
 
         const values = {
           updated_by: user.id || user.ID,
@@ -81,16 +84,18 @@ class ProductItemController {
           product_id,
           seller_id: request.payload.seller_id || newSellerId,
           document_date: document_date ?
-              moment.utc(document_date).format('YYYY-MM-DD') :
-              moment.utc().format('YYYY-MM-DD'),
-          repair_for: request.payload.repair_for,
-          repair_cost: request.payload.value,
-          warranty_upto: request.payload.warranty_upto,
+              moment.utc(document_date).format('YYYY-MM-DD') : document_date ===
+              '' && repairId ? undefined :
+                  moment.utc().format('YYYY-MM-DD'),
+          repair_for: request.payload.repair_for || undefined,
+          repair_cost: request.payload.value || undefined,
+          warranty_upto: request.payload.warranty_upto || undefined,
           user_id: user.id || user.ID,
-          job_id: request.payload.job_id,
+          job_id: request.payload.job_id || undefined,
         };
         const repairPromise = repairId ?
-            repairAdaptor.updateRepairs(repairId, values) :
+            repairAdaptor.updateRepairs(repairId,
+                JSON.parse(JSON.stringify(values))) :
             repairAdaptor.createRepairs(values);
         return repairPromise.
             then((result) => {
@@ -113,6 +118,19 @@ class ProductItemController {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user.id || user.ID,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
         return reply({
           status: false,
           message: 'An error occurred in Repair creation.',
@@ -151,6 +169,19 @@ class ProductItemController {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user.id || user.ID,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
         return reply({
           status: false,
         });
@@ -284,6 +315,19 @@ class ProductItemController {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user.id || user.ID,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
         return reply({
           status: false,
           message: 'An error occurred in Insurance creation.',
@@ -323,6 +367,19 @@ class ProductItemController {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user.id || user.ID,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
         return reply({
           status: false,
         });
@@ -447,6 +504,19 @@ class ProductItemController {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user.id || user.ID,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
         return reply({
           status: false,
           message: 'An error occurred in AMC creation.',
@@ -485,6 +555,19 @@ class ProductItemController {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user.id || user.ID,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
         return reply({
           status: false,
         });
@@ -608,6 +691,19 @@ class ProductItemController {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user.id || user.ID,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
         return reply({
           status: false,
           message: 'An error occurred in PUC creation.',
@@ -646,6 +742,19 @@ class ProductItemController {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user.id || user.ID,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
         return reply({
           status: false,
         });
@@ -735,8 +844,8 @@ class ProductItemController {
                 startOf('day');
         expiry_date = warrantyRenewalType ?
             moment.utc(effective_date, moment.ISO_8601).
-            add(warrantyRenewalType.effective_months, 'months').
-            subtract(1, 'day').
+                add(warrantyRenewalType.effective_months, 'months').
+                subtract(1, 'day').
                 endOf('days') :
             undefined;
 
@@ -744,6 +853,7 @@ class ProductItemController {
             `\n\n\n\n\n\n\n\n\n\n\n\n\n\n ${effective_date}, ${expiry_date}`);
         const values = {
           renewal_type: request.payload.renewal_type,
+          renewal_cost: request.payload.value,
           updated_by: user.id || user.ID,
           status_type: warrantyRenewalType ? 11 : 8,
           job_id: request.payload.job_id,
@@ -783,6 +893,19 @@ class ProductItemController {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user.id || user.ID,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
         return reply({
           status: false,
           message: 'An error occurred in warranty creation.',
@@ -822,6 +945,19 @@ class ProductItemController {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user.id || user.ID,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
         return reply({
           status: false,
         });

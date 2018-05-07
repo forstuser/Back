@@ -8,12 +8,14 @@ import AMCAdaptor from './amcs';
 import PUCAdaptor from './pucs';
 import InsuranceAdaptor from './insurances';
 import WarrantyAdaptor from './warranties';
+import RepairAdaptor from './repairs';
 import smtpTransport from 'nodemailer-smtp-transport';
 import _ from 'lodash';
 import nodemailer from 'nodemailer';
 import request from 'request';
 import moment from 'moment';
 import requestPromise from 'request-promise';
+import Promise from 'bluebird';
 
 class NotificationAdaptor {
   constructor(modals) {
@@ -23,6 +25,7 @@ class NotificationAdaptor {
     this.insuranceAdaptor = new InsuranceAdaptor(modals);
     this.warrantyAdaptor = new WarrantyAdaptor(modals);
     this.pucAdaptor = new PUCAdaptor(modals);
+    this.repairAdaptor = new RepairAdaptor(modals);
   }
 
   static sendUserCommentToTeam(subject, userData) {
@@ -126,7 +129,7 @@ class NotificationAdaptor {
       },
       method: 'POST',
       timeout: 170000,
-      json: true // Automatically parses the JSON string in the response
+      json: true, // Automatically parses the JSON string in the response
     };
     return requestPromise(options).then((response) => {
       return !!response.success;
@@ -150,7 +153,7 @@ class NotificationAdaptor {
         response: 'json',
       },
       timeout: 170000,
-      json: true // Automatically parses the JSON string in the response
+      json: true, // Automatically parses the JSON string in the response
     };
     request(options, (error, response, body) => {
       if (!error && response.statusCode === 200) {
@@ -200,7 +203,7 @@ class NotificationAdaptor {
         }
 
         if (moment.utc(aDate, 'YYYY-MM-DD').
-                isBefore(moment.utc(bDate, 'YYYY-MM-DD'))) {
+            isBefore(moment.utc(bDate, 'YYYY-MM-DD'))) {
           return -1;
         }
 
@@ -231,7 +234,7 @@ class NotificationAdaptor {
   }
 
   filterUpcomingService(user, request) {
-    return Promise.all([
+    return Promise.try(() => Promise.all([
       this.productAdaptor.retrieveNotificationProducts({
         user_id: user.id || user.ID,
         status_type: [5, 11],
@@ -257,7 +260,7 @@ class NotificationAdaptor {
         user_id: user.id || user.ID,
         status_type: [5, 11],
         main_category_id: [1, 2, 3],
-        warranty_type: [1,2],
+        warranty_type: [1, 2],
         expiry_date: {
           $gte: moment.utc().startOf('days'),
           $lte: moment.utc().add(30, 'days').endOf('days'),
@@ -279,162 +282,195 @@ class NotificationAdaptor {
         service_schedule_id: {
           $not: null,
         },
-      }, request.language)]).then((result) => {
-      const metaData = result[0][0];
-      let productList = result[0][1].map((productItem) => {
-        productItem.productMetaData = metaData.filter(
-            (item) => item.productId === productItem.id);
+      }, request.language),
+      this.repairAdaptor.retrieveRepairs({
+        user_id: user.id || user.ID,
+        status_type: [5, 11],
+        warranty_upto: {
+          $ne: null,
+        },
+      })])).
+        spread((productDetails, amcList, insuranceList, warrantyList, pucList,
+                serviceScheduleList, repairList) => {
+          const metaData = productDetails[0];
+          let productList = productDetails[1].map((productItem) => {
+            productItem.productMetaData = metaData.filter(
+                (item) => item.productId === productItem.id);
 
-        return productItem;
-      });
-      productList = productList.map((item) => {
-        const product = item;
+            return productItem;
+          });
+          productList = productList.map((item) => {
+            const product = item;
 
-        product.productMetaData.forEach((metaItem) => {
-          const metaData = metaItem;
-          if (metaData.name.toLowerCase().includes('due') &&
-              metaData.name.toLowerCase().includes('date') &&
-              (moment.utc(metaData.value, moment.ISO_8601).isValid() ||
-                  moment.utc(metaData.value, 'DD MMM YYYY').isValid())) {
-            const dueDateTime = moment.utc(metaData.value, moment.ISO_8601).
-                isValid() ? moment.utc(metaData.value,
-                moment.ISO_8601) : moment.utc(metaData.value, 'DD MMM YYYY');
-            product.dueDate = metaData.value;
-            product.dueIn = dueDateTime.diff(moment.utc(), 'days', true);
-          }
-          product.description = '';
-          product.address = '';
-          if (metaData.name.toLowerCase().includes('address')) {
-            product.description = metaData.value;
-            product.address = metaData.value;
-          }
+            product.productMetaData.forEach((metaItem) => {
+              const metaData = metaItem;
+              if (metaData.name.toLowerCase().includes('due') &&
+                  metaData.name.toLowerCase().includes('date') &&
+                  (moment.utc(metaData.value, moment.ISO_8601).isValid() ||
+                      moment.utc(metaData.value, 'DD MMM YYYY').isValid())) {
+                const dueDateTime = moment.utc(metaData.value, moment.ISO_8601).
+                    isValid() ? moment.utc(metaData.value,
+                    moment.ISO_8601) : moment.utc(metaData.value,
+                    'DD MMM YYYY');
+                product.dueDate = metaData.value;
+                product.dueIn = dueDateTime.diff(moment.utc(), 'days', true);
+              }
+              product.description = '';
+              product.address = '';
+              if (metaData.name.toLowerCase().includes('address')) {
+                product.description = metaData.value;
+                product.address = metaData.value;
+              }
+            });
+
+            if (product.masterCategoryId.toString() === '6') {
+              product.title = `${product.productName} Reminder`;
+              product.productType = 5;
+            } else {
+              product.title = `${product.productName} Reminder`;
+              product.productType = 4;
+            }
+
+            return product;
+          });
+
+          productList = productList.filter(
+              item => ((item.dueIn !== undefined && item.dueIn !== null) &&
+                  item.dueIn <= 30 && item.dueIn >= 0));
+
+          let pucProducts = pucList.map((item) => {
+            const puc = item;
+            if (moment.utc(puc.expiryDate, moment.ISO_8601).isValid()) {
+              const dueDateTime = moment.utc(puc.expiryDate, moment.ISO_8601).
+                  endOf('day');
+              puc.dueDate = puc.expiryDate;
+              puc.dueIn = dueDateTime.diff(moment.utc(), 'days', true);
+              puc.productType = 3;
+              puc.title = 'PUC Renewal Pending';
+              puc.description = `PUC Renewal Pending for ${puc.productName}`;
+            }
+
+            return puc;
+          });
+
+          pucProducts = pucProducts.filter(
+              item => ((item.dueIn !== undefined && item.dueIn !== null) &&
+                  item.dueIn <= 30 && item.dueIn >= 0));
+          let amcs = amcList.map((item) => {
+            const amc = item;
+            if (moment.utc(amc.expiryDate, moment.ISO_8601).isValid()) {
+              const dueDateTime = moment.utc(amc.expiryDate, moment.ISO_8601);
+              amc.dueDate = amc.expiryDate;
+              amc.dueIn = dueDateTime.diff(moment.utc(), 'days', true);
+              amc.productType = 3;
+              amc.title = 'AMC Renewal Pending';
+              amc.description = `AMC Renewal Pending for ${amc.productName}`;
+            }
+
+            return amc;
+          });
+          amcs = amcs.filter(
+              item => (item.dueIn !== undefined && item.dueIn !== null) &&
+                  item.dueIn <= 30 && item.dueIn >= 0);
+
+          let insurances = insuranceList.map((item) => {
+            const insurance = item;
+            if (moment.utc(insurance.expiryDate, moment.ISO_8601).isValid()) {
+              const dueDateTime = moment.utc(insurance.expiryDate,
+                  moment.ISO_8601);
+              insurance.dueDate = insurance.expiryDate;
+              insurance.dueIn = dueDateTime.diff(moment.utc(), 'days', true);
+              insurance.productType = 3;
+              insurance.title = 'Insurance Renewal Pending';
+              insurance.description = `Insurance Renewal Pending for ${insurance.productName}`;
+            }
+            return insurance;
+          });
+
+          insurances = insurances.filter(
+              item => (item.dueIn !== undefined && item.dueIn !== null) &&
+                  item.dueIn <= 30 && item.dueIn >= 0);
+
+          let warranties = warrantyList.map((item) => {
+            const warranty = item;
+            if (moment.utc(warranty.expiryDate, moment.ISO_8601).isValid()) {
+              const dueDateTime = moment.utc(warranty.expiryDate,
+                  moment.ISO_8601);
+
+              warranty.dueDate = warranty.expiryDate;
+              warranty.dueIn = dueDateTime.diff(moment.utc(), 'days', true);
+              warranty.productType = 3;
+              warranty.title = `Warranty Renewal Pending`;
+              warranty.description = `Warranty Renewal Pending for ${warranty.warranty_type ===
+              3 ?
+                  `${warranty.dualWarrantyItem ||
+                  'dual item'} of ${warranty.productName}` :
+                  warranty.warranty_type === 4 ?
+                      `Accessories of ${warranty.productName}` :
+                      `${warranty.productName}`}`;
+            }
+
+            return warranty;
+          });
+
+          warranties = warranties.filter(
+              item => (item.dueIn !== undefined && item.dueIn !== null) &&
+                  item.dueIn <= 30 && item.dueIn >= 0);
+
+          let repairWarranties = repairList.map((item) => {
+            const warranty = item;
+            if (moment.utc(warranty.warranty_upto, moment.ISO_8601).isValid()) {
+              const dueDate_time = moment.utc(warranty.warranty_upto,
+                  moment.ISO_8601).
+                  endOf('day');
+              warranty.dueDate = warranty.warranty_upto;
+              warranty.dueIn = dueDate_time.diff(moment.utc(), 'days', true);
+              warranty.productType = 7;
+              warranty.title = `Repair Warranty Expiring`;
+              warranty.description = `Warranty Renewal Expiring for ${warranty.productName}`;
+            }
+            return warranty;
+          });
+
+          repairWarranties = repairWarranties.filter(
+              item => (item.dueIn !== undefined && item.dueIn !== null) &&
+                  item.dueIn <= 30 && item.dueIn >= 0);
+
+          let productServiceSchedule = serviceScheduleList.map((item) => {
+            const scheduledProduct = item;
+            const scheduledDate = scheduledProduct.schedule ?
+                moment.utc(scheduledProduct.purchaseDate, moment.ISO_8601).
+                    add(scheduledProduct.schedule.due_in_months, 'months') :
+                undefined;
+            if (scheduledDate &&
+                moment.utc(scheduledDate, moment.ISO_8601).isValid()) {
+              const due_date_time = moment.utc(scheduledDate, moment.ISO_8601).
+                  endOf('day');
+              scheduledProduct.dueDate = scheduledDate;
+              scheduledProduct.dueIn = due_date_time.diff(moment.utc(), 'days',
+                  true);
+              scheduledProduct.productType = 3;
+              scheduledProduct.title = `Service is pending for ${scheduledProduct.productName}`;
+              scheduledProduct.description = `Service is pending for ${scheduledProduct.productName}`;
+            }
+
+            return scheduledProduct;
+          });
+
+          productServiceSchedule = productServiceSchedule.filter(
+              item => ((item.dueIn !== undefined && item.dueIn !== null) &&
+                  item.dueIn <= 7 && item.dueIn >= 0));
+
+          return [
+            ...productList,
+            ...warranties,
+            ...insurances,
+            ...amcs,
+            ...pucProducts,
+            ...productServiceSchedule,
+            ...repairWarranties,
+          ];
         });
-
-        if (product.masterCategoryId.toString() === '6') {
-          product.title = `${product.productName} Reminder`;
-          product.productType = 5;
-        } else {
-          product.title = `${product.productName} Reminder`;
-          product.productType = 4;
-        }
-
-        return product;
-      });
-
-      productList = productList.filter(
-          item => ((item.dueIn !== undefined && item.dueIn !== null) &&
-              item.dueIn <= 30 && item.dueIn >= 0));
-
-      let pucProducts = result[4].map((item) => {
-        const puc = item;
-        if (moment.utc(puc.expiryDate, moment.ISO_8601).isValid()) {
-          const dueDateTime = moment.utc(puc.expiryDate, moment.ISO_8601).
-              endOf('day');
-          puc.dueDate = puc.expiryDate;
-          puc.dueIn = dueDateTime.diff(moment.utc(), 'days', true);
-          puc.productType = 3;
-          puc.title = 'PUC Renewal Pending';
-          puc.description = `PUC Renewal Pending for ${puc.productName}`;
-        }
-
-        return puc;
-      });
-
-      pucProducts = pucProducts.filter(
-          item => ((item.dueIn !== undefined && item.dueIn !== null) &&
-              item.dueIn <= 30 && item.dueIn >= 0));
-      let amcs = result[1].map((item) => {
-        const amc = item;
-        if (moment.utc(amc.expiryDate, moment.ISO_8601).isValid()) {
-          const dueDateTime = moment.utc(amc.expiryDate, moment.ISO_8601);
-          amc.dueDate = amc.expiryDate;
-          amc.dueIn = dueDateTime.diff(moment.utc(), 'days', true);
-          amc.productType = 3;
-          amc.title = 'AMC Renewal Pending';
-          amc.description = `AMC Renewal Pending for ${amc.productName}`;
-        }
-
-        return amc;
-      });
-      amcs = amcs.filter(
-          item => (item.dueIn !== undefined && item.dueIn !== null) &&
-              item.dueIn <= 30 && item.dueIn >= 0);
-
-      let insurances = result[2].map((item) => {
-        const insurance = item;
-        if (moment.utc(insurance.expiryDate, moment.ISO_8601).isValid()) {
-          const dueDateTime = moment.utc(insurance.expiryDate, moment.ISO_8601);
-          insurance.dueDate = insurance.expiryDate;
-          insurance.dueIn = dueDateTime.diff(moment.utc(), 'days', true);
-          insurance.productType = 3;
-          insurance.title = 'Insurance Renewal Pending';
-          insurance.description = `Insurance Renewal Pending for ${insurance.productName}`;
-        }
-        return insurance;
-      });
-
-      insurances = insurances.filter(
-          item => (item.dueIn !== undefined && item.dueIn !== null) &&
-              item.dueIn <= 30 && item.dueIn >= 0);
-
-      let warranties = result[3].map((item) => {
-        const warranty = item;
-        if (moment.utc(warranty.expiryDate, moment.ISO_8601).isValid()) {
-          const dueDateTime = moment.utc(warranty.expiryDate, moment.ISO_8601);
-
-          warranty.dueDate = warranty.expiryDate;
-          warranty.dueIn = dueDateTime.diff(moment.utc(), 'days', true);
-          warranty.productType = 3;
-          warranty.title = `Warranty Renewal Pending`;
-          warranty.description = `Warranty Renewal Pending for ${warranty.warranty_type ===
-          3 ?
-              `${warranty.dualWarrantyItem ||
-              'dual item'} of ${warranty.productName}` :
-              warranty.warranty_type === 4 ?
-                  `Accessories of ${warranty.productName}` :
-                  `${warranty.productName}`}`;
-        }
-
-        return warranty;
-      });
-
-      warranties = warranties.filter(
-          item => (item.dueIn !== undefined && item.dueIn !== null) &&
-              item.dueIn <= 30 && item.dueIn >= 0);
-
-      let productServiceSchedule = result[5].map((item) => {
-        const scheduledProduct = item;
-        const scheduledDate = scheduledProduct.schedule ?
-            moment.utc(scheduledProduct.purchaseDate, moment.ISO_8601).
-                add(scheduledProduct.schedule.due_in_months, 'months') :
-            undefined;
-        if (scheduledDate &&
-            moment.utc(scheduledDate, moment.ISO_8601).isValid()) {
-          const due_date_time = moment.utc(scheduledDate, moment.ISO_8601).
-              endOf('day');
-          scheduledProduct.dueDate = scheduledDate;
-          scheduledProduct.dueIn = due_date_time.diff(moment.utc(), 'days',
-              true);
-          scheduledProduct.productType = 3;
-          scheduledProduct.title = `Service is pending for ${scheduledProduct.productName}`;
-          scheduledProduct.description = `Service is pending for ${scheduledProduct.productName}`;
-        }
-
-        return scheduledProduct;
-      });
-
-      productServiceSchedule = productServiceSchedule.filter(
-          item => ((item.dueIn !== undefined && item.dueIn !== null) &&
-              item.dueIn <= 7 && item.dueIn >= 0));
-
-      return [
-        ...productList,
-        ...warranties,
-        ...insurances,
-        ...amcs,
-        ...pucProducts,
-        ...productServiceSchedule];
-    });
   }
 
   prepareNotificationData(user) {
@@ -584,7 +620,7 @@ class NotificationAdaptor {
         aDate = a.dueDate;
         bDate = b.dueDate;
         if (moment.utc(aDate, 'YYYY-MM-DD').
-                isBefore(moment.utc(bDate, 'YYYY-MM-DD'))) {
+            isBefore(moment.utc(bDate, 'YYYY-MM-DD'))) {
           return -1;
         }
 
