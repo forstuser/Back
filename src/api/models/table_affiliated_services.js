@@ -11,7 +11,6 @@ export default (sequelize, DataTypes) => {
             service_level: {
                 type: DataTypes.INTEGER,
             },
-
             updated_by: {
                 type: DataTypes.INTEGER,
                 defaultValue: 1
@@ -32,7 +31,6 @@ export default (sequelize, DataTypes) => {
                 type: DataTypes.DATE,
                 defaultValue: sequelize.literal('NOW()'),
             },
-
         },
         {
             freezeTableName: true,
