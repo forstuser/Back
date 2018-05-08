@@ -258,4 +258,34 @@ export default class affiliatedServicesController {
   //     return shared.preValidation(request.pre, reply);
   //   }
   // }
+  static getProductServices(request, reply) {
+
+    const user = shared.verifyAuthorization(request.headers);
+    console.log(`the request.header is ${request.headers}`);
+    if (request.pre.userExist && !request.pre.forceUpdate) {
+      console.log(`the user id is  || ${user}`);
+      return affiliatedServicesAdaptor.getProductServices({
+        user_id: (user.id || user.ID),
+        ref_id: request.params.id,
+      }).then((products) => reply({
+        status: true,
+        products,
+
+      })).catch((err) => {
+        console.log(`Error on ${new Date()} for user ${user.id ||
+        user.ID} is as follow: \n \n ${err}`);
+        return reply({
+          status: false,
+          message: 'Unable to retrieve Product Services data.',
+        });
+      });
+
+    }
+
+    else {
+      return shared.preValidation(request.pre, reply);
+    }
+
+  }
 }
+
