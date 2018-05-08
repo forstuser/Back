@@ -14,11 +14,9 @@ export default (sequelize, DataTypes) => {
   const table_orders = sequelize.define('table_orders', {
         user_id: {
           type: DataTypes.INTEGER,
-        },
-        case_id: { // has
+        }, case_id: {
           type: DataTypes.INTEGER,
-        },
-        service_id: {
+        }, service_id: {
           type: DataTypes.INTEGER,
         }, product_id: {
           type: DataTypes.INTEGER,
@@ -26,24 +24,21 @@ export default (sequelize, DataTypes) => {
           type: DataTypes.INTEGER,
         }, address_id: {
           type: DataTypes.INTEGER,
-        },
-        updated_by: {
+        }, case_details: {
+          type: DataTypes.JSONB,
+        }, updated_by: {
           type: DataTypes.INTEGER,
           defaultValue: 1,
-        },
-        status_type: {
+        }, status_type: {
           type: DataTypes.INTEGER,
           defaultValue: 1,
-        },
-        created_by: {
+        }, created_by: {
           type: DataTypes.INTEGER,
           defaultValue: 1,
-        },
-        created_at: {
+        }, created_at: {
           type: DataTypes.DATE,
           defaultValue: sequelize.literal('NOW()'),
-        },
-        updated_at: {
+        }, updated_at: {
           type: DataTypes.DATE,
           defaultValue: sequelize.literal('NOW()'),
         },
@@ -76,7 +71,7 @@ export default (sequelize, DataTypes) => {
       onUpdate: 'cascade',
     });
 
-    table_orders.belongsTo(models.table_affiliated_services, {
+    table_orders.belongsTo(models.table_provider_services_mapping, {
       foreignKey: 'service_id',
       onDelete: 'cascade',
       onUpdate: 'cascade',

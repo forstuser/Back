@@ -44,6 +44,11 @@ export default class affiliatedServicesAdaptor {
     return this.rp(options);
   }
 
+  addOrder(orderDetails) {
+    console.log(orderDetails);
+    return this.modals.table_orders.bulkCreate(orderDetails);
+  }
+
   getCities(options) {
     return Promise.try(() => this.modals.table_cities.findAll(options)).
         then(result => {
@@ -121,6 +126,8 @@ export default class affiliatedServicesAdaptor {
             childServiceList, this.getAllProviderServices({
               where: providerServiceOptions,
               attributes: [
+                'id',
+                'provider_category_id',
                 'service_id',
                 'price_options',
                 'affiliated_service_id'],
@@ -133,6 +140,8 @@ export default class affiliatedServicesAdaptor {
               if (providerServiceItem) {
                 serviceItem.price_options = providerServiceItem.price_options;
                 serviceItem.affiliated_service_id = providerServiceItem.affiliated_service_id;
+                serviceItem.provider_category_id = providerServiceItem.provider_category_id;
+                serviceItem.service_mapping_id = providerServiceItem.id;
                 return serviceItem;
               }
 
@@ -185,5 +194,4 @@ export default class affiliatedServicesAdaptor {
             }),
     );
   }
-
 }

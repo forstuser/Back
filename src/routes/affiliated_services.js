@@ -126,6 +126,7 @@ export function prepareAffiliatedServiceRoute(
             'mobile': joi.string().required(),
             'email': joi.string().email(),
             'affiliated_service_bookings': joi.array().items(joi.object().keys({
+              'service_mapping_id': [joi.string(), joi.allow(null)],
               'affiliated_service_id': joi.number().required(),
               'appointment_date': joi.string().required(),
               'timeSlot': joi.number().required().min(0).max(3),
