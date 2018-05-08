@@ -32,7 +32,7 @@ export default class affiliatedServicesAdaptor {
   }
 
   createBooking(serviceToBook) {
-    console.log(serviceToBook);
+    // console.log(serviceToBook);
     const options = {
       url: MrRightEndPoint + 'case/book',
       method: 'POST',

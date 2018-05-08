@@ -146,7 +146,7 @@ export default class affiliatedServicesController {
   static createBooking(request, reply) {
 
     const user = shared.verifyAuthorization(request.headers);
-    let address;
+    let address = request.payload.address;
     if (request.pre.userExist && !request.pre.forceUpdate) {
       return Promise.try(() => {
         const userCouponPromises = request.payload.affiliated_service_bookings.map(
@@ -164,25 +164,32 @@ export default class affiliatedServicesController {
               return '';
             });
 
-        let userAddressPromise;
-        if (!request.payload.address.id) {
-          address = request.payload.address;
+        let userAddressPromise = userAdaptor.retrieveSingleUserAddress({
+          where: {
+            id: address.id,
+          },
+        });
+        console.log(`The address is ${JSON.stringify(address)}`);
+        if (!address.id) {
+
           userAddressPromise = userAdaptor.createUserAddress({
             address_type: address.address_type,
             address_line_1: address.line_1,
             address_line_2: address.line_2,
             city: address.city,
             pin: address.pin,
-          })
+          });
         }
 
         return Promise.all(
             [userAddressPromise, Promise.all(userCouponPromises)]);
       }).spread((userAddress, userCoupons) => {
         const data = request.payload;
-        if (!address.id) {
-          address = userAddress;
-        }
+        console.log('is the error here');
+        console.log(
+            `the address id was not provided in the request, so using the saved ${JSON.stringify(
+                userAddress)} id`);
+        address = userAddress;
         const serviceToBook = {
           fullName: data.full_name,
           mobileNumber: data.mobile,
@@ -214,9 +221,6 @@ export default class affiliatedServicesController {
         }
 
         return '';
-        //request.payload.affiliated service booking.map((item, index) =>{
-        // check if item coupon is present on not
-        // if it is present then use it's index to see the response in usercoupons array
 
       }).then((result) => {
         const orderDetails = request.payload.affiliated_service_bookings.map(
