@@ -30,9 +30,8 @@ export default class affiliatedServicesController {
         status: true,
         cities,
       })).catch((err) => {
-        console.log(
-            `Error on ${new Date()} for user ${user.id ||
-            user.ID} is as follow: \n \n ${err}`);
+        console.log(`Error on ${new Date()} for user ${user.id ||
+        user.ID} is as follow: \n \n ${err}`);
 
         return reply({
           status: false,
@@ -55,9 +54,8 @@ export default class affiliatedServicesController {
         status: true,
         categories,
       })).catch((err) => {
-        console.log(
-            `Error on ${new Date()} for user ${user.id ||
-            user.ID} is as follow: \n \n ${err}`);
+        console.log(`Error on ${new Date()} for user ${user.id ||
+        user.ID} is as follow: \n \n ${err}`);
         console.log(err);
         return reply({
           status: false,
@@ -71,10 +69,10 @@ export default class affiliatedServicesController {
 
   static getServices(request, reply) {
 
-    //const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
-      return affiliatedServicesAdaptor.getServices(
-          {city_id: request.params.id}).then((services) => reply({
+      return affiliatedServicesAdaptor.getServices({
+        city_id: request.params.id,
+      }).then((services) => reply({
         status: true,
         services,
       }));
@@ -85,7 +83,6 @@ export default class affiliatedServicesController {
 
   static getAllProviders(request, reply) {
 
-    //  const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
       return affiliatedServicesAdaptor.getAllProviders(
           {city_id: request.params.id}).then((providers) => reply({
@@ -99,7 +96,6 @@ export default class affiliatedServicesController {
 
   static getChildServices(request, reply) {
 
-    // const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
       return affiliatedServicesAdaptor.getChildServices({
         ref_id: request.params.id,
@@ -266,8 +262,36 @@ export default class affiliatedServicesController {
     }
   }
 
+  static cancelBooking(request, reply) {
+
+    if (request.pre.userExist && !request.pre.forceUpdate) {
+      const body = request.payload;
+      return affiliatedServicesAdaptor.cancelBooking({
+        caseId: body.caseId,
+        reasonType: body.reasonType,
+        reason: body.reason,
+      }).then((result) => reply(result));
+    } else {
+      return shared.preValidation(request.pre, reply);
+    }
+  }
+
+  static rescheduleBooking(request, reply) {
+
+    if (request.pre.userExist && !request.pre.forceUpdate) {
+      const body = request.payload;
+      return affiliatedServicesAdaptor.rescheduleBooking({
+        caseId: body.caseId,
+        date: body.date,
+        timeSlot: body.timeSlot,
+      }).then((result) => reply(result));
+    } else {
+      return shared.preValidation(request.pre, reply);
+    }
+  }
+
 // use this function template below to write controllers
-  // static functionName(request, reply) {
+  // static cancelBooking(request, reply) {
   //
   //   const user = shared.verifyAuthorization(request.headers);
   //   if (request.pre.userExist && !request.pre.forceUpdate) {

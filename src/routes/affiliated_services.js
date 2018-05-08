@@ -146,25 +146,67 @@ export function prepareAffiliatedServiceRoute(
       },
     });
 
-    // {
-    //   "full_name": "User Name",
-    //     "mobile": "9012345678",
-    //     "email": "thor@odinson.com",
-    //     "affiliated_service_bookings":[{
-    //   "affiliated_service_id": 4,
-    //   "appointment_date": "2016-02-12",
-    //   "timeSlot": 3,
-    //   "subject": "string",
-    //   "coupon": "string"
-    // }],
-    //     "address": {
-    //   "id": "Nullable Integer",
-    //       "address_type": "Integer",
-    //       "line_1": "string",
-    //       "city": "string",
-    //       "pin": "string"
-    // }
-    // }
+    // table for reason types for cancellation
+    // Code ReasonTypes
+    // 1    Over Priced
+    // 2    PRO did not show up
+    // 3    Called local PRO
+    // 4    Unsatisfied with PRO
+    // 5    Service not required
+    // 6    Other
+    // 7    Service not available
+
+    route.push({
+      method: 'POST',
+      path: '/booking/cancel',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {
+            method: appVersionHelper.checkAppVersion,
+            assign: 'forceUpdate',
+          },
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: controller.cancelBooking,
+        validate: {
+          payload: {
+            'caseId': joi.number().required(),
+            'reasonType': joi.number().min(1).max(7),
+            'reason': joi.string().allow(null),
+          },
+        },
+      },
+    });
+
+    route.push({
+      method: 'POST',
+      path: '/booking/reschedule',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {
+            method: appVersionHelper.checkAppVersion,
+            assign: 'forceUpdate',
+          },
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: controller.rescheduleBooking,
+        validate: {
+          payload: {
+            'caseId': joi.number().required(),
+            'date': joi.string().required(),
+            'timeSlot': joi.number().required().min(0).max(3),
+          },
+        },
+      },
+    });
 
   }
 }

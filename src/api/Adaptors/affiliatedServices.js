@@ -3,6 +3,7 @@ import CategoryAdaptor from './category';
 
 const rp = require('request-promise');
 const MrRightEndPoint = 'https://www.mrright.in/api/partner/V_1/';
+const MrRightApiKey = 'f168fb76-378a-456c-8c68-6441cf60b214';
 
 export default class affiliatedServicesAdaptor {
 
@@ -19,7 +20,7 @@ export default class affiliatedServicesAdaptor {
       url: MrRightEndPoint + 'coupon/validate',
       method: 'POST',
       headers: {
-        ApiKey: 'f168fb76-378a-456c-8c68-6441cf60b214',
+        ApiKey: MrRightApiKey,
       },
       json: {
         couponCode: couponCode,
@@ -37,7 +38,7 @@ export default class affiliatedServicesAdaptor {
       url: MrRightEndPoint + 'case/book',
       method: 'POST',
       headers: {
-        ApiKey: 'f168fb76-378a-456c-8c68-6441cf60b214',
+        ApiKey: MrRightApiKey,
       },
       json: serviceToBook,
     };
@@ -47,6 +48,58 @@ export default class affiliatedServicesAdaptor {
   addOrder(orderDetails) {
     console.log(orderDetails);
     return this.modals.table_orders.bulkCreate(orderDetails);
+  }
+
+  rescheduleBooking(data) {
+    const options = {
+      url: MrRightEndPoint + 'case/cancel',
+      method: 'POST',
+      headers: {
+        ApiKey: MrRightApiKey,
+      }, json: data,
+    };
+    return Promise.try(() => this.rp(options)).then((result) => {
+      if (result.Success) {
+        const updatedData = {
+          status_type: 3,
+        };
+        const options = {
+          where: {
+            case_id: data.caseId,
+          },
+        };
+        return this.rescheduleOrder(updatedData, options);
+      }
+      // failed to reschedule order
+      return 0;
+    }).then((result) => {
+      return result && result !== 0;
+    });
+  }
+
+  cancelBooking(data) {
+    const options = {
+      url: MrRightEndPoint + 'case/cancel',
+      method: 'POST',
+      headers: {
+        ApiKey: MrRightApiKey,
+      }, json: data,
+    };
+    return Promise.try(() => this.rp(options)).then((result) => {
+      if (result.Success) {
+        return this.cancelOrder({
+          where: {
+            case_id: data.caseId,
+          },
+        });
+      }
+      // failed to cancel order
+      // what do i do here
+      return 0;
+
+    }).then((result) => {
+      return result && result !== 0;
+    });
   }
 
   getCities(options) {
@@ -193,5 +246,19 @@ export default class affiliatedServicesAdaptor {
               return childServices.map(item => item.toJSON());
             }),
     );
+  }
+
+  cancelOrder(options) {
+    return Promise.try(() => {
+      this.modals.table_orders.update({
+        status_type: 2,
+      }, options);
+    });
+  }
+
+  rescheduleOrder(updatedData, options) {
+    return Promise.try(() => {
+      this.modals.table_orders.update(updatedData, options);
+    });
   }
 }
