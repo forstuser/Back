@@ -371,6 +371,19 @@ class UserAdaptor {
       'longitude'];
     return this.modals.userAddress.findAll(filterOptions);
   }
+
+  retrieveSingleUserAddress(filterOptions) {
+    filterOptions.attributes = [
+      'address_type',
+      'address_line_1',
+      'address_line_2',
+      'city',
+      'state',
+      'pin',
+      'latitude',
+      'longitude'];
+    return this.modals.userAddress.findOne(filterOptions);
+  }
 }
 
 export default UserAdaptor;

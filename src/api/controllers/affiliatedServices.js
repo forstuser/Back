@@ -146,6 +146,7 @@ export default class affiliatedServicesController {
   static createBooking(request, reply) {
 
     const user = shared.verifyAuthorization(request.headers);
+    let address = request.payload.address;
     if (request.pre.userExist && !request.pre.forceUpdate) {
       return Promise.try(() => {
         const userCouponPromises = request.payload.affiliated_service_bookings.map(
@@ -163,30 +164,39 @@ export default class affiliatedServicesController {
               return '';
             });
 
-        const userAddressPromise = [];
-        if (!request.payload.address.id) {
-          const address = request.payload.address;
-          userAddressPromise.push(userAdaptor.createUserAddress({
+        let userAddressPromise = userAdaptor.retrieveSingleUserAddress({
+          where: {
+            id: address.id,
+          },
+        });
+        console.log(`The address is ${JSON.stringify(address)}`);
+        if (!address.id) {
+
+          userAddressPromise = userAdaptor.createUserAddress({
             address_type: address.address_type,
             address_line_1: address.line_1,
             address_line_2: address.line_2,
             city: address.city,
             pin: address.pin,
-          }));
+          });
         }
 
         return Promise.all(
-            [Promise.all(userCouponPromises), Promise.all(userAddressPromise)]);
-      }).spread((userCoupons) => {
+            [userAddressPromise, Promise.all(userCouponPromises)]);
+      }).spread((userAddress, userCoupons) => {
         const data = request.payload;
-        const address = request.payload.address;
+        console.log('is the error here');
+        console.log(
+            `the address id was not provided in the request, so using the saved ${JSON.stringify(
+                userAddress)} id`);
+        address = userAddress;
         const serviceToBook = {
           fullName: data.full_name,
           mobileNumber: data.mobile,
-          locality: address.line_2,
-          streetAddress: address.line_1,
-          city: address.city,
-          zipcode: address.pin,
+          locality: userAddress.address_line_2,
+          streetAddress: userAddress.address_line_1,
+          city: userAddress.city,
+          zipcode: userAddress.pin,
           bookings: [],
         };
         data.affiliated_service_bookings.forEach((item, index) => {
@@ -211,45 +221,53 @@ export default class affiliatedServicesController {
         }
 
         return '';
-        //request.payload.affiliated service booking.map((item, index) =>{
-        // check if item coupon is present on not
-        // if it is present then use it's index to see the response in usercoupons array
 
+      }).then((result) => {
+        const orderDetails = request.payload.affiliated_service_bookings.map(
+            (item, index) => {
+              const caseDetail = result.CaseDetailList[index];
+              return {
+                user_id: user.id || user.ID,
+                case_id: caseDetail.CaseId,
+                service_id: item.service_mapping_id,
+                product_id: request.payload.product_id,
+                category_id: request.payload.category_id,
+                address_id: address.id,
+                updated_by: user.id,
+                status_type: 1,
+                created_by: user.id,
+                case_details: caseDetail,
+              };
+            });
+        return affiliatedServicesAdaptor.addOrder(orderDetails);
       }).then((result) => {
             return reply({
               status: true,
               result,
             });
-
             // now save the case Id's to the database table using the adapter
-
             // this will be the sample result
 //             {
 //               CaseIds : [12334,12346],
-// // Booked case Id which can be used to fetch case details Later
-//                   Message : "Cases booked successfully."
+//             //Booked case Id which can be used to fetch case details Later
+//               Message : "Cases booked successfully."
 //             }
           },
       ).catch((err) => {
-        console.log(
-            `Error on ${new Date()} for user ${user.id ||
-            user.ID} is as follow: \n \n ${err}`);
+        console.log(`Error on ${new Date()} for user ${user.id ||
+        user.ID} is as follow: \n \n ${err}`);
         return reply({
           status: false,
           message: 'Unable to retrieve create booking',
         });
       });
-
-      // if address id is null then insert the address in user address table
-
     } else {
       return shared.preValidation(request.pre, reply);
     }
   }
 
 // use this function template below to write controllers
-
-  // static createBooking(request, reply) {
+  // static functionName(request, reply) {
   //
   //   const user = shared.verifyAuthorization(request.headers);
   //   if (request.pre.userExist && !request.pre.forceUpdate) {

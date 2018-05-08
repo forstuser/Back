@@ -34,7 +34,7 @@ export default class affiliatedServicesAdaptor {
   }
 
   createBooking(serviceToBook) {
-    console.log(serviceToBook);
+    // console.log(serviceToBook);
     const options = {
       url: MrRightEndPoint + 'case/book',
       method: 'POST',
@@ -44,6 +44,11 @@ export default class affiliatedServicesAdaptor {
       json: serviceToBook,
     };
     return this.rp(options);
+  }
+
+  addOrder(orderDetails) {
+    console.log(orderDetails);
+    return this.modals.table_orders.bulkCreate(orderDetails);
   }
 
   getCities(options) {
@@ -123,6 +128,8 @@ export default class affiliatedServicesAdaptor {
             childServiceList, this.getAllProviderServices({
               where: providerServiceOptions,
               attributes: [
+                'id',
+                'provider_category_id',
                 'service_id',
                 'price_options',
                 'affiliated_service_id'],
@@ -135,6 +142,8 @@ export default class affiliatedServicesAdaptor {
               if (providerServiceItem) {
                 serviceItem.price_options = providerServiceItem.price_options;
                 serviceItem.affiliated_service_id = providerServiceItem.affiliated_service_id;
+                serviceItem.provider_category_id = providerServiceItem.provider_category_id;
+                serviceItem.service_mapping_id = providerServiceItem.id;
                 return serviceItem;
               }
 
@@ -190,21 +199,21 @@ export default class affiliatedServicesAdaptor {
 
   getProductServices(options) {
 
-      return Promise.try(() => this.getChildServices(options)).
-          then(result => this.getAllProviderServices({
-            where: {
-              service_id: result.map(item => item.id),
-            },
-            attributes: ['provider_category_id'],
-          })).then(providerServices => this.getAllProviderCategories({
-            where: {
-              id: providerServices.map(item => item.provider_category_id),
-            },
-            attributes: ['category_id'],
-          })).then(categories => this.productAdapter.retrieveProducts({
-            category_id: categories.map(item => item.category_id),
-            user_id: options.user_id,
-          }));
-    }
-
+    return Promise.try(() => this.getChildServices(options)).
+        then(result => this.getAllProviderServices({
+          where: {
+            service_id: result.map(item => item.id),
+          },
+          attributes: ['provider_category_id'],
+        })).then(providerServices => this.getAllProviderCategories({
+          where: {
+            id: providerServices.map(item => item.provider_category_id),
+          },
+          attributes: ['category_id'],
+        })).then(categories => this.productAdapter.retrieveProducts({
+          category_id: categories.map(item => item.category_id),
+          user_id: options.user_id,
+        }));
   }
+
+}
