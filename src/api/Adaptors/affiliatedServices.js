@@ -1,5 +1,6 @@
 import Promise from 'bluebird';
 import CategoryAdaptor from './category';
+import ProductAdapter from './product';
 
 const rp = require('request-promise');
 const MrRightEndPoint = 'https://www.mrright.in/api/partner/V_1/';
@@ -10,6 +11,7 @@ export default class affiliatedServicesAdaptor {
   constructor(modals) {
     this.modals = modals;
     this.categoryAdaptor = new CategoryAdaptor(modals);
+    this.productAdapter = new ProductAdapter(modals);
     this.rp = rp;
   }
 
@@ -261,4 +263,24 @@ export default class affiliatedServicesAdaptor {
       this.modals.table_orders.update(updatedData, options);
     });
   }
+
+  getProductServices(options) {
+
+    return Promise.try(() => this.getChildServices(options)).
+        then(result => this.getAllProviderServices({
+          where: {
+            service_id: result.map(item => item.id),
+          },
+          attributes: ['provider_category_id'],
+        })).then(providerServices => this.getAllProviderCategories({
+          where: {
+            id: providerServices.map(item => item.provider_category_id),
+          },
+          attributes: ['category_id'],
+        })).then(categories => this.productAdapter.retrieveProducts({
+          category_id: categories.map(item => item.category_id),
+          user_id: options.user_id,
+        }));
+  }
+
 }

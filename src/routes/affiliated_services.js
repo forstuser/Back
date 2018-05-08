@@ -209,4 +209,24 @@ export function prepareAffiliatedServiceRoute(
     });
 
   }
+
+  route.push({
+    method: 'GET',
+    path: '/services/{id}/products',
+    config: {
+      auth: 'jwt',
+      pre: [
+        {
+          method: appVersionHelper.checkAppVersion,
+          assign: 'forceUpdate',
+        },
+        {
+          method: appVersionHelper.updateUserActiveStatus,
+          assign: 'userExist',
+        },
+      ],
+      handler: controller.getProductServices,
+    },
+
+  });
 }
