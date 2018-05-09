@@ -105,8 +105,7 @@ export default class affiliatedServicesController {
         status: true,
         childServices,
       })).catch((err) => {
-        console.log(
-            `Error on ${new Date()} for user ${user.id ||
+        console.log(`Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
         console.log(err);
         return reply({
@@ -181,7 +180,6 @@ export default class affiliatedServicesController {
             [userAddressPromise, Promise.all(userCouponPromises)]);
       }).spread((userAddress, userCoupons) => {
         const data = request.payload;
-        console.log('is the error here');
         console.log(
             `the address id was not provided in the request, so using the saved ${JSON.stringify(
                 userAddress)} id`);
@@ -302,6 +300,21 @@ export default class affiliatedServicesController {
   //     return shared.preValidation(request.pre, reply);
   //   }
   // }
+
+  static getOrdersList(request, reply) {
+
+    const user = shared.verifyAuthorization(request.headers);
+    if (request.pre.userExist && !request.pre.forceUpdate) {
+      return affiliatedServicesAdaptor.getOrders({
+        where: {
+          user_id: (user.id || user.ID),
+        },
+      }).then((orders) => reply(orders));
+    } else {
+      return shared.preValidation(request.pre, reply);
+    }
+  }
+
   static getProductServices(request, reply) {
 
     const user = shared.verifyAuthorization(request.headers);

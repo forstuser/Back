@@ -234,6 +234,11 @@ export default class affiliatedServicesAdaptor {
             }).filter(serviceItem => !!serviceItem)).catch(console.log);
   }
 
+  getOrders(options) {
+    return Promise.try(() => this.modals.table_orders.findAll(options)).
+        then((orders) => orders.map(item => item.toJSON()));
+  }
+
 // below are all the helper functions which are used to avoid redundancy of code
   getAllProviderCities(options) {
     return Promise.try(

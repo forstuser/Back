@@ -208,25 +208,44 @@ export function prepareAffiliatedServiceRoute(
       },
     });
 
+    route.push({
+      method: 'GET',
+      path: '/services/{id}/products',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {
+            method: appVersionHelper.checkAppVersion,
+            assign: 'forceUpdate',
+          },
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: controller.getProductServices,
+      },
+
+    });
+
+    route.push({
+      method: 'GET',
+      path: '/orders',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {
+            method: appVersionHelper.checkAppVersion,
+            assign: 'forceUpdate',
+          },
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: controller.getOrdersList,
+      },
+    });
+
   }
-
-  route.push({
-    method: 'GET',
-    path: '/services/{id}/products',
-    config: {
-      auth: 'jwt',
-      pre: [
-        {
-          method: appVersionHelper.checkAppVersion,
-          assign: 'forceUpdate',
-        },
-        {
-          method: appVersionHelper.updateUserActiveStatus,
-          assign: 'userExist',
-        },
-      ],
-      handler: controller.getProductServices,
-    },
-
-  });
 }
