@@ -270,7 +270,9 @@ export default class affiliatedServicesController {
         caseId: body.caseId,
         reasonType: body.reasonType,
         reason: body.reason,
-      }).then((result) => reply(result));
+      }).then((result) => reply({
+        status: result,
+      }));
     } else {
       return shared.preValidation(request.pre, reply);
     }

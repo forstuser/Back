@@ -54,28 +54,57 @@ export default class affiliatedServicesAdaptor {
 
   rescheduleBooking(data) {
     const options = {
-      url: MrRightEndPoint + 'case/cancel',
+      url: MrRightEndPoint + 'case/reschedule',
       method: 'POST',
       headers: {
         ApiKey: MrRightApiKey,
       }, json: data,
     };
+    console.log('in reschedule booking with data', data);
     return Promise.try(() => this.rp(options)).then((result) => {
+      console.log('response of reschedule is ', result);
       if (result.Success) {
-        const updatedData = {
-          status_type: 3,
-        };
-        const options = {
-          where: {
-            case_id: data.caseId,
+
+        // on success, do a get case details call and
+        // shove that data into the case details section of the orders table
+        // also set the status type to be 3
+
+        const getCaseDetailsOptions = {
+          url: MrRightEndPoint + 'case/details/' + data.caseId,
+          method: 'GET',
+          headers: {
+            ApiKey: MrRightApiKey,
           },
         };
-        return this.rescheduleOrder(updatedData, options);
+
+        return Promise.try(() => this.rp(getCaseDetailsOptions)).
+            then((caseDetails) => {
+
+              console.log(caseDetails);
+              const updatedData = {
+                status_type: 3,
+                case_details: JSON.parse(caseDetails).Case,
+              };
+
+              const options = {
+                where: {
+                  case_id: data.caseId,
+                },
+              };
+
+              return this.rescheduleOrder(updatedData, options);
+            });
       }
       // failed to reschedule order
       return 0;
     }).then((result) => {
-      return result && result !== 0;
+      return {status: result && result !== 0};
+    }).catch((err) => {
+      console.log('the error of reschedule is ', err);
+      return {
+        status: false,
+        error: err.error,
+      };
     });
   }
 
@@ -100,7 +129,8 @@ export default class affiliatedServicesAdaptor {
       return 0;
 
     }).then((result) => {
-      return result && result !== 0;
+      console.log(result);
+      return !!result && result !== 0;
     });
   }
 
@@ -251,17 +281,14 @@ export default class affiliatedServicesAdaptor {
   }
 
   cancelOrder(options) {
-    return Promise.try(() => {
-      this.modals.table_orders.update({
-        status_type: 2,
-      }, options);
-    });
+    return Promise.try(() => this.modals.table_orders.update({
+      status_type: 2,
+    }, options));
   }
 
   rescheduleOrder(updatedData, options) {
-    return Promise.try(() => {
-      this.modals.table_orders.update(updatedData, options);
-    });
+    return Promise.try(
+        () => this.modals.table_orders.update(updatedData, options));
   }
 
   getProductServices(options) {
