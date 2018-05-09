@@ -1,21 +1,20 @@
 'use strict';
 export default (Sequelize, DataTypes) => {
-  const table_coupons = sequelize.define('table_coupons', {
+  const table_coupons = Sequelize.define('table_coupons', {
         coupon_code: {
-          type: DataTypes.String,
+          type: DataTypes.STRING,
         },
         type: {
-          type: DataTypes.String,
+          type: DataTypes.STRING,
         },
         value: {
           type: DataTypes.INTEGER,
         },
         expiry: {
-          type: DataTypes.Date,
-
+          type: DataTypes.DATE,
         },
         is_exclusive: {
-          type: DataTypes.boolean,
+          type: DataTypes.BOOLEAN,
         },
         status_type: {
           type: DataTypes.INTEGER,
@@ -23,12 +22,12 @@ export default (Sequelize, DataTypes) => {
 
         },
         created_at: {
-          type: DataTypes.Date,
-          defaultValue: sequelize.literal('NOW()'),
+          type: DataTypes.DATE,
+          defaultValue: Sequelize.literal('NOW()'),
         },
         updated_at: {
-          type: DataTypes.Date,
-          defaultValue: sequelize.literal('NOW()'),
+          type: DataTypes.DATE,
+          defaultValue: Sequelize.literal('NOW()'),
         },
       },
       {
@@ -37,15 +36,14 @@ export default (Sequelize, DataTypes) => {
         timestamps: true,
         underscored: true,
         table_name: 'table_coupons',
-
       });
   table_coupons.associate = (models) => {
-    table_coupons.belongsTo(table_coupons, {
+    table_coupons.belongsTo(models.table_coupons, {
       foreignKey: 'status_type',
       onDelete: 'cascade',
       onUpdate: 'cascade',
-
     });
-
   };
+
+  return table_coupons;
 }
