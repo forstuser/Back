@@ -236,7 +236,10 @@ export default class affiliatedServicesAdaptor {
 
   getOrders(options) {
     return Promise.try(() => this.modals.table_orders.findAll(options)).
-        then((orders) => orders.map(item => item.toJSON()));
+        then((orders) => {
+          console.log('the orders are ', orders);
+          return orders.map(item => item.toJSON());
+        });
   }
 
 // below are all the helper functions which are used to avoid redundancy of code

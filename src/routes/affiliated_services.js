@@ -247,5 +247,24 @@ export function prepareAffiliatedServiceRoute(
       },
     });
 
+    route.push({
+      method: 'GET',
+      path: '/order/{id}',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {
+            method: appVersionHelper.checkAppVersion,
+            assign: 'forceUpdate',
+          },
+          {
+            method: appVersionHelper.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: controller.getOrderById,
+      },
+    });
+
   }
 }

@@ -315,6 +315,20 @@ export default class affiliatedServicesController {
     }
   }
 
+  static getOrderById(request, reply) {
+
+    // const user = shared.verifyAuthorization(request.headers);
+    if (request.pre.userExist && !request.pre.forceUpdate) {
+      return affiliatedServicesAdaptor.getOrders({
+        where: {
+          id: request.params.id,
+        },
+      }).then((orders) => reply(orders[0]));
+    } else {
+      return shared.preValidation(request.pre, reply);
+    }
+  }
+
   static getProductServices(request, reply) {
 
     const user = shared.verifyAuthorization(request.headers);
