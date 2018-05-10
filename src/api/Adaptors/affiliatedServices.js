@@ -242,6 +242,24 @@ export default class affiliatedServicesAdaptor {
         });
   }
 
+  getOrdersById(options) {
+    let order;
+    return Promise.try(() => this.modals.table_orders.findOne(options)).
+        then((result) => {
+
+          if (result.product_id == null) {
+            return '';
+          }
+
+          order = result.toJSON();
+          return this.productAdapter.retrieveProductById(order.product_id, {});
+        }).then(product => {
+          console.log(product);
+          order.productDetails = product;
+          return order;
+        }).catch(err => console.log(err));
+  }
+
 // below are all the helper functions which are used to avoid redundancy of code
   getAllProviderCities(options) {
     return Promise.try(

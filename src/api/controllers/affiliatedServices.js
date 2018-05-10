@@ -319,11 +319,11 @@ export default class affiliatedServicesController {
 
     // const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
-      return affiliatedServicesAdaptor.getOrders({
+      return affiliatedServicesAdaptor.getOrdersById({
         where: {
           id: request.params.id,
         },
-      }).then((orders) => reply(orders[0]));
+      }).then((orders) => reply(orders));
     } else {
       return shared.preValidation(request.pre, reply);
     }
