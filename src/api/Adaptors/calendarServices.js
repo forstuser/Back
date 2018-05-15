@@ -2,6 +2,7 @@ import moment from 'moment';
 import _ from 'lodash';
 import Promise from 'bluebird';
 import ProductAdaptor from './product';
+import SellerAdaptor from './sellers';
 import {monthlyPaymentCalc} from '../../helpers/shared';
 
 require('moment-weekday-calc');
@@ -9,6 +10,7 @@ require('moment-weekday-calc');
 export default class CalendarServiceAdaptor {
   constructor(modals) {
     this.modals = modals;
+    this.sellerAdaptor = new SellerAdaptor(modals);
     this.productAdaptor = new ProductAdaptor(modals);
   }
 
@@ -1259,21 +1261,52 @@ export default class CalendarServiceAdaptor {
   }
 
   markPaymentPaid(id, servicePaymentDetail) {
-    return Promise.all([
+    return Promise.try(() => Promise.all([
       this.modals.calendar_item_payment.create(servicePaymentDetail),
-      this.retrieveCalendarItemById(id, 'en')]).then((result) => {
-      const {product_name, service_type, user_id} = result[1];
-      const {category_id, main_category_id, sub_category_id} = service_type;
-      return this.productAdaptor.createEmptyProduct({
-        document_date: servicePaymentDetail.paid_on,
-        category_id, main_category_id, sub_category_id,
-        product_name,
-        purchase_cost: servicePaymentDetail.amount_paid,
-        status_type: 11,
-        updated_by: user_id,
-        user_id,
-        model: servicePaymentDetail.name,
-      });
-    });
+      this.retrieveCalendarItemById(id, 'en')])).
+        then((result) => {
+
+          const {user_id, provider_name, provider_number} = result[1];
+
+          let sellerOption = {
+            seller_name: {
+              $iLike: provider_name,
+            },
+          };
+
+          if (provider_number) {
+            sellerOption.contact_no = provider_number;
+          }
+          return Promise.all([
+
+            (provider_number && provider_number.trim()) ||
+            (provider_name && provider_name.trim()) ?
+                this.sellerAdaptor.retrieveOrCreateOfflineSellers(sellerOption,
+                    {
+                      seller_name: provider_name,
+                      contact_no: provider_number,
+                      updated_by: user_id,
+                      created_by: user_id,
+                      status_type: 11,
+                    }) : ''
+            , result[1]]);
+        }).
+        spread((sellerDetail, productDetail) => {
+
+          const {product_name, service_type, user_id} = productDetail;
+          const {category_id, main_category_id, sub_category_id} = service_type;
+          return this.productAdaptor.createEmptyProduct(
+              JSON.parse(JSON.stringify({
+                document_date: servicePaymentDetail.paid_on,
+                category_id, main_category_id, sub_category_id,
+                product_name,
+                seller_id: sellerDetail ? sellerDetail.sid : undefined,
+                purchase_cost: servicePaymentDetail.amount_paid,
+                status_type: 11,
+                updated_by: user_id,
+                user_id,
+                model: servicePaymentDetail.name,
+              })));
+        });
   }
 }
