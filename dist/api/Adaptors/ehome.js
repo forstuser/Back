@@ -249,7 +249,6 @@ var EHomeAdaptor = function () {
         });
 
         onlineSellers = _lodash2.default.uniqBy(onlineSellers, 'id');
-        console.log('\n\n\n\n\n\n\n', request);
         return {
           status: true,
           productList: productList /* :productList.slice((pageNo * 10) - 10, 10) */

@@ -223,7 +223,6 @@ class EHomeAdaptor {
           });
 
       onlineSellers = _.uniqBy(onlineSellers, 'id');
-      console.log('\n\n\n\n\n\n\n', request);
       return {
         status: true,
         productList /* :productList.slice((pageNo * 10) - 10, 10) */,

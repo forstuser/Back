@@ -849,7 +849,7 @@ var NotificationAdaptor = function () {
 
         return reply({ status: true });
       }).catch(function (err) {
-        console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
+        console.log('Error on ' + new Date() + ' for user is as follow: \n \n ' + err);
         return reply({ status: false });
       });
     }
