@@ -22,6 +22,10 @@ var _product = require('./product');
 
 var _product2 = _interopRequireDefault(_product);
 
+var _sellers = require('./sellers');
+
+var _sellers2 = _interopRequireDefault(_sellers);
+
 var _shared = require('../../helpers/shared');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -37,6 +41,7 @@ var CalendarServiceAdaptor = function () {
     _classCallCheck(this, CalendarServiceAdaptor);
 
     this.modals = modals;
+    this.sellerAdaptor = new _sellers2.default(modals);
     this.productAdaptor = new _product2.default(modals);
   }
 
@@ -1036,25 +1041,50 @@ var CalendarServiceAdaptor = function () {
     value: function markPaymentPaid(id, servicePaymentDetail) {
       var _this10 = this;
 
-      return _bluebird2.default.all([this.modals.calendar_item_payment.create(servicePaymentDetail), this.retrieveCalendarItemById(id, 'en')]).then(function (result) {
+      return _bluebird2.default.try(function () {
+        return _bluebird2.default.all([_this10.modals.calendar_item_payment.create(servicePaymentDetail), _this10.retrieveCalendarItemById(id, 'en')]);
+      }).then(function (result) {
         var _result$ = result[1],
-            product_name = _result$.product_name,
-            service_type = _result$.service_type,
-            user_id = _result$.user_id;
+            user_id = _result$.user_id,
+            provider_name = _result$.provider_name,
+            provider_number = _result$.provider_number;
+
+
+        var sellerOption = {
+          seller_name: {
+            $iLike: provider_name
+          }
+        };
+
+        if (provider_number) {
+          sellerOption.contact_no = provider_number;
+        }
+        return _bluebird2.default.all([provider_number && provider_number.trim() || provider_name && provider_name.trim() ? _this10.sellerAdaptor.retrieveOrCreateOfflineSellers(sellerOption, {
+          seller_name: provider_name,
+          contact_no: provider_number,
+          updated_by: user_id,
+          created_by: user_id,
+          status_type: 11
+        }) : '', result[1]]);
+      }).spread(function (sellerDetail, productDetail) {
+        var product_name = productDetail.product_name,
+            service_type = productDetail.service_type,
+            user_id = productDetail.user_id;
         var category_id = service_type.category_id,
             main_category_id = service_type.main_category_id,
             sub_category_id = service_type.sub_category_id;
 
-        return _this10.productAdaptor.createEmptyProduct({
+        return _this10.productAdaptor.createEmptyProduct(JSON.parse(JSON.stringify({
           document_date: servicePaymentDetail.paid_on,
           category_id: category_id, main_category_id: main_category_id, sub_category_id: sub_category_id,
           product_name: product_name,
+          seller_id: sellerDetail ? sellerDetail.sid : undefined,
           purchase_cost: servicePaymentDetail.amount_paid,
           status_type: 11,
           updated_by: user_id,
           user_id: user_id,
           model: servicePaymentDetail.name
-        });
+        })));
       });
     }
   }]);
