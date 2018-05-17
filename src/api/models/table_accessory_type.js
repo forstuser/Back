@@ -74,7 +74,7 @@ export default (sequelize, DataTypes) => {
           onUpdate: 'cascade',
         });
 
-    table_accessory_type.belongsTo(models.brands(),
+    table_accessory_type.belongsTo(models.brands,
         {
           foreignKey: 'brand_id',
           onDelete: 'cascade',

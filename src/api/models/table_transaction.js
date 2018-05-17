@@ -5,19 +5,19 @@ export default (sequelize, DataTypes) => {
         accessory_listing_id: { // fk
           type: DataTypes.INTEGER,
         },
-        txn_id: {
+        transaction_id: {
           type: DataTypes.STRING,
         },
-        status: {
+        status_type: {
           type: DataTypes.INTEGER,
         },
-        amnt_paid: {
+        amount_paid: {
           type: DataTypes.INTEGER,
         },
         product_id: { // fk
           type: DataTypes.INTEGER,
         },
-        txn_date: {
+        transaction_date: {
           type: DataTypes.DATE,
         },
         quantity: {
@@ -57,10 +57,6 @@ export default (sequelize, DataTypes) => {
           type: DataTypes.INTEGER,
           defaultValue: 1,
         },
-        status_type: {
-          type: DataTypes.INTEGER,
-          defaultValue: 1,
-        },
       },
       {
         freezeTableName: true,
@@ -72,7 +68,7 @@ export default (sequelize, DataTypes) => {
 
   table_transaction.associate = (models) => {
 
-    table_transaction.belongsTo(models.consumer_products,
+    table_transaction.belongsTo(models.products,
         {
           foreignKey: 'product_id',
           onDelete: 'cascade',
