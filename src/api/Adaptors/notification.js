@@ -48,7 +48,17 @@ class NotificationAdaptor {
                                     One Home : Multiple Needs : One App</p><p style="margin:0 auto; -webkit-margin-before: 0; -webkit-margin-after: 0;padding: 10px 0;">Regards<br/>Support BinBill </p><img style="width: 100px" atr="logo" src="https://s3.ap-south-1.amazonaws.com/binbill-static/logo-color.png"/></td></tr></table></td></tr></table></div></center></body></html>`,
     };
 
-    smtpTransporter.sendMail(mailOptions);
+    smtpTransporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        return console.log(`Error on ${new Date()} is as follow: \n \n ${error}`);
+      }
+      console.log('Message sent: %s', info.messageId);
+      // Preview only available when sending through an Ethereal account
+      console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
+
+      // Message sent: <b658f8ca-6296-ccf4-8306-87d57a0b4321@example.com>
+      // Preview URL: https://ethereal.email/message/WaQKMgKddxQDoou...
+    });
   }
 
   static sendVerificationMail(email, user) {
@@ -71,7 +81,17 @@ class NotificationAdaptor {
     };
 
     // send mail with defined transport object
-    smtpTransporter.sendMail(mailOptions);
+    smtpTransporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        return console.log(`Error on ${new Date()} is as follow: \n \n ${error}`);
+      }
+      console.log('Message sent: %s', info.messageId);
+      // Preview only available when sending through an Ethereal account
+      console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
+
+      // Message sent: <b658f8ca-6296-ccf4-8306-87d57a0b4321@example.com>
+      // Preview URL: https://ethereal.email/message/WaQKMgKddxQDoou...
+    });
   }
 
   static sendMailOnUpload(subject, email) {
@@ -94,7 +114,17 @@ class NotificationAdaptor {
     };
 
     // send mail with defined transport object
-    smtpTransporter.sendMail(mailOptions);
+    smtpTransporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        return console.log(`Error on ${new Date()} is as follow: \n \n ${error}`);
+      }
+      console.log('Message sent: %s', info.messageId);
+      // Preview only available when sending through an Ethereal account
+      console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
+
+      // Message sent: <b658f8ca-6296-ccf4-8306-87d57a0b4321@example.com>
+      // Preview URL: https://ethereal.email/message/WaQKMgKddxQDoou...
+    });
   }
 
   static sendMailOnDifferentSteps(subject, email, user, stepId) {
@@ -117,7 +147,17 @@ class NotificationAdaptor {
     };
 
     // send mail with defined transport object
-    smtpTransporter.sendMail(mailOptions);
+    smtpTransporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        return console.log(`Error on ${new Date()} is as follow: \n \n ${error}`);
+      }
+      console.log('Message sent: %s', info.messageId);
+      // Preview only available when sending through an Ethereal account
+      console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
+
+      // Message sent: <b658f8ca-6296-ccf4-8306-87d57a0b4321@example.com>
+      // Preview URL: https://ethereal.email/message/WaQKMgKddxQDoou...
+    });
   }
 
   static verifyCaptcha(response) {
