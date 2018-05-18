@@ -10,6 +10,7 @@ import RepairAdaptor from './repairs';
 import CategoryAdaptor from './category';
 import SellerAdaptor from './sellers';
 import ServiceScheduleAdaptor from './serviceSchedules';
+import notificationAdaptor from '../Adaptors/notification';
 import _ from 'lodash';
 import moment from 'moment/moment';
 import Promise from 'bluebird';
@@ -26,6 +27,7 @@ class ProductAdaptor {
     this.categoryAdaptor = new CategoryAdaptor(modals);
     this.sellerAdaptor = new SellerAdaptor(modals);
     this.serviceScheduleAdaptor = new ServiceScheduleAdaptor(modals);
+    this.notificationAdaptor = new notificationAdaptor(modal);
   }
 
   retrieveProducts(options, language) {
@@ -1818,6 +1820,7 @@ class ProductAdaptor {
 
   updateProductDetails(productBody, metadataBody, otherItems, productId) {
     let dbProduct;
+    let flag = false;
     return Promise.try(() => this.modals.products.findOne({
       where: {
         id: productId,
@@ -1855,10 +1858,20 @@ class ProductAdaptor {
             id: productId,
             status_type: 8,
           },
-        })]);
+        }),
+        this.modals.products.count({
+          where: {
+            user_id: productBody.user_id,
+            status_type: 5 || 11,
+          },
+        }),
+      ]);
     }).then((result) => {
       if (result[1] && result[0] === 0 && result[2] === 0) {
         return false;
+      }
+      if (result[3] === 1) { // to check it it is the first product
+        flag = true;
       }
       const sellerPromise = [];
       const isProductAMCSellerSame = false;
@@ -2312,6 +2325,19 @@ class ProductAdaptor {
                   finalResult.amcs = product.amcs;
                   finalResult.repairs = product.repairs;
                   finalResult.pucDetails = product.pucDetails;
+                }
+
+                if (flag) {
+                  notificationAdaptor.notifyUser(finalResult.user_id, {
+                    title: 'Your Product Card is created!',
+                    description: 'Congratulations on your first Product Card! Enjoy the journey to easy life with your Home Manager.',
+                  }, reply);
+                  if (finalResult.copies || finalResult.copies.length === 0) {
+                    notificationAdaptor.notifyUser(finalResult.user_id, {
+                      title: 'Your Purchase Bill is a life saver!',
+                      description: 'Did you know that it\'s mandatory to have a product\'s purchase or repair bill to avail warranty and also helps in easy resale?',
+                    }, reply);
+                  }
                 }
 
                 return finalResult;
