@@ -19,6 +19,7 @@ import AppVersionHelper from '../helpers/appVersion';
 import ProductItemController from '../api/controllers/productItem';
 import CalendarServiceController from '../api/controllers/calendarServices';
 import WhatToServiceController from '../api/controllers/whatToServices';
+import {prepareAffiliatedServiceRoute} from './affiliated_services';
 
 let User;
 let appVersionHelper;
