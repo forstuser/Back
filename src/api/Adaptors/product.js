@@ -10,7 +10,7 @@ import RepairAdaptor from './repairs';
 import CategoryAdaptor from './category';
 import SellerAdaptor from './sellers';
 import ServiceScheduleAdaptor from './serviceSchedules';
-import notificationAdaptor from '../Adaptors/notification';
+import NotificationAdaptor from '../Adaptors/notification';
 import _ from 'lodash';
 import moment from 'moment/moment';
 import Promise from 'bluebird';
@@ -27,7 +27,7 @@ class ProductAdaptor {
     this.categoryAdaptor = new CategoryAdaptor(modals);
     this.sellerAdaptor = new SellerAdaptor(modals);
     this.serviceScheduleAdaptor = new ServiceScheduleAdaptor(modals);
-    this.notificationAdaptor = new notificationAdaptor(modal);
+    this.notificationAdaptor = new NotificationAdaptor(modals);
   }
 
   retrieveProducts(options, language) {
