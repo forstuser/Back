@@ -2,7 +2,7 @@
 export default (sequelize, DataTypes) => {
   const table_transaction = sequelize.define('table_transaction', {
 
-        accessory_listing_id: { // fk
+        accessory_product_id: { // fk
           type: DataTypes.INTEGER,
         },
         transaction_id: {
@@ -75,9 +75,9 @@ export default (sequelize, DataTypes) => {
           onUpdate: 'cascade',
         });
 
-    table_transaction.belongsTo(models.table_accessory_listing,
+    table_transaction.belongsTo(models.table_accessory_products,
         {
-          foreignKey: 'accessory_listing_id',
+          foreignKey: 'accessory_product_id',
           onDelete: 'cascade',
           onUpdate: 'cascade',
         });

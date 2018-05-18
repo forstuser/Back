@@ -19,6 +19,8 @@ import AppVersionHelper from '../helpers/appVersion';
 import ProductItemController from '../api/controllers/productItem';
 import CalendarServiceController from '../api/controllers/calendarServices';
 import WhatToServiceController from '../api/controllers/whatToServices';
+import {prepareAccessoryRoute} from './accessory_routes';
+import AccessoryServicesController from '../api/controllers/accessory';
 
 let User;
 let appVersionHelper;
@@ -2100,7 +2102,7 @@ function prepareProductItemRoutes(productItemController, productItemRoutes) {
             warranty_type: [joi.number(), joi.allow(null)],
             main_category_id: [joi.number(), joi.allow(null)],
             category_id: [joi.number(), joi.allow(null)],
-            value: [joi.number(), joi.allow(null)]
+            value: [joi.number(), joi.allow(null)],
           },
         },
       },
@@ -2130,7 +2132,7 @@ function prepareProductItemRoutes(productItemController, productItemRoutes) {
             warranty_type: [joi.number(), joi.allow(null)],
             main_category_id: [joi.number(), joi.allow(null)],
             category_id: [joi.number(), joi.allow(null)],
-            value: [joi.number(), joi.allow(null)]
+            value: [joi.number(), joi.allow(null)],
           },
         },
       },
@@ -2932,6 +2934,7 @@ export default (app, modals) => {
   const calendarRoutes = [];
   const uploadFileRoute = [];
   const whatToServiceRoutes = [];
+  const accessoryServicesRoutes = [];
   const userController = new UserController(modals);
   const categoryController = new CategoryController(modals);
   const brandController = new BrandController(modals);
@@ -2945,6 +2948,8 @@ export default (app, modals) => {
   const repairController = new ProductItemController(modals);
   const calendarServiceController = new CalendarServiceController(modals);
   const whatToServiceController = new WhatToServiceController(modals);
+  const accessoryServicesController = new AccessoryServicesController(modals);
+
   prepareAuthRoutes(userController, authRoutes);
 
   prepareCategoryRoutes(categoryController, categoryRoutes);
@@ -2968,6 +2973,9 @@ export default (app, modals) => {
   prepareCalendarServiceRoutes(calendarServiceController, calendarRoutes);
 
   prepareWhatToServiceRoutes(whatToServiceController, whatToServiceRoutes);
+
+  prepareAccessoryRoute(accessoryServicesController,
+      AccessoryServicesController, accessoryServicesRoutes, appVersionHelper);
 
   if (searchController) {
     searchRoutes.push({
@@ -3015,5 +3023,6 @@ export default (app, modals) => {
     ...repairRoutes,
     ...calendarRoutes,
     ...whatToServiceRoutes,
+    ...accessoryServicesRoutes,
   ]);
 };

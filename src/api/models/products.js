@@ -29,16 +29,7 @@ export default (sequelize, DataTypes) => {
         document_number: {
           type: DataTypes.STRING,
         },
-        file_type: {
-          type: DataTypes.STRING,
-        },
-        file_ref: {
-          type: DataTypes.STRING,
-        },
         product_name: {
-          type: DataTypes.STRING,
-        },
-        model: {
           type: DataTypes.STRING,
         },
         purchase_cost: {
@@ -50,7 +41,7 @@ export default (sequelize, DataTypes) => {
           defaultValue: 0,
         },
         document_date: {
-          type: DataTypes.DATEONLY,
+          type: DataTypes.DATE,
           defaultValue: sequelize.literal('NOW()'),
         },
         user_id: {
@@ -60,6 +51,9 @@ export default (sequelize, DataTypes) => {
           type: DataTypes.INTEGER,
         },
         seller_id: {
+          type: DataTypes.INTEGER,
+        },
+        accessory_id: {
           type: DataTypes.INTEGER,
         },
         status_type: {
@@ -76,11 +70,13 @@ export default (sequelize, DataTypes) => {
         copies: {
           type: DataTypes.ARRAY(DataTypes.JSONB),
         },
+        model: {
+          type: DataTypes.STRING,
+        },
       },
       {
         freezeTableName: true,
         defaultPrimaryKey: true,
-        timestamps: true,
         underscored: true,
         tableName: 'consumer_products',
       });
@@ -107,6 +103,8 @@ export default (sequelize, DataTypes) => {
     products.belongsTo(models.jobs, {as: 'jobs', foreignKey: 'job_id'});
     products.belongsTo(models.offlineSellers,
         {foreignKey: 'seller_id', as: 'sellers'});
+    products.belongsTo(models.table_accessory_categories,
+        {foreignKey: 'accessory_id', as: 'accessory', onDelete: 'cascade'});
     products.belongsTo(models.brands,
         {foreignKey: 'brand_id', as: 'brand'});
     products.belongsTo(models.categories,
