@@ -43,6 +43,10 @@ var _shared = require('../../helpers/shared');
 
 var _shared2 = _interopRequireDefault(_shared);
 
+var _notification3 = require('../Adaptors/notification');
+
+var _notification4 = _interopRequireDefault(_notification3);
+
 var _moment = require('moment');
 
 var _moment2 = _interopRequireDefault(_moment);
@@ -69,6 +73,7 @@ var DashboardAdaptor = function () {
     this.warrantyAdaptor = new _warranties2.default(modals);
     this.pucAdaptor = new _pucs2.default(modals);
     this.calendarServiceAdaptor = new _calendarServices2.default(modals);
+    this.notificationAdaptor = new _notification4.default(modals);
     this.date = _moment2.default.utc();
   }
 
@@ -313,9 +318,13 @@ var DashboardAdaptor = function () {
       }
 
       if (user.email && !user.email_verified) {
-        _notification2.default.sendMailOnDifferentSteps('Welcome to BinBill - Your eHome', user.email, user, 1);
-      }
+        _notification2.default.sendMailOnDifferentSteps('Welcome to BinBill', user.email, user, 1);
 
+        this.notificationAdaptor.notifyUser(user.id || user.ID, {
+          title: 'Welcome to BinBill!',
+          description: 'Hello User. Greetings from Rohit BinBill CEO. I welcome you to your eHome. We promise to constantly evolve and make managing your eHome ever efficient and smarter. As it is a new home, you may take some time to get accustomed to it. Your Home Manager and I would always welcome your suggestions to improve your eHome. Please reach me at - rohit@binbill.com or eHome@binbill.com'
+        }, reply);
+      }
       return {
         status: true,
         message: 'New User',

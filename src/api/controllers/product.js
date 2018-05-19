@@ -2,15 +2,18 @@
 'use strict';
 
 import ProductAdaptor from '../Adaptors/product';
+import NotificationAdaptor from '../Adaptors/notification';
 import shared from '../../helpers/shared';
 import moment from 'moment/moment';
 
 let productAdaptor;
+let notificationAdaptor;
 let models;
 
 class ProductController {
   constructor(modal) {
     productAdaptor = new ProductAdaptor(modal);
+    notificationAdaptor = new NotificationAdaptor(modal);
     models = modal;
   }
 
@@ -265,6 +268,20 @@ class ProductController {
           otherItems, request.params.id).
           then((result) => {
             if (result) {
+              if (result.flag) {
+                notificationAdaptor.notifyUser(result.user_id, {
+                  title: 'Your Product Card is created!',
+                  description: 'Congratulations on your first Product Card! Enjoy the journey to easy life with your Home Manager.',
+                }, reply);
+
+                if (!result.copies ||
+                    (result.copies && result.copies.length === 0)) {
+                  notificationAdaptor.notifyUser(result.user_id, {
+                    title: 'Your Purchase Bill is a life saver!',
+                    description: 'Did you know that it\'s mandatory to have a product\'s purchase or repair bill to avail warranty and also helps in easy resale?',
+                  }, reply);
+                }
+              }
               return reply({
                 status: true,
                 message: 'successful',

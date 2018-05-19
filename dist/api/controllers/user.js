@@ -160,6 +160,7 @@ var loginOrRegisterUser = function loginOrRegisterUser(parameters) {
     trackTransaction(request.payload.transactionId, updatedUser.id);
     replyObject.authorization = 'bearer ' + _authentication2.default.generateToken(userData[0]).token;
     token = replyObject.authorization;
+
     return dashboardAdaptor.prepareDashboardResult({
       isNewUser: userData[1],
       user: userData[0].toJSON(),

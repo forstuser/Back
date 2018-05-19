@@ -293,16 +293,16 @@ class DashboardAdaptor {
 
     if (user.email && !user.email_verified) {
       notificationAdaptor.sendMailOnDifferentSteps(
-          'Welcome to BinBill - Your eHome',
+          'Welcome to BinBill',
           user.email, user, 1);
-    }
 
-    notificationAdaptor.notifyUser(user.id || user.ID,
-        {
-          title: 'Welcome to BinBill!',
-          description: 'Hello User. Greetings from Rohit BinBill CEO. I welcome you to your eHome. We promise to constantly evolve and make managing your eHome ever efficient and smarter. As it is a new home, you may take some time to get accustomed to it. Your Home Manager and I would always welcome your suggestions to improve your eHome. Please reach me at - rohit@binbill.com or eHome@binbill.com',
-        },
-        reply);
+      this.notificationAdaptor.notifyUser(user.id || user.ID,
+          {
+            title: 'Welcome to BinBill!',
+            description: 'Hello User. Greetings from Rohit BinBill CEO. I welcome you to your eHome. We promise to constantly evolve and make managing your eHome ever efficient and smarter. As it is a new home, you may take some time to get accustomed to it. Your Home Manager and I would always welcome your suggestions to improve your eHome. Please reach me at - rohit@binbill.com or eHome@binbill.com',
+          },
+          reply);
+    }
     return {
       status: true,
       message: 'New User',

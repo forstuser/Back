@@ -50,7 +50,8 @@ class NotificationAdaptor {
 
     smtpTransporter.sendMail(mailOptions, (error, info) => {
       if (error) {
-        return console.log(`Error on ${new Date()} is as follow: \n \n ${error}`);
+        return console.log(
+            `Error on ${new Date()} is as follow: \n \n ${error}`);
       }
       console.log('Message sent: %s', info.messageId);
       // Preview only available when sending through an Ethereal account
@@ -83,7 +84,8 @@ class NotificationAdaptor {
     // send mail with defined transport object
     smtpTransporter.sendMail(mailOptions, (error, info) => {
       if (error) {
-        return console.log(`Error on ${new Date()} is as follow: \n \n ${error}`);
+        return console.log(
+            `Error on ${new Date()} is as follow: \n \n ${error}`);
       }
       console.log('Message sent: %s', info.messageId);
       // Preview only available when sending through an Ethereal account
@@ -116,7 +118,8 @@ class NotificationAdaptor {
     // send mail with defined transport object
     smtpTransporter.sendMail(mailOptions, (error, info) => {
       if (error) {
-        return console.log(`Error on ${new Date()} is as follow: \n \n ${error}`);
+        return console.log(
+            `Error on ${new Date()} is as follow: \n \n ${error}`);
       }
       console.log('Message sent: %s', info.messageId);
       // Preview only available when sending through an Ethereal account
@@ -149,7 +152,8 @@ class NotificationAdaptor {
     // send mail with defined transport object
     smtpTransporter.sendMail(mailOptions, (error, info) => {
       if (error) {
-        return console.log(`Error on ${new Date()} is as follow: \n \n ${error}`);
+        return console.log(
+            `Error on ${new Date()} is as follow: \n \n ${error}`);
       }
       console.log('Message sent: %s', info.messageId);
       // Preview only available when sending through an Ethereal account

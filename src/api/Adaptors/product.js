@@ -10,7 +10,6 @@ import RepairAdaptor from './repairs';
 import CategoryAdaptor from './category';
 import SellerAdaptor from './sellers';
 import ServiceScheduleAdaptor from './serviceSchedules';
-import NotificationAdaptor from '../Adaptors/notification';
 import _ from 'lodash';
 import moment from 'moment/moment';
 import Promise from 'bluebird';
@@ -27,7 +26,6 @@ class ProductAdaptor {
     this.categoryAdaptor = new CategoryAdaptor(modals);
     this.sellerAdaptor = new SellerAdaptor(modals);
     this.serviceScheduleAdaptor = new ServiceScheduleAdaptor(modals);
-    this.notificationAdaptor = new NotificationAdaptor(modals);
   }
 
   retrieveProducts(options, language) {
@@ -1870,7 +1868,7 @@ class ProductAdaptor {
       if (result[1] && result[0] === 0 && result[2] === 0) {
         return false;
       }
-      if (result[3] === 1) { // to check it it is the first product
+      if (result[3] === 0) { // to check it it is the first product
         flag = true;
       }
       const sellerPromise = [];
@@ -2327,18 +2325,7 @@ class ProductAdaptor {
                   finalResult.pucDetails = product.pucDetails;
                 }
 
-                if (flag) {
-                  notificationAdaptor.notifyUser(finalResult.user_id, {
-                    title: 'Your Product Card is created!',
-                    description: 'Congratulations on your first Product Card! Enjoy the journey to easy life with your Home Manager.',
-                  }, reply);
-                  if (finalResult.copies || finalResult.copies.length === 0) {
-                    notificationAdaptor.notifyUser(finalResult.user_id, {
-                      title: 'Your Purchase Bill is a life saver!',
-                      description: 'Did you know that it\'s mandatory to have a product\'s purchase or repair bill to avail warranty and also helps in easy resale?',
-                    }, reply);
-                  }
-                }
+                finalResult.flag = flag;
 
                 return finalResult;
               }).catch((err) => console.log(

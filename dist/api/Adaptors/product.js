@@ -1027,6 +1027,7 @@ var ProductAdaptor = function () {
       var _this6 = this;
 
       var dbProduct = void 0;
+      var flag = false;
       return _bluebird2.default.try(function () {
         return _this6.modals.products.findOne({
           where: {
@@ -1055,10 +1056,19 @@ var ProductAdaptor = function () {
             id: productId,
             status_type: 8
           }
+        }), _this6.modals.products.count({
+          where: {
+            user_id: productBody.user_id,
+            status_type: 5 || 11
+          }
         })]);
       }).then(function (result) {
         if (result[1] && result[0] === 0 && result[2] === 0) {
           return false;
+        }
+        if (result[3] === 0) {
+          // to check it it is the first product
+          flag = true;
         }
         var sellerPromise = [];
         var isProductAMCSellerSame = false;
@@ -1427,6 +1437,8 @@ var ProductAdaptor = function () {
             finalResult.repairs = product.repairs;
             finalResult.pucDetails = product.pucDetails;
           }
+
+          finalResult.flag = flag;
 
           return finalResult;
         }).catch(function (err) {

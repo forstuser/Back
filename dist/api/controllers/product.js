@@ -11,6 +11,10 @@ var _product = require('../Adaptors/product');
 
 var _product2 = _interopRequireDefault(_product);
 
+var _notification = require('../Adaptors/notification');
+
+var _notification2 = _interopRequireDefault(_notification);
+
 var _shared = require('../../helpers/shared');
 
 var _shared2 = _interopRequireDefault(_shared);
@@ -24,6 +28,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var productAdaptor = void 0;
+var notificationAdaptor = void 0;
 var models = void 0;
 
 var ProductController = function () {
@@ -31,6 +36,7 @@ var ProductController = function () {
     _classCallCheck(this, ProductController);
 
     productAdaptor = new _product2.default(modal);
+    notificationAdaptor = new _notification2.default(modal);
     models = modal;
   }
 
@@ -90,6 +96,7 @@ var ProductController = function () {
               product: result,
               forceUpdate: request.pre.forceUpdate
             });
+            //todo: after this check if number of products in the db for that user is 1 and if true send him a notification
           } else {
             return reply({
               status: false,
@@ -258,6 +265,19 @@ var ProductController = function () {
 
         return productAdaptor.updateProductDetails(productBody, metaDataBody, otherItems, request.params.id).then(function (result) {
           if (result) {
+            if (result.flag) {
+              notificationAdaptor.notifyUser(result.user_id, {
+                title: 'Your Product Card is created!',
+                description: 'Congratulations on your first Product Card! Enjoy the journey to easy life with your Home Manager.'
+              }, reply);
+
+              if (!result.copies || result.copies && result.copies.length === 0) {
+                notificationAdaptor.notifyUser(result.user_id, {
+                  title: 'Your Purchase Bill is a life saver!',
+                  description: 'Did you know that it\'s mandatory to have a product\'s purchase or repair bill to avail warranty and also helps in easy resale?'
+                }, reply);
+              }
+            }
             return reply({
               status: true,
               message: 'successful',
