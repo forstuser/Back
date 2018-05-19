@@ -9,6 +9,7 @@ import WarrantyAdaptor from './warranties';
 import CalendarServiceAdaptor from './calendarServices';
 import PUCAdaptor from './pucs';
 import shared from '../../helpers/shared';
+import NotificationAdaptor from '../Adaptors/notification';
 import moment from 'moment';
 import Promise from 'bluebird';
 
@@ -22,6 +23,7 @@ class DashboardAdaptor {
     this.warrantyAdaptor = new WarrantyAdaptor(modals);
     this.pucAdaptor = new PUCAdaptor(modals);
     this.calendarServiceAdaptor = new CalendarServiceAdaptor(modals);
+    this.notificationAdaptor = new NotificationAdaptor(modals);
     this.date = moment.utc();
   }
 
@@ -295,6 +297,12 @@ class DashboardAdaptor {
           user.email, user, 1);
     }
 
+    notificationAdaptor.notifyUser(user.id || user.ID,
+        {
+          title: 'Welcome to BinBill!',
+          description: 'Hello User. Greetings from Rohit BinBill CEO. I welcome you to your eHome. We promise to constantly evolve and make managing your eHome ever efficient and smarter. As it is a new home, you may take some time to get accustomed to it. Your Home Manager and I would always welcome your suggestions to improve your eHome. Please reach me at - rohit@binbill.com or eHome@binbill.com',
+        },
+        reply);
     return {
       status: true,
       message: 'New User',

@@ -102,6 +102,7 @@ let loginOrRegisterUser = parameters => {
         replyObject.authorization = `bearer ${authentication.generateToken(
             userData[0]).token}`;
         token = replyObject.authorization;
+
         return dashboardAdaptor.prepareDashboardResult({
           isNewUser: userData[1],
           user: userData[0].toJSON(),
@@ -476,6 +477,7 @@ class UserController {
                 request,
                 reply,
               });
+
             } else {
               replyObject.status = false;
               replyObject.message = 'Invalid/Expired OTP';

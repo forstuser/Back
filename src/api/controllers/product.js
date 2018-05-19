@@ -81,6 +81,7 @@ class ProductController {
                 product: result,
                 forceUpdate: request.pre.forceUpdate,
               });
+              //todo: after this check if number of products in the db for that user is 1 and if true send him a notification
             } else {
               return reply({
                 status: false,
