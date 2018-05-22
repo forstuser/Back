@@ -1860,7 +1860,7 @@ class ProductAdaptor {
         this.modals.products.count({
           where: {
             user_id: productBody.user_id,
-            status_type: 5 || 11,
+            status_type: [5,11],
           },
         }),
       ]);
