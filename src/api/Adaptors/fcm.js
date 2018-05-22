@@ -11,10 +11,17 @@ class FCMManager {
     const defaults = {
       user_id: userId,
       fcm_id: fcmId,
+      platform_id: 1,
+    };
+
+    const where = {
+      user_id: userId,
+      platform_id: 1,
     };
 
     if (platformId) {
       defaults.platform_id = platformId;
+      where.platform_id = platformId;
     }
 
     return Promise.all([
@@ -26,13 +33,16 @@ class FCMManager {
           fcm_id: fcmId,
         },
       }), this.fcmModal.findCreateFind({
-        where: defaults,
+        where,
         defaults,
       })]).then((data) => {
       const fcmDetail = data[1][0].toJSON();
       selected_language = selected_language || fcmDetail.selected_language ||
           'en';
-      data[1][0].updateAttributes({selected_language});
+      data[1][0].updateAttributes({
+        selected_language,
+        fcm_id: fcmId,
+      });
       return data;
     }).catch((err) => {
       console.log(

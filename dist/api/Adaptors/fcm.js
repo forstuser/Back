@@ -28,11 +28,18 @@ var FCMManager = function () {
       }
       var defaults = {
         user_id: userId,
-        fcm_id: fcmId
+        fcm_id: fcmId,
+        platform_id: 1
+      };
+
+      var where = {
+        user_id: userId,
+        platform_id: 1
       };
 
       if (platformId) {
         defaults.platform_id = platformId;
+        where.platform_id = platformId;
       }
 
       return Promise.all([this.fcmModal.destroy({
@@ -43,12 +50,15 @@ var FCMManager = function () {
           fcm_id: fcmId
         }
       }), this.fcmModal.findCreateFind({
-        where: defaults,
+        where: where,
         defaults: defaults
       })]).then(function (data) {
         var fcmDetail = data[1][0].toJSON();
         selected_language = selected_language || fcmDetail.selected_language || 'en';
-        data[1][0].updateAttributes({ selected_language: selected_language });
+        data[1][0].updateAttributes({
+          selected_language: selected_language,
+          fcm_id: fcmId
+        });
         return data;
       }).catch(function (err) {
         console.log('Error on ' + new Date() + ' for user ' + userId + ' is as follow: \n \n ' + err);

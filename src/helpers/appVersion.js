@@ -90,7 +90,8 @@ const updateUserActiveStatus = (request, reply) => {
                 request.url.pathname === '/consumer/otp/validate' ||
                 request.url.pathname === '/consumer/validate' ||
                 request.url.pathname === '/consumer/pin' ||
-                request.url.pathname === '/consumer/pin/reset')) {
+                request.url.pathname === '/consumer/pin/reset' ||
+                request.url.pathname === '/consumer/subscribe')) {
           return Promise.all([
             MODAL.users.update({
               last_active_date: moment.utc(),

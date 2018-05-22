@@ -265,19 +265,19 @@ var ProductController = function () {
 
         return productAdaptor.updateProductDetails(productBody, metaDataBody, otherItems, request.params.id).then(function (result) {
           if (result) {
-            if (result.flag) {
+            /*if (result.flag) {
               notificationAdaptor.notifyUser(result.user_id, {
                 title: 'Your Product Card is created!',
-                description: 'Congratulations on your first Product Card! Enjoy the journey to easy life with your Home Manager.'
+                description: 'Congratulations on your first Product Card! Enjoy the journey to easy life with your Home Manager.',
               }, reply);
-
-              if (!result.copies || result.copies && result.copies.length === 0) {
+               if (!result.copies ||
+                  (result.copies && result.copies.length === 0)) {
                 notificationAdaptor.notifyUser(result.user_id, {
                   title: 'Your Purchase Bill is a life saver!',
-                  description: 'Did you know that it\'s mandatory to have a product\'s purchase or repair bill to avail warranty and also helps in easy resale?'
+                  description: 'Did you know that it\'s mandatory to have a product\'s purchase or repair bill to avail warranty and also helps in easy resale?',
                 }, reply);
               }
-            }
+            }*/
             return reply({
               status: true,
               message: 'successful',

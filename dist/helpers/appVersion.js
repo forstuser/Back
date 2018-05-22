@@ -88,7 +88,7 @@ var updateUserActiveStatus = function updateUserActiveStatus(request, reply) {
         var timeDiffMin = _moment2.default.duration(_moment2.default.utc().diff(last_active_date)).asMinutes();
 
         console.log('\n\n\n\n\n', { timeDiffMin: timeDiffMin, last_active_date: last_active_date });
-        if (userDetail.password && timeDiffMin <= 10 || !userDetail.password || request.url.pathname === '/consumer/otp/send' || request.url.pathname === '/consumer/otp/validate' || request.url.pathname === '/consumer/validate' || request.url.pathname === '/consumer/pin' || request.url.pathname === '/consumer/pin/reset') {
+        if (userDetail.password && timeDiffMin <= 10 || !userDetail.password || request.url.pathname === '/consumer/otp/send' || request.url.pathname === '/consumer/otp/validate' || request.url.pathname === '/consumer/validate' || request.url.pathname === '/consumer/pin' || request.url.pathname === '/consumer/pin/reset' || request.url.pathname === '/consumer/subscribe') {
           return _bluebird2.default.all([MODAL.users.update({
             last_active_date: _moment2.default.utc(),
             last_api: request.url.pathname
