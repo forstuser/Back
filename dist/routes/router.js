@@ -77,6 +77,12 @@ var _whatToServices = require('../api/controllers/whatToServices');
 
 var _whatToServices2 = _interopRequireDefault(_whatToServices);
 
+var _accessory_routes = require('./accessory_routes');
+
+var _accessory = require('../api/controllers/accessory');
+
+var _accessory2 = _interopRequireDefault(_accessory);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var User = void 0;
@@ -2531,6 +2537,7 @@ exports.default = function (app, modals) {
   var calendarRoutes = [];
   var uploadFileRoute = [];
   var whatToServiceRoutes = [];
+  var accessoryServicesRoutes = [];
   var userController = new _user2.default(modals);
   var categoryController = new _category2.default(modals);
   var brandController = new _brand2.default(modals);
@@ -2544,6 +2551,8 @@ exports.default = function (app, modals) {
   var repairController = new _productItem2.default(modals);
   var calendarServiceController = new _calendarServices2.default(modals);
   var whatToServiceController = new _whatToServices2.default(modals);
+  var accessoryServicesController = new _accessory2.default(modals);
+
   prepareAuthRoutes(userController, authRoutes);
 
   prepareCategoryRoutes(categoryController, categoryRoutes);
@@ -2568,6 +2577,9 @@ exports.default = function (app, modals) {
 
   prepareWhatToServiceRoutes(whatToServiceController, whatToServiceRoutes);
 
+  (0, _accessory_routes.prepareAccessoryRoute)(accessoryServicesController,
+      _accessory2.default, accessoryServicesRoutes, appVersionHelper);
+
   if (searchController) {
     searchRoutes.push({
       method: 'GET',
@@ -2589,5 +2601,9 @@ exports.default = function (app, modals) {
     });
   }
 
-  app.route([].concat(authRoutes, categoryRoutes, brandRoutes, sellerRoutes, serviceCenterRoutes, billManagementRoutes, uploadFileRoute, dashboardRoutes, productRoutes, insightRoutes, searchRoutes, generalRoutes, repairRoutes, calendarRoutes, whatToServiceRoutes));
+  app.route([].concat(authRoutes, categoryRoutes, brandRoutes, sellerRoutes,
+      serviceCenterRoutes, billManagementRoutes, uploadFileRoute,
+      dashboardRoutes, productRoutes, insightRoutes, searchRoutes,
+      generalRoutes, repairRoutes, calendarRoutes, whatToServiceRoutes,
+      accessoryServicesRoutes));
 };
