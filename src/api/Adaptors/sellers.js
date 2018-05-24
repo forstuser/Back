@@ -69,8 +69,8 @@ export default class SellerAdaptor {
       if (result) {
         const sellerDetail = result.toJSON();
         defaults.status_type = sellerDetail.status_type;
-        result.updateAttributes(defaults);
-        return result;
+
+        return Promise.try(() => result.updateAttributes(defaults));
       }
 
       return this.modals.offlineSellers.create(defaults);

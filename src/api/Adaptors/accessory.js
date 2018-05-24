@@ -1,10 +1,12 @@
 import Promise from 'bluebird';
-// import ProductAdapter from './product';
+import ProductAdapter from './product';
+import SellerAdapter from './sellers';
 
 export default class AccessoryAdaptor {
   constructor(modals) {
     this.modals = modals;
-    // this.productAdapter = ProductAdapter(modals);
+    this.productAdapter = new ProductAdapter(modals);
+    this.sellerAdapter = new SellerAdapter(modals);
   }
 
   getAccessoriesList(options) {
@@ -140,6 +142,69 @@ export default class AccessoryAdaptor {
         }));
   }
 
+  createTransaction(options) {
+    // find create find seller
+    // create the transaction
+    // create product and reference it to existing product
+
+    return Promise.try(() => {
+
+      return this.sellerAdapter.retrieveOrCreateOfflineSellers({
+        'seller_name': options.seller_detail.name,
+        'address': options.seller_detail.address,
+        'contact_no': options.seller_detail.phone,
+      }, {
+        'seller_name': options.seller_detail.name,
+        'address': options.seller_detail.address,
+        'contact_no': options.seller_detail.phone,
+      });
+
+    }).then((seller) => Promise.all([
+      this.addTransaction({
+        'amount_paid': options.price,
+        'accessory_product_id': options.accessory_product_id,
+        'delivery_address': options.delivery_address,
+        'details_url': options.details_url,
+        'estimated_delivery_date': options.delivery_date,
+        'online_seller_id': options.online_seller_id,
+        'payment_mode_id': options.payment_mode,
+        'product_id': options.product_id,
+        'quantity': options.quantity,
+        'seller_id': seller.id,
+        'status_type': options.status_type,
+        'transaction_id': options.transaction_id,
+      }), this.modals.products.findOne({
+        where: {
+          'id': options.product_id,
+        },
+      }),
+      this.modals.table_accessory_products.findOne({
+        where: {
+          id: options.accessory_product_id,
+        },
+      }),
+    ])).spread((result, parentProduct, accessoryProduct) => {
+      parentProduct = parentProduct.toJSON();
+      accessoryProduct = accessoryProduct.toJSON();
+      return Promise.all([
+        result,
+        this.productAdapter.createEmptyProduct({
+          'accessory_id': options.accessory_product_id,
+          'category_id': parentProduct.category_id,
+          'ref_id': options.product_id,
+          'product_name': accessoryProduct.title,
+          'purchase_cost': options.price,
+          'seller_id': result.id,
+          'user_id': options.user_id,
+          'job_id': parentProduct.job_id,
+          'main_category_id': parentProduct.main_category_id,
+          'status_type': 11,
+        }),
+      ]);
+    });
+
+  }
+
   retrieveProducts(options) {
     return this.modals.products.findAll(options).
         then((result) => result.map(item => item.toJSON()));
@@ -169,4 +234,10 @@ export default class AccessoryAdaptor {
     return this.modals.table_payment_mode.findAll(options).
         then((result) => result.map(item => item.toJSON()));
   }
+
+  addTransaction(options) {
+    return this.modals.table_transaction.create(options).
+        then((result) => result.toJSON());
+  }
+
 }

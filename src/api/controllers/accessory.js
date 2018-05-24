@@ -62,16 +62,52 @@ class AccessoryController {
     }
   }
 
-  // static functionName(request, reply) {
-  //
-  //   const user = shared.verifyAuthorization(request.headers);
-  //   if (request.pre.userExist && !request.pre.forceUpdate) {
-  //     // this is where make us of adapter
-  //
-  //   } else {
-  //     return shared.preValidation(request.pre, reply);
-  //   }
-  // }
+  static createTransaction(request, reply) {
+
+    const user = shared.verifyAuthorization(request.headers);
+    if (request.pre.userExist && !request.pre.forceUpdate) {
+      // this is where make us of adapter
+      accessoryAdaptor.createTransaction({
+        'transaction_id': request.payload.transaction_id,
+        'status_type': request.payload.status_type,
+        'price': request.payload.price,
+        'quantity': request.payload.quantity,
+        'seller_detail': request.payload.seller_detail,
+        'delivery_date': request.payload.delivery_date,
+        'product_id': request.payload.product_id,
+        'accessory_product_id': request.payload.accessory_product_id,
+        'payment_mode': request.payload.payment_mode,
+        'details_url': request.payload.details_url,
+        'delivery_address': request.payload.delivery_address,
+        'online_seller_id': request.payload.online_seller_id,
+        'user_id': user.id || user.ID,
+      }).then((result) => reply({
+        status: true,
+        result,
+      })).catch((err) => {
+        console.log(`Error on ${new Date()} for user ${user.id ||
+        user.ID} is as follow: \n \n ${err}`);
+        return reply({
+          status: false,
+          message: 'Unable to retrieve order history',
+        });
+      });
+
+    } else {
+      return shared.preValidation(request.pre, reply);
+    }
+  }
+
+  // static createTransaction(request, reply) {
+  //   //
+  //   //   const user = shared.verifyAuthorization(request.headers);
+  //   //   if (request.pre.userExist && !request.pre.forceUpdate) {
+  //   //     // this is where make us of adapter
+  //   //
+  //   //   } else {
+  //   //     return shared.preValidation(request.pre, reply);
+  //   //   }
+  //   // }
 
 }
 

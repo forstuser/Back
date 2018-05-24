@@ -10,7 +10,7 @@ export default (sequelize, DataTypes) => {
         variant: {
           type: DataTypes.STRING,
         },
-        accessory_product_id: {
+        accessory_id: {
           type: DataTypes.INTEGER,
         },
         created_at: {
