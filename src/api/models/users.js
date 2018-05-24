@@ -23,6 +23,9 @@ export default (sequelize, DataTypes) => {
     location: {
       type: DataTypes.STRING,
     },
+    gender: {
+      type: DataTypes.INTEGER,
+    },
     latitude: {
       type: DataTypes.FLOAT,
       allowNull: true,

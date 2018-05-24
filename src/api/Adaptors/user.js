@@ -72,6 +72,7 @@ class UserAdaptor {
         'email_verified',
         'email_secret',
         'image_name',
+          'gender',
         'fb_id',
       ],
     }).then((result) => {
@@ -93,6 +94,7 @@ class UserAdaptor {
             'email_verified',
             'email_secret',
             'image_name',
+            'gender',
           ],
         });
       }
@@ -103,7 +105,7 @@ class UserAdaptor {
           fb_id: defaultObject.fb_id,
           last_active_date: moment.utc(),
           last_api: defaultObject.last_api,
-        })), true]);
+        })), false]);
     });
   }
 
@@ -123,6 +125,7 @@ class UserAdaptor {
       'email',
       'email_verified',
       'email_secret',
+      'gender',
       [
         this.modals.sequelize.fn('CONCAT', 'consumer/',
             this.modals.sequelize.col('id'), '/images'), 'imageUrl'],
@@ -154,6 +157,7 @@ class UserAdaptor {
           'longitude',
           'image_name',
           'password',
+          'gender',
           [
             this.modals.sequelize.fn('CONCAT', '/consumer/',
                 this.modals.sequelize.col('id'), '/images'), 'imageUrl'],
@@ -251,6 +255,7 @@ class UserAdaptor {
       location: payload.location,
       latitude: payload.latitude,
       longitude: payload.longitude,
+      gender: payload.gender,
     };
 
     const userAddresses = payload.addresses ? payload.addresses.map((item) => {
@@ -314,7 +319,7 @@ class UserAdaptor {
           `Error on ${new Date()} for user ${user.id ||
           user.ID} is as follow: \n \n ${err}`);
       if (err && err.errors && err.errors.findIndex(
-              (item) => item.message === 'email must be unique') !== -1) {
+          (item) => item.message === 'email must be unique') !== -1) {
         return reply({
           status: false,
           message: 'The email mentioned is already linked with other account',

@@ -313,6 +313,7 @@ function prepareAuthRoutes(userController, authRoutes) {
             phoneNo: [_joi2.default.string(), _joi2.default.allow(null)],
             fcmId: [_joi2.default.string(), _joi2.default.allow(null)],
             platform: [_joi2.default.number(), _joi2.default.allow(null)],
+            gender: [_joi2.default.number(), _joi2.default.allow(null)],
             email: [_joi2.default.string(), _joi2.default.allow(null, '')],
             oldEmail: [_joi2.default.string(), _joi2.default.allow(null, '')],
             name: [_joi2.default.string(), _joi2.default.allow(null, '')],

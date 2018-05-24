@@ -306,6 +306,7 @@ function prepareAuthRoutes(userController, authRoutes) {
             phoneNo: [joi.string(), joi.allow(null)],
             fcmId: [joi.string(), joi.allow(null)],
             platform: [joi.number(), joi.allow(null)],
+            gender: [joi.number(), joi.allow(null)],
             email: [joi.string(), joi.allow(null, '')],
             oldEmail: [joi.string(), joi.allow(null, '')],
             name: [joi.string(), joi.allow(null, '')],
