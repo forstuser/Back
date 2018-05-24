@@ -116,7 +116,7 @@ var GeneralController = function () {
 
         return categoryAdaptor.retrieveCategories({ category_level: 1 }, false, request.language);
       }).then(function (results) {
-        return reply({
+        return reply.response({
           status: true,
           dropDowns: request.query.brandId ? results : undefined,
           categories: request.query.brandId ? undefined : isBrandRequest ? results[0] : results,
@@ -150,7 +150,7 @@ var GeneralController = function () {
           return console.log('error while logging on db,', ex);
         });
 
-        return reply({
+        return reply.response({
           status: false
         });
       });
@@ -192,7 +192,7 @@ var GeneralController = function () {
           return false;
         }).then(function (isValid) {
           if (isValid === false) {
-            return reply({
+            return reply.response({
               status: false,
               message: 'You have reached to max attempt for a day'
             });
@@ -202,10 +202,10 @@ var GeneralController = function () {
             if (request.payload.message) {
               _notification2.default.sendUserCommentToTeam('Comment received', request.payload);
             }
-            return reply({ status: true }).code(201);
+            return reply.response({ status: true }).code(201);
           }
 
-          return reply({
+          return reply.response({
             status: false,
             message: 'Invalid Request'
           });
@@ -226,7 +226,7 @@ var GeneralController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'Invalid Request'
           });
@@ -244,7 +244,7 @@ var GeneralController = function () {
         },
         order: [['id']]
       }).then(function (faq) {
-        return reply({ status: true, faq: faq }).code(200);
+        return reply.response({ status: true, faq: faq }).code(200);
       }).catch(function (err) {
         console.log('Error on ' + new Date() + ' for user is as follow: \n \n ' + err);
         modals.logs.create({
@@ -262,14 +262,14 @@ var GeneralController = function () {
         }).catch(function (ex) {
           return console.log('error while logging on db,', ex);
         });
-        return reply({ status: false }).code(200);
+        return reply.response({ status: false }).code(200);
       });
     }
   }, {
     key: 'retrieveTips',
     value: function retrieveTips(request, reply) {
       return modals.tips.findAll({ order: [['id']] }).then(function (tips) {
-        return reply({ status: true, tips: tips }).code(200);
+        return reply.response({ status: true, tips: tips }).code(200);
       }).catch(function (err) {
         console.log('Error on ' + new Date() + ' for user is as follow: \n \n ' + err);
         modals.logs.create({
@@ -287,7 +287,7 @@ var GeneralController = function () {
         }).catch(function (ex) {
           return console.log('error while logging on db,', ex);
         });
-        return reply({ status: false }).code(200);
+        return reply.response({ status: false }).code(200);
       });
     }
   }, {
@@ -337,7 +337,7 @@ var GeneralController = function () {
           });
           return modals.knowItems.findAll(options);
         }).then(function (knowItems) {
-          return reply({
+          return reply.response({
             status: true,
             items: JSON.parse(JSON.stringify(knowItems.map(function (item) {
               var knowItemDetail = item.toJSON();
@@ -377,22 +377,22 @@ var GeneralController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({ status: false }).code(200);
+          return reply.response({ status: false }).code(200);
         });
       } else if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         }).code(401);
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -425,7 +425,7 @@ var GeneralController = function () {
       };
 
       return modals.knowItems.findAll(options).then(function (knowItems) {
-        return reply({
+        return reply.response({
           status: true, items: knowItems.map(function (item) {
             item = item.toJSON();
             item.imageUrl = '/knowitem/' + item.id + '/images';
@@ -461,7 +461,7 @@ var GeneralController = function () {
         }).catch(function (ex) {
           return console.log('error while logging on db,', ex);
         });
-        return reply({ status: false }).code(200);
+        return reply.response({ status: false }).code(200);
       });
     }
   }, {
@@ -500,7 +500,7 @@ var GeneralController = function () {
         knowItem.hashTags = knowItem.hashTags.trim();
         knowItem.totalLikes = knowItem.users.length;
 
-        return reply({
+        return reply.response({
           status: true, item: knowItem
         }).code(200);
       }).catch(function (err) {
@@ -520,7 +520,7 @@ var GeneralController = function () {
         }).catch(function (ex) {
           return console.log('error while logging on db,', ex);
         });
-        return reply({ status: false }).code(200);
+        return reply.response({ status: false }).code(200);
       });
     }
   }, {
@@ -545,7 +545,7 @@ var GeneralController = function () {
           distinct: true,
           order: [['created_at', 'desc']]
         }).then(function (tagItems) {
-          return reply({
+          return reply.response({
             status: true, items: tagItems.map(function (item) {
               item = item.toJSON();
               item.title = item.title || item.default_title;
@@ -570,22 +570,22 @@ var GeneralController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({ status: false }).code(200);
+          return reply.response({ status: false }).code(200);
         });
       } else if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         }).code(401);
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -602,7 +602,7 @@ var GeneralController = function () {
           user_id: user.id || user.ID,
           know_item_id: request.params.id
         }).then(function () {
-          return reply({
+          return reply.response({
             status: true,
             message: 'You have successfully liked this item.'
           }).code(200);
@@ -623,22 +623,22 @@ var GeneralController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({ status: false }).code(200);
+          return reply.response({ status: false }).code(200);
         });
       } else if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         }).code(401);
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -657,7 +657,7 @@ var GeneralController = function () {
             know_item_id: request.params.id
           }
         }).then(function () {
-          return reply({
+          return reply.response({
             status: true,
             message: 'You have successfully Un-liked this item.'
           }).code(200);
@@ -678,22 +678,22 @@ var GeneralController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({ status: false }).code(200);
+          return reply.response({ status: false }).code(200);
         });
       } else if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         }).code(401);
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -738,7 +738,7 @@ var GeneralController = function () {
             status_type: 1
           })]);
         }).then(function (initResult) {
-          return reply({
+          return reply.response({
             status: true,
             product: initResult[0],
             categories: initResult[1],
@@ -762,26 +762,26 @@ var GeneralController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'Unable to initialize product or job.',
             forceUpdate: request.pre.forceUpdate
           }).code(200);
         });
       } else if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         }).code(401);
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -800,7 +800,7 @@ var GeneralController = function () {
             }
           });
         }).then(function () {
-          return reply({
+          return reply.response({
             status: true,
             message: 'Status updated successfully.'
           });
@@ -821,26 +821,26 @@ var GeneralController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'Failed to update status',
             forceUpdate: request.pre.forceUpdate
           });
         });
       } else if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         }).code(401);
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -860,7 +860,7 @@ var GeneralController = function () {
             user_id: user.id || user.ID
           });
         }).then(function (productResult) {
-          return reply({
+          return reply.response({
             status: true,
             product: productResult,
             message: 'Success.'
@@ -882,26 +882,26 @@ var GeneralController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'Unable to fetch product list',
             forceUpdate: request.pre.forceUpdate
           });
         });
       } else if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         }).code(401);
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate

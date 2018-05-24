@@ -82,13 +82,13 @@ class UploadController {
   static uploadUserImage(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         // forceUpdate: request.pre.forceUpdate
@@ -124,7 +124,7 @@ class UploadController {
             },
           });
         }).then(() => {
-          return reply({
+          return reply.response({
             status: true,
             message: 'Uploaded Successfully',
           });
@@ -145,7 +145,7 @@ class UploadController {
               err,
             }),
           }).catch((ex) => console.log('error while logging on db,', ex));
-          return reply({
+          return reply.response({
             status: false,
             message: 'Upload Failed',
             err,
@@ -154,20 +154,20 @@ class UploadController {
         });
       });
     } else {
-      return reply({status: false, message: 'No documents in request'}); //, forceUpdate: request.pre.forceUpdate});
+      return reply.response({status: false, message: 'No documents in request'}); //, forceUpdate: request.pre.forceUpdate});
     }
   }
 
   static uploadProductImage(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         // forceUpdate: request.pre.forceUpdate
@@ -203,7 +203,7 @@ class UploadController {
 
             return productResult.updateAttributes({file_type, file_ref});
           }).then(() => {
-            return reply({
+            return reply.response({
               status: true,
               message: 'Uploaded Successfully',
               cImageURL: `/consumer/products/${request.params.id}/images/${file_ref}`,
@@ -225,7 +225,7 @@ class UploadController {
                 err,
               }),
             }).catch((ex) => console.log('error while logging on db,', ex));
-            return reply({
+            return reply.response({
               status: false,
               message: 'Upload Failed',
               err,
@@ -234,7 +234,7 @@ class UploadController {
           });
         }
 
-        return reply({
+        return reply.response({
           status: false,
           message: 'Invalid Product Id Upload Failed',
           err,
@@ -242,20 +242,20 @@ class UploadController {
         });
       });
     } else {
-      return reply({status: false, message: 'No documents in request'}); //, forceUpdate: request.pre.forceUpdate});
+      return reply.response({status: false, message: 'No documents in request'}); //, forceUpdate: request.pre.forceUpdate});
     }
   }
 
   static uploadWearableImage(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         // forceUpdate: request.pre.forceUpdate
@@ -291,7 +291,7 @@ class UploadController {
             return wearableResult.updateAttributes({image_name, image_code});
           }).then((wearableResult) => {
             wearableResult.image_link = `/wearable/${wearableResult.id}/images/${wearableResult.image_code}`;
-            return reply({
+            return reply.response({
               status: true,
               message: 'Uploaded Successfully',
               wearableResult,
@@ -313,7 +313,7 @@ class UploadController {
                 err,
               }),
             }).catch((ex) => console.log('error while logging on db,', ex));
-            return reply({
+            return reply.response({
               status: false,
               message: 'Upload Failed',
               err,
@@ -322,7 +322,7 @@ class UploadController {
           });
         }
 
-        return reply({
+        return reply.response({
           status: false,
           message: 'Invalid Wearable Id Upload Failed',
           err,
@@ -330,20 +330,20 @@ class UploadController {
         });
       });
     } else {
-      return reply({status: false, message: 'No documents in request'}); //, forceUpdate: request.pre.forceUpdate});
+      return reply.response({status: false, message: 'No documents in request'}); //, forceUpdate: request.pre.forceUpdate});
     }
   }
 
   static uploadFiles(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
       }).code(401);
@@ -389,7 +389,7 @@ class UploadController {
 
         if (filteredFileData.length === 0) {
           console.log('No valid documents in request');
-          return reply(
+          return reply.response(
               {status: false, message: 'No valid documents in request'});
         } else {
           if (request.params && request.params.id) {
@@ -418,7 +418,7 @@ class UploadController {
                   err,
                 }),
               }).catch((ex) => console.log('error while logging on db,', ex));
-              return reply(
+              return reply.response(
                   {status: false, message: 'Unable to upload document'});
             });
           }
@@ -448,15 +448,15 @@ class UploadController {
                 err,
               }),
             }).catch((ex) => console.log('error while logging on db,', ex));
-            return reply(
+            return reply.response(
                 {status: false, message: 'Unable to upload document'});
           });
         }
         // } else {
-        // 	reply({status: false, message: 'No File', forceUpdate: request.pre.forceUpdate}).code(400);
+        // 	reply.response({status: false, message: 'No File', forceUpdate: request.pre.forceUpdate}).code(400);
         // }
       } else {
-        return reply({status: false, message: 'No documents in request'}); //, forceUpdate: request.pre.forceUpdate});
+        return reply.response({status: false, message: 'No documents in request'}); //, forceUpdate: request.pre.forceUpdate});
       }
     }
   }
@@ -485,10 +485,10 @@ class UploadController {
                 undefined;
             // console.log("OUTSIDE FILE ALLOWED: ", file_type);
             if (file_type && !isFileTypeAllowed(file_type)) {
-              return reply({status: false, message: 'Data Upload Failed'});
+              return reply.response({status: false, message: 'Data Upload Failed'});
             } else if (!file_type &&
                 !isFileTypeAllowedMagicNumber(fileData._data)) {
-              return reply({status: false, message: 'Data Upload Failed'});
+              return reply.response({status: false, message: 'Data Upload Failed'});
             } else {
               return UploadController.uploadSingleFile({
                 requiredDetail: {
@@ -520,7 +520,7 @@ class UploadController {
               err,
             }),
           }).catch((ex) => console.log('error while logging on db,', ex));
-          return reply({status: false, message: 'Upload Failed', err});// , forceUpdate: request.pre.forceUpdate});
+          return reply.response({status: false, message: 'Upload Failed', err});// , forceUpdate: request.pre.forceUpdate});
         });
   }
 
@@ -562,10 +562,10 @@ class UploadController {
         const file_type = (/[.]/.exec(name)) ? /[^.]+$/.exec(name) : undefined;
         // console.log("OUTSIDE FILE ALLOWED: ", file_type);
         if (file_type && !isFileTypeAllowed(file_type)) {
-          return reply({status: false, message: 'Data Upload Failed'});
+          return reply.response({status: false, message: 'Data Upload Failed'});
         } else if (!file_type &&
             !isFileTypeAllowedMagicNumber(fileData._data)) {
-          return reply({status: false, message: 'Data Upload Failed'});
+          return reply.response({status: false, message: 'Data Upload Failed'});
         } else {
           return UploadController.uploadSingleFile({
             requiredDetail: {
@@ -594,7 +594,7 @@ class UploadController {
           err,
         }),
       }).catch((ex) => console.log('error while logging on db,', ex));
-      return reply({status: false, message: 'Upload Failed', err});// , forceUpdate: request.pre.forceUpdate});
+      return reply.response({status: false, message: 'Upload Failed', err});// , forceUpdate: request.pre.forceUpdate});
     });
   }
 
@@ -676,7 +676,7 @@ class UploadController {
                     err,
                   }),
                 }).catch((ex) => console.log('error while logging on db,', ex));
-                return reply({
+                return reply.response({
                   status: false,
                   message: 'Data Update Failed',
                   err,
@@ -701,7 +701,7 @@ class UploadController {
               err,
             }),
           }).catch((ex) => console.log('error while logging on db,', ex));
-          return reply({status: false, message: 'Upload Failed', err}); //forceUpdate: request.pre.forceUpdate});
+          return reply.response({status: false, message: 'Upload Failed', err}); //forceUpdate: request.pre.forceUpdate});
         });
   }
 
@@ -799,7 +799,7 @@ class UploadController {
           err,
         }),
       }).catch((ex) => console.log('error while logging on db,', ex));
-      return reply({
+      return reply.response({
         status: false,
         message: 'Upload Failed',
         err: JSON.stringify(err),
@@ -843,7 +843,7 @@ class UploadController {
       }
     }
 
-    return reply(replyResult);
+    return reply.response(replyResult);
   }
 
   static createProductItems(parameters) {
@@ -1027,7 +1027,7 @@ class UploadController {
   static retrieveFiles(request, reply) {
     /* const user = shared.verifyAuthorization(request.headers);
      if (!request.pre.userExist) {
-        reply({
+        reply.response({
           status: false,
           message: 'Unauthorized',
         });
@@ -1050,7 +1050,7 @@ class UploadController {
                   `${result.copies[0].file_name}` :
                   `jobs/${result.job_id}/${result.copies[0].file_name}`).
               then(fileResult => {
-                return reply(fileResult.Body).
+                return reply.response(fileResult.Body).
                     header('Content-Type', fileResult.ContentType).
                     header('Content-Disposition',
                         `attachment; filename=${result.bill_copy_name}`);
@@ -1061,7 +1061,7 @@ class UploadController {
                 return fsImpl.readFile(
                     `jobs/${result.job_id}/${result.copies[0].file_name}`).
                     then(fileResult => {
-                      return reply(fileResult.Body).
+                      return reply.response(fileResult.Body).
                           header('Content-Type', fileResult.ContentType).
                           header('Content-Disposition',
                               `attachment; filename=${result.bill_copy_name}`);
@@ -1085,7 +1085,7 @@ class UploadController {
                           catch(
                               (ex) => console.log('error while logging on db,',
                                   ex));
-                      return reply({
+                      return reply.response({
                         status: false,
                         message: 'No Result Found',
                         forceUpdate: request.pre.forceUpdate,
@@ -1094,7 +1094,7 @@ class UploadController {
                     });
               });
         } else {
-          return reply({
+          return reply.response({
             status: false,
             message: 'No Result Found',
             forceUpdate: request.pre.forceUpdate,
@@ -1117,11 +1117,11 @@ class UploadController {
             err,
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply(
+        return reply.response(
             {status: false, err, forceUpdate: request.pre.forceUpdate});
       });
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -1134,13 +1134,13 @@ class UploadController {
   static deleteFile(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
       }).code(401);
@@ -1270,7 +1270,7 @@ class UploadController {
               break;
           }
 
-          return reply(deletionResponse);
+          return reply.response(deletionResponse);
         }).catch((err) => {
           console.log(
               `Error on ${new Date()} for user ${user.id ||
@@ -1289,11 +1289,11 @@ class UploadController {
               err,
             }),
           }).catch((ex) => console.log('error while logging on db,', ex));
-          return reply(
+          return reply.response(
               {status: false, err, forceUpdate: request.pre.forceUpdate});
         });
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate,
@@ -1387,7 +1387,7 @@ class UploadController {
         },
       }).then((result) => {
         return fsImplCategory.readFile(result.category_image_name, 'utf8').
-            then(fileResult => reply(fileResult.Body).
+            then(fileResult => reply.response(fileResult.Body).
                 header('Content-Type', fileResult.ContentType).
                 header('Content-Disposition',
                     `attachment; filename=${result.CopyName}`));
@@ -1408,7 +1408,7 @@ class UploadController {
             err,
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unable to retrieve image',
           err,
@@ -1416,7 +1416,7 @@ class UploadController {
         });
       });
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -1440,7 +1440,7 @@ class UploadController {
           const productDetail = productResult.toJSON();
           return fsImplProduct.readFile(
               `${request.params.id}.${productDetail.file_type}`, 'utf8').
-              then(fileResult => reply(fileResult.Body).
+              then(fileResult => reply.response(fileResult.Body).
                   header('Content-Type', fileResult.ContentType).
                   header('Content-Disposition',
                       `attachment; filename=${request.params.id}.${productDetail.file_type}`)).
@@ -1461,7 +1461,7 @@ class UploadController {
                     err,
                   }),
                 }).catch((ex) => console.log('error while logging on db,', ex));
-                return reply({
+                return reply.response({
                   status: false,
                   message: 'Unable to retrieve image',
                   err,
@@ -1471,7 +1471,7 @@ class UploadController {
         }
       });
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -1493,7 +1493,7 @@ class UploadController {
           const wearableDetail = wearableResult.toJSON();
           return fsImplProduct.readFile(
               `${wearableDetail.image_name}`, 'utf8').
-              then(fileResult => reply(fileResult.Body).
+              then(fileResult => reply.response(fileResult.Body).
                   header('Content-Type', fileResult.ContentType).
                   header('Content-Disposition',
                       `attachment; filename=${wearableDetail.image_name}`)).
@@ -1514,7 +1514,7 @@ class UploadController {
                     err,
                   }),
                 }).catch((ex) => console.log('error while logging on db,', ex));
-                return reply({
+                return reply.response({
                   status: false,
                   message: 'Unable to retrieve image',
                   err,
@@ -1524,7 +1524,7 @@ class UploadController {
         }
       });
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -1540,7 +1540,7 @@ class UploadController {
               : ''}`,
           config.AWS.ACCESS_DETAILS);
       return fsImplCategory.readFile(`${request.params.id}.png`, 'utf8').
-          then(fileResult => reply(fileResult.Body).
+          then(fileResult => reply.response(fileResult.Body).
               header('Content-Type', fileResult.ContentType).
               header('Content-Disposition',
                   `attachment; filename=${request.params.id}.png`)).
@@ -1561,7 +1561,7 @@ class UploadController {
                 err,
               }),
             }).catch((ex) => console.log('error while logging on db,', ex));
-            return reply({
+            return reply.response({
               status: false,
               message: 'Unable to retrieve image',
               err,
@@ -1569,7 +1569,7 @@ class UploadController {
             });
           });
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -1585,7 +1585,7 @@ class UploadController {
               : ''}`,
           config.AWS.ACCESS_DETAILS);
       return fsImplBrand.readFile(`${request.params.id}.png`, 'utf8').
-          then(fileResult => reply(fileResult.Body).
+          then(fileResult => reply.response(fileResult.Body).
               header('Content-Type', fileResult.ContentType).
               header('Content-Disposition',
                   `attachment; filename=${request.params.id}.png`)).
@@ -1605,7 +1605,7 @@ class UploadController {
                 err,
               }),
             }).catch((ex) => console.log('error while logging on db,', ex));
-            return reply({
+            return reply.response({
               status: false,
               message: 'Unable to retrieve image',
               err,
@@ -1613,7 +1613,7 @@ class UploadController {
             });
           });
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -1629,7 +1629,7 @@ class UploadController {
               : ''}`,
           config.AWS.ACCESS_DETAILS);
       return fsImplBrand.readFile(`${request.params.id}.png`, 'utf8').
-          then(fileResult => reply(fileResult.Body).
+          then(fileResult => reply.response(fileResult.Body).
               header('Content-Type', fileResult.ContentType).
               header('Content-Disposition',
                   `attachment; filename=${request.params.id}.png`)).
@@ -1650,7 +1650,7 @@ class UploadController {
                 err,
               }),
             }).catch((ex) => console.log('error while logging on db,', ex));
-            return reply({
+            return reply.response({
               status: false,
               message: 'Unable to retrieve image',
               err,
@@ -1658,7 +1658,7 @@ class UploadController {
             });
           });
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -1672,7 +1672,7 @@ class UploadController {
           `${config.AWS.S3.BUCKET}/${config.AWS.S3.KNOW_ITEM_IMAGE}`,
           config.AWS.ACCESS_DETAILS);
       return fsImplBrand.readFile(`${request.params.id}.png`, 'utf8').
-          then(fileResult => reply(fileResult.Body).
+          then(fileResult => reply.response(fileResult.Body).
               header('Content-Type', fileResult.ContentType).
               header('Content-Disposition',
                   `attachment; filename=${request.params.id}.png`)).
@@ -1693,7 +1693,7 @@ class UploadController {
                 err,
               }),
             }).catch((ex) => console.log('error while logging on db,', ex));
-            return reply({
+            return reply.response({
               status: false,
               message: 'Unable to retrieve image',
               err,
@@ -1701,7 +1701,7 @@ class UploadController {
             });
           });
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -1712,13 +1712,13 @@ class UploadController {
   static retrieveUserImage(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
       }).code(401);
@@ -1731,7 +1731,7 @@ class UploadController {
               return fsImpl.readFile(userDetail.image_name);
             }).
             then((fileResult) => {
-              return reply(fileResult.Body).
+              return reply.response(fileResult.Body).
                   header('Content-Type', fileResult.ContentType).
                   header('Content-Disposition',
                       `attachment; filename=${fileResult.CopyName}`);
@@ -1745,7 +1745,7 @@ class UploadController {
                   config.AWS.ACCESS_DETAILS);
               return fsImplUser.readFile(userData.image_name).
                   then((fileResult) => {
-                    return reply(fileResult.Body).
+                    return reply.response(fileResult.Body).
                         header('Content-Type', fileResult.ContentType).
                         header('Content-Disposition',
                             `attachment; filename=${fileResult.CopyName}`);
@@ -1771,7 +1771,7 @@ class UploadController {
                     }).
                         catch((ex) => console.log('error while logging on db,',
                             ex));
-                    return reply({
+                    return reply.response({
                       status: false,
                       message: 'No Result Found',
                       forceUpdate: request.pre.forceUpdate,
@@ -1779,7 +1779,7 @@ class UploadController {
                   });
             });
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate,

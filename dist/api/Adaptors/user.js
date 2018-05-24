@@ -231,7 +231,7 @@ var UserAdaptor = function () {
         emailID = validateEmail(payload.email);
 
         if (emailID === undefined) {
-          return reply({ status: false }).code(400);
+          return reply.response({ status: false }).code(400);
         }
       }
 
@@ -293,7 +293,7 @@ var UserAdaptor = function () {
           _notification2.default.sendVerificationMail(updatedUser.email, updatedUser);
         }
 
-        return reply({
+        return reply.response({
           status: true,
           message: 'User Details Updated Successfully',
           forceUpdate: request.pre.forceUpdate
@@ -303,14 +303,14 @@ var UserAdaptor = function () {
         if (err && err.errors && err.errors.findIndex(function (item) {
           return item.message === 'email must be unique';
         }) !== -1) {
-          return reply({
+          return reply.response({
             status: false,
             message: 'The email mentioned is already linked with other account',
             err: err,
             forceUpdate: request.pre.forceUpdate
           });
         }
-        return reply({
+        return reply.response({
           status: false,
           message: 'User Detail Update failed',
           err: err,

@@ -49,7 +49,7 @@ var WhatToController = function () {
         return _bluebird2.default.try(function () {
           return whatToServiceAdaptor.retrieveAllStateData({});
         }).then(function (states) {
-          return reply({
+          return reply.response({
             status: true,
             states: states
           });
@@ -70,25 +70,25 @@ var WhatToController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'Unable to retrieve all states data'
           });
         });
       } else if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         }).code(401);
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -115,7 +115,7 @@ var WhatToController = function () {
             is_veg: request.query.is_veg
           });
         }).then(function (mealList) {
-          return reply({
+          return reply.response({
             status: true,
             mealList: mealList
           });
@@ -136,25 +136,25 @@ var WhatToController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'Unable to retrieve state meal items'
           });
         });
       } else if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         }).code(401);
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -181,7 +181,7 @@ var WhatToController = function () {
             current_date: request.query.current_date
           });
         }).then(function (mealList) {
-          return reply({
+          return reply.response({
             status: true,
             mealList: mealList
           });
@@ -202,25 +202,25 @@ var WhatToController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'Unable to  retrieve user meal items'
           });
         });
       } else if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         }).code(401);
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -240,7 +240,7 @@ var WhatToController = function () {
             state_id: request.payload.state_id
           });
         }).then(function (mealList) {
-          return reply({
+          return reply.response({
             status: true,
             mealList: mealList
           });
@@ -261,25 +261,25 @@ var WhatToController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'Unable to  prepare user meal list '
           });
         });
       } else if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         }).code(401);
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -308,7 +308,7 @@ var WhatToController = function () {
             current_date: request.payload.current_date
           });
         }).then(function (mealList) {
-          return reply({
+          return reply.response({
             status: true,
             mealList: mealList
           });
@@ -329,25 +329,25 @@ var WhatToController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'Unable to add user meal item'
           });
         });
       } else if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         }).code(401);
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -366,7 +366,7 @@ var WhatToController = function () {
             current_date: request.payload.current_date
           });
         }).then(function (mealList) {
-          return reply({
+          return reply.response({
             status: true,
             mealList: mealList
           });
@@ -387,25 +387,25 @@ var WhatToController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'Unable to update user meal current date '
           });
         });
       } else if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         }).code(401);
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -424,7 +424,7 @@ var WhatToController = function () {
             current_date: request.payload.current_date
           });
         }).then(function (mealList) {
-          return reply({
+          return reply.response({
             status: true,
             mealList: mealList
           });
@@ -445,24 +445,24 @@ var WhatToController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false
           });
         });
       } else if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         }).code(401);
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -483,7 +483,7 @@ var WhatToController = function () {
             }
           });
         }).then(function () {
-          return reply({
+          return reply.response({
             status: true
           });
         }).catch(function (err) {
@@ -503,25 +503,25 @@ var WhatToController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'Unable to remove meals '
           });
         });
       } else if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         }).code(401);
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -539,7 +539,7 @@ var WhatToController = function () {
             current_date: request.query.current_date
           });
         }).then(function (wearableList) {
-          return reply({
+          return reply.response({
             status: true,
             wearableList: wearableList
           });
@@ -560,25 +560,25 @@ var WhatToController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'unable to  retrieve Wearables'
           });
         });
       } else if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         }).code(401);
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -597,7 +597,7 @@ var WhatToController = function () {
             current_date: request.payload.current_date
           });
         }).then(function (wearable) {
-          return reply({
+          return reply.response({
             status: true,
             wearable: wearable
           });
@@ -618,25 +618,25 @@ var WhatToController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'Unable to add wearable'
           });
         });
       } else if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         }).code(401);
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -654,7 +654,7 @@ var WhatToController = function () {
             user_id: user.ID || user.id, id: request.params.id
           });
         }).then(function () {
-          return reply({
+          return reply.response({
             status: true,
             wearable: {
               name: request.payload.name,
@@ -678,25 +678,25 @@ var WhatToController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'Unable to update wearable'
           });
         });
       } else if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         }).code(401);
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -715,7 +715,7 @@ var WhatToController = function () {
             current_date: request.payload.current_date
           });
         }).then(function (wearablelList) {
-          return reply({
+          return reply.response({
             status: true,
             wearablelList: wearablelList
           });
@@ -736,25 +736,25 @@ var WhatToController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'Unable to update wearable current date'
           });
         });
       } else if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         }).code(401);
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -771,7 +771,7 @@ var WhatToController = function () {
             user_id: user.ID || user.id, id: request.params.id
           });
         }).then(function () {
-          return reply({
+          return reply.response({
             status: true,
             wearable: {
               id: request.params.id
@@ -794,25 +794,25 @@ var WhatToController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'Unable to Delete wearable'
           });
         });
       } else if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         }).code(401);
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -831,7 +831,7 @@ var WhatToController = function () {
             current_date: request.payload.current_date
           });
         }).then(function (wearablelList) {
-          return reply({
+          return reply.response({
             status: true,
             wearablelList: wearablelList
           });
@@ -852,25 +852,25 @@ var WhatToController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'Unable to remove wearable current date'
           });
         });
       } else if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         }).code(401);
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -887,7 +887,7 @@ var WhatToController = function () {
             user_id: user.ID || user.id
           });
         }).then(function (todoList) {
-          return reply({
+          return reply.response({
             status: true,
             todoList: todoList
           });
@@ -908,25 +908,25 @@ var WhatToController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'Unable to retrieve ToDoList'
           });
         });
       } else if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         }).code(401);
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -944,7 +944,7 @@ var WhatToController = function () {
             current_date: request.query.current_date
           });
         }).then(function (todoList) {
-          return reply({
+          return reply.response({
             status: true,
             todoList: todoList
           });
@@ -967,25 +967,25 @@ var WhatToController = function () {
             return console.log('error while logging on db,', ex);
           });
 
-          return reply({
+          return reply.response({
             status: false,
             message: 'Unable to retrieve UserToDoList'
           });
         });
       } else if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         }).code(401);
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -1011,7 +1011,7 @@ var WhatToController = function () {
             current_date: request.payload.current_date
           });
         }).then(function (todoList) {
-          return reply({
+          return reply.response({
             status: true,
             todoList: todoList
           });
@@ -1032,25 +1032,25 @@ var WhatToController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'Unable to User ToDoList '
           });
         });
       } else if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         }).code(401);
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -1069,7 +1069,7 @@ var WhatToController = function () {
             current_date: request.payload.current_date
           });
         }).then(function (todoItem) {
-          return reply({
+          return reply.response({
             status: true,
             todoItem: todoItem
           });
@@ -1090,25 +1090,25 @@ var WhatToController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'Unable to update ToDoItem'
           });
         });
       } else if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         }).code(401);
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -1127,7 +1127,7 @@ var WhatToController = function () {
             unselected_ids: request.payload.unselected_ids || []
           });
         }).then(function (todoList) {
-          return reply({
+          return reply.response({
             status: true,
             todoList: todoList
           });
@@ -1148,25 +1148,25 @@ var WhatToController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'Unable to prepare user ToDoList'
           });
         });
       } else if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         }).code(401);
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -1185,7 +1185,7 @@ var WhatToController = function () {
             current_date: request.payload.current_date
           });
         }).then(function (removelist) {
-          return reply({
+          return reply.response({
             status: true,
             removelist: removelist
           });
@@ -1206,25 +1206,25 @@ var WhatToController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'Unable to delete user ToDo current Date'
           });
         });
       } else if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         }).code(401);
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -1245,7 +1245,7 @@ var WhatToController = function () {
             }
           });
         }).then(function () {
-          return reply({
+          return reply.response({
             status: true
           });
         }).catch(function (err) {
@@ -1265,25 +1265,25 @@ var WhatToController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'Unable to delete what ToDo'
           });
         });
       } else if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         }).code(401);
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate

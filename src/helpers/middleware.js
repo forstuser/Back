@@ -40,21 +40,21 @@ const checkAppVersion = (request, reply) => {
 
         if (currentAppVersion < FORCE_VERSION) {
           console.log('current < force');
-          return reply(true);
+          return reply.response(true);
         } else if (currentAppVersion >= FORCE_VERSION &&
             currentAppVersion < RECOMMENDED_VERSION) {
           console.log('force < current < recommended');
-          return reply(false);
+          return reply.response(false);
         } else {
-          return reply(null);
+          return reply.response(null);
         }
       } else {
-        return reply(null);
+        return reply.response(null);
       }
     });
   } else {
     console.log('App Version not in Headers');
-    return reply(null);
+    return reply.response(null);
   }
 };
 
@@ -64,7 +64,7 @@ const updateUserActiveStatus = (request, reply) => {
   const language = (request.headers.language || '').split('-')[0];
   request.language = supportedLanguages.indexOf(language) >= 0 ? language : '';
   if (!user) {
-    return reply(null);
+    return reply.response(null);
   } else {
     return MODAL.users.findOne({
       where: {
@@ -114,7 +114,7 @@ const updateUserActiveStatus = (request, reply) => {
             })]).then((item) => {
             console.log(
                 `User updated detail is as follow ${JSON.stringify(item[0])}`);
-            return reply(true);
+            return reply.response(true);
           }).catch((err) => {
             console.log(
                 `Error on ${new Date()} for user ${user.mobile_no} is as follow: \n \n ${err}`);
@@ -124,21 +124,21 @@ const updateUserActiveStatus = (request, reply) => {
               log_type: 2,
               user_id: user.id || user.ID,
               log_content: JSON.stringify({err}),
-            }).then(() => reply(false));
+            }).then(() => reply.response(false));
           });
         } else {
           console.log(
               `User ${user.mobile_no} inactive for more than 10 minutes`);
-          return reply(0);
+          return reply.response(0);
         }
       } else {
         console.log(`User ${user.mobile_no} doesn't exist`);
-        return reply(null);
+        return reply.response(null);
       }
     }).catch((err) => {
       console.log(
           `Error on ${new Date()} for user ${user.mobile_no} is as follow: \n \n ${err}`);
-      return reply(false);
+      return reply.response(false);
     });
   }
 };
@@ -146,7 +146,7 @@ const updateUserActiveStatus = (request, reply) => {
 const hasMultipleAccounts = (request, reply) => {
   const user = shared.verifyAuthorization(request.headers);
   if (!user) {
-    return reply(false);
+    return reply.response(false);
   } else {
     return Promise.try(() => {
       return MODAL.users.count({
@@ -159,13 +159,13 @@ const hasMultipleAccounts = (request, reply) => {
       });
     }).then((userCounts) => {
       if (userCounts > 1) {
-        return reply(true);
+        return reply.response(true);
       }
-      return reply(false);
+      return reply.response(false);
     }).catch((err) => {
       console.log(
           `Error on ${new Date()} for user ${request.payload.mobile_no} is as follow: \n \n ${err}`);
-      return reply(false);
+      return reply.response(false);
     });
   }
 };
@@ -173,7 +173,7 @@ const hasMultipleAccounts = (request, reply) => {
 const updateUserPIN = (request, reply) => {
   const user = shared.verifyAuthorization(request.headers);
   if (!user) {
-    return reply(null);
+    return reply.response(null);
   }
   return Promise.try(() => hashPassword(request.payload.pin)).
       then((hashedPassword) => {
@@ -205,19 +205,19 @@ const updateUserPIN = (request, reply) => {
         return false;
       }).
       then((pinResult) => {
-        return pinResult ? reply(true) : reply(false);
+        return pinResult ? reply.response(true) : reply.response(false);
       }).
       catch((err) => {
         console.log(
             `Error on ${new Date()} for user ${request.payload.mobile_no} is as follow: \n \n ${err}`);
-        return reply(false);
+        return reply.response(false);
       });
 };
 
 const verifyUserPIN = (request, reply) => {
   const user = shared.verifyAuthorization(request.headers);
   if (!user) {
-    return reply(null);
+    return reply.response(null);
   }
   return Promise.try(() => hashPassword(request.payload.pin)).
       then((hashedPassword) => {
@@ -251,19 +251,19 @@ const verifyUserPIN = (request, reply) => {
         return false;
       }).
       then((pinResult) => {
-        return pinResult ? reply(true) : reply(false);
+        return pinResult ? reply.response(true) : reply.response(false);
       }).
       catch((err) => {
         console.log(
             `Error on ${new Date()} for user ${request.payload.mobile_no} is as follow: \n \n ${err}`);
-        return reply(false);
+        return reply.response(false);
       });
 };
 
 const verifyUserOTP = (request, reply) => {
   const user = shared.verifyAuthorization(request.headers);
   if (!user) {
-    return reply(null);
+    return reply.response(null);
   }
   return Promise.try(() => MODAL.users.findOne({
     where: {
@@ -296,18 +296,18 @@ const verifyUserOTP = (request, reply) => {
 
         return false;
       }).
-      then((pinResult) => reply(pinResult)).
+      then((pinResult) => reply.response(pinResult)).
       catch((err) => {
         console.log(
             `Error on ${new Date()} for user ${request.payload.mobile_no} is as follow: \n \n ${err}`);
-        return reply(false);
+        return reply.response(false);
       });
 };
 
 const verifyUserEmail = (request, reply) => {
   const user = shared.verifyAuthorization(request.headers);
   if (!user) {
-    return reply(null);
+    return reply.response(null);
   } else {
     return Promise.try(() => MODAL.users.count({
       where: {
@@ -334,26 +334,26 @@ const verifyUserEmail = (request, reply) => {
           if (userDetail) {
             request.user = userDetail;
             if (userDetail.email_verified) {
-              return reply((userDetail.email || '').toLowerCase() ===
+              return reply.response((userDetail.email || '').toLowerCase() ===
                   (request.payload.email || '').toLowerCase());
             } else {
               userResult.updateAttributes({email: request.payload.email});
-              return reply(true);
+              return reply.response(true);
             }
           } else {
             console.log(`User ${user.email} is invalid.`);
-            return reply(false);
+            return reply.response(false);
           }
         });
       } else {
         console.log(
             `User with ${request.params.email} already exist.`);
-        return reply(null);
+        return reply.response(null);
       }
     }).catch((err) => {
       console.log(
           `Error on ${new Date()} for user ${user.mobile_no} is as follow: \n \n ${err}`);
-      return reply(false);
+      return reply.response(false);
     });
   }
 };

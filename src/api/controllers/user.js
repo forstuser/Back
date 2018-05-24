@@ -111,7 +111,7 @@ let loginOrRegisterUser = parameters => {
         });
       }).
       then((result) => {
-        return reply(result).
+        return reply.response(result).
             code(201).
             header('authorization', replyObject.authorization);
       }).
@@ -119,7 +119,7 @@ let loginOrRegisterUser = parameters => {
         console.log(
             `Error on ${new Date()} for user is as follow: \n \n ${err}`);
         if (err.authorization) {
-          return reply({status: false, message: 'Unable to Login User', err}).
+          return reply.response({status: false, message: 'Unable to Login User', err}).
               code(401).
               header('authorization', replyObject.authorization);
         }
@@ -138,7 +138,7 @@ let loginOrRegisterUser = parameters => {
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
 
-        return reply({
+        return reply.response({
           status: false,
           authorization: token,
           message: 'Unable to Login User',
@@ -171,7 +171,7 @@ class UserController {
       forceUpdate: request.pre.forceUpdate,
     };
     if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
@@ -179,7 +179,7 @@ class UserController {
     } else if (!request.pre.userExist) {
       replyObject.status = false;
       replyObject.message = 'Unauthorized';
-      return reply(replyObject);
+      return reply.response(replyObject);
     } else if (request.pre.userExist && !request.pre.forceUpdate) {
       if (request.payload && request.payload.fcmId) {
         fcmManager.insertFcmDetails({
@@ -209,14 +209,14 @@ class UserController {
                   err,
                 }),
               }).catch((ex) => console.log('error while logging on db,', ex));
-              return reply({status: false});
+              return reply.response({status: false});
             });
       }
-      return reply(replyObject).code(201);
+      return reply.response(replyObject).code(201);
     } else {
       replyObject.status = false;
       replyObject.message = 'Forbidden';
-      return reply(replyObject);
+      return reply.response(replyObject);
     }
   }
 
@@ -233,7 +233,7 @@ class UserController {
                 `Phone number: ${request.payload.PhoneNo} is not a valid phone number`);
             replyObject.status = false;
             replyObject.message = 'Invalid Phone number';
-            return reply(replyObject);
+            return reply.response(replyObject);
           }
 
           if (!request.pre.hasMultipleAccounts) {
@@ -258,15 +258,15 @@ class UserController {
                 if (response[1]) {
                   replyObject.Name = user.name;
                   replyObject.imageUrl = user.imageUrl;
-                  return reply(replyObject).code(201);
+                  return reply.response(replyObject).code(201);
                 } else {
-                  return reply(replyObject).code(201);
+                  return reply.response(replyObject).code(201);
                 }
               } else {
                 replyObject.status = false;
                 replyObject.message = response[0].ErrorMessage;
                 replyObject.error = response[0].ErrorMessage;
-                return reply(replyObject).code(403);
+                return reply.response(replyObject).code(403);
               }
             }).catch((err) => {
               console.log('Error while sending OTP is as follow: \n',
@@ -291,13 +291,13 @@ class UserController {
               replyObject.status = false;
               replyObject.message = 'Some issue with sending OTP';
               replyObject.error = err;
-              return reply(replyObject);
+              return reply.response(replyObject);
             });
           } else {
             replyObject.status = false;
             replyObject.message = 'User with same mobile number exist.';
             replyObject.error = err;
-            return reply(replyObject);
+            return reply.response(replyObject);
           }
         }).
         catch((err) => {
@@ -319,7 +319,7 @@ class UserController {
           }).catch((ex) => console.log('error while logging on db,', ex));
           replyObject.status = false;
           replyObject.message = 'Invalid Phone number';
-          return reply(replyObject);
+          return reply.response(replyObject);
         });
   }
 
@@ -352,7 +352,7 @@ class UserController {
         const user = request.user;
         replyObject.Name = user.name;
         replyObject.imageUrl = user.imageUrl;
-        return reply(replyObject).code(201);
+        return reply.response(replyObject).code(201);
       }).catch((err) => {
         console.log(
             'Some issue with sending verification code over email is as follow: \n',
@@ -375,16 +375,16 @@ class UserController {
         replyObject.status = false;
         replyObject.message = 'Some issue with sending verification code over email';
         replyObject.error = err;
-        return reply(replyObject);
+        return reply.response(replyObject);
       });
     } else if (request.pre.isValidEmail === null) {
       replyObject.status = false;
       replyObject.message = 'Another user with email exist';
-      return reply(replyObject);
+      return reply.response(replyObject);
     } else {
       replyObject.status = false;
       replyObject.message = 'Invalid Email, Please provide correct one.';
-      return reply(replyObject);
+      return reply.response(replyObject);
     }
   }
 
@@ -405,7 +405,7 @@ class UserController {
         replyObject.email = currentUser.email;
         replyObject.Name = currentUser.name;
         replyObject.imageUrl = currentUser.imageUrl;
-        return reply(replyObject).code(201);
+        return reply.response(replyObject).code(201);
       }).catch((err) => {
         console.log('Invalid OTP is as follow: \n',
             JSON.stringify({API_Logs: err}));
@@ -426,16 +426,16 @@ class UserController {
         replyObject.status = false;
         replyObject.message = 'Invalid OTP.';
         replyObject.error = err;
-        return reply(replyObject);
+        return reply.response(replyObject);
       });
     } else if (request.pre.isValidOTP === null) {
       replyObject.status = false;
       replyObject.message = 'Provided OTP is expired, Please request new one.';
-      return reply(replyObject);
+      return reply.response(replyObject);
     } else {
       replyObject.status = false;
       replyObject.message = 'Invalid OTP.';
-      return reply(replyObject);
+      return reply.response(replyObject);
     }
   }
 
@@ -482,7 +482,7 @@ class UserController {
               replyObject.status = false;
               replyObject.message = 'Invalid/Expired OTP';
 
-              return reply(replyObject);
+              return reply.response(replyObject);
             }
 
           }).catch((err) => {
@@ -504,7 +504,7 @@ class UserController {
             replyObject.status = false;
             replyObject.message = 'Issue in updating data';
             replyObject.error = err;
-            return reply(replyObject).code(401);
+            return reply.response(replyObject).code(401);
           });
         } else if (request.payload.Token === '0501') {
           return loginOrRegisterUser({
@@ -522,7 +522,7 @@ class UserController {
         if (!validatePayloadSignature(TruePayload, TrueSecret)) {
           replyObject.status = false;
           replyObject.message = 'Payload verification failed';
-          return reply(replyObject);
+          return reply.response(replyObject);
         } else {
           userInput.email = (trueObject.EmailAddress || '').toLowerCase();
           userInput.full_name = trueObject.Name;
@@ -554,7 +554,7 @@ class UserController {
             replyObject.status = false;
             replyObject.message = 'Issue in updating data';
             replyObject.error = err;
-            return reply(replyObject).code(401);
+            return reply.response(replyObject).code(401);
           });
         }
       } else if (request.payload.BBLogin_Type === 3) {
@@ -617,14 +617,14 @@ class UserController {
             replyObject.status = false;
             replyObject.message = 'Issue in updating data';
             replyObject.error = err;
-            return reply(replyObject).code(401);
+            return reply.response(replyObject).code(401);
           });
         }
       }
     } else {
       replyObject.status = false;
       replyObject.message = 'Forbidden';
-      reply(replyObject);
+      reply.response(replyObject);
     }
   }
 
@@ -653,12 +653,12 @@ class UserController {
         if (result[0]) {
           replyObject.authorization = request.headers.authorization;
 
-          return reply(replyObject);
+          return reply.response(replyObject);
         } else {
           replyObject.status = false;
           replyObject.message = 'Invalid/Expired OTP';
 
-          return reply(replyObject).code(400);
+          return reply.response(replyObject).code(400);
         }
       }).catch((err) => {
         console.log(
@@ -679,13 +679,13 @@ class UserController {
         replyObject.status = false;
         replyObject.message = 'Issue in updating data';
         replyObject.error = err;
-        return reply(replyObject).code(401);
+        return reply.response(replyObject).code(401);
       });
 
     } else {
       replyObject.status = false;
       replyObject.message = 'Forbidden';
-      return reply(replyObject);
+      return reply.response(replyObject);
     }
   }
 
@@ -714,12 +714,12 @@ class UserController {
           replyObject.authorization = `bearer ${authentication.generateToken(
               request.user).token}`;
 
-          return reply(replyObject);
+          return reply.response(replyObject);
         } else {
           replyObject.status = false;
           replyObject.message = 'Invalid PIN';
 
-          return reply(replyObject);
+          return reply.response(replyObject);
         }
       }).catch((err) => {
         console.log(
@@ -740,13 +740,13 @@ class UserController {
         replyObject.status = false;
         replyObject.message = 'Issue in updating data';
         replyObject.error = err;
-        return reply(replyObject);
+        return reply.response(replyObject);
       });
 
     } else {
       replyObject.status = false;
       replyObject.message = 'Forbidden';
-      return reply(replyObject);
+      return reply.response(replyObject);
     }
   }
 
@@ -775,12 +775,12 @@ class UserController {
           replyObject.authorization = `bearer ${authentication.generateToken(
               request.user).token}`;
 
-          return reply(replyObject);
+          return reply.response(replyObject);
         } else {
           replyObject.status = false;
           replyObject.message = 'Invalid PIN';
 
-          return reply(replyObject);
+          return reply.response(replyObject);
         }
       }).catch((err) => {
         console.log(
@@ -801,13 +801,13 @@ class UserController {
         replyObject.status = false;
         replyObject.message = 'Issue in updating data';
         replyObject.error = err;
-        return reply(replyObject);
+        return reply.response(replyObject);
       });
 
     } else {
       replyObject.status = false;
       replyObject.message = 'Forbidden';
-      return reply(replyObject);
+      return reply.response(replyObject);
     }
   }
 
@@ -838,7 +838,7 @@ class UserController {
           id: user.id || user.ID,
         },
       }).then(() => {
-        return reply(replyObject).code(201);
+        return reply.response(replyObject).code(201);
       }).catch(() => {
 
         modals.logs.create({
@@ -857,17 +857,17 @@ class UserController {
 
         replyObject.status = false;
         replyObject.message = 'Forbidden';
-        return reply(replyObject);
+        return reply.response(replyObject);
       });
 
     } else if (!request.pre.userExist) {
       replyObject.status = false;
       replyObject.message = 'Unauthorized';
-      return reply(replyObject).code(401);
+      return reply.response(replyObject).code(401);
     } else {
       replyObject.status = false;
       replyObject.message = 'Forbidden';
-      reply(replyObject);
+      reply.response(replyObject);
     }
   }
 
@@ -877,19 +877,19 @@ class UserController {
         request.pre.pinVerified) {
       return userAdaptor.updateUserDetail({password: null},
           {where: {id: user.id || user.ID}}).
-          then(() => reply({
+          then(() => reply.response({
             message: 'Successful',
             status: true,
             forceUpdate: request.pre.forceUpdate,
           }));
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply(
+      return reply.response(
           {
             message: 'Invalid PIN',
             status: false,
@@ -897,7 +897,7 @@ class UserController {
           }).
           code(401);
     } else {
-      return reply({
+      return reply.response({
         message: 'Invalid PIN',
         status: false,
         forceUpdate: request.pre.forceUpdate,
@@ -908,19 +908,19 @@ class UserController {
   static retrieveUserProfile(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
-      return reply(userAdaptor.retrieveUserProfile(user, request));
+      return reply.response(userAdaptor.retrieveUserProfile(user, request));
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply(
+      return reply.response(
           {message: 'Invalid Token', forceUpdate: request.pre.forceUpdate}).
           code(401);
     } else {
-      return reply({
+      return reply.response({
         message: 'Forbidden',
         status: false,
         forceUpdate: request.pre.forceUpdate,
@@ -951,21 +951,21 @@ class UserController {
               }),
             }).catch((ex) => console.log('error while logging on db,', ex));
 
-            return reply(
+            return reply.response(
                 {status: false, message: 'Unable to update user profile'});
           });
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply(
+      return reply.response(
           {message: 'Invalid Token', forceUpdate: request.pre.forceUpdate}).
           code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -976,13 +976,13 @@ class UserController {
   static retrieveNearBy(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      reply({
+      reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
@@ -994,7 +994,7 @@ class UserController {
           request.query.professionids || '[]', reply, user.id || user.ID,
           request);
     } else {
-      reply({
+      reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,

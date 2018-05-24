@@ -19,7 +19,7 @@ class BrandController {
     const isWebMode = (request.params && request.params.mode &&
         request.params.mode.toLowerCase() === 'web');
     if (!user && !isWebMode) {
-      reply({status: false, message: 'Unauthorized'});
+      reply.response({status: false, message: 'Unauthorized'});
     } else if (!request.pre.forceUpdate) {
       const categoryId = request.query.categoryid || undefined;
 
@@ -72,7 +72,7 @@ class BrandController {
           });
         }
       }).then((results) => {
-        reply({
+        reply.response({
           status: true,
           message: 'Successful',
           brands: results,
@@ -82,14 +82,14 @@ class BrandController {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
-        reply({
+        reply.response({
           status: false,
           message: 'Something wrong',
           forceUpdate: request.pre.forceUpdate,
         }).code(500);
       });
     } else {
-      reply({
+      reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -100,7 +100,7 @@ class BrandController {
   static getBrandASC(request, reply) {
     return brandAdaptor.retrieveASCBrands(request.query).then((results) => {
       if (results) {
-        return reply({
+        return reply.response({
           status: true,
           message: 'Successful',
           brands: results,
@@ -108,7 +108,7 @@ class BrandController {
         });
       }
 
-      return reply({
+      return reply.response({
         status: false,
         message: 'No Brand Found',
         forceUpdate: request.pre.forceUpdate,
@@ -118,7 +118,7 @@ class BrandController {
       console.log(
           `Error on ${new Date()} for user ${user.id ||
           user.ID} is as follow: \n \n ${err}`);
-      return reply({
+      return reply.response({
         status: false,
         message: 'Something wrong',
         forceUpdate: request.pre.forceUpdate,

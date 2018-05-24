@@ -153,7 +153,7 @@ class ServiceCenterController {
                         return a.distance - b.distance;
                       });
 
-                      return reply({
+                      return reply.response({
                         status: true,
                         serviceCenters: finalFilteredList,
                         brand: selectedBrand,
@@ -181,7 +181,7 @@ class ServiceCenterController {
                           err,
                         }),
                       }).catch((ex) => console.log('error while logging on db,', ex));
-                      return reply({
+                      return reply.response({
                         status: false,
                         err,
                         forceUpdate: request.pre.forceUpdate,
@@ -189,7 +189,7 @@ class ServiceCenterController {
                     });
               }
               if (origins.length <= 0) {
-                return reply({
+                return reply.response({
                   status: true,
                   filterData: {
                     brands: filterBrands,
@@ -200,7 +200,7 @@ class ServiceCenterController {
                 });
               }
             } else {
-              return reply({
+              return reply.response({
                 status: true,
                 message: 'No Data Found for mentioned search',
                 filterData: {
@@ -228,26 +228,26 @@ class ServiceCenterController {
             err,
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({
+        return reply.response({
           status: false,
           err,
           forceUpdate: request.pre.forceUpdate,
         });
       });
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -316,7 +316,7 @@ class ServiceCenterController {
           attributes: [['brand_name', 'name'], ['brand_id', 'id']],
         }),
       ]).then((result) => {
-        return reply({
+        return reply.response({
           status: true,
           categories: result[0],
           cities: result[1].map(item => item.DISTINCT),
@@ -325,7 +325,7 @@ class ServiceCenterController {
         });
       });
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,

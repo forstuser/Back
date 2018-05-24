@@ -86,13 +86,13 @@ var ProductItemController = function () {
     value: function updateRepair(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
@@ -130,14 +130,14 @@ var ProductItemController = function () {
           var repairPromise = repairId ? repairAdaptor.updateRepairs(repairId, JSON.parse(JSON.stringify(values))) : repairAdaptor.createRepairs(values);
           return repairPromise.then(function (result) {
             if (result) {
-              return reply({
+              return reply.response({
                 status: true,
                 message: 'successfull',
                 repair: result,
                 forceUpdate: request.pre.forceUpdate
               });
             } else {
-              return reply({
+              return reply.response({
                 status: false,
                 message: 'Repair already exist.',
                 forceUpdate: request.pre.forceUpdate
@@ -161,7 +161,7 @@ var ProductItemController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'An error occurred in Repair creation.',
             forceUpdate: request.pre.forceUpdate,
@@ -169,7 +169,7 @@ var ProductItemController = function () {
           });
         });
       } else {
-        reply({
+        reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -181,20 +181,20 @@ var ProductItemController = function () {
     value: function deleteRepair(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         });
       } else if (request.pre.userExist && !request.pre.forceUpdate) {
         return repairAdaptor.deleteRepair(request.params.repairId, user.id || user.ID).then(function () {
-          return reply({
+          return reply.response({
             status: true
           });
         }).catch(function (err) {
@@ -214,12 +214,12 @@ var ProductItemController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false
           });
         });
       } else {
-        reply({
+        reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -231,13 +231,13 @@ var ProductItemController = function () {
     value: function updateInsurance(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
@@ -299,14 +299,14 @@ var ProductItemController = function () {
           return insuranceId ? insuranceAdaptor.updateInsurances(insuranceId, insuranceBody) : insuranceAdaptor.createInsurances(insuranceBody);
         }).then(function (result) {
           if (result) {
-            return reply({
+            return reply.response({
               status: true,
               message: 'successful',
               insurance: result,
               forceUpdate: request.pre.forceUpdate
             });
           } else {
-            return reply({
+            return reply.response({
               status: false,
               message: 'Insurance already exist.',
               forceUpdate: request.pre.forceUpdate
@@ -329,7 +329,7 @@ var ProductItemController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'An error occurred in Insurance creation.',
             forceUpdate: request.pre.forceUpdate,
@@ -337,7 +337,7 @@ var ProductItemController = function () {
           });
         });
       } else {
-        reply({
+        reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -349,20 +349,20 @@ var ProductItemController = function () {
     value: function deleteInsurance(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         });
       } else if (request.pre.userExist && !request.pre.forceUpdate) {
         return insuranceAdaptor.deleteInsurance(request.params.insuranceId, user.id || user.ID).then(function () {
-          return reply({
+          return reply.response({
             status: true
           });
         }).catch(function (err) {
@@ -382,12 +382,12 @@ var ProductItemController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false
           });
         });
       } else {
-        reply({
+        reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -399,13 +399,13 @@ var ProductItemController = function () {
     value: function updateAmc(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
@@ -454,14 +454,14 @@ var ProductItemController = function () {
           return amcId ? amcAdaptor.updateAMCs(amcId, values) : amcAdaptor.createAMCs(values);
         }).then(function (result) {
           if (result) {
-            return reply({
+            return reply.response({
               status: true,
               message: 'successful',
               amc: result,
               forceUpdate: request.pre.forceUpdate
             });
           } else {
-            return reply({
+            return reply.response({
               status: false,
               message: 'AMC already exist.',
               forceUpdate: request.pre.forceUpdate
@@ -484,7 +484,7 @@ var ProductItemController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'An error occurred in AMC creation.',
             forceUpdate: request.pre.forceUpdate,
@@ -492,7 +492,7 @@ var ProductItemController = function () {
           });
         });
       } else {
-        reply({
+        reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -504,20 +504,20 @@ var ProductItemController = function () {
     value: function deleteAMC(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         });
       } else if (request.pre.userExist && !request.pre.forceUpdate) {
         return amcAdaptor.deleteAMC(request.params.amcId, user.id || user.ID).then(function () {
-          return reply({
+          return reply.response({
             status: true
           });
         }).catch(function (err) {
@@ -537,12 +537,12 @@ var ProductItemController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false
           });
         });
       } else {
-        reply({
+        reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -554,13 +554,13 @@ var ProductItemController = function () {
     value: function updatePUC(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
@@ -607,14 +607,14 @@ var ProductItemController = function () {
           var pucPromise = pucId ? pucAdaptor.updatePUCs(pucId, values) : pucAdaptor.createPUCs(values);
           return pucPromise.then(function (result) {
             if (result) {
-              return reply({
+              return reply.response({
                 status: true,
                 message: 'successful',
                 puc: result,
                 forceUpdate: request.pre.forceUpdate
               });
             } else {
-              return reply({
+              return reply.response({
                 status: false,
                 message: 'PUC already exist.',
                 forceUpdate: request.pre.forceUpdate
@@ -638,7 +638,7 @@ var ProductItemController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'An error occurred in PUC creation.',
             forceUpdate: request.pre.forceUpdate,
@@ -646,7 +646,7 @@ var ProductItemController = function () {
           });
         });
       } else {
-        reply({
+        reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -658,20 +658,20 @@ var ProductItemController = function () {
     value: function deletePUC(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         });
       } else if (request.pre.userExist && !request.pre.forceUpdate) {
         return pucAdaptor.deletePUCs(request.params.pucId, user.id || user.ID).then(function () {
-          return reply({
+          return reply.response({
             status: true
           });
         }).catch(function (err) {
@@ -691,12 +691,12 @@ var ProductItemController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false
           });
         });
       } else {
-        reply({
+        reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -708,13 +708,13 @@ var ProductItemController = function () {
     value: function updateWarranty(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
@@ -778,14 +778,14 @@ var ProductItemController = function () {
           var warrantyItemPromise = warrantyId ? warrantyAdaptor.updateWarranties(warrantyId, values) : warrantyAdaptor.createWarranties(values);
           return warrantyItemPromise.then(function (result) {
             if (result) {
-              return reply({
+              return reply.response({
                 status: true,
                 message: 'successful',
                 warranty: result,
                 forceUpdate: request.pre.forceUpdate
               });
             } else {
-              return reply({
+              return reply.response({
                 status: false,
                 message: 'Warranty already exist.',
                 forceUpdate: request.pre.forceUpdate
@@ -809,7 +809,7 @@ var ProductItemController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'An error occurred in warranty creation.',
             forceUpdate: request.pre.forceUpdate,
@@ -817,7 +817,7 @@ var ProductItemController = function () {
           });
         });
       } else {
-        reply({
+        reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -829,20 +829,20 @@ var ProductItemController = function () {
     value: function deleteWarranty(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         });
       } else if (request.pre.userExist && !request.pre.forceUpdate) {
         return warrantyAdaptor.deleteWarranties(request.params.warrantyId, user.id || user.ID).then(function () {
-          return reply({
+          return reply.response({
             status: true
           });
         }).catch(function (err) {
@@ -862,12 +862,12 @@ var ProductItemController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false
           });
         });
       } else {
-        reply({
+        reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate

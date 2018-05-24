@@ -15,7 +15,7 @@ class CategoryController {
     const isWebMode = (request.params && request.params.mode &&
         request.params.mode.toLowerCase() === 'web');
     if (!user && !isWebMode) {
-      reply({
+      reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
@@ -33,14 +33,14 @@ class CategoryController {
           `SELECT category_id, category_name from categories where category_id in (SELECT DISTINCT category_id from service_center_details where center_id in (SELECT center_id from center_brand_mapping where brand_id ${condition})) order by category_name;`).
           then((results) => {
             if (results.length === 0) {
-              reply({
+              reply.response({
                 status: true,
                 categories: [],
                 forceUpdate: request.pre.forceUpdate,
               });
             }
             else {
-              reply({
+              reply.response({
                 status: true,
                 categories: results[0],
                 forceUpdate: request.pre.forceUpdate,
@@ -51,10 +51,10 @@ class CategoryController {
             console.log(
                 `Error on ${new Date()} for user ${user.id ||
                 user.ID} is as follow: \n \n ${err}`);
-            reply({status: false, message: 'ISE'});
+            reply.response({status: false, message: 'ISE'});
           });
     } else {
-      reply({
+      reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,

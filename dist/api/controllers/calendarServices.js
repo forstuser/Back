@@ -49,13 +49,13 @@ var CalendarServiceController = function () {
     value: function retrieveCalendarServices(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
@@ -64,7 +64,7 @@ var CalendarServiceController = function () {
         return _bluebird2.default.try(function () {
           return calendarServiceAdaptor.retrieveCalendarServices({ status_type: 1 }, request.language);
         }).spread(function (items, unit_types) {
-          return reply({
+          return reply.response({
             status: true,
             items: items,
             unit_types: unit_types,
@@ -87,7 +87,7 @@ var CalendarServiceController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'An error occurred in retrieving calendar service list.',
             forceUpdate: request.pre.forceUpdate,
@@ -95,7 +95,7 @@ var CalendarServiceController = function () {
           });
         });
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -107,13 +107,13 @@ var CalendarServiceController = function () {
     value: function createItem(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
@@ -178,7 +178,7 @@ var CalendarServiceController = function () {
             user: user
           });
         }).spread(function (calendar_item) {
-          return reply({
+          return reply.response({
             status: true,
             message: 'successful',
             calendar_item: calendar_item,
@@ -201,7 +201,7 @@ var CalendarServiceController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'An error occurred in calendar item creation.',
             forceUpdate: request.pre.forceUpdate,
@@ -209,7 +209,7 @@ var CalendarServiceController = function () {
           });
         });
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -221,13 +221,13 @@ var CalendarServiceController = function () {
     value: function updateItem(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
@@ -243,7 +243,7 @@ var CalendarServiceController = function () {
         return _bluebird2.default.try(function () {
           return calendarServiceAdaptor.updateCalendarItem(productBody, request.params.id);
         }).then(function () {
-          return reply({
+          return reply.response({
             status: true,
             message: 'successful',
             forceUpdate: request.pre.forceUpdate
@@ -265,7 +265,7 @@ var CalendarServiceController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'An error occurred in calendar item creation.',
             forceUpdate: request.pre.forceUpdate,
@@ -273,7 +273,7 @@ var CalendarServiceController = function () {
           });
         });
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -285,13 +285,13 @@ var CalendarServiceController = function () {
     value: function markAbsent(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
@@ -319,7 +319,7 @@ var CalendarServiceController = function () {
             selected_days: currentCalcDetail.selected_days
           }, true);
         }).then(function (payment_detail) {
-          return reply({
+          return reply.response({
             status: true,
             message: 'successful',
             payment_detail: payment_detail,
@@ -342,7 +342,7 @@ var CalendarServiceController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'Unable to mark absent.',
             forceUpdate: request.pre.forceUpdate,
@@ -350,7 +350,7 @@ var CalendarServiceController = function () {
           });
         });
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -362,13 +362,13 @@ var CalendarServiceController = function () {
     value: function markPaid(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
@@ -384,7 +384,7 @@ var CalendarServiceController = function () {
         return _bluebird2.default.try(function () {
           return calendarServiceAdaptor.markPaymentPaid(request.params.id, servicePaymentDetail);
         }).then(function (payment_detail) {
-          return reply({
+          return reply.response({
             status: true,
             message: 'successful',
             payment_detail: payment_detail,
@@ -407,7 +407,7 @@ var CalendarServiceController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'Unable to mark paid.',
             forceUpdate: request.pre.forceUpdate,
@@ -415,7 +415,7 @@ var CalendarServiceController = function () {
           });
         });
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -427,13 +427,13 @@ var CalendarServiceController = function () {
     value: function markPresent(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
@@ -459,7 +459,7 @@ var CalendarServiceController = function () {
             selected_days: currentCalcDetail.selected_days
           }, true);
         }).then(function (payment_detail) {
-          return reply({
+          return reply.response({
             status: true,
             message: 'successful',
             payment_detail: payment_detail,
@@ -482,7 +482,7 @@ var CalendarServiceController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'Unable to mark absent.',
             forceUpdate: request.pre.forceUpdate,
@@ -490,7 +490,7 @@ var CalendarServiceController = function () {
           });
         });
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -503,13 +503,13 @@ var CalendarServiceController = function () {
       var user = _shared2.default.verifyAuthorization(request.headers);
       console.log({ user_exist: request.pre.userExist });
       if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
@@ -520,7 +520,7 @@ var CalendarServiceController = function () {
             user_id: user.id || user.ID
           }, request.language, request.query.limit, request.query.offset);
         }).then(function (items) {
-          return reply({
+          return reply.response({
             status: true,
             message: 'successful',
             items: items,
@@ -543,7 +543,7 @@ var CalendarServiceController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'An error occurred in retrieving calendar item list.',
             forceUpdate: request.pre.forceUpdate,
@@ -551,7 +551,7 @@ var CalendarServiceController = function () {
           });
         });
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -563,13 +563,13 @@ var CalendarServiceController = function () {
     value: function retrieveCalendarItem(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
@@ -578,7 +578,7 @@ var CalendarServiceController = function () {
         return _bluebird2.default.try(function () {
           return calendarServiceAdaptor.retrieveCalendarItemById(request.params.id, request.language);
         }).then(function (result) {
-          return reply({
+          return reply.response({
             status: true,
             message: 'successful',
             item: result,
@@ -601,7 +601,7 @@ var CalendarServiceController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'An error occurred in retrieving calendar item list.',
             forceUpdate: request.pre.forceUpdate,
@@ -609,7 +609,7 @@ var CalendarServiceController = function () {
           });
         });
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -621,13 +621,13 @@ var CalendarServiceController = function () {
     value: function addServiceCalc(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
@@ -658,7 +658,7 @@ var CalendarServiceController = function () {
           }
           return _bluebird2.default.all([[], result.toJSON()]);
         }).spread(function (manipulatedResult, calculation_detail) {
-          return reply({
+          return reply.response({
             status: true,
             message: 'successful',
             calculation_detail: calculation_detail,
@@ -681,7 +681,7 @@ var CalendarServiceController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'An error occurred in adding effective calculation method for service.',
             forceUpdate: request.pre.forceUpdate,
@@ -689,7 +689,7 @@ var CalendarServiceController = function () {
           });
         });
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -701,13 +701,13 @@ var CalendarServiceController = function () {
     value: function updateServiceCalc(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
@@ -736,7 +736,7 @@ var CalendarServiceController = function () {
             ref_id: request.params.id
           }), result]);
         }).spread(function (manipulatedResult, calculation_detail) {
-          return reply({
+          return reply.response({
             status: true,
             message: 'successful',
             calculation_detail: calculation_detail,
@@ -759,7 +759,7 @@ var CalendarServiceController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'An error occurred in adding effective calculation method for service.',
             forceUpdate: request.pre.forceUpdate,
@@ -767,7 +767,7 @@ var CalendarServiceController = function () {
           });
         });
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -779,13 +779,13 @@ var CalendarServiceController = function () {
     value: function deleteCalendarItem(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
@@ -794,7 +794,7 @@ var CalendarServiceController = function () {
         return _bluebird2.default.try(function () {
           return calendarServiceAdaptor.deleteCalendarItemById(request.params.id, user.id || user.ID);
         }).then(function () {
-          return reply({
+          return reply.response({
             status: true,
             message: 'successful',
             forceUpdate: request.pre.forceUpdate
@@ -816,7 +816,7 @@ var CalendarServiceController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'An error occurred in adding effective calculation method for service.',
             forceUpdate: request.pre.forceUpdate,
@@ -824,7 +824,7 @@ var CalendarServiceController = function () {
           });
         });
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -836,13 +836,13 @@ var CalendarServiceController = function () {
     value: function finishCalendarItem(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
@@ -855,7 +855,7 @@ var CalendarServiceController = function () {
 
           return calendarServiceAdaptor.updateCalendarItem(productBody, request.params.id);
         }).then(function () {
-          return reply({
+          return reply.response({
             status: true,
             message: 'successful',
             forceUpdate: request.pre.forceUpdate
@@ -877,7 +877,7 @@ var CalendarServiceController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'An error occurred in calendar item creation.',
             forceUpdate: request.pre.forceUpdate,
@@ -885,7 +885,7 @@ var CalendarServiceController = function () {
           });
         });
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate

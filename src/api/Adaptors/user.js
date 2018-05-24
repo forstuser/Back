@@ -241,7 +241,7 @@ class UserAdaptor {
       emailID = validateEmail(payload.email);
 
       if (emailID === undefined) {
-        return reply({status: false}).code(400);
+        return reply.response({status: false}).code(400);
       }
     }
 
@@ -304,7 +304,7 @@ class UserAdaptor {
             updatedUser);
       }
 
-      return reply({
+      return reply.response({
         status: true,
         message: 'User Details Updated Successfully',
         forceUpdate: request.pre.forceUpdate,
@@ -315,14 +315,14 @@ class UserAdaptor {
           user.ID} is as follow: \n \n ${err}`);
       if (err && err.errors && err.errors.findIndex(
               (item) => item.message === 'email must be unique') !== -1) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'The email mentioned is already linked with other account',
           err,
           forceUpdate: request.pre.forceUpdate,
         });
       }
-      return reply({
+      return reply.response({
         status: false,
         message: 'User Detail Update failed',
         err,

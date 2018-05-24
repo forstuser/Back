@@ -35,19 +35,19 @@ var SearchController = function () {
     value: function retrieveSearch(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         }).code(401);
       } else {
-        return reply(searchAdaptor.prepareSearchResult(user, request.query.searchvalue, request.language));
+        return reply.response(searchAdaptor.prepareSearchResult(user, request.query.searchvalue, request.language));
       }
     }
   }]);

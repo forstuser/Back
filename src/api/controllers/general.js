@@ -76,7 +76,7 @@ class GeneralController {
           {category_level: 1}, false, request.language);
     }).
         then((results) => {
-          return reply({
+          return reply.response({
             status: true,
             dropDowns: request.query.brandId ? results : undefined,
             categories: request.query.brandId ?
@@ -116,7 +116,7 @@ class GeneralController {
             }),
           }).catch((ex) => console.log('error while logging on db,', ex));
 
-          return reply({
+          return reply.response({
             status: false,
           });
         });
@@ -158,7 +158,7 @@ class GeneralController {
         return false;
       }).then((isValid) => {
         if (isValid === false) {
-          return reply({
+          return reply.response({
             status: false,
             message: 'You have reached to max attempt for a day',
           });
@@ -169,10 +169,10 @@ class GeneralController {
             NotificationAdaptor.sendUserCommentToTeam('Comment received',
                 request.payload);
           }
-          return reply({status: true}).code(201);
+          return reply.response({status: true}).code(201);
         }
 
-        return reply({
+        return reply.response({
           status: false,
           message: 'Invalid Request',
         });
@@ -192,7 +192,7 @@ class GeneralController {
             err,
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({
+        return reply.response({
           status: false,
           message: 'Invalid Request',
         });
@@ -209,7 +209,7 @@ class GeneralController {
       },
       order: [['id']],
     }).then((faq) => {
-      return reply({status: true, faq}).code(200);
+      return reply.response({status: true, faq}).code(200);
     }).catch((err) => {
       console.log(
           `Error on ${new Date()} for user is as follow: \n \n ${err}`);
@@ -226,13 +226,13 @@ class GeneralController {
           err,
         }),
       }).catch((ex) => console.log('error while logging on db,', ex));
-      return reply({status: false}).code(200);
+      return reply.response({status: false}).code(200);
     });
   }
 
   static retrieveTips(request, reply) {
     return modals.tips.findAll({order: [['id']]}).then((tips) => {
-      return reply({status: true, tips}).code(200);
+      return reply.response({status: true, tips}).code(200);
     }).catch((err) => {
       console.log(
           `Error on ${new Date()} for user is as follow: \n \n ${err}`);
@@ -249,7 +249,7 @@ class GeneralController {
           err,
         }),
       }).catch((ex) => console.log('error while logging on db,', ex));
-      return reply({status: false}).code(200);
+      return reply.response({status: false}).code(200);
     });
   }
 
@@ -327,7 +327,7 @@ class GeneralController {
             return modals.knowItems.findAll(options);
           }).
           then((knowItems) => {
-            return reply({
+            return reply.response({
               status: true,
               items: JSON.parse(JSON.stringify(knowItems.map((item) => {
                 const knowItemDetail = item.toJSON();
@@ -369,22 +369,22 @@ class GeneralController {
                 err,
               }),
             }).catch((ex) => console.log('error while logging on db,', ex));
-            return reply({status: false}).code(200);
+            return reply.response({status: false}).code(200);
           });
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -445,7 +445,7 @@ class GeneralController {
     };
 
     return modals.knowItems.findAll(options).then((knowItems) => {
-      return reply({
+      return reply.response({
         status: true, items: knowItems.map((item) => {
           item = item.toJSON();
           item.imageUrl = `/knowitem/${item.id}/images`;
@@ -480,7 +480,7 @@ class GeneralController {
           err,
         }),
       }).catch((ex) => console.log('error while logging on db,', ex));
-      return reply({status: false}).code(200);
+      return reply.response({status: false}).code(200);
     });
   }
 
@@ -549,7 +549,7 @@ class GeneralController {
           knowItem.hashTags = knowItem.hashTags.trim();
           knowItem.totalLikes = knowItem.users.length;
 
-          return reply({
+          return reply.response({
             status: true, item: knowItem,
           }).code(200);
         }).
@@ -569,7 +569,7 @@ class GeneralController {
               err,
             }),
           }).catch((ex) => console.log('error while logging on db,', ex));
-          return reply({status: false}).code(200);
+          return reply.response({status: false}).code(200);
         });
   }
 
@@ -607,7 +607,7 @@ class GeneralController {
         distinct: true,
         order: [['created_at', 'desc']],
       }).then((tagItems) => {
-        return reply({
+        return reply.response({
           status: true, items: tagItems.map((item) => {
             item = item.toJSON();
             item.title = item.title || item.default_title;
@@ -632,22 +632,22 @@ class GeneralController {
             err,
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({status: false}).code(200);
+        return reply.response({status: false}).code(200);
       });
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -663,7 +663,7 @@ class GeneralController {
         user_id: user.id || user.ID,
         know_item_id: request.params.id,
       }).then(() => {
-        return reply({
+        return reply.response({
           status: true,
           message: 'You have successfully liked this item.',
         }).code(200);
@@ -684,22 +684,22 @@ class GeneralController {
             err,
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({status: false}).code(200);
+        return reply.response({status: false}).code(200);
       });
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -717,7 +717,7 @@ class GeneralController {
           know_item_id: request.params.id,
         },
       }).then(() => {
-        return reply({
+        return reply.response({
           status: true,
           message: 'You have successfully Un-liked this item.',
         }).code(200);
@@ -738,22 +738,22 @@ class GeneralController {
             err,
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({status: false}).code(200);
+        return reply.response({status: false}).code(200);
       });
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -820,7 +820,7 @@ class GeneralController {
           categoryAdaptor.retrieveRenewalTypes({
             status_type: 1,
           })]);
-      }).then((initResult) => reply({
+      }).then((initResult) => reply.response({
         status: true,
         product: initResult[0],
         categories: initResult[1],
@@ -843,26 +843,26 @@ class GeneralController {
             err,
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unable to initialize product or job.',
           forceUpdate: request.pre.forceUpdate,
         }).code(200);
       });
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -880,7 +880,7 @@ class GeneralController {
                 id: user.id || user.ID,
               },
             });
-      }).then(() => reply({
+      }).then(() => reply.response({
         status: true,
         message: 'Status updated successfully.',
       })).catch((err) => {
@@ -900,26 +900,26 @@ class GeneralController {
             err,
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({
+        return reply.response({
           status: false,
           message: 'Failed to update status',
           forceUpdate: request.pre.forceUpdate,
         });
       });
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -937,7 +937,7 @@ class GeneralController {
           status_type: [5, 11],
           user_id: user.id || user.ID,
         });
-      }).then((productResult) => reply({
+      }).then((productResult) => reply.response({
         status: true,
         product: productResult,
         message: 'Success.',
@@ -958,7 +958,7 @@ class GeneralController {
             err,
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unable to fetch product list',
           forceUpdate: request.pre.forceUpdate,
@@ -966,19 +966,19 @@ class GeneralController {
       });
 
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,

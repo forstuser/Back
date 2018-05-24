@@ -53,21 +53,21 @@ var DashboardController = function () {
     value: function getDashboard(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist && !request.pre.forceUpdate) {
-        return reply(dashboardAdaptor.retrieveDashboardResult(user, request)).code(200);
+        return reply.response(dashboardAdaptor.retrieveDashboardResult(user, request)).code(200);
       } else if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         }).code(401);
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -81,21 +81,21 @@ var DashboardController = function () {
       var language = request.language;
       console.log(language);
       if (request.pre.userExist && !request.pre.forceUpdate) {
-        return reply(eHomeAdaptor.prepareEHomeResult(user, request, language)).code(200);
+        return reply.response(eHomeAdaptor.prepareEHomeResult(user, request, language)).code(200);
       } else if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         }).code(401);
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -107,19 +107,19 @@ var DashboardController = function () {
     value: function getProductsInCategory(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         }).code(401);
       } else if (request.pre.userExist && !request.pre.forceUpdate) {
-        return reply(eHomeAdaptor.prepareProductDetail({
+        return reply.response(eHomeAdaptor.prepareProductDetail({
           user: user,
           masterCategoryId: request.params.id,
           ctype: request.query.subCategoryId,
@@ -132,7 +132,7 @@ var DashboardController = function () {
           request: request
         })).code(200);
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -144,20 +144,20 @@ var DashboardController = function () {
     value: function updateNotificationStatus(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         }).code(401);
       } else {
         return notificationAdaptor.updateNotificationStatus(user, request.payload.notificationIds).then(function () {
-          return reply({ status: true }).code(201); //, forceUpdate: request.pre.forceUpdate}).code(201);
+          return reply.response({ status: true }).code(201); //, forceUpdate: request.pre.forceUpdate}).code(201);
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
 
@@ -176,7 +176,7 @@ var DashboardController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({ status: false }).code(500); //, forceUpdate: request.pre.forceUpdate}).code(500);
+          return reply.response({ status: false }).code(500); //, forceUpdate: request.pre.forceUpdate}).code(500);
         });
       }
     }
@@ -185,21 +185,21 @@ var DashboardController = function () {
     value: function getMailbox(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         }).code(401);
       } else if (!request.pre.forceUpdate && user) {
-        return reply(notificationAdaptor.retrieveNotifications(user, request)).code(200);
+        return reply.response(notificationAdaptor.retrieveNotifications(user, request)).code(200);
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate

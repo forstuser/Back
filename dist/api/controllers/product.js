@@ -45,13 +45,13 @@ var ProductController = function () {
     value: function createProduct(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
@@ -90,7 +90,7 @@ var ProductController = function () {
         }) : [];
         return productAdaptor.createProduct(productBody, metaDataBody, otherItems).then(function (result) {
           if (result) {
-            return reply({
+            return reply.response({
               status: true,
               message: 'successfull',
               product: result,
@@ -98,7 +98,7 @@ var ProductController = function () {
             });
             //todo: after this check if number of products in the db for that user is 1 and if true send him a notification
           } else {
-            return reply({
+            return reply.response({
               status: false,
               message: 'Product already exist.',
               forceUpdate: request.pre.forceUpdate
@@ -121,7 +121,7 @@ var ProductController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'An error occurred in product creation.',
             forceUpdate: request.pre.forceUpdate,
@@ -129,7 +129,7 @@ var ProductController = function () {
           });
         });
       } else {
-        reply({
+        reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -141,13 +141,13 @@ var ProductController = function () {
     value: function deleteProduct(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
@@ -155,14 +155,14 @@ var ProductController = function () {
       } else if (request.pre.userExist && !request.pre.forceUpdate) {
         return productAdaptor.deleteProduct(request.params.id, user.id || user.ID).then(function (deleted) {
           if (deleted) {
-            return reply({
+            return reply.response({
               status: true,
               message: 'successfull',
               deleted: deleted,
               forceUpdate: request.pre.forceUpdate
             });
           } else {
-            return reply({
+            return reply.response({
               status: false,
               message: 'Product delete failed',
               forceUpdate: request.pre.forceUpdate
@@ -193,7 +193,7 @@ var ProductController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'An error occurred in product deletion.',
             forceUpdate: request.pre.forceUpdate,
@@ -201,7 +201,7 @@ var ProductController = function () {
           });
         });
       } else {
-        reply({
+        reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -213,13 +213,13 @@ var ProductController = function () {
     value: function updateProduct(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
@@ -278,20 +278,20 @@ var ProductController = function () {
                 }, reply);
               }
             }*/
-            return reply({
+            return reply.response({
               status: true,
               message: 'successful',
               product: result,
               forceUpdate: request.pre.forceUpdate
             });
           } else if (result === false) {
-            return reply({
+            return reply.response({
               status: false,
               message: 'Brand/Model can\'t be changed as they are already verified.',
               forceUpdate: request.pre.forceUpdate
             });
           } else {
-            return reply({
+            return reply.response({
               status: false,
               message: 'Product already exist.',
               forceUpdate: request.pre.forceUpdate
@@ -314,7 +314,7 @@ var ProductController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'An error occurred in product creation.',
             forceUpdate: request.pre.forceUpdate,
@@ -322,7 +322,7 @@ var ProductController = function () {
           });
         });
       } else {
-        reply({
+        reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -334,13 +334,13 @@ var ProductController = function () {
     value: function updateUserReview(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
@@ -348,14 +348,14 @@ var ProductController = function () {
       } else if (request.pre.userExist && !request.pre.forceUpdate) {
         var id = request.params.id;
         if (request.params.reviewfor === 'brands') {
-          return reply(productAdaptor.updateBrandReview(user, id, request));
+          return reply.response(productAdaptor.updateBrandReview(user, id, request));
         } else if (request.params.reviewfor === 'sellers') {
-          return reply(productAdaptor.updateSellerReview(user, id, request.query.isonlineseller, request));
+          return reply.response(productAdaptor.updateSellerReview(user, id, request.query.isonlineseller, request));
         } else {
-          return reply(productAdaptor.updateProductReview(user, id, request));
+          return reply.response(productAdaptor.updateProductReview(user, id, request));
         }
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -367,24 +367,24 @@ var ProductController = function () {
     value: function retrieveProductDetail(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
         });
       } else if (request.pre.userExist && !request.pre.forceUpdate) {
-        return reply(productAdaptor.prepareProductDetail({
+        return reply.response(productAdaptor.prepareProductDetail({
           user: user,
           request: request
         })).code(200);
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -396,13 +396,13 @@ var ProductController = function () {
     value: function retrieveCenterProducts(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
@@ -425,7 +425,7 @@ var ProductController = function () {
         }
 
         return productAdaptor.retrieveProducts(options).then(function (result) {
-          return reply({
+          return reply.response({
             status: true,
             productList: result /* :productList.slice((pageNo * 10) - 10, 10) */
             , forceUpdate: request.pre.forceUpdate
@@ -453,14 +453,14 @@ var ProductController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'Unable to fetch product list',
             forceUpdate: request.pre.forceUpdate
           });
         });
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate

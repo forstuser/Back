@@ -22,13 +22,13 @@ export default class CalendarServiceController {
   static retrieveCalendarServices(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
@@ -36,7 +36,7 @@ export default class CalendarServiceController {
     } else if (request.pre.userExist && !request.pre.forceUpdate) {
       return Promise.try(() => calendarServiceAdaptor.retrieveCalendarServices(
           {status_type: 1},
-          request.language)).spread((items, unit_types) => reply({
+          request.language)).spread((items, unit_types) => reply.response({
         status: true,
         items,
         unit_types,
@@ -58,7 +58,7 @@ export default class CalendarServiceController {
             err,
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({
+        return reply.response({
           status: false,
           message: 'An error occurred in retrieving calendar service list.',
           forceUpdate: request.pre.forceUpdate,
@@ -66,7 +66,7 @@ export default class CalendarServiceController {
         });
       });
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -77,13 +77,13 @@ export default class CalendarServiceController {
   static createItem(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
@@ -148,7 +148,7 @@ export default class CalendarServiceController {
         serviceAbsentDayArray,
         serviceCalculationBody,
         user,
-      })).spread((calendar_item) => reply({
+      })).spread((calendar_item) => reply.response({
         status: true,
         message: 'successful',
         calendar_item,
@@ -171,7 +171,7 @@ export default class CalendarServiceController {
                 err,
               }),
             }).catch((ex) => console.log('error while logging on db,', ex));
-            return reply({
+            return reply.response({
               status: false,
               message: 'An error occurred in calendar item creation.',
               forceUpdate: request.pre.forceUpdate,
@@ -179,7 +179,7 @@ export default class CalendarServiceController {
             });
           });
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -190,13 +190,13 @@ export default class CalendarServiceController {
   static updateItem(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
@@ -212,7 +212,7 @@ export default class CalendarServiceController {
       return Promise.try(
           () => calendarServiceAdaptor.updateCalendarItem(productBody,
               request.params.id)).
-          then(() => reply({
+          then(() => reply.response({
             status: true,
             message: 'successful',
             forceUpdate: request.pre.forceUpdate,
@@ -234,7 +234,7 @@ export default class CalendarServiceController {
                 err,
               }),
             }).catch((ex) => console.log('error while logging on db,', ex));
-            return reply({
+            return reply.response({
               status: false,
               message: 'An error occurred in calendar item creation.',
               forceUpdate: request.pre.forceUpdate,
@@ -242,7 +242,7 @@ export default class CalendarServiceController {
             });
           });
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -253,13 +253,13 @@ export default class CalendarServiceController {
   static markAbsent(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
@@ -291,7 +291,7 @@ export default class CalendarServiceController {
                   selected_days: currentCalcDetail.selected_days,
                 }, true);
           }).
-          then((payment_detail) => reply({
+          then((payment_detail) => reply.response({
             status: true,
             message: 'successful',
             payment_detail,
@@ -314,7 +314,7 @@ export default class CalendarServiceController {
                 err,
               }),
             }).catch((ex) => console.log('error while logging on db,', ex));
-            return reply({
+            return reply.response({
               status: false,
               message: 'Unable to mark absent.',
               forceUpdate: request.pre.forceUpdate,
@@ -322,7 +322,7 @@ export default class CalendarServiceController {
             });
           });
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -333,13 +333,13 @@ export default class CalendarServiceController {
   static markPaid(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
@@ -355,7 +355,7 @@ export default class CalendarServiceController {
       return Promise.try(
           () => calendarServiceAdaptor.markPaymentPaid(request.params.id,
               servicePaymentDetail)).
-          then((payment_detail) => reply({
+          then((payment_detail) => reply.response({
             status: true,
             message: 'successful',
             payment_detail,
@@ -378,7 +378,7 @@ export default class CalendarServiceController {
                 err,
               }),
             }).catch((ex) => console.log('error while logging on db,', ex));
-            return reply({
+            return reply.response({
               status: false,
               message: 'Unable to mark paid.',
               forceUpdate: request.pre.forceUpdate,
@@ -386,7 +386,7 @@ export default class CalendarServiceController {
             });
           });
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -397,13 +397,13 @@ export default class CalendarServiceController {
   static markPresent(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
@@ -433,7 +433,7 @@ export default class CalendarServiceController {
                   selected_days: currentCalcDetail.selected_days,
                 }, true);
           }).
-          then((payment_detail) => reply({
+          then((payment_detail) => reply.response({
             status: true,
             message: 'successful',
             payment_detail,
@@ -456,7 +456,7 @@ export default class CalendarServiceController {
                 err,
               }),
             }).catch((ex) => console.log('error while logging on db,', ex));
-            return reply({
+            return reply.response({
               status: false,
               message: 'Unable to mark absent.',
               forceUpdate: request.pre.forceUpdate,
@@ -464,7 +464,7 @@ export default class CalendarServiceController {
             });
           });
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -476,13 +476,13 @@ export default class CalendarServiceController {
     const user = shared.verifyAuthorization(request.headers);
     console.log({user_exist: request.pre.userExist});
     if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
@@ -492,7 +492,7 @@ export default class CalendarServiceController {
         user_id: user.id ||
         user.ID,
       }, request.language, request.query.limit, request.query.offset)).
-          then((items) => reply({
+          then((items) => reply.response({
             status: true,
             message: 'successful',
             items,
@@ -515,7 +515,7 @@ export default class CalendarServiceController {
                 err,
               }),
             }).catch((ex) => console.log('error while logging on db,', ex));
-            return reply({
+            return reply.response({
               status: false,
               message: 'An error occurred in retrieving calendar item list.',
               forceUpdate: request.pre.forceUpdate,
@@ -523,7 +523,7 @@ export default class CalendarServiceController {
             });
           });
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -534,13 +534,13 @@ export default class CalendarServiceController {
   static retrieveCalendarItem(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
@@ -549,7 +549,7 @@ export default class CalendarServiceController {
       return Promise.try(() => calendarServiceAdaptor.retrieveCalendarItemById(
           request.params.id,
           request.language)).
-          then((result) => reply({
+          then((result) => reply.response({
             status: true,
             message: 'successful',
             item: result,
@@ -572,7 +572,7 @@ export default class CalendarServiceController {
                 err,
               }),
             }).catch((ex) => console.log('error while logging on db,', ex));
-            return reply({
+            return reply.response({
               status: false,
               message: 'An error occurred in retrieving calendar item list.',
               forceUpdate: request.pre.forceUpdate,
@@ -580,7 +580,7 @@ export default class CalendarServiceController {
             });
           });
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -591,13 +591,13 @@ export default class CalendarServiceController {
   static addServiceCalc(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
@@ -637,7 +637,7 @@ export default class CalendarServiceController {
             return Promise.all([[], result.toJSON()]);
           }).
           spread((manipulatedResult, calculation_detail) => {
-            return reply({
+            return reply.response({
               status: true,
               message: 'successful',
               calculation_detail,
@@ -661,7 +661,7 @@ export default class CalendarServiceController {
                 err,
               }),
             }).catch((ex) => console.log('error while logging on db,', ex));
-            return reply({
+            return reply.response({
               status: false,
               message: 'An error occurred in adding effective calculation method for service.',
               forceUpdate: request.pre.forceUpdate,
@@ -669,7 +669,7 @@ export default class CalendarServiceController {
             });
           });
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -680,13 +680,13 @@ export default class CalendarServiceController {
   static updateServiceCalc(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
@@ -718,7 +718,7 @@ export default class CalendarServiceController {
                 startOf('days'),
             ref_id: request.params.id,
           }), result]);
-      }).spread((manipulatedResult, calculation_detail) => reply({
+      }).spread((manipulatedResult, calculation_detail) => reply.response({
         status: true,
         message: 'successful',
         calculation_detail,
@@ -741,7 +741,7 @@ export default class CalendarServiceController {
                 err,
               }),
             }).catch((ex) => console.log('error while logging on db,', ex));
-            return reply({
+            return reply.response({
               status: false,
               message: 'An error occurred in adding effective calculation method for service.',
               forceUpdate: request.pre.forceUpdate,
@@ -749,7 +749,7 @@ export default class CalendarServiceController {
             });
           });
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -760,13 +760,13 @@ export default class CalendarServiceController {
   static deleteCalendarItem(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
@@ -774,7 +774,7 @@ export default class CalendarServiceController {
     } else if (request.pre.userExist && !request.pre.forceUpdate) {
       return Promise.try(() => calendarServiceAdaptor.deleteCalendarItemById(
           request.params.id, user.id || user.ID)).then(() => {
-        return reply({
+        return reply.response({
           status: true,
           message: 'successful',
           forceUpdate: request.pre.forceUpdate,
@@ -796,7 +796,7 @@ export default class CalendarServiceController {
             err,
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({
+        return reply.response({
           status: false,
           message: 'An error occurred in adding effective calculation method for service.',
           forceUpdate: request.pre.forceUpdate,
@@ -804,7 +804,7 @@ export default class CalendarServiceController {
         });
       });
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -815,13 +815,13 @@ export default class CalendarServiceController {
   static finishCalendarItem(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
@@ -835,7 +835,7 @@ export default class CalendarServiceController {
 
           return calendarServiceAdaptor.updateCalendarItem(productBody,
               request.params.id);
-      }).then(() => reply({
+      }).then(() => reply.response({
           status: true,
           message: 'successful',
           forceUpdate: request.pre.forceUpdate,
@@ -856,7 +856,7 @@ export default class CalendarServiceController {
             err,
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({
+        return reply.response({
           status: false,
           message: 'An error occurred in calendar item creation.',
           forceUpdate: request.pre.forceUpdate,
@@ -864,7 +864,7 @@ export default class CalendarServiceController {
         });
       });
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,

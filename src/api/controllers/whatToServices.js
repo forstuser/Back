@@ -23,7 +23,7 @@ export default class WhatToController {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
       return Promise.try(() => whatToServiceAdaptor.retrieveAllStateData({})).
-          then((states) => reply({
+          then((states) => reply.response({
             status: true,
             states,
           })).catch((err) => {
@@ -43,25 +43,25 @@ export default class WhatToController {
                 err,
               }),
             }).catch((ex) => console.log('error while logging on db,', ex));
-            return reply({
+            return reply.response({
               status: false,
               message:'Unable to retrieve all states data'
             });
           });
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -83,7 +83,7 @@ export default class WhatToController {
         user_id: user.ID || user.id,
         is_veg: request.query.is_veg,
       })).
-          then((mealList) => reply({
+          then((mealList) => reply.response({
             status: true,
             mealList,
           })).catch((err) => {
@@ -103,25 +103,25 @@ export default class WhatToController {
                 err,
               }),
             }).catch((ex) => console.log('error while logging on db,', ex));
-            return reply({
+            return reply.response({
               status: false,
               message:'Unable to retrieve state meal items'
             });
           });
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -142,7 +142,7 @@ export default class WhatToController {
         user_id: user.ID || user.id,
         is_veg: request.query.is_veg,
         current_date: request.query.current_date,
-      })).then((mealList) => reply({
+      })).then((mealList) => reply.response({
         status: true,
         mealList,
       })).catch((err) => {
@@ -162,25 +162,25 @@ export default class WhatToController {
             err,
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({
+        return reply.response({
           status: false,
           message:'Unable to  retrieve user meal items'
         });
       });
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -196,7 +196,7 @@ export default class WhatToController {
         selected_ids: request.payload.selected_ids || [],
         unselected_ids: request.payload.unselected_ids || [],
         state_id: request.payload.state_id,
-      })).then((mealList) => reply({
+      })).then((mealList) => reply.response({
         status: true,
         mealList,
       })).catch((err) => {
@@ -216,25 +216,25 @@ export default class WhatToController {
             err,
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({
+        return reply.response({
           status: false,
           message:'Unable to  prepare user meal list '
         });
       });
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -257,7 +257,7 @@ export default class WhatToController {
         is_veg: request.payload.is_veg,
         state_id: request.payload.state_id,
         current_date:request.payload.current_date,
-      })).then((mealList) => reply({
+      })).then((mealList) => reply.response({
         status: true,
         mealList,
       })).catch((err) => {
@@ -277,25 +277,25 @@ export default class WhatToController {
             err,
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({
+        return reply.response({
           status: false,
           message:'Unable to add user meal item'
         });
       });
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -310,7 +310,7 @@ export default class WhatToController {
         user_id: user.ID || user.id,
         meal_id: request.params.meal_id,
         current_date: request.payload.current_date,
-      })).then((mealList) => reply({
+      })).then((mealList) => reply.response({
         status: true,
         mealList,
       })).catch((err) => {
@@ -330,25 +330,25 @@ export default class WhatToController {
             err,
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({
+        return reply.response({
           status: false,
           message:'Unable to update user meal current date '
         });
       });
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -363,7 +363,7 @@ export default class WhatToController {
         user_id: user.ID || user.id,
         meal_id: request.params.meal_id,
         current_date: request.payload.current_date,
-      })).then((mealList) => reply({
+      })).then((mealList) => reply.response({
         status: true,
         mealList,
       })).catch((err) => {
@@ -383,24 +383,24 @@ export default class WhatToController {
             err,
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({
+        return reply.response({
           status: false,
         });
       });
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -417,7 +417,7 @@ export default class WhatToController {
           id: request.params.meal_id,
           status_type: 11,
         },
-      })).then(() => reply({
+      })).then(() => reply.response({
         status: true,
       })).catch((err) => {
         console.log(
@@ -436,25 +436,25 @@ export default class WhatToController {
             err,
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({
+        return reply.response({
           status: false,
           message:'Unable to remove meals '
         });
       });
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -468,7 +468,7 @@ export default class WhatToController {
       return Promise.try(() => whatToServiceAdaptor.retrieveWearables({
         user_id: user.ID || user.id,
         current_date: request.query.current_date,
-      })).then((wearableList) => reply({
+      })).then((wearableList) => reply.response({
         status: true,
         wearableList,
       })).catch((err) => {
@@ -488,25 +488,25 @@ export default class WhatToController {
             err,
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({
+        return reply.response({
           status: false,
           message:'unable to  retrieve Wearables'
         });
       });
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -521,7 +521,7 @@ export default class WhatToController {
         item_name: request.payload.name,
         user_id: user.ID || user.id,
         current_date:request.payload.current_date,
-      })).then((wearable) => reply({
+      })).then((wearable) => reply.response({
         status: true,
         wearable,
       })).catch((err) => {
@@ -541,25 +541,25 @@ export default class WhatToController {
             err,
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({
+        return reply.response({
           status: false,
           message:'Unable to add wearable'
         });
       });
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -573,7 +573,7 @@ export default class WhatToController {
       return Promise.try(() => whatToServiceAdaptor.updateWearable({
         item_name: request.payload.name,
         user_id: user.ID || user.id, id: request.params.id,
-      })).then(() => reply({
+      })).then(() => reply.response({
         status: true,
         wearable: {
           name: request.payload.name,
@@ -596,25 +596,25 @@ export default class WhatToController {
             err,
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({
+        return reply.response({
           status: false,
           message:'Unable to update wearable'
         });
       });
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -629,7 +629,7 @@ export default class WhatToController {
         user_id: user.ID || user.id,
         id: request.params.id,
         current_date: request.payload.current_date,
-      })).then((wearablelList) => reply({
+      })).then((wearablelList) => reply.response({
         status: true,
         wearablelList,
       })).catch((err) => {
@@ -649,25 +649,25 @@ export default class WhatToController {
             err,
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({
+        return reply.response({
           status: false,
           message:'Unable to update wearable current date'
         });
       });
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -680,7 +680,7 @@ export default class WhatToController {
     if (request.pre.userExist && !request.pre.forceUpdate) {
       return Promise.try(() => whatToServiceAdaptor.deleteWearable({
         user_id: user.ID || user.id, id: request.params.id,
-      })).then(() => reply({
+      })).then(() => reply.response({
         status: true,
         wearable: {
           id: request.params.id,
@@ -702,25 +702,25 @@ export default class WhatToController {
             err,
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({
+        return reply.response({
           status: false,
           message:'Unable to Delete wearable'
         });
       });
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -735,7 +735,7 @@ export default class WhatToController {
         user_id: user.ID || user.id,
         id: request.params.id,
         current_date: request.payload.current_date,
-      })).then((wearablelList) => reply({
+      })).then((wearablelList) => reply.response({
         status: true,
         wearablelList,
       })).catch((err) => {
@@ -755,25 +755,25 @@ export default class WhatToController {
             err,
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({
+        return reply.response({
           status: false,
           message:'Unable to remove wearable current date'
         });
       });
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -787,7 +787,7 @@ export default class WhatToController {
       return Promise.try(() => whatToServiceAdaptor.retrieveToDoList({
         user_id: user.ID || user.id,
       })).
-          then((todoList) => reply({
+          then((todoList) => reply.response({
             status: true,
             todoList,
           })).catch((err) => {
@@ -807,25 +807,25 @@ export default class WhatToController {
                 err,
               }),
             }).catch((ex) => console.log('error while logging on db,', ex));
-            return reply({
+            return reply.response({
               status: false,
               message:'Unable to retrieve ToDoList'
             });
           });
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -839,7 +839,7 @@ export default class WhatToController {
       return Promise.try(() => whatToServiceAdaptor.retrieveUserToDoList({
         user_id: user.ID || user.id,
         current_date: request.query.current_date,
-      })).then((todoList) => reply({
+      })).then((todoList) => reply.response({
         status: true,
         todoList,
       })).catch((err) => {
@@ -861,25 +861,25 @@ export default class WhatToController {
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
 
-        return reply({
+        return reply.response({
           status: false,
           message:'Unable to retrieve UserToDoList'
         });
       });
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -899,7 +899,7 @@ export default class WhatToController {
           status_type: 11,
         })),
         current_date: request.payload.current_date,
-      })).then((todoList) => reply({
+      })).then((todoList) => reply.response({
         status: true,
         todoList,
       })).catch((err) => {
@@ -919,25 +919,25 @@ export default class WhatToController {
             err,
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({
+        return reply.response({
           status: false,
           message:'Unable to User ToDoList '
         });
       });
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -952,7 +952,7 @@ export default class WhatToController {
         user_id: user.ID || user.id,
         todo_id: request.params.todo_id,
         current_date: request.payload.current_date,
-      })).then((todoItem) => reply({
+      })).then((todoItem) => reply.response({
         status: true,
         todoItem,
       })).catch((err) => {
@@ -972,25 +972,25 @@ export default class WhatToController {
             err,
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({
+        return reply.response({
           status: false,
           message:'Unable to update ToDoItem'
         });
       });
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -1005,7 +1005,7 @@ export default class WhatToController {
         user_id: user.ID || user.id,
         selected_ids: request.payload.selected_ids || [],
         unselected_ids: request.payload.unselected_ids || [],
-      })).then((todoList) => reply({
+      })).then((todoList) => reply.response({
         status: true,
         todoList,
       })).catch((err) => {
@@ -1025,25 +1025,25 @@ export default class WhatToController {
             err,
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({
+        return reply.response({
           status: false,
           message:'Unable to prepare user ToDoList'
         });
       });
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -1059,7 +1059,7 @@ export default class WhatToController {
         user_id: user.ID || user.id,
         todo_id: request.params.todo_id,
         current_date: request.payload.current_date,
-      })).then((removelist) => reply({
+      })).then((removelist) => reply.response({
         status: true,
         removelist,
       })).catch((err) => {
@@ -1079,25 +1079,25 @@ export default class WhatToController {
             err,
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({
+        return reply.response({
           status: false,
           message:'Unable to delete user ToDo current Date'
         });
       });
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -1114,7 +1114,7 @@ export default class WhatToController {
           id: request.params.todo_id,
           status_type: 11,
         },
-      })).then(() => reply({
+      })).then(() => reply.response({
         status: true,
       })).catch((err) => {
         console.log(
@@ -1133,25 +1133,25 @@ export default class WhatToController {
             err,
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({
+        return reply.response({
           status: false,
           message:'Unable to delete what ToDo'
         });
       });
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,

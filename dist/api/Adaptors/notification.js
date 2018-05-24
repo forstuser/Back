@@ -807,17 +807,6 @@ var NotificationAdaptor = function () {
           }
         };
         (0, _request2.default)(options, function (error, response, body) {
-          if (!error && response.statusCode === 200) {
-            // request was success, should early return response to client
-            reply({
-              status: true
-            }).code(200);
-          } else {
-            reply({
-              status: false,
-              error: error
-            }).code(500);
-          }
           // extract invalid registration for removal
           if (body.failure > 0 && Array.isArray(body.results) && body.results.length === result.length) {
             var results = body.results;
@@ -828,6 +817,17 @@ var NotificationAdaptor = function () {
                 });
               }
             }
+          }
+          if (!error && response.statusCode === 200) {
+            // request was success, should early return response to client
+            return reply.response({
+              status: true
+            }).code(200);
+          } else {
+            return reply.response({
+              status: false,
+              error: error
+            });
           }
         });
       });
@@ -847,10 +847,10 @@ var NotificationAdaptor = function () {
           email_verified: true
         });
 
-        return reply({ status: true });
+        return reply.response({ status: true });
       }).catch(function (err) {
         console.log('Error on ' + new Date() + ' for user is as follow: \n \n ' + err);
-        return reply({ status: false });
+        return reply.response({ status: false });
       });
     }
   }], [{

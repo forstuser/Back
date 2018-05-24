@@ -130,13 +130,13 @@ var UploadController = function () {
     value: function uploadUserImage(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized'
           // forceUpdate: request.pre.forceUpdate
@@ -168,7 +168,7 @@ var UploadController = function () {
               }
             });
           }).then(function () {
-            return reply({
+            return reply.response({
               status: true,
               message: 'Uploaded Successfully'
             });
@@ -189,7 +189,7 @@ var UploadController = function () {
             }).catch(function (ex) {
               return console.log('error while logging on db,', ex);
             });
-            return reply({
+            return reply.response({
               status: false,
               message: 'Upload Failed',
               err: err
@@ -198,7 +198,7 @@ var UploadController = function () {
           });
         });
       } else {
-        return reply({ status: false, message: 'No documents in request' }); //, forceUpdate: request.pre.forceUpdate});
+        return reply.response({ status: false, message: 'No documents in request' }); //, forceUpdate: request.pre.forceUpdate});
       }
     }
   }, {
@@ -206,13 +206,13 @@ var UploadController = function () {
     value: function uploadProductImage(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized'
           // forceUpdate: request.pre.forceUpdate
@@ -242,7 +242,7 @@ var UploadController = function () {
 
               return productResult.updateAttributes({ file_type: file_type, file_ref: file_ref });
             }).then(function () {
-              return reply({
+              return reply.response({
                 status: true,
                 message: 'Uploaded Successfully',
                 cImageURL: '/consumer/products/' + request.params.id + '/images/' + file_ref
@@ -264,7 +264,7 @@ var UploadController = function () {
               }).catch(function (ex) {
                 return console.log('error while logging on db,', ex);
               });
-              return reply({
+              return reply.response({
                 status: false,
                 message: 'Upload Failed',
                 err: err
@@ -273,7 +273,7 @@ var UploadController = function () {
             });
           }
 
-          return reply({
+          return reply.response({
             status: false,
             message: 'Invalid Product Id Upload Failed',
             err: err
@@ -281,7 +281,7 @@ var UploadController = function () {
           });
         });
       } else {
-        return reply({ status: false, message: 'No documents in request' }); //, forceUpdate: request.pre.forceUpdate});
+        return reply.response({ status: false, message: 'No documents in request' }); //, forceUpdate: request.pre.forceUpdate});
       }
     }
   }, {
@@ -289,13 +289,13 @@ var UploadController = function () {
     value: function uploadWearableImage(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized'
           // forceUpdate: request.pre.forceUpdate
@@ -325,7 +325,7 @@ var UploadController = function () {
               return wearableResult.updateAttributes({ image_name: image_name, image_code: image_code });
             }).then(function (wearableResult) {
               wearableResult.image_link = '/wearable/' + wearableResult.id + '/images/' + wearableResult.image_code;
-              return reply({
+              return reply.response({
                 status: true,
                 message: 'Uploaded Successfully',
                 wearableResult: wearableResult
@@ -347,7 +347,7 @@ var UploadController = function () {
               }).catch(function (ex) {
                 return console.log('error while logging on db,', ex);
               });
-              return reply({
+              return reply.response({
                 status: false,
                 message: 'Upload Failed',
                 err: err
@@ -356,7 +356,7 @@ var UploadController = function () {
             });
           }
 
-          return reply({
+          return reply.response({
             status: false,
             message: 'Invalid Wearable Id Upload Failed',
             err: err
@@ -364,7 +364,7 @@ var UploadController = function () {
           });
         });
       } else {
-        return reply({ status: false, message: 'No documents in request' }); //, forceUpdate: request.pre.forceUpdate});
+        return reply.response({ status: false, message: 'No documents in request' }); //, forceUpdate: request.pre.forceUpdate});
       }
     }
   }, {
@@ -372,13 +372,13 @@ var UploadController = function () {
     value: function uploadFiles(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized'
         }).code(401);
@@ -416,7 +416,7 @@ var UploadController = function () {
 
           if (filteredFileData.length === 0) {
             console.log('No valid documents in request');
-            return reply({ status: false, message: 'No valid documents in request' });
+            return reply.response({ status: false, message: 'No valid documents in request' });
           } else {
             if (request.params && request.params.id) {
               console.log('Request received has JOB ID ' + request.params.id + ' to upload file by user_id ' + (user.id || user.ID));
@@ -442,7 +442,7 @@ var UploadController = function () {
                 }).catch(function (ex) {
                   return console.log('error while logging on db,', ex);
                 });
-                return reply({ status: false, message: 'Unable to upload document' });
+                return reply.response({ status: false, message: 'Unable to upload document' });
               });
             }
 
@@ -469,14 +469,14 @@ var UploadController = function () {
               }).catch(function (ex) {
                 return console.log('error while logging on db,', ex);
               });
-              return reply({ status: false, message: 'Unable to upload document' });
+              return reply.response({ status: false, message: 'Unable to upload document' });
             });
           }
           // } else {
-          // 	reply({status: false, message: 'No File', forceUpdate: request.pre.forceUpdate}).code(400);
+          // 	reply.response({status: false, message: 'No File', forceUpdate: request.pre.forceUpdate}).code(400);
           // }
         } else {
-          return reply({ status: false, message: 'No documents in request' }); //, forceUpdate: request.pre.forceUpdate});
+          return reply.response({ status: false, message: 'No documents in request' }); //, forceUpdate: request.pre.forceUpdate});
         }
       }
     }
@@ -507,9 +507,9 @@ var UploadController = function () {
           var file_type = /[.]/.exec(name) ? /[^.]+$/.exec(name) : undefined;
           // console.log("OUTSIDE FILE ALLOWED: ", file_type);
           if (file_type && !isFileTypeAllowed(file_type)) {
-            return reply({ status: false, message: 'Data Upload Failed' });
+            return reply.response({ status: false, message: 'Data Upload Failed' });
           } else if (!file_type && !isFileTypeAllowedMagicNumber(fileData._data)) {
-            return reply({ status: false, message: 'Data Upload Failed' });
+            return reply.response({ status: false, message: 'Data Upload Failed' });
           } else {
             return UploadController.uploadSingleFile({
               requiredDetail: {
@@ -540,7 +540,7 @@ var UploadController = function () {
         }).catch(function (ex) {
           return console.log('error while logging on db,', ex);
         });
-        return reply({ status: false, message: 'Upload Failed', err: err }); // , forceUpdate: request.pre.forceUpdate});
+        return reply.response({ status: false, message: 'Upload Failed', err: err }); // , forceUpdate: request.pre.forceUpdate});
       });
     }
   }, {
@@ -577,9 +577,9 @@ var UploadController = function () {
           var file_type = /[.]/.exec(name) ? /[^.]+$/.exec(name) : undefined;
           // console.log("OUTSIDE FILE ALLOWED: ", file_type);
           if (file_type && !isFileTypeAllowed(file_type)) {
-            return reply({ status: false, message: 'Data Upload Failed' });
+            return reply.response({ status: false, message: 'Data Upload Failed' });
           } else if (!file_type && !isFileTypeAllowedMagicNumber(fileData._data)) {
-            return reply({ status: false, message: 'Data Upload Failed' });
+            return reply.response({ status: false, message: 'Data Upload Failed' });
           } else {
             return UploadController.uploadSingleFile({
               requiredDetail: {
@@ -608,7 +608,7 @@ var UploadController = function () {
         }).catch(function (ex) {
           return console.log('error while logging on db,', ex);
         });
-        return reply({ status: false, message: 'Upload Failed', err: err }); // , forceUpdate: request.pre.forceUpdate});
+        return reply.response({ status: false, message: 'Upload Failed', err: err }); // , forceUpdate: request.pre.forceUpdate});
       });
     }
   }, {
@@ -681,7 +681,7 @@ var UploadController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'Data Update Failed',
             err: err
@@ -705,7 +705,7 @@ var UploadController = function () {
         }).catch(function (ex) {
           return console.log('error while logging on db,', ex);
         });
-        return reply({ status: false, message: 'Upload Failed', err: err }); //forceUpdate: request.pre.forceUpdate});
+        return reply.response({ status: false, message: 'Upload Failed', err: err }); //forceUpdate: request.pre.forceUpdate});
       });
     }
   }, {
@@ -800,7 +800,7 @@ var UploadController = function () {
         }).catch(function (ex) {
           return console.log('error while logging on db,', ex);
         });
-        return reply({
+        return reply.response({
           status: false,
           message: 'Upload Failed',
           err: JSON.stringify(err)
@@ -845,7 +845,7 @@ var UploadController = function () {
         }
       }
 
-      return reply(replyResult);
+      return reply.response(replyResult);
     }
   }, {
     key: 'createProductItems',
@@ -1029,7 +1029,7 @@ var UploadController = function () {
     value: function retrieveFiles(request, reply) {
       /* const user = shared.verifyAuthorization(request.headers);
        if (!request.pre.userExist) {
-          reply({
+          reply.response({
             status: false,
             message: 'Unauthorized',
           });
@@ -1047,11 +1047,11 @@ var UploadController = function () {
         }).then(function (result) {
           if (result) {
             fsImpl.readFile(_guid2.default.isGuid(result.job_id) ? '' + result.copies[0].file_name : 'jobs/' + result.job_id + '/' + result.copies[0].file_name).then(function (fileResult) {
-              return reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', 'attachment; filename=' + result.bill_copy_name);
+              return reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', 'attachment; filename=' + result.bill_copy_name);
             }).catch(function (err) {
               console.log('Error on ' + new Date() + ' while retrieving image is as follow: \n \n ' + err);
               return fsImpl.readFile('jobs/' + result.job_id + '/' + result.copies[0].file_name).then(function (fileResult) {
-                return reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', 'attachment; filename=' + result.bill_copy_name);
+                return reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', 'attachment; filename=' + result.bill_copy_name);
               }).catch(function (err) {
                 console.log('Error on ' + new Date() + ' while retrieving image is as follow: \n \n ' + err);
 
@@ -1069,7 +1069,7 @@ var UploadController = function () {
                 }).catch(function (ex) {
                   return console.log('error while logging on db,', ex);
                 });
-                return reply({
+                return reply.response({
                   status: false,
                   message: 'No Result Found',
                   forceUpdate: request.pre.forceUpdate,
@@ -1078,7 +1078,7 @@ var UploadController = function () {
               });
             });
           } else {
-            return reply({
+            return reply.response({
               status: false,
               message: 'No Result Found',
               forceUpdate: request.pre.forceUpdate
@@ -1102,10 +1102,10 @@ var UploadController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({ status: false, err: err, forceUpdate: request.pre.forceUpdate });
+          return reply.response({ status: false, err: err, forceUpdate: request.pre.forceUpdate });
         });
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -1121,13 +1121,13 @@ var UploadController = function () {
     value: function deleteFile(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized'
         }).code(401);
@@ -1235,7 +1235,7 @@ var UploadController = function () {
                 break;
             }
 
-            return reply(deletionResponse);
+            return reply.response(deletionResponse);
           }).catch(function (err) {
             console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
 
@@ -1254,10 +1254,10 @@ var UploadController = function () {
             }).catch(function (ex) {
               return console.log('error while logging on db,', ex);
             });
-            return reply({ status: false, err: err, forceUpdate: request.pre.forceUpdate });
+            return reply.response({ status: false, err: err, forceUpdate: request.pre.forceUpdate });
           });
         } else {
-          return reply({
+          return reply.response({
             status: false,
             message: 'Forbidden',
             forceUpdate: request.pre.forceUpdate
@@ -1350,7 +1350,7 @@ var UploadController = function () {
           }
         }).then(function (result) {
           return fsImplCategory.readFile(result.category_image_name, 'utf8').then(function (fileResult) {
-            return reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', 'attachment; filename=' + result.CopyName);
+            return reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', 'attachment; filename=' + result.CopyName);
           });
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' for user while retrieving category image is as follow: \n \n ' + err);
@@ -1370,7 +1370,7 @@ var UploadController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'Unable to retrieve image',
             err: err,
@@ -1378,7 +1378,7 @@ var UploadController = function () {
           });
         });
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -1398,7 +1398,7 @@ var UploadController = function () {
           if (productResult) {
             var productDetail = productResult.toJSON();
             return fsImplProduct.readFile(request.params.id + '.' + productDetail.file_type, 'utf8').then(function (fileResult) {
-              return reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', 'attachment; filename=' + request.params.id + '.' + productDetail.file_type);
+              return reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', 'attachment; filename=' + request.params.id + '.' + productDetail.file_type);
             }).catch(function (err) {
               console.log('Error on ' + new Date() + ' for user while retrieving product item image is as follow: \n \n ' + err);
 
@@ -1417,7 +1417,7 @@ var UploadController = function () {
               }).catch(function (ex) {
                 return console.log('error while logging on db,', ex);
               });
-              return reply({
+              return reply.response({
                 status: false,
                 message: 'Unable to retrieve image',
                 err: err,
@@ -1427,7 +1427,7 @@ var UploadController = function () {
           }
         });
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -1447,7 +1447,7 @@ var UploadController = function () {
           if (wearableResult) {
             var wearableDetail = wearableResult.toJSON();
             return fsImplProduct.readFile('' + wearableDetail.image_name, 'utf8').then(function (fileResult) {
-              return reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', 'attachment; filename=' + wearableDetail.image_name);
+              return reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', 'attachment; filename=' + wearableDetail.image_name);
             }).catch(function (err) {
               console.log('Error on ' + new Date() + ' for user while retrieving wearable item image is as follow: \n \n ' + err);
 
@@ -1466,7 +1466,7 @@ var UploadController = function () {
               }).catch(function (ex) {
                 return console.log('error while logging on db,', ex);
               });
-              return reply({
+              return reply.response({
                 status: false,
                 message: 'Unable to retrieve image',
                 err: err,
@@ -1476,7 +1476,7 @@ var UploadController = function () {
           }
         });
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -1489,7 +1489,7 @@ var UploadController = function () {
       if (!request.pre.forceUpdate) {
         var fsImplCategory = new _s3fs2.default(_main2.default.AWS.S3.BUCKET + '/' + _main2.default.AWS.S3.CALENDAR_ITEM_IMAGE + (request.params.file_type ? '/' + request.params.file_type : ''), _main2.default.AWS.ACCESS_DETAILS);
         return fsImplCategory.readFile(request.params.id + '.png', 'utf8').then(function (fileResult) {
-          return reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', 'attachment; filename=' + request.params.id + '.png');
+          return reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', 'attachment; filename=' + request.params.id + '.png');
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' for user while retrieving calendar item image is as follow: \n \n ' + err);
 
@@ -1508,7 +1508,7 @@ var UploadController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'Unable to retrieve image',
             err: err,
@@ -1516,7 +1516,7 @@ var UploadController = function () {
           });
         });
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -1529,7 +1529,7 @@ var UploadController = function () {
       if (!request.pre.forceUpdate) {
         var fsImplBrand = new _s3fs2.default(_main2.default.AWS.S3.BUCKET + '/' + _main2.default.AWS.S3.BRAND_IMAGE + (request.params.file_type ? '/' + request.params.file_type : ''), _main2.default.AWS.ACCESS_DETAILS);
         return fsImplBrand.readFile(request.params.id + '.png', 'utf8').then(function (fileResult) {
-          return reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', 'attachment; filename=' + request.params.id + '.png');
+          return reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', 'attachment; filename=' + request.params.id + '.png');
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' retrieving brand image is as follow: \n \n ' + err);
           modals.logs.create({
@@ -1547,7 +1547,7 @@ var UploadController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'Unable to retrieve image',
             err: err,
@@ -1555,7 +1555,7 @@ var UploadController = function () {
           });
         });
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -1568,7 +1568,7 @@ var UploadController = function () {
       if (!request.pre.forceUpdate) {
         var fsImplBrand = new _s3fs2.default(_main2.default.AWS.S3.BUCKET + '/' + _main2.default.AWS.S3.PROVIDER_IMAGE + (request.params.file_type ? '/' + request.params.file_type : ''), _main2.default.AWS.ACCESS_DETAILS);
         return fsImplBrand.readFile(request.params.id + '.png', 'utf8').then(function (fileResult) {
-          return reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', 'attachment; filename=' + request.params.id + '.png');
+          return reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', 'attachment; filename=' + request.params.id + '.png');
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' retrieving provider image is as follow: \n \n ' + err);
 
@@ -1587,7 +1587,7 @@ var UploadController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'Unable to retrieve image',
             err: err,
@@ -1595,7 +1595,7 @@ var UploadController = function () {
           });
         });
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -1608,7 +1608,7 @@ var UploadController = function () {
       if (!request.pre.forceUpdate) {
         var fsImplBrand = new _s3fs2.default(_main2.default.AWS.S3.BUCKET + '/' + _main2.default.AWS.S3.KNOW_ITEM_IMAGE, _main2.default.AWS.ACCESS_DETAILS);
         return fsImplBrand.readFile(request.params.id + '.png', 'utf8').then(function (fileResult) {
-          return reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', 'attachment; filename=' + request.params.id + '.png');
+          return reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', 'attachment; filename=' + request.params.id + '.png');
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' retrieving fact image is as follow: \n \n ' + err);
 
@@ -1627,7 +1627,7 @@ var UploadController = function () {
           }).catch(function (ex) {
             return console.log('error while logging on db,', ex);
           });
-          return reply({
+          return reply.response({
             status: false,
             message: 'Unable to retrieve image',
             err: err,
@@ -1635,7 +1635,7 @@ var UploadController = function () {
           });
         });
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -1647,13 +1647,13 @@ var UploadController = function () {
     value: function retrieveUserImage(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unauthorized'
         }).code(401);
@@ -1664,12 +1664,12 @@ var UploadController = function () {
             userData = userDetail;
             return fsImpl.readFile(userDetail.image_name);
           }).then(function (fileResult) {
-            return reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', 'attachment; filename=' + fileResult.CopyName);
+            return reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', 'attachment; filename=' + fileResult.CopyName);
           }).catch(function (err) {
             console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
             var fsImplUser = new _s3fs2.default(_main2.default.AWS.S3.BUCKET + '/' + _main2.default.AWS.S3.USER_IMAGE, _main2.default.AWS.ACCESS_DETAILS);
             return fsImplUser.readFile(userData.image_name).then(function (fileResult) {
-              return reply(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', 'attachment; filename=' + fileResult.CopyName);
+              return reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', 'attachment; filename=' + fileResult.CopyName);
             }).catch(function (err) {
               console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n ' + JSON.stringify(err.toJSON()));
 
@@ -1688,7 +1688,7 @@ var UploadController = function () {
               }).catch(function (ex) {
                 return console.log('error while logging on db,', ex);
               });
-              return reply({
+              return reply.response({
                 status: false,
                 message: 'No Result Found',
                 forceUpdate: request.pre.forceUpdate
@@ -1696,7 +1696,7 @@ var UploadController = function () {
             });
           });
         } else {
-          return reply({
+          return reply.response({
             status: false,
             message: 'Forbidden',
             forceUpdate: request.pre.forceUpdate

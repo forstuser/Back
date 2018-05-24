@@ -168,11 +168,11 @@ var loginOrRegisterUser = function loginOrRegisterUser(parameters) {
       request: request
     });
   }).then(function (result) {
-    return reply(result).code(201).header('authorization', replyObject.authorization);
+    return reply.response(result).code(201).header('authorization', replyObject.authorization);
   }).catch(function (err) {
     console.log('Error on ' + new Date() + ' for user is as follow: \n \n ' + err);
     if (err.authorization) {
-      return reply({ status: false, message: 'Unable to Login User', err: err }).code(401).header('authorization', replyObject.authorization);
+      return reply.response({ status: false, message: 'Unable to Login User', err: err }).code(401).header('authorization', replyObject.authorization);
     }
 
     modals.logs.create({
@@ -191,7 +191,7 @@ var loginOrRegisterUser = function loginOrRegisterUser(parameters) {
       return console.log('error while logging on db,', ex);
     });
 
-    return reply({
+    return reply.response({
       status: false,
       authorization: token,
       message: 'Unable to Login User',
@@ -227,7 +227,7 @@ var UserController = function () {
         forceUpdate: request.pre.forceUpdate
       };
       if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
@@ -235,7 +235,7 @@ var UserController = function () {
       } else if (!request.pre.userExist) {
         replyObject.status = false;
         replyObject.message = 'Unauthorized';
-        return reply(replyObject);
+        return reply.response(replyObject);
       } else if (request.pre.userExist && !request.pre.forceUpdate) {
         if (request.payload && request.payload.fcmId) {
           fcmManager.insertFcmDetails({
@@ -263,14 +263,14 @@ var UserController = function () {
             }).catch(function (ex) {
               return console.log('error while logging on db,', ex);
             });
-            return reply({ status: false });
+            return reply.response({ status: false });
           });
         }
-        return reply(replyObject).code(201);
+        return reply.response(replyObject).code(201);
       } else {
         replyObject.status = false;
         replyObject.message = 'Forbidden';
-        return reply(replyObject);
+        return reply.response(replyObject);
       }
     }
   }, {
@@ -287,7 +287,7 @@ var UserController = function () {
           console.log('Phone number: ' + request.payload.PhoneNo + ' is not a valid phone number');
           replyObject.status = false;
           replyObject.message = 'Invalid Phone number';
-          return reply(replyObject);
+          return reply.response(replyObject);
         }
 
         if (!request.pre.hasMultipleAccounts) {
@@ -303,15 +303,15 @@ var UserController = function () {
               if (response[1]) {
                 replyObject.Name = user.name;
                 replyObject.imageUrl = user.imageUrl;
-                return reply(replyObject).code(201);
+                return reply.response(replyObject).code(201);
               } else {
-                return reply(replyObject).code(201);
+                return reply.response(replyObject).code(201);
               }
             } else {
               replyObject.status = false;
               replyObject.message = response[0].ErrorMessage;
               replyObject.error = response[0].ErrorMessage;
-              return reply(replyObject).code(403);
+              return reply.response(replyObject).code(403);
             }
           }).catch(function (err) {
             console.log('Error while sending OTP is as follow: \n', JSON.stringify({
@@ -337,13 +337,13 @@ var UserController = function () {
             replyObject.status = false;
             replyObject.message = 'Some issue with sending OTP';
             replyObject.error = err;
-            return reply(replyObject);
+            return reply.response(replyObject);
           });
         } else {
           replyObject.status = false;
           replyObject.message = 'User with same mobile number exist.';
           replyObject.error = err;
-          return reply(replyObject);
+          return reply.response(replyObject);
         }
       }).catch(function (err) {
         console.log('Phone number: ' + request.payload.PhoneNo + ' is not a valid phone number ' + err);
@@ -365,7 +365,7 @@ var UserController = function () {
         });
         replyObject.status = false;
         replyObject.message = 'Invalid Phone number';
-        return reply(replyObject);
+        return reply.response(replyObject);
       });
     }
   }, {
@@ -395,7 +395,7 @@ var UserController = function () {
           var user = request.user;
           replyObject.Name = user.name;
           replyObject.imageUrl = user.imageUrl;
-          return reply(replyObject).code(201);
+          return reply.response(replyObject).code(201);
         }).catch(function (err) {
           console.log('Some issue with sending verification code over email is as follow: \n', JSON.stringify({ email: request.payload.email.toLowerCase(), API_Logs: err }));
           modals.logs.create({
@@ -417,16 +417,16 @@ var UserController = function () {
           replyObject.status = false;
           replyObject.message = 'Some issue with sending verification code over email';
           replyObject.error = err;
-          return reply(replyObject);
+          return reply.response(replyObject);
         });
       } else if (request.pre.isValidEmail === null) {
         replyObject.status = false;
         replyObject.message = 'Another user with email exist';
-        return reply(replyObject);
+        return reply.response(replyObject);
       } else {
         replyObject.status = false;
         replyObject.message = 'Invalid Email, Please provide correct one.';
-        return reply(replyObject);
+        return reply.response(replyObject);
       }
     }
   }, {
@@ -450,7 +450,7 @@ var UserController = function () {
           replyObject.email = currentUser.email;
           replyObject.Name = currentUser.name;
           replyObject.imageUrl = currentUser.imageUrl;
-          return reply(replyObject).code(201);
+          return reply.response(replyObject).code(201);
         }).catch(function (err) {
           console.log('Invalid OTP is as follow: \n', JSON.stringify({ API_Logs: err }));
           modals.logs.create({
@@ -472,16 +472,16 @@ var UserController = function () {
           replyObject.status = false;
           replyObject.message = 'Invalid OTP.';
           replyObject.error = err;
-          return reply(replyObject);
+          return reply.response(replyObject);
         });
       } else if (request.pre.isValidOTP === null) {
         replyObject.status = false;
         replyObject.message = 'Provided OTP is expired, Please request new one.';
-        return reply(replyObject);
+        return reply.response(replyObject);
       } else {
         replyObject.status = false;
         replyObject.message = 'Invalid OTP.';
-        return reply(replyObject);
+        return reply.response(replyObject);
       }
     }
   }, {
@@ -527,7 +527,7 @@ var UserController = function () {
                 replyObject.status = false;
                 replyObject.message = 'Invalid/Expired OTP';
 
-                return reply(replyObject);
+                return reply.response(replyObject);
               }
             }).catch(function (err) {
               console.log('Error on ' + new Date() + ' for mobile no: ' + trueObject.PhoneNo + ' is as follow: \n \n ' + err);
@@ -549,7 +549,7 @@ var UserController = function () {
               replyObject.status = false;
               replyObject.message = 'Issue in updating data';
               replyObject.error = err;
-              return reply(replyObject).code(401);
+              return reply.response(replyObject).code(401);
             });
           } else if (request.payload.Token === '0501') {
             return loginOrRegisterUser({
@@ -567,7 +567,7 @@ var UserController = function () {
           if (!validatePayloadSignature(TruePayload, TrueSecret)) {
             replyObject.status = false;
             replyObject.message = 'Payload verification failed';
-            return reply(replyObject);
+            return reply.response(replyObject);
           } else {
             userInput.email = (trueObject.EmailAddress || '').toLowerCase();
             userInput.full_name = trueObject.Name;
@@ -600,7 +600,7 @@ var UserController = function () {
               replyObject.status = false;
               replyObject.message = 'Issue in updating data';
               replyObject.error = err;
-              return reply(replyObject).code(401);
+              return reply.response(replyObject).code(401);
             });
           }
         } else if (request.payload.BBLogin_Type === 3) {
@@ -658,14 +658,14 @@ var UserController = function () {
               replyObject.status = false;
               replyObject.message = 'Issue in updating data';
               replyObject.error = err;
-              return reply(replyObject).code(401);
+              return reply.response(replyObject).code(401);
             });
           }
         }
       } else {
         replyObject.status = false;
         replyObject.message = 'Forbidden';
-        reply(replyObject);
+        reply.response(replyObject);
       }
     }
   }, {
@@ -692,12 +692,12 @@ var UserController = function () {
           if (result[0]) {
             replyObject.authorization = request.headers.authorization;
 
-            return reply(replyObject);
+            return reply.response(replyObject);
           } else {
             replyObject.status = false;
             replyObject.message = 'Invalid/Expired OTP';
 
-            return reply(replyObject).code(400);
+            return reply.response(replyObject).code(400);
           }
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' for mobile no: ' + request.user.mobile_no + ' is as follow: \n \n ' + err);
@@ -719,12 +719,12 @@ var UserController = function () {
           replyObject.status = false;
           replyObject.message = 'Issue in updating data';
           replyObject.error = err;
-          return reply(replyObject).code(401);
+          return reply.response(replyObject).code(401);
         });
       } else {
         replyObject.status = false;
         replyObject.message = 'Forbidden';
-        return reply(replyObject);
+        return reply.response(replyObject);
       }
     }
   }, {
@@ -751,12 +751,12 @@ var UserController = function () {
           if (result[0]) {
             replyObject.authorization = 'bearer ' + _authentication2.default.generateToken(request.user).token;
 
-            return reply(replyObject);
+            return reply.response(replyObject);
           } else {
             replyObject.status = false;
             replyObject.message = 'Invalid PIN';
 
-            return reply(replyObject);
+            return reply.response(replyObject);
           }
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' for mobile no: ' + request.user.mobile_no + ' is as follow: \n \n ' + err);
@@ -778,12 +778,12 @@ var UserController = function () {
           replyObject.status = false;
           replyObject.message = 'Issue in updating data';
           replyObject.error = err;
-          return reply(replyObject);
+          return reply.response(replyObject);
         });
       } else {
         replyObject.status = false;
         replyObject.message = 'Forbidden';
-        return reply(replyObject);
+        return reply.response(replyObject);
       }
     }
   }, {
@@ -810,12 +810,12 @@ var UserController = function () {
           if (result[0]) {
             replyObject.authorization = 'bearer ' + _authentication2.default.generateToken(request.user).token;
 
-            return reply(replyObject);
+            return reply.response(replyObject);
           } else {
             replyObject.status = false;
             replyObject.message = 'Invalid PIN';
 
-            return reply(replyObject);
+            return reply.response(replyObject);
           }
         }).catch(function (err) {
           console.log('Error on ' + new Date() + ' for mobile no: ' + request.user.mobile_no + ' is as follow: \n \n ' + err);
@@ -837,12 +837,12 @@ var UserController = function () {
           replyObject.status = false;
           replyObject.message = 'Issue in updating data';
           replyObject.error = err;
-          return reply(replyObject);
+          return reply.response(replyObject);
         });
       } else {
         replyObject.status = false;
         replyObject.message = 'Forbidden';
-        return reply(replyObject);
+        return reply.response(replyObject);
       }
     }
   }, {
@@ -872,7 +872,7 @@ var UserController = function () {
             id: user.id || user.ID
           }
         }).then(function () {
-          return reply(replyObject).code(201);
+          return reply.response(replyObject).code(201);
         }).catch(function () {
 
           modals.logs.create({
@@ -893,16 +893,16 @@ var UserController = function () {
 
           replyObject.status = false;
           replyObject.message = 'Forbidden';
-          return reply(replyObject);
+          return reply.response(replyObject);
         });
       } else if (!request.pre.userExist) {
         replyObject.status = false;
         replyObject.message = 'Unauthorized';
-        return reply(replyObject).code(401);
+        return reply.response(replyObject).code(401);
       } else {
         replyObject.status = false;
         replyObject.message = 'Forbidden';
-        reply(replyObject);
+        reply.response(replyObject);
       }
     }
   }, {
@@ -911,26 +911,26 @@ var UserController = function () {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist && !request.pre.forceUpdate && request.pre.pinVerified) {
         return userAdaptor.updateUserDetail({ password: null }, { where: { id: user.id || user.ID } }).then(function () {
-          return reply({
+          return reply.response({
             message: 'Successful',
             status: true,
             forceUpdate: request.pre.forceUpdate
           });
         });
       } else if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({
+        return reply.response({
           message: 'Invalid PIN',
           status: false,
           forceUpdate: request.pre.forceUpdate
         }).code(401);
       } else {
-        return reply({
+        return reply.response({
           message: 'Invalid PIN',
           status: false,
           forceUpdate: request.pre.forceUpdate
@@ -942,17 +942,17 @@ var UserController = function () {
     value: function retrieveUserProfile(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist && !request.pre.forceUpdate) {
-        return reply(userAdaptor.retrieveUserProfile(user, request));
+        return reply.response(userAdaptor.retrieveUserProfile(user, request));
       } else if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({ message: 'Invalid Token', forceUpdate: request.pre.forceUpdate }).code(401);
+        return reply.response({ message: 'Invalid Token', forceUpdate: request.pre.forceUpdate }).code(401);
       } else {
-        return reply({
+        return reply.response({
           message: 'Forbidden',
           status: false,
           forceUpdate: request.pre.forceUpdate
@@ -983,18 +983,18 @@ var UserController = function () {
             return console.log('error while logging on db,', ex);
           });
 
-          return reply({ status: false, message: 'Unable to update user profile' });
+          return reply.response({ status: false, message: 'Unable to update user profile' });
         });
       } else if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply({ message: 'Invalid Token', forceUpdate: request.pre.forceUpdate }).code(401);
+        return reply.response({ message: 'Invalid Token', forceUpdate: request.pre.forceUpdate }).code(401);
       } else {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
@@ -1006,13 +1006,13 @@ var UserController = function () {
     value: function retrieveNearBy(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
       if (request.pre.userExist === 0) {
-        return reply({
+        return reply.response({
           status: false,
           message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        reply({
+        reply.response({
           status: false,
           message: 'Unauthorized',
           forceUpdate: request.pre.forceUpdate
@@ -1020,7 +1020,7 @@ var UserController = function () {
       } else if (request.pre.userExist && !request.pre.forceUpdate) {
         nearByAdaptor.retrieveNearBy(request.query.location || user.location, request.query.geolocation || user.latitude + ',' + user.longitude, request.query.professionids || '[]', reply, user.id || user.ID, request);
       } else {
-        reply({
+        reply.response({
           status: false,
           message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate

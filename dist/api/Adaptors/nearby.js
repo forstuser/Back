@@ -84,7 +84,7 @@ var NearByAdaptor = function () {
 									finalResult.sort(function (a, b) {
 										return a.distance - b.distance;
 									});
-									reply({
+									return reply.response({
 										status: true,
 										sortedUsers: finalResult,
 										forceUpdate: request.pre.forceUpdate
@@ -93,7 +93,7 @@ var NearByAdaptor = function () {
 							}
 						}).catch(function (err) {
 							console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
-							reply({
+							return reply.response({
 								status: false,
 								err: err,
 								forceUpdate: request.pre.forceUpdate
@@ -102,14 +102,14 @@ var NearByAdaptor = function () {
 					}
 
 					if (origins.length <= 0) {
-						reply({
+						return reply.response({
 							status: true,
 							users: users,
 							forceUpdate: request.pre.forceUpdate
 						});
 					}
 				} else {
-					reply({
+					return reply.response({
 						status: false,
 						message: 'No Data Found for mentioned search',
 						forceUpdate: request.pre.forceUpdate
@@ -117,7 +117,7 @@ var NearByAdaptor = function () {
 				}
 			}).catch(function (err) {
 				console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
-				reply({
+				return reply.response({
 					status: false,
 					message: 'Unable to get near by professional',
 					err: err,
