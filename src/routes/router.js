@@ -16,7 +16,6 @@ import {prepareGeneralRoutes} from './general';
 import {prepareAuthRoutes} from './auth';
 import {prepareBrandRoutes} from './brand';
 import {prepareAccessoryRoute} from './accessory_routes';
-import AccessoryServicesController from '../api/controllers/accessory';
 
 let middleware;
 
@@ -40,7 +39,6 @@ export default (app, modals) => {
   const whatToServiceRoutes = [];
   const accessoryServicesRoutes = [];
   const searchController = new SearchController(modals);
-  const accessoryServicesController = new AccessoryServicesController(modals);
   prepareAuthRoutes(modals, authRoutes, middleware);
 
   prepareCategoryRoutes(modals, categoryRoutes, middleware);
@@ -65,8 +63,7 @@ export default (app, modals) => {
 
   prepareWhatToServiceRoutes(modals, whatToServiceRoutes, middleware);
 
-  prepareAccessoryRoute(accessoryServicesController,
-      AccessoryServicesController, accessoryServicesRoutes, middleware);
+  prepareAccessoryRoute(modals, accessoryServicesRoutes, middleware);
 
   if (searchController) {
     searchRoutes.push({

@@ -1,15 +1,21 @@
 /*jshint esversion: 6 */
 'use strict';
 
-//accessoryRoute
-
-Object.defineProperty(exports, '__esModule', {
-  value: true,
+Object.defineProperty(exports, "__esModule", {
+  value: true
 });
 exports.prepareAccessoryRoute = prepareAccessoryRoute;
 
-function prepareAccessoryRoute(
-    varController, controller, route, appVersionHelper) {
+var _accessory = require('../api/controllers/accessory');
+
+var _accessory2 = _interopRequireDefault(_accessory);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+//accessoryRoute
+function prepareAccessoryRoute(modal, route, middleware) {
+
+  var varController = new _accessory2.default(modal);
 
   if (varController) {
 
@@ -18,16 +24,15 @@ function prepareAccessoryRoute(
       path: '/accessories',
       config: {
         auth: 'jwt',
-        pre: [
-          {
-            method: appVersionHelper.checkAppVersion,
-            assign: 'forceUpdate',
-          }, {
-            method: appVersionHelper.updateUserActiveStatus,
-            assign: 'userExist',
-          }],
-        handler: controller.getAccessories,
-      },
+        pre: [{
+          method: middleware.checkAppVersion,
+          assign: 'forceUpdate'
+        }, {
+          method: middleware.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _accessory2.default.getAccessories
+      }
     });
 
     route.push({
@@ -35,16 +40,15 @@ function prepareAccessoryRoute(
       path: '/order/history',
       config: {
         auth: 'jwt',
-        pre: [
-          {
-            method: appVersionHelper.checkAppVersion,
-            assign: 'forceUpdate',
-          }, {
-            method: appVersionHelper.updateUserActiveStatus,
-            assign: 'userExist',
-          }],
-        handler: controller.getOrderHistory,
-      },
+        pre: [{
+          method: middleware.checkAppVersion,
+          assign: 'forceUpdate'
+        }, {
+          method: middleware.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _accessory2.default.getOrderHistory
+      }
     });
 
     // route.push({
@@ -54,11 +58,11 @@ function prepareAccessoryRoute(
     //     auth: 'jwt',
     //     pre: [
     //       {
-    //         method: appVersionHelper.checkAppVersion,
+    //         method: middleware.checkAppVersion,
     //         assign: 'forceUpdate',
     //       },
     //       {
-    //         method: appVersionHelper.updateUserActiveStatus,
+    //         method: middleware.updateUserActiveStatus,
     //         assign: 'userExist',
     //       },
     //     ],

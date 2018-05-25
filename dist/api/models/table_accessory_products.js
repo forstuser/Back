@@ -1,112 +1,112 @@
 'use strict';
 
-Object.defineProperty(exports, '__esModule', {
-  value: true,
+Object.defineProperty(exports, "__esModule", {
+  value: true
 });
 
-exports.default = function(sequelize, DataTypes) {
+exports.default = function (sequelize, DataTypes) {
   var table_accessory_products = sequelize.define('table_accessory_products', {
     title: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING
     },
     product_brand_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.INTEGER
     },
     product_model: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING
     },
     description: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING
     },
     asin: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING
     },
     pid: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING
     },
     details: {
-      type: DataTypes.JSONB,
+      type: DataTypes.JSONB
     },
     accessory_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.INTEGER
     },
     accessory_type_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.INTEGER
     },
     bb_class: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.INTEGER
     },
     created_at: {
       type: DataTypes.DATE,
-      defaultValue: sequelize.literal('NOW()'),
+      defaultValue: sequelize.literal('NOW()')
     },
     created_by: {
       type: DataTypes.INTEGER,
-      defaultValue: 1,
+      defaultValue: 1
     },
     updated_at: {
       type: DataTypes.DATE,
-      defaultValue: sequelize.literal('NOW()'),
+      defaultValue: sequelize.literal('NOW()')
     },
     updated_by: {
       type: DataTypes.INTEGER,
-      defaultValue: 1,
+      defaultValue: 1
     },
     status_type: {
       type: DataTypes.INTEGER,
-      defaultValue: 1,
+      defaultValue: 1
     },
     affiliate_type: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.INTEGER
     },
     url: {
-      type: DataTypes.STRING,
-    },
+      type: DataTypes.STRING
+    }
   }, {
     freezeTableName: true,
     defaultPrimaryKey: true,
     timestamps: true,
     underscored: true,
-    tableName: 'table_accessory_products',
+    tableName: 'table_accessory_products'
   });
 
-  table_accessory_products.associate = function(models) {
+  table_accessory_products.associate = function (models) {
 
     table_accessory_products.belongsTo(models.table_accessory_types, {
       foreignKey: 'accessory_type_id',
       as: 'accessory_type',
       onDelete: 'cascade',
-      onUpdate: 'cascade',
+      onUpdate: 'cascade'
     });
 
     table_accessory_products.belongsTo(models.brands, {
       foreignKey: 'product_brand_id',
       onDelete: 'cascade',
-      onUpdate: 'cascade',
+      onUpdate: 'cascade'
     });
 
     table_accessory_products.belongsTo(models.table_accessory_categories, {
       foreignKey: 'accessory_id',
       as: 'accessory',
       onDelete: 'cascade',
-      onUpdate: 'cascade',
+      onUpdate: 'cascade'
     });
 
     table_accessory_products.belongsTo(models.users, {
       foreignKey: 'updated_by',
       onDelete: 'cascade',
-      onUpdate: 'cascade',
+      onUpdate: 'cascade'
     });
     table_accessory_products.belongsTo(models.users, {
       foreignKey: 'created_by',
       onDelete: 'cascade',
-      onUpdate: 'cascade',
+      onUpdate: 'cascade'
     });
     table_accessory_products.belongsTo(models.statuses, {
       foreignKey: 'status_type',
       targetKey: 'status_type',
       onDelete: 'cascade',
-      onUpdate: 'cascade',
+      onUpdate: 'cascade'
     });
   };
   return table_accessory_products;

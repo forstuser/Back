@@ -22,14 +22,14 @@ class AccessoryController {
       return accessoryAdaptor.getAccessoriesList({
         user_id: (user.id || user.ID),
         queryOptions: request.query,
-      }).then((result) => reply({
+      }).then((result) => reply.response({
         status: true,
         result,
       })).catch((err) => {
         console.log(`Error on ${new Date()} for user ${user.id ||
         user.ID} is as follow: \n \n ${err}`);
         console.log(err);
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unable to retrieve accessories data',
         });
@@ -45,13 +45,13 @@ class AccessoryController {
     if (request.pre.userExist && !request.pre.forceUpdate) {
       accessoryAdaptor.getOrderHistory({
         user_id: (user.id || user.ID),
-      }).then((result) => reply({
+      }).then((result) => reply.response({
         status: true,
         result,
       })).catch((err) => {
         console.log(`Error on ${new Date()} for user ${user.id ||
         user.ID} is as follow: \n \n ${err}`);
-        return reply({
+        return reply.response({
           status: false,
           message: 'Unable to retrieve order history',
         });

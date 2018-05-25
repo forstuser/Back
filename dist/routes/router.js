@@ -37,6 +37,12 @@ var _auth = require('./auth');
 
 var _brand = require('./brand');
 
+var _accessory_routes = require('./accessory_routes');
+
+var _accessory = require('../api/controllers/accessory');
+
+var _accessory2 = _interopRequireDefault(_accessory);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var middleware = void 0;
@@ -59,6 +65,7 @@ exports.default = function (app, modals) {
   var calendarRoutes = [];
   var uploadFileRoute = [];
   var whatToServiceRoutes = [];
+  var accessoryServicesRoutes = [];
   var searchController = new _search2.default(modals);
   (0, _auth.prepareAuthRoutes)(modals, authRoutes, middleware);
 
@@ -84,6 +91,8 @@ exports.default = function (app, modals) {
 
   (0, _what_to_service.prepareWhatToServiceRoutes)(modals, whatToServiceRoutes, middleware);
 
+  (0, _accessory_routes.prepareAccessoryRoute)(modals, accessoryServicesRoutes, middleware);
+
   if (searchController) {
     searchRoutes.push({
       method: 'GET',
@@ -105,5 +114,5 @@ exports.default = function (app, modals) {
     });
   }
 
-  app.route([].concat(authRoutes, categoryRoutes, brandRoutes, sellerRoutes, serviceCenterRoutes, billManagementRoutes, uploadFileRoute, dashboardRoutes, productRoutes, insightRoutes, searchRoutes, generalRoutes, repairRoutes, calendarRoutes, whatToServiceRoutes));
+  app.route([].concat(authRoutes, categoryRoutes, brandRoutes, sellerRoutes, serviceCenterRoutes, billManagementRoutes, uploadFileRoute, dashboardRoutes, productRoutes, insightRoutes, searchRoutes, generalRoutes, repairRoutes, calendarRoutes, whatToServiceRoutes, accessoryServicesRoutes));
 };

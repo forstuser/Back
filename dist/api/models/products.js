@@ -58,7 +58,7 @@ exports.default = function (sequelize, DataTypes) {
       type: DataTypes.INTEGER
     },
     accessory_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.INTEGER
     },
     status_type: {
       type: DataTypes.INTEGER
@@ -75,7 +75,7 @@ exports.default = function (sequelize, DataTypes) {
       type: DataTypes.ARRAY(DataTypes.JSONB)
     },
     model: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING
     }
   }, {
     freezeTableName: true,
@@ -97,8 +97,7 @@ exports.default = function (sequelize, DataTypes) {
     products.belongsTo(models.statuses, { foreignKey: 'status_type', targetKey: 'status_type' });
     products.belongsTo(models.jobs, { as: 'jobs', foreignKey: 'job_id' });
     products.belongsTo(models.offlineSellers, { foreignKey: 'seller_id', as: 'sellers' });
-    products.belongsTo(models.table_accessory_categories,
-        {foreignKey: 'accessory_id', as: 'accessory', onDelete: 'cascade'});
+    products.belongsTo(models.table_accessory_categories, { foreignKey: 'accessory_id', as: 'accessory', onDelete: 'cascade' });
     products.belongsTo(models.brands, { foreignKey: 'brand_id', as: 'brand' });
     products.belongsTo(models.categories, { foreignKey: 'main_category_id', as: 'mainCategory' });
     products.belongsTo(models.categories, { foreignKey: 'category_id', as: 'category' });

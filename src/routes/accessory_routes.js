@@ -1,9 +1,12 @@
 /*jshint esversion: 6 */
 'use strict';
 
+import controller from '../api/controllers/accessory';
+
 //accessoryRoute
-export function prepareAccessoryRoute(
-    varController, controller, route, appVersionHelper) {
+export function prepareAccessoryRoute(modal, route, middleware) {
+
+  const varController = new controller(modal);
 
   if (varController) {
 
@@ -14,11 +17,11 @@ export function prepareAccessoryRoute(
         auth: 'jwt',
         pre: [
           {
-            method: appVersionHelper.checkAppVersion,
+            method: middleware.checkAppVersion,
             assign: 'forceUpdate',
           },
           {
-            method: appVersionHelper.updateUserActiveStatus,
+            method: middleware.updateUserActiveStatus,
             assign: 'userExist',
           },
         ],
@@ -33,11 +36,11 @@ export function prepareAccessoryRoute(
         auth: 'jwt',
         pre: [
           {
-            method: appVersionHelper.checkAppVersion,
+            method: middleware.checkAppVersion,
             assign: 'forceUpdate',
           },
           {
-            method: appVersionHelper.updateUserActiveStatus,
+            method: middleware.updateUserActiveStatus,
             assign: 'userExist',
           },
         ],
@@ -52,11 +55,11 @@ export function prepareAccessoryRoute(
     //     auth: 'jwt',
     //     pre: [
     //       {
-    //         method: appVersionHelper.checkAppVersion,
+    //         method: middleware.checkAppVersion,
     //         assign: 'forceUpdate',
     //       },
     //       {
-    //         method: appVersionHelper.updateUserActiveStatus,
+    //         method: middleware.updateUserActiveStatus,
     //         assign: 'userExist',
     //       },
     //     ],
