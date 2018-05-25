@@ -3,14 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-
-var _fs = require('fs');
-
-var _fs2 = _interopRequireDefault(_fs);
-
-var _path = require('path');
-
-var _path2 = _interopRequireDefault(_path);
+exports.initModel = undefined;
 
 var _hapi = require('hapi');
 
@@ -140,7 +133,7 @@ var init = function () {
   server.options.tls = TLS_OPTIONS;
 }*/
 
-var initModel = function initModel() {
+var initModel = exports.initModel = function initModel() {
   _models2.default.sequelize.sync().then(function () {
     init().then(function (server) {
       (0, _router2.default)(server, _models2.default);
@@ -165,14 +158,10 @@ var initModel = function initModel() {
         }).catch(function (ex) {
           return console.log('error while logging on db,', ex);
         });
-
         process.exit(1);
       });
     });
   }).catch(function (err) {
     return console.log('Error at start up is as follow: \n \n ' + err);
   });
-};
-exports.default = {
-  initModel: initModel
 };

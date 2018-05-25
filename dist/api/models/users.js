@@ -56,6 +56,9 @@ exports.default = function (sequelize, DataTypes) {
     user_status_type: {
       type: DataTypes.INTEGER
     },
+    gender: {
+      type: DataTypes.INTEGER
+    },
     email_verified: {
       type: DataTypes.BOOLEAN
     },

@@ -93,7 +93,7 @@ var UserAdaptor = function () {
 
       return this.modals.users.findOne({
         where: whereObject,
-        attributes: ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', 'image_name', 'fb_id']
+        attributes: ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', 'image_name', 'gender', 'fb_id']
       }).then(function (result) {
 
         console.log(result);
@@ -102,7 +102,7 @@ var UserAdaptor = function () {
           return _this.modals.users.findCreateFind({
             where: whereObject,
             defaults: defaultObject,
-            attributes: ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', 'image_name']
+            attributes: ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', 'image_name', 'gender']
           });
         }
 
@@ -126,7 +126,7 @@ var UserAdaptor = function () {
   }, {
     key: 'retrieveSingleUser',
     value: function retrieveSingleUser(filterObject) {
-      filterObject.attributes = ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', [this.modals.sequelize.fn('CONCAT', 'consumer/', this.modals.sequelize.col('id'), '/images'), 'imageUrl']];
+      filterObject.attributes = ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', 'gender', [this.modals.sequelize.fn('CONCAT', 'consumer/', this.modals.sequelize.col('id'), '/images'), 'imageUrl']];
       return this.modals.users.findOne(filterObject).then(function (item) {
         return item ? item.toJSON() : item;
       });
@@ -142,7 +142,7 @@ var UserAdaptor = function () {
     key: 'retrieveUserById',
     value: function retrieveUserById(user) {
       return _bluebird2.default.all([this.modals.users.findById(user.id || user.ID, {
-        attributes: ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', 'location', 'latitude', 'longitude', 'image_name', 'password', [this.modals.sequelize.fn('CONCAT', '/consumer/', this.modals.sequelize.col('id'), '/images'), 'imageUrl']]
+        attributes: ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', 'location', 'latitude', 'longitude', 'image_name', 'password', 'gender', [this.modals.sequelize.fn('CONCAT', '/consumer/', this.modals.sequelize.col('id'), '/images'), 'imageUrl']]
       }), this.retrieveUserAddress({
         where: {
           user_id: user.id || user.ID
@@ -240,7 +240,8 @@ var UserAdaptor = function () {
         full_name: payload.name,
         location: payload.location,
         latitude: payload.latitude,
-        longitude: payload.longitude
+        longitude: payload.longitude,
+        gender: payload.gender
       };
 
       var userAddresses = payload.addresses ? payload.addresses.map(function (item) {

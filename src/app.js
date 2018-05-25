@@ -68,7 +68,7 @@ const init = async () => {
   server.options.tls = TLS_OPTIONS;
 }*/
 
-const initModel = () => {
+export const initModel = () => {
   models.sequelize.sync().then(() => {
     init().then((server) => {
       routers(server, models);
@@ -89,16 +89,12 @@ const initModel = () => {
           log_type: 2,
           user_id: 1,
           log_content: JSON.stringify({err}),
-        }).
-            catch((ex) => console.log('error while logging on db,', ex));
-
+        }).catch((ex) =>
+            console.log('error while logging on db,', ex));
         process.exit(1);
       });
     });
   }).catch(err =>
       console.log(
           `Error at start up is as follow: \n \n ${err}`));
-};
-export default {
-  initModel,
 };

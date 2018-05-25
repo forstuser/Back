@@ -3,15 +3,12 @@
 'use strict';
 import cluster from 'cluster';
 import {cpus} from 'os';
-import APP from './app';
-import config from './config/main';
-
-const PORT = config.APP.PORT || 8443;
+import {initModel} from './app';
 
 // import {executeCron} from './cronRunner';
 const numCPUs = cpus().length;
 
-const server = APP.initModel;
+const server = initModel;
 
 // executeCron();
 

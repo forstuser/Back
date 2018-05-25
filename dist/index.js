@@ -11,20 +11,12 @@ var _os = require('os');
 
 var _app = require('./app');
 
-var _app2 = _interopRequireDefault(_app);
-
-var _main = require('./config/main');
-
-var _main2 = _interopRequireDefault(_main);
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-var PORT = _main2.default.APP.PORT || 8443;
 
 // import {executeCron} from './cronRunner';
 var numCPUs = (0, _os.cpus)().length;
 
-var server = _app2.default.initModel;
+var server = _app.initModel;
 
 // executeCron();
 
