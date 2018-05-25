@@ -28,80 +28,50 @@ class DashboardAdaptor {
   }
 
   retrieveDashboardResult(user, request) {
+    let user_id = user.id || user.ID;
     return Promise.try(() => Promise.all([
       this.filterUpcomingService(user, request),
       this.prepareInsightData(user, request),
       this.retrieveRecentSearch(user),
       this.modals.mailBox.count(
-          {where: {user_id: user.id || user.ID, status_id: 4}}),
-      this.modals.products.count({
-        where: {
-          user_id: user.id || user.ID,
-          status_type: [5, 11],
-        },
-      }),
+          {where: {user_id, status_id: 4}}),
       this.productAdaptor.retrieveUsersLastProduct({
-        user_id: user.id || user.ID,
+        user_id,
         status_type: [5, 11],
       }, request.language),
-      this.modals.user_calendar_item.count({
-        where: {
-          user_id: user.id || user.ID,
-        },
-      }),
       this.modals.user_calendar_item.findOne({
         where: {
-          user_id: user.id || user.ID,
+          user_id,
         },
         order: [['updated_at', 'desc']],
       }),
       this.modals.service_calculation.findOne({
         where: {
-          updated_by: user.id || user.ID,
+          updated_by: user_id,
         },
         order: [['updated_at', 'desc']],
       }),
       this.calendarServiceAdaptor.retrieveCalendarItemList(
-          {user_id: user.id || user.ID}, request.language, 4),
+          {user_id}, request.language, 4),
       this.modals.products.count({
         where: {
-          user_id: user.id || user.ID,
+          user_id,
           main_category_id: [2, 3],
           status_type: [5, 11],
         },
       }),
-      this.modals.knowItems.count({
-        where: {
-          id: {$gt: request.query.lastfact || 0},
-        },
-      }),
-      this.modals.todoUserMap.count({
-        where: {
-          user_id: user.id || user.ID,
-        },
-      }),
-      this.modals.mealUserMap.count({
-        where: {
-          user_id: user.id || user.ID,
-        },
-      }),
-      this.modals.wearables.count({
-        where: {
-          created_by: user.id || user.ID,
-        },
-      }),
-      this.modals.know_user_likes.count({
-        where: {
-          created_by: user.id || user.ID,
-        },
-      }),
+      this.getUserItemCounts(user_id),
     ])).
         spread(
             (upcomingServices, insightData, recentSearches, notificationCount,
-             productCount, product, calendarItemCount, latestCalendarItem,
-             latestCalendarCalc, recent_calendar_item, service_center_products,
-             know_item_count, todoCounts, mealCounts,
-             wearableCounts, knowItemCounts) => {
+             product, latestCalendarItem, latestCalendarCalc,
+             recent_calendar_item, service_center_products,
+             know_item_count) => {
+
+              let {
+                productCounts, calendarItemCounts, todoCounts, mealCounts,
+                wearableCounts, knowItemCounts,
+              } = userItemCounts;
               latestCalendarItem = latestCalendarItem
                   ? latestCalendarItem.toJSON()
                   : {};
@@ -126,8 +96,9 @@ class DashboardAdaptor {
                     upcomingServices),
                 insight: this.evaluateDashboardInsight(insightData),
                 forceUpdate: request.pre.forceUpdate,
-                showDashboard: !!(productCount && parseInt(productCount) > 0) ||
-                !!(calendarItemCount && parseInt(calendarItemCount) > 0),
+                showDashboard: !!(productCounts && parseInt(productCounts) >
+                    0) ||
+                !!(calendarItemCounts && parseInt(calendarItemCounts) > 0),
                 showEazyDay: !!(todoCounts && todoCounts > 0) ||
                 !!(mealCounts && mealCounts > 0) ||
                 !!(wearableCounts && wearableCounts > 0),
@@ -258,36 +229,12 @@ class DashboardAdaptor {
     console.log(isNewUser);
     if (!isNewUser) {
       console.log('We are here', isNewUser);
-      return Promise.all([
-        this.modals.products.count({
-          where: {
-            user_id: user.id || user.ID,
-            status_type: [5, 11],
-          },
-        }),
-        this.modals.user_calendar_item.count({
-          where: {
-            user_id: user.id || user.ID,
-          },
-        }), this.modals.todoUserMap.count({
-          where: {
-            user_id: user.id || user.ID,
-          },
-        }), this.modals.mealUserMap.count({
-          where: {
-            user_id: user.id || user.ID,
-          },
-        }), this.modals.wearables.count({
-          where: {
-            created_by: user.id || user.ID,
-          },
-        }), this.modals.know_user_likes.count({
-          where: {
-            created_by: user.id || user.ID,
-          },
-        })]).
-          spread((productCounts, calendarItemCounts, todoCounts, mealCounts,
-                  wearableCounts, knowItemCounts) => {
+      return this.getUserItemCounts(user.id || user.ID).
+          then((userItemCounts) => {
+            let {
+              productCounts, calendarItemCounts, todoCounts, mealCounts,
+              wearableCounts, knowItemCounts,
+            } = userItemCounts;
             calendarItemCounts = parseInt(calendarItemCounts);
             productCounts = parseInt(productCounts);
             return {
@@ -359,6 +306,41 @@ class DashboardAdaptor {
       userId: user.id || user.ID,
       forceUpdate: request.pre.forceUpdate,
     };
+  }
+
+  getUserItemCounts(user_id) {
+    return Promise.all([
+      this.modals.products.count({
+        where: {
+          user_id,
+          status_type: [5, 11],
+        },
+      }),
+      this.modals.user_calendar_item.count({
+        where: {
+          user_id,
+        },
+      }), this.modals.todoUserMap.count({
+        where: {
+          user_id,
+        },
+      }), this.modals.mealUserMap.count({
+        where: {
+          user_id,
+        },
+      }), this.modals.wearables.count({
+        where: {
+          created_by: user_id,
+        },
+      }), this.modals.know_user_likes.count({
+        where: {
+          user_id,
+        },
+      })]).spread((productCounts, calendarItemCounts, todoCounts, mealCounts,
+                   wearableCounts, knowItemCounts) => ({
+      productCounts, calendarItemCounts, todoCounts, mealCounts,
+      wearableCounts, knowItemCounts,
+    }));
   }
 
   filterUpcomingService(user, request) {
