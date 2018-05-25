@@ -82,37 +82,57 @@ var DashboardAdaptor = function () {
     value: function retrieveDashboardResult(user, request) {
       var _this = this;
 
-      var user_id = user.id || user.ID;
       return _bluebird2.default.try(function () {
-        return _bluebird2.default.all([_this.filterUpcomingService(user, request), _this.prepareInsightData(user, request), _this.retrieveRecentSearch(user), _this.modals.mailBox.count({ where: { user_id: user_id, status_id: 4 } }), _this.productAdaptor.retrieveUsersLastProduct({
-          user_id: user_id,
-          status_type: [5, 11]
-        }, request.language), _this.modals.user_calendar_item.findOne({
+        return _bluebird2.default.all([_this.filterUpcomingService(user, request), _this.prepareInsightData(user, request), _this.retrieveRecentSearch(user), _this.modals.mailBox.count({ where: { user_id: user.id || user.ID, status_id: 4 } }), _this.modals.products.count({
           where: {
-            user_id: user_id
+            user_id: user.id || user.ID,
+            status_type: [5, 11]
+          }
+        }), _this.productAdaptor.retrieveUsersLastProduct({
+          user_id: user.id || user.ID,
+          status_type: [5, 11]
+        }, request.language), _this.modals.user_calendar_item.count({
+          where: {
+            user_id: user.id || user.ID
+          }
+        }), _this.modals.user_calendar_item.findOne({
+          where: {
+            user_id: user.id || user.ID
           },
           order: [['updated_at', 'desc']]
         }), _this.modals.service_calculation.findOne({
           where: {
-            updated_by: user_id
+            updated_by: user.id || user.ID
           },
           order: [['updated_at', 'desc']]
-        }), _this.calendarServiceAdaptor.retrieveCalendarItemList({ user_id: user_id }, request.language, 4), _this.modals.products.count({
+        }), _this.calendarServiceAdaptor.retrieveCalendarItemList({ user_id: user.id || user.ID }, request.language, 4), _this.modals.products.count({
           where: {
-            user_id: user_id,
+            user_id: user.id || user.ID,
             main_category_id: [2, 3],
             status_type: [5, 11]
           }
-        }), _this.getUserItemCounts(user_id)]);
-      }).spread(function (upcomingServices, insightData, recentSearches, notificationCount, product, latestCalendarItem, latestCalendarCalc, recent_calendar_item, service_center_products, know_item_count) {
-        var _userItemCounts = userItemCounts,
-            productCounts = _userItemCounts.productCounts,
-            calendarItemCounts = _userItemCounts.calendarItemCounts,
-            todoCounts = _userItemCounts.todoCounts,
-            mealCounts = _userItemCounts.mealCounts,
-            wearableCounts = _userItemCounts.wearableCounts,
-            knowItemCounts = _userItemCounts.knowItemCounts;
-
+        }), _this.modals.knowItems.count({
+          where: {
+            id: { $gt: request.query.lastfact || 0 }
+          }
+        }), _this.modals.todoUserMap.count({
+          where: {
+            user_id: user.id || user.ID
+          }
+        }), _this.modals.mealUserMap.count({
+          where: {
+            user_id: user.id || user.ID
+          }
+        }), _this.modals.wearables.count({
+          where: {
+            created_by: user.id || user.ID
+          }
+        }), _this.modals.know_user_likes.count({
+          where: {
+            user_id: user.id || user.ID
+          }
+        })]);
+      }).spread(function (upcomingServices, insightData, recentSearches, notificationCount, productCount, product, calendarItemCount, latestCalendarItem, latestCalendarCalc, recent_calendar_item, service_center_products, know_item_count, todoCounts, mealCounts, wearableCounts, knowItemCounts) {
         latestCalendarItem = latestCalendarItem ? latestCalendarItem.toJSON() : {};
         latestCalendarCalc = latestCalendarCalc ? latestCalendarCalc.toJSON() : {};
         var calendar_item_updated_at = latestCalendarItem && (0, _moment2.default)(latestCalendarItem.updated_at, _moment2.default.ISO_8601).diff((0, _moment2.default)(latestCalendarCalc.updated_at, _moment2.default.ISO_8601), 'days') < 0 ? latestCalendarCalc.updated_at : latestCalendarItem ? latestCalendarItem.updated_at : (0, _moment2.default)();
@@ -127,9 +147,9 @@ var DashboardAdaptor = function () {
           upcomingServices: _this.evaluateUpcomingServices(upcomingServices),
           insight: _this.evaluateDashboardInsight(insightData),
           forceUpdate: request.pre.forceUpdate,
-          showDashboard: !!(productCounts && parseInt(productCounts) > 0) || !!(calendarItemCounts && parseInt(calendarItemCounts) > 0),
-          showEazyDay: !!(todoCounts && todoCounts > 0) || !!(mealCounts && mealCounts > 0) || !!(wearableCounts && wearableCounts > 0),
-          showKnowItems: !!(knowItemCounts && knowItemCounts > 0),
+          showDashboard: !!(productCount && parseInt(productCount) > 0) || !!(calendarItemCount && parseInt(calendarItemCount) > 0),
+          hasEazyDayItems: !!(todoCounts && todoCounts > 0) || !!(mealCounts && mealCounts > 0) || !!(wearableCounts && wearableCounts > 0),
+          knowItemsLiked: !!(knowItemCounts && knowItemCounts > 0),
           total_calendar_item: calendarItemCount || 0,
           calendar_item_updated_at: calendar_item_updated_at,
           recent_calendar_item: recent_calendar_item,
@@ -251,14 +271,32 @@ var DashboardAdaptor = function () {
       console.log(isNewUser);
       if (!isNewUser) {
         console.log('We are here', isNewUser);
-        return this.getUserItemCounts(user.id || user.ID).then(function (userItemCounts) {
-          var productCounts = userItemCounts.productCounts,
-              calendarItemCounts = userItemCounts.calendarItemCounts,
-              todoCounts = userItemCounts.todoCounts,
-              mealCounts = userItemCounts.mealCounts,
-              wearableCounts = userItemCounts.wearableCounts,
-              knowItemCounts = userItemCounts.knowItemCounts;
-
+        return _bluebird2.default.all([this.modals.products.count({
+          where: {
+            user_id: user.id || user.ID,
+            status_type: [5, 11]
+          }
+        }), this.modals.user_calendar_item.count({
+          where: {
+            user_id: user.id || user.ID
+          }
+        }), this.modals.todoUserMap.count({
+          where: {
+            user_id: user.id || user.ID
+          }
+        }), this.modals.mealUserMap.count({
+          where: {
+            user_id: user.id || user.ID
+          }
+        }), this.modals.wearables.count({
+          where: {
+            created_by: user.id || user.ID
+          }
+        }), this.modals.know_user_likes.count({
+          where: {
+            user_id: user.id || user.ID
+          }
+        })]).spread(function (productCounts, calendarItemCounts, todoCounts, mealCounts, wearableCounts, knowItemCounts) {
           calendarItemCounts = parseInt(calendarItemCounts);
           productCounts = parseInt(productCounts);
           return {
@@ -266,8 +304,8 @@ var DashboardAdaptor = function () {
             message: !isNewUser ? 'Existing User' : 'New User',
             billCounts: 0,
             showDashboard: !!(productCounts && productCounts > 0) || !!(calendarItemCounts && calendarItemCounts > 0),
-            showEazyDay: !!(todoCounts && todoCounts > 0) || !!(mealCounts && mealCounts > 0) || !!(wearableCounts && wearableCounts > 0),
-            showKnowItems: !!(knowItemCounts && knowItemCounts > 0),
+            hasEazyDayItems: !!(todoCounts && todoCounts > 0) || !!(mealCounts && mealCounts > 0) || !!(wearableCounts && wearableCounts > 0),
+            knowItemsLiked: !!(knowItemCounts && knowItemCounts > 0),
             isExistingUser: !isNewUser,
             authorization: token,
             userId: user.id || user.ID,
@@ -316,47 +354,12 @@ var DashboardAdaptor = function () {
         authorization: token,
         billCounts: 0,
         showDashboard: false,
-        showEazyDay: false,
-        showKnowItems: false,
+        hasEazyDayItems: false,
+        knowItemsLiked: false,
         isExistingUser: false,
         userId: user.id || user.ID,
         forceUpdate: request.pre.forceUpdate
       };
-    }
-  }, {
-    key: 'getUserItemCounts',
-    value: function getUserItemCounts(user_id) {
-      return _bluebird2.default.all([this.modals.products.count({
-        where: {
-          user_id: user_id,
-          status_type: [5, 11]
-        }
-      }), this.modals.user_calendar_item.count({
-        where: {
-          user_id: user_id
-        }
-      }), this.modals.todoUserMap.count({
-        where: {
-          user_id: user_id
-        }
-      }), this.modals.mealUserMap.count({
-        where: {
-          user_id: user_id
-        }
-      }), this.modals.wearables.count({
-        where: {
-          created_by: user_id
-        }
-      }), this.modals.know_user_likes.count({
-        where: {
-          user_id: user_id
-        }
-      })]).spread(function (productCounts, calendarItemCounts, todoCounts, mealCounts, wearableCounts, knowItemCounts) {
-        return {
-          productCounts: productCounts, calendarItemCounts: calendarItemCounts, todoCounts: todoCounts, mealCounts: mealCounts,
-          wearableCounts: wearableCounts, knowItemCounts: knowItemCounts
-        };
-      });
     }
   }, {
     key: 'filterUpcomingService',
