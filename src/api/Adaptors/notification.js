@@ -368,10 +368,12 @@ class NotificationAdaptor {
             });
 
             if (product.masterCategoryId.toString() === '6') {
-              product.title = `${product.productName} Reminder`;
+              product.title = `${product.productName ||
+              'one of your product'} Reminder`;
               product.productType = 5;
             } else {
-              product.title = `${product.productName} Reminder`;
+              product.title = `${product.productName ||
+              'one of your product'} Reminder`;
               product.productType = 4;
             }
 
@@ -391,7 +393,8 @@ class NotificationAdaptor {
               puc.dueIn = dueDateTime.diff(moment.utc(), 'days', true);
               puc.productType = 3;
               puc.title = 'PUC Renewal Pending';
-              puc.description = `PUC Renewal Pending for ${puc.productName}`;
+              puc.description = `PUC Renewal Pending for ${puc.productName ||
+              'one of your product'}`;
             }
 
             return puc;
@@ -408,7 +411,8 @@ class NotificationAdaptor {
               amc.dueIn = dueDateTime.diff(moment.utc(), 'days', true);
               amc.productType = 3;
               amc.title = 'AMC Renewal Pending';
-              amc.description = `AMC Renewal Pending for ${amc.productName}`;
+              amc.description = `AMC Renewal Pending for ${amc.productName ||
+              'one of your product'}`;
             }
 
             return amc;
@@ -426,7 +430,8 @@ class NotificationAdaptor {
               insurance.dueIn = dueDateTime.diff(moment.utc(), 'days', true);
               insurance.productType = 3;
               insurance.title = 'Insurance Renewal Pending';
-              insurance.description = `Insurance Renewal Pending for ${insurance.productName}`;
+              insurance.description = `Insurance Renewal Pending for ${insurance.productName ||
+              'one of your product'}`;
             }
             return insurance;
           });
@@ -448,10 +453,12 @@ class NotificationAdaptor {
               warranty.description = `Warranty Renewal Pending for ${warranty.warranty_type ===
               3 ?
                   `${warranty.dualWarrantyItem ||
-                  'dual item'} of ${warranty.productName}` :
+                  'dual item'} of ${warranty.productName ||
+                  'one of your product'}` :
                   warranty.warranty_type === 4 ?
-                      `Accessories of ${warranty.productName}` :
-                      `${warranty.productName}`}`;
+                      `Accessories of ${warranty.productName ||
+                      'one of your product'}` :
+                      `${warranty.productName || 'one of your product'}`}`;
             }
 
             return warranty;
@@ -465,13 +472,13 @@ class NotificationAdaptor {
             const warranty = item;
             if (moment.utc(warranty.warranty_upto, moment.ISO_8601).isValid()) {
               const dueDate_time = moment.utc(warranty.warranty_upto,
-                  moment.ISO_8601).
-                  endOf('day');
+                  moment.ISO_8601).endOf('day');
               warranty.dueDate = warranty.warranty_upto;
               warranty.dueIn = dueDate_time.diff(moment.utc(), 'days', true);
               warranty.productType = 7;
               warranty.title = `Repair Warranty Expiring`;
-              warranty.description = `Warranty Renewal Expiring for ${warranty.productName}`;
+              warranty.description = `Warranty Renewal Expiring for ${warranty.productName ||
+              'one of your product'}`;
             }
             return warranty;
           });
@@ -493,9 +500,12 @@ class NotificationAdaptor {
               scheduledProduct.dueDate = scheduledDate;
               scheduledProduct.dueIn = due_date_time.diff(moment.utc(), 'days',
                   true);
-              scheduledProduct.productType = 3;
-              scheduledProduct.title = `Service is pending for ${scheduledProduct.productName}`;
-              scheduledProduct.description = `Service is pending for ${scheduledProduct.productName}`;
+              scheduledProduct.productType = 7;
+              scheduledProduct.productId = scheduledProduct.id;
+              scheduledProduct.title = `Service is pending for ${scheduledProduct.productName ||
+              'one of your product'}`;
+              scheduledProduct.description = `Service is pending for ${scheduledProduct.productName ||
+              'one of your product'}`;
             }
 
             return scheduledProduct;

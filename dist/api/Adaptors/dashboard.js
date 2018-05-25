@@ -148,15 +148,16 @@ var DashboardAdaptor = function () {
           insight: _this.evaluateDashboardInsight(insightData),
           forceUpdate: request.pre.forceUpdate,
           showDashboard: !!(productCount && parseInt(productCount) > 0) || !!(calendarItemCount && parseInt(calendarItemCount) > 0),
-          showEazyDay: !!(todoCounts && todoCounts > 0) || !!(mealCounts && mealCounts > 0) || !!(wearableCounts && wearableCounts > 0),
-          showKnowItems: !!(knowItemCounts && knowItemCounts > 0),
+          hasEazyDayItems: !!(todoCounts && todoCounts > 0) || !!(mealCounts && mealCounts > 0) || !!(wearableCounts && wearableCounts > 0),
+          knowItemsLiked: !!(knowItemCounts && knowItemCounts > 0),
           total_calendar_item: calendarItemCount || 0,
           calendar_item_updated_at: calendar_item_updated_at,
           recent_calendar_item: recent_calendar_item,
           recent_products: product.slice(0, 4),
           product: product[0],
           service_center_products: service_center_products,
-          know_item_count: know_item_count
+          know_item_count: know_item_count,
+          hasProducts: true
         };
       }).catch(function (err) {
         console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
@@ -302,11 +303,12 @@ var DashboardAdaptor = function () {
           return {
             status: true,
             message: !isNewUser ? 'Existing User' : 'New User',
-            billCounts: 0,
+            billCounts: productCounts,
             showDashboard: !!(productCounts && productCounts > 0) || !!(calendarItemCounts && calendarItemCounts > 0),
-            showEazyDay: !!(todoCounts && todoCounts > 0) || !!(mealCounts && mealCounts > 0) || !!(wearableCounts && wearableCounts > 0),
-            showKnowItems: !!(knowItemCounts && knowItemCounts > 0),
+            hasEazyDayItems: !!(todoCounts && todoCounts > 0) || !!(mealCounts && mealCounts > 0) || !!(wearableCounts && wearableCounts > 0),
+            knowItemsLiked: !!(knowItemCounts && knowItemCounts > 0),
             isExistingUser: !isNewUser,
+            hasProducts: true,
             authorization: token,
             userId: user.id || user.ID,
             forceUpdate: request.pre.forceUpdate
@@ -354,8 +356,9 @@ var DashboardAdaptor = function () {
         authorization: token,
         billCounts: 0,
         showDashboard: false,
-        showEazyDay: false,
-        showKnowItems: false,
+        hasEazyDayItems: false,
+        knowItemsLiked: false,
+        hasProducts: true,
         isExistingUser: false,
         userId: user.id || user.ID,
         forceUpdate: request.pre.forceUpdate
