@@ -86,19 +86,7 @@ var DashboardAdaptor = function () {
         return _bluebird2.default.all([_this.filterUpcomingService(user, request), _this.prepareInsightData(user, request), _this.retrieveRecentSearch(user), _this.modals.mailBox.count({ where: { user_id: user.id || user.ID, status_id: 4 } }), _this.modals.products.count({
           where: {
             user_id: user.id || user.ID,
-            status_type: [5, 8]
-          },
-          include: [{
-            model: _this.modals.bills,
-            where: {
-              status_type: 5
-            },
-            required: true
-          }]
-        }), _this.modals.products.count({
-          where: {
-            user_id: user.id || user.ID,
-            status_type: 11
+            status_type: [5, 11]
           }
         }), _this.productAdaptor.retrieveUsersLastProduct({
           user_id: user.id || user.ID,
@@ -127,97 +115,48 @@ var DashboardAdaptor = function () {
           where: {
             id: { $gt: request.query.lastfact || 0 }
           }
+        }), _this.modals.todoUserMap.count({
+          where: {
+            user_id: user.id || user.ID
+          }
+        }), _this.modals.mealUserMap.count({
+          where: {
+            user_id: user.id || user.ID
+          }
+        }), _this.modals.wearables.count({
+          where: {
+            created_by: user.id || user.ID
+          }
+        }), _this.modals.know_user_likes.count({
+          where: {
+            created_by: user.id || user.ID
+          }
         })]);
-      }).then(function (result) {
-        var upcomingServices = result[0].map(function (elem) {
-          if (elem.productType === 1) {
-            var dueAmountArr = elem.productMetaData.filter(function (e) {
-              return e.name.toLowerCase() === 'due amount';
-            });
-
-            if (dueAmountArr.length > 0) {
-              elem.value = dueAmountArr[0].value;
-            }
-          }
-
-          return elem;
-        });
-
-        var distinctInsight = [];
-        var insightData = result[1].map(function (item) {
-          var insightItem = item;
-          var index = distinctInsight.findIndex(function (distinctItem) {
-            return _moment2.default.utc(distinctItem.purchaseDate, _moment2.default.ISO_8601).startOf('day').valueOf() === _moment2.default.utc(insightItem.purchaseDate, _moment2.default.ISO_8601).startOf('day').valueOf();
-          });
-
-          if (index === -1) {
-            distinctInsight.push(insightItem);
-          } else {
-            distinctInsight[index].value += insightItem.value;
-          }
-
-          return insightItem;
-        });
-
-        var insightResult = distinctInsight && distinctInsight.length > 0 ? {
-          startDate: _moment2.default.utc().startOf('M'),
-          endDate: _moment2.default.utc(),
-          totalSpend: _shared2.default.sumProps(distinctInsight, 'value'),
-          totalDays: _moment2.default.utc().endOf('d').diff(_moment2.default.utc().startOf('M'), 'days'),
-          insightData: distinctInsight
-        } : {
-          startDate: _moment2.default.utc().startOf('M'),
-          endDate: _moment2.default.utc(),
-          totalSpend: 0,
-          totalDays: _moment2.default.utc().endOf('d').diff(_moment2.default.utc().startOf('M'), 'days'),
-          insightData: insightData
-        };
-
-        upcomingServices.sort(function (a, b) {
-          var aDate = void 0;
-          var bDate = void 0;
-
-          aDate = a.expiryDate;
-          bDate = b.expiryDate;
-
-          if (a.productType === 1) {
-            aDate = a.dueDate;
-          }
-
-          if (b.productType === 1) {
-            bDate = b.dueDate;
-          }
-
-          if (_moment2.default.utc(aDate, 'YYYY-MM-DD').isBefore(_moment2.default.utc(bDate, 'YYYY-MM-DD'))) {
-            return -1;
-          }
-
-          return 1;
-        });
-        var product = result[6];
-        var latestCalendarItem = result[8] ? result[8].toJSON() : {};
-        var latestCalendarCalc = result[9] ? result[9].toJSON() : {};
+      }).spread(function (upcomingServices, insightData, recentSearches, notificationCount, productCount, product, calendarItemCount, latestCalendarItem, latestCalendarCalc, recent_calendar_item, service_center_products, know_item_count, todoCounts, mealCounts, wearableCounts, knowItemCounts) {
+        latestCalendarItem = latestCalendarItem ? latestCalendarItem.toJSON() : {};
+        latestCalendarCalc = latestCalendarCalc ? latestCalendarCalc.toJSON() : {};
         var calendar_item_updated_at = latestCalendarItem && (0, _moment2.default)(latestCalendarItem.updated_at, _moment2.default.ISO_8601).diff((0, _moment2.default)(latestCalendarCalc.updated_at, _moment2.default.ISO_8601), 'days') < 0 ? latestCalendarCalc.updated_at : latestCalendarItem ? latestCalendarItem.updated_at : (0, _moment2.default)();
         return {
           status: true,
           message: 'Dashboard restore Successful',
-          notificationCount: result[3],
-          recentSearches: result[2].map(function (item) {
+          notificationCount: notificationCount,
+          recentSearches: recentSearches.map(function (item) {
             var search = item.toJSON();
             return search.searchValue;
           }).slice(0, 5),
-          upcomingServices: upcomingServices,
-          insight: insightResult,
+          upcomingServices: _this.evaluateUpcomingServices(upcomingServices),
+          insight: _this.evaluateDashboardInsight(insightData),
           forceUpdate: request.pre.forceUpdate,
-          showDashboard: !!(result[4] && parseInt(result[4]) > 0) || !!(result[5] && parseInt(result[5]) > 0),
-          hasProducts: !!(result[5] && parseInt(result[5]) > 0),
-          total_calendar_item: result[7] || 0,
+          showDashboard: !!(productCount && parseInt(productCount) > 0) || !!(calendarItemCount && parseInt(calendarItemCount) > 0),
+          showEazyDay: !!(todoCounts && todoCounts > 0) || !!(mealCounts && mealCounts > 0) || !!(wearableCounts && wearableCounts > 0),
+          showKnowItems: !!(knowItemCounts && knowItemCounts > 0),
+          total_calendar_item: calendarItemCount || 0,
           calendar_item_updated_at: calendar_item_updated_at,
-          recent_calendar_item: result[10],
+          recent_calendar_item: recent_calendar_item,
           recent_products: product.slice(0, 4),
           product: product[0],
-          service_center_products: result[11],
-          know_item_count: result[12]
+          service_center_products: service_center_products,
+          know_item_count: know_item_count
         };
       }).catch(function (err) {
         console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
@@ -247,6 +186,79 @@ var DashboardAdaptor = function () {
       });
     }
   }, {
+    key: 'evaluateUpcomingServices',
+    value: function evaluateUpcomingServices(upcomingServices) {
+      upcomingServices = upcomingServices.map(function (elem) {
+        if (elem.productType === 1) {
+          var dueAmountArr = elem.productMetaData.filter(function (e) {
+            return e.name.toLowerCase() === 'due amount';
+          });
+
+          if (dueAmountArr.length > 0) {
+            elem.value = dueAmountArr[0].value;
+          }
+        }
+
+        return elem;
+      });
+
+      upcomingServices.sort(function (a, b) {
+        var aDate = void 0;
+        var bDate = void 0;
+
+        aDate = a.expiryDate;
+        bDate = b.expiryDate;
+
+        if (a.productType === 1) {
+          aDate = a.dueDate;
+        }
+
+        if (b.productType === 1) {
+          bDate = b.dueDate;
+        }
+
+        if (_moment2.default.utc(aDate, 'YYYY-MM-DD').isBefore(_moment2.default.utc(bDate, 'YYYY-MM-DD'))) {
+          return -1;
+        }
+
+        return 1;
+      });
+      return upcomingServices;
+    }
+  }, {
+    key: 'evaluateDashboardInsight',
+    value: function evaluateDashboardInsight(insightData) {
+      var distinctInsight = [];
+      insightData = insightData.map(function (item) {
+        var insightItem = item;
+        var index = distinctInsight.findIndex(function (distinctItem) {
+          return _moment2.default.utc(distinctItem.purchaseDate, _moment2.default.ISO_8601).startOf('day').valueOf() === _moment2.default.utc(insightItem.purchaseDate, _moment2.default.ISO_8601).startOf('day').valueOf();
+        });
+
+        if (index === -1) {
+          distinctInsight.push(insightItem);
+        } else {
+          distinctInsight[index].value += insightItem.value;
+        }
+
+        return insightItem;
+      });
+
+      return distinctInsight && distinctInsight.length > 0 ? {
+        startDate: _moment2.default.utc().startOf('M'),
+        endDate: _moment2.default.utc(),
+        totalSpend: _shared2.default.sumProps(distinctInsight, 'value'),
+        totalDays: _moment2.default.utc().endOf('d').diff(_moment2.default.utc().startOf('M'), 'days'),
+        insightData: distinctInsight
+      } : {
+        startDate: _moment2.default.utc().startOf('M'),
+        endDate: _moment2.default.utc(),
+        totalSpend: 0,
+        totalDays: _moment2.default.utc().endOf('d').diff(_moment2.default.utc().startOf('M'), 'days'),
+        insightData: insightData
+      };
+    }
+  }, {
     key: 'prepareDashboardResult',
     value: function prepareDashboardResult(parameters) {
       var _this2 = this;
@@ -256,33 +268,44 @@ var DashboardAdaptor = function () {
           token = parameters.token,
           request = parameters.request;
 
+      console.log(isNewUser);
       if (!isNewUser) {
+        console.log('We are here', isNewUser);
         return _bluebird2.default.all([this.modals.products.count({
           where: {
             user_id: user.id || user.ID,
-            status_type: [5, 8, 11]
-          },
-          include: [{
-            model: this.modals.bills,
-            where: {
-              status_type: 5
-            },
-            required: true
-          }]
-        }), this.modals.products.count({
-          where: {
-            user_id: user.id || user.ID,
-            status_type: 11
+            status_type: [5, 11]
           }
-        })]).then(function (result) {
-          var billCounts = parseInt(result[0]);
-          var productCounts = parseInt(result[1]);
+        }), this.modals.user_calendar_item.count({
+          where: {
+            user_id: user.id || user.ID
+          }
+        }), this.modals.todoUserMap.count({
+          where: {
+            user_id: user.id || user.ID
+          }
+        }), this.modals.mealUserMap.count({
+          where: {
+            user_id: user.id || user.ID
+          }
+        }), this.modals.wearables.count({
+          where: {
+            created_by: user.id || user.ID
+          }
+        }), this.modals.know_user_likes.count({
+          where: {
+            created_by: user.id || user.ID
+          }
+        })]).spread(function (productCounts, calendarItemCounts, todoCounts, mealCounts, wearableCounts, knowItemCounts) {
+          calendarItemCounts = parseInt(calendarItemCounts);
+          productCounts = parseInt(productCounts);
           return {
             status: true,
             message: !isNewUser ? 'Existing User' : 'New User',
-            billCounts: billCounts,
-            hasProducts: !!(productCounts && productCounts > 0),
-            showDashboard: !!(billCounts && billCounts > 0) || !!(productCounts && productCounts > 0),
+            billCounts: 0,
+            showDashboard: !!(productCounts && productCounts > 0) || !!(calendarItemCounts && calendarItemCounts > 0),
+            showEazyDay: !!(todoCounts && todoCounts > 0) || !!(mealCounts && mealCounts > 0) || !!(wearableCounts && wearableCounts > 0),
+            showKnowItems: !!(knowItemCounts && knowItemCounts > 0),
             isExistingUser: !isNewUser,
             authorization: token,
             userId: user.id || user.ID,
@@ -331,6 +354,8 @@ var DashboardAdaptor = function () {
         authorization: token,
         billCounts: 0,
         showDashboard: false,
+        showEazyDay: false,
+        showKnowItems: false,
         isExistingUser: false,
         userId: user.id || user.ID,
         forceUpdate: request.pre.forceUpdate

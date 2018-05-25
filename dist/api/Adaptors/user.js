@@ -113,14 +113,14 @@ var UserAdaptor = function () {
             last_active_date: _moment2.default.utc(),
             last_api: defaultObject.last_api
           });
-        }), true]);
+        }), false]);
       });
     }
 
     /**
-     * Retrieve Single user for requested condition.
+     *
      * @param filterObject
-     * @returns {User}
+     * @returns {Promise<Model>}
      */
 
   }, {

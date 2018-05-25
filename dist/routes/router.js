@@ -39,10 +39,6 @@ var _brand = require('./brand');
 
 var _accessory_routes = require('./accessory_routes');
 
-var _accessory = require('../api/controllers/accessory');
-
-var _accessory2 = _interopRequireDefault(_accessory);
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var middleware = void 0;

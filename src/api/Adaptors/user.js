@@ -72,7 +72,7 @@ class UserAdaptor {
         'email_verified',
         'email_secret',
         'image_name',
-          'gender',
+        'gender',
         'fb_id',
       ],
     }).then((result) => {
@@ -105,14 +105,14 @@ class UserAdaptor {
           fb_id: defaultObject.fb_id,
           last_active_date: moment.utc(),
           last_api: defaultObject.last_api,
-        })), true]);
+        })), false]);
     });
   }
 
   /**
-   * Retrieve Single user for requested condition.
+   *
    * @param filterObject
-   * @returns {User}
+   * @returns {Promise<Model>}
    */
   retrieveSingleUser(filterObject) {
     filterObject.attributes = [
@@ -319,7 +319,7 @@ class UserAdaptor {
           `Error on ${new Date()} for user ${user.id ||
           user.ID} is as follow: \n \n ${err}`);
       if (err && err.errors && err.errors.findIndex(
-              (item) => item.message === 'email must be unique') !== -1) {
+          (item) => item.message === 'email must be unique') !== -1) {
         return reply.response({
           status: false,
           message: 'The email mentioned is already linked with other account',
