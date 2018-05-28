@@ -273,11 +273,21 @@ var verifyUserOTP = function verifyUserOTP(request, reply) {
   });
 };
 
+function isValidEmail(emailAddress) {
+  var pattern = new RegExp(/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/);
+  return pattern.test(emailAddress);
+}
+
 var verifyUserEmail = function verifyUserEmail(request, reply) {
   var user = _shared2.default.verifyAuthorization(request.headers);
   if (!user) {
     return reply(null);
   } else {
+
+    if (!isValidEmail(request.payload.email)) {
+      return reply(false);
+    }
+
     return _bluebird2.default.try(function () {
       return MODAL.users.count({
         where: {

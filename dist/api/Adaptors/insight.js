@@ -398,7 +398,7 @@ var InsightAdaptor = function () {
             return this.prepareCategoryData(user, { category_id: masterCategoryId }).then(function (result) {
                 var productList = _lodash2.default.chain(result[0].expenses).filter(function (item) {
                     return item.purchaseDate && _moment2.default.utc(item.purchaseDate, _moment2.default.ISO_8601).valueOf() <= _moment2.default.utc().valueOf();
-                }).orderBy(['purchaseDate'], ['asc']).value();
+                }).orderBy(['purchaseDate'], ['desc']).value();
 
                 var distinctInsightWeekly = [];
                 var distinctInsightMonthly = [];
