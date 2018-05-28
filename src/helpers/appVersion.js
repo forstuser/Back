@@ -72,6 +72,7 @@ const updateUserActiveStatus = (request, reply) => {
       },
     }).then((userResult) => {
       const userDetail = userResult ? userResult.toJSON() : userResult;
+      request.user = userDetail || user;
       console.log(
           `Last route ${request.url.pathname} accessed by user id ${user.id ||
           user.ID} from ${request.headers.ios_app_version ?

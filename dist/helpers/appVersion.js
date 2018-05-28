@@ -82,6 +82,7 @@ var updateUserActiveStatus = function updateUserActiveStatus(request, reply) {
       }
     }).then(function (userResult) {
       var userDetail = userResult ? userResult.toJSON() : userResult;
+      request.user = userDetail || user;
       console.log('Last route ' + request.url.pathname + ' accessed by user id ' + (user.id || user.ID) + ' from ' + (request.headers.ios_app_version ? 'iOS' : 'android'));
       if (userDetail) {
         var last_active_date = _moment2.default.utc(userDetail.last_active_date, _moment2.default.ISO_8601);
