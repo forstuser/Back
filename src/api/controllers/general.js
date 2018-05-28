@@ -548,7 +548,9 @@ class GeneralController {
           });
           knowItem.hashTags = knowItem.hashTags.trim();
           knowItem.totalLikes = knowItem.users.length;
-
+          const user = shared.verifyAuthorization(request.headers);
+          knowItem.isLikedByUser = user ? knowItem.users.findIndex(
+              (userItem) => userItem.id === (user.id || user.ID)) >= 0 : false;
           return reply({
             status: true, item: knowItem,
           }).code(200);
@@ -603,7 +605,7 @@ class GeneralController {
             'default_description'],
           [
             `${language ? `description_${language}` : `description`}`,
-            'description'],],
+            'description']],
         distinct: true,
         order: [['created_at', 'desc']],
       }).then((tagItems) => {

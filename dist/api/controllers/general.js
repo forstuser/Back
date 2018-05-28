@@ -499,7 +499,10 @@ var GeneralController = function () {
         });
         knowItem.hashTags = knowItem.hashTags.trim();
         knowItem.totalLikes = knowItem.users.length;
-
+        var user = _shared2.default.verifyAuthorization(request.headers);
+        knowItem.isLikedByUser = user ? knowItem.users.findIndex(function (userItem) {
+          return userItem.id === (user.id || user.ID);
+        }) >= 0 : false;
         return reply({
           status: true, item: knowItem
         }).code(200);
