@@ -638,14 +638,57 @@ class UserController {
     if (!request.pre.forceUpdate && !request.pre.hasMultipleAccounts) {
       return Promise.try(() => {
         return OTPHelper.verifyOTPForUser(request.payload.mobile_no,
-            request.payload.token);
+            request.payload.token).catch((err) => {
+          console.log(`Error on ${new Date()} for mobile no: ${request.payload.mobile_no} is as follow: \n \n ${err}`);
+          modals.logs.create({
+            api_action: request.method,
+            api_path: request.url.pathname,
+            log_type: 2,
+            user_id: 1,
+            log_content: JSON.stringify({
+              params: request.params,
+              query: request.query,
+              headers: request.headers,
+              payload: request.payload,
+              err,
+            }),
+          }).catch((ex) => console.log('error while logging on db,', ex));
+
+          console.log('test I am here');
+          replyObject.status = false;
+          replyObject.message = 'Issue in retrieving OTP';
+          replyObject.error = err;
+          return reply(replyObject).code(401);
+        });
       }).then((data) => {
+
+        console.log('test We are here', request.user);
         if (data.type === 'success') {
           return Promise.all([
             true,
             userAdaptor.updateUserDetail({
               mobile_no: request.payload.mobile_no,
-            }, {where: {id: request.user.id}})]);
+            }, {where: {id: request.user.id}}).catch((err) => {
+              console.log(
+                  `Error on ${new Date()} for mobile no: ${request.payload.mobile_no} is as follow: \n \n ${err}`);
+              modals.logs.create({
+                api_action: request.method,
+                api_path: request.url.pathname,
+                log_type: 2,
+                user_id: 1,
+                log_content: JSON.stringify({
+                  params: request.params,
+                  query: request.query,
+                  headers: request.headers,
+                  payload: request.payload,
+                  err,
+                }),
+              }).catch((ex) => console.log('error while logging on db,', ex));
+              replyObject.status = false;
+              replyObject.message = 'Issue in updating data';
+              replyObject.error = err;
+              return reply(replyObject).code(401);
+            })]);
         } else {
           return [false];
         }
@@ -658,7 +701,7 @@ class UserController {
           replyObject.status = false;
           replyObject.message = 'Invalid/Expired OTP';
 
-          return reply(replyObject).code(400);
+          return reply(replyObject);
         }
       }).catch((err) => {
         console.log(
