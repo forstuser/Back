@@ -425,7 +425,7 @@ class InsightAdaptor {
             const productList = _.chain(result[0].expenses).filter((item) => (item.purchaseDate &&
                 moment.utc(item.purchaseDate, moment.ISO_8601).valueOf() <=
                 moment.utc().valueOf())).orderBy(['purchaseDate'],
-                ['asc']).value();
+                ['desc']).value();
 
             const distinctInsightWeekly = [];
             const distinctInsightMonthly = [];

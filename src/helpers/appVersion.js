@@ -304,11 +304,22 @@ const verifyUserOTP = (request, reply) => {
       });
 };
 
+function isValidEmail(emailAddress) {
+  const pattern = new RegExp(
+      /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/);
+  return pattern.test(emailAddress);
+}
+
 const verifyUserEmail = (request, reply) => {
   const user = shared.verifyAuthorization(request.headers);
   if (!user) {
     return reply(null);
   } else {
+
+    if (!isValidEmail(request.payload.email)) {
+      return reply(false);
+    }
+
     return Promise.try(() => MODAL.users.count({
       where: {
         $or: {

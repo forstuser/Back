@@ -75,3 +75,5 @@ cert/
 #.DS_Store
 .DS_Store
 # End of https://www.gitignore.io/api/node
+dist/helpers/image_magic.js
+package-lock.json
