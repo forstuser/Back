@@ -133,7 +133,7 @@ var loginOrRegisterUser = function loginOrRegisterUser(parameters) {
 
     return _bluebird2.default.all([userData[0], userData[1]]);
   }).then(function (userData) {
-    console.log('\n\n\n\n\n User Data', JSON.stringify({ userData: userData }));
+    var promiseArray = [userData];
     updatedUser = userData[0].toJSON();
 
     if (!updatedUser.email_verified && updatedUser.email) {
@@ -145,22 +145,19 @@ var loginOrRegisterUser = function loginOrRegisterUser(parameters) {
     }
 
     if (request.payload.fcmId) {
-      fcmManager.insertFcmDetails({
+      promiseArray.push(fcmManager.insertFcmDetails({
         userId: updatedUser.id || updatedUser.ID,
         fcmId: request.payload.fcmId,
         platformId: request.payload.platform || 1,
         selected_language: selected_language
-      }).then(function (data) {
-        console.log(data);
-      }).catch(function (err) {
-        return console.log('Error on ' + new Date() + ' for user ' + (updatedUser.id || updatedUser.ID) + ' is as follow: \n ' + err);
-      });
+      }));
     }
 
     trackTransaction(request.payload.transactionId, updatedUser.id);
     replyObject.authorization = 'bearer ' + _authentication2.default.generateToken(userData[0]).token;
     token = replyObject.authorization;
-
+    return _bluebird2.default.all(promiseArray);
+  }).spread(function (userData, fcmData) {
     return dashboardAdaptor.prepareDashboardResult({
       isNewUser: userData[1],
       user: userData[0].toJSON(),
@@ -1009,7 +1006,7 @@ var UserController = function () {
     key: 'updateUserProfile',
     value: function updateUserProfile(request, reply) {
       var user = _shared2.default.verifyAuthorization(request.headers);
-      if (request.pre.userExist && !request.pre.forceUpdate) {
+      if (request.pre.isValidEmail && request.pre.userExist && !request.pre.forceUpdate) {
         return userAdaptor.updateUserProfile(user, request, reply).catch(function (err) {
           console.log('Error on ' + new Date() + ' for user ' + (user.id || user.ID) + ' is as follow: \n \n ' + err);
 
@@ -1031,6 +1028,14 @@ var UserController = function () {
 
           return reply({ status: false, message: 'Unable to update user profile' });
         });
+      } else if (request.pre.isValidEmail === null) {
+        replyObject.status = false;
+        replyObject.message = 'Another user with email exist';
+        return reply(replyObject);
+      } else if (!request.pre.isValidEmail) {
+        replyObject.status = false;
+        replyObject.message = 'Invalid Email, Please provide correct one.';
+        return reply(replyObject);
       } else if (request.pre.userExist === 0) {
         return reply({
           status: false,

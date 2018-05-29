@@ -788,6 +788,8 @@ var NotificationAdaptor = function () {
   }, {
     key: 'notifyUser',
     value: function notifyUser(userId, payload, reply) {
+      var _this5 = this;
+
       return this.modals.fcmDetails.findAll({
         where: {
           user_id: userId
@@ -798,27 +800,25 @@ var NotificationAdaptor = function () {
           method: 'POST',
           headers: { Authorization: 'key=' + _main2.default.GOOGLE.FCM_KEY },
           json: {
-            // note that Sequelize returns token object array, we map it with token value only
             registration_ids: result.map(function (user) {
               return user.fcm_id;
             }),
-            // iOS requires priority to be set as 'high' for message to be received in background
             priority: 'high',
-            data: payload
+            data: payload,
+            notification: {
+              title: payload.title,
+              body: payload.description
+            }
           }
         };
         (0, _request2.default)(options, function (error, response, body) {
-          if (!error && response.statusCode === 200) {
-            // request was success, should early return response to client
-            reply({
-              status: true
-            }).code(200);
-          } else {
-            reply({
-              status: false,
-              error: error
-            }).code(500);
-          }
+          _this5.modals.logs.create({
+            log_type: 3,
+            user_id: userId,
+            log_content: JSON.stringify({ options: options })
+          }).catch(function (ex) {
+            return console.log('error while logging on db,', ex);
+          });
           // extract invalid registration for removal
           if (body.failure > 0 && Array.isArray(body.results) && body.results.length === result.length) {
             var results = body.results;
@@ -828,6 +828,20 @@ var NotificationAdaptor = function () {
                   console.log('FCM ID\'s DELETED: ', rows);
                 });
               }
+            }
+          }
+
+          if (reply) {
+            if (!error && response.statusCode === 200) {
+              // request was success, should early return response to client
+              return reply({
+                status: true
+              }).code(200);
+            } else {
+              return reply({
+                status: false,
+                error: error
+              }).code(500);
             }
           }
         });

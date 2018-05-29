@@ -71,7 +71,7 @@ let loginOrRegisterUser = parameters => {
         return Promise.all([userData[0], userData[1]]);
       }).
       then((userData) => {
-        console.log('\n\n\n\n\n User Data', JSON.stringify({userData}));
+        const promiseArray = [userData];
         updatedUser = userData[0].toJSON();
 
         if ((!updatedUser.email_verified) && (updatedUser.email)) {
@@ -84,38 +84,29 @@ let loginOrRegisterUser = parameters => {
         }
 
         if (request.payload.fcmId) {
-          fcmManager.insertFcmDetails({
+          promiseArray.push(fcmManager.insertFcmDetails({
             userId: updatedUser.id || updatedUser.ID,
             fcmId: request.payload.fcmId,
             platformId: request.payload.platform || 1,
             selected_language,
-          }).
-              then((data) => {
-                console.log(data);
-              }).
-              catch((err) => console.log(
-                  `Error on ${new Date()} for user ${updatedUser.id ||
-                  updatedUser.ID} is as follow: \n ${err}`));
+          }));
         }
 
         trackTransaction(request.payload.transactionId, updatedUser.id);
         replyObject.authorization = `bearer ${authentication.generateToken(
             userData[0]).token}`;
         token = replyObject.authorization;
-
-        return dashboardAdaptor.prepareDashboardResult({
-          isNewUser: userData[1],
-          user: userData[0].toJSON(),
-          token: replyObject.authorization,
-          request,
-        });
-      }).
-      then((result) => {
+        return Promise.all(promiseArray);
+      }).spread((userData, fcmData) => dashboardAdaptor.prepareDashboardResult({
+        isNewUser: userData[1],
+        user: userData[0].toJSON(),
+        token: replyObject.authorization,
+        request,
+      })).then((result) => {
         return reply(result).
             code(201).
             header('authorization', replyObject.authorization);
-      }).
-      catch((err) => {
+      }).catch((err) => {
         console.log(
             `Error on ${new Date()} for user is as follow: \n \n ${err}`);
         if (err.authorization) {
@@ -639,7 +630,8 @@ class UserController {
       return Promise.try(() => {
         return OTPHelper.verifyOTPForUser(request.payload.mobile_no,
             request.payload.token).catch((err) => {
-          console.log(`Error on ${new Date()} for mobile no: ${request.payload.mobile_no} is as follow: \n \n ${err}`);
+          console.log(
+              `Error on ${new Date()} for mobile no: ${request.payload.mobile_no} is as follow: \n \n ${err}`);
           modals.logs.create({
             api_action: request.method,
             api_path: request.url.pathname,
@@ -973,7 +965,8 @@ class UserController {
 
   static updateUserProfile(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (request.pre.userExist && !request.pre.forceUpdate) {
+    if (request.pre.isValidEmail && request.pre.userExist &&
+        !request.pre.forceUpdate) {
       return userAdaptor.updateUserProfile(user, request, reply).
           catch((err) => {
             console.log(
@@ -997,6 +990,14 @@ class UserController {
             return reply(
                 {status: false, message: 'Unable to update user profile'});
           });
+    } else if (request.pre.isValidEmail === null) {
+      replyObject.status = false;
+      replyObject.message = 'Another user with email exist';
+      return reply(replyObject);
+    } else if (!request.pre.isValidEmail) {
+      replyObject.status = false;
+      replyObject.message = 'Invalid Email, Please provide correct one.';
+      return reply(replyObject);
     } else if (request.pre.userExist === 0) {
       return reply({
         status: false,

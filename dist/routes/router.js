@@ -305,6 +305,9 @@ function prepareAuthRoutes(userController, authRoutes) {
         pre: [{ method: appVersionHelper.checkAppVersion, assign: 'forceUpdate' }, {
           method: appVersionHelper.updateUserActiveStatus,
           assign: 'userExist'
+        }, {
+          method: appVersionHelper.verifyUserEmail,
+          assign: 'isValidEmail'
         }],
         handler: _user2.default.updateUserProfile,
         description: 'Update User Profile.',

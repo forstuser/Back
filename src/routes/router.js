@@ -298,6 +298,10 @@ function prepareAuthRoutes(userController, authRoutes) {
             method: appVersionHelper.updateUserActiveStatus,
             assign: 'userExist',
           },
+          {
+            method: appVersionHelper.verifyUserEmail,
+            assign: 'isValidEmail',
+          },
         ],
         handler: UserController.updateUserProfile,
         description: 'Update User Profile.',
