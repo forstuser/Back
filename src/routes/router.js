@@ -1549,6 +1549,17 @@ function prepareInsightRoutes(insightController, insightRoutes) {
 
 function prepareGeneralRoutes(generalController, generalRoutes) {
   if (generalController) {
+
+    generalRoutes.push({
+      method : 'GET',
+      path : '/appupdate',
+        config : {
+          handler : appVersionHelper.checkForAppUpdate,
+          description : 'Get app latest version',
+        }
+    });
+
+
     generalRoutes.push({
       method: 'POST',
       path: '/contact-us',
