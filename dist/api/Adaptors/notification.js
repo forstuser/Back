@@ -807,7 +807,7 @@ var NotificationAdaptor = function () {
             data: payload,
             notification: {
               title: payload.title,
-              body: payload.description
+              body: payload.description || payload.big_text
             }
           }
         };

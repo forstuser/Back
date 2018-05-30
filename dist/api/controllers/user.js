@@ -418,7 +418,7 @@ var UserController = function () {
         });
       } else if (request.pre.isValidEmail === null) {
         replyObject.status = false;
-        replyObject.message = 'Another user with email exist';
+        replyObject.message = 'Account already exists with this email.';
         return reply(replyObject);
       } else {
         replyObject.status = false;
@@ -764,6 +764,10 @@ var UserController = function () {
           replyObject.error = err;
           return reply(replyObject).code(401);
         });
+      } else if (request.pre.hasMultipleAccounts) {
+        replyObject.status = false;
+        replyObject.message = 'Account already exists with this mobile no.';
+        return reply(replyObject);
       } else {
         replyObject.status = false;
         replyObject.message = 'Forbidden';
@@ -1030,7 +1034,7 @@ var UserController = function () {
         });
       } else if (request.pre.isValidEmail === null) {
         replyObject.status = false;
-        replyObject.message = 'Another user with email exist';
+        replyObject.message = 'Account already exists with the email.';
         return reply(replyObject);
       } else if (!request.pre.isValidEmail) {
         replyObject.status = false;
