@@ -13,6 +13,7 @@ import ServiceScheduleAdaptor from './serviceSchedules';
 import _ from 'lodash';
 import moment from 'moment/moment';
 import Promise from 'bluebird';
+import notificationAdaptor from './notification';
 
 class ProductAdaptor {
   constructor(modals) {
@@ -1816,7 +1817,7 @@ class ProductAdaptor {
         });
   }
 
-  updateProductDetails(productBody, metadataBody, otherItems, productId) {
+  updateProductDetails(user, productBody, metadataBody, otherItems, productId) {
     let dbProduct;
     let flag = false;
     return Promise.try(() => this.modals.products.findOne({
@@ -1870,6 +1871,11 @@ class ProductAdaptor {
       }
       if (result[3] === 0) { // to check it it is the first product
         flag = true;
+
+        notificationAdaptor.sendMailOnDifferentSteps(
+            'Your product is our responsibility now!',
+            user.email, user, 5); // 5 is for 1st product creation
+
       }
       const sellerPromise = [];
       const isProductAMCSellerSame = false;

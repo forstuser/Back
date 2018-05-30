@@ -264,7 +264,8 @@ class ProductController {
           }) :
           [];
 
-      return productAdaptor.updateProductDetails(productBody, metaDataBody,
+      return productAdaptor.updateProductDetails(user, productBody,
+          metaDataBody,
           otherItems, request.params.id).
           then((result) => {
             if (result) {
