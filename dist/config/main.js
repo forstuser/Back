@@ -6,8 +6,8 @@ Object.defineProperty(exports, "__esModule", {
 exports.default = {
   SMS: {
     AUTH_KEY: process.env.SMS_AUTH_KEY,
-    HOST_NAME: 'http://api.msg91.com',
-    PATH: '/api/v2/sendsms',
+    HOST_NAME: "http://api.msg91.com",
+    PATH: "/api/v2/sendsms"
   },
   FB_GRAPH_ROUTE: process.env.FB_GRAPH_ROUTE,
   MESSAGE: process.env.MESSAGE,

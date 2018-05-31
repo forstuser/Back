@@ -314,7 +314,7 @@ var ProductAdaptor = function () {
           attributes: [],
           required: false
         }],
-        attributes: ['id', ['product_name', 'productName'], 'file_type', 'file_ref', [this.modals.sequelize.literal('"category"."category_id"'), 'categoryId'], ['main_category_id', 'masterCategoryId'], 'sub_category_id', ['brand_id', 'brandId'], ['colour_id', 'colorId'], ['purchase_cost', 'value'], 'taxes', [this.modals.sequelize.literal('' + (language ? '"sub_category"."category_name_' + language + '"' : '"sub_category"."category_name"')), 'sub_category_name'], [this.modals.sequelize.literal('' + (language ? '"category"."category_name_' + language + '"' : '"category"."category_name"')), 'categoryName'], [this.modals.sequelize.literal('' + (language ? '"mainCategory"."category_name_' + language + '"' : '"mainCategory"."category_name"')), 'masterCategoryName'], [this.modals.sequelize.literal('"sub_category"."category_name"'), 'default_sub_category_name'], [this.modals.sequelize.literal('"mainCategory"."category_name"'), 'default_masterCategoryName'], [this.modals.sequelize.literal('"category"."category_name"'), 'default_categoryName'], [this.modals.sequelize.fn('CONCAT', '/categories/', this.modals.sequelize.literal('"category"."category_id"'), '/images/'), 'cImageURL'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"products"."id"')), 'productURL'], ['document_date', 'purchaseDate'], 'model', ['document_number', 'documentNo'], ['updated_at', 'updatedDate'], ['bill_id', 'billId'], ['job_id', 'jobId'], ['seller_id', 'sellerId'], 'copies', [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"products"."id"'), '/reviews'), 'reviewUrl'], [this.modals.sequelize.literal('"category"."category_name"'), 'categoryName'], [this.modals.sequelize.fn('CONCAT', '/consumer/servicecenters?brandid=', this.modals.sequelize.literal('"products"."brand_id"'), '&categoryid=', this.modals.sequelize.col('"products"."category_id"')), 'serviceCenterUrl'], 'status_type'],
+        attributes: ['id', ['id', 'productId'], ['product_name', 'productName'], 'file_type', 'file_ref', [this.modals.sequelize.literal('"category"."category_id"'), 'categoryId'], ['main_category_id', 'masterCategoryId'], 'sub_category_id', ['brand_id', 'brandId'], ['colour_id', 'colorId'], ['purchase_cost', 'value'], 'taxes', [this.modals.sequelize.literal('' + (language ? '"sub_category"."category_name_' + language + '"' : '"sub_category"."category_name"')), 'sub_category_name'], [this.modals.sequelize.literal('' + (language ? '"category"."category_name_' + language + '"' : '"category"."category_name"')), 'categoryName'], [this.modals.sequelize.literal('' + (language ? '"mainCategory"."category_name_' + language + '"' : '"mainCategory"."category_name"')), 'masterCategoryName'], [this.modals.sequelize.literal('"sub_category"."category_name"'), 'default_sub_category_name'], [this.modals.sequelize.literal('"mainCategory"."category_name"'), 'default_masterCategoryName'], [this.modals.sequelize.literal('"category"."category_name"'), 'default_categoryName'], [this.modals.sequelize.fn('CONCAT', '/categories/', this.modals.sequelize.literal('"category"."category_id"'), '/images/'), 'cImageURL'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"products"."id"')), 'productURL'], ['document_date', 'purchaseDate'], 'model', ['document_number', 'documentNo'], ['updated_at', 'updatedDate'], ['bill_id', 'billId'], ['job_id', 'jobId'], ['seller_id', 'sellerId'], 'copies', [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"products"."id"'), '/reviews'), 'reviewUrl'], [this.modals.sequelize.literal('"category"."category_name"'), 'categoryName'], [this.modals.sequelize.fn('CONCAT', '/consumer/servicecenters?brandid=', this.modals.sequelize.literal('"products"."brand_id"'), '&categoryid=', this.modals.sequelize.col('"products"."category_id"')), 'serviceCenterUrl'], 'status_type'],
         order: [['document_date', 'DESC']]
       }).then(function (productResult) {
         return productResult.map(function (item) {
@@ -1027,8 +1027,7 @@ var ProductAdaptor = function () {
     }
   }, {
     key: 'updateProductDetails',
-    value: function updateProductDetails(
-        user, productBody, metadataBody, otherItems, productId) {
+    value: function updateProductDetails(user, productBody, metadataBody, otherItems, productId) {
       var _this6 = this;
 
       var dbProduct = void 0;
@@ -1064,6 +1063,7 @@ var ProductAdaptor = function () {
         }), _this6.modals.products.count({
           where: {
             user_id: productBody.user_id,
+            category_id: [1, 2, 3],
             status_type: [5, 11]
           }
         })]);
@@ -1071,12 +1071,11 @@ var ProductAdaptor = function () {
         if (result[1] && result[0] === 0 && result[2] === 0) {
           return false;
         }
-        if (result[3] === 0) {
+        if (result[3] === 0 && (productBody.category_id.toString() === '1' || productBody.category_id.toString() === '2' || productBody.category_id.toString() === '3')) {
           // to check it it is the first product
           flag = true;
 
-          _notification2.default.sendMailOnDifferentSteps(
-              'Your product is our responsibility now!', user.email, user, 5); // 5 is for 1st product creation
+          _notification2.default.sendMailOnDifferentSteps('Your product is our responsibility now!', user.email, user, 5); // 5 is for 1st product creation
         }
         var sellerPromise = [];
         var isProductAMCSellerSame = false;
@@ -1790,28 +1789,30 @@ var ProductAdaptor = function () {
           isProductPUCSellerSame = parameters.isProductPUCSellerSame,
           isAMCRepairSellerSame = parameters.isAMCRepairSellerSame;
 
-      var sellerOption = {
-        $or: {
-          $and: {
-            seller_name: {
-              $iLike: productBody.seller_name || ''
-            }
-          }
-        }
-      };
+      var sellerOption = void 0;
 
       if (productBody.seller_id) {
-        sellerOption.$or.sid = productBody.seller_id;
-      }
-
-      if (productBody.seller_contact && productBody.seller_contact.trim()) {
-        sellerOption.$or.$and.contact_no = productBody.seller_contact.trim();
-      }
-
-      if (productBody.seller_email && productBody.seller_email.trim()) {
-        sellerOption.$or.$and.email = {
-          $iLike: productBody.seller_email.trim()
+        sellerOption = { sid: productBody.seller_id };
+      } else {
+        sellerOption = {
+          $or: {
+            $and: {
+              seller_name: {
+                $iLike: productBody.seller_name || ''
+              }
+            }
+          }
         };
+
+        if (productBody.seller_contact && productBody.seller_contact.trim()) {
+          sellerOption.$or.$and.contact_no = productBody.seller_contact.trim();
+        }
+
+        if (productBody.seller_email && productBody.seller_email.trim()) {
+          sellerOption.$or.$and.email = {
+            $iLike: productBody.seller_email.trim()
+          };
+        }
       }
 
       sellerPromise.push(productBody.seller_contact && productBody.seller_contact.trim() || productBody.seller_name && productBody.seller_name.trim() || productBody.seller_email && productBody.seller_email.trim() || productBody.seller_address && productBody.seller_address.trim() ? this.sellerAdaptor.retrieveOrCreateOfflineSellers(sellerOption, {
@@ -2090,7 +2091,7 @@ var ProductAdaptor = function () {
       }
       return this.modals.products.findAll({
         where: options,
-        attributes: ['id', ['product_name', 'productName'], ['purchase_cost', 'value'], ['main_category_id', 'masterCategoryId'], 'taxes', [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"products"."id"')), 'productURL'], ['document_date', 'purchaseDate'], ['document_number', 'documentNo'], ['updated_at', 'updatedDate'], ['bill_id', 'billId'], ['job_id', 'jobId'], 'copies', 'user_id']
+        attributes: ['id', ['id', 'productId'], ['product_name', 'productName'], ['purchase_cost', 'value'], ['main_category_id', 'masterCategoryId'], 'taxes', [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"products"."id"')), 'productURL'], ['document_date', 'purchaseDate'], ['document_number', 'documentNo'], ['updated_at', 'updatedDate'], ['bill_id', 'billId'], ['job_id', 'jobId'], 'copies', 'user_id']
       }).then(function (productResult) {
         console.log(productResult.map(function (item) {
           return item.toJSON();

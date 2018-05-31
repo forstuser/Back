@@ -347,9 +347,10 @@ class DashboardAdaptor {
 
     // welcome sms
     if (user.mobile_no) {
-      const message = `Hello${user.name ?
-          ` ${user.name}` :
-          ''}, Glad to have you on board! Now track the entire life cycle of your products with easy access to bills & documents as well as receive timely warranty & insurance alerts - ALL in one place, at one time. `;
+      const message = `${user.name ?
+          `Hello ${user.name}` :
+          'Hello'}, Glad to have you on board! Now track the entire life cycle of your products with easy access to bills & documents as well as receive timely warranty & insurance alerts - ALL in one place, at one time.
+          Start Now : https://www.binbill.com/`;
       sendSMS(message, [user.mobile_no]);
     }
 

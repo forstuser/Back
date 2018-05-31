@@ -481,6 +481,9 @@ class ProductAdaptor {
       attributes: [
         'id',
         [
+          'id',
+          'productId'],
+        [
           'product_name',
           'productName'],
         'file_type',
@@ -1861,7 +1864,8 @@ class ProductAdaptor {
         this.modals.products.count({
           where: {
             user_id: productBody.user_id,
-            status_type: [5,11],
+            category_id: [1, 2, 3],
+            status_type: [5, 11],
           },
         }),
       ]);
@@ -1869,7 +1873,9 @@ class ProductAdaptor {
       if (result[1] && result[0] === 0 && result[2] === 0) {
         return false;
       }
-      if (result[3] === 0) { // to check it it is the first product
+      if (result[3] === 0 && (productBody.category_id.toString() === '1' ||
+          productBody.category_id.toString() === '2' ||
+          productBody.category_id.toString() === '3')) { // to check it it is the first product
         flag = true;
 
         notificationAdaptor.sendMailOnDifferentSteps(
@@ -2737,28 +2743,30 @@ class ProductAdaptor {
 
   prepareSellerPromise(parameters) {
     let {sellerPromise, productBody, otherItems, isProductAMCSellerSame, isProductRepairSellerSame, isProductPUCSellerSame, isAMCRepairSellerSame} = parameters;
-    let sellerOption = {
-      $or: {
-        $and: {
-          seller_name: {
-            $iLike: productBody.seller_name || '',
-          },
-        },
-      },
-    };
+    let sellerOption;
 
     if (productBody.seller_id) {
-      sellerOption.$or.sid = productBody.seller_id;
-    }
-
-    if (productBody.seller_contact && productBody.seller_contact.trim()) {
-      sellerOption.$or.$and.contact_no = productBody.seller_contact.trim();
-    }
-
-    if (productBody.seller_email && productBody.seller_email.trim()) {
-      sellerOption.$or.$and.email = {
-        $iLike: productBody.seller_email.trim(),
+      sellerOption = {sid: productBody.seller_id};
+    } else {
+      sellerOption = {
+        $or: {
+          $and: {
+            seller_name: {
+              $iLike: productBody.seller_name || '',
+            },
+          },
+        },
       };
+
+      if (productBody.seller_contact && productBody.seller_contact.trim()) {
+        sellerOption.$or.$and.contact_no = productBody.seller_contact.trim();
+      }
+
+      if (productBody.seller_email && productBody.seller_email.trim()) {
+        sellerOption.$or.$and.email = {
+          $iLike: productBody.seller_email.trim(),
+        };
+      }
     }
 
     sellerPromise.push(
@@ -3081,6 +3089,9 @@ class ProductAdaptor {
       where: options,
       attributes: [
         'id',
+        [
+          'id',
+          'productId'],
         [
           'product_name',
           'productName'],
