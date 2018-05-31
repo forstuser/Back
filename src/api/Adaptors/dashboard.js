@@ -1,4 +1,3 @@
-/*jshint esversion: 6 */
 'use strict';
 import notificationAdaptor from './notification';
 import ProductAdaptor from './product';
@@ -12,6 +11,7 @@ import shared from '../../helpers/shared';
 import NotificationAdaptor from '../Adaptors/notification';
 import moment from 'moment';
 import Promise from 'bluebird';
+import smsHelper from '../../helpers/sms';
 
 class DashboardAdaptor {
   constructor(modals) {
@@ -101,12 +101,8 @@ class DashboardAdaptor {
          latestCalendarCalc, recent_calendar_item, service_center_products,
          know_item_count, todoCounts, mealCounts,
          wearableCounts, knowItemCounts) => {
-          latestCalendarItem = latestCalendarItem
-              ? latestCalendarItem.toJSON()
-              : {};
-          latestCalendarCalc = latestCalendarCalc
-              ? latestCalendarCalc.toJSON()
-              : {};
+          latestCalendarItem = latestCalendarItem ? latestCalendarItem.toJSON() : {};
+          latestCalendarCalc = latestCalendarCalc ? latestCalendarCalc.toJSON() : {};
           const calendar_item_updated_at = latestCalendarItem &&
           moment(latestCalendarItem.updated_at, moment.ISO_8601).
               diff(moment(latestCalendarCalc.updated_at, moment.ISO_8601),
@@ -337,12 +333,20 @@ class DashboardAdaptor {
           user.email, user, 1);
     }
 
+    // welcome email
     this.notificationAdaptor.notifyUser(user.id || user.ID,
         {
           title: 'Welcome to BinBill!',
           description: 'Hello User. Greetings from Rohit BinBill CEO. I welcome...',
           big_text: 'Hello User. Greetings from Rohit BinBill CEO. I welcome you to your eHome. We promise to constantly evolve and make managing your eHome ever efficient and smarter. As it is a new home, you may take some time to get accustomed to it. Your Home Manager and I would always welcome your suggestions to improve your eHome. Please reach me at - rohit@binbill.com or eHome@binbill.com',
         });
+
+    // welcome sms
+    if (user.mobile_no) {
+      const message = `Hello${user.name ? ` ${user.name}` : ''}, Glad to have you on board! Now track the entire life cycle of your products with easy access to bills & documents as well as receive timely warranty & insurance alerts - ALL in one place, at one time. `;
+      smsHelper.sendSMS(message, [user.mobile_no]);
+    }
+
     return {
       status: true,
       message: 'New User',

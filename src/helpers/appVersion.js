@@ -1,4 +1,3 @@
-/*jshint esversion: 6 */
 'use strict';
 let MODAL;
 import shared from './shared';
@@ -397,8 +396,8 @@ const checkForAppUpdate = (request, reply) => {
         console.log('App Version not in Headers');
         return reply(null);
       }
-    }
-;
+    };
+
 export default (models) => {
   MODAL = models;
   return {

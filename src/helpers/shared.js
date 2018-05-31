@@ -1,4 +1,3 @@
-/*jshint esversion: 6 */
 'use strict';
 
 import dateFormat from 'dateformat';
@@ -837,8 +836,7 @@ export function retrieveMailTemplate(user, templateType) {
     }
     default: {
       const verificationUrl = `${config.SERVER_HOST}/verify/${user.email_secret}`;
-      `Hi ${user.name ||
-      'User'},<br /><br /> <a href='${verificationUrl}'>Click here</a> to verify your email account -<br /><br /> Welcome to the safe and connected world!<br /><br />Regards,<br />BinBill`;
+     return `Hi ${user.name || 'User'},<br /><br /> <a href='${verificationUrl}'>Click here</a> to verify your email account -<br /><br /> Welcome to the safe and connected world!<br /><br />Regards,<br />BinBill`;
     }
   }
 }
