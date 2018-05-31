@@ -55,6 +55,10 @@ var _bluebird = require('bluebird');
 
 var _bluebird2 = _interopRequireDefault(_bluebird);
 
+var _notification = require('./notification');
+
+var _notification2 = _interopRequireDefault(_notification);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
@@ -1023,7 +1027,8 @@ var ProductAdaptor = function () {
     }
   }, {
     key: 'updateProductDetails',
-    value: function updateProductDetails(productBody, metadataBody, otherItems, productId) {
+    value: function updateProductDetails(
+        user, productBody, metadataBody, otherItems, productId) {
       var _this6 = this;
 
       var dbProduct = void 0;
@@ -1069,6 +1074,9 @@ var ProductAdaptor = function () {
         if (result[3] === 0) {
           // to check it it is the first product
           flag = true;
+
+          _notification2.default.sendMailOnDifferentSteps(
+              'Your product is our responsibility now!', user.email, user, 5); // 5 is for 1st product creation
         }
         var sellerPromise = [];
         var isProductAMCSellerSame = false;

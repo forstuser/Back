@@ -1034,6 +1034,7 @@ class NotificationAdaptor {
           registration_ids: result.map(user => user.fcm_id),
           priority: 'high',
           data: payload,
+          notification_type: 26,
           notification: {
             title: payload.title,
             body: payload.description || payload.big_text,

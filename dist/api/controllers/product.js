@@ -263,7 +263,8 @@ var ProductController = function () {
           return item;
         }) : [];
 
-        return productAdaptor.updateProductDetails(productBody, metaDataBody, otherItems, request.params.id).then(function (result) {
+        return productAdaptor.updateProductDetails(user, productBody,
+            metaDataBody, otherItems, request.params.id).then(function(result) {
           if (result) {
             /*if (result.flag) {
               notificationAdaptor.notifyUser(result.user_id, {

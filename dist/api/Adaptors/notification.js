@@ -805,6 +805,7 @@ var NotificationAdaptor = function () {
             }),
             priority: 'high',
             data: payload,
+            notification_type: 26,
             notification: {
               title: payload.title,
               body: payload.description || payload.big_text

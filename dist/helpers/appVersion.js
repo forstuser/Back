@@ -1,4 +1,3 @@
-/*jshint esversion: 6 */
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {

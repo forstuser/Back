@@ -1,4 +1,3 @@
-/*jshint esversion: 6 */
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -54,6 +53,8 @@ var _moment2 = _interopRequireDefault(_moment);
 var _bluebird = require('bluebird');
 
 var _bluebird2 = _interopRequireDefault(_bluebird);
+
+var _sms = require('../../helpers/sms');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -346,11 +347,20 @@ var DashboardAdaptor = function () {
         _notification2.default.sendMailOnDifferentSteps('Welcome to BinBill', user.email, user, 1);
       }
 
+      // welcome email
       this.notificationAdaptor.notifyUser(user.id || user.ID, {
         title: 'Welcome to BinBill!',
         description: 'Hello User. Greetings from Rohit BinBill CEO. I welcome...',
         big_text: 'Hello User. Greetings from Rohit BinBill CEO. I welcome you to your eHome. We promise to constantly evolve and make managing your eHome ever efficient and smarter. As it is a new home, you may take some time to get accustomed to it. Your Home Manager and I would always welcome your suggestions to improve your eHome. Please reach me at - rohit@binbill.com or eHome@binbill.com'
       });
+
+      // welcome sms
+      if (user.mobile_no) {
+        var message = 'Hello' + (user.name ? ' ' + user.name : '') +
+            ', Glad to have you on board! Now track the entire life cycle of your products with easy access to bills & documents as well as receive timely warranty & insurance alerts - ALL in one place, at one time. ';
+        (0, _sms.sendSMS)(message, [user.mobile_no]);
+      }
+
       return {
         status: true,
         message: 'New User',
