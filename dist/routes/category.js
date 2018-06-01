@@ -12,7 +12,7 @@ var _category2 = _interopRequireDefault(_category);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function prepareCategoryRoutes(modal, routesObject, middleware) {
-  var initController = new _category2.default(modal);
+  const initController = new _category2.default(modal);
   if (initController) {
     routesObject.push({
       method: 'GET',

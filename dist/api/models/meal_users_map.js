@@ -4,8 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-exports.default = function (sequelize, DataTypes) {
-  var mealUserMap = sequelize.define('mealUserMap', {
+exports.default = (sequelize, DataTypes) => {
+  const mealUserMap = sequelize.define('mealUserMap', {
     user_id: {
       type: DataTypes.INTEGER
     },
@@ -43,7 +43,7 @@ exports.default = function (sequelize, DataTypes) {
     tableName: 'table_meal_user_map'
   });
 
-  mealUserMap.associate = function (models) {
+  mealUserMap.associate = models => {
     mealUserMap.belongsTo(models.users, { foreignKey: 'user_id', onDelete: 'cascade', onUpdate: 'cascade' });
     mealUserMap.belongsTo(models.users, { foreignKey: 'created_by', onDelete: 'cascade', onUpdate: 'cascade' });
     mealUserMap.belongsTo(models.users, { foreignKey: 'updated_by', onDelete: 'cascade', onUpdate: 'cascade' });

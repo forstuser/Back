@@ -4,8 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-exports.default = function (sequelize, DataTypes) {
-  var wearables = sequelize.define('wearables', {
+exports.default = (sequelize, DataTypes) => {
+  const wearables = sequelize.define('wearables', {
     name: {
       type: DataTypes.STRING
     },
@@ -42,7 +42,7 @@ exports.default = function (sequelize, DataTypes) {
     tableName: 'table_wearable_items'
   });
 
-  wearables.associate = function (models) {
+  wearables.associate = models => {
     wearables.belongsTo(models.users, {
       foreignKey: 'created_by',
       as: 'creator',

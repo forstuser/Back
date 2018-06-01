@@ -19,7 +19,7 @@ function prepareWhatToServiceRoutes(modal, routeObject, middleware) {
   //= ========================
   // What To Service Routes
   //= ========================
-  var controllerInit = new _whatToServices2.default(modal);
+  const controllerInit = new _whatToServices2.default(modal);
   if (controllerInit) {
     routeObject.push({
       method: 'GET',

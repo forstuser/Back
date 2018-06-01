@@ -20,7 +20,7 @@ function prepareProductRoutes(modal, routeObject, middleware) {
   // Product Routes
   //= ========================
 
-  var controllerInit = new _product2.default(modal);
+  const controllerInit = new _product2.default(modal);
   if (controllerInit) {
     routeObject.push({
       method: 'PUT',

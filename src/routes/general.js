@@ -5,6 +5,15 @@ export function prepareGeneralRoutes(modal, routeObject, middleware) {
   const controllerInit = new ControllerObject(modal);
   if (controllerInit) {
     routeObject.push({
+      method : 'GET',
+      path : '/version/detail',
+      config : {
+        handler : ControllerObject.checkForAppUpdate,
+        description : 'Get app latest version details',
+      }
+    });
+
+    routeObject.push({
       method: 'POST',
       path: '/contact-us',
       config: {

@@ -12,7 +12,7 @@ var _brand2 = _interopRequireDefault(_brand);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function prepareBrandRoutes(modal, routeObject, middleware) {
-  var controllerInit = new _brand2.default(modal);
+  const controllerInit = new _brand2.default(modal);
   if (controllerInit) {
     // Get brands
     routeObject.push({

@@ -10,8 +10,8 @@ var _moment2 = _interopRequireDefault(_moment);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-exports.default = function (sequelize, DataTypes) {
-  var userAddress = sequelize.define('userAddress', {
+exports.default = (sequelize, DataTypes) => {
+  const userAddress = sequelize.define('userAddress', {
     address_type: {
       type: DataTypes.INTEGER,
       defaultValue: 1
@@ -68,7 +68,7 @@ exports.default = function (sequelize, DataTypes) {
     underscored: true,
     tableName: 'user_addresses',
     hooks: {
-      afterCreate: function afterCreate(user) {
+      afterCreate: user => {
         user.updateAttributes({
           last_login: _moment2.default.utc().toISOString()
         });
@@ -76,7 +76,7 @@ exports.default = function (sequelize, DataTypes) {
     }
   });
 
-  userAddress.associate = function (models) {
+  userAddress.associate = models => {
     userAddress.belongsTo(models.users, { onDelete: 'cascade', hooks: true });
     userAddress.belongsTo(models.users, { foreignKey: 'updated_by', as: 'updatedByUser' });
     userAddress.belongsTo(models.statuses, { foreignKey: 'status_type', targetKey: 'status_type' });

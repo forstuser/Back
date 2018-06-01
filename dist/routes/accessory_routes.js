@@ -15,7 +15,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //accessoryRoute
 function prepareAccessoryRoute(modal, route, middleware) {
 
-  var varController = new _accessory2.default(modal);
+  const varController = new _accessory2.default(modal);
 
   if (varController) {
 

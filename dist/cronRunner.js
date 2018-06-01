@@ -24,64 +24,62 @@ var _moment2 = _interopRequireDefault(_moment);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function executeCron() {
-  _models2.default.sequelize.sync().then(function () {
-    var rule1 = new _nodeSchedule2.default.RecurrenceRule();
+  _models2.default.sequelize.sync().then(() => {
+    let rule1 = new _nodeSchedule2.default.RecurrenceRule();
     rule1.hour = 8;
     rule1.dayOfWeek = new _nodeSchedule2.default.Range(0, 6);
-    var notificationAdaptor = new _notification2.default(_models2.default);
+    const notificationAdaptor = new _notification2.default(_models2.default);
     _nodeSchedule2.default.scheduleJob(rule1, function () {
       console.log('Send Notification of 7 days Start');
-      return notificationAdaptor.createNotifications(7).then(function () {
+      return notificationAdaptor.createNotifications(7).then(() => {
         console.log('success');
       }).catch(console.log);
     });
-    var rule2 = new _nodeSchedule2.default.RecurrenceRule();
+    let rule2 = new _nodeSchedule2.default.RecurrenceRule();
     rule2.hour = 9;
     rule2.dayOfWeek = new _nodeSchedule2.default.Range(0, 6);
     _nodeSchedule2.default.scheduleJob(rule2, function () {
       console.log('Send Notification of 15 days Start');
-      return notificationAdaptor.createNotifications(15).then(function () {
+      return notificationAdaptor.createNotifications(15).then(() => {
         console.log('success');
       }).catch(console.log);
     });
 
-    var rule3 = new _nodeSchedule2.default.RecurrenceRule();
+    let rule3 = new _nodeSchedule2.default.RecurrenceRule();
     rule3.hour = 7;
     rule3.dayOfWeek = 5;
     _nodeSchedule2.default.scheduleJob(rule3, function () {
       console.log('Send Notification of Missing Docs Start');
-      return notificationAdaptor.createMissingDocNotification(15).then(function () {
+      return notificationAdaptor.createMissingDocNotification(15).then(() => {
         console.log('success');
       }).catch(console.log);
     });
-    var rule4 = new _nodeSchedule2.default.RecurrenceRule();
+    let rule4 = new _nodeSchedule2.default.RecurrenceRule();
     rule4.hour = 6;
     rule4.dayOfWeek = new _nodeSchedule2.default.Range(0, 6);
     _nodeSchedule2.default.scheduleJob(rule4, function () {
       console.log('Send Notification of daily expenses Start');
-      return notificationAdaptor.createExpenseNotification(1).then(function () {
+      return notificationAdaptor.createExpenseNotification(1).then(() => {
         console.log('success');
       }).catch(console.log);
     });
-    var rule5 = new _nodeSchedule2.default.RecurrenceRule();
+    let rule5 = new _nodeSchedule2.default.RecurrenceRule();
     rule5.hour = 6;
     rule5.dayOfWeek = 0;
     _nodeSchedule2.default.scheduleJob(rule5, function () {
       console.log('Send Notification of weekly expenses Start');
-      return notificationAdaptor.createExpenseNotification(6).then(function () {
+      return notificationAdaptor.createExpenseNotification(6).then(() => {
         console.log('success');
       }).catch(console.log);
     });
-    var rule6 = new _nodeSchedule2.default.RecurrenceRule();
+    let rule6 = new _nodeSchedule2.default.RecurrenceRule();
     rule6.hour = 6;
     rule6.month = _moment2.default.utc().endOf('month');
     _nodeSchedule2.default.scheduleJob(rule6, function () {
       console.log('Send Notification of monthly expenses Start');
-      return notificationAdaptor.createExpenseNotification(_moment2.default.utc().endOf('month').date()).then(function () {
+      return notificationAdaptor.createExpenseNotification(_moment2.default.utc().endOf('month').date()).then(() => {
         console.log('success');
       }).catch(console.log);
     });
-  }).catch(function (err) {
-    return console.log(err, 'Something went wrong with the Database Update! for Cron Job');
-  });
+  }).catch(err => console.log(err, 'Something went wrong with the Database Update! for Cron Job'));
 }

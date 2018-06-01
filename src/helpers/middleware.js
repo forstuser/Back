@@ -1,4 +1,3 @@
-/*jshint esversion: 6 */
 'use strict';
 let MODAL;
 import shared from './shared';
@@ -72,6 +71,7 @@ const updateUserActiveStatus = (request, reply) => {
       },
     }).then((userResult) => {
       const userDetail = userResult ? userResult.toJSON() : userResult;
+      request.user = userDetail || user;
       console.log(
           `Last route ${request.url.pathname} accessed by user id ${user.id ||
           user.ID} from ${request.headers.ios_app_version ?
@@ -269,94 +269,134 @@ const verifyUserOTP = (request, reply) => {
     where: {
       id: user.id || user.ID,
     },
-  })).
-      then((userResult) => {
-        if (userResult) {
-          console.log(
-              `Last route ${request.url.pathname} accessed by user id ${user.id ||
-              user.ID} from ${request.headers.ios_app_version ?
-                  'iOS' :
-                  'android'}`);
-          request.user = userResult;
-          const currentUser = request.user.toJSON();
-          console.log(currentUser);
-          if (currentUser.email_secret) {
-            console.log(currentUser.otp_created_at);
-            const timeDiffMin = moment.duration(
-                moment.utc().diff(moment(currentUser.otp_created_at))).
-                asMinutes();
-            console.log(timeDiffMin);
-            if (timeDiffMin > 5) {
-              return null;
-            }
-            return comparePasswords(request.payload.token,
-                currentUser.email_secret);
-          }
+  })).then((userResult) => {
+    if (userResult) {
+      console.log(
+          `Last route ${request.url.pathname} accessed by user id ${user.id ||
+          user.ID} from ${request.headers.ios_app_version ?
+              'iOS' :
+              'android'}`);
+      request.user = userResult;
+      const currentUser = request.user.toJSON();
+      console.log(currentUser);
+      if (currentUser.email_secret) {
+        console.log(currentUser.otp_created_at);
+        const timeDiffMin = moment.duration(
+            moment.utc().diff(moment(currentUser.otp_created_at))).asMinutes();
+        console.log(timeDiffMin);
+        if (timeDiffMin > 5) {
+          return null;
         }
+        return comparePasswords(request.payload.token,
+            currentUser.email_secret);
+      }
+    }
 
-        return false;
-      }).
-      then((pinResult) => reply.response(pinResult)).
-      catch((err) => {
-        console.log(
-            `Error on ${new Date()} for user ${request.payload.mobile_no} is as follow: \n \n ${err}`);
-        return reply.response(false);
-      });
+    return false;
+  }).then((pinResult) => reply.response(pinResult)).catch((err) => {
+    console.log(
+        `Error on ${new Date()} for user ${request.payload.mobile_no} is as follow: \n \n ${err}`);
+    return reply.response(false);
+  });
 };
+
+function isValidEmail(emailAddress) {
+  const pattern = new RegExp(
+      /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/);
+  return pattern.test(emailAddress);
+}
 
 const verifyUserEmail = (request, reply) => {
   const user = shared.verifyAuthorization(request.headers);
   if (!user) {
     return reply.response(null);
   } else {
-    return Promise.try(() => MODAL.users.count({
-      where: {
-        $or: {
-          id: user.id || user.ID,
-          email: {
-            $iLike: request.payload.email,
+
+    if (request.payload.email) {
+      if (!isValidEmail(request.payload.email.toLowerCase())) {
+        return reply.response(false);
+      }
+      return Promise.try(() => MODAL.users.count({
+        where: {
+          $or: {
+            id: user.id || user.ID,
+            email: {
+              $iLike: request.payload.email,
+            },
           },
         },
-      },
-    })).then((userCounts) => {
-      if (userCounts <= 1) {
-        return MODAL.users.findOne({
-          where: {
-            id: user.id || user.ID,
-          },
-        }).then((userResult) => {
-          const userDetail = userResult ? userResult.toJSON() : userResult;
-          console.log(
-              `Last route ${request.url.pathname} accessed by user id ${user.id ||
-              user.ID} from ${request.headers.ios_app_version ?
-                  'iOS' :
-                  'android'}`);
-          if (userDetail) {
-            request.user = userDetail;
-            if (userDetail.email_verified) {
-              return reply.response((userDetail.email || '').toLowerCase() ===
-                  (request.payload.email || '').toLowerCase());
+      })).then((userCounts) => {
+        if (userCounts <= 1) {
+          return MODAL.users.findOne({
+            where: {
+              id: user.id || user.ID,
+            },
+          }).then((userResult) => {
+            const userDetail = userResult ? userResult.toJSON() : userResult;
+            console.log(
+                `Last route ${request.url.pathname} accessed by user id ${user.id ||
+                user.ID} from ${request.headers.ios_app_version ?
+                    'iOS' :
+                    'android'}`);
+            if (userDetail) {
+              request.user = userDetail;
+              if (userDetail.email_verified) {
+                return reply.response((userDetail.email || '').toLowerCase() ===
+                    (request.payload.email || '').toLowerCase());
+              } else {
+                userResult.updateAttributes({email: request.payload.email});
+                return reply.response(true);
+              }
             } else {
-              userResult.updateAttributes({email: request.payload.email});
-              return reply.response(true);
+              console.log(`User ${user.email} is invalid.`);
+              return reply.response(false);
             }
-          } else {
-            console.log(`User ${user.email} is invalid.`);
-            return reply.response(false);
-          }
-        });
-      } else {
+          });
+        } else {
+          console.log(
+              `User with ${request.params.email} already exist.`);
+          return reply.response(null);
+        }
+      }).catch((err) => {
         console.log(
-            `User with ${request.params.email} already exist.`);
-        return reply.response(null);
-      }
-    }).catch((err) => {
-      console.log(
-          `Error on ${new Date()} for user ${user.mobile_no} is as follow: \n \n ${err}`);
-      return reply.response(false);
-    });
+            `Error on ${new Date()} for user ${user.mobile_no} is as follow: \n \n ${err}`);
+        return reply.response(false);
+      });
+    }
+
+    return reply.response(true);
   }
 };
+
+const checkForAppUpdate = (request, reply) => {
+      if (request.headers.app_version !== undefined ||
+          request.headers.ios_app_version !== undefined) {
+        const id = request.headers.ios_app_version ? 2 : 1;
+
+        MODAL.appVersion.findOne({
+          where: {
+            id,
+          },
+          order: [['updatedAt', 'DESC']],
+          attributes: [
+            [
+              'recommended_version',
+              'recommendedVersion'],
+            [
+              'force_version',
+              'forceVersion'],
+            [
+              'details',
+              'updateDetails']],
+        }).then((result) => {
+          console.log(result);
+          return reply.response(result);
+        });
+      } else {
+        console.log('App Version not in Headers');
+        return reply.response(null);
+      }
+    };
 
 export default (models) => {
   MODAL = models;
@@ -368,5 +408,6 @@ export default (models) => {
     hasMultipleAccounts,
     verifyUserEmail,
     verifyUserOTP,
+    checkForAppUpdate,
   };
 };

@@ -16,7 +16,7 @@ var _joi2 = _interopRequireDefault(_joi);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function prepareDashboardRoutes(modal, routeObject, middleware) {
-  var controllerInit = new _dashboard2.default(modal);
+  const controllerInit = new _dashboard2.default(modal);
   if (controllerInit) {
 
     /*Retrieve dashboard of consumer*/

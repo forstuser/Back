@@ -4,8 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-exports.default = function (sequelize, DataTypes) {
-  var brands = sequelize.define('brands', {
+exports.default = (sequelize, DataTypes) => {
+  const brands = sequelize.define('brands', {
     brand_id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
@@ -50,7 +50,7 @@ exports.default = function (sequelize, DataTypes) {
     tableName: 'brands'
   });
 
-  brands.associate = function (models) {
+  brands.associate = models => {
     brands.belongsTo(models.users, { foreignKey: 'updated_by' });
 
     brands.belongsTo(models.statuses, { foreignKey: 'status_type', targetKey: 'status_type' });

@@ -4,8 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-exports.default = function (sequelize, DataTypes) {
-  var products = sequelize.define('products', {
+exports.default = (sequelize, DataTypes) => {
+  const products = sequelize.define('products', {
     bill_id: {
       type: DataTypes.INTEGER
     },
@@ -84,7 +84,7 @@ exports.default = function (sequelize, DataTypes) {
     tableName: 'consumer_products'
   });
 
-  products.associate = function (models) {
+  products.associate = models => {
     products.belongsTo(models.bills);
     products.belongsTo(models.users, { foreignKey: 'user_id', as: 'consumer' });
     products.belongsTo(models.users, { foreignKey: 'updated_by', as: 'updatedByUser' });

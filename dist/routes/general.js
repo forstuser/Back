@@ -16,8 +16,17 @@ var _joi2 = _interopRequireDefault(_joi);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function prepareGeneralRoutes(modal, routeObject, middleware) {
-  var controllerInit = new _general2.default(modal);
+  const controllerInit = new _general2.default(modal);
   if (controllerInit) {
+    routeObject.push({
+      method: 'GET',
+      path: '/version/detail',
+      config: {
+        handler: _general2.default.checkForAppUpdate,
+        description: 'Get app latest version details'
+      }
+    });
+
     routeObject.push({
       method: 'POST',
       path: '/contact-us',

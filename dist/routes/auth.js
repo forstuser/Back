@@ -19,7 +19,7 @@ function prepareAuthRoutes(modal, routeObject, middleware) {
   //= ========================
   // Auth Routes
   //= ========================
-  var controllerInit = new _user2.default(modal);
+  const controllerInit = new _user2.default(modal);
   if (controllerInit) {
 
     /*Send OTP*/
@@ -89,6 +89,9 @@ function prepareAuthRoutes(modal, routeObject, middleware) {
         pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, {
           method: middleware.updateUserActiveStatus,
           assign: 'userExist'
+        }, {
+          method: middleware.verifyUserEmail,
+          assign: 'isValidEmail'
         }],
         handler: _user2.default.updateUserProfile,
         description: 'Update User Profile.',

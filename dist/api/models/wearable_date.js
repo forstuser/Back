@@ -4,8 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-exports.default = function (sequelize, DataTypes) {
-  var wearableDate = sequelize.define('wearableDate', {
+exports.default = (sequelize, DataTypes) => {
+  const wearableDate = sequelize.define('wearableDate', {
     wearable_id: {
       type: DataTypes.INTEGER
     },
@@ -29,7 +29,7 @@ exports.default = function (sequelize, DataTypes) {
     tableName: 'table_wearable_date'
   });
 
-  wearableDate.associate = function (models) {
+  wearableDate.associate = models => {
     wearableDate.belongsTo(models.wearables, { foreignKey: 'wearable_id', onDelete: 'cascade', onUpdate: 'cascade' });
   };
   return wearableDate;

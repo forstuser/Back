@@ -4,8 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-exports.default = function (sequelize, DataTypes) {
-  var serviceCenters = sequelize.define('serviceCenters', {
+exports.default = (sequelize, DataTypes) => {
+  const serviceCenters = sequelize.define('serviceCenters', {
     center_id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
@@ -64,7 +64,7 @@ exports.default = function (sequelize, DataTypes) {
     tableName: 'service_centers'
   });
 
-  serviceCenters.associate = function (models) {
+  serviceCenters.associate = models => {
     serviceCenters.belongsTo(models.users, { foreignKey: 'updated_by' });
 
     serviceCenters.belongsTo(models.statuses, { foreignKey: 'status_type', targetKey: 'status_type' });

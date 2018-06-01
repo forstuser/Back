@@ -4,8 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-exports.default = function (sequelize, DataTypes) {
-  var tags = sequelize.define('tags', {
+exports.default = (sequelize, DataTypes) => {
+  const tags = sequelize.define('tags', {
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
@@ -96,7 +96,7 @@ exports.default = function (sequelize, DataTypes) {
     tableName: 'tags'
   });
 
-  tags.associate = function (models) {
+  tags.associate = models => {
     tags.belongsTo(models.users, { foreignKey: 'updated_by' });
     tags.belongsTo(models.statuses, { foreignKey: 'status_type', targetKey: 'status_type' });
     tags.belongsToMany(models.knowItems, {

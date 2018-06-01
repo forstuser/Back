@@ -20,7 +20,7 @@ import {prepareAccessoryRoute} from './accessory_routes';
 let middleware;
 
 export default (app, modals) => {
-  middleware = new Middleware(modals);
+  middleware = Middleware(modals);
   // Initializing route groups
   const authRoutes = [];
   const categoryRoutes = [];

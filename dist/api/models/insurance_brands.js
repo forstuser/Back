@@ -10,8 +10,8 @@ var _categories2 = _interopRequireDefault(_categories);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-exports.default = function (sequelize, DataTypes) {
-  var insuranceBrands = sequelize.define('insuranceBrands', {
+exports.default = (sequelize, DataTypes) => {
+  const insuranceBrands = sequelize.define('insuranceBrands', {
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
@@ -96,7 +96,7 @@ exports.default = function (sequelize, DataTypes) {
     tableName: 'insurance_brands'
   });
 
-  insuranceBrands.associate = function (models) {
+  insuranceBrands.associate = models => {
     insuranceBrands.belongsTo(models.users, { foreignKey: 'updated_by' });
     insuranceBrands.belongsTo(models.statuses, { foreignKey: 'status_type', targetKey: 'status_type' });
     insuranceBrands.belongsTo(models.categories, {

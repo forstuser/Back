@@ -34,6 +34,36 @@ class GeneralController {
     modals = modal;
   }
 
+  static checkForAppUpdate(request, reply) {
+    if (request.headers.app_version !== undefined ||
+        request.headers.ios_app_version !== undefined) {
+      const id = request.headers.ios_app_version ? 2 : 1;
+
+      return modals.appVersion.findOne({
+        where: {
+          id,
+        },
+        order: [['updatedAt', 'DESC']],
+        attributes: [
+          [
+            'recommended_version',
+            'recommendedVersion'],
+          [
+            'force_version',
+            'forceVersion'],
+          [
+            'details',
+            'updateDetails']],
+      }).then((result) => {
+        console.log(result);
+        return reply.response(result);
+      });
+    } else {
+      console.log('App Version not in Headers');
+      return reply.response(null);
+    }
+  }
+
   /**
    * Retrieve Reference Data
    * @param request
@@ -548,7 +578,9 @@ class GeneralController {
           });
           knowItem.hashTags = knowItem.hashTags.trim();
           knowItem.totalLikes = knowItem.users.length;
-
+          const user = shared.verifyAuthorization(request.headers);
+          knowItem.isLikedByUser = user ? knowItem.users.findIndex(
+              (userItem) => userItem.id === (user.id || user.ID)) >= 0 : false;
           return reply.response({
             status: true, item: knowItem,
           }).code(200);
@@ -603,7 +635,7 @@ class GeneralController {
             'default_description'],
           [
             `${language ? `description_${language}` : `description`}`,
-            'description'],],
+            'description']],
         distinct: true,
         order: [['created_at', 'desc']],
       }).then((tagItems) => {

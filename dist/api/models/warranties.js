@@ -4,8 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-exports.default = function (sequelize, DataTypes) {
-  var warranties = sequelize.define('warranties', {
+exports.default = (sequelize, DataTypes) => {
+  const warranties = sequelize.define('warranties', {
     product_id: {
       type: DataTypes.INTEGER,
       allowNull: false
@@ -74,7 +74,7 @@ exports.default = function (sequelize, DataTypes) {
     tableName: 'consumer_warranties'
   });
 
-  warranties.associate = function (models) {
+  warranties.associate = models => {
     warranties.belongsTo(models.products, { foreignKey: 'product_id' });
     warranties.belongsTo(models.users, { foreignKey: 'user_id', as: 'consumer' });
     warranties.belongsTo(models.users, { foreignKey: 'updated_by', as: 'updatedByUser' });

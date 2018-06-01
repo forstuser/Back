@@ -4,8 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-exports.default = function (sequelize, DataTypes) {
-  var table_accessory_products = sequelize.define('table_accessory_products', {
+exports.default = (sequelize, DataTypes) => {
+  const table_accessory_products = sequelize.define('table_accessory_products', {
     title: {
       type: DataTypes.STRING
     },
@@ -70,7 +70,7 @@ exports.default = function (sequelize, DataTypes) {
     tableName: 'table_accessory_products'
   });
 
-  table_accessory_products.associate = function (models) {
+  table_accessory_products.associate = models => {
 
     table_accessory_products.belongsTo(models.table_accessory_types, {
       foreignKey: 'accessory_type_id',

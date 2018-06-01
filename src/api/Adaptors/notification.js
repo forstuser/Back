@@ -364,13 +364,15 @@ class NotificationAdaptor {
                     }
                 });
 
-                if (product.masterCategoryId.toString() === '6') {
-                    product.title = `${product.productName} Reminder`;
-                    product.productType = 5;
-                } else {
-                    product.title = `${product.productName} Reminder`;
-                    product.productType = 4;
-                }
+            if (product.masterCategoryId.toString() === '6') {
+              product.title = `${product.productName ||
+              'one of your product'} Reminder`;
+              product.productType = 5;
+            } else {
+              product.title = `${product.productName ||
+              'one of your product'} Reminder`;
+              product.productType = 4;
+            }
 
                 return product;
             });
@@ -379,33 +381,36 @@ class NotificationAdaptor {
                 item => ((item.dueIn !== undefined && item.dueIn !== null) &&
                     item.dueIn <= 30 && item.dueIn >= 0));
 
-            let pucProducts = pucList.map((item) => {
-                const puc = item;
-                if (moment.utc(puc.expiryDate, moment.ISO_8601).isValid()) {
-                    const dueDateTime = moment.utc(puc.expiryDate, moment.ISO_8601).endOf('day');
-                    puc.dueDate = puc.expiryDate;
-                    puc.dueIn = dueDateTime.diff(moment.utc(), 'days', true);
-                    puc.productType = 3;
-                    puc.title = 'PUC Renewal Pending';
-                    puc.description = `PUC Renewal Pending for ${puc.productName}`;
-                }
+          let pucProducts = pucList.map((item) => {
+            const puc = item;
+            if (moment.utc(puc.expiryDate, moment.ISO_8601).isValid()) {
+              const dueDateTime = moment.utc(puc.expiryDate, moment.ISO_8601).
+                  endOf('day');
+              puc.dueDate = puc.expiryDate;
+              puc.dueIn = dueDateTime.diff(moment.utc(), 'days', true);
+              puc.productType = 3;
+              puc.title = 'PUC Renewal Pending';
+              puc.description = `PUC Renewal Pending for ${puc.productName ||
+              'one of your product'}`;
+            }
 
                 return puc;
             });
 
-            pucProducts = pucProducts.filter(
-                item => ((item.dueIn !== undefined && item.dueIn !== null) &&
-                    item.dueIn <= 30 && item.dueIn >= 0));
-            let amcs = amcList.map((item) => {
-                const amc = item;
-                if (moment.utc(amc.expiryDate, moment.ISO_8601).isValid()) {
-                    const dueDateTime = moment.utc(amc.expiryDate, moment.ISO_8601);
-                    amc.dueDate = amc.expiryDate;
-                    amc.dueIn = dueDateTime.diff(moment.utc(), 'days', true);
-                    amc.productType = 3;
-                    amc.title = 'AMC Renewal Pending';
-                    amc.description = `AMC Renewal Pending for ${amc.productName}`;
-                }
+          pucProducts = pucProducts.filter(
+              item => ((item.dueIn !== undefined && item.dueIn !== null) &&
+                  item.dueIn <= 30 && item.dueIn >= 0));
+          let amcs = amcList.map((item) => {
+            const amc = item;
+            if (moment.utc(amc.expiryDate, moment.ISO_8601).isValid()) {
+              const dueDateTime = moment.utc(amc.expiryDate, moment.ISO_8601);
+              amc.dueDate = amc.expiryDate;
+              amc.dueIn = dueDateTime.diff(moment.utc(), 'days', true);
+              amc.productType = 3;
+              amc.title = 'AMC Renewal Pending';
+              amc.description = `AMC Renewal Pending for ${amc.productName ||
+              'one of your product'}`;
+            }
 
                 return amc;
             });
@@ -413,19 +418,20 @@ class NotificationAdaptor {
                 item => (item.dueIn !== undefined && item.dueIn !== null) &&
                     item.dueIn <= 30 && item.dueIn >= 0);
 
-            let insurances = insuranceList.map((item) => {
-                const insurance = item;
-                if (moment.utc(insurance.expiryDate, moment.ISO_8601).isValid()) {
-                    const dueDateTime = moment.utc(insurance.expiryDate,
-                        moment.ISO_8601);
-                    insurance.dueDate = insurance.expiryDate;
-                    insurance.dueIn = dueDateTime.diff(moment.utc(), 'days', true);
-                    insurance.productType = 3;
-                    insurance.title = 'Insurance Renewal Pending';
-                    insurance.description = `Insurance Renewal Pending for ${insurance.productName}`;
-                }
-                return insurance;
-            });
+          let insurances = insuranceList.map((item) => {
+            const insurance = item;
+            if (moment.utc(insurance.expiryDate, moment.ISO_8601).isValid()) {
+              const dueDateTime = moment.utc(insurance.expiryDate,
+                  moment.ISO_8601);
+              insurance.dueDate = insurance.expiryDate;
+              insurance.dueIn = dueDateTime.diff(moment.utc(), 'days', true);
+              insurance.productType = 3;
+              insurance.title = 'Insurance Renewal Pending';
+              insurance.description = `Insurance Renewal Pending for ${insurance.productName ||
+              'one of your product'}`;
+            }
+            return insurance;
+          });
 
             insurances = insurances.filter(
                 item => (item.dueIn !== undefined && item.dueIn !== null) &&
@@ -437,18 +443,20 @@ class NotificationAdaptor {
                     const dueDateTime = moment.utc(warranty.expiryDate,
                         moment.ISO_8601);
 
-                    warranty.dueDate = warranty.expiryDate;
-                    warranty.dueIn = dueDateTime.diff(moment.utc(), 'days', true);
-                    warranty.productType = 3;
-                    warranty.title = `Warranty Renewal Pending`;
-                    warranty.description = `Warranty Renewal Pending for ${warranty.warranty_type ===
-                    3 ?
-                        `${warranty.dualWarrantyItem ||
-                        'dual item'} of ${warranty.productName}` :
-                        warranty.warranty_type === 4 ?
-                            `Accessories of ${warranty.productName}` :
-                            `${warranty.productName}`}`;
-                }
+              warranty.dueDate = warranty.expiryDate;
+              warranty.dueIn = dueDateTime.diff(moment.utc(), 'days', true);
+              warranty.productType = 3;
+              warranty.title = `Warranty Renewal Pending`;
+              warranty.description = `Warranty Renewal Pending for ${warranty.warranty_type ===
+              3 ?
+                  `${warranty.dualWarrantyItem ||
+                  'dual item'} of ${warranty.productName ||
+                  'one of your product'}` :
+                  warranty.warranty_type === 4 ?
+                      `Accessories of ${warranty.productName ||
+                      'one of your product'}` :
+                      `${warranty.productName || 'one of your product'}`}`;
+            }
 
                 return warranty;
             });
@@ -457,40 +465,45 @@ class NotificationAdaptor {
                 item => (item.dueIn !== undefined && item.dueIn !== null) &&
                     item.dueIn <= 30 && item.dueIn >= 0);
 
-            let repairWarranties = repairList.map((item) => {
-                const warranty = item;
-                if (moment.utc(warranty.warranty_upto, moment.ISO_8601).isValid()) {
-                    const dueDate_time = moment.utc(warranty.warranty_upto,
-                        moment.ISO_8601).endOf('day');
-                    warranty.dueDate = warranty.warranty_upto;
-                    warranty.dueIn = dueDate_time.diff(moment.utc(), 'days', true);
-                    warranty.productType = 7;
-                    warranty.title = `Repair Warranty Expiring`;
-                    warranty.description = `Warranty Renewal Expiring for ${warranty.productName}`;
-                }
-                return warranty;
-            });
+          let repairWarranties = repairList.map((item) => {
+            const warranty = item;
+            if (moment.utc(warranty.warranty_upto, moment.ISO_8601).isValid()) {
+              const dueDate_time = moment.utc(warranty.warranty_upto,
+                  moment.ISO_8601).endOf('day');
+              warranty.dueDate = warranty.warranty_upto;
+              warranty.dueIn = dueDate_time.diff(moment.utc(), 'days', true);
+              warranty.productType = 7;
+              warranty.title = `Repair Warranty Expiring`;
+              warranty.description = `Warranty Renewal Expiring for ${warranty.productName ||
+              'one of your product'}`;
+            }
+            return warranty;
+          });
 
             repairWarranties = repairWarranties.filter(
                 item => (item.dueIn !== undefined && item.dueIn !== null) &&
                     item.dueIn <= 30 && item.dueIn >= 0);
 
-            let productServiceSchedule = serviceScheduleList.map((item) => {
-                const scheduledProduct = item;
-                const scheduledDate = scheduledProduct.schedule ?
-                    moment.utc(scheduledProduct.purchaseDate, moment.ISO_8601).add(scheduledProduct.schedule.due_in_months, 'months') :
-                    undefined;
-                if (scheduledDate &&
-                    moment.utc(scheduledDate, moment.ISO_8601).isValid()) {
-                    const due_date_time = moment.utc(scheduledDate, moment.ISO_8601).endOf('day');
-                    scheduledProduct.dueDate = scheduledDate;
-                    scheduledProduct.dueIn = due_date_time.diff(moment.utc(), 'days',
-                        true);
-                    scheduledProduct.productId = scheduledProduct.id;
-                    scheduledProduct.productType = 3;
-                    scheduledProduct.title = `Service is pending for ${scheduledProduct.productName}`;
-                    scheduledProduct.description = `Service is pending for ${scheduledProduct.productName}`;
-                }
+          let productServiceSchedule = serviceScheduleList.map((item) => {
+            const scheduledProduct = item;
+            const scheduledDate = scheduledProduct.schedule ?
+                moment.utc(scheduledProduct.purchaseDate, moment.ISO_8601).
+                    add(scheduledProduct.schedule.due_in_months, 'months') :
+                undefined;
+            if (scheduledDate &&
+                moment.utc(scheduledDate, moment.ISO_8601).isValid()) {
+              const due_date_time = moment.utc(scheduledDate, moment.ISO_8601).
+                  endOf('day');
+              scheduledProduct.dueDate = scheduledDate;
+              scheduledProduct.dueIn = due_date_time.diff(moment.utc(), 'days',
+                  true);
+              scheduledProduct.productType = 7;
+              scheduledProduct.productId = scheduledProduct.id;
+              scheduledProduct.title = `Service is pending for ${scheduledProduct.productName ||
+              'one of your product'}`;
+              scheduledProduct.description = `Service is pending for ${scheduledProduct.productName ||
+              'one of your product'}`;
+            }
 
                 return scheduledProduct;
             });
@@ -1002,51 +1015,64 @@ class NotificationAdaptor {
         });
     }
 
-    notifyUser(userId, payload, reply) {
-        return this.modals.fcmDetails.findAll({
-            where: {
-                user_id: userId,
-            },
-        }).then((result) => {
-            const options = {
-                uri: 'https://fcm.googleapis.com/fcm/send',
-                method: 'POST',
-                headers: {Authorization: `key=${config.GOOGLE.FCM_KEY}`},
-                json: {
-                    // note that Sequelize returns token object array, we map it with token value only
-                    registration_ids: result.map(user => user.fcm_id),
-                    // iOS requires priority to be set as 'high' for message to be received in background
-                    priority: 'high',
-                    data: payload,
-                },
-            };
-            request(options, (error, response, body) => {
-                // extract invalid registration for removal
-                if (body.failure > 0 && Array.isArray(body.results) &&
-                    body.results.length === result.length) {
-                    const results = body.results;
-                    for (let i = 0; i < result.length; i += 1) {
-                        if (results[i].error === 'InvalidRegistration') {
-                            result[i].destroy().then(rows => {
-                                console.log('FCM ID\'s DELETED: ', rows);
-                            });
-                        }
-                    }
-                }
-                if (!error && response.statusCode === 200) {
-                    // request was success, should early return response to client
-                    return reply.response({
-                        status: true,
-                    }).code(200);
-                } else {
-                    return reply.response({
-                        status: false,
-                        error,
-                    });
-                }
-            });
-        });
-    }
+  notifyUser(userId, payload, reply) {
+    return this.modals.fcmDetails.findAll({
+      where: {
+        user_id: userId,
+      },
+    }).then((result) => {
+      const options = {
+        uri: 'https://fcm.googleapis.com/fcm/send',
+        method: 'POST',
+        headers: {Authorization: `key=${config.GOOGLE.FCM_KEY}`},
+        json: {
+          registration_ids: result.map(user => user.fcm_id),
+          priority: 'high',
+          data: payload,
+          notification_type: 26,
+          notification: {
+            title: payload.title,
+            body: payload.description || payload.big_text,
+          },
+        },
+      };
+      request(options, (error, response, body) => {
+        this.modals.logs.create({
+          log_type: 3,
+          user_id: userId,
+          log_content: JSON.stringify({options}),
+        }).
+            catch((ex) => console.log('error while logging on db,',
+                ex));
+        // extract invalid registration for removal
+        if (body.failure > 0 && Array.isArray(body.results) &&
+            body.results.length === result.length) {
+          const results = body.results;
+          for (let i = 0; i < result.length; i += 1) {
+            if (results[i].error === 'InvalidRegistration') {
+              result[i].destroy().then(rows => {
+                console.log('FCM ID\'s DELETED: ', rows);
+              });
+            }
+          }
+        }
+
+        if (reply) {
+          if (!error && response.statusCode === 200) {
+            // request was success, should early return response to client
+            return reply.response({
+              status: true,
+            }).code(200);
+          } else {
+            return reply.response({
+              status: false,
+              error,
+            }).code(500);
+          }
+        }
+      });
+    });
+  }
 
     verifyEmailAddress(emailSecret, reply) {
         return this.modals.users.findOne({

@@ -4,8 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-exports.default = function (sequelize, DataTypes) {
-  var know_user_likes = sequelize.define('know_user_likes', {
+exports.default = (sequelize, DataTypes) => {
+  const know_user_likes = sequelize.define('know_user_likes', {
     know_item_id: {
       type: DataTypes.INTEGER
     },
@@ -28,7 +28,7 @@ exports.default = function (sequelize, DataTypes) {
     tableName: 'know_user_likes'
   });
 
-  know_user_likes.associate = function (models) {
+  know_user_likes.associate = models => {
     know_user_likes.belongsTo(models.knowItems, { foreignKey: 'know_item_id' });
     know_user_likes.belongsTo(models.users, { foreignKey: 'user_id' });
   };

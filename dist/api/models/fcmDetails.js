@@ -1,7 +1,7 @@
 'use strict';
 
-module.exports = function (sequelize, DataTypes) {
-  var fcmDetails = sequelize.define('fcmDetails', {
+module.exports = (sequelize, DataTypes) => {
+  const fcmDetails = sequelize.define('fcmDetails', {
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
@@ -35,7 +35,7 @@ module.exports = function (sequelize, DataTypes) {
     underscored: true
   });
 
-  fcmDetails.associate = function (models) {
+  fcmDetails.associate = models => {
     fcmDetails.belongsTo(models.users, { foreignKey: 'user_id', as: 'consumer' });
   };
 

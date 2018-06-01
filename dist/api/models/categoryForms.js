@@ -4,8 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-exports.default = function (sequelize, DataTypes) {
-  var categoryForms = sequelize.define('categoryForms', {
+exports.default = (sequelize, DataTypes) => {
+  const categoryForms = sequelize.define('categoryForms', {
     display_index: {
       type: DataTypes.INTEGER
     },
@@ -73,7 +73,7 @@ exports.default = function (sequelize, DataTypes) {
     tableName: 'category_forms'
   });
 
-  categoryForms.associate = function (models) {
+  categoryForms.associate = models => {
     categoryForms.belongsTo(models.users, { foreignKey: 'updated_by' });
 
     categoryForms.belongsTo(models.categories, { foreignKey: 'category_id' });

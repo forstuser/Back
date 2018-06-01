@@ -16,7 +16,7 @@ var _path2 = _interopRequireDefault(_path);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function prepareUploadRoutes(modal, routeObject, middleware) {
-  var initController = new _upload2.default(modal);
+  const initController = new _upload2.default(modal);
   if (initController) {
     /*Upload User Image*/
     routeObject.push({

@@ -4,8 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-exports.default = function (sequelize, DataTypes) {
-  var offlineSellers = sequelize.define('offlineSellers', {
+exports.default = (sequelize, DataTypes) => {
+  const offlineSellers = sequelize.define('offlineSellers', {
     sid: {
       type: DataTypes.INTEGER,
       primaryKey: true,
@@ -87,7 +87,7 @@ exports.default = function (sequelize, DataTypes) {
     tableName: 'offline_sellers'
   });
 
-  offlineSellers.associate = function (models) {
+  offlineSellers.associate = models => {
     offlineSellers.belongsTo(models.users, { foreignKey: 'updated_by' });
 
     offlineSellers.belongsTo(models.statuses, { foreignKey: 'status_type', targetKey: 'status_type' });

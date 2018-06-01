@@ -30,12 +30,12 @@ var _continuationLocalStorage2 = _interopRequireDefault(_continuationLocalStorag
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var ns = _continuationLocalStorage2.default.createNamespace('transaction-namespace');
+const ns = _continuationLocalStorage2.default.createNamespace('transaction-namespace');
 
 (0, _clsBluebird2.default)(ns, _bluebird2.default);
 _sequelize2.default.useCLS(ns);
-var database = _main2.default.DATABASE;
-var Op = _sequelize2.default.Op;
+const database = _main2.default.DATABASE;
+const Op = _sequelize2.default.Op;
 database.operatorsAliases = {
   $eq: Op.eq,
   $ne: Op.ne,
@@ -72,24 +72,22 @@ database.operatorsAliases = {
   $values: Op.values,
   $col: Op.col
 };
-var sequelize = new _sequelize2.default(database.database, database.username, database.password, database);
+const sequelize = new _sequelize2.default(database.database, database.username, database.password, database);
 /* const tediousSequelize = new Sequelize(
   config.msSQLDatabase.database,
   config.msSQLDatabase.username,
   config.msSQLDatabase.password,
   config.msSQLDatabase
 ); */
-var db = {};
+const db = {};
 
-_fs2.default.readdirSync(__dirname).filter(function (file) {
-  return file.indexOf('.') !== 0 && file !== 'index.js';
-}).forEach(function (file) {
-  var model = sequelize.import(_path2.default.join(__dirname, file));
+_fs2.default.readdirSync(__dirname).filter(file => file.indexOf('.') !== 0 && file !== 'index.js').forEach(file => {
+  const model = sequelize.import(_path2.default.join(__dirname, file));
   // model.removeAttribute('id');
   db[model.name] = model;
 });
 
-Object.keys(db).forEach(function (modelName) {
+Object.keys(db).forEach(modelName => {
   if ('associate' in db[modelName]) {
     db[modelName].associate(db);
   }

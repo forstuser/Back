@@ -4,8 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-exports.default = function (sequelize, DataTypes) {
-  var table_accessory_types = sequelize.define('table_accessory_types', {
+exports.default = (sequelize, DataTypes) => {
+  const table_accessory_types = sequelize.define('table_accessory_types', {
     model: {
       type: DataTypes.STRING
     },
@@ -46,7 +46,7 @@ exports.default = function (sequelize, DataTypes) {
     tableName: 'table_accessory_types'
   });
 
-  table_accessory_types.associate = function (models) {
+  table_accessory_types.associate = models => {
 
     table_accessory_types.belongsTo(models.brands, {
       foreignKey: 'brand_id',

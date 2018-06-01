@@ -21,7 +21,7 @@ function prepareInsightRoutes(modal, routeObject, middleware) {
   //= ========================
   // Product Routes
   //= ========================
-  var controllerInit = new _insight2.default(modal);
+  const controllerInit = new _insight2.default(modal);
   if (controllerInit) {
     routeObject.push({
       method: 'GET',

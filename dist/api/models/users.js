@@ -10,8 +10,8 @@ var _moment2 = _interopRequireDefault(_moment);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-exports.default = function (sequelize, DataTypes) {
-  var users = sequelize.define('users', {
+exports.default = (sequelize, DataTypes) => {
+  const users = sequelize.define('users', {
     fb_id: {
       type: DataTypes.STRING
     },
@@ -110,7 +110,7 @@ exports.default = function (sequelize, DataTypes) {
     tableName: 'users',
     classMethods: {},
     hooks: {
-      afterCreate: function afterCreate(user) {
+      afterCreate: user => {
         user.updateAttributes({
           last_login_at: _moment2.default.utc().toISOString()
         });
@@ -118,7 +118,7 @@ exports.default = function (sequelize, DataTypes) {
     }
   });
 
-  users.associate = function (models) {
+  users.associate = models => {
     users.hasMany(models.userAddress, { as: 'addresses' });
     users.hasMany(models.jobs, { foreignKey: 'user_id', onDelete: 'cascade', hooks: true });
     users.hasMany(models.fcmDetails, { foreignKey: 'user_id', onDelete: 'cascade', hooks: true });

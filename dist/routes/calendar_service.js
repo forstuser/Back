@@ -19,7 +19,7 @@ function prepareCalendarServiceRoutes(modal, calendarRoutes, middleware) {
   //= ========================
   // Calendar Item Routes
   //= ========================
-  var controllerInit = new _calendarServices2.default(modal);
+  const controllerInit = new _calendarServices2.default(modal);
   if (controllerInit) {
     calendarRoutes.push({
       method: 'GET',

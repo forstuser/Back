@@ -1,4 +1,3 @@
-/*jshint esversion: 6 */
 'use strict';
 import notificationAdaptor from './notification';
 import ProductAdaptor from './product';
@@ -12,6 +11,7 @@ import shared from '../../helpers/shared';
 import NotificationAdaptor from '../Adaptors/notification';
 import moment from 'moment';
 import Promise from 'bluebird';
+import {sendSMS} from '../../helpers/sms';
 
 class DashboardAdaptor {
   constructor(modals) {
@@ -95,56 +95,55 @@ class DashboardAdaptor {
           user_id: user.id || user.ID,
         },
       }),
-    ])).
-        spread(
-            (upcomingServices, insightData, recentSearches, notificationCount,
-             productCount, product, calendarItemCount, latestCalendarItem,
-             latestCalendarCalc, recent_calendar_item, service_center_products,
-             know_item_count, todoCounts, mealCounts,
-             wearableCounts, knowItemCounts) => {
-              latestCalendarItem = latestCalendarItem
-                  ? latestCalendarItem.toJSON()
-                  : {};
-              latestCalendarCalc = latestCalendarCalc
-                  ? latestCalendarCalc.toJSON()
-                  : {};
-              const calendar_item_updated_at = latestCalendarItem &&
-              moment(latestCalendarItem.updated_at, moment.ISO_8601).
-                  diff(moment(latestCalendarCalc.updated_at, moment.ISO_8601),
-                      'days') < 0 ?
-                  latestCalendarCalc.updated_at : latestCalendarItem ?
-                      latestCalendarItem.updated_at : moment();
-              return {
-                status: true,
-                message: 'Dashboard restore Successful',
-                notificationCount: notificationCount,
-                recentSearches: recentSearches.map((item) => {
-                  const search = item.toJSON();
-                  return search.searchValue;
-                }).slice(0, 5),
-                upcomingServices: this.evaluateUpcomingServices(
-                    upcomingServices),
-                insight: this.evaluateDashboardInsight(insightData),
-                forceUpdate: request.pre.forceUpdate,
-                showDashboard: !!(productCount && parseInt(productCount) > 0) ||
-                !!(calendarItemCount && parseInt(calendarItemCount) > 0),
-                hasEazyDayItems: !!(todoCounts && todoCounts > 0) ||
-                !!(mealCounts && mealCounts > 0) ||
-                !!(wearableCounts && wearableCounts > 0),
-                knowItemsLiked: !!(knowItemCounts && knowItemCounts > 0),
-                total_calendar_item: calendarItemCount || 0,
-                calendar_item_updated_at,
-                recent_calendar_item,
-                recent_products: product.slice(0, 4),
-                product: product[0],
-                service_center_products,
-                know_item_count,
-              };
-            }).
-        catch(err => {
-          console.log(
-              `Error on ${new Date()} for user ${user.id ||
-              user.ID} is as follow: \n \n ${err}`);
+    ])).spread(
+        (upcomingServices, insightData, recentSearches, notificationCount,
+         productCount, product, calendarItemCount, latestCalendarItem,
+         latestCalendarCalc, recent_calendar_item, service_center_products,
+         know_item_count, todoCounts, mealCounts,
+         wearableCounts, knowItemCounts) => {
+          latestCalendarItem = latestCalendarItem ?
+              latestCalendarItem.toJSON() :
+              {};
+          latestCalendarCalc = latestCalendarCalc ?
+              latestCalendarCalc.toJSON() :
+              {};
+          const calendar_item_updated_at = latestCalendarItem &&
+          moment(latestCalendarItem.updated_at, moment.ISO_8601).
+              diff(moment(latestCalendarCalc.updated_at, moment.ISO_8601),
+                  'days') < 0 ?
+              latestCalendarCalc.updated_at : latestCalendarItem ?
+                  latestCalendarItem.updated_at : moment();
+          return {
+            status: true,
+            message: 'Dashboard restore Successful',
+            notificationCount: notificationCount,
+            recentSearches: recentSearches.map((item) => {
+              const search = item.toJSON();
+              return search.searchValue;
+            }).slice(0, 5),
+            upcomingServices: this.evaluateUpcomingServices(
+                upcomingServices),
+            insight: this.evaluateDashboardInsight(insightData),
+            forceUpdate: request.pre.forceUpdate,
+            showDashboard: !!(productCount && parseInt(productCount) > 0) ||
+            !!(calendarItemCount && parseInt(calendarItemCount) > 0),
+            hasEazyDayItems: !!(todoCounts && todoCounts > 0) ||
+            !!(mealCounts && mealCounts > 0) ||
+            !!(wearableCounts && wearableCounts > 0),
+            knowItemsLiked: !!(knowItemCounts && knowItemCounts > 0),
+            total_calendar_item: calendarItemCount || 0,
+            calendar_item_updated_at,
+            recent_calendar_item,
+            recent_products: product.slice(0, 4),
+            product: product[0],
+            service_center_products,
+            know_item_count,
+            hasProducts: true,
+          };
+        }).catch(err => {
+      console.log(
+          `Error on ${new Date()} for user ${user.id ||
+          user.ID} is as follow: \n \n ${err}`);
 
           this.modals.logs.create({
             api_action: request.method,
@@ -215,9 +214,7 @@ class DashboardAdaptor {
       const insightItem = item;
       const index = distinctInsight.findIndex(
           distinctItem => (moment.utc(distinctItem.purchaseDate,
-              moment.ISO_8601).
-                  startOf('day').
-                  valueOf() ===
+              moment.ISO_8601).startOf('day').valueOf() ===
               moment.utc(insightItem.purchaseDate, moment.ISO_8601).
                   startOf('day').
                   valueOf()));
@@ -257,7 +254,6 @@ class DashboardAdaptor {
     let {isNewUser, user, token, request} = parameters;
     console.log(isNewUser);
     if (!isNewUser) {
-      console.log('We are here', isNewUser);
       return Promise.all([
         this.modals.products.count({
           where: {
@@ -285,31 +281,30 @@ class DashboardAdaptor {
           where: {
             user_id: user.id || user.ID,
           },
-        })]).
-          spread((productCounts, calendarItemCounts, todoCounts, mealCounts,
-                  wearableCounts, knowItemCounts) => {
-            calendarItemCounts = parseInt(calendarItemCounts);
-            productCounts = parseInt(productCounts);
-            return {
-              status: true,
-              message: !isNewUser ? 'Existing User' : 'New User',
-              billCounts: 0,
-              showDashboard: !!(productCounts && productCounts > 0) ||
-              !!(calendarItemCounts && calendarItemCounts > 0),
-              hasEazyDayItems: !!(todoCounts && todoCounts > 0) ||
-              !!(mealCounts && mealCounts > 0) ||
-              !!(wearableCounts && wearableCounts > 0),
-              knowItemsLiked: !!(knowItemCounts && knowItemCounts > 0),
-              isExistingUser: !isNewUser,
-              authorization: token,
-              userId: user.id || user.ID,
-              forceUpdate: request.pre.forceUpdate,
-            };
-          }).
-          catch((err) => {
-            console.log(
-                `Error on ${new Date()} for user ${user.id ||
-                user.ID} is as follow: \n \n ${err}`);
+        })]).spread((productCounts, calendarItemCounts, todoCounts, mealCounts,
+                     wearableCounts, knowItemCounts) => {
+        calendarItemCounts = parseInt(calendarItemCounts);
+        productCounts = parseInt(productCounts);
+        return {
+          status: true,
+          message: !isNewUser ? 'Existing User' : 'New User',
+          billCounts: productCounts,
+          showDashboard: !!(productCounts && productCounts > 0) ||
+          !!(calendarItemCounts && calendarItemCounts > 0),
+          hasEazyDayItems: !!(todoCounts && todoCounts > 0) ||
+          !!(mealCounts && mealCounts > 0) ||
+          !!(wearableCounts && wearableCounts > 0),
+          knowItemsLiked: !!(knowItemCounts && knowItemCounts > 0),
+          isExistingUser: !isNewUser,
+          hasProducts: true,
+          authorization: token,
+          userId: user.id || user.ID,
+          forceUpdate: request.pre.forceUpdate,
+        };
+      }).catch((err) => {
+        console.log(
+            `Error on ${new Date()} for user ${user.id ||
+            user.ID} is as follow: \n \n ${err}`);
 
             this.modals.logs.create({
               api_action: request.method,
@@ -335,18 +330,29 @@ class DashboardAdaptor {
           });
     }
 
-    if (user.email && !user.email_verified) {
+    if (user.email) {
       notificationAdaptor.sendMailOnDifferentSteps(
           'Welcome to BinBill',
           user.email, user, 1);
-
-      this.notificationAdaptor.notifyUser(user.id || user.ID,
-          {
-            title: 'Welcome to BinBill!',
-            description: 'Hello User. Greetings from Rohit BinBill CEO. I welcome you to your eHome. We promise to constantly evolve and make managing your eHome ever efficient and smarter. As it is a new home, you may take some time to get accustomed to it. Your Home Manager and I would always welcome your suggestions to improve your eHome. Please reach me at - rohit@binbill.com or eHome@binbill.com',
-          },
-          reply);
     }
+
+    // welcome email
+    this.notificationAdaptor.notifyUser(user.id || user.ID,
+        {
+          title: 'Welcome to BinBill!',
+          description: 'Hello User. Greetings from Rohit BinBill CEO. I welcome...',
+          big_text: 'Hello User. Greetings from Rohit BinBill CEO. I welcome you to your eHome. We promise to constantly evolve and make managing your eHome ever efficient and smarter. As it is a new home, you may take some time to get accustomed to it. Your Home Manager and I would always welcome your suggestions to improve your eHome. Please reach me at - rohit@binbill.com or eHome@binbill.com',
+        });
+
+    // welcome sms
+    if (user.mobile_no) {
+      const message = `${user.name ?
+          `Hello ${user.name}` :
+          'Hello'}, Glad to have you on board! Now track the entire life cycle of your products with easy access to bills & documents as well as receive timely warranty & insurance alerts - ALL in one place, at one time.
+          Start Now : https://www.binbill.com/`;
+      sendSMS(message, [user.mobile_no]);
+    }
+
     return {
       status: true,
       message: 'New User',
@@ -355,6 +361,7 @@ class DashboardAdaptor {
       showDashboard: false,
       hasEazyDayItems: false,
       knowItemsLiked: false,
+      hasProducts: true,
       isExistingUser: false,
       userId: user.id || user.ID,
       forceUpdate: request.pre.forceUpdate,
@@ -416,168 +423,161 @@ class DashboardAdaptor {
         warranty_upto: {
           $ne: null,
         },
-      })])).
-        spread((amcList, insuranceList, warrantyList, pucList,
-                productServiceScheduleList, productDetails, repairList) => {
-          let amcs = amcList.map((item) => {
-            const amc = item;
-            if (moment.utc(amc.expiryDate, moment.ISO_8601).isValid()) {
-              const dueDate_time = moment.utc(amc.expiryDate, moment.ISO_8601).
-                  endOf('day');
-              amc.dueDate = amc.expiryDate;
-              amc.dueIn = dueDate_time.diff(moment.utc(), 'days', true);
-              amc.productType = 4;
-            }
+      })])).spread((amcList, insuranceList, warrantyList, pucList,
+                    productServiceScheduleList, productDetails, repairList) => {
+      let amcs = amcList.map((item) => {
+        const amc = item;
+        if (moment.utc(amc.expiryDate, moment.ISO_8601).isValid()) {
+          const dueDate_time = moment.utc(amc.expiryDate, moment.ISO_8601).
+              endOf('day');
+          amc.dueDate = amc.expiryDate;
+          amc.dueIn = dueDate_time.diff(moment.utc(), 'days', true);
+          amc.productType = 4;
+        }
 
-            return amc;
-          });
-          amcs = amcs.filter(
-              item => (item.dueIn !== undefined && item.dueIn !== null) &&
-                  item.dueIn <= 30 && item.dueIn >= 0);
+        return amc;
+      });
+      amcs = amcs.filter(
+          item => (item.dueIn !== undefined && item.dueIn !== null) &&
+              item.dueIn <= 30 && item.dueIn >= 0);
 
-          let insurances = insuranceList.map((item) => {
-            const insurance = item;
-            if (moment.utc(insurance.expiryDate, moment.ISO_8601).isValid()) {
-              const dueDate_time = moment.utc(insurance.expiryDate,
-                  moment.ISO_8601).
-                  endOf('day');
-              insurance.dueDate = insurance.expiryDate;
-              insurance.dueIn = dueDate_time.diff(moment.utc(), 'days', true);
-              insurance.productType = 3;
-            }
-            return insurance;
-          });
+      let insurances = insuranceList.map((item) => {
+        const insurance = item;
+        if (moment.utc(insurance.expiryDate, moment.ISO_8601).isValid()) {
+          const dueDate_time = moment.utc(insurance.expiryDate,
+              moment.ISO_8601).endOf('day');
+          insurance.dueDate = insurance.expiryDate;
+          insurance.dueIn = dueDate_time.diff(moment.utc(), 'days', true);
+          insurance.productType = 3;
+        }
+        return insurance;
+      });
 
-          insurances = insurances.filter(
-              item => (item.dueIn !== undefined && item.dueIn !== null) &&
-                  item.dueIn <= 30 && item.dueIn >= 0);
+      insurances = insurances.filter(
+          item => (item.dueIn !== undefined && item.dueIn !== null) &&
+              item.dueIn <= 30 && item.dueIn >= 0);
 
-          let warranties = warrantyList.map((item) => {
-            const warranty = item;
-            if (moment.utc(warranty.expiryDate, moment.ISO_8601).isValid()) {
-              const dueDate_time = moment.utc(warranty.expiryDate,
-                  moment.ISO_8601).
-                  endOf('day');
-              warranty.dueDate = warranty.expiryDate;
-              warranty.dueIn = dueDate_time.diff(moment.utc(), 'days', true);
-              warranty.productType = 2;
-            }
-            return warranty;
-          });
+      let warranties = warrantyList.map((item) => {
+        const warranty = item;
+        if (moment.utc(warranty.expiryDate, moment.ISO_8601).isValid()) {
+          const dueDate_time = moment.utc(warranty.expiryDate,
+              moment.ISO_8601).endOf('day');
+          warranty.dueDate = warranty.expiryDate;
+          warranty.dueIn = dueDate_time.diff(moment.utc(), 'days', true);
+          warranty.productType = 2;
+        }
+        return warranty;
+      });
 
-          warranties = warranties.filter(
-              item => (item.dueIn !== undefined && item.dueIn !== null) &&
-                  item.dueIn <= 30 && item.dueIn >= 0);
+      warranties = warranties.filter(
+          item => (item.dueIn !== undefined && item.dueIn !== null) &&
+              item.dueIn <= 30 && item.dueIn >= 0);
 
-          let repairWarranties = repairList.map((item) => {
-            const warranty = item;
-            if (moment.utc(warranty.warranty_upto, moment.ISO_8601).isValid()) {
-              const dueDate_time = moment.utc(warranty.warranty_upto,
-                  moment.ISO_8601).
-                  endOf('day');
-              warranty.dueDate = warranty.warranty_upto;
-              warranty.dueIn = dueDate_time.diff(moment.utc(), 'days', true);
-              warranty.productType = 7;
-            }
-            return warranty;
-          });
+      let repairWarranties = repairList.map((item) => {
+        const warranty = item;
+        if (moment.utc(warranty.warranty_upto, moment.ISO_8601).isValid()) {
+          const dueDate_time = moment.utc(warranty.warranty_upto,
+              moment.ISO_8601).endOf('day');
+          warranty.dueDate = warranty.warranty_upto;
+          warranty.dueIn = dueDate_time.diff(moment.utc(), 'days', true);
+          warranty.productType = 7;
+        }
+        return warranty;
+      });
 
-          repairWarranties = repairWarranties.filter(
-              item => (item.dueIn !== undefined && item.dueIn !== null) &&
-                  item.dueIn <= 30 && item.dueIn >= 0);
+      repairWarranties = repairWarranties.filter(
+          item => (item.dueIn !== undefined && item.dueIn !== null) &&
+              item.dueIn <= 30 && item.dueIn >= 0);
 
-          let pucProducts = pucList.map((item) => {
-            const puc = item;
-            if (moment.utc(puc.expiryDate, moment.ISO_8601).isValid()) {
-              const dueDate_time = moment.utc(puc.expiryDate, moment.ISO_8601).
-                  endOf('day');
-              puc.dueDate = puc.expiryDate;
-              puc.dueIn = dueDate_time.diff(moment.utc(), 'days', true);
-              puc.productType = 5;
-            }
+      let pucProducts = pucList.map((item) => {
+        const puc = item;
+        if (moment.utc(puc.expiryDate, moment.ISO_8601).isValid()) {
+          const dueDate_time = moment.utc(puc.expiryDate, moment.ISO_8601).
+              endOf('day');
+          puc.dueDate = puc.expiryDate;
+          puc.dueIn = dueDate_time.diff(moment.utc(), 'days', true);
+          puc.productType = 5;
+        }
 
-            return puc;
-          });
+        return puc;
+      });
 
-          pucProducts = pucProducts.filter(
-              item => ((item.dueIn !== undefined && item.dueIn !== null) &&
-                  item.dueIn <= 30 && item.dueIn >= 0));
+      pucProducts = pucProducts.filter(
+          item => ((item.dueIn !== undefined && item.dueIn !== null) &&
+              item.dueIn <= 30 && item.dueIn >= 0));
 
-          let productServiceSchedule = productServiceScheduleList.filter(
-              item => item.schedule).
-              map((item) => {
-                const scheduledProduct = item;
-                const scheduledDate = scheduledProduct.schedule ?
-                    scheduledProduct.schedule.due_date :
-                    undefined;
-                if (scheduledDate &&
-                    moment.utc(scheduledDate, moment.ISO_8601).isValid()) {
-                  const dueDate_time = moment.utc(scheduledDate,
-                      moment.ISO_8601).
-                      endOf('day');
-                  scheduledProduct.dueDate = dueDate_time;
-                  scheduledProduct.dueIn = dueDate_time.diff(moment.utc(),
-                      'days',
-                      true);
-                  scheduledProduct.productType = 6;
-                }
+      let productServiceSchedule = productServiceScheduleList.filter(
+          item => item.schedule).map((item) => {
+        const scheduledProduct = item;
+        const scheduledDate = scheduledProduct.schedule ?
+            scheduledProduct.schedule.due_date :
+            undefined;
+        if (scheduledDate &&
+            moment.utc(scheduledDate, moment.ISO_8601).isValid()) {
+          const dueDate_time = moment.utc(scheduledDate,
+              moment.ISO_8601).endOf('day');
+          scheduledProduct.dueDate = dueDate_time;
+          scheduledProduct.dueIn = dueDate_time.diff(moment.utc(),
+              'days',
+              true);
+          scheduledProduct.productType = 6;
+        }
 
-                return scheduledProduct;
-              });
+        return scheduledProduct;
+      });
 
-          productServiceSchedule = productServiceSchedule.filter(
-              item => ((item.dueIn !== undefined && item.dueIn !== null) &&
-                  item.dueIn <= 7 && item.dueIn >= 0));
-          const metaData = productDetails[0];
-          let productList = productDetails[1].map((productItem) => {
-            productItem.productMetaData = metaData.filter(
-                (item) => item.productId === productItem.id);
+      productServiceSchedule = productServiceSchedule.filter(
+          item => ((item.dueIn !== undefined && item.dueIn !== null) &&
+              item.dueIn <= 7 && item.dueIn >= 0));
+      const metaData = productDetails[0];
+      let productList = productDetails[1].map((productItem) => {
+        productItem.productMetaData = metaData.filter(
+            (item) => item.productId === productItem.id);
 
-            return productItem;
-          });
+        return productItem;
+      });
 
-          productList = productList.map((item) => {
-            const productItem = item;
-            productItem.productMetaData.forEach((metaItem) => {
-              const metaData = metaItem;
-              if (metaData.name.toLowerCase().includes('due') &&
-                  metaData.name.toLowerCase().includes('date') &&
-                  metaData.value &&
-                  (moment.utc(metaData.value, moment.ISO_8601).isValid() ||
-                      moment.utc(metaData.value, 'DD MMM YYYY').isValid())) {
-                const dueDate_time = moment.utc(metaData.value,
-                    moment.ISO_8601).
-                    isValid() ? moment.utc(metaData.value,
-                    moment.ISO_8601) : moment.utc(metaData.value,
-                    'DD MMM YYYY');
-                productItem.dueDate = dueDate_time;
-                productItem.dueIn = dueDate_time.diff(moment.utc(), 'days',
-                    true);
-              }
-              productItem.address = '';
-              if (metaData.name.toLowerCase().includes('address')) {
-                productItem.address = metaData.value;
-              }
-            });
-
-            productItem.productType = 1;
-            return productItem;
-          });
-
-          productList = productList.filter(
-              item => ((item.dueIn !== undefined && item.dueIn !== null) &&
-                  item.dueIn <=
-                  30 && item.dueIn >= 0));
-
-          return [
-            ...productList,
-            ...warranties,
-            ...insurances,
-            ...amcs,
-            ...pucProducts,
-            ...productServiceSchedule,
-            ...repairWarranties];
+      productList = productList.map((item) => {
+        const productItem = item;
+        productItem.productMetaData.forEach((metaItem) => {
+          const metaData = metaItem;
+          if (metaData.name.toLowerCase().includes('due') &&
+              metaData.name.toLowerCase().includes('date') &&
+              metaData.value &&
+              (moment.utc(metaData.value, moment.ISO_8601).isValid() ||
+                  moment.utc(metaData.value, 'DD MMM YYYY').isValid())) {
+            const dueDate_time = moment.utc(metaData.value,
+                moment.ISO_8601).isValid() ? moment.utc(metaData.value,
+                moment.ISO_8601) : moment.utc(metaData.value,
+                'DD MMM YYYY');
+            productItem.dueDate = dueDate_time;
+            productItem.dueIn = dueDate_time.diff(moment.utc(), 'days',
+                true);
+          }
+          productItem.address = '';
+          if (metaData.name.toLowerCase().includes('address')) {
+            productItem.address = metaData.value;
+          }
         });
+
+        productItem.productType = 1;
+        return productItem;
+      });
+
+      productList = productList.filter(
+          item => ((item.dueIn !== undefined && item.dueIn !== null) &&
+              item.dueIn <=
+              30 && item.dueIn >= 0));
+
+      return [
+        ...productList,
+        ...warranties,
+        ...insurances,
+        ...amcs,
+        ...pucProducts,
+        ...productServiceSchedule,
+        ...repairWarranties];
+    });
   }
 
   prepareInsightData(user, request) {
@@ -629,14 +629,13 @@ class DashboardAdaptor {
           $lte: moment.utc(),
           $gte: moment.utc().startOf('M'),
         },
-      })]).
-        then((results) => Promise.all([
-          ...results[0],
-          ...results[1],
-          ...results[2],
-          ...results[3],
-          ...results[4],
-          ...results[5]]));
+      })]).then((results) => Promise.all([
+      ...results[0],
+      ...results[1],
+      ...results[2],
+      ...results[3],
+      ...results[4],
+      ...results[5]]));
   }
 
   retrieveRecentSearch(user) {

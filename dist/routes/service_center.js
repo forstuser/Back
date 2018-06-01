@@ -16,7 +16,7 @@ var _joi2 = _interopRequireDefault(_joi);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function prepareServiceCenterRoutes(modal, routeObject, middleware) {
-  var initController = new _serviceCenter2.default(modal);
+  const initController = new _serviceCenter2.default(modal);
   if (initController) {
     routeObject.push({
       method: 'POST',

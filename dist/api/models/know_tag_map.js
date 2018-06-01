@@ -4,8 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-exports.default = function (sequelize, DataTypes) {
-  var know_tag_map = sequelize.define('know_tag_map', {
+exports.default = (sequelize, DataTypes) => {
+  const know_tag_map = sequelize.define('know_tag_map', {
     know_item_id: {
       type: DataTypes.INTEGER
     },
@@ -28,7 +28,7 @@ exports.default = function (sequelize, DataTypes) {
     tableName: 'know_tag_map'
   });
 
-  know_tag_map.associate = function (models) {
+  know_tag_map.associate = models => {
     know_tag_map.belongsTo(models.knowItems, { foreignKey: 'know_item_id' });
     know_tag_map.belongsTo(models.tags, { foreignKey: 'tag_id' });
   };

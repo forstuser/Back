@@ -4,8 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-exports.default = function (sequelize, DataTypes) {
-  var table_payment_mode = sequelize.define('table_payment_mode', {
+exports.default = (sequelize, DataTypes) => {
+  const table_payment_mode = sequelize.define('table_payment_mode', {
 
     title: {
       type: DataTypes.STRING
@@ -38,7 +38,7 @@ exports.default = function (sequelize, DataTypes) {
     tableName: 'table_payment_mode'
   });
 
-  table_payment_mode.associate = function (models) {
+  table_payment_mode.associate = models => {
 
     table_payment_mode.belongsTo(models.users, {
       foreignKey: 'updated_by',

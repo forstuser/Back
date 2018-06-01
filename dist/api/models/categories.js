@@ -4,8 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-exports.default = function (sequelize, DataTypes) {
-  var categories = sequelize.define('categories', {
+exports.default = (sequelize, DataTypes) => {
+  const categories = sequelize.define('categories', {
     category_id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
@@ -82,7 +82,7 @@ exports.default = function (sequelize, DataTypes) {
     tableName: 'categories'
   });
 
-  categories.associate = function (models) {
+  categories.associate = models => {
     categories.belongsTo(models.users, { foreignKey: 'updated_by' });
     categories.belongsTo(models.categories, { foreignKey: 'ref_id' });
     categories.hasMany(models.categories, { foreignKey: 'ref_id', as: 'subCategories' });

@@ -1,4 +1,3 @@
-/*jshint esversion: 6 */
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -25,29 +24,29 @@ var _password = require('./password');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var MODAL = void 0;
+let MODAL;
 
 
-var checkAppVersion = function checkAppVersion(request, reply) {
+const checkAppVersion = (request, reply) => {
   if (request.headers.app_version !== undefined || request.headers.ios_app_version !== undefined) {
-    var appVersion = request.headers.ios_app_version || request.headers.app_version;
-    var id = request.headers.ios_app_version ? 2 : 1;
-    var currentAppVersion = !isNaN(parseInt(appVersion)) ? parseInt(appVersion) : null;
-    console.log('CURRENT APP VERSION = ' + currentAppVersion);
+    const appVersion = request.headers.ios_app_version || request.headers.app_version;
+    const id = request.headers.ios_app_version ? 2 : 1;
+    const currentAppVersion = !isNaN(parseInt(appVersion)) ? parseInt(appVersion) : null;
+    console.log(`CURRENT APP VERSION = ${currentAppVersion}`);
 
     MODAL.appVersion.findOne({
       where: {
-        id: id
+        id
       },
       order: [['updatedAt', 'DESC']],
       attributes: [['recommended_version', 'recommendedVersion'], ['force_version', 'forceVersion']]
-    }).then(function (results) {
+    }).then(results => {
       if (results && currentAppVersion) {
-        var FORCE_VERSION = results.dataValues.forceVersion;
-        var RECOMMENDED_VERSION = results.dataValues.recommendedVersion;
+        const FORCE_VERSION = results.dataValues.forceVersion;
+        const RECOMMENDED_VERSION = results.dataValues.recommendedVersion;
 
-        console.log('FORCE APP VERSION = ' + FORCE_VERSION);
-        console.log('RECOMMENDED APP VERSION = ' + RECOMMENDED_VERSION);
+        console.log(`FORCE APP VERSION = ${FORCE_VERSION}`);
+        console.log(`RECOMMENDED APP VERSION = ${RECOMMENDED_VERSION}`);
 
         if (currentAppVersion < FORCE_VERSION) {
           console.log('current < force');
@@ -68,10 +67,10 @@ var checkAppVersion = function checkAppVersion(request, reply) {
   }
 };
 
-var updateUserActiveStatus = function updateUserActiveStatus(request, reply) {
-  var user = _shared2.default.verifyAuthorization(request.headers);
-  var supportedLanguages = _main2.default.SUPPORTED_LANGUAGES.split(',');
-  var language = (request.headers.language || '').split('-')[0];
+const updateUserActiveStatus = (request, reply) => {
+  const user = _shared2.default.verifyAuthorization(request.headers);
+  const supportedLanguages = _main2.default.SUPPORTED_LANGUAGES.split(',');
+  const language = (request.headers.language || '').split('-')[0];
   request.language = supportedLanguages.indexOf(language) >= 0 ? language : '';
   if (!user) {
     return reply.response(null);
@@ -80,14 +79,15 @@ var updateUserActiveStatus = function updateUserActiveStatus(request, reply) {
       where: {
         id: user.id || user.ID
       }
-    }).then(function (userResult) {
-      var userDetail = userResult ? userResult.toJSON() : userResult;
-      console.log('Last route ' + request.url.pathname + ' accessed by user id ' + (user.id || user.ID) + ' from ' + (request.headers.ios_app_version ? 'iOS' : 'android'));
+    }).then(userResult => {
+      const userDetail = userResult ? userResult.toJSON() : userResult;
+      request.user = userDetail || user;
+      console.log(`Last route ${request.url.pathname} accessed by user id ${user.id || user.ID} from ${request.headers.ios_app_version ? 'iOS' : 'android'}`);
       if (userDetail) {
-        var last_active_date = _moment2.default.utc(userDetail.last_active_date, _moment2.default.ISO_8601);
-        var timeDiffMin = _moment2.default.duration(_moment2.default.utc().diff(last_active_date)).asMinutes();
+        const last_active_date = _moment2.default.utc(userDetail.last_active_date, _moment2.default.ISO_8601);
+        const timeDiffMin = _moment2.default.duration(_moment2.default.utc().diff(last_active_date)).asMinutes();
 
-        console.log('\n\n\n\n\n', { timeDiffMin: timeDiffMin, last_active_date: last_active_date });
+        console.log('\n\n\n\n\n', { timeDiffMin, last_active_date });
         if (userDetail.password && timeDiffMin <= 10 || !userDetail.password || request.url.pathname === '/consumer/otp/send' || request.url.pathname === '/consumer/otp/validate' || request.url.pathname === '/consumer/validate' || request.url.pathname === '/consumer/pin' || request.url.pathname === '/consumer/pin/reset' || request.url.pathname === '/consumer/subscribe') {
           return _bluebird2.default.all([MODAL.users.update({
             last_active_date: _moment2.default.utc(),
@@ -106,42 +106,40 @@ var updateUserActiveStatus = function updateUserActiveStatus(request, reply) {
               query: request.query,
               headers: request.headers
             })
-          })]).then(function (item) {
-            console.log('User updated detail is as follow ' + JSON.stringify(item[0]));
+          })]).then(item => {
+            console.log(`User updated detail is as follow ${JSON.stringify(item[0])}`);
             return reply.response(true);
-          }).catch(function (err) {
-            console.log('Error on ' + new Date() + ' for user ' + user.mobile_no + ' is as follow: \n \n ' + err);
+          }).catch(err => {
+            console.log(`Error on ${new Date()} for user ${user.mobile_no} is as follow: \n \n ${err}`);
             return MODAL.logs.create({
               api_action: request.method,
               api_path: request.url.pathname,
               log_type: 2,
               user_id: user.id || user.ID,
-              log_content: JSON.stringify({ err: err })
-            }).then(function () {
-              return reply.response(false);
-            });
+              log_content: JSON.stringify({ err })
+            }).then(() => reply.response(false));
           });
         } else {
-          console.log('User ' + user.mobile_no + ' inactive for more than 10 minutes');
+          console.log(`User ${user.mobile_no} inactive for more than 10 minutes`);
           return reply.response(0);
         }
       } else {
-        console.log('User ' + user.mobile_no + ' doesn\'t exist');
+        console.log(`User ${user.mobile_no} doesn't exist`);
         return reply.response(null);
       }
-    }).catch(function (err) {
-      console.log('Error on ' + new Date() + ' for user ' + user.mobile_no + ' is as follow: \n \n ' + err);
+    }).catch(err => {
+      console.log(`Error on ${new Date()} for user ${user.mobile_no} is as follow: \n \n ${err}`);
       return reply.response(false);
     });
   }
 };
 
-var hasMultipleAccounts = function hasMultipleAccounts(request, reply) {
-  var user = _shared2.default.verifyAuthorization(request.headers);
+const hasMultipleAccounts = (request, reply) => {
+  const user = _shared2.default.verifyAuthorization(request.headers);
   if (!user) {
     return reply.response(false);
   } else {
-    return _bluebird2.default.try(function () {
+    return _bluebird2.default.try(() => {
       return MODAL.users.count({
         where: {
           $or: {
@@ -150,37 +148,35 @@ var hasMultipleAccounts = function hasMultipleAccounts(request, reply) {
           }
         }
       });
-    }).then(function (userCounts) {
+    }).then(userCounts => {
       if (userCounts > 1) {
         return reply.response(true);
       }
       return reply.response(false);
-    }).catch(function (err) {
-      console.log('Error on ' + new Date() + ' for user ' + request.payload.mobile_no + ' is as follow: \n \n ' + err);
+    }).catch(err => {
+      console.log(`Error on ${new Date()} for user ${request.payload.mobile_no} is as follow: \n \n ${err}`);
       return reply.response(false);
     });
   }
 };
 
-var updateUserPIN = function updateUserPIN(request, reply) {
-  var user = _shared2.default.verifyAuthorization(request.headers);
+const updateUserPIN = (request, reply) => {
+  const user = _shared2.default.verifyAuthorization(request.headers);
   if (!user) {
     return reply.response(null);
   }
-  return _bluebird2.default.try(function () {
-    return (0, _password.hashPassword)(request.payload.pin);
-  }).then(function (hashedPassword) {
+  return _bluebird2.default.try(() => (0, _password.hashPassword)(request.payload.pin)).then(hashedPassword => {
     request.hashedPassword = hashedPassword;
     return MODAL.users.findOne({
       where: {
         id: user.id || user.ID
       }
     });
-  }).then(function (userResult) {
+  }).then(userResult => {
     if (userResult) {
-      console.log('Last route ' + request.url.pathname + ' accessed by user id ' + (user.id || user.ID) + ' from ' + (request.headers.ios_app_version ? 'iOS' : 'android'));
+      console.log(`Last route ${request.url.pathname} accessed by user id ${user.id || user.ID} from ${request.headers.ios_app_version ? 'iOS' : 'android'}`);
       request.user = userResult;
-      var currentUser = request.user.toJSON();
+      const currentUser = request.user.toJSON();
       console.log(currentUser);
       if (request.payload.old_pin) {
         return (0, _password.comparePasswords)(request.payload.old_pin, currentUser.password);
@@ -190,33 +186,31 @@ var updateUserPIN = function updateUserPIN(request, reply) {
     }
 
     return false;
-  }).then(function (pinResult) {
+  }).then(pinResult => {
     return pinResult ? reply.response(true) : reply.response(false);
-  }).catch(function (err) {
-    console.log('Error on ' + new Date() + ' for user ' + request.payload.mobile_no + ' is as follow: \n \n ' + err);
+  }).catch(err => {
+    console.log(`Error on ${new Date()} for user ${request.payload.mobile_no} is as follow: \n \n ${err}`);
     return reply.response(false);
   });
 };
 
-var verifyUserPIN = function verifyUserPIN(request, reply) {
-  var user = _shared2.default.verifyAuthorization(request.headers);
+const verifyUserPIN = (request, reply) => {
+  const user = _shared2.default.verifyAuthorization(request.headers);
   if (!user) {
     return reply.response(null);
   }
-  return _bluebird2.default.try(function () {
-    return (0, _password.hashPassword)(request.payload.pin);
-  }).then(function (hashedPassword) {
+  return _bluebird2.default.try(() => (0, _password.hashPassword)(request.payload.pin)).then(hashedPassword => {
     request.hashedPassword = hashedPassword;
     return MODAL.users.findOne({
       where: {
         id: user.id || user.ID
       }
     });
-  }).then(function (userResult) {
+  }).then(userResult => {
     if (userResult) {
-      console.log('Last route ' + request.url.pathname + ' accessed by user id ' + (user.id || user.ID) + ' from ' + (request.headers.ios_app_version ? 'iOS' : 'android'));
+      console.log(`Last route ${request.url.pathname} accessed by user id ${user.id || user.ID} from ${request.headers.ios_app_version ? 'iOS' : 'android'}`);
       request.user = userResult;
-      var currentUser = request.user.toJSON();
+      const currentUser = request.user.toJSON();
       console.log(currentUser);
       if (!currentUser.password) {
         return true;
@@ -228,34 +222,32 @@ var verifyUserPIN = function verifyUserPIN(request, reply) {
     }
 
     return false;
-  }).then(function (pinResult) {
+  }).then(pinResult => {
     return pinResult ? reply.response(true) : reply.response(false);
-  }).catch(function (err) {
-    console.log('Error on ' + new Date() + ' for user ' + request.payload.mobile_no + ' is as follow: \n \n ' + err);
+  }).catch(err => {
+    console.log(`Error on ${new Date()} for user ${request.payload.mobile_no} is as follow: \n \n ${err}`);
     return reply.response(false);
   });
 };
 
-var verifyUserOTP = function verifyUserOTP(request, reply) {
-  var user = _shared2.default.verifyAuthorization(request.headers);
+const verifyUserOTP = (request, reply) => {
+  const user = _shared2.default.verifyAuthorization(request.headers);
   if (!user) {
     return reply.response(null);
   }
-  return _bluebird2.default.try(function () {
-    return MODAL.users.findOne({
-      where: {
-        id: user.id || user.ID
-      }
-    });
-  }).then(function (userResult) {
+  return _bluebird2.default.try(() => MODAL.users.findOne({
+    where: {
+      id: user.id || user.ID
+    }
+  })).then(userResult => {
     if (userResult) {
-      console.log('Last route ' + request.url.pathname + ' accessed by user id ' + (user.id || user.ID) + ' from ' + (request.headers.ios_app_version ? 'iOS' : 'android'));
+      console.log(`Last route ${request.url.pathname} accessed by user id ${user.id || user.ID} from ${request.headers.ios_app_version ? 'iOS' : 'android'}`);
       request.user = userResult;
-      var currentUser = request.user.toJSON();
+      const currentUser = request.user.toJSON();
       console.log(currentUser);
       if (currentUser.email_secret) {
         console.log(currentUser.otp_created_at);
-        var timeDiffMin = _moment2.default.duration(_moment2.default.utc().diff((0, _moment2.default)(currentUser.otp_created_at))).asMinutes();
+        const timeDiffMin = _moment2.default.duration(_moment2.default.utc().diff((0, _moment2.default)(currentUser.otp_created_at))).asMinutes();
         console.log(timeDiffMin);
         if (timeDiffMin > 5) {
           return null;
@@ -265,21 +257,28 @@ var verifyUserOTP = function verifyUserOTP(request, reply) {
     }
 
     return false;
-  }).then(function (pinResult) {
-    return reply.response(pinResult);
-  }).catch(function (err) {
-    console.log('Error on ' + new Date() + ' for user ' + request.payload.mobile_no + ' is as follow: \n \n ' + err);
+  }).then(pinResult => reply.response(pinResult)).catch(err => {
+    console.log(`Error on ${new Date()} for user ${request.payload.mobile_no} is as follow: \n \n ${err}`);
     return reply.response(false);
   });
 };
 
-var verifyUserEmail = function verifyUserEmail(request, reply) {
-  var user = _shared2.default.verifyAuthorization(request.headers);
+function isValidEmail(emailAddress) {
+  const pattern = new RegExp(/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/);
+  return pattern.test(emailAddress);
+}
+
+const verifyUserEmail = (request, reply) => {
+  const user = _shared2.default.verifyAuthorization(request.headers);
   if (!user) {
     return reply.response(null);
   } else {
-    return _bluebird2.default.try(function () {
-      return MODAL.users.count({
+
+    if (request.payload.email) {
+      if (!isValidEmail(request.payload.email.toLowerCase())) {
+        return reply.response(false);
+      }
+      return _bluebird2.default.try(() => MODAL.users.count({
         where: {
           $or: {
             id: user.id || user.ID,
@@ -288,49 +287,72 @@ var verifyUserEmail = function verifyUserEmail(request, reply) {
             }
           }
         }
-      });
-    }).then(function (userCounts) {
-      if (userCounts <= 1) {
-        return MODAL.users.findOne({
-          where: {
-            id: user.id || user.ID
-          }
-        }).then(function (userResult) {
-          var userDetail = userResult ? userResult.toJSON() : userResult;
-          console.log('Last route ' + request.url.pathname + ' accessed by user id ' + (user.id || user.ID) + ' from ' + (request.headers.ios_app_version ? 'iOS' : 'android'));
-          if (userDetail) {
-            request.user = userDetail;
-            if (userDetail.email_verified) {
-              return reply.response((userDetail.email || '').toLowerCase() === (request.payload.email || '').toLowerCase());
-            } else {
-              userResult.updateAttributes({ email: request.payload.email });
-              return reply.response(true);
+      })).then(userCounts => {
+        if (userCounts <= 1) {
+          return MODAL.users.findOne({
+            where: {
+              id: user.id || user.ID
             }
-          } else {
-            console.log('User ' + user.email + ' is invalid.');
-            return reply.response(false);
-          }
-        });
-      } else {
-        console.log('User with ' + request.params.email + ' already exist.');
-        return reply.response(null);
-      }
-    }).catch(function (err) {
-      console.log('Error on ' + new Date() + ' for user ' + user.mobile_no + ' is as follow: \n \n ' + err);
-      return reply.response(false);
-    });
+          }).then(userResult => {
+            const userDetail = userResult ? userResult.toJSON() : userResult;
+            console.log(`Last route ${request.url.pathname} accessed by user id ${user.id || user.ID} from ${request.headers.ios_app_version ? 'iOS' : 'android'}`);
+            if (userDetail) {
+              request.user = userDetail;
+              if (userDetail.email_verified) {
+                return reply.response((userDetail.email || '').toLowerCase() === (request.payload.email || '').toLowerCase());
+              } else {
+                userResult.updateAttributes({ email: request.payload.email });
+                return reply.response(true);
+              }
+            } else {
+              console.log(`User ${user.email} is invalid.`);
+              return reply.response(false);
+            }
+          });
+        } else {
+          console.log(`User with ${request.params.email} already exist.`);
+          return reply.response(null);
+        }
+      }).catch(err => {
+        console.log(`Error on ${new Date()} for user ${user.mobile_no} is as follow: \n \n ${err}`);
+        return reply.response(false);
+      });
+    }
+
+    return reply.response(true);
   }
 };
 
-exports.default = function (models) {
+const checkForAppUpdate = (request, reply) => {
+  if (request.headers.app_version !== undefined || request.headers.ios_app_version !== undefined) {
+    const id = request.headers.ios_app_version ? 2 : 1;
+
+    MODAL.appVersion.findOne({
+      where: {
+        id
+      },
+      order: [['updatedAt', 'DESC']],
+      attributes: [['recommended_version', 'recommendedVersion'], ['force_version', 'forceVersion'], ['details', 'updateDetails']]
+    }).then(result => {
+      console.log(result);
+      return reply.response(result);
+    });
+  } else {
+    console.log('App Version not in Headers');
+    return reply.response(null);
+  }
+};
+
+exports.default = models => {
   MODAL = models;
   return {
-    checkAppVersion: checkAppVersion,
-    updateUserActiveStatus: updateUserActiveStatus,
-    verifyUserPIN: verifyUserPIN,
-    updateUserPIN: updateUserPIN,
-    hasMultipleAccounts: hasMultipleAccounts,
-    verifyUserEmail: verifyUserEmail,
-    verifyUserOTP: verifyUserOTP
+    checkAppVersion,
+    updateUserActiveStatus,
+    verifyUserPIN,
+    updateUserPIN,
+    hasMultipleAccounts,
+    verifyUserEmail,
+    verifyUserOTP,
+    checkForAppUpdate
   };
 };

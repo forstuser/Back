@@ -1,7 +1,7 @@
 'use strict';
 
-exports.default = function (sequelize, DataTypes) {
-  var states = sequelize.define('states', {
+exports.default = (sequelize, DataTypes) => {
+  const states = sequelize.define('states', {
     state_name: {
       type: DataTypes.STRING,
       allowNull: false
@@ -27,7 +27,7 @@ exports.default = function (sequelize, DataTypes) {
     tableName: 'table_states'
   });
 
-  states.associate = function (models) {
+  states.associate = models => {
     states.belongsTo(models.users, { foreignKey: 'created_by' });
     states.belongsTo(models.statuses, { foreignKey: 'status_type', targetKey: 'status_type' });
     states.hasMany(models.mealStateMap, { foreignKey: 'state_id', onDelete: 'cascade', onUpdate: 'cascade' });

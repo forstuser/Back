@@ -4,8 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-exports.default = function (sequelize, DataTypes) {
-  var serviceSchedules = sequelize.define('serviceSchedules', {
+exports.default = (sequelize, DataTypes) => {
+  const serviceSchedules = sequelize.define('serviceSchedules', {
     category_id: {
       type: DataTypes.INTEGER
     },
@@ -59,7 +59,7 @@ exports.default = function (sequelize, DataTypes) {
     tableName: 'service_schedules'
   });
 
-  serviceSchedules.associate = function (models) {
+  serviceSchedules.associate = models => {
     serviceSchedules.belongsTo(models.users, { foreignKey: 'updated_by' });
 
     serviceSchedules.belongsTo(models.users, { foreignKey: 'created_by' });

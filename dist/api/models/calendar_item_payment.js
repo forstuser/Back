@@ -4,8 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-exports.default = function (sequelize, DataTypes) {
-  var calendar_item_payment = sequelize.define('calendar_item_payment', {
+exports.default = (sequelize, DataTypes) => {
+  const calendar_item_payment = sequelize.define('calendar_item_payment', {
     ref_id: {
       type: DataTypes.INTEGER
     },
@@ -37,7 +37,7 @@ exports.default = function (sequelize, DataTypes) {
     tableName: 'table_calendar_item_payment'
   });
 
-  calendar_item_payment.associate = function (models) {
+  calendar_item_payment.associate = models => {
     calendar_item_payment.belongsTo(models.user_calendar_item, { foreignKey: 'ref_id', as: 'calendar_item' });
     calendar_item_payment.belongsTo(models.users, { foreignKey: 'updated_by' });
     calendar_item_payment.belongsTo(models.statuses, { foreignKey: 'status_type', targetKey: 'status_type' });

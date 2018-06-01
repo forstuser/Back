@@ -4,8 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-exports.default = function (sequelize, DataTypes) {
-  var table_accessory_categories = sequelize.define('table_accessory_categories', {
+exports.default = (sequelize, DataTypes) => {
+  const table_accessory_categories = sequelize.define('table_accessory_categories', {
     category_id: {
       type: DataTypes.INTEGER
     },
@@ -46,7 +46,7 @@ exports.default = function (sequelize, DataTypes) {
     tableName: 'table_accessory_categories'
   });
 
-  table_accessory_categories.associate = function (models) {
+  table_accessory_categories.associate = models => {
 
     table_accessory_categories.belongsTo(models.categories, {
       foreignKey: 'category_id',

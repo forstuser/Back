@@ -96,6 +96,10 @@ export function prepareAuthRoutes(modal, routeObject, middleware) {
             method: middleware.updateUserActiveStatus,
             assign: 'userExist',
           },
+          {
+            method: middleware.verifyUserEmail,
+            assign: 'isValidEmail',
+          },
         ],
         handler: ControllerObject.updateUserProfile,
         description: 'Update User Profile.',

@@ -41,28 +41,28 @@ var _accessory_routes = require('./accessory_routes');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var middleware = void 0;
+let middleware;
 
-exports.default = function (app, modals) {
-  middleware = new _middleware2.default(modals);
+exports.default = (app, modals) => {
+  middleware = (0, _middleware2.default)(modals);
   // Initializing route groups
-  var authRoutes = [];
-  var categoryRoutes = [];
-  var brandRoutes = [];
-  var sellerRoutes = [];
-  var serviceCenterRoutes = [];
-  var billManagementRoutes = [];
-  var dashboardRoutes = [];
-  var productRoutes = [];
-  var insightRoutes = [];
-  var searchRoutes = [];
-  var generalRoutes = [];
-  var repairRoutes = [];
-  var calendarRoutes = [];
-  var uploadFileRoute = [];
-  var whatToServiceRoutes = [];
-  var accessoryServicesRoutes = [];
-  var searchController = new _search2.default(modals);
+  const authRoutes = [];
+  const categoryRoutes = [];
+  const brandRoutes = [];
+  const sellerRoutes = [];
+  const serviceCenterRoutes = [];
+  const billManagementRoutes = [];
+  const dashboardRoutes = [];
+  const productRoutes = [];
+  const insightRoutes = [];
+  const searchRoutes = [];
+  const generalRoutes = [];
+  const repairRoutes = [];
+  const calendarRoutes = [];
+  const uploadFileRoute = [];
+  const whatToServiceRoutes = [];
+  const accessoryServicesRoutes = [];
+  const searchController = new _search2.default(modals);
   (0, _auth.prepareAuthRoutes)(modals, authRoutes, middleware);
 
   (0, _category.prepareCategoryRoutes)(modals, categoryRoutes, middleware);
@@ -110,5 +110,5 @@ exports.default = function (app, modals) {
     });
   }
 
-  app.route([].concat(authRoutes, categoryRoutes, brandRoutes, sellerRoutes, serviceCenterRoutes, billManagementRoutes, uploadFileRoute, dashboardRoutes, productRoutes, insightRoutes, searchRoutes, generalRoutes, repairRoutes, calendarRoutes, whatToServiceRoutes, accessoryServicesRoutes));
+  app.route([...authRoutes, ...categoryRoutes, ...brandRoutes, ...sellerRoutes, ...serviceCenterRoutes, ...billManagementRoutes, ...uploadFileRoute, ...dashboardRoutes, ...productRoutes, ...insightRoutes, ...searchRoutes, ...generalRoutes, ...repairRoutes, ...calendarRoutes, ...whatToServiceRoutes, ...accessoryServicesRoutes]);
 };

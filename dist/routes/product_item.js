@@ -19,7 +19,7 @@ function prepareProductItemRoutes(modal, routeObject, middleware) {
   //= ========================
   // Repair Routes
   //= ========================
-  var controllerInit = new _productItem2.default(modal);
+  const controllerInit = new _productItem2.default(modal);
   if (controllerInit) {
 
     routeObject.push({

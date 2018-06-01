@@ -4,8 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-exports.default = function (sequelize, DataTypes) {
-  var jobs = sequelize.define('jobs', {
+exports.default = (sequelize, DataTypes) => {
+  const jobs = sequelize.define('jobs', {
     job_id: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -58,7 +58,7 @@ exports.default = function (sequelize, DataTypes) {
     tableName: 'jobs'
   });
 
-  jobs.associate = function (models) {
+  jobs.associate = models => {
     jobs.belongsTo(models.users, { foreignKey: 'user_id', as: 'consumer' });
     jobs.belongsTo(models.users, { foreignKey: 'uploaded_by', as: 'user' });
     jobs.belongsTo(models.users, { foreignKey: 'updated_by', as: 'updatedByUser' });

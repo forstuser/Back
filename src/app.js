@@ -21,39 +21,42 @@ const init = async () => {
       },
     },
   });
-
-  await server.register(
-      {
-        plugin: inert,
-      });
-  await server.register({
-    plugin: vision,
-  });
-  await server.register({
-    plugin: hapiSwagger,
-    options: {
-      info: {
-        title: 'Consumer API Documentation',
-        version: '1.0.0',
-      },
-    },
-  });
-  await server.register(hapiJWT);
-  const jwtKey = config.JWT_SECRET;
-  server.auth.strategy('jwt', 'jwt',
-      {
-        key: jwtKey.toString(),
-        validate: (decoded, request, callback) => {
-          if (!decoded) {
-            return callback(null, false);
-          }
-
-          return callback(null, true);
+  try {
+    await server.register(
+        {
+          plugin: inert,
+        });
+    await server.register({
+      plugin: vision,
+    });
+    await server.register({
+      plugin: hapiSwagger,
+      options: {
+        info: {
+          title: 'Consumer API Documentation',
+          version: '1.0.0',
         },
-        verifyOptions: {algorithms: ['HS512']}, // pick a strong algorithm
-      });
+      },
+    });
+    await server.register(hapiJWT);
+    const jwtKey = config.JWT_SECRET;
+    server.auth.strategy('jwt', 'jwt',
+        {
+          key: jwtKey.toString(),
+          validate: (decoded, request, callback) => {
+            if (!decoded) {
+              return callback(null, false);
+            }
 
-  await server.start();
+            return callback(null, true);
+          },
+          verifyOptions: {algorithms: ['HS512']}, // pick a strong algorithm
+        });
+
+    await server.start();
+  } catch (e) {
+    throw e;
+  }
   return server;
 };
 
