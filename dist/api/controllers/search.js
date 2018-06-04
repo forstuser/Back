@@ -24,7 +24,7 @@ class SearchController {
     modals = modal;
   }
 
-  static retrieveSearch(request, reply) {
+  static async retrieveSearch(request, reply) {
     const user = _shared2.default.verifyAuthorization(request.headers);
     if (request.pre.userExist === 0) {
       return reply.response({
@@ -39,7 +39,8 @@ class SearchController {
         forceUpdate: request.pre.forceUpdate
       }).code(401);
     } else {
-      return reply.response(searchAdaptor.prepareSearchResult(user, request.query.searchvalue, request.language));
+      const result = await searchAdaptor.prepareSearchResult(user, request.query.searchvalue, request.language);
+      return reply.response(result);
     }
   }
 }

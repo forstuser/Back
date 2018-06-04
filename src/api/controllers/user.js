@@ -110,7 +110,8 @@ let loginOrRegisterUser = parameters => {
         console.log(
             `Error on ${new Date()} for user is as follow: \n \n ${err}`);
         if (err.authorization) {
-          return reply.response({status: false, message: 'Unable to Login User', err}).
+          return reply.response(
+              {status: false, message: 'Unable to Login User', err}).
               code(401).
               header('authorization', replyObject.authorization);
         }
@@ -944,10 +945,11 @@ class UserController {
     }
   }
 
-  static retrieveUserProfile(request, reply) {
+  static async retrieveUserProfile(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
-      return reply.response(userAdaptor.retrieveUserProfile(user, request));
+      return reply.response(
+          await userAdaptor.retrieveUserProfile(user, request));
     } else if (request.pre.userExist === 0) {
       return reply.response({
         status: false,

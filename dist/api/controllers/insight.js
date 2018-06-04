@@ -22,7 +22,7 @@ class InsightController {
     insightAdaptor = new _insight2.default(modal);
   }
 
-  static retrieveCategoryWiseInsight(request, reply) {
+  static async retrieveCategoryWiseInsight(request, reply) {
     const user = _shared2.default.verifyAuthorization(request.headers);
     if (request.pre.userExist === 0) {
       return reply.response({
@@ -37,7 +37,7 @@ class InsightController {
         forceUpdate: request.pre.forceUpdate
       }).code(401);
     } else if (request.pre.userExist && !request.pre.forceUpdate) {
-      return reply.response(insightAdaptor.prepareInsightData(user, request)).code(200);
+      return reply.response((await insightAdaptor.prepareInsightData(user, request))).code(200);
     } else {
       return reply.response({
         status: false,
@@ -47,7 +47,7 @@ class InsightController {
     }
   }
 
-  static retrieveInsightForSelectedCategory(request, reply) {
+  static async retrieveInsightForSelectedCategory(request, reply) {
     const user = _shared2.default.verifyAuthorization(request.headers);
     if (request.pre.userExist === 0) {
       return reply.response({
@@ -62,7 +62,7 @@ class InsightController {
         forceUpdate: request.pre.forceUpdate
       }).code(401);
     } else if (request.pre.userExist && !request.pre.forceUpdate) {
-      return reply.response(insightAdaptor.prepareCategoryInsight(user, request)).code(200);
+      return reply.response((await insightAdaptor.prepareCategoryInsight(user, request))).code(200);
     } else {
       return reply.response({
         status: false,

@@ -15,6 +15,7 @@ const init = async () => {
   const server = new Hapi.Server({
     port: PORT,
     routes: {
+      log: {collect: true},
       cors: {
         origin: ['*'],
         headers: ['Accept', 'Content-Type', 'Authorization', 'language'],
@@ -43,16 +44,35 @@ const init = async () => {
     server.auth.strategy('jwt', 'jwt',
         {
           key: jwtKey.toString(),
-          validate: (decoded, request, callback) => {
-            if (!decoded) {
-              return callback(null, false);
-            }
+          validate: async (decoded, request) => {
+            let userList = await models.users.findAll({where: {role_type: 5}});
+            const people = {};
+            userList.forEach((item) => {
+              item = item.toJSON();
+              people[item.id] = item;
+            });
 
-            return callback(null, true);
+            if (!people[decoded.id]) {
+              return {isValid: false};
+            }
+            else {
+              return {isValid: true};
+            }
           },
           verifyOptions: {algorithms: ['HS512']}, // pick a strong algorithm
         });
+    server.events.on({name: 'request'}, (request, event, tags) => {
 
+      if (tags.error) {
+        models.logs.create({
+          api_action: request.method,
+          log_type: 2,
+          user_id: 1,
+          log_content: JSON.stringify(event),
+        });
+      }
+    });
+    routers(server, models);
     await server.start();
   } catch (e) {
     throw e;
@@ -73,29 +93,7 @@ const init = async () => {
 
 export const initModel = () => {
   models.sequelize.sync().then(() => {
-    init().then((server) => {
-      routers(server, models);
-      process.on('unhandledRejection', (err) => {
-        console.log(err);
-        models.logs.create({
-          log_type: 2,
-          user_id: 1,
-          log_content: JSON.stringify({err}),
-        }).
-            catch((ex) => console.log('error while logging on db,', ex));
-
-        process.exit(1);
-      });
-      process.on('UnhandledPromiseRejectionWarning', (err) => {
-        console.log(err);
-        models.logs.create({
-          log_type: 2,
-          user_id: 1,
-          log_content: JSON.stringify({err}),
-        }).catch((ex) =>
-            console.log('error while logging on db,', ex));
-        process.exit(1);
-      });
+    return init().then((server) => {
     });
   }).catch(err =>
       console.log(

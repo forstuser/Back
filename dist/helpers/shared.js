@@ -1435,20 +1435,20 @@ const stringHasSubString = (stringItem, subString) => _lodash2.default.includes(
 
 const preValidation = (preRequest, reply) => {
     if (preRequest.userExist === 0) {
-        return reply({
+        return reply.response({
             status: false,
             message: 'Inactive User',
             forceUpdate: preRequest.forceUpdate
         }).code(402);
     } else if (!preRequest.userExist) {
-        return reply({
+        return reply.response({
             status: false,
             message: 'Unauthorized',
             forceUpdate: preRequest.forceUpdate
         }).code(401);
     }
 
-    return reply({
+    return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: preRequest.forceUpdate

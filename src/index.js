@@ -8,8 +8,6 @@ import {initModel} from './app';
 // import {executeCron} from './cronRunner';
 const numCPUs = cpus().length;
 
-const server = initModel;
-
 // executeCron();
 
 if (cluster.isMaster) {
@@ -30,5 +28,5 @@ if (cluster.isMaster) {
   });
 
 } else {
-  server();
+  initModel();
 }

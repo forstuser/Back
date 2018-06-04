@@ -1,49 +1,103 @@
 import Promise from 'bluebird';
-// import ProductAdapter from './product';
+import ProductAdapter from './product';
+import SellerAdapter from './sellers';
 
 export default class AccessoryAdaptor {
   constructor(modals) {
     this.modals = modals;
-    // this.productAdapter = ProductAdapter(modals);
+    this.productAdapter = new ProductAdapter(modals);
+    this.sellerAdapter = new SellerAdapter(modals);
   }
 
-  getAccessoriesList(options) {
+  async getAccessoryCategories(options) {
+    const {user_id, queryOptions} = options;
+    const accessoryCategories = await this.retrieveAccessoryCategories({
+      where: {status_type: 1},
+      attributes: ['category_id'],
+      order: [['priority']],
+    });
+
+    const categoryProducts = await  Promise.all([
+      this.retrieveCategoryNames({
+        where: {
+          category_id: accessoryCategories.map(item => item.category_id),
+        },
+        attributes: ['category_id', 'category_name'],
+      }), this.retrieveProducts({
+        where: {
+          user_id,
+          status_type: [5, 11],
+          category_id: accessoryCategories.map(item => item.category_id),
+        },
+        attributes: [
+          'brand_id',
+          'main_category_id',
+          'category_id',
+          'product_name',
+          'id',
+        ],
+      })]);
+
+    return categoryProducts[0].map(item => {
+      item.products = categoryProducts[1].filter(
+          productItem => productItem.category_id = item.category_id);
+      return item;
+    });
+  }
+
+  async getAccessoriesList(options) {
     const {user_id, queryOptions} = options;
     console.log(queryOptions);
-    return Promise.try(() => this.retrieveProducts({
-      where: {
-        user_id,
-        status_type: [5, 11],
-      },
-      attributes: [
-        'brand_id',
-        'main_category_id',
-        'category_id',
-        'product_name',
-        'id',
-      ],
-    })).then((products) => {
-      //get the category IDs
-      const categoryIds = products.map((item) => item.category_id);
+    const productOptions = {
+      user_id,
+      status_type: [5, 11],
+    };
 
-      const accessoryOptions = {
-        category_id: categoryIds,
-      };
+    let {categoryid, bbclass} = queryOptions;
+    const accessoryOptions = {};
+    const categoryNameOptions = {};
+    const accessoryCategoryProducts = await this.retrieveAccessoryCategoryProducts(
+        {
+          categoryid,
+          productOptions,
+          accessoryOptions,
+          categoryNameOptions,
+        });
+    let accessoryCategories = accessoryCategoryProducts[0];
+    const categories = accessoryCategoryProducts[1];
+    const products = accessoryCategoryProducts[2];
+    const accessoryProductOptions = {
+      accessory_id: accessoryCategories.map(item => item.id),
+      bb_class: 2,
+    };
 
-      const categoryNameOptions = {
-        category_id: categoryIds,
-      };
+    if (bbclass) {
+      accessoryProductOptions.bb_class = bbclass;
+    }
 
-      if (queryOptions.categoryid) {
-        accessoryOptions.category_id = queryOptions.categoryid;
-        categoryNameOptions.category_id = queryOptions.categoryid;
-      } else {
-        accessoryOptions.priority = {
-          $between: [1, 6],
-        };
-      }
+    const accessoryProducts = await this.retrieveAccessoryProducts({
+      where: accessoryProductOptions,
+    });
+    accessoryCategories = accessoryCategories.map((item) => {
+      item.accessory_items = accessoryProducts.filter(
+          apItem => apItem.accessory_id === item.id);
+      return item;
+    });
+    return categories.map(item => {
+      item.accessories = accessoryCategories.filter(
+          acItem => acItem.category_id === item.category_id);
+      item.products = products;
+      return item;
+    }).filter((item) => item.accessories.length > 0);
+  }
 
-      return Promise.all([
+  async retrieveAccessoryCategoryProducts(parameters) {
+    let {categoryid, productOptions, accessoryOptions, categoryNameOptions} = parameters;
+    if (categoryid) {
+      productOptions.category_id = categoryid;
+      accessoryOptions.category_id = categoryid;
+      categoryNameOptions.category_id = categoryid;
+      return await Promise.all([
         this.retrieveAccessoryCategories({
           where: accessoryOptions,
           attributes: ['id', 'title', 'category_id'],
@@ -52,39 +106,44 @@ export default class AccessoryAdaptor {
         this.retrieveCategoryNames({
           where: categoryNameOptions,
           attributes: ['category_id', 'category_name'],
-        })]);
-    }).spread((accessoryCategories, categoryNames) => {
-      console.log(JSON.stringify({accessoryCategories, categoryNames}));
-      const productOptions = {
-        accessory_id: accessoryCategories.map(item => item.id),
-      };
-
-      if (!queryOptions.bbclass) {
-        productOptions.bb_class = 2;
-      } else {
-        productOptions.bb_class = queryOptions.bbclass;
-      }
-
-      return Promise.all([
-        accessoryCategories, this.retrieveAccessoryProducts({
+        }), this.retrieveProducts({
           where: productOptions,
-        }), categoryNames]);
-
-    }).spread((accessoryCategories, accessoryProducts, categoryNames) => {
-
-      accessoryCategories = accessoryCategories.map((item) => {
-        item.accessory_items = accessoryProducts.filter(
-            apItem => apItem.accessory_id === item.id);
-        return item;
+          attributes: [
+            'brand_id',
+            'main_category_id',
+            'category_id',
+            'product_name',
+            'id',
+          ],
+        })]);
+    } else {
+      const products = await this.retrieveProducts({
+        where: productOptions,
+        attributes: [
+          'brand_id',
+          'main_category_id',
+          'category_id',
+          'product_name',
+          'id',
+        ],
       });
-
-      return categoryNames.map(item => {
-        item.accessories = accessoryCategories.filter(
-            acItem => acItem.category_id === item.category_id);
-        return item;
-      }).filter((item) => item.accessories.length > 0);
-
-    });
+      const categoryIds = products.map((item) => item.category_id);
+      accessoryOptions.category_id = categoryIds;
+      categoryNameOptions.category_id = categoryIds;
+      accessoryOptions.priority = {
+        $between: [1, 6],
+      };
+      return await Promise.all([
+        this.retrieveAccessoryCategories({
+          where: accessoryOptions,
+          attributes: ['id', 'title', 'category_id'],
+          order: [['priority']],
+        }),
+        this.retrieveCategoryNames({
+          where: categoryNameOptions,
+          attributes: ['category_id', 'category_name'],
+        }), products]);
+    }
   }
 
   getOrderHistory(options) {
@@ -140,6 +199,69 @@ export default class AccessoryAdaptor {
         }));
   }
 
+  createTransaction(options) {
+    // find create find seller
+    // create the transaction
+    // create product and reference it to existing product
+
+    return Promise.try(() => {
+
+      return this.sellerAdapter.retrieveOrCreateOfflineSellers({
+        'seller_name': options.seller_detail.name,
+        'address': options.seller_detail.address,
+        'contact_no': options.seller_detail.phone,
+      }, {
+        'seller_name': options.seller_detail.name,
+        'address': options.seller_detail.address,
+        'contact_no': options.seller_detail.phone,
+      });
+
+    }).then((seller) => Promise.all([
+      this.addTransaction({
+        'amount_paid': options.price,
+        'accessory_product_id': options.accessory_product_id,
+        'delivery_address': options.delivery_address,
+        'details_url': options.details_url,
+        'estimated_delivery_date': options.delivery_date,
+        'online_seller_id': options.online_seller_id,
+        'payment_mode_id': options.payment_mode,
+        'product_id': options.product_id,
+        'quantity': options.quantity,
+        'seller_id': seller.id,
+        'status_type': options.status_type,
+        'transaction_id': options.transaction_id,
+      }), this.modals.products.findOne({
+        where: {
+          'id': options.product_id,
+        },
+      }),
+      this.modals.table_accessory_products.findOne({
+        where: {
+          id: options.accessory_product_id,
+        },
+      }),
+    ])).spread((result, parentProduct, accessoryProduct) => {
+      parentProduct = parentProduct.toJSON();
+      accessoryProduct = accessoryProduct.toJSON();
+      return Promise.all([
+        result,
+        this.productAdapter.createEmptyProduct({
+          'accessory_id': options.accessory_product_id,
+          'category_id': parentProduct.category_id,
+          'ref_id': options.product_id,
+          'product_name': accessoryProduct.title,
+          'purchase_cost': options.price,
+          'seller_id': result.id,
+          'user_id': options.user_id,
+          'job_id': parentProduct.job_id,
+          'main_category_id': parentProduct.main_category_id,
+          'status_type': 11,
+        }),
+      ]);
+    });
+
+  }
+
   retrieveProducts(options) {
     return this.modals.products.findAll(options).
         then((result) => result.map(item => item.toJSON()));
@@ -169,4 +291,10 @@ export default class AccessoryAdaptor {
     return this.modals.table_payment_mode.findAll(options).
         then((result) => result.map(item => item.toJSON()));
   }
+
+  addTransaction(options) {
+    return this.modals.table_transaction.create(options).
+        then((result) => result.toJSON());
+  }
+
 }

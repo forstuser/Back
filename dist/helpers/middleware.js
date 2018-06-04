@@ -34,7 +34,7 @@ const checkAppVersion = (request, reply) => {
     const currentAppVersion = !isNaN(parseInt(appVersion)) ? parseInt(appVersion) : null;
     console.log(`CURRENT APP VERSION = ${currentAppVersion}`);
 
-    MODAL.appVersion.findOne({
+    return MODAL.appVersion.findOne({
       where: {
         id
       },
@@ -50,20 +50,20 @@ const checkAppVersion = (request, reply) => {
 
         if (currentAppVersion < FORCE_VERSION) {
           console.log('current < force');
-          return reply.response(true);
+          return true;
         } else if (currentAppVersion >= FORCE_VERSION && currentAppVersion < RECOMMENDED_VERSION) {
           console.log('force < current < recommended');
-          return reply.response(false);
+          return false;
         } else {
-          return reply.response(null);
+          return null;
         }
       } else {
-        return reply.response(null);
+        return null;
       }
     });
   } else {
     console.log('App Version not in Headers');
-    return reply.response(null);
+    return null;
   }
 };
 
@@ -73,7 +73,7 @@ const updateUserActiveStatus = (request, reply) => {
   const language = (request.headers.language || '').split('-')[0];
   request.language = supportedLanguages.indexOf(language) >= 0 ? language : '';
   if (!user) {
-    return reply.response(null);
+    return null;
   } else {
     return MODAL.users.findOne({
       where: {
@@ -108,7 +108,7 @@ const updateUserActiveStatus = (request, reply) => {
             })
           })]).then(item => {
             console.log(`User updated detail is as follow ${JSON.stringify(item[0])}`);
-            return reply.response(true);
+            return true;
           }).catch(err => {
             console.log(`Error on ${new Date()} for user ${user.mobile_no} is as follow: \n \n ${err}`);
             return MODAL.logs.create({
@@ -117,19 +117,19 @@ const updateUserActiveStatus = (request, reply) => {
               log_type: 2,
               user_id: user.id || user.ID,
               log_content: JSON.stringify({ err })
-            }).then(() => reply.response(false));
+            }).then(() => false);
           });
         } else {
           console.log(`User ${user.mobile_no} inactive for more than 10 minutes`);
-          return reply.response(0);
+          return 0;
         }
       } else {
         console.log(`User ${user.mobile_no} doesn't exist`);
-        return reply.response(null);
+        return null;
       }
     }).catch(err => {
       console.log(`Error on ${new Date()} for user ${user.mobile_no} is as follow: \n \n ${err}`);
-      return reply.response(false);
+      return false;
     });
   }
 };
@@ -137,7 +137,7 @@ const updateUserActiveStatus = (request, reply) => {
 const hasMultipleAccounts = (request, reply) => {
   const user = _shared2.default.verifyAuthorization(request.headers);
   if (!user) {
-    return reply.response(false);
+    return false;
   } else {
     return _bluebird2.default.try(() => {
       return MODAL.users.count({
@@ -150,12 +150,12 @@ const hasMultipleAccounts = (request, reply) => {
       });
     }).then(userCounts => {
       if (userCounts > 1) {
-        return reply.response(true);
+        return true;
       }
-      return reply.response(false);
+      return false;
     }).catch(err => {
       console.log(`Error on ${new Date()} for user ${request.payload.mobile_no} is as follow: \n \n ${err}`);
-      return reply.response(false);
+      return false;
     });
   }
 };
@@ -163,7 +163,7 @@ const hasMultipleAccounts = (request, reply) => {
 const updateUserPIN = (request, reply) => {
   const user = _shared2.default.verifyAuthorization(request.headers);
   if (!user) {
-    return reply.response(null);
+    return null;
   }
   return _bluebird2.default.try(() => (0, _password.hashPassword)(request.payload.pin)).then(hashedPassword => {
     request.hashedPassword = hashedPassword;
@@ -187,17 +187,17 @@ const updateUserPIN = (request, reply) => {
 
     return false;
   }).then(pinResult => {
-    return pinResult ? reply.response(true) : reply.response(false);
+    return pinResult ? true : false;
   }).catch(err => {
     console.log(`Error on ${new Date()} for user ${request.payload.mobile_no} is as follow: \n \n ${err}`);
-    return reply.response(false);
+    return false;
   });
 };
 
 const verifyUserPIN = (request, reply) => {
   const user = _shared2.default.verifyAuthorization(request.headers);
   if (!user) {
-    return reply.response(null);
+    return null;
   }
   return _bluebird2.default.try(() => (0, _password.hashPassword)(request.payload.pin)).then(hashedPassword => {
     request.hashedPassword = hashedPassword;
@@ -223,17 +223,17 @@ const verifyUserPIN = (request, reply) => {
 
     return false;
   }).then(pinResult => {
-    return pinResult ? reply.response(true) : reply.response(false);
+    return pinResult ? true : false;
   }).catch(err => {
     console.log(`Error on ${new Date()} for user ${request.payload.mobile_no} is as follow: \n \n ${err}`);
-    return reply.response(false);
+    return false;
   });
 };
 
 const verifyUserOTP = (request, reply) => {
   const user = _shared2.default.verifyAuthorization(request.headers);
   if (!user) {
-    return reply.response(null);
+    return null;
   }
   return _bluebird2.default.try(() => MODAL.users.findOne({
     where: {
@@ -257,9 +257,9 @@ const verifyUserOTP = (request, reply) => {
     }
 
     return false;
-  }).then(pinResult => reply.response(pinResult)).catch(err => {
+  }).then(pinResult => pinResult).catch(err => {
     console.log(`Error on ${new Date()} for user ${request.payload.mobile_no} is as follow: \n \n ${err}`);
-    return reply.response(false);
+    return false;
   });
 };
 
@@ -271,12 +271,12 @@ function isValidEmail(emailAddress) {
 const verifyUserEmail = (request, reply) => {
   const user = _shared2.default.verifyAuthorization(request.headers);
   if (!user) {
-    return reply.response(null);
+    return null;
   } else {
 
     if (request.payload.email) {
       if (!isValidEmail(request.payload.email.toLowerCase())) {
-        return reply.response(false);
+        return false;
       }
       return _bluebird2.default.try(() => MODAL.users.count({
         where: {
@@ -299,27 +299,27 @@ const verifyUserEmail = (request, reply) => {
             if (userDetail) {
               request.user = userDetail;
               if (userDetail.email_verified) {
-                return reply.response((userDetail.email || '').toLowerCase() === (request.payload.email || '').toLowerCase());
+                return (userDetail.email || '').toLowerCase() === (request.payload.email || '').toLowerCase();
               } else {
                 userResult.updateAttributes({ email: request.payload.email });
-                return reply.response(true);
+                return true;
               }
             } else {
               console.log(`User ${user.email} is invalid.`);
-              return reply.response(false);
+              return false;
             }
           });
         } else {
           console.log(`User with ${request.params.email} already exist.`);
-          return reply.response(null);
+          return null;
         }
       }).catch(err => {
         console.log(`Error on ${new Date()} for user ${user.mobile_no} is as follow: \n \n ${err}`);
-        return reply.response(false);
+        return false;
       });
     }
 
-    return reply.response(true);
+    return true;
   }
 };
 
@@ -335,11 +335,11 @@ const checkForAppUpdate = (request, reply) => {
       attributes: [['recommended_version', 'recommendedVersion'], ['force_version', 'forceVersion'], ['details', 'updateDetails']]
     }).then(result => {
       console.log(result);
-      return reply.response(result);
+      return result;
     });
   } else {
     console.log('App Version not in Headers');
-    return reply.response(null);
+    return null;
   }
 };
 

@@ -93,13 +93,13 @@ exports.default = (app, modals) => {
     searchRoutes.push({
       method: 'GET',
       path: '/search',
+      handler: _search2.default.retrieveSearch,
       config: {
         auth: 'jwt',
         pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, {
           method: middleware.updateUserActiveStatus,
           assign: 'userExist'
         }],
-        handler: _search2.default.retrieveSearch,
         description: 'Get Search Data.',
         plugins: {
           'hapi-swagger': {
@@ -110,5 +110,11 @@ exports.default = (app, modals) => {
     });
   }
 
-  app.route([...authRoutes, ...categoryRoutes, ...brandRoutes, ...sellerRoutes, ...serviceCenterRoutes, ...billManagementRoutes, ...uploadFileRoute, ...dashboardRoutes, ...productRoutes, ...insightRoutes, ...searchRoutes, ...generalRoutes, ...repairRoutes, ...calendarRoutes, ...whatToServiceRoutes, ...accessoryServicesRoutes]);
+  [...authRoutes, ...categoryRoutes, ...brandRoutes, ...sellerRoutes, ...serviceCenterRoutes, ...billManagementRoutes, ...uploadFileRoute, ...dashboardRoutes, ...productRoutes, ...insightRoutes, ...searchRoutes, ...generalRoutes, ...repairRoutes, ...calendarRoutes, ...whatToServiceRoutes, ...accessoryServicesRoutes].forEach(routeItem => app.route(routeItem));
+  const handler = function (request, h, err) {
+    console.log(err);
+    return h.response('The page was not found').code(404);
+  };
+
+  app.route({ method: '*', path: '/{p*}', handler });
 };

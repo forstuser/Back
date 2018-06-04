@@ -8,13 +8,13 @@ let modals;
 let searchAdaptor;
 
 class SearchController {
-	constructor(modal) {
-		searchAdaptor = new SearchAdaptor(modal);
-		modals = modal;
-	}
+  constructor(modal) {
+    searchAdaptor = new SearchAdaptor(modal);
+    modals = modal;
+  }
 
-	static retrieveSearch(request, reply) {
-		const user = shared.verifyAuthorization(request.headers);
+  static async retrieveSearch(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist === 0) {
       return reply.response({
         status: false,
@@ -27,11 +27,13 @@ class SearchController {
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
-		} else {
-      return reply.response(
-          searchAdaptor.prepareSearchResult(user, request.query.searchvalue, request.language));
-		}
-	}
+    } else {
+      const result = await searchAdaptor.prepareSearchResult(user,
+          request.query.searchvalue,
+          request.language);
+      return reply.response(result);
+    }
+  }
 }
 
 export default SearchController;

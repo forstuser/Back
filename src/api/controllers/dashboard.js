@@ -19,14 +19,14 @@ class DashboardController {
     eHomeAdaptor = new EHomeAdaptor(modal);
     notificationAdaptor = new NotificationAdaptor(modal);
     userAdaptor = new UserAdaptor(modal);
-    modals = modal
+    modals = modal;
   }
 
-  static getDashboard(request, reply) {
+  static async getDashboard(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
-      return reply.response(dashboardAdaptor.retrieveDashboardResult(user, request)).
-          code(200);
+      return reply.response(
+          await dashboardAdaptor.retrieveDashboardResult(user, request));
     } else if (request.pre.userExist === 0) {
       return reply.response({
         status: false,
@@ -48,12 +48,13 @@ class DashboardController {
     }
   }
 
-  static getEHome(request, reply) {
+  static async getEHome(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     const language = request.language;
     console.log(language);
     if (request.pre.userExist && !request.pre.forceUpdate) {
-      return reply.response(eHomeAdaptor.prepareEHomeResult(user, request, language)).
+      return reply.response(
+          await eHomeAdaptor.prepareEHomeResult(user, request, language)).
           code(200);
     } else if (request.pre.userExist === 0) {
       return reply.response({
@@ -76,7 +77,7 @@ class DashboardController {
     }
   }
 
-  static getProductsInCategory(request, reply) {
+  static async getProductsInCategory(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist === 0) {
       return reply.response({
@@ -92,7 +93,7 @@ class DashboardController {
       }).code(401);
     } else if (request.pre.userExist && !request.pre.forceUpdate) {
       return reply.response(
-          eHomeAdaptor.prepareProductDetail({
+          await eHomeAdaptor.prepareProductDetail({
             user,
             masterCategoryId: request.params.id,
             ctype: request.query.subCategoryId,
@@ -158,7 +159,7 @@ class DashboardController {
     }
   }
 
-  static getMailbox(request, reply) {
+  static async getMailbox(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist === 0) {
       return reply.response({
@@ -174,7 +175,7 @@ class DashboardController {
       }).code(401);
     } else if (!request.pre.forceUpdate && user) {
       return reply.response(
-          notificationAdaptor.retrieveNotifications(user, request)).
+          await notificationAdaptor.retrieveNotifications(user, request)).
           code(200);
     } else {
       return reply.response({

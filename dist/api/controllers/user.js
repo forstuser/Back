@@ -919,10 +919,10 @@ class UserController {
     }
   }
 
-  static retrieveUserProfile(request, reply) {
+  static async retrieveUserProfile(request, reply) {
     const user = _shared2.default.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
-      return reply.response(userAdaptor.retrieveUserProfile(user, request));
+      return reply.response((await userAdaptor.retrieveUserProfile(user, request)));
     } else if (request.pre.userExist === 0) {
       return reply.response({
         status: false,

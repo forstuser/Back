@@ -69,6 +69,7 @@ export default (app, modals) => {
     searchRoutes.push({
       method: 'GET',
       path: '/search',
+      handler: SearchController.retrieveSearch,
       config: {
         auth: 'jwt',
         pre: [
@@ -78,7 +79,6 @@ export default (app, modals) => {
             assign: 'userExist',
           },
         ],
-        handler: SearchController.retrieveSearch,
         description: 'Get Search Data.',
         plugins: {
           'hapi-swagger': {
@@ -95,7 +95,7 @@ export default (app, modals) => {
     });
   }
 
-  app.route([
+  ([
     ...authRoutes,
     ...categoryRoutes,
     ...brandRoutes,
@@ -112,5 +112,11 @@ export default (app, modals) => {
     ...calendarRoutes,
     ...whatToServiceRoutes,
     ...accessoryServicesRoutes,
-  ]);
+  ]).forEach((routeItem) => app.route(routeItem));
+  const handler = function(request, h, err) {
+    console.log(err);
+    return h.response('The page was not found').code(404);
+  };
+
+  app.route({method: '*', path: '/{p*}', handler});
 };

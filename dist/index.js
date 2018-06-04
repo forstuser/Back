@@ -16,8 +16,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 // import {executeCron} from './cronRunner';
 const numCPUs = (0, _os.cpus)().length;
 
-const server = _app.initModel;
-
 // executeCron();
 
 if (_cluster2.default.isMaster) {
@@ -37,5 +35,5 @@ if (_cluster2.default.isMaster) {
     console.log('Worker started with PID ' + worker.process.pid + '.');
   });
 } else {
-  server();
+  (0, _app.initModel)();
 }
