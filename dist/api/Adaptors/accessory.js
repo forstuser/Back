@@ -33,7 +33,7 @@ class AccessoryAdaptor {
       order: [['priority']]
     });
 
-    const categoryProducts = await _bluebird2.default.all([this.retrieveCategoryNames({
+    const [categories, products] = await _bluebird2.default.all([this.retrieveCategoryNames({
       where: {
         category_id: accessoryCategories.map(item => item.category_id)
       },
@@ -47,8 +47,8 @@ class AccessoryAdaptor {
       attributes: ['brand_id', 'main_category_id', 'category_id', 'product_name', 'id']
     })]);
 
-    return categoryProducts[0].map(item => {
-      item.products = categoryProducts[1].filter(productItem => productItem.category_id = item.category_id);
+    return categories.map(item => {
+      item.products = products.filter(productItem => productItem.category_id === item.category_id);
       return item;
     });
   }
@@ -64,15 +64,12 @@ class AccessoryAdaptor {
     let { categoryid, bbclass } = queryOptions;
     const accessoryOptions = {};
     const categoryNameOptions = {};
-    const accessoryCategoryProducts = await this.retrieveAccessoryCategoryProducts({
+    let [accessoryCategories, categories, products] = await this.retrieveAccessoryCategoryProducts({
       categoryid,
       productOptions,
       accessoryOptions,
       categoryNameOptions
     });
-    let accessoryCategories = accessoryCategoryProducts[0];
-    const categories = accessoryCategoryProducts[1];
-    const products = accessoryCategoryProducts[2];
     const accessoryProductOptions = {
       accessory_id: accessoryCategories.map(item => item.id),
       bb_class: 2
@@ -135,64 +132,64 @@ class AccessoryAdaptor {
     }
   }
 
-  getOrderHistory(options) {
+  async getOrderHistory(options) {
 
-    return _bluebird2.default.try(() => this.retrieveTransactions({
+    const transactions = await this.retrieveTransactions({
       where: {
         created_by: options.user_id
       },
       order: [['updated_at', 'desc']]
-    })).then(transactions => {
-      const accessory_product_ids = transactions.map(transaction => transaction.accessory_product_id);
-      const product_ids = transactions.map(transaction => transaction.product_id);
-      const payment_mode_ids = transactions.map(transaction => transaction.payment_mode_id);
-      return _bluebird2.default.all([
-      // these transactions have the accessory product id
-      // get the accessory products using that
-      this.retrieveAccessoryProducts({
-        where: {
-          id: accessory_product_ids
-        }
-      }),
-      // they also have product id
-      // get the consumer product using that
-      this.retrieveProducts({
-        where: {
-          id: product_ids
-        }
-      }),
-      // payment mode is also there.
-      // add the payment mode in the result of each transactions well.
-      this.retrievePaymentMode({
-        where: {
-          id: payment_mode_ids
-        }
-      }), transactions]);
-    }).spread((accessoryProducts, products, paymentModes, transactions) => transactions.map(item => {
+    });
+    const accessory_product_ids = transactions.map(transaction => transaction.accessory_product_id);
+    const product_ids = transactions.map(transaction => transaction.product_id);
+    const payment_mode_ids = transactions.map(transaction => transaction.payment_mode_id);
+    const [accessoryProducts, products, paymentModes] = await _bluebird2.default.all([
+    // these transactions have the accessory product id
+    // get the accessory products using that
+    this.retrieveAccessoryProducts({
+      where: {
+        id: accessory_product_ids
+      }
+    }),
+    // they also have product id
+    // get the consumer product using that
+    this.retrieveProducts({
+      where: {
+        id: product_ids
+      }
+    }),
+    // payment mode is also there.
+    // add the payment mode in the result of each transactions well.
+    this.retrievePaymentMode({
+      where: {
+        id: payment_mode_ids
+      }
+    })]);
+
+    return transactions.map(item => {
       item.accessory_product = accessoryProducts.find(pmItem => pmItem.id === item.accessory_product_id);
       item.product = products.find(pmItem => pmItem.id === item.product_id);
       item.payment_mode = paymentModes.find(pmItem => pmItem.id === item.payment_mode_id);
       return item;
-    }));
+    });
   }
 
-  createTransaction(options) {
+  async createTransaction(options) {
     // find create find seller
     // create the transaction
     // create product and reference it to existing product
 
-    return _bluebird2.default.try(() => {
+    const seller = await this.sellerAdapter.retrieveOrCreateOfflineSellers({
+      'seller_name': options.seller_detail.name,
+      'address': options.seller_detail.address,
+      'contact_no': options.seller_detail.phone
+    }, {
+      'seller_name': options.seller_detail.name,
+      'address': options.seller_detail.address,
+      'contact_no': options.seller_detail.phone
+    });
 
-      return this.sellerAdapter.retrieveOrCreateOfflineSellers({
-        'seller_name': options.seller_detail.name,
-        'address': options.seller_detail.address,
-        'contact_no': options.seller_detail.phone
-      }, {
-        'seller_name': options.seller_detail.name,
-        'address': options.seller_detail.address,
-        'contact_no': options.seller_detail.phone
-      });
-    }).then(seller => _bluebird2.default.all([this.addTransaction({
+    let [result, parentProduct, accessoryProduct] = await _bluebird2.default.all([this.addTransaction({
       'amount_paid': options.price,
       'accessory_product_id': options.accessory_product_id,
       'delivery_address': options.delivery_address,
@@ -213,22 +210,22 @@ class AccessoryAdaptor {
       where: {
         id: options.accessory_product_id
       }
-    })])).spread((result, parentProduct, accessoryProduct) => {
-      parentProduct = parentProduct.toJSON();
-      accessoryProduct = accessoryProduct.toJSON();
-      return _bluebird2.default.all([result, this.productAdapter.createEmptyProduct({
-        'accessory_id': options.accessory_product_id,
-        'category_id': parentProduct.category_id,
-        'ref_id': options.product_id,
-        'product_name': accessoryProduct.title,
-        'purchase_cost': options.price,
-        'seller_id': result.id,
-        'user_id': options.user_id,
-        'job_id': parentProduct.job_id,
-        'main_category_id': parentProduct.main_category_id,
-        'status_type': 11
-      })]);
-    });
+    })]);
+
+    parentProduct = parentProduct.toJSON();
+    accessoryProduct = accessoryProduct.toJSON();
+    return await _bluebird2.default.all([result, this.productAdapter.createEmptyProduct({
+      'accessory_id': options.accessory_product_id,
+      'category_id': parentProduct.category_id,
+      'ref_id': options.product_id,
+      'product_name': accessoryProduct.title,
+      'purchase_cost': options.price,
+      'seller_id': result.id,
+      'user_id': options.user_id,
+      'job_id': parentProduct.job_id,
+      'main_category_id': parentProduct.main_category_id,
+      'status_type': 11
+    })]);
   }
 
   retrieveProducts(options) {

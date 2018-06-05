@@ -17,7 +17,7 @@ export default class AccessoryAdaptor {
       order: [['priority']],
     });
 
-    const categoryProducts = await  Promise.all([
+    const [categories, products] = await  Promise.all([
       this.retrieveCategoryNames({
         where: {
           category_id: accessoryCategories.map(item => item.category_id),
@@ -38,9 +38,9 @@ export default class AccessoryAdaptor {
         ],
       })]);
 
-    return categoryProducts[0].map(item => {
-      item.products = categoryProducts[1].filter(
-          productItem => productItem.category_id = item.category_id);
+    return categories.map(item => {
+      item.products = products.filter(
+          productItem => productItem.category_id === item.category_id);
       return item;
     });
   }
@@ -56,16 +56,13 @@ export default class AccessoryAdaptor {
     let {categoryid, bbclass} = queryOptions;
     const accessoryOptions = {};
     const categoryNameOptions = {};
-    const accessoryCategoryProducts = await this.retrieveAccessoryCategoryProducts(
+    let [accessoryCategories, categories, products] = await this.retrieveAccessoryCategoryProducts(
         {
           categoryid,
           productOptions,
           accessoryOptions,
           categoryNameOptions,
         });
-    let accessoryCategories = accessoryCategoryProducts[0];
-    const categories = accessoryCategoryProducts[1];
-    const products = accessoryCategoryProducts[2];
     const accessoryProductOptions = {
       accessory_id: accessoryCategories.map(item => item.id),
       bb_class: 2,
@@ -146,77 +143,71 @@ export default class AccessoryAdaptor {
     }
   }
 
-  getOrderHistory(options) {
+  async getOrderHistory(options) {
 
-    return Promise.try(() => this.retrieveTransactions({
-          where: {
-            created_by: options.user_id,
-          },
-          order: [['updated_at', 'desc']],
-        }),
-    ).
-        then((transactions) => {
-          const accessory_product_ids = transactions.map(
-              transaction => transaction.accessory_product_id);
-          const product_ids = transactions.map(
-              transaction => transaction.product_id);
-          const payment_mode_ids = transactions.map(
-              transaction => transaction.payment_mode_id);
-          return Promise.all([
-            // these transactions have the accessory product id
-            // get the accessory products using that
-            this.retrieveAccessoryProducts({
-              where: {
-                id: accessory_product_ids,
-              },
-            }),
-            // they also have product id
-            // get the consumer product using that
-            this.retrieveProducts({
-              where: {
-                id: product_ids,
-              },
-            }),
-            // payment mode is also there.
-            // add the payment mode in the result of each transactions well.
-            this.retrievePaymentMode({
-              where: {
-                id: payment_mode_ids,
-              },
-            }),
-            transactions,
-          ]);
-        }).
-        spread((accessoryProducts, products, paymentModes,
-                transactions) => transactions.map((item) => {
-          item.accessory_product = accessoryProducts.find(
-              (pmItem) => pmItem.id === item.accessory_product_id);
-          item.product = products.find(
-              (pmItem) => pmItem.id === item.product_id);
-          item.payment_mode = paymentModes.find(
-              (pmItem) => pmItem.id === item.payment_mode_id);
-          return item;
-        }));
+    const transactions = await this.retrieveTransactions({
+      where: {
+        created_by: options.user_id,
+      },
+      order: [['updated_at', 'desc']],
+    });
+    const accessory_product_ids = transactions.map(
+        transaction => transaction.accessory_product_id);
+    const product_ids = transactions.map(
+        transaction => transaction.product_id);
+    const payment_mode_ids = transactions.map(
+        transaction => transaction.payment_mode_id);
+    const [accessoryProducts, products, paymentModes] = await Promise.all([
+      // these transactions have the accessory product id
+      // get the accessory products using that
+      this.retrieveAccessoryProducts({
+        where: {
+          id: accessory_product_ids,
+        },
+      }),
+      // they also have product id
+      // get the consumer product using that
+      this.retrieveProducts({
+        where: {
+          id: product_ids,
+        },
+      }),
+      // payment mode is also there.
+      // add the payment mode in the result of each transactions well.
+      this.retrievePaymentMode({
+        where: {
+          id: payment_mode_ids,
+        },
+      }),
+    ]);
+
+    return transactions.map((item) => {
+      item.accessory_product = accessoryProducts.find(
+          (pmItem) => pmItem.id === item.accessory_product_id);
+      item.product = products.find(
+          (pmItem) => pmItem.id === item.product_id);
+      item.payment_mode = paymentModes.find(
+          (pmItem) => pmItem.id === item.payment_mode_id);
+      return item;
+    });
   }
 
-  createTransaction(options) {
+  async createTransaction(options) {
     // find create find seller
     // create the transaction
     // create product and reference it to existing product
 
-    return Promise.try(() => {
+    const seller = await this.sellerAdapter.retrieveOrCreateOfflineSellers({
+      'seller_name': options.seller_detail.name,
+      'address': options.seller_detail.address,
+      'contact_no': options.seller_detail.phone,
+    }, {
+      'seller_name': options.seller_detail.name,
+      'address': options.seller_detail.address,
+      'contact_no': options.seller_detail.phone,
+    });
 
-      return this.sellerAdapter.retrieveOrCreateOfflineSellers({
-        'seller_name': options.seller_detail.name,
-        'address': options.seller_detail.address,
-        'contact_no': options.seller_detail.phone,
-      }, {
-        'seller_name': options.seller_detail.name,
-        'address': options.seller_detail.address,
-        'contact_no': options.seller_detail.phone,
-      });
-
-    }).then((seller) => Promise.all([
+    let [result, parentProduct, accessoryProduct] = await Promise.all([
       this.addTransaction({
         'amount_paid': options.price,
         'accessory_product_id': options.accessory_product_id,
@@ -240,26 +231,25 @@ export default class AccessoryAdaptor {
           id: options.accessory_product_id,
         },
       }),
-    ])).spread((result, parentProduct, accessoryProduct) => {
-      parentProduct = parentProduct.toJSON();
-      accessoryProduct = accessoryProduct.toJSON();
-      return Promise.all([
-        result,
-        this.productAdapter.createEmptyProduct({
-          'accessory_id': options.accessory_product_id,
-          'category_id': parentProduct.category_id,
-          'ref_id': options.product_id,
-          'product_name': accessoryProduct.title,
-          'purchase_cost': options.price,
-          'seller_id': result.id,
-          'user_id': options.user_id,
-          'job_id': parentProduct.job_id,
-          'main_category_id': parentProduct.main_category_id,
-          'status_type': 11,
-        }),
-      ]);
-    });
+    ]);
 
+    parentProduct = parentProduct.toJSON();
+    accessoryProduct = accessoryProduct.toJSON();
+    return await Promise.all([
+      result,
+      this.productAdapter.createEmptyProduct({
+        'accessory_id': options.accessory_product_id,
+        'category_id': parentProduct.category_id,
+        'ref_id': options.product_id,
+        'product_name': accessoryProduct.title,
+        'purchase_cost': options.price,
+        'seller_id': result.id,
+        'user_id': options.user_id,
+        'job_id': parentProduct.job_id,
+        'main_category_id': parentProduct.main_category_id,
+        'status_type': 11,
+      }),
+    ]);
   }
 
   retrieveProducts(options) {
