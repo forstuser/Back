@@ -1,7 +1,6 @@
 /*jshint esversion: 6 */
 'use strict';
 
-import Bluebird from 'bluebird';
 import shared from '../../helpers/shared';
 import BrandAdaptor from '../Adaptors/brands';
 
@@ -14,91 +13,104 @@ class BrandController {
     brandAdaptor = new BrandAdaptor(modal);
   }
 
-  static getBrands(request, reply) {
+  static async getBrands(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     const isWebMode = (request.params && request.params.mode &&
         request.params.mode.toLowerCase() === 'web');
-    if (!user && !isWebMode) {
-      reply.response({status: false, message: 'Unauthorized'});
-    } else if (!request.pre.forceUpdate) {
-      const categoryId = request.query.categoryid || undefined;
+    try {
+      if (!user && !isWebMode) {
+        return reply.response({status: false, message: 'Unauthorized'});
+      } else if (!request.pre.forceUpdate) {
+        const categoryId = request.query.categoryid || undefined;
 
-      const options = {
-        status_type: 1,
-        category_id: categoryId,
-      };
+        const options = {
+          status_type: 1,
+          category_id: categoryId,
+        };
 
-      if (categoryId) {
-        options.category_id = categoryId;
-      }
-
-      return Bluebird.try(() => {
         if (categoryId) {
-          return modals.brands.findAll({
-            where: {
-              status_type: 1,
-            },
-            include: [
-              {
-                model: modals.brandDetails,
-                as: 'details',
-                where: options,
-                required: true,
-              }, {
-                model: modals.serviceCenters,
-                as: 'centers',
-                attributes: [],
-                required: true,
-              },
-            ],
-            order: [['brand_name', 'ASC']],
-            attributes: [['brand_name', 'brandName'], ['brand_id', 'id']],
-          });
-        } else {
-          return modals.brands.findAll({
-            where: {
-              status_type: 1,
-            },
-            order: [['brand_name', 'ASC']],
-            attributes: [['brand_name', 'brandName'], ['brand_id', 'id']],
-            include: [
-              {
-                model: modals.serviceCenters,
-                as: 'centers',
-                attributes: [],
-                required: true,
-              },
-            ],
-          });
+          options.category_id = categoryId;
         }
-      }).then((results) => {
-        reply.response({
+        let results = [];
+        if (categoryId) {
+          results = await
+              modals.brands.findAll({
+                where: {
+                  status_type: 1,
+                },
+                include: [
+                  {
+                    model: modals.brandDetails,
+                    as: 'details',
+                    where: options,
+                    required: true,
+                  }, {
+                    model: modals.serviceCenters,
+                    as: 'centers',
+                    attributes: [],
+                    required: true,
+                  },
+                ],
+                order: [['brand_name', 'ASC']],
+                attributes: [['brand_name', 'brandName'], ['brand_id', 'id']],
+              });
+        } else {
+          results = await
+              modals.brands.findAll({
+                where: {
+                  status_type: 1,
+                },
+                order: [['brand_name', 'ASC']],
+                attributes: [['brand_name', 'brandName'], ['brand_id', 'id']],
+                include: [
+                  {
+                    model: modals.serviceCenters,
+                    as: 'centers',
+                    attributes: [],
+                    required: true,
+                  },
+                ],
+              });
+        }
+        return reply.response({
           status: true,
           message: 'Successful',
           brands: results,
           forceUpdate: request.pre.forceUpdate,
         });
-      }).catch((err) => {
-        console.log(
-            `Error on ${new Date()} for user ${user.id ||
-            user.ID} is as follow: \n \n ${err}`);
-        reply.response({
+      } else {
+        return reply.response({
           status: false,
-          message: 'Something wrong',
+          message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate,
-        }).code(500);
-      });
-    } else {
-      reply.response({
+        });
+      }
+    } catch (err) {
+
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
+      return reply.response({
         status: false,
-        message: 'Forbidden',
+        message: 'Something wrong',
         forceUpdate: request.pre.forceUpdate,
       });
     }
   }
 
-  static getBrandASC(request, reply) {
-    return brandAdaptor.retrieveASCBrands(request.query).then((results) => {
+  static async getBrandASC(request, reply) {
+    try {
+      const results = await brandAdaptor.retrieveASCBrands(request.query);
       if (results) {
         return reply.response({
           status: true,
@@ -114,16 +126,26 @@ class BrandController {
         forceUpdate: request.pre.forceUpdate,
       }).code(404);
 
-    }).catch((err) => {
-      console.log(
-          `Error on ${new Date()} for user ${user.id ||
-          user.ID} is as follow: \n \n ${err}`);
+    } catch (err) {
+
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
       return reply.response({
         status: false,
         message: 'Something wrong',
         forceUpdate: request.pre.forceUpdate,
-      }).code(500);
-    });
+      });
+    }
   }
 }
 

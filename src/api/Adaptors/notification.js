@@ -1060,9 +1060,8 @@ class NotificationAdaptor {
           log_type: 3,
           user_id: userId,
           log_content: JSON.stringify({options}),
-        }).
-            catch((ex) => console.log('error while logging on db,',
-                ex));
+        }).catch((ex) => console.log('error while logging on db,',
+            ex));
         // extract invalid registration for removal
         if (body.failure > 0 && Array.isArray(body.results) &&
             body.results.length === result.length) {
@@ -1086,7 +1085,7 @@ class NotificationAdaptor {
             return reply.response({
               status: false,
               error,
-            }).code(500);
+            });
           }
         }
       });

@@ -3,8 +3,8 @@
 export default {
   SMS: {
     AUTH_KEY: process.env.SMS_AUTH_KEY,
-    HOST_NAME : "http://api.msg91.com",
-    PATH : "/api/v2/sendsms",
+    HOST_NAME: 'http://api.msg91.com',
+    PATH: '/api/v2/sendsms',
   },
   FB_GRAPH_ROUTE: process.env.FB_GRAPH_ROUTE,
   MESSAGE: process.env.MESSAGE,
@@ -81,6 +81,8 @@ export default {
     FURNITURE: process.env.FURNITURE_CATEGORY.split(','),
     ELECTRONIC: process.env.ELECTRONIC_CATEGORY.split(','),
     CALENDAR_ITEM: process.env.CALENDAR_ITEM_CATEGORY.split(','),
+    OFFER: process.env.OFFER_CATEGORY.split(','),
+    ACCESSORY: process.env.ACCESSORY_CATEGORY.split(','),
   },
   TRUECALLER_PUBLIC_KEY: '-----BEGIN PUBLIC KEY-----\nMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDEpFwIarbm48m6ueG+jhpt2vCGaqXZlwR/HPuL4zH1DQ/eWFbgQtVnrta8QhQz3ywLnbX6s7aecxUzzNJsTtS8VxKAYll4E1lJUqrNdWt8CU+TaUQuFm8vzLoPiYKEXl4bX5rzMQUMqA228gWuYmRFQnpduQTgnYIMO8XVUQXl5wIDAQAB\n-----END PUBLIC KEY-----',
 };

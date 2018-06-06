@@ -680,6 +680,7 @@ class ProductAdaptor {
     productBody.category_id = productBody.category_id || dbProduct.category_id;
     productBody.main_category_id = productBody.main_category_id || dbProduct.main_category_id;
     productBody.sub_category_id = productBody.sub_category_id || dbProduct.sub_category_id;
+    productBody.document_date = productBody.document_date || dbProduct.document_date;
     const result = await _bluebird2.default.all([productBody.brand_id || productBody.brand_id === 0 ? this.modals.products.count({
       where: {
         id,
@@ -948,7 +949,6 @@ class ProductAdaptor {
           isProductPUCSellerSame, sellerDetail, pucSeller
         });
       }
-
       [product.metaData, product.insurances, product.warranties, product.amcs, product.repairs, product.pucDetail, product.service_schedules, product.service_center_counts] = await _bluebird2.default.all([_bluebird2.default.all(metadataPromise), _bluebird2.default.all(insurancePromise), _bluebird2.default.all(warrantyItemPromise), _bluebird2.default.all(amcPromise), _bluebird2.default.all(repairPromise), _bluebird2.default.all(pucPromise), serviceSchedule, this.modals.serviceCenters.count({
         include: [{
           model: this.modals.brands, as: 'brands',
@@ -1021,7 +1021,7 @@ class ProductAdaptor {
     let { expiry_period, effective_date, value, id, seller_contact, seller_name } = puc;
 
     const product_id = product.id;
-    effective_date = effective_date || document_date;
+    effective_date = effective_date || document_date || _moment2.default.utc();
     effective_date = _moment2.default.utc(effective_date, _moment2.default.ISO_8601).isValid() ? _moment2.default.utc(effective_date, _moment2.default.ISO_8601).startOf('day') : _moment2.default.utc(effective_date, 'DD MMM YY').startOf('day');
     const expiry_date = _moment2.default.utc(effective_date, _moment2.default.ISO_8601).add(expiry_period || 6, 'months').subtract(1, 'day').endOf('days').format('YYYY-MM-DD');
     const values = {
@@ -1057,7 +1057,7 @@ class ProductAdaptor {
     const { document_date, user_id, job_id } = product;
     const product_id = product.id;
     let { seller_name, effective_date, seller_contact, value, id } = amc;
-    effective_date = effective_date || document_date;
+    effective_date = effective_date || document_date || _moment2.default.utc();
     effective_date = _moment2.default.utc(effective_date, _moment2.default.ISO_8601).isValid() ? _moment2.default.utc(effective_date, _moment2.default.ISO_8601).startOf('day') : _moment2.default.utc(effective_date, 'DD MMM YY').startOf('day');
     const expiry_date = _moment2.default.utc(effective_date, _moment2.default.ISO_8601).add(12, 'months').subtract(1, 'day').endOf('days').format('YYYY-MM-DD');
     const values = {
@@ -1081,7 +1081,7 @@ class ProductAdaptor {
       insuranceRenewalType = renewalTypes.find(item => item.type === renewal_type);
     }
 
-    effective_date = effective_date || document_date;
+    effective_date = effective_date || document_date || _moment2.default.utc();
     effective_date = _moment2.default.utc(effective_date, _moment2.default.ISO_8601).isValid() ? _moment2.default.utc(effective_date, _moment2.default.ISO_8601).startOf('day') : _moment2.default.utc(effective_date, 'DD MMM YY').startOf('day');
     const expiry_date = _moment2.default.utc(effective_date, _moment2.default.ISO_8601).add(insuranceRenewalType.effective_months, 'months').subtract(1, 'day').endOf('days');
     const values = {
@@ -1101,7 +1101,7 @@ class ProductAdaptor {
     let warrantyRenewalType;
     let expiry_date;
     const product_id = product.id;
-    const { id, renewal_type, extended_id, extended_renewal_type, effective_date, extended_effective_date, extended_provider_id, extended_provider_name } = warranty;
+    let { id, renewal_type, extended_id, extended_renewal_type, effective_date, extended_effective_date, extended_provider_id, extended_provider_name } = warranty;
     const { document_date, user_id, job_id } = product;
     const updateOption = { status_type: 11 };
     if (id && !renewal_type) {
@@ -1114,7 +1114,7 @@ class ProductAdaptor {
 
     if (renewal_type) {
       warrantyRenewalType = renewalTypes.find(item => item.type === renewal_type);
-      let effective_date = effective_date || document_date;
+      effective_date = effective_date || document_date || _moment2.default.utc();
       effective_date = _moment2.default.utc(effective_date, _moment2.default.ISO_8601).isValid() ? _moment2.default.utc(effective_date, _moment2.default.ISO_8601).startOf('day') : _moment2.default.utc(effective_date, 'DD MMM YY').startOf('day');
       expiry_date = _moment2.default.utc(effective_date, _moment2.default.ISO_8601).add(warrantyRenewalType.effective_months, 'months').subtract(1, 'day').endOf('days');
       const warrantyOptions = {
@@ -1124,12 +1124,13 @@ class ProductAdaptor {
         effective_date: _moment2.default.utc(effective_date).format('YYYY-MM-DD'),
         document_date: _moment2.default.utc(effective_date).format('YYYY-MM-DD')
       };
+
       warrantyItemPromise.push(id ? this.warrantyAdaptor.updateWarranties(warranty.id, warrantyOptions) : this.warrantyAdaptor.createWarranties(warrantyOptions));
     }
 
     if (extended_renewal_type) {
       warrantyRenewalType = renewalTypes.find(item => item.type === extended_renewal_type);
-      let effective_date = extended_effective_date || expiry_date || document_date;
+      effective_date = extended_effective_date || expiry_date || document_date;
       effective_date = _moment2.default.utc(effective_date, _moment2.default.ISO_8601).isValid() ? _moment2.default.utc(effective_date, _moment2.default.ISO_8601).startOf('day') : _moment2.default.utc(effective_date, 'DD MMM YY').startOf('day');
       expiry_date = _moment2.default.utc(effective_date).add(warrantyRenewalType.effective_months, 'months').subtract(1, 'day').endOf('days');
       const extendedOptions = {
@@ -1320,7 +1321,7 @@ class ProductAdaptor {
         forceUpdate: request.pre.forceUpdate
       };
     }).catch(err => {
-      console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
+
       return {
         status: true,
         message: 'Review Update Failed',
@@ -1376,7 +1377,7 @@ class ProductAdaptor {
         forceUpdate: request.pre.forceUpdate
       };
     }).catch(err => {
-      console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
+
       return {
         status: true,
         message: 'Review Update Failed',
@@ -1419,7 +1420,7 @@ class ProductAdaptor {
         forceUpdate: request.pre.forceUpdate
       };
     }).catch(err => {
-      console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
+
       return {
         status: true,
         message: 'Review Update Failed',
@@ -1542,7 +1543,7 @@ class ProductAdaptor {
         };
       }
     }).catch(err => {
-      console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
+
       return {
         status: false,
         message: 'Unable to retrieve data',

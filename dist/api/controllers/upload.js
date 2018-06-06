@@ -24,10 +24,6 @@ var _shared = require('../../helpers/shared');
 
 var _shared2 = _interopRequireDefault(_shared);
 
-var _notification = require('../Adaptors/notification');
-
-var _notification2 = _interopRequireDefault(_notification);
-
 var _user = require('../Adaptors/user');
 
 var _user2 = _interopRequireDefault(_user);
@@ -60,14 +56,6 @@ var _product = require('../Adaptors/product');
 
 var _product2 = _interopRequireDefault(_product);
 
-var _guid = require('guid');
-
-var _guid2 = _interopRequireDefault(_guid);
-
-var _bluebird = require('bluebird');
-
-var _bluebird2 = _interopRequireDefault(_bluebird);
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 const fsImpl = new _s3fs2.default(_main2.default.AWS.S3.BUCKET, _main2.default.AWS.ACCESS_DETAILS);
@@ -76,7 +64,7 @@ const ALLOWED_FILE_TYPES = ['txt', 'pdf', 'doc', 'docx', 'rtf', 'xls', 'xlsx', '
 
 const categoryImageType = ['xxhdpi-small', 'xxhdpi'];
 
-const isFileTypeAllowed = function (fileTypeData) {
+const isFileTypeAllowed = fileTypeData => {
   console.log('FILE TYPE DATA: ' + fileTypeData);
   if (fileTypeData) {
     let filetype = fileTypeData.toString().toLowerCase();
@@ -87,15 +75,13 @@ const isFileTypeAllowed = function (fileTypeData) {
   return false;
 };
 
-const isFileTypeAllowedMagicNumber = function (buffer) {
+const isFileTypeAllowedMagicNumber = buffer => {
   console.log('GOT BUFFER');
   const result = (0, _fileType2.default)(buffer);
   return ALLOWED_FILE_TYPES.indexOf(result.ext.toString()) > -1;
 };
 
-const getTypeFromBuffer = function (buffer) {
-  return (0, _fileType2.default)(buffer);
-};
+const getTypeFromBuffer = buffer => (0, _fileType2.default)(buffer);
 let modals;
 let userAdaptor;
 let jobAdaptor;
@@ -119,7 +105,7 @@ class UploadController {
     productAdaptor = new _product2.default(modals);
   }
 
-  static uploadUserImage(request, reply) {
+  static async uploadUserImage(request, reply) {
     const user = _shared2.default.verifyAuthorization(request.headers);
     if (request.pre.userExist === 0) {
       return reply.response({
@@ -134,493 +120,29 @@ class UploadController {
         // forceUpdate: request.pre.forceUpdate
       }).code(401);
     } else if (request.payload) {
-      return modals.users.findOne({
-        where: {
-          id: user.id || user.ID
-        }
-      }).then(userResult => {
-        const userDetail = userResult.toJSON();
-        fsImpl.unlink(userDetail.image_name).catch(err => {
-          console.log(`Error while deleting ${userDetail.image_name} on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
+      try {
+        let userDetail = await modals.users.findOne({
+          where: {
+            id: user.id || user.ID
+          }
         });
+        userDetail = userDetail.toJSON();
+        await fsImpl.unlink(userDetail.image_name);
         const fieldNameHere = request.payload.fieldNameHere;
         const fileData = fieldNameHere || request.payload.filesName;
 
         const name = fileData.hapi.filename;
         const file_type = name.split('.')[name.split('.').length - 1];
-        const fileName = `active-${user.id || user.ID}-${new Date().getTime()}.${file_type}`;
+        const image_name = `active-${user.id || user.ID}-${new Date().getTime()}.${file_type}`;
         // const file = fs.createReadStream();
-        return fsImpl.writeFile(fileName, fileData._data, { ContentType: _mimeTypes2.default.lookup(fileName) }).then(fileResult => {
+        await fsImpl.writeFile(image_name, fileData._data, { ContentType: _mimeTypes2.default.lookup(image_name) });
 
-          return userAdaptor.updateUserDetail({
-            image_name: fileName
-          }, {
-            where: {
-              id: user.id || user.ID
-            }
-          });
-        }).then(() => {
-          return reply.response({
-            status: true,
-            message: 'Uploaded Successfully'
-          });
-        }).catch(err => {
-          console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
-
-          modals.logs.create({
-            api_action: request.method,
-            api_path: request.url.pathname,
-            log_type: 2,
-            user_id: user.id || user.ID,
-            log_content: JSON.stringify({
-              params: request.params,
-              query: request.query,
-              headers: request.headers,
-              err
-            })
-          }).catch(ex => console.log('error while logging on db,', ex));
-          return reply.response({
-            status: false,
-            message: 'Upload Failed',
-            err
-            // forceUpdate: request.pre.forceUpdate
-          });
-        });
-      });
-    } else {
-      return reply.response({ status: false, message: 'No documents in request' }); //, forceUpdate: request.pre.forceUpdate});
-    }
-  }
-
-  static uploadProductImage(request, reply) {
-    const user = _shared2.default.verifyAuthorization(request.headers);
-    if (request.pre.userExist === 0) {
-      return reply.response({
-        status: false,
-        message: 'Inactive User',
-        forceUpdate: request.pre.forceUpdate
-      }).code(402);
-    } else if (!request.pre.userExist) {
-      return reply.response({
-        status: false,
-        message: 'Unauthorized'
-        // forceUpdate: request.pre.forceUpdate
-      });
-    } else if (request.payload) {
-      return modals.products.findOne({
-        where: {
-          id: request.params.id,
-          user_id: user.id || user.ID
-        }
-      }).then(productResult => {
-        if (productResult) {
-          const file_ref = `${Math.random().toString(36).substr(2, 9)}${(user.id || user.ID).toString(36)}`;
-          const productDetail = productResult.toJSON();
-          const fieldNameHere = request.payload.fieldNameHere;
-          const fileData = fieldNameHere || request.payload.filesName;
-
-          const name = fileData.hapi.filename;
-          const file_type = name.split('.')[name.split('.').length - 1];
-          const fileName = `${productDetail.id}.${file_type}`;
-          // const file = fs.createReadStream();
-
-          const fsImplProduct = new _s3fs2.default(`${_main2.default.AWS.S3.BUCKET}/${_main2.default.AWS.S3.PRODUCT_IMAGE}`, _main2.default.AWS.ACCESS_DETAILS);
-          return _bluebird2.default.try(() => fsImplProduct.writeFile(fileName, fileData._data, { ContentType: _mimeTypes2.default.lookup(fileName) })).then(() => {
-
-            return productResult.updateAttributes({ file_type, file_ref });
-          }).then(() => {
-            return reply.response({
-              status: true,
-              message: 'Uploaded Successfully',
-              cImageURL: `/consumer/products/${request.params.id}/images/${file_ref}`
-            });
-          }).catch(err => {
-            console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
-
-            modals.logs.create({
-              api_action: request.method,
-              api_path: request.url.pathname,
-              log_type: 2,
-              user_id: user.id || user.ID,
-              log_content: JSON.stringify({
-                params: request.params,
-                query: request.query,
-                headers: request.headers,
-                err
-              })
-            }).catch(ex => console.log('error while logging on db,', ex));
-            return reply.response({
-              status: false,
-              message: 'Upload Failed',
-              err
-              // forceUpdate: request.pre.forceUpdate
-            });
-          });
-        }
-
+        await userAdaptor.updateUserDetail({ image_name }, { where: { id: user.id || user.ID } });
         return reply.response({
-          status: false,
-          message: 'Invalid Product Id Upload Failed',
-          err
-          // forceUpdate: request.pre.forceUpdate
+          status: true,
+          message: 'Uploaded Successfully'
         });
-      });
-    } else {
-      return reply.response({ status: false, message: 'No documents in request' }); //, forceUpdate: request.pre.forceUpdate});
-    }
-  }
-
-  static uploadWearableImage(request, reply) {
-    const user = _shared2.default.verifyAuthorization(request.headers);
-    if (request.pre.userExist === 0) {
-      return reply.response({
-        status: false,
-        message: 'Inactive User',
-        forceUpdate: request.pre.forceUpdate
-      }).code(402);
-    } else if (!request.pre.userExist) {
-      return reply.response({
-        status: false,
-        message: 'Unauthorized'
-        // forceUpdate: request.pre.forceUpdate
-      }).code(401);
-    } else if (request.payload) {
-      return modals.wearables.findOne({
-        where: {
-          id: request.params.id,
-          created_by: user.id || user.ID
-        }
-      }).then(wearableResult => {
-        if (wearableResult) {
-          const image_code = `${Math.random().toString(36).substr(2, 9)}${(user.id || user.ID).toString(36)}`;
-          const wearableItem = wearableResult.toJSON();
-          const fieldNameHere = request.payload.fieldNameHere;
-          const fileData = fieldNameHere || request.payload.filesName;
-
-          const name = fileData.hapi.filename;
-          const file_type = name.split('.')[name.split('.').length - 1];
-          const image_name = `${wearableItem.id}.${file_type}`;
-
-          const fsImplProduct = new _s3fs2.default(`${_main2.default.AWS.S3.BUCKET}/${_main2.default.AWS.S3.WEARABLE_IMAGE}`, _main2.default.AWS.ACCESS_DETAILS);
-          return _bluebird2.default.try(() => fsImplProduct.writeFile(image_name, fileData._data, { ContentType: _mimeTypes2.default.lookup(image_name) })).then(() => {
-
-            return wearableResult.updateAttributes({ image_name, image_code });
-          }).then(wearableResult => {
-            wearableResult.image_link = `/wearable/${wearableResult.id}/images/${wearableResult.image_code}`;
-            return reply.response({
-              status: true,
-              message: 'Uploaded Successfully',
-              wearableResult
-            });
-          }).catch(err => {
-            console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
-
-            modals.logs.create({
-              api_action: request.method,
-              api_path: request.url.pathname,
-              log_type: 2,
-              user_id: user.id || user.ID,
-              log_content: JSON.stringify({
-                params: request.params,
-                query: request.query,
-                headers: request.headers,
-                err
-              })
-            }).catch(ex => console.log('error while logging on db,', ex));
-            return reply.response({
-              status: false,
-              message: 'Upload Failed',
-              err
-              // forceUpdate: request.pre.forceUpdate
-            });
-          });
-        }
-
-        return reply.response({
-          status: false,
-          message: 'Invalid Wearable Id Upload Failed',
-          err
-          // forceUpdate: request.pre.forceUpdate
-        });
-      });
-    } else {
-      return reply.response({ status: false, message: 'No documents in request' }); //, forceUpdate: request.pre.forceUpdate});
-    }
-  }
-
-  static uploadFiles(request, reply) {
-    const user = _shared2.default.verifyAuthorization(request.headers);
-    if (request.pre.userExist === 0) {
-      return reply.response({
-        status: false,
-        message: 'Inactive User',
-        forceUpdate: request.pre.forceUpdate
-      }).code(402);
-    } else if (!request.pre.userExist) {
-      return reply.response({
-        status: false,
-        message: 'Unauthorized'
-      }).code(401);
-    } else if (request.payload) {
-      console.log('Request received to upload file by user_id ', user.id || user.ID);
-      // if (!request.pre.forceUpdate && request.payload) {
-      const fieldNameHere = request.payload.fieldNameHere;
-      const fileData = fieldNameHere || request.payload.filesName || request.payload.file;
-
-      let filteredFileData = fileData;
-      if (filteredFileData) {
-        if (Array.isArray(filteredFileData)) {
-          filteredFileData = fileData.filter(datum => {
-            const name = datum.hapi.filename;
-            const file_type = /[.]/.exec(name) ? /[^.]+$/.exec(name) : undefined;
-            if (file_type && !isFileTypeAllowed(file_type)) {
-              return false;
-            } else if (!file_type && !isFileTypeAllowedMagicNumber(datum._data)) {
-              return false;
-            }
-
-            return true;
-          });
-        } else {
-          const name = filteredFileData.hapi.filename;
-          console.log('\n\n\n', name);
-          const file_type = /[.]/.exec(name) ? /[^.]+$/.exec(name) : undefined;
-          // console.log("OUTSIDE FILE ALLOWED: ", file_type);
-          if (file_type && !isFileTypeAllowed(file_type)) {
-            filteredFileData = [];
-          } else if (!file_type && !isFileTypeAllowedMagicNumber(filteredFileData._data)) {
-            filteredFileData = [];
-          }
-        }
-
-        if (filteredFileData.length === 0) {
-          console.log('No valid documents in request');
-          return reply.response({ status: false, message: 'No valid documents in request' });
-        } else {
-          if (request.params && request.params.id) {
-            console.log(`Request received has JOB ID ${request.params.id} to upload file by user_id ${user.id || user.ID}`);
-            return UploadController.retrieveJobCreateCopies({
-              user,
-              fileData,
-              reply,
-              request
-            }).catch(err => {
-              console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
-
-              modals.logs.create({
-                api_action: request.method,
-                api_path: request.url.pathname,
-                log_type: 2,
-                user_id: user.id || user.ID,
-                log_content: JSON.stringify({
-                  params: request.params,
-                  query: request.query,
-                  headers: request.headers,
-                  err
-                })
-              }).catch(ex => console.log('error while logging on db,', ex));
-              return reply.response({ status: false, message: 'Unable to upload document' });
-            });
-          }
-
-          console.log(`Request received to create new job to upload file by user_id ${user.id || user.ID}`);
-          return UploadController.createJobWithCopies({
-            user,
-            fileData: filteredFileData,
-            reply,
-            request
-          }).catch(err => {
-            console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
-
-            modals.logs.create({
-              api_action: request.method,
-              api_path: request.url.pathname,
-              log_type: 2,
-              user_id: user.id || user.ID,
-              log_content: JSON.stringify({
-                params: request.params,
-                query: request.query,
-                headers: request.headers,
-                err
-              })
-            }).catch(ex => console.log('error while logging on db,', ex));
-            return reply.response({ status: false, message: 'Unable to upload document' });
-          });
-        }
-        // } else {
-        // 	reply.response({status: false, message: 'No File', forceUpdate: request.pre.forceUpdate}).code(400);
-        // }
-      } else {
-        return reply.response({ status: false, message: 'No documents in request' }); //, forceUpdate: request.pre.forceUpdate});
-      }
-    }
-  }
-
-  static retrieveJobCreateCopies(parameters) {
-    let { user, fileData, reply, request } = parameters;
-    return jobAdaptor.retrieveJobDetail(request.params.id, true).then(jobResult => {
-      console.log(`JOB detail is as follow${JSON.stringify({ jobResult })}`);
-      if (Array.isArray(fileData)) {
-        console.log(`Request has multiple files`);
-        return UploadController.uploadArrayOfFile({
-          requiredDetail: {
-            fileData,
-            user,
-            result: jobResult,
-            type: request.query ? parseInt(request.query.type || '1') : 1,
-            itemId: request.query ? request.query.itemid : undefined
-          }, reply
-        });
-      } else {
-        console.log(`Request has single file ${fileData.hapi.filename}`);
-        const name = fileData.hapi.filename;
-        const file_type = /[.]/.exec(name) ? /[^.]+$/.exec(name) : undefined;
-        // console.log("OUTSIDE FILE ALLOWED: ", file_type);
-        if (file_type && !isFileTypeAllowed(file_type)) {
-          return reply.response({ status: false, message: 'Data Upload Failed' });
-        } else if (!file_type && !isFileTypeAllowedMagicNumber(fileData._data)) {
-          return reply.response({ status: false, message: 'Data Upload Failed' });
-        } else {
-          return UploadController.uploadSingleFile({
-            requiredDetail: {
-              fileData,
-              result: jobResult,
-              fileType: file_type,
-              user,
-              type: request.query ? parseInt(request.query.type || '1') : 1,
-              itemId: request.query ? request.query.itemid : undefined
-            }, reply
-          });
-        }
-      }
-    }).catch(err => {
-      console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
-
-      modals.logs.create({
-        api_action: request.method,
-        api_path: request.url.pathname,
-        log_type: 2,
-        user_id: user.id || user.ID,
-        log_content: JSON.stringify({
-          params: request.params,
-          query: request.query,
-          headers: request.headers,
-          err
-        })
-      }).catch(ex => console.log('error while logging on db,', ex));
-      return reply.response({ status: false, message: 'Upload Failed', err }); // , forceUpdate: request.pre.forceUpdate});
-    });
-  }
-
-  static createJobWithCopies(parameters) {
-    let { user, fileData, reply, request } = parameters;
-    return jobAdaptor.createJobs({
-      job_id: `${Math.random().toString(36).substr(2, 9)}${(user.id || user.ID).toString(36)}`,
-      user_id: user.id || user.ID,
-      updated_by: user.id || user.ID,
-      uploaded_by: user.id || user.ID,
-      user_status: 8,
-      admin_status: 4,
-      comments: request.query ? request.query.productId ? `This job is sent for product id ${request.query.productId}` : request.query.productName ? `This job is sent for product name ${request.query.productName}` : '' : ``
-    }).then(jobResult => {
-      jobResult.copies = [];
-      if (Array.isArray(fileData)) {
-        return UploadController.uploadArrayOfFile({
-          requiredDetail: {
-            fileData,
-            user,
-            result: jobResult,
-            type: request.query ? parseInt(request.query.type || '1') : 1,
-            itemId: request.query ? request.query.itemid : undefined,
-            productId: request.query ? request.query.productid : undefined
-          }, reply
-        });
-      } else {
-        const name = fileData.hapi.filename;
-        const file_type = /[.]/.exec(name) ? /[^.]+$/.exec(name) : undefined;
-        // console.log("OUTSIDE FILE ALLOWED: ", file_type);
-        if (file_type && !isFileTypeAllowed(file_type)) {
-          return reply.response({ status: false, message: 'Data Upload Failed' });
-        } else if (!file_type && !isFileTypeAllowedMagicNumber(fileData._data)) {
-          return reply.response({ status: false, message: 'Data Upload Failed' });
-        } else {
-          return UploadController.uploadSingleFile({
-            requiredDetail: {
-              fileData, result: jobResult, fileType: file_type,
-              user, type: request.query ? request.query.type || 1 : 1,
-              itemId: request.query ? request.query.itemid : undefined,
-              productId: request.query ? request.query.productid : undefined
-            }, reply
-          });
-        }
-      }
-    }).catch(err => {
-      console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
-
-      modals.logs.create({
-        api_action: request.method,
-        api_path: request.url.pathname,
-        log_type: 2,
-        user_id: user.id || user.ID,
-        log_content: JSON.stringify({
-          params: request.params,
-          query: request.query,
-          headers: request.headers,
-          err
-        })
-      }).catch(ex => console.log('error while logging on db,', ex));
-      return reply.response({ status: false, message: 'Upload Failed', err }); // , forceUpdate: request.pre.forceUpdate});
-    });
-  }
-
-  static uploadSingleFile(parameters) {
-    console.log('Single File Upload');
-    let { requiredDetail, reply } = parameters;
-    const user = requiredDetail.user;
-    const fileData = requiredDetail.fileData;
-    const jobResult = requiredDetail.result;
-    const type = requiredDetail.type;
-    const file_type = requiredDetail.fileType;
-    const fileTypeData = getTypeFromBuffer(fileData._data);
-    const fileName = `${user.id || user.ID}-${jobResult.copies.length + 1}.${file_type ? file_type.toString() : fileTypeData.ext}`;
-    console.log(_mimeTypes2.default.lookup(fileName));
-    return fsImpl.writeFile(`jobs/${jobResult.job_id}/${fileName}`, fileData._data, { ContentType: _mimeTypes2.default.lookup(fileName) || 'image/jpeg' }).then(fileResult => {
-      const jobCopyDetail = {
-        job_id: jobResult.id,
-        file_name: fileName,
-        file_type: file_type ? file_type.toString() : fileTypeData.ext,
-        status_type: 6,
-        updated_by: user.id || user.ID,
-        type
-      };
-      let copyData;
-      return jobAdaptor.createJobCopies(jobCopyDetail).then(copyResult => {
-        copyData = [copyResult];
-        return modals.users.findById(user.id || user.ID);
-      }).then(() => {
-        UploadController.notifyTeam(user, jobResult);
-
-        if (type && (requiredDetail.productId || jobResult.productId)) {
-          return UploadController.createProductItems({
-            type,
-            jobId: jobResult.id,
-            user,
-            productId: requiredDetail.productId || jobResult.productId,
-            itemId: requiredDetail.itemId,
-            copies: copyData.map(copyItem => ({
-              copyId: copyItem.id,
-              copyUrl: `/jobs/${copyItem.job_id}/files/${copyItem.id}`,
-              file_type: copyItem.file_type,
-              jobId: copyItem.job_id,
-              copyName: copyItem.file_name
-            }))
-          });
-        }
-
-        return undefined;
-      }).then(productItemResult => {
-        return UploadController.uploadResponse(jobResult, copyData, productItemResult, type, reply);
-      }).catch(err => {
+      } catch (err) {
         console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
 
         modals.logs.create({
@@ -637,12 +159,389 @@ class UploadController {
         }).catch(ex => console.log('error while logging on db,', ex));
         return reply.response({
           status: false,
-          message: 'Data Update Failed',
+          message: 'Upload Failed',
           err
           // forceUpdate: request.pre.forceUpdate
         });
+      }
+    } else {
+      return reply.response({ status: false, message: 'No documents in request' }); //, forceUpdate: request.pre.forceUpdate});
+    }
+  }
+
+  static async uploadProductImage(request, reply) {
+    const user = _shared2.default.verifyAuthorization(request.headers);
+    if (request.pre.userExist === 0) {
+      return reply.response({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate
+      }).code(402);
+    } else if (!request.pre.userExist) {
+      return reply.response({
+        status: false,
+        message: 'Unauthorized'
+        // forceUpdate: request.pre.forceUpdate
       });
-    }).catch(err => {
+    } else if (request.payload) {
+      try {
+        const productResult = await modals.products.findOne({
+          where: {
+            id: request.params.id,
+            user_id: user.id || user.ID
+          }
+        });
+        if (productResult) {
+          const file_ref = `${Math.random().toString(36).substr(2, 9)}${(user.id || user.ID).toString(36)}`;
+          const productDetail = productResult.toJSON();
+          const fieldNameHere = request.payload.fieldNameHere;
+          const fileData = fieldNameHere || request.payload.filesName;
+          const name = fileData.hapi.filename;
+          const file_type = name.split('.')[name.split('.').length - 1];
+          const fileName = `${productDetail.id}.${file_type}`;
+          const fsImplProduct = new _s3fs2.default(`${_main2.default.AWS.S3.BUCKET}/${_main2.default.AWS.S3.PRODUCT_IMAGE}`, _main2.default.AWS.ACCESS_DETAILS);
+          await fsImplProduct.writeFile(fileName, fileData._data, { ContentType: _mimeTypes2.default.lookup(fileName) });
+
+          await productResult.updateAttributes({ file_type, file_ref });
+          return reply.response({
+            status: true,
+            message: 'Uploaded Successfully',
+            cImageURL: `/consumer/products/${request.params.id}/images/${file_ref}`
+          });
+        }
+
+        return reply.response({
+          status: false,
+          message: 'Invalid Product Id Upload Failed',
+          err
+          // forceUpdate: request.pre.forceUpdate
+        });
+      } catch (err) {
+        console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
+
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user.id || user.ID,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            err
+          })
+        }).catch(ex => console.log('error while logging on db,', ex));
+        return reply.response({
+          status: false,
+          message: 'Upload Failed',
+          err
+          // forceUpdate: request.pre.forceUpdate
+        });
+      }
+    } else {
+      return reply.response({ status: false, message: 'No documents in request' }); //, forceUpdate: request.pre.forceUpdate});
+    }
+  }
+
+  static async uploadWearableImage(request, reply) {
+    const user = _shared2.default.verifyAuthorization(request.headers);
+    if (request.pre.userExist === 0) {
+      return reply.response({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate
+      }).code(402);
+    } else if (!request.pre.userExist) {
+      return reply.response({
+        status: false,
+        message: 'Unauthorized'
+        // forceUpdate: request.pre.forceUpdate
+      }).code(401);
+    } else if (request.payload) {
+      try {
+        const wearableResult = await modals.wearables.findOne({
+          where: {
+            id: request.params.id,
+            created_by: user.id || user.ID
+          }
+        });
+        if (wearableResult) {
+          const image_code = `${Math.random().toString(36).substr(2, 9)}${(user.id || user.ID).toString(36)}`;
+          const wearableItem = wearableResult.toJSON();
+          const fieldNameHere = request.payload.fieldNameHere;
+          const fileData = fieldNameHere || request.payload.filesName;
+
+          const name = fileData.hapi.filename;
+          const file_type = name.split('.')[name.split('.').length - 1];
+          const image_name = `${wearableItem.id}.${file_type}`;
+
+          const fsImplProduct = new _s3fs2.default(`${_main2.default.AWS.S3.BUCKET}/${_main2.default.AWS.S3.WEARABLE_IMAGE}`, _main2.default.AWS.ACCESS_DETAILS);
+          await fsImplProduct.writeFile(image_name, fileData._data, { ContentType: _mimeTypes2.default.lookup(image_name) });
+
+          await wearableResult.updateAttributes({ image_name, image_code });
+          wearableResult.image_link = `/wearable/${wearableResult.id}/images/${wearableResult.image_code}`;
+          return reply.response({
+            status: true,
+            message: 'Uploaded Successfully',
+            wearableResult
+          });
+        }
+
+        return reply.response({
+          status: false,
+          message: 'Invalid Wearable Id Upload Failed',
+          err
+          // forceUpdate: request.pre.forceUpdate
+        });
+      } catch (err) {
+        console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
+
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user.id || user.ID,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            err
+          })
+        }).catch(ex => console.log('error while logging on db,', ex));
+        return reply.response({
+          status: false,
+          message: 'Upload Failed',
+          err
+          // forceUpdate: request.pre.forceUpdate
+        });
+      }
+    } else {
+      return reply.response({ status: false, message: 'No documents in request' }); //, forceUpdate: request.pre.forceUpdate});
+    }
+  }
+
+  static async uploadFiles(request, reply) {
+    const user = _shared2.default.verifyAuthorization(request.headers);
+    if (request.pre.userExist === 0) {
+      return reply.response({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate
+      }).code(402);
+    } else if (!request.pre.userExist) {
+      return reply.response({
+        status: false,
+        message: 'Unauthorized'
+      }).code(401);
+    } else if (request.payload) {
+      try {
+        console.log('Request received to upload file by user_id ', user.id || user.ID);
+        // if (!request.pre.forceUpdate && request.payload) {
+        const fieldNameHere = request.payload.fieldNameHere;
+        const fileData = fieldNameHere || request.payload.filesName || request.payload.file;
+
+        let filteredFileData = fileData;
+        if (filteredFileData) {
+          if (Array.isArray(filteredFileData)) {
+            filteredFileData = fileData.filter(datum => {
+              const name = datum.hapi.filename;
+              const file_type = /[.]/.exec(name) ? /[^.]+$/.exec(name) : undefined;
+              if (file_type && !isFileTypeAllowed(file_type)) {
+                return false;
+              } else if (!file_type && !isFileTypeAllowedMagicNumber(datum._data)) {
+                return false;
+              }
+
+              return true;
+            });
+          } else {
+            const name = filteredFileData.hapi.filename;
+            console.log('\n\n\n', name);
+            const file_type = /[.]/.exec(name) ? /[^.]+$/.exec(name) : undefined;
+            // console.log("OUTSIDE FILE ALLOWED: ", file_type);
+            if (file_type && !isFileTypeAllowed(file_type)) {
+              filteredFileData = [];
+            } else if (!file_type && !isFileTypeAllowedMagicNumber(filteredFileData._data)) {
+              filteredFileData = [];
+            }
+          }
+
+          if (filteredFileData.length === 0) {
+            console.log('No valid documents in request');
+            return reply.response({ status: false, message: 'No valid documents in request' });
+          } else {
+            if (request.params && request.params.id) {
+              console.log(`Request received has JOB ID ${request.params.id} to upload file by user_id ${user.id || user.ID}`);
+              return await UploadController.retrieveJobCreateCopies({ user, fileData, reply, request });
+            }
+
+            console.log(`Request received to create new job to upload file by user_id ${user.id || user.ID}`);
+            return await UploadController.createJobWithCopies({ user, fileData: filteredFileData, reply, request });
+          }
+          // } else {
+          // 	reply.response({status: false, message: 'No File', forceUpdate: request.pre.forceUpdate}).code(400);
+          // }
+        } else {
+          return reply.response({ status: false, message: 'No documents in request' }); //, forceUpdate: request.pre.forceUpdate});
+        }
+      } catch (err) {
+        console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
+
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user.id || user.ID,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            err
+          })
+        }).catch(ex => console.log('error while logging on db,', ex));
+        return reply.response({ status: false, message: 'Unable to upload document' });
+      }
+    }
+  }
+
+  static async retrieveJobCreateCopies(parameters) {
+    let { user, fileData, reply, request } = parameters;
+    const type = request.query ? parseInt(request.query.type || '1') : 1;
+    const itemId = request.query ? request.query.itemid : undefined;
+    try {
+      const result = await jobAdaptor.retrieveJobDetail(request.params.id, true);
+      console.log(`JOB detail is as follow${JSON.stringify({ jobResult: result })}`);
+      if (Array.isArray(fileData)) {
+        console.log(`Request has multiple files`);
+        return await UploadController.uploadArrayOfFile({
+          requiredDetail: { fileData, user, result, type, itemId }, reply
+        });
+      } else {
+        console.log(`Request has single file ${fileData.hapi.filename}`);
+        const name = fileData.hapi.filename;
+        const fileType = /[.]/.exec(name) ? /[^.]+$/.exec(name) : undefined;
+        if (fileType && !isFileTypeAllowed(fileType) || !fileType && !isFileTypeAllowedMagicNumber(fileData._data)) {
+          return reply.response({ status: false, message: 'Data Upload Failed' });
+        } else {
+          return await UploadController.uploadSingleFile({
+            requiredDetail: { fileData, result, fileType, user, type, itemId },
+            reply
+          });
+        }
+      }
+    } catch (err) {
+      console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
+
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user.id || user.ID,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          err
+        })
+      }).catch(ex => console.log('error while logging on db,', ex));
+      return reply.response({ status: false, message: 'Upload Failed', err }); // , forceUpdate: request.pre.forceUpdate});
+    }
+  }
+
+  static async createJobWithCopies(parameters) {
+    let { user, fileData, reply, request } = parameters;
+    const user_id = user.id || user.ID;
+    let user_status = 8,
+        admin_status = 4;
+    try {
+      const result = await jobAdaptor.createJobs({
+        job_id: `${Math.random().toString(36).substr(2, 9)}${user_id.toString(36)}`,
+        user_id, updated_by: user_id, uploaded_by: user_id, user_status,
+        admin_status, comments: request.query ? request.query.productId ? `This job is sent for product id ${request.query.productId}` : request.query.productName ? `This job is sent for product name ${request.query.productName}` : '' : ``
+      });
+      const type = request.query ? parseInt(request.query.type || '1') : 1;
+      const itemId = request.query ? request.query.itemid : undefined;
+      const productId = request.query ? request.query.productid : undefined;
+      result.copies = [];
+      if (Array.isArray(fileData)) {
+        return await UploadController.uploadArrayOfFile({
+          requiredDetail: { fileData, user, result, type, itemId, productId },
+          reply
+        });
+      } else {
+        const name = fileData.hapi.filename;
+        const fileType = /[.]/.exec(name) ? /[^.]+$/.exec(name) : undefined;
+
+        if (fileType && !isFileTypeAllowed(fileType) || !fileType && !isFileTypeAllowedMagicNumber(fileData._data)) {
+          return reply.response({ status: false, message: 'Data Upload Failed' });
+        } else {
+          return await UploadController.uploadSingleFile({
+            requiredDetail: {
+              fileData, result, fileType, user, type,
+              itemId, productId
+            }, reply
+          });
+        }
+      }
+    } catch (err) {
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user.id || user.ID,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          err
+        })
+      }).catch(ex => console.log('error while logging on db,', ex));
+      return reply.response({ status: false, message: 'Upload Failed', err }); // , forceUpdate: request.pre.forceUpdate});
+    }
+  }
+
+  static async uploadSingleFile(parameters) {
+    console.log('Single File Upload');
+    let { requiredDetail, reply } = parameters;
+    const user = requiredDetail.user;
+    const fileData = requiredDetail.fileData;
+    const jobResult = requiredDetail.result;
+    const type = requiredDetail.type;
+    let file_type = requiredDetail.fileType;
+    const fileTypeData = getTypeFromBuffer(fileData._data);
+    file_type = file_type ? file_type.toString() : fileTypeData.ext;
+    const file_name = `${user.id || user.ID}-${jobResult.copies.length + 1}.${file_type}`;
+    try {
+      await fsImpl.writeFile(`jobs/${jobResult.job_id}/${file_name}`, fileData._data, { ContentType: _mimeTypes2.default.lookup(file_name) || 'image/jpeg' });
+      const job_id = jobResult.id;
+      const updated_by = user.id || user.ID;
+      const jobCopyDetail = {
+        job_id, file_name, type, file_type, status_type: 6, updated_by
+      };
+      let copyData = [await jobAdaptor.createJobCopies(jobCopyDetail)];
+      await modals.users.findById(updated_by);
+      UploadController.notifyTeam(user, jobResult);
+      let productItemResult;
+      const productId = requiredDetail.productId || jobResult.productId;
+      if (type && productId) {
+        productItemResult = UploadController.createProductItems({
+          type, jobId: job_id, user, productId,
+          itemId: requiredDetail.itemId, copies: copyData.map(copyItem => ({
+            copyId: copyItem.id,
+            copyUrl: `/jobs/${job_id}/files/${copyItem.id}`,
+            file_type: copyItem.file_type,
+            jobId: job_id, copyName: file_name
+          }))
+        });
+      }
+      return await UploadController.uploadResponse({
+        jobResult: jobResult,
+        copyData: copyData,
+        productItemResult: productItemResult,
+        type: type,
+        reply: reply
+      });
+    } catch (err) {
       console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
 
       modals.logs.create({
@@ -658,34 +557,35 @@ class UploadController {
         })
       }).catch(ex => console.log('error while logging on db,', ex));
       return reply.response({ status: false, message: 'Upload Failed', err }); //forceUpdate: request.pre.forceUpdate});
-    });
+    }
   }
 
-  static uploadArrayOfFile(parameters) {
+  static async uploadArrayOfFile(parameters) {
     console.log('Multiple File Upload');
-    let { requiredDetail, reply } = parameters;
-    let jobCopies;
-    const fileNames = [];
-    const fileTypes = [];
-    const fileTypeDataArray = [];
-    const user = requiredDetail.user;
-    const fileData = requiredDetail.fileData;
-    const jobResult = requiredDetail.result;
-    const type = requiredDetail.type;
-    const fileUploadPromises = fileData.map((elem, index) => {
-      index = jobResult.copies.length + index;
-      const name = elem.hapi.filename;
-      const file_type = /[.]/.exec(name) ? /[^.]+$/.exec(name) : undefined;
-      const fileTypeData = getTypeFromBuffer(elem._data);
-      const fileName = `${user.id || user.ID}-${index + 1}.${file_type ? file_type.toString() : fileTypeData.ext}`;
+    try {
+      let { requiredDetail, reply } = parameters;
+      let jobCopies;
+      const fileNames = [];
+      const fileTypes = [];
+      const fileTypeDataArray = [];
+      const user = requiredDetail.user;
+      const fileData = requiredDetail.fileData;
+      const jobResult = requiredDetail.result;
+      const type = requiredDetail.type;
+      const fileUploadPromises = fileData.map((elem, index) => {
+        index = jobResult.copies.length + index;
+        const name = elem.hapi.filename;
+        const file_type = /[.]/.exec(name) ? /[^.]+$/.exec(name) : undefined;
+        const fileTypeData = getTypeFromBuffer(elem._data);
+        const fileName = `${user.id || user.ID}-${index + 1}.${file_type ? file_type.toString() : fileTypeData.ext}`;
 
-      fileNames.push(fileName);
-      fileTypes.push(file_type);
-      fileTypeDataArray.push(fileTypeData);
-      // const file = fs.createReadStream();
-      return fsImpl.writeFile(`jobs/${jobResult.job_id}/${fileName}`, elem._data, { ContentType: _mimeTypes2.default.lookup(fileName) || 'image/jpeg' });
-    });
-    return _bluebird2.default.all(fileUploadPromises).then(fileResult => {
+        fileNames.push(fileName);
+        fileTypes.push(file_type);
+        fileTypeDataArray.push(fileTypeData);
+        // const file = fs.createReadStream();
+        return fsImpl.writeFile(`jobs/${jobResult.job_id}/${fileName}`, elem._data, { ContentType: _mimeTypes2.default.lookup(fileName) || 'image/jpeg' });
+      });
+      const fileResult = await Promise.all(fileUploadPromises);
       const promisedQuery = [];
       const jobPromise = fileResult.map((elem, index) => {
         const jobCopyDetail = {
@@ -699,25 +599,20 @@ class UploadController {
         return jobAdaptor.createJobCopies(jobCopyDetail);
       });
 
-      promisedQuery.push(_bluebird2.default.all(jobPromise));
+      promisedQuery.push(Promise.all(jobPromise));
       promisedQuery.push(modals.users.findById(user.id || user.ID));
       // if (promisedQuery.length === Object.keys(fileData).length) {
-      return _bluebird2.default.all(promisedQuery);
-      // }
-    }).then(billResult => {
+      const billResult = await Promise.all(promisedQuery);
       jobCopies = billResult[0];
       const userResult = billResult[billResult.length - 1];
 
       UploadController.notifyTeam(user, jobResult);
-
-      if (type && (requiredDetail.productId || jobResult.productId)) {
-        return UploadController.createProductItems({
-          type,
-          jobId: jobResult.id,
-          user,
-          productId: requiredDetail.productId || jobResult.productId,
-          itemId: requiredDetail.itemId,
-          copies: jobCopies.map(copyItem => ({
+      const productId = requiredDetail.productId || jobResult.productId;
+      let productItemResult;
+      if (type && productId) {
+        productItemResult = await UploadController.createProductItems({
+          type, jobId: jobResult.id, user, productId,
+          itemId: requiredDetail.itemId, copies: jobCopies.map(copyItem => ({
             copyId: copyItem.id,
             copyUrl: `/jobs/${copyItem.job_id}/files/${copyItem.id}`,
             file_type: copyItem.file_type,
@@ -726,13 +621,14 @@ class UploadController {
           }))
         });
       }
-
-      return undefined;
-    }).then(productItemResult => {
-      return UploadController.uploadResponse(jobResult, jobCopies, productItemResult, type, reply);
-    }).catch(err => {
-      console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
-
+      return await UploadController.uploadResponse({
+        jobResult: jobResult,
+        copyData: jobCopies,
+        productItemResult: productItemResult,
+        type: type,
+        reply: reply
+      });
+    } catch (err) {
       modals.logs.create({
         api_action: request.method,
         api_path: request.url.pathname,
@@ -750,49 +646,68 @@ class UploadController {
         message: 'Upload Failed',
         err: JSON.stringify(err)
         // forceUpdate: request.pre.forceUpdate
-      }).code(500);
-    });
+      });
+    }
   }
 
-  static uploadResponse(jobResult, copyData, productItemResult, type, reply) {
+  static async uploadResponse(parameters) {
+    let { jobResult, copyData, productItemResult, type, reply } = parameters;
     const replyResult = {
       status: true,
       job_id: jobResult.id,
       message: 'Uploaded Successfully',
       billResult: copyData
-      // forceUpdate: request.pre.forceUpdate
     };
     if (productItemResult) {
-      if (type === 2) {
-        replyResult.amc = productItemResult[0];
-        replyResult.product = productItemResult[1];
-      } else if (type === 3) {
-        replyResult.insurance = productItemResult[0];
-        replyResult.product = productItemResult[1];
-      } else if (type === 4) {
-        replyResult.repair = productItemResult[0];
-        replyResult.product = productItemResult[1];
-      } else if (type === 5) {
-        replyResult.warranty = productItemResult[0];
-        replyResult.product = productItemResult[1];
-      } else if (type === 6) {
-        replyResult.warranty = productItemResult[0];
-        replyResult.product = productItemResult[1];
-      } else if (type === 7) {
-        replyResult.puc = productItemResult[0];
-        replyResult.product = productItemResult[1];
-      } else if (type === 8) {
-        replyResult.warranty = productItemResult[0];
-        replyResult.product = productItemResult[1];
-      } else {
-        replyResult.product = productItemResult[0];
+      replyResult.product = productItemResult[1];
+      switch (type) {
+        case 2:
+          {
+            replyResult.amc = productItemResult[0];
+            break;
+          }
+        case 3:
+          {
+            replyResult.insurance = productItemResult[0];
+            break;
+          }
+        case 4:
+          {
+            replyResult.repair = productItemResult[0];
+            break;
+          }
+        case 5:
+          {
+            replyResult.warranty = productItemResult[0];
+            break;
+          }
+        case 6:
+          {
+            replyResult.warranty = productItemResult[0];
+            break;
+          }
+        case 7:
+          {
+            replyResult.puc = productItemResult[0];
+            break;
+          }
+        case 8:
+          {
+            replyResult.warranty = productItemResult[0];
+            break;
+          }
+        default:
+          {
+            replyResult.product = productItemResult[0];
+            break;
+          }
       }
     }
 
     return reply.response(replyResult);
   }
 
-  static createProductItems(parameters) {
+  static async createProductItems(parameters) {
     let { type, jobId, user, productId, itemId, copies } = parameters;
     const productItemPromise = [];
     switch (type) {
@@ -935,80 +850,28 @@ class UploadController {
       }));
     }
 
-    return _bluebird2.default.all(productItemPromise);
-  }
-
-  static mailUserForJob(userResult, user) {
-    modals.jobs.count({
-      where: {
-        uploaded_by: userResult.id || userResult.ID
-      }
-    }).then(billCount => {
-      if (billCount === 1) {
-        _notification2.default.sendMailOnDifferentSteps('It’s good to see you start building your eHome', userResult.email, userResult, 2);
-      } else {
-        _notification2.default.sendMailOnDifferentSteps('We have received your bill, soon it will be available in your eHome', userResult.email, userResult, 3);
-      }
-    }).catch(err => {
-      console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n ${JSON.stringify(err)} \n email is ${userResult.email}`);
-    });
+    return Promise.all(productItemPromise);
   }
 
   static notifyTeam(user, result) {
     if (process.env.NODE_ENV === 'production') {
-      _notification2.default.sendMailOnUpload(_main2.default.MESSAGE, 'sagar@binbill.com;pranjal@binbill.com;anu.gupta@binbill.com', user, result.id);
+      notificationAdaptor.sendMailOnUpload(_main2.default.MESSAGE, 'sagar@binbill.com;pranjal@binbill.com;anu.gupta@binbill.com', user, result.id);
     }
   }
 
-  static retrieveFiles(request, reply) {
-    /* const user = shared.verifyAuthorization(request.headers);
-     if (!request.pre.userExist) {
-        reply.response({
-          status: false,
-          message: 'Unauthorized',
-        });
-     } else {*/
+  static async retrieveFiles(request, reply) {
     if (!request.pre.forceUpdate) {
-      return modals.jobs.findById(request.params.id, {
-        include: [{
-          model: modals.jobCopies,
-          as: 'copies',
-          where: {
-            id: request.params.copyid
-          },
-          required: true
-        }]
-      }).then(result => {
+      try {
+        const result = await modals.jobs.findById(request.params.id, {
+          include: [{
+            model: modals.jobCopies, as: 'copies',
+            where: { id: request.params.copyid },
+            required: true
+          }]
+        });
         if (result) {
-          fsImpl.readFile(_guid2.default.isGuid(result.job_id) ? `${result.copies[0].file_name}` : `jobs/${result.job_id}/${result.copies[0].file_name}`).then(fileResult => {
-            return reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${result.bill_copy_name}`);
-          }).catch(err => {
-            console.log(`Error on ${new Date()} while retrieving image is as follow: \n \n ${err}`);
-            return fsImpl.readFile(`jobs/${result.job_id}/${result.copies[0].file_name}`).then(fileResult => {
-              return reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${result.bill_copy_name}`);
-            }).catch(err => {
-              console.log(`Error on ${new Date()} while retrieving image is as follow: \n \n ${err}`);
-
-              modals.logs.create({
-                api_action: request.method,
-                api_path: request.url.pathname,
-                log_type: 2,
-                user_id: 1,
-                log_content: JSON.stringify({
-                  params: request.params,
-                  query: request.query,
-                  headers: request.headers,
-                  err
-                })
-              }).catch(ex => console.log('error while logging on db,', ex));
-              return reply.response({
-                status: false,
-                message: 'No Result Found',
-                forceUpdate: request.pre.forceUpdate,
-                err
-              }).code(404);
-            });
-          });
+          const fileResult = await fsImpl.readFile(Guid.isGuid(result.job_id) ? `${result.copies[0].file_name}` : `jobs/${result.job_id}/${result.copies[0].file_name}`);
+          return reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${result.bill_copy_name}`);
         } else {
           return reply.response({
             status: false,
@@ -1016,24 +879,34 @@ class UploadController {
             forceUpdate: request.pre.forceUpdate
           }).code(404);
         }
-      }).catch(err => {
-        console.log(`Error on ${new Date()} for user is as follow: \n \n ${err}`);
+      } catch (err) {
+        console.log(`Error on ${new Date()} while retrieving image is as follow: \n \n ${err}`);
+        try {
+          const fileResult = await fsImpl.readFile(`jobs/${result.job_id}/${result.copies[0].file_name}`);
+          return reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${result.bill_copy_name}`);
+        } catch (err) {
+          console.log(`Error on ${new Date()} while retrieving image is as follow: \n \n ${err}`);
 
-        modals.logs.create({
-          api_action: request.method,
-          api_path: request.url.pathname,
-          log_type: 2,
-          user_id: 1,
-          log_content: JSON.stringify({
-            params: request.params,
-            query: request.query,
-            headers: request.headers,
-            payload: request.payload,
+          modals.logs.create({
+            api_action: request.method,
+            api_path: request.url.pathname,
+            log_type: 2,
+            user_id: 1,
+            log_content: JSON.stringify({
+              params: request.params,
+              query: request.query,
+              headers: request.headers,
+              err
+            })
+          }).catch(ex => console.log('error while logging on db,', ex));
+          return reply.response({
+            status: false,
+            message: 'No Result Found',
+            forceUpdate: request.pre.forceUpdate,
             err
-          })
-        }).catch(ex => console.log('error while logging on db,', ex));
-        return reply.response({ status: false, err, forceUpdate: request.pre.forceUpdate });
-      });
+          }).code(404);
+        }
+      }
     } else {
       return reply.response({
         status: false,
@@ -1041,11 +914,10 @@ class UploadController {
         forceUpdate: request.pre.forceUpdate
       });
     }
-    // }
   }
 
   //Will required to be change if discard is required
-  static deleteFile(request, reply) {
+  static async deleteFile(request, reply) {
     const user = _shared2.default.verifyAuthorization(request.headers);
     if (request.pre.userExist === 0) {
       return reply.response({
@@ -1059,74 +931,52 @@ class UploadController {
         message: 'Unauthorized'
       }).code(401);
     } else {
-      if (!request.pre.forceUpdate) {
-        const itemId = request.query && request.query.itemid ? request.query.itemid : undefined;
+      try {
+        if (!request.pre.forceUpdate) {
+          const itemId = request.query && request.query.itemid ? request.query.itemid : undefined;
 
-        return _bluebird2.default.all([modals.jobs.findById(request.params.id, {
-          include: [{
-            model: modals.jobCopies,
-            as: 'copies',
-            required: true
-          }]
-        }), modals.jobCopies.update({
-          status_type: 3,
-          updated_by: user.id || user.ID
-        }, {
-          where: {
-            id: request.params.copyid,
-            job_id: request.params.id
-          }
-        }), modals.jobCopies.count({
-          where: {
-            id: {
-              $ne: request.params.copyid
-            },
-            job_id: request.params.id,
-            status_type: {
-              $notIn: [3, 9]
+          let [jobData, updateCopyStatus, count, productItemStatus] = await Promise.all([modals.jobs.findById(request.params.id, {
+            include: [{ model: modals.jobCopies, as: 'copies', required: true }]
+          }), modals.jobCopies.update({ status_type: 3, updated_by: user.id || user.ID }, {
+            where: {
+              id: request.params.copyid,
+              job_id: request.params.id
             }
-          }
-        }), itemId ? UploadController.updateOrDeleteProductItems({
-          type: parseInt(request.query.type || '1'),
-          jobId: request.params.id,
-          user,
-          itemId,
-          copyId: request.params.copyid
-        }) : '']).then(result => {
-          const count = result[2];
+          }), modals.jobCopies.count({
+            where: {
+              id: { $ne: request.params.copyid },
+              job_id: request.params.id,
+              status_type: { $notIn: [3, 9] }
+            }
+          }), itemId ? UploadController.updateOrDeleteProductItems({
+            type: parseInt(request.query.type || '1'),
+            jobId: request.params.id,
+            user, itemId, copyId: request.params.copyid
+          }) : '']);
           let attributes = count > 0 ? {
-            user_status: 8,
-            admin_status: 4,
-            ce_status: null,
-            qe_status: null,
-            updated_by: user.id || user.ID
+            user_status: 8, admin_status: 4, ce_status: null,
+            qe_status: null, updated_by: user.id || user.ID
           } : {
-            user_status: 8,
-            admin_status: 2,
-            ce_status: null,
-            qe_status: null,
-            updated_by: user.id || user.ID
+            user_status: 8, admin_status: 2, ce_status: null,
+            qe_status: null, updated_by: user.id || user.ID
           };
-          const copiesData = result[0].copies.find(copyItem => copyItem.id.toString() === request.params.copyid.toString());
+
+          const jobItem = jobData.toJSON();
+          const copiesData = jobItem.copies.find(copyItem => copyItem.id.toString() === request.params.copyid.toString());
           if (copiesData) {
-            fsImpl.unlink(copiesData.file_name).catch(err => {
-              console.log(`Error while deleting ${copiesData.file_name} on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
-            });
-            fsImpl.unlink(`jobs/${result[0].job_id}/${copiesData.file_name}`).catch(err => {
-              console.log(`Error while deleting jobs/${result[0].job_id}/${copiesData.file_name} on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
-            });
+            await fsImpl.unlink(copiesData.file_name);
+            await fsImpl.unlink(`jobs/${result[0].job_id}/${copiesData.file_name}`);
           }
-          const jobItem = result[0].toJSON();
           if (jobItem.admin_status !== 5) {
-            result[0].updateAttributes(attributes);
+            jobData.updateAttributes(attributes);
           }
 
           const deletionResponse = {
             status: true,
-            message: result[3][0] === true ? 'Product item deleted successfully' : result[3][0] && itemId ? 'File deleted successfully from product item' : 'File deleted successfully',
-            isProductItemDeleted: result[3][0] === true,
-            productItemCopiesCount: result[3][0] && result[3][0] !== true ? result[3][0].copies.length : 0,
-            productItem: result[3][0] && result[3][0] !== true ? result[3][0] : undefined,
+            message: productItemStatus[0] === true ? 'Product item deleted successfully' : productItemStatus[0] && itemId ? 'File deleted successfully from product item' : 'File deleted successfully',
+            isProductItemDeleted: productItemStatus[0] === true,
+            productItemCopiesCount: productItemStatus[0] && productItemStatus[0] !== true ? productItemStatus[0].copies.length : 0,
+            productItem: productItemStatus[0] && productItemStatus[0] !== true ? productItemStatus[0] : undefined,
             forceUpdate: request.pre.forceUpdate
           };
 
@@ -1161,112 +1011,79 @@ class UploadController {
           }
 
           return reply.response(deletionResponse);
-        }).catch(err => {
-          console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
+        } else {
+          return reply.response({
+            status: false,
+            message: 'Forbidden',
+            forceUpdate: request.pre.forceUpdate
+          });
+        }
+      } catch (err) {
+        console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
 
-          modals.logs.create({
-            api_action: request.method,
-            api_path: request.url.pathname,
-            log_type: 2,
-            user_id: user.id || user.ID,
-            log_content: JSON.stringify({
-              params: request.params,
-              query: request.query,
-              headers: request.headers,
-              payload: request.payload,
-              err
-            })
-          }).catch(ex => console.log('error while logging on db,', ex));
-          return reply.response({ status: false, err, forceUpdate: request.pre.forceUpdate });
-        });
-      } else {
-        return reply.response({
-          status: false,
-          message: 'Forbidden',
-          forceUpdate: request.pre.forceUpdate
-        });
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user.id || user.ID,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err
+          })
+        }).catch(ex => console.log('error while logging on db,', ex));
+        return reply.response({ status: false, err, forceUpdate: request.pre.forceUpdate });
       }
     }
   }
 
-  static updateOrDeleteProductItems(parameters) {
+  static async updateOrDeleteProductItems(parameters) {
     let { type, jobId, user, itemId, copyId } = parameters;
     const productItemPromise = [];
+    const user_id = user.id || user.ID;
     switch (type) {
       case 2:
-        productItemPromise.push(amcAdaptor.removeAMCs(itemId, copyId, {
-          job_id: jobId,
-          user_id: user.id || user.ID,
-          updated_by: user.id || user.ID
-        }));
+        productItemPromise.push(amcAdaptor.removeAMCs(itemId, copyId, { job_id: jobId, user_id, updated_by: user_id }));
         break;
 
       case 3:
-        productItemPromise.push(insuranceAdaptor.removeInsurances(itemId, copyId, {
-          job_id: jobId,
-          user_id: user.id || user.ID,
-          updated_by: user.id || user.ID
-        }));
+        productItemPromise.push(insuranceAdaptor.removeInsurances(itemId, copyId, { job_id: jobId, user_id, updated_by: user_id }));
         break;
 
       case 4:
-        productItemPromise.push(repairAdaptor.removeRepairs(itemId, copyId, {
-          job_id: jobId,
-          user_id: user.id || user.ID,
-          updated_by: user.id || user.ID
-        }));
+        productItemPromise.push(repairAdaptor.removeRepairs(itemId, copyId, { job_id: jobId, user_id, updated_by: user_id }));
         break;
       case 5:
-        productItemPromise.push(warrantyAdaptor.removeWarranties(itemId, copyId, {
-          job_id: jobId,
-          user_id: user.id || user.ID,
-          updated_by: user.id || user.ID
-        }));
+        productItemPromise.push(warrantyAdaptor.removeWarranties(itemId, copyId, { job_id: jobId, user_id, updated_by: user_id }));
         break;
 
       case 6:
-        productItemPromise.push(warrantyAdaptor.removeWarranties(itemId, copyId, {
-          job_id: jobId,
-          user_id: user.id || user.ID,
-          updated_by: user.id || user.ID
-        }));
+        productItemPromise.push(warrantyAdaptor.removeWarranties(itemId, copyId, { job_id: jobId, user_id, updated_by: user_id }));
         break;
       case 7:
-        productItemPromise.push(pucAdaptor.removePUCs(itemId, {
-          job_id: jobId,
-          user_id: user.id || user.ID,
-          updated_by: user.id || user.ID
-        }));
+        productItemPromise.push(pucAdaptor.removePUCs(itemId, copyId, { job_id: jobId, user_id, updated_by: user_id }));
         break;
       case 8:
-        productItemPromise.push(warrantyAdaptor.removeWarranties(itemId, copyId, {
-          job_id: jobId,
-          user_id: user.id || user.ID,
-          updated_by: user.id || user.ID
-        }));
+        productItemPromise.push(warrantyAdaptor.removeWarranties(itemId, copyId, { job_id: jobId, user_id, updated_by: user_id }));
         break;
       default:
-        productItemPromise.push(productAdaptor.removeProducts(itemId, copyId, {
-          job_id: jobId,
-          user_id: user.id || user.ID,
-          updated_by: user.id || user.ID
-        }));
+        productItemPromise.push(productAdaptor.removeProducts(itemId, copyId, { job_id: jobId, user_id, updated_by: user_id }));
         break;
     }
 
-    return _bluebird2.default.all(productItemPromise);
+    return Promise.all(productItemPromise);
   }
 
-  static retrieveCategoryImage(request, reply) {
+  static async retrieveCategoryImage(request, reply) {
     if (!request.pre.forceUpdate) {
-      const fsImplCategory = new _s3fs2.default(`${_main2.default.AWS.S3.BUCKET}/${_main2.default.AWS.S3.CATEGORY_IMAGE}/${categoryImageType[request.params.type || 0]}${request.params.file_type ? `/${request.params.file_type}` : ''}`, _main2.default.AWS.ACCESS_DETAILS);
-      return modals.categories.findOne({
-        where: {
-          category_id: request.params.id
-        }
-      }).then(result => {
-        return fsImplCategory.readFile(result.category_image_name, 'utf8').then(fileResult => reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${result.CopyName}`));
-      }).catch(err => {
+      try {
+        const fsImplCategory = new _s3fs2.default(`${_main2.default.AWS.S3.BUCKET}/${_main2.default.AWS.S3.CATEGORY_IMAGE}/${categoryImageType[request.params.type || 1]}${request.params.file_type ? `/${request.params.file_type}` : ''}`, _main2.default.AWS.ACCESS_DETAILS);
+        const result = await modals.categories.findOne({ where: { category_id: request.params.id } });
+        const fileResult = await fsImplCategory.readFile(result.category_image_name, 'utf8');
+        return reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${result.category_image_name}`);
+      } catch (err) {
         console.log(`Error on ${new Date()} for user while retrieving category image is as follow: \n \n ${err}`);
 
         modals.logs.create({
@@ -1288,7 +1105,7 @@ class UploadController {
           err,
           forceUpdate: request.pre.forceUpdate
         });
-      });
+      }
     } else {
       return reply.response({
         status: false,
@@ -1298,41 +1115,83 @@ class UploadController {
     }
   }
 
-  static retrieveProductImage(request, reply) {
+  static async retrieveOfferCategoryImage(request, reply) {
     if (!request.pre.forceUpdate) {
-      const fsImplProduct = new _s3fs2.default(`${_main2.default.AWS.S3.BUCKET}/${_main2.default.AWS.S3.PRODUCT_IMAGE}${request.params.file_type ? `/${request.params.file_type}` : ''}`, _main2.default.AWS.ACCESS_DETAILS);
-      return modals.products.findOne({
-        where: {
-          id: request.params.id
-        }
-      }).then(productResult => {
+      try {
+        const fsImplCategory = new _s3fs2.default(`${_main2.default.AWS.S3.BUCKET}/${_main2.default.AWS.S3.CATEGORY_IMAGE}/${categoryImageType[1]}${request.params.file_type ? `/${request.params.file_type}` : ''}`, _main2.default.AWS.ACCESS_DETAILS);
+        const result = await modals.offerCategories.findOne({
+          where: {
+            id: request.params.id
+          }
+        });
+        const fileResult = fsImplCategory.readFile(result.category_image_name, 'utf8');
+        return reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${result.category_image_name}`);
+      } catch (err) {
+        console.log(`Error on ${new Date()} for user while retrieving category image is as follow: \n \n ${err}`);
+
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: 1,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err
+          })
+        }).catch(ex => console.log('error while logging on db,', ex));
+        return reply.response({
+          status: false,
+          message: 'Unable to retrieve image',
+          err,
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    } else {
+      return reply.response({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate
+      });
+    }
+  }
+
+  static async retrieveProductImage(request, reply) {
+    if (!request.pre.forceUpdate) {
+      try {
+        const fsImplProduct = new _s3fs2.default(`${_main2.default.AWS.S3.BUCKET}/${_main2.default.AWS.S3.PRODUCT_IMAGE}${request.params.file_type ? `/${request.params.file_type}` : ''}`, _main2.default.AWS.ACCESS_DETAILS);
+
+        const productResult = await modals.products.findOne({ where: { id: request.params.id } });
         if (productResult) {
           const productDetail = productResult.toJSON();
-          return fsImplProduct.readFile(`${request.params.id}.${productDetail.file_type}`, 'utf8').then(fileResult => reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${request.params.id}.${productDetail.file_type}`)).catch(err => {
-            console.log(`Error on ${new Date()} for user while retrieving product item image is as follow: \n \n ${err}`);
-
-            modals.logs.create({
-              api_action: request.method,
-              api_path: request.url.pathname,
-              log_type: 2,
-              user_id: 1,
-              log_content: JSON.stringify({
-                params: request.params,
-                query: request.query,
-                headers: request.headers,
-                payload: request.payload,
-                err
-              })
-            }).catch(ex => console.log('error while logging on db,', ex));
-            return reply.response({
-              status: false,
-              message: 'Unable to retrieve image',
-              err,
-              forceUpdate: request.pre.forceUpdate
-            });
-          });
+          const fileResult = await fsImplProduct.readFile(`${request.params.id}.${productDetail.file_type}`, 'utf8');
+          return reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${request.params.id}.${productDetail.file_type}`);
         }
-      });
+      } catch (err) {
+        console.log(`Error on ${new Date()} for user while retrieving product item image is as follow: \n \n ${err}`);
+
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: 1,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err
+          })
+        }).catch(ex => console.log('error while logging on db,', ex));
+        return reply.response({
+          status: false,
+          message: 'Unable to retrieve image',
+          err,
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
     } else {
       return reply.response({
         status: false,
@@ -1342,41 +1201,39 @@ class UploadController {
     }
   }
 
-  static retrieveWearableImage(request, reply) {
+  static async retrieveWearableImage(request, reply) {
     if (!request.pre.forceUpdate) {
-      const fsImplProduct = new _s3fs2.default(`${_main2.default.AWS.S3.BUCKET}/${_main2.default.AWS.S3.WEARABLE_IMAGE}`, _main2.default.AWS.ACCESS_DETAILS);
-      return modals.wearables.findOne({
-        where: {
-          id: request.params.id
-        }
-      }).then(wearableResult => {
+      try {
+        const fsImplProduct = new _s3fs2.default(`${_main2.default.AWS.S3.BUCKET}/${_main2.default.AWS.S3.WEARABLE_IMAGE}`, _main2.default.AWS.ACCESS_DETAILS);
+        const wearableResult = await modals.wearables.findOne({ where: { id: request.params.id } });
         if (wearableResult) {
           const wearableDetail = wearableResult.toJSON();
-          return fsImplProduct.readFile(`${wearableDetail.image_name}`, 'utf8').then(fileResult => reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${wearableDetail.image_name}`)).catch(err => {
-            console.log(`Error on ${new Date()} for user while retrieving wearable item image is as follow: \n \n ${err}`);
-
-            modals.logs.create({
-              api_action: request.method,
-              api_path: request.url.pathname,
-              log_type: 2,
-              user_id: 1,
-              log_content: JSON.stringify({
-                params: request.params,
-                query: request.query,
-                headers: request.headers,
-                payload: request.payload,
-                err
-              })
-            }).catch(ex => console.log('error while logging on db,', ex));
-            return reply.response({
-              status: false,
-              message: 'Unable to retrieve image',
-              err,
-              forceUpdate: request.pre.forceUpdate
-            });
-          });
+          const fileResult = await fsImplProduct.readFile(`${wearableDetail.image_name}`, 'utf8');
+          return reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${wearableDetail.image_name}`);
         }
-      });
+      } catch (err) {
+        console.log(`Error on ${new Date()} for user while retrieving wearable item image is as follow: \n \n ${err}`);
+
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: 1,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err
+          })
+        }).catch(ex => console.log('error while logging on db,', ex));
+        return reply.response({
+          status: false,
+          message: 'Unable to retrieve image',
+          err,
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
     } else {
       return reply.response({
         status: false,
@@ -1386,10 +1243,13 @@ class UploadController {
     }
   }
 
-  static retrieveCalendarItemImage(request, reply) {
+  static async retrieveCalendarItemImage(request, reply) {
     if (!request.pre.forceUpdate) {
-      const fsImplCategory = new _s3fs2.default(`${_main2.default.AWS.S3.BUCKET}/${_main2.default.AWS.S3.CALENDAR_ITEM_IMAGE}${request.params.file_type ? `/${request.params.file_type}` : ''}`, _main2.default.AWS.ACCESS_DETAILS);
-      return fsImplCategory.readFile(`${request.params.id}.png`, 'utf8').then(fileResult => reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${request.params.id}.png`)).catch(err => {
+      try {
+        const fsImplCategory = new _s3fs2.default(`${_main2.default.AWS.S3.BUCKET}/${_main2.default.AWS.S3.CALENDAR_ITEM_IMAGE}${request.params.file_type ? `/${request.params.file_type}` : ''}`, _main2.default.AWS.ACCESS_DETAILS);
+        const fileResult = fsImplCategory.readFile(`${request.params.id}.png`, 'utf8');
+        return reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${request.params.id}.png`);
+      } catch (err) {
         console.log(`Error on ${new Date()} for user while retrieving calendar item image is as follow: \n \n ${err}`);
 
         modals.logs.create({
@@ -1411,7 +1271,7 @@ class UploadController {
           err,
           forceUpdate: request.pre.forceUpdate
         });
-      });
+      }
     } else {
       return reply.response({
         status: false,
@@ -1421,10 +1281,13 @@ class UploadController {
     }
   }
 
-  static retrieveBrandImage(request, reply) {
+  static async retrieveBrandImage(request, reply) {
     if (!request.pre.forceUpdate) {
-      const fsImplBrand = new _s3fs2.default(`${_main2.default.AWS.S3.BUCKET}/${_main2.default.AWS.S3.BRAND_IMAGE}${request.params.file_type ? `/${request.params.file_type}` : ''}`, _main2.default.AWS.ACCESS_DETAILS);
-      return fsImplBrand.readFile(`${request.params.id}.png`, 'utf8').then(fileResult => reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${request.params.id}.png`)).catch(err => {
+      try {
+        const fsImplBrand = new _s3fs2.default(`${_main2.default.AWS.S3.BUCKET}/${_main2.default.AWS.S3.BRAND_IMAGE}${request.params.file_type ? `/${request.params.file_type}` : ''}`, _main2.default.AWS.ACCESS_DETAILS);
+        const fileResult = await fsImplBrand.readFile(`${request.params.id}.png`, 'utf8');
+        return reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${request.params.id}.png`);
+      } catch (err) {
         console.log(`Error on ${new Date()} retrieving brand image is as follow: \n \n ${err}`);
         modals.logs.create({
           api_action: request.method,
@@ -1445,7 +1308,7 @@ class UploadController {
           err,
           forceUpdate: request.pre.forceUpdate
         });
-      });
+      }
     } else {
       return reply.response({
         status: false,
@@ -1455,10 +1318,13 @@ class UploadController {
     }
   }
 
-  static retrieveProviderImage(request, reply) {
+  static async retrieveProviderImage(request, reply) {
     if (!request.pre.forceUpdate) {
-      const fsImplBrand = new _s3fs2.default(`${_main2.default.AWS.S3.BUCKET}/${_main2.default.AWS.S3.PROVIDER_IMAGE}${request.params.file_type ? `/${request.params.file_type}` : ''}`, _main2.default.AWS.ACCESS_DETAILS);
-      return fsImplBrand.readFile(`${request.params.id}.png`, 'utf8').then(fileResult => reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${request.params.id}.png`)).catch(err => {
+      try {
+        const fsImplBrand = new _s3fs2.default(`${_main2.default.AWS.S3.BUCKET}/${_main2.default.AWS.S3.PROVIDER_IMAGE}${request.params.file_type ? `/${request.params.file_type}` : ''}`, _main2.default.AWS.ACCESS_DETAILS);
+        const fileResult = await fsImplBrand.readFile(`${request.params.id}.png`, 'utf8');
+        return reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${request.params.id}.png`);
+      } catch (err) {
         console.log(`Error on ${new Date()} retrieving provider image is as follow: \n \n ${err}`);
 
         modals.logs.create({
@@ -1480,7 +1346,7 @@ class UploadController {
           err,
           forceUpdate: request.pre.forceUpdate
         });
-      });
+      }
     } else {
       return reply.response({
         status: false,
@@ -1490,12 +1356,14 @@ class UploadController {
     }
   }
 
-  static retrieveKnowItemImage(request, reply) {
+  static async retrieveKnowItemImage(request, reply) {
     if (!request.pre.forceUpdate) {
-      const fsImplBrand = new _s3fs2.default(`${_main2.default.AWS.S3.BUCKET}/${_main2.default.AWS.S3.KNOW_ITEM_IMAGE}`, _main2.default.AWS.ACCESS_DETAILS);
-      return fsImplBrand.readFile(`${request.params.id}.png`, 'utf8').then(fileResult => reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${request.params.id}.png`)).catch(err => {
+      try {
+        const fsImplBrand = new _s3fs2.default(`${_main2.default.AWS.S3.BUCKET}/${_main2.default.AWS.S3.KNOW_ITEM_IMAGE}`, _main2.default.AWS.ACCESS_DETAILS);
+        const fileResult = await fsImplBrand.readFile(`${request.params.id}.png`, 'utf8');
+        return reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${request.params.id}.png`);
+      } catch (err) {
         console.log(`Error on ${new Date()} retrieving fact image is as follow: \n \n ${err}`);
-
         modals.logs.create({
           api_action: request.method,
           api_path: request.url.pathname,
@@ -1515,7 +1383,7 @@ class UploadController {
           err,
           forceUpdate: request.pre.forceUpdate
         });
-      });
+      }
     } else {
       return reply.response({
         status: false,
@@ -1525,7 +1393,7 @@ class UploadController {
     }
   }
 
-  static retrieveUserImage(request, reply) {
+  static async retrieveUserImage(request, reply) {
     const user = _shared2.default.verifyAuthorization(request.headers);
     if (request.pre.userExist === 0) {
       return reply.response({
@@ -1540,18 +1408,17 @@ class UploadController {
       }).code(401);
     } else {
       if (!request.pre.forceUpdate) {
-        let userData;
-        return userAdaptor.retrieveUserImageNameById(user).then(userDetail => {
-          userData = userDetail;
-          return fsImpl.readFile(userDetail.image_name);
-        }).then(fileResult => {
-          return reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${fileResult.CopyName}`);
-        }).catch(err => {
+        try {
+          let userData = await userAdaptor.retrieveUserImageNameById(user);
+          const fileResult = await fsImpl.readFile(userData.image_name);
+          return reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${userData.image_name}`);
+        } catch (err) {
           console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
           const fsImplUser = new _s3fs2.default(`${_main2.default.AWS.S3.BUCKET}/${_main2.default.AWS.S3.USER_IMAGE}`, _main2.default.AWS.ACCESS_DETAILS);
-          return fsImplUser.readFile(userData.image_name).then(fileResult => {
+          try {
+            const fileResult = await fsImplUser.readFile(userData.image_name);
             return reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${fileResult.CopyName}`);
-          }).catch(err => {
+          } catch (err) {
             console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n ${JSON.stringify(err.toJSON())}`);
 
             modals.logs.create({
@@ -1572,8 +1439,8 @@ class UploadController {
               message: 'No Result Found',
               forceUpdate: request.pre.forceUpdate
             }).code(404);
-          });
-        });
+          }
+        }
       } else {
         return reply.response({
           status: false,

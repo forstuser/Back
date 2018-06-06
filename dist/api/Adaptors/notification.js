@@ -972,7 +972,7 @@ class NotificationAdaptor {
             return reply.response({
               status: false,
               error
-            }).code(500);
+            });
           }
         }
       });

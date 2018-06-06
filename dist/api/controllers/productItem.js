@@ -75,33 +75,34 @@ class ProductItemController {
     jobAdaptor = new _job2.default(modal);
   }
 
-  static updateRepair(request, reply) {
+  static async updateRepair(request, reply) {
     const user = _shared2.default.verifyAuthorization(request.headers);
-    if (request.pre.userExist === 0) {
-      return reply.response({
-        status: false,
-        message: 'Inactive User',
-        forceUpdate: request.pre.forceUpdate
-      }).code(402);
-    } else if (!request.pre.userExist) {
-      return reply.response({
-        status: false,
-        message: 'Unauthorized',
-        forceUpdate: request.pre.forceUpdate
-      });
-    } else if (request.pre.userExist && !request.pre.forceUpdate) {
-      const sellerPromise = !request.payload.seller_id && (request.payload.seller_contact || request.payload.seller_name) ? sellerAdaptor.retrieveOrCreateOfflineSellers({
-        seller_name: request.payload.seller_name,
-        contact_no: request.payload.seller_contact
-      }, {
-        seller_name: request.payload.seller_name,
-        contact_no: request.payload.seller_contact,
-        updated_by: user.id || user.ID,
-        created_by: user.id || user.ID,
-        address: request.payload.seller_address,
-        status_type: 11
-      }) : '';
-      return Promise.all([sellerPromise]).then(sellerList => {
+    try {
+      if (request.pre.userExist === 0) {
+        return reply.response({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
+        return reply.response({
+          status: false,
+          message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate
+        });
+      } else if (request.pre.userExist && !request.pre.forceUpdate) {
+        const sellerPromise = !request.payload.seller_id && (request.payload.seller_contact || request.payload.seller_name) ? sellerAdaptor.retrieveOrCreateOfflineSellers({
+          seller_name: request.payload.seller_name,
+          contact_no: request.payload.seller_contact
+        }, {
+          seller_name: request.payload.seller_name,
+          contact_no: request.payload.seller_contact,
+          updated_by: user.id || user.ID,
+          created_by: user.id || user.ID,
+          address: request.payload.seller_address,
+          status_type: 11
+        }) : '';
+        const sellerList = await Promise.all([sellerPromise]);
         const product_id = parseInt(request.params.id);
         const repairId = parseInt(request.params.repairId);
         const newSellerId = sellerList[0] ? sellerList[0].sid : undefined;
@@ -119,141 +120,136 @@ class ProductItemController {
           user_id: user.id || user.ID,
           job_id: request.payload.job_id || undefined
         };
-        const repairPromise = repairId ? repairAdaptor.updateRepairs(repairId, JSON.parse(JSON.stringify(values))) : repairAdaptor.createRepairs(values);
-        return repairPromise.then(result => {
-          if (result) {
-            return reply.response({
-              status: true,
-              message: 'successfull',
-              repair: result,
-              forceUpdate: request.pre.forceUpdate
-            });
-          } else {
-            return reply.response({
-              status: false,
-              message: 'Repair already exist.',
-              forceUpdate: request.pre.forceUpdate
-            });
-          }
-        });
-      }).catch(err => {
-        console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
-        modals.logs.create({
-          api_action: request.method,
-          api_path: request.url.pathname,
-          log_type: 2,
-          user_id: user.id || user.ID,
-          log_content: JSON.stringify({
-            params: request.params,
-            query: request.query,
-            headers: request.headers,
-            payload: request.payload,
-            err
-          })
-        }).catch(ex => console.log('error while logging on db,', ex));
+        const repair = repairId ? await repairAdaptor.updateRepairs(repairId, JSON.parse(JSON.stringify(values))) : await repairAdaptor.createRepairs(values);
+        if (repair) {
+          return reply.response({
+            status: true,
+            message: 'successfull',
+            repair,
+            forceUpdate: request.pre.forceUpdate
+          });
+        } else {
+          return reply.response({
+            status: false,
+            message: 'Repair already exist.',
+            forceUpdate: request.pre.forceUpdate
+          });
+        }
+      } else {
         return reply.response({
           status: false,
-          message: 'An error occurred in Repair creation.',
-          forceUpdate: request.pre.forceUpdate,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    } catch (err) {
+
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
           err
-        });
-      });
-    } else {
-      reply.response({
+        })
+      }).catch(ex => console.log('error while logging on db,', ex));
+      return reply.response({
         status: false,
-        message: 'Forbidden',
+        message: 'Unable to create warranty',
         forceUpdate: request.pre.forceUpdate
       });
     }
   }
 
-  static deleteRepair(request, reply) {
+  static async deleteRepair(request, reply) {
     const user = _shared2.default.verifyAuthorization(request.headers);
-    if (request.pre.userExist === 0) {
-      return reply.response({
-        status: false,
-        message: 'Inactive User',
-        forceUpdate: request.pre.forceUpdate
-      }).code(402);
-    } else if (!request.pre.userExist) {
-      return reply.response({
-        status: false,
-        message: 'Unauthorized',
-        forceUpdate: request.pre.forceUpdate
-      });
-    } else if (request.pre.userExist && !request.pre.forceUpdate) {
-      return repairAdaptor.deleteRepair(request.params.repairId, user.id || user.ID).then(() => reply.response({
-        status: true
-      })).catch(err => {
-        console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
-        modals.logs.create({
-          api_action: request.method,
-          api_path: request.url.pathname,
-          log_type: 2,
-          user_id: user.id || user.ID,
-          log_content: JSON.stringify({
-            params: request.params,
-            query: request.query,
-            headers: request.headers,
-            payload: request.payload,
-            err
-          })
-        }).catch(ex => console.log('error while logging on db,', ex));
+    try {
+      if (request.pre.userExist === 0) {
         return reply.response({
-          status: false
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
+        return reply.response({
+          status: false,
+          message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate
         });
-      });
-    } else {
-      reply.response({
+      } else if (request.pre.userExist && !request.pre.forceUpdate) {
+        await repairAdaptor.deleteRepair(request.params.repairId, user.id || user.ID);
+        return reply.response({
+          status: true
+        });
+      } else {
+        return reply.response({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    } catch (err) {
+
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err
+        })
+      }).catch(ex => console.log('error while logging on db,', ex));
+      return reply.response({
         status: false,
-        message: 'Forbidden',
+        message: 'Unable to delete repair',
         forceUpdate: request.pre.forceUpdate
       });
     }
   }
 
-  static updateInsurance(request, reply) {
+  static async updateInsurance(request, reply) {
     const user = _shared2.default.verifyAuthorization(request.headers);
-    if (request.pre.userExist === 0) {
-      return reply.response({
-        status: false,
-        message: 'Inactive User',
-        forceUpdate: request.pre.forceUpdate
-      }).code(402);
-    } else if (!request.pre.userExist) {
-      return reply.response({
-        status: false,
-        message: 'Unauthorized',
-        forceUpdate: request.pre.forceUpdate
-      });
-    } else if (request.pre.userExist && !request.pre.forceUpdate) {
-      const providerPromise = request.payload.provider_name ? insuranceAdaptor.findCreateInsuranceBrand({
-        main_category_id: request.payload.main_category_id,
-        category_id: request.payload.category_id,
-        type: 1,
-        status_type: 11,
-        updated_by: user.id || user.ID,
-        name: request.payload.provider_name
-      }) : undefined;
-      let insuranceRenewalType;
-      let renewalTypes;
-      let insuranceId;
-      let providerId;
-      let product_id;
-      return Promise.all([providerPromise, categoryAdaptor.retrieveRenewalTypes({
-        status_type: 1
-      })]).then(promiseResult => {
-        const provider = promiseResult[0];
-        renewalTypes = promiseResult[1];
-        product_id = parseInt(request.params.id);
-        insuranceId = parseInt(request.params.insuranceId);
-        providerId = provider ? provider.id : undefined;
-        insuranceRenewalType = renewalTypes.find(item => item.type === 8);
+    try {
+      if (request.pre.userExist === 0) {
+        return reply.response({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
+        return reply.response({
+          status: false,
+          message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate
+        });
+      } else if (request.pre.userExist && !request.pre.forceUpdate) {
+        const providerPromise = request.payload.provider_name ? insuranceAdaptor.findCreateInsuranceBrand({
+          main_category_id: request.payload.main_category_id,
+          category_id: request.payload.category_id,
+          type: 1,
+          status_type: 11,
+          updated_by: user.id || user.ID,
+          name: request.payload.provider_name
+        }) : undefined;
+        const [provider, renewalTypes] = await Promise.all([providerPromise, categoryAdaptor.retrieveRenewalTypes({
+          status_type: 1
+        })]);
+        const product_id = parseInt(request.params.id);
+        const insuranceId = parseInt(request.params.insuranceId);
+        const providerId = provider ? provider.id : undefined;
+        let insuranceRenewalType = renewalTypes.find(item => item.type === 8);
         if (request.payload.renewal_type) {
           insuranceRenewalType = renewalTypes.find(item => item.type === request.payload.renewal_type);
         }
-        return productAdaptor.retrieveProductById(product_id, { status_type: [5, 8, 11] });
-      }).then(productResult => {
+        const productResult = await productAdaptor.retrieveProductById(product_id, { status_type: [5, 8, 11] });
         const currentItem = productResult ? productResult.insuranceDetails.find(item => item.id === parseInt(insuranceId)) : undefined;
         const insuranceEffectiveDate = productResult ? productResult.insuranceDetails && productResult.insuranceDetails.length > 0 ? currentItem ? _moment2.default.utc(currentItem.effectiveDate, _moment2.default.ISO_8601) : _moment2.default.utc(productResult.insuranceDetails[0].expiryDate, _moment2.default.ISO_8601).add(1, 'days') : productResult.purchaseDate : undefined;
         let effective_date = insuranceEffectiveDate ? request.payload.effective_date || insuranceEffectiveDate : _moment2.default.utc();
@@ -274,13 +270,13 @@ class ProductItemController {
           renewal_cost: request.payload.value,
           user_id: user.id || user.ID
         };
-        return insuranceId ? insuranceAdaptor.updateInsurances(insuranceId, insuranceBody) : insuranceAdaptor.createInsurances(insuranceBody);
-      }).then(result => {
-        if (result) {
+        const insurance = insuranceId ? await insuranceAdaptor.updateInsurances(insuranceId, insuranceBody) : await insuranceAdaptor.createInsurances(insuranceBody);
+
+        if (insurance) {
           return reply.response({
             status: true,
             message: 'successful',
-            insurance: result,
+            insurance,
             forceUpdate: request.pre.forceUpdate
           });
         } else {
@@ -290,116 +286,118 @@ class ProductItemController {
             forceUpdate: request.pre.forceUpdate
           });
         }
-      }).catch(err => {
-        console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
-        modals.logs.create({
-          api_action: request.method,
-          api_path: request.url.pathname,
-          log_type: 2,
-          user_id: user.id || user.ID,
-          log_content: JSON.stringify({
-            params: request.params,
-            query: request.query,
-            headers: request.headers,
-            payload: request.payload,
-            err
-          })
-        }).catch(ex => console.log('error while logging on db,', ex));
+      } else {
         return reply.response({
           status: false,
-          message: 'An error occurred in Insurance creation.',
-          forceUpdate: request.pre.forceUpdate,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    } catch (err) {
+
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
           err
-        });
-      });
-    } else {
-      reply.response({
+        })
+      }).catch(ex => console.log('error while logging on db,', ex));
+      return reply.response({
         status: false,
-        message: 'Forbidden',
+        message: 'Unable to create insurance',
         forceUpdate: request.pre.forceUpdate
       });
     }
   }
 
-  static deleteInsurance(request, reply) {
+  static async deleteInsurance(request, reply) {
     const user = _shared2.default.verifyAuthorization(request.headers);
-    if (request.pre.userExist === 0) {
-      return reply.response({
-        status: false,
-        message: 'Inactive User',
-        forceUpdate: request.pre.forceUpdate
-      }).code(402);
-    } else if (!request.pre.userExist) {
-      return reply.response({
-        status: false,
-        message: 'Unauthorized',
-        forceUpdate: request.pre.forceUpdate
-      });
-    } else if (request.pre.userExist && !request.pre.forceUpdate) {
-      return insuranceAdaptor.deleteInsurance(request.params.insuranceId, user.id || user.ID).then(() => reply.response({
-        status: true
-      })).catch(err => {
-        console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
-        modals.logs.create({
-          api_action: request.method,
-          api_path: request.url.pathname,
-          log_type: 2,
-          user_id: user.id || user.ID,
-          log_content: JSON.stringify({
-            params: request.params,
-            query: request.query,
-            headers: request.headers,
-            payload: request.payload,
-            err
-          })
-        }).catch(ex => console.log('error while logging on db,', ex));
+    try {
+      if (request.pre.userExist === 0) {
         return reply.response({
-          status: false
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
+        return reply.response({
+          status: false,
+          message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate
         });
-      });
-    } else {
-      reply.response({
+      } else if (request.pre.userExist && !request.pre.forceUpdate) {
+        await insuranceAdaptor.deleteInsurance(request.params.insuranceId, user.id || user.ID);
+        return reply.response({
+          status: true
+        });
+      } else {
+        return reply.response({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    } catch (err) {
+
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err
+        })
+      }).catch(ex => console.log('error while logging on db,', ex));
+      return reply.response({
         status: false,
-        message: 'Forbidden',
+        message: 'Unable to delete insurance.',
         forceUpdate: request.pre.forceUpdate
       });
     }
   }
 
-  static updateAmc(request, reply) {
+  static async updateAmc(request, reply) {
     const user = _shared2.default.verifyAuthorization(request.headers);
-    if (request.pre.userExist === 0) {
-      return reply.response({
-        status: false,
-        message: 'Inactive User',
-        forceUpdate: request.pre.forceUpdate
-      }).code(402);
-    } else if (!request.pre.userExist) {
-      return reply.response({
-        status: false,
-        message: 'Unauthorized',
-        forceUpdate: request.pre.forceUpdate
-      });
-    } else if (request.pre.userExist && !request.pre.forceUpdate) {
-      const sellerPromise = !request.payload.seller_id && (request.payload.seller_contact || request.payload.seller_name) ? sellerAdaptor.retrieveOrCreateOfflineSellers({
-        seller_name: request.payload.seller_name,
-        contact_no: request.payload.seller_contact
-      }, {
-        seller_name: request.payload.seller_name,
-        contact_no: request.payload.seller_contact,
-        updated_by: user.id || user.ID,
-        created_by: user.id || user.ID,
-        address: request.payload.seller_address,
-        status_type: 11
-      }) : '';
-      const product_id = parseInt(request.params.id);
-      const amcId = parseInt(request.params.amcId);
-      let sellerList;
-      return Promise.all([sellerPromise]).then(sellerResult => {
-        sellerList = sellerResult[0];
+    try {
+      if (request.pre.userExist === 0) {
+        return reply.response({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
+        return reply.response({
+          status: false,
+          message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate
+        });
+      } else if (request.pre.userExist && !request.pre.forceUpdate) {
+        const sellerPromise = !request.payload.seller_id && (request.payload.seller_contact || request.payload.seller_name) ? sellerAdaptor.retrieveOrCreateOfflineSellers({
+          seller_name: request.payload.seller_name,
+          contact_no: request.payload.seller_contact
+        }, {
+          seller_name: request.payload.seller_name,
+          contact_no: request.payload.seller_contact,
+          updated_by: user.id || user.ID,
+          created_by: user.id || user.ID,
+          address: request.payload.seller_address,
+          status_type: 11
+        }) : '';
+        const product_id = parseInt(request.params.id);
+        const amcId = parseInt(request.params.amcId);
+        const [sellerList] = await Promise.all([sellerPromise]);
 
-        return productAdaptor.retrieveProductById(product_id, { status_type: [5, 8, 11] });
-      }).then(productResult => {
+        const productResult = await productAdaptor.retrieveProductById(product_id, { status_type: [5, 8, 11] });
         const currentItem = productResult ? productResult.amcDetails.find(item => item.id === parseInt(amcId)) : undefined;
         const amcEffectiveDate = productResult ? currentItem ? _moment2.default.utc(currentItem.effectiveDate, _moment2.default.ISO_8601) : productResult.amcDetails && productResult.amcDetails.length > 0 ? _moment2.default.utc(productResult.amcDetails[0].expiryDate, _moment2.default.ISO_8601).add(1, 'days') : productResult.purchaseDate : undefined;
         let effective_date = amcEffectiveDate ? request.payload.effective_date || amcEffectiveDate : _moment2.default.utc();
@@ -419,13 +417,13 @@ class ProductItemController {
           document_date: effective_date ? _moment2.default.utc(effective_date).format('YYYY-MM-DD') : undefined,
           user_id: user.id || user.ID
         };
-        return amcId ? amcAdaptor.updateAMCs(amcId, values) : amcAdaptor.createAMCs(values);
-      }).then(result => {
-        if (result) {
+        const amc = amcId ? await amcAdaptor.updateAMCs(amcId, values) : await amcAdaptor.createAMCs(values);
+
+        if (amc) {
           return reply.response({
             status: true,
             message: 'successful',
-            amc: result,
+            amc,
             forceUpdate: request.pre.forceUpdate
           });
         } else {
@@ -435,115 +433,117 @@ class ProductItemController {
             forceUpdate: request.pre.forceUpdate
           });
         }
-      }).catch(err => {
-        console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
-        modals.logs.create({
-          api_action: request.method,
-          api_path: request.url.pathname,
-          log_type: 2,
-          user_id: user.id || user.ID,
-          log_content: JSON.stringify({
-            params: request.params,
-            query: request.query,
-            headers: request.headers,
-            payload: request.payload,
-            err
-          })
-        }).catch(ex => console.log('error while logging on db,', ex));
+      } else {
         return reply.response({
           status: false,
-          message: 'An error occurred in AMC creation.',
-          forceUpdate: request.pre.forceUpdate,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    } catch (err) {
+
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
           err
-        });
-      });
-    } else {
-      reply.response({
+        })
+      }).catch(ex => console.log('error while logging on db,', ex));
+      return reply.response({
         status: false,
-        message: 'Forbidden',
+        message: 'Unable to create AMC',
         forceUpdate: request.pre.forceUpdate
       });
     }
   }
 
-  static deleteAMC(request, reply) {
+  static async deleteAMC(request, reply) {
     const user = _shared2.default.verifyAuthorization(request.headers);
-    if (request.pre.userExist === 0) {
-      return reply.response({
-        status: false,
-        message: 'Inactive User',
-        forceUpdate: request.pre.forceUpdate
-      }).code(402);
-    } else if (!request.pre.userExist) {
-      return reply.response({
-        status: false,
-        message: 'Unauthorized',
-        forceUpdate: request.pre.forceUpdate
-      });
-    } else if (request.pre.userExist && !request.pre.forceUpdate) {
-      return amcAdaptor.deleteAMC(request.params.amcId, user.id || user.ID).then(() => reply.response({
-        status: true
-      })).catch(err => {
-        console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
-        modals.logs.create({
-          api_action: request.method,
-          api_path: request.url.pathname,
-          log_type: 2,
-          user_id: user.id || user.ID,
-          log_content: JSON.stringify({
-            params: request.params,
-            query: request.query,
-            headers: request.headers,
-            payload: request.payload,
-            err
-          })
-        }).catch(ex => console.log('error while logging on db,', ex));
+    try {
+      if (request.pre.userExist === 0) {
         return reply.response({
-          status: false
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
+        return reply.response({
+          status: false,
+          message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate
         });
-      });
-    } else {
-      reply.response({
+      } else if (request.pre.userExist && !request.pre.forceUpdate) {
+        await amcAdaptor.deleteAMC(request.params.amcId, user.id || user.ID);
+        return reply.response({
+          status: true
+        });
+      } else {
+        return reply.response({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    } catch (err) {
+
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err
+        })
+      }).catch(ex => console.log('error while logging on db,', ex));
+      return reply.response({
         status: false,
-        message: 'Forbidden',
+        message: 'Unable to delete amc',
         forceUpdate: request.pre.forceUpdate
       });
     }
   }
 
-  static updatePUC(request, reply) {
+  static async updatePUC(request, reply) {
     const user = _shared2.default.verifyAuthorization(request.headers);
-    if (request.pre.userExist === 0) {
-      return reply.response({
-        status: false,
-        message: 'Inactive User',
-        forceUpdate: request.pre.forceUpdate
-      }).code(402);
-    } else if (!request.pre.userExist) {
-      return reply.response({
-        status: false,
-        message: 'Unauthorized',
-        forceUpdate: request.pre.forceUpdate
-      });
-    } else if (request.pre.userExist && !request.pre.forceUpdate) {
-      const sellerPromise = !request.payload.seller_id && (request.payload.seller_contact || request.payload.seller_name) ? sellerAdaptor.retrieveOrCreateOfflineSellers({
-        seller_name: request.payload.seller_name,
-        contact_no: request.payload.seller_contact
-      }, {
-        seller_name: request.payload.seller_name,
-        contact_no: request.payload.seller_contact,
-        updated_by: user.id || user.ID,
-        created_by: user.id || user.ID,
-        address: request.payload.seller_address,
-        status_type: 11
-      }) : '';
-      let sellerList;
-      const product_id = parseInt(request.params.id);
-      const pucId = parseInt(request.params.pucId);
-      return Promise.all([sellerPromise]).then(sellerResult => {
-        sellerList = sellerResult[0];
-        return productAdaptor.retrieveProductById(product_id, { status_type: [5, 8, 11] });
-      }).then(productResult => {
+    try {
+      if (request.pre.userExist === 0) {
+        return reply.response({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
+        return reply.response({
+          status: false,
+          message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate
+        });
+      } else if (request.pre.userExist && !request.pre.forceUpdate) {
+        const sellerPromise = !request.payload.seller_id && (request.payload.seller_contact || request.payload.seller_name) ? sellerAdaptor.retrieveOrCreateOfflineSellers({
+          seller_name: request.payload.seller_name,
+          contact_no: request.payload.seller_contact
+        }, {
+          seller_name: request.payload.seller_name,
+          contact_no: request.payload.seller_contact,
+          updated_by: user.id || user.ID,
+          created_by: user.id || user.ID,
+          address: request.payload.seller_address,
+          status_type: 11
+        }) : '';
+        const product_id = parseInt(request.params.id);
+        const pucId = parseInt(request.params.pucId);
+        const [sellerList] = await Promise.all([sellerPromise]);
+        const productResult = await productAdaptor.retrieveProductById(product_id, { status_type: [5, 8, 11] });
         const currentItem = productResult ? productResult.pucDetails.find(pucItem => pucItem.id === parseInt(pucId)) : undefined;
         const pucEffectiveDate = productResult ? currentItem ? _moment2.default.utc(currentItem.effectiveDate, _moment2.default.ISO_8601) : productResult.pucDetails && productResult.pucDetails.length > 0 ? _moment2.default.utc(productResult.pucDetails[0].expiryDate, _moment2.default.ISO_8601).add(1, 'days') : productResult.purchaseDate : undefined;
         let effective_date = pucEffectiveDate ? request.payload.effective_date || pucEffectiveDate : _moment2.default.utc();
@@ -563,150 +563,145 @@ class ProductItemController {
           user_id: user.id || user.ID
         };
         const pucPromise = pucId ? pucAdaptor.updatePUCs(pucId, values) : pucAdaptor.createPUCs(values);
-        return pucPromise.then(result => {
-          if (result) {
-            return reply.response({
-              status: true,
-              message: 'successful',
-              puc: result,
-              forceUpdate: request.pre.forceUpdate
-            });
-          } else {
-            return reply.response({
-              status: false,
-              message: 'PUC already exist.',
-              forceUpdate: request.pre.forceUpdate
-            });
-          }
-        });
-      }).catch(err => {
-        console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
-        modals.logs.create({
-          api_action: request.method,
-          api_path: request.url.pathname,
-          log_type: 2,
-          user_id: user.id || user.ID,
-          log_content: JSON.stringify({
-            params: request.params,
-            query: request.query,
-            headers: request.headers,
-            payload: request.payload,
-            err
-          })
-        }).catch(ex => console.log('error while logging on db,', ex));
+        const result = await pucPromise;
+        if (result) {
+          return reply.response({
+            status: true,
+            message: 'successful',
+            puc: result,
+            forceUpdate: request.pre.forceUpdate
+          });
+        } else {
+          return reply.response({
+            status: false,
+            message: 'PUC already exist.',
+            forceUpdate: request.pre.forceUpdate
+          });
+        }
+      } else {
         return reply.response({
           status: false,
-          message: 'An error occurred in PUC creation.',
-          forceUpdate: request.pre.forceUpdate,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    } catch (err) {
+
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
           err
-        });
-      });
-    } else {
-      reply.response({
+        })
+      }).catch(ex => console.log('error while logging on db,', ex));
+      return reply.response({
         status: false,
-        message: 'Forbidden',
+        message: 'Unable to create PUC',
         forceUpdate: request.pre.forceUpdate
       });
     }
   }
 
-  static deletePUC(request, reply) {
+  static async deletePUC(request, reply) {
     const user = _shared2.default.verifyAuthorization(request.headers);
-    if (request.pre.userExist === 0) {
-      return reply.response({
-        status: false,
-        message: 'Inactive User',
-        forceUpdate: request.pre.forceUpdate
-      }).code(402);
-    } else if (!request.pre.userExist) {
-      return reply.response({
-        status: false,
-        message: 'Unauthorized',
-        forceUpdate: request.pre.forceUpdate
-      });
-    } else if (request.pre.userExist && !request.pre.forceUpdate) {
-      return pucAdaptor.deletePUCs(request.params.pucId, user.id || user.ID).then(() => reply.response({
-        status: true
-      })).catch(err => {
-        console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
-        modals.logs.create({
-          api_action: request.method,
-          api_path: request.url.pathname,
-          log_type: 2,
-          user_id: user.id || user.ID,
-          log_content: JSON.stringify({
-            params: request.params,
-            query: request.query,
-            headers: request.headers,
-            payload: request.payload,
-            err
-          })
-        }).catch(ex => console.log('error while logging on db,', ex));
+    try {
+      if (request.pre.userExist === 0) {
         return reply.response({
-          status: false
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
+        return reply.response({
+          status: false,
+          message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate
         });
-      });
-    } else {
-      reply.response({
+      } else if (request.pre.userExist && !request.pre.forceUpdate) {
+        await pucAdaptor.deletePUCs(request.params.pucId, user.id || user.ID);
+        return reply.response({
+          status: true
+        });
+      } else {
+        return reply.response({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    } catch (err) {
+
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err
+        })
+      }).catch(ex => console.log('error while logging on db,', ex));
+      return reply.response({
         status: false,
-        message: 'Forbidden',
+        message: 'Unable to delete PUC',
         forceUpdate: request.pre.forceUpdate
       });
     }
   }
 
-  static updateWarranty(request, reply) {
+  static async updateWarranty(request, reply) {
     const user = _shared2.default.verifyAuthorization(request.headers);
-    if (request.pre.userExist === 0) {
-      return reply.response({
-        status: false,
-        message: 'Inactive User',
-        forceUpdate: request.pre.forceUpdate
-      }).code(402);
-    } else if (!request.pre.userExist) {
-      return reply.response({
-        status: false,
-        message: 'Unauthorized',
-        forceUpdate: request.pre.forceUpdate
-      });
-    } else if (request.pre.userExist && !request.pre.forceUpdate) {
-      const providerPromise = request.payload.provider_name ? insuranceAdaptor.findCreateInsuranceBrand({
-        main_category_id: request.payload.main_category_id,
-        category_id: request.payload.category_id,
-        type: 1,
-        status_type: 11,
-        updated_by: user.id || user.ID,
-        name: request.payload.provider_name
-      }) : undefined;
-      const product_id = parseInt(request.params.id);
-      const warrantyId = parseInt(request.params.warrantyId);
-      let warrantyRenewalType;
-      let expiry_date;
-      let provider;
-      return Promise.all([providerPromise, categoryAdaptor.retrieveRenewalTypes({
-        status_type: 1
-      })]).then(promiseResult => {
-        provider = promiseResult[0];
-        warrantyRenewalType = promiseResult[1].find(item => item.type === request.payload.renewal_type);
-        return productAdaptor.retrieveProductById(product_id, { status_type: [5, 8, 11] });
-      }).then(productResult => {
+    try {
+      if (request.pre.userExist === 0) {
+        return reply.response({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
+        return reply.response({
+          status: false,
+          message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate
+        });
+      } else if (request.pre.userExist && !request.pre.forceUpdate) {
+        const providerPromise = request.payload.provider_name ? insuranceAdaptor.findCreateInsuranceBrand({
+          main_category_id: request.payload.main_category_id,
+          category_id: request.payload.category_id,
+          type: 1,
+          status_type: 11,
+          updated_by: user.id || user.ID,
+          name: request.payload.provider_name
+        }) : undefined;
+        const product_id = parseInt(request.params.id);
+        const warrantyId = parseInt(request.params.warrantyId);
+        let warrantyRenewalType;
+        let expiry_date;
+        let [provider, renewal_types] = await Promise.all([providerPromise, categoryAdaptor.retrieveRenewalTypes({
+          status_type: 1
+        })]);
+        warrantyRenewalType = renewal_types.find(item => item.type === request.payload.renewal_type);
+        const productResult = await productAdaptor.retrieveProductById(product_id, { status_type: [5, 8, 11] });
         const warrantyDetails = productResult ? productResult.warrantyDetails.filter(warrantyItem => request.payload.warranty_type === 3 ? warrantyItem.warranty_type === 3 : warrantyItem.warranty_type === 1 || warrantyItem.warranty_type === 2) : [];
 
         const currentItem = warrantyDetails.find(warrantyDetail => {
           return warrantyDetail.id === parseInt(warrantyId);
         });
 
-        console.log(`\n\n\n\n\n\n${JSON.stringify({
-          warrantyId,
-          currentItem,
-          warrantyDetail: warrantyDetails
-        })}`);
         const warrantyEffectiveDate = currentItem ? _moment2.default.utc(currentItem.effectiveDate, _moment2.default.ISO_8601) : warrantyDetails.length > 0 ? _moment2.default.utc(warrantyDetails[0].expiryDate, _moment2.default.ISO_8601).add(1, 'days') : productResult.purchaseDate;
         let effective_date = warrantyEffectiveDate ? request.payload.effective_date || warrantyEffectiveDate : _moment2.default.utc();
         effective_date = _moment2.default.utc(effective_date, _moment2.default.ISO_8601).isValid() ? _moment2.default.utc(effective_date, _moment2.default.ISO_8601).startOf('day') : _moment2.default.utc(effective_date, 'DD MMM YY').startOf('day');
         expiry_date = warrantyRenewalType ? _moment2.default.utc(effective_date, _moment2.default.ISO_8601).add(warrantyRenewalType.effective_months, 'months').subtract(1, 'day').endOf('days') : undefined;
 
-        console.log(`\n\n\n\n\n\n\n\n\n\n\n\n\n\n ${effective_date}, ${expiry_date}`);
         const values = {
           renewal_type: request.payload.renewal_type,
           renewal_cost: request.payload.value,
@@ -722,93 +717,96 @@ class ProductItemController {
           user_id: user.id || user.ID
         };
         const warrantyItemPromise = warrantyId ? warrantyAdaptor.updateWarranties(warrantyId, values) : warrantyAdaptor.createWarranties(values);
-        return warrantyItemPromise.then(result => {
-          if (result) {
-            return reply.response({
-              status: true,
-              message: 'successful',
-              warranty: result,
-              forceUpdate: request.pre.forceUpdate
-            });
-          } else {
-            return reply.response({
-              status: false,
-              message: 'Warranty already exist.',
-              forceUpdate: request.pre.forceUpdate
-            });
-          }
-        });
-      }).catch(err => {
-        console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
-        modals.logs.create({
-          api_action: request.method,
-          api_path: request.url.pathname,
-          log_type: 2,
-          user_id: user.id || user.ID,
-          log_content: JSON.stringify({
-            params: request.params,
-            query: request.query,
-            headers: request.headers,
-            payload: request.payload,
-            err
-          })
-        }).catch(ex => console.log('error while logging on db,', ex));
+        const result = await warrantyItemPromise;
+        if (result) {
+          return reply.response({
+            status: true,
+            message: 'successful',
+            warranty: result,
+            forceUpdate: request.pre.forceUpdate
+          });
+        } else {
+          return reply.response({
+            status: false,
+            message: 'Warranty already exist.',
+            forceUpdate: request.pre.forceUpdate
+          });
+        }
+      } else {
         return reply.response({
           status: false,
-          message: 'An error occurred in warranty creation.',
-          forceUpdate: request.pre.forceUpdate,
-          err
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
         });
-      });
-    } else {
-      reply.response({
+      }
+    } catch (err) {
+
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err
+        })
+      }).catch(ex => console.log('error while logging on db,', ex));
+      return reply.response({
         status: false,
-        message: 'Forbidden',
+        message: 'Unable to create warranty',
         forceUpdate: request.pre.forceUpdate
       });
     }
   }
 
-  static deleteWarranty(request, reply) {
+  static async deleteWarranty(request, reply) {
     const user = _shared2.default.verifyAuthorization(request.headers);
-    if (request.pre.userExist === 0) {
-      return reply.response({
-        status: false,
-        message: 'Inactive User',
-        forceUpdate: request.pre.forceUpdate
-      }).code(402);
-    } else if (!request.pre.userExist) {
-      return reply.response({
-        status: false,
-        message: 'Unauthorized',
-        forceUpdate: request.pre.forceUpdate
-      });
-    } else if (request.pre.userExist && !request.pre.forceUpdate) {
-      return warrantyAdaptor.deleteWarranties(request.params.warrantyId, user.id || user.ID).then(() => reply.response({
-        status: true
-      })).catch(err => {
-        console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
-        modals.logs.create({
-          api_action: request.method,
-          api_path: request.url.pathname,
-          log_type: 2,
-          user_id: user.id || user.ID,
-          log_content: JSON.stringify({
-            params: request.params,
-            query: request.query,
-            headers: request.headers,
-            payload: request.payload,
-            err
-          })
-        }).catch(ex => console.log('error while logging on db,', ex));
+    try {
+      if (request.pre.userExist === 0) {
         return reply.response({
-          status: false
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
+        return reply.response({
+          status: false,
+          message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate
         });
-      });
-    } else {
-      reply.response({
+      } else if (request.pre.userExist && !request.pre.forceUpdate) {
+        await warrantyAdaptor.deleteWarranties(request.params.warrantyId, user.id || user.ID);
+        return reply.response({
+          status: true
+        });
+      } else {
+        return reply.response({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    } catch (err) {
+
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err
+        })
+      }).catch(ex => console.log('error while logging on db,', ex));
+      return reply.response({
         status: false,
-        message: 'Forbidden',
+        message: 'Unable to delete warranty',
         forceUpdate: request.pre.forceUpdate
       });
     }

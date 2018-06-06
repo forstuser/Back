@@ -245,6 +245,22 @@ export function prepareUploadRoutes(modal, routeObject, middleware) {
         handler: ControllerObject.retrieveCategoryImage,
       },
     });
+    /*Retrieve Category images*/
+    routeObject.push({
+      method: 'GET',
+      path: '/offer/categories/{id}/images/{file_type}',
+      config: {
+        handler: ControllerObject.retrieveOfferCategoryImage,
+      },
+    });
+
+    routeObject.push({
+      method: 'GET',
+      path: '/offer/categories/{id}/images',
+      config: {
+        handler: ControllerObject.retrieveOfferCategoryImage,
+      },
+    });
 
     /*Retrieve Category images*/
     routeObject.push({

@@ -72,23 +72,40 @@ class GeneralController {
     modals = modal;
   }
 
-  static checkForAppUpdate(request, reply) {
-    if (request.headers.app_version !== undefined || request.headers.ios_app_version !== undefined) {
-      const id = request.headers.ios_app_version ? 2 : 1;
+  static async checkForAppUpdate(request, reply) {
+    try {
+      if (request.headers.app_version !== undefined || request.headers.ios_app_version !== undefined) {
+        const id = request.headers.ios_app_version ? 2 : 1;
 
-      return modals.appVersion.findOne({
-        where: {
-          id
-        },
-        order: [['updatedAt', 'DESC']],
-        attributes: [['recommended_version', 'recommendedVersion'], ['force_version', 'forceVersion'], ['details', 'updateDetails']]
-      }).then(result => {
-        console.log(result);
+        const result = await modals.appVersion.findOne({
+          where: { id },
+          order: [['updatedAt', 'DESC']],
+          attributes: ['recommended_version', 'force_version', ['details', 'updateDetails']]
+        });
         return reply.response(result);
+      } else {
+        console.log('App Version not in Headers');
+        return reply.response(null);
+      }
+    } catch (err) {
+
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err
+        })
+      }).catch(ex => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to fetch product list.',
+        forceUpdate: request.pre.forceUpdate
       });
-    } else {
-      console.log('App Version not in Headers');
-      return reply.response(null);
     }
   }
 
@@ -97,13 +114,14 @@ class GeneralController {
    * @param request
    * @param reply
    */
-  static retrieveReferenceData(request, reply) {
+  static async retrieveReferenceData(request, reply) {
     const user = _shared2.default.verifyAuthorization(request.headers);
     let isBrandRequest = false;
-    return _bluebird2.default.try(() => {
+    try {
+      let results;
       if (request.query && user) {
         if (request.query.categoryId && request.query.brandId) {
-          return brandAdaptor.retrieveBrandDropDowns({
+          results = await brandAdaptor.retrieveBrandDropDowns({
             category_id: request.query.categoryId,
             brand_id: request.query.brandId,
             $or: {
@@ -116,16 +134,16 @@ class GeneralController {
           });
         } else if (request.query.categoryId) {
           isBrandRequest = true;
-          return _bluebird2.default.all([categoryAdaptor.retrieveSubCategories({ category_id: request.query.categoryId }, true, request.language, user), categoryAdaptor.retrieveRenewalTypes({
+          results = await _bluebird2.default.all([categoryAdaptor.retrieveSubCategories({ category_id: request.query.categoryId }, true, request.language, user), categoryAdaptor.retrieveRenewalTypes({
             status_type: 1
           })]);
         } else if (request.query.mainCategoryId) {
-          return categoryAdaptor.retrieveCategories({ category_id: request.query.mainCategoryId }, false, request.language, false, user);
+          results = await categoryAdaptor.retrieveCategories({ category_id: request.query.mainCategoryId }, false, request.language, false, user);
         }
+      } else {
+        results = await categoryAdaptor.retrieveCategories({ category_level: 1 }, false, request.language);
       }
 
-      return categoryAdaptor.retrieveCategories({ category_level: 1 }, false, request.language);
-    }).then(results => {
       return reply.response({
         status: true,
         dropDowns: request.query.brandId ? results : undefined,
@@ -142,13 +160,83 @@ class GeneralController {
           name: 'PHONE'
         }]
       });
-    }).catch(err => {
-      console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
+    } catch (err) {
+
       modals.logs.create({
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user.id || user.ID,
+        user_id: user ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err
+        })
+      }).catch(ex => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false
+      });
+    }
+  }
+
+  static async contactUs(request, reply) {
+    try {
+      let isVerified = false;
+      if (request.payload.captcha_response) {
+        isVerified = await _notification2.default.verifyCaptcha(request.payload.captcha_response);
+      }
+
+      if (isVerified) {
+        _notification2.default.sendLinkOnMessage(request.payload.phone);
+      }
+
+      const item = await contactModel.findOne({
+        where: {
+          phone: request.payload.phone
+        }
+      });
+      let isValid = false;
+      if (item) {
+        isValid = await contactModel.update({ msg_day: item.msg_day + 1 }, {
+          where: {
+            phone: request.payload.phone
+          }
+        });
+      } else if (!item) {
+        isValid = await contactModel.create({
+          name: request.payload.name,
+          phone: request.payload.phone,
+          email: request.payload.email,
+          message: request.payload.message
+        });
+      }
+      if (isValid === false) {
+        return reply.response({
+          status: false,
+          message: 'You have reached to max attempt for a day'
+        });
+      }
+
+      if (request.payload.message || isVerified) {
+        if (request.payload.message) {
+          _notification2.default.sendUserCommentToTeam('Comment received', request.payload);
+        }
+
+        return reply.response({ status: true }).code(201);
+      }
+
+      return reply.response({
+        status: false,
+        message: 'Invalid Request'
+      });
+    } catch (err) {
+      console.log(`Error on ${new Date()} is as follow: \n \n ${error}`);
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -159,176 +247,100 @@ class GeneralController {
       }).catch(ex => console.log('error while logging on db,', ex));
 
       return reply.response({
-        status: false
+        status: false,
+        message: 'Invalid Request'
       });
-    });
+    }
   }
 
-  static contactUs(request, reply) {
-    return _bluebird2.default.try(() => {
-      if (request.payload.captcha_response) {
-        return _notification2.default.verifyCaptcha(request.payload.captcha_response);
-      }
-
-      return false;
-    }).then(isVerified => {
-      if (isVerified) {
-        _notification2.default.sendLinkOnMessage(request.payload.phone);
-      }
-
-      return contactModel.findOne({
+  static async retrieveFAQs(request, reply) {
+    try {
+      const faq = await modals.faqs.findAll({
         where: {
-          phone: request.payload.phone
-        }
-      }).then(item => {
-        if (item) {
-          return contactModel.update({ msg_day: item.msg_day + 1 }, {
-            where: {
-              phone: request.payload.phone
-            }
-          });
-        } else if (!item) {
-          return contactModel.create({
-            name: request.payload.name,
-            phone: request.payload.phone,
-            email: request.payload.email,
-            message: request.payload.message
-          });
-        }
-
-        return false;
-      }).then(isValid => {
-        if (isValid === false) {
-          return reply.response({
-            status: false,
-            message: 'You have reached to max attempt for a day'
-          });
-        }
-
-        if (request.payload.message || isVerified) {
-          if (request.payload.message) {
-            _notification2.default.sendUserCommentToTeam('Comment received', request.payload);
-          }
-          return reply.response({ status: true }).code(201);
-        }
-
-        return reply.response({
-          status: false,
-          message: 'Invalid Request'
-        });
-      }).catch(error => {
-        console.log(`Error on ${new Date()} is as follow: \n \n ${error}`);
-        modals.logs.create({
-          api_action: request.method,
-          api_path: request.url.pathname,
-          log_type: 2,
-          user_id: 1,
-          log_content: JSON.stringify({
-            params: request.params,
-            query: request.query,
-            headers: request.headers,
-            payload: request.payload,
-            err
-          })
-        }).catch(ex => console.log('error while logging on db,', ex));
-        return reply.response({
-          status: false,
-          message: 'Invalid Request'
-        });
-      });
-    });
-  }
-
-  static retrieveFAQs(request, reply) {
-    return modals.faqs.findAll({
-      where: {
-        status_id: {
-          $ne: 3
-        }
-      },
-      order: [['id']]
-    }).then(faq => {
-      return reply.response({ status: true, faq }).code(200);
-    }).catch(err => {
-      console.log(`Error on ${new Date()} for user is as follow: \n \n ${err}`);
-      modals.logs.create({
-        api_action: request.method,
-        api_path: request.url.pathname,
-        log_type: 2,
-        user_id: 1,
-        log_content: JSON.stringify({
-          params: request.params,
-          query: request.query,
-          headers: request.headers,
-          payload: request.payload,
-          err
-        })
-      }).catch(ex => console.log('error while logging on db,', ex));
-      return reply.response({ status: false }).code(200);
-    });
-  }
-
-  static retrieveTips(request, reply) {
-    return modals.tips.findAll({ order: [['id']] }).then(tips => {
-      return reply.response({ status: true, tips }).code(200);
-    }).catch(err => {
-      console.log(`Error on ${new Date()} for user is as follow: \n \n ${err}`);
-      modals.logs.create({
-        api_action: request.method,
-        api_path: request.url.pathname,
-        log_type: 2,
-        user_id: 1,
-        log_content: JSON.stringify({
-          params: request.params,
-          query: request.query,
-          headers: request.headers,
-          payload: request.payload,
-          err
-        })
-      }).catch(ex => console.log('error while logging on db,', ex));
-      return reply.response({ status: false }).code(200);
-    });
-  }
-
-  static retrieveKnowItems(request, reply) {
-    const user = _shared2.default.verifyAuthorization(request.headers);
-
-    if (request.pre.userExist && !request.pre.forceUpdate) {
-      const language = request.language;
-      const options = {
-        where: {
-          batch_date: {
-            $lte: (0, _moment2.default)().endOf('days')
+          status_id: {
+            $ne: 3
           }
         },
-        include: [{
-          model: modals.tags,
-          as: 'tags',
-          attributes: [['title', 'default_title'], [`${language ? `title_${language}` : `title`}`, 'title'], ['description', 'default_description'], [`${language ? `description_${language}` : `description`}`, 'description']]
-        }, {
-          model: modals.users,
-          as: 'users',
-          attributes: ['id']
-        }],
-        attributes: ['id', ['title', 'default_title'], [`${language ? `title_${language}` : `title`}`, 'title'], ['description', 'default_description'], [`${language ? `description_${language}` : `description`}`, 'description'], 'short_url'],
-        order: [['id', 'asc']],
-        limit: request.query.limit || 10
-      };
+        order: [['id']]
+      });
+      return reply.response({ status: true, faq }).code(200);
+    } catch (err) {
+      console.log(`Error on ${new Date()} for user is as follow: \n \n ${err}`);
 
-      console.log({ offset: request.query.offset });
-      if (request.query.offset) {
-        options.offset = request.query.offset;
-      }
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
 
-      const tagMapOptions = {};
-      if (request.payload && request.payload.tag_id && request.payload.tag_id.length > 0) {
-        tagMapOptions.where = modals.sequelize.where(modals.sequelize.col('"tag_id"'), { $in: request.payload.tag_id });
-      }
-      return _bluebird2.default.try(() => modals.know_tag_map.findAll(tagMapOptions)).then(tagMapResult => {
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err
+        })
+      }).catch(ex => console.log('error while logging on db,', ex));
+      return reply.response({ status: false }).code(200);
+    }
+  }
+
+  static async retrieveTips(request, reply) {
+    try {
+      const tips = await modals.tips.findAll({ order: [['id']] });
+      return reply.response({ status: true, tips }).code(200);
+    } catch (err) {
+      console.log(`Error on ${new Date()} for user is as follow: \n \n ${err}`);
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err
+        })
+      }).catch(ex => console.log('error while logging on db,', ex));
+      return reply.response({ status: false }).code(200);
+    }
+  }
+
+  static async retrieveKnowItems(request, reply) {
+    const user = _shared2.default.verifyAuthorization(request.headers);
+
+    try {
+      if (request.pre.userExist && !request.pre.forceUpdate) {
+        const language = request.language;
+        const options = {
+          where: { batch_date: { $lte: (0, _moment2.default)().endOf('days') } },
+          include: [{
+            model: modals.tags, as: 'tags',
+            attributes: [['title', 'default_title'], [`${language ? `title_${language}` : `title`}`, 'title'], ['description', 'default_description'], [`${language ? `description_${language}` : `description`}`, 'description']]
+          }, {
+            model: modals.users,
+            as: 'users',
+            attributes: ['id']
+          }],
+          attributes: ['id', ['title', 'default_title'], [`${language ? `title_${language}` : `title`}`, 'title'], ['description', 'default_description'], [`${language ? `description_${language}` : `description`}`, 'description'], 'short_url'],
+          order: [['id', 'asc']],
+          limit: request.query.limit || 10
+        };
+
+        console.log({ offset: request.query.offset });
+        if (request.query.offset) {
+          options.offset = request.query.offset;
+        }
+
+        const tagMapOptions = {};
+        if (request.payload && request.payload.tag_id && request.payload.tag_id.length > 0) {
+          tagMapOptions.where = modals.sequelize.where(modals.sequelize.col('"tag_id"'), { $in: request.payload.tag_id });
+        }
+        let tagMapResult = await modals.know_tag_map.findAll(tagMapOptions);
         tagMapResult = tagMapResult.map(tMItem => tMItem.toJSON());
         options.where.id = tagMapResult.map(tMItem => tMItem.know_item_id);
-        return modals.knowItems.findAll(options);
-      }).then(knowItems => {
+        const knowItems = await modals.knowItems.findAll(options);
         return reply.response({
           status: true,
           items: JSON.parse(JSON.stringify(knowItems.map(item => {
@@ -350,68 +362,68 @@ class GeneralController {
             return knowItemDetail;
           })))
         }).code(200);
-      }).catch(err => {
-        console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
-        modals.logs.create({
-          api_action: request.method,
-          api_path: request.url.pathname,
-          log_type: 2,
-          user_id: user.id || user.ID,
-          log_content: JSON.stringify({
-            params: request.params,
-            query: request.query,
-            headers: request.headers,
-            payload: request.payload,
-            err
-          })
-        }).catch(ex => console.log('error while logging on db,', ex));
-        return reply.response({ status: false }).code(200);
-      });
-    } else if (request.pre.userExist === 0) {
-      return reply.response({
-        status: false,
-        message: 'Inactive User',
-        forceUpdate: request.pre.forceUpdate
-      }).code(402);
-    } else if (!request.pre.userExist) {
-      return reply.response({
-        status: false,
-        message: 'Unauthorized',
-        forceUpdate: request.pre.forceUpdate
-      }).code(401);
-    } else {
-      return reply.response({
-        status: false,
-        message: 'Forbidden',
-        forceUpdate: request.pre.forceUpdate
-      });
+      } else if (request.pre.userExist === 0) {
+        return reply.response({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
+        return reply.response({
+          status: false,
+          message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate
+        }).code(401);
+      } else {
+        return reply.response({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    } catch (err) {
+
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err
+        })
+      }).catch(ex => console.log('error while logging on db,', ex));
+      return reply.response({ status: false }).code(200);
     }
   }
 
-  static retrieveKnowItemUnAuthorized(request, reply) {
-    const supportedLanguages = _main2.default.SUPPORTED_LANGUAGES.split(',');
-    let language = (request.headers.language || '').split('-')[0];
-    language = supportedLanguages.indexOf(language) >= 0 ? language : '';
-    const options = {
-      where: {
-        batch_date: {
-          $lte: (0, _moment2.default)()
-        }
-      },
-      include: [{
-        model: modals.tags,
-        as: 'tags',
-        attributes: [['title', 'default_title'], [`${language ? `title_${language}` : `title`}`, 'title'], ['description', 'default_description'], [`${language ? `description_${language}` : `description`}`, 'description']]
-      }, {
-        model: modals.users,
-        as: 'users',
-        attributes: ['id']
-      }],
-      attributes: ['id', ['title', 'default_title'], [`${language ? `title_${language}` : `title`}`, 'title'], ['description', 'default_description'], [`${language ? `description_${language}` : `description`}`, 'description'], 'short_url'],
-      order: [['id', 'asc']]
-    };
-
-    return modals.knowItems.findAll(options).then(knowItems => {
+  static async retrieveKnowItemUnAuthorized(request, reply) {
+    try {
+      const supportedLanguages = _main2.default.SUPPORTED_LANGUAGES.split(',');
+      let language = (request.headers.language || '').split('-')[0];
+      language = supportedLanguages.indexOf(language) >= 0 ? language : '';
+      const options = {
+        where: {
+          batch_date: {
+            $lte: (0, _moment2.default)()
+          }
+        },
+        include: [{
+          model: modals.tags,
+          as: 'tags',
+          attributes: [['title', 'default_title'], [`${language ? `title_${language}` : `title`}`, 'title'], ['description', 'default_description'], [`${language ? `description_${language}` : `description`}`, 'description']]
+        }, {
+          model: modals.users,
+          as: 'users',
+          attributes: ['id']
+        }],
+        attributes: ['id', ['title', 'default_title'], [`${language ? `title_${language}` : `title`}`, 'title'], ['description', 'default_description'], [`${language ? `description_${language}` : `description`}`, 'description'], 'short_url'],
+        order: [['id', 'asc']]
+      };
+      const knowItems = await modals.knowItems.findAll(options);
       return reply.response({
         status: true, items: knowItems.map(item => {
           item = item.toJSON();
@@ -431,13 +443,13 @@ class GeneralController {
           return item;
         }).slice((request.query.offset || 1) - 1, request.query.limit || 10)
       }).code(200);
-    }).catch(err => {
+    } catch (err) {
       console.log(`Error on ${new Date()} is as follow: \n \n ${err}`);
       modals.logs.create({
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: 1,
+
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -447,28 +459,30 @@ class GeneralController {
         })
       }).catch(ex => console.log('error while logging on db,', ex));
       return reply.response({ status: false }).code(200);
-    });
+    }
   }
 
-  static retrieveKnowItemsById(request, reply) {
-    const supportedLanguages = _main2.default.SUPPORTED_LANGUAGES.split(',');
-    let language = (request.headers.language || '').split('-')[0];
-    language = supportedLanguages.indexOf(language) >= 0 ? language : '';
-    const options = {
-      include: [{
-        model: modals.tags,
-        as: 'tags',
-        attributes: [['title', 'default_title'], [`${language ? `title_${language}` : `title`}`, 'title'], ['description', 'default_description'], [`${language ? `description_${language}` : `description`}`, 'description']]
-      }, {
-        model: modals.users,
-        as: 'users',
-        attributes: ['id']
-      }],
-      attributes: ['id', ['title', 'default_title'], [`${language ? `title_${language}` : `title`}`, 'title'], ['description', 'default_description'], [`${language ? `description_${language}` : `description`}`, 'description'], 'short_url'],
-      order: [['created_at', 'desc']]
-    };
+  static async retrieveKnowItemsById(request, reply) {
+    const user = _shared2.default.verifyAuthorization(request.headers);
+    try {
+      const supportedLanguages = _main2.default.SUPPORTED_LANGUAGES.split(',');
+      let language = (request.headers.language || '').split('-')[0];
+      language = supportedLanguages.indexOf(language) >= 0 ? language : '';
+      const options = {
+        include: [{
+          model: modals.tags,
+          as: 'tags',
+          attributes: [['title', 'default_title'], [`${language ? `title_${language}` : `title`}`, 'title'], ['description', 'default_description'], [`${language ? `description_${language}` : `description`}`, 'description']]
+        }, {
+          model: modals.users,
+          as: 'users',
+          attributes: ['id']
+        }],
+        attributes: ['id', ['title', 'default_title'], [`${language ? `title_${language}` : `title`}`, 'title'], ['description', 'default_description'], [`${language ? `description_${language}` : `description`}`, 'description'], 'short_url'],
+        order: [['created_at', 'desc']]
+      };
 
-    return modals.knowItems.findById(request.params.id, options).then(result => {
+      const result = await modals.knowItems.findById(request.params.id, options);
       const knowItem = result.toJSON();
       knowItem.imageUrl = `/knowitem/${knowItem.id}/images`;
       knowItem.hashTags = '';
@@ -483,18 +497,17 @@ class GeneralController {
       });
       knowItem.hashTags = knowItem.hashTags.trim();
       knowItem.totalLikes = knowItem.users.length;
-      const user = _shared2.default.verifyAuthorization(request.headers);
       knowItem.isLikedByUser = user ? knowItem.users.findIndex(userItem => userItem.id === (user.id || user.ID)) >= 0 : false;
       return reply.response({
         status: true, item: knowItem
       }).code(200);
-    }).catch(err => {
+    } catch (err) {
       console.log(`Error on ${new Date()} is as follow: \n \n ${err}`);
       modals.logs.create({
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: 1,
+        user_id: user ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -504,29 +517,30 @@ class GeneralController {
         })
       }).catch(ex => console.log('error while logging on db,', ex));
       return reply.response({ status: false }).code(200);
-    });
+    }
   }
 
-  static retrieveTags(request, reply) {
+  static async retrieveTags(request, reply) {
     const user = _shared2.default.verifyAuthorization(request.headers);
-    if (request.pre.userExist && !request.pre.forceUpdate) {
-      const language = request.language;
-      return modals.tags.findAll({
-        include: {
-          model: modals.knowItems,
-          as: 'knowItems',
-          where: {
-            batch_date: {
-              $lte: (0, _moment2.default)()
-            }
+    try {
+      if (request.pre.userExist && !request.pre.forceUpdate) {
+        const language = request.language;
+        const tagItems = await modals.tags.findAll({
+          include: {
+            model: modals.knowItems,
+            as: 'knowItems',
+            where: {
+              batch_date: {
+                $lte: (0, _moment2.default)()
+              }
+            },
+            attributes: [],
+            required: true
           },
-          attributes: [],
-          required: true
-        },
-        attributes: ['id', ['title', 'default_title'], [`${language ? `title_${language}` : `title`}`, 'title'], ['description', 'default_description'], [`${language ? `description_${language}` : `description`}`, 'description']],
-        distinct: true,
-        order: [['created_at', 'desc']]
-      }).then(tagItems => {
+          attributes: ['id', ['title', 'default_title'], [`${language ? `title_${language}` : `title`}`, 'title'], ['description', 'default_description'], [`${language ? `description_${language}` : `description`}`, 'description']],
+          distinct: true,
+          order: [['created_at', 'desc']]
+        });
         return reply.response({
           status: true, items: tagItems.map(item => {
             item = item.toJSON();
@@ -535,152 +549,154 @@ class GeneralController {
             return item;
           })
         }).code(200);
-      }).catch(err => {
-        console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
-        modals.logs.create({
-          api_action: request.method,
-          api_path: request.url.pathname,
-          log_type: 2,
-          user_id: user.id || user.ID,
-          log_content: JSON.stringify({
-            params: request.params,
-            query: request.query,
-            headers: request.headers,
-            payload: request.payload,
-            err
-          })
-        }).catch(ex => console.log('error while logging on db,', ex));
-        return reply.response({ status: false }).code(200);
-      });
-    } else if (request.pre.userExist === 0) {
-      return reply.response({
-        status: false,
-        message: 'Inactive User',
-        forceUpdate: request.pre.forceUpdate
-      }).code(402);
-    } else if (!request.pre.userExist) {
-      return reply.response({
-        status: false,
-        message: 'Unauthorized',
-        forceUpdate: request.pre.forceUpdate
-      }).code(401);
-    } else {
-      return reply.response({
-        status: false,
-        message: 'Forbidden',
-        forceUpdate: request.pre.forceUpdate
-      });
+      } else if (request.pre.userExist === 0) {
+        return reply.response({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
+        return reply.response({
+          status: false,
+          message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate
+        }).code(401);
+      } else {
+        return reply.response({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    } catch (err) {
+
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err
+        })
+      }).catch(ex => console.log('error while logging on db,', ex));
+      return reply.response({ status: false }).code(200);
     }
   }
 
-  static likeKnowItems(request, reply) {
+  static async likeKnowItems(request, reply) {
     const user = _shared2.default.verifyAuthorization(request.headers);
 
-    if (request.pre.userExist && !request.pre.forceUpdate) {
-      return modals.know_user_likes.create({
-        user_id: user.id || user.ID,
-        know_item_id: request.params.id
-      }).then(() => {
+    try {
+      if (request.pre.userExist && !request.pre.forceUpdate) {
+        await modals.know_user_likes.create({
+          user_id: user.id || user.ID,
+          know_item_id: request.params.id
+        });
         return reply.response({
           status: true,
           message: 'You have successfully liked this item.'
         }).code(200);
-      }).catch(err => {
-        console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
-        modals.logs.create({
-          api_action: request.method,
-          api_path: request.url.pathname,
-          log_type: 2,
-          user_id: user.id || user.ID,
-          log_content: JSON.stringify({
-            params: request.params,
-            query: request.query,
-            headers: request.headers,
-            payload: request.payload,
-            err
-          })
-        }).catch(ex => console.log('error while logging on db,', ex));
-        return reply.response({ status: false }).code(200);
-      });
-    } else if (request.pre.userExist === 0) {
-      return reply.response({
-        status: false,
-        message: 'Inactive User',
-        forceUpdate: request.pre.forceUpdate
-      }).code(402);
-    } else if (!request.pre.userExist) {
-      return reply.response({
-        status: false,
-        message: 'Unauthorized',
-        forceUpdate: request.pre.forceUpdate
-      }).code(401);
-    } else {
-      return reply.response({
-        status: false,
-        message: 'Forbidden',
-        forceUpdate: request.pre.forceUpdate
-      });
+      } else if (request.pre.userExist === 0) {
+        return reply.response({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
+        return reply.response({
+          status: false,
+          message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate
+        }).code(401);
+      } else {
+        return reply.response({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    } catch (err) {
+
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err
+        })
+      }).catch(ex => console.log('error while logging on db,', ex));
+      return reply.response({ status: false }).code(200);
     }
   }
 
-  static disLikeKnowItems(request, reply) {
+  static async disLikeKnowItems(request, reply) {
     const user = _shared2.default.verifyAuthorization(request.headers);
 
-    if (request.pre.userExist && !request.pre.forceUpdate) {
-      return modals.know_user_likes.destroy({
-        where: {
-          user_id: user.id || user.ID,
-          know_item_id: request.params.id
-        }
-      }).then(() => {
+    try {
+      if (request.pre.userExist && !request.pre.forceUpdate) {
+        await modals.know_user_likes.destroy({
+          where: {
+            user_id: user.id || user.ID,
+            know_item_id: request.params.id
+          }
+        });
         return reply.response({
           status: true,
           message: 'You have successfully Un-liked this item.'
         }).code(200);
-      }).catch(err => {
-        console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
-        modals.logs.create({
-          api_action: request.method,
-          api_path: request.url.pathname,
-          log_type: 2,
-          user_id: user.id || user.ID,
-          log_content: JSON.stringify({
-            params: request.params,
-            query: request.query,
-            headers: request.headers,
-            payload: request.payload,
-            err
-          })
-        }).catch(ex => console.log('error while logging on db,', ex));
-        return reply.response({ status: false }).code(200);
-      });
-    } else if (request.pre.userExist === 0) {
-      return reply.response({
-        status: false,
-        message: 'Inactive User',
-        forceUpdate: request.pre.forceUpdate
-      }).code(402);
-    } else if (!request.pre.userExist) {
-      return reply.response({
-        status: false,
-        message: 'Unauthorized',
-        forceUpdate: request.pre.forceUpdate
-      }).code(401);
-    } else {
-      return reply.response({
-        status: false,
-        message: 'Forbidden',
-        forceUpdate: request.pre.forceUpdate
-      });
+      } else if (request.pre.userExist === 0) {
+        return reply.response({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
+        return reply.response({
+          status: false,
+          message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate
+        }).code(401);
+      } else {
+        return reply.response({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    } catch (err) {
+
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err
+        })
+      }).catch(ex => console.log('error while logging on db,', ex));
+      return reply.response({ status: false }).code(200);
     }
   }
 
-  static initializeUserProduct(request, reply) {
+  static async initializeUserProduct(request, reply) {
     const user = _shared2.default.verifyAuthorization(request.headers);
 
-    if (request.pre.userExist && !request.pre.forceUpdate) {
-      return _bluebird2.default.try(() => {
-        return jobAdaptor.createJobs({
+    try {
+      if (request.pre.userExist && !request.pre.forceUpdate) {
+        const jobResult = await jobAdaptor.createJobs({
           job_id: `${Math.random().toString(36).substr(2, 9)}${(user.id || user.ID).toString(36)}`,
           user_id: user.id || user.ID,
           updated_by: user.id || user.ID,
@@ -689,8 +705,7 @@ class GeneralController {
           admin_status: 2,
           comments: request.query ? request.query.productId ? `This job is sent for product id ${request.query.productId}` : request.query.productName ? `This job is sent for product name ${request.query.productName}` : '' : ``
         });
-      }).then(jobResult => {
-        return _bluebird2.default.all([productAdaptor.createEmptyProduct({
+        const [product, categories, renewalTypes] = await _bluebird2.default.all([productAdaptor.createEmptyProduct({
           job_id: jobResult.id,
           product_name: request.payload.product_name,
           user_id: user.id || user.ID,
@@ -710,73 +725,75 @@ class GeneralController {
         }), categoryAdaptor.retrieveSubCategories({ category_id: request.payload.category_id }, true), categoryAdaptor.retrieveRenewalTypes({
           status_type: 1
         })]);
-      }).then(initResult => reply.response({
-        status: true,
-        product: initResult[0],
-        categories: initResult[1],
-        renewalTypes: initResult[2],
-        message: 'Product and Job is initialized.'
-      })).catch(err => {
-        console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
-        modals.logs.create({
-          api_action: request.method,
-          api_path: request.url.pathname,
-          log_type: 2,
-          user_id: user.id || user.ID,
-          log_content: JSON.stringify({
-            params: request.params,
-            query: request.query,
-            headers: request.headers,
-            payload: request.payload,
-            err
-          })
-        }).catch(ex => console.log('error while logging on db,', ex));
+        return reply.response({
+          status: true,
+          product,
+          categories,
+          renewalTypes,
+          message: 'Product and Job is initialized.'
+        });
+      } else if (request.pre.userExist === 0) {
         return reply.response({
           status: false,
-          message: 'Unable to initialize product or job.',
+          message: 'Inactive User',
           forceUpdate: request.pre.forceUpdate
-        }).code(200);
-      });
-    } else if (request.pre.userExist === 0) {
+        }).code(402);
+      } else if (!request.pre.userExist) {
+        return reply.response({
+          status: false,
+          message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate
+        }).code(401);
+      } else {
+        return reply.response({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    } catch (err) {
+
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err
+        })
+      }).catch(ex => console.log('error while logging on db,', ex));
       return reply.response({
         status: false,
-        message: 'Inactive User',
+        message: 'Unable to initialize product or job.',
         forceUpdate: request.pre.forceUpdate
-      }).code(402);
-    } else if (!request.pre.userExist) {
-      return reply.response({
-        status: false,
-        message: 'Unauthorized',
-        forceUpdate: request.pre.forceUpdate
-      }).code(401);
-    } else {
-      return reply.response({
-        status: false,
-        message: 'Forbidden',
-        forceUpdate: request.pre.forceUpdate
-      });
+      }).code(200);
     }
   }
 
-  static serviceCenterAccessed(request, reply) {
+  static async serviceCenterAccessed(request, reply) {
     const user = _shared2.default.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
-      return _bluebird2.default.try(() => {
-        return userAdaptor.updateUserDetail({ service_center_accessed: true }, {
+      try {
+        await userAdaptor.updateUserDetail({ service_center_accessed: true }, {
           where: {
             id: user.id || user.ID
           }
         });
-      }).then(() => reply.response({
-        status: true,
-        message: 'Status updated successfully.'
-      })).catch(err => {
+        return reply.response({
+          status: true,
+          message: 'Status updated successfully.'
+        });
+      } catch (err) {
         console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
         modals.logs.create({
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user.id || user.ID,
+          user_id: user ? user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -790,7 +807,7 @@ class GeneralController {
           message: 'Failed to update status',
           forceUpdate: request.pre.forceUpdate
         });
-      });
+      }
     } else if (request.pre.userExist === 0) {
       return reply.response({
         status: false,
@@ -812,57 +829,58 @@ class GeneralController {
     }
   }
 
-  static retrieveRepairableProducts(request, reply) {
+  static async retrieveRepairableProducts(request, reply) {
     const user = _shared2.default.verifyAuthorization(request.headers);
 
-    if (request.pre.userExist && !request.pre.forceUpdate) {
-      return _bluebird2.default.try(() => {
-        return productAdaptor.retrieveProducts({
+    try {
+      if (request.pre.userExist && !request.pre.forceUpdate) {
+        const product = await productAdaptor.retrieveProducts({
           main_category_id: [1, 2, 3],
           status_type: [5, 11],
           user_id: user.id || user.ID
         });
-      }).then(productResult => reply.response({
-        status: true,
-        product: productResult,
-        message: 'Success.'
-      })).catch(err => {
-        console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
-        modals.logs.create({
-          api_action: request.method,
-          api_path: request.url.pathname,
-          log_type: 2,
-          user_id: user.id || user.ID,
-          log_content: JSON.stringify({
-            params: request.params,
-            query: request.query,
-            headers: request.headers,
-            payload: request.payload,
-            err
-          })
-        }).catch(ex => console.log('error while logging on db,', ex));
+        return reply.response({
+          status: true,
+          product,
+          message: 'Success.'
+        });
+      } else if (request.pre.userExist === 0) {
         return reply.response({
           status: false,
-          message: 'Unable to fetch product list',
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
+        return reply.response({
+          status: false,
+          message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate
+        }).code(401);
+      } else {
+        return reply.response({
+          status: false,
+          message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
         });
-      });
-    } else if (request.pre.userExist === 0) {
+      }
+    } catch (err) {
+
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err
+        })
+      }).catch(ex => console.log('error while logging on db,', ex));
       return reply.response({
         status: false,
-        message: 'Inactive User',
-        forceUpdate: request.pre.forceUpdate
-      }).code(402);
-    } else if (!request.pre.userExist) {
-      return reply.response({
-        status: false,
-        message: 'Unauthorized',
-        forceUpdate: request.pre.forceUpdate
-      }).code(401);
-    } else {
-      return reply.response({
-        status: false,
-        message: 'Forbidden',
+        message: 'Unable to fetch product list.',
         forceUpdate: request.pre.forceUpdate
       });
     }

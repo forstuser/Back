@@ -235,6 +235,22 @@ function prepareUploadRoutes(modal, routeObject, middleware) {
         handler: _upload2.default.retrieveCategoryImage
       }
     });
+    /*Retrieve Category images*/
+    routeObject.push({
+      method: 'GET',
+      path: '/offer/categories/{id}/images/{file_type}',
+      config: {
+        handler: _upload2.default.retrieveOfferCategoryImage
+      }
+    });
+
+    routeObject.push({
+      method: 'GET',
+      path: '/offer/categories/{id}/images',
+      config: {
+        handler: _upload2.default.retrieveOfferCategoryImage
+      }
+    });
 
     /*Retrieve Category images*/
     routeObject.push({

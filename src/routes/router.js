@@ -16,6 +16,7 @@ import {prepareGeneralRoutes} from './general';
 import {prepareAuthRoutes} from './auth';
 import {prepareBrandRoutes} from './brand';
 import {prepareAccessoryRoute} from './accessory_routes';
+import {prepareOfferRoutes} from './offer';
 
 let middleware;
 
@@ -38,6 +39,7 @@ export default (app, modals) => {
   const uploadFileRoute = [];
   const whatToServiceRoutes = [];
   const accessoryServicesRoutes = [];
+  const offerRoutes = [];
   const searchController = new SearchController(modals);
   prepareAuthRoutes(modals, authRoutes, middleware);
 
@@ -64,6 +66,8 @@ export default (app, modals) => {
   prepareWhatToServiceRoutes(modals, whatToServiceRoutes, middleware);
 
   prepareAccessoryRoute(modals, accessoryServicesRoutes, middleware);
+
+  prepareOfferRoutes(modals, offerRoutes, middleware);
 
   if (searchController) {
     searchRoutes.push({
@@ -112,6 +116,7 @@ export default (app, modals) => {
     ...calendarRoutes,
     ...whatToServiceRoutes,
     ...accessoryServicesRoutes,
+    ...offerRoutes,
   ]).forEach((routeItem) => app.route(routeItem));
   const handler = function(request, h, err) {
     console.log(err);

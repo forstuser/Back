@@ -25,13 +25,13 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 let productAdaptor;
 let notificationAdaptor;
-let models;
+let modals;
 
 class ProductController {
   constructor(modal) {
     productAdaptor = new _product2.default(modal);
     notificationAdaptor = new _notification2.default(modal);
-    models = modal;
+    modals = modal;
   }
 
   static async deleteProduct(request, reply) {
@@ -67,11 +67,11 @@ class ProductController {
         }
       } catch (err) {
         console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
-        models.logs.create({
+        modals.logs.create({
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user.id || user.ID,
+          user_id: user ? user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -157,12 +157,11 @@ class ProductController {
           });
         }
       } catch (err) {
-        console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
-        models.logs.create({
+        modals.logs.create({
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user.id || user.ID,
+          user_id: user ? user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -187,82 +186,124 @@ class ProductController {
     }
   }
 
-  static updateUserReview(request, reply) {
+  static async updateUserReview(request, reply) {
     const user = _shared2.default.verifyAuthorization(request.headers);
-    if (request.pre.userExist === 0) {
-      return reply.response({
-        status: false,
-        message: 'Inactive User',
-        forceUpdate: request.pre.forceUpdate
-      }).code(402);
-    } else if (!request.pre.userExist) {
-      return reply.response({
-        status: false,
-        message: 'Unauthorized',
-        forceUpdate: request.pre.forceUpdate
-      });
-    } else if (request.pre.userExist && !request.pre.forceUpdate) {
-      const id = request.params.id;
-      if (request.params.reviewfor === 'brands') {
-        return reply.response(productAdaptor.updateBrandReview(user, id, request));
-      } else if (request.params.reviewfor === 'sellers') {
-        return reply.response(productAdaptor.updateSellerReview(user, id, request.query.isonlineseller, request));
+    try {
+      if (request.pre.userExist === 0) {
+        return reply.response({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
+        return reply.response({
+          status: false,
+          message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate
+        });
+      } else if (request.pre.userExist && !request.pre.forceUpdate) {
+        const id = request.params.id;
+        if (request.params.reviewfor === 'brands') {
+          return reply.response((await productAdaptor.updateBrandReview(user, id, request)));
+        } else if (request.params.reviewfor === 'sellers') {
+          return reply.response((await productAdaptor.updateSellerReview(user, id, request.query.isonlineseller, request)));
+        } else {
+          return reply.response((await productAdaptor.updateProductReview(user, id, request)));
+        }
       } else {
-        return reply.response(productAdaptor.updateProductReview(user, id, request));
+        return reply.response({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
       }
-    } else {
+    } catch (err) {
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err
+        })
+      }).catch(ex => console.log('error while logging on db,', ex));
       return reply.response({
         status: false,
-        message: 'Forbidden',
-        forceUpdate: request.pre.forceUpdate
+        message: 'Unable to add/update review now.',
+        forceUpdate: request.pre.forceUpdate,
+        err
       });
     }
   }
 
-  static retrieveProductDetail(request, reply) {
+  static async retrieveProductDetail(request, reply) {
     const user = _shared2.default.verifyAuthorization(request.headers);
-    if (request.pre.userExist === 0) {
+    try {
+      if (request.pre.userExist === 0) {
+        return reply.response({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
+        return reply.response({
+          status: false,
+          message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate
+        });
+      } else if (request.pre.userExist && !request.pre.forceUpdate) {
+        return reply.response((await productAdaptor.prepareProductDetail({ user, request }))).code(200);
+      } else {
+        return reply.response({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    } catch (err) {
+
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err
+        })
+      }).catch(ex => console.log('error while logging on db,', ex));
       return reply.response({
         status: false,
-        message: 'Inactive User',
-        forceUpdate: request.pre.forceUpdate
-      }).code(402);
-    } else if (!request.pre.userExist) {
-      return reply.response({
-        status: false,
-        message: 'Unauthorized',
-        forceUpdate: request.pre.forceUpdate
-      });
-    } else if (request.pre.userExist && !request.pre.forceUpdate) {
-      return reply.response(productAdaptor.prepareProductDetail({
-        user,
-        request
-      })).code(200);
-    } else {
-      return reply.response({
-        status: false,
-        message: 'Forbidden',
-        forceUpdate: request.pre.forceUpdate
+        message: 'Unable to retrieve product.',
+        forceUpdate: request.pre.forceUpdate,
+        err
       });
     }
   }
 
   static async retrieveCenterProducts(request, reply) {
     const user = _shared2.default.verifyAuthorization(request.headers);
-    if (request.pre.userExist === 0) {
-      return reply.response({
-        status: false,
-        message: 'Inactive User',
-        forceUpdate: request.pre.forceUpdate
-      }).code(402);
-    } else if (!request.pre.userExist) {
-      return reply.response({
-        status: false,
-        message: 'Unauthorized',
-        forceUpdate: request.pre.forceUpdate
-      });
-    } else if (request.pre.userExist && !request.pre.forceUpdate) {
-      try {
+    try {
+      if (request.pre.userExist === 0) {
+        return reply.response({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
+        return reply.response({
+          status: false,
+          message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate
+        });
+      } else if (request.pre.userExist && !request.pre.forceUpdate) {
         const brandId = (request.query.brandids || '[]').split('[')[1].split(']')[0].split(',').filter(Boolean);
         const categoryId = (request.query.categoryids || '[]').split('[')[1].split(']')[0].split(',').filter(Boolean);
         const options = {
@@ -284,32 +325,33 @@ class ProductController {
           productList: await productAdaptor.retrieveProducts(options),
           forceUpdate: request.pre.forceUpdate
         });
-      } catch (err) {
-        console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
-        models.logs.create({
-          api_action: request.method,
-          api_path: request.url.pathname,
-          log_type: 2,
-          user_id: user.id || user.ID,
-          log_content: JSON.stringify({
-            params: request.params,
-            query: request.query,
-            headers: request.headers,
-            payload: request.payload,
-            err
-          })
-        }).catch(ex => console.log('error while logging on db,', ex));
+      } else {
         return reply.response({
           status: false,
-          message: 'Unable to fetch product list',
+          message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
         });
       }
-    } else {
+    } catch (err) {
+
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err
+        })
+      }).catch(ex => console.log('error while logging on db,', ex));
       return reply.response({
         status: false,
-        message: 'Forbidden',
-        forceUpdate: request.pre.forceUpdate
+        message: 'Unable to fetch product.',
+        forceUpdate: request.pre.forceUpdate,
+        err
       });
     }
   }

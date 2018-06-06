@@ -37,7 +37,7 @@ class AccessoryAdaptor {
       where: {
         category_id: accessoryCategories.map(item => item.category_id)
       },
-      attributes: ['category_id', 'category_name']
+      attributes: ['category_id', ['ref_id', 'main_category_id'], 'category_name']
     }), this.retrieveProducts({
       where: {
         user_id,
@@ -48,6 +48,7 @@ class AccessoryAdaptor {
     })]);
 
     return categories.map(item => {
+      item.image_url = `/categories/${item.category_id}/images/1/thumbnail`;
       item.products = products.filter(productItem => productItem.category_id === item.category_id);
       return item;
     });
@@ -71,8 +72,7 @@ class AccessoryAdaptor {
       categoryNameOptions
     });
     const accessoryProductOptions = {
-      accessory_id: accessoryCategories.map(item => item.id),
-      bb_class: 2
+      accessory_id: accessoryCategories.map(item => item.id)
     };
 
     if (bbclass) {
@@ -83,11 +83,11 @@ class AccessoryAdaptor {
       where: accessoryProductOptions
     });
     accessoryCategories = accessoryCategories.map(item => {
-      item.accessory_items = accessoryProducts.filter(apItem => apItem.accessory_id === item.id);
+      item.accessory_items = accessoryProducts.filter(apItem => apItem.accessory_id === item.id && !apItem.details.isOutOfStock);
       return item;
     });
     return categories.map(item => {
-      item.accessories = accessoryCategories.filter(acItem => acItem.category_id === item.category_id);
+      item.accessories = accessoryCategories.filter(acItem => acItem.category_id === item.category_id && acItem.accessory_items.length > 0);
       item.products = products;
       return item;
     }).filter(item => item.accessories.length > 0);
