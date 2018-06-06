@@ -62,6 +62,13 @@ exports.default = (sequelize, DataTypes) => {
       onUpdate: 'cascade'
     });
 
+    table_accessory_categories.hasMany(models.table_accessory_products, {
+      foreignKey: 'accessory_id',
+      as: 'accessory_items',
+      onDelete: 'cascade',
+      onUpdate: 'cascade'
+    });
+
     table_accessory_categories.belongsTo(models.users, {
       foreignKey: 'updated_by',
       onDelete: 'cascade',

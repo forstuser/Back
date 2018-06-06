@@ -2,30 +2,29 @@
 'use strict';
 
 import shared from '../../helpers/shared';
-import AccessoryAdaptor from '../Adaptors/accessory';
+import OfferAdaptor from '../Adaptors/offer';
 import config from '../../config/main';
 
 let modals;
-let accessoryAdaptor;
+let offerAdaptor;
 
-class AccessoryController {
+class OfferController {
   constructor(modal) {
-    accessoryAdaptor = new AccessoryAdaptor(modal);
+    offerAdaptor = new OfferAdaptor(modal);
     modals = modal;
   }
 
-  static async getAccessoryCategories(request, reply) {
+  static async getOfferCategories(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
       // this is where make us of adapter
       try {
         return reply.response({
           status: true,
-          result: await accessoryAdaptor.getAccessoryCategories({
-            user_id: (user.id || user.ID),
+          categories: await offerAdaptor.getOfferCategories({
             queryOptions: request.query,
           }),
-          default_ids: config.CATEGORIES.ACCESSORY,
+          default_ids: config.CATEGORIES.OFFER,
         });
       } catch (err) {
         console.log(`Error on ${new Date()} for user ${user.id ||
@@ -53,16 +52,17 @@ class AccessoryController {
     }
   }
 
-  static async getAccessories(request, reply) {
+  static async getOffers(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
       // this is where make us of adapter
       try {
         return reply.response({
           status: true,
-          result: await accessoryAdaptor.getAccessoriesList({
+          result: await offerAdaptor.getOfferList({
             user_id: (user.id || user.ID),
             queryOptions: request.query,
+            paramOptions: request.params,
           }),
         });
       } catch (err) {
@@ -83,7 +83,7 @@ class AccessoryController {
         }).catch((ex) => console.log('error while logging on db,', ex));
         return reply.response({
           status: false,
-          message: 'Unable to retrieve accessories data',
+          message: 'Unable to retrieve offer data',
         });
       }
     } else {
@@ -91,63 +91,17 @@ class AccessoryController {
     }
   }
 
-  static async getOrderHistory(request, reply) {
-    const user = shared.verifyAuthorization(request.headers);
-    if (request.pre.userExist && !request.pre.forceUpdate) {
-      try {
-        return reply.response({
-          status: true,
-          result: await accessoryAdaptor.getOrderHistory({
-            user_id: (user.id || user.ID),
-          }),
-        });
-      } catch (err) {
-        console.log(`Error on ${new Date()} for user ${user.id ||
-        user.ID} is as follow: \n \n ${err}`);
-        modals.logs.create({
-          api_action: request.method,
-          api_path: request.url.pathname,
-          log_type: 2,
-          user_id: user ? user.id || user.ID : undefined,
-          log_content: JSON.stringify({
-            params: request.params,
-            query: request.query,
-            headers: request.headers,
-            payload: request.payload,
-            err,
-          }),
-        }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply.response({
-          status: false,
-          message: 'Unable to retrieve order history',
-        });
-      }
-    } else {
-      return shared.preValidation(request.pre, reply);
-    }
-  }
-
-  static async createTransaction(request, reply) {
+  static async updateOfferClickCount(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
       // this is where make us of adapter
       try {
         return reply.response({
           status: true,
-          result: await accessoryAdaptor.createTransaction({
-            'transaction_id': request.payload.transaction_id,
-            'status_type': request.payload.status_type,
-            'price': request.payload.price,
-            'quantity': request.payload.quantity,
-            'seller_detail': request.payload.seller_detail,
-            'delivery_date': request.payload.delivery_date,
-            'product_id': request.payload.product_id,
-            'accessory_product_id': request.payload.accessory_product_id,
-            'payment_mode': request.payload.payment_mode,
-            'details_url': request.payload.details_url,
-            'delivery_address': request.payload.delivery_address,
-            'online_seller_id': request.payload.online_seller_id,
-            'user_id': user.id || user.ID,
+          result: await offerAdaptor.updateOfferClickCounts({
+            user_id: (user.id || user.ID),
+            queryOptions: request.query,
+            paramOptions: request.params,
           }),
         });
       } catch (err) {
@@ -168,7 +122,7 @@ class AccessoryController {
         }).catch((ex) => console.log('error while logging on db,', ex));
         return reply.response({
           status: false,
-          message: 'Unable to retrieve order history',
+          message: 'Unable to retrieve offer data',
         });
       }
     } else {
@@ -177,4 +131,4 @@ class AccessoryController {
   }
 }
 
-export default AccessoryController;
+export default OfferController;

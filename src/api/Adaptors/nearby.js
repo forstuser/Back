@@ -21,7 +21,7 @@ class NearByAdaptor {
 		} else if (location) {
 			origins.push(`${location},India`);
 		}
-		this.filterNearByProfessional(professionIds.split('[')[1].split(']')[0].split(',').filter(Boolean), userId)
+		return this.filterNearByProfessional(professionIds.split('[')[1].split(']')[0].split(',').filter(Boolean), userId)
 			.then((result) => {
 				const finalResult = [];
 				const userWithOrigins = [];
@@ -107,9 +107,7 @@ class NearByAdaptor {
 					});
 				}
 			}).catch((err) => {
-      console.log(
-          `Error on ${new Date()} for user ${user.id ||
-          user.ID} is as follow: \n \n ${err}`);
+
 			return reply.response({
 				status: false,
 				message: 'Unable to get near by professional',

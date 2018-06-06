@@ -8,6 +8,10 @@ var _bluebird = require('bluebird');
 
 var _bluebird2 = _interopRequireDefault(_bluebird);
 
+var _lodash = require('lodash');
+
+var _lodash2 = _interopRequireDefault(_lodash);
+
 var _product = require('./product');
 
 var _product2 = _interopRequireDefault(_product);
@@ -15,6 +19,10 @@ var _product2 = _interopRequireDefault(_product);
 var _sellers = require('./sellers');
 
 var _sellers2 = _interopRequireDefault(_sellers);
+
+var _main = require('../../config/main');
+
+var _main2 = _interopRequireDefault(_main);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -33,22 +41,47 @@ class AccessoryAdaptor {
       order: [['priority']]
     });
 
-    const [categories, products] = await _bluebird2.default.all([this.retrieveCategoryNames({
+    const categories = await this.retrieveProductCategories({
       where: {
-        category_id: accessoryCategories.map(item => item.category_id)
+        status_type: 1,
+        category_id: _lodash2.default.uniq(accessoryCategories.map(item => item.category_id))
       },
-      attributes: ['category_id', 'category_name']
-    }), this.retrieveProducts({
-      where: {
-        user_id,
-        status_type: [5, 11],
-        category_id: accessoryCategories.map(item => item.category_id)
-      },
-      attributes: ['brand_id', 'main_category_id', 'category_id', 'product_name', 'id']
-    })]);
+      include: [{
+        model: this.modals.products,
+        as: 'products',
+        where: {
+          user_id, status_type: [5, 11]
+        },
+        attributes: ['brand_id', 'main_category_id', 'category_id', 'product_name', 'id'],
+        required: false
+      }, {
+        model: this.modals.table_accessory_categories,
+        as: 'accessories',
+        where: {
+          status_type: 1
+        },
+        include: {
+          model: this.modals.table_accessory_products,
+          as: 'accessory_items',
+          where: {
+            title: { $or: { $ne: '', $not: null } },
+            details: {
+              isOutOfStock: false,
+              image: { $or: { $ne: '', $not: null } },
+              name: { $or: { $ne: '', $not: null } }
+            }
+          }, attributes: [], required: true
+        },
+        attributes: ['id', 'title', 'category_id', 'priority'],
+        order: [['priority']],
+        required: false
+      }],
+      attributes: ['category_id', ['ref_id', 'main_category_id'], 'category_name']
+    });
 
     return categories.map(item => {
-      item.products = products.filter(productItem => productItem.category_id === item.category_id);
+      item.accessories = _lodash2.default.orderBy(item.accessories, ['priority'], ['asc']);
+      item.image_url = `/categories/${item.category_id}/images/1/thumbnail`;
       return item;
     });
   }
@@ -56,23 +89,24 @@ class AccessoryAdaptor {
   async getAccessoriesList(options) {
     const { user_id, queryOptions } = options;
     console.log(queryOptions);
-    const productOptions = {
-      user_id,
-      status_type: [5, 11]
-    };
-
-    let { categoryid, bbclass } = queryOptions;
-    const accessoryOptions = {};
-    const categoryNameOptions = {};
+    const model_accessory = _main2.default.CATEGORIES.MODEL_ACCESSORIES;
+    let { categoryid, bbclass, accessory_ids, offset, limit, model, brand_id } = queryOptions;
+    accessory_ids = (accessory_ids || '').split(',').filter(item => !!item);
     let [accessoryCategories, categories, products] = await this.retrieveAccessoryCategoryProducts({
-      categoryid,
-      productOptions,
-      accessoryOptions,
-      categoryNameOptions
+      accessory_ids, categoryid, offset, limit, user_id
     });
+
+    accessory_ids = accessory_ids.length > 0 ? accessory_ids : accessoryCategories.map(item => item.id);
+    let filteredAccessoryIds = accessory_ids.filter(aIdItem => !model_accessory.includes(aIdItem.toString()));
+    let modelBasedAccessoryIds = accessory_ids.filter(aIdItem => model_accessory.includes(aIdItem.toString()));
     const accessoryProductOptions = {
-      accessory_id: accessoryCategories.map(item => item.id),
-      bb_class: 2
+      accessory_id: filteredAccessoryIds,
+      title: { $or: { $ne: '', $not: null } },
+      details: {
+        isOutOfStock: false,
+        image: { $or: { $ne: '', $not: null } },
+        name: { $or: { $ne: '', $not: null } }
+      }
     };
 
     if (bbclass) {
@@ -80,40 +114,76 @@ class AccessoryAdaptor {
     }
 
     const accessoryProducts = await this.retrieveAccessoryProducts({
-      where: accessoryProductOptions
+      options: {
+        where: accessoryProductOptions,
+        attributes: ['id', 'asin', 'accessory_id', 'accessory_type_id', 'affiliate_type', [this.modals.sequelize.json('details.price'), 'price'], [this.modals.sequelize.json('details.mrp'), 'mrp'], [this.modals.sequelize.json('details.image'), 'image'], [this.modals.sequelize.json('details.url'), 'url'], [this.modals.sequelize.json('details.name'), 'name'], [this.modals.sequelize.json('details.rating'), 'rating'], [this.modals.sequelize.json('details.productId'), 'pid'], [this.modals.sequelize.json('details.isOutOfStock'), 'isOutOfStock'], [this.modals.sequelize.json('details.seller'), 'seller']]
+      },
+      modelBasedAccessoryIds,
+      brand_id,
+      model
     });
     accessoryCategories = accessoryCategories.map(item => {
-      item.accessory_items = accessoryProducts.filter(apItem => apItem.accessory_id === item.id);
+      item.accessory_items = accessoryProducts.filter(apItem => apItem.accessory_id === item.id && !apItem.isOutOfStock);
       return item;
     });
     return categories.map(item => {
-      item.accessories = accessoryCategories.filter(acItem => acItem.category_id === item.category_id);
-      item.products = products;
+      item.accessories = accessoryCategories.filter(acItem => acItem.category_id === item.category_id && acItem.accessory_items.length > 0);
+      item.products = item.products || products.filter(pItem => pItem.category_id === item.category_id);
       return item;
-    }).filter(item => item.accessories.length > 0);
+    });
   }
 
   async retrieveAccessoryCategoryProducts(parameters) {
-    let { categoryid, productOptions, accessoryOptions, categoryNameOptions } = parameters;
+    let { categoryid, accessory_ids, offset, limit, user_id } = parameters;
+    const productOptions = { user_id, status_type: [5, 11] };
+    const accessoryOptions = { status_type: 1 };
+    const categoryNameOptions = { status_type: 1 };
     if (categoryid) {
       productOptions.category_id = categoryid;
       accessoryOptions.category_id = categoryid;
       categoryNameOptions.category_id = categoryid;
+      if (accessory_ids.length > 0) {
+        accessoryOptions.id = accessory_ids;
+      }
+
+      limit = limit || _main2.default.LIMITS.ACCESSORY;
+
+      offset = offset || 0;
       return await _bluebird2.default.all([this.retrieveAccessoryCategories({
         where: accessoryOptions,
-        attributes: ['id', 'title', 'category_id'],
-        order: [['priority']]
-      }), this.retrieveCategoryNames({
+        include: [{
+          model: this.modals.table_accessory_products,
+          as: 'accessory_items',
+          where: {
+            title: { $or: { $ne: '', $not: null } },
+            details: {
+              isOutOfStock: false,
+              image: { $or: { $ne: '', $not: null } },
+              name: { $or: { $ne: '', $not: null } }
+            }
+          },
+          attributes: [],
+          required: true
+        }],
+        attributes: ['id', 'title', 'category_id', 'priority'],
+        order: [['priority']],
+        offset,
+        limit
+      }), this.retrieveProductCategories({
         where: categoryNameOptions,
+        include: [{
+          model: this.modals.products,
+          as: 'products',
+          where: productOptions,
+          attributes: ['brand_id', 'main_category_id', 'category_id', 'product_name', 'id', 'model'],
+          required: false
+        }],
         attributes: ['category_id', 'category_name']
-      }), this.retrieveProducts({
-        where: productOptions,
-        attributes: ['brand_id', 'main_category_id', 'category_id', 'product_name', 'id']
       })]);
     } else {
       const products = await this.retrieveProducts({
         where: productOptions,
-        attributes: ['brand_id', 'main_category_id', 'category_id', 'product_name', 'id']
+        attributes: ['brand_id', 'main_category_id', 'category_id', 'product_name', 'id', 'model']
       });
       const categoryIds = products.map(item => item.category_id);
       accessoryOptions.category_id = categoryIds;
@@ -125,7 +195,7 @@ class AccessoryAdaptor {
         where: accessoryOptions,
         attributes: ['id', 'title', 'category_id'],
         order: [['priority']]
-      }), this.retrieveCategoryNames({
+      }), this.retrieveProductCategories({
         where: categoryNameOptions,
         attributes: ['category_id', 'category_name']
       }), products]);
@@ -133,7 +203,6 @@ class AccessoryAdaptor {
   }
 
   async getOrderHistory(options) {
-
     const transactions = await this.retrieveTransactions({
       where: {
         created_by: options.user_id
@@ -147,8 +216,10 @@ class AccessoryAdaptor {
     // these transactions have the accessory product id
     // get the accessory products using that
     this.retrieveAccessoryProducts({
-      where: {
-        id: accessory_product_ids
+      options: {
+        where: {
+          id: accessory_product_ids
+        }
       }
     }),
     // they also have product id
@@ -228,33 +299,62 @@ class AccessoryAdaptor {
     })]);
   }
 
-  retrieveProducts(options) {
-    return this.modals.products.findAll(options).then(result => result.map(item => item.toJSON()));
+  async retrieveProducts(options) {
+    const result = await this.modals.products.findAll(options);
+    return result.map(item => item.toJSON());
   }
 
-  retrieveAccessoryCategories(options) {
-    return this.modals.table_accessory_categories.findAll(options).then(result => result.map(item => item.toJSON()));
+  async retrieveAccessoryCategories(options) {
+    const result = await this.modals.table_accessory_categories.findAll(options);
+    return result.map(item => item.toJSON());
   }
 
-  retrieveCategoryNames(options) {
-    return this.modals.categories.findAll(options).then(result => result.map(item => item.toJSON()));
+  async retrieveProductCategories(options) {
+    const result = await this.modals.categories.findAll(options);
+    return result.map(item => item.toJSON());
   }
 
-  retrieveAccessoryProducts(options) {
-    return this.modals.table_accessory_products.findAll(options).then(result => result.map(item => item.toJSON()));
+  async retrieveAccessoryProducts(parameters) {
+    let { options, modelBasedAccessoryIds, brand_id, model } = parameters;
+    let result = await this.modals.table_accessory_products.findAll(options);
+    if ((brand_id || model) && modelBasedAccessoryIds && modelBasedAccessoryIds.length > 0) {
+      const accessory_types = await this.retrieveAccessoryType({
+        where: JSON.parse(JSON.stringify({
+          brand_id, model
+        })),
+        attributes: ['id']
+      });
+      const modelOptions = {};
+      _lodash2.default.assign(modelOptions, options);
+      modelOptions.where.accessory_id = modelBasedAccessoryIds;
+      modelOptions.where.accessory_type_id = accessory_types.map(atItem => atItem.id);
+      const modelAccessories = await this.modals.table_accessory_products.findAll(modelOptions);
+      result.push(...modelAccessories);
+    }
+
+    console.log(JSON.stringify(result));
+
+    return result;
   }
 
-  retrieveTransactions(options) {
-    return this.modals.table_transaction.findAll(options).then(result => result.map(item => item.toJSON()));
+  async retrieveAccessoryType(options) {
+    const result = await this.modals.table_accessory_types.findAll(options);
+    return result.map(item => item.toJSON());
   }
 
-  retrievePaymentMode(options) {
-    return this.modals.table_payment_mode.findAll(options).then(result => result.map(item => item.toJSON()));
+  async retrieveTransactions(options) {
+    const result = await this.modals.table_transaction.findAll(options);
+    return result.map(item => item.toJSON());
   }
 
-  addTransaction(options) {
-    return this.modals.table_transaction.create(options).then(result => result.toJSON());
+  async retrievePaymentMode(options) {
+    await this.modals.table_payment_mode.findAll(options);
+    return result.map(item => item.toJSON());
   }
 
+  async addTransaction(options) {
+    const result = await this.modals.table_transaction.create(options);
+    return result.toJSON();
+  }
 }
 exports.default = AccessoryAdaptor;

@@ -60,13 +60,6 @@ export default (sequelize, DataTypes) => {
 
     table_accessory_types.belongsTo(models.users,
         {
-          foreignKey: 'updated_by',
-          onDelete: 'cascade',
-          onUpdate: 'cascade',
-        });
-
-    table_accessory_types.belongsTo(models.users,
-        {
           foreignKey: 'created_by',
           onDelete: 'cascade',
           onUpdate: 'cascade',

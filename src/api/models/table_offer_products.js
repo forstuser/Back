@@ -1,36 +1,44 @@
 'use strict';
 export default (sequelize, DataTypes) => {
-  const table_accessory_products = sequelize.define('table_accessory_products',
+  const offerProducts = sequelize.define('offerProducts',
       {
         title: {
-          type: DataTypes.STRING(2550),
+          type: DataTypes.STRING(34554),
         },
-        product_brand_id: {
-          type: DataTypes.INTEGER,
-        },
-        product_model: {
+        promo_code: {
           type: DataTypes.STRING,
         },
         description: {
-          type: DataTypes.STRING(25500),
+          type: DataTypes.STRING(34554),
         },
-        asin: {
+        provider_id: {
           type: DataTypes.STRING,
         },
-        pid: {
+        adv_campaign_name: {
           type: DataTypes.STRING,
         },
-        details: {
-          type: DataTypes.JSONB,
+        short_title: {
+          type: DataTypes.STRING,
         },
-        accessory_id: {
+        category_id: {
           type: DataTypes.INTEGER,
         },
-        accessory_type_id: {
+        main_category_id: {
           type: DataTypes.INTEGER,
         },
-        bb_class: {
-          type: DataTypes.INTEGER,
+        promo_link: {
+          type: DataTypes.STRING,
+        },
+        goto_link: {
+          type: DataTypes.STRING,
+        },
+        date_start: {
+          type: DataTypes.DATE,
+          defaultValue: sequelize.literal('NOW()'),
+        },
+        date_end: {
+          type: DataTypes.DATE,
+          defaultValue: sequelize.literal('NOW()'),
         },
         created_at: {
           type: DataTypes.DATE,
@@ -52,11 +60,24 @@ export default (sequelize, DataTypes) => {
           type: DataTypes.INTEGER,
           defaultValue: 1,
         },
-        affiliate_type: {
-          type: DataTypes.INTEGER,
+        offer_id: {
+          type: DataTypes.STRING,
         },
-        url: {
-          type: DataTypes.STRING(2550),
+        logo: {
+          type: DataTypes.STRING,
+        },
+        discount: {
+          type: DataTypes.STRING,
+        },
+        cashback: {
+          type: DataTypes.STRING,
+        },
+        other: {
+          type: DataTypes.STRING,
+        },
+        click_count: {
+          type: DataTypes.INTEGER,
+          defaultValue: 0,
         },
       },
       {
@@ -64,47 +85,31 @@ export default (sequelize, DataTypes) => {
         defaultPrimaryKey: true,
         timestamps: true,
         underscored: true,
-        tableName: 'table_accessory_products',
+        tableName: 'table_offer_products',
       });
 
-  table_accessory_products.associate = (models) => {
-
-    table_accessory_products.belongsTo(models.table_accessory_types,
+  offerProducts.associate = (models) => {
+    offerProducts.belongsTo(models.offerCategories,
         {
-          foreignKey: 'accessory_type_id',
-          as: 'accessory_type',
+          foreignKey: 'category_id',
+          as: 'category',
           onDelete: 'cascade',
           onUpdate: 'cascade',
         });
 
-    table_accessory_products.belongsTo(models.brands,
-        {
-          foreignKey: 'product_brand_id',
-          onDelete: 'cascade',
-          onUpdate: 'cascade',
-        });
-
-    table_accessory_products.belongsTo(models.table_accessory_categories,
-        {
-          foreignKey: 'accessory_id',
-          as: 'accessory',
-          onDelete: 'cascade',
-          onUpdate: 'cascade',
-        });
-
-    table_accessory_products.belongsTo(models.users,
+    offerProducts.belongsTo(models.users,
         {
           foreignKey: 'updated_by',
           onDelete: 'cascade',
           onUpdate: 'cascade',
         });
-    table_accessory_products.belongsTo(models.users,
+    offerProducts.belongsTo(models.users,
         {
           foreignKey: 'created_by',
           onDelete: 'cascade',
           onUpdate: 'cascade',
         });
-    table_accessory_products.belongsTo(models.statuses,
+    offerProducts.belongsTo(models.statuses,
         {
           foreignKey: 'status_type',
           targetKey: 'status_type',
@@ -112,5 +117,5 @@ export default (sequelize, DataTypes) => {
           onUpdate: 'cascade',
         });
   };
-  return table_accessory_products;
+  return offerProducts;
 }

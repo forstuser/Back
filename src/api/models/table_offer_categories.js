@@ -1,13 +1,7 @@
 'use strict';
 
 export default (sequelize, DataTypes) => {
-  const categories = sequelize.define('categories', {
-        category_id: {
-          type: DataTypes.INTEGER,
-          primaryKey: true,
-          autoIncrement: true,
-          unique: true,
-        },
+  const offerCategories = sequelize.define('offerCategories', {
         category_name: {
           type: DataTypes.STRING,
         },
@@ -38,15 +32,6 @@ export default (sequelize, DataTypes) => {
         ref_id: {
           'type': DataTypes.INTEGER,
         },
-        type_category_form: {
-          'type': DataTypes.INTEGER,
-        },
-        category_form_1: {
-          'type': DataTypes.INTEGER,
-        },
-        category_form_2: {
-          'type': DataTypes.INTEGER,
-        },
         category_level: {
           'type': DataTypes.INTEGER,
         },
@@ -67,43 +52,29 @@ export default (sequelize, DataTypes) => {
           type: DataTypes.DATE,
           defaultValue: sequelize.literal('NOW()'),
         },
-        dual_warranty_item: {
-          type: DataTypes.STRING,
-        },
       },
       {
         freezeTableName: true,
-        defaultPrimaryKey: false,
+        defaultPrimaryKey: true,
         timestamps: true,
         underscored: true,
-        tableName: 'categories',
+        tableName: 'table_offer_categories',
       });
 
-  categories.associate = (models) => {
-    categories.belongsTo(models.users,
+  offerCategories.associate = (models) => {
+    offerCategories.belongsTo(models.users,
         {foreignKey: 'updated_by'});
-    categories.belongsTo(models.categories,
-        {foreignKey: 'ref_id'});
-    categories.hasMany(models.categories,
+    offerCategories.belongsTo(models.offerCategories,
+        {foreignKey: 'ref_id', as: 'categories'});
+    offerCategories.hasMany(models.offerCategories,
         {foreignKey: 'ref_id', as: 'subCategories'});
-    categories.hasMany(models.products,
-        {foreignKey: 'category_id', as: 'products'});
-    categories.hasMany(models.products,
-        {foreignKey: 'main_category_id', as: 'main_products'});
-    categories.hasMany(models.products,
-        {foreignKey: 'sub_category_id', as: 'sub_products'});
-    categories.hasMany(models.table_accessory_categories,
-        {foreignKey: 'category_id', as: 'accessories'});
+    offerCategories.hasMany(models.offerProducts,
+        {foreignKey: 'category_id', as: 'offers'});
+    offerCategories.hasMany(models.offerProducts,
+        {foreignKey: 'main_category_id', as: 'main_offers'});
 
-    categories.belongsTo(models.statuses,
+    offerCategories.belongsTo(models.statuses,
         {foreignKey: 'status_type', targetKey: 'status_type'});
-    categories.belongsToMany(models.insuranceBrands,
-        {
-          foreignKey: 'category_id',
-          otherKey: 'insurance_brand_id',
-          through: 'insurance_brand_categories',
-          as: 'insuranceProviders',
-        });
   };
-  return categories;
+  return offerCategories;
 };

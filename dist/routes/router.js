@@ -39,6 +39,8 @@ var _brand = require('./brand');
 
 var _accessory_routes = require('./accessory_routes');
 
+var _offer = require('./offer');
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 let middleware;
@@ -62,6 +64,7 @@ exports.default = (app, modals) => {
   const uploadFileRoute = [];
   const whatToServiceRoutes = [];
   const accessoryServicesRoutes = [];
+  const offerRoutes = [];
   const searchController = new _search2.default(modals);
   (0, _auth.prepareAuthRoutes)(modals, authRoutes, middleware);
 
@@ -89,6 +92,8 @@ exports.default = (app, modals) => {
 
   (0, _accessory_routes.prepareAccessoryRoute)(modals, accessoryServicesRoutes, middleware);
 
+  (0, _offer.prepareOfferRoutes)(modals, offerRoutes, middleware);
+
   if (searchController) {
     searchRoutes.push({
       method: 'GET',
@@ -110,7 +115,7 @@ exports.default = (app, modals) => {
     });
   }
 
-  [...authRoutes, ...categoryRoutes, ...brandRoutes, ...sellerRoutes, ...serviceCenterRoutes, ...billManagementRoutes, ...uploadFileRoute, ...dashboardRoutes, ...productRoutes, ...insightRoutes, ...searchRoutes, ...generalRoutes, ...repairRoutes, ...calendarRoutes, ...whatToServiceRoutes, ...accessoryServicesRoutes].forEach(routeItem => app.route(routeItem));
+  [...authRoutes, ...categoryRoutes, ...brandRoutes, ...sellerRoutes, ...serviceCenterRoutes, ...billManagementRoutes, ...uploadFileRoute, ...dashboardRoutes, ...productRoutes, ...insightRoutes, ...searchRoutes, ...generalRoutes, ...repairRoutes, ...calendarRoutes, ...whatToServiceRoutes, ...accessoryServicesRoutes, ...offerRoutes].forEach(routeItem => app.route(routeItem));
   const handler = function (request, h, err) {
     console.log(err);
     return h.response('The page was not found').code(404);
