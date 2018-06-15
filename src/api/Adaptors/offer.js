@@ -1,5 +1,6 @@
 import moment from 'moment';
 import config from '../../config/main';
+import _ from 'lodash';
 
 export default class OfferAdaptor {
   constructor(modals) {
@@ -14,38 +15,103 @@ export default class OfferAdaptor {
       },
     };
 
-    const offerInclude = {
-      model: this.modals.offerProducts,
-      as: 'main_offers', where: {
-        status_type: 1, date_end: {$gte: moment().format()},
-      }, attributes: [], required: true,
-    };
-
     if (queryOptions.ref_id) {
       offerOptions.main_category_id = queryOptions.ref_id;
-      offerInclude.as = 'offers';
     }
 
-    const offerCategories = await this.retrieveOffers({
-      where: offerOptions,
-      attributes: ['category_id', 'main_category_id'],
-    });
+    const offerList = await Promise.all([
+      ...(await this.retrieveOffers(0, {
+        where: offerOptions,
+        attributes: [
+          'category_id', 'main_category_id',
+          'discount', 'cashback', 'other', 'adv_campaign_name'],
+      })), ...(await this.retrieveOffers(1, {
+        where: offerOptions,
+        attributes: [
+          'category_id', 'main_category_id',
+          'discount', 'cashback', 'other', 'adv_campaign_name'],
+      })), ...(await this.retrieveOffers(2, {
+        where: offerOptions,
+        attributes: [
+          'category_id', 'main_category_id',
+          'discount', 'cashback', 'other', 'adv_campaign_name'],
+      }))]);
     const categoryOptions = {
       status_type: 1,
-      id: offerCategories.map(item => queryOptions.ref_id ?
+      id: offerList.map(item => queryOptions.ref_id ?
           item.category_id :
           item.main_category_id),
     };
-    return await this.retrieveOfferCategories({
+    const offerCategories = await this.retrieveOfferCategories({
       where: categoryOptions,
-      include: [offerInclude],
       attributes: [
-        [
-          this.modals.sequelize.literal(`count(${offerInclude.as})`),
-          'offer_counts'],
         'id', 'category_level', 'category_name', 'category_image_name'],
       order: [['category_name']],
-      group: ['"offerCategories"."id"'],
+    });
+
+    return offerCategories.map(item => {
+      const category_offers = offerList.filter(olItem => queryOptions.ref_id ?
+          olItem.category_id.toString() === item.id.toString() :
+          olItem.main_category_id.toString() === item.id.toString());
+      item.offer_counts = offerList.filter(olItem => queryOptions.ref_id ?
+          olItem.category_id.toString() === item.id.toString() :
+          olItem.main_category_id.toString() === item.id.toString()).length;
+      item.filter = {};
+      item.filter.discount = _.groupBy(_.sortBy(
+          category_offers.filter(cOItem => cOItem.discount).
+              map(cOItem => ({
+                category_id: cOItem.category_id,
+                discount: cOItem.discount,
+              })), ['discount', 'category_id']), 'category_id');
+      item.filter.cashback = _.groupBy(_.sortBy(
+          category_offers.filter(cOItem => cOItem.cashback).
+              map(cOItem => ({
+                category_id: cOItem.category_id,
+                cashback: cOItem.cashback,
+              })), ['cashback', 'category_id']), 'category_id');
+      item.filter.merchant = _.groupBy(_.sortBy(
+          category_offers.filter(cOItem => cOItem.adv_campaign_name).
+              map(cOItem => ({
+                category_id: cOItem.category_id,
+                merchant: cOItem.adv_campaign_name,
+              })), ['adv_campaign_name', 'category_id']), 'category_id');
+      item.filter.other = _.groupBy(_.sortBy(
+          category_offers.filter(cOItem => cOItem.other).
+              map(cOItem => ({
+                category_id: cOItem.category_id,
+                other: cOItem.other,
+              })), ['other', 'category_id']), 'category_id');
+      for (let dItem in item.filter.discount) {
+        if (item.filter.discount.hasOwnProperty(dItem)) {
+          item.filter.discount[dItem] = _.sortedUniqBy(
+              item.filter.discount[dItem], 'discount').
+              map(cOItem => cOItem.discount);
+        }
+      }
+
+      for (let cItem in item.filter.cashback) {
+        if (item.filter.cashback.hasOwnProperty(cItem)) {
+          item.filter.cashback[cItem] = _.sortedUniqBy(
+              item.filter.cashback[cItem], 'cashback').
+              map(cOItem => cOItem.cashback);
+        }
+      }
+
+      for (let oItem in item.filter.other) {
+        if (item.filter.other.hasOwnProperty(oItem)) {
+          item.filter.other[oItem] = _.sortedUniqBy(
+              item.filter.other[oItem], 'cashback').map(cOItem => cOItem.other);
+        }
+      }
+
+      for (let mItem in item.filter.merchant) {
+        if (item.filter.merchant.hasOwnProperty(mItem)) {
+          item.filter.merchant[mItem] = _.sortedUniqBy(
+              item.filter.merchant[mItem], 'cashback').
+              map(cOItem => cOItem.merchant);
+        }
+      }
+      return item;
     });
   }
 
@@ -53,12 +119,36 @@ export default class OfferAdaptor {
     const {user_id, queryOptions, paramOptions} = options;
     console.log(queryOptions);
     let {id} = paramOptions;
-    let {offset, limit} = queryOptions;
-    const offerInclude = {
-      model: this.modals.offerProducts, as: 'offers',
-      where: {status_type: 1, date_end: {$gte: moment().format()}},
-      required: true, attributes: [],
-    };
+    let {offset, limit, cashback, discount, other, merchant, discount_offer_id, cashback_offer_id, other_offer_id} = queryOptions;
+
+    const offerInclude = [
+      {
+        model: this.modals.offerProductsDiscount,
+        as: 'offers', where: JSON.parse(JSON.stringify({
+          status_type: 1,
+          date_end: {$gte: moment().format()},
+          cashback: cashback ? {$gte: cashback} : undefined,
+          discount: discount ? {$gte: discount} : undefined,
+          adv_campaign_name: merchant ? {$in: merchant.split(',')} : undefined,
+        })), attributes: [/*'discount', 'cashback', 'other'*/], required: false,
+      }, {
+        model: this.modals.offerProductsCashback,
+        as: 'offers_cashback', where: JSON.parse(JSON.stringify({
+          status_type: 1,
+          date_end: {$gte: moment().format()},
+          cashback: cashback ? {$gte: cashback} : undefined,
+          discount: discount ? {$gte: discount} : undefined,
+          adv_campaign_name: merchant ? {$in: merchant.split(',')} : undefined,
+        })), attributes: [/*'discount', 'cashback', 'other'*/], required: false,
+      }, {
+        model: this.modals.offerProductsOther,
+        as: 'offers_other', where: JSON.parse(JSON.stringify({
+          status_type: 1,
+          date_end: {$gte: moment().format()},
+          other: other ? {$not: null, $ilike: other} : undefined,
+          adv_campaign_name: merchant ? {$in: merchant.split(',')} : undefined,
+        })), attributes: [/*'discount', 'cashback', 'other'*/], required: false,
+      }];
     offset = offset || 0;
     limit = limit || config.LIMITS.OFFER;
     const selected_category = await this.retrieveOfferCategory({
@@ -75,47 +165,41 @@ export default class OfferAdaptor {
     if (selected_category.category_level === 1) {
       const categories = await this.retrieveOfferCategories({
         where: {ref_id: id},
-        include: [offerInclude],
+        include: offerInclude,
         attributes: [
           'id', 'category_level', 'category_name',
           'category_image_name', [
-            this.modals.sequelize.literal(`count(${offerInclude.as})`),
-            'offer_counts']],
+            this.modals.sequelize.literal(`count(${offerInclude[0].as})`),
+            'offer_counts'], [
+            this.modals.sequelize.literal(`count(${offerInclude[1].as})`),
+            'offer_cashback_counts'], [
+            this.modals.sequelize.literal(`count(${offerInclude[2].as})`),
+            'offer_other_counts']],
         group: ['"offerCategories"."id"'],
       });
 
       offers = await Promise.all(
-          categories.map(async (item) => {
-            const offerOptions = {
-              status_type: 1, category_id: item.id,
-              date_end: {$gte: moment().format()},
-            };
-            if (queryOptions.cashback && queryOptions.discount) {
-              offerOptions.cashback = {
-                $not: null,
-              };
-              offerOptions.discount = {
-                $not: null,
-              };
-            } else if (queryOptions.cashback) {
-              offerOptions.cashback = {
-                $not: null,
-              };
-            } else if (queryOptions.discount) {
-              offerOptions.discount = {
-                $not: null,
-              };
-            } else if (queryOptions.other) {
-              offerOptions.other = {
-                $not: null,
-              };
-            }
-            return await this.retrieveOffers(
-                {where: offerOptions, offset, limit});
-          }));
+          categories.map(async (item) => await this.retrieveOfferList({
+            category_id: item.id,
+            cashback,
+            discount,
+            discount_offer_id,
+            offset,
+            limit,
+            other,
+            cashback_offer_id,
+            other_offer_id,
+            merchant,
+          })));
+
+      console.log('\n\n\n\n\n\n', JSON.stringify(offers));
       return categories.map((item, index) => {
         item.offers = offers[index];
-
+        item.offer_counts = discount && cashback ?
+            parseInt(item.offer_counts || 0) :
+            parseInt(item.offer_counts || 0) +
+            parseInt(item.offer_cashback_counts || 0) +
+            parseInt(item.offer_other_counts || 0);
         return item;
       });
     }
@@ -127,16 +211,99 @@ export default class OfferAdaptor {
         attributes: [
           'id', 'category_level', 'category_name',
           'category_image_name'],
-      }), this.retrieveOffers({
-        where: {
-          status_type: 1, category_id: id,
-          date_end: {$gte: moment().format()},
-        }, offset, limit,
+      }),
+      this.retrieveOfferList({
+        category_id: id, cashback, discount, discount_offer_id, limit,
+        offset, other, cashback_offer_id, other_offer_id, merchant,
       })]);
     category.offers = offers;
 
     return category;
 
+  }
+
+  async retrieveOfferList(parameters) {
+    let {category_id, cashback, discount, discount_offer_id, offset, limit, other, cashback_offer_id, other_offer_id, merchant} = parameters;
+    const offerOptions = {
+      status_type: 1, category_id,
+      date_end: {$gte: moment().format()},
+      adv_campaign_name: merchant ? {$in: merchant.split(',')} : undefined,
+    };
+    const offers = {
+      discount: [],
+      cashback: [],
+      others: [],
+    };
+    const offer_values = ['discount', 'cashback', 'others'];
+    let data_option = (cashback && discount) || discount ?
+        0 : cashback ? 1 : 2;
+    offerOptions.cashback = cashback ? {$gte: cashback} : undefined;
+    offerOptions.discount = discount ? {$gte: discount} : undefined;
+    offerOptions.id = discount_offer_id ? {$gt: discount_offer_id} : undefined;
+    let discount_offer, cashback_offer, other_offer;
+    let offer_list = [];
+    if (!cashback && !discount && !other) {
+      discount_offer = await this.retrieveOffers(0, {
+        where: JSON.parse(JSON.stringify(offerOptions)),
+        offset, limit,
+      });
+
+      offerOptions.id = cashback_offer_id ?
+          {$gt: cashback_offer_id} :
+          undefined;
+      cashback_offer = await this.retrieveOffers(1, {
+        where: JSON.parse(JSON.stringify(offerOptions)),
+        offset, limit,
+      });
+
+      offerOptions.id = other_offer_id ? {$gt: other_offer_id} : undefined;
+      other_offer = await this.retrieveOffers(2, {
+        where: JSON.parse(JSON.stringify(offerOptions)),
+        offset, limit,
+      });
+    } else {
+      offerOptions.id = data_option === 1 && cashback_offer_id ?
+          {$gt: cashback_offer_id} : data_option === 2 && other_offer_id ?
+              {$gt: other_offer_id} :
+              discount_offer_id ? {$gt: discount_offer_id} : undefined;
+      offers[offer_values[data_option]] = await this.retrieveOffers(data_option,
+          {
+            where: JSON.parse(JSON.stringify(offerOptions)),
+            offset, limit,
+          });
+    }
+
+    let lastIndex = 0;
+    if (!cashback && !discount && !other) {
+      while (offer_list.length < limit) {
+        if (discount_offer[lastIndex] || cashback_offer[lastIndex] ||
+            other_offer[lastIndex]) {
+          offers[offer_values[0]].push(discount_offer[lastIndex]);
+          offer_list.push(discount_offer[lastIndex]);
+          if (offer_list.indexOf((olItem) => olItem.offer_id.toString() ===
+              cashback_offer[lastIndex].offer_id.toString()) === -1 &&
+              offer_list.length < limit) {
+            offer_list.push(cashback_offer[lastIndex]);
+            offers[offer_values[1]].push(cashback_offer[lastIndex]);
+          }
+          if (offer_list.length < limit) {
+            offer_list.push(other_offer[lastIndex]);
+            offers[offer_values[2]].push(other_offer[lastIndex]);
+          }
+          offers[offer_values[0]] = offers[offer_values[0]].filter(
+              item => item);
+          offers[offer_values[1]] = offers[offer_values[1]].filter(
+              item => item);
+          offers[offer_values[2]] = offers[offer_values[2]].filter(
+              item => item);
+          offer_list = offer_list.filter(item => item);
+          lastIndex++;
+        } else {
+          break;
+        }
+      }
+    }
+    return offers;
   }
 
   async updateOfferClickCounts(options) {
@@ -165,16 +332,23 @@ export default class OfferAdaptor {
     return result;
   }
 
-  async retrieveOffers(options) {
-    const result = await this.modals.offerProducts.findAll(options);
+  async retrieveOffers(data_option, options) {
+    options.order = data_option === 1 ?
+        [['cashback', 'desc']] :
+        [['discount', 'desc'], ['cashback', 'desc']];
+    const result = data_option === 1 ?
+        await this.modals.offerProductsCashback.findAll(options) :
+        data_option === 2 ?
+            await this.modals.offerProductsOther.findAll(options) :
+            await this.modals.offerProductsDiscount.findAll(options);
     return result.map(item => item.toJSON());
   }
 
   async retrieveOfferById(id) {
-    return await this.modals.offerProducts.findById(id);
+    return await this.modals.offerProductsDiscount.findById(id);
   }
 
   async updateOffer(values, options) {
-    return await this.modals.offerProducts.update(values, options);
+    return await this.modals.offerProductsDiscount.update(values, options);
   }
 }

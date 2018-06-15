@@ -68,10 +68,18 @@ export default (sequelize, DataTypes) => {
         {foreignKey: 'ref_id', as: 'categories'});
     offerCategories.hasMany(models.offerCategories,
         {foreignKey: 'ref_id', as: 'subCategories'});
-    offerCategories.hasMany(models.offerProducts,
+    offerCategories.hasMany(models.offerProductsDiscount,
         {foreignKey: 'category_id', as: 'offers'});
-    offerCategories.hasMany(models.offerProducts,
+    offerCategories.hasMany(models.offerProductsDiscount,
         {foreignKey: 'main_category_id', as: 'main_offers'});
+    offerCategories.hasMany(models.offerProductsCashback,
+        {foreignKey: 'category_id', as: 'offers_cashback'});
+    offerCategories.hasMany(models.offerProductsCashback,
+        {foreignKey: 'main_category_id', as: 'main_offers_cashback'});
+    offerCategories.hasMany(models.offerProductsOther,
+        {foreignKey: 'category_id', as: 'offers_other'});
+    offerCategories.hasMany(models.offerProductsOther,
+        {foreignKey: 'main_category_id', as: 'main_offers_other'});
 
     offerCategories.belongsTo(models.statuses,
         {foreignKey: 'status_type', targetKey: 'status_type'});

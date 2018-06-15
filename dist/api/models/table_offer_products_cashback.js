@@ -5,7 +5,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 
 exports.default = (sequelize, DataTypes) => {
-  const offerProductsDiscount = sequelize.define('offerProductsDiscount', {
+  const offerProductsCashback = sequelize.define('offerProductsCashback', {
     title: {
       type: DataTypes.STRING(34554)
     },
@@ -88,33 +88,33 @@ exports.default = (sequelize, DataTypes) => {
     defaultPrimaryKey: true,
     timestamps: true,
     underscored: true,
-    tableName: 'table_offer_products'
+    tableName: 'table_offer_products_cashback'
   });
 
-  offerProductsDiscount.associate = models => {
-    offerProductsDiscount.belongsTo(models.offerCategories, {
+  offerProductsCashback.associate = models => {
+    offerProductsCashback.belongsTo(models.offerCategories, {
       foreignKey: 'category_id',
       as: 'category',
       onDelete: 'cascade',
       onUpdate: 'cascade'
     });
 
-    offerProductsDiscount.belongsTo(models.users, {
+    offerProductsCashback.belongsTo(models.users, {
       foreignKey: 'updated_by',
       onDelete: 'cascade',
       onUpdate: 'cascade'
     });
-    offerProductsDiscount.belongsTo(models.users, {
+    offerProductsCashback.belongsTo(models.users, {
       foreignKey: 'created_by',
       onDelete: 'cascade',
       onUpdate: 'cascade'
     });
-    offerProductsDiscount.belongsTo(models.statuses, {
+    offerProductsCashback.belongsTo(models.statuses, {
       foreignKey: 'status_type',
       targetKey: 'status_type',
       onDelete: 'cascade',
       onUpdate: 'cascade'
     });
   };
-  return offerProductsDiscount;
+  return offerProductsCashback;
 };
