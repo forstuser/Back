@@ -582,7 +582,7 @@ class ProductAdaptor {
     }).then(productResult => {
       products = productResult ? productResult.toJSON() : productResult;
       if (products) {
-        products.cImageURL = products.file_type ? `/consumer/products/${products.id}/images/${products.file_ref}` : products.sub_category_id ? `/categories/${products.sub_category_id}/images/0` : products.cImageURL;
+        products.cImageURL = products.file_type ? `/consumer/products/${products.id}/images/${products.file_ref}` : products.sub_category_id ? `/categories/${products.sub_category_id}/images/1` : products.cImageURL;
         products.sub_category_name = products.sub_category_name || products.default_sub_category_name;
         products.masterCategoryName = products.masterCategoryName || products.default_masterCategoryName;
         products.categoryName = products.categoryName || products.default_categoryName;
