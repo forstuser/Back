@@ -155,16 +155,9 @@ class OfferAdaptor {
       });
 
       offers = await Promise.all(categories.map(async item => await this.retrieveOfferList({
-        category_id: item.id,
-        cashback,
-        discount,
-        discount_offer_id,
-        offset,
-        limit,
-        other,
-        cashback_offer_id,
-        other_offer_id,
-        merchant
+        category_id: item.id, cashback, discount,
+        discount_offer_id, offset, limit, other,
+        cashback_offer_id, other_offer_id, merchant
       })));
 
       console.log('\n\n\n\n\n\n', JSON.stringify(offers));

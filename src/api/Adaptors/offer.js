@@ -167,8 +167,7 @@ export default class OfferAdaptor {
         where: {ref_id: id},
         include: offerInclude,
         attributes: [
-          'id', 'category_level', 'category_name',
-          'category_image_name', [
+          'id', 'category_level', 'category_name', 'category_image_name', [
             this.modals.sequelize.literal(`count(${offerInclude[0].as})`),
             'offer_counts'], [
             this.modals.sequelize.literal(`count(${offerInclude[1].as})`),
@@ -180,16 +179,9 @@ export default class OfferAdaptor {
 
       offers = await Promise.all(
           categories.map(async (item) => await this.retrieveOfferList({
-            category_id: item.id,
-            cashback,
-            discount,
-            discount_offer_id,
-            offset,
-            limit,
-            other,
-            cashback_offer_id,
-            other_offer_id,
-            merchant,
+            category_id: item.id, cashback, discount,
+            discount_offer_id, offset, limit, other,
+            cashback_offer_id, other_offer_id, merchant,
           })));
 
       console.log('\n\n\n\n\n\n', JSON.stringify(offers));
