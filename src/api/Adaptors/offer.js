@@ -143,6 +143,8 @@ export default class OfferAdaptor {
           status_type: 1,
           date_end: {$gte: moment().format()},
           other: other ? {$not: null} : undefined,
+          cashback: cashback ? {$gte: cashback} : undefined,
+          discount: discount ? {$gte: discount} : undefined,
           adv_campaign_name: merchant ? {$in: merchant.split(',')} : undefined,
         })), attributes: [/*'discount', 'cashback', 'other'*/], required: false,
       }];

@@ -33,7 +33,7 @@ export default class AccessoryAdaptor {
           },
           attributes: [
             'brand_id', 'main_category_id', 'category_id',
-            'product_name', 'id'],
+            'product_name', 'id', 'model'],
           required: false,
         },
         {
@@ -325,6 +325,7 @@ export default class AccessoryAdaptor {
 
   async retrieveAccessoryProducts(parameters) {
     let {options, modelBasedAccessoryIds, brand_id, model} = parameters;
+    brand_id = brand_id || null;
     let result = await this.modals.table_accessory_products.findAll(options);
     if ((brand_id || model) &&
         (modelBasedAccessoryIds && modelBasedAccessoryIds.length > 0)) {
@@ -337,8 +338,8 @@ export default class AccessoryAdaptor {
       const modelOptions = {};
       _.assign(modelOptions, options);
       modelOptions.where.accessory_id = modelBasedAccessoryIds;
-      modelOptions.where.accessory_type_id = accessory_types.map(
-          atItem => atItem.id);
+      modelOptions.where.accessory_type_id = accessory_types.filter(
+          atItem => atItem).map(atItem => atItem.id);
       const modelAccessories = await this.modals.table_accessory_products.findAll(
           modelOptions);
       result.push(...modelAccessories);
