@@ -211,7 +211,7 @@ export default class WhatToServiceAdaptor {
   async addUserMealItem(options) {
     const mealItems = await this.modals.meals.bulkCreate(options.meal_items,
         {returning: true});
-    await  Promise.all([
+    await Promise.all([
       ...mealItems.map((mealItem) => this.modals.mealStateMap.create({
         meal_id: mealItem.id,
         state_id: options.state_id,

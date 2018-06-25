@@ -22,8 +22,8 @@ class ServiceScheduleAdaptor {
     this.modals = modals;
   }
 
-  retrieveServiceSchedules(options) {
-    return this.modals.serviceSchedules.findAll({
+  async retrieveServiceSchedules(options) {
+    const scheduleResults = await this.modals.serviceSchedules.findAll({
       where: options,
       attributes: [
         'id',
@@ -38,7 +38,8 @@ class ServiceScheduleAdaptor {
         'due_in_days',
         'updated_at'],
       order: [['due_in_months']],
-    }).then((scheduleResults) => scheduleResults.map((item) => item.toJSON()));
+    });
+    return scheduleResults.map((item) => item.toJSON());
   }
 }
 

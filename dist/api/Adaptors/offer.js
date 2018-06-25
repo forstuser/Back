@@ -35,63 +35,41 @@ class OfferAdaptor {
       offerOptions.main_category_id = queryOptions.ref_id;
     }
 
-    const offerList = _lodash2.default.orderBy((await Promise.all([...(await this.retrieveOffers(0, {
+    const offerData = await Promise.all([this.retrieveOffers(0, {
       where: offerOptions,
-      attributes: ['category_id', 'main_category_id', 'discount', 'cashback', 'other', 'adv_campaign_name'],
+      attributes: ['category_id', 'main_category_id', 'adv_campaign_name'],
+      distinct: true,
       order: [['main_category_id', 'asc'], ['category_id', 'asc']]
-    })), ...(await this.retrieveOffers(1, {
+    }), this.retrieveOffers(1, {
       where: offerOptions,
-      attributes: ['category_id', 'main_category_id', 'discount', 'cashback', 'other', 'adv_campaign_name'],
-      order: [['main_category_id', 'asc'], ['category_id', 'asc']]
-    })), ...(await this.retrieveOffers(2, {
-      where: offerOptions, attributes: ['category_id', 'main_category_id', 'discount', 'cashback', 'other', 'adv_campaign_name'],
-      order: [['main_category_id', 'asc'], ['category_id', 'asc']]
-    }))])), ['main_category_id'], ['asc']);
-    const id = _lodash2.default.sortedUniq(offerList.map(item => queryOptions.ref_id ? item.category_id : item.main_category_id));
-    const categoryOptions = {
-      status_type: 1,
-      id
-    };
+      attributes: ['category_id', 'main_category_id', 'adv_campaign_name'],
+      order: [['main_category_id', 'asc'], ['category_id', 'asc']],
+      distinct: true
+    }), await this.retrieveOffers(2, {
+      where: offerOptions, attributes: ['category_id', 'main_category_id', 'adv_campaign_name'],
+      order: [['main_category_id', 'asc'], ['category_id', 'asc']],
+      distinct: true
+    })]);
+    const offerList = _lodash2.default.orderBy([...offerData[0], ...offerData[1], ...offerData[2]], ['main_category_id'], ['asc']);
+    const id = _lodash2.default.sortedUniq(offerList.filter(item => item && item.category_id && item.main_category_id).map(item => queryOptions.ref_id ? item.category_id : item.main_category_id));
+    const categoryOptions = { status_type: 1, id };
     const offerCategories = await this.retrieveOfferCategories({
       where: categoryOptions,
       attributes: ['id', 'category_level', 'category_name', 'category_image_name'],
-      order: [['category_name']]
+      order: [['priority'], ['id']]
     });
 
     return offerCategories.map(item => {
-      const category_offers = offerList.filter(olItem => queryOptions.ref_id ? olItem.category_id.toString() === item.id.toString() : olItem.main_category_id.toString() === item.id.toString());
+      const category_offers = offerList.filter(olItem => queryOptions.ref_id ? (olItem.category_id || '').toString() === item.id.toString() : (olItem.main_category_id || '').toString() === item.id.toString());
       item.offer_counts = category_offers.length;
-      item.filter = {};
-      item.filter.discount = _lodash2.default.groupBy(_lodash2.default.sortBy(category_offers.filter(cOItem => cOItem.discount).map(cOItem => ({
-        category_id: cOItem.category_id, discount: cOItem.discount
-      })), ['discount', 'category_id']), 'category_id');
-      item.filter.cashback = _lodash2.default.groupBy(_lodash2.default.sortBy(category_offers.filter(cOItem => cOItem.cashback).map(cOItem => ({
-        category_id: cOItem.category_id, cashback: cOItem.cashback
-      })), ['cashback', 'category_id']), 'category_id');
+      item.filter = { discount: {}, cashback: {}, other: {} };
       item.filter.merchant = _lodash2.default.groupBy(_lodash2.default.sortBy(category_offers.filter(cOItem => cOItem.adv_campaign_name).map(cOItem => ({
         category_id: cOItem.category_id,
         merchant: cOItem.adv_campaign_name
       })), ['merchant', 'category_id']), 'category_id');
-      item.filter.other = _lodash2.default.groupBy(_lodash2.default.sortBy(category_offers.filter(cOItem => cOItem.other).map(cOItem => ({
-        category_id: cOItem.category_id, other: cOItem.other
-      })), ['other', 'category_id']), 'category_id');
-      for (let dItem in item.filter.discount) {
-        if (item.filter.discount.hasOwnProperty(dItem)) {
-          item.filter.discount[dItem] = _lodash2.default.sortedUniqBy(item.filter.discount[dItem], 'discount').map(cOItem => cOItem.discount);
-        }
-      }
-
-      for (let cItem in item.filter.cashback) {
-        if (item.filter.cashback.hasOwnProperty(cItem)) {
-          item.filter.cashback[cItem] = _lodash2.default.sortedUniqBy(item.filter.cashback[cItem], 'cashback').map(cOItem => cOItem.cashback);
-        }
-      }
-
-      for (let oItem in item.filter.other) {
-        if (item.filter.other.hasOwnProperty(oItem)) {
-          item.filter.other[oItem] = _lodash2.default.sortedUniqBy(item.filter.other[oItem], 'other').map(cOItem => cOItem.other);
-        }
-      }
+      item.filter.discount[item.id] = _main2.default.OFFERS.DISCOUNTS.split(',');
+      item.filter.cashback[item.id] = _main2.default.OFFERS.CASHBACKS.split(',');
+      item.filter.other[item.id] = [];
 
       for (let mItem in item.filter.merchant) {
         if (item.filter.merchant.hasOwnProperty(mItem)) {
@@ -114,6 +92,7 @@ class OfferAdaptor {
       as: 'offers', where: JSON.parse(JSON.stringify({
         status_type: 1,
         date_end: { $gte: (0, _moment2.default)().format() },
+        other: other ? { $not: null } : undefined,
         cashback: cashback ? { $gte: cashback } : undefined,
         discount: discount ? { $gte: discount } : undefined,
         adv_campaign_name: merchant ? { $in: merchant.split(',') } : undefined
@@ -123,6 +102,7 @@ class OfferAdaptor {
       as: 'offers_cashback', where: JSON.parse(JSON.stringify({
         status_type: 1,
         date_end: { $gte: (0, _moment2.default)().format() },
+        other: other ? { $not: null } : undefined,
         cashback: cashback ? { $gte: cashback } : undefined,
         discount: discount ? { $gte: discount } : undefined,
         adv_campaign_name: merchant ? { $in: merchant.split(',') } : undefined
@@ -209,7 +189,7 @@ class OfferAdaptor {
         offset, limit
       });
     } else {
-      offerOptions.id = data_option === 1 && cashback_offer_id ? { $gt: cashback_offer_id } : data_option === 2 && other_offer_id ? { $gt: other_offer_id } : discount_offer_id ? { $gt: discount_offer_id } : undefined;
+      offerOptions.id = data_option === 1 && cashback_offer_id ? { $gt: cashback_offer_id } : data_option === 2 && other_offer_id ? { $gt: other_offer_id } : data_option === 0 && discount_offer_id ? { $gt: discount_offer_id } : undefined;
       offers[offer_values[data_option]] = await this.retrieveOffers(data_option, {
         where: JSON.parse(JSON.stringify(offerOptions)), offset, limit,
         order: data_option === 1 ? [['cashback', cashback_sort]] : [['discount', discount_sort], ['cashback', cashback_sort]]

@@ -310,6 +310,14 @@ class ProductController {
           main_category_id: [2, 3],
           status_type: [5, 11],
           user_id: user.id || user.ID,
+          brand_id: {
+            $in: modals.sequelize.literal(
+                '(Select brand_id from center_brand_mapping)'),
+          },
+          category_id: {
+            $in: modals.sequelize.literal(
+                '(Select category_id from service_center_details)'),
+          },
         };
 
         if (brandId.length > 0) {

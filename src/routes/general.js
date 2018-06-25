@@ -232,5 +232,23 @@ export function prepareGeneralRoutes(modal, routeObject, middleware) {
         description: 'Update user service center accessed.',
       },
     });
+
+    routeObject.push({
+      method: 'POST',
+      path: '/ses-bounce',
+      config: {
+        handler: ControllerObject.sesBounceHandler,
+        description: 'Handling Bounces from SES.',
+      },
+    });
+
+    routeObject.push({
+      method: 'POST',
+      path: '/ses-complaints',
+      config: {
+        handler: ControllerObject.sesComplaintHandler,
+        description: 'Handling Complaints from SES.',
+      },
+    });
   }
 }

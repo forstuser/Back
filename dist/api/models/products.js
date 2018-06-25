@@ -40,6 +40,12 @@ exports.default = (sequelize, DataTypes) => {
       type: DataTypes.FLOAT,
       defaultValue: 0
     },
+    file_type: {
+      type: DataTypes.STRING
+    },
+    file_ref: {
+      type: DataTypes.STRING
+    },
     taxes: {
       type: DataTypes.FLOAT,
       defaultValue: 0
@@ -58,6 +64,9 @@ exports.default = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER
     },
     accessory_id: {
+      type: DataTypes.INTEGER
+    },
+    ref_id: {
       type: DataTypes.INTEGER
     },
     status_type: {

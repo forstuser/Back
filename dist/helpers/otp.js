@@ -53,7 +53,7 @@ const generateOTP = length => {
   return value.join('');
 };
 
-const sendOTPToUser = (mobileNo, otpLength) => _bluebird2.default.try(() => {
+const sendOTPToUser = async (mobileNo, otpLength) => await _bluebird2.default.try(() => {
   const phone = `91${mobileNo}`;
   const otp = generateOTP(otpLength); // OTP of length = 4
   return sendOTP.sendAsync(phone, 'BINBILL', otp).catch(err => {
@@ -63,13 +63,10 @@ const sendOTPToUser = (mobileNo, otpLength) => _bluebird2.default.try(() => {
   });
 });
 
-const sendOTPOverEmail = (email, name, otpLength) => _bluebird2.default.try(() => {
+const sendOTPOverEmail = async (email, name, otpLength) => await _bluebird2.default.try(async () => {
   const smtpTransporter = _nodemailer2.default.createTransport((0, _nodemailerSmtpTransport2.default)({
     service: 'gmail',
-    auth: {
-      user: _main2.default.EMAIL.USER,
-      pass: _main2.default.EMAIL.PASSWORD
-    },
+    auth: { user: _main2.default.EMAIL.USER, pass: _main2.default.EMAIL.PASSWORD },
     secure: true,
     port: 465
   }));
@@ -98,14 +95,13 @@ Regards<br/>Support BinBill </p>
 </td></tr></table></td></tr></table></div></center></body></html>`
   };
 
-  return _bluebird2.default.all([_password2.default.hashPassword(otp), smtpTransporter.sendMail(mailOptions)]);
+  return await _bluebird2.default.all([_password2.default.hashPassword(otp), smtpTransporter.sendMail(mailOptions)]);
 });
 
-const verifyOTPForUser = (mobileNo, otp) => _bluebird2.default.try(() => {
+const verifyOTPForUser = async (mobileNo, otp) => {
   const phone = `91${mobileNo}`;
-
-  return sendOTP.verifyAsync(phone, otp);
-});
+  return await _bluebird2.default.try(() => sendOTP.verifyAsync(phone, otp));
+};
 
 module.exports = {
   sendOTPToUser,

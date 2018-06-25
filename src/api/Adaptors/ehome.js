@@ -22,17 +22,18 @@ class EHomeAdaptor {
     this.repairAdaptor = new RepairAdaptor(modals);
   }
 
-  prepareEHomeResult(user, request) {
-    return Promise.all([
-      this.prepareCategoryData(user, request.language),
-      this.retrieveRecentSearch(user),
-      this.modals.mailBox.count({
-        where: {
-          user_id: user.id || user.ID,
-          status_id: 4,
-        },
-      }),
-    ]).then((result) => {
+  async prepareEHomeResult(user, request) {
+    try {
+      const result = await Promise.all([
+        this.prepareCategoryData(user, request.language),
+        this.retrieveRecentSearch(user),
+        this.modals.mailBox.count({
+          where: {
+            user_id: user.id || user.ID,
+            status_id: 4,
+          },
+        }),
+      ]);
 
       let OtherCategory = null;
 
@@ -64,7 +65,21 @@ class EHomeAdaptor {
         categoryList: newCategoryData,
         forceUpdate: request.pre.forceUpdate,
       };
-    }).catch((err) => {
+    } catch (err) {
+      console.log(err);
+      this.modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user.id || user.ID,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
 
       return {
         status: false,
@@ -72,10 +87,10 @@ class EHomeAdaptor {
         err,
         forceUpdate: request.pre.forceUpdate,
       };
-    });
+    }
   }
 
-  retrieveUnProcessedBills(user) {
+  async retrieveUnProcessedBills(user) {
     return this.modals.jobs.findAll({
       attributes: [['created_at', 'uploadedDate'], ['id', 'docId']],
       where: {
@@ -122,7 +137,7 @@ class EHomeAdaptor {
     });
   }
 
-  prepareCategoryData(user, language) {
+  async prepareCategoryData(user, language) {
     const categoryOption = {
       category_level: 1,
       status_type: 1,
@@ -138,60 +153,62 @@ class EHomeAdaptor {
     _.assignIn(inProgressProductOption, productOptions);
     inProgressProductOption.status_type = 8;
 
-    return Promise.all([
-      this.categoryAdaptor.retrieveCategories(categoryOption, false, language),
+    const results = await Promise.all([
+      this.categoryAdaptor.retrieveCategories({
+        options: categoryOption,
+        isBrandFormRequired: false,
+        isSubCategoryRequiredForAll: false,
+        language: language,
+      }),
       this.productAdaptor.retrieveProductCounts(productOptions),
-      this.productAdaptor.retrieveProductCounts(inProgressProductOption)]).
-        then((results) => {
-          return results[0].map((categoryItem) => {
-            const category = categoryItem;
-            const products = _.chain(results[1]).
-                filter(
-                    (productItem) => productItem.masterCategoryId ===
-                        category.id);
-            const inProgressProduct = _.chain(results[2]).
-                filter((amcItem) => amcItem.masterCategoryId === category.id);
-            const expenses = _.chain([
-              ...products,
-              ...inProgressProduct,
-            ] || []).sortBy((item) => {
-              return moment.utc(item.lastUpdatedAt, moment.ISO_8601);
-            }).reverse().value();
-            category.expenses = expenses;
-            category.cLastUpdate = expenses &&
-            expenses.length > 0 ?
-                expenses[0].lastUpdatedAt :
-                null;
-            category.productCounts = parseInt(shared.sumProps(expenses,
-                'productCounts'));
-            return category;
-          });
-        });
-  }
+      this.productAdaptor.retrieveProductCounts(inProgressProductOption)]);
+    return results[0].map((categoryItem) => {
+      const category = categoryItem;
 
-  retrieveRecentSearch(user) {
-    return this.modals.recentSearches.findAll({
-      where: {
-        user_id: user.id || user.ID,
-      },
-      order: [['searchDate', 'DESC']],
-      attributes: ['searchValue'],
+      const products = _.chain(results[1]).
+          filter(
+              (productItem) => productItem.masterCategoryId ===
+                  category.id);
+      const inProgressProduct = _.chain(results[2]).
+          filter((amcItem) => amcItem.masterCategoryId === category.id);
+      const expenses = _.chain([
+        ...products,
+        ...inProgressProduct,
+      ] || []).sortBy((item) => {
+        return moment.utc(item.lastUpdatedAt, moment.ISO_8601);
+      }).reverse().value();
+      category.expenses = expenses;
+      category.cLastUpdate = expenses &&
+      expenses.length > 0 ?
+          expenses[0].lastUpdatedAt :
+          null;
+      category.productCounts = parseInt(shared.sumProps(expenses,
+          'productCounts'));
+      return category;
     });
   }
 
-  prepareProductDetail(parameters) {
+  async retrieveRecentSearch(user) {
+    return await this.modals.recentSearches.findAll({
+      where: {user_id: user.id || user.ID, searchValue: {$not: null}},
+      order: [['searchDate', 'DESC']], attributes: ['searchValue'],
+    });
+  }
+
+  async prepareProductDetail(parameters) {
     let {user, masterCategoryId, ctype, brandIds, categoryIds, offlineSellerIds, onlineSellerIds, sortBy, searchValue, request} = parameters;
-    return this.fetchProductDetails({
-      user: user,
-      masterCategoryId: masterCategoryId,
-      subCategoryId: ctype || undefined,
-      brandIds: brandIds,
-      categoryIds: categoryIds,
-      offlineSellerIds: offlineSellerIds,
-      onlineSellerIds: onlineSellerIds,
-      sortBy: sortBy,
-      searchValue: `%${searchValue || ''}%`,
-    }, request.language).then((result) => {
+    try {
+      const result = await this.fetchProductDetails({
+        user: user,
+        masterCategoryId: masterCategoryId,
+        subCategoryId: ctype || undefined,
+        brandIds: brandIds,
+        categoryIds: categoryIds,
+        offlineSellerIds: offlineSellerIds,
+        onlineSellerIds: onlineSellerIds,
+        sortBy: sortBy,
+        searchValue: `%${searchValue || ''}%`,
+      }, request.language);
       const productList = result.productList;
       /* const listIndex = (pageNo * 10) - 10; */
 
@@ -242,27 +259,35 @@ class EHomeAdaptor {
              &offlinesellerids=${offlineSellerIds}&onlinesellerids=
              ${onlineSellerIds}&sortby=${sortBy}&searchvalue=${searchValue}` : '' */
       };
-    }).catch((err) => {
+    } catch (err) {
 
+      console.log(err);
+      this.modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user.id || user.ID,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
       return {
         status: false,
         err,
         forceUpdate: request.pre.forceUpdate,
       };
-    });
+    }
   }
 
-  fetchProductDetails(parameters, language) {
+  async fetchProductDetails(parameters, language) {
     let {user, masterCategoryId, subCategoryId, brandIds, categoryIds, offlineSellerIds, onlineSellerIds, sortBy, searchValue} = parameters;
-    const categoryOption = {
-      category_level: 1,
-      status_type: 1,
-    };
+    const categoryOption = {category_level: 1, status_type: 1};
 
-    const productOptions = {
-      status_type: [5, 11],
-      user_id: user.id || user.ID,
-    };
+    const productOptions = {status_type: [5, 11], user_id: user.id || user.ID};
 
     if (masterCategoryId) {
       categoryOption.category_id = masterCategoryId;
@@ -299,41 +324,44 @@ class EHomeAdaptor {
     _.assignIn(inProgressProductOption, productOptions);
     inProgressProductOption.status_type = 8;
 
-    return Promise.all([
-      this.categoryAdaptor.retrieveCategories(categoryOption, false, language,
-          true),
+    const results = await Promise.all([
+      this.categoryAdaptor.retrieveCategories({
+        options: categoryOption,
+        isBrandFormRequired: false,
+        isSubCategoryRequiredForAll:false,
+        language: language,
+        isFilterRequest: true,
+      }),
       this.productAdaptor.retrieveProducts(productOptions, language),
       this.productAdaptor.retrieveProducts(inProgressProductOption,
-          language)]).
-        then((results) => {
-          return results[0].map((categoryItem) => {
-            const category = categoryItem;
-            const products = _.chain(results[1]).
-                map((productItem) => {
-                  const product = productItem;
-                  product.dataIndex = 1;
-                  return product;
-                }).
-                filter(
-                    (productItem) => productItem.masterCategoryId ===
-                        category.id).value();
-            const inProgressProduct = _.chain(results[2]).
-                map((productItem) => {
-                  const product = productItem;
-                  product.dataIndex = 2;
-                  return product;
-                }).
-                filter((productItem) => productItem.masterCategoryId ===
-                    category.id).value();
-            category.productList = _.chain([
-              ...products,
-              ...inProgressProduct] || []).sortBy((item) => {
-              return moment.utc(item.purchaseDate, moment.ISO_8601);
-            }).reverse().value();
+          language)]);
+    return results[0].map((categoryItem) => {
+      const category = categoryItem;
+      const products = _.chain(results[1]).
+          map((productItem) => {
+            const product = productItem;
+            product.dataIndex = 1;
+            return product;
+          }).
+          filter(
+              (productItem) => productItem.masterCategoryId ===
+                  category.id).value();
+      const inProgressProduct = _.chain(results[2]).
+          map((productItem) => {
+            const product = productItem;
+            product.dataIndex = 2;
+            return product;
+          }).
+          filter((productItem) => productItem.masterCategoryId ===
+              category.id).value();
+      category.productList = _.chain([
+        ...products,
+        ...inProgressProduct] || []).sortBy((item) => {
+        return moment.utc(item.purchaseDate, moment.ISO_8601);
+      }).reverse().value();
 
-            return category;
-          })[0];
-        });
+      return category;
+    })[0];
   }
 }
 

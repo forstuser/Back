@@ -84,26 +84,16 @@ class InsightAdaptor {
     try {
       const result = await this.prepareCategoryData(user, for_lifetime ?
           {} : {document_date: {$between: [min_date, max_date]}});
-      let category_insight = for_lifetime ? result.map((item) => {
+
+      let category_insight = result.map((item) => {
         const expenses = item.expenses.filter(
-            (item) => moment.utc(item.purchaseDate, moment.ISO_8601).
-                isSameOrBefore(moment.utc()));
-        const totalAmount = shared.sumProps(expenses, 'value');
-        const totalTax = shared.sumProps(expenses, 'taxes');
-        return {
-          id: item.id,
-          cName: item.name,
-          cURL: item.categoryInsightUrl,
-          cImageURl: item.categoryImageUrl,
-          totalAmount: parseFloat(totalAmount || 0).toFixed(2),
-          totalTax: parseFloat(totalTax || 0).toFixed(2),
-        };
-      }) : result.map((item) => {
-        const expenses = item.expenses.filter(
-            (item) => moment.utc(item.purchaseDate, moment.ISO_8601).
-                    isSameOrAfter(moment.utc(min_date).utc().startOf('d')) &&
+            (item) => for_lifetime ?
                 moment.utc(item.purchaseDate, moment.ISO_8601).
-                    isSameOrBefore(moment.utc(max_date).utc().endOf('d')));
+                    isSameOrBefore(moment.utc()) :
+                moment.utc(item.purchaseDate, moment.ISO_8601).
+                    isSameOrAfter(moment.utc(min_date).startOf('d')) &&
+                moment.utc(item.purchaseDate, moment.ISO_8601).
+                    isSameOrBefore(moment.utc()));
         const totalAmount = shared.sumProps(expenses, 'value');
         const totalTax = shared.sumProps(expenses, 'taxes');
         return {
@@ -114,8 +104,8 @@ class InsightAdaptor {
           totalTax: parseFloat(totalTax || 0).toFixed(2),
         };
       });
-
-      category_insight = _.chain(category_insight).map((elem) => {
+      category_insight = _.chain(
+          category_insight.filter((elem) => (elem.id !== 9))).map((elem) => {
         elem.totalAmount = parseFloat(elem.totalAmount);
         return elem;
       }).orderBy(['totalAmount', 'cName'], ['desc', 'asc']).map((elem) => {
@@ -186,7 +176,7 @@ class InsightAdaptor {
           orderBy(['purchaseDate'], ['desc']).value();
       return {
         status: true,
-        productList: productList,
+        productList,
         categoryName: category.name,
         forceUpdate: request.pre.forceUpdate,
       };
@@ -217,7 +207,6 @@ class InsightAdaptor {
 
   async prepareCategoryData(user, options, language) {
     const {document_date, category_id} = options;
-
     const categoryOption = {category_level: 1, status_type: 1, category_id};
     const productOptions = JSON.parse(JSON.stringify({
       status_type: [5, 11, 12], product_status_type: [5, 11],
@@ -225,51 +214,58 @@ class InsightAdaptor {
     }));
 
     if (!category_id) {
-      categoryOption.category_id = {
-        $notIn: [10],
-      };
+      categoryOption.category_id = {$notIn: [9, 10]};
     }
 
     let [categories, products, amcs, insurances, repairs, warranties, pucs] = await Promise.all(
         [
-          this.categoryAdaptor.retrieveCategories(
-              JSON.parse(JSON.stringify(categoryOption)), false, language),
-          this.productAdaptor.retrieveProducts(productOptions, language),
+          this.categoryAdaptor.retrieveCategories({
+            options: JSON.parse(JSON.stringify(categoryOption)),
+            isSubCategoryRequiredForAll:false,
+            isBrandFormRequired: false, language,
+          }), this.productAdaptor.retrieveProducts(productOptions, language),
           this.amcAdaptor.retrieveAMCs(productOptions),
           this.insuranceAdaptor.retrieveInsurances(productOptions),
           this.repairAdaptor.retrieveRepairs(productOptions),
           this.warrantyAdaptor.retrieveWarranties(productOptions),
           this.pucAdaptor.retrievePUCs(productOptions)]);
+
+    products = products.map((pItem) => {
+      pItem.dataIndex = 1;
+      return pItem;
+    });
+    amcs = amcs.map((amcItem) => {
+      amcItem.dataIndex = 2;
+      return amcItem;
+    });
+    insurances = insurances.map((insurance) => {
+      insurance.dataIndex = 3;
+      return insurance;
+    });
+    repairs = repairs.map((repair) => {
+      repair.dataIndex = 4;
+      return repair;
+    });
+    warranties = warranties.map((warranty) => {
+      warranty.dataIndex = 5;
+      return warranty;
+    });
+    pucs = pucs.map((puc) => {
+      puc.dataIndex = 6;
+      return puc;
+    });
     return categories.map((category) => {
-      products = _.chain(products).map((pItem) => {
-        pItem.dataIndex = 1;
-        return pItem;
-      }).filter((pItem) => pItem.masterCategoryId === category.id);
-      amcs = _.chain(amcs).map((amcItem) => {
-        amcItem.dataIndex = 2;
-        return amcItem;
-      }).filter((amcItem) => amcItem.masterCategoryId === category.id);
-      insurances = _.chain(insurances).map((insurance) => {
-        insurance.dataIndex = 3;
-        return insurance;
-      }).filter((insurance) => insurance.masterCategoryId === category.id);
-      repairs = _.chain(repairs).map((repair) => {
-        repair.dataIndex = 4;
-        return repair;
-      }).filter((repair) => repair.masterCategoryId === category.id);
-      warranties = _.chain(warranties).map((warranty) => {
-        warranty.dataIndex = 5;
-        return warranty;
-      }).filter((warranty) => warranty.masterCategoryId === category.id);
-      pucs = _.chain(pucs).map((puc) => {
-        puc.dataIndex = 6;
-        return puc;
-      }).filter((puc) => puc.masterCategoryId === category.id);
       category.expenses = _.chain([
-        ...products, ...amcs, ...insurances,
-        ...repairs, ...warranties, ...pucs] || []).sortBy((item) => {
-        return moment.utc(item.purchaseDate || item.updatedDate);
-      }).reverse().value();
+        ...products.filter((pItem) => pItem.masterCategoryId === category.id),
+        ...amcs.filter((amcItem) => amcItem.masterCategoryId === category.id),
+        ...insurances.filter(
+            (insurance) => insurance.masterCategoryId === category.id),
+        ...repairs.filter((repair) => repair.masterCategoryId === category.id),
+        ...warranties.filter(
+            (warranty) => warranty.masterCategoryId === category.id),
+        ...pucs.filter((puc) => puc.masterCategoryId === category.id)] || []).
+          sortBy((item) => moment.utc(item.purchaseDate || item.updatedDate)).
+          reverse().value();
 
       return category;
     });

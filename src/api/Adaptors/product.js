@@ -342,80 +342,39 @@ export default class ProductAdaptor {
       $not: null,
     };
 
-    const productResult = this.modals.products.findAll({
-      where: options,
-      include: [
+    const productResult = await this.modals.products.findAll({
+      where: options, include: [
         {
-          model: this.modals.serviceSchedules,
-          as: 'schedule',
-          attributes: [
+          model: this.modals.serviceSchedules, as: 'schedule', attributes: [
             'id', 'inclusions', 'exclusions', 'service_number', 'service_type',
-            'distance',
-            'due_in_months',
-            'due_in_days'],
-          required: false,
-        },
-        {
-          model: this.modals.categories,
-          as: 'category',
-          attributes: [],
-          required: false,
-        },
-        {
-          model: this.modals.categories,
-          as: 'mainCategory',
-          attributes: [],
-          required: false,
-        },
-        {
-          model: this.modals.categories,
-          as: 'sub_category',
-          attributes: [],
-          required: false,
-        },
-      ],
-      attributes: [
-        'id',
-        [
-          'id',
-          'productId'],
-        [
-          'product_name',
-          'productName'],
-        'file_type',
-        'file_ref',
-        [
+            'distance', 'due_in_months', 'due_in_days'], required: false,
+        }, {
+          model: this.modals.categories, as: 'category',
+          attributes: [], required: false,
+        }, {
+          model: this.modals.categories, as: 'mainCategory',
+          attributes: [], required: false,
+        }, {
+          model: this.modals.categories, as: 'sub_category',
+          attributes: [], required: false,
+        }], attributes: [
+        'id', ['id', 'productId'], ['product_name', 'productName'], [
           this.modals.sequelize.literal('"category"."category_id"'),
           'categoryId'],
-        [
-          'main_category_id',
-          'masterCategoryId'],
-        'sub_category_id',
-        [
-          'brand_id',
-          'brandId'],
-        [
-          'colour_id',
-          'colorId'],
-        [
-          'purchase_cost',
-          'value'],
-        'taxes',
-        [
+        ['main_category_id', 'masterCategoryId'], 'sub_category_id',
+        ['brand_id', 'brandId'], ['colour_id', 'colorId'],
+        ['purchase_cost', 'value'], 'taxes', [
           this.modals.sequelize.literal(`${language ?
               `"sub_category"."category_name_${language}"` :
               `"sub_category"."category_name"`}`),
-          'sub_category_name'],
-        [
+          'sub_category_name'], [
           this.modals.sequelize.literal(`${language ?
               `"category"."category_name_${language}"` :
-              `"category"."category_name"`}`),
-          'categoryName'],
+              `"category"."category_name"`}`), 'categoryName'],
         [
           this.modals.sequelize.literal(`${language ?
               `"mainCategory"."category_name_${language}"` :
-              `"mainCategory"."category_name"`}`),
-          'masterCategoryName'],
+              `"mainCategory"."category_name"`}`), 'masterCategoryName'],
         [
           this.modals.sequelize.literal(`"sub_category"."category_name"`),
           'default_sub_category_name'],
@@ -425,52 +384,17 @@ export default class ProductAdaptor {
         [
           this.modals.sequelize.literal(`"category"."category_name"`),
           'default_categoryName'],
-        [
-          this.modals.sequelize.fn('CONCAT', '/categories/',
-              this.modals.sequelize.literal('"category"."category_id"'),
-              '/images/'),
-          'cImageURL'],
-        [
-          this.modals.sequelize.fn('CONCAT', 'products/',
-              this.modals.sequelize.literal('"products"."id"')),
-          'productURL'],
-        [
-          'document_date',
-          'purchaseDate'],
-        'model',
-        ['document_number', 'documentNo'],
-        ['updated_at', 'updatedDate'],
-        [
-          'bill_id',
-          'billId'],
-        [
-          'job_id',
-          'jobId'],
-        [
-          'seller_id',
-          'sellerId'],
-        'copies',
-        [
-          this.modals.sequelize.fn('CONCAT', 'products/',
-              this.modals.sequelize.literal('"products"."id"'), '/reviews'),
-          'reviewUrl'],
-        [
-          this.modals.sequelize.literal('"category"."category_name"'),
-          'categoryName'],
-        [
-          this.modals.sequelize.fn('CONCAT',
-              '/consumer/servicecenters?brandid=',
-              this.modals.sequelize.literal('"products"."brand_id"'),
-              '&categoryid=',
-              this.modals.sequelize.col('"products"."category_id"')),
-          'serviceCenterUrl'],
-        'status_type',
-      ],
+        ['document_date', 'purchaseDate'], 'model', 'file_type', 'file_ref',
+        ['document_number', 'documentNo'], ['updated_at', 'updatedDate'],
+        ['bill_id', 'billId'], ['job_id', 'jobId'],
+        ['seller_id', 'sellerId'], 'copies', 'status_type'],
       order: [['document_date', 'DESC']],
     });
-    return productResult.map((item) => {
+    return await Promise.try(() => productResult.map((item) => {
       const productItem = item.toJSON();
-
+      productItem.serviceCenterUrl = `/consumer/servicecenters?brandid=${productItem.brandId}&categoryid=${productItem.categoryId}`;
+      productItem.reviewUrl = `products/${productItem.id}/reviews`;
+      productItem.productURL = `products/${productItem.id}`;
       productItem.sub_category_name = productItem.sub_category_name ||
           productItem.default_sub_category_name;
       productItem.masterCategoryName = productItem.masterCategoryName ||
@@ -485,17 +409,16 @@ export default class ProductAdaptor {
       }
       productItem.cImageURL = productItem.sub_category_id ?
           `/categories/${productItem.sub_category_id}/images/1/thumbnail` :
-          `${productItem.cImageURL}1/thumbnail`;
+          `/categories/${productItem.category_id}/images/1/thumbnail`;
       productItem.purchaseDate = moment.utc(productItem.purchaseDate,
-          moment.ISO_8601).
-          startOf('days');
+          moment.ISO_8601).startOf('days');
       if (productItem.schedule) {
         productItem.schedule.due_date = moment.utc(productItem.purchaseDate,
             moment.ISO_8601).
             add(productItem.schedule.due_in_months, 'months');
       }
       return productItem;
-    });
+    }));
   }
 
   async retrieveUsersLastProduct(options, language) {
@@ -978,197 +901,228 @@ export default class ProductAdaptor {
   }
 
   async retrieveProductById(id, options, language) {
-    options.id = id;
-    let productItem;
-    let products = await this.modals.products.findOne({
-      where: options,
-      include: [
-        {
-          model: this.modals.serviceSchedules,
-          as: 'schedule',
-          attributes: [
-            'id',
-            'title',
-            'inclusions',
-            'exclusions',
-            'service_number',
-            'service_type',
-            'distance',
-            'due_in_months',
-            'due_in_days'],
-          required: false,
-        },
-        {
-          model: this.modals.bills,
-          attributes: [
-            ['consumer_name', 'consumerName'],
-            ['consumer_email', 'consumerEmail'],
-            ['consumer_phone_no', 'consumerPhoneNo'],
-            ['document_number', 'invoiceNo']], include: [
-            {
-              model: this.modals.onlineSellers,
-              as: 'sellers',
-              attributes: [
-                ['seller_name', 'sellerName'], 'url',
-                'contact', 'email', [
-                  this.modals.sequelize.fn('CONCAT', 'sellers/',
-                      this.modals.sequelize.literal('"bill->sellers"."sid"'),
-                      '/reviews?isonlineseller=true'), 'reviewUrl']], include: [
-                {
-                  model: this.modals.sellerReviews, as: 'sellerReviews',
-                  attributes: [
-                    ['review_ratings', 'ratings'],
-                    ['review_feedback', 'feedback'],
-                    ['review_comments', 'comments']],
-                  required: false,
-                }], required: false,
-            }], required: false,
-        },
-        {
-          model: this.modals.offlineSellers, as: 'sellers',
-          attributes: [
-            ['sid', 'id'], ['seller_name', 'sellerName'],
-            'url', ['contact_no', 'contact'], 'email',
-            'address', 'city', 'state', 'pincode',
-            'latitude', 'longitude', [
-              this.modals.sequelize.fn('CONCAT', 'sellers/',
-                  this.modals.sequelize.literal('"sellers"."sid"'),
-                  '/reviews?isonlineseller=false'), 'reviewUrl']], include: [
-            {
-              model: this.modals.sellerReviews, as: 'sellerReviews',
-              attributes: [
-                ['review_ratings', 'ratings'], ['review_feedback', 'feedback'],
-                ['review_comments', 'comments']], required: false,
-            }], required: false,
-        },
-        {
-          model: this.modals.productReviews, as: 'productReviews',
-          attributes: [
-            ['review_ratings', 'ratings'], ['review_feedback', 'feedback'],
-            ['review_comments', 'comments']], required: false,
-        }, {
-          model: this.modals.categories, as: 'category',
-          attributes: [], required: false,
-        }, {
-          model: this.modals.categories, as: 'mainCategory', attributes: [],
-          required: false,
-        }, {
-          model: this.modals.categories, as: 'sub_category', attributes: [],
-          required: false,
-        }],
-      attributes: [
-        'id', ['product_name', 'productName'], 'file_type', 'file_ref', [
-          this.modals.sequelize.literal('"category"."category_id"'),
-          'categoryId'], ['main_category_id', 'masterCategoryId'], 'model',
-        'sub_category_id', ['colour_id', 'colorId'], [
-          this.modals.sequelize.literal(
-              `${language ? `"sub_category"."category_name_${language}"` :
-                  `"sub_category"."category_name"`}`), 'sub_category_name'], [
-          this.modals.sequelize.literal(
-              `${language ? `"category"."category_name_${language}"` :
-                  `"category"."category_name"`}`), 'categoryName'], [
-          this.modals.sequelize.literal(`"sub_category"."category_name"`),
-          'default_sub_category_name'], ['purchase_cost', 'value'], [
-          this.modals.sequelize.literal(`"mainCategory"."category_name"`),
-          'default_masterCategoryName'], 'taxes', [
-          this.modals.sequelize.literal(`"category"."category_name"`),
-          'default_categoryName'], ['brand_id', 'brandId'], [
-          this.modals.sequelize.literal(
-              `${language ? `"mainCategory"."category_name_${language}"` :
-                  `"mainCategory"."category_name"`}`), 'masterCategoryName'], [
-          this.modals.sequelize.fn('CONCAT', '/categories/',
-              this.modals.sequelize.col('"category"."category_id"'),
-              '/images/0'), 'cImageURL'], ['document_date', 'purchaseDate'], [
-          this.modals.sequelize.fn('CONCAT', 'products/',
-              this.modals.sequelize.literal('"products"."id"')), 'productURL'],
-        ['document_number', 'documentNo'], ['updated_at', 'updatedDate'], [
-          this.modals.sequelize.fn('CONCAT', 'products/',
-              this.modals.sequelize.literal('"products"."id"'), '/reviews'),
-          'reviewUrl'], ['job_id', 'jobId'], ['seller_id', 'sellerId'], [
-          this.modals.sequelize.fn('CONCAT',
-              '/consumer/servicecenters?brandid=',
-              this.modals.sequelize.literal('"products"."brand_id"'),
-              '&categoryid=',
-              this.modals.sequelize.col('"products"."category_id"')),
-          'serviceCenterUrl'], 'copies', 'status_type'],
-    });
-    products = products ? products.toJSON() : products;
-    if (products) {
-      products.cImageURL = products.file_type ?
-          `/consumer/products/${products.id}/images/${products.file_ref}` :
-          products.sub_category_id ?
-              `/categories/${products.sub_category_id}/images/0` :
-              products.cImageURL;
-      products.sub_category_name = products.sub_category_name ||
-          products.default_sub_category_name;
-      products.masterCategoryName = products.masterCategoryName ||
-          products.default_masterCategoryName;
-      products.categoryName = products.categoryName ||
-          products.default_categoryName;
-      productItem = productResult;
-      if (products.copies) {
-        products.copies = products.copies.map((copyItem) => {
-          copyItem.file_type = copyItem.file_type || copyItem.fileType;
-          return copyItem;
-        });
-      }
-      if (products.schedule) {
-        products.schedule.due_date = moment.utc(products.purchaseDate,
-            moment.ISO_8601).add(products.schedule.due_in_months, 'months');
-      }
-      const serviceSchedulePromise = products.schedule ?
-          this.serviceScheduleAdaptor.retrieveServiceSchedules({
-            category_id: products.schedule.category_id,
-            brand_id: products.schedule.brand_id, status_type: 1,
-            title: products.schedule.title, id: {$gte: products.schedule.id},
-          }) :
-          undefined;
-      let [metaData, brand, insuranceDetails, warrantyDetails, amcDetails, repairBills, pucDetails, serviceSchedules, serviceCenterCounts] = await Promise.all(
+    try {
+      options.id = id;
+      let productItem;
+      let products;
+      const productResult = await this.modals.products.findOne({
+        where: options,
+        include: [
+          {
+            model: this.modals.serviceSchedules,
+            as: 'schedule',
+            attributes: [
+              'id', 'title', 'inclusions',
+              'exclusions', 'service_number', 'service_type',
+              'distance', 'due_in_months', 'due_in_days'],
+            required: false,
+          },
+          {
+            model: this.modals.bills,
+            attributes: [
+              ['consumer_name', 'consumerName'],
+              ['consumer_email', 'consumerEmail'],
+              ['consumer_phone_no', 'consumerPhoneNo'],
+              ['document_number', 'invoiceNo']], include: [
+              {
+                model: this.modals.onlineSellers,
+                as: 'sellers',
+                attributes: [
+                  ['seller_name', 'sellerName'], 'url',
+                  'contact', 'email', [
+                    this.modals.sequelize.fn('CONCAT', 'sellers/',
+                        this.modals.sequelize.literal('"bill->sellers"."sid"'),
+                        '/reviews?isonlineseller=true'), 'reviewUrl']],
+                include: [
+                  {
+                    model: this.modals.sellerReviews, as: 'sellerReviews',
+                    attributes: [
+                      ['review_ratings', 'ratings'],
+                      ['review_feedback', 'feedback'],
+                      ['review_comments', 'comments']],
+                    required: false,
+                  }],
+                required: false,
+              }], required: false,
+          },
+          {
+            model: this.modals.offlineSellers, as: 'sellers',
+            attributes: [
+              ['sid', 'id'], ['seller_name', 'sellerName'],
+              'url', ['contact_no', 'contact'], 'email',
+              'address', 'city', 'state', 'pincode',
+              'latitude', 'longitude', [
+                this.modals.sequelize.fn('CONCAT', 'sellers/',
+                    this.modals.sequelize.literal('"sellers"."sid"'),
+                    '/reviews?isonlineseller=false'), 'reviewUrl']], include: [
+              {
+                model: this.modals.sellerReviews, as: 'sellerReviews',
+                attributes: [
+                  ['review_ratings', 'ratings'],
+                  ['review_feedback', 'feedback'],
+                  ['review_comments', 'comments']], required: false,
+              }], required: false,
+          },
+          {
+            model: this.modals.productReviews, as: 'productReviews',
+            attributes: [
+              ['review_ratings', 'ratings'], ['review_feedback', 'feedback'],
+              ['review_comments', 'comments']], required: false,
+          }, {
+            model: this.modals.categories, as: 'category',
+            attributes: [], required: false,
+          }, {
+            model: this.modals.categories, as: 'mainCategory', attributes: [],
+            required: false,
+          }, {
+            model: this.modals.categories, as: 'sub_category', attributes: [],
+            required: false,
+          }],
+        attributes: [
+          'id',
+          ['product_name', 'productName'],
+          'file_type',
+          'file_ref',
           [
-            this.retrieveProductMetadata({product_id: products.id}, language),
-            this.brandAdaptor.retrieveBrandById(products.brandId,
-                {category_id: products.categoryId}),
-            this.insuranceAdaptor.retrieveInsurances({product_id: products.id}),
-            this.warrantyAdaptor.retrieveWarranties({product_id: products.id}),
-            this.amcAdaptor.retrieveAMCs({product_id: products.id}),
-            this.repairAdaptor.retrieveRepairs({product_id: products.id}),
-            this.pucAdaptor.retrievePUCs({product_id: products.id}),
-            serviceSchedulePromise,
-            this.modals.serviceCenters.count({
-              include: [
-                {
-                  model: this.modals.brands, as: 'brands',
-                  where: {brand_id: products.brandId},
-                  attributes: [], required: true,
-                }, {
-                  model: this.modals.centerDetails,
-                  where: {category_id: products.categoryId},
-                  attributes: [], required: true, as: 'centerDetails',
-                }],
-            }),
-          ]);
-      products.purchaseDate = moment.utc(products.purchaseDate,
-          moment.ISO_8601).startOf('days');
-      products.metaData = metaData.filter(
-          (item) => !item.name.toLowerCase().includes('puc'));
-      products.brand = brand;
-      products.insuranceDetails = insuranceDetails;
-      products.warrantyDetails = warrantyDetails;
-      products.amcDetails = amcDetails;
-      products.repairBills = repairBills;
-      products.pucDetails = pucDetails;
-      products.serviceSchedules = serviceSchedules ?
-          serviceSchedules.map((scheduleItem) => {
-            scheduleItem.due_date = moment.utc(products.purchaseDate,
-                moment.ISO_8601).add(scheduleItem.due_in_months, 'months');
+            this.modals.sequelize.literal('"category"."category_id"'),
+            'categoryId'],
+          ['main_category_id', 'masterCategoryId'],
+          'model',
+          'sub_category_id',
+          ['colour_id', 'colorId'],
+          [
+            this.modals.sequelize.literal(
+                `${language ? `"sub_category"."category_name_${language}"` :
+                    `"sub_category"."category_name"`}`), 'sub_category_name'],
+          [
+            this.modals.sequelize.literal(
+                `${language ? `"category"."category_name_${language}"` :
+                    `"category"."category_name"`}`), 'categoryName'],
+          [
+            this.modals.sequelize.literal(`"sub_category"."category_name"`),
+            'default_sub_category_name'],
+          ['purchase_cost', 'value'],
+          [
+            this.modals.sequelize.literal(`"mainCategory"."category_name"`),
+            'default_masterCategoryName'],
+          'taxes',
+          [
+            this.modals.sequelize.literal(`"category"."category_name"`),
+            'default_categoryName'],
+          ['brand_id', 'brandId'],
+          [
+            this.modals.sequelize.literal(
+                `${language ? `"mainCategory"."category_name_${language}"` :
+                    `"mainCategory"."category_name"`}`), 'masterCategoryName'],
+          [
+            this.modals.sequelize.fn('CONCAT', '/categories/',
+                this.modals.sequelize.col('"category"."category_id"'),
+                '/images/0'), 'cImageURL'],
+          ['document_date', 'purchaseDate'],
+          [
+            this.modals.sequelize.fn('CONCAT', 'products/',
+                this.modals.sequelize.literal('"products"."id"')),
+            'productURL'],
+          ['document_number', 'documentNo'],
+          ['updated_at', 'updatedDate'],
+          [
+            this.modals.sequelize.fn('CONCAT', 'products/',
+                this.modals.sequelize.literal('"products"."id"'), '/reviews'),
+            'reviewUrl'],
+          ['job_id', 'jobId'],
+          ['seller_id', 'sellerId'],
+          [
+            this.modals.sequelize.fn('CONCAT',
+                '/consumer/servicecenters?brandid=',
+                this.modals.sequelize.literal('"products"."brand_id"'),
+                '&categoryid=',
+                this.modals.sequelize.col('"products"."category_id"')),
+            'serviceCenterUrl'],
+          'copies',
+          'status_type'],
+      });
+      products = productResult ? productResult.toJSON() : productResult;
+      if (products) {
+        products.cImageURL = products.file_type ?
+            `/consumer/products/${products.id}/images/${products.file_ref}` :
+            products.sub_category_id ?
+                `/categories/${products.sub_category_id}/images/0` :
+                products.cImageURL;
+        products.sub_category_name = products.sub_category_name ||
+            products.default_sub_category_name;
+        products.masterCategoryName = products.masterCategoryName ||
+            products.default_masterCategoryName;
+        products.categoryName = products.categoryName ||
+            products.default_categoryName;
+        productItem = productResult;
+        if (products.copies) {
+          products.copies = products.copies.map((copyItem) => {
+            copyItem.file_type = copyItem.file_type || copyItem.fileType;
+            return copyItem;
+          });
+        }
+        if (products.schedule) {
+          products.schedule.due_date = moment.utc(products.purchaseDate,
+              moment.ISO_8601).add(products.schedule.due_in_months, 'months');
+        }
+        const serviceSchedulePromise = products.schedule ?
+            this.serviceScheduleAdaptor.retrieveServiceSchedules({
+              category_id: products.schedule.category_id,
+              brand_id: products.schedule.brand_id, status_type: 1,
+              title: products.schedule.title, id: {$gte: products.schedule.id},
+            }) : undefined;
+        let [metaData, brand, insuranceDetails, warrantyDetails, amcDetails, repairBills, pucDetails, serviceSchedules, serviceCenterCounts] = await Promise.all(
+            [
+              this.retrieveProductMetadata({product_id: products.id}, language),
+              this.brandAdaptor.retrieveBrandById(products.brandId,
+                  {category_id: products.categoryId}),
+              this.insuranceAdaptor.retrieveInsurances(
+                  {product_id: products.id}),
+              this.warrantyAdaptor.retrieveWarranties(
+                  {product_id: products.id}),
+              this.amcAdaptor.retrieveAMCs({product_id: products.id}),
+              this.repairAdaptor.retrieveRepairs({product_id: products.id}),
+              this.pucAdaptor.retrievePUCs({product_id: products.id}),
+              serviceSchedulePromise,
+              this.modals.serviceCenters.count({
+                include: [
+                  {
+                    model: this.modals.brands, as: 'brands',
+                    where: {brand_id: products.brandId},
+                    attributes: [], required: true,
+                  }, {
+                    model: this.modals.centerDetails,
+                    where: {category_id: products.categoryId},
+                    attributes: [], required: true, as: 'centerDetails',
+                  }],
+              }),
+            ]);
+        products.purchaseDate = moment.utc(products.purchaseDate,
+            moment.ISO_8601).startOf('days');
+        products.metaData = metaData.filter(
+            (item) => !item.name.toLowerCase().includes('puc'));
+        products.brand = brand;
+        products.insuranceDetails = insuranceDetails;
+        products.warrantyDetails = warrantyDetails;
+        products.amcDetails = amcDetails;
+        products.repairBills = repairBills;
+        products.pucDetails = pucDetails;
+        products.serviceSchedules = serviceSchedules ?
+            serviceSchedules.map((scheduleItem) => {
+              scheduleItem.due_date = moment.utc(products.purchaseDate,
+                  moment.ISO_8601).add(scheduleItem.due_in_months, 'months');
 
-            return scheduleItem;
-          }) : serviceSchedules;
-      products.serviceCenterUrl = serviceCenterCounts &&
-      serviceCenterCounts > 0 ? products.serviceCenterUrl : '';
+              return scheduleItem;
+            }) : serviceSchedules;
+        products.serviceCenterUrl = serviceCenterCounts &&
+        serviceCenterCounts > 0 ? products.serviceCenterUrl : '';
+      }
+
+      return products;
+    } catch (err) {
+      console.log(err);
+      throw err;
     }
-
-    return products;
   }
 
   async updateProductDetails(parameters) {
@@ -1191,6 +1145,10 @@ export default class ProductAdaptor {
         dbProduct.sub_category_id;
     productBody.document_date = productBody.document_date ||
         dbProduct.document_date;
+    productBody.purchase_cost = productBody.purchase_cost ||
+        dbProduct.purchase_cost;
+    productBody.product_name = productBody.product_name ||
+        dbProduct.product_name;
     const result = await Promise.all([
       productBody.brand_id || productBody.brand_id === 0 ?
           this.modals.products.count({
@@ -1273,7 +1231,7 @@ export default class ProductAdaptor {
     sellerPromise.push(brandPromise);
     sellerPromise.push(warrantyProviderPromise);
     let product = productBody;
-    let [sellerDetail, amcSeller, repairSeller, pucSeller, insuranceProvider, brandDetail, warrantyProvider] = await     Promise.all(
+    let [sellerDetail, amcSeller, repairSeller, pucSeller, insuranceProvider, brandDetail, warrantyProvider] = await Promise.all(
         sellerPromise);
     const newSeller = seller_contact || seller_name || seller_email ?
         sellerDetail :
@@ -1327,7 +1285,8 @@ export default class ProductAdaptor {
     let [renewalTypes, productDetail, productModel, productCategory, normalWarranties, currentMetaData] = await Promise.all(
         [
           this.categoryAdaptor.retrieveRenewalTypes({status_type: 1}),
-          this.updateProduct(id, product), ...brandModelPromise]);
+          this.updateProduct(id, JSON.parse(JSON.stringify(product))),
+          ...brandModelPromise]);
     normalWarranties = normalWarranties ?
         normalWarranties.map((item) => item.toJSON()) :
         [];
@@ -1485,7 +1444,7 @@ export default class ProductAdaptor {
       [
         product.metaData, product.insurances, product.warranties, product.amcs,
         product.repairs, product.pucDetail, product.service_schedules,
-        product.service_center_counts] = await           Promise.all([
+        product.service_center_counts] = await Promise.all([
         Promise.all(metadataPromise),
         Promise.all(insurancePromise),
         Promise.all(warrantyItemPromise),
@@ -1839,19 +1798,17 @@ export default class ProductAdaptor {
   }
 
   async retrieveProductMetadata(options, language) {
-    const metaDataResult = await   this.modals.metaData.findAll({
-      where: options, include: [
+    const metaDataResult = await this.modals.metaData.findAll({
+      where: JSON.parse(JSON.stringify(options)), include: [
         {
           model: this.modals.categoryForms,
           as: 'categoryForm', attributes: [],
         }], attributes: [
         'id', ['product_id', 'productId'],
-        ['form_value', 'value'],
-        ['category_form_id', 'categoryFormId'],
+        ['form_value', 'value'], ['category_form_id', 'categoryFormId'],
         [
           this.modals.sequelize.literal('"categoryForm"."form_type"'),
-          'formType'],
-        [
+          'formType'], [
           this.modals.sequelize.literal(`${language ?
               `"categoryForm"."title_${language}"` :
               `"categoryForm"."title"`}`), 'default_name'],
@@ -1861,11 +1818,16 @@ export default class ProductAdaptor {
           'displayIndex']],
     });
     let metaData = metaDataResult.map((item) => item.toJSON());
-    const categoryFormIds = metaData.map((item) => item.categoryFormId);
-    const dropDowns = await   this.modals.dropDowns.findAll({
-      where: {category_form_id: categoryFormIds},
-      attributes: ['id', 'title'],
-    });
+    const categoryFormIds = metaData.filter(
+        item => !!item && item.categoryFormId).
+        map((item) => item.categoryFormId);
+    const dropDowns = categoryFormIds.length > 0 ?
+        await this.modals.dropDowns.findAll({
+          where: JSON.parse(
+              JSON.stringify({category_form_id: categoryFormIds})),
+          attributes: ['id', 'title'],
+        }) :
+        [];
     return _.orderBy(metaData.map((item) => {
       const metaDataItem = item;
       if (metaDataItem.formType === 2 && metaDataItem.value) {
@@ -2019,59 +1981,40 @@ export default class ProductAdaptor {
     }
   }
 
-  retrieveNotificationProducts(options) {
+  async retrieveNotificationProducts(options) {
     if (!options.status_type) {
       options.status_type = [5, 11];
     }
-    return this.modals.products.findAll({
+    const productResult = await this.modals.products.findAll({
       where: options,
       attributes: [
-        'id', ['id', 'productId'],
-        ['product_name', 'productName'],
-        ['purchase_cost', 'value'],
-        ['main_category_id', 'masterCategoryId'],
-        'taxes',
-        [
+        'id', ['id', 'productId'], ['product_name', 'productName'],
+        ['purchase_cost', 'value'], ['main_category_id', 'masterCategoryId'],
+        'taxes', [
           this.modals.sequelize.fn('CONCAT', 'products/',
               this.modals.sequelize.literal('"products"."id"')),
-          'productURL'],
-        [
-          'document_date',
-          'purchaseDate'],
-        ['document_number', 'documentNo'],
-        ['updated_at', 'updatedDate'],
-        [
-          'bill_id',
-          'billId'],
-        [
-          'job_id',
-          'jobId'],
-        'copies', 'user_id',
-      ],
-    }).then((productResult) => {
-      console.log(productResult.map((item) => item.toJSON()));
-      const products = productResult.map((item) => {
-        const productItem = item.toJSON();
-        if (productItem.copies) {
-          productItem.copies = productItem.copies.map((copyItem) => {
-            copyItem.file_type = copyItem.file_type || copyItem.fileType;
-            return copyItem;
-          });
-        }
-
-        return productItem;
-
-      });
-      const product_id = products.map((item) => item.id);
-      console.log('\n\n\n\n\n\n\n\n');
-      console.log({
-        product_id,
-      });
-      return Promise.all([
-        this.retrieveProductMetadata({
-          product_id,
-        }), products]);
+          'productURL'], ['document_date', 'purchaseDate'],
+        ['document_number', 'documentNo'], ['updated_at', 'updatedDate'],
+        ['bill_id', 'billId'], ['job_id', 'jobId'], 'copies', 'user_id'],
     });
+    const products = productResult.map((item) => {
+      const productItem = item.toJSON();
+      if (productItem.copies) {
+        productItem.copies = productItem.copies.map((copyItem) => {
+          copyItem.file_type = copyItem.file_type || copyItem.fileType;
+          return copyItem;
+        });
+      }
+
+      return productItem;
+    });
+    const product_id = products.filter(item => !!item && item.id).
+        map((item) => item.id);
+    return await Promise.all(
+        [
+          product_id.length > 0 ?
+              this.retrieveProductMetadata({product_id}) :
+              [], products]);
   }
 
   async retrieveMissingDocProducts(options) {
@@ -2114,7 +2057,7 @@ export default class ProductAdaptor {
       product.hasDocs = product.copies.length > 0;
       return product;
     });
-    const [insurances, warranties] = await   Promise.all([
+    const [insurances, warranties] = await Promise.all([
       this.insuranceAdaptor.retrieveInsurances({
         product_id: {
           $in: products.filter((item) => item.masterCategoryId === 2 ||
@@ -2230,13 +2173,13 @@ export default class ProductAdaptor {
   }
 
   async createEmptyProduct(productDetail) {
-    const productResult = await   this.modals.products.create(productDetail);
+    const productResult = await this.modals.products.create(productDetail);
     const productData = productResult.toJSON();
     return {id: productData.id, job_id: productData.job_id};
   }
 
   async updateProduct(id, productDetail) {
-    const productResult = await   this.modals.products.findOne({where: {id}});
+    const productResult = await this.modals.products.findOne({where: {id}});
     const itemDetail = productResult.toJSON();
     const currentPurchaseDate = itemDetail.document_date;
     const isModalSame = itemDetail.model === productDetail.model;
@@ -2258,7 +2201,7 @@ export default class ProductAdaptor {
     if (productDetail.document_date &&
         moment.utc(currentPurchaseDate, moment.ISO_8601).valueOf() !==
         moment.utc(productDetail.document_date, moment.ISO_8601).valueOf()) {
-      await     Promise.all([
+      await Promise.all([
         this.warrantyAdaptor.updateWarrantyPeriod(
             {product_id: id, user_id: productDetail.user_id},
             currentPurchaseDate, productDetail.document_date),
@@ -2296,7 +2239,7 @@ export default class ProductAdaptor {
         }, {where: {id: result.job_id}}),
         this.modals.jobCopies.update({status_type: 3, updated_by},
             {where: {job_id: result.job_id}})] : [undefined, undefined];
-      await     Promise.all([
+      await Promise.all([
         this.modals.mailBox.create({
           title: `User Deleted Product #${id}`, job_id: result.job_id,
           bill_product_id: result.product_id, notification_type: 100,

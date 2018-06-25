@@ -44,8 +44,7 @@ class GeneralController {
           where: {id},
           order: [['updatedAt', 'DESC']],
           attributes: [
-            'recommended_version', 'force_version',
-            ['details', 'updateDetails']],
+            'recommended_version', 'force_version', 'details'],
         });
         return reply.response(result);
       } else {
@@ -108,14 +107,52 @@ class GeneralController {
             })]);
         } else if (request.query.mainCategoryId) {
           results = await categoryAdaptor.retrieveCategories(
-              {category_id: request.query.mainCategoryId}, false,
-              request.language, false, user);
+              {
+                options: {category_id: request.query.mainCategoryId},
+                isSubCategoryRequiredForAll: true,
+                isBrandFormRequired: false,
+                language: request.language,
+                isFilterRequest: false,
+                user: user,
+              });
+        } else {
+          results = await categoryAdaptor.retrieveCategories(
+              {
+                options: {category_level: 1},
+                isSubCategoryRequiredForAll: true,
+                isBrandFormRequired: false,
+                language: request.language,
+              });
         }
-      } else {
-        results = await categoryAdaptor.retrieveCategories(
-            {category_level: 1}, false, request.language);
-      }
 
+        return reply.response({
+          status: true,
+          dropDowns: request.query.brandId ? results : undefined,
+          categories: request.query.brandId ?
+              undefined :
+              isBrandRequest ?
+                  results[0] :
+                  results,
+          renewalTypes: isBrandRequest ? results[1] : undefined,
+          contactType: [
+            {
+              id: 1,
+              name: 'URL',
+            }, {
+              id: 2,
+              name: 'EMAIL',
+            }, {
+              id: 3,
+              name: 'PHONE',
+            }],
+        });
+      }
+      results = await categoryAdaptor.retrieveCategories(
+          {
+            options: {category_level: 1}, isSubCategoryRequiredForAll: true,
+            isBrandFormRequired: false,
+            language: request.language,
+          });
       return reply.response({
         status: true,
         dropDowns: request.query.brandId ? results : undefined,
@@ -859,7 +896,6 @@ class GeneralController {
         });
       }
     } catch (err) {
-
       modals.logs.create({
         api_action: request.method,
         api_path: request.url.pathname,
@@ -936,6 +972,42 @@ class GeneralController {
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
       });
+    }
+  }
+
+  static async sesBounceHandler(request, reply) {
+    try {
+      await modals.logs.create({
+        log_type: 4,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+        }),
+      });
+      return reply.response().code(200);
+    } catch (e) {
+      console.log('error while logging on db,', ex);
+      return reply.response().code(200);
+    }
+  }
+
+  static async sesComplaintHandler(request, reply) {
+    try {
+      await modals.logs.create({
+        log_type: 4,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+        }),
+      });
+      return reply.response().code(200);
+    } catch (e) {
+      console.log('error while logging on db,', ex);
+      return reply.response().code(200);
     }
   }
 

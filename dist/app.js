@@ -75,7 +75,9 @@ const init = async () => {
     server.auth.strategy('jwt', 'jwt', {
       key: jwtKey.toString(),
       validate: async (decoded, request) => {
-        let userList = await _models2.default.users.findAll({ where: { role_type: 5 } });
+        let userList = await _models2.default.users.findAll({
+          where: JSON.parse(JSON.stringify({ role_type: 5, id: decoded.id }))
+        });
         const people = {};
         userList.forEach(item => {
           item = item.toJSON();
@@ -121,7 +123,5 @@ const init = async () => {
 }*/
 
 const initModel = exports.initModel = () => {
-  _models2.default.sequelize.sync().then(() => {
-    return init().then(server => {});
-  }).catch(err => console.log(`Error at start up is as follow: \n \n ${err}`));
+  _models2.default.sequelize.sync().then(() => init()).catch(err => console.log(`Error at start up is as follow: \n \n ${err}`));
 };

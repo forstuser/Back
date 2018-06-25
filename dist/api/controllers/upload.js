@@ -56,6 +56,14 @@ var _product = require('../Adaptors/product');
 
 var _product2 = _interopRequireDefault(_product);
 
+var _bluebird = require('bluebird');
+
+var _bluebird2 = _interopRequireDefault(_bluebird);
+
+var _guid = require('guid');
+
+var _guid2 = _interopRequireDefault(_guid);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 const fsImpl = new _s3fs2.default(_main2.default.AWS.S3.BUCKET, _main2.default.AWS.ACCESS_DETAILS);
@@ -118,16 +126,15 @@ class UploadController {
         status: false,
         message: 'Unauthorized'
         // forceUpdate: request.pre.forceUpdate
-      }).code(401);
+      });
     } else if (request.payload) {
       try {
-        let userDetail = await modals.users.findOne({
-          where: {
-            id: user.id || user.ID
-          }
-        });
+        let userDetail = await modals.users.findOne({ where: { id: user.id || user.ID } });
         userDetail = userDetail.toJSON();
-        await fsImpl.unlink(userDetail.image_name);
+        if (userDetail.image_name) {
+          await fsImpl.unlink(userDetail.image_name);
+        }
+
         const fieldNameHere = request.payload.fieldNameHere;
         const fileData = fieldNameHere || request.payload.filesName;
 
@@ -184,15 +191,11 @@ class UploadController {
         // forceUpdate: request.pre.forceUpdate
       });
     } else if (request.payload) {
+      let user_id = user.id || user.ID;
       try {
-        const productResult = await modals.products.findOne({
-          where: {
-            id: request.params.id,
-            user_id: user.id || user.ID
-          }
-        });
+        const productResult = await modals.products.findOne({ where: { id: request.params.id, user_id } });
         if (productResult) {
-          const file_ref = `${Math.random().toString(36).substr(2, 9)}${(user.id || user.ID).toString(36)}`;
+          const file_ref = `${Math.random().toString(36).substr(2, 9)}${user_id.toString(36)}`;
           const productDetail = productResult.toJSON();
           const fieldNameHere = request.payload.fieldNameHere;
           const fileData = fieldNameHere || request.payload.filesName;
@@ -200,7 +203,7 @@ class UploadController {
           const file_type = name.split('.')[name.split('.').length - 1];
           const fileName = `${productDetail.id}.${file_type}`;
           const fsImplProduct = new _s3fs2.default(`${_main2.default.AWS.S3.BUCKET}/${_main2.default.AWS.S3.PRODUCT_IMAGE}`, _main2.default.AWS.ACCESS_DETAILS);
-          await fsImplProduct.writeFile(fileName, fileData._data, { ContentType: _mimeTypes2.default.lookup(fileName) });
+          await _bluebird2.default.try(() => fsImplProduct.writeFile(fileName, fileData._data, { ContentType: _mimeTypes2.default.lookup(fileName) }));
 
           await productResult.updateAttributes({ file_type, file_ref });
           return reply.response({
@@ -217,13 +220,13 @@ class UploadController {
           // forceUpdate: request.pre.forceUpdate
         });
       } catch (err) {
-        console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
+        console.log(`Error on ${new Date()} for user ${user_id} is as follow: \n \n ${err}`);
 
         modals.logs.create({
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user.id || user.ID,
+          user_id: user_id,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -524,7 +527,7 @@ class UploadController {
       let productItemResult;
       const productId = requiredDetail.productId || jobResult.productId;
       if (type && productId) {
-        productItemResult = UploadController.createProductItems({
+        productItemResult = await UploadController.createProductItems({
           type, jobId: job_id, user, productId,
           itemId: requiredDetail.itemId, copies: copyData.map(copyItem => ({
             copyId: copyItem.id,
@@ -585,7 +588,7 @@ class UploadController {
         // const file = fs.createReadStream();
         return await fsImpl.writeFile(`jobs/${jobResult.job_id}/${fileName}`, elem._data, { ContentType: _mimeTypes2.default.lookup(fileName) || 'image/jpeg' });
       });
-      const fileResult = await Promise.all(fileUploadPromises);
+      const fileResult = await _bluebird2.default.all(fileUploadPromises);
       const promisedQuery = [];
       const jobPromise = fileResult.map((elem, index) => {
         const jobCopyDetail = {
@@ -599,10 +602,10 @@ class UploadController {
         return jobAdaptor.createJobCopies(jobCopyDetail);
       });
 
-      promisedQuery.push(Promise.all(jobPromise));
+      promisedQuery.push(_bluebird2.default.all(jobPromise));
       promisedQuery.push(modals.users.findById(user.id || user.ID));
       // if (promisedQuery.length === Object.keys(fileData).length) {
-      const billResult = await Promise.all(promisedQuery);
+      const billResult = await _bluebird2.default.all(promisedQuery);
       jobCopies = billResult[0];
       const userResult = billResult[billResult.length - 1];
 
@@ -850,7 +853,7 @@ class UploadController {
       }));
     }
 
-    return Promise.all(productItemPromise);
+    return await _bluebird2.default.all(productItemPromise);
   }
 
   static notifyTeam(user, result) {
@@ -861,8 +864,9 @@ class UploadController {
 
   static async retrieveFiles(request, reply) {
     if (!request.pre.forceUpdate) {
+      let result;
       try {
-        const result = await modals.jobs.findById(request.params.id, {
+        result = await modals.jobs.findById(request.params.id, {
           include: [{
             model: modals.jobCopies, as: 'copies',
             where: { id: request.params.copyid },
@@ -870,7 +874,7 @@ class UploadController {
           }]
         });
         if (result) {
-          const fileResult = await fsImpl.readFile(Guid.isGuid(result.job_id) ? `${result.copies[0].file_name}` : `jobs/${result.job_id}/${result.copies[0].file_name}`);
+          const fileResult = await fsImpl.readFile(_guid2.default.isGuid(result.job_id) ? `${result.copies[0].file_name}` : `jobs/${result.job_id}/${result.copies[0].file_name}`);
           return reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${result.bill_copy_name}`);
         } else {
           return reply.response({
@@ -935,7 +939,7 @@ class UploadController {
         if (!request.pre.forceUpdate) {
           const itemId = request.query && request.query.itemid ? request.query.itemid : undefined;
 
-          let [jobData, updateCopyStatus, count, productItemStatus] = await Promise.all([modals.jobs.findById(request.params.id, {
+          let [jobData, updateCopyStatus, count, productItemStatus] = await _bluebird2.default.all([modals.jobs.findById(request.params.id, {
             include: [{ model: modals.jobCopies, as: 'copies', required: true }]
           }), modals.jobCopies.update({ status_type: 3, updated_by: user.id || user.ID }, {
             where: {
@@ -1073,7 +1077,7 @@ class UploadController {
         break;
     }
 
-    return Promise.all(productItemPromise);
+    return await _bluebird2.default.all(productItemPromise);
   }
 
   static async retrieveCategoryImage(request, reply) {
@@ -1119,11 +1123,7 @@ class UploadController {
     if (!request.pre.forceUpdate) {
       try {
         const fsImplCategory = new _s3fs2.default(`${_main2.default.AWS.S3.BUCKET}/${_main2.default.AWS.S3.CATEGORY_IMAGE}/offer${request.params.file_type ? `/${request.params.file_type}` : ''}`, _main2.default.AWS.ACCESS_DETAILS);
-        let result = await modals.offerCategories.findOne({
-          where: {
-            id: request.params.id
-          }
-        });
+        let result = await modals.offerCategories.findOne({ where: { id: request.params.id } });
 
         result = result ? result.toJSON() : {};
         const fileResult = await fsImplCategory.readFile(result.category_image_name, 'utf8');

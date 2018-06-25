@@ -123,7 +123,11 @@ class SearchAdaptor {
 
     let categories;
 
-    return this.categoryAdaptor.retrieveCategories(categoryOption, language).then(results => {
+    return this.categoryAdaptor.retrieveCategories({
+      options: categoryOption,
+      isSubCategoryRequiredForAll: false,
+      isBrandFormRequired: language
+    }).then(results => {
       categories = results;
       const categoryIds = categories.filter(item => item.level === 2);
       const mainCategoryIds = categories.filter(item => item.level === 1);

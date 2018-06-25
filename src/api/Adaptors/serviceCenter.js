@@ -8,13 +8,13 @@ class ServiceCenterAdaptor {
     this.modals = modals;
   }
 
-  retrieveServiceCenters(options) {
+  async retrieveServiceCenters(options) {
     options.status_type = 1;
     const categoryId = options.category_id;
     const brand_id = options.brand_id;
     options = _.omit(options, 'category_id');
     options = _.omit(options, 'brand_id');
-    return this.modals.serviceCenters.findAll({
+    const results = await this.modals.serviceCenters.findAll({
       where: options,
       include: [
         {
@@ -98,7 +98,8 @@ class ServiceCenterAdaptor {
           'center_address',
           'address']],
       order: [['center_name', 'ASC']],
-    }).then((results) => results.map((item) => item.toJSON()));
+    });
+    return results.map((item) => item.toJSON());
   }
 }
 

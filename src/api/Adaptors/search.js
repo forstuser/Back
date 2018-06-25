@@ -124,7 +124,11 @@ class SearchAdaptor {
 
     let categories;
 
-    return this.categoryAdaptor.retrieveCategories(categoryOption, language).
+    return this.categoryAdaptor.retrieveCategories({
+      options: categoryOption,
+      isSubCategoryRequiredForAll: false,
+      isBrandFormRequired: language
+    }).
         then((results) => {
           categories = results;
           const categoryIds = categories.filter(item => item.level === 2);

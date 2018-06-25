@@ -13,6 +13,8 @@ import WarrantyAdaptor from '../Adaptors/warranties';
 import RepairAdaptor from '../Adaptors/repairs';
 import PUCAdaptor from '../Adaptors/pucs';
 import ProductAdaptor from '../Adaptors/product';
+import Promise from 'bluebird';
+import Guid from 'guid';
 
 const fsImpl = new S3FS(config.AWS.S3.BUCKET, config.AWS.ACCESS_DETAILS);
 
@@ -77,16 +79,16 @@ class UploadController {
         status: false,
         message: 'Unauthorized',
         // forceUpdate: request.pre.forceUpdate
-      }).code(401);
+      });
     } else if (request.payload) {
       try {
-        let userDetail = await modals.users.findOne({
-          where: {
-            id: user.id || user.ID,
-          },
-        });
+        let userDetail = await modals.users.findOne(
+            {where: {id: user.id || user.ID}});
         userDetail = userDetail.toJSON();
-        await fsImpl.unlink(userDetail.image_name);
+        if (userDetail.image_name) {
+          await fsImpl.unlink(userDetail.image_name);
+        }
+
         const fieldNameHere = request.payload.fieldNameHere;
         const fileData = fieldNameHere || request.payload.filesName;
 
@@ -149,16 +151,13 @@ class UploadController {
         // forceUpdate: request.pre.forceUpdate
       });
     } else if (request.payload) {
+      let user_id = user.id || user.ID;
       try {
-        const productResult = await modals.products.findOne({
-          where: {
-            id: request.params.id,
-            user_id: user.id || user.ID,
-          },
-        });
+        const productResult = await modals.products.findOne(
+            {where: {id: request.params.id, user_id}});
         if (productResult) {
           const file_ref = `${Math.random().toString(36).
-              substr(2, 9)}${(user.id || user.ID).toString(36)}`;
+              substr(2, 9)}${(user_id).toString(36)}`;
           const productDetail = productResult.toJSON();
           const fieldNameHere = request.payload.fieldNameHere;
           const fileData = fieldNameHere || request.payload.filesName;
@@ -168,8 +167,9 @@ class UploadController {
           const fsImplProduct = new S3FS(
               `${config.AWS.S3.BUCKET}/${config.AWS.S3.PRODUCT_IMAGE}`,
               config.AWS.ACCESS_DETAILS);
-          await fsImplProduct.writeFile(fileName, fileData._data,
-              {ContentType: mime.lookup(fileName)});
+          await Promise.try(
+              () => fsImplProduct.writeFile(fileName, fileData._data,
+                  {ContentType: mime.lookup(fileName)}));
 
           await productResult.updateAttributes({file_type, file_ref});
           return reply.response({
@@ -187,14 +187,13 @@ class UploadController {
         });
       } catch (err) {
         console.log(
-            `Error on ${new Date()} for user ${user.id ||
-            user.ID} is as follow: \n \n ${err}`);
+            `Error on ${new Date()} for user ${user_id} is as follow: \n \n ${err}`);
 
         modals.logs.create({
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user.id || user.ID,
+          user_id: user_id,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -536,7 +535,7 @@ class UploadController {
       let productItemResult;
       const productId = requiredDetail.productId || jobResult.productId;
       if (type && productId) {
-        productItemResult = UploadController.createProductItems({
+        productItemResult = await UploadController.createProductItems({
           type, jobId: job_id, user, productId,
           itemId: requiredDetail.itemId, copies: copyData.map((copyItem) => ({
             copyId: copyItem.id,
@@ -861,7 +860,7 @@ class UploadController {
       }));
     }
 
-    return Promise.all(productItemPromise);
+    return await Promise.all(productItemPromise);
   }
 
   static notifyTeam(user, result) {
@@ -874,8 +873,9 @@ class UploadController {
 
   static async retrieveFiles(request, reply) {
     if (!request.pre.forceUpdate) {
+      let result;
       try {
-        const result = await modals.jobs.findById(request.params.id, {
+        result = await modals.jobs.findById(request.params.id, {
           include: [
             {
               model: modals.jobCopies, as: 'copies',
@@ -992,8 +992,7 @@ class UploadController {
               {
                 user_status: 8, admin_status: 4, ce_status: null,
                 qe_status: null, updated_by: user.id || user.ID,
-              } :
-              {
+              } : {
                 user_status: 8, admin_status: 2, ce_status: null,
                 qe_status: null, updated_by: user.id || user.ID,
               };
@@ -1132,7 +1131,7 @@ class UploadController {
         break;
     }
 
-    return Promise.all(productItemPromise);
+    return await Promise.all(productItemPromise);
   }
 
   static async retrieveCategoryImage(request, reply) {
@@ -1191,16 +1190,12 @@ class UploadController {
             `${config.AWS.S3.BUCKET}/${config.AWS.S3.CATEGORY_IMAGE}/offer${request.params.file_type
                 ? `/${request.params.file_type}`
                 : ''}`, config.AWS.ACCESS_DETAILS);
-        let result = await modals.offerCategories.findOne({
-          where: {
-            id: request.params.id,
-          },
-        });
+        let result = await modals.offerCategories.findOne(
+            {where: {id: request.params.id}});
 
         result = result ? result.toJSON() : {};
         const fileResult = await fsImplCategory.readFile(
-            result.category_image_name,
-            'utf8');
+            result.category_image_name, 'utf8');
 
         console.log(fileResult);
         return reply.response(fileResult.Body).
@@ -1490,8 +1485,7 @@ class UploadController {
             `${config.AWS.S3.BUCKET}/${config.AWS.S3.KNOW_ITEM_IMAGE}`,
             config.AWS.ACCESS_DETAILS);
         const fileResult = await fsImplBrand.readFile(
-            `${request.params.id}.png`,
-            'utf8');
+            `${request.params.id}.png`, 'utf8');
         return reply.response(fileResult.Body).
             header('Content-Type', fileResult.ContentType).
             header('Content-Disposition',

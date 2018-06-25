@@ -54,6 +54,10 @@ var _bluebird2 = _interopRequireDefault(_bluebird);
 
 var _sms = require('../../helpers/sms');
 
+var _lodash = require('lodash');
+
+var _lodash2 = _interopRequireDefault(_lodash);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 class DashboardAdaptor {
@@ -68,110 +72,25 @@ class DashboardAdaptor {
     this.calendarServiceAdaptor = new _calendarServices2.default(modals);
     this.notificationAdaptor = new _notification4.default(modals);
     this.date = _moment2.default.utc();
+    this._ = _lodash2.default;
   }
 
-  retrieveDashboardResult(user, request) {
-    return _bluebird2.default.try(() => _bluebird2.default.all([this.filterUpcomingService(user, request),
-    // this.prepareInsightData(user, request),
-    this.retrieveRecentSearch(user), this.modals.mailBox.count({ where: { user_id: user.id || user.ID, status_id: 4 } }), this.modals.products.count({
-      where: {
-        user_id: user.id || user.ID,
-        status_type: [5, 11]
-      }
-    }),
-    /* this.productAdaptor.retrieveUsersLastProduct({
-       user_id: user.id || user.ID,
-       status_type: [5, 11],
-     }, request.language),*/
-    this.modals.user_calendar_item.count({
-      where: {
-        user_id: user.id || user.ID
-      }
-    }),
-    /*this.modals.user_calendar_item.findOne({
-      where: {
-        user_id: user.id || user.ID,
-      },
-      order: [['updated_at', 'desc']],
-    }),
-    this.modals.service_calculation.findOne({
-      where: {
-        updated_by: user.id || user.ID,
-      },
-      order: [['updated_at', 'desc']],
-    }),
-    this.calendarServiceAdaptor.retrieveCalendarItemList(
-        {user_id: user.id || user.ID}, request.language, 4),*/
-    this.modals.products.count({
-      where: {
-        user_id: user.id || user.ID,
-        main_category_id: [2, 3],
-        status_type: [5, 11]
-      }
-    }), this.modals.knowItems.count({
-      where: {
-        id: { $gt: request.query.lastfact || 0 }
-      }
-    }), this.modals.todoUserMap.count({
-      where: {
-        user_id: user.id || user.ID
-      }
-    }), this.modals.mealUserMap.count({
-      where: {
-        user_id: user.id || user.ID
-      }
-    }), this.modals.wearables.count({
-      where: {
-        created_by: user.id || user.ID
-      }
-    }), this.modals.know_user_likes.count({
-      where: {
-        user_id: user.id || user.ID
-      }
-    })])).spread(parameters => {
-      let {
-        upcomingServices, recentSearches, notificationCount, productCount,
-        /*product,*/calendarItemCount, /*latestCalendarItem, latestCalendarCalc,
-                                       recent_calendar_item,*/service_center_products, know_item_count, todoCounts,
-        mealCounts, wearableCounts, knowItemCounts
-      } = parameters;
-      /*latestCalendarItem = latestCalendarItem ?
-          latestCalendarItem.toJSON() :
-          {};
-      latestCalendarCalc = latestCalendarCalc ?
-          latestCalendarCalc.toJSON() :
-          {};
-      const calendar_item_updated_at = latestCalendarItem &&
-      moment(latestCalendarItem.updated_at, moment.ISO_8601).
-          diff(moment(latestCalendarCalc.updated_at, moment.ISO_8601),
-              'days') < 0 ?
-          latestCalendarCalc.updated_at : latestCalendarItem ?
-              latestCalendarItem.updated_at : moment();*/
+  async retrieveDashboardResult(user, request) {
+    try {
+      let [upcomingServices, recentSearches, notificationCount] = await _bluebird2.default.all([this.filterUpcomingService(user, request), this.retrieveRecentSearch(user), this.modals.mailBox.count({ where: { user_id: user.id || user.ID, status_id: 4 } })]);
       return {
         status: true,
         message: 'Dashboard restore Successful',
-        notificationCount: notificationCount,
-        recentSearches: recentSearches.map(item => {
+        notificationCount,
+        recentSearches: await _bluebird2.default.try(() => recentSearches.map(item => {
           const search = item.toJSON();
           return search.searchValue;
-        }).slice(0, 5),
-        upcomingServices: this.evaluateUpcomingServices(upcomingServices),
-        // insight: this.evaluateDashboardInsight(insightData),
-        forceUpdate: request.pre.forceUpdate,
-        showDashboard: !!(productCount && parseInt(productCount) > 0) || !!(calendarItemCount && parseInt(calendarItemCount) > 0),
-        hasEazyDayItems: !!(todoCounts && todoCounts > 0) || !!(mealCounts && mealCounts > 0) || !!(wearableCounts && wearableCounts > 0),
-        knowItemsLiked: !!(knowItemCounts && knowItemCounts > 0),
-        total_calendar_item: calendarItemCount || 0,
-        /*calendar_item_updated_at,
-        recent_calendar_item,*/
-        /*recent_products: product.slice(0, 4),
-        product: product[0],*/
-        service_center_products,
-        know_item_count,
-        hasProducts: true
+        }).slice(0, 5)),
+        upcomingServices: await this.evaluateUpcomingServices(upcomingServices),
+        forceUpdate: request.pre.forceUpdate
       };
-    }).catch(err => {
-
+    } catch (err) {
+      console.log(err);
       this.modals.logs.create({
         api_action: request.method,
         api_path: request.url.pathname,
@@ -192,49 +111,14 @@ class DashboardAdaptor {
         forceUpdate: request.pre.forceUpdate,
         showDashboard: false
       };
-    });
+    }
   }
 
-  evaluateUpcomingServices(upcomingServices) {
-    upcomingServices = upcomingServices.map(elem => {
-      if (elem.productType === 1) {
-        const dueAmountArr = elem.productMetaData.filter(e => {
-          return e.name.toLowerCase() === 'due amount';
-        });
-
-        if (dueAmountArr.length > 0) {
-          elem.value = dueAmountArr[0].value;
-        }
-      }
-
-      return elem;
-    });
-
-    upcomingServices.sort((a, b) => {
-      let aDate;
-      let bDate;
-
-      aDate = a.expiryDate;
-      bDate = b.expiryDate;
-
-      if (a.productType === 1) {
-        aDate = a.dueDate;
-      }
-
-      if (b.productType === 1) {
-        bDate = b.dueDate;
-      }
-
-      if (_moment2.default.utc(aDate, 'YYYY-MM-DD').isBefore(_moment2.default.utc(bDate, 'YYYY-MM-DD'))) {
-        return -1;
-      }
-
-      return 1;
-    });
-    return upcomingServices;
+  async evaluateUpcomingServices(upcomingServices) {
+    return await _bluebird2.default.try(() => this._.orderBy(upcomingServices, ['expiryDate'], ['asc']));
   }
 
-  evaluateDashboardInsight(insightData) {
+  async evaluateDashboardInsight(insightData) {
     const distinctInsight = [];
     insightData = insightData.map(item => {
       const insightItem = item;
@@ -264,59 +148,41 @@ class DashboardAdaptor {
     };
   }
 
-  prepareDashboardResult(parameters) {
+  async prepareDashboardResult(parameters) {
     let { isNewUser, user, token, request } = parameters;
     console.log(isNewUser);
+    let user_id = user.id || user.ID;
     if (!isNewUser) {
-      return _bluebird2.default.all([this.modals.products.count({
-        where: {
-          user_id: user.id || user.ID,
-          status_type: [5, 11]
-        }
-      }), this.modals.user_calendar_item.count({
-        where: {
-          user_id: user.id || user.ID
-        }
-      }), this.modals.todoUserMap.count({
-        where: {
-          user_id: user.id || user.ID
-        }
-      }), this.modals.mealUserMap.count({
-        where: {
-          user_id: user.id || user.ID
-        }
-      }), this.modals.wearables.count({
-        where: {
-          created_by: user.id || user.ID
-        }
-      }), this.modals.know_user_likes.count({
-        where: {
-          user_id: user.id || user.ID
-        }
-      })]).spread((productCounts, calendarItemCounts, todoCounts, mealCounts, wearableCounts, knowItemCounts) => {
-        calendarItemCounts = parseInt(calendarItemCounts);
+      try {
+        let [productCounts, /*calendarItemCounts, todoCounts, mealCounts,
+                            wearableCounts,*/knowItemCounts] = await _bluebird2.default.all([this.modals.products.count({ where: { user_id, status_type: [5, 11] } }),
+        /*this.modals.user_calendar_item.count({where: {user_id}}),
+        this.modals.todoUserMap.count({where: {user_id}}),
+        this.modals.mealUserMap.count({where: {user_id}}),
+        this.modals.wearables.count({where: {created_by: user_id}}),*/
+        this.modals.know_user_likes.count({ where: { user_id } })]);
+        // calendarItemCounts = parseInt(calendarItemCounts);
         productCounts = parseInt(productCounts);
         return {
           status: true,
           message: !isNewUser ? 'Existing User' : 'New User',
           billCounts: productCounts,
-          showDashboard: !!(productCounts && productCounts > 0) || !!(calendarItemCounts && calendarItemCounts > 0),
-          hasEazyDayItems: !!(todoCounts && todoCounts > 0) || !!(mealCounts && mealCounts > 0) || !!(wearableCounts && wearableCounts > 0),
+          showDashboard: productCounts && productCounts > 0,
           knowItemsLiked: !!(knowItemCounts && knowItemCounts > 0),
           isExistingUser: !isNewUser,
           hasProducts: true,
           authorization: token,
-          userId: user.id || user.ID,
+          userId: user_id,
           forceUpdate: request.pre.forceUpdate
         };
-      }).catch(err => {
-        console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
+      } catch (err) {
+        console.log(`Error on ${new Date()} for user ${user_id} is as follow: \n \n ${err}`);
 
         this.modals.logs.create({
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user.id || user.ID,
+          user_id,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -333,7 +199,7 @@ class DashboardAdaptor {
           err,
           forceUpdate: request.pre.forceUpdate
         };
-      });
+      }
     }
 
     if (user.email) {
@@ -341,7 +207,7 @@ class DashboardAdaptor {
     }
 
     // welcome email
-    this.notificationAdaptor.notifyUser(user.id || user.ID, {
+    this.notificationAdaptor.notifyUser(user_id, {
       title: 'Welcome to BinBill!',
       description: 'Hello User. Greetings from Rohit BinBill CEO. I welcome...',
       big_text: 'Hello User. Greetings from Rohit BinBill CEO. I welcome you to your eHome. We promise to constantly evolve and make managing your eHome ever efficient and smarter. As it is a new home, you may take some time to get accustomed to it. Your Home Manager and I would always welcome your suggestions to improve your eHome. Please reach me at - rohit@binbill.com or eHome@binbill.com'
@@ -364,60 +230,61 @@ class DashboardAdaptor {
       knowItemsLiked: false,
       hasProducts: true,
       isExistingUser: false,
-      userId: user.id || user.ID,
+      userId: user_id,
       forceUpdate: request.pre.forceUpdate
     };
   }
 
-  filterUpcomingService(user, request) {
-    return _bluebird2.default.try(() => _bluebird2.default.all([this.amcAdaptor.retrieveAMCs({
-      user_id: user.id || user.ID,
-      status_type: [5, 11],
-      expiry_date: {
-        $gte: _moment2.default.utc().startOf('days'),
-        $lte: _moment2.default.utc().add(30, 'days').endOf('days')
-      }
-    }), this.insuranceAdaptor.retrieveInsurances({
-      user_id: user.id || user.ID,
-      status_type: [5, 11],
-      expiry_date: {
-        $gte: _moment2.default.utc().startOf('days'),
-        $lte: _moment2.default.utc().add(30, 'days').endOf('days')
-      }
-    }), this.warrantyAdaptor.retrieveWarranties({
-      user_id: user.id || user.ID,
-      status_type: [5, 11],
-      warranty_type: [1, 2],
-      expiry_date: {
-        $gte: _moment2.default.utc().startOf('days'),
-        $lte: _moment2.default.utc().add(30, 'days').endOf('days')
-      }
-    }), this.pucAdaptor.retrievePUCs({
-      user_id: user.id || user.ID,
-      status_type: [5, 11],
-      main_category_id: [3],
-      expiry_date: {
-        $gte: _moment2.default.utc().startOf('days'),
-        $lte: _moment2.default.utc().add(30, 'days').endOf('days')
-      }
-    }), this.productAdaptor.retrieveUpcomingProducts({
-      user_id: user.id || user.ID,
-      status_type: [5, 11],
-      main_category_id: [3],
-      service_schedule_id: {
-        $not: null
-      }
-    }, request.language), this.productAdaptor.retrieveNotificationProducts({
-      user_id: user.id || user.ID,
-      status_type: [5, 11],
-      main_category_id: [6, 8]
-    }), this.repairAdaptor.retrieveRepairs({
-      user_id: user.id || user.ID,
-      status_type: [5, 11],
-      warranty_upto: {
-        $ne: null
-      }
-    })])).spread((amcList, insuranceList, warrantyList, pucList, productServiceScheduleList, productDetails, repairList) => {
+  async filterUpcomingService(user, request) {
+    return await _bluebird2.default.try(async () => {
+      const [amcList, insuranceList, warrantyList, pucList, productServiceScheduleList, productDetails, repairList] = await _bluebird2.default.all([this.amcAdaptor.retrieveAMCs({
+        user_id: user.id || user.ID,
+        status_type: [5, 11],
+        expiry_date: {
+          $gte: _moment2.default.utc().startOf('days'),
+          $lte: _moment2.default.utc().add(30, 'days').endOf('days')
+        }
+      }), this.insuranceAdaptor.retrieveInsurances({
+        user_id: user.id || user.ID,
+        status_type: [5, 11],
+        expiry_date: {
+          $gte: _moment2.default.utc().startOf('days'),
+          $lte: _moment2.default.utc().add(30, 'days').endOf('days')
+        }
+      }), this.warrantyAdaptor.retrieveWarranties({
+        user_id: user.id || user.ID,
+        status_type: [5, 11],
+        warranty_type: [1, 2],
+        expiry_date: {
+          $gte: _moment2.default.utc().startOf('days'),
+          $lte: _moment2.default.utc().add(30, 'days').endOf('days')
+        }
+      }), this.pucAdaptor.retrievePUCs({
+        user_id: user.id || user.ID,
+        status_type: [5, 11],
+        main_category_id: [3],
+        expiry_date: {
+          $gte: _moment2.default.utc().startOf('days'),
+          $lte: _moment2.default.utc().add(30, 'days').endOf('days')
+        }
+      }), this.productAdaptor.retrieveUpcomingProducts({
+        user_id: user.id || user.ID,
+        status_type: [5, 11],
+        main_category_id: [3],
+        service_schedule_id: {
+          $not: null
+        }
+      }, request.language), this.productAdaptor.retrieveNotificationProducts({
+        user_id: user.id || user.ID,
+        status_type: [5, 11],
+        main_category_id: [6, 8]
+      }), this.repairAdaptor.retrieveRepairs({
+        user_id: user.id || user.ID,
+        status_type: [5, 11],
+        warranty_upto: {
+          $ne: null
+        }
+      })]);
       let amcs = amcList.map(item => {
         const amc = item;
         if (_moment2.default.utc(amc.expiryDate, _moment2.default.ISO_8601).isValid()) {
@@ -429,7 +296,6 @@ class DashboardAdaptor {
 
         return amc;
       });
-      amcs = amcs.filter(item => item.dueIn !== undefined && item.dueIn !== null && item.dueIn <= 30 && item.dueIn >= 0);
 
       let insurances = insuranceList.map(item => {
         const insurance = item;
@@ -442,8 +308,6 @@ class DashboardAdaptor {
         return insurance;
       });
 
-      insurances = insurances.filter(item => item.dueIn !== undefined && item.dueIn !== null && item.dueIn <= 30 && item.dueIn >= 0);
-
       let warranties = warrantyList.map(item => {
         const warranty = item;
         if (_moment2.default.utc(warranty.expiryDate, _moment2.default.ISO_8601).isValid()) {
@@ -455,8 +319,6 @@ class DashboardAdaptor {
         return warranty;
       });
 
-      warranties = warranties.filter(item => item.dueIn !== undefined && item.dueIn !== null && item.dueIn <= 30 && item.dueIn >= 0);
-
       let repairWarranties = repairList.map(item => {
         const warranty = item;
         if (_moment2.default.utc(warranty.warranty_upto, _moment2.default.ISO_8601).isValid()) {
@@ -467,8 +329,6 @@ class DashboardAdaptor {
         }
         return warranty;
       });
-
-      repairWarranties = repairWarranties.filter(item => item.dueIn !== undefined && item.dueIn !== null && item.dueIn <= 30 && item.dueIn >= 0);
 
       let pucProducts = pucList.map(item => {
         const puc = item;
@@ -482,8 +342,6 @@ class DashboardAdaptor {
         return puc;
       });
 
-      pucProducts = pucProducts.filter(item => item.dueIn !== undefined && item.dueIn !== null && item.dueIn <= 30 && item.dueIn >= 0);
-
       let productServiceSchedule = productServiceScheduleList.filter(item => item.schedule).map(item => {
         const scheduledProduct = item;
         const scheduledDate = scheduledProduct.schedule ? scheduledProduct.schedule.due_date : undefined;
@@ -495,18 +353,11 @@ class DashboardAdaptor {
         }
 
         return scheduledProduct;
-      });
+      }).filter(item => item.dueIn !== undefined && item.dueIn !== null && item.dueIn <= 7 && item.dueIn >= 0);
 
-      productServiceSchedule = productServiceSchedule.filter(item => item.dueIn !== undefined && item.dueIn !== null && item.dueIn <= 7 && item.dueIn >= 0);
       const metaData = productDetails[0];
       let productList = productDetails[1].map(productItem => {
         productItem.productMetaData = metaData.filter(item => item.productId === productItem.id);
-
-        return productItem;
-      });
-
-      productList = productList.map(item => {
-        const productItem = item;
         productItem.productMetaData.forEach(metaItem => {
           const metaData = metaItem;
           if (metaData.name.toLowerCase().includes('due') && metaData.name.toLowerCase().includes('date') && metaData.value && (_moment2.default.utc(metaData.value, _moment2.default.ISO_8601).isValid() || _moment2.default.utc(metaData.value, 'DD MMM YYYY').isValid())) {
@@ -518,20 +369,22 @@ class DashboardAdaptor {
           if (metaData.name.toLowerCase().includes('address')) {
             productItem.address = metaData.value;
           }
+          if (metaData.name.toLowerCase().includes('due amount')) {
+            productItem.value = metaData.value;
+          }
+          productItem.expiryDate = productItem.dueDate;
         });
 
         productItem.productType = 1;
         return productItem;
       });
 
-      productList = productList.filter(item => item.dueIn !== undefined && item.dueIn !== null && item.dueIn <= 30 && item.dueIn >= 0);
-
-      return [...productList, ...warranties, ...insurances, ...amcs, ...pucProducts, ...productServiceSchedule, ...repairWarranties];
+      return [...productList, ...warranties, ...insurances, ...amcs, ...pucProducts, ...productServiceSchedule, ...repairWarranties].filter(item => item.dueIn !== undefined && item.dueIn !== null && item.dueIn <= 30 && item.dueIn >= 0);
     });
   }
 
-  prepareInsightData(user, request) {
-    return _bluebird2.default.all([this.productAdaptor.retrieveProducts({
+  async prepareInsightData(user, request) {
+    const results = await _bluebird2.default.all([this.productAdaptor.retrieveProducts({
       status_type: [5, 11],
       user_id: user.id || user.ID,
       document_date: {
@@ -573,13 +426,17 @@ class DashboardAdaptor {
         $lte: _moment2.default.utc(),
         $gte: _moment2.default.utc().startOf('M')
       }
-    })]).then(results => _bluebird2.default.all([...results[0], ...results[1], ...results[2], ...results[3], ...results[4], ...results[5]]));
+    })]);
+    return [...results[0], ...results[1], ...results[2], ...results[3], ...results[4], ...results[5]];
   }
 
-  retrieveRecentSearch(user) {
-    return this.modals.recentSearches.findAll({
+  async retrieveRecentSearch(user) {
+    return await this.modals.recentSearches.findAll({
       where: {
-        user_id: user.id || user.ID
+        user_id: user.id || user.ID,
+        searchValue: {
+          $not: null
+        }
       },
       order: [['searchDate', 'DESC']],
       attributes: ['searchValue']

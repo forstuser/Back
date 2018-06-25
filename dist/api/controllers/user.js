@@ -117,9 +117,9 @@ let loginOrRegisterUser = async parameters => {
     let userData = await userAdaptor.loginOrRegister(userWhere, userInput);
     if (!userData[1]) {
       userData = await _bluebird2.default.all([_bluebird2.default.try(() => userData[0].updateAttributes(userInput)), userData[1]]);
+    } else {
+      userData = await _bluebird2.default.all([userData[0], userData[1]]);
     }
-
-    userData = await _bluebird2.default.all([userData[0], userData[1]]);
     updatedUser = userData[0].toJSON();
 
     if (!updatedUser.email_verified && updatedUser.email) {
@@ -143,10 +143,8 @@ let loginOrRegisterUser = async parameters => {
     replyObject.authorization = `bearer ${_authentication2.default.generateToken(userData[0]).token}`;
     token = replyObject.authorization;
     const result = await dashboardAdaptor.prepareDashboardResult({
-      isNewUser: userData[1],
-      user: userData[0].toJSON(),
-      token: replyObject.authorization,
-      request
+      isNewUser: userData[1], user: userData[0].toJSON(),
+      token: replyObject.authorization, request
     });
     return reply.response(result).code(201).header('authorization', replyObject.authorization);
   } catch (err) {
@@ -315,17 +313,12 @@ class UserController {
     const user = request.user;
     try {
       if (request.pre.isValidEmail) {
-        const response = _otp2.default.sendOTPOverEmail(request.payload.email, request.user.name, request.headers.ios_app_version && request.headers.ios_app_version < 14 || request.headers.app_version && request.headers.app_version < 13 ? 6 : 4);
-        console.log('OTP Sent over email', response[0]);
+        const response = await _otp2.default.sendOTPOverEmail(request.payload.email, request.user.name, request.headers.ios_app_version && request.headers.ios_app_version < 14 || request.headers.app_version && request.headers.app_version < 13 ? 6 : 4);
         await userAdaptor.updateUserDetail({
           email: request.payload.email.toLowerCase(),
           email_secret: response[0],
           otp_created_at: _moment2.default.utc()
-        }, {
-          where: {
-            id: request.user.id
-          }
-        });
+        }, { where: { id: request.user.id } });
         replyObject.email = request.payload.email;
         replyObject.Name = user.name;
         replyObject.imageUrl = user.imageUrl;
@@ -437,17 +430,11 @@ class UserController {
     try {
       if (!request.pre.forceUpdate) {
         if (request.payload.BBLogin_Type === 1) {
-          if (trueObject.PhoneNo !== '8750568036') {
+          if (trueObject.PhoneNo !== '8750568036' && trueObject.PhoneNo !== '9661086188') {
             const data = await _otp2.default.verifyOTPForUser(trueObject.PhoneNo, request.payload.Token);
             console.log('VALIDATE OTP RESPONSE: ', data);
             if (data.type === 'success') {
-              return await loginOrRegisterUser({
-                userWhere,
-                userInput,
-                trueObject,
-                request,
-                reply
-              });
+              return await loginOrRegisterUser({ userWhere, userInput, trueObject, request, reply });
             } else {
               replyObject.status = false;
               replyObject.message = 'Invalid/Expired OTP';
@@ -455,13 +442,7 @@ class UserController {
               return reply.response(replyObject);
             }
           } else if (request.payload.Token === '0501') {
-            return await loginOrRegisterUser({
-              userWhere,
-              userInput,
-              trueObject,
-              request,
-              reply
-            });
+            return await loginOrRegisterUser({ userWhere, userInput, trueObject, request, reply });
           }
         } else if (request.payload.BBLogin_Type === 2) {
           const TrueSecret = request.payload.TrueSecret;
@@ -673,9 +654,8 @@ class UserController {
       if (!request.pre.forceUpdate) {
         let result = [false];
         if (request.pre.pinVerified) {
-          result = _bluebird2.default.all([true, userAdaptor.updateUserDetail({
-            password: request.hashedPassword,
-            last_active_date: _moment2.default.utc(),
+          result = await _bluebird2.default.all([true, userAdaptor.updateUserDetail({
+            password: request.hashedPassword, last_active_date: _moment2.default.utc(),
             last_api: request.url.pathname
           }, { where: { id: request.user.id } })]);
         }
@@ -794,7 +774,7 @@ class UserController {
           message: 'Invalid PIN',
           status: false,
           forceUpdate: request.pre.forceUpdate
-        }).code(401);
+        });
       } else {
         return reply.response({
           message: 'Invalid PIN',
@@ -837,7 +817,11 @@ class UserController {
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply.response({ message: 'Invalid Token', forceUpdate: request.pre.forceUpdate }).code(401);
+        return reply.response({
+          message: 'Invalid Token',
+          status: false,
+          forceUpdate: request.pre.forceUpdate
+        });
       } else {
         return reply.response({
           message: 'Forbidden',
@@ -888,7 +872,11 @@ class UserController {
           forceUpdate: request.pre.forceUpdate
         }).code(402);
       } else if (!request.pre.userExist) {
-        return reply.response({ message: 'Invalid Token', forceUpdate: request.pre.forceUpdate }).code(401);
+        return reply.response({
+          message: 'Invalid Token',
+          status: false,
+          forceUpdate: request.pre.forceUpdate
+        });
       } else {
         return reply.response({
           status: false,

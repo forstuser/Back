@@ -23,11 +23,10 @@ class DashboardController {
   }
 
   static async getDashboard(request, reply) {
-    const user = shared.verifyAuthorization(request.headers);
+    const user = request.user || shared.verifyAuthorization(request.headers);
     try {
       if (request.pre.userExist && !request.pre.forceUpdate) {
-        return reply.response(
-            await dashboardAdaptor.retrieveDashboardResult(user, request));
+        return reply.response(await dashboardAdaptor.retrieveDashboardResult(user, request));
       } else if (request.pre.userExist === 0) {
         return reply.response({
           status: false,
@@ -48,7 +47,7 @@ class DashboardController {
         });
       }
     } catch (err) {
-
+      console.log(err);
       modals.logs.create({
         api_action: request.method,
         api_path: request.url.pathname,
