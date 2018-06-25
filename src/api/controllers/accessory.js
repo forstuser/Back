@@ -97,9 +97,8 @@ class AccessoryController {
       try {
         return reply.response({
           status: true,
-          result: await accessoryAdaptor.getOrderHistory({
-            user_id: (user.id || user.ID),
-          }),
+          result: await accessoryAdaptor.getOrderHistory(
+              {user_id: (user.id || user.ID)}),
         });
       } catch (err) {
         console.log(`Error on ${new Date()} for user ${user.id ||

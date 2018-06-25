@@ -33,7 +33,7 @@ export default class AccessoryAdaptor {
           },
           attributes: [
             'brand_id', 'main_category_id', 'category_id',
-            'product_name', 'id'],
+            'product_name', 'id', 'model'],
           required: false,
         },
         {
@@ -222,48 +222,41 @@ export default class AccessoryAdaptor {
 
   async getOrderHistory(options) {
     const transactions = await this.retrieveTransactions({
-      where: {
-        created_by: options.user_id,
-      },
+      where: {created_by: options.user_id},
       order: [['updated_at', 'desc']],
     });
-    const accessory_product_ids = transactions.map(
-        transaction => transaction.accessory_product_id);
-    const product_ids = transactions.map(
-        transaction => transaction.product_id);
-    const payment_mode_ids = transactions.map(
-        transaction => transaction.payment_mode_id);
+    let accessory_product_ids, product_ids, payment_mode_ids;
+    if (transactions.length > 0) {
+      accessory_product_ids = transactions.map(
+          transaction => transaction.accessory_product_id);
+      product_ids = transactions.map(transaction => transaction.product_id);
+      payment_mode_ids = transactions.map(
+          transaction => transaction.payment_mode_id);
+    }
+
     const [accessoryProducts, products, paymentModes] = await Promise.all([
       // these transactions have the accessory product id
       // get the accessory products using that
-      this.retrieveAccessoryProducts({
-        options: {
-          where: {
-            id: accessory_product_ids,
-          },
-        },
-      }),
+      this.retrieveAccessoryProducts(
+          {
+            options: {
+              where: JSON.parse(JSON.stringify({id: accessory_product_ids})),
+            },
+          }),
       // they also have product id
       // get the consumer product using that
-      this.retrieveProducts({
-        where: {
-          id: product_ids,
-        },
-      }),
+      this.retrieveProducts(
+          {where: JSON.parse(JSON.stringify({id: product_ids}))}),
       // payment mode is also there.
       // add the payment mode in the result of each transactions well.
-      this.retrievePaymentMode({
-        where: {
-          id: payment_mode_ids,
-        },
-      }),
+      this.retrievePaymentMode(
+          {where: JSON.parse(JSON.stringify({id: payment_mode_ids}))}),
     ]);
 
     return transactions.map((item) => {
       item.accessory_product = accessoryProducts.find(
           (pmItem) => pmItem.id === item.accessory_product_id);
-      item.product = products.find(
-          (pmItem) => pmItem.id === item.product_id);
+      item.product = products.find((pmItem) => pmItem.id === item.product_id);
       item.payment_mode = paymentModes.find(
           (pmItem) => pmItem.id === item.payment_mode_id);
       return item;
@@ -291,8 +284,9 @@ export default class AccessoryAdaptor {
       this.addTransaction({
         amount_paid: price, accessory_product_id, delivery_address,
         details_url, estimated_delivery_date: delivery_date, online_seller_id,
-        payment_mode_id: payment_mode, product_id, quantity,
-        seller_id: seller.id, status_type, transaction_id,
+        payment_mode_id: payment_mode || 1, product_id, quantity,
+        seller_id: seller.id, status_type, transaction_id, updated_by: user_id,
+        created_by: user_id,
       }), this.modals.products.findOne({where: {id: product_id}}),
       this.modals.table_accessory_products.findOne(
           {where: {id: accessory_product_id}}),
@@ -307,7 +301,8 @@ export default class AccessoryAdaptor {
         accessory_id: accessory_product_id, category_id,
         ref_id: product_id, product_name: accessoryProduct.title,
         purchase_cost: price, seller_id: result.id, user_id, job_id,
-        main_category_id, status_type: 11,
+        main_category_id, status_type: 11, updated_by: user_id,
+        created_by: user_id,
       }),
     ]);
   }
@@ -330,6 +325,7 @@ export default class AccessoryAdaptor {
 
   async retrieveAccessoryProducts(parameters) {
     let {options, modelBasedAccessoryIds, brand_id, model} = parameters;
+    brand_id = brand_id || null;
     let result = await this.modals.table_accessory_products.findAll(options);
     if ((brand_id || model) &&
         (modelBasedAccessoryIds && modelBasedAccessoryIds.length > 0)) {
@@ -342,14 +338,12 @@ export default class AccessoryAdaptor {
       const modelOptions = {};
       _.assign(modelOptions, options);
       modelOptions.where.accessory_id = modelBasedAccessoryIds;
-      modelOptions.where.accessory_type_id = accessory_types.map(
-          atItem => atItem.id);
+      modelOptions.where.accessory_type_id = accessory_types.filter(
+          atItem => atItem).map(atItem => atItem.id);
       const modelAccessories = await this.modals.table_accessory_products.findAll(
           modelOptions);
       result.push(...modelAccessories);
     }
-
-    console.log(JSON.stringify(result));
 
     return result;
   }
@@ -365,7 +359,7 @@ export default class AccessoryAdaptor {
   }
 
   async retrievePaymentMode(options) {
-    await this.modals.table_payment_mode.findAll(options);
+    const result = await this.modals.table_payment_mode.findAll(options);
     return result.map(item => item.toJSON());
   }
 

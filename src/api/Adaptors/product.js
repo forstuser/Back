@@ -1191,7 +1191,7 @@ export default class ProductAdaptor {
         dbProduct.sub_category_id;
     productBody.document_date = productBody.document_date ||
         dbProduct.document_date;
-    const result = await     Promise.all([
+    const result = await Promise.all([
       productBody.brand_id || productBody.brand_id === 0 ?
           this.modals.products.count({
             where: {
@@ -1526,7 +1526,7 @@ export default class ProductAdaptor {
           `/consumer/servicecenters?brandid=${product.brand_id}&categoryid=${product.category_id}`
           : '';
 
-      await           Promise.all(productPromise);
+      await Promise.all(productPromise);
     }
   }
 
@@ -1889,7 +1889,7 @@ export default class ProductAdaptor {
         },
       });
       if (!result[1]) {
-        await       result[0].updateAttributes(
+        await result[0].updateAttributes(
             {review_ratings, review_feedback, review_comments});
       }
 
@@ -1942,7 +1942,7 @@ export default class ProductAdaptor {
         defaults: defaultClause,
       });
       if (!result[1]) {
-        await       result[0].updateAttributes(
+        await result[0].updateAttributes(
             {review_ratings, review_feedback, review_comments});
       }
 
@@ -1989,7 +1989,7 @@ export default class ProductAdaptor {
         },
       });
       if (!result[1]) {
-        await       result[0].updateAttributes(
+        await result[0].updateAttributes(
             {review_ratings, review_feedback, review_comments});
       }
 
@@ -2081,7 +2081,7 @@ export default class ProductAdaptor {
       };
     }
 
-    let products = await   this.modals.products.findAll({
+    let products = await this.modals.products.findAll({
       where: options,
       attributes: [
         'id',
