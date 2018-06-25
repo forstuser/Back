@@ -34,21 +34,16 @@ class RepairAdaptor {
     this.modals = modals;
   }
 
-  retrieveRepairs(options) {
-    options.status_type = [5, 11];
-    let productOptions = {};
-
-    if (options.main_category_id) {
-      productOptions.main_category_id = options.main_category_id;
+  async retrieveRepairs(options) {
+    const { status_type, main_category_id, product_status_type, category_id } = options;
+    if (!status_type) {
+      options.status_type = [5, 11, 12];
     }
-
-    if (options.product_status_type) {
-      productOptions.status_type = options.product_status_type;
-    }
-
-    if (options.category_id) {
-      productOptions.category_id = options.category_id;
-    }
+    let productOptions = JSON.parse(JSON.stringify({
+      main_category_id,
+      status_type: product_status_type,
+      category_id
+    }));
 
     productOptions = productOptions === {} ? undefined : productOptions;
     options = _lodash2.default.omit(options, 'category_id');
@@ -56,7 +51,7 @@ class RepairAdaptor {
     options = _lodash2.default.omit(options, 'product_status_type');
     options = _lodash2.default.omit(options, 'brand_id');
 
-    return this.modals.repairs.findAll({
+    const repairResult = await this.modals.repairs.findAll({
       where: options,
       include: [{
         model: this.modals.onlineSellers,
@@ -76,7 +71,8 @@ class RepairAdaptor {
       }],
       attributes: ['id', ['product_id', 'productId'], ['job_id', 'jobId'], [this.modals.sequelize.literal('"product"."main_category_id"'), 'masterCategoryId'], 'user_id', ['document_number', 'policyNo'], ['repair_cost', 'premiumAmount'], [this.modals.sequelize.literal('"product"."product_name"'), 'productName'], ['repair_cost', 'value'], ['repair_taxes', 'taxes'], ['document_date', 'purchaseDate'], ['updated_at', 'updatedDate'], 'warranty_upto', 'repair_for', [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"product_id"')), 'productURL'], 'copies'],
       order: [['document_date', 'DESC']]
-    }).then(repairResult => repairResult.map(item => {
+    });
+    return repairResult.map(item => {
       const productItem = item.toJSON();
       if (productItem.copies) {
         productItem.copies = productItem.copies.map(copyItem => {
@@ -86,12 +82,12 @@ class RepairAdaptor {
       }
       productItem.purchaseDate = _moment2.default.utc(productItem.purchaseDate, _moment2.default.ISO_8601).startOf('days');
       return productItem;
-    }).sort(sortAmcWarrantyInsuranceRepair));
+    }).sort(sortAmcWarrantyInsuranceRepair);
   }
 
-  retrieveNotificationRepairs(options) {
+  async retrieveNotificationRepairs(options) {
     options.status_type = [5, 11];
-    return this.modals.repairs.findAll({
+    const repairResult = await this.modals.repairs.findAll({
       where: options,
       include: [{
         model: this.modals.products,
@@ -101,10 +97,11 @@ class RepairAdaptor {
       }],
       attributes: ['id', ['product_id', 'productId'], ['job_id', 'jobId'], [this.modals.sequelize.literal('"product"."main_category_id"'), 'masterCategoryId'], 'user_id', ['document_number', 'policyNo'], ['repair_cost', 'premiumAmount'], [this.modals.sequelize.literal('"product"."product_name"'), 'productName'], ['repair_cost', 'value'], ['repair_taxes', 'taxes'], ['document_date', 'purchaseDate'], ['updated_at', 'updatedDate'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"product_id"')), 'productURL'], 'copies'],
       order: [['document_date', 'DESC']]
-    }).then(repairResult => repairResult.map(item => item.toJSON()).sort(sortAmcWarrantyInsuranceRepair));
+    });
+    return repairResult.map(item => item.toJSON()).sort(sortAmcWarrantyInsuranceRepair);
   }
 
-  retrieveRepairCount(options) {
+  async retrieveRepairCount(options) {
     options.status_type = [5, 11];
     const productOptions = options.product_status_type ? {
       status_type: options.product_status_type
@@ -112,96 +109,64 @@ class RepairAdaptor {
     options = _lodash2.default.omit(options, 'category_id');
     options = _lodash2.default.omit(options, 'main_category_id');
     options = _lodash2.default.omit(options, 'product_status_type');
-    return this.modals.repairs.findAll({
-      where: options,
-      include: [{
-        model: this.modals.products,
-        where: productOptions,
-        attributes: [],
-        required: productOptions !== undefined
-      }],
-
-      attributes: [[this.modals.sequelize.literal('COUNT(*)'), 'productCounts'], [this.modals.sequelize.literal('"product"."main_category_id"'), 'masterCategoryId'], [this.modals.sequelize.literal('max("repairs"."updated_at")'), 'lastUpdatedAt']],
+    const repairResult = await this.modals.repairs.findAll({
+      where: options, include: [{
+        model: this.modals.products, where: productOptions,
+        attributes: [], required: productOptions !== undefined
+      }], attributes: [[this.modals.sequelize.literal('COUNT(*)'), 'productCounts'], [this.modals.sequelize.literal('"product"."main_category_id"'), 'masterCategoryId'], [this.modals.sequelize.literal('max("repairs"."updated_at")'), 'lastUpdatedAt']],
       group: this.modals.sequelize.literal('"product"."main_category_id"')
-    }).then(repairResult => repairResult.map(item => item.toJSON()));
+    });
+    return repairResult.map(item => item.toJSON());
   }
 
-  createRepairs(values) {
-    return this.modals.repairs.create(values).then(result => result.toJSON());
+  async createRepairs(values) {
+    const result = this.modals.repairs.create(values);
+    return result.toJSON();
   }
 
-  updateRepairs(id, values) {
-    return this.modals.repairs.findOne({
-      where: {
-        id
-      }
-    }).then(result => {
-      const itemDetail = result.toJSON();
-      if (values.copies && values.copies.length > 0 && itemDetail.copies && itemDetail.copies.length > 0) {
-        const newCopies = values.copies;
-        values.copies = itemDetail.copies;
-        values.copies.push(...newCopies);
-      }
+  async updateRepairs(id, values) {
+    const result = await this.modals.repairs.findOne({ where: { id } });
+    const itemDetail = result.toJSON();
+    if (values.copies && values.copies.length > 0 && itemDetail.copies && itemDetail.copies.length > 0) {
+      const newCopies = values.copies;
+      values.copies = itemDetail.copies;
+      values.copies.push(...newCopies);
+    }
 
-      values.status_type = itemDetail.status_type === 5 ? itemDetail.status_type : itemDetail.status_type !== 8 ? 11 : values.status_type || itemDetail.status_type;
+    values.status_type = itemDetail.status_type === 5 ? itemDetail.status_type : itemDetail.status_type !== 8 ? 11 : values.status_type || itemDetail.status_type;
 
-      result.updateAttributes(values);
+    await result.updateAttributes(values);
+    return result.toJSON();
+  }
+
+  async removeRepairs(id, copyId, values) {
+    const result = await this.modals.repairs.findOne({ where: { id } });
+    const itemDetail = result.toJSON();
+    if (copyId && itemDetail.copies.length > 0) {
+      values.copies = itemDetail.copies.filter(item => item.copyId !== parseInt(copyId));
+
+      await result.updateAttributes(values);
       return result.toJSON();
-    });
-  }
+    }
 
-  removeRepairs(id, copyId, values) {
-    return this.modals.repairs.findOne({
+    await this.modals.repairs.destroy({
       where: {
         id
       }
-    }).then(result => {
-      const itemDetail = result.toJSON();
-      if (copyId && itemDetail.copies.length > 0) {
-        values.copies = itemDetail.copies.filter(item => item.copyId !== parseInt(copyId));
-
-        result.updateAttributes(values);
-
-        return result.toJSON();
-      }
-
-      return this.modals.repairs.destroy({
-        where: {
-          id
-        }
-      }).then(() => {
-        return true;
-      });
     });
+    return true;
   }
 
-  deleteRepair(id, user_id) {
-    return this.modals.repairs.findById(id).then(result => {
-      if (result) {
-        return Promise.all([this.modals.mailBox.create({
-          title: `User Deleted Repair #${id}`,
-          job_id: result.job_id,
-          bill_product_id: result.product_id,
-          notification_type: 100
-        }), this.modals.repairs.destroy({
-          where: {
-            id,
-            user_id
-          }
-        }), result.copies && result.copies.length > 0 ? this.modals.jobCopies.update({
-          status_type: 3,
-          updated_by: user_id
-        }, {
-          where: {
-            id: result.copies.map(item => item.copyId)
-          }
-        }) : undefined]).then(() => {
-          return true;
-        });
-      }
+  async deleteRepair(id, user_id) {
+    const result = await this.modals.repairs.findById(id);
+    if (result) {
+      await Promise.all([this.modals.mailBox.create({
+        title: `User Deleted Repair #${id}`, job_id: result.job_id,
+        bill_product_id: result.product_id, notification_type: 100
+      }), this.modals.repairs.destroy({ where: { id, user_id } }), result.copies && result.copies.length > 0 ? this.modals.jobCopies.update({ status_type: 3, updated_by: user_id }, { where: { id: result.copies.map(item => item.copyId) } }) : undefined]);
+    }
 
-      return true;
-    });
+    return true;
   }
 }
 

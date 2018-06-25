@@ -242,7 +242,7 @@ class ProductAdaptor {
     });
   }
 
-  retrieveUpcomingProducts(options, language) {
+  async retrieveUpcomingProducts(options, language) {
     if (!options.status_type) {
       options.status_type = [5, 11];
     }
@@ -254,7 +254,7 @@ class ProductAdaptor {
       $not: null
     };
 
-    return this.modals.products.findAll({
+    const productResult = this.modals.products.findAll({
       where: options,
       include: [{
         model: this.modals.serviceSchedules,
@@ -279,7 +279,8 @@ class ProductAdaptor {
       }],
       attributes: ['id', ['id', 'productId'], ['product_name', 'productName'], 'file_type', 'file_ref', [this.modals.sequelize.literal('"category"."category_id"'), 'categoryId'], ['main_category_id', 'masterCategoryId'], 'sub_category_id', ['brand_id', 'brandId'], ['colour_id', 'colorId'], ['purchase_cost', 'value'], 'taxes', [this.modals.sequelize.literal(`${language ? `"sub_category"."category_name_${language}"` : `"sub_category"."category_name"`}`), 'sub_category_name'], [this.modals.sequelize.literal(`${language ? `"category"."category_name_${language}"` : `"category"."category_name"`}`), 'categoryName'], [this.modals.sequelize.literal(`${language ? `"mainCategory"."category_name_${language}"` : `"mainCategory"."category_name"`}`), 'masterCategoryName'], [this.modals.sequelize.literal(`"sub_category"."category_name"`), 'default_sub_category_name'], [this.modals.sequelize.literal(`"mainCategory"."category_name"`), 'default_masterCategoryName'], [this.modals.sequelize.literal(`"category"."category_name"`), 'default_categoryName'], [this.modals.sequelize.fn('CONCAT', '/categories/', this.modals.sequelize.literal('"category"."category_id"'), '/images/'), 'cImageURL'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"products"."id"')), 'productURL'], ['document_date', 'purchaseDate'], 'model', ['document_number', 'documentNo'], ['updated_at', 'updatedDate'], ['bill_id', 'billId'], ['job_id', 'jobId'], ['seller_id', 'sellerId'], 'copies', [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"products"."id"'), '/reviews'), 'reviewUrl'], [this.modals.sequelize.literal('"category"."category_name"'), 'categoryName'], [this.modals.sequelize.fn('CONCAT', '/consumer/servicecenters?brandid=', this.modals.sequelize.literal('"products"."brand_id"'), '&categoryid=', this.modals.sequelize.col('"products"."category_id"')), 'serviceCenterUrl'], 'status_type'],
       order: [['document_date', 'DESC']]
-    }).then(productResult => productResult.map(item => {
+    });
+    return productResult.map(item => {
       const productItem = item.toJSON();
 
       productItem.sub_category_name = productItem.sub_category_name || productItem.default_sub_category_name;
@@ -297,10 +298,10 @@ class ProductAdaptor {
         productItem.schedule.due_date = _moment2.default.utc(productItem.purchaseDate, _moment2.default.ISO_8601).add(productItem.schedule.due_in_months, 'months');
       }
       return productItem;
-    }));
+    });
   }
 
-  retrieveUsersLastProduct(options, language) {
+  async retrieveUsersLastProduct(options, language) {
     let billOption = {};
     let products;
 
@@ -313,7 +314,7 @@ class ProductAdaptor {
 
     options = _lodash2.default.omit(options, 'product_status_type');
 
-    return this.modals.products.findAll({
+    const productResult = await this.modals.products.findAll({
       where: options,
       include: [{
         model: this.modals.brands,
@@ -381,65 +382,63 @@ class ProductAdaptor {
       }],
       attributes: ['id', 'file_type', 'file_ref', ['product_name', 'productName'], 'model', ['category_id', 'categoryId'], ['main_category_id', 'masterCategoryId'], 'sub_category_id', ['brand_id', 'brandId'], ['colour_id', 'colorId'], ['purchase_cost', 'value'], 'taxes', [this.modals.sequelize.fn('CONCAT', '/categories/', this.modals.sequelize.col('"products"."category_id"'), '/images/'), 'cImageURL'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"products"."id"')), 'productURL'], [this.modals.sequelize.literal(`${language ? `"sub_category"."category_name_${language}"` : `"sub_category"."category_name"`}`), 'sub_category_name'], [this.modals.sequelize.literal(`${language ? `"category"."category_name_${language}"` : `"category"."category_name"`}`), 'categoryName'], [this.modals.sequelize.literal(`"sub_category"."category_name"`), 'default_sub_category_name'], [this.modals.sequelize.literal(`"mainCategory"."category_name"`), 'default_masterCategoryName'], [this.modals.sequelize.literal(`"category"."category_name"`), 'default_categoryName'], [this.modals.sequelize.literal(`${language ? `"mainCategory"."category_name_${language}"` : `"mainCategory"."category_name"`}`), 'masterCategoryName'], ['document_date', 'purchaseDate'], ['document_number', 'documentNo'], ['updated_at', 'updatedDate'], ['bill_id', 'billId'], ['job_id', 'jobId'], ['seller_id', 'sellerId'], 'copies', [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"products"."id"'), '/reviews'), 'reviewUrl'], [this.modals.sequelize.fn('CONCAT', '/consumer/servicecenters?brandid=', this.modals.sequelize.literal('"products"."brand_id"'), '&categoryid=', this.modals.sequelize.col('"products"."category_id"')), 'serviceCenterUrl'], 'updated_at', 'status_type'],
       order: [['updated_at', 'DESC']]
-    }).then(productResult => {
-      products = productResult.map(item => {
-        const productItem = item.toJSON();
-        productItem.sub_category_name = productItem.sub_category_name || productItem.default_sub_category_name;
-        productItem.masterCategoryName = productItem.masterCategoryName || productItem.default_masterCategoryName;
-        productItem.categoryName = productItem.categoryName || productItem.default_categoryName;
+    });
+    products = productResult.map(item => {
+      const productItem = item.toJSON();
+      productItem.sub_category_name = productItem.sub_category_name || productItem.default_sub_category_name;
+      productItem.masterCategoryName = productItem.masterCategoryName || productItem.default_masterCategoryName;
+      productItem.categoryName = productItem.categoryName || productItem.default_categoryName;
+      if (productItem.copies) {
+        productItem.copies = productItem.copies.map(copyItem => {
+          copyItem.file_type = copyItem.file_type || copyItem.fileType;
+          return copyItem;
+        });
+      }
+      productItem.cImageURL = productItem.sub_category_id ? `/categories/${productItem.sub_category_id}/images/1/thumbnail` : `${productItem.cImageURL}1/thumbnail`;
+      productItem.purchaseDate = _moment2.default.utc(productItem.purchaseDate, _moment2.default.ISO_8601).startOf('days');
+      if (productItem.schedule) {
+        productItem.schedule.due_date = _moment2.default.utc(productItem.purchaseDate, _moment2.default.ISO_8601).add(productItem.schedule.due_in_months, 'months');
+      }
+      return productItem;
+    }).filter(productItem => productItem.status_type !== 8 || productItem.status_type === 8 && productItem.bill && productItem.bill.billStatus === 5);
+    let results;
+    if (products.length > 0) {
+      const results = await _bluebird2.default.all([this.retrieveProductMetadata({
+        product_id: products.map(item => item.id)
+      }, language), this.insuranceAdaptor.retrieveInsurances({ product_id: products.map(item => item.id) }), this.warrantyAdaptor.retrieveWarranties({ product_id: products.map(item => item.id) }), this.amcAdaptor.retrieveAMCs({ product_id: products.map(item => item.id) }), this.repairAdaptor.retrieveRepairs({ product_id: products.map(item => item.id) }), this.pucAdaptor.retrievePUCs({ product_id: products.map(item => item.id) })]);
+    }
+    if (results) {
+      const metaData = results[0];
+      products = products.map(productItem => {
         if (productItem.copies) {
           productItem.copies = productItem.copies.map(copyItem => {
             copyItem.file_type = copyItem.file_type || copyItem.fileType;
             return copyItem;
           });
         }
-        productItem.cImageURL = productItem.sub_category_id ? `/categories/${productItem.sub_category_id}/images/1/thumbnail` : `${productItem.cImageURL}1/thumbnail`;
-        productItem.purchaseDate = _moment2.default.utc(productItem.purchaseDate, _moment2.default.ISO_8601).startOf('days');
-        if (productItem.schedule) {
-          productItem.schedule.due_date = _moment2.default.utc(productItem.purchaseDate, _moment2.default.ISO_8601).add(productItem.schedule.due_in_months, 'months');
+        const pucItem = metaData.find(item => item.name.toLowerCase().includes('puc'));
+        if (pucItem) {
+          productItem.pucDetail = {
+            expiry_date: pucItem.value
+          };
         }
+        productItem.productMetaData = metaData.filter(item => item.productId === productItem.id && !item.name.toLowerCase().includes('puc'));
+        productItem.insuranceDetails = results[1].filter(item => item.productId === productItem.id);
+        productItem.warrantyDetails = results[2].filter(item => item.productId === productItem.id);
+        productItem.amcDetails = results[3].filter(item => item.productId === productItem.id);
+        productItem.repairBills = results[4].filter(item => item.productId === productItem.id);
+        productItem.pucDetails = results[5].filter(item => item.productId === productItem.id);
+
+        productItem.requiredCount = productItem.insuranceDetails.length + productItem.warrantyDetails.length + productItem.amcDetails.length + productItem.repairBills.length + productItem.pucDetails.length;
+
         return productItem;
-      }).filter(productItem => productItem.status_type !== 8 || productItem.status_type === 8 && productItem.bill && productItem.bill.billStatus === 5);
-      if (products.length > 0) {
-        return _bluebird2.default.all([this.retrieveProductMetadata({
-          product_id: products.map(item => item.id)
-        }, language), this.insuranceAdaptor.retrieveInsurances({ product_id: products.map(item => item.id) }), this.warrantyAdaptor.retrieveWarranties({ product_id: products.map(item => item.id) }), this.amcAdaptor.retrieveAMCs({ product_id: products.map(item => item.id) }), this.repairAdaptor.retrieveRepairs({ product_id: products.map(item => item.id) }), this.pucAdaptor.retrievePUCs({ product_id: products.map(item => item.id) })]);
-      }
-      return undefined;
-    }).then(results => {
-      if (results) {
-        const metaData = results[0];
-        products = products.map(productItem => {
-          if (productItem.copies) {
-            productItem.copies = productItem.copies.map(copyItem => {
-              copyItem.file_type = copyItem.file_type || copyItem.fileType;
-              return copyItem;
-            });
-          }
-          const pucItem = metaData.find(item => item.name.toLowerCase().includes('puc'));
-          if (pucItem) {
-            productItem.pucDetail = {
-              expiry_date: pucItem.value
-            };
-          }
-          productItem.productMetaData = metaData.filter(item => item.productId === productItem.id && !item.name.toLowerCase().includes('puc'));
-          productItem.insuranceDetails = results[1].filter(item => item.productId === productItem.id);
-          productItem.warrantyDetails = results[2].filter(item => item.productId === productItem.id);
-          productItem.amcDetails = results[3].filter(item => item.productId === productItem.id);
-          productItem.repairBills = results[4].filter(item => item.productId === productItem.id);
-          productItem.pucDetails = results[5].filter(item => item.productId === productItem.id);
+      });
+    }
 
-          productItem.requiredCount = productItem.insuranceDetails.length + productItem.warrantyDetails.length + productItem.amcDetails.length + productItem.repairBills.length + productItem.pucDetails.length;
-
-          return productItem;
-        });
-      }
-
-      return products;
-    });
+    return products;
   }
 
-  retrieveProductIds(options) {
+  async retrieveProductIds(options) {
     if (!options.status_type) {
       options.status_type = {
         $notIn: [3, 9]
@@ -457,7 +456,7 @@ class ProductAdaptor {
     options = _lodash2.default.omit(options, 'online_seller_id');
     options = _lodash2.default.omit(options, 'product_status_type');
 
-    return this.modals.products.findAll({
+    const productResult = await this.modals.products.findAll({
       where: options,
       include: [{
         model: this.modals.bills,
@@ -472,10 +471,11 @@ class ProductAdaptor {
         required: !!billOption.seller_id
       }],
       attributes: ['id', 'status_type']
-    }).then(productResult => productResult.map(item => item.toJSON()).filter(productItem => productItem.status_type !== 8 || productItem.status_type === 8 && productItem.bill && productItem.bill.status_type === 5));
+    });
+    return productResult.map(item => item.toJSON()).filter(productItem => productItem.status_type !== 8 || productItem.status_type === 8 && productItem.bill && productItem.bill.status_type === 5);
   }
 
-  retrieveProductCounts(options) {
+  async retrieveProductCounts(options) {
     if (!options.status_type) {
       options.status_type = [5, 11];
     }
@@ -489,7 +489,7 @@ class ProductAdaptor {
     _lodash2.default.assignIn(inProgressProductOption, options);
     let productResult;
     options = _lodash2.default.omit(options, 'product_status_type');
-    return this.modals.products.findAll({
+    const productItems = await this.modals.products.findAll({
       where: options,
       include: [{
         model: this.modals.bills,
@@ -499,174 +499,110 @@ class ProductAdaptor {
       }],
       attributes: [[this.modals.sequelize.literal('COUNT(*)'), 'productCounts'], ['main_category_id', 'masterCategoryId'], [this.modals.sequelize.literal('max("products"."updated_at")'), 'lastUpdatedAt']],
       group: 'main_category_id'
-    }).then(productItems => {
-      productResult = productItems.map(item => item.toJSON());
-      inProgressProductOption.status_type = 5;
-      inProgressProductOption.product_status_type = options.status_type;
-      return _bluebird2.default.all([this.amcAdaptor.retrieveAMCCounts(inProgressProductOption), this.insuranceAdaptor.retrieveInsuranceCount(inProgressProductOption), this.warrantyAdaptor.retrieveWarrantyCount(inProgressProductOption), this.repairAdaptor.retrieveRepairCount(inProgressProductOption), this.pucAdaptor.retrievePUCs(inProgressProductOption)]);
-    }).then(results => {
-      if (options.status_type !== 8) {
-        return productResult;
-      }
-      const availableResult = [...results[0], ...results[1], ...results[2], ...results[3], ...results[4]];
-
-      return productResult.filter(item => availableResult.filter(availResult => availResult.masterCategoryId === item.masterCategoryId).length > 0);
     });
+    productResult = productItems.map(item => item.toJSON());
+    inProgressProductOption.status_type = 5;
+    inProgressProductOption.product_status_type = options.status_type;
+    const results = await _bluebird2.default.all([this.amcAdaptor.retrieveAMCCounts(inProgressProductOption), this.insuranceAdaptor.retrieveInsuranceCount(inProgressProductOption), this.warrantyAdaptor.retrieveWarrantyCount(inProgressProductOption), this.repairAdaptor.retrieveRepairCount(inProgressProductOption), this.pucAdaptor.retrievePUCs(inProgressProductOption)]);
+    if (options.status_type !== 8) {
+      return productResult;
+    }
+    const availableResult = [...results[0], ...results[1], ...results[2], ...results[3], ...results[4]];
+
+    return productResult.filter(item => availableResult.filter(availResult => availResult.masterCategoryId === item.masterCategoryId).length > 0);
   }
 
-  retrieveProductById(id, options, language) {
+  async retrieveProductById(id, options, language) {
     options.id = id;
-    let products;
     let productItem;
-    return this.modals.products.findOne({
+    let products = await this.modals.products.findOne({
       where: options,
       include: [{
-        model: this.modals.colours,
-        as: 'color',
-        attributes: [['colour_id', 'colorId'], ['colour_name', 'colorName']],
-        required: false
-      }, {
         model: this.modals.serviceSchedules,
         as: 'schedule',
-        attributes: ['id', 'category_id', 'brand_id', 'title', 'inclusions', 'exclusions', 'service_number', 'service_type', 'distance', 'due_in_months', 'due_in_days'],
+        attributes: ['id', 'title', 'inclusions', 'exclusions', 'service_number', 'service_type', 'distance', 'due_in_months', 'due_in_days'],
         required: false
       }, {
         model: this.modals.bills,
-        attributes: [['consumer_name', 'consumerName'], ['consumer_email', 'consumerEmail'], ['consumer_phone_no', 'consumerPhoneNo'], ['document_number', 'invoiceNo']],
-        include: [{
+        attributes: [['consumer_name', 'consumerName'], ['consumer_email', 'consumerEmail'], ['consumer_phone_no', 'consumerPhoneNo'], ['document_number', 'invoiceNo']], include: [{
           model: this.modals.onlineSellers,
           as: 'sellers',
-          attributes: [['seller_name', 'sellerName'], 'url', 'gstin', 'contact', 'email', [this.modals.sequelize.fn('CONCAT', 'sellers/', this.modals.sequelize.literal('"bill->sellers"."sid"'), '/reviews?isonlineseller=true'), 'reviewUrl']],
-          include: [{
-            model: this.modals.sellerReviews,
-            as: 'sellerReviews',
+          attributes: [['seller_name', 'sellerName'], 'url', 'contact', 'email', [this.modals.sequelize.fn('CONCAT', 'sellers/', this.modals.sequelize.literal('"bill->sellers"."sid"'), '/reviews?isonlineseller=true'), 'reviewUrl']], include: [{
+            model: this.modals.sellerReviews, as: 'sellerReviews',
             attributes: [['review_ratings', 'ratings'], ['review_feedback', 'feedback'], ['review_comments', 'comments']],
             required: false
-          }],
-          required: false
-        }],
+          }], required: false
+        }], required: false
+      }, {
+        model: this.modals.offlineSellers, as: 'sellers',
+        attributes: [['sid', 'id'], ['seller_name', 'sellerName'], 'url', ['contact_no', 'contact'], 'email', 'address', 'city', 'state', 'pincode', 'latitude', 'longitude', [this.modals.sequelize.fn('CONCAT', 'sellers/', this.modals.sequelize.literal('"sellers"."sid"'), '/reviews?isonlineseller=false'), 'reviewUrl']], include: [{
+          model: this.modals.sellerReviews, as: 'sellerReviews',
+          attributes: [['review_ratings', 'ratings'], ['review_feedback', 'feedback'], ['review_comments', 'comments']], required: false
+        }], required: false
+      }, {
+        model: this.modals.productReviews, as: 'productReviews',
+        attributes: [['review_ratings', 'ratings'], ['review_feedback', 'feedback'], ['review_comments', 'comments']], required: false
+      }, {
+        model: this.modals.categories, as: 'category',
+        attributes: [], required: false
+      }, {
+        model: this.modals.categories, as: 'mainCategory', attributes: [],
         required: false
       }, {
-        model: this.modals.offlineSellers,
-        as: 'sellers',
-        attributes: [['sid', 'id'], ['seller_name', 'sellerName'], ['owner_name', 'ownerName'], ['pan_no', 'panNo'], ['reg_no', 'regNo'], ['is_service', 'isService'], 'url', 'gstin', ['contact_no', 'contact'], 'email', 'address', 'city', 'state', 'pincode', 'latitude', 'longitude', [this.modals.sequelize.fn('CONCAT', 'sellers/', this.modals.sequelize.literal('"sellers"."sid"'), '/reviews?isonlineseller=false'), 'reviewUrl']],
-        include: [{
-          model: this.modals.sellerReviews,
-          as: 'sellerReviews',
-          attributes: [['review_ratings', 'ratings'], ['review_feedback', 'feedback'], ['review_comments', 'comments']],
-          required: false
-        }],
-        required: false
-      }, {
-        model: this.modals.productReviews,
-        as: 'productReviews',
-        attributes: [['review_ratings', 'ratings'], ['review_feedback', 'feedback'], ['review_comments', 'comments']],
-        required: false
-      }, {
-        model: this.modals.categories,
-        as: 'category',
-        attributes: [],
-        required: false
-      }, {
-        model: this.modals.categories,
-        as: 'mainCategory',
-        attributes: [],
-        required: false
-      }, {
-        model: this.modals.categories,
-        as: 'sub_category',
-        attributes: [],
+        model: this.modals.categories, as: 'sub_category', attributes: [],
         required: false
       }],
-      attributes: ['id', ['product_name', 'productName'], 'file_type', 'file_ref', 'model', [this.modals.sequelize.literal('"category"."category_id"'), 'categoryId'], [this.modals.sequelize.literal('"category"."dual_warranty_item"'), 'dualWarrantyItem'], ['main_category_id', 'masterCategoryId'], 'sub_category_id', ['brand_id', 'brandId'], ['colour_id', 'colorId'], ['purchase_cost', 'value'], [this.modals.sequelize.literal(`${language ? `"sub_category"."category_name_${language}"` : `"sub_category"."category_name"`}`), 'sub_category_name'], [this.modals.sequelize.literal(`${language ? `"category"."category_name_${language}"` : `"category"."category_name"`}`), 'categoryName'], [this.modals.sequelize.literal(`"sub_category"."category_name"`), 'default_sub_category_name'], [this.modals.sequelize.literal(`"mainCategory"."category_name"`), 'default_masterCategoryName'], [this.modals.sequelize.literal(`"category"."category_name"`), 'default_categoryName'], [this.modals.sequelize.literal(`${language ? `"mainCategory"."category_name_${language}"` : `"mainCategory"."category_name"`}`), 'masterCategoryName'], 'taxes', [this.modals.sequelize.fn('CONCAT', '/categories/', this.modals.sequelize.col('"category"."category_id"'), '/images/0'), 'cImageURL'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"products"."id"')), 'productURL'], ['document_date', 'purchaseDate'], ['document_number', 'documentNo'], ['updated_at', 'updatedDate'], ['bill_id', 'billId'], ['job_id', 'jobId'], ['seller_id', 'sellerId'], 'copies', 'status_type', [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"products"."id"'), '/reviews'), 'reviewUrl'], [this.modals.sequelize.fn('CONCAT', '/consumer/servicecenters?brandid=', this.modals.sequelize.literal('"products"."brand_id"'), '&categoryid=', this.modals.sequelize.col('"products"."category_id"')), 'serviceCenterUrl']]
-    }).then(productResult => {
-      products = productResult ? productResult.toJSON() : productResult;
-      if (products) {
-        products.cImageURL = products.file_type ? `/consumer/products/${products.id}/images/${products.file_ref}` : products.sub_category_id ? `/categories/${products.sub_category_id}/images/0` : products.cImageURL;
-        products.sub_category_name = products.sub_category_name || products.default_sub_category_name;
-        products.masterCategoryName = products.masterCategoryName || products.default_masterCategoryName;
-        products.categoryName = products.categoryName || products.default_categoryName;
-        productItem = productResult;
-        if (products.copies) {
-          products.copies = products.copies.map(copyItem => {
-            copyItem.file_type = copyItem.file_type || copyItem.fileType;
-            return copyItem;
-          });
-        }
-        if (products.schedule) {
-          products.schedule.due_date = _moment2.default.utc(products.purchaseDate, _moment2.default.ISO_8601).add(products.schedule.due_in_months, 'months');
-        }
-        const serviceSchedulePromise = products.schedule ? this.serviceScheduleAdaptor.retrieveServiceSchedules({
-          category_id: products.schedule.category_id,
-          brand_id: products.schedule.brand_id,
-          title: products.schedule.title,
-          id: {
-            $gte: products.schedule.id
-          },
-          status_type: 1
-        }) : undefined;
-        return _bluebird2.default.all([this.retrieveProductMetadata({
-          product_id: products.id
-        }, language), this.brandAdaptor.retrieveBrandById(products.brandId, {
-          category_id: products.categoryId
-        }), this.insuranceAdaptor.retrieveInsurances({
-          product_id: products.id
-        }), this.warrantyAdaptor.retrieveWarranties({
-          product_id: products.id
-        }), this.amcAdaptor.retrieveAMCs({
-          product_id: products.id
-        }), this.repairAdaptor.retrieveRepairs({
-          product_id: products.id
-        }), this.pucAdaptor.retrievePUCs({
-          product_id: products.id
-        }), serviceSchedulePromise, this.modals.serviceCenters.count({
-          include: [{
-            model: this.modals.brands,
-            as: 'brands',
-            where: {
-              brand_id: products.brandId
-            },
-            attributes: [],
-            required: true
-          }, {
-            model: this.modals.centerDetails,
-            where: {
-              category_id: products.categoryId
-            },
-            attributes: [],
-            required: true,
-            as: 'centerDetails'
-          }]
-        })]);
-      }
-    }).then(results => {
-      if (products) {
-
-        products.purchaseDate = _moment2.default.utc(products.purchaseDate, _moment2.default.ISO_8601).startOf('days');
-        const metaData = results[0];
-        const pucItem = metaData.find(item => item.name.toLowerCase().includes('puc'));
-        if (pucItem) {
-          products.pucDetail = {
-            expiry_date: pucItem.value
-          };
-        }
-        products.metaData = metaData.filter(item => !item.name.toLowerCase().includes('puc'));
-        products.brand = results[1];
-        products.insuranceDetails = results[2];
-        products.warrantyDetails = results[3];
-        products.amcDetails = results[4];
-        products.repairBills = results[5];
-        products.pucDetails = results[6];
-        products.serviceSchedules = results[7] ? results[7].map(scheduleItem => {
-          scheduleItem.due_date = _moment2.default.utc(products.purchaseDate, _moment2.default.ISO_8601).add(scheduleItem.due_in_months, 'months');
-
-          return scheduleItem;
-        }) : results[7];
-        products.serviceCenterUrl = results[8] && results[8] > 0 ? products.serviceCenterUrl : '';
-      }
-
-      return products;
+      attributes: ['id', ['product_name', 'productName'], 'file_type', 'file_ref', [this.modals.sequelize.literal('"category"."category_id"'), 'categoryId'], ['main_category_id', 'masterCategoryId'], 'model', 'sub_category_id', ['colour_id', 'colorId'], [this.modals.sequelize.literal(`${language ? `"sub_category"."category_name_${language}"` : `"sub_category"."category_name"`}`), 'sub_category_name'], [this.modals.sequelize.literal(`${language ? `"category"."category_name_${language}"` : `"category"."category_name"`}`), 'categoryName'], [this.modals.sequelize.literal(`"sub_category"."category_name"`), 'default_sub_category_name'], ['purchase_cost', 'value'], [this.modals.sequelize.literal(`"mainCategory"."category_name"`), 'default_masterCategoryName'], 'taxes', [this.modals.sequelize.literal(`"category"."category_name"`), 'default_categoryName'], ['brand_id', 'brandId'], [this.modals.sequelize.literal(`${language ? `"mainCategory"."category_name_${language}"` : `"mainCategory"."category_name"`}`), 'masterCategoryName'], [this.modals.sequelize.fn('CONCAT', '/categories/', this.modals.sequelize.col('"category"."category_id"'), '/images/0'), 'cImageURL'], ['document_date', 'purchaseDate'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"products"."id"')), 'productURL'], ['document_number', 'documentNo'], ['updated_at', 'updatedDate'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"products"."id"'), '/reviews'), 'reviewUrl'], ['job_id', 'jobId'], ['seller_id', 'sellerId'], [this.modals.sequelize.fn('CONCAT', '/consumer/servicecenters?brandid=', this.modals.sequelize.literal('"products"."brand_id"'), '&categoryid=', this.modals.sequelize.col('"products"."category_id"')), 'serviceCenterUrl'], 'copies', 'status_type']
     });
+    products = products ? products.toJSON() : products;
+    if (products) {
+      products.cImageURL = products.file_type ? `/consumer/products/${products.id}/images/${products.file_ref}` : products.sub_category_id ? `/categories/${products.sub_category_id}/images/0` : products.cImageURL;
+      products.sub_category_name = products.sub_category_name || products.default_sub_category_name;
+      products.masterCategoryName = products.masterCategoryName || products.default_masterCategoryName;
+      products.categoryName = products.categoryName || products.default_categoryName;
+      productItem = productResult;
+      if (products.copies) {
+        products.copies = products.copies.map(copyItem => {
+          copyItem.file_type = copyItem.file_type || copyItem.fileType;
+          return copyItem;
+        });
+      }
+      if (products.schedule) {
+        products.schedule.due_date = _moment2.default.utc(products.purchaseDate, _moment2.default.ISO_8601).add(products.schedule.due_in_months, 'months');
+      }
+      const serviceSchedulePromise = products.schedule ? this.serviceScheduleAdaptor.retrieveServiceSchedules({
+        category_id: products.schedule.category_id,
+        brand_id: products.schedule.brand_id, status_type: 1,
+        title: products.schedule.title, id: { $gte: products.schedule.id }
+      }) : undefined;
+      let [metaData, brand, insuranceDetails, warrantyDetails, amcDetails, repairBills, pucDetails, serviceSchedules, serviceCenterCounts] = await _bluebird2.default.all([this.retrieveProductMetadata({ product_id: products.id }, language), this.brandAdaptor.retrieveBrandById(products.brandId, { category_id: products.categoryId }), this.insuranceAdaptor.retrieveInsurances({ product_id: products.id }), this.warrantyAdaptor.retrieveWarranties({ product_id: products.id }), this.amcAdaptor.retrieveAMCs({ product_id: products.id }), this.repairAdaptor.retrieveRepairs({ product_id: products.id }), this.pucAdaptor.retrievePUCs({ product_id: products.id }), serviceSchedulePromise, this.modals.serviceCenters.count({
+        include: [{
+          model: this.modals.brands, as: 'brands',
+          where: { brand_id: products.brandId },
+          attributes: [], required: true
+        }, {
+          model: this.modals.centerDetails,
+          where: { category_id: products.categoryId },
+          attributes: [], required: true, as: 'centerDetails'
+        }]
+      })]);
+      products.purchaseDate = _moment2.default.utc(products.purchaseDate, _moment2.default.ISO_8601).startOf('days');
+      products.metaData = metaData.filter(item => !item.name.toLowerCase().includes('puc'));
+      products.brand = brand;
+      products.insuranceDetails = insuranceDetails;
+      products.warrantyDetails = warrantyDetails;
+      products.amcDetails = amcDetails;
+      products.repairBills = repairBills;
+      products.pucDetails = pucDetails;
+      products.serviceSchedules = serviceSchedules ? serviceSchedules.map(scheduleItem => {
+        scheduleItem.due_date = _moment2.default.utc(products.purchaseDate, _moment2.default.ISO_8601).add(scheduleItem.due_in_months, 'months');
+
+        return scheduleItem;
+      }) : serviceSchedules;
+      products.serviceCenterUrl = serviceCenterCounts && serviceCenterCounts > 0 ? products.serviceCenterUrl : '';
+    }
+
+    return products;
   }
 
   async updateProductDetails(parameters) {
@@ -757,11 +693,7 @@ class ProductAdaptor {
 
     if (product.new_drop_down && model) {
       await this.modals.brandDropDown.findCreateFind({
-        where: {
-          title: {
-            $iLike: model
-          }, category_id, brand_id
-        },
+        where: { title: { $iLike: model }, category_id, brand_id },
         defaults: {
           title: model, category_id, brand_id,
           updated_by: user_id, created_by: user_id, status_type: 11
@@ -781,34 +713,14 @@ class ProductAdaptor {
     const brandModelPromise = model ? [this.modals.brandDropDown.findOne({
       where: {
         brand_id: product.brand_id,
-        title: {
-          $iLike: `${model}%`
-        },
-        category_id
+        title: { $iLike: `${model}%` }, category_id
       }
-    }), this.modals.categories.findOne({
-      where: {
-        category_id
-      }
-    })] : [, this.modals.categories.findOne({
-      where: {
-        category_id
-      }
-    })];
+    }), this.modals.categories.findOne({ where: { category_id } })] : [, this.modals.categories.findOne({ where: { category_id } })];
     brandModelPromise.push(this.modals.warranties.findAll({
-      where: {
-        product_id: id,
-        warranty_type: 1
-      },
+      where: { product_id: id, warranty_type: 1 },
       order: [['expiry_date', 'ASC']]
-    }), this.modals.metaData.findAll({
-      where: {
-        product_id: id
-      }
-    }));
-    let [renewalTypes, productDetail, productModel, productCategory, normalWarranties, currentMetaData] = await _bluebird2.default.all([this.categoryAdaptor.retrieveRenewalTypes({
-      status_type: 1
-    }), this.updateProduct(id, product), ...brandModelPromise]);
+    }), this.modals.metaData.findAll({ where: { product_id: id } }));
+    let [renewalTypes, productDetail, productModel, productCategory, normalWarranties, currentMetaData] = await _bluebird2.default.all([this.categoryAdaptor.retrieveRenewalTypes({ status_type: 1 }), this.updateProduct(id, product), ...brandModelPromise]);
     normalWarranties = normalWarranties ? normalWarranties.map(item => item.toJSON()) : [];
     product = productDetail;
     currentMetaData = currentMetaData ? currentMetaData.map(item => item.toJSON()) : [];
@@ -893,9 +805,7 @@ class ProductAdaptor {
           }
 
           const { warranty_renewal_type, dual_renewal_type } = productModel || {};
-          warranty = {
-            renewal_type: warranty_renewal_type, dual_renewal_type
-          };
+          warranty = { renewal_type: warranty_renewal_type, dual_renewal_type };
         }
       }
 
@@ -981,41 +891,12 @@ class ProductAdaptor {
     }
   }
 
-  verifyCopiesExist(product_id) {
-    return _bluebird2.default.all([this.modals.products.count({
-      where: {
-        id: product_id,
-        status_type: 5
-      }
-    }), this.modals.amcs.count({
-      where: {
-        product_id,
-        status_type: 5
-      }
-    }), this.modals.insurances.count({
-      where: {
-        product_id,
-        status_type: 5
-      }
-    }), this.modals.pucs.count({
-      where: {
-        product_id,
-        status_type: 5
-      }
-    }), this.modals.repairs.count({
-      where: {
-        product_id,
-        status_type: 5
-      }
-    }), this.modals.warranties.count({
-      where: {
-        product_id,
-        status_type: 5
-      }
-    })]).then(results => results.filter(item => item > 0).length > 0);
+  async verifyCopiesExist(product_id) {
+    const results = await _bluebird2.default.all([this.modals.products.count({ where: { id: product_id, status_type: 5 } }), this.modals.amcs.count({ where: { product_id, status_type: 5 } }), this.modals.insurances.count({ where: { product_id, status_type: 5 } }), this.modals.pucs.count({ where: { product_id, status_type: 5 } }), this.modals.repairs.count({ where: { product_id, status_type: 5 } }), this.modals.warranties.count({ where: { product_id, status_type: 5 } })]);
+    return results.filter(item => item > 0).length > 0;
   }
 
-  preparePUCPromise(parameters) {
+  async preparePUCPromise(parameters) {
     let { puc, pucPromise, product, isProductPUCSellerSame, sellerDetail, pucSeller } = parameters;
     const { user_id, job_id, document_date } = product;
     let { expiry_period, effective_date, value, id, seller_contact, seller_name } = puc;
@@ -1035,7 +916,7 @@ class ProductAdaptor {
     pucPromise.push(id ? this.pucAdaptor.updatePUCs(id, values) : this.pucAdaptor.createPUCs(values));
   }
 
-  prepareRepairPromise(parameters) {
+  async prepareRepairPromise(parameters) {
     let { repair, isProductRepairSellerSame, sellerDetail, amcSeller, repairSeller, isAMCRepairSellerSame, repairPromise, product } = parameters;
     const { user_id, job_id } = product;
     let { repair_for, document_date, warranty_upto, value, id, seller_contact, seller_name } = repair;
@@ -1052,7 +933,7 @@ class ProductAdaptor {
     repairPromise.push(otherItems.repair.id ? this.repairAdaptor.updateRepairs(id, values) : this.repairAdaptor.createRepairs(values));
   }
 
-  prepareAMCPromise(parameters) {
+  async prepareAMCPromise(parameters) {
     let { amc, amcPromise, product, isProductAMCSellerSame, sellerDetail, amcSeller } = parameters;
     const { document_date, user_id, job_id } = product;
     const product_id = product.id;
@@ -1071,7 +952,7 @@ class ProductAdaptor {
     amcPromise.push(otherItems.amc.id ? this.amcAdaptor.updateAMCs(id, values) : this.amcAdaptor.createAMCs(values));
   }
 
-  prepareInsurancePromise(parameters) {
+  async prepareInsurancePromise(parameters) {
     let { insurance, insurancePromise, product, insuranceProvider, renewalTypes } = parameters;
     const { document_date, user_id, job_id } = product;
     let { renewal_type, effective_date, policy_no, provider_id, amount_insured, value, id } = insurance;
@@ -1087,7 +968,7 @@ class ProductAdaptor {
     const values = {
       renewal_type: renewal_type || 8, updated_by: user_id, job_id,
       status_type: 11, product_id, document_number: policy_no,
-      amount_insured: amount_insured, renewal_cost: value, user_id,
+      amount_insured, renewal_cost: value, user_id,
       expiry_date: _moment2.default.utc(expiry_date).format('YYYY-MM-DD'),
       effective_date: _moment2.default.utc(effective_date).format('YYYY-MM-DD'),
       document_date: _moment2.default.utc(effective_date).format('YYYY-MM-DD'),
@@ -1096,7 +977,7 @@ class ProductAdaptor {
     insurancePromise.push(id ? this.insuranceAdaptor.updateInsurances(otherItems.insurance.id, values) : this.insuranceAdaptor.createInsurances(values));
   }
 
-  prepareWarrantyPromise(parameters) {
+  async prepareWarrantyPromise(parameters) {
     let { warranty, renewalTypes, warrantyItemPromise, product, warrantyProvider } = parameters;
     let warrantyRenewalType;
     let expiry_date;
@@ -1148,7 +1029,7 @@ class ProductAdaptor {
     warrantyItemPromise.push(this.warrantyAdaptor.updateWarrantyPeriod({ product_id, user_id }, document_date, document_date));
   }
 
-  prepareSellerPromise(parameters) {
+  async prepareSellerPromise(parameters) {
     let { sellerPromise, productBody, amc, repair, puc, isProductAMCSellerSame, isProductRepairSellerSame, isProductPUCSellerSame, isAMCRepairSellerSame } = parameters;
     let sellerOption;
     let { seller_id, seller_name, seller_contact, seller_email, seller_address, user_id } = productBody;
@@ -1244,190 +1125,163 @@ class ProductAdaptor {
     }
   }
 
-  retrieveProductMetadata(options, language) {
-    return this.modals.metaData.findAll({
-      where: options,
-      include: [{
-        model: this.modals.categoryForms, as: 'categoryForm', attributes: []
-      }],
+  async retrieveProductMetadata(options, language) {
+    const metaDataResult = await this.modals.metaData.findAll({
+      where: options, include: [{
+        model: this.modals.categoryForms,
+        as: 'categoryForm', attributes: []
+      }], attributes: ['id', ['product_id', 'productId'], ['form_value', 'value'], ['category_form_id', 'categoryFormId'], [this.modals.sequelize.literal('"categoryForm"."form_type"'), 'formType'], [this.modals.sequelize.literal(`${language ? `"categoryForm"."title_${language}"` : `"categoryForm"."title"`}`), 'default_name'], [this.modals.sequelize.literal('"categoryForm"."title"'), 'name'], [this.modals.sequelize.literal('"categoryForm"."display_index"'), 'displayIndex']]
+    });
+    let metaData = metaDataResult.map(item => item.toJSON());
+    const categoryFormIds = metaData.map(item => item.categoryFormId);
+    const dropDowns = await this.modals.dropDowns.findAll({
+      where: { category_form_id: categoryFormIds },
+      attributes: ['id', 'title']
+    });
+    return _lodash2.default.orderBy(metaData.map(item => {
+      const metaDataItem = item;
+      if (metaDataItem.formType === 2 && metaDataItem.value) {
+        const dropDown = dropDowns.find(item => item.id === parseInt(metaDataItem.value));
+        metaDataItem.value = dropDown ? dropDown.title : metaDataItem.value;
+      }
+      return metaDataItem;
+    }).filter(item => item.value), ['displayIndex'], ['asc']);
+  }
 
-      attributes: ['id', ['product_id', 'productId'], ['form_value', 'value'], ['category_form_id', 'categoryFormId'], [this.modals.sequelize.literal('"categoryForm"."form_type"'), 'formType'], [this.modals.sequelize.literal(`${language ? `"categoryForm"."title_${language}"` : `"categoryForm"."title"`}`), 'default_name'], [this.modals.sequelize.literal('"categoryForm"."title"'), 'name'], [this.modals.sequelize.literal('"categoryForm"."display_index"'), 'displayIndex']]
-    }).then(metaDataResult => {
-      const metaData = metaDataResult.map(item => item.toJSON());
-      const categoryFormIds = metaData.map(item => item.categoryFormId);
-
-      console.log({
-        metaData, categoryFormIds
-      });
-      return _bluebird2.default.all([metaData, this.modals.dropDowns.findAll({
-        where: {
-          category_form_id: categoryFormIds
-        },
-        attributes: ['id', 'title']
-      })]);
-    }).then(result => {
-      const unOrderedMetaData = result[0].map(item => {
-        const metaDataItem = item;
-
-        console.log({
-          metaDataItem
-        });
-        if (metaDataItem.formType === 2 && metaDataItem.value) {
-          const dropDown = result[1].find(item => item.id === parseInt(metaDataItem.value));
-          metaDataItem.value = dropDown ? dropDown.title : metaDataItem.value;
+  async updateBrandReview(user, brand_id, request) {
+    const { ratings: review_ratings, feedback: review_feedback, comments: review_comments } = request.payload;
+    const user_id = user.id || user.ID;
+    try {
+      const result = await this.modals.brandReviews.findCreateFind({
+        where: { user_id, brand_id, status_id: 1 },
+        defaults: {
+          user_id, brand_id, status_id: 1, review_ratings,
+          review_feedback, review_comments
         }
-
-        return metaDataItem;
-      }).filter(item => item.value);
-
-      console.log({
-        unOrderedMetaData
       });
-
-      unOrderedMetaData.sort((itemA, itemB) => itemA.displayIndex - itemB.displayIndex);
-
-      return unOrderedMetaData;
-    });
-  }
-
-  updateBrandReview(user, brandId, request) {
-    const payload = request.payload;
-    return this.modals.brandReviews.findCreateFind({
-      where: {
-        user_id: user.id || user.ID,
-        brand_id: brandId,
-        status_id: 1
-      },
-      defaults: {
-        user_id: user.id || user.ID,
-        brand_id: brandId,
-        status_id: 1,
-        review_ratings: payload.ratings,
-        review_feedback: payload.feedback,
-        review_comments: payload.comments
-      }
-    }).then(result => {
       if (!result[1]) {
-        result[0].updateAttributes({
-          review_ratings: payload.ratings,
-          review_feedback: payload.feedback,
-          review_comments: payload.comments
-        });
+        await result[0].updateAttributes({ review_ratings, review_feedback, review_comments });
       }
 
       return {
-        status: true,
-        message: 'Review Updated Successfully',
-        forceUpdate: request.pre.forceUpdate
+        status: true, message: 'Review Updated Successfully',
+        result: result[0].toJSON(), forceUpdate: request.pre.forceUpdate
       };
-    }).catch(err => {
-
+    } catch (err) {
+      console.log(err);
+      this.modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user.id || user.ID,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err
+        })
+      }).catch(ex => console.log('error while logging on db,', ex));
       return {
-        status: true,
-        message: 'Review Update Failed',
-        err,
-        forceUpdate: request.pre.forceUpdate
+        status: true, message: 'Review Update Failed',
+        err, forceUpdate: request.pre.forceUpdate
       };
-    });
+    }
   }
 
-  updateSellerReview(user, sellerId, isOnlineSeller, request) {
+  async updateSellerReview(user, seller_id, isOnlineSeller, request) {
     const payload = request.payload;
-    const whereClause = isOnlineSeller ? {
-      user_id: user.id || user.ID,
-      seller_id: sellerId,
-      status_id: 1
-    } : {
-      user_id: user.id || user.ID,
-      offline_seller_id: sellerId,
-      status_id: 1
-    };
+    const { ratings: review_ratings, feedback: review_feedback, comments: review_comments } = request.payload;
+    const user_id = user.id || user.ID;
+    const status_id = 1;
+
+    const whereClause = isOnlineSeller ? { user_id, seller_id, status_id } : { user_id, offline_seller_id: seller_id, status_id };
 
     const defaultClause = isOnlineSeller ? {
-      user_id: user.id || user.ID,
-      seller_id: sellerId,
-      status_id: 1,
-      review_ratings: payload.ratings,
-      review_feedback: payload.feedback,
-      review_comments: payload.comments
+      user_id, seller_id, status_id, review_ratings,
+      review_feedback, review_comments
     } : {
-      user_id: user.id || user.ID,
-      offline_seller_id: sellerId,
-      status_id: 1,
-      review_ratings: payload.ratings,
-      review_feedback: payload.feedback,
-      review_comments: payload.comments
+      user_id, offline_seller_id: seller_id, status_id,
+      review_ratings, review_feedback, review_comments
     };
-
-    return this.modals.sellerReviews.findCreateFind({
-      where: whereClause,
-      defaults: defaultClause
-    }).then(result => {
+    try {
+      const result = await this.modals.sellerReviews.findCreateFind({
+        where: whereClause,
+        defaults: defaultClause
+      });
       if (!result[1]) {
-        result[0].updateAttributes({
-          review_ratings: payload.ratings,
-          review_feedback: payload.feedback,
-          review_comments: payload.comments
-        });
+        await result[0].updateAttributes({ review_ratings, review_feedback, review_comments });
       }
 
       return {
-        status: true,
-        message: 'Review Updated Successfully',
-        forceUpdate: request.pre.forceUpdate
+        status: true, message: 'Review Updated Successfully',
+        result: result[0].toJSON(), forceUpdate: request.pre.forceUpdate
       };
-    }).catch(err => {
+    } catch (err) {
+      console.log(err);
+      this.modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user.id || user.ID,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err
+        })
+      }).catch(ex => console.log('error while logging on db,', ex));
 
       return {
-        status: true,
-        message: 'Review Update Failed',
-        err,
-        forceUpdate: request.pre.forceUpdate
+        status: true, message: 'Review Update Failed',
+        err, forceUpdate: request.pre.forceUpdate
       };
-    });
+    }
   }
 
-  updateProductReview(user, productId, request) {
+  async updateProductReview(user, bill_product_id, request) {
     const payload = request.payload;
-    const whereClause = {
-      user_id: user.id || user.ID,
-      bill_product_id: productId,
-      status_id: 1
-    };
-
-    return this.modals.productReviews.findCreateFind({
-      where: whereClause,
-      defaults: {
-        user_id: user.id || user.ID,
-        bill_product_id: productId,
-        status_id: 1,
-        review_ratings: payload.ratings,
-        review_feedback: payload.feedback,
-        review_comments: payload.comments
-      }
-    }).then(result => {
+    const { ratings: review_ratings, feedback: review_feedback, comments: review_comments } = request.payload;
+    const user_id = user.id || user.ID;
+    const status_id = 1;
+    const whereClause = { user_id, bill_product_id, status_id };
+    try {
+      const result = await this.modals.productReviews.findCreateFind({
+        where: whereClause,
+        defaults: {
+          user_id, bill_product_id, status_id, review_ratings,
+          review_feedback, review_comments
+        }
+      });
       if (!result[1]) {
-        result[0].updateAttributes({
-          review_ratings: payload.ratings,
-          review_feedback: payload.feedback,
-          review_comments: payload.comments
-        });
+        await result[0].updateAttributes({ review_ratings, review_feedback, review_comments });
       }
 
       return {
-        status: true,
-        message: 'Review Updated Successfully',
-        forceUpdate: request.pre.forceUpdate
+        status: true, message: 'Review Updated Successfully',
+        result: result[0].toJSON(), forceUpdate: request.pre.forceUpdate
       };
-    }).catch(err => {
-
+    } catch (err) {
+      console.log(err);
+      this.modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user.id || user.ID,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err
+        })
+      }).catch(ex => console.log('error while logging on db,', ex));
       return {
-        status: true,
-        message: 'Review Update Failed',
-        err,
-        forceUpdate: request.pre.forceUpdate
+        status: true, message: 'Review Update Failed',
+        err, forceUpdate: request.pre.forceUpdate
       };
-    });
+    }
   }
 
   retrieveNotificationProducts(options) {
@@ -1461,72 +1315,66 @@ class ProductAdaptor {
     });
   }
 
-  retrieveMissingDocProducts(options) {
+  async retrieveMissingDocProducts(options) {
     if (!options.status_type) {
       options.status_type = {
         $notIn: [3, 9]
       };
     }
 
-    let products;
-    return this.modals.products.findAll({
+    let products = await this.modals.products.findAll({
       where: options,
       attributes: ['id', ['product_name', 'productName'], ['purchase_cost', 'value'], ['main_category_id', 'masterCategoryId'], 'taxes', ['document_date', 'purchaseDate'], ['document_number', 'documentNo'], ['updated_at', 'updatedDate'], ['bill_id', 'billId'], ['job_id', 'jobId'], 'copies', 'user_id']
-    }).then(productResult => {
-      products = productResult.map(item => {
-        const product = item.toJSON();
-        product.hasDocs = product.copies.length > 0;
-        return product;
-      });
-      return _bluebird2.default.all([this.insuranceAdaptor.retrieveInsurances({
-        product_id: {
-          $in: products.filter(item => item.masterCategoryId === 2 || item.masterCategoryId === 3).map(item => item.id)
-        }
-      }), this.warrantyAdaptor.retrieveWarranties({
-        product_id: {
-          $in: products.filter(item => item.masterCategoryId === 2 || item.masterCategoryId === 3).map(item => item.id)
-        }
-      })]);
-    }).then(results => {
-      const insurances = results[0];
-      const warranties = results[1];
-
-      products = products.map(productItem => {
-        if (productItem.masterCategoryId === 2 || productItem.masterCategoryId === 3) {
-          productItem.hasInsurance = insurances.filter(item => item.productId === productItem.id).length > 0;
-
-          productItem.hasWarranty = warranties.filter(item => item.productId === productItem.id).length > 0;
-        }
-
-        return productItem;
-      });
-
-      return products.filter(pItem => !pItem.hasDocs || pItem.hasInsurance && pItem.hasInsurance === false || pItem.hasWarranty && pItem.hasWarranty === false);
     });
+    products = products.map(item => {
+      const product = item.toJSON();
+      product.hasDocs = product.copies.length > 0;
+      return product;
+    });
+    const [insurances, warranties] = await _bluebird2.default.all([this.insuranceAdaptor.retrieveInsurances({
+      product_id: {
+        $in: products.filter(item => item.masterCategoryId === 2 || item.masterCategoryId === 3).map(item => item.id)
+      }
+    }), this.warrantyAdaptor.retrieveWarranties({
+      product_id: {
+        $in: products.filter(item => item.masterCategoryId === 2 || item.masterCategoryId === 3).map(item => item.id)
+      }
+    })]);
+
+    products = products.map(productItem => {
+      if (productItem.masterCategoryId === 2 || productItem.masterCategoryId === 3) {
+        productItem.hasInsurance = insurances.filter(item => item.productId === productItem.id).length > 0;
+
+        productItem.hasWarranty = warranties.filter(item => item.productId === productItem.id).length > 0;
+      }
+
+      return productItem;
+    });
+
+    return products.filter(pItem => !pItem.hasDocs || pItem.hasInsurance && pItem.hasInsurance === false || pItem.hasWarranty && pItem.hasWarranty === false);
   }
 
-  retrieveProductExpenses(options) {
+  async retrieveProductExpenses(options) {
     if (!options.status_type) {
       options.status_type = {
         $notIn: [3, 9]
       };
     }
-
-    return this.modals.products.findAll({
+    const productResult = await this.modals.products.findAll({
       where: options,
       attributes: ['id', ['product_name', 'productName'], ['purchase_cost', 'value'], ['main_category_id', 'masterCategoryId'], 'taxes', ['document_date', 'purchaseDate'], ['document_number', 'documentNo'], ['updated_at', 'updatedDate'], ['bill_id', 'billId'], ['job_id', 'jobId'], 'copies', 'user_id']
-    }).then(productResult => {
-      return productResult.map(item => item.toJSON());
     });
+    return productResult.map(item => item.toJSON());
   }
 
-  prepareProductDetail(parameters) {
+  async prepareProductDetail(parameters) {
     let { user, request } = parameters;
     const productId = request.params.id;
-    return this.retrieveProductById(productId, {
-      user_id: user.id || user.ID,
-      status_type: [5, 8, 11]
-    }, request.language).then(result => {
+    try {
+      const result = await this.retrieveProductById(productId, {
+        user_id: user.id || user.ID,
+        status_type: [5, 8, 11]
+      }, request.language);
       if (result) {
         return {
           status: true,
@@ -1534,16 +1382,28 @@ class ProductAdaptor {
           product: result,
           forceUpdate: request.pre.forceUpdate
         };
-      } else {
-        return {
-          status: false,
-          product: {},
-          message: 'No Data Found',
-          forceUpdate: request.pre.forceUpdate
-        };
       }
-    }).catch(err => {
 
+      return {
+        status: false,
+        product: {},
+        message: 'No Data Found',
+        forceUpdate: request.pre.forceUpdate
+      };
+    } catch (err) {
+      this.modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user.id || user.ID,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err
+        })
+      }).catch(ex => console.log('error while logging on db,', ex));
       return {
         status: false,
         message: 'Unable to retrieve data',
@@ -1551,28 +1411,19 @@ class ProductAdaptor {
         err,
         forceUpdate: request.pre.forceUpdate
       };
-    });
+    }
   }
 
-  createEmptyProduct(productDetail) {
-    return this.modals.products.create(productDetail).then(productResult => {
-      const productData = productResult.toJSON();
-      return {
-        id: productData.id,
-        job_id: productData.job_id
-      };
-    });
+  async createEmptyProduct(productDetail) {
+    const productResult = await this.modals.products.create(productDetail);
+    const productData = productResult.toJSON();
+    return { id: productData.id, job_id: productData.job_id };
   }
 
   async updateProduct(id, productDetail) {
-    const productResult = await this.modals.products.findOne({
-      where: {
-        id
-      }
-    });
+    const productResult = await this.modals.products.findOne({ where: { id } });
     const itemDetail = productResult.toJSON();
     const currentPurchaseDate = itemDetail.document_date;
-    console.log('\n\n\n', JSON.stringify({ productDetail }));
     const isModalSame = itemDetail.model === productDetail.model;
     if (productDetail.copies && productDetail.copies.length > 0 && itemDetail.copies && itemDetail.copies.length > 0) {
       const newCopies = productDetail.copies;
@@ -1585,20 +1436,19 @@ class ProductAdaptor {
     productDetail = productResult.toJSON();
     productDetail.isModalSame = isModalSame;
     if (productDetail.document_date && _moment2.default.utc(currentPurchaseDate, _moment2.default.ISO_8601).valueOf() !== _moment2.default.utc(productDetail.document_date, _moment2.default.ISO_8601).valueOf()) {
-      await _bluebird2.default.all([this.warrantyAdaptor.updateWarrantyPeriod({ product_id: id, user_id: productDetail.user_id }, currentPurchaseDate, productDetail.document_date), this.insuranceAdaptor.updateInsurancePeriod({ product_id: id, user_id: productDetail.user_id }, currentPurchaseDate, productDetail.document_date), this.pucAdaptor.updatePUCPeriod({ product_id: id, user_id: productDetail.user_id }, currentPurchaseDate, productDetail.document_date), this.amcAdaptor.updateAMCPeriod({ product_id: id, user_id: productDetail.user_id }, currentPurchaseDate, productDetail.document_date)]).catch(err => console.log(`Error on update product ${new Date()} for user ${productDetail.user_id} is as follow: \n \n ${err}`));
+      await _bluebird2.default.all([this.warrantyAdaptor.updateWarrantyPeriod({ product_id: id, user_id: productDetail.user_id }, currentPurchaseDate, productDetail.document_date), this.insuranceAdaptor.updateInsurancePeriod({
+        options: { product_id: id, user_id: productDetail.user_id },
+        purchase_date: currentPurchaseDate,
+        new_purchase_date: productDetail.document_date
+      }), this.pucAdaptor.updatePUCPeriod({ product_id: id, user_id: productDetail.user_id }, currentPurchaseDate, productDetail.document_date), this.amcAdaptor.updateAMCPeriod({ product_id: id, user_id: productDetail.user_id }, currentPurchaseDate, productDetail.document_date)]).catch(err => console.log(`Error on update product ${new Date()} for user ${productDetail.user_id} is as follow: \n \n ${err}`));
     }
     return productDetail;
   }
 
-  updateProductMetaData(id, values) {
-    return this.modals.metaData.findOne({
-      where: {
-        id
-      }
-    }).then(result => {
-      result.updateAttributes(values);
-      return result;
-    });
+  async updateProductMetaData(id, values) {
+    const result = await this.modals.metaData.findOne({ where: { id } });
+    await result.updateAttributes(values);
+    return result;
   }
 
   async deleteProduct(id, updated_by) {

@@ -71,29 +71,38 @@ class DashboardAdaptor {
   }
 
   retrieveDashboardResult(user, request) {
-    return _bluebird2.default.try(() => _bluebird2.default.all([this.filterUpcomingService(user, request), this.prepareInsightData(user, request), this.retrieveRecentSearch(user), this.modals.mailBox.count({ where: { user_id: user.id || user.ID, status_id: 4 } }), this.modals.products.count({
+    return _bluebird2.default.try(() => _bluebird2.default.all([this.filterUpcomingService(user, request),
+    // this.prepareInsightData(user, request),
+    this.retrieveRecentSearch(user), this.modals.mailBox.count({ where: { user_id: user.id || user.ID, status_id: 4 } }), this.modals.products.count({
       where: {
         user_id: user.id || user.ID,
         status_type: [5, 11]
       }
-    }), this.productAdaptor.retrieveUsersLastProduct({
-      user_id: user.id || user.ID,
-      status_type: [5, 11]
-    }, request.language), this.modals.user_calendar_item.count({
+    }),
+    /* this.productAdaptor.retrieveUsersLastProduct({
+       user_id: user.id || user.ID,
+       status_type: [5, 11],
+     }, request.language),*/
+    this.modals.user_calendar_item.count({
       where: {
         user_id: user.id || user.ID
       }
-    }), this.modals.user_calendar_item.findOne({
+    }),
+    /*this.modals.user_calendar_item.findOne({
       where: {
-        user_id: user.id || user.ID
+        user_id: user.id || user.ID,
       },
-      order: [['updated_at', 'desc']]
-    }), this.modals.service_calculation.findOne({
+      order: [['updated_at', 'desc']],
+    }),
+    this.modals.service_calculation.findOne({
       where: {
-        updated_by: user.id || user.ID
+        updated_by: user.id || user.ID,
       },
-      order: [['updated_at', 'desc']]
-    }), this.calendarServiceAdaptor.retrieveCalendarItemList({ user_id: user.id || user.ID }, request.language, 4), this.modals.products.count({
+      order: [['updated_at', 'desc']],
+    }),
+    this.calendarServiceAdaptor.retrieveCalendarItemList(
+        {user_id: user.id || user.ID}, request.language, 4),*/
+    this.modals.products.count({
       where: {
         user_id: user.id || user.ID,
         main_category_id: [2, 3],
@@ -119,10 +128,25 @@ class DashboardAdaptor {
       where: {
         user_id: user.id || user.ID
       }
-    })])).spread((upcomingServices, insightData, recentSearches, notificationCount, productCount, product, calendarItemCount, latestCalendarItem, latestCalendarCalc, recent_calendar_item, service_center_products, know_item_count, todoCounts, mealCounts, wearableCounts, knowItemCounts) => {
-      latestCalendarItem = latestCalendarItem ? latestCalendarItem.toJSON() : {};
-      latestCalendarCalc = latestCalendarCalc ? latestCalendarCalc.toJSON() : {};
-      const calendar_item_updated_at = latestCalendarItem && (0, _moment2.default)(latestCalendarItem.updated_at, _moment2.default.ISO_8601).diff((0, _moment2.default)(latestCalendarCalc.updated_at, _moment2.default.ISO_8601), 'days') < 0 ? latestCalendarCalc.updated_at : latestCalendarItem ? latestCalendarItem.updated_at : (0, _moment2.default)();
+    })])).spread(parameters => {
+      let {
+        upcomingServices, recentSearches, notificationCount, productCount,
+        /*product,*/calendarItemCount, /*latestCalendarItem, latestCalendarCalc,
+                                       recent_calendar_item,*/service_center_products, know_item_count, todoCounts,
+        mealCounts, wearableCounts, knowItemCounts
+      } = parameters;
+      /*latestCalendarItem = latestCalendarItem ?
+          latestCalendarItem.toJSON() :
+          {};
+      latestCalendarCalc = latestCalendarCalc ?
+          latestCalendarCalc.toJSON() :
+          {};
+      const calendar_item_updated_at = latestCalendarItem &&
+      moment(latestCalendarItem.updated_at, moment.ISO_8601).
+          diff(moment(latestCalendarCalc.updated_at, moment.ISO_8601),
+              'days') < 0 ?
+          latestCalendarCalc.updated_at : latestCalendarItem ?
+              latestCalendarItem.updated_at : moment();*/
       return {
         status: true,
         message: 'Dashboard restore Successful',
@@ -132,16 +156,16 @@ class DashboardAdaptor {
           return search.searchValue;
         }).slice(0, 5),
         upcomingServices: this.evaluateUpcomingServices(upcomingServices),
-        insight: this.evaluateDashboardInsight(insightData),
+        // insight: this.evaluateDashboardInsight(insightData),
         forceUpdate: request.pre.forceUpdate,
         showDashboard: !!(productCount && parseInt(productCount) > 0) || !!(calendarItemCount && parseInt(calendarItemCount) > 0),
         hasEazyDayItems: !!(todoCounts && todoCounts > 0) || !!(mealCounts && mealCounts > 0) || !!(wearableCounts && wearableCounts > 0),
         knowItemsLiked: !!(knowItemCounts && knowItemCounts > 0),
         total_calendar_item: calendarItemCount || 0,
-        calendar_item_updated_at,
-        recent_calendar_item,
-        recent_products: product.slice(0, 4),
-        product: product[0],
+        /*calendar_item_updated_at,
+        recent_calendar_item,*/
+        /*recent_products: product.slice(0, 4),
+        product: product[0],*/
         service_center_products,
         know_item_count,
         hasProducts: true

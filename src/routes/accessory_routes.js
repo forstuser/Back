@@ -87,20 +87,21 @@ export function prepareAccessoryRoute(modal, route, middleware) {
         validate: {
           payload: {
             'transaction_id': joi.string().required(),
-            'status_type': joi.number().required(),
+            'status_type': joi.number(),
             'price': joi.number().required(),
-            'quantity': joi.number().required(),
+            'quantity': joi.number(),
             'online_seller_id': joi.number().required(),
-            'seller_detail': joi.array().items(joi.object().keys({
-              'name': [joi.string(), joi.allow(null)],
-              'address': joi.number().required(),
-              'phone': joi.string().required(),
-            })),
-            'delivery_address': joi.string().required(),
-            'delivery_date': joi.string().required(),
+            'seller_detail': [
+              joi.object().keys({
+                'name': [joi.string(), joi.allow(null)],
+                'address': joi.number(),
+                'phone': joi.string(),
+              }), joi.allow(null)],
+            'delivery_address': joi.string(),
+            'delivery_date': joi.string(),
             'product_id': joi.string().required(),
             'accessory_product_id': joi.string().required(),
-            'payment_mode': joi.number().required(),
+            'payment_mode': joi.number(),
             'details_url': joi.string().required(),
           },
         },

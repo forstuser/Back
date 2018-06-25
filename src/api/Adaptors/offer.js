@@ -121,6 +121,7 @@ export default class OfferAdaptor {
     let {id} = paramOptions;
     let {offset, limit, cashback, discount, other, merchant, discount_offer_id, cashback_offer_id, other_offer_id} = queryOptions;
 
+    other = (!!other && other.toLowerCase() === 'true');
     const offerInclude = [
       {
         model: this.modals.offerProductsDiscount,

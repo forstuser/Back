@@ -143,22 +143,19 @@ class AccessoryController {
     if (request.pre.userExist && !request.pre.forceUpdate) {
       // this is where make us of adapter
       try {
+        let {
+          transaction_id, status_type, price, quantity,
+          seller_detail, delivery_date, product_id, accessory_product_id,
+          payment_mode, details_url, delivery_address, online_seller_id
+        } = request.payload;
+        const user_id = user.id || user.ID;
+        status_type = status_type || 1;
         return reply.response({
           status: true,
           result: await accessoryAdaptor.createTransaction({
-            'transaction_id': request.payload.transaction_id,
-            'status_type': request.payload.status_type,
-            'price': request.payload.price,
-            'quantity': request.payload.quantity,
-            'seller_detail': request.payload.seller_detail,
-            'delivery_date': request.payload.delivery_date,
-            'product_id': request.payload.product_id,
-            'accessory_product_id': request.payload.accessory_product_id,
-            'payment_mode': request.payload.payment_mode,
-            'details_url': request.payload.details_url,
-            'delivery_address': request.payload.delivery_address,
-            'online_seller_id': request.payload.online_seller_id,
-            'user_id': user.id || user.ID
+            transaction_id, status_type, price, quantity, seller_detail,
+            delivery_date, product_id, accessory_product_id, payment_mode,
+            details_url, delivery_address, online_seller_id, user_id
           })
         });
       } catch (err) {
