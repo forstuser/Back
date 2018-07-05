@@ -77,9 +77,7 @@ class SearchAdaptor {
         categoryList,
       };
     }).catch((err) => {
-      console.log(
-          `Error on ${new Date()} for user ${user.id ||
-          user.ID} is as follow: \n \n ${err}`);
+
       this.modals.logs.create({
         api_action: request.method,
         api_path: request.url.pathname,

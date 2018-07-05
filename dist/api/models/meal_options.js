@@ -4,8 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-exports.default = function (sequelize, DataTypes) {
-  var meals = sequelize.define('meals', {
+exports.default = (sequelize, DataTypes) => {
+  const meals = sequelize.define('meals', {
     name: {
       type: DataTypes.STRING
     },
@@ -45,7 +45,7 @@ exports.default = function (sequelize, DataTypes) {
     tableName: 'table_meal_options'
   });
 
-  meals.associate = function (models) {
+  meals.associate = models => {
     meals.belongsTo(models.users, { foreignKey: 'created_by', onDelete: 'cascade', onUpdate: 'cascade' });
     meals.belongsTo(models.users, { foreignKey: 'updated_by', onDelete: 'cascade', onUpdate: 'cascade' });
     meals.belongsTo(models.statuses, {

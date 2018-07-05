@@ -5,7 +5,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-exports.default = function (sequelize, DataTypes) {
+exports.default = (sequelize, DataTypes) => {
   return sequelize.define('appVersion', {
     recommended_version: {
       type: DataTypes.INTEGER

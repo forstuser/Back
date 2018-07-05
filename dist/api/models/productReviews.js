@@ -5,8 +5,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-exports.default = function (sequelize, DataTypes) {
-  var productReviews = sequelize.define('productReviews', {
+exports.default = (sequelize, DataTypes) => {
+  const productReviews = sequelize.define('productReviews', {
     product_review_id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
@@ -48,7 +48,7 @@ exports.default = function (sequelize, DataTypes) {
     tableName: 'table_product_reviews'
   });
 
-  productReviews.associate = function (models) {
+  productReviews.associate = models => {
     productReviews.belongsTo(models.users, { foreignKey: 'user_id' });
     productReviews.belongsTo(models.products, { foreignKey: 'bill_product_id' });
   };

@@ -4,8 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-exports.default = function (sequelize, DataTypes) {
-  var todo = sequelize.define('todo', {
+exports.default = (sequelize, DataTypes) => {
+  const todo = sequelize.define('todo', {
     name: {
       type: DataTypes.STRING
     },
@@ -42,7 +42,7 @@ exports.default = function (sequelize, DataTypes) {
     tableName: 'table_todo'
   });
 
-  todo.associate = function (models) {
+  todo.associate = models => {
     todo.belongsTo(models.users, { foreignKey: 'created_by', onDelete: 'cascade', onUpdate: 'cascade' });
     todo.belongsTo(models.users, { foreignKey: 'updated_by', onDelete: 'cascade', onUpdate: 'cascade' });
     todo.belongsTo(models.statuses, {

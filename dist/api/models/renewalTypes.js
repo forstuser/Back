@@ -4,8 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-exports.default = function (sequelize, DataTypes) {
-  var renewalTypes = sequelize.define('renewalTypes', {
+exports.default = (sequelize, DataTypes) => {
+  const renewalTypes = sequelize.define('renewalTypes', {
     title: {
       type: DataTypes.STRING
     },
@@ -43,7 +43,7 @@ exports.default = function (sequelize, DataTypes) {
     tableName: 'renewal_types'
   });
 
-  renewalTypes.associate = function (models) {
+  renewalTypes.associate = models => {
     renewalTypes.belongsTo(models.users, { foreignKey: 'updated_by' });
 
     renewalTypes.belongsTo(models.statuses, { foreignKey: 'status_type', targetKey: 'status_type' });

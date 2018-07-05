@@ -4,8 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-exports.default = function (sequelize, DataTypes) {
-  var quantities = sequelize.define('quantities', {
+exports.default = (sequelize, DataTypes) => {
+  const quantities = sequelize.define('quantities', {
     quantity_name: {
       type: DataTypes.STRING
     },
@@ -61,7 +61,7 @@ exports.default = function (sequelize, DataTypes) {
     tableName: 'table_quantity'
   });
 
-  quantities.associate = function (models) {
+  quantities.associate = models => {
     quantities.belongsTo(models.users, { foreignKey: 'updated_by' });
     quantities.belongsTo(models.statuses, { foreignKey: 'status_type', targetKey: 'status_type' });
   };

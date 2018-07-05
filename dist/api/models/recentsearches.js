@@ -5,8 +5,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-exports.default = function (sequelize, DataTypes) {
-  var recentSearches = sequelize.define('recentSearches', {
+exports.default = (sequelize, DataTypes) => {
+  const recentSearches = sequelize.define('recentSearches', {
     id: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -49,7 +49,7 @@ exports.default = function (sequelize, DataTypes) {
     tableName: 'table_recent_searches'
   });
 
-  recentSearches.associate = function (models) {
+  recentSearches.associate = models => {
     recentSearches.belongsTo(models.users, { foreignKey: 'user_id' });
   };
   return recentSearches;

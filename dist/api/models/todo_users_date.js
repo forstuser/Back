@@ -4,8 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-exports.default = function (sequelize, DataTypes) {
-  var todoUserDate = sequelize.define('todoUserDate', {
+exports.default = (sequelize, DataTypes) => {
+  const todoUserDate = sequelize.define('todoUserDate', {
     user_todo_id: {
       type: DataTypes.INTEGER
     },
@@ -29,7 +29,7 @@ exports.default = function (sequelize, DataTypes) {
     tableName: 'table_todo_user_date'
   });
 
-  todoUserDate.associate = function (models) {
+  todoUserDate.associate = models => {
     todoUserDate.belongsTo(models.todoUserMap, { foreignKey: 'user_todo_id', onDelete: 'cascade', onUpdate: 'cascade' });
   };
   return todoUserDate;

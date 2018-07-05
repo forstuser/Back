@@ -17,7 +17,7 @@ const checkAppVersion = (request, reply) => {
         null);
     console.log(`CURRENT APP VERSION = ${currentAppVersion}`);
 
-    MODAL.appVersion.findOne({
+    return MODAL.appVersion.findOne({
       where: {
         id,
       },
@@ -39,21 +39,21 @@ const checkAppVersion = (request, reply) => {
 
         if (currentAppVersion < FORCE_VERSION) {
           console.log('current < force');
-          return reply(true);
+          return true;
         } else if (currentAppVersion >= FORCE_VERSION &&
             currentAppVersion < RECOMMENDED_VERSION) {
           console.log('force < current < recommended');
-          return reply(false);
+          return false;
         } else {
-          return reply(null);
+          return null;
         }
       } else {
-        return reply(null);
+        return null;
       }
     });
   } else {
     console.log('App Version not in Headers');
-    return reply(null);
+    return null;
   }
 };
 
@@ -63,7 +63,7 @@ const updateUserActiveStatus = (request, reply) => {
   const language = (request.headers.language || '').split('-')[0];
   request.language = supportedLanguages.indexOf(language) >= 0 ? language : '';
   if (!user) {
-    return reply(null);
+    return null;
   } else {
     return MODAL.users.findOne({
       where: {
@@ -114,7 +114,7 @@ const updateUserActiveStatus = (request, reply) => {
             })]).then((item) => {
             console.log(
                 `User updated detail is as follow ${JSON.stringify(item[0])}`);
-            return reply(true);
+            return true;
           }).catch((err) => {
             console.log(
                 `Error on ${new Date()} for user ${user.mobile_no} is as follow: \n \n ${err}`);
@@ -124,21 +124,21 @@ const updateUserActiveStatus = (request, reply) => {
               log_type: 2,
               user_id: user.id || user.ID,
               log_content: JSON.stringify({err}),
-            }).then(() => reply(false));
+            }).then(() => false);
           });
         } else {
           console.log(
               `User ${user.mobile_no} inactive for more than 10 minutes`);
-          return reply(0);
+          return 0;
         }
       } else {
         console.log(`User ${user.mobile_no} doesn't exist`);
-        return reply(null);
+        return null;
       }
     }).catch((err) => {
       console.log(
           `Error on ${new Date()} for user ${user.mobile_no} is as follow: \n \n ${err}`);
-      return reply(false);
+      return false;
     });
   }
 };
@@ -146,7 +146,7 @@ const updateUserActiveStatus = (request, reply) => {
 const hasMultipleAccounts = (request, reply) => {
   const user = shared.verifyAuthorization(request.headers);
   if (!user) {
-    return reply(false);
+    return false;
   } else {
     return Promise.try(() => {
       return MODAL.users.count({
@@ -159,13 +159,13 @@ const hasMultipleAccounts = (request, reply) => {
       });
     }).then((userCounts) => {
       if (userCounts > 1) {
-        return reply(true);
+        return true;
       }
-      return reply(false);
+      return false;
     }).catch((err) => {
       console.log(
           `Error on ${new Date()} for user ${request.payload.mobile_no} is as follow: \n \n ${err}`);
-      return reply(false);
+      return false;
     });
   }
 };
@@ -173,7 +173,7 @@ const hasMultipleAccounts = (request, reply) => {
 const updateUserPIN = (request, reply) => {
   const user = shared.verifyAuthorization(request.headers);
   if (!user) {
-    return reply(null);
+    return null;
   }
   return Promise.try(() => hashPassword(request.payload.pin)).
       then((hashedPassword) => {
@@ -205,19 +205,19 @@ const updateUserPIN = (request, reply) => {
         return false;
       }).
       then((pinResult) => {
-        return pinResult ? reply(true) : reply(false);
+        return pinResult ? true : false;
       }).
       catch((err) => {
         console.log(
             `Error on ${new Date()} for user ${request.payload.mobile_no} is as follow: \n \n ${err}`);
-        return reply(false);
+        return false;
       });
 };
 
 const verifyUserPIN = (request, reply) => {
   const user = shared.verifyAuthorization(request.headers);
   if (!user) {
-    return reply(null);
+    return null;
   }
   return Promise.try(() => hashPassword(request.payload.pin)).
       then((hashedPassword) => {
@@ -251,19 +251,19 @@ const verifyUserPIN = (request, reply) => {
         return false;
       }).
       then((pinResult) => {
-        return pinResult ? reply(true) : reply(false);
+        return pinResult ? true : false;
       }).
       catch((err) => {
         console.log(
             `Error on ${new Date()} for user ${request.payload.mobile_no} is as follow: \n \n ${err}`);
-        return reply(false);
+        return false;
       });
 };
 
 const verifyUserOTP = (request, reply) => {
   const user = shared.verifyAuthorization(request.headers);
   if (!user) {
-    return reply(null);
+    return null;
   }
   return Promise.try(() => MODAL.users.findOne({
     where: {
@@ -293,10 +293,10 @@ const verifyUserOTP = (request, reply) => {
     }
 
     return false;
-  }).then((pinResult) => reply(pinResult)).catch((err) => {
+  }).then((pinResult) => pinResult).catch((err) => {
     console.log(
         `Error on ${new Date()} for user ${request.payload.mobile_no} is as follow: \n \n ${err}`);
-    return reply(false);
+    return false;
   });
 };
 
@@ -309,19 +309,19 @@ function isValidEmail(emailAddress) {
 const verifyUserEmail = (request, reply) => {
   const user = shared.verifyAuthorization(request.headers);
   if (!user) {
-    return reply(null);
+    return null;
   } else {
+
     if (request.payload.email) {
       if (!isValidEmail(request.payload.email.toLowerCase())) {
-        return reply(false);
+        return false;
       }
-
       return Promise.try(() => MODAL.users.count({
         where: {
           $or: {
             id: user.id || user.ID,
             email: {
-              $iLike: request.payload.email.toLowerCase(),
+              $iLike: request.payload.email,
             },
           },
         },
@@ -341,62 +341,62 @@ const verifyUserEmail = (request, reply) => {
             if (userDetail) {
               request.user = userDetail;
               if (userDetail.email_verified) {
-                return reply((userDetail.email || '').toLowerCase() ===
-                    (request.payload.email || '').toLowerCase());
+                return (userDetail.email || '').toLowerCase() ===
+                    (request.payload.email || '').toLowerCase();
               } else {
                 userResult.updateAttributes({email: request.payload.email});
-                return reply(true);
+                return true;
               }
             } else {
               console.log(`User ${user.email} is invalid.`);
-              return reply(false);
+              return false;
             }
           });
         } else {
           console.log(
               `User with ${request.params.email} already exist.`);
-          return reply(null);
+          return null;
         }
       }).catch((err) => {
         console.log(
             `Error on ${new Date()} for user ${user.mobile_no} is as follow: \n \n ${err}`);
-        return reply(false);
+        return false;
       });
     }
 
-    return reply(true);
+    return true;
   }
 };
 
 const checkForAppUpdate = (request, reply) => {
-      if (request.headers.app_version !== undefined ||
-          request.headers.ios_app_version !== undefined) {
-        const id = request.headers.ios_app_version ? 2 : 1;
+  if (request.headers.app_version !== undefined ||
+      request.headers.ios_app_version !== undefined) {
+    const id = request.headers.ios_app_version ? 2 : 1;
 
-        MODAL.appVersion.findOne({
-          where: {
-            id,
-          },
-          order: [['updatedAt', 'DESC']],
-          attributes: [
-            [
-              'recommended_version',
-              'recommendedVersion'],
-            [
-              'force_version',
-              'forceVersion'],
-            [
-              'details',
-              'updateDetails']],
-        }).then((result) => {
-          console.log(result);
-          return reply(result);
-        });
-      } else {
-        console.log('App Version not in Headers');
-        return reply(null);
-      }
-    };
+    MODAL.appVersion.findOne({
+      where: {
+        id,
+      },
+      order: [['updatedAt', 'DESC']],
+      attributes: [
+        [
+          'recommended_version',
+          'recommendedVersion'],
+        [
+          'force_version',
+          'forceVersion'],
+        [
+          'details',
+          'updateDetails']],
+    }).then((result) => {
+      console.log(result);
+      return result;
+    });
+  } else {
+    console.log('App Version not in Headers');
+    return null;
+  }
+};
 
 export default (models) => {
   MODAL = models;

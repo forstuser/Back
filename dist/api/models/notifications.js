@@ -5,8 +5,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-exports.default = function (sequelize, DataTypes) {
-  var mailBox = sequelize.define('mailBox', {
+exports.default = (sequelize, DataTypes) => {
+  const mailBox = sequelize.define('mailBox', {
     notification_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -68,7 +68,7 @@ exports.default = function (sequelize, DataTypes) {
     tableName: 'table_inbox_notification'
   });
 
-  mailBox.associate = function (models) {
+  mailBox.associate = models => {
     mailBox.belongsTo(models.users, { foreignKey: 'user_id' });
     mailBox.belongsTo(models.products, {
       foreignKey: 'bill_product_id', as: 'product'

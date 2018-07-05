@@ -4,8 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-exports.default = function (sequelize, DataTypes) {
-  var metaData = sequelize.define('metaData', {
+exports.default = (sequelize, DataTypes) => {
+  const metaData = sequelize.define('metaData', {
     product_id: {
       type: DataTypes.INTEGER
     },
@@ -38,7 +38,7 @@ exports.default = function (sequelize, DataTypes) {
     tableName: 'product_metadata'
   });
 
-  metaData.associate = function (models) {
+  metaData.associate = models => {
     metaData.belongsTo(models.users, { foreignKey: 'updated_by' });
 
     metaData.belongsTo(models.products);

@@ -4,8 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-exports.default = function (sequelize, DataTypes) {
-  var detailTypes = sequelize.define('detailTypes', {
+exports.default = (sequelize, DataTypes) => {
+  const detailTypes = sequelize.define('detailTypes', {
     title: {
       type: DataTypes.STRING
     },
@@ -37,7 +37,7 @@ exports.default = function (sequelize, DataTypes) {
     tableName: 'detail_types'
   });
 
-  detailTypes.associate = function (models) {
+  detailTypes.associate = models => {
     detailTypes.belongsTo(models.users, { foreignKey: 'updated_by' });
 
     detailTypes.belongsTo(models.statuses, { foreignKey: 'status_type', targetKey: 'status_type' });

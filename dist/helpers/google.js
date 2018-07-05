@@ -23,38 +23,38 @@ var _main2 = _interopRequireDefault(_main);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var phoneUtil = _googleLibphonenumber.PhoneNumberUtil.getInstance();
-var googleMapsClient = (0, _maps.createClient)({
+const phoneUtil = _googleLibphonenumber.PhoneNumberUtil.getInstance();
+const googleMapsClient = (0, _maps.createClient)({
   key: _main2.default.GOOGLE.API_KEY
 });
 _bluebird2.default.promisifyAll(googleMapsClient);
 
-var distanceMatrix = function distanceMatrix(origins, destinations) {
+const distanceMatrix = (origins, destinations) => {
   if (destinations.length > 25) {
     destinations = _lodash2.default.chunk(destinations, 25);
   }
 
-  var promises = destinations.map(function (destinationsElem) {
+  const promises = destinations.map(destinationsElem => {
     return googleMapsClient.distanceMatrixAsync({
       origins: origins,
       destinations: destinationsElem
     });
   });
 
-  return _bluebird2.default.all(promises).then(function (result) {
-    var rows = result.map(function (elem) {
+  return _bluebird2.default.all(promises).then(result => {
+    const rows = result.map(elem => {
       return elem.json.rows;
     });
 
-    return _lodash2.default.chain(rows).flatten().map(function (elem) {
+    return _lodash2.default.chain(rows).flatten().map(elem => {
       return elem.elements;
     }).flatten().value();
   });
 };
 
-var isValidPhoneNumber = function isValidPhoneNumber(phone) {
-  return _bluebird2.default.try(function () {
-    var regionCode = phoneUtil.getRegionCodeForCountryCode('91');
+const isValidPhoneNumber = phone => {
+  return _bluebird2.default.try(() => {
+    const regionCode = phoneUtil.getRegionCodeForCountryCode('91');
     if (regionCode.toUpperCase() === 'ZZ') {
       return false;
     }
@@ -62,7 +62,7 @@ var isValidPhoneNumber = function isValidPhoneNumber(phone) {
     console.log('REGION CODE: ', regionCode);
 
     return phoneUtil.parse(phone, regionCode);
-  }).then(function (phoneNumber) {
+  }).then(phoneNumber => {
 
     console.log('IS PHONE VALID: ', phoneUtil.isValidNumber(phoneNumber));
     console.log('PHONE NUMBER TYPE: ', phoneUtil.getNumberType(phoneNumber));
@@ -74,6 +74,6 @@ var isValidPhoneNumber = function isValidPhoneNumber(phone) {
 };
 
 exports.default = {
-  distanceMatrix: distanceMatrix,
-  isValidPhoneNumber: isValidPhoneNumber
+  distanceMatrix,
+  isValidPhoneNumber
 };

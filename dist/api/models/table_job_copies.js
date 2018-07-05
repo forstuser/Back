@@ -4,8 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-exports.default = function (sequelize, DataTypes) {
-  var jobCopies = sequelize.define('jobCopies', {
+exports.default = (sequelize, DataTypes) => {
+  const jobCopies = sequelize.define('jobCopies', {
     updated_by: {
       type: DataTypes.INTEGER
     },
@@ -41,7 +41,7 @@ exports.default = function (sequelize, DataTypes) {
     tableName: 'job_copies'
   });
 
-  jobCopies.associate = function (models) {
+  jobCopies.associate = models => {
     jobCopies.belongsTo(models.users, { foreignKey: 'updated_by' });
     jobCopies.belongsTo(models.jobs);
     jobCopies.belongsTo(models.statuses, { foreignKey: 'status_type', targetKey: 'status_type' });

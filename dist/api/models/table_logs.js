@@ -4,8 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-exports.default = function (sequelize, DataTypes) {
-  var logs = sequelize.define('logs', {
+exports.default = (sequelize, DataTypes) => {
+  const logs = sequelize.define('logs', {
     user_id: {
       type: DataTypes.INTEGER
     },
@@ -30,7 +30,7 @@ exports.default = function (sequelize, DataTypes) {
     tableName: 'logs'
   });
 
-  logs.associate = function (models) {
+  logs.associate = models => {
     logs.belongsTo(models.users, { foreignKey: 'user_id', as: 'user' });
   };
   return logs;

@@ -268,6 +268,20 @@ class NotificationAdaptor {
       console.log(
           `Error on ${new Date()} for user ${user.id ||
           user.ID} is as follow: \n ${err}`);
+
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user.id || user.ID,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
       return {
         status: false,
         message: 'Mailbox restore failed',
@@ -1046,9 +1060,8 @@ class NotificationAdaptor {
           log_type: 3,
           user_id: userId,
           log_content: JSON.stringify({options}),
-        }).
-            catch((ex) => console.log('error while logging on db,',
-                ex));
+        }).catch((ex) => console.log('error while logging on db,',
+            ex));
         // extract invalid registration for removal
         if (body.failure > 0 && Array.isArray(body.results) &&
             body.results.length === result.length) {
@@ -1065,14 +1078,14 @@ class NotificationAdaptor {
         if (reply) {
           if (!error && response.statusCode === 200) {
             // request was success, should early return response to client
-            return reply({
+            return reply.response({
               status: true,
             }).code(200);
           } else {
-            return reply({
+            return reply.response({
               status: false,
               error,
-            }).code(500);
+            });
           }
         }
       });
@@ -1092,11 +1105,11 @@ class NotificationAdaptor {
         email_verified: true,
       });
 
-      return reply({status: true});
+      return reply.response({status: true});
     }).catch((err) => {
       console.log(
           `Error on ${new Date()} for user is as follow: \n \n ${err}`);
-      return reply({status: false});
+      return reply.response({status: false});
     });
   }
 }

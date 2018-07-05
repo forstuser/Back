@@ -4,8 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-exports.default = function (sequelize, DataTypes) {
-  var user_calendar_item = sequelize.define('user_calendar_item', {
+exports.default = (sequelize, DataTypes) => {
+  const user_calendar_item = sequelize.define('user_calendar_item', {
     provider_name: {
       type: DataTypes.STRING
     },
@@ -52,7 +52,7 @@ exports.default = function (sequelize, DataTypes) {
     tableName: 'table_user_calendar_item'
   });
 
-  user_calendar_item.associate = function (models) {
+  user_calendar_item.associate = models => {
     user_calendar_item.belongsTo(models.users, { foreignKey: 'updated_by' });
     user_calendar_item.belongsTo(models.users, { foreignKey: 'user_id' });
     user_calendar_item.belongsTo(models.calendar_services, { foreignKey: 'service_id', as: 'service_type' });

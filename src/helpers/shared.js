@@ -1414,6 +1414,44 @@ const iterateToCollection = (collection, callback, ...relativeItems) => {
 const stringHasSubString = (stringItem, subString) => _.includes(stringItem,
     subString);
 
+const preValidation = (preRequest, reply) => {
+  if (preRequest.userExist === 0) {
+    return reply.response({
+      status: false,
+      message: 'Inactive User',
+      forceUpdate: preRequest.forceUpdate,
+    }).code(402);
+  } else if (!preRequest.userExist) {
+    return reply.response({
+      status: false,
+      message: 'Unauthorized',
+      forceUpdate: preRequest.forceUpdate,
+    }).code(401);
+  }
+
+  return reply.response({
+    status: false,
+    message: 'Forbidden',
+    forceUpdate: preRequest.forceUpdate,
+  });
+};
+
+function logError(request, user, err, modals) {
+  modals.logs.create({
+    api_action: request.method,
+    api_path: request.url.pathname,
+    log_type: 2,
+    user_id: user ? user.id || user.ID : undefined,
+    log_content: JSON.stringify({
+      params: request.params,
+      query: request.query,
+      headers: request.headers,
+      payload: request.payload,
+      err,
+    }),
+  }).catch((ex) => console.log('error while logging on db,', ex));
+}
+
 export default {
   readJSONFile,
   formatDate,
@@ -1428,4 +1466,6 @@ export default {
   sumProps,
   retrieveDaysInsight,
   retrieveMailTemplate,
+  preValidation,
+  logError,
 };

@@ -4,8 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-exports.default = function (sequelize, DataTypes) {
-  var calendar_services = sequelize.define('calendar_services', {
+exports.default = (sequelize, DataTypes) => {
+  const calendar_services = sequelize.define('calendar_services', {
     service_name: {
       type: DataTypes.STRING
     },
@@ -76,7 +76,7 @@ exports.default = function (sequelize, DataTypes) {
     tableName: 'table_calendar_services'
   });
 
-  calendar_services.associate = function (models) {
+  calendar_services.associate = models => {
     calendar_services.belongsTo(models.users, { foreignKey: 'updated_by' });
     calendar_services.belongsTo(models.statuses, { foreignKey: 'status_type', targetKey: 'status_type' });
     calendar_services.belongsTo(models.quantities, { foreignKey: 'quantity_type', as: 'quantity' });

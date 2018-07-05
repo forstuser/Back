@@ -4,8 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-exports.default = function (sequelize, DataTypes) {
-  var insuranceBrandCategories = sequelize.define('insuranceBrandCategories', {
+exports.default = (sequelize, DataTypes) => {
+  const insuranceBrandCategories = sequelize.define('insuranceBrandCategories', {
     insurance_brand_id: {
       type: DataTypes.INTEGER
     },
@@ -28,7 +28,7 @@ exports.default = function (sequelize, DataTypes) {
     tableName: 'insurance_brand_categories'
   });
 
-  insuranceBrandCategories.associate = function (models) {
+  insuranceBrandCategories.associate = models => {
     insuranceBrandCategories.belongsTo(models.insuranceBrands, { foreignKey: 'insurance_brand_id' });
     insuranceBrandCategories.belongsTo(models.categories, { foreignKey: 'category_id' });
   };

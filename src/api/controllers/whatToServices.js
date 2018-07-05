@@ -2,7 +2,6 @@
 'use strict';
 
 import WhatToServiceAdaptor from '../Adaptors/whatToServices';
-import Promise from 'bluebird';
 import shared from '../../helpers/shared';
 
 let modals;
@@ -19,52 +18,54 @@ export default class WhatToController {
    * @param request
    * @param reply
    */
-  static retrieveStateReference(request, reply) {
+  static async retrieveStateReference(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
-    if (request.pre.userExist && !request.pre.forceUpdate) {
-      return Promise.try(() => whatToServiceAdaptor.retrieveAllStateData({})).
-          then((states) => reply({
-            status: true,
-            states,
-          })).catch((err) => {
-            console.log(
-                `Error on ${new Date()} for user ${user.id ||
-                user.ID} is as follow: \n \n ${err}`);
-            modals.logs.create({
-              api_action: request.method,
-              api_path: request.url.pathname,
-              log_type: 2,
-              user_id: user.id || user.ID,
-              log_content: JSON.stringify({
-                params: request.params,
-                query: request.query,
-                headers: request.headers,
-                payload: request.payload,
-                err,
-              }),
-            }).catch((ex) => console.log('error while logging on db,', ex));
-            return reply({
-              status: false,
-              message:'Unable to retrieve all states data'
-            });
-          });
-    } else if (request.pre.userExist === 0) {
-      return reply({
+    try {
+      if (request.pre.userExist && !request.pre.forceUpdate) {
+        const states = await whatToServiceAdaptor.retrieveAllStateData({});
+        return reply.response({
+          status: true,
+          states,
+        });
+      } else if (request.pre.userExist === 0) {
+        return reply.response({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate,
+        }).code(402);
+      } else if (!request.pre.userExist) {
+        return reply.response({
+          status: false,
+          message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate,
+        }).code(401);
+      } else {
+        return reply.response({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate,
+        });
+      }
+    } catch (err) {
+      console.log(
+          `Error on ${new Date()} for user ${user.id ||
+          user.ID} is as follow: \n \n ${err}`);
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
+      return reply.response({
         status: false,
-        message: 'Inactive User',
-        forceUpdate: request.pre.forceUpdate,
-      }).code(402);
-    } else if (!request.pre.userExist) {
-      return reply({
-        status: false,
-        message: 'Unauthorized',
-        forceUpdate: request.pre.forceUpdate,
-      }).code(401);
-    } else {
-      return reply({
-        status: false,
-        message: 'Forbidden',
-        forceUpdate: request.pre.forceUpdate,
+        message: 'Unable to retrieve all states data',
       });
     }
   }
@@ -75,53 +76,56 @@ export default class WhatToController {
    * @param reply
    * @returns {*}
    */
-  static retrieveStateMealData(request, reply) {
+  static async retrieveStateMealData(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
-      return Promise.try(() => whatToServiceAdaptor.retrieveStateMealItems({
-        state_id: request.params.state_id,
-        user_id: user.ID || user.id,
-        is_veg: request.query.is_veg,
-      })).
-          then((mealList) => reply({
-            status: true,
-            mealList,
-          })).catch((err) => {
-            console.log(
-                `Error on ${new Date()} for user ${user.id ||
-                user.ID} is as follow: \n \n ${err}`);
-            modals.logs.create({
-              api_action: request.method,
-              api_path: request.url.pathname,
-              log_type: 2,
-              user_id: user.id || user.ID,
-              log_content: JSON.stringify({
-                params: request.params,
-                query: request.query,
-                headers: request.headers,
-                payload: request.payload,
-                err,
-              }),
-            }).catch((ex) => console.log('error while logging on db,', ex));
-            return reply({
-              status: false,
-              message:'Unable to retrieve state meal items'
-            });
-          });
+      try {
+        const mealList = await whatToServiceAdaptor.retrieveStateMealItems({
+          state_id: request.params.state_id,
+          user_id: user.ID || user.id,
+          is_veg: request.query.is_veg,
+        });
+
+        return reply.response({
+          status: true,
+          mealList,
+        });
+      } catch (err) {
+        console.log(
+            `Error on ${new Date()} for user ${user.id ||
+            user.ID} is as follow: \n \n ${err}`);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user.id || user.ID,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
+        return reply.response({
+          status: false,
+          message: 'Unable to retrieve state meal items',
+        });
+      }
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -135,17 +139,20 @@ export default class WhatToController {
    * @param reply
    * @returns {*}
    */
-  static retrieveUserMealList(request, reply) {
+  static async retrieveUserMealList(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
-      return Promise.try(() => whatToServiceAdaptor.retrieveUserMealItems({
-        user_id: user.ID || user.id,
-        is_veg: request.query.is_veg,
-        current_date: request.query.current_date,
-      })).then((mealList) => reply({
-        status: true,
-        mealList,
-      })).catch((err) => {
+      try {
+        const mealList = await whatToServiceAdaptor.retrieveUserMealItems({
+          user_id: user.ID || user.id,
+          is_veg: request.query.is_veg,
+          current_date: request.query.current_date,
+        });
+        return reply.response({
+          status: true,
+          mealList,
+        });
+      } catch (err) {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
@@ -153,7 +160,7 @@ export default class WhatToController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user.id || user.ID,
+          user_id: user ? user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -162,25 +169,25 @@ export default class WhatToController {
             err,
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({
+        return reply.response({
           status: false,
-          message:'Unable to  retrieve user meal items'
+          message: 'Unable to  retrieve user meal items',
         });
-      });
+      }
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -188,18 +195,21 @@ export default class WhatToController {
     }
   }
 
-  static prepareUserMealList(request, reply) {
+  static async prepareUserMealList(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
-      return Promise.try(() => whatToServiceAdaptor.prepareUserMealList({
-        user_id: user.ID || user.id,
-        selected_ids: request.payload.selected_ids || [],
-        unselected_ids: request.payload.unselected_ids || [],
-        state_id: request.payload.state_id,
-      })).then((mealList) => reply({
-        status: true,
-        mealList,
-      })).catch((err) => {
+      try {
+        const mealList = await whatToServiceAdaptor.prepareUserMealList({
+          user_id: user.ID || user.id,
+          selected_ids: request.payload.selected_ids || [],
+          unselected_ids: request.payload.unselected_ids || [],
+          state_id: request.payload.state_id,
+        });
+        return reply.response({
+          status: true,
+          mealList,
+        });
+      } catch (err) {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
@@ -207,7 +217,7 @@ export default class WhatToController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user.id || user.ID,
+          user_id: user ? user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -216,25 +226,25 @@ export default class WhatToController {
             err,
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({
+        return reply.response({
           status: false,
-          message:'Unable to  prepare user meal list '
+          message: 'Unable to  prepare user meal list ',
         });
-      });
+      }
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -242,25 +252,29 @@ export default class WhatToController {
     }
   }
 
-  static addUserMealItem(request, reply) {
+  static async addUserMealItem(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
-      return Promise.try(() => whatToServiceAdaptor.addUserMealItem({
-        user_id: user.ID || user.id,
-        meal_items: request.payload.names.map((mealItem) => ({
-          created_by: user.ID || user.id,
-          updated_by: user.ID || user.id,
-          name: mealItem,
-          is_veg: !(request.payload.is_veg && request.payload.is_veg === false),
-          status_type: 11,
-        })),
-        is_veg: request.payload.is_veg,
-        state_id: request.payload.state_id,
-        current_date:request.payload.current_date,
-      })).then((mealList) => reply({
-        status: true,
-        mealList,
-      })).catch((err) => {
+      try {
+        const mealList = await whatToServiceAdaptor.addUserMealItem({
+          user_id: user.ID || user.id,
+          meal_items: request.payload.names.map((mealItem) => ({
+            created_by: user.ID || user.id,
+            updated_by: user.ID || user.id,
+            name: mealItem,
+            is_veg: !(request.payload.is_veg && request.payload.is_veg ===
+                false),
+            status_type: 11,
+          })),
+          is_veg: request.payload.is_veg,
+          state_id: request.payload.state_id,
+          current_date: request.payload.current_date,
+        });
+        return reply.response({
+          status: true,
+          mealList,
+        });
+      } catch (err) {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
@@ -268,7 +282,7 @@ export default class WhatToController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user.id || user.ID,
+          user_id: user ? user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -277,25 +291,25 @@ export default class WhatToController {
             err,
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({
+        return reply.response({
           status: false,
-          message:'Unable to add user meal item'
+          message: 'Unable to add user meal item',
         });
-      });
+      }
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -303,17 +317,20 @@ export default class WhatToController {
     }
   }
 
-  static updateMealCurrentDate(request, reply) {
+  static async updateMealCurrentDate(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
-      return Promise.try(() => whatToServiceAdaptor.updateUserMealCurrentDate({
-        user_id: user.ID || user.id,
-        meal_id: request.params.meal_id,
-        current_date: request.payload.current_date,
-      })).then((mealList) => reply({
-        status: true,
-        mealList,
-      })).catch((err) => {
+      try {
+        const mealList = await whatToServiceAdaptor.updateUserMealCurrentDate({
+          user_id: user.ID || user.id,
+          meal_id: request.params.meal_id,
+          current_date: request.payload.current_date,
+        });
+        return reply.response({
+          status: true,
+          mealList,
+        });
+      } catch (err) {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
@@ -321,7 +338,7 @@ export default class WhatToController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user.id || user.ID,
+          user_id: user ? user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -330,25 +347,25 @@ export default class WhatToController {
             err,
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({
+        return reply.response({
           status: false,
-          message:'Unable to update user meal current date '
+          message: 'Unable to update user meal current date ',
         });
-      });
+      }
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -356,17 +373,20 @@ export default class WhatToController {
     }
   }
 
-  static removeMealCurrentDate(request, reply) {
+  static async removeMealCurrentDate(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
-      return Promise.try(() => whatToServiceAdaptor.deleteUserMealCurrentDate({
-        user_id: user.ID || user.id,
-        meal_id: request.params.meal_id,
-        current_date: request.payload.current_date,
-      })).then((mealList) => reply({
-        status: true,
-        mealList,
-      })).catch((err) => {
+      try {
+        const mealList = await whatToServiceAdaptor.deleteUserMealCurrentDate({
+          user_id: user.ID || user.id,
+          meal_id: request.params.meal_id,
+          current_date: request.payload.current_date,
+        });
+        return reply.response({
+          status: true,
+          mealList,
+        });
+      } catch (err) {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
@@ -374,7 +394,7 @@ export default class WhatToController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user.id || user.ID,
+          user_id: user ? user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -383,24 +403,24 @@ export default class WhatToController {
             err,
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({
+        return reply.response({
           status: false,
         });
-      });
+      }
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -408,18 +428,21 @@ export default class WhatToController {
     }
   }
 
-  static removeMeal(request, reply) {
+  static async removeMeal(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
-      return Promise.try(() => whatToServiceAdaptor.removeMeals({
-        where: {
-          created_by: user.ID || user.id,
-          id: request.params.meal_id,
-          status_type: 11,
-        },
-      })).then(() => reply({
-        status: true,
-      })).catch((err) => {
+      try {
+        await whatToServiceAdaptor.removeMeals({
+          where: {
+            created_by: user.ID || user.id,
+            id: request.params.meal_id,
+            status_type: 11,
+          },
+        });
+        return reply.response({
+          status: true,
+        });
+      } catch (err) {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
@@ -427,7 +450,7 @@ export default class WhatToController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user.id || user.ID,
+          user_id: user ? user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -436,25 +459,25 @@ export default class WhatToController {
             err,
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({
+        return reply.response({
           status: false,
-          message:'Unable to remove meals '
+          message: 'Unable to remove meals ',
         });
-      });
+      }
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -462,16 +485,19 @@ export default class WhatToController {
     }
   }
 
-  static retrieveUserWearables(request, reply) {
+  static async retrieveUserWearables(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
-      return Promise.try(() => whatToServiceAdaptor.retrieveWearables({
-        user_id: user.ID || user.id,
-        current_date: request.query.current_date,
-      })).then((wearableList) => reply({
-        status: true,
-        wearableList,
-      })).catch((err) => {
+      try {
+        const wearableList = await whatToServiceAdaptor.retrieveWearables({
+          user_id: user.ID || user.id,
+          current_date: request.query.current_date,
+        });
+        return reply.response({
+          status: true,
+          wearableList,
+        });
+      } catch (err) {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
@@ -479,7 +505,7 @@ export default class WhatToController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user.id || user.ID,
+          user_id: user ? user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -488,25 +514,25 @@ export default class WhatToController {
             err,
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({
+        return reply.response({
           status: false,
-          message:'unable to  retrieve Wearables'
+          message: 'unable to  retrieve Wearables',
         });
-      });
+      }
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -514,17 +540,20 @@ export default class WhatToController {
     }
   }
 
-  static addUserWearables(request, reply) {
+  static async addUserWearables(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
-      return Promise.try(() => whatToServiceAdaptor.addWearable({
-        item_name: request.payload.name,
-        user_id: user.ID || user.id,
-        current_date:request.payload.current_date,
-      })).then((wearable) => reply({
-        status: true,
-        wearable,
-      })).catch((err) => {
+      try {
+        const wearable = await whatToServiceAdaptor.addWearable({
+          item_name: request.payload.name,
+          user_id: user.ID || user.id,
+          current_date: request.payload.current_date,
+        });
+        return reply.response({
+          status: true,
+          wearable,
+        });
+      } catch (err) {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
@@ -532,7 +561,7 @@ export default class WhatToController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user.id || user.ID,
+          user_id: user ? user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -541,25 +570,25 @@ export default class WhatToController {
             err,
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({
+        return reply.response({
           status: false,
-          message:'Unable to add wearable'
+          message: 'Unable to add wearable',
         });
-      });
+      }
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -567,19 +596,22 @@ export default class WhatToController {
     }
   }
 
-  static updateUserWearables(request, reply) {
+  static async updateUserWearables(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
-      return Promise.try(() => whatToServiceAdaptor.updateWearable({
-        item_name: request.payload.name,
-        user_id: user.ID || user.id, id: request.params.id,
-      })).then(() => reply({
-        status: true,
-        wearable: {
-          name: request.payload.name,
-          id: request.params.id,
-        },
-      })).catch((err) => {
+      try {
+        await whatToServiceAdaptor.updateWearable({
+          item_name: request.payload.name,
+          user_id: user.ID || user.id, id: request.params.id,
+        });
+        return reply.response({
+          status: true,
+          wearable: {
+            name: request.payload.name,
+            id: request.params.id,
+          },
+        });
+      } catch (err) {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
@@ -587,7 +619,7 @@ export default class WhatToController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user.id || user.ID,
+          user_id: user ? user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -596,25 +628,25 @@ export default class WhatToController {
             err,
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({
+        return reply.response({
           status: false,
-          message:'Unable to update wearable'
+          message: 'Unable to update wearable',
         });
-      });
+      }
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -622,236 +654,29 @@ export default class WhatToController {
     }
   }
 
-  static updateWearableCurrentDate(request, reply) {
+  static async updateWearableCurrentDate(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
-      return Promise.try(() => whatToServiceAdaptor.updateWearableCurrentDate({
-        user_id: user.ID || user.id,
-        id: request.params.id,
-        current_date: request.payload.current_date,
-      })).then((wearablelList) => reply({
-        status: true,
-        wearablelList,
-      })).catch((err) => {
-        console.log(
-            `Error on ${new Date()} for user ${user.id ||
-            user.ID} is as follow: \n \n ${err}`);
-        modals.logs.create({
-          api_action: request.method,
-          api_path: request.url.pathname,
-          log_type: 2,
-          user_id: user.id || user.ID,
-          log_content: JSON.stringify({
-            params: request.params,
-            query: request.query,
-            headers: request.headers,
-            payload: request.payload,
-            err,
-          }),
-        }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({
-          status: false,
-          message:'Unable to update wearable current date'
-        });
-      });
-    } else if (request.pre.userExist === 0) {
-      return reply({
-        status: false,
-        message: 'Inactive User',
-        forceUpdate: request.pre.forceUpdate,
-      }).code(402);
-    } else if (!request.pre.userExist) {
-      return reply({
-        status: false,
-        message: 'Unauthorized',
-        forceUpdate: request.pre.forceUpdate,
-      }).code(401);
-    } else {
-      return reply({
-        status: false,
-        message: 'Forbidden',
-        forceUpdate: request.pre.forceUpdate,
-      });
-    }
-  }
-
-  static destroyUserWearables(request, reply) {
-    const user = shared.verifyAuthorization(request.headers);
-    if (request.pre.userExist && !request.pre.forceUpdate) {
-      return Promise.try(() => whatToServiceAdaptor.deleteWearable({
-        user_id: user.ID || user.id, id: request.params.id,
-      })).then(() => reply({
-        status: true,
-        wearable: {
-          id: request.params.id,
-        },
-      })).catch((err) => {
-        console.log(
-            `Error on ${new Date()} for user ${user.id ||
-            user.ID} is as follow: \n \n ${err}`);
-        modals.logs.create({
-          api_action: request.method,
-          api_path: request.url.pathname,
-          log_type: 2,
-          user_id: user.id || user.ID,
-          log_content: JSON.stringify({
-            params: request.params,
-            query: request.query,
-            headers: request.headers,
-            payload: request.payload,
-            err,
-          }),
-        }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({
-          status: false,
-          message:'Unable to Delete wearable'
-        });
-      });
-    } else if (request.pre.userExist === 0) {
-      return reply({
-        status: false,
-        message: 'Inactive User',
-        forceUpdate: request.pre.forceUpdate,
-      }).code(402);
-    } else if (!request.pre.userExist) {
-      return reply({
-        status: false,
-        message: 'Unauthorized',
-        forceUpdate: request.pre.forceUpdate,
-      }).code(401);
-    } else {
-      return reply({
-        status: false,
-        message: 'Forbidden',
-        forceUpdate: request.pre.forceUpdate,
-      });
-    }
-  }
-
-  static removeWearable(request, reply) {
-    const user = shared.verifyAuthorization(request.headers);
-    if (request.pre.userExist && !request.pre.forceUpdate) {
-      return Promise.try(() => whatToServiceAdaptor.removeWearableCurrentDate({
-        user_id: user.ID || user.id,
-        id: request.params.id,
-        current_date: request.payload.current_date,
-      })).then((wearablelList) => reply({
-        status: true,
-        wearablelList,
-      })).catch((err) => {
-        console.log(
-            `Error on ${new Date()} for user ${user.id ||
-            user.ID} is as follow: \n \n ${err}`);
-        modals.logs.create({
-          api_action: request.method,
-          api_path: request.url.pathname,
-          log_type: 2,
-          user_id: user.id || user.ID,
-          log_content: JSON.stringify({
-            params: request.params,
-            query: request.query,
-            headers: request.headers,
-            payload: request.payload,
-            err,
-          }),
-        }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({
-          status: false,
-          message:'Unable to remove wearable current date'
-        });
-      });
-    } else if (request.pre.userExist === 0) {
-      return reply({
-        status: false,
-        message: 'Inactive User',
-        forceUpdate: request.pre.forceUpdate,
-      }).code(402);
-    } else if (!request.pre.userExist) {
-      return reply({
-        status: false,
-        message: 'Unauthorized',
-        forceUpdate: request.pre.forceUpdate,
-      }).code(401);
-    } else {
-      return reply({
-        status: false,
-        message: 'Forbidden',
-        forceUpdate: request.pre.forceUpdate,
-      });
-    }
-  }
-
-  static retrieveToDoListItems(request, reply) {
-    const user = shared.verifyAuthorization(request.headers);
-    if (request.pre.userExist && !request.pre.forceUpdate) {
-      return Promise.try(() => whatToServiceAdaptor.retrieveToDoList({
-        user_id: user.ID || user.id,
-      })).
-          then((todoList) => reply({
-            status: true,
-            todoList,
-          })).catch((err) => {
-            console.log(
-                `Error on ${new Date()} for user ${user.id ||
-                user.ID} is as follow: \n \n ${err}`);
-            modals.logs.create({
-              api_action: request.method,
-              api_path: request.url.pathname,
-              log_type: 2,
-              user_id: user.id || user.ID,
-              log_content: JSON.stringify({
-                params: request.params,
-                query: request.query,
-                headers: request.headers,
-                payload: request.payload,
-                err,
-              }),
-            }).catch((ex) => console.log('error while logging on db,', ex));
-            return reply({
-              status: false,
-              message:'Unable to retrieve ToDoList'
+      try {
+        const wearableList = await whatToServiceAdaptor.updateWearableCurrentDate(
+            {
+              user_id: user.ID || user.id,
+              id: request.params.id,
+              current_date: request.payload.current_date,
             });
-          });
-    } else if (request.pre.userExist === 0) {
-      return reply({
-        status: false,
-        message: 'Inactive User',
-        forceUpdate: request.pre.forceUpdate,
-      }).code(402);
-    } else if (!request.pre.userExist) {
-      return reply({
-        status: false,
-        message: 'Unauthorized',
-        forceUpdate: request.pre.forceUpdate,
-      }).code(401);
-    } else {
-      return reply({
-        status: false,
-        message: 'Forbidden',
-        forceUpdate: request.pre.forceUpdate,
-      });
-    }
-  }
-
-  static retrieveUserToDoList(request, reply) {
-    const user = shared.verifyAuthorization(request.headers);
-    if (request.pre.userExist && !request.pre.forceUpdate) {
-      return Promise.try(() => whatToServiceAdaptor.retrieveUserToDoList({
-        user_id: user.ID || user.id,
-        current_date: request.query.current_date,
-      })).then((todoList) => reply({
-        status: true,
-        todoList,
-      })).catch((err) => {
+        return reply.response({
+          status: true,
+          wearableList,
+        });
+      } catch (err) {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
-
         modals.logs.create({
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user.id || user.ID,
+          user_id: user ? user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -860,26 +685,25 @@ export default class WhatToController {
             err,
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
-
-        return reply({
+        return reply.response({
           status: false,
-          message:'Unable to retrieve UserToDoList'
+          message: 'Unable to update wearable current date',
         });
-      });
+      }
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -887,22 +711,20 @@ export default class WhatToController {
     }
   }
 
-  static addUserToDoList(request, reply) {
+  static async destroyUserWearables(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
-      return Promise.try(() => whatToServiceAdaptor.addUserToDoList({
-        user_id: user.ID || user.id,
-        todo_items: request.payload.names.map((todoItem) => ({
-          created_by: user.ID || user.id,
-          updated_by: user.ID || user.id,
-          name: todoItem,
-          status_type: 11,
-        })),
-        current_date: request.payload.current_date,
-      })).then((todoList) => reply({
-        status: true,
-        todoList,
-      })).catch((err) => {
+      try {
+        await whatToServiceAdaptor.deleteWearable({
+          user_id: user.ID || user.id, id: request.params.id,
+        });
+        return reply.response({
+          status: true,
+          wearable: {
+            id: request.params.id,
+          },
+        });
+      } catch (err) {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
@@ -910,7 +732,7 @@ export default class WhatToController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user.id || user.ID,
+          user_id: user ? user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -919,25 +741,25 @@ export default class WhatToController {
             err,
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({
+        return reply.response({
           status: false,
-          message:'Unable to User ToDoList '
+          message: 'Unable to Delete wearable',
         });
-      });
+      }
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -945,17 +767,21 @@ export default class WhatToController {
     }
   }
 
-  static updateToDoItem(request, reply) {
+  static async removeWearable(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
-      return Promise.try(() => whatToServiceAdaptor.updateToDoItem({
-        user_id: user.ID || user.id,
-        todo_id: request.params.todo_id,
-        current_date: request.payload.current_date,
-      })).then((todoItem) => reply({
-        status: true,
-        todoItem,
-      })).catch((err) => {
+      try {
+        const wearableList = await whatToServiceAdaptor.removeWearableCurrentDate(
+            {
+              user_id: user.ID || user.id,
+              id: request.params.id,
+              current_date: request.payload.current_date,
+            });
+        return reply.response({
+          status: true,
+          wearableList,
+        });
+      } catch (err) {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
@@ -963,7 +789,7 @@ export default class WhatToController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user.id || user.ID,
+          user_id: user ? user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -972,25 +798,25 @@ export default class WhatToController {
             err,
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({
+        return reply.response({
           status: false,
-          message:'Unable to update ToDoItem'
+          message: 'Unable to remove wearable current date',
         });
-      });
+      }
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -998,17 +824,18 @@ export default class WhatToController {
     }
   }
 
-  static prepareUserToDoList(request, reply) {
+  static async retrieveToDoListItems(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
-      return Promise.try(() => whatToServiceAdaptor.prepareUserToDoList({
-        user_id: user.ID || user.id,
-        selected_ids: request.payload.selected_ids || [],
-        unselected_ids: request.payload.unselected_ids || [],
-      })).then((todoList) => reply({
-        status: true,
-        todoList,
-      })).catch((err) => {
+      try {
+        const todoList = await whatToServiceAdaptor.retrieveToDoList({
+          user_id: user.ID || user.id,
+        });
+        return reply.response({
+          status: true,
+          todoList,
+        });
+      } catch (err) {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
@@ -1025,44 +852,45 @@ export default class WhatToController {
             err,
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({
+        return reply.response({
           status: false,
-          message:'Unable to prepare user ToDoList'
+          message: 'Unable to retrieve ToDoList',
         });
-      });
+      }
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
       });
     }
-
   }
 
-  static removeToDos(request, reply) {
+  static async retrieveUserToDoList(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
-      return Promise.try(() => whatToServiceAdaptor.deleteUserTodoCurrentDate({
-        user_id: user.ID || user.id,
-        todo_id: request.params.todo_id,
-        current_date: request.payload.current_date,
-      })).then((removelist) => reply({
-        status: true,
-        removelist,
-      })).catch((err) => {
+      try {
+        const todoList = await whatToServiceAdaptor.retrieveUserToDoList({
+          user_id: user.ID || user.id,
+          current_date: request.query.current_date,
+        });
+        return reply.response({
+          status: true,
+          todoList,
+        });
+      } catch (err) {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
@@ -1070,7 +898,7 @@ export default class WhatToController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user.id || user.ID,
+          user_id: user ? user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -1079,25 +907,26 @@ export default class WhatToController {
             err,
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({
+
+        return reply.response({
           status: false,
-          message:'Unable to delete user ToDo current Date'
+          message: 'Unable to retrieve UserToDoList',
         });
-      });
+      }
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -1105,18 +934,25 @@ export default class WhatToController {
     }
   }
 
-  static removeWhatToDos(request, reply) {
+  static async addUserToDoList(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
-      return Promise.try(() => whatToServiceAdaptor.deleteWhatTodo({
-        where: {
-          created_by: user.ID || user.id,
-          id: request.params.todo_id,
-          status_type: 11,
-        },
-      })).then(() => reply({
-        status: true,
-      })).catch((err) => {
+      try {
+        const todoList = await whatToServiceAdaptor.addUserToDoList({
+          user_id: user.ID || user.id,
+          todo_items: request.payload.names.map((todoItem) => ({
+            created_by: user.ID || user.id,
+            updated_by: user.ID || user.id,
+            name: todoItem,
+            status_type: 11,
+          })),
+          current_date: request.payload.current_date,
+        });
+        return reply.response({
+          status: true,
+          todoList,
+        });
+      } catch (err) {
         console.log(
             `Error on ${new Date()} for user ${user.id ||
             user.ID} is as follow: \n \n ${err}`);
@@ -1124,7 +960,7 @@ export default class WhatToController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user.id || user.ID,
+          user_id: user ? user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -1133,25 +969,25 @@ export default class WhatToController {
             err,
           }),
         }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply({
+        return reply.response({
           status: false,
-          message:'Unable to delete what ToDo'
+          message: 'Unable to User ToDoList ',
         });
-      });
+      }
     } else if (request.pre.userExist === 0) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
       }).code(402);
     } else if (!request.pre.userExist) {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Unauthorized',
         forceUpdate: request.pre.forceUpdate,
       }).code(401);
     } else {
-      return reply({
+      return reply.response({
         status: false,
         message: 'Forbidden',
         forceUpdate: request.pre.forceUpdate,
@@ -1159,4 +995,229 @@ export default class WhatToController {
     }
   }
 
+  static async updateToDoItem(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    if (request.pre.userExist && !request.pre.forceUpdate) {
+      try {
+        const todoItem = await whatToServiceAdaptor.updateToDoItem({
+          user_id: user.ID || user.id,
+          todo_id: request.params.todo_id,
+          current_date: request.payload.current_date,
+        });
+        return reply.response({
+          status: true,
+          todoItem,
+        });
+      } catch (err) {
+        console.log(
+            `Error on ${new Date()} for user ${user.id ||
+            user.ID} is as follow: \n \n ${err}`);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user ? user.id || user.ID : undefined,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
+        return reply.response({
+          status: false,
+          message: 'Unable to update ToDoItem',
+        });
+      }
+    } else if (request.pre.userExist === 0) {
+      return reply.response({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
+      return reply.response({
+        status: false,
+        message: 'Unauthorized',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(401);
+    } else {
+      return reply.response({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
+  static async prepareUserToDoList(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    if (request.pre.userExist && !request.pre.forceUpdate) {
+      try {
+        const todoList = await whatToServiceAdaptor.prepareUserToDoList({
+          user_id: user.ID || user.id,
+          selected_ids: request.payload.selected_ids || [],
+          unselected_ids: request.payload.unselected_ids || [],
+        });
+        return reply.response({
+          status: true,
+          todoList,
+        });
+      } catch (err) {
+        console.log(
+            `Error on ${new Date()} for user ${user.id ||
+            user.ID} is as follow: \n \n ${err}`);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user ? user.id || user.ID : undefined,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
+        return reply.response({
+          status: false,
+          message: 'Unable to prepare user ToDoList',
+        });
+      }
+    } else if (request.pre.userExist === 0) {
+      return reply.response({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
+      return reply.response({
+        status: false,
+        message: 'Unauthorized',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(401);
+    } else {
+      return reply.response({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
+  static async removeToDos(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    if (request.pre.userExist && !request.pre.forceUpdate) {
+      try {
+        const removeList = await whatToServiceAdaptor.deleteUserTodoCurrentDate(
+            {
+              user_id: user.ID || user.id,
+              todo_id: request.params.todo_id,
+              current_date: request.payload.current_date,
+            });
+        return reply.response({
+          status: true,
+          removeList,
+        });
+      } catch (err) {
+        console.log(
+            `Error on ${new Date()} for user ${user.id ||
+            user.ID} is as follow: \n \n ${err}`);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user ? user.id || user.ID : undefined,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
+        return reply.response({
+          status: false,
+          message: 'Unable to delete user ToDo current Date',
+        });
+      }
+    } else if (request.pre.userExist === 0) {
+      return reply.response({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
+      return reply.response({
+        status: false,
+        message: 'Unauthorized',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(401);
+    } else {
+      return reply.response({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
+  static async removeWhatToDos(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    if (request.pre.userExist && !request.pre.forceUpdate) {
+      try {
+        await whatToServiceAdaptor.deleteWhatTodo({
+          where: {
+            created_by: user.ID || user.id,
+            id: request.params.todo_id,
+            status_type: 11,
+          },
+        });
+        return reply.response({
+          status: true,
+        });
+      } catch (err) {
+        console.log(
+            `Error on ${new Date()} for user ${user.id ||
+            user.ID} is as follow: \n \n ${err}`);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user ? user.id || user.ID : undefined,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
+        return reply.response({
+          status: false,
+          message: 'Unable to delete what ToDo',
+        });
+      }
+    } else if (request.pre.userExist === 0) {
+      return reply.response({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(402);
+    } else if (!request.pre.userExist) {
+      return reply.response({
+        status: false,
+        message: 'Unauthorized',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(401);
+    } else {
+      return reply.response({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
 }

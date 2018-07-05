@@ -1,6 +1,4 @@
 'use strict';
-let MODAL;
-
 import requestPromise from 'request-promise';
 import config from '../config/main';
 

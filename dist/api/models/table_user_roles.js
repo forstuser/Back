@@ -4,8 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-exports.default = function (sequelize, DataTypes) {
-  var userRoles = sequelize.define('userRoles', {
+exports.default = (sequelize, DataTypes) => {
+  const userRoles = sequelize.define('userRoles', {
     role_type: {
       type: DataTypes.INTEGER,
       unique: true
@@ -31,7 +31,7 @@ exports.default = function (sequelize, DataTypes) {
     tableName: 'user_roles'
   });
 
-  userRoles.associate = function (models) {
+  userRoles.associate = models => {
     userRoles.hasMany(models.users, { foreignKey: 'role_type', sourceKey: 'role_type' });
   };
   return userRoles;

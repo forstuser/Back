@@ -4,8 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-exports.default = function (sequelize, DataTypes) {
-  var dropDowns = sequelize.define('dropDowns', {
+exports.default = (sequelize, DataTypes) => {
+  const dropDowns = sequelize.define('dropDowns', {
     title: {
       type: DataTypes.STRING
     },
@@ -37,7 +37,7 @@ exports.default = function (sequelize, DataTypes) {
     tableName: 'category_form_drop_downs'
   });
 
-  dropDowns.associate = function (models) {
+  dropDowns.associate = models => {
     dropDowns.belongsTo(models.users, { foreignKey: 'updated_by' });
 
     dropDowns.belongsTo(models.categoryForms, { foreignKey: 'category_form_id' });

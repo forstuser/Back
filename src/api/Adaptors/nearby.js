@@ -21,7 +21,7 @@ class NearByAdaptor {
 		} else if (location) {
 			origins.push(`${location},India`);
 		}
-		this.filterNearByProfessional(professionIds.split('[')[1].split(']')[0].split(',').filter(Boolean), userId)
+		return this.filterNearByProfessional(professionIds.split('[')[1].split(']')[0].split(',').filter(Boolean), userId)
 			.then((result) => {
 				const finalResult = [];
 				const userWithOrigins = [];
@@ -72,7 +72,7 @@ class NearByAdaptor {
 								finalResult.push(userWithOrigins[i]);
 								if (finalResult.length === result.length) {
 									finalResult.sort((a, b) => a.distance - b.distance);
-									reply({
+									return reply.response({
 										status: true,
 										sortedUsers: finalResult,
 										forceUpdate: request.pre.forceUpdate
@@ -83,7 +83,7 @@ class NearByAdaptor {
               console.log(
                   `Error on ${new Date()} for user ${user.id ||
                   user.ID} is as follow: \n \n ${err}`);
-							reply({
+							return reply.response({
 								status: false,
 								err,
 								forceUpdate: request.pre.forceUpdate
@@ -93,24 +93,22 @@ class NearByAdaptor {
 
 
 					if (origins.length <= 0) {
-						reply({
+						return reply.response({
 							status: true,
 							users,
 							forceUpdate: request.pre.forceUpdate
 						});
 					}
 				} else {
-					reply({
+					return reply.response({
 						status: false,
 						message: 'No Data Found for mentioned search',
 						forceUpdate: request.pre.forceUpdate
 					});
 				}
 			}).catch((err) => {
-      console.log(
-          `Error on ${new Date()} for user ${user.id ||
-          user.ID} is as follow: \n \n ${err}`);
-			reply({
+
+			return reply.response({
 				status: false,
 				message: 'Unable to get near by professional',
 				err,

@@ -5,8 +5,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-exports.default = function (sequelize, DataTypes) {
-  var statuses = sequelize.define('statuses', {
+exports.default = (sequelize, DataTypes) => {
+  const statuses = sequelize.define('statuses', {
     status_id: {
       type: DataTypes.INTEGER,
       unique: true,
@@ -42,7 +42,7 @@ exports.default = function (sequelize, DataTypes) {
     tableName: 'statuses'
   });
 
-  statuses.associate = function (models) {
+  statuses.associate = models => {
     statuses.hasMany(models.users, { foreignKey: 'user_status_type', sourceKey: 'status_type' });
     statuses.hasMany(models.jobs, { foreignKey: 'user_status', sourceKey: 'status_type' });
     statuses.hasMany(models.jobs, { foreignKey: 'admin_status', sourceKey: 'status_type' });

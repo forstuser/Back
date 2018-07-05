@@ -4,8 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-exports.default = function (sequelize, DataTypes) {
-  var mealStateMap = sequelize.define('mealStateMap', {
+exports.default = (sequelize, DataTypes) => {
+  const mealStateMap = sequelize.define('mealStateMap', {
     meal_id: {
       type: DataTypes.INTEGER
     },
@@ -41,7 +41,7 @@ exports.default = function (sequelize, DataTypes) {
 
   });
 
-  mealStateMap.associate = function (models) {
+  mealStateMap.associate = models => {
     mealStateMap.belongsTo(models.users, { foreignKey: 'created_by', onDelete: 'cascade', onUpdate: 'cascade' });
     mealStateMap.belongsTo(models.users, { foreignKey: 'updated_by', onDelete: 'cascade', onUpdate: 'cascade' });
     mealStateMap.belongsTo(models.statuses, { foreignKey: 'status_type', targetKey: 'status_type', onDelete: 'cascade', onUpdate: 'cascade' });

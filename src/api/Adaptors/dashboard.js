@@ -30,7 +30,7 @@ class DashboardAdaptor {
   retrieveDashboardResult(user, request) {
     return Promise.try(() => Promise.all([
       this.filterUpcomingService(user, request),
-      this.prepareInsightData(user, request),
+      // this.prepareInsightData(user, request),
       this.retrieveRecentSearch(user),
       this.modals.mailBox.count(
           {where: {user_id: user.id || user.ID, status_id: 4}}),
@@ -40,16 +40,16 @@ class DashboardAdaptor {
           status_type: [5, 11],
         },
       }),
-      this.productAdaptor.retrieveUsersLastProduct({
-        user_id: user.id || user.ID,
-        status_type: [5, 11],
-      }, request.language),
+      /* this.productAdaptor.retrieveUsersLastProduct({
+         user_id: user.id || user.ID,
+         status_type: [5, 11],
+       }, request.language),*/
       this.modals.user_calendar_item.count({
         where: {
           user_id: user.id || user.ID,
         },
       }),
-      this.modals.user_calendar_item.findOne({
+      /*this.modals.user_calendar_item.findOne({
         where: {
           user_id: user.id || user.ID,
         },
@@ -62,7 +62,7 @@ class DashboardAdaptor {
         order: [['updated_at', 'desc']],
       }),
       this.calendarServiceAdaptor.retrieveCalendarItemList(
-          {user_id: user.id || user.ID}, request.language, 4),
+          {user_id: user.id || user.ID}, request.language, 4),*/
       this.modals.products.count({
         where: {
           user_id: user.id || user.ID,
@@ -95,55 +95,52 @@ class DashboardAdaptor {
           user_id: user.id || user.ID,
         },
       }),
-    ])).spread(
-        (upcomingServices, insightData, recentSearches, notificationCount,
-         productCount, product, calendarItemCount, latestCalendarItem,
-         latestCalendarCalc, recent_calendar_item, service_center_products,
-         know_item_count, todoCounts, mealCounts,
-         wearableCounts, knowItemCounts) => {
-          latestCalendarItem = latestCalendarItem ?
-              latestCalendarItem.toJSON() :
-              {};
-          latestCalendarCalc = latestCalendarCalc ?
-              latestCalendarCalc.toJSON() :
-              {};
-          const calendar_item_updated_at = latestCalendarItem &&
-          moment(latestCalendarItem.updated_at, moment.ISO_8601).
-              diff(moment(latestCalendarCalc.updated_at, moment.ISO_8601),
-                  'days') < 0 ?
-              latestCalendarCalc.updated_at : latestCalendarItem ?
-                  latestCalendarItem.updated_at : moment();
-          return {
-            status: true,
-            message: 'Dashboard restore Successful',
-            notificationCount: notificationCount,
-            recentSearches: recentSearches.map((item) => {
-              const search = item.toJSON();
-              return search.searchValue;
-            }).slice(0, 5),
-            upcomingServices: this.evaluateUpcomingServices(
-                upcomingServices),
-            insight: this.evaluateDashboardInsight(insightData),
-            forceUpdate: request.pre.forceUpdate,
-            showDashboard: !!(productCount && parseInt(productCount) > 0) ||
-            !!(calendarItemCount && parseInt(calendarItemCount) > 0),
-            hasEazyDayItems: !!(todoCounts && todoCounts > 0) ||
-            !!(mealCounts && mealCounts > 0) ||
-            !!(wearableCounts && wearableCounts > 0),
-            knowItemsLiked: !!(knowItemCounts && knowItemCounts > 0),
-            total_calendar_item: calendarItemCount || 0,
-            calendar_item_updated_at,
-            recent_calendar_item,
-            recent_products: product.slice(0, 4),
-            product: product[0],
-            service_center_products,
-            know_item_count,
-            hasProducts: true,
-          };
-        }).catch(err => {
-      console.log(
-          `Error on ${new Date()} for user ${user.id ||
-          user.ID} is as follow: \n \n ${err}`);
+    ])).spread((parameters) => {
+      let {
+        upcomingServices, recentSearches, notificationCount, productCount,
+        /*product,*/ calendarItemCount, /*latestCalendarItem, latestCalendarCalc,
+        recent_calendar_item,*/ service_center_products, know_item_count, todoCounts,
+        mealCounts, wearableCounts, knowItemCounts,
+      } = parameters;
+      /*latestCalendarItem = latestCalendarItem ?
+          latestCalendarItem.toJSON() :
+          {};
+      latestCalendarCalc = latestCalendarCalc ?
+          latestCalendarCalc.toJSON() :
+          {};
+      const calendar_item_updated_at = latestCalendarItem &&
+      moment(latestCalendarItem.updated_at, moment.ISO_8601).
+          diff(moment(latestCalendarCalc.updated_at, moment.ISO_8601),
+              'days') < 0 ?
+          latestCalendarCalc.updated_at : latestCalendarItem ?
+              latestCalendarItem.updated_at : moment();*/
+      return {
+        status: true,
+        message: 'Dashboard restore Successful',
+        notificationCount: notificationCount,
+        recentSearches: recentSearches.map((item) => {
+          const search = item.toJSON();
+          return search.searchValue;
+        }).slice(0, 5),
+        upcomingServices: this.evaluateUpcomingServices(upcomingServices),
+        // insight: this.evaluateDashboardInsight(insightData),
+        forceUpdate: request.pre.forceUpdate,
+        showDashboard: !!(productCount && parseInt(productCount) > 0) ||
+        !!(calendarItemCount && parseInt(calendarItemCount) > 0),
+        hasEazyDayItems: !!(todoCounts && todoCounts > 0) ||
+        !!(mealCounts && mealCounts > 0) ||
+        !!(wearableCounts && wearableCounts > 0),
+        knowItemsLiked: !!(knowItemCounts && knowItemCounts > 0),
+        total_calendar_item: calendarItemCount || 0,
+        /*calendar_item_updated_at,
+        recent_calendar_item,*/
+        /*recent_products: product.slice(0, 4),
+        product: product[0],*/
+        service_center_products,
+        know_item_count,
+        hasProducts: true,
+      };
+    }).catch(err => {
 
       this.modals.logs.create({
         api_action: request.method,
@@ -254,7 +251,6 @@ class DashboardAdaptor {
     let {isNewUser, user, token, request} = parameters;
     console.log(isNewUser);
     if (!isNewUser) {
-      console.log('We are here', isNewUser);
       return Promise.all([
         this.modals.products.count({
           where: {

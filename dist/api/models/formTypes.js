@@ -4,8 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-exports.default = function (sequelize, DataTypes) {
-  var formTypes = sequelize.define('formTypes', {
+exports.default = (sequelize, DataTypes) => {
+  const formTypes = sequelize.define('formTypes', {
     title: {
       type: DataTypes.STRING
     },
@@ -38,7 +38,7 @@ exports.default = function (sequelize, DataTypes) {
     tableName: 'form_types'
   });
 
-  formTypes.associate = function (models) {
+  formTypes.associate = models => {
     formTypes.belongsTo(models.users, { foreignKey: 'updated_by' });
 
     formTypes.belongsTo(models.statuses, { foreignKey: 'status_type', targetKey: 'status_type' });

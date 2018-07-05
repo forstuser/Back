@@ -4,8 +4,6 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
 var _moment = require('moment');
 
 var _moment2 = _interopRequireDefault(_moment);
@@ -24,871 +22,626 @@ var _product2 = _interopRequireDefault(_product);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
 require('moment-weekday-calc');
 
-var WhatToServiceAdaptor = function () {
-  function WhatToServiceAdaptor(modals) {
-    _classCallCheck(this, WhatToServiceAdaptor);
-
+class WhatToServiceAdaptor {
+  constructor(modals) {
     this.modals = modals;
     this.productAdaptor = new _product2.default(modals);
   }
 
-  _createClass(WhatToServiceAdaptor, [{
-    key: 'retrieveAllStateData',
-    value: function retrieveAllStateData(options) {
-      return this.modals.states.findAll({
-        where: options,
-        attributes: ['id', 'state_name'],
-        order: [['id']]
-      }).then(function (result) {
-        var stateData = result.map(function (item) {
-          return item.toJSON();
-        });
-        var stateList = stateData.filter(function (stateItem) {
-          return stateItem.id === 0;
-        });
-        stateList.push.apply(stateList, _toConsumableArray(_lodash2.default.orderBy(stateData.filter(function (stateItem) {
-          return stateItem.id !== 0;
-        }), ['state_name'], ['asc'])));
-        return stateList;
-      });
-    }
-  }, {
-    key: 'retrieveStateMealItems',
-    value: function retrieveStateMealItems(options, limit, offset) {
-      var _this = this;
+  async retrieveAllStateData(options) {
+    let stateData = await this.modals.states.findAll({
+      where: options,
+      attributes: ['id', 'state_name'],
+      order: [['id']]
+    });
+    stateData = stateData.map(item => item.toJSON());
+    const stateList = stateData.filter(stateItem => stateItem.id === 0);
+    stateList.push(..._lodash2.default.orderBy(stateData.filter(stateItem => stateItem.id !== 0), ['state_name'], ['asc']));
+    return stateList;
+  }
 
-      return _bluebird2.default.try(function () {
-        return _bluebird2.default.all([_this.retrieveStateMeals({ where: { state_id: options.state_id, status_type: 1 } }), _this.retrieveUserMeals({ where: { user_id: options.user_id, status_type: 1 } })]);
-      }).spread(function (stateMeals, userMeals) {
-        var mealItemOptions = {
-          where: {
-            $or: [{
-              $and: {
-                id: stateMeals.map(function (item) {
-                  return item.meal_id;
-                }),
-                status_type: 1
-              }
-            }, {
-              $and: {
-                created_by: options.user_id,
-                status_type: [1, 11]
-              }
-            }]
-          },
-          order: [['item_type', 'asc'], ['name', 'asc']]
-        };
-        if (options.is_veg) {
-          mealItemOptions.where.is_veg = options.is_veg;
-        }
-
-        if (limit) {
-          mealItemOptions.limit = limit;
-        }
-
-        if (offset) {
-          mealItemOptions.offset = offset;
-        }
-
-        return _bluebird2.default.all([_this.retrieveAllMealItems(mealItemOptions), userMeals]);
-      }).spread(function (mealItems, userMeals) {
-        return mealItems.map(function (item) {
-          var userMeal = userMeals.find(function (userItem) {
-            return userItem.meal_id === item.id;
-          });
-          item.isSelected = !!userMeal;
-
-          return item;
-        });
-      });
-    }
-  }, {
-    key: 'retrieveUserMealItems',
-    value: function retrieveUserMealItems(options, limit, offset) {
-      var _this2 = this;
-
-      return _bluebird2.default.try(function () {
-        return _this2.retrieveUserMeals({
-          where: {
-            user_id: options.user_id,
+  async retrieveStateMealItems(options, limit, offset) {
+    const [stateMeals, userMeals] = await _bluebird2.default.all([this.retrieveStateMeals({ where: { state_id: options.state_id, status_type: 1 } }), this.retrieveUserMeals({ where: { user_id: options.user_id, status_type: 1 } })]);
+    const mealItemOptions = {
+      where: {
+        $or: [{
+          $and: {
+            id: stateMeals.map(item => item.meal_id),
             status_type: 1
-          },
-          include: {
-            model: _this2.modals.mealUserDate,
-            as: 'meal_dates',
-            required: false
           }
-        });
-      }).then(function (userMeals) {
-        var mealItemOptions = {
+        }, {
+          $and: {
+            created_by: options.user_id,
+            status_type: [1, 11]
+          }
+        }]
+      },
+      order: [['item_type', 'asc'], ['name', 'asc']]
+    };
+    if (options.is_veg) {
+      mealItemOptions.where.is_veg = options.is_veg;
+    }
+
+    if (limit) {
+      mealItemOptions.limit = limit;
+    }
+
+    if (offset) {
+      mealItemOptions.offset = offset;
+    }
+
+    const mealItems = this.retrieveAllMealItems(mealItemOptions);
+    return mealItems.map(item => {
+      const userMeal = userMeals.find(userItem => userItem.meal_id === item.id);
+      item.isSelected = !!userMeal;
+
+      return item;
+    });
+  }
+
+  async retrieveUserMealItems(options, limit, offset) {
+    const userMeals = await this.retrieveUserMeals({
+      where: {
+        user_id: options.user_id,
+        status_type: 1
+      },
+      include: {
+        model: this.modals.mealUserDate,
+        as: 'meal_dates',
+        required: false
+      }
+    });
+    const mealItemOptions = {
+      where: {
+        id: userMeals.map(item => item.meal_id),
+        $or: {
+          status_type: 1,
+          $and: {
+            created_by: options.user_id,
+            status_type: [1, 11]
+          }
+        }
+      },
+      order: [['name', 'asc']]
+    };
+    if (options.is_veg) {
+      mealItemOptions.where.is_veg = options.is_veg;
+    }
+
+    if (limit) {
+      mealItemOptions.limit = limit;
+    }
+
+    if (offset) {
+      mealItemOptions.offset = offset;
+    }
+
+    let mealItems = await this.retrieveAllMealItems(mealItemOptions);
+    mealItems = mealItems.map(item => {
+      const userMeal = userMeals.find(userItem => userItem.meal_id === item.id);
+      item.selected_times = (userMeal.meal_dates || []).filter(dateItem => (0, _moment2.default)(dateItem.selected_date, _moment2.default.ISO_8601).isSameOrBefore(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day')).length;
+      let mealDates = _lodash2.default.orderBy(userMeal.meal_dates || [], ['selected_date'], ['asc']);
+      const currentDateItem = mealDates.find(dateItem => (0, _moment2.default)(dateItem.selected_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day'));
+      const futureDateItem = mealDates.find(dateItem => (0, _moment2.default)(dateItem.selected_date, _moment2.default.ISO_8601).isAfter(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day'));
+      mealDates = _lodash2.default.orderBy(userMeal.meal_dates || [], ['selected_date'], ['desc']);
+      const lastDateItem = mealDates.find(dateItem => (0, _moment2.default)(dateItem.selected_date, _moment2.default.ISO_8601).isBefore(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day'));
+      if (currentDateItem) {
+        item.current_date = currentDateItem.selected_date;
+        item.future_date = futureDateItem ? futureDateItem.selected_date : currentDateItem.selected_date;
+        item.last_date = lastDateItem ? lastDateItem.selected_date : currentDateItem.selected_date;
+      } else if (futureDateItem) {
+        item.current_date = futureDateItem.selected_date;
+        item.future_date = futureDateItem.selected_date;
+        item.last_date = lastDateItem ? lastDateItem.selected_date : futureDateItem.selected_date;
+      } else if (lastDateItem) {
+        item.current_date = lastDateItem.selected_date;
+        item.last_date = lastDateItem.selected_date;
+      }
+
+      item.state_id = userMeal.state_id;
+
+      return item;
+    });
+    mealItems = _lodash2.default.orderBy(mealItems, ['current_date'], ['desc']);
+    const mealList = mealItems.filter(item => item.current_date && ((0, _moment2.default)(item.current_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day') || (0, _moment2.default)(item.future_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day') || (0, _moment2.default)(item.last_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day')));
+    const previousMealList = mealItems.filter(item => item.current_date && (0, _moment2.default)(item.current_date, _moment2.default.ISO_8601).isBefore(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day') || (0, _moment2.default)(item.current_date, _moment2.default.ISO_8601).isAfter(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day'));
+    const remainingMealList = mealItems.filter(item => !item.current_date);
+    mealList.push(..._lodash2.default.orderBy(previousMealList, ['current_date'], ['asc']));
+    mealList.push(...remainingMealList);
+
+    return mealList;
+  }
+
+  async retrieveAllMealItems(options) {
+    const result = await this.modals.meals.findAll(options);
+    return result.map(item => item.toJSON());
+  }
+
+  async retrieveStateMeals(options) {
+    const result = await this.modals.mealStateMap.findAll(options);
+    return result.map(item => item.toJSON());
+  }
+
+  async retrieveUserMeals(options) {
+    const result = await this.modals.mealUserMap.findAll(options);
+    return result.map(item => item.toJSON());
+  }
+
+  async addUserMealItem(options) {
+    const mealItems = await this.modals.meals.bulkCreate(options.meal_items, { returning: true });
+    await _bluebird2.default.all([...mealItems.map(mealItem => this.modals.mealStateMap.create({
+      meal_id: mealItem.id,
+      state_id: options.state_id
+    })), ...mealItems.map(mealItem => this.modals.mealUserMap.create({
+      meal_id: mealItem.id,
+      user_id: options.user_id,
+      state_id: options.state_id
+    }))]);
+    await _bluebird2.default.all([...(options.current_date ? mealItems.map(mealItem => this.updateUserMealCurrentDate({
+      meal_id: mealItem.id,
+      user_id: options.user_id,
+      current_date: options.current_date
+    })) : [])]);
+    return mealItems;
+  }
+
+  async prepareUserMealList(options) {
+    const [mealResult] = await _bluebird2.default.all([this.retrieveUserMeals({
+      where: {
+        user_id: options.user_id,
+        meal_id: [...options.selected_ids, ...options.unselected_ids]
+      }
+    }), this.modals.mealUserMap.update({
+      status_type: 2
+    }, {
+      where: {
+        user_id: options.user_id,
+        meal_id: {
+          $notIn: [...options.selected_ids]
+        }
+      }
+    })]);
+    await _bluebird2.default.all([...options.selected_ids.map(id => {
+      const meal = mealResult.find(item => item.meal_id === id);
+      if (meal) {
+        return this.modals.mealUserMap.update({
+          status_type: 1,
+          state_id: options.state_id || null
+        }, {
           where: {
-            id: userMeals.map(function (item) {
-              return item.meal_id;
-            }),
-            $or: {
-              status_type: 1,
-              $and: {
-                created_by: options.user_id,
-                status_type: [1, 11]
-              }
-            }
-          },
-          order: [['name', 'asc']]
-        };
-        if (options.is_veg) {
-          mealItemOptions.where.is_veg = options.is_veg;
-        }
-
-        if (limit) {
-          mealItemOptions.limit = limit;
-        }
-
-        if (offset) {
-          mealItemOptions.offset = offset;
-        }
-
-        return _bluebird2.default.all([_this2.retrieveAllMealItems(mealItemOptions), userMeals]);
-      }).spread(function (mealItems, userMeals) {
-        return mealItems.map(function (item) {
-          var userMeal = userMeals.find(function (userItem) {
-            return userItem.meal_id === item.id;
-          });
-          item.selected_times = (userMeal.meal_dates || []).filter(function (dateItem) {
-            return (0, _moment2.default)(dateItem.selected_date, _moment2.default.ISO_8601).isSameOrBefore(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day');
-          }).length;
-          var mealDates = _lodash2.default.orderBy(userMeal.meal_dates || [], ['selected_date'], ['asc']);
-          var currentDateItem = mealDates.find(function (dateItem) {
-            return (0, _moment2.default)(dateItem.selected_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day');
-          });
-          var futureDateItem = mealDates.find(function (dateItem) {
-            return (0, _moment2.default)(dateItem.selected_date, _moment2.default.ISO_8601).isAfter(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day');
-          });
-          mealDates = _lodash2.default.orderBy(userMeal.meal_dates || [], ['selected_date'], ['desc']);
-          var lastDateItem = mealDates.find(function (dateItem) {
-            return (0, _moment2.default)(dateItem.selected_date, _moment2.default.ISO_8601).isBefore(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day');
-          });
-          if (currentDateItem) {
-            item.current_date = currentDateItem.selected_date;
-            item.future_date = futureDateItem ? futureDateItem.selected_date : currentDateItem.selected_date;
-            item.last_date = lastDateItem ? lastDateItem.selected_date : currentDateItem.selected_date;
-          } else if (futureDateItem) {
-            item.current_date = futureDateItem.selected_date;
-            item.future_date = futureDateItem.selected_date;
-            item.last_date = lastDateItem ? lastDateItem.selected_date : futureDateItem.selected_date;
-          } else if (lastDateItem) {
-            item.current_date = lastDateItem.selected_date;
-            item.last_date = lastDateItem.selected_date;
+            id: meal.id
           }
+        });
+      }
 
-          item.state_id = userMeal.state_id;
-
-          return item;
-        });
-      }).then(function (result) {
-        var mealItemList = _lodash2.default.orderBy(result, ['current_date'], ['desc']);
-        var mealList = mealItemList.filter(function (item) {
-          return item.current_date && ((0, _moment2.default)(item.current_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day') || (0, _moment2.default)(item.future_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day') || (0, _moment2.default)(item.last_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day'));
-        });
-        var previousMealList = mealItemList.filter(function (item) {
-          return item.current_date && (0, _moment2.default)(item.current_date, _moment2.default.ISO_8601).isBefore(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day') || (0, _moment2.default)(item.current_date, _moment2.default.ISO_8601).isAfter(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day');
-        });
-        var remainingMealList = mealItemList.filter(function (item) {
-          return !item.current_date;
-        });
-        mealList.push.apply(mealList, _toConsumableArray(_lodash2.default.orderBy(previousMealList, ['current_date'], ['asc'])));
-        mealList.push.apply(mealList, _toConsumableArray(remainingMealList));
-
-        return mealList;
+      return this.modals.mealUserMap.create({
+        user_id: options.user_id,
+        meal_id: id,
+        status_type: 1,
+        state_id: options.state_id || null
       });
-    }
-  }, {
-    key: 'retrieveAllMealItems',
-    value: function retrieveAllMealItems(options) {
-      return this.modals.meals.findAll(options).then(function (result) {
-        return result.map(function (item) {
-          return item.toJSON();
-        });
-      });
-    }
-  }, {
-    key: 'retrieveStateMeals',
-    value: function retrieveStateMeals(options) {
-      return this.modals.mealStateMap.findAll(options).then(function (result) {
-        return result.map(function (item) {
-          return item.toJSON();
-        });
-      });
-    }
-  }, {
-    key: 'retrieveUserMeals',
-    value: function retrieveUserMeals(options) {
-      return this.modals.mealUserMap.findAll(options).then(function (result) {
-        return result.map(function (item) {
-          return item.toJSON();
-        });
-      });
-    }
-  }, {
-    key: 'addUserMealItem',
-    value: function addUserMealItem(options) {
-      var _this3 = this;
-
-      return _bluebird2.default.try(function () {
-        return _this3.modals.meals.bulkCreate(options.meal_items, { returning: true });
-      }).then(function (mealResult) {
-        console.log(JSON.stringify({ mealResult: mealResult }));
-        var mealItems = mealResult;
-        return _bluebird2.default.all([mealItems].concat(_toConsumableArray(mealItems.map(function (mealItem) {
-          return _this3.modals.mealStateMap.create({
-            meal_id: mealItem.id,
-            state_id: options.state_id
-          });
-        })), _toConsumableArray(mealItems.map(function (mealItem) {
-          return _this3.modals.mealUserMap.create({
-            meal_id: mealItem.id,
-            user_id: options.user_id,
-            state_id: options.state_id
-          });
-        }))));
-      }).spread(function (mealItems) {
-        return _bluebird2.default.all([mealItems].concat(_toConsumableArray(options.current_date ? mealItems.map(function (mealItem) {
-          return _this3.updateUserMealCurrentDate({
-            meal_id: mealItem.id,
-            user_id: options.user_id,
-            current_date: options.current_date
-          });
-        }) : [])));
-      }).spread(function (mealItems) {
-        return mealItems;
-      });
-    }
-  }, {
-    key: 'prepareUserMealList',
-    value: function prepareUserMealList(options) {
-      var _this4 = this;
-
-      return _bluebird2.default.try(function () {
-        return _bluebird2.default.all([_this4.retrieveUserMeals({
+    }), ...options.unselected_ids.map(id => {
+      const meal = mealResult.find(item => item.meal_id === id);
+      if (meal) {
+        return this.modals.mealUserMap.update({
+          status_type: 2,
+          state_id: options.state_id || null
+        }, {
           where: {
-            user_id: options.user_id,
-            meal_id: [].concat(_toConsumableArray(options.selected_ids), _toConsumableArray(options.unselected_ids))
+            id: meal.id
           }
-        }), _this4.modals.mealUserMap.update({
+        });
+      }
+
+      return this.modals.mealUserMap.create({
+        user_id: options.user_id,
+        meal_id: id,
+        status_type: 2,
+        state_id: options.state_id || null
+      });
+    })]);
+    return await this.retrieveUserMealItems({
+      user_id: options.user_id
+    });
+  }
+
+  async updateUserMealCurrentDate(options) {
+    const mealResult = await this.modals.mealUserMap.findOne({
+      where: {
+        user_id: options.user_id,
+        meal_id: options.meal_id
+      }
+    });
+    const meal = mealResult.toJSON();
+    await this.modals.mealUserDate.findCreateFind({
+      where: {
+        selected_date: options.current_date,
+        user_meal_id: meal.id
+      }
+    });
+    return await this.retrieveUserMealItems({
+      user_id: options.user_id
+    });
+  }
+
+  async deleteUserMealCurrentDate(options) {
+    const mealResult = await this.modals.mealUserMap.findOne({
+      where: {
+        user_id: options.user_id,
+        meal_id: options.meal_id
+      }
+    });
+    const meal = mealResult.toJSON();
+    await this.modals.mealUserDate.destroy({
+      where: {
+        selected_date: options.current_date,
+        user_meal_id: meal.id
+      }
+    });
+
+    return await this.retrieveUserMealItems({
+      user_id: options.user_id
+    });
+  }
+
+  async removeMeals(options) {
+    return await this.modals.meals.destroy(options);
+  }
+
+  async addWearable(options) {
+    const result = await this.modals.wearables.create({
+      name: options.item_name,
+      created_by: options.user_id,
+      updated_by: options.user_id
+    });
+    await _bluebird2.default.all([options.current_date ? this.updateWearableCurrentDate({
+      user_id: options.user_id,
+      id: result.id,
+      current_date: options.current_date
+    }) : '']);
+    return result;
+  }
+
+  async updateWearableCurrentDate(options) {
+    let wearableItem = await this.modals.wearables.findOne({
+      where: {
+        created_by: options.user_id,
+        id: options.id
+      }
+    });
+    wearableItem = wearableItem.toJSON();
+    await this.modals.wearableDate.findCreateFind({
+      where: {
+        selected_date: options.current_date,
+        wearable_id: wearableItem.id
+      }
+    });
+
+    return await this.retrieveWearables({
+      user_id: options.user_id
+    });
+  }
+
+  async retrieveWearables(options) {
+    let results = await this.modals.wearables.findAll({
+      where: {
+        created_by: options.user_id,
+        image_code: {
+          $ne: null
+        }
+      },
+      include: {
+        model: this.modals.wearableDate,
+        as: 'wearable_dates',
+        required: false
+      },
+      order: [['name', 'asc']]
+    });
+    results = results.map(item => {
+      item = item.toJSON();
+      item.image_link = `/wearable/${item.id}/images/${item.image_code}`;
+      let wearableDates = _lodash2.default.orderBy(item.wearable_dates || [], ['selected_date'], ['asc']);
+
+      item.selected_times = (item.wearable_dates || []).filter(dateItem => (0, _moment2.default)(dateItem.selected_date, _moment2.default.ISO_8601).isSameOrBefore(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day')).length;
+      const currentDateItem = wearableDates.find(dateItem => (0, _moment2.default)(dateItem.selected_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day'));
+      const futureDateItem = wearableDates.find(dateItem => (0, _moment2.default)(dateItem.selected_date, _moment2.default.ISO_8601).isAfter(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day'));
+      wearableDates = _lodash2.default.orderBy(item.wearable_dates || [], ['selected_date'], ['desc']);
+      const lastDateItem = wearableDates.find(dateItem => (0, _moment2.default)(dateItem.selected_date, _moment2.default.ISO_8601).isBefore(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day'));
+      if (currentDateItem) {
+        item.current_date = currentDateItem.selected_date;
+        item.future_date = futureDateItem ? futureDateItem.selected_date : currentDateItem.selected_date;
+        item.last_date = lastDateItem ? lastDateItem.selected_date : currentDateItem.selected_date;
+      } else if (futureDateItem) {
+        item.current_date = futureDateItem.selected_date;
+        item.future_date = futureDateItem.selected_date;
+        item.last_date = lastDateItem ? lastDateItem.selected_date : futureDateItem.selected_date;
+      } else if (lastDateItem) {
+        item.current_date = lastDateItem.selected_date;
+        item.last_date = lastDateItem.selected_date;
+      }
+
+      return item;
+    });
+
+    const wearableItems = _lodash2.default.orderBy(results, ['current_date'], ['desc']);
+    const wearableList = wearableItems.filter(item => item.current_date && ((0, _moment2.default)(item.current_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day') || (0, _moment2.default)(item.future_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day') || (0, _moment2.default)(item.last_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day')));
+    const previousWearableList = wearableItems.filter(item => item.current_date && (0, _moment2.default)(item.current_date, _moment2.default.ISO_8601).isBefore(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day') || (0, _moment2.default)(item.current_date, _moment2.default.ISO_8601).isAfter(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day'));
+    const remainingWearableList = wearableItems.filter(item => !item.current_date);
+    wearableList.push(..._lodash2.default.orderBy(previousWearableList, ['current_date'], ['asc']));
+    wearableList.push(...remainingWearableList);
+
+    return wearableList;
+  }
+
+  async updateWearable(options) {
+    return await this.modals.wearables.update({
+      name: options.item_name,
+      updated_by: options.user_id
+    }, {
+      where: {
+        id: options.id
+      }
+    });
+  }
+
+  async deleteWearable(options) {
+    return await this.modals.wearables.destroy({
+      where: {
+        id: options.id,
+        created_by: options.user_id,
+        updated_by: options.user_id
+      }
+    });
+  }
+
+  async removeWearableCurrentDate(options) {
+    let wearable = await this.modals.wearables.findOne({
+      where: {
+        created_by: options.user_id,
+        id: options.id
+      }
+    });
+    wearable = wearable.toJSON();
+    await this.modals.wearableDate.destroy({
+      where: {
+        selected_date: options.current_date,
+        wearable_id: wearable.id
+      }
+    });
+    return await this.retrieveWearables({
+      user_id: options.user_id
+    });
+  }
+
+  async retrieveToDoList(options, limit, offset) {
+    const todoItemOptions = {
+      where: {
+        $or: {
+          status_type: 1,
+          $and: {
+            created_by: options.user_id,
+            status_type: [1, 11]
+          }
+        }
+      },
+      order: [['item_type', 'asc'], ['name', 'asc']]
+    };
+
+    if (limit) {
+      todoItemOptions.limit = limit;
+    }
+
+    if (offset) {
+      todoItemOptions.offset = offset;
+    }
+
+    const [todoItems, userTodoList] = await _bluebird2.default.all([this.retrieveAllTodoListItems(todoItemOptions), this.retrieveUserTodoItems({
+      where: {
+        user_id: options.user_id,
+        status_type: 1
+      }
+    })]);
+    return todoItems.map(item => {
+      const userTodo = userTodoList.find(userItem => userItem.todo_id === item.id);
+      item.isSelected = !!userTodo;
+
+      return item;
+    });
+  }
+
+  async deleteUserTodoCurrentDate(options) {
+    let todo = await this.modals.todoUserMap.findOne({
+      where: {
+        user_id: options.user_id,
+        todo_id: options.todo_id
+      }
+    });
+
+    todo = todo.toJSON();
+    await this.modals.todoUserDate.destroy({
+      where: {
+        selected_date: options.current_date,
+        user_todo_id: todo.id
+      }
+    });
+    return await this.retrieveUserToDoList({
+      user_id: options.user_id
+    });
+  }
+
+  async retrieveUserToDoList(options, limit, offset) {
+    const userTodos = await this.retrieveUserTodoItems({
+      where: {
+        user_id: options.user_id,
+        status_type: 1
+      },
+      include: {
+        model: this.modals.todoUserDate,
+        as: 'todo_dates',
+        required: false
+      }
+    });
+    const todoItemOptions = {
+      where: {
+        id: userTodos.map(item => item.todo_id),
+        $or: {
+          status_type: 1,
+          $and: {
+            created_by: options.user_id,
+            status_type: [1, 11]
+          }
+        }
+      },
+      order: [['name', 'asc']]
+    };
+
+    if (limit) {
+      todoItemOptions.limit = limit;
+    }
+
+    if (offset) {
+      todoItemOptions.offset = offset;
+    }
+
+    let todoItems = await this.retrieveAllTodoListItems(todoItemOptions);
+    todoItems = todoItems.map(item => {
+      const userTodo = userTodos.find(userItem => userItem.todo_id === item.id);
+      item.selected_times = (userTodo.todo_dates || []).filter(dateItem => (0, _moment2.default)(dateItem.selected_date, _moment2.default.ISO_8601).isSameOrBefore(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day')).length;
+      let todoDates = _lodash2.default.orderBy(userTodo.todo_dates || [], ['selected_date'], ['asc']);
+      const currentDateItem = todoDates.find(dateItem => (0, _moment2.default)(dateItem.selected_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day'));
+      const futureDateItem = todoDates.find(dateItem => (0, _moment2.default)(dateItem.selected_date, _moment2.default.ISO_8601).isAfter(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day'));
+      todoDates = _lodash2.default.orderBy(userTodo.todo_dates || [], ['selected_date'], ['desc']);
+      const lastDateItem = todoDates.find(dateItem => (0, _moment2.default)(dateItem.selected_date, _moment2.default.ISO_8601).isBefore(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day'));
+      if (currentDateItem) {
+        item.current_date = currentDateItem.selected_date;
+        item.future_date = futureDateItem ? futureDateItem.selected_date : currentDateItem.selected_date;
+        item.last_date = lastDateItem ? lastDateItem.selected_date : currentDateItem.selected_date;
+      } else if (futureDateItem) {
+        item.current_date = futureDateItem.selected_date;
+        item.future_date = futureDateItem.selected_date;
+        item.last_date = lastDateItem ? lastDateItem.selected_date : futureDateItem.selected_date;
+      } else if (lastDateItem) {
+        item.current_date = lastDateItem.selected_date;
+        item.last_date = lastDateItem.selected_date;
+      }
+
+      return item;
+    });
+    todoItems = _lodash2.default.orderBy(todoItems, ['current_date'], ['desc']);
+    const todoList = todoItems.filter(item => item.current_date && ((0, _moment2.default)(item.current_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day') || (0, _moment2.default)(item.future_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day') || (0, _moment2.default)(item.last_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day')));
+    const previousTodoList = todoItems.filter(item => item.current_date && (0, _moment2.default)(item.current_date, _moment2.default.ISO_8601).isBefore(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day') || (0, _moment2.default)(item.current_date, _moment2.default.ISO_8601).isAfter(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day'));
+    const remainingTodoList = todoItems.filter(item => !item.current_date);
+    todoList.push(..._lodash2.default.orderBy(previousTodoList, ['current_date'], ['asc']));
+    todoList.push(...remainingTodoList);
+
+    return todoList;
+  }
+
+  async deleteWhatTodo(options) {
+    return await this.modals.todo.destroy(options);
+  }
+
+  async prepareUserToDoList(options) {
+    const [userTodo] = await _bluebird2.default.all([this.retrieveUserTodoItems({
+      where: {
+        user_id: options.user_id,
+        todo_id: [...options.selected_ids, ...options.unselected_ids]
+      }
+    }), this.modals.todoUserMap.update({
+      status_type: 2
+    }, {
+      where: {
+        user_id: options.user_id,
+        todo_id: {
+          $notIn: [...options.selected_ids, ...options.unselected_ids]
+        }
+      }
+    })]);
+    await _bluebird2.default.all([...options.selected_ids.map(id => {
+      const todoItem = userTodo.find(item => item.todo_id === id);
+      if (todoItem) {
+        return this.modals.todoUserMap.update({
+          status_type: 1
+        }, {
+          where: {
+            id: todoItem.id
+          }
+        });
+      }
+
+      return this.modals.todoUserMap.create({
+        user_id: options.user_id,
+        todo_id: id,
+        status_type: 1
+      });
+    }), ...options.unselected_ids.map(id => {
+      const todoItem = userTodo.find(item => item.todo_id === id);
+      if (todoItem) {
+        return this.modals.todoUserMap.update({
           status_type: 2
         }, {
           where: {
-            user_id: options.user_id,
-            meal_id: {
-              $notIn: [].concat(_toConsumableArray(options.selected_ids))
-            }
+            id: todoItem.id
           }
-        })]);
-      }).spread(function (mealResult) {
-        return _bluebird2.default.all([].concat(_toConsumableArray(options.selected_ids.map(function (id) {
-          var meal = mealResult.find(function (item) {
-            return item.meal_id === id;
-          });
-          if (meal) {
-            return _this4.modals.mealUserMap.update({
-              status_type: 1,
-              state_id: options.state_id || null
-            }, {
-              where: {
-                id: meal.id
-              }
-            });
-          }
-
-          return _this4.modals.mealUserMap.create({
-            user_id: options.user_id,
-            meal_id: id,
-            status_type: 1,
-            state_id: options.state_id || null
-          });
-        })), _toConsumableArray(options.unselected_ids.map(function (id) {
-          var meal = mealResult.find(function (item) {
-            return item.meal_id === id;
-          });
-          if (meal) {
-            return _this4.modals.mealUserMap.update({
-              status_type: 2,
-              state_id: options.state_id || null
-            }, {
-              where: {
-                id: meal.id
-              }
-            });
-          }
-
-          return _this4.modals.mealUserMap.create({
-            user_id: options.user_id,
-            meal_id: id,
-            status_type: 2,
-            state_id: options.state_id || null
-          });
-        }))));
-      }).then(function () {
-        return _this4.retrieveUserMealItems({
-          user_id: options.user_id
         });
+      }
+
+      return this.modals.todoUserMap.create({
+        user_id: options.user_id,
+        todo_id: id,
+        status_type: 2
       });
+    })]);
+    return await this.retrieveUserToDoList({
+      user_id: options.user_id
+    });
+  }
+
+  async updateToDoItem(options) {
+    let todoUser = this.modals.todoUserMap.findOne({
+      where: {
+        user_id: options.user_id,
+        todo_id: options.todo_id
+      }
+    });
+    todoUser = todoUser.toJSON();
+    await this.modals.todoUserDate.findCreateFind({
+      where: {
+        selected_date: options.current_date,
+        user_todo_id: todoUser.id
+      }
+    });
+    return await this.retrieveUserToDoList({
+      user_id: options.user_id
+    });
+  }
+
+  async addUserToDoList(options) {
+    let userTodo = await this.modals.todo.bulkCreate(options.todo_items, { returning: true });
+    await _bluebird2.default.all(userTodo.map(todoItem => this.modals.todoUserMap.create({
+      todo_id: todoItem.id,
+      user_id: options.user_id
+    })));
+    if (options.current_date) {
+      await _bluebird2.default.all(userTodo.map(todoItem => this.updateToDoItem({
+        current_date: options.current_date,
+        todo_id: todoItem.id,
+        user_id: options.user_id
+      })));
     }
-  }, {
-    key: 'updateUserMealCurrentDate',
-    value: function updateUserMealCurrentDate(options) {
-      var _this5 = this;
+    return userTodo;
+  }
 
-      return _bluebird2.default.try(function () {
-        return _this5.modals.mealUserMap.findOne({
-          where: {
-            user_id: options.user_id,
-            meal_id: options.meal_id
-          }
-        });
-      }).then(function (mealResult) {
-        var meal = mealResult.toJSON();
-        return _this5.modals.mealUserDate.findCreateFind({
-          where: {
-            selected_date: options.current_date,
-            user_meal_id: meal.id
-          }
-        });
-      }).then(function () {
-        return _this5.retrieveUserMealItems({
-          user_id: options.user_id
-        });
-      });
-    }
-  }, {
-    key: 'deleteUserMealCurrentDate',
-    value: function deleteUserMealCurrentDate(options) {
-      var _this6 = this;
+  async retrieveAllTodoListItems(options) {
+    const result = await this.modals.todo.findAll(options);
+    return result.map(item => item.toJSON());
+  }
 
-      return _bluebird2.default.try(function () {
-        return _this6.modals.mealUserMap.findOne({
-          where: {
-            user_id: options.user_id,
-            meal_id: options.meal_id
-          }
-        });
-      }).then(function (mealResult) {
-        var meal = mealResult.toJSON();
-        return _this6.modals.mealUserDate.destroy({
-          where: {
-            selected_date: options.current_date,
-            user_meal_id: meal.id
-          }
-        });
-      }).then(function () {
-        return _this6.retrieveUserMealItems({
-          user_id: options.user_id
-        });
-      });
-    }
-  }, {
-    key: 'removeMeals',
-    value: function removeMeals(options) {
-      var _this7 = this;
-
-      return _bluebird2.default.try(function () {
-        return _this7.modals.meals.destroy(options);
-      });
-    }
-  }, {
-    key: 'addWearable',
-    value: function addWearable(options) {
-      var _this8 = this;
-
-      return _bluebird2.default.try(function () {
-        return _this8.modals.wearables.create({
-          name: options.item_name,
-          created_by: options.user_id,
-          updated_by: options.user_id
-        });
-      }).then(function (result) {
-        return _bluebird2.default.all([result, options.current_date ? _this8.updateWearableCurrentDate({
-          user_id: options.user_id,
-          id: result.id,
-          current_date: options.current_date
-        }) : '']);
-      }).spread(function (result) {
-        return result;
-      });
-    }
-  }, {
-    key: 'updateWearableCurrentDate',
-    value: function updateWearableCurrentDate(options) {
-      var _this9 = this;
-
-      return _bluebird2.default.try(function () {
-        return _this9.modals.wearables.findOne({
-          where: {
-            created_by: options.user_id,
-            id: options.id
-          }
-        });
-      }).then(function (wearableItems) {
-        var wearable = wearableItems.toJSON();
-        return _this9.modals.wearableDate.findCreateFind({
-          where: {
-            selected_date: options.current_date,
-            wearable_id: wearable.id
-          }
-        });
-      }).then(function () {
-        return _this9.retrieveWearables({
-          user_id: options.user_id
-        });
-      });
-    }
-  }, {
-    key: 'retrieveWearables',
-    value: function retrieveWearables(options) {
-      var _this10 = this;
-
-      return _bluebird2.default.try(function () {
-        return _this10.modals.wearables.findAll({
-          where: {
-            created_by: options.user_id,
-            image_code: {
-              $ne: null
-            }
-          },
-          include: {
-            model: _this10.modals.wearableDate,
-            as: 'wearable_dates',
-            required: false
-          },
-          order: [['name', 'asc']]
-        });
-      }).then(function (results) {
-        return results.map(function (item) {
-          item = item.toJSON();
-          item.image_link = '/wearable/' + item.id + '/images/' + item.image_code;
-          var wearableDates = _lodash2.default.orderBy(item.wearable_dates || [], ['selected_date'], ['asc']);
-
-          item.selected_times = (item.wearable_dates || []).filter(function (dateItem) {
-            return (0, _moment2.default)(dateItem.selected_date, _moment2.default.ISO_8601).isSameOrBefore(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day');
-          }).length;
-          var currentDateItem = wearableDates.find(function (dateItem) {
-            return (0, _moment2.default)(dateItem.selected_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day');
-          });
-          var futureDateItem = wearableDates.find(function (dateItem) {
-            return (0, _moment2.default)(dateItem.selected_date, _moment2.default.ISO_8601).isAfter(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day');
-          });
-          wearableDates = _lodash2.default.orderBy(item.wearable_dates || [], ['selected_date'], ['desc']);
-          var lastDateItem = wearableDates.find(function (dateItem) {
-            return (0, _moment2.default)(dateItem.selected_date, _moment2.default.ISO_8601).isBefore(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day');
-          });
-          if (currentDateItem) {
-            item.current_date = currentDateItem.selected_date;
-            item.future_date = futureDateItem ? futureDateItem.selected_date : currentDateItem.selected_date;
-            item.last_date = lastDateItem ? lastDateItem.selected_date : currentDateItem.selected_date;
-          } else if (futureDateItem) {
-            item.current_date = futureDateItem.selected_date;
-            item.future_date = futureDateItem.selected_date;
-            item.last_date = lastDateItem ? lastDateItem.selected_date : futureDateItem.selected_date;
-          } else if (lastDateItem) {
-            item.current_date = lastDateItem.selected_date;
-            item.last_date = lastDateItem.selected_date;
-          }
-
-          return item;
-        });
-      }).then(function (result) {
-        var wearableItems = _lodash2.default.orderBy(result, ['current_date'], ['desc']);
-        var wearableList = wearableItems.filter(function (item) {
-          return item.current_date && ((0, _moment2.default)(item.current_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day') || (0, _moment2.default)(item.future_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day') || (0, _moment2.default)(item.last_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day'));
-        });
-        var previousWearableList = wearableItems.filter(function (item) {
-          return item.current_date && (0, _moment2.default)(item.current_date, _moment2.default.ISO_8601).isBefore(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day') || (0, _moment2.default)(item.current_date, _moment2.default.ISO_8601).isAfter(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day');
-        });
-        var remainingWearableList = wearableItems.filter(function (item) {
-          return !item.current_date;
-        });
-        wearableList.push.apply(wearableList, _toConsumableArray(_lodash2.default.orderBy(previousWearableList, ['current_date'], ['asc'])));
-        wearableList.push.apply(wearableList, _toConsumableArray(remainingWearableList));
-
-        return wearableList;
-      });
-    }
-  }, {
-    key: 'updateWearable',
-    value: function updateWearable(options) {
-      var _this11 = this;
-
-      return _bluebird2.default.try(function () {
-        return _this11.modals.wearables.update({
-          name: options.item_name,
-          updated_by: options.user_id
-        }, {
-          where: {
-            id: options.id
-          }
-        });
-      });
-    }
-  }, {
-    key: 'deleteWearable',
-    value: function deleteWearable(options) {
-      var _this12 = this;
-
-      return _bluebird2.default.try(function () {
-        return _this12.modals.wearables.destroy({
-          where: {
-            id: options.id,
-            created_by: options.user_id,
-            updated_by: options.user_id
-          }
-        });
-      });
-    }
-  }, {
-    key: 'removeWearableCurrentDate',
-    value: function removeWearableCurrentDate(options) {
-      var _this13 = this;
-
-      return _bluebird2.default.try(function () {
-        return _this13.modals.wearables.findOne({
-          where: {
-            created_by: options.user_id,
-            id: options.id
-          }
-        });
-      }).then(function (wearabbleItem) {
-        var wearable = wearabbleItem.toJSON();
-        return _this13.modals.wearableDate.destroy({
-          where: {
-            selected_date: options.current_date,
-            wearable_id: wearable.id
-          }
-        });
-      }).then(function () {
-        return _this13.retrieveWearables({
-          user_id: options.user_id
-        });
-      });
-    }
-  }, {
-    key: 'retrieveToDoList',
-    value: function retrieveToDoList(options, limit, offset) {
-      var _this14 = this;
-
-      return _bluebird2.default.try(function () {
-        var todoItemOptions = {
-          where: {
-            $or: {
-              status_type: 1,
-              $and: {
-                created_by: options.user_id,
-                status_type: [1, 11]
-              }
-            }
-          },
-          order: [['item_type', 'asc'], ['name', 'asc']]
-        };
-
-        if (limit) {
-          todoItemOptions.limit = limit;
-        }
-
-        if (offset) {
-          todoItemOptions.offset = offset;
-        }
-
-        return _bluebird2.default.all([_this14.retrieveAllTodoListItems(todoItemOptions), _this14.retrieveUserTodoItems({
-          where: {
-            user_id: options.user_id,
-            status_type: 1
-          }
-        })]);
-      }).spread(function (todoItems, userTodoList) {
-        return todoItems.map(function (item) {
-          var userTodo = userTodoList.find(function (userItem) {
-            return userItem.todo_id === item.id;
-          });
-          item.isSelected = !!userTodo;
-
-          return item;
-        });
-      });
-    }
-  }, {
-    key: 'deleteUserTodoCurrentDate',
-    value: function deleteUserTodoCurrentDate(options) {
-      var _this15 = this;
-
-      return _bluebird2.default.try(function () {
-        return _this15.modals.todoUserMap.findOne({
-          where: {
-            user_id: options.user_id,
-            todo_id: options.todo_id
-          }
-        });
-      }).then(function (todoResult) {
-        var todo = todoResult.toJSON();
-        return _this15.modals.todoUserDate.destroy({
-          where: {
-            selected_date: options.current_date,
-            user_todo_id: todo.id
-          }
-        });
-      }).then(function () {
-        return _this15.retrieveUserToDoList({
-          user_id: options.user_id
-        });
-      });
-    }
-  }, {
-    key: 'retrieveUserToDoList',
-    value: function retrieveUserToDoList(options, limit, offset) {
-      var _this16 = this;
-
-      return _bluebird2.default.try(function () {
-        return _this16.retrieveUserTodoItems({
-          where: {
-            user_id: options.user_id,
-            status_type: 1
-          },
-          include: {
-            model: _this16.modals.todoUserDate,
-            as: 'todo_dates',
-            required: false
-          }
-        });
-      }).then(function (userTodos) {
-        var todoItemOptions = {
-          where: {
-            id: userTodos.map(function (item) {
-              return item.todo_id;
-            }),
-            $or: {
-              status_type: 1,
-              $and: {
-                created_by: options.user_id,
-                status_type: [1, 11]
-              }
-            }
-          },
-          order: [['name', 'asc']]
-        };
-
-        if (limit) {
-          todoItemOptions.limit = limit;
-        }
-
-        if (offset) {
-          todoItemOptions.offset = offset;
-        }
-
-        return _bluebird2.default.all([_this16.retrieveAllTodoListItems(todoItemOptions), userTodos]);
-      }).spread(function (todoItems, userTodos) {
-        return todoItems.map(function (item) {
-          var userTodo = userTodos.find(function (userItem) {
-            return userItem.todo_id === item.id;
-          });
-          item.selected_times = (userTodo.todo_dates || []).filter(function (dateItem) {
-            return (0, _moment2.default)(dateItem.selected_date, _moment2.default.ISO_8601).isSameOrBefore(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day');
-          }).length;
-          var todoDates = _lodash2.default.orderBy(userTodo.todo_dates || [], ['selected_date'], ['asc']);
-          var currentDateItem = todoDates.find(function (dateItem) {
-            return (0, _moment2.default)(dateItem.selected_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day');
-          });
-          var futureDateItem = todoDates.find(function (dateItem) {
-            return (0, _moment2.default)(dateItem.selected_date, _moment2.default.ISO_8601).isAfter(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day');
-          });
-          todoDates = _lodash2.default.orderBy(userTodo.todo_dates || [], ['selected_date'], ['desc']);
-          var lastDateItem = todoDates.find(function (dateItem) {
-            return (0, _moment2.default)(dateItem.selected_date, _moment2.default.ISO_8601).isBefore(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day');
-          });
-          if (currentDateItem) {
-            item.current_date = currentDateItem.selected_date;
-            item.future_date = futureDateItem ? futureDateItem.selected_date : currentDateItem.selected_date;
-            item.last_date = lastDateItem ? lastDateItem.selected_date : currentDateItem.selected_date;
-          } else if (futureDateItem) {
-            item.current_date = futureDateItem.selected_date;
-            item.future_date = futureDateItem.selected_date;
-            item.last_date = lastDateItem ? lastDateItem.selected_date : futureDateItem.selected_date;
-          } else if (lastDateItem) {
-            item.current_date = lastDateItem.selected_date;
-            item.last_date = lastDateItem.selected_date;
-          }
-
-          return item;
-        });
-      }).then(function (result) {
-        var todoItemList = _lodash2.default.orderBy(result, ['current_date'], ['desc']);
-        var todoList = todoItemList.filter(function (item) {
-          return item.current_date && ((0, _moment2.default)(item.current_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day') || (0, _moment2.default)(item.future_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day') || (0, _moment2.default)(item.last_date, _moment2.default.ISO_8601).isSame(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day'));
-        });
-        var previousTodoList = todoItemList.filter(function (item) {
-          return item.current_date && (0, _moment2.default)(item.current_date, _moment2.default.ISO_8601).isBefore(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day') || (0, _moment2.default)(item.current_date, _moment2.default.ISO_8601).isAfter(options.current_date ? (0, _moment2.default)(options.current_date, _moment2.default.ISO_8601) : (0, _moment2.default)(), 'day');
-        });
-        var remainingTodoList = todoItemList.filter(function (item) {
-          return !item.current_date;
-        });
-        todoList.push.apply(todoList, _toConsumableArray(_lodash2.default.orderBy(previousTodoList, ['current_date'], ['asc'])));
-        todoList.push.apply(todoList, _toConsumableArray(remainingTodoList));
-
-        return todoList;
-      });
-    }
-  }, {
-    key: 'deleteWhatTodo',
-    value: function deleteWhatTodo(options) {
-      var _this17 = this;
-
-      return _bluebird2.default.try(function () {
-        return _this17.modals.todo.destroy(options);
-      });
-    }
-  }, {
-    key: 'prepareUserToDoList',
-    value: function prepareUserToDoList(options) {
-      var _this18 = this;
-
-      return _bluebird2.default.try(function () {
-        return _bluebird2.default.all([_this18.retrieveUserTodoItems({
-          where: {
-            user_id: options.user_id,
-            todo_id: [].concat(_toConsumableArray(options.selected_ids), _toConsumableArray(options.unselected_ids))
-          }
-        }), _this18.modals.todoUserMap.update({
-          status_type: 2
-        }, {
-          where: {
-            user_id: options.user_id,
-            todo_id: {
-              $notIn: [].concat(_toConsumableArray(options.selected_ids), _toConsumableArray(options.unselected_ids))
-            }
-          }
-        })]);
-      }).spread(function (userTodo) {
-        return _bluebird2.default.all([].concat(_toConsumableArray(options.selected_ids.map(function (id) {
-          var todoItem = userTodo.find(function (item) {
-            return item.todo_id === id;
-          });
-          if (todoItem) {
-            return _this18.modals.todoUserMap.update({
-              status_type: 1
-            }, {
-              where: {
-                id: todoItem.id
-              }
-            });
-          }
-
-          return _this18.modals.todoUserMap.create({
-            user_id: options.user_id,
-            todo_id: id,
-            status_type: 1
-          });
-        })), _toConsumableArray(options.unselected_ids.map(function (id) {
-          var todoItem = userTodo.find(function (item) {
-            return item.todo_id === id;
-          });
-          if (todoItem) {
-            return _this18.modals.todoUserMap.update({
-              status_type: 2
-            }, {
-              where: {
-                id: todoItem.id
-              }
-            });
-          }
-
-          return _this18.modals.todoUserMap.create({
-            user_id: options.user_id,
-            todo_id: id,
-            status_type: 2
-          });
-        }))));
-      }).then(function () {
-        return _this18.retrieveUserToDoList({
-          user_id: options.user_id
-        });
-      });
-    }
-  }, {
-    key: 'updateToDoItem',
-    value: function updateToDoItem(options) {
-      var _this19 = this;
-
-      return _bluebird2.default.try(function () {
-        return _this19.modals.todoUserMap.findOne({
-          where: {
-            user_id: options.user_id,
-            todo_id: options.todo_id
-          }
-        });
-      }).then(function (todoResult) {
-        var todoUser = todoResult.toJSON();
-        return _this19.modals.todoUserDate.findCreateFind({
-          where: {
-            selected_date: options.current_date,
-            user_todo_id: todoUser.id
-          }
-        });
-      }).then(function () {
-        return _this19.retrieveUserToDoList({
-          user_id: options.user_id
-        });
-      });
-    }
-  }, {
-    key: 'addUserToDoList',
-    value: function addUserToDoList(options) {
-      var _this20 = this;
-
-      return _bluebird2.default.try(function () {
-        return _this20.modals.todo.bulkCreate(options.todo_items, { returning: true });
-      }).then(function (todoList) {
-        var userTodo = todoList;
-        return _bluebird2.default.all([userTodo].concat(_toConsumableArray(userTodo.map(function (todoItem) {
-          return _this20.modals.todoUserMap.create({
-            todo_id: todoItem.id,
-            user_id: options.user_id
-          });
-        }))));
-      }).spread(function (userTodo) {
-        return _bluebird2.default.all([userTodo].concat(_toConsumableArray(options.current_date ? userTodo.map(function (todoItem) {
-          return _this20.updateToDoItem({
-            current_date: options.current_date,
-            todo_id: todoItem.id,
-            user_id: options.user_id
-          });
-        }) : [])));
-      }).spread(function (userTodo) {
-        return userTodo;
-      });
-    }
-  }, {
-    key: 'retrieveAllTodoListItems',
-    value: function retrieveAllTodoListItems(options) {
-      return this.modals.todo.findAll(options).then(function (result) {
-        return result.map(function (item) {
-          return item.toJSON();
-        });
-      });
-    }
-  }, {
-    key: 'retrieveUserTodoItems',
-    value: function retrieveUserTodoItems(options) {
-      return this.modals.todoUserMap.findAll(options).then(function (result) {
-        return result.map(function (item) {
-          return item.toJSON();
-        });
-      });
-    }
-  }]);
-
-  return WhatToServiceAdaptor;
-}();
-
+  async retrieveUserTodoItems(options) {
+    const result = await this.modals.todoUserMap.findAll(options);
+    return result.map(item => item.toJSON());
+  }
+}
 exports.default = WhatToServiceAdaptor;

@@ -7,8 +7,8 @@ Object.defineProperty(exports, "__esModule", {
 
 var _shared = require('./shared');
 
-var curlyBrace = '{';
-var bigBrace = '[';
+const curlyBrace = '{';
+const bigBrace = '[';
 
 /**
  *
@@ -33,7 +33,7 @@ function parseStringToJson(body) {
 	return body;
 }
 
-exports.default = function (err, req, res, next) {
+exports.default = (err, req, res, next) => {
 	if (err) {
 		try {
 			res.status(err.status || 500).send(parseStringToJson(err.message));

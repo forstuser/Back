@@ -4,8 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-exports.default = function (sequelize, DataTypes) {
-  var todoUserMap = sequelize.define('todoUserMap', {
+exports.default = (sequelize, DataTypes) => {
+  const todoUserMap = sequelize.define('todoUserMap', {
     user_id: {
       type: DataTypes.INTEGER
     },
@@ -40,7 +40,7 @@ exports.default = function (sequelize, DataTypes) {
     tableName: 'table_todo_user_map'
   });
 
-  todoUserMap.associate = function (models) {
+  todoUserMap.associate = models => {
     todoUserMap.belongsTo(models.users, { foreignKey: 'user_id', onDelete: 'cascade', onUpdate: 'cascade' });
     todoUserMap.belongsTo(models.users, { foreignKey: 'created_by', onDelete: 'cascade', onUpdate: 'cascade' });
     todoUserMap.belongsTo(models.users, { foreignKey: 'updated_by', onDelete: 'cascade', onUpdate: 'cascade' });
