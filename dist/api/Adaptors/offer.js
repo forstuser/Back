@@ -92,7 +92,7 @@ class OfferAdaptor {
       as: 'offers', where: JSON.parse(JSON.stringify({
         status_type: 1,
         date_end: { $gte: (0, _moment2.default)().format() },
-        other: other ? { $not: null } : undefined,
+        other: other ? { $not: null, $ne: '' } : undefined,
         cashback: cashback ? { $gte: cashback } : undefined,
         discount: discount ? { $gte: discount } : undefined,
         adv_campaign_name: merchant ? { $in: merchant.split(',') } : undefined
@@ -102,7 +102,7 @@ class OfferAdaptor {
       as: 'offers_cashback', where: JSON.parse(JSON.stringify({
         status_type: 1,
         date_end: { $gte: (0, _moment2.default)().format() },
-        other: other ? { $not: null } : undefined,
+        other: other ? { $not: null, $ne: '' } : undefined,
         cashback: cashback ? { $gte: cashback } : undefined,
         discount: discount ? { $gte: discount } : undefined,
         adv_campaign_name: merchant ? { $in: merchant.split(',') } : undefined
@@ -112,7 +112,7 @@ class OfferAdaptor {
       as: 'offers_other', where: JSON.parse(JSON.stringify({
         status_type: 1,
         date_end: { $gte: (0, _moment2.default)().format() },
-        other: other ? { $not: null } : undefined,
+        other: other ? { $not: null, $ne: '' } : undefined,
         cashback: cashback ? { $gte: cashback } : undefined,
         discount: discount ? { $gte: discount } : undefined,
         adv_campaign_name: merchant ? { $in: merchant.split(',') } : undefined
@@ -123,7 +123,7 @@ class OfferAdaptor {
     const selected_category = await this.retrieveOfferCategory({
       where: { id }, attributes: ['id', 'category_level', 'category_name', 'category_image_name']
     });
-    let offers, category;
+    let offers, category, trending_discount, trending_cashback, trending_others;
     if (selected_category.category_level === 1) {
       const categories = await this.retrieveOfferCategories({
         where: { ref_id: id }, include: offerInclude,
@@ -142,14 +142,15 @@ class OfferAdaptor {
         return item;
       });
     }
-    [category, offers] = await Promise.all([this.retrieveOfferCategory({
+    [category, offers, trending_discount, trending_cashback, trending_others] = await Promise.all([this.retrieveOfferCategory({
       where: { id }, attributes: ['id', 'category_level', 'category_name', 'category_image_name']
     }), this.retrieveOfferList({
       category_id: id, cashback, discount, discount_offer_id,
       limit, offset, other, cashback_offer_id, other_offer_id,
       merchant, cashback_sort, discount_sort, other_sort
-    })]);
+    }), this.retrieveOffers({ category_id, trending: true }, 0), this.retrieveOffers({ category_id, trending: true }, 1), this.retrieveOffers({ category_id, trending: true }, 2)]);
     category.offers = offers;
+    category.trending = [...trending_discount, ...trending_cashback, ...trending_others];
 
     return category;
   }

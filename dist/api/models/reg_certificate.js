@@ -5,12 +5,15 @@ Object.defineProperty(exports, "__esModule", {
 });
 
 exports.default = (sequelize, DataTypes) => {
-  const pucs = sequelize.define('pucs', {
+  const reg_certificate = sequelize.define('reg_certificate', {
     product_id: {
       type: DataTypes.INTEGER,
       allowNull: false
     },
     job_id: {
+      type: DataTypes.INTEGER
+    },
+    state_id: {
       type: DataTypes.INTEGER
     },
     document_number: {
@@ -31,9 +34,6 @@ exports.default = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER
     },
     updated_by: {
-      type: DataTypes.INTEGER
-    },
-    seller_id: {
       type: DataTypes.INTEGER
     },
     status_type: {
@@ -67,19 +67,19 @@ exports.default = (sequelize, DataTypes) => {
     defaultPrimaryKey: true,
     timestamps: true,
     underscored: true,
-    tableName: 'consumer_pucs'
+    tableName: 'consumer_reg_certificate'
   });
 
-  pucs.associate = models => {
-    pucs.belongsTo(models.products, { foreignKey: 'product_id' });
-    pucs.belongsTo(models.users, { foreignKey: 'user_id', as: 'consumer' });
-    pucs.belongsTo(models.users, { foreignKey: 'updated_by', as: 'updatedByUser' });
+  reg_certificate.associate = models => {
+    reg_certificate.belongsTo(models.products, { foreignKey: 'product_id' });
+    reg_certificate.belongsTo(models.users, { foreignKey: 'user_id', as: 'consumer' });
+    reg_certificate.belongsTo(models.users, { foreignKey: 'updated_by', as: 'updatedByUser' });
 
-    pucs.belongsTo(models.statuses, { foreignKey: 'status_type', targetKey: 'status_type' });
-    pucs.belongsTo(models.jobs, { as: 'jobs', foreignKey: 'job_id' });
-    pucs.belongsTo(models.offlineSellers, { foreignKey: 'seller_id', as: 'sellers' });
-    pucs.belongsTo(models.renewalTypes, { foreignKey: 'renewal_type', targetKey: 'type' });
+    reg_certificate.belongsTo(models.statuses, { foreignKey: 'status_type', targetKey: 'status_type' });
+    reg_certificate.belongsTo(models.jobs, { as: 'jobs', foreignKey: 'job_id' });
+    reg_certificate.belongsTo(models.states, { foreignKey: 'state_id', as: 'state' });
+    reg_certificate.belongsTo(models.renewalTypes, { foreignKey: 'renewal_type', targetKey: 'type', as: 'renewal_detail' });
   };
 
-  return pucs;
+  return reg_certificate;
 };

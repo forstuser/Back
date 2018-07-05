@@ -243,6 +243,60 @@ class DashboardController {
     }
   }
 
+  static async getEHomeProducts(request, reply) {
+    const user = _shared2.default.verifyAuthorization(request.headers);
+    try {
+      if (request.pre.userExist === 0) {
+        return reply.response({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
+        return reply.response({
+          status: false,
+          message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate
+        }).code(401);
+      } else if (request.pre.userExist && !request.pre.forceUpdate) {
+        const { brand_id, category_id, offline_seller_id, online_seller_id, sort_by, search_value, limit, offset } = request.query;
+        return reply.response((await eHomeAdaptor.retrieveEHomeProducts({
+          user, type: parseInt(request.params.type), sort_by, search_value,
+          request, brand_id: (brand_id || '').split(',').filter(Boolean),
+          category_id: (category_id || '').split(',').filter(Boolean),
+          offline_seller_id: (offline_seller_id || '').split(',').filter(Boolean),
+          online_seller_id: (online_seller_id || '').split(',').filter(Boolean), limit, offset
+        }))).code(200);
+      } else {
+        return reply.response({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    } catch (err) {
+
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err
+        })
+      }).catch(ex => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to retrieve category product list.',
+        forceUpdate: request.pre.forceUpdate
+      });
+    }
+  }
+
   static async updateNotificationStatus(request, reply) {
     const user = _shared2.default.verifyAuthorization(request.headers);
     try {

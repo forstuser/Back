@@ -124,6 +124,8 @@ export function prepareProductRoutes(modal, routeObject, middleware) {
             sub_category_id: [joi.number(), joi.allow(null)],
             brand_id: [joi.number(), joi.allow(null)],
             colour_id: [joi.number(), joi.allow(null)],
+            ref_id: [joi.number(), joi.allow(null)],
+            accessory_part_id: [joi.number(), joi.allow(null)],
             value: [joi.number(), joi.allow(null)],
             taxes: [joi.number(), joi.allow(null)],
             seller_id: [joi.number(), joi.allow(null)],
@@ -199,6 +201,93 @@ export function prepareProductRoutes(modal, routeObject, middleware) {
         },
       },
     });
+
+    routeObject.push({
+      method: 'POST',
+      path: '/products/{ref_id}/accessories',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: middleware.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: ControllerObject.updateAccessoryProduct,
+        description: 'Create Accessory Product.',
+        validate: {
+          payload: {
+            product_name: [joi.string(), joi.allow(null)],
+            accessory_part_name: [joi.string(), joi.allow(null)],
+            job_id: [joi.number(), joi.allow(null)],
+            main_category_id: [joi.number(), joi.allow(null)],
+            category_id: [joi.number(), joi.allow(null)],
+            sub_category_id: [joi.number(), joi.allow(null)],
+            brand_id: [joi.number(), joi.allow(null)],
+            accessory_part_id: [joi.number(), joi.allow(null)],
+            value: [joi.number(), joi.allow(null)],
+            taxes: [joi.number(), joi.allow(null)],
+            seller_id: [joi.number(), joi.allow(null)],
+            seller_name: [joi.string(), joi.allow(null)],
+            seller_contact: [joi.string(), joi.allow(null)],
+            seller_email: [joi.string(), joi.allow(null)],
+            seller_address: [joi.string(), joi.allow(null)],
+            document_number: [joi.string(), joi.allow(null)],
+            document_date: [joi.string(), joi.allow(null)],
+            warranty: joi.object().keys({
+              id: [joi.number(), joi.allow(null)],
+              renewal_type: [joi.number(), joi.allow(null)],
+              effective_date: [joi.string(), joi.allow(null)],
+            }).allow(null),
+          },
+        },
+      },
+    });
+
+    routeObject.push({
+      method: 'PUT',
+      path: '/products/{ref_id}/accessories/{id}',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: middleware.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: ControllerObject.updateAccessoryProduct,
+        description: 'Update Accessory Product.',
+        validate: {
+          payload: {
+            product_name: [joi.string(), joi.allow(null)],
+            accessory_part_name: [joi.string(), joi.allow(null)],
+            job_id: [joi.number(), joi.allow(null)],
+            main_category_id: [joi.number(), joi.allow(null)],
+            category_id: [joi.number(), joi.allow(null)],
+            sub_category_id: [joi.number(), joi.allow(null)],
+            brand_id: [joi.number(), joi.allow(null)],
+            accessory_part_id: [joi.number(), joi.allow(null)],
+            value: [joi.number(), joi.allow(null)],
+            taxes: [joi.number(), joi.allow(null)],
+            seller_id: [joi.number(), joi.allow(null)],
+            seller_name: [joi.string(), joi.allow(null)],
+            seller_contact: [joi.string(), joi.allow(null)],
+            seller_email: [joi.string(), joi.allow(null)],
+            seller_address: [joi.string(), joi.allow(null)],
+            document_number: [joi.string(), joi.allow(null)],
+            document_date: [joi.string(), joi.allow(null)],
+            warranty: joi.object().keys({
+              id: [joi.number(), joi.allow(null)],
+              renewal_type: [joi.number(), joi.allow(null)],
+              effective_date: [joi.string(), joi.allow(null)],
+            }).allow(null),
+          },
+        },
+      },
+    });
+
     routeObject.push({
       method: 'DELETE',
       path: '/products/{id}',

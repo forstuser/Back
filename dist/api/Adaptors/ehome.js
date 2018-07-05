@@ -159,7 +159,9 @@ class EHomeAdaptor {
     const productOptions = {
       status_type: [5, 11],
       user_id: user.id || user.ID,
-      product_status_type: 8
+      product_status_type: 8,
+      accessory_part_id: null,
+      accessory_id: null
     };
 
     const inProgressProductOption = {};
@@ -169,8 +171,8 @@ class EHomeAdaptor {
     const results = await Promise.all([this.categoryAdaptor.retrieveCategories({
       options: categoryOption,
       isBrandFormRequired: false,
-      isSubCategoryRequiredForAll: false,
-      language: language
+      isSubCategoryRequiredForAll: true,
+      language
     }), this.productAdaptor.retrieveProductCounts(productOptions), this.productAdaptor.retrieveProductCounts(inProgressProductOption)]);
     return results[0].map(categoryItem => {
       const category = categoryItem;
@@ -194,31 +196,162 @@ class EHomeAdaptor {
     });
   }
 
+  async retrieveEHomeProducts(parameters) {
+    let { user, type, brand_id, category_id, offline_seller_id, online_seller_id, sort_by, search_value, request, limit, offset } = parameters;
+    const main_category_id = type === 1 ? [1, 2, 3, 7] : type === 2 ? [4, 5, 6, 8] : [9, 10];
+    try {
+      let [categoryData, recent_searches] = await Promise.all([this.fetchEHomeProducts({
+        user, main_category_id, brand_id, category_id,
+        offline_seller_id, online_seller_id, sort_by,
+        search_value: `%${search_value || ''}%`, limit, offset
+      }, request.language), this.retrieveRecentSearch(user)]);
+      let brands,
+          productList = [],
+          offlineSellers,
+          onlineSellers;
+      categoryData = categoryData.map(result => {
+        productList.push(...result.productList);
+        /* const listIndex = (pageNo * 10) - 10; */
+        result.brands = _lodash2.default.uniqBy(result.productList.filter(item => item.brand).map(item => {
+          const brandItem = item.brand;
+          brandItem.id = brandItem.brandId;
+          return brandItem;
+        }), 'id');
+
+        result.offlineSellers = _lodash2.default.uniqBy(result.productList.filter(item => item.sellers).map(item => {
+          const sellerItem = item.sellers;
+          sellerItem.name = sellerItem.sellerName;
+          return sellerItem;
+        }), 'id');
+
+        result.onlineSellers = _lodash2.default.uniqBy(result.productList.filter(item => item.bill && item.bill.sellers).map(item => {
+          const sellerItem = item.bill.sellers;
+          sellerItem.name = sellerItem.sellerName;
+          return sellerItem;
+        }), 'id');
+        result.subCategories = _lodash2.default.uniqBy(result.subCategories.filter(scItem => scItem.products.length > 0), 'id');
+        result = _lodash2.default.omit(result, 'productList');
+        return result;
+      });
+      return {
+        status: true,
+        productList /* :productList.slice((pageNo * 10) - 10, 10) */
+        , recentSearches: recent_searches.map(item => {
+          const searches = item.toJSON();
+          return searches.searchValue;
+        }).slice(0, 5),
+        filterData: categoryData,
+        forceUpdate: request.pre.forceUpdate
+      };
+    } catch (err) {
+
+      console.log(err);
+      this.modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user.id || user.ID,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err
+        })
+      }).catch(ex => console.log('error while logging on db,', ex));
+      return {
+        status: false,
+        err,
+        forceUpdate: request.pre.forceUpdate
+      };
+    }
+  }
+
+  async fetchEHomeProducts(parameters, language) {
+    let { user, main_category_id, subCategoryId, brand_id, category_id, offline_seller_id, online_seller_id, sort_by, search_value, limit, offset } = parameters;
+    const categoryOption = { category_level: 1, status_type: 1 };
+
+    const productOptions = {
+      user_id: user.id || user.ID, accessory_part_id: null,
+      accessory_id: null, $or: [{
+        $and: {
+          status_type: 8, bill_id: {
+            $in: this.modals.sequelize.literal(`(Select id from consumer_bills where status_type = 5)`)
+          }
+        }
+      }, { status_type: [5, 11] }]
+    };
+
+    if (main_category_id) {
+      categoryOption.category_id = main_category_id;
+      productOptions.main_category_id = main_category_id;
+    }
+
+    if (subCategoryId) {
+      productOptions.category_id = subCategoryId;
+    }
+
+    if (category_id && category_id.length > 0) {
+      productOptions.category_id = category_id;
+    }
+
+    if (search_value && search_value !== '%%') {
+      productOptions.product_name = {
+        $iLike: search_value
+      };
+    }
+
+    if (brand_id && brand_id.length > 0) {
+      productOptions.brand_id = brand_id;
+    }
+
+    if (offline_seller_id && offline_seller_id.length > 0) {
+      productOptions.seller_id = offline_seller_id;
+    }
+
+    if (online_seller_id && online_seller_id.length > 0) {
+      productOptions.online_seller_id = online_seller_id;
+    }
+
+    console.log({ offset });
+    const [categories, productList] = await Promise.all([this.categoryAdaptor.retrieveCategories({
+      options: categoryOption,
+      isBrandFormRequired: false, isFilterRequest: true,
+      isSubCategoryRequiredForAll: true, language, user
+    }), this.productAdaptor.retrieveEHomeProducts(productOptions, language, limit, offset, sort_by)]);
+    return categories.map(categoryItem => {
+      const category = categoryItem;
+      const products = _lodash2.default.chain(productList).map(productItem => {
+        const product = productItem;
+        product.dataIndex = 1;
+        return product;
+      }).filter(productItem => productItem.masterCategoryId === category.id).value();
+      category.productList = _lodash2.default.chain([...products] || []).sortBy(item => _moment2.default.utc(item.purchaseDate, _moment2.default.ISO_8601)).reverse().value();
+
+      return category;
+    });
+  }
+
   async prepareProductDetail(parameters) {
     let { user, masterCategoryId, ctype, brandIds, categoryIds, offlineSellerIds, onlineSellerIds, sortBy, searchValue, request } = parameters;
     try {
       const result = await this.fetchProductDetails({
-        user: user,
-        masterCategoryId: masterCategoryId,
-        subCategoryId: ctype || undefined,
-        brandIds: brandIds,
-        categoryIds: categoryIds,
-        offlineSellerIds: offlineSellerIds,
-        onlineSellerIds: onlineSellerIds,
-        sortBy: sortBy,
-        searchValue: `%${searchValue || ''}%`
+        main_category_id: masterCategoryId, subCategoryId: ctype || undefined,
+        brand_id: brandIds, category_id: categoryIds, sort_by: sortBy,
+        offline_seller_id: offlineSellerIds, online_seller_id: onlineSellerIds,
+        search_value: `%${searchValue || ''}%`, user
       }, request.language);
       const productList = result.productList;
       /* const listIndex = (pageNo * 10) - 10; */
 
-      let brands = result.productList.filter(item => item.brand !== null).map(item => {
+      let brands = result.productList.filter(item => item.brand).map(item => {
         const brandItem = item.brand;
         brandItem.id = brandItem.brandId;
         return brandItem;
       });
       brands = _lodash2.default.uniqBy(brands, 'id');
 
-      let offlineSellers = result.productList.filter(item => item.sellers !== null).map(item => {
+      let offlineSellers = result.productList.filter(item => item.sellers).map(item => {
         const sellerItem = item.sellers;
         sellerItem.name = sellerItem.sellerName;
         return sellerItem;
@@ -226,7 +359,7 @@ class EHomeAdaptor {
 
       offlineSellers = _lodash2.default.uniqBy(offlineSellers, 'id');
 
-      let onlineSellers = result.productList.filter(item => item.bill !== null && item.bill.sellers !== null).map(item => {
+      let onlineSellers = result.productList.filter(item => item.bill && item.bill.sellers).map(item => {
         const sellerItem = item.bill.sellers;
         sellerItem.name = sellerItem.sellerName;
         return sellerItem;
@@ -278,53 +411,58 @@ class EHomeAdaptor {
   }
 
   async fetchProductDetails(parameters, language) {
-    let { user, masterCategoryId, subCategoryId, brandIds, categoryIds, offlineSellerIds, onlineSellerIds, sortBy, searchValue } = parameters;
+    let { user, main_category_id, subCategoryId, brand_id, category_id, offline_seller_id, online_seller_id, sort_by, search_value, limit, offset } = parameters;
     const categoryOption = { category_level: 1, status_type: 1 };
 
-    const productOptions = { status_type: [5, 11], user_id: user.id || user.ID };
+    const productOptions = {
+      status_type: [5, 11], user_id: user.id || user.ID,
+      accessory_part_id: null, accessory_id: null
+    };
 
-    if (masterCategoryId) {
-      categoryOption.category_id = masterCategoryId;
-      productOptions.main_category_id = masterCategoryId;
+    if (main_category_id) {
+      categoryOption.category_id = main_category_id;
+      productOptions.main_category_id = main_category_id;
     }
 
     if (subCategoryId) {
       productOptions.category_id = subCategoryId;
     }
 
-    if (categoryIds && categoryIds.length > 0) {
-      productOptions.category_id = categoryIds;
+    if (category_id && category_id.length > 0) {
+      productOptions.category_id = category_id;
     }
 
-    if (searchValue && searchValue !== '%%') {
+    if (search_value && search_value !== '%%') {
       productOptions.product_name = {
-        $iLike: searchValue
+        $iLike: search_value
       };
     }
 
-    if (brandIds && brandIds.length > 0) {
-      productOptions.brand_id = brandIds;
+    if (brand_id && brand_id.length > 0) {
+      productOptions.brand_id = brand_id;
     }
 
-    if (offlineSellerIds && offlineSellerIds.length > 0) {
-      productOptions.seller_id = offlineSellerIds;
+    if (offline_seller_id && offline_seller_id.length > 0) {
+      productOptions.seller_id = offline_seller_id;
     }
 
-    if (onlineSellerIds && onlineSellerIds.length > 0) {
-      productOptions.online_seller_id = onlineSellerIds;
+    if (online_seller_id && online_seller_id.length > 0) {
+      productOptions.online_seller_id = online_seller_id;
     }
 
     const inProgressProductOption = {};
     _lodash2.default.assignIn(inProgressProductOption, productOptions);
     inProgressProductOption.status_type = 8;
+    inProgressProductOption.bill_id = {
+      $in: this.modals.sequelize.literal(`(Select id from consumer_bills where status_type = 5)`)
+    };
 
     const results = await Promise.all([this.categoryAdaptor.retrieveCategories({
       options: categoryOption,
       isBrandFormRequired: false,
-      isSubCategoryRequiredForAll: false,
-      language: language,
+      isSubCategoryRequiredForAll: true, language,
       isFilterRequest: true
-    }), this.productAdaptor.retrieveProducts(productOptions, language), this.productAdaptor.retrieveProducts(inProgressProductOption, language)]);
+    }), this.productAdaptor.retrieveProducts(productOptions, language, limit, offset, sort_by), this.productAdaptor.retrieveProducts(inProgressProductOption, language, limit, offset, sort_by)]);
     return results[0].map(categoryItem => {
       const category = categoryItem;
       const products = _lodash2.default.chain(results[1]).map(productItem => {

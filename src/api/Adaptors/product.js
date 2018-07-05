@@ -10,10 +10,13 @@ import RepairAdaptor from './repairs';
 import CategoryAdaptor from './category';
 import SellerAdaptor from './sellers';
 import ServiceScheduleAdaptor from './serviceSchedules';
+import NotificationAdaptor from './notification';
+import notificationAdaptor from './notification';
 import _ from 'lodash';
 import moment from 'moment/moment';
 import Promise from 'bluebird';
-import notificationAdaptor from './notification';
+import reg_certificate from './reg_certificates';
+import FuelAdaptor from './refueling';
 
 export default class ProductAdaptor {
   constructor(modals) {
@@ -23,15 +26,22 @@ export default class ProductAdaptor {
     this.warrantyAdaptor = new WarrantyAdaptor(modals);
     this.amcAdaptor = new AMCAdaptor(modals);
     this.pucAdaptor = new PUCAdaptor(modals);
+    this.regCertAdaptor = new reg_certificate(modals);
     this.repairAdaptor = new RepairAdaptor(modals);
     this.categoryAdaptor = new CategoryAdaptor(modals);
     this.sellerAdaptor = new SellerAdaptor(modals);
     this.serviceScheduleAdaptor = new ServiceScheduleAdaptor(modals);
+    this.fuelAdaptor = new FuelAdaptor(modals);
+    this.notificationAdaptor = new NotificationAdaptor(modals);
   }
 
   async retrieveProducts(options, language) {
     if (!options.status_type) {
       options.status_type = [5, 11];
+    }
+
+    if (!options.ref_id) {
+      options.ref_id = null;
     }
 
     let billOption = {};
@@ -71,8 +81,7 @@ export default class ProductAdaptor {
 
     let products;
     const productResult = await this.modals.products.findAll({
-      where: options,
-      include: [
+      where: options, include: [
         {
           model: this.modals.brands,
           as: 'brand',
@@ -175,6 +184,12 @@ export default class ProductAdaptor {
           required: false,
         },
         {
+          model: this.modals.accessory_part,
+          as: 'accessory_part',
+          attributes: [],
+          required: false,
+        },
+        {
           model: this.modals.categories,
           as: 'mainCategory',
           attributes: [],
@@ -186,8 +201,7 @@ export default class ProductAdaptor {
           attributes: [],
           required: false,
         },
-      ],
-      attributes: [
+      ], attributes: [
         'id', ['product_name', 'productName'],
         'file_type', 'file_ref',
         ['category_id', 'categoryId'], ['main_category_id', 'masterCategoryId'],
@@ -200,7 +214,7 @@ export default class ProductAdaptor {
         [
           this.modals.sequelize.fn('CONCAT', 'products/',
               this.modals.sequelize.literal('"products"."id"')),
-          'productURL'],
+          'productURL'], 'accessory_part_id',
         ['document_date', 'purchaseDate'], 'model',
         ['document_number', 'documentNo'], ['updated_at', 'updatedDate'],
         ['bill_id', 'billId'], ['job_id', 'jobId'],
@@ -217,6 +231,9 @@ export default class ProductAdaptor {
           this.modals.sequelize.literal(`${language ?
               `"category"."category_name_${language}"` :
               `"category"."category_name"`}`), 'categoryName'],
+        [
+          this.modals.sequelize.literal(`"accessory_part"."title"`),
+          'accessory_part_name'],
         [
           this.modals.sequelize.literal(`"sub_category"."category_name"`),
           'default_sub_category_name'],
@@ -238,8 +255,7 @@ export default class ProductAdaptor {
               '&categoryid=',
               this.modals.sequelize.col('"products"."category_id"')),
           'serviceCenterUrl'], 'status_type',
-      ],
-      order: [['document_date', 'DESC']],
+      ], order: [['document_date', 'DESC']],
     });
     products = productResult.map((item) => {
       const productItem = item.toJSON();
@@ -268,8 +284,13 @@ export default class ProductAdaptor {
               sItem => parseInt(item.bill.seller_id) === parseInt(sItem)));
     }
     inProgressProductOption = _.omit(inProgressProductOption, 'product_name');
+    inProgressProductOption = _.omit(inProgressProductOption, 'bill_id');
+    inProgressProductOption = _.omit(inProgressProductOption,
+        'accessory_part_id');
+    inProgressProductOption = _.omit(inProgressProductOption, 'accessory_id');
     inProgressProductOption.status_type = [5, 11, 12];
     inProgressProductOption.product_status_type = options.status_type;
+    inProgressProductOption = _.omit(inProgressProductOption, 'ref_id');
     let warrantyOptions = {};
     _.assignIn(warrantyOptions, inProgressProductOption);
     warrantyOptions.warranty_type = [1, 2];
@@ -278,12 +299,319 @@ export default class ProductAdaptor {
     if (products.length > 0) {
       inProgressProductOption.product_id = products.map((item) => item.id);
       [
-        metaData,
-        insurances,
-        warranties,
-        amcs,
-        repairs,
-        pucs] = await Promise.all([
+        metaData, insurances, warranties,
+        amcs, repairs, pucs] = await Promise.all([
+        this.retrieveProductMetadata({
+          product_id: products.map((item) => item.id),
+        }, language),
+        this.insuranceAdaptor.retrieveInsurances(inProgressProductOption),
+        this.warrantyAdaptor.retrieveWarranties(warrantyOptions),
+        this.amcAdaptor.retrieveAMCs(inProgressProductOption),
+        this.repairAdaptor.retrieveRepairs(inProgressProductOption),
+        this.pucAdaptor.retrievePUCs(inProgressProductOption)]);
+    }
+    return products.map((productItem) => {
+      if (productItem.copies) {
+        productItem.copies = productItem.copies.map((copyItem) => {
+          copyItem.file_type = copyItem.file_type || copyItem.fileType;
+          return copyItem;
+        });
+      }
+      const pucItem = metaData.find(
+          (item) => item.name.toLowerCase().includes('puc'));
+      if (pucItem) {
+        productItem.pucDetail = {
+          expiry_date: pucItem.value,
+        };
+      }
+      productItem.productMetaData = metaData.filter(
+          (item) => item.productId === productItem.id &&
+              !item.name.toLowerCase().includes('puc'));
+      productItem.insuranceDetails = insurances.filter(
+          (item) => item.productId === productItem.id);
+      productItem.warrantyDetails = warranties.filter(
+          (item) => item.productId === productItem.id);
+      productItem.amcDetails = amcs.filter(
+          (item) => item.productId === productItem.id);
+      productItem.repairBills = repairs.filter(
+          (item) => item.productId === productItem.id);
+      productItem.pucDetails = pucs.filter(
+          (item) => item.productId === productItem.id);
+
+      productItem.requiredCount = productItem.insuranceDetails.length +
+          productItem.warrantyDetails.length +
+          productItem.amcDetails.length +
+          productItem.repairBills.length + productItem.pucDetails.length;
+
+      return productItem;
+    });
+  }
+
+  async retrieveEHomeProducts(options, language, limit, offset, sort_by) {
+    if (!options.status_type) {
+      options.status_type = [5, 11];
+    }
+
+    console.log({offset});
+    limit = limit || 10;
+    offset = offset || 0;
+
+    if (!options.ref_id) {
+      options.ref_id = null;
+    }
+
+    let billOption = {};
+    if (options.status_type === 8) {
+      billOption.status_type = 5;
+    }
+
+    if (options.online_seller_id) {
+      billOption.seller_id = options.online_seller_id;
+    }
+
+    if (!options.main_category_id) {
+      options = _.omit(options, 'main_category_id');
+    }
+
+    if (!options.category_id) {
+      options = _.omit(options, 'category_id');
+    }
+
+    options = _.omit(options, 'online_seller_id');
+
+    let inProgressProductOption = {};
+    _.assignIn(inProgressProductOption, options);
+    options = _.omit(options, 'product_status_type');
+    if (!inProgressProductOption.product_name) {
+      inProgressProductOption = _.omit(options, 'product_name');
+    }
+    if (!inProgressProductOption.brand_id) {
+      inProgressProductOption = _.omit(options, 'brand_id');
+    }
+    if (!inProgressProductOption.seller_id) {
+      inProgressProductOption = _.omit(options, 'seller_id');
+    }
+    if (!inProgressProductOption.online_seller_id) {
+      inProgressProductOption = _.omit(options, 'online_seller_id');
+    }
+
+    let products;
+    const productResult = await this.modals.products.findAll({
+      where: options, attributes: [
+        'id',
+        ['product_name', 'productName'],
+        'file_type', 'file_ref', 'bill_id', 'category_id',
+        ['category_id', 'categoryId'], 'main_category_id',
+        ['main_category_id', 'masterCategoryId'],
+        'sub_category_id', 'brand_id', ['brand_id', 'brandId'],
+        'taxes', ['colour_id', 'colorId'], ['purchase_cost', 'value'],
+        [
+          this.modals.sequelize.fn('CONCAT', '/categories/',
+              this.modals.sequelize.literal('"category_id"'),
+              '/images/'), 'cImageURL'], [
+          this.modals.sequelize.fn('CONCAT', 'products/',
+              this.modals.sequelize.literal('"products"."id"')),
+          'productURL'], 'accessory_part_id', ['document_date', 'purchaseDate'],
+        'model', ['document_number', 'documentNo'],
+        ['updated_at', 'updatedDate'], ['bill_id', 'billId'], 'job_id',
+        ['job_id', 'jobId'], 'seller_id', ['seller_id', 'sellerId'],
+        'copies', 'service_schedule_id', [
+          this.modals.sequelize.fn('CONCAT', 'products/',
+              this.modals.sequelize.literal('"products"."id"'), '/reviews'),
+          'reviewUrl'], [
+          this.modals.sequelize.fn('CONCAT',
+              '/consumer/servicecenters?brandid=',
+              this.modals.sequelize.literal('"products"."brand_id"'),
+              '&categoryid=',
+              this.modals.sequelize.col('"products"."category_id"')),
+          'serviceCenterUrl'], 'status_type',
+      ], order: [['document_date', sort_by || 'DESC']], limit, offset,
+    });
+    products = productResult.map((item) => item.toJSON());
+    billOption.id = products.map(item => item.bill_id).filter(Boolean);
+    let [brands, colours, service_schedules, bills, offline_sellers, product_reviews, categories, accessory_parts] = await Promise.all(
+        [
+          this.modals.brands.findAll({
+            where: {
+              brand_id: products.map(item => item.brand_id).
+                  filter(Boolean),
+            }, attributes: [
+              ['brand_id', 'brandId'], ['brand_id', 'id'],
+              ['brand_name', 'name'], ['brand_description', 'description'],
+              [
+                this.modals.sequelize.fn('CONCAT', 'brands/',
+                    this.modals.sequelize.col('"brand_id"'), '/reviews'),
+                'reviewUrl']],
+          }),
+          this.modals.colours.findAll({
+            where: {
+              colour_id: products.map(item => item.colorId).
+                  filter(Boolean),
+            }, attributes: [
+              ['colour_id', 'colorId'], ['colour_name', 'colorName']],
+          }),
+          this.modals.serviceSchedules.findAll({
+            where: {
+              id: products.map(item => item.service_schedule_id).
+                  filter(Boolean),
+            }, attributes: [
+              'id', 'inclusions', 'exclusions',
+              'service_number', 'service_type', 'distance',
+              'due_in_months', 'due_in_days'],
+          }),
+          this.modals.bills.findAll({
+            where: billOption,
+            attributes: [
+              'id', ['consumer_name', 'consumerName'],
+              ['consumer_email', 'consumerEmail'],
+              ['consumer_phone_no', 'consumerPhoneNo'],
+              ['document_number', 'invoiceNo'], 'seller_id'],
+            include: [
+              {
+                model: this.modals.onlineSellers,
+                as: 'sellers',
+                attributes: [
+                  ['sid', 'id'], ['seller_name', 'sellerName'],
+                  'url', 'gstin', 'contact', 'email',
+                  [
+                    this.modals.sequelize.fn('CONCAT', 'sellers/',
+                        this.modals.sequelize.literal('"sellers"."sid"'),
+                        '/reviews?isonlineseller=true'), 'reviewUrl']],
+                include: [
+                  {
+                    model: this.modals.sellerReviews,
+                    as: 'sellerReviews',
+                    attributes: [
+                      ['review_ratings', 'ratings'],
+                      ['review_feedback', 'feedback'],
+                      ['review_comments', 'comments']],
+                    required: false,
+                  },
+                ],
+                required: false,
+              }],
+            required: options.status_type === 8,
+          }),
+          this.modals.offlineSellers.findAll({
+            where: {sid: products.map(item => item.seller_id).filter(Boolean)},
+            attributes: [
+              ['sid', 'id'], ['seller_name', 'sellerName'],
+              ['owner_name', 'ownerName'], ['pan_no', 'panNo'],
+              ['reg_no', 'regNo'], ['is_service', 'isService'],
+              'url', 'gstin', ['contact_no', 'contact'], 'email', 'address',
+              'city', 'state', 'pincode', 'latitude', 'longitude',
+              [
+                this.modals.sequelize.fn('CONCAT', 'sellers/',
+                    this.modals.sequelize.literal('"sid"'),
+                    '/reviews?isonlineseller=false'), 'reviewUrl']],
+            include: [
+              {
+                model: this.modals.sellerReviews,
+                as: 'sellerReviews',
+                attributes: [
+                  ['review_ratings', 'ratings'],
+                  ['review_feedback', 'feedback'],
+                  ['review_comments', 'comments']],
+                required: false,
+              },
+            ],
+          }),
+          this.modals.productReviews.findAll({
+            where: {
+              bill_product_id: products.map(item => item.id).
+                  filter(Boolean),
+            },
+            attributes: [
+              'bill_product_id', ['review_ratings', 'ratings'],
+              ['review_feedback', 'feedback'],
+              ['review_comments', 'comments']],
+          }),
+          this.modals.categories.findAll({
+            where: {
+              category_id: [
+                ...products.map(item => item.category_id).filter(Boolean),
+                ...products.map(item => item.main_category_id).filter(Boolean),
+                ...products.map(item => item.sub_category_id).filter(Boolean)],
+            },
+            attributes: ['category_id', 'category_name'],
+          }),
+          this.modals.accessory_part.findAll({
+            where: {
+              id: products.map(item => item.accessory_part_id).
+                  filter(Boolean),
+            },
+            attributes: ['id', 'title'],
+          })]);
+    brands = brands.map(item => item.toJSON());
+    colours = colours.map(item => item.toJSON());
+    service_schedules = service_schedules.map(item => item.toJSON());
+    bills = bills.map(item => item.toJSON());
+    offline_sellers = offline_sellers.map(item => item.toJSON());
+    categories = categories.map(item => item.toJSON());
+    accessory_parts = accessory_parts.map(item => item.toJSON());
+    product_reviews = product_reviews.map(item => item.toJSON());
+
+    products = products.map((item) => {
+      const productItem = item;
+      const sub_category = categories.find(
+          subItem => productItem.sub_category_id === subItem.category_id);
+      const category = categories.find(
+          subItem => productItem.category_id === subItem.category_id);
+      const main_category = categories.find(
+          subItem => productItem.main_category_id === subItem.category_id);
+      const accessory_part = accessory_parts.find(
+          subItem => productItem.accessory_part_id === subItem.id);
+      productItem.sub_category_name = (sub_category || {}).category_name;
+      productItem.masterCategoryName = (main_category || {}).category_name;
+      productItem.categoryName = (category || {}).category_name;
+      productItem.accessory_part_name = (accessory_part || {}).title;
+      productItem.sellers = offline_sellers.find(
+          subItem => subItem.id === productItem.seller_id);
+      productItem.bill = bills.find(
+          subItem => subItem.id === productItem.bill_id);
+      productItem.productReviews = product_reviews.filter(
+          subItem => subItem.bill_product_id === productItem.id);
+      productItem.brand = brands.find(
+          subItem => subItem.id === productItem.brand_id);
+      productItem.schedule = service_schedules.find(
+          subItem => subItem.id === productItem.service_schedule_id);
+      productItem.purchaseDate = moment.utc(productItem.purchaseDate,
+          moment.ISO_8601).startOf('days');
+      productItem.cImageURL = productItem.sub_category_id ?
+          `/categories/${productItem.sub_category_id}/images/1/thumbnail` :
+          `${productItem.cImageURL}1/thumbnail`;
+      if (productItem.schedule) {
+        productItem.schedule.due_date = moment.utc(productItem.purchaseDate,
+            moment.ISO_8601).
+            add(productItem.schedule.due_in_months, 'months');
+      }
+
+      return productItem;
+    });
+    if (billOption.seller_id && billOption.seller_id.length > 0) {
+      products = products.filter(
+          (item) => item.bill && billOption.seller_id.find(
+              sItem => parseInt(item.bill.seller_id) === parseInt(sItem)));
+    }
+    inProgressProductOption = _.omit(inProgressProductOption, 'product_name');
+    inProgressProductOption = _.omit(inProgressProductOption, 'bill_id');
+    inProgressProductOption = _.omit(inProgressProductOption, '$or');
+    inProgressProductOption = _.omit(inProgressProductOption,
+        'accessory_part_id');
+    inProgressProductOption = _.omit(inProgressProductOption, 'accessory_id');
+    inProgressProductOption.status_type = [5, 11, 12];
+    inProgressProductOption.product_status_type = options.status_type;
+    inProgressProductOption = _.omit(inProgressProductOption, 'ref_id');
+    let warrantyOptions = {};
+    _.assignIn(warrantyOptions, inProgressProductOption);
+    warrantyOptions.warranty_type = [1, 2];
+    let metaData = [], insurances = [], warranties = [], amcs = [],
+        repairs = [], pucs = [];
+    if (products.length > 0) {
+      inProgressProductOption.product_id = products.map((item) => item.id);
+      [
+        metaData, insurances, warranties,
+        amcs, repairs, pucs] = await Promise.all([
         this.retrieveProductMetadata({
           product_id: products.map((item) => item.id),
         }, language),
@@ -536,52 +864,22 @@ export default class ProductAdaptor {
           model: this.modals.offlineSellers,
           as: 'sellers',
           attributes: [
-            [
-              'sid',
-              'id'],
-            [
-              'seller_name',
-              'sellerName'],
-            [
-              'owner_name',
-              'ownerName'],
-            [
-              'pan_no',
-              'panNo'],
-            [
-              'reg_no',
-              'regNo'],
-            [
-              'is_service',
-              'isService'],
-            'url',
-            'gstin',
-            ['contact_no', 'contact'],
-            'email',
-            'address',
-            'city',
-            'state',
-            'pincode',
-            'latitude',
-            'longitude',
-            [
+            ['sid', 'id'], ['seller_name', 'sellerName'],
+            ['owner_name', 'ownerName'], ['pan_no', 'panNo'],
+            ['reg_no', 'regNo'], ['is_service', 'isService'],
+            'url', 'gstin', ['contact_no', 'contact'],
+            'email', 'address', 'city', 'state',
+            'pincode', 'latitude', 'longitude', [
               this.modals.sequelize.fn('CONCAT', 'sellers/',
                   this.modals.sequelize.literal('"sellers"."sid"'),
                   '/reviews?isonlineseller=false'), 'reviewUrl']],
           include: [
             {
               model: this.modals.sellerReviews,
-              as: 'sellerReviews',
-              attributes: [
-                [
-                  'review_ratings',
-                  'ratings'],
-                [
-                  'review_feedback',
-                  'feedback'],
-                [
-                  'review_comments',
-                  'comments']],
+              as: 'sellerReviews', attributes: [
+                ['review_ratings', 'ratings'],
+                ['review_feedback', 'feedback'],
+                ['review_comments', 'comments']],
               required: false,
             },
           ],
@@ -589,17 +887,10 @@ export default class ProductAdaptor {
         },
         {
           model: this.modals.productReviews,
-          as: 'productReviews',
-          attributes: [
-            [
-              'review_ratings',
-              'ratings'],
-            [
-              'review_feedback',
-              'feedback'],
-            [
-              'review_comments',
-              'comments']],
+          as: 'productReviews', attributes: [
+            ['review_ratings', 'ratings'],
+            ['review_feedback', 'feedback'],
+            ['review_comments', 'comments']],
           required: false,
         },
         {
@@ -621,91 +912,49 @@ export default class ProductAdaptor {
         },
       ],
       attributes: [
-        'id',
-        'file_type',
-        'file_ref',
-        [
-          'product_name',
-          'productName'],
-        'model',
-        [
-          'category_id',
-          'categoryId'],
-        [
-          'main_category_id',
-          'masterCategoryId'],
-        'sub_category_id',
-        [
-          'brand_id',
-          'brandId'],
-        [
-          'colour_id',
-          'colorId'],
-        [
-          'purchase_cost',
-          'value'],
-        'taxes',
+        'id', 'file_type', 'file_ref',
+        ['product_name', 'productName'], 'model',
+        ['category_id', 'categoryId'],
+        ['main_category_id', 'masterCategoryId'],
+        'sub_category_id', ['brand_id', 'brandId'],
+        ['colour_id', 'colorId'],
+        ['purchase_cost', 'value'], 'taxes',
         [
           this.modals.sequelize.fn('CONCAT', '/categories/',
               this.modals.sequelize.col('"products"."category_id"'),
-              '/images/'),
-          'cImageURL'],
+              '/images/'), 'cImageURL'],
         [
           this.modals.sequelize.fn('CONCAT', 'products/',
-              this.modals.sequelize.literal('"products"."id"')),
-          'productURL'],
+              this.modals.sequelize.literal('"products"."id"')), 'productURL'],
         [
           this.modals.sequelize.literal(`${language ?
               `"sub_category"."category_name_${language}"` :
-              `"sub_category"."category_name"`}`),
-          'sub_category_name'],
-        [
+              `"sub_category"."category_name"`}`), 'sub_category_name'], [
           this.modals.sequelize.literal(`${language ?
               `"category"."category_name_${language}"` :
-              `"category"."category_name"`}`),
-          'categoryName'],
-        [
+              `"category"."category_name"`}`), 'categoryName'], [
           this.modals.sequelize.literal(`"sub_category"."category_name"`),
-          'default_sub_category_name'],
-        [
+          'default_sub_category_name'], [
           this.modals.sequelize.literal(`"mainCategory"."category_name"`),
-          'default_masterCategoryName'],
-        [
+          'default_masterCategoryName'], [
           this.modals.sequelize.literal(`"category"."category_name"`),
-          'default_categoryName'],
-        [
+          'default_categoryName'], [
           this.modals.sequelize.literal(`${language ?
               `"mainCategory"."category_name_${language}"` :
-              `"mainCategory"."category_name"`}`),
-          'masterCategoryName'],
-        [
-          'document_date',
-          'purchaseDate'],
-        ['document_number', 'documentNo'],
-        ['updated_at', 'updatedDate'],
-        [
-          'bill_id',
-          'billId'],
-        [
-          'job_id',
-          'jobId'],
-        [
-          'seller_id',
-          'sellerId'],
-        'copies',
-        [
+              `"mainCategory"."category_name"`}`), 'masterCategoryName'],
+        ['document_date', 'purchaseDate'],
+        ['document_number', 'documentNo'], ['updated_at', 'updatedDate'],
+        ['bill_id', 'billId'], ['job_id', 'jobId'],
+        ['seller_id', 'sellerId'], 'copies', [
           this.modals.sequelize.fn('CONCAT', 'products/',
               this.modals.sequelize.literal('"products"."id"'), '/reviews'),
-          'reviewUrl'],
-        [
+          'reviewUrl'], [
           this.modals.sequelize.fn('CONCAT',
               '/consumer/servicecenters?brandid=',
               this.modals.sequelize.literal('"products"."brand_id"'),
               '&categoryid=',
               this.modals.sequelize.col('"products"."category_id"')),
-          'serviceCenterUrl'],
-        'updated_at',
-        'status_type',
+          'serviceCenterUrl'], 'updated_at', 'status_type',
       ],
       order: [['updated_at', 'DESC']],
     });
@@ -821,17 +1070,11 @@ export default class ProductAdaptor {
       where: options,
       include: [
         {
-          model: this.modals.bills,
-          where: billOption,
-          include: [
+          model: this.modals.bills, where: billOption, include: [
             {
-              model: this.modals.onlineSellers,
-              as: 'sellers',
-              attributes: [],
-              required: false,
-            }],
-          attributes: ['status_type'],
-          required: !!(billOption.seller_id),
+              model: this.modals.onlineSellers, as: 'sellers',
+              attributes: [], required: false,
+            }], attributes: ['status_type'], required: !!(billOption.seller_id),
         },
       ],
       attributes: ['id', 'status_type'],
@@ -852,7 +1095,7 @@ export default class ProductAdaptor {
       billOption.status_type = 5;
     }
 
-    const inProgressProductOption = {};
+    let inProgressProductOption = {};
     _.assignIn(inProgressProductOption, options);
     let productResult;
     options = _.omit(options, 'product_status_type');
@@ -877,6 +1120,9 @@ export default class ProductAdaptor {
       group: 'main_category_id',
     });
     productResult = productItems.map((item) => item.toJSON());
+    inProgressProductOption = _.omit(inProgressProductOption,
+        'accessory_part_id');
+    inProgressProductOption = _.omit(inProgressProductOption, 'accessory_id');
     inProgressProductOption.status_type = 5;
     inProgressProductOption.product_status_type = options.status_type;
     const results = await Promise.all([
@@ -979,18 +1225,11 @@ export default class ProductAdaptor {
             required: false,
           }],
         attributes: [
-          'id',
-          ['product_name', 'productName'],
-          'file_type',
-          'file_ref',
-          [
+          'id', ['product_name', 'productName'],
+          'file_type', 'file_ref', [
             this.modals.sequelize.literal('"category"."category_id"'),
-            'categoryId'],
-          ['main_category_id', 'masterCategoryId'],
-          'model',
-          'sub_category_id',
-          ['colour_id', 'colorId'],
-          [
+            'categoryId'], ['main_category_id', 'masterCategoryId'],
+          'model', 'sub_category_id', ['colour_id', 'colorId'], [
             this.modals.sequelize.literal(
                 `${language ? `"sub_category"."category_name_${language}"` :
                     `"sub_category"."category_name"`}`), 'sub_category_name'],
@@ -1000,37 +1239,26 @@ export default class ProductAdaptor {
                     `"category"."category_name"`}`), 'categoryName'],
           [
             this.modals.sequelize.literal(`"sub_category"."category_name"`),
-            'default_sub_category_name'],
-          ['purchase_cost', 'value'],
-          [
+            'default_sub_category_name'], ['purchase_cost', 'value'], [
             this.modals.sequelize.literal(`"mainCategory"."category_name"`),
-            'default_masterCategoryName'],
-          'taxes',
-          [
+            'default_masterCategoryName'], 'taxes', [
             this.modals.sequelize.literal(`"category"."category_name"`),
-            'default_categoryName'],
-          ['brand_id', 'brandId'],
-          [
+            'default_categoryName'], ['brand_id', 'brandId'], [
             this.modals.sequelize.literal(
                 `${language ? `"mainCategory"."category_name_${language}"` :
                     `"mainCategory"."category_name"`}`), 'masterCategoryName'],
           [
             this.modals.sequelize.fn('CONCAT', '/categories/',
                 this.modals.sequelize.col('"category"."category_id"'),
-                '/images/0'), 'cImageURL'],
-          ['document_date', 'purchaseDate'],
+                '/images/0'), 'cImageURL'], ['document_date', 'purchaseDate'],
           [
             this.modals.sequelize.fn('CONCAT', 'products/',
                 this.modals.sequelize.literal('"products"."id"')),
-            'productURL'],
-          ['document_number', 'documentNo'],
-          ['updated_at', 'updatedDate'],
-          [
+            'productURL'], ['document_number', 'documentNo'],
+          ['updated_at', 'updatedDate'], [
             this.modals.sequelize.fn('CONCAT', 'products/',
                 this.modals.sequelize.literal('"products"."id"'), '/reviews'),
-            'reviewUrl'],
-          ['job_id', 'jobId'],
-          ['seller_id', 'sellerId'],
+            'reviewUrl'], ['job_id', 'jobId'], ['seller_id', 'sellerId'],
           [
             this.modals.sequelize.fn('CONCAT',
                 '/consumer/servicecenters?brandid=',
@@ -1065,13 +1293,17 @@ export default class ProductAdaptor {
           products.schedule.due_date = moment.utc(products.purchaseDate,
               moment.ISO_8601).add(products.schedule.due_in_months, 'months');
         }
-        const serviceSchedulePromise = products.schedule ?
-            this.serviceScheduleAdaptor.retrieveServiceSchedules({
-              category_id: products.schedule.category_id,
-              brand_id: products.schedule.brand_id, status_type: 1,
-              title: products.schedule.title, id: {$gte: products.schedule.id},
-            }) : undefined;
-        let [metaData, brand, insuranceDetails, warrantyDetails, amcDetails, repairBills, pucDetails, serviceSchedules, serviceCenterCounts] = await Promise.all(
+
+        const rcPromise = products.masterCategoryId &&
+        products.masterCategoryId === 3 ?
+            this.regCertAdaptor.retrieveRegCerts({product_id: products.id}) :
+            [];
+
+        const fuelPromise = products.masterCategoryId &&
+        products.masterCategoryId === 3 ?
+            this.fuelAdaptor.retrieveRefueling({product_id: products.id}) :
+            [];
+        let [metaData, brand, insuranceDetails, warrantyDetails, amcDetails, repairBills, pucDetails, serviceSchedules, serviceCenterCounts, rc_details, accessories, fuel_details] = await Promise.all(
             [
               this.retrieveProductMetadata({product_id: products.id}, language),
               this.brandAdaptor.retrieveBrandById(products.brandId,
@@ -1083,7 +1315,13 @@ export default class ProductAdaptor {
               this.amcAdaptor.retrieveAMCs({product_id: products.id}),
               this.repairAdaptor.retrieveRepairs({product_id: products.id}),
               this.pucAdaptor.retrievePUCs({product_id: products.id}),
-              serviceSchedulePromise,
+              products.schedule ?
+                  this.serviceScheduleAdaptor.retrieveServiceSchedules({
+                    category_id: products.categoryId,
+                    brand_id: products.brandId,
+                    status_type: 1, title: {$iLike: products.schedule.title},
+                    id: {$gte: products.schedule.id},
+                  }) : undefined,
               this.modals.serviceCenters.count({
                 include: [
                   {
@@ -1096,7 +1334,9 @@ export default class ProductAdaptor {
                     attributes: [], required: true, as: 'centerDetails',
                   }],
               }),
-            ]);
+              rcPromise,
+              this.retrieveProducts({ref_id: products.id}),
+              fuelPromise]);
         products.purchaseDate = moment.utc(products.purchaseDate,
             moment.ISO_8601).startOf('days');
         products.metaData = metaData.filter(
@@ -1105,8 +1345,16 @@ export default class ProductAdaptor {
         products.insuranceDetails = insuranceDetails;
         products.warrantyDetails = warrantyDetails;
         products.amcDetails = amcDetails;
+        products.rc_details = rc_details;
         products.repairBills = repairBills;
         products.pucDetails = pucDetails;
+        products.fuel_details = fuel_details;
+        if (fuel_details.length > 1) {
+          products.mileage = (fuel_details[0].odometer_reading -
+              fuel_details[1].odometer_reading) / fuel_details[1].fuel_quantity;
+        }
+
+        products.accessories = accessories;
         products.serviceSchedules = serviceSchedules ?
             serviceSchedules.map((scheduleItem) => {
               scheduleItem.due_date = moment.utc(products.purchaseDate,
@@ -1126,186 +1374,286 @@ export default class ProductAdaptor {
   }
 
   async updateProductDetails(parameters) {
-    let {user, productBody, metaDataBody, otherItems, id} = parameters;
-    let dbProduct;
-    let flag = false;
-    dbProduct = (await this.modals.products.findOne({where: {id}})).toJSON();
-    productBody.seller_id = dbProduct.seller_id;
-    productBody.brand_id = productBody.brand_id || productBody.brand_id === 0
-        ? productBody.brand_id
-        : dbProduct.brand_id;
-    productBody.model = productBody.model || productBody.model !== ''
-        ? productBody.model
-        : dbProduct.model;
-    productBody.category_id = productBody.category_id ||
-        dbProduct.category_id;
-    productBody.main_category_id = productBody.main_category_id ||
-        dbProduct.main_category_id;
-    productBody.sub_category_id = productBody.sub_category_id ||
-        dbProduct.sub_category_id;
-    productBody.document_date = productBody.document_date ||
-        dbProduct.document_date;
-    productBody.purchase_cost = productBody.purchase_cost ||
-        dbProduct.purchase_cost;
-    productBody.product_name = productBody.product_name ||
-        dbProduct.product_name;
-    const result = await Promise.all([
-      productBody.brand_id || productBody.brand_id === 0 ?
-          this.modals.products.count({
-            where: {
-              id,
-              brand_id: productBody.brand_id,
-              model: productBody.model,
-              status_type: {
-                $notIn: [8],
+    try {
+      let {user, productBody, metaDataBody, otherItems, id} = parameters;
+      let dbProduct;
+      let flag = false;
+      dbProduct = (await this.modals.products.findOne({
+        where: {id}, include: {
+          model: this.modals.users,
+          as: 'consumer',
+          attributes: ['id', ['full_name', 'name'], 'email'],
+        },
+      })).toJSON();
+      productBody.seller_id = dbProduct.seller_id;
+      productBody.brand_id = productBody.brand_id || productBody.brand_id === 0
+          ? productBody.brand_id : dbProduct.brand_id;
+      productBody.model = productBody.model || productBody.model !== ''
+          ? productBody.model : dbProduct.model;
+      productBody.category_id = productBody.category_id ||
+          dbProduct.category_id;
+      productBody.main_category_id = productBody.main_category_id ||
+          dbProduct.main_category_id;
+      productBody.sub_category_id = productBody.sub_category_id ||
+          dbProduct.sub_category_id;
+      productBody.document_date = productBody.document_date ||
+          dbProduct.document_date;
+      productBody.purchase_cost = productBody.purchase_cost ||
+          dbProduct.purchase_cost;
+      productBody.product_name = productBody.product_name ||
+          dbProduct.product_name;
+      const result = await Promise.all([
+        productBody.brand_id || productBody.brand_id === 0 ?
+            this.modals.products.count({
+              where: {
+                id, brand_id: productBody.brand_id,
+                model: productBody.model, status_type: {$notIn: [8]},
               },
-            },
-          }) : 1,
-      this.verifyCopiesExist(id),
-      this.modals.products.count({
-        where: {
-          id,
-          status_type: 8,
-        },
-      }),
-      this.modals.products.count({
-        where: {
-          user_id: productBody.user_id,
-          category_id: [1, 2, 3],
-          status_type: [5, 11],
-        },
-      }),
-    ]);
+            }) : 1,
+        this.verifyCopiesExist(id),
+        this.modals.products.count({
+          where: {id, status_type: 8},
+        }),
+        this.modals.products.count({
+          where: {
+            user_id: productBody.user_id, category_id: [1, 2, 3],
+            status_type: [5, 11],
+          },
+        }),
+      ]);
 
-    if (result[1] && result[0] === 0 && result[2] === 0) {
-      return false;
-    }
+      if (result[1] && result[0] === 0 && result[2] === 0) {
+        return false;
+      }
 
-    if (result[3] === 0 && (productBody.category_id.toString() === '1' ||
-        productBody.category_id.toString() === '2' ||
-        productBody.category_id.toString() === '3')) { // to check it it is the first product
-      flag = true;
+      if (result[3] === 0 && (productBody.category_id.toString() === '1' ||
+          productBody.category_id.toString() === '2' ||
+          productBody.category_id.toString() === '3')) { // to check it it is the first product
+        flag = true;
 
-      notificationAdaptor.sendMailOnDifferentSteps(
-          'Your product is our responsibility now!',
-          user.email, user, 5); // 5 is for 1st product creation
+        notificationAdaptor.sendMailOnDifferentSteps(
+            'Your product is our responsibility now!',
+            user.email, user, 5); // 5 is for 1st product creation
 
-    }
-    const sellerPromise = [];
-    const {amc, insurance, repair, puc, warranty} = otherItems;
-    const isProductAMCSellerSame = false;
-    const isProductRepairSellerSame = false;
-    const isAMCRepairSellerSame = repair && amc && repair.seller_contact ===
-        amc.seller_contact;
-    const isProductPUCSellerSame = false;
-    const {main_category_id, category_id, user_id, brand_name, brand_id, model, document_number, document_date, taxes, purchase_cost, colour_id, seller_contact, seller_name, seller_email} = productBody;
-    const providerOptions = {
-      main_category_id, category_id,
-      status_type: 11, updated_by: user_id,
-    };
-    const insuranceProviderPromise = insurance &&
-    insurance.provider_name ?
-        this.insuranceAdaptor.findCreateInsuranceBrand(_.assign({
-          type: 1, name: insurance.provider_name,
-        }, providerOptions)) :
-        undefined;
-    const warrantyProviderPromise = warranty &&
-    warranty.extended_provider_name ?
-        this.insuranceAdaptor.findCreateInsuranceBrand(_.assign({
-          type: 2, name: warranty.extended_provider_name,
-        }, providerOptions)) :
-        undefined;
+      }
+      const sellerPromise = [];
+      const {amc, insurance, repair, puc, warranty} = otherItems;
+      const isProductAMCSellerSame = false;
+      const isProductRepairSellerSame = false;
+      const isAMCRepairSellerSame = repair && amc && repair.seller_contact ===
+          amc.seller_contact;
+      const isProductPUCSellerSame = false;
+      const {main_category_id, category_id, user_id, brand_name, brand_id, model, document_number, document_date, taxes, purchase_cost, colour_id, seller_contact, seller_name, seller_email} = productBody;
+      const providerOptions = {
+        main_category_id, category_id, status_type: 11, updated_by: user_id,
+      };
+      const insuranceProviderPromise = insurance &&
+      insurance.provider_name ?
+          this.insuranceAdaptor.findCreateInsuranceBrand(_.assign({
+            type: 1, name: insurance.provider_name,
+          }, providerOptions)) :
+          undefined;
+      const warrantyProviderPromise = warranty &&
+      warranty.extended_provider_name ?
+          this.insuranceAdaptor.findCreateInsuranceBrand(_.assign({
+            type: 2, name: warranty.extended_provider_name,
+          }, providerOptions)) :
+          undefined;
 
-    const brandPromise = !brand_id &&
-    brand_id !== 0 &&
-    brand_name ?
-        this.brandAdaptor.findCreateBrand({
-          status_type: 11, brand_name, category_id,
-          updated_by: user_id, created_by: user_id,
-        }) :
-        undefined;
-    this.prepareSellerPromise({
-      sellerPromise, productBody, amc, repair, puc,
-    });
-    sellerPromise.push(insuranceProviderPromise);
-    sellerPromise.push(brandPromise);
-    sellerPromise.push(warrantyProviderPromise);
-    let product = productBody;
-    let [sellerDetail, amcSeller, repairSeller, pucSeller, insuranceProvider, brandDetail, warrantyProvider] = await Promise.all(
-        sellerPromise);
-    const newSeller = seller_contact || seller_name || seller_email ?
-        sellerDetail :
-        undefined;
-    product = _.omit(product, 'seller_name');
-    product = _.omit(product, 'seller_contact');
-    product = _.omit(product, 'brand_name');
-    product.seller_id = newSeller ? newSeller.sid : product.seller_id;
-    product.brand_id = brandDetail ? brandDetail.brand_id : brand_id;
+      const brandPromise = !brand_id &&
+      brand_id !== 0 && brand_name ?
+          this.brandAdaptor.findCreateBrand({
+            status_type: 11, brand_name, category_id,
+            updated_by: user_id, created_by: user_id,
+          }) : undefined;
+      this.prepareSellerPromise({sellerPromise, productBody, amc, repair, puc});
+      sellerPromise.push(insuranceProviderPromise);
+      sellerPromise.push(brandPromise);
+      sellerPromise.push(warrantyProviderPromise);
+      let product = productBody;
+      let [sellerDetail, amcSeller, repairSeller, pucSeller, insuranceProvider, brandDetail, warrantyProvider] = await Promise.all(
+          sellerPromise);
+      const newSeller = seller_contact || seller_name || seller_email ?
+          sellerDetail :
+          undefined;
+      product = _.omit(product, 'seller_name');
+      product = _.omit(product, 'seller_contact');
+      product = _.omit(product, 'brand_name');
+      product.seller_id = newSeller ? newSeller.sid : product.seller_id;
+      product.brand_id = brandDetail ? brandDetail.brand_id : brand_id;
 
-    let metadata = metaDataBody.map((mdItem) => {
-      mdItem = _.omit(mdItem, 'new_drop_down');
-      return mdItem;
-    });
-
-    if (product.new_drop_down && model) {
-      await this.modals.brandDropDown.findCreateFind({
-        where: {title: {$iLike: model}, category_id, brand_id},
-        defaults: {
-          title: model, category_id, brand_id,
-          updated_by: user_id, created_by: user_id, status_type: 11,
-        },
+      let metadata = metaDataBody.map((mdItem) => {
+        mdItem = _.omit(mdItem, 'new_drop_down');
+        return mdItem;
       });
+
+      if (product.new_drop_down && model) {
+        await this.modals.brandDropDown.findCreateFind({
+          where: {title: {$iLike: model}, category_id, brand_id},
+          defaults: {
+            title: model, category_id, brand_id,
+            updated_by: user_id, created_by: user_id, status_type: 11,
+          },
+        });
+      }
+
+      product = !colour_id ? _.omit(product, 'colour_id') : product;
+      product = !purchase_cost && purchase_cost !== 0 ?
+          _.omit(product, 'purchase_cost') :
+          product;
+      product = _.omit(product, 'new_drop_down');
+      product = !model && model !== '' ? _.omit(product, 'model') : product;
+      product = !taxes && taxes !== 0 ? _.omit(product, 'taxes') : product;
+      product = !document_number ? _.omit(product, 'document_number') : product;
+      product = !document_date ? _.omit(product, 'document_date') : product;
+      product = !product.seller_id ? _.omit(product, 'seller_id') : product;
+      product = !product.brand_id && product.brand_id !== 0 ?
+          _.omit(product, 'brand_id') :
+          product;
+      const brandModelPromise = model ? [
+            this.modals.brandDropDown.findOne({
+              where: {
+                brand_id: product.brand_id,
+                title: {$iLike: `${model}%`}, category_id,
+              },
+            }), this.modals.categories.findOne({where: {category_id}})] :
+          [, this.modals.categories.findOne({where: {category_id}})];
+      brandModelPromise.push(this.modals.warranties.findAll({
+        where: {product_id: id, warranty_type: 1},
+        order: [['expiry_date', 'ASC']],
+      }), this.modals.metaData.findAll({where: {product_id: id}}));
+      let [renewalTypes, productDetail, productModel, productCategory, normalWarranties, currentMetaData] = await Promise.all(
+          [
+            this.categoryAdaptor.retrieveRenewalTypes({status_type: 1}),
+            this.updateProduct(id, JSON.parse(JSON.stringify(product))),
+            ...brandModelPromise]);
+      normalWarranties = normalWarranties ?
+          normalWarranties.map((item) => item.toJSON()) :
+          [];
+      product = productDetail;
+      currentMetaData = currentMetaData ?
+          currentMetaData.map(
+              item => item.toJSON()) : [];
+      const productPromise = [];
+      await this.prepareProductItems({
+        product, productModel, productCategory,
+        normalWarranties, productPromise, currentMetaData,
+        metadata, amc, insurance, puc, repair, warranty,
+        renewalTypes, sellerDetail, amcSeller, repairSeller,
+        pucSeller, insuranceProvider, warrantyProvider,
+        isProductAMCSellerSame, isProductRepairSellerSame,
+        isAMCRepairSellerSame, isProductPUCSellerSame,
+      });
+
+      if (!productBody.accessory_part_id && !productBody.accessory_id &&
+          dbProduct.status_type === 8) {
+        const accessories = await this.retrieveAccessoryForProducts(
+            {category_id: productBody.category_id});
+        if (dbProduct.consumer.email) {
+          const {email, id, name} = dbProduct.consumer;
+          this.notificationAdaptor({email, id, name, product: productBody});
+        }
+      }
+      product.flag = flag;
+
+      return product;
+    } catch (e) {
+      console.log('\n\n\n', e);
+      throw e;
     }
+  }
 
-    product = !colour_id ? _.omit(product, 'colour_id') : product;
-    product = !purchase_cost && purchase_cost !== 0 ?
-        _.omit(product, 'purchase_cost') :
-        product;
-    product = _.omit(product, 'new_drop_down');
-    product = !model && model !== '' ? _.omit(product, 'model') : product;
-    product = !taxes && taxes !== 0 ? _.omit(product, 'taxes') : product;
-    product = !document_number ? _.omit(product, 'document_number') : product;
-    product = !document_date ? _.omit(product, 'document_date') : product;
-    product = !product.seller_id ? _.omit(product, 'seller_id') : product;
-    product = !product.brand_id && product.brand_id !== 0 ?
-        _.omit(product, 'brand_id') :
-        product;
-    const brandModelPromise = model ? [
-          this.modals.brandDropDown.findOne({
-            where: {
-              brand_id: product.brand_id,
-              title: {$iLike: `${model}%`}, category_id,
-            },
-          }), this.modals.categories.findOne({where: {category_id}})] :
-        [, this.modals.categories.findOne({where: {category_id}})];
-    brandModelPromise.push(this.modals.warranties.findAll({
-      where: {product_id: id, warranty_type: 1},
-      order: [['expiry_date', 'ASC']],
-    }), this.modals.metaData.findAll({where: {product_id: id}}));
-    let [renewalTypes, productDetail, productModel, productCategory, normalWarranties, currentMetaData] = await Promise.all(
-        [
-          this.categoryAdaptor.retrieveRenewalTypes({status_type: 1}),
-          this.updateProduct(id, JSON.parse(JSON.stringify(product))),
-          ...brandModelPromise]);
-    normalWarranties = normalWarranties ?
-        normalWarranties.map((item) => item.toJSON()) :
-        [];
-    product = productDetail;
-    currentMetaData = currentMetaData ?
-        currentMetaData.map(
-            item => item.toJSON()) : [];
-    const productPromise = [];
-    await this.prepareProductItems({
-      product, productModel, productCategory, normalWarranties, productPromise,
-      currentMetaData, metadata, amc, insurance, puc, repair, warranty,
-      renewalTypes, sellerDetail, amcSeller, repairSeller, pucSeller,
-      insuranceProvider, warrantyProvider, isProductAMCSellerSame,
-      isProductRepairSellerSame, isAMCRepairSellerSame, isProductPUCSellerSame,
-    });
+  async updateAccessoryProduct(parameters) {
+    try {
+      let {user, productBody, otherItems, id, ref_id} = parameters;
+      let dbProduct, masterProduct;
+      let flag = false;
+      [masterProduct, dbProduct] = await Promise.all([
+        this.modals.products.findOne({where: {id: ref_id}}),
+        this.modals.products.findById(id)]);
+      masterProduct = masterProduct.toJSON();
+      dbProduct = dbProduct ? dbProduct.toJSON() : {};
+      productBody.seller_id = dbProduct.seller_id;
+      productBody.brand_id = productBody.brand_id || productBody.brand_id === 0
+          ? productBody.brand_id : dbProduct.brand_id;
+      productBody.job_id = productBody.job_id || masterProduct.job_id;
+      productBody.category_id = productBody.category_id ||
+          masterProduct.category_id;
+      productBody.main_category_id = productBody.main_category_id ||
+          masterProduct.main_category_id;
+      productBody.accessory_part_id = productBody.accessory_part_id ||
+          dbProduct.accessory_part_id;
+      productBody.sub_category_id = productBody.sub_category_id ||
+          masterProduct.sub_category_id;
+      productBody.document_date = productBody.document_date ||
+          dbProduct.document_date;
+      productBody.purchase_cost = productBody.purchase_cost ||
+          dbProduct.purchase_cost;
+      productBody.product_name = productBody.product_name ||
+          dbProduct.product_name;
+      let {warranty} = otherItems;
+      const {
+        main_category_id, category_id, user_id, accessory_part_name, document_number,
+        document_date, taxes, purchase_cost, accessory_part_id, job_id,
+      } = productBody;
 
-    product.flag = flag;
+      const accessory_part_promise = !accessory_part_id && accessory_part_name ?
+          this.findCreateAccessoryPart({
+            status_type: 11, title: accessory_part_name,
+            accessory_part_name, category_id, main_category_id,
+            updated_by: user_id, created_by: user_id,
+          }) : undefined;
+      let product = productBody;
+      let [accessory_part] = await Promise.all([accessory_part_promise]);
+      product = !purchase_cost && purchase_cost !== 0 ?
+          _.omit(product, 'purchase_cost') : product;
+      product = _.omit(product, 'accessory_part_name');
+      product = !taxes && taxes !== 0 ? _.omit(product, 'taxes') : product;
+      product = !document_number ? _.omit(product, 'document_number') : product;
+      product = !document_date ? _.omit(product, 'document_date') : product;
+      product = !product.seller_id ? _.omit(product, 'seller_id') : product;
+      product = !product.brand_id && product.brand_id !== 0 ?
+          _.omit(product, 'brand_id') : product;
+      product.ref_id = ref_id;
+      product.accessory_part_id = accessory_part ?
+          accessory_part.id : product.accessory_part_id;
+      let [renewalTypes, productDetail] = await Promise.all(
+          [
+            this.categoryAdaptor.retrieveRenewalTypes({status_type: 1}),
+            id ? this.updateProduct(id, JSON.parse(JSON.stringify(product))) :
+                this.createEmptyProduct(JSON.parse(JSON.stringify(product)))]);
+      product = productDetail;
+      let {renewal_type, effective_date, id: warranty_id, expiry_date} = warranty ||
+      {};
 
-    return product;
+      if (renewal_type) {
+        const warrantyRenewalType = renewalTypes.find(
+            item => item.type === renewal_type);
+        effective_date = effective_date || document_date || moment.utc();
+        effective_date = moment.utc(effective_date, moment.ISO_8601).isValid() ?
+            moment.utc(effective_date, moment.ISO_8601).startOf('day') :
+            moment.utc(effective_date, 'DD MMM YY').startOf('day');
+        expiry_date = moment.utc(effective_date, moment.ISO_8601).
+            add(warrantyRenewalType.effective_months, 'months').
+            subtract(1, 'day').endOf('days');
+        const warrantyOptions = {
+          renewal_type, updated_by: user_id, status_type: 11, job_id,
+          product_id: productDetail.id, warranty_type: 1, user_id,
+          expiry_date: moment.utc(expiry_date).format('YYYY-MM-DD'),
+          effective_date: moment.utc(effective_date).format('YYYY-MM-DD'),
+          document_date: moment.utc(effective_date).format('YYYY-MM-DD'),
+        };
+
+        warranty = await (warranty_id ?
+            this.warrantyAdaptor.updateWarranties(warranty_id, warrantyOptions)
+            : this.warrantyAdaptor.createWarranties(warrantyOptions));
+      }
+
+      product.warranty = warranty;
+      return product;
+    } catch (e) {
+      throw e;
+    }
   }
 
   async prepareProductItems(parameters) {
@@ -1444,27 +1792,32 @@ export default class ProductAdaptor {
       [
         product.metaData, product.insurances, product.warranties, product.amcs,
         product.repairs, product.pucDetail, product.service_schedules,
-        product.service_center_counts] = await Promise.all([
+        product.service_center_counts, product.rc_details] = await Promise.all([
         Promise.all(metadataPromise),
         Promise.all(insurancePromise),
         Promise.all(warrantyItemPromise),
         Promise.all(amcPromise),
         Promise.all(repairPromise),
-        Promise.all(pucPromise),
-        serviceSchedule,
+        Promise.all(pucPromise), serviceSchedule,
         this.modals.serviceCenters.count({
           include: [
             {
               model: this.modals.brands, as: 'brands',
               where: {brand_id: product.brand_id},
               attributes: [], required: true,
-            },
-            {
+            }, {
               model: this.modals.centerDetails,
               where: {category_id: product.category_id},
               attributes: [], required: true, as: 'centerDetails',
             }],
-        })]);
+        }), main_category_id === 3 ?
+            this.regCertAdaptor.updateRegCertPeriod(
+                {
+                  options: {product_id: product.id, user_id},
+                  purchase_date: document_date,
+                  new_purchase_date: document_date,
+                }) :
+            undefined]);
 
       product.metaData = product.metaData.filter(mdItem => mdItem).map(
           (mdItem) => mdItem.toJSON());
@@ -2027,28 +2380,13 @@ export default class ProductAdaptor {
     let products = await this.modals.products.findAll({
       where: options,
       attributes: [
-        'id',
-        [
-          'product_name',
-          'productName'],
-        [
-          'purchase_cost',
-          'value'],
-        [
-          'main_category_id',
-          'masterCategoryId'],
-        'taxes',
-        [
-          'document_date',
-          'purchaseDate'],
+        'id', ['product_name', 'productName'],
+        ['purchase_cost', 'value'],
+        ['main_category_id', 'masterCategoryId'], 'taxes',
+        ['document_date', 'purchaseDate'],
         ['document_number', 'documentNo'],
         ['updated_at', 'updatedDate'],
-        [
-          'bill_id',
-          'billId'],
-        [
-          'job_id',
-          'jobId'],
+        ['bill_id', 'billId'], ['job_id', 'jobId'],
         'copies', 'user_id',
       ],
     });
@@ -2097,29 +2435,13 @@ export default class ProductAdaptor {
     const productResult = await   this.modals.products.findAll({
       where: options,
       attributes: [
-        'id',
-        [
-          'product_name',
-          'productName'],
-        [
-          'purchase_cost',
-          'value'],
-        [
-          'main_category_id',
-          'masterCategoryId'],
-        'taxes',
-        [
-          'document_date',
-          'purchaseDate'],
+        'id', ['product_name', 'productName'],
+        ['purchase_cost', 'value'],
+        ['main_category_id', 'masterCategoryId'],
+        'taxes', ['document_date', 'purchaseDate'],
         ['document_number', 'documentNo'],
-        ['updated_at', 'updatedDate'],
-        [
-          'bill_id',
-          'billId'],
-        [
-          'job_id',
-          'jobId'],
-        'copies', 'user_id',
+        ['updated_at', 'updatedDate'], ['bill_id', 'billId'],
+        ['job_id', 'jobId'], 'copies', 'user_id',
       ],
     });
     return productResult.map((item) => item.toJSON());
@@ -2174,8 +2496,7 @@ export default class ProductAdaptor {
 
   async createEmptyProduct(productDetail) {
     const productResult = await this.modals.products.create(productDetail);
-    const productData = productResult.toJSON();
-    return {id: productData.id, job_id: productData.job_id};
+    return productResult.toJSON();
   }
 
   async updateProduct(id, productDetail) {
@@ -2265,5 +2586,43 @@ export default class ProductAdaptor {
     await   this.modals.products.destroy({where: {id}});
 
     return true;
+  }
+
+  async findCreateAccessoryPart(values) {
+    let category, accessoryPartModel;
+    accessoryPartModel = await this.modals.accessory_part.findOne({
+      where: {
+        title: {$iLike: `${values.accessory_part_name}`},
+        category_id: values.category_id,
+      },
+    });
+    if (!accessoryPartModel) {
+      accessoryPartModel = await this.modals.accessory_part.create(values);
+    }
+
+    return accessoryPartModel.toJSON();
+  }
+
+  async retrieveAccessoryForProducts(options) {
+    const {category_id} = options;
+    return (await this.modals.table_accessory_categories.findAll(
+        {
+          where: {priority: [1, 2, 3], category_id}, include: [
+            {
+              model: this.modals.table_accessory_products, as: 'products',
+              where: {
+                bb_class: 1,
+                title: {$and: {$ne: '', $not: null}}, details: {
+                  isOutOfStock: false, image: {$and: {$ne: '', $not: null}},
+                  name: {$and: {$ne: '', $not: null}},
+                  price: {$and: {$ne: '', $not: null}},
+                },
+              },
+              attributes: [
+                'id', 'asin', 'accessory_id', 'accessory_type_id',
+                'details', 'affiliate_type', 'bb_class'],
+            }], attributes: ['category_id', 'priority', 'title', 'id'],
+          order: [['category_id', 'asc'], ['priority', 'asc']],
+        })).map(item => item.toJSON());
   }
 }

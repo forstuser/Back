@@ -1,5 +1,6 @@
 import BrandAdaptor from './brands';
 import config from '../../config/main';
+import _ from 'lodash';
 
 export default class CategoryAdaptor {
   constructor(modals) {
@@ -23,33 +24,26 @@ export default class CategoryAdaptor {
     categoryData = result.map(item => {
       const categoryItem = item.toJSON();
       categoryItem.name = categoryItem.name || categoryItem.default_name;
+      categoryItem.default_ids = categoryItem.id === 1 ?
+          config.CATEGORIES.FURNITURE :
+          categoryItem.id === 2 ?
+              config.CATEGORIES.ELECTRONIC :
+              categoryItem.id === 3 ?
+                  config.CATEGORIES.AUTOMOBILE : [];
       return categoryItem;
     });
-    const subCategoryOption = {
-      status_type: 1,
-      ref_id: categoryData.filter(
-          item => !isSubCategoryRequiredForAll && item.id !== 2 && item.id !==
-              3).map(item => item.id),
-    };
-    const main_category_id = options.category_id;
-    const excluded_category_id = main_category_id ? {
-      $notIn:
-          main_category_id === '1' && !isFilterRequest ?
-              config.CATEGORIES.FURNITURE :
-              main_category_id === '2' && !isFilterRequest ?
-                  config.CATEGORIES.ELECTRONIC :
-                  main_category_id === '3' && !isFilterRequest ?
-                      config.CATEGORIES.AUTOMOBILE : [],
-    } : undefined;
-    if (excluded_category_id) {
-      subCategoryOption.category_id = excluded_category_id;
-    }
-
+    const ref_id = !isSubCategoryRequiredForAll ?
+        categoryData.filter(
+            item => item.id !== 2 && item.id !== 3).map(item => item.id) :
+        categoryData.map(item => item.id);
+    const subCategoryOption = {status_type: 1, ref_id};
     const subCategories = await this.retrieveSubCategories(subCategoryOption,
         isBrandFormRequired, language, user);
     categoryData = categoryData.map((item) => {
-      item.subCategories = subCategories.filter(
-          (categoryItem) => categoryItem.refId === item.id);
+      item.subCategories = _.sortBy(subCategories.filter(
+          (categoryItem) => categoryItem.refId === item.id),
+          categoryItem => item.default_ids.indexOf(
+              categoryItem.id));
 
       return item;
     });
@@ -59,13 +53,23 @@ export default class CategoryAdaptor {
   async retrieveSubCategories(options, isBrandFormRequired, language, user) {
     let categoryData;
     options.status_type = 1;
+    user = user || {};
     const result = await this.modals.categories.findAll({
-      where: options, attributes: [
+      where: options, include: [
+        {
+          model: this.modals.products, as: 'products',
+          where: JSON.parse(
+              JSON.stringify({
+                status_type: [5, 11], accessory_part_id: null,
+                accessory_id: null, user_id: user.id || user.ID,
+              })),
+          attributes: ['id', 'product_name'], required: false,
+        }], attributes: [
         ['category_id', 'id'], ['category_name', 'default_name'],
         [`${language ? `category_name_${language}` : `category_name`}`, 'name'],
         ['ref_id', 'refId'], [
           this.modals.sequelize.fn('CONCAT', '/categories/',
-              this.modals.sequelize.literal('category_id'),
+              this.modals.sequelize.literal('"categories"."category_id"'),
               '/images/1/thumbnail'), 'categoryImageUrl']],
       order: ['category_id'],
     });
@@ -254,37 +258,18 @@ export default class CategoryAdaptor {
       include: [
         {
           model: this.modals.dropDowns,
-          as: 'dropDown',
-          where: {
+          as: 'dropDown', where: {
             status_type: 1,
-          },
-          attributes: [
-            'id',
-            'title',
-            [
-              'category_form_id',
-              'categoryFormId'],
-            [
-              'status_type',
-              'status'],
-          ],
-          required: false,
+          }, attributes: [
+            'id', 'title',
+            ['category_form_id', 'categoryFormId'],
+            ['status_type', 'status'],
+          ], required: false,
         },
-      ],
-      attributes: [
-        [
-          'category_id',
-          'categoryId'],
-        'title',
-        'main_category_id',
-        [
-          'form_type',
-          'formType'],
-        [
-          'status_type',
-          'status'],
-        'id',
-        ['display_index', 'displayIndex'],
+      ], attributes: [
+        ['category_id', 'categoryId'], 'title',
+        'main_category_id', ['form_type', 'formType'],
+        ['status_type', 'status'], 'id', ['display_index', 'displayIndex'],
       ],
       order: ['display_index', 'title'],
     });
@@ -297,5 +282,13 @@ export default class CategoryAdaptor {
       order: [['effective_months', 'ASC']],
     });
     return renewalTypes.map(item => item.toJSON());
+  }
+
+  async retrieveAccessoryPart(options) {
+    const accessory_parts = await this.modals.accessory_part.findAll({
+      where: options,
+      order: [['id', 'ASC']],
+    });
+    return accessory_parts.map(item => item.toJSON());
   }
 }

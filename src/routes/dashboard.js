@@ -71,6 +71,17 @@ export function prepareDashboardRoutes(modal, routeObject, middleware) {
       },
     });
 
+    routeObject.push({
+      method: 'GET', path: '/consumer/ehome/products/{type}', config: {
+        auth: 'jwt', pre: [
+          {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: middleware.updateUserActiveStatus, assign: 'userExist',
+          },
+        ], handler: ControllerObject.getEHomeProducts,
+      },
+    });
+
     /*Retrieve mails of consumer*/
     routeObject.push({
       method: 'GET',

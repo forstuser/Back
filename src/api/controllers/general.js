@@ -135,16 +135,9 @@ class GeneralController {
                   results,
           renewalTypes: isBrandRequest ? results[1] : undefined,
           contactType: [
-            {
-              id: 1,
-              name: 'URL',
-            }, {
-              id: 2,
-              name: 'EMAIL',
-            }, {
-              id: 3,
-              name: 'PHONE',
-            }],
+            {id: 1, name: 'URL'},
+            {id: 2, name: 'EMAIL'},
+            {id: 3, name: 'PHONE'}],
         });
       }
       results = await categoryAdaptor.retrieveCategories(
@@ -163,16 +156,41 @@ class GeneralController {
                 results,
         renewalTypes: isBrandRequest ? results[1] : undefined,
         contactType: [
-          {
-            id: 1,
-            name: 'URL',
-          }, {
-            id: 2,
-            name: 'EMAIL',
-          }, {
-            id: 3,
-            name: 'PHONE',
-          }],
+          {id: 1, name: 'URL'},
+          {id: 2, name: 'EMAIL'},
+          {id: 3, name: 'PHONE'}],
+      });
+    } catch (err) {
+
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+      });
+    }
+  }
+
+  static async retrieveAccessoryPartRefData(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    try {
+      return reply.response({
+        status: true,
+        accessory_parts: request.query.category_id ?
+            await categoryAdaptor.retrieveAccessoryPart(
+                {category_id: request.query.category_id}) :
+            await categoryAdaptor.retrieveAccessoryPart(
+                {options: {main_category_id: [1, 2, 3]}}),
       });
     } catch (err) {
 

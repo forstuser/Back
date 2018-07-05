@@ -66,6 +66,9 @@ exports.default = (sequelize, DataTypes) => {
     accessory_id: {
       type: DataTypes.INTEGER
     },
+    accessory_part_id: {
+      type: DataTypes.INTEGER
+    },
     ref_id: {
       type: DataTypes.INTEGER
     },
@@ -107,6 +110,11 @@ exports.default = (sequelize, DataTypes) => {
     products.belongsTo(models.jobs, { as: 'jobs', foreignKey: 'job_id' });
     products.belongsTo(models.offlineSellers, { foreignKey: 'seller_id', as: 'sellers' });
     products.belongsTo(models.table_accessory_categories, { foreignKey: 'accessory_id', as: 'accessory', onDelete: 'cascade' });
+    products.belongsTo(models.accessory_part, {
+      foreignKey: 'accessory_part_id',
+      as: 'accessory_part',
+      onDelete: 'cascade'
+    });
     products.belongsTo(models.brands, { foreignKey: 'brand_id', as: 'brand' });
     products.belongsTo(models.categories, { foreignKey: 'main_category_id', as: 'mainCategory' });
     products.belongsTo(models.categories, { foreignKey: 'category_id', as: 'category' });

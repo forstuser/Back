@@ -62,6 +62,9 @@ export default (sequelize, DataTypes) => {
         accessory_id: {
           type: DataTypes.INTEGER,
         },
+        accessory_part_id: {
+          type: DataTypes.INTEGER,
+        },
         ref_id: {
           type: DataTypes.INTEGER,
         },
@@ -114,6 +117,12 @@ export default (sequelize, DataTypes) => {
         {foreignKey: 'seller_id', as: 'sellers'});
     products.belongsTo(models.table_accessory_categories,
         {foreignKey: 'accessory_id', as: 'accessory', onDelete: 'cascade'});
+    products.belongsTo(models.accessory_part,
+        {
+          foreignKey: 'accessory_part_id',
+          as: 'accessory_part',
+          onDelete: 'cascade',
+        });
     products.belongsTo(models.brands,
         {foreignKey: 'brand_id', as: 'brand'});
     products.belongsTo(models.categories,

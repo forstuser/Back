@@ -5,12 +5,12 @@ export function prepareGeneralRoutes(modal, routeObject, middleware) {
   const controllerInit = new ControllerObject(modal);
   if (controllerInit) {
     routeObject.push({
-      method : 'GET',
-      path : '/version/detail',
-      config : {
-        handler : ControllerObject.checkForAppUpdate,
-        description : 'Get app latest version details',
-      }
+      method: 'GET',
+      path: '/version/detail',
+      config: {
+        handler: ControllerObject.checkForAppUpdate,
+        description: 'Get app latest version details',
+      },
     });
 
     routeObject.push({
@@ -158,6 +158,26 @@ export function prepareGeneralRoutes(modal, routeObject, middleware) {
       config: {
         handler: ControllerObject.retrieveReferenceData,
         description: 'Retrieve Reference data',
+      },
+    });
+
+    routeObject.push({
+      method: 'GET',
+      path: '/referencedata/accessories',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {
+            method: middleware.checkAppVersion,
+            assign: 'forceUpdate',
+          },
+          {
+            method: middleware.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: ControllerObject.retrieveAccessoryPartRefData,
+        description: 'Retrieve Accessory Reference data',
       },
     });
 

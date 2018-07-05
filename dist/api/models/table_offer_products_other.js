@@ -33,6 +33,9 @@ exports.default = (sequelize, DataTypes) => {
     promo_link: {
       type: DataTypes.STRING(2550)
     },
+    trending: {
+      type: DataTypes.BOOLEAN
+    },
     goto_link: {
       type: DataTypes.STRING(2550)
     },

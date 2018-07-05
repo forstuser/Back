@@ -165,6 +165,23 @@ function prepareGeneralRoutes(modal, routeObject, middleware) {
 
     routeObject.push({
       method: 'GET',
+      path: '/referencedata/accessories',
+      config: {
+        auth: 'jwt',
+        pre: [{
+          method: middleware.checkAppVersion,
+          assign: 'forceUpdate'
+        }, {
+          method: middleware.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _general2.default.retrieveAccessoryPartRefData,
+        description: 'Retrieve Accessory Reference data'
+      }
+    });
+
+    routeObject.push({
+      method: 'GET',
       path: '/repairs/products',
       config: {
         auth: 'jwt',
