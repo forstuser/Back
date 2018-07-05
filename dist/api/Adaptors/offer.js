@@ -92,7 +92,7 @@ class OfferAdaptor {
       as: 'offers', where: JSON.parse(JSON.stringify({
         status_type: 1,
         date_end: { $gte: (0, _moment2.default)().format() },
-        other: other ? { $not: null } : undefined,
+        other: other ? { $not: null, $ne: '' } : undefined,
         cashback: cashback ? { $gte: cashback } : undefined,
         discount: discount ? { $gte: discount } : undefined,
         adv_campaign_name: merchant ? { $in: merchant.split(',') } : undefined
@@ -102,7 +102,7 @@ class OfferAdaptor {
       as: 'offers_cashback', where: JSON.parse(JSON.stringify({
         status_type: 1,
         date_end: { $gte: (0, _moment2.default)().format() },
-        other: other ? { $not: null } : undefined,
+        other: other ? { $not: null, $ne: '' } : undefined,
         cashback: cashback ? { $gte: cashback } : undefined,
         discount: discount ? { $gte: discount } : undefined,
         adv_campaign_name: merchant ? { $in: merchant.split(',') } : undefined
@@ -112,7 +112,7 @@ class OfferAdaptor {
       as: 'offers_other', where: JSON.parse(JSON.stringify({
         status_type: 1,
         date_end: { $gte: (0, _moment2.default)().format() },
-        other: other ? { $not: null } : undefined,
+        other: other ? { $not: null, $ne: '' } : undefined,
         cashback: cashback ? { $gte: cashback } : undefined,
         discount: discount ? { $gte: discount } : undefined,
         adv_campaign_name: merchant ? { $in: merchant.split(',') } : undefined

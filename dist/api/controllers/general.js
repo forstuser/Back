@@ -137,21 +137,11 @@ class GeneralController {
           results = await _bluebird2.default.all([categoryAdaptor.retrieveSubCategories({ category_id: request.query.categoryId }, true, request.language, user), categoryAdaptor.retrieveRenewalTypes({
             status_type: 1
           })]);
-        } else if (request.query.mainCategoryId) {
-          results = await categoryAdaptor.retrieveCategories({
-            options: { category_id: request.query.mainCategoryId },
-            isSubCategoryRequiredForAll: true,
-            isBrandFormRequired: false,
-            language: request.language,
-            isFilterRequest: false,
-            user: user
-          });
         } else {
           results = await categoryAdaptor.retrieveCategories({
-            options: { category_level: 1 },
-            isSubCategoryRequiredForAll: true,
-            isBrandFormRequired: false,
-            language: request.language
+            options: request.query.mainCategoryId ? { category_id: request.query.mainCategoryId } : { category_level: 1 },
+            isSubCategoryRequiredForAll: true, isBrandFormRequired: false,
+            language: request.language, isFilterRequest: false, user
           });
         }
 
@@ -160,38 +150,19 @@ class GeneralController {
           dropDowns: request.query.brandId ? results : undefined,
           categories: request.query.brandId ? undefined : isBrandRequest ? results[0] : results,
           renewalTypes: isBrandRequest ? results[1] : undefined,
-          contactType: [{
-            id: 1,
-            name: 'URL'
-          }, {
-            id: 2,
-            name: 'EMAIL'
-          }, {
-            id: 3,
-            name: 'PHONE'
-          }]
+          contactType: [{ id: 1, name: 'URL' }, { id: 2, name: 'EMAIL' }, { id: 3, name: 'PHONE' }]
         });
       }
       results = await categoryAdaptor.retrieveCategories({
         options: { category_level: 1 }, isSubCategoryRequiredForAll: true,
-        isBrandFormRequired: false,
-        language: request.language
+        isBrandFormRequired: false, language: request.language
       });
       return reply.response({
         status: true,
         dropDowns: request.query.brandId ? results : undefined,
         categories: request.query.brandId ? undefined : isBrandRequest ? results[0] : results,
         renewalTypes: isBrandRequest ? results[1] : undefined,
-        contactType: [{
-          id: 1,
-          name: 'URL'
-        }, {
-          id: 2,
-          name: 'EMAIL'
-        }, {
-          id: 3,
-          name: 'PHONE'
-        }]
+        contactType: [{ id: 1, name: 'URL' }, { id: 2, name: 'EMAIL' }, { id: 3, name: 'PHONE' }]
       });
     } catch (err) {
 

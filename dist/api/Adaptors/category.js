@@ -32,9 +32,10 @@ class CategoryAdaptor {
       categoryItem.name = categoryItem.name || categoryItem.default_name;
       return categoryItem;
     });
+    const ref_id = !isSubCategoryRequiredForAll ? categoryData.filter(item => item.id !== 2 && item.id !== 3).map(item => item.id) : categoryData.map(item => item.id);
     const subCategoryOption = {
       status_type: 1,
-      ref_id: categoryData.filter(item => !isSubCategoryRequiredForAll && item.id !== 2 && item.id !== 3).map(item => item.id)
+      ref_id
     };
     const main_category_id = options.category_id;
     const excluded_category_id = main_category_id ? {
