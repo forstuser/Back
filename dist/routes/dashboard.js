@@ -33,6 +33,18 @@ function prepareDashboardRoutes(modal, routeObject, middleware) {
       }
     });
 
+    routeObject.push({
+      method: 'GET',
+      path: '/consumer/upcomings',
+      config: {
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, {
+          method: middleware.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _dashboard2.default.retrieveUpcomingService
+      }
+    });
+
     /*Retrieve E-Home of consumer*/
     routeObject.push({
       method: 'GET',
