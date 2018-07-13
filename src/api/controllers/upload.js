@@ -1558,6 +1558,50 @@ class UploadController {
     }
   }
 
+  static async retrieveOfferBannerImage(request, reply) {
+    if (!request.pre.forceUpdate) {
+      try {
+        const fsImplBrand = new S3FS(
+            `${config.AWS.S3.BUCKET}/${config.AWS.S3.OFFER_BANNERS}`,
+            config.AWS.ACCESS_DETAILS);
+        const fileResult = await fsImplBrand.readFile(
+            `${request.params.offer_id}.png`, 'utf8');
+        return reply.response(fileResult.Body).
+            header('Content-Type', fileResult.ContentType).
+            header('Content-Disposition',
+                `attachment; filename=${request.params.id}.png`);
+      } catch (err) {
+        console.log(
+            `Error on ${new Date()} retrieving fact image is as follow: \n \n ${err}`);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: 1,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
+        return reply.response({
+          status: false,
+          message: 'Unable to retrieve image',
+          err,
+          forceUpdate: request.pre.forceUpdate,
+        });
+      }
+    } else {
+      return reply.response({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
   static async retrieveUserImage(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist === 0) {

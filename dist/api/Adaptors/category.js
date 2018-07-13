@@ -45,7 +45,12 @@ class CategoryAdaptor {
 
       return item;
     });
-    return categoryData;
+    const otherCategoryData = categoryData.find(item => item.id === 9);
+    categoryData = categoryData.filter(item => item.id !== 9);
+    if (otherCategoryData) {
+      categoryData.push(otherCategoryData);
+    }
+    return JSON.parse(JSON.stringify(categoryData));
   }
 
   async retrieveSubCategories(options, isBrandFormRequired, language, user) {
@@ -97,7 +102,7 @@ class CategoryAdaptor {
           }
         }, {
           $and: {
-            category_id: categoryData.map(item => item.id),
+            main_category_id: categoryData.map(item => item.refId),
             title: {
               $iLike: 'Chasis Number'
             }

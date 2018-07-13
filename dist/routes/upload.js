@@ -256,6 +256,14 @@ function prepareUploadRoutes(modal, routeObject, middleware) {
       }
     });
 
+    routeObject.push({
+      method: 'GET',
+      path: '/offer/{offer_id}/banners',
+      config: {
+        handler: _upload2.default.retrieveOfferBannerImage
+      }
+    });
+
     /*Retrieve Category images*/
     routeObject.push({
       method: 'GET',

@@ -266,6 +266,14 @@ export function prepareUploadRoutes(modal, routeObject, middleware) {
       },
     });
 
+    routeObject.push({
+      method: 'GET',
+      path: '/offer/{offer_id}/banners',
+      config: {
+        handler: ControllerObject.retrieveOfferBannerImage,
+      },
+    });
+
     /*Retrieve Category images*/
     routeObject.push({
       method: 'GET',

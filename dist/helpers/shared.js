@@ -3,6 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
+exports.notifyUser = notifyUser;
 exports.preparePaymentDetails = preparePaymentDetails;
 exports.monthlyPaymentCalc = monthlyPaymentCalc;
 exports.retrieveMailTemplate = retrieveMailTemplate;
@@ -41,6 +42,14 @@ var _main = require('../config/main');
 
 var _main2 = _interopRequireDefault(_main);
 
+var _request = require('request');
+
+var _request2 = _interopRequireDefault(_request);
+
+var _bluebird = require('bluebird');
+
+var _bluebird2 = _interopRequireDefault(_bluebird);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 const filePath = '';
@@ -51,7 +60,7 @@ const basicStringConst = 'basic';
 const emptyObject = {};
 const emptyString = '';
 const authorizationParamConst = 'authorization';
-const readJSONFile = fileName => new Promise((resolve, reject) => {
+const readJSONFile = fileName => new _bluebird2.default((resolve, reject) => {
     const completeFilePath = _path2.default.resolve(__dirname, `${filePath}${fileName}${jsonFileType}`);
     (0, _fs.readFile)(completeFilePath, utfFormatting, (err, data) => {
         if (err) {
@@ -164,6 +173,88 @@ function retrieveDaysInsight(distinctInsight) {
         purchaseDate: _moment2.default.utc(weekItem.purchaseDate, _moment2.default.ISO_8601),
         purchaseDay: _moment2.default.utc(weekItem.purchaseDate, _moment2.default.ISO_8601).format('ddd')
     }));
+}
+
+async function notifyUser(userId, data, notification, fcm_details) {
+    const androidFcmKeys = fcm_details.filter(fcm => fcm.platform_id === 1).map(user => ({ fcm_id: user.fcm_id, user_id: user.user_id }));
+    const iosFcmKeys = fcm_details.filter(fcm => fcm.platform_id === 2).map(user => ({ fcm_id: user.fcm_id, user_id: user.user_id }));
+    data.big_text = data.description;
+    notification.big_text = notification.description;
+    if (androidFcmKeys.length > 0) {
+        await androidNotificationDispatcher(androidFcmKeys, fcm_details, data);
+    }
+
+    if (iosFcmKeys.length > 0) {
+        await iosNotificationDispatcher(iosFcmKeys, fcm_details, notification, data);
+    }
+
+    return '';
+}
+
+async function iosNotificationDispatcher(iosFcmKeys, result, notification, data) {
+    await iosFcmKeys.forEach(async (fcm_detail, index) => {
+        await _bluebird2.default.try(() => setTimeout(((fcm_detail, notification, data, config) => () => {
+            return (0, _request2.default)({
+                uri: 'https://fcm.googleapis.com/fcm/send',
+                method: 'POST',
+                headers: { Authorization: `key=${config.GOOGLE.FCM_KEY}` },
+                json: {
+                    priority: 'high',
+                    data,
+                    registration_ids: [fcm_detail.fcm_id],
+                    notification: notification || {
+                        title: data.title,
+                        body: data.description,
+                        big_text: data.big_text || data.description
+                    }
+                }
+            }, (error, response, body) => {
+                if (error) {
+                    console.log(error);
+                }
+                // extract invalid registration for removal
+                if (body.failure > 0 && Array.isArray(body.results) && body.results.length === result.length) {
+                    const results = body.results;
+                    for (let i = 0; i < result.length; i += 1) {
+                        if (results[i].error === 'InvalidRegistration') {
+                            result[i].destroy().then(console.log);
+                        }
+                    }
+                }
+            });
+        })(fcm_detail, notification, data, _main2.default), index * 50));
+    });
+}
+
+async function androidNotificationDispatcher(androidFcmKeys, result, data) {
+    await androidFcmKeys.forEach(async (fcm_detail, index) => {
+        await _bluebird2.default.try(() => setTimeout(((fcm_detail, data, config) => () => {
+            return (0, _request2.default)({
+                uri: 'https://fcm.googleapis.com/fcm/send',
+                method: 'POST',
+                headers: { Authorization: `key=${config.GOOGLE.FCM_KEY}` },
+                json: {
+                    priority: 'high',
+                    data,
+                    registration_ids: [fcm_detail.fcm_id]
+                }
+            }, (error, response, body) => {
+                if (error) {
+                    console.log(error);
+                }
+
+                // extract invalid registration for removal
+                if (body.failure > 0 && Array.isArray(body.results) && body.results.length === result.length) {
+                    const results = body.results;
+                    for (let i = 0; i < result.length; i += 1) {
+                        if (results[i].error === 'InvalidRegistration') {
+                            result[i].destroy().then(console.log);
+                        }
+                    }
+                }
+            });
+        })(fcm_detail, data, _main2.default), index * 50));
+    });
 }
 
 function preparePaymentDetails(parameters) {

@@ -353,7 +353,7 @@ class DashboardAdaptor {
         }
 
         return scheduledProduct;
-      }).filter(item => item.dueIn !== undefined && item.dueIn !== null && item.dueIn <= 7 && item.dueIn >= 0);
+      });
 
       const metaData = productDetails[0];
       let productList = productDetails[1].map(productItem => {

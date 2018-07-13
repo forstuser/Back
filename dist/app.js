@@ -95,6 +95,7 @@ const init = async () => {
     server.events.on({ name: 'request' }, (request, event, tags) => {
 
       if (tags.error) {
+        console.log(event);
         _models2.default.logs.create({
           api_action: request.method,
           log_type: 2,
@@ -106,6 +107,7 @@ const init = async () => {
     (0, _router2.default)(server, _models2.default);
     await server.start();
   } catch (e) {
+    console.log(e);
     throw e;
   }
   return server;

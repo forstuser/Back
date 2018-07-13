@@ -94,10 +94,10 @@ class AccessoryAdaptor {
       const model_accessory = _main2.default.CATEGORIES.MODEL_ACCESSORIES;
       let { categoryid, bbclass, accessory_ids, offset, limit, model, brand_id } = queryOptions;
       accessory_ids = (accessory_ids || '').split(',').filter(item => !!item);
-      const accessory_types = await this.retrieveAccessoryType({
+      const accessory_types = brand_id || model ? await this.retrieveAccessoryType({
         where: JSON.parse(JSON.stringify({ brand_id, model })),
         attributes: ['id']
-      });
+      }) : [];
       let accessory_type_id = accessory_types.map(item => item.id);
       accessory_type_id = accessory_type_id.length > 0 ? accessory_type_id : undefined;
       let [accessoryCategories, categories, products] = await this.retrieveAccessoryCategoryProducts({
@@ -124,7 +124,7 @@ class AccessoryAdaptor {
         options: {
           where: accessoryProductOptions,
           attributes: ['id', 'asin', 'accessory_id', 'accessory_type_id', 'affiliate_type', [this.modals.sequelize.json('details.price'), 'price'], [this.modals.sequelize.json('details.mrp'), 'mrp'], [this.modals.sequelize.json('details.image'), 'image'], [this.modals.sequelize.json('details.url'), 'url'], [this.modals.sequelize.json('details.name'), 'name'], [this.modals.sequelize.json('details.rating'), 'rating'], [this.modals.sequelize.json('details.productId'), 'pid'], [this.modals.sequelize.json('details.isOutOfStock'), 'isOutOfStock'], [this.modals.sequelize.json('details.seller'), 'seller'], 'bb_class'],
-          order: [['bb_class', 'asc'], ['affiliate_type', 'asc']]
+          order: [['bb_class', 'asc'], ['id']]
         }, accessory_type_id, modelBasedAccessoryIds, brand_id,
         model
       });
@@ -194,7 +194,7 @@ class AccessoryAdaptor {
       return await _bluebird2.default.all([this.retrieveAccessoryCategories({
         where: accessoryOptions,
         attributes: ['id', 'title', 'category_id'],
-        order: [['priority']]
+        order: [['priority'], ['id']]
       }), this.retrieveProductCategories({
         where: categoryNameOptions,
         attributes: ['category_id', 'category_name']

@@ -78,10 +78,10 @@ export default class AccessoryAdaptor {
       const model_accessory = config.CATEGORIES.MODEL_ACCESSORIES;
       let {categoryid, bbclass, accessory_ids, offset, limit, model, brand_id} = queryOptions;
       accessory_ids = (accessory_ids || '').split(',').filter((item) => !!item);
-      const accessory_types = await this.retrieveAccessoryType({
+      const accessory_types = brand_id || model  ? await this.retrieveAccessoryType({
         where: JSON.parse(JSON.stringify({brand_id, model})),
         attributes: ['id'],
-      });
+      }) : [];
       let accessory_type_id = accessory_types.map((item) => item.id);
       accessory_type_id = accessory_type_id.length > 0 ?
           accessory_type_id : undefined;
@@ -126,7 +126,7 @@ export default class AccessoryAdaptor {
               'isOutOfStock'],
             [this.modals.sequelize.json('details.seller'), 'seller'],
             'bb_class'],
-          order: [['bb_class', 'asc'], ['affiliate_type', 'asc']],
+          order: [['bb_class', 'asc'], ['id']],
         }, accessory_type_id, modelBasedAccessoryIds, brand_id,
         model,
       });
@@ -215,7 +215,7 @@ export default class AccessoryAdaptor {
         this.retrieveAccessoryCategories({
           where: accessoryOptions,
           attributes: ['id', 'title', 'category_id'],
-          order: [['priority']],
+          order: [['priority'], ['id']],
         }),
         this.retrieveProductCategories({
           where: categoryNameOptions,

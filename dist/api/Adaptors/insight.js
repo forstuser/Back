@@ -102,12 +102,12 @@ class InsightAdaptor {
 
   async prepareInsightData(user, request) {
     let { min_date, max_date, for_lifetime, for_year, for_month } = request.query;
-    for_month = for_month ? for_month - 1 : (0, _moment2.default)().month();
+    let calc_month = for_month ? for_month - 1 : (0, _moment2.default)().month();
     for_lifetime = !!for_lifetime && for_lifetime.toLowerCase() === 'true';
-    const for_month_date = [for_year || (0, _moment2.default)().year(), for_month, 1];
+    const for_month_date = [for_year || (0, _moment2.default)().year(), calc_month, 1];
     const for_year_date = [for_year, 0, 1];
-    min_date = (min_date ? (0, _moment2.default)(min_date, _moment2.default.ISO_8601).startOf('day') : for_year ? (0, _moment2.default)(for_year_date).startOf('year') : (0, _moment2.default)(for_month_date).startOf('month')).format();
-    max_date = (max_date ? (0, _moment2.default)(max_date, _moment2.default.ISO_8601).endOf('day') : for_year ? (0, _moment2.default)(for_year_date).endOf('year') : (0, _moment2.default)(for_month_date).endOf('month')).format();
+    min_date = (min_date ? (0, _moment2.default)(min_date, _moment2.default.ISO_8601).startOf('day') : for_year && !for_month ? (0, _moment2.default)(for_year_date).startOf('year') : (0, _moment2.default)(for_month_date).startOf('month')).format();
+    max_date = (max_date ? (0, _moment2.default)(max_date, _moment2.default.ISO_8601).endOf('day') : for_year && !for_month ? (0, _moment2.default)(for_year_date).endOf('year') : (0, _moment2.default)(for_month_date).endOf('month')).format();
     try {
       const result = await this.prepareCategoryData(user, for_lifetime ? {} : { document_date: { $between: [min_date, max_date] } });
 
@@ -170,14 +170,18 @@ class InsightAdaptor {
     const category_id = request.params.id;
     let { min_date, max_date, for_lifetime, for_year, for_month } = request.query;
     for_lifetime = !!for_lifetime && for_lifetime.toLowerCase() === 'true';
-    for_month = for_month ? for_month - 1 : (0, _moment2.default)().month();
-    const for_month_date = [for_year || (0, _moment2.default)().year(), for_month, 1];
+    let calc_month = for_month ? for_month - 1 : (0, _moment2.default)().month();
+    const for_month_date = [for_year || (0, _moment2.default)().year(), calc_month, 1];
     const for_year_date = [for_year, 0, 1];
-    min_date = (min_date ? (0, _moment2.default)(min_date, _moment2.default.ISO_8601).startOf('day') : for_year ? (0, _moment2.default)(for_year_date).startOf('year') : (0, _moment2.default)(for_month_date).startOf('month')).format();
-    max_date = (max_date ? (0, _moment2.default)(max_date, _moment2.default.ISO_8601).endOf('day') : for_year ? (0, _moment2.default)(for_year_date).endOf('year') : (0, _moment2.default)(for_month_date).endOf('month')).format();
+    min_date = (min_date ? (0, _moment2.default)(min_date, _moment2.default.ISO_8601).startOf('day') : for_year && !for_month ? (0, _moment2.default)(for_year_date).startOf('year') : (0, _moment2.default)(for_month_date).startOf('month')).format();
+    max_date = (max_date ? (0, _moment2.default)(max_date, _moment2.default.ISO_8601).endOf('day') : for_year && !for_month ? (0, _moment2.default)(for_year_date).endOf('year') : (0, _moment2.default)(for_month_date).endOf('month')).format();
     try {
       const [category] = await this.prepareCategoryData(user, JSON.parse(JSON.stringify({
-        category_id, document_date: for_lifetime ? { $lte: (0, _moment2.default)() } : { $between: [min_date, max_date] }
+        category_id,
+        document_date: for_lifetime ? { $lte: (0, _moment2.default)() } : { $between: [min_date, max_date] },
+        ref_id: {
+          $or: [{ $not: null }, { $is: null }]
+        }
       })));
       const productList = _lodash2.default.chain(category.expenses).filter(item => item.purchaseDate && _moment2.default.utc(item.purchaseDate, _moment2.default.ISO_8601).isSameOrBefore(_moment2.default.utc().valueOf())).orderBy(['purchaseDate'], ['desc']).value();
       return {
@@ -214,7 +218,8 @@ class InsightAdaptor {
     const categoryOption = { category_level: 1, status_type: 1, category_id };
     const productOptions = JSON.parse(JSON.stringify({
       status_type: [5, 11, 12], product_status_type: [5, 11],
-      user_id: user.id || user.ID, document_date, main_category_id: category_id
+      user_id: user.id || user.ID, document_date, main_category_id: category_id,
+      ref_id: { $or: [{ $not: null }, { $is: null }] }
     }));
 
     if (!category_id) {

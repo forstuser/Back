@@ -215,6 +215,7 @@ class ProductItemController {
           forceUpdate: request.pre.forceUpdate,
         });
       } else if (request.pre.userExist && !request.pre.forceUpdate) {
+        console.log(JSON.stringify({payload: request.payload}));
         const providerPromise =
             request.payload.provider_name ?
                 insuranceAdaptor.findCreateInsuranceBrand({
@@ -1124,35 +1125,41 @@ class ProductItemController {
         let productResult = await productAdaptor.retrieveProductById(
             product_id, {status_type: [5, 8, 11], main_category_id: 3});
         if (productResult) {
-          const currentItem = productResult ?
-              productResult.fuel_details.find(
-                  (item) => item.id === parseInt(fuel_id)) :
-              undefined;
-          effective_date = effective_date || moment.utc();
-          effective_date = moment.utc(effective_date, moment.ISO_8601).
-              isValid() ? moment.utc(effective_date,
-              moment.ISO_8601).startOf('day') :
-              moment.utc(effective_date, 'DD MMM YY').startOf('day');
-          const values = {
-            fuel_quantity, fuel_type, odometer_reading, product_id,
-            updated_by: user.id || user.ID, status_type: 11,
-            job_id: job_id || productResult.jobId, purchase_cost: value,
-            document_number, user_id: user.id || user.ID,
-            effective_date: effective_date ? moment.utc(effective_date).
-                format('YYYY-MM-DD') : undefined,
-            document_date: effective_date ? moment.utc(effective_date).
-                format('YYYY-MM-DD') : undefined,
-          };
-          const fuel_detail = fuel_id ?
-              await fuelAdaptor.updateRefuelings(fuel_id, values) :
-              await fuelAdaptor.createRefuelings(values);
+          const prevFuel = productResult.fuel_details.find(
+                  (item) => item.odometer_reading > odometer_reading && moment.utc(effective_date, moment.ISO_8601).isAfter(moment.utc(item.document_date, moment.ISO_8601), 'day'));
+          if(!prevFuel) {
+            effective_date = effective_date || moment.utc();
+            effective_date = moment.utc(effective_date, moment.ISO_8601).
+                isValid() ? moment.utc(effective_date,
+                moment.ISO_8601).startOf('day') :
+                moment.utc(effective_date, 'DD MMM YY').startOf('day');
+            const values = {
+              fuel_quantity, fuel_type, odometer_reading, product_id,
+              updated_by: user.id || user.ID, status_type: 11,
+              job_id: job_id || productResult.jobId, purchase_cost: value,
+              document_number, user_id: user.id || user.ID,
+              effective_date: effective_date ? moment.utc(effective_date).
+                  format('YYYY-MM-DD') : undefined,
+              document_date: effective_date ? moment.utc(effective_date).
+                  format('YYYY-MM-DD') : undefined,
+            };
+            const fuel_detail = fuel_id ?
+                await fuelAdaptor.updateRefuelings(fuel_id, values) :
+                await fuelAdaptor.createRefuelings(values);
 
-          return fuel_detail ? reply.response({
-            status: true, message: 'successful', fuel_detail,
-            forceUpdate: request.pre.forceUpdate,
-          }) : reply.response({
+            return fuel_detail ? reply.response({
+              status: true, message: 'successful', fuel_detail,
+              forceUpdate: request.pre.forceUpdate,
+            }) : reply.response({
+              status: false,
+              message: 'Fuel Detail already exist.',
+              forceUpdate: request.pre.forceUpdate,
+            });
+          }
+
+          return reply.response({
             status: false,
-            message: 'Fuel Detail already exist.',
+            message: `Odometer reading can't be less than the previous one.`,
             forceUpdate: request.pre.forceUpdate,
           });
         }
@@ -1210,8 +1217,7 @@ class ProductItemController {
         });
       } else if (request.pre.userExist && !request.pre.forceUpdate) {
         await fuelAdaptor.deleteRefueling(
-            request.params.rc_id, user.id ||
-            user.ID);
+            request.params.fuel_id, user.id || user.ID);
         return reply.response({
           status: true,
         });

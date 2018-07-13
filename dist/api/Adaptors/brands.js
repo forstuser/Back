@@ -122,11 +122,9 @@ class BrandAdaptor {
 
   async findCreateBrand(values) {
     let brandData, brandDetail, category;
-    const categoryModel = this.modals.categories.findOne({
-      where: {
-        category_id: values.category_id
-      }
-    });
+    const { category_id } = values;
+    const categoryModel = await this.modals.categories.findOne({ where: { category_id } });
+    console.log(JSON.stringify({ categoryModel, category_id }));
     category = categoryModel.toJSON();
     const brandModel = await this.modals.brands.findOne({
       where: {

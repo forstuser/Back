@@ -71,15 +71,15 @@ class InsightAdaptor {
 
   async prepareInsightData(user, request) {
     let {min_date, max_date, for_lifetime, for_year, for_month} = request.query;
-    for_month = for_month ? for_month - 1 : moment().month();
+    let calc_month = for_month ? for_month - 1 : moment().month();
     for_lifetime = (!!for_lifetime && for_lifetime.toLowerCase() === 'true');
-    const for_month_date = [for_year || moment().year(), for_month, 1];
+    const for_month_date = [for_year || moment().year(), calc_month, 1];
     const for_year_date = [for_year, 0, 1];
     min_date = (min_date ? moment(min_date, moment.ISO_8601).startOf('day') :
-        for_year ? moment(for_year_date).startOf('year') :
+        for_year && !for_month ? moment(for_year_date).startOf('year') :
             moment(for_month_date).startOf('month')).format();
     max_date = (max_date ? moment(max_date, moment.ISO_8601).endOf('day') :
-        for_year ? moment(for_year_date).endOf('year') :
+        for_year && !for_month ? moment(for_year_date).endOf('year') :
             moment(for_month_date).endOf('month')).format();
     try {
       const result = await this.prepareCategoryData(user, for_lifetime ?
@@ -154,20 +154,24 @@ class InsightAdaptor {
     const category_id = request.params.id;
     let {min_date, max_date, for_lifetime, for_year, for_month} = request.query;
     for_lifetime = (!!for_lifetime && for_lifetime.toLowerCase() === 'true');
-    for_month = for_month ? for_month - 1 : moment().month();
-    const for_month_date = [for_year || moment().year(), for_month, 1];
+    let calc_month = for_month ? for_month - 1 : moment().month();
+    const for_month_date = [for_year || moment().year(), calc_month, 1];
     const for_year_date = [for_year, 0, 1];
     min_date = (min_date ? moment(min_date, moment.ISO_8601).startOf('day') :
-        for_year ? moment(for_year_date).startOf('year') :
+        for_year && !for_month ? moment(for_year_date).startOf('year') :
             moment(for_month_date).startOf('month')).format();
     max_date = (max_date ? moment(max_date, moment.ISO_8601).endOf('day') :
-        for_year ? moment(for_year_date).endOf('year') :
+        for_year && !for_month ? moment(for_year_date).endOf('year') :
             moment(for_month_date).endOf('month')).format();
     try {
       const [category] = await this.prepareCategoryData(user,
           JSON.parse(JSON.stringify({
-            category_id, document_date: for_lifetime ?
+            category_id,
+            document_date: for_lifetime ?
                 {$lte: moment()} : {$between: [min_date, max_date]},
+            ref_id: {
+              $or: [{$not: null}, {$is: null}],
+            },
           })));
       const productList = _.chain(category.expenses).
           filter((item) => (item.purchaseDate &&
@@ -211,6 +215,7 @@ class InsightAdaptor {
     const productOptions = JSON.parse(JSON.stringify({
       status_type: [5, 11, 12], product_status_type: [5, 11],
       user_id: user.id || user.ID, document_date, main_category_id: category_id,
+      ref_id: {$or: [{$not: null}, {$is: null}]},
     }));
 
     if (!category_id) {
@@ -221,7 +226,7 @@ class InsightAdaptor {
         [
           this.categoryAdaptor.retrieveCategories({
             options: JSON.parse(JSON.stringify(categoryOption)),
-            isSubCategoryRequiredForAll:false,
+            isSubCategoryRequiredForAll: false,
             isBrandFormRequired: false, language,
           }), this.productAdaptor.retrieveProducts(productOptions, language),
           this.amcAdaptor.retrieveAMCs(productOptions),

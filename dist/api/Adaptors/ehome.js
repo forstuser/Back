@@ -205,13 +205,9 @@ class EHomeAdaptor {
         offline_seller_id, online_seller_id, sort_by,
         search_value: `%${search_value || ''}%`, limit, offset
       }, request.language), this.retrieveRecentSearch(user)]);
-      let brands,
-          productList = [],
-          offlineSellers,
-          onlineSellers;
-      categoryData = categoryData.map(result => {
-        productList.push(...result.productList);
-        /* const listIndex = (pageNo * 10) - 10; */
+      let brands, offlineSellers, onlineSellers;
+      let { productList, categories } = categoryData;
+      categories = categories.map(result => {
         result.brands = _lodash2.default.uniqBy(result.productList.filter(item => item.brand).map(item => {
           const brandItem = item.brand;
           brandItem.id = brandItem.brandId;
@@ -240,7 +236,7 @@ class EHomeAdaptor {
           const searches = item.toJSON();
           return searches.searchValue;
         }).slice(0, 5),
-        filterData: categoryData,
+        filterData: categories,
         forceUpdate: request.pre.forceUpdate
       };
     } catch (err) {
@@ -319,17 +315,17 @@ class EHomeAdaptor {
       isBrandFormRequired: false, isFilterRequest: true,
       isSubCategoryRequiredForAll: true, language, user
     }), this.productAdaptor.retrieveEHomeProducts(productOptions, language, limit, offset, sort_by)]);
-    return categories.map(categoryItem => {
-      const category = categoryItem;
-      const products = _lodash2.default.chain(productList).map(productItem => {
-        const product = productItem;
-        product.dataIndex = 1;
-        return product;
-      }).filter(productItem => productItem.masterCategoryId === category.id).value();
-      category.productList = _lodash2.default.chain([...products] || []).sortBy(item => _moment2.default.utc(item.purchaseDate, _moment2.default.ISO_8601)).reverse().value();
-
-      return category;
-    });
+    return {
+      categories: categories.map(categoryItem => {
+        const category = categoryItem;
+        category.productList = productList.map(productItem => {
+          const product = productItem;
+          product.dataIndex = 1;
+          return product;
+        }).filter(productItem => productItem.masterCategoryId === category.id);
+        return category;
+      }), productList
+    };
   }
 
   async prepareProductDetail(parameters) {

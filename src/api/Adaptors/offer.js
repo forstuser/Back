@@ -136,7 +136,7 @@ export default class OfferAdaptor {
       });
 
       offers = await Promise.all(
-          categories.map(async (item) => await this.retrieveOfferList({
+          categories.map((item) => this.retrieveOfferList({
             category_id: item.id, cashback, discount, discount_offer_id,
             offset, limit, other, cashback_offer_id, other_offer_id,
             merchant, cashback_sort, discount_sort, other_sort,
@@ -148,11 +148,7 @@ export default class OfferAdaptor {
         return item;
       });
     }
-    [
-      category, offers,
-      trending_discount,
-      trending_cashback,
-      trending_others] = await Promise.all([
+    [category, offers] = await Promise.all([
       this.retrieveOfferCategory({
         where: {id}, attributes: [
           'id', 'category_level', 'category_name', 'category_image_name'],
@@ -161,15 +157,8 @@ export default class OfferAdaptor {
         category_id: id, cashback, discount, discount_offer_id,
         limit, offset, other, cashback_offer_id, other_offer_id,
         merchant, cashback_sort, discount_sort, other_sort,
-      }),
-      this.retrieveOffers({category_id, trending: true}, 0),
-      this.retrieveOffers({category_id, trending: true}, 1),
-      this.retrieveOffers({category_id, trending: true}, 2)]);
+      })]);
     category.offers = offers;
-    category.trending = [
-      ...trending_discount,
-      ...trending_cashback,
-      ...trending_others];
 
     return category;
 
@@ -213,18 +202,19 @@ export default class OfferAdaptor {
         offset, limit,
       });
     } else {
-      offerOptions.id = data_option === 1 && cashback_offer_id ?
+      /*offerOptions.id = data_option === 1 && cashback_offer_id ?
           {$gt: cashback_offer_id} : data_option === 2 && other_offer_id ?
               {$gt: other_offer_id} :
               data_option === 0 && discount_offer_id ?
-                  {$gt: discount_offer_id} :
-                  undefined;
+                  {$gt: discount_offer_id} : undefined;*/
       offers[offer_values[data_option]] = await this.retrieveOffers(data_option,
           {
-            where: JSON.parse(JSON.stringify(offerOptions)), offset, limit,
+            where: JSON.parse(JSON.stringify(offerOptions)),
             order: data_option === 1 ?
                 [['cashback', cashback_sort]] :
-                [['discount', discount_sort], ['cashback', cashback_sort]],
+                [
+                  ['discount', discount_sort],
+                  ['cashback', cashback_sort]], /* offset, limit,*/
           });
     }
 
@@ -258,6 +248,7 @@ export default class OfferAdaptor {
         }
       }
     }
+    console.log(JSON.stringify({offer_list, limit}));
     return offers;
   }
 

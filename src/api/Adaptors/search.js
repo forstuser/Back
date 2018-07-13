@@ -21,34 +21,36 @@ class SearchAdaptor {
     this.brandAdaptor = new BrandAdaptor(modals);
   }
 
-  prepareSearchResult(user, searchValue, language) {
-    return Promise.all([
-      this.fetchProductDetailOnline(user, `%${searchValue}%`),
-      this.fetchProductDetailOffline(user, `%${searchValue}%`),
-      this.fetchProductDetailBrand(user, `%${searchValue}%`),
-    ]).then((results) => {
-      const onlineSellerProductId = results[0].map(item => item.id);
-      const offlineSellerProductId = results[1].map(item => item.id);
-      const brandProductId = results[2].map(item => item.id);
-      return Promise.all([
-        this.fetchProductDetails(user, `%${searchValue}%`,
-            [
-              ...onlineSellerProductId,
-              ...offlineSellerProductId,
-              ...brandProductId], language),
-        this.prepareCategoryData(user, `%${searchValue}%`, language),
-        this.updateRecentSearch(user, searchValue),
-        this.retrieveRecentSearch(user),
-      ]);
-    }).then((result) => {
+  async prepareSearchResult(user, searchValue, language) {
+    try {
+      let [onlineSellerProductId, offlineSellerProductId, brandProductId] = await Promise.all(
+          [
+            this.fetchProductDetailOnline(user, `%${searchValue}%`),
+            this.fetchProductDetailOffline(user, `%${searchValue}%`),
+            this.fetchProductDetailBrand(user, `%${searchValue}%`),
+          ]);
+      onlineSellerProductId = onlineSellerProductId.map(item => item.id);
+      offlineSellerProductId = offlineSellerProductId.map(item => item.id);
+      brandProductId = brandProductId.map(item => item.id);
+      let [productList, categoryList, recent_search_update, recent_search] = await Promise.all(
+          [
+            this.fetchProductDetails(user, `%${searchValue}%`,
+                [
+                  ...onlineSellerProductId.map(item => item.id),
+                  ...offlineSellerProductId.map(item => item.id),
+                  ...brandProductId.map(item => item.id)], language),
+            this.prepareCategoryData(user, `%${searchValue}%`, language),
+            this.updateRecentSearch(user, searchValue),
+            this.retrieveRecentSearch(user),
+          ]);
       const productIds = [];
-      let productList = result[0].map((item) => {
+      productList = productList.map((item) => {
         const product = item;
         productIds.push(product.id);
         return product;
       });
 
-      const categoryList = result[1].map((item) => {
+      categoryList = categoryList.map((item) => {
         const category = item;
         category.products = category.products.filter((elem) => {
           return (productIds.indexOf(elem.id) < 0);
@@ -57,27 +59,26 @@ class SearchAdaptor {
         return category;
       });
 
-      productList = uniqueBy([
-        ...productList], (item1, item2) => item1.id === item2.id);
+      productList = uniqueBy([...productList],
+          (item1, item2) => item1.id === item2.id);
 
-      result[2][0].updateAttributes({
+      await recent_search_update[0].updateAttributes({
         resultCount: productList.length + categoryList.length,
         searchDate: moment.utc().format('YYYY-MM-DD HH:mm:ss'),
       });
-      const recentSearches = result[3].map(item => {
+      recent_search = recent_search.map(item => {
         const searches = item.toJSON();
         return searches.searchValue;
       });
+      const recentSearches = [recent_search_update[1], ...recent_search];
       return {
         status: true,
         message: 'Search successful',
-        notificationCount: 0,
         recentSearches,
         productDetails: productList,
         categoryList,
       };
-    }).catch((err) => {
-
+    } catch (err) {
       this.modals.logs.create({
         api_action: request.method,
         api_path: request.url.pathname,
@@ -96,7 +97,7 @@ class SearchAdaptor {
         message: 'Search failed',
         err,
       };
-    });
+    }
   }
 
   prepareCategoryData(user, searchValue, language) {
@@ -127,7 +128,7 @@ class SearchAdaptor {
     return this.categoryAdaptor.retrieveCategories({
       options: categoryOption,
       isSubCategoryRequiredForAll: false,
-      isBrandFormRequired: language
+      isBrandFormRequired: language,
     }).
         then((results) => {
           categories = results;

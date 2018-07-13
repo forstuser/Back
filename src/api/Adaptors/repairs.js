@@ -228,7 +228,7 @@ class RepairAdaptor {
   }
 
   async createRepairs(values) {
-    const result = this.modals.repairs.create(values);
+    const result = await this.modals.repairs.create(values);
     return result.toJSON();
   }
 

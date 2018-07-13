@@ -19,6 +19,7 @@ export default {
       BRAND_IMAGE: 'brandimages',
       PROVIDER_IMAGE: 'providerimages',
       KNOW_ITEM_IMAGE: 'knowitemimages',
+      OFFER_BANNERS: 'offer_banners',
     },
     ACCESS_DETAILS: {
       accessKeyId: process.env.AWS_ACCESS_KEY,
