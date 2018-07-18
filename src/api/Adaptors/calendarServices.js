@@ -142,7 +142,7 @@ export default class CalendarServiceAdaptor {
   }
 
   async createCalendarItem(calendarItemDetail) {
-    const {productBody, servicePaymentArray, serviceAbsentDayArray, serviceCalculationBody, user} = calendarItemDetail;
+    const {productBody, servicePaymentArray, serviceAbsentDayArray, serviceCalculationBody} = calendarItemDetail;
     let calendarItem = await this.findAndCreateCalendarItem(
         {where: productBody});
     calendarItem = calendarItem.toJSON();
@@ -744,7 +744,7 @@ export default class CalendarServiceAdaptor {
     const calcResult = await this.modals.service_calculation.findOne(
         {where: options});
     if (calcResult) {
-      return await new Promise((resolve, reject) => setImmediate(() => {
+      return await new Promise((resolve) => setImmediate(() => {
         resolve(calcResult.updateAttributes(calcDetail));
       }));
     }
@@ -933,8 +933,8 @@ export default class CalendarServiceAdaptor {
         let total_units = 0;
 
         const absentDaysToDestroy = [];
-        serviceCalc.forEach((calcItem, index) => {
-          const totalAmtUnitDay = this.prepareTotalAmtUnitDays({
+        await serviceCalc.forEach(async (calcItem, index) => {
+          const totalAmtUnitDay = await this.prepareTotalAmtUnitDays({
             index, calcItem, serviceCalc, paymentItem,
             start_date, total_amount, total_units, total_days,
             absentDetailToUpdate, absentDaysToDestroy,
@@ -967,7 +967,7 @@ export default class CalendarServiceAdaptor {
       })]);
   }
 
-  prepareTotalAmtUnitDays(parameters) {
+  async prepareTotalAmtUnitDays(parameters) {
     let {index, calcItem, serviceCalc, paymentItem, start_date, total_amount, total_units, total_days, absentDetailToUpdate, absentDaysToDestroy} = parameters;
     const nextIndex = index > 0 ? index - 1 : index;
     let periodStartDate = moment(calcItem.effective_date,
@@ -997,7 +997,7 @@ export default class CalendarServiceAdaptor {
       periodEndDate = monthDiff > 0 ? moment(paymentItem.end_date,
           moment.ISO_8601) : nextEffectDate;
       periodStartDate = moment(start_date);
-      const __ret = this.retrieveDayInPeriod({
+      const __ret = await this.retrieveDayInPeriod({
         daysInMonth, startDate, monthEndDate, selected_days, daysInPeriod,
         periodStartDate, periodEndDate, absentDays, paymentItem,
       });
@@ -1009,17 +1009,18 @@ export default class CalendarServiceAdaptor {
       moment(startDate, moment.ISO_8601).
           isSameOrBefore(moment(), 'months') ?
           periodEndDate : moment();
-      const __ret = this.retrieveDayInPeriod({
+      const __ret = await this.retrieveDayInPeriod({
         daysInMonth, startDate, monthEndDate, selected_days, daysInPeriod,
         periodStartDate, periodEndDate, absentDays, paymentItem,
       });
       daysInMonth = __ret.daysInMonth;
       daysInPeriod = __ret.daysInPeriod;
       absentDays = __ret.absentDays;
+      console.log('This is ok', __ret);
     } else {
       periodEndDate = moment(serviceCalc[nextIndex].effective_date,
           moment.ISO_8601).subtract(1, 'd');
-      const __ret = this.retrieveDayInPeriod({
+      const __ret = await this.retrieveDayInPeriod({
         daysInMonth, startDate, monthEndDate, selected_days, daysInPeriod,
         periodStartDate, periodEndDate, absentDays, paymentItem,
       });
@@ -1063,20 +1064,21 @@ export default class CalendarServiceAdaptor {
   }
 
   async retrieveDayInPeriod(parameters) {
-    let {daysInMonth, startDate, monthEndDate, selected_days, daysInPeriod, periodStartDate, periodEndDate, absentDays, paymentItem} = parameters;
-    daysInMonth = moment().
-        isoWeekdayCalc(moment(startDate, moment.ISO_8601).startOf('month'),
-            monthEndDate, selected_days);
-    daysInPeriod = moment().
-        isoWeekdayCalc(periodStartDate, periodEndDate, selected_days);
-    absentDays = paymentItem.absent_day_detail.filter((absentDayItem) => {
-      const absent_date = moment(absentDayItem.absent_date,
-          moment.ISO_8601);
-      return absent_date.isSameOrAfter(periodStartDate) &&
-          absent_date.isSameOrBefore(periodEndDate) &&
-          selected_days.includes(absent_date.isoWeekday());
-    }).length;
-    return {daysInMonth, daysInPeriod, absentDays};
+    let {startDate, monthEndDate, selected_days, periodStartDate, periodEndDate, paymentItem} = parameters;
+    return await {
+      daysInMonth: moment().
+          isoWeekdayCalc(moment(startDate, moment.ISO_8601).startOf('month'),
+              monthEndDate, selected_days),
+      daysInPeriod: moment().
+          isoWeekdayCalc(periodStartDate, periodEndDate, selected_days),
+      absentDays: paymentItem.absent_day_detail.filter((absentDayItem) => {
+        const absent_date = moment(absentDayItem.absent_date,
+            moment.ISO_8601);
+        return absent_date.isSameOrAfter(periodStartDate) &&
+            absent_date.isSameOrBefore(periodEndDate) &&
+            selected_days.includes(absent_date.isoWeekday());
+      }).length,
+    };
   }
 
   async markPaymentPaid(id, servicePaymentDetail) {

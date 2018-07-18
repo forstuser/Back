@@ -78,10 +78,12 @@ export default class AccessoryAdaptor {
       const model_accessory = config.CATEGORIES.MODEL_ACCESSORIES;
       let {categoryid, bbclass, accessory_ids, offset, limit, model, brand_id} = queryOptions;
       accessory_ids = (accessory_ids || '').split(',').filter((item) => !!item);
-      const accessory_types = brand_id || model  ? await this.retrieveAccessoryType({
-        where: JSON.parse(JSON.stringify({brand_id, model})),
-        attributes: ['id'],
-      }) : [];
+      const accessory_types = brand_id || model ?
+          await this.retrieveAccessoryType({
+            where: JSON.parse(JSON.stringify({brand_id, model})),
+            attributes: ['id'],
+          }) :
+          [];
       let accessory_type_id = accessory_types.map((item) => item.id);
       accessory_type_id = accessory_type_id.length > 0 ?
           accessory_type_id : undefined;
@@ -273,16 +275,16 @@ export default class AccessoryAdaptor {
     }
   }
 
-  async createTransaction(options) {
+  async createTransaction(options, reply, request) {
     // find create find seller
     // create the transaction
     // create product and reference it to existing product
+    let {
+      transaction_id, status_type, price, quantity, seller_detail,
+      delivery_date, product_id, accessory_product_id, payment_mode,
+      details_url, delivery_address, online_seller_id, user_id,
+    } = options;
     try {
-      let {
-        transaction_id, status_type, price, quantity, seller_detail,
-        delivery_date, product_id, accessory_product_id, payment_mode,
-        details_url, delivery_address, online_seller_id, user_id,
-      } = options;
       let seller = {};
       const transactionDetail = await this.modals.table_transaction.findOne(
           {where: {transaction_id}});
@@ -309,21 +311,42 @@ export default class AccessoryAdaptor {
         parentProduct = parentProduct.toJSON();
         accessoryProduct = accessoryProduct.toJSON();
         const {category_id, job_id, main_category_id} = parentProduct;
-        return await Promise.all([
-          result,
-          this.productAdapter.createEmptyProduct({
-            accessory_id: accessory_product_id, category_id,
-            ref_id: product_id, product_name: accessoryProduct.title,
-            purchase_cost: price, seller_id: result.id, user_id, job_id,
-            main_category_id, status_type: 11, updated_by: user_id,
-            created_by: user_id,
-          }),
-        ]);
+        return reply.response({
+          status: true,
+          result: await Promise.all([
+            result,
+            this.productAdapter.createEmptyProduct({
+              accessory_id: accessory_product_id, category_id,
+              ref_id: product_id, product_name: accessoryProduct.title,
+              purchase_cost: price, seller_id: result.id, user_id, job_id,
+              main_category_id, status_type: 11, updated_by: user_id,
+              created_by: user_id,
+            }),
+          ]),
+        });
       }
 
-      throw Error('Transaction already exist with the given transaction id.');
-    } catch (e) {
-      throw e;
+      return reply.response({
+        status: false,
+        message: 'Transaction already exist with the given transaction id.',
+      });
+    } catch (err) {
+      this.modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false, message: 'Unable to create transaction.', err,
+      });
     }
   }
 

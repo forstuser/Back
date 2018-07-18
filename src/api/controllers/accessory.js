@@ -4,6 +4,7 @@
 import shared from '../../helpers/shared';
 import AccessoryAdaptor from '../Adaptors/accessory';
 import config from '../../config/main';
+import moment from 'moment/moment';
 
 let modals;
 let accessoryAdaptor;
@@ -136,16 +137,15 @@ class AccessoryController {
           seller_detail, delivery_date, product_id, accessory_product_id,
           payment_mode, details_url, delivery_address, online_seller_id,
         } = request.payload;
+        delivery_date = moment(delivery_date, moment.ISO_8601).isValid() ?
+            moment(delivery_date, moment.ISO_8601) : moment().add(3, 'days');
         const user_id = user.id || user.ID;
         status_type = status_type || 1;
-        return reply.response({
-          status: true,
-          result: await accessoryAdaptor.createTransaction({
-            transaction_id, status_type, price, quantity, seller_detail,
-            delivery_date, product_id, accessory_product_id, payment_mode,
-            details_url, delivery_address, online_seller_id, user_id,
-          }),
-        });
+        return await accessoryAdaptor.createTransaction({
+          transaction_id, status_type, price, quantity, seller_detail,
+          delivery_date, product_id, accessory_product_id, payment_mode,
+          details_url, delivery_address, online_seller_id, user_id,
+        }, reply, request);
       } catch (err) {
         console.log(`Error on ${new Date()} for user ${user.id ||
         user.ID} is as follow: \n \n ${err}`);
@@ -164,7 +164,7 @@ class AccessoryController {
         }).catch((ex) => console.log('error while logging on db,', ex));
         return reply.response({
           status: false,
-          message: 'Unable to retrieve order history',
+          message: 'Unable to create transaction',
         });
       }
     } else {
