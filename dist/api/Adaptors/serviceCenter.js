@@ -45,7 +45,7 @@ class ServiceCenterAdaptor {
         required: true,
         as: 'centerDetails'
       }],
-      attributes: [['center_name', 'centerName'], ['center_city', 'city'], ['center_state', 'state'], ['center_country', 'country'], ['center_pin', 'pinCode'], ['center_latitude', 'latitude'], ['center_longitude', 'longitude'], ['center_timings', 'timings'], ['center_days', 'openingDays'], [this.modals.sequelize.fn('CONCAT', '/categories/', categoryId, '/images/0'), 'cImageURL'], ['center_address', 'address']],
+      attributes: [['center_name', 'centerName'], ['center_city', 'city'], ['center_state', 'state'], ['center_country', 'country'], ['center_pin', 'pinCode'], ['center_latitude', 'latitude'], ['center_longitude', 'longitude'], ['center_timings', 'timings'], ['center_days', 'openingDays'], [this.modals.sequelize.fn('CONCAT', '/categories/', categoryId, '/images/1'), 'cImageURL'], ['center_address', 'address']],
       order: [['center_name', 'ASC']]
     });
     return results.map(item => item.toJSON());

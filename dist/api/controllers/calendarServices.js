@@ -169,6 +169,7 @@ class CalendarServiceController {
         });
       }
     } catch (err) {
+      console.log(err);
       modals.logs.create({
         api_action: request.method,
         api_path: request.url.pathname,
@@ -537,6 +538,7 @@ class CalendarServiceController {
         });
       }
     } catch (err) {
+      console.log(err);
       modals.logs.create({
         api_action: request.method,
         api_path: request.url.pathname,
@@ -613,6 +615,7 @@ class CalendarServiceController {
         });
       }
     } catch (err) {
+      console.log(err);
       modals.logs.create({
         api_action: request.method,
         api_path: request.url.pathname,
@@ -685,6 +688,7 @@ class CalendarServiceController {
         });
       }
     } catch (err) {
+      console.log(err);
       modals.logs.create({
         api_action: request.method,
         api_path: request.url.pathname,

@@ -145,10 +145,10 @@ export default class CalendarServiceAdaptor {
     const {productBody, servicePaymentArray, serviceAbsentDayArray, serviceCalculationBody} = calendarItemDetail;
     let calendarItem = await this.findAndCreateCalendarItem(
         {where: productBody});
-    calendarItem = calendarItem.toJSON();
+    console.log(calendarItem);
+    calendarItem = calendarItem[0].toJSON();
     serviceCalculationBody.ref_id = calendarItem.id;
     const subPromiseArray = [
-      calendarItem,
       this.findCreateCalculationDetail({where: serviceCalculationBody})];
     servicePaymentArray.forEach((item) => {
       item.ref_id = calendarItem.id;
@@ -159,7 +159,8 @@ export default class CalendarServiceAdaptor {
       subPromiseArray.push(this.markAbsentForItem({where: item}));
     });
 
-    return await Promise.all(subPromiseArray);
+    await Promise.all(subPromiseArray);
+    return calendarItem;
   }
 
   async updateCalendarItem(calendarItemDetail, id) {
@@ -761,7 +762,7 @@ export default class CalendarServiceAdaptor {
     let serviceCalcList;
     let servicePayments;
     let absentDetail = [];
-    const serviceResult = Promise.all([
+    let serviceResult = await Promise.all([
       this.modals.service_payment.count({
         where: {
           ref_id: options.ref_id,
@@ -816,15 +817,15 @@ export default class CalendarServiceAdaptor {
       destroyServicePayment = this.modals.service_payment.destroy({
         where: {ref_id: servicePayments[0].calendar_item.id},
       });
-      const effectiveDate = moment(options.effective_date,
+      let effectiveDate = moment(options.effective_date,
           moment.ISO_8601);
-      const absent_date = moment(servicePayments[0].end_date,
+      let absent_date = moment(servicePayments[0].end_date,
           moment.ISO_8601).startOf();
-      const currentDate = absent_date.isAfter(moment().startOf('days')) ?
+      let currentDate = absent_date.isAfter(moment().startOf('days')) ?
           absent_date : moment();
-      const currentMth = currentDate.month();
-      const currentYear = currentDate.year();
-      const effectiveMth = effectiveDate.month();
+      let currentMth = currentDate.month();
+      let currentYear = currentDate.year();
+      let effectiveMth = effectiveDate.month();
       let {selected_days, wages_type} = servicePayments[0].calendar_item;
       let serviceCalculationBody = serviceCalcList[0];
       selected_days = serviceCalculationBody.selected_days || selected_days;
@@ -857,7 +858,6 @@ export default class CalendarServiceAdaptor {
       payment_calendar_item,
     ]);
 
-    console.log(JSON.stringify(results));
     const absentDetailToUpdate = [];
     let paymentDetail;
     if (results[1] === 0) {
@@ -882,12 +882,10 @@ export default class CalendarServiceAdaptor {
         paymentDetail.calendar_item = results[2];
       });
     } else {
-      paymentDetail = await this.updatePaymentDetailForCalc({
-        servicePayments,
-        serviceCalcList,
-        absentDetailToUpdate,
-      });
+      paymentDetail = await this.updatePaymentDetailForCalc(
+          {servicePayments, serviceCalcList, absentDetailToUpdate});
     }
+    console.log(`It's here`, JSON.stringify({paymentDetail}));
     return await Promise.all(paymentDetail.length > 0 ? paymentDetail.map(
         absentItem => this.markAbsentForItem({where: absentItem})) : []);
   }
@@ -895,7 +893,7 @@ export default class CalendarServiceAdaptor {
   async updatePaymentDetailForCalc(parameters) {
     let {servicePayments, serviceCalcList} = parameters;
     const absentDetailToUpdate = [];
-    return await Promise.all([
+    await Promise.all([
       ...servicePayments.map(async (paymentItem) => {
         const start_date = moment(paymentItem.start_date, moment.ISO_8601).
             valueOf();
@@ -933,45 +931,68 @@ export default class CalendarServiceAdaptor {
         let total_units = 0;
 
         const absentDaysToDestroy = [];
-        await serviceCalc.forEach(async (calcItem, index) => {
-          const totalAmtUnitDay = await this.prepareTotalAmtUnitDays({
+        serviceCalc.forEach((calcItem, index) => {
+          const totalAmtUnitDays = this.prepareTotalAmtUnitDays({
             index, calcItem, serviceCalc, paymentItem,
             start_date, total_amount, total_units, total_days,
             absentDetailToUpdate, absentDaysToDestroy,
           });
-          total_amount = totalAmtUnitDay.total_amount;
-          total_units = totalAmtUnitDay.total_units;
-          total_days = totalAmtUnitDay.total_days;
+          console.log(JSON.stringify({totalAmtUnitDays}));
+          total_amount = totalAmtUnitDays.total_amount;
+          total_units = totalAmtUnitDays.total_units;
+          total_days = totalAmtUnitDays.total_days;
         });
-
+        console.log(JSON.stringify({
+          start_date, end_date, paymentItem, total_amount,
+          total_days, total_units,
+        }));
         return Promise.all([
-          paymentItem.id ?
-              this.modals.service_payment.update({
-                start_date, end_date,
-                updated_by: paymentItem.updated_by,
-                status_type: paymentItem.status_type,
-                total_amount: (total_amount).toFixed(2),
-                total_days, total_units, amount_paid: 0,
-              }, {where: {id: paymentItem.id}}) :
-              this.modals.service_payment.create({
-                start_date, end_date,
-                updated_by: paymentItem.updated_by,
-                status_type: paymentItem.status_type,
-                total_amount: (total_amount).toFixed(2),
-                total_days, total_units, ref_id: paymentItem.ref_id,
-                amount_paid: 0,
-              }),
+          paymentItem.id ? this.updateServicePayments({
+            start_date, end_date, paymentItem, total_amount,
+            total_days, total_units,
+          }) : this.createServicePayments({
+            start_date, end_date, paymentItem, total_amount,
+            total_days, total_units,
+          }),
           ...absentDaysToDestroy.map((absentItem) => this.markPresentForItem(
-              {where: {id: absentItem.id}}))]);
+              {where: {id: absentItem.id}})), absentDetailToUpdate]);
         /*}));*/
       })]);
+    return absentDetailToUpdate;
   }
 
-  async prepareTotalAmtUnitDays(parameters) {
-    let {index, calcItem, serviceCalc, paymentItem, start_date, total_amount, total_units, total_days, absentDetailToUpdate, absentDaysToDestroy} = parameters;
+  async createServicePayments(parameters) {
+    let {start_date, end_date, paymentItem, total_amount, total_days, total_units} = parameters;
+    const servicePayment = await this.modals.service_payment.create({
+      start_date, end_date,
+      updated_by: paymentItem.updated_by,
+      status_type: paymentItem.status_type,
+      total_amount: (total_amount).toFixed(2),
+      total_days, total_units, ref_id: paymentItem.ref_id,
+      amount_paid: 0,
+    });
+
+    return servicePayment.toJSON();
+  }
+
+  async updateServicePayments(parameters) {
+    let {start_date, end_date, paymentItem, total_amount, total_days, total_units} = parameters;
+    await this.modals.service_payment.update({
+      start_date, end_date,
+      updated_by: paymentItem.updated_by,
+      status_type: paymentItem.status_type,
+      total_amount: (total_amount).toFixed(2),
+      total_days, total_units, amount_paid: 0,
+    }, {where: {id: paymentItem.id}});
+    const servicePayment = await this.modals.service_payment.findOne(
+        {where: {id: paymentItem.id}});
+    return servicePayment.toJSON();
+  }
+
+  prepareTotalAmtUnitDays(parameters) {
+    let {index, calcItem, serviceCalc, paymentItem, start_date} = parameters;
     const nextIndex = index > 0 ? index - 1 : index;
-    let periodStartDate = moment(calcItem.effective_date,
-        moment.ISO_8601);
+    let periodStartDate = moment(calcItem.effective_date, moment.ISO_8601);
     const effective_date = periodStartDate.valueOf();
     const next_effective_date = moment(
         serviceCalc[nextIndex].effective_date, moment.ISO_8601).valueOf();
@@ -986,8 +1007,7 @@ export default class CalendarServiceAdaptor {
         endOf('M');
     if (moment(effective_date).isSameOrBefore(moment(start_date)) &&
         !moment(start_date).isSame(moment(next_effective_date))) {
-      const nextEffectDate = moment(next_effective_date).
-          subtract(1, 'days');
+      const nextEffectDate = moment(next_effective_date).subtract(1, 'days');
       const nextEffectStartDate = moment(
           nextEffectDate.format('YYYY-MM-DD'), moment.ISO_8601).
           startOf('months');
@@ -997,7 +1017,7 @@ export default class CalendarServiceAdaptor {
       periodEndDate = monthDiff > 0 ? moment(paymentItem.end_date,
           moment.ISO_8601) : nextEffectDate;
       periodStartDate = moment(start_date);
-      const __ret = await this.retrieveDayInPeriod({
+      const __ret = this.retrieveDayInPeriod({
         daysInMonth, startDate, monthEndDate, selected_days, daysInPeriod,
         periodStartDate, periodEndDate, absentDays, paymentItem,
       });
@@ -1009,18 +1029,17 @@ export default class CalendarServiceAdaptor {
       moment(startDate, moment.ISO_8601).
           isSameOrBefore(moment(), 'months') ?
           periodEndDate : moment();
-      const __ret = await this.retrieveDayInPeriod({
+      const __ret = this.retrieveDayInPeriod({
         daysInMonth, startDate, monthEndDate, selected_days, daysInPeriod,
         periodStartDate, periodEndDate, absentDays, paymentItem,
       });
       daysInMonth = __ret.daysInMonth;
       daysInPeriod = __ret.daysInPeriod;
       absentDays = __ret.absentDays;
-      console.log('This is ok', __ret);
     } else {
       periodEndDate = moment(serviceCalc[nextIndex].effective_date,
           moment.ISO_8601).subtract(1, 'd');
-      const __ret = await this.retrieveDayInPeriod({
+      const __ret = this.retrieveDayInPeriod({
         daysInMonth, startDate, monthEndDate, selected_days, daysInPeriod,
         periodStartDate, periodEndDate, absentDays, paymentItem,
       });
@@ -1037,35 +1056,42 @@ export default class CalendarServiceAdaptor {
 
     const current_total_amount = unit_price * daysInPeriod;
     if (calcItem.quantity || calcItem.quantity === 0) {
-      total_amount += (calcItem.quantity * current_total_amount);
-      total_units += (calcItem.quantity * daysInPeriod);
+      parameters.total_amount += (calcItem.quantity * current_total_amount);
+      parameters.total_units += (calcItem.quantity * daysInPeriod);
     } else {
-      total_amount += current_total_amount;
+      parameters.total_amount += current_total_amount;
     }
 
-    total_days += daysInPeriod;
-    absentDetailToUpdate.push(...paymentItem.absent_day_detail.filter(
-        (absentDayItem) => {
-          const absent_date = moment(absentDayItem.absent_date,
-              moment.ISO_8601);
-          return selected_days.includes(absent_date.isoWeekday());
-        }).map((absentDayItem) => {
-      absentDayItem.payment_id = paymentItem.id;
-      return absentDayItem;
-    }));
+    parameters.total_days += daysInPeriod;
+    parameters.absentDetailToUpdate.push(
+        ...paymentItem.absent_day_detail.filter(
+            (absentDayItem) => {
+              const absent_date = moment(absentDayItem.absent_date,
+                  moment.ISO_8601);
+              return selected_days.includes(absent_date.isoWeekday());
+            }).map((absentDayItem) => {
+          absentDayItem.payment_id = paymentItem.id;
+          return absentDayItem;
+        }));
 
-    absentDaysToDestroy.push(...paymentItem.absent_day_detail.filter(
+    parameters.absentDaysToDestroy.push(...paymentItem.absent_day_detail.filter(
         (absentDayItem) => {
           const absent_date = moment(absentDayItem.absent_date,
               moment.ISO_8601);
           return !selected_days.includes(absent_date.isoWeekday());
         }));
-    return {total_amount, total_units, total_days};
+    return {
+      total_amount: parameters.total_amount,
+      total_units: parameters.total_units,
+      total_days: parameters.total_days,
+      absentDetailToUpdate: parameters.absentDetailToUpdate,
+      absentDaysToDestroy: parameters.absentDaysToDestroy,
+    };
   }
 
-  async retrieveDayInPeriod(parameters) {
+  retrieveDayInPeriod(parameters) {
     let {startDate, monthEndDate, selected_days, periodStartDate, periodEndDate, paymentItem} = parameters;
-    return await {
+    return {
       daysInMonth: moment().
           isoWeekdayCalc(moment(startDate, moment.ISO_8601).startOf('month'),
               monthEndDate, selected_days),

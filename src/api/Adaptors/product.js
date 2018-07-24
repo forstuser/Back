@@ -1255,7 +1255,7 @@ export default class ProductAdaptor {
           [
             this.modals.sequelize.fn('CONCAT', '/categories/',
                 this.modals.sequelize.col('"category"."category_id"'),
-                '/images/0'), 'cImageURL'], ['document_date', 'purchaseDate'],
+                '/images/1'), 'cImageURL'], ['document_date', 'purchaseDate'],
           [
             this.modals.sequelize.fn('CONCAT', 'products/',
                 this.modals.sequelize.literal('"products"."id"')),
@@ -1279,7 +1279,7 @@ export default class ProductAdaptor {
         products.cImageURL = products.file_type ?
             `/consumer/products/${products.id}/images/${products.file_ref}` :
             products.sub_category_id ?
-                `/categories/${products.sub_category_id}/images/0` :
+                `/categories/${products.sub_category_id}/images/1` :
                 products.cImageURL;
         products.sub_category_name = products.sub_category_name ||
             products.default_sub_category_name;

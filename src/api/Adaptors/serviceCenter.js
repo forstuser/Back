@@ -92,7 +92,7 @@ class ServiceCenterAdaptor {
           'openingDays'],
         [
           this.modals.sequelize.fn('CONCAT', '/categories/', categoryId,
-              '/images/0'),
+              '/images/1'),
           'cImageURL'],
         [
           'center_address',
