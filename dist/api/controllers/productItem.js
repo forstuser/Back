@@ -103,7 +103,7 @@ class ProductItemController {
           forceUpdate: request.pre.forceUpdate
         });
       } else if (request.pre.userExist && !request.pre.forceUpdate) {
-        const sellerPromise = !request.payload.seller_id && (request.payload.seller_contact || request.payload.seller_name) ? sellerAdaptor.retrieveOrCreateOfflineSellers({
+        const sellerPromise = !request.payload.seller_id && (request.payload.seller_contact || request.payload.seller_name) ? sellerAdaptor.retrieveOrCreateSellers({
           seller_name: request.payload.seller_name,
           contact_no: request.payload.seller_contact
         }, {
@@ -395,7 +395,7 @@ class ProductItemController {
           forceUpdate: request.pre.forceUpdate
         });
       } else if (request.pre.userExist && !request.pre.forceUpdate) {
-        const sellerPromise = !request.payload.seller_id && (request.payload.seller_contact || request.payload.seller_name) ? sellerAdaptor.retrieveOrCreateOfflineSellers({
+        const sellerPromise = !request.payload.seller_id && (request.payload.seller_contact || request.payload.seller_name) ? sellerAdaptor.retrieveOrCreateSellers({
           seller_name: request.payload.seller_name,
           contact_no: request.payload.seller_contact
         }, {
@@ -540,7 +540,7 @@ class ProductItemController {
           forceUpdate: request.pre.forceUpdate
         });
       } else if (request.pre.userExist && !request.pre.forceUpdate) {
-        const sellerPromise = !request.payload.seller_id && (request.payload.seller_contact || request.payload.seller_name) ? sellerAdaptor.retrieveOrCreateOfflineSellers({
+        const sellerPromise = !request.payload.seller_id && (request.payload.seller_contact || request.payload.seller_name) ? sellerAdaptor.retrieveOrCreateSellers({
           seller_name: request.payload.seller_name,
           contact_no: request.payload.seller_contact
         }, {

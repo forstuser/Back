@@ -41,14 +41,10 @@ class ServiceCenterController {
       if ((request.pre.userExist || isWebMode) && !request.pre.forceUpdate) {
         console.log(request.payload);
         const payload = request.payload || {
-          location: '',
-          city: '',
-          searchValue: '',
-          longitude: '',
-          latitude: '',
-          categoryId: '',
-          masterCategoryId: '',
-          brandId: ''
+          location: '', city: '',
+          searchValue: '', longitude: '',
+          latitude: '', categoryId: '',
+          masterCategoryId: '', brandId: ''
         };
         let latitude = '';
         let longitude = '';
@@ -66,12 +62,8 @@ class ServiceCenterController {
         const categoryId = request.query.categoryid || payload.categoryId || 0;
         const brandId = request.query.brandid || payload.brandId || 0;
         const whereClause = {
-          center_city: {
-            $iLike: `%${city}%`
-          },
-          brand_id: brandId,
-          category_id: categoryId,
-          $and: [modals.sequelize.where(modals.sequelize.col('"centerDetails"."category_id"'), categoryId), modals.sequelize.where(modals.sequelize.col('"brands"."brand_id"'), brandId)]
+          center_city: { $iLike: `%${city}%` },
+          brand_id: brandId, category_id: categoryId, $and: [modals.sequelize.where(modals.sequelize.col('"centerDetails"."category_id"'), categoryId), modals.sequelize.where(modals.sequelize.col('"brands"."brand_id"'), brandId)]
         };
 
         const origins = [];

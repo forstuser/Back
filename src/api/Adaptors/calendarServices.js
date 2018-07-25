@@ -1121,7 +1121,7 @@ export default class CalendarServiceAdaptor {
     const sellerDetail = await Promise.try(
         () => (provider_number && provider_number.trim()) ||
         (provider_name && provider_name.trim()) ?
-            this.sellerAdaptor.retrieveOrCreateOfflineSellers(sellerOption,
+            this.sellerAdaptor.retrieveOrCreateSellers(sellerOption,
                 {
                   seller_name: provider_name,
                   contact_no: provider_number,

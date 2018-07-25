@@ -105,7 +105,7 @@ class UserAdaptor {
    */
   async retrieveUserById(user) {
     const result = await _bluebird2.default.all([this.modals.users.findById(user.id || user.ID, {
-      attributes: ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', 'location', 'latitude', 'longitude', 'image_name', 'password', 'gender', [this.modals.sequelize.fn('CONCAT', '/consumer/', this.modals.sequelize.col('id'), '/images'), 'imageUrl']]
+      attributes: ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', 'location', 'latitude', 'longitude', 'image_name', 'password', 'gender', [this.modals.sequelize.fn('CONCAT', '/consumer/', this.modals.sequelize.col('id'), '/images'), 'imageUrl'], [this.modals.sequelize.literal(`(Select sum(amount) from table_wallet_user_cashback where user_id = ${user.id || user.ID} and status_type in (16) group by user_id)`), 'wallet_value']]
     }), this.retrieveUserAddress({ where: { user_id: user.id || user.ID } })]);
     if (result[0]) {
       let user = result[0].toJSON();
@@ -297,6 +297,19 @@ class UserAdaptor {
   async retrieveUserAddress(filterOptions) {
     filterOptions.attributes = ['address_type', 'address_line_1', 'address_line_2', 'city', 'state', 'pin', 'latitude', 'longitude'];
     return await this.modals.userAddress.findAll(filterOptions);
+  }
+
+  async retrieveUserIndexedData(options) {
+    const result = await this.modals.user_index.findAll(options);
+    return result && result.length > 0 ? result[0].toJSON() : undefined;
+  }
+
+  async updateUserIndexedData(updateValues, filterOptions) {
+    return await this.modals.user_index.update(updateValues, filterOptions);
+  }
+
+  async createUserIndexedData(updateValues, filterOptions) {
+    return await this.modals.user_index.create(updateValues, filterOptions);
   }
 }
 

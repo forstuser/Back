@@ -260,5 +260,23 @@ function prepareGeneralRoutes(modal, routeObject, middleware) {
         description: 'Handling Complaints from SES.'
       }
     });
+
+    routeObject.push({
+      method: 'POST',
+      path: '/message',
+      config: {
+        handler: _general2.default.sendMessages,
+        description: 'Handling Messages from server.'
+      }
+    });
+
+    routeObject.push({
+      method: 'POST',
+      path: '/sendsms',
+      config: {
+        handler: _general2.default.sendMessages,
+        description: 'Handling SMS from server.'
+      }
+    });
   }
 }

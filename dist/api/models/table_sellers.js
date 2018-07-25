@@ -36,14 +36,14 @@ exports.default = (sequelize, DataTypes) => {
     address: {
       type: DataTypes.STRING
     },
-    city: {
-      type: DataTypes.STRING
+    city_id: {
+      type: DataTypes.INTEGER
     },
-    state: {
-      type: DataTypes.STRING
+    state_id: {
+      type: DataTypes.INTEGER
     },
-    pincode: {
-      type: DataTypes.STRING
+    location_id: {
+      type: DataTypes.INTEGER
     },
     latitude: {
       type: DataTypes.FLOAT,
@@ -78,6 +78,15 @@ exports.default = (sequelize, DataTypes) => {
     updated_at: {
       type: DataTypes.DATE,
       defaultValue: sequelize.literal('NOW()')
+    },
+    documents: {
+      type: DataTypes.JSONB
+    },
+    seller_type_id: {
+      type: DataTypes.INTEGER
+    },
+    user_id: {
+      type: DataTypes.INTEGER
     }
   }, {
     freezeTableName: true,
@@ -88,10 +97,38 @@ exports.default = (sequelize, DataTypes) => {
   });
 
   offlineSellers.associate = models => {
-    offlineSellers.belongsTo(models.users, { foreignKey: 'updated_by' });
-
-    offlineSellers.belongsTo(models.statuses, { foreignKey: 'status_type', targetKey: 'status_type' });
-    offlineSellers.hasMany(models.sellerReviews, { foreignKey: 'seller_id', as: 'sellerReviews' });
+    offlineSellers.belongsTo(models.users, {
+      foreignKey: 'updated_by',
+      as: 'updater',
+      onDelete: 'cascade',
+      onUpdate: 'cascade'
+    });
+    offlineSellers.belongsTo(models.users, {
+      foreignKey: 'user_id',
+      as: 'user',
+      onDelete: 'cascade',
+      onUpdate: 'cascade'
+    });
+    offlineSellers.belongsTo(models.seller_types, {
+      foreignKey: 'seller_type_id',
+      onDelete: 'cascade',
+      onUpdate: 'cascade'
+    });
+    offlineSellers.belongsTo(models.statuses, {
+      foreignKey: 'status_type',
+      targetKey: 'status_type',
+      onDelete: 'cascade',
+      onUpdate: 'cascade'
+    });
+    offlineSellers.hasMany(models.sellerReviews, {
+      foreignKey: 'seller_id',
+      as: 'sellerReviews',
+      onDelete: 'cascade',
+      onUpdate: 'cascade'
+    });
+    offlineSellers.belongsTo(models.states, { foreignKey: 'state_id', onDelete: 'cascade', onUpdate: 'cascade' });
+    offlineSellers.belongsTo(models.cities, { foreignKey: 'city_id', onDelete: 'cascade', onUpdate: 'cascade' });
+    offlineSellers.belongsTo(models.locations, { foreignKey: 'location_id', onDelete: 'cascade', onUpdate: 'cascade' });
   };
   return offlineSellers;
 };

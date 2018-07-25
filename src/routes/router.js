@@ -17,6 +17,8 @@ import {prepareAuthRoutes} from './auth';
 import {prepareBrandRoutes} from './brand';
 import {prepareAccessoryRoute} from './accessory_routes';
 import {prepareOfferRoutes} from './offer';
+import {prepareShopEarnRoute} from './shop_earn';
+import {prepareSellerRoutes} from './sellers';
 
 let middleware;
 
@@ -40,6 +42,7 @@ export default (app, modals) => {
   const whatToServiceRoutes = [];
   const accessoryServicesRoutes = [];
   const offerRoutes = [];
+  const shopEarnRoutes = [];
   const searchController = new SearchController(modals);
   prepareAuthRoutes(modals, authRoutes, middleware);
 
@@ -68,6 +71,10 @@ export default (app, modals) => {
   prepareAccessoryRoute(modals, accessoryServicesRoutes, middleware);
 
   prepareOfferRoutes(modals, offerRoutes, middleware);
+
+  prepareShopEarnRoute(modals, shopEarnRoutes, middleware);
+
+  prepareSellerRoutes(modals, sellerRoutes, middleware);
 
   if (searchController) {
     searchRoutes.push({
@@ -117,6 +124,7 @@ export default (app, modals) => {
     ...whatToServiceRoutes,
     ...accessoryServicesRoutes,
     ...offerRoutes,
+    ...shopEarnRoutes,
   ]).forEach((routeItem) => app.route(routeItem));
   const handler = function(request, h, err) {
     console.log(err);

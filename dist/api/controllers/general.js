@@ -138,8 +138,9 @@ class GeneralController {
             status_type: 1
           })]);
         } else if (request.query.mainCategoryId) {
+          const category_id = request.query.mainCategoryId.toString() === '2' ? [11, 12] : request.query.mainCategoryId;
           results = await categoryAdaptor.retrieveCategories({
-            options: { category_id: request.query.mainCategoryId },
+            options: { category_id },
             isSubCategoryRequiredForAll: true,
             isBrandFormRequired: false,
             language: request.language,
@@ -893,6 +894,24 @@ class GeneralController {
     try {
       await modals.logs.create({
         log_type: 4,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload
+        })
+      });
+      return reply.response().code(200);
+    } catch (e) {
+      console.log('error while logging on db,', ex);
+      return reply.response().code(200);
+    }
+  }
+
+  static async sendMessages(request, reply) {
+    try {
+      await modals.logs.create({
+        log_type: 100,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,

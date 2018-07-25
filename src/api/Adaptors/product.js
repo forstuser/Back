@@ -1589,7 +1589,7 @@ export default class ProductAdaptor {
             ''}`} in our Deals section.`,
             notification_type: 5,
             link: 'http://bit.ly/2NXhJGC' ||
-            `https://www.binbill.com/deals/accessories/${product.category_id}?product_id=${product.id}`,
+                `https://www.binbill.com/deals/accessories/${product.category_id}?product_id=${product.id}`,
             id: product.id,
           }, {
             title: `Add some zing to your ${product.product_name ||
@@ -2119,7 +2119,7 @@ export default class ProductAdaptor {
     seller_name && seller_name.trim() || seller_name === '' ||
     seller_email && seller_email.trim() ||
     seller_address && seller_address.trim() ?
-        this.sellerAdaptor.retrieveOrCreateOfflineSellers(sellerOption, {
+        this.sellerAdaptor.retrieveOrCreateSellers(sellerOption, {
           seller_name,
           contact_no: seller_contact,
           email: seller_email,
@@ -2141,7 +2141,7 @@ export default class ProductAdaptor {
         sellerOption = _.omit(sellerOption, 'contact_no');
       }
       sellerPromise.push((seller_contact || seller_name || seller_name === '') ?
-          this.sellerAdaptor.retrieveOrCreateOfflineSellers(sellerOption,
+          this.sellerAdaptor.retrieveOrCreateSellers(sellerOption,
               {
                 seller_name, contact_no: seller_contact, updated_by: user_id,
                 created_by: user_id, status_type: 11,
@@ -2166,7 +2166,7 @@ export default class ProductAdaptor {
           repair.seller_contact.trim()) ||
           (repair.seller_name &&
               repair.seller_name.trim())) ?
-          this.sellerAdaptor.retrieveOrCreateOfflineSellers(sellerOption,
+          this.sellerAdaptor.retrieveOrCreateSellers(sellerOption,
               {
                 seller_name: repair.seller_name,
                 contact_no: repair.seller_contact,
@@ -2189,7 +2189,7 @@ export default class ProductAdaptor {
       ((puc.seller_contact &&
           puc.seller_contact.trim()) ||
           (puc.seller_name && puc.seller_name.trim())) ?
-          this.sellerAdaptor.retrieveOrCreateOfflineSellers(sellerOption,
+          this.sellerAdaptor.retrieveOrCreateSellers(sellerOption,
               {
                 seller_name: puc.seller_name,
                 contact_no: puc.seller_contact,
@@ -2249,7 +2249,7 @@ export default class ProductAdaptor {
     const {ratings: review_ratings, feedback: review_feedback, comments: review_comments} = request.payload;
     const user_id = user.id || user.ID;
     try {
-      const result = await     this.modals.brandReviews.findCreateFind({
+      const result = await this.modals.brandReviews.findCreateFind({
         where: {user_id, brand_id, status_id: 1},
         defaults: {
           user_id, brand_id, status_id: 1, review_ratings,
@@ -2305,7 +2305,7 @@ export default class ProductAdaptor {
       review_ratings, review_feedback, review_comments,
     };
     try {
-      const result = await     this.modals.sellerReviews.findCreateFind({
+      const result = await this.modals.sellerReviews.findCreateFind({
         where: whereClause,
         defaults: defaultClause,
       });
@@ -2349,7 +2349,7 @@ export default class ProductAdaptor {
     const status_id = 1;
     const whereClause = {user_id, bill_product_id, status_id};
     try {
-      const result = await     this.modals.productReviews.findCreateFind({
+      const result = await this.modals.productReviews.findCreateFind({
         where: whereClause,
         defaults: {
           user_id, bill_product_id, status_id, review_ratings,
@@ -2485,7 +2485,7 @@ export default class ProductAdaptor {
         $notIn: [3, 9],
       };
     }
-    const productResult = await   this.modals.products.findAll({
+    const productResult = await this.modals.products.findAll({
       where: options,
       attributes: [
         'id', ['product_name', 'productName'],
@@ -2504,7 +2504,7 @@ export default class ProductAdaptor {
     let {user, request} = parameters;
     const productId = request.params.id;
     try {
-      const result = await     this.retrieveProductById(productId, {
+      const result = await this.retrieveProductById(productId, {
         user_id: user.id || user.ID,
         status_type: [5, 8, 11],
       }, request.language);
@@ -2569,7 +2569,7 @@ export default class ProductAdaptor {
         itemDetail.status_type !== 8 ?
             11 :
             productDetail.status_type || itemDetail.status_type;
-    await   productResult.updateAttributes(productDetail);
+    await productResult.updateAttributes(productDetail);
     productDetail = productResult.toJSON();
     productDetail.isModalSame = isModalSame;
     if (productDetail.document_date &&
@@ -2598,13 +2598,13 @@ export default class ProductAdaptor {
   }
 
   async updateProductMetaData(id, values) {
-    const result = await   this.modals.metaData.findOne({where: {id}});
-    await   result.updateAttributes(values);
+    const result = await this.modals.metaData.findOne({where: {id}});
+    await result.updateAttributes(values);
     return result;
   }
 
   async deleteProduct(id, updated_by) {
-    const result = await   this.modals.products.findById(id);
+    const result = await this.modals.products.findById(id);
     if (result) {
       const jobPromise = result.job_id ? [
         this.modals.jobs.update({
@@ -2626,17 +2626,17 @@ export default class ProductAdaptor {
   }
 
   async removeProducts(id, copyId, values) {
-    const result = await   this.modals.products.findOne({where: {id}});
+    const result = await this.modals.products.findOne({where: {id}});
     const itemDetail = result.toJSON();
     if (copyId && itemDetail.copies.length > 0) {
       values.copies = itemDetail.copies.filter(
           (item) => item.copyId !== parseInt(copyId));
-      await     result.updateAttributes(values);
+      await result.updateAttributes(values);
 
       return result.toJSON();
     }
 
-    await   this.modals.products.destroy({where: {id}});
+    await this.modals.products.destroy({where: {id}});
 
     return true;
   }

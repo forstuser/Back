@@ -530,12 +530,13 @@ class UploadController {
       await modals.users.findById(updated_by);
       UploadController.notifyTeam(user, jobResult);
       let productItemResult;
-      let {productId, category_id, main_category_id, id} = jobResult;
+      let {productId, category_id, main_category_id, id, cashback_job_id} = jobResult;
       productId = requiredDetail.productId || productId;
       if (type && productId) {
         productItemResult = await UploadController.createProductItems({
           type, jobId: job_id, user, productId, category_id, main_category_id,
-          itemId: requiredDetail.itemId, copies: copyData.map((copyItem) => ({
+          cashback_job_id, itemId: requiredDetail.itemId,
+          copies: copyData.map((copyItem) => ({
             copyId: copyItem.id,
             copyUrl: `/jobs/${job_id}/files/${copyItem.id}`,
             file_type: copyItem.file_type,
@@ -616,13 +617,14 @@ class UploadController {
       const billResult = await Promise.all(promisedQuery);
       jobCopies = billResult[0];
       UploadController.notifyTeam(user, jobResult);
-      let {productId, category_id, main_category_id, id} = jobResult;
+      let {productId, category_id, main_category_id, id, cashback_job_id} = jobResult;
       productId = requiredDetail.productId || productId;
       let productItemResult;
       if (type && productId) {
         productItemResult = await UploadController.createProductItems({
           type, jobId: id, user, productId, category_id, main_category_id,
-          itemId: requiredDetail.itemId, copies: jobCopies.map((copyItem) => ({
+          itemId: requiredDetail.itemId, cashback_job_id,
+          copies: jobCopies.map((copyItem) => ({
             copyId: copyItem.id,
             copyUrl: `/jobs/${copyItem.job_id}/files/${copyItem.id}`,
             file_type: copyItem.file_type,
@@ -719,7 +721,7 @@ class UploadController {
   }
 
   static async createProductItems(parameters) {
-    let {type, jobId: job_id, user, productId: product_id, itemId, copies, category_id, main_category_id} = parameters;
+    let {type, jobId: job_id, user, productId: product_id, itemId, copies, category_id, main_category_id, cashback_job_id} = parameters;
     const productItemPromise = [];
     let user_id = user.id || user.ID;
     switch (type) {
@@ -825,6 +827,14 @@ class UploadController {
     if (type > 1 && type < 12) {
       productItemPromise.push(productAdaptor.updateProduct(product_id,
           {job_id, user_id, updated_by: user_id}));
+    } else if (cashback_job_id) {
+      productItemPromise.push(
+          jobAdaptor.updateCashBackJobs({
+            id: cashback_job_id, jobDetail: {
+              job_id, user_id, updated_by: user_id,
+              copies, admin_status: 2,
+            },
+          }));
     }
 
     return await Promise.all(productItemPromise);
@@ -928,8 +938,7 @@ class UploadController {
       try {
         if (!request.pre.forceUpdate) {
           const itemId = request.query && request.query.itemid ?
-              request.query.itemid :
-              undefined;
+              request.query.itemid : undefined;
 
           let [jobData, updateCopyStatus, count, productItemStatus] = await Promise.all(
               [
@@ -971,7 +980,7 @@ class UploadController {
           if (copiesData) {
             await fsImpl.unlink(copiesData.file_name);
             await fsImpl.unlink(
-                `jobs/${result[0].job_id}/${copiesData.file_name}`);
+                `jobs/${jobData[0].job_id}/${copiesData.file_name}`);
           }
           if (jobItem.admin_status !== 5) {
             jobData.updateAttributes(attributes);

@@ -60,7 +60,7 @@ class ProductItemController {
         const sellerPromise = !request.payload.seller_id &&
         (request.payload.seller_contact ||
             request.payload.seller_name) ?
-            sellerAdaptor.retrieveOrCreateOfflineSellers({
+            sellerAdaptor.retrieveOrCreateSellers({
                   seller_name: request.payload.seller_name,
                   contact_no: request.payload.seller_contact,
                 },
@@ -412,7 +412,7 @@ class ProductItemController {
         const sellerPromise = !request.payload.seller_id &&
         (request.payload.seller_contact ||
             request.payload.seller_name) ?
-            sellerAdaptor.retrieveOrCreateOfflineSellers({
+            sellerAdaptor.retrieveOrCreateSellers({
                   seller_name: request.payload.seller_name,
                   contact_no: request.payload.seller_contact,
                 },
@@ -588,7 +588,7 @@ class ProductItemController {
         const sellerPromise = !request.payload.seller_id &&
         (request.payload.seller_contact ||
             request.payload.seller_name) ?
-            sellerAdaptor.retrieveOrCreateOfflineSellers({
+            sellerAdaptor.retrieveOrCreateSellers({
                   seller_name: request.payload.seller_name,
                   contact_no: request.payload.seller_contact,
                 },

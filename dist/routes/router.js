@@ -41,6 +41,10 @@ var _accessory_routes = require('./accessory_routes');
 
 var _offer = require('./offer');
 
+var _shop_earn = require('./shop_earn');
+
+var _sellers = require('./sellers');
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 let middleware;
@@ -65,6 +69,7 @@ exports.default = (app, modals) => {
   const whatToServiceRoutes = [];
   const accessoryServicesRoutes = [];
   const offerRoutes = [];
+  const shopEarnRoutes = [];
   const searchController = new _search2.default(modals);
   (0, _auth.prepareAuthRoutes)(modals, authRoutes, middleware);
 
@@ -94,6 +99,10 @@ exports.default = (app, modals) => {
 
   (0, _offer.prepareOfferRoutes)(modals, offerRoutes, middleware);
 
+  (0, _shop_earn.prepareShopEarnRoute)(modals, shopEarnRoutes, middleware);
+
+  (0, _sellers.prepareSellerRoutes)(modals, sellerRoutes, middleware);
+
   if (searchController) {
     searchRoutes.push({
       method: 'GET',
@@ -115,7 +124,7 @@ exports.default = (app, modals) => {
     });
   }
 
-  [...authRoutes, ...categoryRoutes, ...brandRoutes, ...sellerRoutes, ...serviceCenterRoutes, ...billManagementRoutes, ...uploadFileRoute, ...dashboardRoutes, ...productRoutes, ...insightRoutes, ...searchRoutes, ...generalRoutes, ...repairRoutes, ...calendarRoutes, ...whatToServiceRoutes, ...accessoryServicesRoutes, ...offerRoutes].forEach(routeItem => app.route(routeItem));
+  [...authRoutes, ...categoryRoutes, ...brandRoutes, ...sellerRoutes, ...serviceCenterRoutes, ...billManagementRoutes, ...uploadFileRoute, ...dashboardRoutes, ...productRoutes, ...insightRoutes, ...searchRoutes, ...generalRoutes, ...repairRoutes, ...calendarRoutes, ...whatToServiceRoutes, ...accessoryServicesRoutes, ...offerRoutes, ...shopEarnRoutes].forEach(routeItem => app.route(routeItem));
   const handler = function (request, h, err) {
     console.log(err);
     return h.response('The page was not found').code(404);

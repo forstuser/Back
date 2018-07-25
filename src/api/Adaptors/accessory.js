@@ -291,7 +291,7 @@ export default class AccessoryAdaptor {
       if (!transactionDetail) {
         if (seller_detail) {
           const {name, address, phone} = seller_detail;
-          seller = await this.sellerAdapter.retrieveOrCreateOfflineSellers(
+          seller = await this.sellerAdapter.retrieveOrCreateSellers(
               {seller_name: name, address, contact_no: phone},
               {seller_name: name, address, contact_no: phone});
         }

@@ -799,7 +799,7 @@ class CalendarServiceAdaptor {
     if (provider_number) {
       sellerOption.contact_no = provider_number;
     }
-    const sellerDetail = await _bluebird2.default.try(() => provider_number && provider_number.trim() || provider_name && provider_name.trim() ? this.sellerAdaptor.retrieveOrCreateOfflineSellers(sellerOption, {
+    const sellerDetail = await _bluebird2.default.try(() => provider_number && provider_number.trim() || provider_name && provider_name.trim() ? this.sellerAdaptor.retrieveOrCreateSellers(sellerOption, {
       seller_name: provider_name,
       contact_no: provider_number,
       updated_by: user_id,

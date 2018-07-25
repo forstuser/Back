@@ -1393,7 +1393,7 @@ class ProductAdaptor {
       }
     }
 
-    sellerPromise.push(seller_contact && seller_contact.trim() || seller_name && seller_name.trim() || seller_name === '' || seller_email && seller_email.trim() || seller_address && seller_address.trim() ? this.sellerAdaptor.retrieveOrCreateOfflineSellers(sellerOption, {
+    sellerPromise.push(seller_contact && seller_contact.trim() || seller_name && seller_name.trim() || seller_name === '' || seller_email && seller_email.trim() || seller_address && seller_address.trim() ? this.sellerAdaptor.retrieveOrCreateSellers(sellerOption, {
       seller_name,
       contact_no: seller_contact,
       email: seller_email,
@@ -1413,7 +1413,7 @@ class ProductAdaptor {
       } else {
         sellerOption = _lodash2.default.omit(sellerOption, 'contact_no');
       }
-      sellerPromise.push(seller_contact || seller_name || seller_name === '' ? this.sellerAdaptor.retrieveOrCreateOfflineSellers(sellerOption, {
+      sellerPromise.push(seller_contact || seller_name || seller_name === '' ? this.sellerAdaptor.retrieveOrCreateSellers(sellerOption, {
         seller_name, contact_no: seller_contact, updated_by: user_id,
         created_by: user_id, status_type: 11
       }) : '');
@@ -1431,7 +1431,7 @@ class ProductAdaptor {
       } else {
         sellerOption = _lodash2.default.omit(sellerOption, 'contact_no');
       }
-      sellerPromise.push(!repair.is_amc_seller && !isProductRepairSellerSame && !isAMCRepairSellerSame && (repair.seller_contact && repair.seller_contact.trim() || repair.seller_name && repair.seller_name.trim()) ? this.sellerAdaptor.retrieveOrCreateOfflineSellers(sellerOption, {
+      sellerPromise.push(!repair.is_amc_seller && !isProductRepairSellerSame && !isAMCRepairSellerSame && (repair.seller_contact && repair.seller_contact.trim() || repair.seller_name && repair.seller_name.trim()) ? this.sellerAdaptor.retrieveOrCreateSellers(sellerOption, {
         seller_name: repair.seller_name,
         contact_no: repair.seller_contact,
         updated_by: productBody.user_id,
@@ -1448,7 +1448,7 @@ class ProductAdaptor {
       } else {
         sellerOption = _lodash2.default.omit(sellerOption, 'contact_no');
       }
-      sellerPromise.push(!isProductPUCSellerSame && (puc.seller_contact && puc.seller_contact.trim() || puc.seller_name && puc.seller_name.trim()) ? this.sellerAdaptor.retrieveOrCreateOfflineSellers(sellerOption, {
+      sellerPromise.push(!isProductPUCSellerSame && (puc.seller_contact && puc.seller_contact.trim() || puc.seller_name && puc.seller_name.trim()) ? this.sellerAdaptor.retrieveOrCreateSellers(sellerOption, {
         seller_name: puc.seller_name,
         contact_no: puc.seller_contact,
         updated_by: productBody.user_id,
