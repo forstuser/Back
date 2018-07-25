@@ -22,23 +22,17 @@ class ServiceScheduleAdaptor {
     this.modals = modals;
   }
 
-  retrieveServiceSchedules(options) {
-    return this.modals.serviceSchedules.findAll({
+  async retrieveServiceSchedules(options) {
+    const scheduleResults = await this.modals.serviceSchedules.findAll({
       where: options,
       attributes: [
-        'id',
-        'category_id',
-        'brand_id',
-        'title',
-        'inclusions',
-        'exclusions',
+        'id', 'category_id', 'brand_id',
+        'title', 'inclusions', 'exclusions',
         'service_number', 'service_type',
-        'distance',
-        'due_in_months',
-        'due_in_days',
-        'updated_at'],
+        'distance', 'due_in_months', 'due_in_days', 'updated_at'],
       order: [['due_in_months']],
-    }).then((scheduleResults) => scheduleResults.map((item) => item.toJSON()));
+    });
+    return scheduleResults.map((item) => item.toJSON());
   }
 }
 

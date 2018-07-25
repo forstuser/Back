@@ -66,6 +66,9 @@ export default (sequelize, DataTypes) => {
         logo: {
           type: DataTypes.STRING(2550),
         },
+        trending: {
+          type: DataTypes.BOOLEAN
+        },
         discount: {
           type: DataTypes.FLOAT,
         },

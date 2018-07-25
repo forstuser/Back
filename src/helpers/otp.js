@@ -32,7 +32,7 @@ const generateOTP = length => {
   return value.join('');
 };
 
-const sendOTPToUser = (mobileNo, otpLength) => Promise.try(() => {
+const sendOTPToUser = async (mobileNo, otpLength) => await Promise.try(() => {
   const phone = `91${mobileNo}`;
   const otp = generateOTP(otpLength); // OTP of length = 4
   return sendOTP.sendAsync(phone, 'BINBILL', otp).catch((err) => {
@@ -44,13 +44,10 @@ const sendOTPToUser = (mobileNo, otpLength) => Promise.try(() => {
   });
 });
 
-const sendOTPOverEmail = (email, name, otpLength) => Promise.try(() => {
+const sendOTPOverEmail = async (email, name, otpLength) => await Promise.try(async () => {
   const smtpTransporter = nodemailer.createTransport(smtpTransport({
     service: 'gmail',
-    auth: {
-      user: config.EMAIL.USER,
-      pass: config.EMAIL.PASSWORD,
-    },
+    auth: {user: config.EMAIL.USER, pass: config.EMAIL.PASSWORD,},
     secure: true,
     port: 465,
   }));
@@ -80,16 +77,12 @@ Regards<br/>Support BinBill </p>
 </td></tr></table></td></tr></table></div></center></body></html>`,
   };
 
-  return Promise.all([
-    PasswordModule.hashPassword(otp),
-    smtpTransporter.sendMail(mailOptions)]);
-});
+  return await Promise.all([PasswordModule.hashPassword(otp), smtpTransporter.sendMail(mailOptions)]);});
 
-const verifyOTPForUser = (mobileNo, otp) => Promise.try(() => {
+const verifyOTPForUser = async (mobileNo, otp) => {
   const phone = `91${mobileNo}`;
-
-  return sendOTP.verifyAsync(phone, otp);
-});
+  return await Promise.try(() =>sendOTP.verifyAsync(phone, otp));
+};
 
 module.exports = {
   sendOTPToUser,

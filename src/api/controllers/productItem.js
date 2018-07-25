@@ -3,12 +3,14 @@ import shared from '../../helpers/shared';
 import InsuranceAdaptor from '../Adaptors/insurances';
 import AMCAdaptor from '../Adaptors/amcs';
 import PUCAdaptor from '../Adaptors/pucs';
+import RegCertificateAdaptor from '../Adaptors/reg_certificates';
 import WarrantyAdaptor from '../Adaptors/warranties';
 import RepairAdaptor from '../Adaptors/repairs';
 import SellerAdaptor from '../Adaptors/sellers';
 import CategoryAdaptor from '../Adaptors/category';
 import ProductAdaptor from '../Adaptors/product';
 import JobAdaptor from '../Adaptors/job';
+import FuelAdaptor from '../Adaptors/refueling';
 
 let repairAdaptor;
 let sellerAdaptor;
@@ -20,6 +22,8 @@ let categoryAdaptor;
 let productAdaptor;
 let jobAdaptor;
 let modals;
+let regCertificateAdaptor;
+let fuelAdaptor;
 
 class ProductItemController {
   constructor(modal) {
@@ -33,6 +37,8 @@ class ProductItemController {
     categoryAdaptor = new CategoryAdaptor(modal);
     productAdaptor = new ProductAdaptor(modal);
     jobAdaptor = new JobAdaptor(modal);
+    regCertificateAdaptor = new RegCertificateAdaptor(modal);
+    fuelAdaptor = new FuelAdaptor(modals);
   }
 
   static async updateRepair(request, reply) {
@@ -209,6 +215,7 @@ class ProductItemController {
           forceUpdate: request.pre.forceUpdate,
         });
       } else if (request.pre.userExist && !request.pre.forceUpdate) {
+        console.log(JSON.stringify({payload: request.payload}));
         const providerPromise =
             request.payload.provider_name ?
                 insuranceAdaptor.findCreateInsuranceBrand({
@@ -267,7 +274,7 @@ class ProductItemController {
         const insuranceBody = {
           renewal_type: request.payload.renewal_type || 8,
           updated_by: user.id || user.ID,
-          job_id: request.payload.job_id,
+          job_id: request.payload.job_id || productResult.jobId,
           status_type: 11,
           product_id,
           expiry_date: effective_date && expiry_date ?
@@ -423,25 +430,22 @@ class ProductItemController {
         const [sellerList] = await Promise.all([sellerPromise]);
 
         const productResult = await productAdaptor.retrieveProductById(
-            product_id,
-            {status_type: [5, 8, 11]});
+            product_id, {status_type: [5, 8, 11]});
         const currentItem = productResult ?
             productResult.amcDetails.find(
                 (item) => item.id === parseInt(amcId)) :
             undefined;
-        const amcEffectiveDate = productResult ?
-            currentItem ?
-                moment.utc(currentItem.effectiveDate, moment.ISO_8601) :
-                productResult.amcDetails &&
-                productResult.amcDetails.length > 0 ?
-                    moment.utc(productResult.amcDetails[0].expiryDate,
-                        moment.ISO_8601).add(1, 'days') :
-                    productResult.purchaseDate :
+        const amcEffectiveDate = productResult ? currentItem ?
+            moment.utc(currentItem.effectiveDate, moment.ISO_8601) :
+            productResult.amcDetails &&
+            productResult.amcDetails.length > 0 ?
+                moment.utc(productResult.amcDetails[0].expiryDate,
+                    moment.ISO_8601).add(1, 'days') :
+                productResult.purchaseDate :
             undefined;
         let effective_date = amcEffectiveDate ?
             request.payload.effective_date ||
-            amcEffectiveDate :
-            moment.utc();
+            amcEffectiveDate : moment.utc();
         effective_date = moment.utc(effective_date, moment.ISO_8601).
             isValid() ?
             moment.utc(effective_date,
@@ -449,25 +453,17 @@ class ProductItemController {
             moment.utc(effective_date, 'DD MMM YY').
                 startOf('day');
         const expiry_date = moment.utc(effective_date,
-            moment.ISO_8601).
-            add(12, 'months').
-            subtract(1, 'day').
-            endOf('days').
-            format('YYYY-MM-DD');
+            moment.ISO_8601).add(12, 'months').
+            subtract(1, 'day').endOf('days').format('YYYY-MM-DD');
 
         const values = {
-          renewal_type: 8,
-          updated_by: user.id || user.ID,
-          status_type: 11,
-          product_id: product_id,
-          job_id: request.payload.job_id,
+          renewal_type: 8, updated_by: user.id || user.ID,
+          status_type: 11, product_id,
+          job_id: request.payload.job_id || productResult.jobId,
           renewal_cost: request.payload.value,
-          seller_id: sellerList ?
-              sellerList.sid :
-              request.payload.seller_id,
+          seller_id: sellerList ? sellerList.sid : request.payload.seller_id,
           expiry_date: effective_date ?
-              moment.utc(expiry_date).format('YYYY-MM-DD') :
-              undefined,
+              moment.utc(expiry_date).format('YYYY-MM-DD') : undefined,
           effective_date: effective_date ? moment.utc(effective_date).
               format('YYYY-MM-DD') : undefined,
           document_date: effective_date ? moment.utc(effective_date).
@@ -643,7 +639,7 @@ class ProductItemController {
           status_type: 11,
           renewal_cost: request.payload.value,
           product_id,
-          job_id: request.payload.job_id,
+          job_id: request.payload.job_id || productResult.jobId,
           seller_id: sellerList ?
               sellerList.sid :
               request.payload.seller_id,
@@ -804,9 +800,7 @@ class ProductItemController {
                     warrantyItem.warranty_type === 2)) : [];
 
         const currentItem = warrantyDetails.find(
-            (warrantyDetail) => {
-              return warrantyDetail.id === parseInt(warrantyId);
-            });
+            (warrantyDetail) => warrantyDetail.id === parseInt(warrantyId));
 
         const warrantyEffectiveDate = currentItem ?
             moment.utc(currentItem.effectiveDate, moment.ISO_8601) :
@@ -836,8 +830,8 @@ class ProductItemController {
           renewal_cost: request.payload.value,
           updated_by: user.id || user.ID,
           status_type: warrantyRenewalType ? 11 : 8,
-          job_id: request.payload.job_id,
-          product_id: product_id,
+          job_id: request.payload.job_id || productResult.jobId,
+          product_id,
           expiry_date: effective_date && expiry_date ?
               moment.utc(expiry_date).format('YYYY-MM-DD') :
               undefined,
@@ -919,13 +913,12 @@ class ProductItemController {
         return reply.response({
           status: true,
         });
-      } else {
-        return reply.response({
-          status: false,
-          message: 'Forbidden',
-          forceUpdate: request.pre.forceUpdate,
-        });
       }
+      return reply.response({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
     } catch (err) {
 
       modals.logs.create({
@@ -944,6 +937,315 @@ class ProductItemController {
       return reply.response({
         status: false,
         message: 'Unable to delete warranty',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
+  static async updateRC(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    try {
+      if (request.pre.userExist === 0) {
+        return reply.response({
+          status: false, message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate,
+        }).code(402);
+      } else if (!request.pre.userExist) {
+        return reply.response({
+          status: false, message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate,
+        });
+      } else if (request.pre.userExist && !request.pre.forceUpdate) {
+        let {renewal_type, effective_date, expiry_date, state_id, job_id, value, document_number} = request.payload;
+        const product_id = parseInt(request.params.id);
+        const rc_id = parseInt(request.params.rc_id);
+        let [productResult, renewal_detail] = await Promise.all([
+          productAdaptor.retrieveProductById(
+              product_id, {status_type: [5, 8, 11], main_category_id: 3}),
+          renewal_type ?
+              modals.renewalTypes.findOne({where: {type: renewal_type}}) :
+              {type: 15, effective_months: 180}]);
+        if (productResult) {
+          renewal_detail = renewal_type ?
+              renewal_detail.toJSON() :
+              renewal_detail;
+          const currentItem = productResult ?
+              productResult.rc_details.find(
+                  (item) => item.id === parseInt(rc_id)) :
+              undefined;
+          const rcEffectiveDate = productResult ? currentItem ?
+              moment.utc(currentItem.effectiveDate, moment.ISO_8601) :
+              productResult.rc_details &&
+              productResult.rc_details.length > 0 ?
+                  moment.utc(productResult.rc_details[0].expiryDate,
+                      moment.ISO_8601).add(1, 'days') :
+                  productResult.purchaseDate : undefined;
+          effective_date = rcEffectiveDate ?
+              effective_date || rcEffectiveDate : moment.utc();
+          effective_date = moment.utc(effective_date, moment.ISO_8601).
+              isValid() ? moment.utc(effective_date,
+              moment.ISO_8601).startOf('day') :
+              moment.utc(effective_date, 'DD MMM YY').startOf('day');
+          expiry_date = expiry_date ||
+              moment.utc(effective_date, moment.ISO_8601).
+                  add(renewal_detail.effective_months, 'months').
+                  subtract(1, 'day').endOf('days').format('YYYY-MM-DD');
+
+          const values = {
+            renewal_type: renewal_detail.type,
+            updated_by: user.id || user.ID,
+            status_type: 11, product_id, state_id,
+            job_id: job_id || productResult.jobId, renewal_cost: value,
+            expiry_date: expiry_date ?
+                moment.utc(expiry_date).format('YYYY-MM-DD') : undefined,
+            document_number, user_id: user.id || user.ID,
+            effective_date: effective_date ? moment.utc(effective_date).
+                format('YYYY-MM-DD') : undefined,
+            document_date: effective_date ? moment.utc(effective_date).
+                format('YYYY-MM-DD') : undefined,
+          };
+          const rc = rc_id ?
+              await regCertificateAdaptor.updateRegCerts(rc_id, values) :
+              await regCertificateAdaptor.createRegCerts(values);
+
+          return rc ? reply.response({
+            status: true, message: 'successful', rc,
+            forceUpdate: request.pre.forceUpdate,
+          }) : reply.response({
+            status: false,
+            message: 'RC already exist.',
+            forceUpdate: request.pre.forceUpdate,
+          });
+        }
+
+        return reply.response({
+          status: false,
+          message: 'Invalid product or product does not exist.',
+          forceUpdate: request.pre.forceUpdate,
+        });
+      }
+
+      return reply.response({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    } catch (err) {
+
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to create RC',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
+  static async deleteRC(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    try {
+      if (request.pre.userExist === 0) {
+        return reply.response({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate,
+        }).code(402);
+      } else if (!request.pre.userExist) {
+        return reply.response({
+          status: false,
+          message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate,
+        });
+      } else if (request.pre.userExist && !request.pre.forceUpdate) {
+        await regCertificateAdaptor.deleteRefueling(
+            request.params.rc_id, user.id ||
+            user.ID);
+        return reply.response({
+          status: true,
+        });
+      }
+
+      return reply.response({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    } catch (err) {
+
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to delete amc',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
+  static async updateRefueling(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    try {
+      if (request.pre.userExist === 0) {
+        return reply.response({
+          status: false, message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate,
+        }).code(402);
+      } else if (!request.pre.userExist) {
+        return reply.response({
+          status: false, message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate,
+        });
+      } else if (request.pre.userExist && !request.pre.forceUpdate) {
+        let {effective_date, job_id, value, document_number, fuel_quantity, fuel_type, odometer_reading} = request.payload;
+        const product_id = parseInt(request.params.id);
+        const fuel_id = parseInt(request.params.fuel_id);
+        let productResult = await productAdaptor.retrieveProductById(
+            product_id, {status_type: [5, 8, 11], main_category_id: 3});
+        if (productResult) {
+          const prevFuel = productResult.fuel_details.find(
+                  (item) => item.odometer_reading > odometer_reading && moment.utc(effective_date, moment.ISO_8601).isAfter(moment.utc(item.document_date, moment.ISO_8601), 'day'));
+          if(!prevFuel) {
+            effective_date = effective_date || moment.utc();
+            effective_date = moment.utc(effective_date, moment.ISO_8601).
+                isValid() ? moment.utc(effective_date,
+                moment.ISO_8601).startOf('day') :
+                moment.utc(effective_date, 'DD MMM YY').startOf('day');
+            const values = {
+              fuel_quantity, fuel_type, odometer_reading, product_id,
+              updated_by: user.id || user.ID, status_type: 11,
+              job_id: job_id || productResult.jobId, purchase_cost: value,
+              document_number, user_id: user.id || user.ID,
+              effective_date: effective_date ? moment.utc(effective_date).
+                  format('YYYY-MM-DD') : undefined,
+              document_date: effective_date ? moment.utc(effective_date).
+                  format('YYYY-MM-DD') : undefined,
+            };
+            const fuel_detail = fuel_id ?
+                await fuelAdaptor.updateRefuelings(fuel_id, values) :
+                await fuelAdaptor.createRefuelings(values);
+
+            return fuel_detail ? reply.response({
+              status: true, message: 'successful', fuel_detail,
+              forceUpdate: request.pre.forceUpdate,
+            }) : reply.response({
+              status: false,
+              message: 'Fuel Detail already exist.',
+              forceUpdate: request.pre.forceUpdate,
+            });
+          }
+
+          return reply.response({
+            status: false,
+            message: `Odometer reading can't be less than the previous one.`,
+            forceUpdate: request.pre.forceUpdate,
+          });
+        }
+
+        return reply.response({
+          status: false,
+          message: 'Invalid product or product does not exist.',
+          forceUpdate: request.pre.forceUpdate,
+        });
+      }
+
+      return reply.response({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    } catch (err) {
+
+      console.log(err);
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to create/update fuel',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
+  static async deleteRefueling(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    try {
+      if (request.pre.userExist === 0) {
+        return reply.response({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate,
+        }).code(402);
+      } else if (!request.pre.userExist) {
+        return reply.response({
+          status: false,
+          message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate,
+        });
+      } else if (request.pre.userExist && !request.pre.forceUpdate) {
+        await fuelAdaptor.deleteRefueling(
+            request.params.fuel_id, user.id || user.ID);
+        return reply.response({
+          status: true,
+        });
+      }
+
+      return reply.response({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    } catch (err) {
+      console.log(err);
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to delete fuel detail',
         forceUpdate: request.pre.forceUpdate,
       });
     }

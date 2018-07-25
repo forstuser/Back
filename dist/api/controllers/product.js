@@ -115,15 +115,33 @@ class ProductController {
         const {
           product_name, main_category_id, category_id, sub_category_id, brand_id, colour_id, value,
           taxes, seller_name, seller_contact, seller_email, seller_address, seller_id, model, metadata,
-          isNewModel, brand_name, document_number, document_date, warranty, insurance, puc, amc, repair
+          isNewModel, brand_name, document_number, document_date, warranty, insurance, puc, amc, repair, ref_id, accessory_part_id
         } = request.payload;
         const user_id = user.id || user.ID;
         const productBody = {
-          user_id, product_name, main_category_id, category_id, sub_category_id,
-          brand_id, colour_id, purchase_cost: value, taxes, updated_by: user_id,
-          seller_name, seller_contact, seller_email, seller_address, seller_id,
-          status_type: 11, model: model || '', new_drop_down: isNewModel,
-          document_number, document_date: document_date ? _moment2.default.utc(document_date, _moment2.default.ISO_8601).isValid() ? _moment2.default.utc(document_date, _moment2.default.ISO_8601).startOf('day').format('YYYY-MM-DD') : _moment2.default.utc(document_date, 'DD MMM YY').startOf('day').format('YYYY-MM-DD') : undefined, brand_name
+          user_id,
+          product_name,
+          main_category_id,
+          category_id,
+          sub_category_id,
+          brand_id,
+          colour_id,
+          purchase_cost: value,
+          taxes,
+          updated_by: user_id,
+          seller_name,
+          seller_contact,
+          seller_email,
+          seller_address,
+          seller_id,
+          status_type: 11,
+          model: model || '',
+          new_drop_down: isNewModel,
+          ref_id,
+          document_number,
+          accessory_part_id,
+          document_date: document_date ? _moment2.default.utc(document_date, _moment2.default.ISO_8601).isValid() ? _moment2.default.utc(document_date, _moment2.default.ISO_8601).startOf('day').format('YYYY-MM-DD') : _moment2.default.utc(document_date, 'DD MMM YY').startOf('day').format('YYYY-MM-DD') : undefined,
+          brand_name
         };
 
         const otherItems = { warranty, insurance, puc, amc, repair };
@@ -157,6 +175,77 @@ class ProductController {
           });
         }
       } catch (err) {
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user ? user.id || user.ID : undefined,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err
+          })
+        }).catch(ex => console.log('error while logging on db,', ex));
+        return reply.response({
+          status: false,
+          message: 'An error occurred in product creation.',
+          forceUpdate: request.pre.forceUpdate,
+          err
+        });
+      }
+    } else {
+      reply.response({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate
+      });
+    }
+  }
+
+  static async updateAccessoryProduct(request, reply) {
+    const user = _shared2.default.verifyAuthorization(request.headers);
+    if (request.pre.userExist === 0) {
+      return reply.response({
+        status: false,
+        message: 'Inactive User',
+        forceUpdate: request.pre.forceUpdate
+      }).code(402);
+    } else if (!request.pre.userExist) {
+      return reply.response({
+        status: false,
+        message: 'Unauthorized',
+        forceUpdate: request.pre.forceUpdate
+      });
+    } else if (request.pre.userExist && !request.pre.forceUpdate) {
+      try {
+        const {
+          product_name, main_category_id, category_id, sub_category_id, brand_id, accessory_part_name, value,
+          taxes, seller_name, seller_contact, seller_email, seller_address, seller_id, document_number, document_date, warranty, accessory_part_id
+        } = request.payload;
+        const { ref_id, id } = request.params;
+        const user_id = user.id || user.ID;
+        const productBody = {
+          user_id, product_name, main_category_id, category_id, sub_category_id,
+          brand_id, purchase_cost: value, taxes, updated_by: user_id,
+          seller_name, seller_contact, seller_email, seller_address, seller_id,
+          status_type: 11, ref_id, document_number, accessory_part_id,
+          document_date: document_date ? _moment2.default.utc(document_date, _moment2.default.ISO_8601).isValid() ? _moment2.default.utc(document_date, _moment2.default.ISO_8601).startOf('day').format('YYYY-MM-DD') : _moment2.default.utc(document_date, 'DD MMM YY').startOf('day').format('YYYY-MM-DD') : undefined, accessory_part_name
+        };
+
+        const otherItems = { warranty };
+
+        const product = await productAdaptor.updateAccessoryProduct({ user, productBody, otherItems, id, ref_id });
+        return product ? reply.response({
+          status: true, message: 'successful', product,
+          forceUpdate: request.pre.forceUpdate
+        }) : reply.response({
+          status: false, message: 'Product already exist.',
+          forceUpdate: request.pre.forceUpdate
+        });
+      } catch (err) {
+        console.log(err);
         modals.logs.create({
           api_action: request.method,
           api_path: request.url.pathname,
@@ -309,7 +398,13 @@ class ProductController {
         const options = {
           main_category_id: [2, 3],
           status_type: [5, 11],
-          user_id: user.id || user.ID
+          user_id: user.id || user.ID,
+          brand_id: {
+            $in: modals.sequelize.literal('(Select brand_id from center_brand_mapping)')
+          },
+          category_id: {
+            $in: modals.sequelize.literal('(Select category_id from service_center_details)')
+          }
         };
 
         if (brandId.length > 0) {

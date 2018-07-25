@@ -45,6 +45,7 @@ class InsuranceAdaptor {
       category_id
     }));
     productOptions = productOptions === {} ? undefined : productOptions;
+    options = _lodash2.default.omit(options, 'ref_id');
     options = _lodash2.default.omit(options, 'category_id');
     options = _lodash2.default.omit(options, 'main_category_id');
     options = _lodash2.default.omit(options, 'product_status_type');

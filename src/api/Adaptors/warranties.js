@@ -35,6 +35,7 @@ class WarrantyAdaptor {
     }));
 
     productOptions = productOptions === {} ? undefined : productOptions;
+    options = _.omit(options, 'ref_id');
     options = _.omit(options, 'category_id');
     options = _.omit(options, 'main_category_id');
     options = _.omit(options, 'product_status_type');

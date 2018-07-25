@@ -51,11 +51,7 @@ class UserAdaptor {
 
   async isUserValid(user) {
     try {
-      const userCount = await this.modals.users.count({
-        where: {
-          id: user.id || user.ID
-        }
-      });
+      const userCount = await this.modals.users.count({ where: { id: user.id || user.ID } });
       return !!(userCount && userCount > 0);
     } catch (err) {
       console.log(`Error on ${new Date()} for user ${user.mobile_no || user.mobile_no} is as follow: \n \n ${err}`);
@@ -75,23 +71,18 @@ class UserAdaptor {
     }
 
     const result = await this.modals.users.findOne({
-      where: whereObject,
-      attributes: ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', 'image_name', 'gender', 'fb_id']
+      where: whereObject, attributes: ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', 'image_name', 'gender', 'fb_id']
     });
 
     if (!result || result && !result.id) {
-      console.log('User is getting created.');
       return this.modals.users.findCreateFind({
-        where: whereObject,
-        defaults: defaultObject,
+        where: whereObject, defaults: defaultObject,
         attributes: ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', 'image_name', 'gender']
       });
     }
 
-    console.log('User is getting updated.');
     return _bluebird2.default.all([_bluebird2.default.try(() => result.updateAttributes({
-      fb_id: defaultObject.fb_id,
-      last_active_date: _moment2.default.utc(),
+      fb_id: defaultObject.fb_id, last_active_date: _moment2.default.utc(),
       last_api: defaultObject.last_api
     })), false]);
   }
@@ -115,11 +106,7 @@ class UserAdaptor {
   async retrieveUserById(user) {
     const result = await _bluebird2.default.all([this.modals.users.findById(user.id || user.ID, {
       attributes: ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', 'location', 'latitude', 'longitude', 'image_name', 'password', 'gender', [this.modals.sequelize.fn('CONCAT', '/consumer/', this.modals.sequelize.col('id'), '/images'), 'imageUrl']]
-    }), this.retrieveUserAddress({
-      where: {
-        user_id: user.id || user.ID
-      }
-    })]);
+    }), this.retrieveUserAddress({ where: { user_id: user.id || user.ID } })]);
     if (result[0]) {
       let user = result[0].toJSON();
       const imageDiff = user.image_name ? user.image_name.split('.')[0].split('-') : '';
@@ -134,9 +121,7 @@ class UserAdaptor {
   }
 
   async retrieveUserImageNameById(user) {
-    const result = await this.modals.users.findById(user.id || user.ID, {
-      attributes: ['image_name']
-    });
+    const result = await this.modals.users.findById(user.id || user.ID, { attributes: ['image_name'] });
     return result.toJSON();
   }
 
@@ -151,31 +136,21 @@ class UserAdaptor {
       const result = await this.retrieveUserById(user);
       result.email_secret = undefined;
       return {
-        status: true,
-        message: 'User Data retrieved',
-        binBillDetail: {
-          callUs: '+91-124-4343177',
-          emailUs: 'support@binbill.com',
+        status: true, message: 'User Data retrieved', binBillDetail: {
+          callUs: '+91-124-4343177', emailUs: 'support@binbill.com',
           aboutUs: 'http://www.binbill.com/homes/about',
           reportAnErrorOn: 'support@binbill.com',
           faqUrl: 'http://www.binbill.com/faqs'
-        },
-        userProfile: result,
-        forceUpdate: request.pre.forceUpdate
+        }, userProfile: result, forceUpdate: request.pre.forceUpdate
       };
     } catch (err) {
+      const { params, query, headers, payload, method, url } = request;
       this.modals.logs.create({
-        api_action: request.method,
-        api_path: request.url.pathname,
+        api_action: method,
+        api_path: url.pathname,
         log_type: 2,
         user_id: user ? user.id || user.ID : undefined,
-        log_content: JSON.stringify({
-          params: request.params,
-          query: request.query,
-          headers: request.headers,
-          payload: request.payload,
-          err
-        })
+        log_content: JSON.stringify({ params, query, headers, payload, err })
       }).catch(ex => console.log('error while logging on db,', ex));
       return {
         status: false,
@@ -297,8 +272,8 @@ class UserAdaptor {
    * @param updateValues
    * @param filterOptions
    */
-  updateUserDetail(updateValues, filterOptions) {
-    return this.modals.users.update(updateValues, filterOptions);
+  async updateUserDetail(updateValues, filterOptions) {
+    return await this.modals.users.update(updateValues, filterOptions);
   }
 
   /**
@@ -306,8 +281,8 @@ class UserAdaptor {
    * @param updateValues
    * @param filterOptions
    */
-  updateUserAddress(updateValues, filterOptions) {
-    return this.modals.userAddress.update(updateValues, filterOptions);
+  async updateUserAddress(updateValues, filterOptions) {
+    return await this.modals.userAddress.update(updateValues, filterOptions);
   }
 
   /**
@@ -315,13 +290,13 @@ class UserAdaptor {
    * @param updateValues
    * @param filterOptions
    */
-  createUserAddress(updateValues, filterOptions) {
-    return this.modals.userAddress.create(updateValues, filterOptions);
+  async createUserAddress(updateValues, filterOptions) {
+    return await this.modals.userAddress.create(updateValues, filterOptions);
   }
 
-  retrieveUserAddress(filterOptions) {
+  async retrieveUserAddress(filterOptions) {
     filterOptions.attributes = ['address_type', 'address_line_1', 'address_line_2', 'city', 'state', 'pin', 'latitude', 'longitude'];
-    return this.modals.userAddress.findAll(filterOptions);
+    return await this.modals.userAddress.findAll(filterOptions);
   }
 }
 

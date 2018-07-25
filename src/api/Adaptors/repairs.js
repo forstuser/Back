@@ -35,6 +35,7 @@ class RepairAdaptor {
     }));
 
     productOptions = productOptions === {} ? undefined : productOptions;
+    options = _.omit(options, 'ref_id');
     options = _.omit(options, 'category_id');
     options = _.omit(options, 'main_category_id');
     options = _.omit(options, 'product_status_type');
@@ -227,7 +228,7 @@ class RepairAdaptor {
   }
 
   async createRepairs(values) {
-    const result = this.modals.repairs.create(values);
+    const result = await this.modals.repairs.create(values);
     return result.toJSON();
   }
 

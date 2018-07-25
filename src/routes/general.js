@@ -5,12 +5,12 @@ export function prepareGeneralRoutes(modal, routeObject, middleware) {
   const controllerInit = new ControllerObject(modal);
   if (controllerInit) {
     routeObject.push({
-      method : 'GET',
-      path : '/version/detail',
-      config : {
-        handler : ControllerObject.checkForAppUpdate,
-        description : 'Get app latest version details',
-      }
+      method: 'GET',
+      path: '/version/detail',
+      config: {
+        handler: ControllerObject.checkForAppUpdate,
+        description: 'Get app latest version details',
+      },
     });
 
     routeObject.push({
@@ -163,6 +163,26 @@ export function prepareGeneralRoutes(modal, routeObject, middleware) {
 
     routeObject.push({
       method: 'GET',
+      path: '/referencedata/accessories',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {
+            method: middleware.checkAppVersion,
+            assign: 'forceUpdate',
+          },
+          {
+            method: middleware.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: ControllerObject.retrieveAccessoryPartRefData,
+        description: 'Retrieve Accessory Reference data',
+      },
+    });
+
+    routeObject.push({
+      method: 'GET',
       path: '/repairs/products',
       config: {
         auth: 'jwt',
@@ -230,6 +250,24 @@ export function prepareGeneralRoutes(modal, routeObject, middleware) {
         ],
         handler: ControllerObject.serviceCenterAccessed,
         description: 'Update user service center accessed.',
+      },
+    });
+
+    routeObject.push({
+      method: 'POST',
+      path: '/ses-bounce',
+      config: {
+        handler: ControllerObject.sesBounceHandler,
+        description: 'Handling Bounces from SES.',
+      },
+    });
+
+    routeObject.push({
+      method: 'POST',
+      path: '/ses-complaints',
+      config: {
+        handler: ControllerObject.sesComplaintHandler,
+        description: 'Handling Complaints from SES.',
       },
     });
   }

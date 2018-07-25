@@ -56,6 +56,22 @@ var _product = require('../Adaptors/product');
 
 var _product2 = _interopRequireDefault(_product);
 
+var _reg_certificates = require('../Adaptors/reg_certificates');
+
+var _reg_certificates2 = _interopRequireDefault(_reg_certificates);
+
+var _refueling = require('../Adaptors/refueling');
+
+var _refueling2 = _interopRequireDefault(_refueling);
+
+var _bluebird = require('bluebird');
+
+var _bluebird2 = _interopRequireDefault(_bluebird);
+
+var _guid = require('guid');
+
+var _guid2 = _interopRequireDefault(_guid);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 const fsImpl = new _s3fs2.default(_main2.default.AWS.S3.BUCKET, _main2.default.AWS.ACCESS_DETAILS);
@@ -91,6 +107,8 @@ let insuranceAdaptor;
 let repairAdaptor;
 let pucAdaptor;
 let productAdaptor;
+let regCertAdaptor;
+let fuelingAdaptor;
 
 class UploadController {
   constructor(modal) {
@@ -103,6 +121,8 @@ class UploadController {
     repairAdaptor = new _repairs2.default(modals);
     pucAdaptor = new _pucs2.default(modals);
     productAdaptor = new _product2.default(modals);
+    regCertAdaptor = new _reg_certificates2.default(modals);
+    fuelingAdaptor = new _refueling2.default(modals);
   }
 
   static async uploadUserImage(request, reply) {
@@ -118,16 +138,15 @@ class UploadController {
         status: false,
         message: 'Unauthorized'
         // forceUpdate: request.pre.forceUpdate
-      }).code(401);
+      });
     } else if (request.payload) {
       try {
-        let userDetail = await modals.users.findOne({
-          where: {
-            id: user.id || user.ID
-          }
-        });
+        let userDetail = await modals.users.findOne({ where: { id: user.id || user.ID } });
         userDetail = userDetail.toJSON();
-        await fsImpl.unlink(userDetail.image_name);
+        if (userDetail.image_name) {
+          await fsImpl.unlink(userDetail.image_name);
+        }
+
         const fieldNameHere = request.payload.fieldNameHere;
         const fileData = fieldNameHere || request.payload.filesName;
 
@@ -184,15 +203,11 @@ class UploadController {
         // forceUpdate: request.pre.forceUpdate
       });
     } else if (request.payload) {
+      let user_id = user.id || user.ID;
       try {
-        const productResult = await modals.products.findOne({
-          where: {
-            id: request.params.id,
-            user_id: user.id || user.ID
-          }
-        });
+        const productResult = await modals.products.findOne({ where: { id: request.params.id, user_id } });
         if (productResult) {
-          const file_ref = `${Math.random().toString(36).substr(2, 9)}${(user.id || user.ID).toString(36)}`;
+          const file_ref = `${Math.random().toString(36).substr(2, 9)}${user_id.toString(36)}`;
           const productDetail = productResult.toJSON();
           const fieldNameHere = request.payload.fieldNameHere;
           const fileData = fieldNameHere || request.payload.filesName;
@@ -200,7 +215,7 @@ class UploadController {
           const file_type = name.split('.')[name.split('.').length - 1];
           const fileName = `${productDetail.id}.${file_type}`;
           const fsImplProduct = new _s3fs2.default(`${_main2.default.AWS.S3.BUCKET}/${_main2.default.AWS.S3.PRODUCT_IMAGE}`, _main2.default.AWS.ACCESS_DETAILS);
-          await fsImplProduct.writeFile(fileName, fileData._data, { ContentType: _mimeTypes2.default.lookup(fileName) });
+          await _bluebird2.default.try(() => fsImplProduct.writeFile(fileName, fileData._data, { ContentType: _mimeTypes2.default.lookup(fileName) }));
 
           await productResult.updateAttributes({ file_type, file_ref });
           return reply.response({
@@ -217,13 +232,13 @@ class UploadController {
           // forceUpdate: request.pre.forceUpdate
         });
       } catch (err) {
-        console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
+        console.log(`Error on ${new Date()} for user ${user_id} is as follow: \n \n ${err}`);
 
         modals.logs.create({
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user.id || user.ID,
+          user_id,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -346,13 +361,7 @@ class UploadController {
             filteredFileData = fileData.filter(datum => {
               const name = datum.hapi.filename;
               const file_type = /[.]/.exec(name) ? /[^.]+$/.exec(name) : undefined;
-              if (file_type && !isFileTypeAllowed(file_type)) {
-                return false;
-              } else if (!file_type && !isFileTypeAllowedMagicNumber(datum._data)) {
-                return false;
-              }
-
-              return true;
+              return file_type && !isFileTypeAllowed(file_type) ? false : !(!file_type && !isFileTypeAllowedMagicNumber(datum._data));
             });
           } else {
             const name = filteredFileData.hapi.filename;
@@ -369,15 +378,15 @@ class UploadController {
           if (filteredFileData.length === 0) {
             console.log('No valid documents in request');
             return reply.response({ status: false, message: 'No valid documents in request' });
-          } else {
-            if (request.params && request.params.id) {
-              console.log(`Request received has JOB ID ${request.params.id} to upload file by user_id ${user.id || user.ID}`);
-              return await UploadController.retrieveJobCreateCopies({ user, fileData, reply, request });
-            }
-
-            console.log(`Request received to create new job to upload file by user_id ${user.id || user.ID}`);
-            return await UploadController.createJobWithCopies({ user, fileData: filteredFileData, reply, request });
           }
+
+          if (request.params && request.params.id) {
+            console.log(`Request received has JOB ID ${request.params.id} to upload file by user_id ${user.id || user.ID}`);
+            return await UploadController.retrieveJobCreateCopies({ user, fileData, reply, request });
+          }
+
+          console.log(`Request received to create new job to upload file by user_id ${user.id || user.ID}`);
+          return await UploadController.createJobWithCopies({ user, fileData: filteredFileData, reply, request });
           // } else {
           // 	reply.response({status: false, message: 'No File', forceUpdate: request.pre.forceUpdate}).code(400);
           // }
@@ -416,18 +425,17 @@ class UploadController {
         return await UploadController.uploadArrayOfFile({
           requiredDetail: { fileData, user, result, type, itemId }, reply
         });
+      }
+      console.log(`Request has single file ${fileData.hapi.filename}`);
+      const name = fileData.hapi.filename;
+      const fileType = /[.]/.exec(name) ? /[^.]+$/.exec(name) : undefined;
+      if (fileType && !isFileTypeAllowed(fileType) || !fileType && !isFileTypeAllowedMagicNumber(fileData._data)) {
+        return reply.response({ status: false, message: 'Data Upload Failed' });
       } else {
-        console.log(`Request has single file ${fileData.hapi.filename}`);
-        const name = fileData.hapi.filename;
-        const fileType = /[.]/.exec(name) ? /[^.]+$/.exec(name) : undefined;
-        if (fileType && !isFileTypeAllowed(fileType) || !fileType && !isFileTypeAllowedMagicNumber(fileData._data)) {
-          return reply.response({ status: false, message: 'Data Upload Failed' });
-        } else {
-          return await UploadController.uploadSingleFile({
-            requiredDetail: { fileData, result, fileType, user, type, itemId },
-            reply
-          });
-        }
+        return await UploadController.uploadSingleFile({
+          requiredDetail: { fileData, result, fileType, user, type, itemId },
+          reply
+        });
       }
     } catch (err) {
       console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
@@ -522,10 +530,11 @@ class UploadController {
       await modals.users.findById(updated_by);
       UploadController.notifyTeam(user, jobResult);
       let productItemResult;
-      const productId = requiredDetail.productId || jobResult.productId;
+      let { productId, category_id, main_category_id, id } = jobResult;
+      productId = requiredDetail.productId || productId;
       if (type && productId) {
-        productItemResult = UploadController.createProductItems({
-          type, jobId: job_id, user, productId,
+        productItemResult = await UploadController.createProductItems({
+          type, jobId: job_id, user, productId, category_id, main_category_id,
           itemId: requiredDetail.itemId, copies: copyData.map(copyItem => ({
             copyId: copyItem.id,
             copyUrl: `/jobs/${job_id}/files/${copyItem.id}`,
@@ -534,13 +543,7 @@ class UploadController {
           }))
         });
       }
-      return await UploadController.uploadResponse({
-        jobResult: jobResult,
-        copyData: copyData,
-        productItemResult: productItemResult,
-        type: type,
-        reply: reply
-      });
+      return await UploadController.uploadResponse({ jobResult, copyData, productItemResult, type, reply });
     } catch (err) {
       console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
 
@@ -585,7 +588,7 @@ class UploadController {
         // const file = fs.createReadStream();
         return await fsImpl.writeFile(`jobs/${jobResult.job_id}/${fileName}`, elem._data, { ContentType: _mimeTypes2.default.lookup(fileName) || 'image/jpeg' });
       });
-      const fileResult = await Promise.all(fileUploadPromises);
+      const fileResult = await _bluebird2.default.all(fileUploadPromises);
       const promisedQuery = [];
       const jobPromise = fileResult.map((elem, index) => {
         const jobCopyDetail = {
@@ -599,19 +602,18 @@ class UploadController {
         return jobAdaptor.createJobCopies(jobCopyDetail);
       });
 
-      promisedQuery.push(Promise.all(jobPromise));
+      promisedQuery.push(_bluebird2.default.all(jobPromise));
       promisedQuery.push(modals.users.findById(user.id || user.ID));
       // if (promisedQuery.length === Object.keys(fileData).length) {
-      const billResult = await Promise.all(promisedQuery);
+      const billResult = await _bluebird2.default.all(promisedQuery);
       jobCopies = billResult[0];
-      const userResult = billResult[billResult.length - 1];
-
       UploadController.notifyTeam(user, jobResult);
-      const productId = requiredDetail.productId || jobResult.productId;
+      let { productId, category_id, main_category_id, id } = jobResult;
+      productId = requiredDetail.productId || productId;
       let productItemResult;
       if (type && productId) {
         productItemResult = await UploadController.createProductItems({
-          type, jobId: jobResult.id, user, productId,
+          type, jobId: id, user, productId, category_id, main_category_id,
           itemId: requiredDetail.itemId, copies: jobCopies.map(copyItem => ({
             copyId: copyItem.id,
             copyUrl: `/jobs/${copyItem.job_id}/files/${copyItem.id}`,
@@ -622,11 +624,8 @@ class UploadController {
         });
       }
       return await UploadController.uploadResponse({
-        jobResult: jobResult,
-        copyData: jobCopies,
-        productItemResult: productItemResult,
-        type: type,
-        reply: reply
+        jobResult, copyData: jobCopies, productItemResult,
+        type, reply
       });
     } catch (err) {
       modals.logs.create({
@@ -696,6 +695,21 @@ class UploadController {
             replyResult.warranty = productItemResult[0];
             break;
           }
+        case 9:
+          {
+            replyResult.rc = productItemResult[0];
+            break;
+          }
+        case 10:
+          {
+            replyResult.fuel_details = productItemResult[0];
+            break;
+          }
+        case 11:
+          {
+            replyResult.accessories = productItemResult[0];
+            break;
+          }
         default:
           {
             replyResult.product = productItemResult[0];
@@ -708,149 +722,110 @@ class UploadController {
   }
 
   static async createProductItems(parameters) {
-    let { type, jobId, user, productId, itemId, copies } = parameters;
+    let { type, jobId: job_id, user, productId: product_id, itemId, copies, category_id, main_category_id } = parameters;
     const productItemPromise = [];
+    let user_id = user.id || user.ID;
     switch (type) {
       case 2:
         productItemPromise.push(!itemId ? amcAdaptor.createAMCs({
-          job_id: jobId,
-          product_id: productId,
-          user_id: user.id || user.ID,
-          updated_by: user.id || user.ID,
-          status_type: 8,
-          copies
+          job_id, product_id, user_id, copies,
+          updated_by: user_id, status_type: 8
         }) : amcAdaptor.updateAMCs(itemId, {
-          job_id: jobId,
-          product_id: productId,
-          user_id: user.id || user.ID,
-          updated_by: user.id || user.ID,
-          copies
+          job_id, product_id, user_id, copies,
+          updated_by: user_id
         }));
         break;
 
       case 3:
         productItemPromise.push(!itemId ? insuranceAdaptor.createInsurances({
-          job_id: jobId,
-          product_id: productId,
-          user_id: user.id || user.ID,
-          updated_by: user.id || user.ID,
-          status_type: 8,
-          copies
+          job_id, product_id, user_id, copies,
+          updated_by: user_id, status_type: 8
         }) : insuranceAdaptor.updateInsurances(itemId, {
-          job_id: jobId,
-          product_id: productId,
-          user_id: user.id || user.ID,
-          updated_by: user.id || user.ID,
-          copies
+          job_id, product_id, copies, user_id,
+          updated_by: user_id
         }));
         break;
 
       case 4:
         productItemPromise.push(!itemId ? repairAdaptor.createRepairs({
-          job_id: jobId,
-          product_id: productId,
-          user_id: user.id || user.ID,
-          updated_by: user.id || user.ID,
-          status_type: 8,
-          copies
+          job_id, product_id, copies, user_id,
+          updated_by: user_id, status_type: 8
         }) : repairAdaptor.updateRepairs(itemId, {
-          job_id: jobId,
-          product_id: productId,
-          user_id: user.id || user.ID,
-          updated_by: user.id || user.ID,
-          copies
+          job_id, product_id, user_id, copies,
+          updated_by: user_id
         }));
         break;
       case 5:
         productItemPromise.push(!itemId ? warrantyAdaptor.createWarranties({
-          job_id: jobId,
-          product_id: productId,
-          user_id: user.id || user.ID,
-          updated_by: user.id || user.ID,
-          status_type: 8,
-          warranty_type: 1,
-          copies
+          job_id, product_id, user_id, copies,
+          updated_by: user_id, status_type: 8, warranty_type: 1
         }) : warrantyAdaptor.updateWarranties(itemId, {
-          job_id: jobId,
-          product_id: productId,
-          user_id: user.id || user.ID,
-          updated_by: user.id || user.ID,
-          warranty_type: 1,
-          copies
+          job_id, product_id, copies, user_id,
+          updated_by: user_id, warranty_type: 1
         }));
         break;
 
       case 6:
         productItemPromise.push(!itemId ? warrantyAdaptor.createWarranties({
-          job_id: jobId,
-          product_id: productId,
-          user_id: user.id || user.ID,
-          updated_by: user.id || user.ID,
-          status_type: 8,
-          warranty_type: 3,
-          copies
+          job_id, product_id, user_id, copies,
+          updated_by: user_id, status_type: 8, warranty_type: 3
         }) : warrantyAdaptor.updateWarranties(itemId, {
-          job_id: jobId,
-          product_id: productId,
-          user_id: user.id || user.ID,
-          updated_by: user.id || user.ID,
-          warranty_type: 3,
-          copies
+          job_id, product_id, user_id, copies,
+          updated_by: user_id, warranty_type: 3
         }));
         break;
       case 7:
         productItemPromise.push(!itemId ? pucAdaptor.createPUCs({
-          job_id: jobId,
-          product_id: productId,
-          user_id: user.id || user.ID,
-          updated_by: user.id || user.ID,
-          status_type: 8,
-          copies
+          job_id, product_id, user_id, copies,
+          updated_by: user_id, status_type: 8
         }) : pucAdaptor.updatePUCs(itemId, {
-          job_id: jobId,
-          product_id: productId,
-          user_id: user.id || user.ID,
-          updated_by: user.id || user.ID,
-          copies
+          job_id, copies, product_id, user_id,
+          updated_by: user_id
         }));
         break;
       case 8:
         productItemPromise.push(!itemId ? warrantyAdaptor.createWarranties({
-          job_id: jobId,
-          product_id: productId,
-          user_id: user.id || user.ID,
-          updated_by: user.id || user.ID,
-          status_type: 8,
-          warranty_type: 2,
-          copies
+          job_id, product_id, copies, user_id,
+          updated_by: user_id, status_type: 8, warranty_type: 2
         }) : warrantyAdaptor.updateWarranties(itemId, {
-          job_id: jobId,
-          product_id: productId,
-          user_id: user.id || user.ID,
-          updated_by: user.id || user.ID,
-          warranty_type: 2,
-          copies
+          job_id, product_id, user_id, copies,
+          updated_by: user_id, warranty_type: 2
         }));
+        break;
+      case 9:
+        productItemPromise.push(!itemId ? regCertAdaptor.createRegCerts({
+          job_id, product_id, user_id, copies,
+          updated_by: user_id, status_type: 8
+        }) : regCertAdaptor.updateRegCerts(itemId, {
+          job_id, product_id, user_id,
+          updated_by: user_id, copies
+        }));
+        break;
+      case 10:
+        productItemPromise.push(!itemId ? fuelingAdaptor.createRefuelings({
+          job_id, product_id, user_id, copies,
+          updated_by: user_id, status_type: 8
+        }) : fuelingAdaptor.updateRefuelings(itemId, {
+          job_id, product_id, user_id,
+          updated_by: user_id, copies
+        }));
+        break;
+      case 11:
+        productItemPromise.push(!itemId ? productAdaptor.createEmptyProduct({
+          job_id, ref_id: product_id, user_id, copies, category_id,
+          main_category_id, updated_by: user_id, status_type: 8
+        }) : productAdaptor.updateProduct(itemId, { job_id, user_id, updated_by: user_id, copies }));
         break;
       default:
-        productItemPromise.push(productAdaptor.updateProduct(productId, {
-          job_id: jobId,
-          user_id: user.id || user.ID,
-          updated_by: user.id || user.ID,
-          copies
-        }));
+        productItemPromise.push(productAdaptor.updateProduct(product_id, { job_id, user_id, updated_by: user_id, copies }));
         break;
     }
 
-    if (type > 1 && type < 8) {
-      productItemPromise.push(productAdaptor.updateProduct(productId, {
-        job_id: jobId,
-        user_id: user.id || user.ID,
-        updated_by: user.id || user.ID
-      }));
+    if (type > 1 && type < 12) {
+      productItemPromise.push(productAdaptor.updateProduct(product_id, { job_id, user_id, updated_by: user_id }));
     }
 
-    return Promise.all(productItemPromise);
+    return await _bluebird2.default.all(productItemPromise);
   }
 
   static notifyTeam(user, result) {
@@ -861,8 +836,9 @@ class UploadController {
 
   static async retrieveFiles(request, reply) {
     if (!request.pre.forceUpdate) {
+      let result;
       try {
-        const result = await modals.jobs.findById(request.params.id, {
+        result = await modals.jobs.findById(request.params.id, {
           include: [{
             model: modals.jobCopies, as: 'copies',
             where: { id: request.params.copyid },
@@ -870,7 +846,7 @@ class UploadController {
           }]
         });
         if (result) {
-          const fileResult = await fsImpl.readFile(Guid.isGuid(result.job_id) ? `${result.copies[0].file_name}` : `jobs/${result.job_id}/${result.copies[0].file_name}`);
+          const fileResult = await fsImpl.readFile(_guid2.default.isGuid(result.job_id) ? `${result.copies[0].file_name}` : `jobs/${result.job_id}/${result.copies[0].file_name}`);
           return reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${result.bill_copy_name}`);
         } else {
           return reply.response({
@@ -935,7 +911,7 @@ class UploadController {
         if (!request.pre.forceUpdate) {
           const itemId = request.query && request.query.itemid ? request.query.itemid : undefined;
 
-          let [jobData, updateCopyStatus, count, productItemStatus] = await Promise.all([modals.jobs.findById(request.params.id, {
+          let [jobData, updateCopyStatus, count, productItemStatus] = await _bluebird2.default.all([modals.jobs.findById(request.params.id, {
             include: [{ model: modals.jobCopies, as: 'copies', required: true }]
           }), modals.jobCopies.update({ status_type: 3, updated_by: user.id || user.ID }, {
             where: {
@@ -1005,6 +981,15 @@ class UploadController {
             case 8:
               deletionResponse.warranty = deletionResponse.productItem;
               break;
+            case 9:
+              deletionResponse.rc = deletionResponse.productItem;
+              break;
+            case 10:
+              deletionResponse.fuel_details = deletionResponse.productItem;
+              break;
+            case 11:
+              deletionResponse.accessories = deletionResponse.productItem;
+              break;
             default:
               deletionResponse.product = deletionResponse.productItem;
               break;
@@ -1068,12 +1053,21 @@ class UploadController {
       case 8:
         productItemPromise.push(warrantyAdaptor.removeWarranties(itemId, copyId, { job_id: jobId, user_id, updated_by: user_id }));
         break;
+      case 9:
+        productItemPromise.push(regCertAdaptor.removeRegCerts(itemId, copyId, { job_id: jobId, user_id, updated_by: user_id }));
+        break;
+      case 10:
+        productItemPromise.push(fuelingAdaptor.removeRefueling(itemId, copyId, { job_id: jobId, user_id, updated_by: user_id }));
+        break;
+      case 11:
+        productItemPromise.push(productAdaptor.removeProducts(itemId, copyId, { job_id: jobId, user_id, updated_by: user_id }));
+        break;
       default:
         productItemPromise.push(productAdaptor.removeProducts(itemId, copyId, { job_id: jobId, user_id, updated_by: user_id }));
         break;
     }
 
-    return Promise.all(productItemPromise);
+    return await _bluebird2.default.all(productItemPromise);
   }
 
   static async retrieveCategoryImage(request, reply) {
@@ -1119,17 +1113,53 @@ class UploadController {
     if (!request.pre.forceUpdate) {
       try {
         const fsImplCategory = new _s3fs2.default(`${_main2.default.AWS.S3.BUCKET}/${_main2.default.AWS.S3.CATEGORY_IMAGE}/offer${request.params.file_type ? `/${request.params.file_type}` : ''}`, _main2.default.AWS.ACCESS_DETAILS);
-        let result = await modals.offerCategories.findOne({
-          where: {
-            id: request.params.id
-          }
-        });
+        let result = await modals.offerCategories.findOne({ where: { id: request.params.id } });
 
         result = result ? result.toJSON() : {};
         const fileResult = await fsImplCategory.readFile(result.category_image_name, 'utf8');
 
         console.log(fileResult);
         return reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${result.category_image_name}`);
+      } catch (err) {
+        console.log(`Error on ${new Date()} for user while retrieving category image is as follow: \n \n ${err}`);
+
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: 1,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err
+          })
+        }).catch(ex => console.log('error while logging on db,', ex));
+        return reply.response({
+          status: false,
+          message: 'Unable to retrieve image',
+          err,
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    } else {
+      return reply.response({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate
+      });
+    }
+  }
+
+  static async retrieveAccessoryCategoryImage(request, reply) {
+    if (!request.pre.forceUpdate) {
+      try {
+        const fsImplCategory = new _s3fs2.default(`${_main2.default.AWS.S3.BUCKET}/${_main2.default.AWS.S3.CATEGORY_IMAGE}/accessory_parts${request.params.file_type ? `/${request.params.file_type}` : ''}`, _main2.default.AWS.ACCESS_DETAILS);
+        const fileResult = await fsImplCategory.readFile(`${request.params.id}.png`, 'utf8');
+
+        console.log(fileResult);
+        return reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${request.params.id}.png`);
       } catch (err) {
         console.log(`Error on ${new Date()} for user while retrieving category image is as follow: \n \n ${err}`);
 
@@ -1365,6 +1395,43 @@ class UploadController {
       try {
         const fsImplBrand = new _s3fs2.default(`${_main2.default.AWS.S3.BUCKET}/${_main2.default.AWS.S3.KNOW_ITEM_IMAGE}`, _main2.default.AWS.ACCESS_DETAILS);
         const fileResult = await fsImplBrand.readFile(`${request.params.id}.png`, 'utf8');
+        return reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${request.params.id}.png`);
+      } catch (err) {
+        console.log(`Error on ${new Date()} retrieving fact image is as follow: \n \n ${err}`);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: 1,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err
+          })
+        }).catch(ex => console.log('error while logging on db,', ex));
+        return reply.response({
+          status: false,
+          message: 'Unable to retrieve image',
+          err,
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    } else {
+      return reply.response({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate
+      });
+    }
+  }
+
+  static async retrieveOfferBannerImage(request, reply) {
+    if (!request.pre.forceUpdate) {
+      try {
+        const fsImplBrand = new _s3fs2.default(`${_main2.default.AWS.S3.BUCKET}/${_main2.default.AWS.S3.OFFER_BANNERS}`, _main2.default.AWS.ACCESS_DETAILS);
+        const fileResult = await fsImplBrand.readFile(`${request.params.offer_id}.png`, 'utf8');
         return reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${request.params.id}.png`);
       } catch (err) {
         console.log(`Error on ${new Date()} retrieving fact image is as follow: \n \n ${err}`);

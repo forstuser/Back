@@ -87,20 +87,20 @@ function prepareAccessoryRoute(modal, route, middleware) {
         validate: {
           payload: {
             'transaction_id': _joi2.default.string().required(),
-            'status_type': _joi2.default.number(),
-            'price': _joi2.default.number().required(),
-            'quantity': _joi2.default.number(),
+            'status_type': [_joi2.default.number(), _joi2.default.allow(null)],
+            'price': [_joi2.default.number(), _joi2.default.allow(null)],
+            'quantity': [_joi2.default.number(), _joi2.default.allow(null)],
             'online_seller_id': _joi2.default.number().required(),
             'seller_detail': [_joi2.default.object().keys({
               'name': [_joi2.default.string(), _joi2.default.allow(null)],
               'address': _joi2.default.number(),
               'phone': _joi2.default.string()
             }), _joi2.default.allow(null)],
-            'delivery_address': _joi2.default.string(),
-            'delivery_date': _joi2.default.string(),
-            'product_id': _joi2.default.string().required(),
-            'accessory_product_id': _joi2.default.string().required(),
-            'payment_mode': _joi2.default.number(),
+            'delivery_address': [_joi2.default.string(), _joi2.default.allow(null)],
+            'delivery_date': [_joi2.default.string(), _joi2.default.allow(null)],
+            'product_id': _joi2.default.number().required(),
+            'accessory_product_id': _joi2.default.number().required(),
+            'payment_mode': [_joi2.default.number(), _joi2.default.allow(null)],
             'details_url': _joi2.default.string().required()
           }
         }

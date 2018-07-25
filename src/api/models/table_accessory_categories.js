@@ -11,6 +11,9 @@ export default (sequelize, DataTypes) => {
         priority: {
           type: DataTypes.INTEGER,
         },
+        email_priority: {
+          type: DataTypes.INTEGER,
+        },
         title: {
           type: DataTypes.STRING,
         },

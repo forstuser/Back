@@ -33,6 +33,18 @@ function prepareDashboardRoutes(modal, routeObject, middleware) {
       }
     });
 
+    routeObject.push({
+      method: 'GET',
+      path: '/consumer/upcomings',
+      config: {
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, {
+          method: middleware.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _dashboard2.default.retrieveUpcomingService
+      }
+    });
+
     /*Retrieve E-Home of consumer*/
     routeObject.push({
       method: 'GET',
@@ -58,6 +70,14 @@ function prepareDashboardRoutes(modal, routeObject, middleware) {
           assign: 'userExist'
         }],
         handler: _dashboard2.default.getProductsInCategory
+      }
+    });
+
+    routeObject.push({
+      method: 'GET', path: '/consumer/ehome/products/{type}', config: {
+        auth: 'jwt', pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, {
+          method: middleware.updateUserActiveStatus, assign: 'userExist'
+        }], handler: _dashboard2.default.getEHomeProducts
       }
     });
 

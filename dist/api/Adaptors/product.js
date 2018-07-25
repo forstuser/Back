@@ -53,9 +53,19 @@ var _bluebird = require('bluebird');
 
 var _bluebird2 = _interopRequireDefault(_bluebird);
 
-var _notification = require('./notification');
+var _reg_certificates = require('./reg_certificates');
 
-var _notification2 = _interopRequireDefault(_notification);
+var _reg_certificates2 = _interopRequireDefault(_reg_certificates);
+
+var _refueling = require('./refueling');
+
+var _refueling2 = _interopRequireDefault(_refueling);
+
+var _requestPromise = require('request-promise');
+
+var _requestPromise2 = _interopRequireDefault(_requestPromise);
+
+var _shared = require('../../helpers/shared');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -67,15 +77,21 @@ class ProductAdaptor {
     this.warrantyAdaptor = new _warranties2.default(modals);
     this.amcAdaptor = new _amcs2.default(modals);
     this.pucAdaptor = new _pucs2.default(modals);
+    this.regCertAdaptor = new _reg_certificates2.default(modals);
     this.repairAdaptor = new _repairs2.default(modals);
     this.categoryAdaptor = new _category2.default(modals);
     this.sellerAdaptor = new _sellers2.default(modals);
     this.serviceScheduleAdaptor = new _serviceSchedules2.default(modals);
+    this.fuelAdaptor = new _refueling2.default(modals);
   }
 
   async retrieveProducts(options, language) {
     if (!options.status_type) {
       options.status_type = [5, 11];
+    }
+
+    if (!options.ref_id) {
+      options.ref_id = null;
     }
 
     let billOption = {};
@@ -115,8 +131,7 @@ class ProductAdaptor {
 
     let products;
     const productResult = await this.modals.products.findAll({
-      where: options,
-      include: [{
+      where: options, include: [{
         model: this.modals.brands,
         as: 'brand',
         attributes: [['brand_id', 'brandId'], ['brand_id', 'id'], ['brand_name', 'name'], ['brand_description', 'description'], [this.modals.sequelize.fn('CONCAT', 'brands/', this.modals.sequelize.col('"brand"."brand_id"'), '/reviews'), 'reviewUrl']],
@@ -170,6 +185,11 @@ class ProductAdaptor {
         attributes: [],
         required: false
       }, {
+        model: this.modals.accessory_part,
+        as: 'accessory_part',
+        attributes: [],
+        required: false
+      }, {
         model: this.modals.categories,
         as: 'mainCategory',
         attributes: [],
@@ -179,9 +199,7 @@ class ProductAdaptor {
         as: 'sub_category',
         attributes: [],
         required: false
-      }],
-      attributes: ['id', ['product_name', 'productName'], 'file_type', 'file_ref', ['category_id', 'categoryId'], ['main_category_id', 'masterCategoryId'], 'sub_category_id', ['brand_id', 'brandId'], 'taxes', ['colour_id', 'colorId'], ['purchase_cost', 'value'], [this.modals.sequelize.fn('CONCAT', '/categories/', this.modals.sequelize.literal('"category"."category_id"'), '/images/'), 'cImageURL'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"products"."id"')), 'productURL'], ['document_date', 'purchaseDate'], 'model', ['document_number', 'documentNo'], ['updated_at', 'updatedDate'], ['bill_id', 'billId'], ['job_id', 'jobId'], ['seller_id', 'sellerId'], 'copies', [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"products"."id"'), '/reviews'), 'reviewUrl'], [this.modals.sequelize.literal(`${language ? `"sub_category"."category_name_${language}"` : `"sub_category"."category_name"`}`), 'sub_category_name'], [this.modals.sequelize.literal(`${language ? `"category"."category_name_${language}"` : `"category"."category_name"`}`), 'categoryName'], [this.modals.sequelize.literal(`"sub_category"."category_name"`), 'default_sub_category_name'], [this.modals.sequelize.literal(`"mainCategory"."category_name"`), 'default_masterCategoryName'], [this.modals.sequelize.literal(`"category"."category_name"`), 'default_categoryName'], [this.modals.sequelize.literal(`${language ? `"mainCategory"."category_name_${language}"` : `"mainCategory"."category_name"`}`), 'masterCategoryName'], [this.modals.sequelize.fn('CONCAT', '/consumer/servicecenters?brandid=', this.modals.sequelize.literal('"products"."brand_id"'), '&categoryid=', this.modals.sequelize.col('"products"."category_id"')), 'serviceCenterUrl'], 'status_type'],
-      order: [['document_date', 'DESC']]
+      }], attributes: ['id', ['product_name', 'productName'], 'file_type', 'file_ref', ['category_id', 'categoryId'], ['main_category_id', 'masterCategoryId'], 'sub_category_id', ['brand_id', 'brandId'], 'taxes', ['colour_id', 'colorId'], ['purchase_cost', 'value'], [this.modals.sequelize.fn('CONCAT', '/categories/', this.modals.sequelize.literal('"category"."category_id"'), '/images/'), 'cImageURL'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"products"."id"')), 'productURL'], 'accessory_part_id', ['document_date', 'purchaseDate'], 'model', ['document_number', 'documentNo'], ['updated_at', 'updatedDate'], ['bill_id', 'billId'], ['job_id', 'jobId'], ['seller_id', 'sellerId'], 'copies', [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"products"."id"'), '/reviews'), 'reviewUrl'], [this.modals.sequelize.literal(`${language ? `"sub_category"."category_name_${language}"` : `"sub_category"."category_name"`}`), 'sub_category_name'], [this.modals.sequelize.literal(`${language ? `"category"."category_name_${language}"` : `"category"."category_name"`}`), 'categoryName'], [this.modals.sequelize.literal(`"accessory_part"."title"`), 'accessory_part_name'], [this.modals.sequelize.literal(`"sub_category"."category_name"`), 'default_sub_category_name'], [this.modals.sequelize.literal(`"mainCategory"."category_name"`), 'default_masterCategoryName'], [this.modals.sequelize.literal(`"category"."category_name"`), 'default_categoryName'], [this.modals.sequelize.literal(`${language ? `"mainCategory"."category_name_${language}"` : `"mainCategory"."category_name"`}`), 'masterCategoryName'], [this.modals.sequelize.fn('CONCAT', '/consumer/servicecenters?brandid=', this.modals.sequelize.literal('"products"."brand_id"'), '&categoryid=', this.modals.sequelize.col('"products"."category_id"')), 'serviceCenterUrl'], 'status_type'], order: [['document_date', 'DESC']]
     });
     products = productResult.map(item => {
       const productItem = item.toJSON();
@@ -199,8 +217,207 @@ class ProductAdaptor {
       products = products.filter(item => item.bill && billOption.seller_id.find(sItem => parseInt(item.bill.seller_id) === parseInt(sItem)));
     }
     inProgressProductOption = _lodash2.default.omit(inProgressProductOption, 'product_name');
+    inProgressProductOption = _lodash2.default.omit(inProgressProductOption, 'bill_id');
+    inProgressProductOption = _lodash2.default.omit(inProgressProductOption, 'accessory_part_id');
+    inProgressProductOption = _lodash2.default.omit(inProgressProductOption, 'accessory_id');
     inProgressProductOption.status_type = [5, 11, 12];
     inProgressProductOption.product_status_type = options.status_type;
+    inProgressProductOption = _lodash2.default.omit(inProgressProductOption, 'ref_id');
+    let warrantyOptions = {};
+    _lodash2.default.assignIn(warrantyOptions, inProgressProductOption);
+    warrantyOptions.warranty_type = [1, 2];
+    let metaData = [],
+        insurances = [],
+        warranties = [],
+        amcs = [],
+        repairs = [],
+        pucs = [];
+    if (products.length > 0) {
+      inProgressProductOption.product_id = products.map(item => item.id);
+      [metaData, insurances, warranties, amcs, repairs, pucs] = await _bluebird2.default.all([this.retrieveProductMetadata({
+        product_id: products.map(item => item.id)
+      }, language), this.insuranceAdaptor.retrieveInsurances(inProgressProductOption), this.warrantyAdaptor.retrieveWarranties(warrantyOptions), this.amcAdaptor.retrieveAMCs(inProgressProductOption), this.repairAdaptor.retrieveRepairs(inProgressProductOption), this.pucAdaptor.retrievePUCs(inProgressProductOption)]);
+    }
+    return products.map(productItem => {
+      if (productItem.copies) {
+        productItem.copies = productItem.copies.map(copyItem => {
+          copyItem.file_type = copyItem.file_type || copyItem.fileType;
+          return copyItem;
+        });
+      }
+      const pucItem = metaData.find(item => item.name.toLowerCase().includes('puc'));
+      if (pucItem) {
+        productItem.pucDetail = {
+          expiry_date: pucItem.value
+        };
+      }
+      productItem.productMetaData = metaData.filter(item => item.productId === productItem.id && !item.name.toLowerCase().includes('puc'));
+      productItem.insuranceDetails = insurances.filter(item => item.productId === productItem.id);
+      productItem.warrantyDetails = warranties.filter(item => item.productId === productItem.id);
+      productItem.amcDetails = amcs.filter(item => item.productId === productItem.id);
+      productItem.repairBills = repairs.filter(item => item.productId === productItem.id);
+      productItem.pucDetails = pucs.filter(item => item.productId === productItem.id);
+
+      productItem.requiredCount = productItem.insuranceDetails.length + productItem.warrantyDetails.length + productItem.amcDetails.length + productItem.repairBills.length + productItem.pucDetails.length;
+
+      return productItem;
+    });
+  }
+
+  async retrieveEHomeProducts(options, language, limit, offset, sort_by) {
+    if (!options.status_type) {
+      options.status_type = [5, 11];
+    }
+
+    console.log({ offset });
+    limit = limit || 10;
+    offset = offset || 0;
+
+    if (!options.ref_id) {
+      options.ref_id = null;
+    }
+
+    let billOption = {};
+    if (options.status_type === 8) {
+      billOption.status_type = 5;
+    }
+
+    if (options.online_seller_id) {
+      billOption.seller_id = options.online_seller_id;
+    }
+
+    if (!options.main_category_id) {
+      options = _lodash2.default.omit(options, 'main_category_id');
+    }
+
+    if (!options.category_id) {
+      options = _lodash2.default.omit(options, 'category_id');
+    }
+
+    options = _lodash2.default.omit(options, 'online_seller_id');
+
+    let inProgressProductOption = {};
+    _lodash2.default.assignIn(inProgressProductOption, options);
+    options = _lodash2.default.omit(options, 'product_status_type');
+    if (!inProgressProductOption.product_name) {
+      inProgressProductOption = _lodash2.default.omit(options, 'product_name');
+    }
+    if (!inProgressProductOption.brand_id) {
+      inProgressProductOption = _lodash2.default.omit(options, 'brand_id');
+    }
+    if (!inProgressProductOption.seller_id) {
+      inProgressProductOption = _lodash2.default.omit(options, 'seller_id');
+    }
+    if (!inProgressProductOption.online_seller_id) {
+      inProgressProductOption = _lodash2.default.omit(options, 'online_seller_id');
+    }
+
+    let products;
+    const productResult = await this.modals.products.findAll({
+      where: options,
+      attributes: ['id', ['product_name', 'productName'], 'file_type', 'file_ref', 'bill_id', 'category_id', ['category_id', 'categoryId'], 'main_category_id', ['main_category_id', 'masterCategoryId'], 'sub_category_id', 'brand_id', ['brand_id', 'brandId'], 'taxes', ['colour_id', 'colorId'], ['purchase_cost', 'value'], [this.modals.sequelize.fn('CONCAT', '/categories/', this.modals.sequelize.literal('"category_id"'), '/images/'), 'cImageURL'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"products"."id"')), 'productURL'], 'accessory_part_id', ['document_date', 'purchaseDate'], 'model', ['document_number', 'documentNo'], ['updated_at', 'updatedDate'], ['bill_id', 'billId'], 'job_id', ['job_id', 'jobId'], 'seller_id', ['seller_id', 'sellerId'], 'copies', 'service_schedule_id', [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"products"."id"'), '/reviews'), 'reviewUrl'], [this.modals.sequelize.fn('CONCAT', '/consumer/servicecenters?brandid=', this.modals.sequelize.literal('"products"."brand_id"'), '&categoryid=', this.modals.sequelize.col('"products"."category_id"')), 'serviceCenterUrl'], 'status_type'],
+      order: [['updated_at', sort_by || 'DESC'], ['document_date', sort_by || 'DESC']],
+      limit,
+      offset
+    });
+    products = productResult.map(item => item.toJSON());
+    billOption.id = products.map(item => item.bill_id).filter(Boolean);
+    let [brands, colours, service_schedules, bills, offline_sellers, product_reviews, categories, accessory_parts] = await _bluebird2.default.all([this.modals.brands.findAll({
+      where: {
+        brand_id: products.map(item => item.brand_id).filter(Boolean)
+      }, attributes: [['brand_id', 'brandId'], ['brand_id', 'id'], ['brand_name', 'name'], ['brand_description', 'description'], [this.modals.sequelize.fn('CONCAT', 'brands/', this.modals.sequelize.col('"brand_id"'), '/reviews'), 'reviewUrl']]
+    }), this.modals.colours.findAll({
+      where: {
+        colour_id: products.map(item => item.colorId).filter(Boolean)
+      }, attributes: [['colour_id', 'colorId'], ['colour_name', 'colorName']]
+    }), this.modals.serviceSchedules.findAll({
+      where: {
+        id: products.map(item => item.service_schedule_id).filter(Boolean)
+      }, attributes: ['id', 'inclusions', 'exclusions', 'service_number', 'service_type', 'distance', 'due_in_months', 'due_in_days']
+    }), this.modals.bills.findAll({
+      where: billOption,
+      attributes: ['id', ['consumer_name', 'consumerName'], ['consumer_email', 'consumerEmail'], ['consumer_phone_no', 'consumerPhoneNo'], ['document_number', 'invoiceNo'], 'seller_id'],
+      include: [{
+        model: this.modals.onlineSellers,
+        as: 'sellers',
+        attributes: [['sid', 'id'], ['seller_name', 'sellerName'], 'url', 'gstin', 'contact', 'email', [this.modals.sequelize.fn('CONCAT', 'sellers/', this.modals.sequelize.literal('"sellers"."sid"'), '/reviews?isonlineseller=true'), 'reviewUrl']],
+        include: [{
+          model: this.modals.sellerReviews,
+          as: 'sellerReviews',
+          attributes: [['review_ratings', 'ratings'], ['review_feedback', 'feedback'], ['review_comments', 'comments']],
+          required: false
+        }],
+        required: false
+      }],
+      required: options.status_type === 8
+    }), this.modals.offlineSellers.findAll({
+      where: { sid: products.map(item => item.seller_id).filter(Boolean) },
+      attributes: [['sid', 'id'], ['seller_name', 'sellerName'], ['owner_name', 'ownerName'], ['pan_no', 'panNo'], ['reg_no', 'regNo'], ['is_service', 'isService'], 'url', 'gstin', ['contact_no', 'contact'], 'email', 'address', 'city', 'state', 'pincode', 'latitude', 'longitude', [this.modals.sequelize.fn('CONCAT', 'sellers/', this.modals.sequelize.literal('"sid"'), '/reviews?isonlineseller=false'), 'reviewUrl']],
+      include: [{
+        model: this.modals.sellerReviews,
+        as: 'sellerReviews',
+        attributes: [['review_ratings', 'ratings'], ['review_feedback', 'feedback'], ['review_comments', 'comments']],
+        required: false
+      }]
+    }), this.modals.productReviews.findAll({
+      where: {
+        bill_product_id: products.map(item => item.id).filter(Boolean)
+      },
+      attributes: ['bill_product_id', ['review_ratings', 'ratings'], ['review_feedback', 'feedback'], ['review_comments', 'comments']]
+    }), this.modals.categories.findAll({
+      where: {
+        category_id: [...products.map(item => item.category_id).filter(Boolean), ...products.map(item => item.main_category_id).filter(Boolean), ...products.map(item => item.sub_category_id).filter(Boolean)]
+      },
+      attributes: ['category_id', 'category_name']
+    }), this.modals.accessory_part.findAll({
+      where: {
+        id: products.map(item => item.accessory_part_id).filter(Boolean)
+      },
+      attributes: ['id', 'title']
+    })]);
+    brands = brands.map(item => item.toJSON());
+    colours = colours.map(item => item.toJSON());
+    service_schedules = service_schedules.map(item => item.toJSON());
+    bills = bills.map(item => item.toJSON());
+    offline_sellers = offline_sellers.map(item => item.toJSON());
+    categories = categories.map(item => item.toJSON());
+    accessory_parts = accessory_parts.map(item => item.toJSON());
+    product_reviews = product_reviews.map(item => item.toJSON());
+
+    products = products.map(item => {
+      const productItem = item;
+      const sub_category = categories.find(subItem => productItem.sub_category_id === subItem.category_id);
+      const category = categories.find(subItem => productItem.category_id === subItem.category_id);
+      const main_category = categories.find(subItem => productItem.main_category_id === subItem.category_id);
+      const accessory_part = accessory_parts.find(subItem => productItem.accessory_part_id === subItem.id);
+      productItem.sub_category_name = (sub_category || {}).category_name;
+      productItem.masterCategoryName = (main_category || {}).category_name;
+      productItem.categoryName = (category || {}).category_name;
+      productItem.accessory_part_name = (accessory_part || {}).title;
+      productItem.sellers = offline_sellers.find(subItem => subItem.id === productItem.seller_id);
+      productItem.bill = bills.find(subItem => subItem.id === productItem.bill_id);
+      productItem.productReviews = product_reviews.filter(subItem => subItem.bill_product_id === productItem.id);
+      productItem.brand = brands.find(subItem => subItem.id === productItem.brand_id);
+      productItem.schedule = service_schedules.find(subItem => subItem.id === productItem.service_schedule_id);
+      productItem.purchaseDate = _moment2.default.utc(productItem.purchaseDate, _moment2.default.ISO_8601).startOf('days');
+      productItem.cImageURL = productItem.sub_category_id ? `/categories/${productItem.sub_category_id}/images/1/thumbnail` : `${productItem.cImageURL}1/thumbnail`;
+      if (productItem.schedule) {
+        productItem.schedule.due_date = _moment2.default.utc(productItem.purchaseDate, _moment2.default.ISO_8601).add(productItem.schedule.due_in_months, 'months');
+      }
+
+      return productItem;
+    });
+    if (billOption.seller_id && billOption.seller_id.length > 0) {
+      products = products.filter(item => item.bill && billOption.seller_id.find(sItem => parseInt(item.bill.seller_id) === parseInt(sItem)));
+    }
+    inProgressProductOption = _lodash2.default.omit(inProgressProductOption, 'product_name');
+    inProgressProductOption = _lodash2.default.omit(inProgressProductOption, 'bill_id');
+    inProgressProductOption = _lodash2.default.omit(inProgressProductOption, '$or');
+    inProgressProductOption = _lodash2.default.omit(inProgressProductOption, 'accessory_part_id');
+    inProgressProductOption = _lodash2.default.omit(inProgressProductOption, 'accessory_id');
+    inProgressProductOption.status_type = [5, 11, 12];
+    inProgressProductOption.product_status_type = options.status_type;
+    inProgressProductOption = _lodash2.default.omit(inProgressProductOption, 'ref_id');
     let warrantyOptions = {};
     _lodash2.default.assignIn(warrantyOptions, inProgressProductOption);
     warrantyOptions.warranty_type = [1, 2];
@@ -254,35 +471,26 @@ class ProductAdaptor {
       $not: null
     };
 
-    const productResult = this.modals.products.findAll({
-      where: options,
-      include: [{
-        model: this.modals.serviceSchedules,
-        as: 'schedule',
-        attributes: ['id', 'inclusions', 'exclusions', 'service_number', 'service_type', 'distance', 'due_in_months', 'due_in_days'],
-        required: false
+    const productResult = await this.modals.products.findAll({
+      where: options, include: [{
+        model: this.modals.serviceSchedules, as: 'schedule', attributes: ['id', 'inclusions', 'exclusions', 'service_number', 'service_type', 'distance', 'due_in_months', 'due_in_days'], required: false
       }, {
-        model: this.modals.categories,
-        as: 'category',
-        attributes: [],
-        required: false
+        model: this.modals.categories, as: 'category',
+        attributes: [], required: false
       }, {
-        model: this.modals.categories,
-        as: 'mainCategory',
-        attributes: [],
-        required: false
+        model: this.modals.categories, as: 'mainCategory',
+        attributes: [], required: false
       }, {
-        model: this.modals.categories,
-        as: 'sub_category',
-        attributes: [],
-        required: false
-      }],
-      attributes: ['id', ['id', 'productId'], ['product_name', 'productName'], 'file_type', 'file_ref', [this.modals.sequelize.literal('"category"."category_id"'), 'categoryId'], ['main_category_id', 'masterCategoryId'], 'sub_category_id', ['brand_id', 'brandId'], ['colour_id', 'colorId'], ['purchase_cost', 'value'], 'taxes', [this.modals.sequelize.literal(`${language ? `"sub_category"."category_name_${language}"` : `"sub_category"."category_name"`}`), 'sub_category_name'], [this.modals.sequelize.literal(`${language ? `"category"."category_name_${language}"` : `"category"."category_name"`}`), 'categoryName'], [this.modals.sequelize.literal(`${language ? `"mainCategory"."category_name_${language}"` : `"mainCategory"."category_name"`}`), 'masterCategoryName'], [this.modals.sequelize.literal(`"sub_category"."category_name"`), 'default_sub_category_name'], [this.modals.sequelize.literal(`"mainCategory"."category_name"`), 'default_masterCategoryName'], [this.modals.sequelize.literal(`"category"."category_name"`), 'default_categoryName'], [this.modals.sequelize.fn('CONCAT', '/categories/', this.modals.sequelize.literal('"category"."category_id"'), '/images/'), 'cImageURL'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"products"."id"')), 'productURL'], ['document_date', 'purchaseDate'], 'model', ['document_number', 'documentNo'], ['updated_at', 'updatedDate'], ['bill_id', 'billId'], ['job_id', 'jobId'], ['seller_id', 'sellerId'], 'copies', [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"products"."id"'), '/reviews'), 'reviewUrl'], [this.modals.sequelize.literal('"category"."category_name"'), 'categoryName'], [this.modals.sequelize.fn('CONCAT', '/consumer/servicecenters?brandid=', this.modals.sequelize.literal('"products"."brand_id"'), '&categoryid=', this.modals.sequelize.col('"products"."category_id"')), 'serviceCenterUrl'], 'status_type'],
+        model: this.modals.categories, as: 'sub_category',
+        attributes: [], required: false
+      }], attributes: ['id', ['id', 'productId'], ['product_name', 'productName'], [this.modals.sequelize.literal('"category"."category_id"'), 'categoryId'], ['main_category_id', 'masterCategoryId'], 'sub_category_id', ['brand_id', 'brandId'], ['colour_id', 'colorId'], ['purchase_cost', 'value'], 'taxes', [this.modals.sequelize.literal(`${language ? `"sub_category"."category_name_${language}"` : `"sub_category"."category_name"`}`), 'sub_category_name'], [this.modals.sequelize.literal(`${language ? `"category"."category_name_${language}"` : `"category"."category_name"`}`), 'categoryName'], [this.modals.sequelize.literal(`${language ? `"mainCategory"."category_name_${language}"` : `"mainCategory"."category_name"`}`), 'masterCategoryName'], [this.modals.sequelize.literal(`"sub_category"."category_name"`), 'default_sub_category_name'], [this.modals.sequelize.literal(`"mainCategory"."category_name"`), 'default_masterCategoryName'], [this.modals.sequelize.literal(`"category"."category_name"`), 'default_categoryName'], ['document_date', 'purchaseDate'], 'model', 'file_type', 'file_ref', ['document_number', 'documentNo'], ['updated_at', 'updatedDate'], ['bill_id', 'billId'], ['job_id', 'jobId'], ['seller_id', 'sellerId'], 'copies', 'status_type'],
       order: [['document_date', 'DESC']]
     });
-    return productResult.map(item => {
+    return await _bluebird2.default.try(() => productResult.map(item => {
       const productItem = item.toJSON();
-
+      productItem.serviceCenterUrl = `/consumer/servicecenters?brandid=${productItem.brandId}&categoryid=${productItem.categoryId}`;
+      productItem.reviewUrl = `products/${productItem.id}/reviews`;
+      productItem.productURL = `products/${productItem.id}`;
       productItem.sub_category_name = productItem.sub_category_name || productItem.default_sub_category_name;
       productItem.masterCategoryName = productItem.masterCategoryName || productItem.default_masterCategoryName;
       productItem.categoryName = productItem.categoryName || productItem.default_categoryName;
@@ -292,13 +500,13 @@ class ProductAdaptor {
           return copyItem;
         });
       }
-      productItem.cImageURL = productItem.sub_category_id ? `/categories/${productItem.sub_category_id}/images/1/thumbnail` : `${productItem.cImageURL}1/thumbnail`;
+      productItem.cImageURL = productItem.sub_category_id ? `/categories/${productItem.sub_category_id}/images/1/thumbnail` : `/categories/${productItem.category_id}/images/1/thumbnail`;
       productItem.purchaseDate = _moment2.default.utc(productItem.purchaseDate, _moment2.default.ISO_8601).startOf('days');
       if (productItem.schedule) {
         productItem.schedule.due_date = _moment2.default.utc(productItem.purchaseDate, _moment2.default.ISO_8601).add(productItem.schedule.due_in_months, 'months');
       }
       return productItem;
-    });
+    }));
   }
 
   async retrieveUsersLastProduct(options, language) {
@@ -354,15 +562,13 @@ class ProductAdaptor {
         attributes: [['sid', 'id'], ['seller_name', 'sellerName'], ['owner_name', 'ownerName'], ['pan_no', 'panNo'], ['reg_no', 'regNo'], ['is_service', 'isService'], 'url', 'gstin', ['contact_no', 'contact'], 'email', 'address', 'city', 'state', 'pincode', 'latitude', 'longitude', [this.modals.sequelize.fn('CONCAT', 'sellers/', this.modals.sequelize.literal('"sellers"."sid"'), '/reviews?isonlineseller=false'), 'reviewUrl']],
         include: [{
           model: this.modals.sellerReviews,
-          as: 'sellerReviews',
-          attributes: [['review_ratings', 'ratings'], ['review_feedback', 'feedback'], ['review_comments', 'comments']],
+          as: 'sellerReviews', attributes: [['review_ratings', 'ratings'], ['review_feedback', 'feedback'], ['review_comments', 'comments']],
           required: false
         }],
         required: false
       }, {
         model: this.modals.productReviews,
-        as: 'productReviews',
-        attributes: [['review_ratings', 'ratings'], ['review_feedback', 'feedback'], ['review_comments', 'comments']],
+        as: 'productReviews', attributes: [['review_ratings', 'ratings'], ['review_feedback', 'feedback'], ['review_comments', 'comments']],
         required: false
       }, {
         model: this.modals.categories,
@@ -459,16 +665,10 @@ class ProductAdaptor {
     const productResult = await this.modals.products.findAll({
       where: options,
       include: [{
-        model: this.modals.bills,
-        where: billOption,
-        include: [{
-          model: this.modals.onlineSellers,
-          as: 'sellers',
-          attributes: [],
-          required: false
-        }],
-        attributes: ['status_type'],
-        required: !!billOption.seller_id
+        model: this.modals.bills, where: billOption, include: [{
+          model: this.modals.onlineSellers, as: 'sellers',
+          attributes: [], required: false
+        }], attributes: ['status_type'], required: !!billOption.seller_id
       }],
       attributes: ['id', 'status_type']
     });
@@ -485,7 +685,7 @@ class ProductAdaptor {
       billOption.status_type = 5;
     }
 
-    const inProgressProductOption = {};
+    let inProgressProductOption = {};
     _lodash2.default.assignIn(inProgressProductOption, options);
     let productResult;
     options = _lodash2.default.omit(options, 'product_status_type');
@@ -501,6 +701,8 @@ class ProductAdaptor {
       group: 'main_category_id'
     });
     productResult = productItems.map(item => item.toJSON());
+    inProgressProductOption = _lodash2.default.omit(inProgressProductOption, 'accessory_part_id');
+    inProgressProductOption = _lodash2.default.omit(inProgressProductOption, 'accessory_id');
     inProgressProductOption.status_type = 5;
     inProgressProductOption.product_status_type = options.status_type;
     const results = await _bluebird2.default.all([this.amcAdaptor.retrieveAMCCounts(inProgressProductOption), this.insuranceAdaptor.retrieveInsuranceCount(inProgressProductOption), this.warrantyAdaptor.retrieveWarrantyCount(inProgressProductOption), this.repairAdaptor.retrieveRepairCount(inProgressProductOption), this.pucAdaptor.retrievePUCs(inProgressProductOption)]);
@@ -513,229 +715,358 @@ class ProductAdaptor {
   }
 
   async retrieveProductById(id, options, language) {
-    options.id = id;
-    let productItem;
-    let products = await this.modals.products.findOne({
-      where: options,
-      include: [{
-        model: this.modals.serviceSchedules,
-        as: 'schedule',
-        attributes: ['id', 'title', 'inclusions', 'exclusions', 'service_number', 'service_type', 'distance', 'due_in_months', 'due_in_days'],
-        required: false
-      }, {
-        model: this.modals.bills,
-        attributes: [['consumer_name', 'consumerName'], ['consumer_email', 'consumerEmail'], ['consumer_phone_no', 'consumerPhoneNo'], ['document_number', 'invoiceNo']], include: [{
-          model: this.modals.onlineSellers,
-          as: 'sellers',
-          attributes: [['seller_name', 'sellerName'], 'url', 'contact', 'email', [this.modals.sequelize.fn('CONCAT', 'sellers/', this.modals.sequelize.literal('"bill->sellers"."sid"'), '/reviews?isonlineseller=true'), 'reviewUrl']], include: [{
-            model: this.modals.sellerReviews, as: 'sellerReviews',
-            attributes: [['review_ratings', 'ratings'], ['review_feedback', 'feedback'], ['review_comments', 'comments']],
+    try {
+      options.id = id;
+      let productItem;
+      let products;
+      const productResult = await this.modals.products.findOne({
+        where: options,
+        include: [{
+          model: this.modals.serviceSchedules,
+          as: 'schedule',
+          attributes: ['id', 'title', 'inclusions', 'exclusions', 'service_number', 'service_type', 'distance', 'due_in_months', 'due_in_days'],
+          required: false
+        }, {
+          model: this.modals.bills,
+          attributes: [['consumer_name', 'consumerName'], ['consumer_email', 'consumerEmail'], ['consumer_phone_no', 'consumerPhoneNo'], ['document_number', 'invoiceNo']], include: [{
+            model: this.modals.onlineSellers,
+            as: 'sellers',
+            attributes: [['seller_name', 'sellerName'], 'url', 'contact', 'email', [this.modals.sequelize.fn('CONCAT', 'sellers/', this.modals.sequelize.literal('"bill->sellers"."sid"'), '/reviews?isonlineseller=true'), 'reviewUrl']],
+            include: [{
+              model: this.modals.sellerReviews, as: 'sellerReviews',
+              attributes: [['review_ratings', 'ratings'], ['review_feedback', 'feedback'], ['review_comments', 'comments']],
+              required: false
+            }],
             required: false
           }], required: false
-        }], required: false
-      }, {
-        model: this.modals.offlineSellers, as: 'sellers',
-        attributes: [['sid', 'id'], ['seller_name', 'sellerName'], 'url', ['contact_no', 'contact'], 'email', 'address', 'city', 'state', 'pincode', 'latitude', 'longitude', [this.modals.sequelize.fn('CONCAT', 'sellers/', this.modals.sequelize.literal('"sellers"."sid"'), '/reviews?isonlineseller=false'), 'reviewUrl']], include: [{
-          model: this.modals.sellerReviews, as: 'sellerReviews',
-          attributes: [['review_ratings', 'ratings'], ['review_feedback', 'feedback'], ['review_comments', 'comments']], required: false
-        }], required: false
-      }, {
-        model: this.modals.productReviews, as: 'productReviews',
-        attributes: [['review_ratings', 'ratings'], ['review_feedback', 'feedback'], ['review_comments', 'comments']], required: false
-      }, {
-        model: this.modals.categories, as: 'category',
-        attributes: [], required: false
-      }, {
-        model: this.modals.categories, as: 'mainCategory', attributes: [],
-        required: false
-      }, {
-        model: this.modals.categories, as: 'sub_category', attributes: [],
-        required: false
-      }],
-      attributes: ['id', ['product_name', 'productName'], 'file_type', 'file_ref', [this.modals.sequelize.literal('"category"."category_id"'), 'categoryId'], ['main_category_id', 'masterCategoryId'], 'model', 'sub_category_id', ['colour_id', 'colorId'], [this.modals.sequelize.literal(`${language ? `"sub_category"."category_name_${language}"` : `"sub_category"."category_name"`}`), 'sub_category_name'], [this.modals.sequelize.literal(`${language ? `"category"."category_name_${language}"` : `"category"."category_name"`}`), 'categoryName'], [this.modals.sequelize.literal(`"sub_category"."category_name"`), 'default_sub_category_name'], ['purchase_cost', 'value'], [this.modals.sequelize.literal(`"mainCategory"."category_name"`), 'default_masterCategoryName'], 'taxes', [this.modals.sequelize.literal(`"category"."category_name"`), 'default_categoryName'], ['brand_id', 'brandId'], [this.modals.sequelize.literal(`${language ? `"mainCategory"."category_name_${language}"` : `"mainCategory"."category_name"`}`), 'masterCategoryName'], [this.modals.sequelize.fn('CONCAT', '/categories/', this.modals.sequelize.col('"category"."category_id"'), '/images/0'), 'cImageURL'], ['document_date', 'purchaseDate'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"products"."id"')), 'productURL'], ['document_number', 'documentNo'], ['updated_at', 'updatedDate'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"products"."id"'), '/reviews'), 'reviewUrl'], ['job_id', 'jobId'], ['seller_id', 'sellerId'], [this.modals.sequelize.fn('CONCAT', '/consumer/servicecenters?brandid=', this.modals.sequelize.literal('"products"."brand_id"'), '&categoryid=', this.modals.sequelize.col('"products"."category_id"')), 'serviceCenterUrl'], 'copies', 'status_type']
-    });
-    products = products ? products.toJSON() : products;
-    if (products) {
-      products.cImageURL = products.file_type ? `/consumer/products/${products.id}/images/${products.file_ref}` : products.sub_category_id ? `/categories/${products.sub_category_id}/images/0` : products.cImageURL;
-      products.sub_category_name = products.sub_category_name || products.default_sub_category_name;
-      products.masterCategoryName = products.masterCategoryName || products.default_masterCategoryName;
-      products.categoryName = products.categoryName || products.default_categoryName;
-      productItem = productResult;
-      if (products.copies) {
-        products.copies = products.copies.map(copyItem => {
-          copyItem.file_type = copyItem.file_type || copyItem.fileType;
-          return copyItem;
-        });
-      }
-      if (products.schedule) {
-        products.schedule.due_date = _moment2.default.utc(products.purchaseDate, _moment2.default.ISO_8601).add(products.schedule.due_in_months, 'months');
-      }
-      const serviceSchedulePromise = products.schedule ? this.serviceScheduleAdaptor.retrieveServiceSchedules({
-        category_id: products.schedule.category_id,
-        brand_id: products.schedule.brand_id, status_type: 1,
-        title: products.schedule.title, id: { $gte: products.schedule.id }
-      }) : undefined;
-      let [metaData, brand, insuranceDetails, warrantyDetails, amcDetails, repairBills, pucDetails, serviceSchedules, serviceCenterCounts] = await _bluebird2.default.all([this.retrieveProductMetadata({ product_id: products.id }, language), this.brandAdaptor.retrieveBrandById(products.brandId, { category_id: products.categoryId }), this.insuranceAdaptor.retrieveInsurances({ product_id: products.id }), this.warrantyAdaptor.retrieveWarranties({ product_id: products.id }), this.amcAdaptor.retrieveAMCs({ product_id: products.id }), this.repairAdaptor.retrieveRepairs({ product_id: products.id }), this.pucAdaptor.retrievePUCs({ product_id: products.id }), serviceSchedulePromise, this.modals.serviceCenters.count({
-        include: [{
-          model: this.modals.brands, as: 'brands',
-          where: { brand_id: products.brandId },
-          attributes: [], required: true
         }, {
-          model: this.modals.centerDetails,
-          where: { category_id: products.categoryId },
-          attributes: [], required: true, as: 'centerDetails'
-        }]
-      })]);
-      products.purchaseDate = _moment2.default.utc(products.purchaseDate, _moment2.default.ISO_8601).startOf('days');
-      products.metaData = metaData.filter(item => !item.name.toLowerCase().includes('puc'));
-      products.brand = brand;
-      products.insuranceDetails = insuranceDetails;
-      products.warrantyDetails = warrantyDetails;
-      products.amcDetails = amcDetails;
-      products.repairBills = repairBills;
-      products.pucDetails = pucDetails;
-      products.serviceSchedules = serviceSchedules ? serviceSchedules.map(scheduleItem => {
-        scheduleItem.due_date = _moment2.default.utc(products.purchaseDate, _moment2.default.ISO_8601).add(scheduleItem.due_in_months, 'months');
+          model: this.modals.offlineSellers, as: 'sellers',
+          attributes: [['sid', 'id'], ['seller_name', 'sellerName'], 'url', ['contact_no', 'contact'], 'email', 'address', 'city', 'state', 'pincode', 'latitude', 'longitude', [this.modals.sequelize.fn('CONCAT', 'sellers/', this.modals.sequelize.literal('"sellers"."sid"'), '/reviews?isonlineseller=false'), 'reviewUrl']], include: [{
+            model: this.modals.sellerReviews, as: 'sellerReviews',
+            attributes: [['review_ratings', 'ratings'], ['review_feedback', 'feedback'], ['review_comments', 'comments']], required: false
+          }], required: false
+        }, {
+          model: this.modals.productReviews, as: 'productReviews',
+          attributes: [['review_ratings', 'ratings'], ['review_feedback', 'feedback'], ['review_comments', 'comments']], required: false
+        }, {
+          model: this.modals.categories, as: 'category',
+          attributes: [], required: false
+        }, {
+          model: this.modals.categories, as: 'mainCategory', attributes: [],
+          required: false
+        }, {
+          model: this.modals.categories, as: 'sub_category', attributes: [],
+          required: false
+        }],
+        attributes: ['id', ['product_name', 'productName'], 'file_type', 'file_ref', [this.modals.sequelize.literal('"category"."category_id"'), 'categoryId'], ['main_category_id', 'masterCategoryId'], 'model', 'sub_category_id', ['colour_id', 'colorId'], [this.modals.sequelize.literal(`${language ? `"sub_category"."category_name_${language}"` : `"sub_category"."category_name"`}`), 'sub_category_name'], [this.modals.sequelize.literal(`${language ? `"category"."category_name_${language}"` : `"category"."category_name"`}`), 'categoryName'], [this.modals.sequelize.literal(`"sub_category"."category_name"`), 'default_sub_category_name'], ['purchase_cost', 'value'], [this.modals.sequelize.literal(`"mainCategory"."category_name"`), 'default_masterCategoryName'], 'taxes', [this.modals.sequelize.literal(`"category"."category_name"`), 'default_categoryName'], ['brand_id', 'brandId'], [this.modals.sequelize.literal(`${language ? `"mainCategory"."category_name_${language}"` : `"mainCategory"."category_name"`}`), 'masterCategoryName'], [this.modals.sequelize.fn('CONCAT', '/categories/', this.modals.sequelize.col('"category"."category_id"'), '/images/1'), 'cImageURL'], ['document_date', 'purchaseDate'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"products"."id"')), 'productURL'], ['document_number', 'documentNo'], ['updated_at', 'updatedDate'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"products"."id"'), '/reviews'), 'reviewUrl'], ['job_id', 'jobId'], ['seller_id', 'sellerId'], [this.modals.sequelize.fn('CONCAT', '/consumer/servicecenters?brandid=', this.modals.sequelize.literal('"products"."brand_id"'), '&categoryid=', this.modals.sequelize.col('"products"."category_id"')), 'serviceCenterUrl'], 'copies', 'status_type']
+      });
+      products = productResult ? productResult.toJSON() : productResult;
+      if (products) {
+        products.cImageURL = products.file_type ? `/consumer/products/${products.id}/images/${products.file_ref}` : products.sub_category_id ? `/categories/${products.sub_category_id}/images/1` : products.cImageURL;
+        products.sub_category_name = products.sub_category_name || products.default_sub_category_name;
+        products.masterCategoryName = products.masterCategoryName || products.default_masterCategoryName;
+        products.categoryName = products.categoryName || products.default_categoryName;
+        productItem = productResult;
+        if (products.copies) {
+          products.copies = products.copies.map(copyItem => {
+            copyItem.file_type = copyItem.file_type || copyItem.fileType;
+            return copyItem;
+          });
+        }
+        if (products.schedule) {
+          products.schedule.due_date = _moment2.default.utc(products.purchaseDate, _moment2.default.ISO_8601).add(products.schedule.due_in_months, 'months');
+        }
 
-        return scheduleItem;
-      }) : serviceSchedules;
-      products.serviceCenterUrl = serviceCenterCounts && serviceCenterCounts > 0 ? products.serviceCenterUrl : '';
+        const rcPromise = products.masterCategoryId && products.masterCategoryId === 3 ? this.regCertAdaptor.retrieveRegCerts({ product_id: products.id }) : [];
+
+        const fuelPromise = products.masterCategoryId && products.masterCategoryId === 3 ? this.fuelAdaptor.retrieveRefueling({ product_id: products.id }) : [];
+        let [metaData, brand, insuranceDetails, warrantyDetails, amcDetails, repairBills, pucDetails, serviceSchedules, serviceCenterCounts, rc_details, accessories, fuel_details] = await _bluebird2.default.all([this.retrieveProductMetadata({ product_id: products.id }, language), this.brandAdaptor.retrieveBrandById(products.brandId, { category_id: products.categoryId }), this.insuranceAdaptor.retrieveInsurances({ product_id: products.id }), this.warrantyAdaptor.retrieveWarranties({ product_id: products.id }), this.amcAdaptor.retrieveAMCs({ product_id: products.id }), this.repairAdaptor.retrieveRepairs({ product_id: products.id }), this.pucAdaptor.retrievePUCs({ product_id: products.id }), products.schedule ? this.serviceScheduleAdaptor.retrieveServiceSchedules({
+          category_id: products.categoryId,
+          brand_id: products.brandId,
+          status_type: 1, title: { $iLike: products.schedule.title },
+          id: { $gte: products.schedule.id }
+        }) : undefined, this.modals.serviceCenters.count({
+          include: [{
+            model: this.modals.brands, as: 'brands',
+            where: { brand_id: products.brandId },
+            attributes: [], required: true
+          }, {
+            model: this.modals.centerDetails,
+            where: { category_id: products.categoryId },
+            attributes: [], required: true, as: 'centerDetails'
+          }]
+        }), rcPromise, this.retrieveProducts({ ref_id: products.id }), fuelPromise]);
+        products.purchaseDate = _moment2.default.utc(products.purchaseDate, _moment2.default.ISO_8601).startOf('days');
+        products.metaData = metaData.filter(item => !item.name.toLowerCase().includes('puc'));
+        products.brand = brand;
+        products.insuranceDetails = insuranceDetails;
+        products.warrantyDetails = warrantyDetails;
+        products.amcDetails = amcDetails;
+        products.rc_details = rc_details;
+        products.repairBills = repairBills;
+        products.pucDetails = pucDetails;
+        let temp_odometer = 0,
+            temp_quantity = 0,
+            temp_price = 0;
+        const asc_fuel_detail = _lodash2.default.orderBy(fuel_details, ['odometer_reading'], ['asc']);
+        products.fuel_details = _lodash2.default.orderBy(asc_fuel_detail.map((fItem, index) => {
+          if (index > 0) {
+            const odo_diff = fItem.odometer_reading - temp_odometer;
+            fItem.mileage = odo_diff && temp_quantity ? odo_diff / temp_quantity : 0;
+
+            fItem.rs_km = temp_price && odo_diff ? temp_price / odo_diff : 0;
+          }
+          temp_odometer = fItem.odometer_reading;
+          temp_quantity = fItem.fuel_quantity;
+          temp_price = fItem.value;
+          return fItem;
+        }), ['odometer_reading', 'effective_date'], ['desc', 'desc']);
+        if (fuel_details.length > 1) {
+          products.mileage = fuel_details[0].mileage;
+        }
+
+        products.accessories = accessories;
+        products.serviceSchedules = serviceSchedules ? serviceSchedules.map(scheduleItem => {
+          scheduleItem.due_date = _moment2.default.utc(products.purchaseDate, _moment2.default.ISO_8601).add(scheduleItem.due_in_months, 'months');
+
+          return scheduleItem;
+        }) : serviceSchedules;
+        products.serviceCenterUrl = serviceCenterCounts && serviceCenterCounts > 0 ? products.serviceCenterUrl : '';
+      }
+
+      return products;
+    } catch (err) {
+      console.log(err);
+      throw err;
     }
-
-    return products;
   }
 
   async updateProductDetails(parameters) {
-    let { user, productBody, metaDataBody, otherItems, id } = parameters;
-    let dbProduct;
-    let flag = false;
-    dbProduct = (await this.modals.products.findOne({ where: { id } })).toJSON();
-    productBody.seller_id = dbProduct.seller_id;
-    productBody.brand_id = productBody.brand_id || productBody.brand_id === 0 ? productBody.brand_id : dbProduct.brand_id;
-    productBody.model = productBody.model || productBody.model !== '' ? productBody.model : dbProduct.model;
-    productBody.category_id = productBody.category_id || dbProduct.category_id;
-    productBody.main_category_id = productBody.main_category_id || dbProduct.main_category_id;
-    productBody.sub_category_id = productBody.sub_category_id || dbProduct.sub_category_id;
-    productBody.document_date = productBody.document_date || dbProduct.document_date;
-    const result = await _bluebird2.default.all([productBody.brand_id || productBody.brand_id === 0 ? this.modals.products.count({
-      where: {
-        id,
-        brand_id: productBody.brand_id,
-        model: productBody.model,
-        status_type: {
-          $notIn: [8]
+    try {
+      let { user, productBody, metaDataBody, otherItems, id } = parameters;
+      let dbProduct;
+      let flag = false;
+      dbProduct = (await this.modals.products.findOne({
+        where: { id }, include: {
+          model: this.modals.users,
+          as: 'consumer',
+          attributes: ['id', ['full_name', 'name'], 'email']
         }
-      }
-    }) : 1, this.verifyCopiesExist(id), this.modals.products.count({
-      where: {
-        id,
-        status_type: 8
-      }
-    }), this.modals.products.count({
-      where: {
-        user_id: productBody.user_id,
-        category_id: [1, 2, 3],
-        status_type: [5, 11]
-      }
-    })]);
-
-    if (result[1] && result[0] === 0 && result[2] === 0) {
-      return false;
-    }
-
-    if (result[3] === 0 && (productBody.category_id.toString() === '1' || productBody.category_id.toString() === '2' || productBody.category_id.toString() === '3')) {
-      // to check it it is the first product
-      flag = true;
-
-      _notification2.default.sendMailOnDifferentSteps('Your product is our responsibility now!', user.email, user, 5); // 5 is for 1st product creation
-    }
-    const sellerPromise = [];
-    const { amc, insurance, repair, puc, warranty } = otherItems;
-    const isProductAMCSellerSame = false;
-    const isProductRepairSellerSame = false;
-    const isAMCRepairSellerSame = repair && amc && repair.seller_contact === amc.seller_contact;
-    const isProductPUCSellerSame = false;
-    const { main_category_id, category_id, user_id, brand_name, brand_id, model, document_number, document_date, taxes, purchase_cost, colour_id, seller_contact, seller_name, seller_email } = productBody;
-    const providerOptions = {
-      main_category_id, category_id,
-      status_type: 11, updated_by: user_id
-    };
-    const insuranceProviderPromise = insurance && insurance.provider_name ? this.insuranceAdaptor.findCreateInsuranceBrand(_lodash2.default.assign({
-      type: 1, name: insurance.provider_name
-    }, providerOptions)) : undefined;
-    const warrantyProviderPromise = warranty && warranty.extended_provider_name ? this.insuranceAdaptor.findCreateInsuranceBrand(_lodash2.default.assign({
-      type: 2, name: warranty.extended_provider_name
-    }, providerOptions)) : undefined;
-
-    const brandPromise = !brand_id && brand_id !== 0 && brand_name ? this.brandAdaptor.findCreateBrand({
-      status_type: 11, brand_name, category_id,
-      updated_by: user_id, created_by: user_id
-    }) : undefined;
-    this.prepareSellerPromise({
-      sellerPromise, productBody, amc, repair, puc
-    });
-    sellerPromise.push(insuranceProviderPromise);
-    sellerPromise.push(brandPromise);
-    sellerPromise.push(warrantyProviderPromise);
-    let product = productBody;
-    let [sellerDetail, amcSeller, repairSeller, pucSeller, insuranceProvider, brandDetail, warrantyProvider] = await _bluebird2.default.all(sellerPromise);
-    const newSeller = seller_contact || seller_name || seller_email ? sellerDetail : undefined;
-    product = _lodash2.default.omit(product, 'seller_name');
-    product = _lodash2.default.omit(product, 'seller_contact');
-    product = _lodash2.default.omit(product, 'brand_name');
-    product.seller_id = newSeller ? newSeller.sid : product.seller_id;
-    product.brand_id = brandDetail ? brandDetail.brand_id : brand_id;
-
-    let metadata = metaDataBody.map(mdItem => {
-      mdItem = _lodash2.default.omit(mdItem, 'new_drop_down');
-      return mdItem;
-    });
-
-    if (product.new_drop_down && model) {
-      await this.modals.brandDropDown.findCreateFind({
-        where: { title: { $iLike: model }, category_id, brand_id },
-        defaults: {
-          title: model, category_id, brand_id,
-          updated_by: user_id, created_by: user_id, status_type: 11
+      })).toJSON();
+      productBody.seller_id = dbProduct.seller_id;
+      productBody.brand_id = productBody.brand_name || productBody.brand_id || productBody.brand_id === 0 ? productBody.brand_id : dbProduct.brand_id;
+      productBody.model = productBody.brand_name || productBody.model || productBody.model !== '' ? productBody.model : dbProduct.model;
+      productBody.category_id = productBody.category_id || dbProduct.category_id;
+      productBody.main_category_id = productBody.main_category_id || dbProduct.main_category_id;
+      productBody.sub_category_id = productBody.sub_category_id || dbProduct.sub_category_id;
+      productBody.document_date = productBody.document_date || dbProduct.document_date;
+      productBody.purchase_cost = productBody.purchase_cost || dbProduct.purchase_cost;
+      productBody.product_name = productBody.product_name || dbProduct.product_name;
+      const result = await _bluebird2.default.all([productBody.brand_id || productBody.brand_id === 0 ? this.modals.products.count({
+        where: {
+          id, brand_id: productBody.brand_id,
+          model: productBody.model, status_type: { $notIn: [8] }
         }
+      }) : 1, this.verifyCopiesExist(id), this.modals.products.count({
+        where: { id, status_type: 8 }
+      }), this.modals.products.count({
+        where: {
+          user_id: productBody.user_id, category_id: [1, 2, 3],
+          status_type: [5, 11]
+        }
+      })]);
+
+      if (result[1] && result[0] === 0 && result[2] === 0) {
+        return false;
+      }
+
+      if (result[3] === 0 && (productBody.category_id.toString() === '1' || productBody.category_id.toString() === '2' || productBody.category_id.toString() === '3')) {
+        // to check it it is the first product
+        flag = true;
+
+        notificationAdaptor.sendMailOnDifferentSteps('Your product is our responsibility now!', user.email, user, 5); // 5 is for 1st product creation
+      }
+      const sellerPromise = [];
+      const { amc, insurance, repair, puc, warranty } = otherItems;
+      const isProductAMCSellerSame = false;
+      const isProductRepairSellerSame = false;
+      const isAMCRepairSellerSame = repair && amc && repair.seller_contact === amc.seller_contact;
+      const isProductPUCSellerSame = false;
+      const { main_category_id, category_id, user_id, brand_name, brand_id, model, document_number, document_date, taxes, purchase_cost, colour_id, seller_contact, seller_name, seller_email } = productBody;
+      const providerOptions = {
+        main_category_id, category_id, status_type: 11, updated_by: user_id
+      };
+      const insuranceProviderPromise = insurance && insurance.provider_name ? this.insuranceAdaptor.findCreateInsuranceBrand(_lodash2.default.assign({
+        type: 1, name: insurance.provider_name
+      }, providerOptions)) : undefined;
+      const warrantyProviderPromise = warranty && warranty.extended_provider_name ? this.insuranceAdaptor.findCreateInsuranceBrand(_lodash2.default.assign({
+        type: 2, name: warranty.extended_provider_name
+      }, providerOptions)) : undefined;
+
+      const brandPromise = !brand_id && brand_id !== 0 && brand_name ? this.brandAdaptor.findCreateBrand({
+        status_type: 11, brand_name, category_id,
+        updated_by: user_id, created_by: user_id
+      }) : undefined;
+      this.prepareSellerPromise({ sellerPromise, productBody, amc, repair, puc });
+      sellerPromise.push(insuranceProviderPromise);
+      sellerPromise.push(brandPromise);
+      sellerPromise.push(warrantyProviderPromise);
+      let product = productBody;
+      let [sellerDetail, amcSeller, repairSeller, pucSeller, insuranceProvider, brandDetail, warrantyProvider] = await _bluebird2.default.all(sellerPromise);
+      const newSeller = seller_contact || seller_name || seller_email ? sellerDetail : undefined;
+      product = _lodash2.default.omit(product, 'seller_name');
+      product = _lodash2.default.omit(product, 'seller_contact');
+      product = _lodash2.default.omit(product, 'brand_name');
+      product.seller_id = newSeller ? newSeller.sid : product.seller_id;
+      product.brand_id = brandDetail ? brandDetail.brand_id : brand_id;
+
+      let metadata = metaDataBody.map(mdItem => {
+        mdItem = _lodash2.default.omit(mdItem, 'new_drop_down');
+        return mdItem;
       });
-    }
 
-    product = !colour_id ? _lodash2.default.omit(product, 'colour_id') : product;
-    product = !purchase_cost && purchase_cost !== 0 ? _lodash2.default.omit(product, 'purchase_cost') : product;
-    product = _lodash2.default.omit(product, 'new_drop_down');
-    product = !model && model !== '' ? _lodash2.default.omit(product, 'model') : product;
-    product = !taxes && taxes !== 0 ? _lodash2.default.omit(product, 'taxes') : product;
-    product = !document_number ? _lodash2.default.omit(product, 'document_number') : product;
-    product = !document_date ? _lodash2.default.omit(product, 'document_date') : product;
-    product = !product.seller_id ? _lodash2.default.omit(product, 'seller_id') : product;
-    product = !product.brand_id && product.brand_id !== 0 ? _lodash2.default.omit(product, 'brand_id') : product;
-    const brandModelPromise = model ? [this.modals.brandDropDown.findOne({
-      where: {
-        brand_id: product.brand_id,
-        title: { $iLike: `${model}%` }, category_id
+      if (product.new_drop_down && model) {
+        await this.modals.brandDropDown.findCreateFind({
+          where: { title: { $iLike: model }, category_id, brand_id },
+          defaults: {
+            title: model, category_id, brand_id,
+            updated_by: user_id, created_by: user_id, status_type: 11
+          }
+        });
       }
-    }), this.modals.categories.findOne({ where: { category_id } })] : [, this.modals.categories.findOne({ where: { category_id } })];
-    brandModelPromise.push(this.modals.warranties.findAll({
-      where: { product_id: id, warranty_type: 1 },
-      order: [['expiry_date', 'ASC']]
-    }), this.modals.metaData.findAll({ where: { product_id: id } }));
-    let [renewalTypes, productDetail, productModel, productCategory, normalWarranties, currentMetaData] = await _bluebird2.default.all([this.categoryAdaptor.retrieveRenewalTypes({ status_type: 1 }), this.updateProduct(id, product), ...brandModelPromise]);
-    normalWarranties = normalWarranties ? normalWarranties.map(item => item.toJSON()) : [];
-    product = productDetail;
-    currentMetaData = currentMetaData ? currentMetaData.map(item => item.toJSON()) : [];
-    const productPromise = [];
-    await this.prepareProductItems({
-      product, productModel, productCategory, normalWarranties, productPromise,
-      currentMetaData, metadata, amc, insurance, puc, repair, warranty,
-      renewalTypes, sellerDetail, amcSeller, repairSeller, pucSeller,
-      insuranceProvider, warrantyProvider, isProductAMCSellerSame,
-      isProductRepairSellerSame, isAMCRepairSellerSame, isProductPUCSellerSame
-    });
 
-    product.flag = flag;
+      product = !colour_id ? _lodash2.default.omit(product, 'colour_id') : product;
+      product = !purchase_cost && purchase_cost !== 0 ? _lodash2.default.omit(product, 'purchase_cost') : product;
+      product = _lodash2.default.omit(product, 'new_drop_down');
+      product = !model && model !== '' ? _lodash2.default.omit(product, 'model') : product;
+      product = !taxes && taxes !== 0 ? _lodash2.default.omit(product, 'taxes') : product;
+      product = !document_number ? _lodash2.default.omit(product, 'document_number') : product;
+      product = !document_date ? _lodash2.default.omit(product, 'document_date') : product;
+      product = !product.seller_id ? _lodash2.default.omit(product, 'seller_id') : product;
+      product = !product.brand_id && product.brand_id !== 0 ? _lodash2.default.omit(product, 'brand_id') : product;
+      const brandModelPromise = model ? [this.modals.brandDropDown.findOne({
+        where: {
+          brand_id: product.brand_id,
+          title: { $iLike: `${model}%` }, category_id
+        }
+      }), this.modals.categories.findOne({ where: { category_id } })] : [, this.modals.categories.findOne({ where: { category_id } })];
+      brandModelPromise.push(this.modals.warranties.findAll({
+        where: { product_id: id, warranty_type: 1 },
+        order: [['expiry_date', 'ASC']]
+      }), this.modals.metaData.findAll({ where: { product_id: id } }));
+      let [renewalTypes, productDetail, productModel, productCategory, normalWarranties, currentMetaData] = await _bluebird2.default.all([this.categoryAdaptor.retrieveRenewalTypes({ status_type: 1 }), this.updateProduct(id, JSON.parse(JSON.stringify(product))), ...brandModelPromise]);
+      normalWarranties = normalWarranties ? normalWarranties.map(item => item.toJSON()) : [];
+      product = productDetail;
+      currentMetaData = currentMetaData ? currentMetaData.map(item => item.toJSON()) : [];
+      const productPromise = [];
+      await this.prepareProductItems({
+        product, productModel, productCategory,
+        normalWarranties, productPromise, currentMetaData,
+        metadata, amc, insurance, puc, repair, warranty,
+        renewalTypes, sellerDetail, amcSeller, repairSeller,
+        pucSeller, insuranceProvider, warrantyProvider,
+        isProductAMCSellerSame, isProductRepairSellerSame,
+        isAMCRepairSellerSame, isProductPUCSellerSame
+      });
 
-    return product;
+      if (!productBody.accessory_part_id && !productBody.accessory_id && dbProduct.status_type === 8) {
+        let [accessories, brand, fcm_detail] = await _bluebird2.default.all([this.retrieveAccessoryForProducts({ category_id: productBody.category_id }), this.modals.brands.findById(product.brand_id), this.modals.fcmDetails.findAll({ where: { user_id: product.user_id } })]);
+
+        console.log('\n\n\n\n\n\n', JSON.stringify({ fcm_detail, accessories }));
+        if (fcm_detail && accessories.length > 0) {
+          fcm_detail = fcm_detail.map(item => item.toJSON());
+          (0, _shared.notifyUser)(id, {
+            title: `Add some zing to your ${product.product_name || `${product.brand.brand_name} ${product.model || ''}`}!.`,
+            description: `Check out Trendy Accessories for your ${product.product_name || `${product.brand.brand_name} ${product.model || ''}`} in our Deals section.`,
+            notification_type: 5,
+            link: 'http://bit.ly/2NXhJGC' || `https://www.binbill.com/deals/accessories/${product.category_id}?product_id=${product.id}`,
+            id: product.id
+          }, {
+            title: `Add some zing to your ${product.product_name || `${product.brand.brand_name} ${product.model || ''}`}!.`,
+            body: `Check out Trendy Accessories for your ${product.product_name || `${product.brand.brand_name} ${product.model || ''}`} in our Deals section.`
+          }, fcm_detail);
+        }
+        if (dbProduct.consumer.email && accessories.length > 0) {
+          const { email, id, name } = dbProduct.consumer;
+          product.accessories = accessories;
+          product.brand = brand.toJSON();
+          this.sendProductAccessoryMail({ email, id, name, product });
+        }
+      }
+      product.flag = flag;
+
+      return product;
+    } catch (e) {
+      console.log('\n\n\n', e);
+      throw e;
+    }
+  }
+
+  async updateAccessoryProduct(parameters) {
+    try {
+      let { user, productBody, otherItems, id, ref_id } = parameters;
+      let dbProduct, masterProduct;
+      let flag = false;
+      [masterProduct, dbProduct] = await _bluebird2.default.all([this.modals.products.findOne({ where: { id: ref_id } }), this.modals.products.findById(id)]);
+      masterProduct = masterProduct.toJSON();
+      dbProduct = dbProduct ? dbProduct.toJSON() : {};
+      productBody.seller_id = dbProduct.seller_id;
+      productBody.brand_id = productBody.brand_id || productBody.brand_id === 0 ? productBody.brand_id : dbProduct.brand_id;
+      productBody.job_id = productBody.job_id || masterProduct.job_id;
+      productBody.category_id = productBody.category_id || masterProduct.category_id;
+      productBody.main_category_id = productBody.main_category_id || masterProduct.main_category_id;
+      productBody.accessory_part_id = productBody.accessory_part_id || dbProduct.accessory_part_id;
+      productBody.sub_category_id = productBody.sub_category_id || masterProduct.sub_category_id;
+      productBody.document_date = productBody.document_date || dbProduct.document_date;
+      productBody.purchase_cost = productBody.purchase_cost || dbProduct.purchase_cost;
+      productBody.product_name = productBody.product_name || dbProduct.product_name;
+      let { warranty } = otherItems;
+      const {
+        main_category_id, category_id, user_id, accessory_part_name, document_number,
+        document_date, taxes, purchase_cost, accessory_part_id, job_id
+      } = productBody;
+
+      const accessory_part_promise = !accessory_part_id && accessory_part_name ? this.findCreateAccessoryPart({
+        status_type: 11, title: accessory_part_name,
+        accessory_part_name, category_id, main_category_id,
+        updated_by: user_id, created_by: user_id
+      }) : undefined;
+      let product = productBody;
+      let [accessory_part] = await _bluebird2.default.all([accessory_part_promise]);
+      product = !purchase_cost && purchase_cost !== 0 ? _lodash2.default.omit(product, 'purchase_cost') : product;
+      product = _lodash2.default.omit(product, 'accessory_part_name');
+      product = !taxes && taxes !== 0 ? _lodash2.default.omit(product, 'taxes') : product;
+      product = !document_number ? _lodash2.default.omit(product, 'document_number') : product;
+      product = !document_date ? _lodash2.default.omit(product, 'document_date') : product;
+      product = !product.seller_id ? _lodash2.default.omit(product, 'seller_id') : product;
+      product = !product.brand_id && product.brand_id !== 0 ? _lodash2.default.omit(product, 'brand_id') : product;
+      product.ref_id = ref_id;
+      product.accessory_part_id = accessory_part ? accessory_part.id : product.accessory_part_id;
+      let [renewalTypes, productDetail] = await _bluebird2.default.all([this.categoryAdaptor.retrieveRenewalTypes({ status_type: 1 }), id ? this.updateProduct(id, JSON.parse(JSON.stringify(product))) : this.createEmptyProduct(JSON.parse(JSON.stringify(product)))]);
+      product = productDetail;
+      let { renewal_type, effective_date, id: warranty_id, expiry_date } = warranty || {};
+
+      if (renewal_type) {
+        const warrantyRenewalType = renewalTypes.find(item => item.type === renewal_type);
+        effective_date = effective_date || document_date || _moment2.default.utc();
+        effective_date = _moment2.default.utc(effective_date, _moment2.default.ISO_8601).isValid() ? _moment2.default.utc(effective_date, _moment2.default.ISO_8601).startOf('day') : _moment2.default.utc(effective_date, 'DD MMM YY').startOf('day');
+        expiry_date = _moment2.default.utc(effective_date, _moment2.default.ISO_8601).add(warrantyRenewalType.effective_months, 'months').subtract(1, 'day').endOf('days');
+        const warrantyOptions = {
+          renewal_type, updated_by: user_id, status_type: 11, job_id,
+          product_id: productDetail.id, warranty_type: 1, user_id,
+          expiry_date: _moment2.default.utc(expiry_date).format('YYYY-MM-DD'),
+          effective_date: _moment2.default.utc(effective_date).format('YYYY-MM-DD'),
+          document_date: _moment2.default.utc(effective_date).format('YYYY-MM-DD')
+        };
+
+        warranty = await (warranty_id ? this.warrantyAdaptor.updateWarranties(warranty_id, warrantyOptions) : this.warrantyAdaptor.createWarranties(warrantyOptions));
+      }
+
+      product.warranty = warranty;
+      return product;
+    } catch (e) {
+      throw e;
+    }
   }
 
   async prepareProductItems(parameters) {
@@ -859,7 +1190,7 @@ class ProductAdaptor {
           isProductPUCSellerSame, sellerDetail, pucSeller
         });
       }
-      [product.metaData, product.insurances, product.warranties, product.amcs, product.repairs, product.pucDetail, product.service_schedules, product.service_center_counts] = await _bluebird2.default.all([_bluebird2.default.all(metadataPromise), _bluebird2.default.all(insurancePromise), _bluebird2.default.all(warrantyItemPromise), _bluebird2.default.all(amcPromise), _bluebird2.default.all(repairPromise), _bluebird2.default.all(pucPromise), serviceSchedule, this.modals.serviceCenters.count({
+      [product.metaData, product.insurances, product.warranties, product.amcs, product.repairs, product.pucDetail, product.service_schedules, product.service_center_counts, product.rc_details] = await _bluebird2.default.all([_bluebird2.default.all(metadataPromise), _bluebird2.default.all(insurancePromise), _bluebird2.default.all(warrantyItemPromise), _bluebird2.default.all(amcPromise), _bluebird2.default.all(repairPromise), _bluebird2.default.all(pucPromise), serviceSchedule, this.modals.serviceCenters.count({
         include: [{
           model: this.modals.brands, as: 'brands',
           where: { brand_id: product.brand_id },
@@ -869,7 +1200,11 @@ class ProductAdaptor {
           where: { category_id: product.category_id },
           attributes: [], required: true, as: 'centerDetails'
         }]
-      })]);
+      }), main_category_id === 3 ? this.regCertAdaptor.updateRegCertPeriod({
+        options: { product_id: product.id, user_id },
+        purchase_date: document_date,
+        new_purchase_date: document_date
+      }) : undefined]);
 
       product.metaData = product.metaData.filter(mdItem => mdItem).map(mdItem => mdItem.toJSON());
       if ((product.service_schedules || []).length > 0) {
@@ -1127,17 +1462,17 @@ class ProductAdaptor {
 
   async retrieveProductMetadata(options, language) {
     const metaDataResult = await this.modals.metaData.findAll({
-      where: options, include: [{
+      where: JSON.parse(JSON.stringify(options)), include: [{
         model: this.modals.categoryForms,
         as: 'categoryForm', attributes: []
       }], attributes: ['id', ['product_id', 'productId'], ['form_value', 'value'], ['category_form_id', 'categoryFormId'], [this.modals.sequelize.literal('"categoryForm"."form_type"'), 'formType'], [this.modals.sequelize.literal(`${language ? `"categoryForm"."title_${language}"` : `"categoryForm"."title"`}`), 'default_name'], [this.modals.sequelize.literal('"categoryForm"."title"'), 'name'], [this.modals.sequelize.literal('"categoryForm"."display_index"'), 'displayIndex']]
     });
     let metaData = metaDataResult.map(item => item.toJSON());
-    const categoryFormIds = metaData.map(item => item.categoryFormId);
-    const dropDowns = await this.modals.dropDowns.findAll({
-      where: { category_form_id: categoryFormIds },
+    const categoryFormIds = metaData.filter(item => !!item && item.categoryFormId).map(item => item.categoryFormId);
+    const dropDowns = categoryFormIds.length > 0 ? await this.modals.dropDowns.findAll({
+      where: JSON.parse(JSON.stringify({ category_form_id: categoryFormIds })),
       attributes: ['id', 'title']
-    });
+    }) : [];
     return _lodash2.default.orderBy(metaData.map(item => {
       const metaDataItem = item;
       if (metaDataItem.formType === 2 && metaDataItem.value) {
@@ -1284,35 +1619,27 @@ class ProductAdaptor {
     }
   }
 
-  retrieveNotificationProducts(options) {
+  async retrieveNotificationProducts(options) {
     if (!options.status_type) {
       options.status_type = [5, 11];
     }
-    return this.modals.products.findAll({
+    const productResult = await this.modals.products.findAll({
       where: options,
       attributes: ['id', ['id', 'productId'], ['product_name', 'productName'], ['purchase_cost', 'value'], ['main_category_id', 'masterCategoryId'], 'taxes', [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"products"."id"')), 'productURL'], ['document_date', 'purchaseDate'], ['document_number', 'documentNo'], ['updated_at', 'updatedDate'], ['bill_id', 'billId'], ['job_id', 'jobId'], 'copies', 'user_id']
-    }).then(productResult => {
-      console.log(productResult.map(item => item.toJSON()));
-      const products = productResult.map(item => {
-        const productItem = item.toJSON();
-        if (productItem.copies) {
-          productItem.copies = productItem.copies.map(copyItem => {
-            copyItem.file_type = copyItem.file_type || copyItem.fileType;
-            return copyItem;
-          });
-        }
-
-        return productItem;
-      });
-      const product_id = products.map(item => item.id);
-      console.log('\n\n\n\n\n\n\n\n');
-      console.log({
-        product_id
-      });
-      return _bluebird2.default.all([this.retrieveProductMetadata({
-        product_id
-      }), products]);
     });
+    const products = productResult.map(item => {
+      const productItem = item.toJSON();
+      if (productItem.copies) {
+        productItem.copies = productItem.copies.map(copyItem => {
+          copyItem.file_type = copyItem.file_type || copyItem.fileType;
+          return copyItem;
+        });
+      }
+
+      return productItem;
+    });
+    const product_id = products.filter(item => !!item && item.id).map(item => item.id);
+    return await _bluebird2.default.all([product_id.length > 0 ? this.retrieveProductMetadata({ product_id }) : [], products]);
   }
 
   async retrieveMissingDocProducts(options) {
@@ -1416,8 +1743,7 @@ class ProductAdaptor {
 
   async createEmptyProduct(productDetail) {
     const productResult = await this.modals.products.create(productDetail);
-    const productData = productResult.toJSON();
-    return { id: productData.id, job_id: productData.job_id };
+    return productResult.toJSON();
   }
 
   async updateProduct(id, productDetail) {
@@ -1480,6 +1806,436 @@ class ProductAdaptor {
     await this.modals.products.destroy({ where: { id } });
 
     return true;
+  }
+
+  async findCreateAccessoryPart(values) {
+    let category, accessoryPartModel;
+    accessoryPartModel = await this.modals.accessory_part.findOne({
+      where: {
+        title: { $iLike: `${values.accessory_part_name}` },
+        category_id: values.category_id
+      }
+    });
+    if (!accessoryPartModel) {
+      accessoryPartModel = await this.modals.accessory_part.create(values);
+    }
+
+    return accessoryPartModel.toJSON();
+  }
+
+  async retrieveAccessoryForProducts(options) {
+    const { category_id } = options;
+    return (await this.modals.table_accessory_categories.findAll({
+      where: { category_id }, include: [{
+        model: this.modals.table_accessory_products,
+        as: 'accessory_items',
+        where: {
+          include_email: true,
+          title: { $and: { $ne: '', $not: null } }, details: {
+            isOutOfStock: false, image: { $and: { $ne: '', $not: null } },
+            name: { $and: { $ne: '', $not: null } },
+            price: { $and: { $ne: '', $not: null } }
+          }
+        },
+        attributes: ['id', 'asin', 'accessory_id', 'accessory_type_id', 'details', 'affiliate_type', 'bb_class']
+      }], attributes: ['category_id', 'priority', 'title', 'id'],
+      order: [['category_id', 'asc'], ['priority', 'asc']]
+    })).map(item => {
+      item = item.toJSON();
+      item.products = item.accessory_items;
+      return item;
+    });
+  }
+
+  async sendProductAccessoryMail(options) {
+    const { email, id, name, product } = options;
+    const products = [product];
+    const productHtml = [];
+    products.forEach(pItem => {
+      const accessoryHtml = [];
+      pItem.accessories.forEach(accessItem => {
+        accessItem.products.forEach(aItem => {
+          const rating = parseInt(aItem.details.rating);
+          const ratingHtml = ['<div style="padding: 10px 50px">'];
+          let i = 0;
+          while (ratingHtml.length <= 5) {
+            if (i < rating) {
+              ratingHtml.push(`<img src="https://s3.ap-south-1.amazonaws.com/binbill-static/rating_color.png" alt="rating"/>`);
+            } else {
+              ratingHtml.push(`<img src="https://s3.ap-south-1.amazonaws.com/binbill-static/rating.png" alt="rating"/>`);
+            }
+
+            i++;
+          }
+          ratingHtml.push(`<span style="padding: 10px;">${rating || 0} out of 5</span></div>`);
+          if (accessoryHtml.length < 2) {
+            accessoryHtml.push(`<td align="center" width="310" style=" width:300px; padding: 5px 0;border: 0 solid transparent;"
+    valign="top">
+    <div class="col num4" style="max-width: 320px;min-width: 310px;display: table-cell;vertical-align: top;">
+        <div style="background-color: transparent; width: 100% !important;">
+            <div style="border: 0 solid transparent;padding: 5px 0;">
+                <div align="center" class="img-container center fixedwidth" style="padding-right: 0;  padding-left: 0;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                        <tr style="line-height:0;">
+                            <td style="padding-right: 0; padding-left: 0;" align="center"><img class="center fixedwidth" align="center" border="0" src="${aItem.details.image}"
+                                     alt="Image" title="Image"
+                                     style="outline: none;text-decoration: none;-ms-interpolation-mode: bicubic;clear: both;display: block !important;border: 0;height: auto;float: none;width: 100%;max-width: 159.5px;min-width: 159.5px; max-height: 159.5px; min-height:159.5px;"
+                                     width="159.5" height="159.5"></td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                        <tr>
+                            <td style="padding: 10px 30px 5px;">
+                                <div style="color:#888888;font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;line-height:150%; padding: 10px 30px 5px;">
+                                    <div style="font-size:12px;line-height:18px;font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;color:#888888;text-align:left;">
+                                        <p style="margin: 0;font-size: 14px;line-height: 21px;text-align: center;text-overflow: ellipsis;white-space: nowrap;overflow: hidden; width:270px">
+                                            <strong>${aItem.details.name}</strong>
+                                        </p></div>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                        <tr>
+                            <td style="padding: 10px 30px 20px;">${ratingHtml.toString().replace(/,/g, '')}
+                                <a href="${aItem.details.url}" style="text-decoration: none">
+                                    <div style="color:#888888;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;line-height:150%; padding: 10px 50px 20px;">
+                                        <div style="font-size:12px;line-height:18px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#888888;text-align:left;border:2px solid #00a0ff;border-radius: 50px; padding-top: 10px; padding-bottom: 10px">
+                                            <p style="margin: 0;font-size: 14px;line-height: 21px;text-align: center">
+                                                <strong>₹ ${aItem.details.price}</strong></p></div>
+                                    </div></a></td></tr></table></div>
+                <div align="center" class="button-container center "
+                     style="padding-right: 30px; padding-left: 30px; padding-top:10px; padding-bottom:5px;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-spacing: 0; border-collapse: collapse; mso-table-lspace:0; mso-table-rspace:0;">
+                        <tr>
+                            <td style="padding: 10px 30px 10px;" align="center">
+                            <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word"
+                                             href="https://www.binbill.com/deals/accessories/${pItem.category_id}?product_id=${product.id}&accessory_id=${accessItem.id}"
+                                             style="height:34pt; v-text-anchor:middle; width:73pt;" arcsize="0%"
+                                             strokecolor="#00A0FF" fillcolor="#FFFFFF">
+                                    <w:anchorlock/>
+                                    <v:textbox inset="0,0,0,0">
+                                        <center style="color:#00A0FF; font-family:'Roboto', Tahoma, Verdana, Segoe, sans-serif; font-size:16px;">
+                                            <a href="https://www.binbill.com/deals/accessories/${pItem.category_id}?product_id=${product.id}&accessory_id=${accessItem.id}" target="_blank" style="display: block;text-decoration: none;-webkit-text-size-adjust: none;text-align: center;color: #00A0FF; background-color: #FFFFFF; border-radius: 0; -webkit-border-radius: 0; -moz-border-radius: 0; max-width: 98px; border: 2px solid #00A0FF;padding: 5px 30px;font-family: 'Roboto', Tahoma, Verdana, Segoe, sans-serif;mso-border-alt: none">
+              <span style="font-size:16px;line-height:32px;"><span
+                      style="font-size: 14px; line-height: 28px;"
+                      data-mce-style="font-size: 14px; line-height: 18px;">VIEW NOW</span></span>
+                                            </a></center>
+                                    </v:textbox>
+                                </v:roundrect>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</td>`);
+          }
+        });
+      });
+      productHtml.push(`<div style="background-color:#FFFFFF;">
+                <div style="Margin: 0 auto;min-width: 320px;max-width: 620px;overflow-wrap: break-word;word-wrap: break-word;word-break: break-word;background-color: transparent;" class="block-grid three-up ">
+                    <div style="border-collapse: collapse;display: table;width: 100%;background-color:transparent;"><table width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr><td style="background-color:#FFFFFF;" align="center">
+                                    <table cellpadding="0" cellspacing="0" border="0" style="width: 620px;">
+                                        <tr class="layout-full-width" style="background-color:transparent;">
+                                        <td align="center" width="170" style="width:170px; padding: 5px 0;border: 0 solid transparent;" valign="top"><div class="col num4" style="max-width: 170px;min-width: 170px;display: table-cell;vertical-align: top;">
+                            <div style="background-color: transparent; width: 100% !important;"><div style="border: 0 solid transparent; padding-top:5px; padding-bottom:5px; padding-right: 0; padding-left: 0;">
+                            <table border="0" cellpadding="0" cellspacing="0" width="100%" class="divider "
+                                           style="border-collapse: collapse;table-layout: fixed;border-spacing: 0;mso-table-lspace: 0;mso-table-rspace: 0;vertical-align: top;min-width: 100%;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%"><tbody>
+                                        <tr style="vertical-align: top">
+                                            <td class="divider_inner"
+                                                style="word-break: break-word;border-collapse: collapse !important;vertical-align: top;padding: 15px;min-width: 100%;mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%">
+                                                <table class="divider_content"  align="center" border="0"
+                                                       cellpadding="0" cellspacing="0" width="100%"
+                                                       style="border-collapse: collapse;table-layout: fixed;border-spacing: 0;mso-table-lspace: 0;mso-table-rspace: 0;vertical-align: top;border-top: 3px solid #00AFFF;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%">
+                                                    <tbody>
+                                                    <tr style="vertical-align: top">
+                                                        <td style="word-break: break-word;border-collapse: collapse !important;vertical-align: top;font-size: 0;line-height: 0;mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%">
+                                                            <span>&#160;</span>
+                                                        </td>
+                                                    </tr>
+                                                    </tbody>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table></div></div>
+                        </div></td><td align="center" width="175" style="max-width: 320px;min-width: 240px; padding: 5px 0;border: 0 solid transparent;"
+                        valign="top">
+                        <div class="col num4" style="width:260px;display: table-cell;vertical-align: top;">
+                            <div style="background-color: transparent; width: 100% !important;">
+                                <div style="border: 0 solid transparent;padding: 5px 0;">
+                                    <div class="">
+                                        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                            <tr>
+                                                <td style="padding: 5px;">
+                                        <div style="color:#555555;line-height:120%;font-family:'Roboto', Tahoma, Verdana, Segoe, sans-serif; padding: 0;">
+                                            <div style="font-size:12px;width: 230px;line-height:14px;color:#555555;font-family:'Roboto', Tahoma, Verdana, Segoe, sans-serif;text-align:left; display: inline-block;">
+                                                <p style="margin: 5px;font-size:14px;line-height:17px;text-align:center;display:inline-block;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;width: 220px;"><strong>${pItem.product_name ? pItem.product_name : `${pItem.brand.brand_name} ${pItem.model || ''}`}</strong></p>
+                                                </div></div></td></tr></table></div></div></div></div></td>
+                    <td align="center" width="170" style=" width:170px; padding: 5px 0;border: 0 solid transparent;"
+                        valign="top"><div class="col num4" style="max-width: 170px;min-width: 170px;display: table-cell;vertical-align: top;">
+                            <div style="background-color: transparent; width: 100% !important;">
+                                <div style="border: 0 solid transparent;padding: 5px 0;">
+                                    <table border="0" cellpadding="0" cellspacing="0" width="100%" class="divider "
+                                           style="border-collapse: collapse;table-layout: fixed;border-spacing: 0;mso-table-lspace: 0;mso-table-rspace: 0;vertical-align: top;min-width: 100%;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%"><tbody><tr style="vertical-align: top">
+                                            <td class="divider_inner" style="word-break: break-word;border-collapse: collapse !important;vertical-align: top;padding-right: 15px;padding-left: 15px;padding-top: 15px;padding-bottom: 15px;min-width: 100%;mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%">
+                                                <table class="divider_content" align="center" border="0"
+                                                       cellpadding="0" cellspacing="0" width="100%"
+                                                       style="border-collapse: collapse;table-layout: fixed;border-spacing: 0;mso-table-lspace: 0;mso-table-rspace: 0;vertical-align: top;border-top: 3px solid #00AFFF;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%">
+                                                    <tbody><tr style="vertical-align: top"><td style="word-break: break-word;border-collapse: collapse !important;vertical-align: top;font-size: 0;line-height: 0;mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%">
+                                                            <span>&#160;</span></td></tr></tbody></table></td></tr></tbody></table></div></div></div></td></tr></table></td></tr></table></div></div></div>
+            <div style="background-color:#FFFFFF;"><div style="Margin: 0 auto;min-width: 320px;max-width: 620px;overflow-wrap: break-word;word-wrap: break-word;word-break: break-word;background-color: transparent;"
+                     class="block-grid two-up "><div style="border-collapse: collapse;display: table;width: 100%;background-color:transparent;"><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="background-color:#FFFFFF;" align="center"><table cellpadding="0" cellspacing="0" border="0" style="width: 620px;">
+                                        <tr class="layout-full-width" style="background-color:transparent;">${accessoryHtml.toString()}</tr></table></td></tr></table></div></div></div>`);
+    });
+
+    if (productHtml.length > 0) {
+      await (0, _requestPromise2.default)({
+        url: `https://admin.binbill.com/api/mailfromcrons`,
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        json: {
+          html: `<!DOCTYPE html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name="viewport" content="width=device-width"><meta http-equiv="X-UA-Compatible" content="IE=edge"><title></title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet" type="text/css">
+</head>
+<body class="clean-body" style="margin: 0;padding: 0;-webkit-text-size-adjust: 100%;background-color: #F3F3F3">
+<div class="ie-browser">
+<div class="mso-container">
+<table class="nl-container"
+       style="border-collapse: collapse;table-layout: fixed;border-spacing: 0;mso-table-lspace: 0;mso-table-rspace: 0;vertical-align: top;min-width: 320px;Margin: 0 auto;background-color: #F3F3F3;width: 100%"
+       cellpadding="0" cellspacing="0">
+    <tbody>
+    <tr style="vertical-align: top">
+        <td style="word-break: break-word;border-collapse: collapse !important;vertical-align: top">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                    <td align="center" style="background-color: #F3F3F3;">
+            <div style="background-color:#FFFFFF;">
+                <div style="Margin: 0 auto;min-width: 320px;max-width: 620px;overflow-wrap: break-word;word-wrap: break-word;word-break: break-word;background-color: transparent;"
+                     class="block-grid ">
+                    <div style="border-collapse: collapse;display: table;width: 100%;background-color:transparent;">
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0">                            <tr>
+                                <td style="background-color:#FFFFFF;" align="center">
+                                    <table cellpadding="0" cellspacing="0" border="0" style="width: 620px;">
+                                        <tr class="layout-full-width" style="background-color:transparent;">
+                        <td align="center" width="620"
+                            style=" width:620px; padding-right: 0; padding-left: 0; padding-top:5px; padding-bottom:5px; border: 0 solid transparent;"
+                            valign="top"><div class="col num12"
+                             style="min-width: 320px;max-width: 620px;display: table-cell;vertical-align: top;">
+                            <div style="background-color: transparent; width: 100% !important;">
+                                <div style="border: 0 solid transparent;padding-top:5px; padding-bottom:5px; padding-right: 0; padding-left: 0;">
+                                    <div align="center" class="img-container center fixedwidth "
+                                         style="padding-right: 0;  padding-left: 0;">
+                                        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                            <tr style="line-height:0;line-height:0;">
+                                                <td style="padding-right: 0; padding-left: 0;" align="center">
+                                        <img class="center fixedwidth" align="center" border="0"
+                                             src="https://s3.ap-south-1.amazonaws.com/binbill-static/BinBill_+Color+Logo+2X-04.png" alt="Image"
+                                             title="Image"
+                                             style="outline: none;text-decoration: none;-ms-interpolation-mode: bicubic;clear: both;display: block !important;border: 0;height: auto;float: none;width: 100%;max-width: 217px"
+                                             width="217">
+                                             </td></tr></table></div></div></div>                        </div>
+                       </td></tr></table></td></tr></table></div>
+                </div>
+            </div>
+            <div style="background-color:#FFFFFF;">
+                <div style="Margin: 0 auto;min-width: 320px;max-width: 620px;overflow-wrap: break-word;word-wrap: break-word;word-break: break-word;background-color: transparent;"
+                     class="block-grid ">
+                    <div style="border-collapse: collapse;display: table;width: 100%;background-color:transparent;">
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                                <td style="background-color:#FFFFFF;" align="center">
+                                    <table cellpadding="0" cellspacing="0" border="0" style="width: 620px;">
+                                        <tr class="layout-full-width" style="background-color:transparent;"><td align="center" width="620"
+                            style=" width:620px; padding: 5px 0;border: 0 solid transparent;"
+                            valign="top"><div class="col num12"
+                             style="min-width: 320px;max-width: 620px;display: table-cell;vertical-align: top;">
+                            <div style="background-color: transparent; width: 100% !important;"><div style="border: 0 solid transparent;padding-top:5px; padding-bottom:5px; padding-right: 0; padding-left: 0;"><table border="0" cellpadding="0" cellspacing="0" width="100%" class="divider "
+                                           style="border-collapse: collapse;table-layout: fixed;border-spacing: 0;mso-table-lspace: 0;mso-table-rspace: 0;vertical-align: top;min-width: 100%;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%"><tbody>
+                                        <tr style="vertical-align: top">    <td class="divider_inner"
+                                                style="word-break: break-word;border-collapse: collapse !important;vertical-align: top;padding-right: 10px;padding-left: 10px;padding-top: 10px;padding-bottom: 10px;min-width: 100%;mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%">
+                                                <table class="divider_content" height="0px" align="center" border="0"
+                                                       cellpadding="0" cellspacing="0" width="100%"
+                                                       style="border-collapse: collapse;table-layout: fixed;border-spacing: 0;mso-table-lspace: 0;mso-table-rspace: 0;vertical-align: top;border-top: 3px solid #00AAF8;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%">
+                                                    <tbody><tr style="vertical-align: top"><td style="word-break: break-word;border-collapse: collapse !important;vertical-align: top;font-size: 0;line-height: 0;mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%"><span>&#160;</span></td>
+                                                    </tr>
+                                                    </tbody>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table></div>
+                            </div>
+                        </div></td></tr></table></td></tr></table>
+                    </div>
+                </div>
+            </div>
+            <div style="background-color:#FFFFFF;">
+                <div style="Margin: 0 auto;min-width: 320px;max-width: 620px;overflow-wrap: break-word;word-wrap: break-word;word-break: break-word;background-color: transparent;"
+                     class="block-grid ">
+                    <div style="border-collapse: collapse;display: table;width: 100%;background-color:transparent;">
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                                <td style="background-color:#FFFFFF;" align="center">
+                                    <table cellpadding="0" cellspacing="0" border="0" style="width: 620px;">
+                                        <tr class="layout-full-width" style="background-color:transparent;"><td align="center" width="620"
+                            style=" width:620px; padding: 0;border: 0 solid transparent;border-top-width: 0;"
+                            valign="top"><div class="col num12" style="min-width: 320px;max-width: 620px;display: table-cell;vertical-align: top;">
+                            <div style="background-color: transparent; width: 100% !important;"><div style="border: 0 solid transparent;padding-top:0; padding-bottom:0; padding-right: 0; padding-left: 0;"><div class="">
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                            <tr>
+                                                <td style="padding-right: 10px; padding-left: 10px; padding-top: 10px; padding-bottom: 10px;">
+<div style="color:#555555;font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;line-height:120%; padding-right: 10px; padding-left: 10px; padding-top: 10px; padding-bottom: 10px;">
+                                            <div style="font-size:12px;line-height:14px;color:#555555;font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;text-align:left;">
+                                                <p style="margin: 0;font-size: 14px;line-height: 17px"><span
+                                                        style="font-size: 16px; line-height: 19px; color: rgb(0, 0, 0);"><strong>
+                                                        Hello${name ? ` ${name}` : ''},
+                                                        </strong></span><br><br>
+                                                        <span style="font-size: 16px; line-height: 19px; color: rgb(0, 0, 0);">Congratulations on successfully adding your product!</span><br><br>
+                                                        <span style="font-size: 16px; line-height: 19px; color: rgb(0, 0, 0);">Did you know that we have exciting and best of Accessories for your <b>${product.product_name}</b>?</span><br><br>
+                                                        <span style="font-size: 16px; line-height: 19px; color: rgb(0, 0, 0);">Check out suitably chosen Accessories for your product in our Deals section.</span>
+                                                        <span style="font-size: 16px; line-height: 19px; color: rgb(0, 0, 0);">All your Product Needs in one place.</span>
+                                                </p></div>
+                                        </div></td></tr></table>
+                                    </div></div></div>
+                        </div></td></tr></table></td></tr></table>
+                    </div>
+                </div>
+            </div>
+            ${productHtml.toString()}
+            <div style="background-color:#FFFFFF;">
+      <div style="Margin: 0 auto;min-width: 320px;max-width: 620px;overflow-wrap: break-word;word-wrap: break-word;word-break: break-word;background-color: transparent;" class="block-grid ">
+        <div style="border-collapse: collapse;display: table;width: 100%;background-color:transparent;">
+          <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="background-color:#FFFFFF;" align="center"><table cellpadding="0" cellspacing="0" border="0" style="width: 620px;"><tr class="layout-full-width" style="background-color:transparent;"><td align="center" width="620" style=" width:620px; padding-right: 0; padding-left: 0; padding-top:5px; padding-bottom:5px; border: 0 solid transparent;" valign="top">
+            <div class="col num12" style="min-width: 320px;max-width: 620px;display: table-cell;vertical-align: top;">
+              <div style="background-color: transparent; width: 100% !important;">
+              <div style="border: 0 solid transparent; padding-top:5px; padding-bottom:5px; padding-right: 0; padding-left: 0;"><div align="center" class="button-container center " style="padding-right: 10px; padding-left: 10px; padding-top:10px; padding-bottom:10px;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-spacing: 0; border-collapse: collapse; mso-table-lspace:0; mso-table-rspace:0;"><tr>
+  <td style="padding-right: 10px; padding-left: 10px; padding-top:10px; padding-bottom:10px;" align="center">
+  <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="https://www.binbill.com/deals" style="height:31pt; v-text-anchor:middle; width:76pt;" arcsize="10%" strokecolor="#3AAEE0" fillcolor="#3AAEE0">
+  <w:anchorlock/>
+  <v:textbox inset="0,0,0,0">
+  <a href="https://www.binbill.com/deals/accessories/${product.category_id}?product_id=${product.id}" style="text-decoration: none;">
+  <center style="color:#ffffff; font-family:'Roboto', Tahoma, Verdana, Segoe, sans-serif; font-size:16px;">
+    <div style="color: #ffffff; background-color: #3AAEE0; border-radius: 4px; -webkit-border-radius: 4px; -moz-border-radius: 4px; max-width: 102px; width: auto; border: 0 solid transparent;padding: 5px 20px;font-family: 'Roboto', Tahoma, Verdana, Segoe, sans-serif; text-align: center; mso-border-alt: none;">
+      <span style="font-size:16px;line-height:32px;">View All</span>
+    </div>
+  </center></a></v:textbox></v:roundrect></td></tr></table>
+</div><div class=""><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding-right: 10px; padding-left: 10px; padding-top: 10px; padding-bottom: 10px;">
+	<div style="color:#555555;font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;line-height:120%; padding-right: 10px; padding-left: 10px; padding-top: 10px; padding-bottom: 10px;">	
+		<div style="font-size:12px;line-height:14px;color:#555555;font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;text-align:left;"><p style="margin: 0;font-size: 14px;line-height: 17px"><span style="font-size: 16px; line-height: 19px; color: rgb(0, 0, 0);">For any queries, write to us at <strong>support@binbill.com</strong> or call us at <strong>+91-124-4343177</strong>. </span><br><br><br><span style="color: rgb(0, 0, 0); font-size: 14px; line-height: 16px;"><strong><span style="font-size: 16px; line-height: 19px;">Cheers,</span></strong></span><br><span style="color: rgb(0, 0, 0); font-size: 14px; line-height: 16px;"><strong><span style="font-size: 16px; line-height: 19px;">BinBill Team</span></strong></span><br><br></p></div>	
+	</div></td></tr></table>
+</div></div>              </div></div></td></tr></table></td></tr></table></div></div></div>
+            <div style="background-color:#8C8C8C;">
+                <div style="Margin: 0 auto;min-width: 320px;max-width: 620px;overflow-wrap: break-word;word-wrap: break-word;word-break: break-word;background-color: transparent;"
+                     class="block-grid ">
+                    <div style="border-collapse: collapse;display: table;width: 100%;background-color:transparent;">
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                                <td style="background-color:#8C8C8C;" align="center">
+                                    <table cellpadding="0" cellspacing="0" border="0" style="width: 620px;">
+                                        <tr class="layout-full-width" style="background-color:transparent;">
+                        <td align="center" width="620"
+                            style=" width:620px; padding-right: 10px; padding-left: 10px; padding-top:10px; padding-bottom:10px; border: 0 solid transparent;"
+                            valign="top"><div class="col num12"
+                             style="min-width: 320px;max-width: 620px;display: table-cell;vertical-align: top;">
+                            <div style="background-color: transparent; width: 100% !important;">
+                                <div style="border: 0 solid transparent;padding-top:10px; padding-bottom:10px; padding-right: 10px; padding-left: 10px;">                                    <div align="center"
+                                         style="padding-right: 10px; padding-left: 10px; padding-bottom: 10px;"
+                                         class="">
+                                        <div style="line-height:10px;font-size:1px">&#160;</div>
+                                        <div style="display: table; max-width:171px;">
+                                            <table width="151" cellpadding="0" cellspacing="0" border="0">
+                                                <tr>
+                                                    <td style="border-collapse:collapse; padding-right: 10px; padding-left: 10px; padding-bottom: 10px;"
+                                                        align="center">
+                                                        <table width="100%" cellpadding="0" cellspacing="0" border="0"
+                                                               style="border-collapse:collapse; mso-table-lspace: 0;mso-table-rspace: 0; width:151px;">
+                                                            <tr><td width="32" style="width:32px; padding-right: 15px;"
+                                                                    valign="top"><table align="left" border="0" cellspacing="0" cellpadding="0" width="32"
+                                                   height="32"
+                                                   style="border-collapse: collapse;table-layout: fixed;border-spacing: 0;mso-table-lspace: 0;mso-table-rspace: 0;vertical-align: top;Margin-right: 15px">
+                                                <tbody>
+                                                <tr style="vertical-align: top">
+                                                    <td align="left" valign="middle"
+                                                        style="word-break: break-word;border-collapse: collapse !important;vertical-align: top">
+                                                        <a href="https://www.facebook.com/binbill.ehome/"
+                                                           title="Facebook" target="_blank">
+                                                            <img src="https://s3.ap-south-1.amazonaws.com/binbill-static/facebook.png" alt="Facebook"
+                                                                 title="Facebook" width="32"
+                                                                 style="outline: none;text-decoration: none;-ms-interpolation-mode: bicubic;clear: both;display: block !important;border: none;height: auto;float: none;max-width: 32px !important">
+                                                        </a>
+                                                        <div style="line-height:5px;font-size:1px">&#160;</div>
+                                                        </td></tr></tbody></table></td><td width="32" style="width:32px; padding-right: 15px;" valign="top">
+                                            <table align="left" border="0" cellspacing="0" cellpadding="0" width="32"
+                                                   height="32"
+                                                   style="border-collapse: collapse;table-layout: fixed;border-spacing: 0;mso-table-lspace: 0;mso-table-rspace: 0;vertical-align: top;Margin-right: 15px">
+                                                <tbody>
+                                                <tr style="vertical-align: top">
+                                                    <td align="left" valign="middle"
+                                                        style="word-break: break-word;border-collapse: collapse !important;vertical-align: top">
+                                                        <a href="http://twitter.com//binbill_ehome" title="Twitter"
+                                                           target="_blank">
+                                                            <img src="https://s3.ap-south-1.amazonaws.com/binbill-static/twitter.png" alt="Twitter" title="Twitter"
+                                                                 width="32"
+                                                                 style="outline: none;text-decoration: none;-ms-interpolation-mode: bicubic;clear: both;display: block !important;border: none;height: auto;float: none;max-width: 32px !important">
+                                                        </a>
+                                                        <div style="line-height:5px;font-size:1px">&#160;</div>
+                                                    </td>
+                                                </tr>
+                                                </tbody>
+                                            </table></td><td width="32" style="width:32px; padding-right: 0;" valign="top">
+                                            <table align="left" border="0" cellspacing="0" cellpadding="0" width="32"
+                                                   height="32"
+                                                   style="border-collapse: collapse;table-layout: fixed;border-spacing: 0;mso-table-lspace: 0;mso-table-rspace: 0;vertical-align: top;Margin-right: 0">
+                                                <tbody>
+                                                <tr style="vertical-align: top">
+                                                    <td align="left" valign="middle"
+                                                        style="word-break: break-word;border-collapse: collapse !important;vertical-align: top">
+                                                        <a href="https://www.linkedin.com/company/binbill.com/"
+                                                           title="LinkedIn" target="_blank">
+                                                            <img src="https://s3.ap-south-1.amazonaws.com/binbill-static/linkedin%402x.png" alt="LinkedIn"
+                                                                 title="LinkedIn" width="32"
+                                                                 style="outline: none;text-decoration: none;-ms-interpolation-mode: bicubic;clear: both;display: block !important;border: none;height: auto;float: none;max-width: 32px !important">
+                                                        </a>
+                                                        <div style="line-height:5px;font-size:1px">&#160;</div>
+                                                    </td>
+                                                </tr>
+                                                </tbody></table></td></tr></table></td></tr></table></div></div></div></div></div></td></tr></table></td></tr></table></div></div></div></td></tr></table></td></tr></tbody></table></div></body></html>`,
+          email,
+          subject: 'Exciting Accessories to complement your product!'
+        }
+      }).catch(err => {
+        throw err;
+      });
+    }
+  }
+
+  async bitlyGenerator(long_url) {
+    const result = await (0, _requestPromise2.default)({
+      url: `https://api-ssl.bitly.com/v4/shorten`,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer a0d77b7de14e7ba297f3382ed73f34c763899af1'
+      },
+      json: {
+        long_url,
+        group_guid: 'Bi5edpzw47U'
+      }
+    });
+
+    console.log(JSON.stringify(result));
+    return result.link;
   }
 }
 exports.default = ProductAdaptor;

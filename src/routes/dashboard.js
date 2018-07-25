@@ -22,6 +22,21 @@ export function prepareDashboardRoutes(modal, routeObject, middleware) {
       },
     });
 
+    routeObject.push({
+      method: 'GET',
+      path: '/consumer/upcomings',
+      config: {
+        pre: [
+          {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: middleware.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: ControllerObject.retrieveUpcomingService,
+      },
+    });
+
     /*Retrieve E-Home of consumer*/
     routeObject.push({
       method: 'GET',
@@ -53,6 +68,17 @@ export function prepareDashboardRoutes(modal, routeObject, middleware) {
           },
         ],
         handler: ControllerObject.getProductsInCategory,
+      },
+    });
+
+    routeObject.push({
+      method: 'GET', path: '/consumer/ehome/products/{type}', config: {
+        auth: 'jwt', pre: [
+          {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: middleware.updateUserActiveStatus, assign: 'userExist',
+          },
+        ], handler: ControllerObject.getEHomeProducts,
       },
     });
 

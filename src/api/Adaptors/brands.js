@@ -10,27 +10,22 @@ class BrandAdaptor {
     this.serviceCenterAdaptor = new ServiceCenterAdaptor(modals);
   }
 
-  retrieveBrands(options) {
+  async retrieveBrands(options) {
     options.status_type = [1, 11];
-    return this.modals.brands.findAll({
+    const brandResult = await this.modals.brands.findAll({
       where: options,
       attributes: [
-        [
-          'brand_id',
-          'id'],
-        [
-          'brand_name',
-          'name'],
-        [
-          'brand_description',
-          'description']],
+        ['brand_id', 'id'],
+        ['brand_name', 'name'],
+        ['brand_description', 'description']],
       order: [['brand_index', 'desc'], ['brand_name']],
-    }).then((brandResult) => brandResult.map((item) => item.toJSON()));
+    });
+    return brandResult.map((item) => item.toJSON());
   }
 
-  retrieveASCBrands(options) {
+  async retrieveASCBrands(options) {
     let brand;
-    return this.modals.brands.findAll({
+    const brandResults = await this.modals.brands.findAll({
       where: {
         status_type: 1,
         brand_name: {
@@ -48,91 +43,63 @@ class BrandAdaptor {
           'brand_description',
           'description']],
       order: [['brand_index', 'desc'], ['brand_name']],
-    }).then((brandResults) => {
-      if (brandResults.length > 0) {
-        brand = brandResults.map(item => item.toJSON())[0];
-
-        return Promise.all([
-          this.retrieveBrandDetails({
-            status_type: 1,
-            category_id: 327,
-            brand_id: brand.id,
-          }), this.serviceCenterAdaptor.retrieveServiceCenters({
-            status_type: 1,
-            category_id: 327,
-            brand_id: brand.id,
-          })]);
-      }
-
-      return undefined;
-    }).then((result) => {
-      if (result) {
-        brand.details = result[0];
-        brand.serviceCenters = result[1];
-
-        return brand;
-      }
-
-      return undefined;
     });
+    let result;
+    if (brandResults.length > 0) {
+      brand = brandResults.map(item => item.toJSON())[0];
+
+      result = await Promise.all([
+        this.retrieveBrandDetails({
+          status_type: 1,
+          category_id: 327,
+          brand_id: brand.id,
+        }), this.serviceCenterAdaptor.retrieveServiceCenters({
+          status_type: 1,
+          category_id: 327,
+          brand_id: brand.id,
+        })]);
+    }
+    if (result) {
+      brand.details = result[0];
+      brand.serviceCenters = result[1];
+      return brand;
+    }
+
+    return undefined;
   }
 
-  retrieveBrandById(id, options) {
+  async retrieveBrandById(id, options) {
     options.status_type = 1;
     const detailOptions = options;
     options = _.omit(options, 'category_id');
     detailOptions.brand_id = id;
-    return Promise.all([
+    const results = await Promise.all([
       this.modals.brands.findById(id, {
-        where: options,
-        attributes: [
-          [
-            'brand_id',
-            'id'],
-          [
-            'brand_name',
-            'name'],
-          [
-            'brand_description',
-            'description'],
-          'status_type',
-          [
+        where: options, attributes: [
+          ['brand_id', 'id'], ['brand_name', 'name'],
+          ['brand_description', 'description'], 'status_type', [
             this.modals.sequelize.fn('CONCAT', 'brands/',
                 this.modals.sequelize.col('"brands"."brand_id"'), '/reviews'),
-            'reviewUrl'],
-          [
+            'reviewUrl'], [
             this.modals.sequelize.fn('CONCAT', 'brands/',
                 this.modals.sequelize.col('"brands"."brand_id"'), '/images'),
-            'imageUrl']],
-        include: [
+            'imageUrl']], include: [
           {
-            model: this.modals.brandReviews,
-            as: 'brandReviews',
-            attributes: [
-              [
-                'review_ratings',
-                'ratings'],
-              [
-                'review_feedback',
-                'feedback'],
-              [
-                'review_comments',
-                'comments']],
-            required: false,
-          },
-        ],
-      }), this.retrieveBrandDetails(detailOptions)]).then((results) => {
-      const brand = results[0] ? results[0].toJSON() : results[0];
-      if (brand) {
-        brand.details = results[1];
-      }
+            model: this.modals.brandReviews, as: 'brandReviews', attributes: [
+              ['review_ratings', 'ratings'], ['review_feedback', 'feedback'],
+              ['review_comments', 'comments']], required: false,
+          }],
+      }), this.retrieveBrandDetails(detailOptions)]);
+    const brand = results[0] ? results[0].toJSON() : results[0];
+    if (brand) {
+      brand.details = results[1];
+    }
 
-      return brand;
-    });
+    return brand;
   }
 
-  retrieveBrandDetails(options) {
-    return this.modals.brandDetails.findAll({
+  async retrieveBrandDetails(options) {
+    const detailResult = await this.modals.brandDetails.findAll({
       where: options,
       include: [
         {
@@ -152,12 +119,13 @@ class BrandAdaptor {
           'details'],
         ['category_id', 'categoryId'],
         ['brand_id', 'brandId']],
-    }).then((detailResult) => detailResult.map((item) => item.toJSON()));
+    });
+    return detailResult.map((item) => item.toJSON());
 
   }
 
-  retrieveCategoryBrands(options) {
-    return this.modals.brands.findAll({
+  async retrieveCategoryBrands(options) {
+    const result = await this.modals.brands.findAll({
       where: {
         status_type: [1, 11],
       }, include: [
@@ -190,76 +158,77 @@ class BrandAdaptor {
         'updated_by',
       ],
       order: [['brand_index', 'desc'], ['brand_name']],
-    }).then((result) => result.map((item) => item.toJSON()));
+    });
+    return result.map((item) => item.toJSON());
   }
 
-  retrieveBrandDropDowns(options) {
-    return this.modals.brandDropDown.findAll({
-      where: options,
-      order: [['title', 'asc']],
-    }).then((result) => result.map((item) => item.toJSON()));
+  async retrieveBrandDropDowns(options) {
+    const result = await this.modals.brandDropDown.findAll(
+        {where: options, order: [['title', 'asc']]});
+    return result.map((item) => item.toJSON());
   }
 
-  findCreateBrand(values) {
-    let brandData;
-    let brandDetail;
-    let category;
-    return Promise.all([
-      this.modals.brands.findOne({
-        where: {
-          brand_name: {
-            $iLike: `${values.brand_name}`,
-          },
+  async findCreateBrand(values) {
+    let brandData, brandDetail, category;
+    const {category_id} = values;
+    const categoryModel = await this.modals.categories.findOne(
+        {where: {category_id}});
+    console.log(JSON.stringify({categoryModel, category_id}));
+    category = categoryModel.toJSON();
+    const brandModel = await this.modals.brands.findOne({
+      where: {
+        brand_name: {
+          $or: [
+            {$iLike: `${values.brand_name}`},
+            {$iLike: `${values.brand_name}(${category.category_name})`},
+          ],
         },
-      }), this.modals.categories.findOne({
+      },
+      include: [
+        {
+          model: this.modals.brandDetails, as: 'details',
+          where: {category_id: values.category_id},
+          attributes: [], required: true,
+        }],
+    });
+    let result;
+    if (brandModel) {
+      brandData = brandModel.toJSON();
+      result = await this.modals.brandDetails.findOne({
         where: {
-          category_id: values.category_id,
-        },
-      })]).then((result) => {
-      category = result[1].toJSON();
-      if (result[0]) {
-        brandData = result[0].toJSON();
-        return this.modals.brandDetails.findOne({
-          where: {
-            brand_id: brandData.brand_id,
-            category_id: values.category_id,
-          },
-        });
-      }
-
-      return false;
-    }).then((result) => {
-      if (!result) {
-        return this.modals.brands.create({
-          status_type: 11,
-          brand_name: `${values.brand_name}(${category.category_name})`,
-          updated_by: values.updated_by,
-          created_by: values.created_by,
-        });
-      }
-
-      brandDetail = result.toJSON();
-      return brandData;
-    }).then((updatedResult) => {
-      if (brandDetail) {
-        brandData = updatedResult;
-      } else {
-        brandData = updatedResult.toJSON();
-      }
-
-      if (brandData.status_type === 11) {
-        return this.modals.brandDetails.create({
           brand_id: brandData.brand_id,
-          detail_type: 1,
-          updated_by: values.updated_by,
-          created_by: values.created_by,
-          status_type: 11,
           category_id: values.category_id,
-        });
-      }
+        },
+      });
+    }
+    let updatedResult;
+    if (!result) {
+      updatedResult = await this.modals.brands.create({
+        status_type: 11,
+        brand_name: `${values.brand_name}(${category.category_name})`,
+        updated_by: values.updated_by,
+        created_by: values.created_by,
+      });
+    } else {
+      brandDetail = result.toJSON();
+    }
 
-      return undefined;
-    }).then(() => brandData);
+    if (!brandDetail) {
+      brandData = updatedResult.toJSON();
+    }
+
+    if (brandData.status_type === 11) {
+      return await this.modals.brandDetails.create({
+        brand_id: brandData.brand_id,
+        detail_type: 1,
+        updated_by: values.updated_by,
+        created_by: values.created_by,
+        status_type: 11,
+        category_id: values.category_id,
+      });
+    }
+
+    return brandData;
   }
 }
 

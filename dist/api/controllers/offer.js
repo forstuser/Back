@@ -70,14 +70,12 @@ class OfferController {
     if (request.pre.userExist && !request.pre.forceUpdate) {
       // this is where make us of adapter
       try {
-        return reply.response({
-          status: true,
-          result: await offerAdaptor.getOfferList({
-            user_id: user.id || user.ID,
-            queryOptions: request.query,
-            paramOptions: request.params
-          })
-        });
+        const result = (await offerAdaptor.getOfferList({
+          user_id: user.id || user.ID,
+          queryOptions: request.query,
+          paramOptions: request.params
+        })) || [];
+        return reply.response({ status: true, result, trending: [] });
       } catch (err) {
         console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
         modals.logs.create({

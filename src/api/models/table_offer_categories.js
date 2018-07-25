@@ -32,6 +32,9 @@ export default (sequelize, DataTypes) => {
         ref_id: {
           'type': DataTypes.INTEGER,
         },
+        priority: {
+          'type': DataTypes.INTEGER,
+        },
         category_level: {
           'type': DataTypes.INTEGER,
         },

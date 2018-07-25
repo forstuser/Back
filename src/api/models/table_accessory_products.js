@@ -58,6 +58,9 @@ export default (sequelize, DataTypes) => {
         url: {
           type: DataTypes.STRING(2550),
         },
+        include_email: {
+          type: DataTypes.BOOLEAN,
+        },
       },
       {
         freezeTableName: true,

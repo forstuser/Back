@@ -1,7 +1,7 @@
 'use strict';
 
 export default (sequelize, DataTypes) => {
-  const pucs = sequelize.define('pucs', {
+  const refueling = sequelize.define('refueling', {
         product_id: {
           type: DataTypes.INTEGER,
           allowNull: false,
@@ -9,17 +9,22 @@ export default (sequelize, DataTypes) => {
         job_id: {
           type: DataTypes.INTEGER,
         },
-        document_number: {
-          type: DataTypes.STRING,
-        },
-        renewal_type: {
-          type: DataTypes.INTEGER,
-        },
-        renewal_cost: {
+        odometer_reading: {
           type: DataTypes.FLOAT,
           defaultValue: 0,
         },
-        renewal_taxes: {
+        document_number: {
+          type: DataTypes.STRING,
+        },
+        fuel_quantity: {
+          type: DataTypes.FLOAT,
+          defaultValue: 0,
+        },
+        purchase_cost: {
+          type: DataTypes.FLOAT,
+          defaultValue: 0,
+        },
+        purchase_taxes: {
           type: DataTypes.FLOAT,
           defaultValue: 0,
         },
@@ -27,9 +32,6 @@ export default (sequelize, DataTypes) => {
           type: DataTypes.INTEGER,
         },
         updated_by: {
-          type: DataTypes.INTEGER,
-        },
-        seller_id: {
           type: DataTypes.INTEGER,
         },
         status_type: {
@@ -47,10 +49,6 @@ export default (sequelize, DataTypes) => {
           type: DataTypes.DATEONLY,
           defaultValue: sequelize.literal('NOW()'),
         },
-        expiry_date: {
-          type: DataTypes.DATEONLY,
-          allowNull: true,
-        },
         document_date: {
           type: DataTypes.DATEONLY,
           defaultValue: sequelize.literal('NOW()'),
@@ -58,30 +56,30 @@ export default (sequelize, DataTypes) => {
         copies: {
           type: DataTypes.ARRAY(DataTypes.JSONB),
         },
+        fuel_type: {
+          type: DataTypes.INTEGER,
+          defaultValue: 0,
+        },
       },
       {
         freezeTableName: true,
         defaultPrimaryKey: true,
         timestamps: true,
         underscored: true,
-        tableName: 'consumer_pucs',
+        tableName: 'consumer_refueling',
       });
 
-  pucs.associate = (models) => {
-    pucs.belongsTo(models.products, {foreignKey: 'product_id'});
-    pucs.belongsTo(models.users,
+  refueling.associate = (models) => {
+    refueling.belongsTo(models.products, {foreignKey: 'product_id'});
+    refueling.belongsTo(models.users,
         {foreignKey: 'user_id', as: 'consumer'});
-    pucs.belongsTo(models.users,
+    refueling.belongsTo(models.users,
         {foreignKey: 'updated_by', as: 'updatedByUser'});
 
-    pucs.belongsTo(models.statuses,
+    refueling.belongsTo(models.statuses,
         {foreignKey: 'status_type', targetKey: 'status_type'});
-    pucs.belongsTo(models.jobs, {as: 'jobs', foreignKey: 'job_id'});
-    pucs.belongsTo(models.offlineSellers,
-        {foreignKey: 'seller_id', as: 'sellers'});
-    pucs.belongsTo(models.renewalTypes,
-        {foreignKey: 'renewal_type', targetKey:'type'});
+    refueling.belongsTo(models.jobs, {as: 'jobs', foreignKey: 'job_id'});
   };
 
-  return pucs;
+  return refueling;
 };

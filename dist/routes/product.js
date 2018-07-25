@@ -108,6 +108,8 @@ function prepareProductRoutes(modal, routeObject, middleware) {
             sub_category_id: [_joi2.default.number(), _joi2.default.allow(null)],
             brand_id: [_joi2.default.number(), _joi2.default.allow(null)],
             colour_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            ref_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            accessory_part_id: [_joi2.default.number(), _joi2.default.allow(null)],
             value: [_joi2.default.number(), _joi2.default.allow(null)],
             taxes: [_joi2.default.number(), _joi2.default.allow(null)],
             seller_id: [_joi2.default.number(), _joi2.default.allow(null)],
@@ -177,6 +179,87 @@ function prepareProductRoutes(modal, routeObject, middleware) {
         }
       }
     });
+
+    routeObject.push({
+      method: 'POST',
+      path: '/products/{ref_id}/accessories',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, {
+          method: middleware.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _product2.default.updateAccessoryProduct,
+        description: 'Create Accessory Product.',
+        validate: {
+          payload: {
+            product_name: [_joi2.default.string(), _joi2.default.allow(null)],
+            accessory_part_name: [_joi2.default.string(), _joi2.default.allow(null)],
+            job_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            main_category_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            category_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            sub_category_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            brand_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            accessory_part_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            value: [_joi2.default.number(), _joi2.default.allow(null)],
+            taxes: [_joi2.default.number(), _joi2.default.allow(null)],
+            seller_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            seller_name: [_joi2.default.string(), _joi2.default.allow(null)],
+            seller_contact: [_joi2.default.string(), _joi2.default.allow(null)],
+            seller_email: [_joi2.default.string(), _joi2.default.allow(null)],
+            seller_address: [_joi2.default.string(), _joi2.default.allow(null)],
+            document_number: [_joi2.default.string(), _joi2.default.allow(null)],
+            document_date: [_joi2.default.string(), _joi2.default.allow(null)],
+            warranty: _joi2.default.object().keys({
+              id: [_joi2.default.number(), _joi2.default.allow(null)],
+              renewal_type: [_joi2.default.number(), _joi2.default.allow(null)],
+              effective_date: [_joi2.default.string(), _joi2.default.allow(null)]
+            }).allow(null)
+          }
+        }
+      }
+    });
+
+    routeObject.push({
+      method: 'PUT',
+      path: '/products/{ref_id}/accessories/{id}',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, {
+          method: middleware.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _product2.default.updateAccessoryProduct,
+        description: 'Update Accessory Product.',
+        validate: {
+          payload: {
+            product_name: [_joi2.default.string(), _joi2.default.allow(null)],
+            accessory_part_name: [_joi2.default.string(), _joi2.default.allow(null)],
+            job_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            main_category_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            category_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            sub_category_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            brand_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            accessory_part_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            value: [_joi2.default.number(), _joi2.default.allow(null)],
+            taxes: [_joi2.default.number(), _joi2.default.allow(null)],
+            seller_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            seller_name: [_joi2.default.string(), _joi2.default.allow(null)],
+            seller_contact: [_joi2.default.string(), _joi2.default.allow(null)],
+            seller_email: [_joi2.default.string(), _joi2.default.allow(null)],
+            seller_address: [_joi2.default.string(), _joi2.default.allow(null)],
+            document_number: [_joi2.default.string(), _joi2.default.allow(null)],
+            document_date: [_joi2.default.string(), _joi2.default.allow(null)],
+            warranty: _joi2.default.object().keys({
+              id: [_joi2.default.number(), _joi2.default.allow(null)],
+              renewal_type: [_joi2.default.number(), _joi2.default.allow(null)],
+              effective_date: [_joi2.default.string(), _joi2.default.allow(null)]
+            }).allow(null)
+          }
+        }
+      }
+    });
+
     routeObject.push({
       method: 'DELETE',
       path: '/products/{id}',

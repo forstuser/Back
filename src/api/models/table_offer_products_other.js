@@ -29,6 +29,9 @@ export default (sequelize, DataTypes) => {
         promo_link: {
           type: DataTypes.STRING(2550),
         },
+        trending: {
+          type: DataTypes.BOOLEAN
+        },
         goto_link: {
           type: DataTypes.STRING(2550),
         },
@@ -67,7 +70,7 @@ export default (sequelize, DataTypes) => {
           type: DataTypes.STRING(2550),
         },
         discount: {
-          type: DataTypes.FLOAT,
+           type: DataTypes.FLOAT,
         },
         cashback: {
           type: DataTypes.FLOAT,

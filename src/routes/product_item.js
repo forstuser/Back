@@ -383,5 +383,159 @@ export function prepareProductItemRoutes(modal, routeObject, middleware) {
         description: 'Delete AMC.',
       },
     });
+
+    routeObject.push({
+      method: 'POST',
+      path: '/products/{id}/rc',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: middleware.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: ControllerObject.updateRC,
+        description: 'Add Registration Certificates.',
+        validate: {
+          payload: {
+            "job_id": [joi.number(), joi.allow(null)],
+            "effective_date": [joi.string(), joi.allow(null)],
+            "renewal_type": [joi.number(), joi.allow(null)],
+            "document_number": [joi.string(), joi.allow(null)],
+            "value": [joi.number(), joi.allow(null)],
+            "expiry_date": [joi.string(), joi.allow(null)],
+            "main_category_id": [joi.number(), joi.allow(null)],
+            "category_id": [joi.number(), joi.allow(null)],
+            "state_id": [joi.number(), joi.allow(null)],
+          },
+        },
+      },
+    });
+
+    routeObject.push({
+      method: 'PUT',
+      path: '/products/{id}/rc/{rc_id}',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: middleware.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: ControllerObject.updateRC,
+        description: 'Update Registration Certificates.',
+        validate: {
+          payload: {
+            job_id: [joi.number(), joi.allow(null)],
+            effective_date: [joi.string(), joi.allow(null)],
+            renewal_type: [joi.number(), joi.allow(null)],
+            document_number: [joi.string(), joi.allow(null)],
+            value: [joi.number(), joi.allow(null)],
+            expiry_period: [joi.number(), joi.allow(null)],
+            main_category_id: [joi.number(), joi.allow(null)],
+            category_id: [joi.number(), joi.allow(null)],
+            state_id: [joi.number(), joi.allow(null)],
+          },
+        },
+      },
+    });
+
+    routeObject.push({
+      method: 'DELETE',
+      path: '/products/{id}/rc/{rc_id}',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: middleware.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: ControllerObject.deleteRC,
+        description: 'Delete Registration Certificate.',
+      },
+    });
+
+    routeObject.push({
+      method: 'POST',
+      path: '/products/{id}/fuel',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: middleware.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: ControllerObject.updateRefueling,
+        description: 'Add Fuel Detail.',
+        validate: {
+          payload: {
+            "job_id": [joi.number(), joi.allow(null)],
+            "effective_date": [joi.string(), joi.allow(null)],
+            "odometer_reading": [joi.number(), joi.allow(null)],
+            "document_number": [joi.string(), joi.allow(null)],
+            "value": [joi.number(), joi.allow(null)],
+            "fuel_quantity": [joi.number(), joi.allow(null)],
+            "fuel_type": [joi.number(), joi.allow(null)],
+            "main_category_id": [joi.number(), joi.allow(null)],
+            "category_id": [joi.number(), joi.allow(null)],
+          },
+        },
+      },
+    });
+
+    routeObject.push({
+      method: 'PUT',
+      path: '/products/{id}/fuel/{fuel_id}',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: middleware.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: ControllerObject.updateRefueling,
+        description: 'Update Fuel Detai;.',
+        validate: {
+          payload: {
+            "job_id": [joi.number(), joi.allow(null)],
+            "effective_date": [joi.string(), joi.allow(null)],
+            "odometer_reading": [joi.number(), joi.allow(null)],
+            "document_number": [joi.string(), joi.allow(null)],
+            "value": [joi.number(), joi.allow(null)],
+            "fuel_quantity": [joi.number(), joi.allow(null)],
+            "fuel_type": [joi.number(), joi.allow(null)],
+            "main_category_id": [joi.number(), joi.allow(null)],
+            "category_id": [joi.number(), joi.allow(null)],
+          },
+        },
+      },
+    });
+
+    routeObject.push({
+      method: 'DELETE',
+      path: '/products/{id}/fuel/{fuel_id}',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: middleware.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: ControllerObject.deleteRefueling,
+        description: 'Delete Fuel Detail.',
+      },
+    });
   }
 }

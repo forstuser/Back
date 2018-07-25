@@ -211,11 +211,12 @@ class NotificationAdaptor {
     });
   }
 
-  retrieveNotifications(user, request) {
-    return Promise.all([
-      this.filterUpcomingService(user, request),
-      this.prepareNotificationData(user),
-    ]).then((result) => {
+  async retrieveNotifications(user, request) {
+    try {
+      const result = await Promise.all([
+        this.filterUpcomingService(user, request),
+        this.prepareNotificationData(user),
+      ]);
       const upcomingServices = result[0].map((elem) => {
         if (elem.productType === 4) {
           const dueAmountArr = elem.productMetaData.filter((e) => {
@@ -264,7 +265,7 @@ class NotificationAdaptor {
         /* nextPageUrl: notifications.length >
              listIndex + 10 ? `consumer/mailbox?pageno=${parseInt(pageNo, 10) + 1}` : '' */
       };
-    }).catch((err) => {
+    } catch (err) {
       console.log(
           `Error on ${new Date()} for user ${user.id ||
           user.ID} is as follow: \n ${err}`);
@@ -288,11 +289,13 @@ class NotificationAdaptor {
         err,
         forceUpdate: request.pre.forceUpdate,
       };
-    });
+    }
   }
 
-  filterUpcomingService(user, request) {
-    return Promise.try(() => Promise.all([
+  async filterUpcomingService(user, request) {
+    let [
+      productDetails, amcList, insuranceList, warrantyList, pucList,
+      serviceScheduleList, repairList] = await Promise.all([
       this.productAdaptor.retrieveNotificationProducts({
         user_id: user.id || user.ID,
         status_type: [5, 11],
@@ -347,202 +350,199 @@ class NotificationAdaptor {
         warranty_upto: {
           $ne: null,
         },
-      })])).
-        spread((productDetails, amcList, insuranceList, warrantyList, pucList,
-                serviceScheduleList, repairList) => {
-          const metaData = productDetails[0];
-          let productList = productDetails[1].map((productItem) => {
-            productItem.productMetaData = metaData.filter(
-                (item) => item.productId === productItem.id);
+      })]);
+    const metaData = productDetails[0];
+    let productList = productDetails[1].map((productItem) => {
+      productItem.productMetaData = metaData.filter(
+          (item) => item.productId === productItem.id);
 
-            return productItem;
-          });
-          productList = productList.map((item) => {
-            const product = item;
+      return productItem;
+    });
+    productList = productList.map((item) => {
+      const product = item;
 
-            product.productMetaData.forEach((metaItem) => {
-              const metaData = metaItem;
-              if (metaData.name.toLowerCase().includes('due') &&
-                  metaData.name.toLowerCase().includes('date') &&
-                  (moment.utc(metaData.value, moment.ISO_8601).isValid() ||
-                      moment.utc(metaData.value, 'DD MMM YYYY').isValid())) {
-                const dueDateTime = moment.utc(metaData.value, moment.ISO_8601).
-                    isValid() ? moment.utc(metaData.value,
-                    moment.ISO_8601) : moment.utc(metaData.value,
-                    'DD MMM YYYY');
-                product.dueDate = metaData.value;
-                product.dueIn = dueDateTime.diff(moment.utc(), 'days', true);
-              }
-              product.description = '';
-              product.address = '';
-              if (metaData.name.toLowerCase().includes('address')) {
-                product.description = metaData.value;
-                product.address = metaData.value;
-              }
-            });
+      product.productMetaData.forEach((metaItem) => {
+        const metaData = metaItem;
+        if (metaData.name.toLowerCase().includes('due') &&
+            metaData.name.toLowerCase().includes('date') &&
+            (moment.utc(metaData.value, moment.ISO_8601).isValid() ||
+                moment.utc(metaData.value, 'DD MMM YYYY').isValid())) {
+          const dueDateTime = moment.utc(metaData.value, moment.ISO_8601).
+              isValid() ? moment.utc(metaData.value,
+              moment.ISO_8601) : moment.utc(metaData.value,
+              'DD MMM YYYY');
+          product.dueDate = metaData.value;
+          product.dueIn = dueDateTime.diff(moment.utc(), 'days', true);
+        }
+        product.description = '';
+        product.address = '';
+        if (metaData.name.toLowerCase().includes('address')) {
+          product.description = metaData.value;
+          product.address = metaData.value;
+        }
+      });
 
-            if (product.masterCategoryId.toString() === '6') {
-              product.title = `${product.productName ||
-              'one of your product'} Reminder`;
-              product.productType = 5;
-            } else {
-              product.title = `${product.productName ||
-              'one of your product'} Reminder`;
-              product.productType = 4;
-            }
+      if (product.masterCategoryId.toString() === '6') {
+        product.title = `${product.productName ||
+        'one of your product'} Reminder`;
+        product.productType = 5;
+      } else {
+        product.title = `${product.productName ||
+        'one of your product'} Reminder`;
+        product.productType = 4;
+      }
 
-            return product;
-          });
+      return product;
+    });
 
-          productList = productList.filter(
-              item => ((item.dueIn !== undefined && item.dueIn !== null) &&
-                  item.dueIn <= 30 && item.dueIn >= 0));
+    productList = productList.filter(
+        item => ((item.dueIn !== undefined && item.dueIn !== null) &&
+            item.dueIn <= 30 && item.dueIn >= 0));
 
-          let pucProducts = pucList.map((item) => {
-            const puc = item;
-            if (moment.utc(puc.expiryDate, moment.ISO_8601).isValid()) {
-              const dueDateTime = moment.utc(puc.expiryDate, moment.ISO_8601).
-                  endOf('day');
-              puc.dueDate = puc.expiryDate;
-              puc.dueIn = dueDateTime.diff(moment.utc(), 'days', true);
-              puc.productType = 3;
-              puc.title = 'PUC Renewal Pending';
-              puc.description = `PUC Renewal Pending for ${puc.productName ||
-              'one of your product'}`;
-            }
+    let pucProducts = pucList.map((item) => {
+      const puc = item;
+      if (moment.utc(puc.expiryDate, moment.ISO_8601).isValid()) {
+        const dueDateTime = moment.utc(puc.expiryDate, moment.ISO_8601).
+            endOf('day');
+        puc.dueDate = puc.expiryDate;
+        puc.dueIn = dueDateTime.diff(moment.utc(), 'days', true);
+        puc.productType = 3;
+        puc.title = 'PUC Renewal Pending';
+        puc.description = `PUC Renewal Pending for ${puc.productName ||
+        'one of your product'}`;
+      }
 
-            return puc;
-          });
+      return puc;
+    });
 
-          pucProducts = pucProducts.filter(
-              item => ((item.dueIn !== undefined && item.dueIn !== null) &&
-                  item.dueIn <= 30 && item.dueIn >= 0));
-          let amcs = amcList.map((item) => {
-            const amc = item;
-            if (moment.utc(amc.expiryDate, moment.ISO_8601).isValid()) {
-              const dueDateTime = moment.utc(amc.expiryDate, moment.ISO_8601);
-              amc.dueDate = amc.expiryDate;
-              amc.dueIn = dueDateTime.diff(moment.utc(), 'days', true);
-              amc.productType = 3;
-              amc.title = 'AMC Renewal Pending';
-              amc.description = `AMC Renewal Pending for ${amc.productName ||
-              'one of your product'}`;
-            }
+    pucProducts = pucProducts.filter(
+        item => ((item.dueIn !== undefined && item.dueIn !== null) &&
+            item.dueIn <= 30 && item.dueIn >= 0));
+    let amcs = amcList.map((item) => {
+      const amc = item;
+      if (moment.utc(amc.expiryDate, moment.ISO_8601).isValid()) {
+        const dueDateTime = moment.utc(amc.expiryDate, moment.ISO_8601);
+        amc.dueDate = amc.expiryDate;
+        amc.dueIn = dueDateTime.diff(moment.utc(), 'days', true);
+        amc.productType = 3;
+        amc.title = 'AMC Renewal Pending';
+        amc.description = `AMC Renewal Pending for ${amc.productName ||
+        'one of your product'}`;
+      }
 
-            return amc;
-          });
-          amcs = amcs.filter(
-              item => (item.dueIn !== undefined && item.dueIn !== null) &&
-                  item.dueIn <= 30 && item.dueIn >= 0);
+      return amc;
+    });
+    amcs = amcs.filter(
+        item => (item.dueIn !== undefined && item.dueIn !== null) &&
+            item.dueIn <= 30 && item.dueIn >= 0);
 
-          let insurances = insuranceList.map((item) => {
-            const insurance = item;
-            if (moment.utc(insurance.expiryDate, moment.ISO_8601).isValid()) {
-              const dueDateTime = moment.utc(insurance.expiryDate,
-                  moment.ISO_8601);
-              insurance.dueDate = insurance.expiryDate;
-              insurance.dueIn = dueDateTime.diff(moment.utc(), 'days', true);
-              insurance.productType = 3;
-              insurance.title = 'Insurance Renewal Pending';
-              insurance.description = `Insurance Renewal Pending for ${insurance.productName ||
-              'one of your product'}`;
-            }
-            return insurance;
-          });
+    let insurances = insuranceList.map((item) => {
+      const insurance = item;
+      if (moment.utc(insurance.expiryDate, moment.ISO_8601).isValid()) {
+        const dueDateTime = moment.utc(insurance.expiryDate,
+            moment.ISO_8601);
+        insurance.dueDate = insurance.expiryDate;
+        insurance.dueIn = dueDateTime.diff(moment.utc(), 'days', true);
+        insurance.productType = 3;
+        insurance.title = 'Insurance Renewal Pending';
+        insurance.description = `Insurance Renewal Pending for ${insurance.productName ||
+        'one of your product'}`;
+      }
+      return insurance;
+    });
 
-          insurances = insurances.filter(
-              item => (item.dueIn !== undefined && item.dueIn !== null) &&
-                  item.dueIn <= 30 && item.dueIn >= 0);
+    insurances = insurances.filter(
+        item => (item.dueIn !== undefined && item.dueIn !== null) &&
+            item.dueIn <= 30 && item.dueIn >= 0);
 
-          let warranties = warrantyList.map((item) => {
-            const warranty = item;
-            if (moment.utc(warranty.expiryDate, moment.ISO_8601).isValid()) {
-              const dueDateTime = moment.utc(warranty.expiryDate,
-                  moment.ISO_8601);
+    let warranties = warrantyList.map((item) => {
+      const warranty = item;
+      if (moment.utc(warranty.expiryDate, moment.ISO_8601).isValid()) {
+        const dueDateTime = moment.utc(warranty.expiryDate,
+            moment.ISO_8601);
 
-              warranty.dueDate = warranty.expiryDate;
-              warranty.dueIn = dueDateTime.diff(moment.utc(), 'days', true);
-              warranty.productType = 3;
-              warranty.title = `Warranty Renewal Pending`;
-              warranty.description = `Warranty Renewal Pending for ${warranty.warranty_type ===
-              3 ?
-                  `${warranty.dualWarrantyItem ||
-                  'dual item'} of ${warranty.productName ||
-                  'one of your product'}` :
-                  warranty.warranty_type === 4 ?
-                      `Accessories of ${warranty.productName ||
-                      'one of your product'}` :
-                      `${warranty.productName || 'one of your product'}`}`;
-            }
+        warranty.dueDate = warranty.expiryDate;
+        warranty.dueIn = dueDateTime.diff(moment.utc(), 'days', true);
+        warranty.productType = 3;
+        warranty.title = `Warranty Renewal Pending`;
+        warranty.description = `Warranty Renewal Pending for ${warranty.warranty_type ===
+        3 ?
+            `${warranty.dualWarrantyItem ||
+            'dual item'} of ${warranty.productName ||
+            'one of your product'}` :
+            warranty.warranty_type === 4 ?
+                `Accessories of ${warranty.productName ||
+                'one of your product'}` :
+                `${warranty.productName || 'one of your product'}`}`;
+      }
 
-            return warranty;
-          });
+      return warranty;
+    });
 
-          warranties = warranties.filter(
-              item => (item.dueIn !== undefined && item.dueIn !== null) &&
-                  item.dueIn <= 30 && item.dueIn >= 0);
+    warranties = warranties.filter(
+        item => (item.dueIn !== undefined && item.dueIn !== null) &&
+            item.dueIn <= 30 && item.dueIn >= 0);
 
-          let repairWarranties = repairList.map((item) => {
-            const warranty = item;
-            if (moment.utc(warranty.warranty_upto, moment.ISO_8601).isValid()) {
-              const dueDate_time = moment.utc(warranty.warranty_upto,
-                  moment.ISO_8601).endOf('day');
-              warranty.dueDate = warranty.warranty_upto;
-              warranty.dueIn = dueDate_time.diff(moment.utc(), 'days', true);
-              warranty.productType = 7;
-              warranty.title = `Repair Warranty Expiring`;
-              warranty.description = `Warranty Renewal Expiring for ${warranty.productName ||
-              'one of your product'}`;
-            }
-            return warranty;
-          });
+    let repairWarranties = repairList.map((item) => {
+      const warranty = item;
+      if (moment.utc(warranty.warranty_upto, moment.ISO_8601).isValid()) {
+        const dueDate_time = moment.utc(warranty.warranty_upto,
+            moment.ISO_8601).endOf('day');
+        warranty.dueDate = warranty.warranty_upto;
+        warranty.dueIn = dueDate_time.diff(moment.utc(), 'days', true);
+        warranty.productType = 7;
+        warranty.title = `Repair Warranty Expiring`;
+        warranty.description = `Warranty Renewal Expiring for ${warranty.productName ||
+        'one of your product'}`;
+      }
+      return warranty;
+    });
 
-          repairWarranties = repairWarranties.filter(
-              item => (item.dueIn !== undefined && item.dueIn !== null) &&
-                  item.dueIn <= 30 && item.dueIn >= 0);
+    repairWarranties = repairWarranties.filter(
+        item => (item.dueIn !== undefined && item.dueIn !== null) &&
+            item.dueIn <= 30 && item.dueIn >= 0);
 
-          let productServiceSchedule = serviceScheduleList.map((item) => {
-            const scheduledProduct = item;
-            const scheduledDate = scheduledProduct.schedule ?
-                moment.utc(scheduledProduct.purchaseDate, moment.ISO_8601).
-                    add(scheduledProduct.schedule.due_in_months, 'months') :
-                undefined;
-            if (scheduledDate &&
-                moment.utc(scheduledDate, moment.ISO_8601).isValid()) {
-              const due_date_time = moment.utc(scheduledDate, moment.ISO_8601).
-                  endOf('day');
-              scheduledProduct.dueDate = scheduledDate;
-              scheduledProduct.dueIn = due_date_time.diff(moment.utc(), 'days',
-                  true);
-              scheduledProduct.productType = 7;
-              scheduledProduct.productId = scheduledProduct.id;
-              scheduledProduct.title = `Service is pending for ${scheduledProduct.productName ||
-              'one of your product'}`;
-              scheduledProduct.description = `Service is pending for ${scheduledProduct.productName ||
-              'one of your product'}`;
-            }
+    let productServiceSchedule = serviceScheduleList.map((item) => {
+      const scheduledProduct = item;
+      const scheduledDate = scheduledProduct.schedule ?
+          moment.utc(scheduledProduct.purchaseDate, moment.ISO_8601).
+              add(scheduledProduct.schedule.due_in_months, 'months') :
+          undefined;
+      if (scheduledDate &&
+          moment.utc(scheduledDate, moment.ISO_8601).isValid()) {
+        const due_date_time = moment.utc(scheduledDate, moment.ISO_8601).
+            endOf('day');
+        scheduledProduct.dueDate = scheduledDate;
+        scheduledProduct.dueIn = due_date_time.diff(moment.utc(), 'days',
+            true);
+        scheduledProduct.productType = 7;
+        scheduledProduct.productId = scheduledProduct.id;
+        scheduledProduct.title = `Service is pending for ${scheduledProduct.productName ||
+        'one of your product'}`;
+        scheduledProduct.description = `Service is pending for ${scheduledProduct.productName ||
+        'one of your product'}`;
+      }
 
-            return scheduledProduct;
-          });
+      return scheduledProduct;
+    });
 
-          productServiceSchedule = productServiceSchedule.filter(
-              item => ((item.dueIn !== undefined && item.dueIn !== null) &&
-                  item.dueIn <= 7 && item.dueIn >= 0));
+    productServiceSchedule = productServiceSchedule.filter(
+        item => ((item.dueIn !== undefined && item.dueIn !== null) &&
+            item.dueIn <= 7 && item.dueIn >= 0));
 
-          return [
-            ...productList,
-            ...warranties,
-            ...insurances,
-            ...amcs,
-            ...pucProducts,
-            ...productServiceSchedule,
-            ...repairWarranties,
-          ];
-        });
+    return [
+      ...productList,
+      ...warranties,
+      ...insurances,
+      ...amcs,
+      ...pucProducts,
+      ...productServiceSchedule,
+      ...repairWarranties,
+    ];
   }
 
-  prepareNotificationData(user) {
-    return this.modals.mailBox.findAll({
+  async prepareNotificationData(user) {
+    const result = await this.modals.mailBox.findAll({
       where: {
         user_id: user.id || user.ID,
         status_id: {
@@ -603,19 +603,15 @@ class NotificationAdaptor {
           'status_id',
           'statusId'],
         ['created_at', 'createdAt'], 'copies'],
-    }).then((result) => result.map(item => item.toJSON()));
+    });
+    return result.map(item => item.toJSON());
   }
 
-  updateNotificationStatus(user, notificationIds) {
-    return this.modals.mailBox.update({
-      status_id: 10,
-    }, {
+  async updateNotificationStatus(user, notificationIds) {
+    return await this.modals.mailBox.update({status_id: 10}, {
       where: {
         user_id: user.id || user.ID,
-        status_id: {
-          $notIn: [3, 9],
-        },
-        notification_id: notificationIds,
+        status_id: {$notIn: [3, 9]}, notification_id: notificationIds,
       },
     });
   }
@@ -1111,6 +1107,697 @@ class NotificationAdaptor {
           `Error on ${new Date()} for user is as follow: \n \n ${err}`);
       return reply.response({status: false});
     });
+  }
+
+  async sendProductAccessoryMail(options) {
+    const {email, id, name, product} = options;
+    console.log(JSON.stringify({options}));
+    const products = [product];
+    const productHtml = [];
+    products.forEach(pItem => {
+      const accessoryHtml = [];
+      pItem.accessories.forEach((accessItem) => {
+        accessItem.products.forEach((aItem) => {
+          const rating = parseInt(aItem.details.rating);
+          const ratingHtml = ['<div style="padding: 10px 50px">'];
+          let i = 0;
+          while (ratingHtml.length <= 5) {
+            if (i < rating) {
+              ratingHtml.push(
+                  `<img src="https://s3.ap-south-1.amazonaws.com/binbill-static/rating_color.png" alt="rating"/>`);
+            } else {
+              ratingHtml.push(
+                  `<img src="https://s3.ap-south-1.amazonaws.com/binbill-static/rating.png" alt="rating"/>`);
+            }
+
+            i++;
+          }
+          ratingHtml.push(`<span style="padding: 10px;">${rating ||
+          0} out of 5</span></div>`);
+          if (accessoryHtml.length < 2) {
+            accessoryHtml.push(`<td align="center" width="310" style=" width:300px; padding: 5px 0;border: 0 solid transparent;"
+          valign="top"><div class="col num4"
+          style="max-width: 320px;min-width: 310px;display: table-cell;vertical-align: top;">
+              <div style="background-color: transparent; width: 100% !important;">
+              <div style="border: 0 solid transparent;padding: 5px 0;">
+              <div align="center" class="img-container center fixedwidth"style="padding-right: 0;  padding-left: 0;"><table width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr style="line-height:0;">
+              <td style="padding-right: 0; padding-left: 0;" align="center"><img class="center fixedwidth" align="center" border="0"
+          src="${aItem.details.image}" alt="Image" title="Image" style="outline: none;text-decoration: none;-ms-interpolation-mode: bicubic;clear: both;display: block !important;border: 0;height: auto;float: none;width: 100%;max-width: 159.5px;min-width: 159.5px; max-height: 159.5px; min-height:159.5px;"
+          width="159.5" height="159.5"></td></tr></table></div><div class="">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+              <td style="padding-right: 30px; padding-left: 30px; padding-top: 10px; padding-bottom: 5px;">
+              <div style="color:#888888;font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;line-height:150%; padding-right: 30px; padding-left: 30px; padding-top: 10px; padding-bottom: 5px;">
+              <div style="font-size:12px;line-height:18px;font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;color:#888888;text-align:left;">
+              <p style="margin: 0;font-size: 14px;line-height: 21px;text-align: center">
+              <strong><div
+          style="color: rgb(0, 0, 0); font-size: 14px; line-height: 21px;text-overflow: ellipsis;white-space: nowrap;overflow: hidden;">${aItem.details.name}</div></strong>
+          </p></div>
+              </div></td></tr></table></div> <div class="">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+              <td style="padding: 10px 30px 20px;">${ratingHtml.toString().
+                replace(/,/g, '')}
+              <a href="${aItem.details.url}" style="text-decoration: none">
+              <div style="color:#888888;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;line-height:150%; padding: 10px 50px 20px;">
+              <div style="font-size:12px;line-height:18px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#888888;text-align:left;border:2px solid #00a0ff;border-radius: 50px; padding-top: 10px; padding-bottom: 10px">
+              <p style="margin: 0;font-size: 14px;line-height: 21px;text-align: center"><strong>₹ ${aItem.details.price}</strong></p></div>
+          </div></a></td></tr></table>
+          </div><div align="center" class="button-container center "
+          style="padding-right: 30px; padding-left: 30px; padding-top:10px; padding-bottom:5px;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0"
+          style="border-spacing: 0; border-collapse: collapse; mso-table-lspace:0; mso-table-rspace:0;">
+              <tr>
+              <td style="padding: 10px 30px 10px;" align="center">
+              <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="https://www.binbill.com/deals/accessories/categories/${pItem.category_id}" style="height:34pt; v-text-anchor:middle; width:73pt;" arcsize="0%" strokecolor="#00A0FF" fillcolor="#FFFFFF">
+              <w:anchorlock/>
+          <v:textbox inset="0,0,0,0">
+              <center style="color:#00A0FF; font-family:'Roboto', Tahoma, Verdana, Segoe, sans-serif; font-size:16px;">
+              <a href="https://www.binbill.com/deals/accessories/categories/${pItem.category_id}" target="_blank"
+          style="display: block;text-decoration: none;-webkit-text-size-adjust: none;text-align: center;color: #00A0FF; background-color: #FFFFFF; border-radius: 0; -webkit-border-radius: 0; -moz-border-radius: 0; max-width: 98px; width: 38px;width: auto; border-top: 2px solid #00A0FF; border-right: 2px solid #00A0FF; border-bottom: 2px solid #00A0FF; border-left: 2px solid #00A0FF; padding-top: 5px; padding-right: 30px; padding-bottom: 5px; padding-left: 30px; font-family: 'Roboto', Tahoma, Verdana, Segoe, sans-serif;mso-border-alt: none">
+              <span style="font-size:16px;line-height:32px;"><span
+          style="font-size: 14px; line-height: 28px;"
+          data-mce-style="font-size: 14px; line-height: 18px;">VIEW NOW</span></span>
+          </a></center></v:textbox></v:roundrect></td></tr></table>
+          </div></div></div>
+          </div></td>`);
+          }
+        });
+      });
+      productHtml.push(`<div style="background-color:#FFFFFF;">
+                <div style="Margin: 0 auto;min-width: 320px;max-width: 620px;overflow-wrap: break-word;word-wrap: break-word;word-break: break-word;background-color: transparent;"
+                     class="block-grid three-up ">
+                    <div style="border-collapse: collapse;display: table;width: 100%;background-color:transparent;"><table width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr><td style="background-color:#FFFFFF;" align="center">
+                                    <table cellpadding="0" cellspacing="0" border="0" style="width: 620px;">
+                                        <tr class="layout-full-width" style="background-color:transparent;"><td align="center" width="207"
+                            style=" width:207px; padding: 5px 0px;border: 0px solid transparent;" valign="top"><div class="col num4" style="max-width: 320px;min-width: 206px;display: table-cell;vertical-align: top;">
+                            <div style="background-color: transparent; width: 100% !important;"><div style="border-top: 0 solid transparent; border-left: 0 solid transparent; border-bottom: 0 solid transparent; border-right: 0 solid transparent; padding-top:5px; padding-bottom:5px; padding-right: 0; padding-left: 0;"><table border="0" cellpadding="0" cellspacing="0" width="100%" class="divider "
+                                           style="border-collapse: collapse;table-layout: fixed;border-spacing: 0;mso-table-lspace: 0;mso-table-rspace: 0;vertical-align: top;min-width: 100%;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%"><tbody>
+                                        <tr style="vertical-align: top">
+                                            <td class="divider_inner"
+                                                style="word-break: break-word;border-collapse: collapse !important;vertical-align: top;padding-right: 15px;padding-left: 15px;padding-top: 15px;padding-bottom: 15px;min-width: 100%;mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%">
+                                                <table class="divider_content" height="0px" align="center" border="0"
+                                                       cellpadding="0" cellspacing="0" width="100%"
+                                                       style="border-collapse: collapse;table-layout: fixed;border-spacing: 0;mso-table-lspace: 0;mso-table-rspace: 0;vertical-align: top;border-top: 3px solid #00AFFF;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%">
+                                                    <tbody>
+                                                    <tr style="vertical-align: top">
+                                                        <td style="word-break: break-word;border-collapse: collapse !important;vertical-align: top;font-size: 0;line-height: 0;mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%">
+                                                            <span>&#160;</span>
+                                                        </td>
+                                                    </tr>
+                                                    </tbody>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table></div></div>
+                        </div></td><td align="center" width="207"
+                        style=" width:207px; padding: 5px 0;border: 0 solid transparent;"
+                        valign="top">
+                        <div class="col num4"
+                             style="max-width: 320px;min-width: 206px;display: table-cell;vertical-align: top;">
+                            <div style="background-color: transparent; width: 100% !important;">
+                                <div style="border: 0 solid transparent;padding: 5px 0;">
+                                    <div class="">
+                                        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                            <tr>
+                                                <td style="padding: 5px;">
+                                        <div style="color:#555555;line-height:120%;font-family:'Roboto', Tahoma, Verdana, Segoe, sans-serif; padding: 0;">
+                                            <div style="font-size:12px;width: 150px;line-height:14px;color:#555555;font-family:'Roboto', Tahoma, Verdana, Segoe, sans-serif;text-align:left; display: inline-block; text-overflow: ellipsis;overflow: hidden; white-space: nowrap">
+                                                <p style="margin: 0;font-size: 14px;line-height: 17px;text-align: center; display: inline-block">
+                                                    <span style="color: rgb(0, 0, 0); font-size: 14px; line-height: 16px;"><strong>${pItem.product_name}</strong></span>
+                                                </p></div><img class="center fixedwidth" align="center" border="0"
+                                             src="https://consumer.binbill.com/categories/${pItem.category.category_id}/images/1/thumbnail" alt="Image" title="Image"
+                                             style="outline: none;padding-left:10px;text-decoration: none;-ms-interpolation-mode: bicubic;clear: both;display: inline-block !important;border: 0;height: auto;float: none;width: 100%;max-width: 35px; padding-bottom: 10px"
+                                             width="35">
+                                        </div></td>
+                                    </tr>
+                                    </table></div>
+                                </div>
+                            </div>
+                        </div></td>
+                    <td align="center" width="207"
+                        style=" width:207px; padding: 5px 0;border: 0 solid transparent;"
+                        valign="top"><div class="col num4"
+                             style="max-width: 320px;min-width: 206px;display: table-cell;vertical-align: top;">
+                            <div style="background-color: transparent; width: 100% !important;">
+                                <div style="border-top: 0 solid transparent; border-left: 0 solid transparent; border-bottom: 0 solid transparent; border-right: 0 solid transparent; padding-top:5px; padding-bottom:5px; padding-right: 0; padding-left: 0;">
+                                    <table border="0" cellpadding="0" cellspacing="0" width="100%" class="divider "
+                                           style="border-collapse: collapse;table-layout: fixed;border-spacing: 0;mso-table-lspace: 0;mso-table-rspace: 0;vertical-align: top;min-width: 100%;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%">
+                                        <tbody>
+                                        <tr style="vertical-align: top">
+                                            <td class="divider_inner"
+                                                style="word-break: break-word;border-collapse: collapse !important;vertical-align: top;padding-right: 15px;padding-left: 15px;padding-top: 15px;padding-bottom: 15px;min-width: 100%;mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%">
+                                                <table class="divider_content" height="0px" align="center" border="0"
+                                                       cellpadding="0" cellspacing="0" width="100%"
+                                                       style="border-collapse: collapse;table-layout: fixed;border-spacing: 0;mso-table-lspace: 0;mso-table-rspace: 0;vertical-align: top;border-top: 3px solid #00AFFF;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%">
+                                                    <tbody>
+                                                    <tr style="vertical-align: top">
+                                                        <td style="word-break: break-word;border-collapse: collapse !important;vertical-align: top;font-size: 0;line-height: 0;mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%">
+                                                            <span>&#160;</span>
+                                                        </td>
+                                                    </tr>
+                                                    </tbody>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        </td>
+                        </tr>
+                        </table>
+                        </td>
+                        </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div style="background-color:#FFFFFF;">
+                <div style="Margin: 0 auto;min-width: 320px;max-width: 620px;overflow-wrap: break-word;word-wrap: break-word;word-break: break-word;background-color: transparent;"
+                     class="block-grid two-up ">
+                    <div style="border-collapse: collapse;display: table;width: 100%;background-color:transparent;">
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                                <td style="background-color:#FFFFFF;" align="center">
+                                    <table cellpadding="0" cellspacing="0" border="0" style="width: 620px;">
+                                        <tr class="layout-full-width" style="background-color:transparent;">${accessoryHtml.toString()}</tr></table></td></tr></table></div></div>
+            </div>`);
+    });
+
+    console.log(productHtml);
+    if (productHtml.length > 0) {
+      await request({
+        url: `https://admin.binbill.com/api/mailfromcrons`,
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        json: {
+          html: `<!DOCTYPE html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name="viewport" content="width=device-width"><meta http-equiv="X-UA-Compatible" content="IE=edge"><title></title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet" type="text/css">
+    <style type="text/css" id="media-query">
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        table, tr, td {
+            vertical-align: top;
+            border-collapse: collapse;
+        }
+
+        .ie-browser table, .mso-container table {
+            table-layout: fixed;
+        }
+
+        * {
+            line-height: inherit;
+        }
+
+        a[x-apple-data-detectors=true] {
+            color: inherit !important;
+            text-decoration: none !important;
+        }
+
+        [owa] .img-container div, [owa] .img-container button {
+            display: block !important;
+        }
+
+        [owa] .fullwidth button {
+            width: 100% !important;
+        }
+
+        [owa] .block-grid .col {
+            display: table-cell;
+            float: none !important;
+            vertical-align: top;
+        }
+
+        .ie-browser .num12, .ie-browser .block-grid, [owa] .num12, [owa] .block-grid {
+            width: 620px !important;
+        }
+
+        .ExternalClass, .ExternalClass p, .ExternalClass span, .ExternalClass font, .ExternalClass td, .ExternalClass div {
+            line-height: 100%;
+        }
+
+        .ie-browser .mixed-two-up .num4, [owa] .mixed-two-up .num4 {
+            width: 204px !important;
+        }
+
+        .ie-browser .mixed-two-up .num8, [owa] .mixed-two-up .num8 {
+            width: 408px !important;
+        }
+
+        .ie-browser .block-grid.two-up .col, [owa] .block-grid.two-up .col {
+            width: 310px !important;
+        }
+
+        .ie-browser .block-grid.three-up .col, [owa] .block-grid.three-up .col {
+            width: 206px !important;
+        }
+
+        .ie-browser .block-grid.four-up .col, [owa] .block-grid.four-up .col {
+            width: 155px !important;
+        }
+
+        .ie-browser .block-grid.five-up .col, [owa] .block-grid.five-up .col {
+            width: 124px !important;
+        }
+
+        .ie-browser .block-grid.six-up .col, [owa] .block-grid.six-up .col {
+            width: 103px !important;
+        }
+
+        .ie-browser .block-grid.seven-up .col, [owa] .block-grid.seven-up .col {
+            width: 88px !important;
+        }
+
+        .ie-browser .block-grid.eight-up .col, [owa] .block-grid.eight-up .col {
+            width: 77px !important;
+        }
+
+        .ie-browser .block-grid.nine-up .col, [owa] .block-grid.nine-up .col {
+            width: 68px !important;
+        }
+
+        .ie-browser .block-grid.ten-up .col, [owa] .block-grid.ten-up .col {
+            width: 62px !important;
+        }
+
+        .ie-browser .block-grid.eleven-up .col, [owa] .block-grid.eleven-up .col {
+            width: 56px !important;
+        }
+
+        .ie-browser .block-grid.twelve-up .col, [owa] .block-grid.twelve-up .col {
+            width: 51px !important;
+        }
+        @media only screen and (min-width: 640px) {
+            .block-grid {
+                width: 620px !important;
+            }
+
+            .block-grid .col {
+                vertical-align: top;
+            }
+
+            .block-grid .col.num12 {
+                width: 620px !important;
+            }
+
+            .block-grid.mixed-two-up .col.num4 {
+                width: 204px !important;
+            }
+
+            .block-grid.mixed-two-up .col.num8 {
+                width: 408px !important;
+            }
+
+            .block-grid.two-up .col {
+                width: 310px !important;
+            }
+
+            .block-grid.three-up .col {
+                width: 206px !important;
+            }
+
+            .block-grid.four-up .col {
+                width: 155px !important;
+            }
+
+            .block-grid.five-up .col {
+                width: 124px !important;
+            }
+
+            .block-grid.six-up .col {
+                width: 103px !important;
+            }
+
+            .block-grid.seven-up .col {
+                width: 88px !important;
+            }
+
+            .block-grid.eight-up .col {
+                width: 77px !important;
+            }
+
+            .block-grid.nine-up .col {
+                width: 68px !important;
+            }
+
+            .block-grid.ten-up .col {
+                width: 62px !important;
+            }
+
+            .block-grid.eleven-up .col {
+                width: 56px !important;
+            }
+
+            .block-grid.twelve-up .col {
+                width: 51px !important;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .block-grid, .col {
+                min-width: 320px !important;
+                max-width: 100% !important;
+                display: block !important;
+            }
+
+            .block-grid {
+                width: calc(100% - 40px) !important;
+            }
+
+            .col {
+                width: 100% !important;
+            }
+
+            .col > div {
+                margin: 0 auto;
+            }
+
+            img.fullwidth, img.fullwidthOnMobile {
+                max-width: 100% !important;
+            }
+
+            .no-stack .col {
+                min-width: 0 !important;
+                display: table-cell !important;
+            }
+
+            .no-stack.two-up .col {
+                width: 50% !important;
+            }
+
+            .no-stack.mixed-two-up .col.num4 {
+                width: 33% !important;
+            }
+
+            .no-stack.mixed-two-up .col.num8 {
+                width: 66% !important;
+            }
+
+            .no-stack.three-up .col.num4 {
+                width: 33% !important;
+            }
+
+            .no-stack.four-up .col.num3 {
+                width: 25% !important;
+            }
+
+            .mobile_hide {
+                min-height: 0;
+                max-height: 0;
+                max-width: 0;
+                display: none;
+                overflow: hidden;
+                font-size: 0;
+            }
+        }
+
+    </style>
+</head>
+<body class="clean-body" style="margin: 0;padding: 0;-webkit-text-size-adjust: 100%;background-color: #F3F3F3">
+<style type="text/css" id="media-query-bodytag">
+    @media (max-width: 520px) {
+        .block-grid {
+            min-width: 320px !important;
+            max-width: 100% !important;
+            width: 100% !important;
+            display: block !important;
+        }
+
+        .col {
+            min-width: 320px !important;
+            max-width: 100% !important;
+            width: 100% !important;
+            display: block !important;
+        }
+
+        .col > div {
+            margin: 0 auto;
+        }
+
+        img.fullwidth {
+            max-width: 100% !important;
+        }
+
+        img.fullwidthOnMobile {
+            max-width: 100% !important;
+        }
+
+        .no-stack .col {
+            min-width: 0 !important;
+            display: table-cell !important;
+        }
+
+        .no-stack.two-up .col {
+            width: 50% !important;
+        }
+
+        .no-stack.mixed-two-up .col.num4 {
+            width: 33% !important;
+        }
+
+        .no-stack.mixed-two-up .col.num8 {
+            width: 66% !important;
+        }
+
+        .no-stack.three-up .col.num4 {
+            width: 33% !important;
+        }
+
+        .no-stack.four-up .col.num3 {
+            width: 25% !important;
+        }
+
+        .mobile_hide {
+            min-height: 0 !important;
+            max-height: 0 !important;
+            max-width: 0 !important;
+            display: none !important;
+            overflow: hidden !important;
+            font-size: 0 !important;
+        }
+    }
+</style>
+<div class="ie-browser">
+<div class="mso-container">
+<table class="nl-container"
+       style="border-collapse: collapse;table-layout: fixed;border-spacing: 0;mso-table-lspace: 0;mso-table-rspace: 0;vertical-align: top;min-width: 320px;Margin: 0 auto;background-color: #F3F3F3;width: 100%"
+       cellpadding="0" cellspacing="0">
+    <tbody>
+    <tr style="vertical-align: top">
+        <td style="word-break: break-word;border-collapse: collapse !important;vertical-align: top">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                    <td align="center" style="background-color: #F3F3F3;">
+            <div style="background-color:#FFFFFF;">
+                <div style="Margin: 0 auto;min-width: 320px;max-width: 620px;overflow-wrap: break-word;word-wrap: break-word;word-break: break-word;background-color: transparent;"
+                     class="block-grid ">
+                    <div style="border-collapse: collapse;display: table;width: 100%;background-color:transparent;">
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0">                            <tr>
+                                <td style="background-color:#FFFFFF;" align="center">
+                                    <table cellpadding="0" cellspacing="0" border="0" style="width: 620px;">
+                                        <tr class="layout-full-width" style="background-color:transparent;">
+                        <td align="center" width="620"
+                            style=" width:620px; padding-right: 0; padding-left: 0; padding-top:5px; padding-bottom:5px; border: 0 solid transparent;"
+                            valign="top"><div class="col num12"
+                             style="min-width: 320px;max-width: 620px;display: table-cell;vertical-align: top;">
+                            <div style="background-color: transparent; width: 100% !important;">
+                                <div style="border: 0 solid transparent;padding-top:5px; padding-bottom:5px; padding-right: 0; padding-left: 0;">
+                                    <div align="center" class="img-container center fixedwidth "
+                                         style="padding-right: 0;  padding-left: 0;">
+                                        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                            <tr style="line-height:0;line-height:0;">
+                                                <td style="padding-right: 0; padding-left: 0;" align="center">
+                                        <img class="center fixedwidth" align="center" border="0"
+                                             src="https://s3.ap-south-1.amazonaws.com/binbill-static/BinBill_+Color+Logo+2X-04.png" alt="Image"
+                                             title="Image"
+                                             style="outline: none;text-decoration: none;-ms-interpolation-mode: bicubic;clear: both;display: block !important;border: 0;height: auto;float: none;width: 100%;max-width: 217px"
+                                             width="217">
+                                             </td></tr></table></div></div></div>                        </div>
+                       </td></tr></table></td></tr></table></div>
+                </div>
+            </div>
+            <div style="background-color:#FFFFFF;">
+                <div style="Margin: 0 auto;min-width: 320px;max-width: 620px;overflow-wrap: break-word;word-wrap: break-word;word-break: break-word;background-color: transparent;"
+                     class="block-grid ">
+                    <div style="border-collapse: collapse;display: table;width: 100%;background-color:transparent;">
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                                <td style="background-color:#FFFFFF;" align="center">
+                                    <table cellpadding="0" cellspacing="0" border="0" style="width: 620px;">
+                                        <tr class="layout-full-width" style="background-color:transparent;"><td align="center" width="620"
+                            style=" width:620px; padding: 5px 0;border: 0 solid transparent;"
+                            valign="top"><div class="col num12"
+                             style="min-width: 320px;max-width: 620px;display: table-cell;vertical-align: top;">
+                            <div style="background-color: transparent; width: 100% !important;"><div style="border: 0 solid transparent;padding-top:5px; padding-bottom:5px; padding-right: 0; padding-left: 0;"><table border="0" cellpadding="0" cellspacing="0" width="100%" class="divider "
+                                           style="border-collapse: collapse;table-layout: fixed;border-spacing: 0;mso-table-lspace: 0;mso-table-rspace: 0;vertical-align: top;min-width: 100%;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%"><tbody>
+                                        <tr style="vertical-align: top">    <td class="divider_inner"
+                                                style="word-break: break-word;border-collapse: collapse !important;vertical-align: top;padding-right: 10px;padding-left: 10px;padding-top: 10px;padding-bottom: 10px;min-width: 100%;mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%">
+                                                <table class="divider_content" height="0px" align="center" border="0"
+                                                       cellpadding="0" cellspacing="0" width="100%"
+                                                       style="border-collapse: collapse;table-layout: fixed;border-spacing: 0;mso-table-lspace: 0;mso-table-rspace: 0;vertical-align: top;border-top: 3px solid #00AAF8;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%">
+                                                    <tbody><tr style="vertical-align: top"><td style="word-break: break-word;border-collapse: collapse !important;vertical-align: top;font-size: 0;line-height: 0;mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%"><span>&#160;</span></td>
+                                                    </tr>
+                                                    </tbody>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table></div>
+                            </div>
+                        </div></td></tr></table></td></tr></table>
+                    </div>
+                </div>
+            </div>
+            <div style="background-color:#FFFFFF;">
+                <div style="Margin: 0 auto;min-width: 320px;max-width: 620px;overflow-wrap: break-word;word-wrap: break-word;word-break: break-word;background-color: transparent;"
+                     class="block-grid ">
+                    <div style="border-collapse: collapse;display: table;width: 100%;background-color:transparent;">
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                                <td style="background-color:#FFFFFF;" align="center">
+                                    <table cellpadding="0" cellspacing="0" border="0" style="width: 620px;">
+                                        <tr class="layout-full-width" style="background-color:transparent;"><td align="center" width="620"
+                            style=" width:620px; padding: 0;border: 0 solid transparent;border-top-width: 0;"
+                            valign="top"><div class="col num12" style="min-width: 320px;max-width: 620px;display: table-cell;vertical-align: top;">
+                            <div style="background-color: transparent; width: 100% !important;"><div style="border: 0 solid transparent;padding-top:0; padding-bottom:0; padding-right: 0; padding-left: 0;"><div class="">
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                            <tr>
+                                                <td style="padding-right: 10px; padding-left: 10px; padding-top: 10px; padding-bottom: 10px;">
+<div style="color:#555555;font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;line-height:120%; padding-right: 10px; padding-left: 10px; padding-top: 10px; padding-bottom: 10px;">
+                                            <div style="font-size:12px;line-height:14px;color:#555555;font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;text-align:left;">
+                                                <p style="margin: 0;font-size: 14px;line-height: 17px"><span
+                                                        style="font-size: 16px; line-height: 19px; color: rgb(0, 0, 0);"><strong>
+                                                        Hello
+${name ? ` ${name}` : ''},
+                                                        </strong></span><br><br>
+                                                        <span style="font-size: 16px; line-height: 19px; color: rgb(0, 0, 0);">Congratulations on successfully adding your product!</span><br><br>
+                                                        <span style="font-size: 16px; line-height: 19px; color: rgb(0, 0, 0);">Did you know that we have exciting and best of Accessories for your <b>${pItem.product_name}</b>?</span><br><br>
+                                                        <span style="font-size: 16px; line-height: 19px; color: rgb(0, 0, 0);">Check out suitably chosen Accessories for your product in our Deals section.</span>
+                                                        <span style="font-size: 16px; line-height: 19px; color: rgb(0, 0, 0);">All your Product Needs in one place.</span>
+                                                </p></div>
+                                        </div></td></tr></table>
+                                    </div></div></div>
+                        </div></td></tr></table></td></tr></table>
+                    </div>
+                </div>
+            </div>
+            ${productHtml.toString()}
+            <div style="background-color:#FFFFFF;">
+      <div style="Margin: 0 auto;min-width: 320px;max-width: 620px;overflow-wrap: break-word;word-wrap: break-word;word-break: break-word;background-color: transparent;" class="block-grid ">
+        <div style="border-collapse: collapse;display: table;width: 100%;background-color:transparent;">
+          <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="background-color:#FFFFFF;" align="center"><table cellpadding="0" cellspacing="0" border="0" style="width: 620px;"><tr class="layout-full-width" style="background-color:transparent;"><td align="center" width="620" style=" width:620px; padding-right: 0; padding-left: 0; padding-top:5px; padding-bottom:5px; border-top: 0 solid transparent; border-left: 0 solid transparent; border-bottom: 0 solid transparent; border-right: 0 solid transparent;" valign="top">
+            <div class="col num12" style="min-width: 320px;max-width: 620px;display: table-cell;vertical-align: top;">
+              <div style="background-color: transparent; width: 100% !important;">
+              <div style="border-top: 0 solid transparent; border-left: 0 solid transparent; border-bottom: 0 solid transparent; border-right: 0 solid transparent; padding-top:5px; padding-bottom:5px; padding-right: 0; padding-left: 0;"><div align="center" class="button-container center " style="padding-right: 10px; padding-left: 10px; padding-top:10px; padding-bottom:10px;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-spacing: 0; border-collapse: collapse; mso-table-lspace:0; mso-table-rspace:0;"><tr>
+  <td style="padding-right: 10px; padding-left: 10px; padding-top:10px; padding-bottom:10px;" align="center">
+  <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="https://www.binbill.com/deals" style="height:31pt; v-text-anchor:middle; width:76pt;" arcsize="10%" strokecolor="#3AAEE0" fillcolor="#3AAEE0">
+  <w:anchorlock/>
+  <v:textbox inset="0,0,0,0">
+  <a href="https://www.binbill.com/deals" style="text-decoration: none;">
+  <center style="color:#ffffff; font-family:'Roboto', Tahoma, Verdana, Segoe, sans-serif; font-size:16px;">
+    <div style="color: #ffffff; background-color: #3AAEE0; border-radius: 4px; -webkit-border-radius: 4px; -moz-border-radius: 4px; max-width: 102px; width: 62px;width: auto; border-top: 0 solid transparent; border-right: 0 solid transparent; border-bottom: 0 solid transparent; border-left: 0 solid transparent; padding-top: 5px; padding-right: 20px; padding-bottom: 5px; padding-left: 20px; font-family: 'Roboto', Tahoma, Verdana, Segoe, sans-serif; text-align: center; mso-border-alt: none;">
+      <span style="font-size:16px;line-height:32px;">View All</span>
+    </div>
+  </center></a></v:textbox></v:roundrect></td></tr></table>
+</div><div class=""><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding-right: 10px; padding-left: 10px; padding-top: 10px; padding-bottom: 10px;">
+	<div style="color:#555555;font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;line-height:120%; padding-right: 10px; padding-left: 10px; padding-top: 10px; padding-bottom: 10px;">	
+		<div style="font-size:12px;line-height:14px;color:#555555;font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;text-align:left;"><p style="margin: 0;font-size: 14px;line-height: 17px"><span style="font-size: 16px; line-height: 19px; color: rgb(0, 0, 0);">For any queries, write to us at <strong>support@binbill.com</strong> or call us at <strong>+91-124-4343177</strong>. </span><br><br><br><span style="color: rgb(0, 0, 0); font-size: 14px; line-height: 16px;"><strong><span style="font-size: 16px; line-height: 19px;">Cheers,</span></strong></span><br><span style="color: rgb(0, 0, 0); font-size: 14px; line-height: 16px;"><strong><span style="font-size: 16px; line-height: 19px;">BinBill Team</span></strong></span><br><br></p></div>	
+	</div></td></tr></table>
+</div></div>              </div></div></td></tr></table></td></tr></table></div></div></div>
+            <div style="background-color:#8C8C8C;">
+                <div style="Margin: 0 auto;min-width: 320px;max-width: 620px;overflow-wrap: break-word;word-wrap: break-word;word-break: break-word;background-color: transparent;"
+                     class="block-grid ">
+                    <div style="border-collapse: collapse;display: table;width: 100%;background-color:transparent;">
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                                <td style="background-color:#8C8C8C;" align="center">
+                                    <table cellpadding="0" cellspacing="0" border="0" style="width: 620px;">
+                                        <tr class="layout-full-width" style="background-color:transparent;">
+                        <td align="center" width="620"
+                            style=" width:620px; padding-right: 10px; padding-left: 10px; padding-top:10px; padding-bottom:10px; border: 0 solid transparent;"
+                            valign="top"><div class="col num12"
+                             style="min-width: 320px;max-width: 620px;display: table-cell;vertical-align: top;">
+                            <div style="background-color: transparent; width: 100% !important;">
+                                <div style="border: 0 solid transparent;padding-top:10px; padding-bottom:10px; padding-right: 10px; padding-left: 10px;">                                    <div align="center"
+                                         style="padding-right: 10px; padding-left: 10px; padding-bottom: 10px;"
+                                         class="">
+                                        <div style="line-height:10px;font-size:1px">&#160;</div>
+                                        <div style="display: table; max-width:171px;">
+                                            <table width="151" cellpadding="0" cellspacing="0" border="0">
+                                                <tr>
+                                                    <td style="border-collapse:collapse; padding-right: 10px; padding-left: 10px; padding-bottom: 10px;"
+                                                        align="center">
+                                                        <table width="100%" cellpadding="0" cellspacing="0" border="0"
+                                                               style="border-collapse:collapse; mso-table-lspace: 0;mso-table-rspace: 0; width:151px;">
+                                                            <tr><td width="32" style="width:32px; padding-right: 15px;"
+                                                                    valign="top"><table align="left" border="0" cellspacing="0" cellpadding="0" width="32"
+                                                   height="32"
+                                                   style="border-collapse: collapse;table-layout: fixed;border-spacing: 0;mso-table-lspace: 0;mso-table-rspace: 0;vertical-align: top;Margin-right: 15px">
+                                                <tbody>
+                                                <tr style="vertical-align: top">
+                                                    <td align="left" valign="middle"
+                                                        style="word-break: break-word;border-collapse: collapse !important;vertical-align: top">
+                                                        <a href="https://www.facebook.com/binbill.ehome/"
+                                                           title="Facebook" target="_blank">
+                                                            <img src="https://s3.ap-south-1.amazonaws.com/binbill-static/facebook.png" alt="Facebook"
+                                                                 title="Facebook" width="32"
+                                                                 style="outline: none;text-decoration: none;-ms-interpolation-mode: bicubic;clear: both;display: block !important;border: none;height: auto;float: none;max-width: 32px !important">
+                                                        </a>
+                                                        <div style="line-height:5px;font-size:1px">&#160;</div>
+                                                        </td></tr></tbody></table></td><td width="32" style="width:32px; padding-right: 15px;" valign="top">
+                                            <table align="left" border="0" cellspacing="0" cellpadding="0" width="32"
+                                                   height="32"
+                                                   style="border-collapse: collapse;table-layout: fixed;border-spacing: 0;mso-table-lspace: 0;mso-table-rspace: 0;vertical-align: top;Margin-right: 15px">
+                                                <tbody>
+                                                <tr style="vertical-align: top">
+                                                    <td align="left" valign="middle"
+                                                        style="word-break: break-word;border-collapse: collapse !important;vertical-align: top">
+                                                        <a href="http://twitter.com//binbill_ehome" title="Twitter"
+                                                           target="_blank">
+                                                            <img src="https://s3.ap-south-1.amazonaws.com/binbill-static/twitter.png" alt="Twitter" title="Twitter"
+                                                                 width="32"
+                                                                 style="outline: none;text-decoration: none;-ms-interpolation-mode: bicubic;clear: both;display: block !important;border: none;height: auto;float: none;max-width: 32px !important">
+                                                        </a>
+                                                        <div style="line-height:5px;font-size:1px">&#160;</div>
+                                                    </td>
+                                                </tr>
+                                                </tbody>
+                                            </table></td><td width="32" style="width:32px; padding-right: 0;" valign="top">
+                                            <table align="left" border="0" cellspacing="0" cellpadding="0" width="32"
+                                                   height="32"
+                                                   style="border-collapse: collapse;table-layout: fixed;border-spacing: 0;mso-table-lspace: 0;mso-table-rspace: 0;vertical-align: top;Margin-right: 0">
+                                                <tbody>
+                                                <tr style="vertical-align: top">
+                                                    <td align="left" valign="middle"
+                                                        style="word-break: break-word;border-collapse: collapse !important;vertical-align: top">
+                                                        <a href="https://www.linkedin.com/company/binbill.com/"
+                                                           title="LinkedIn" target="_blank">
+                                                            <img src="https://s3.ap-south-1.amazonaws.com/binbill-static/linkedin%402x.png" alt="LinkedIn"
+                                                                 title="LinkedIn" width="32"
+                                                                 style="outline: none;text-decoration: none;-ms-interpolation-mode: bicubic;clear: both;display: block !important;border: none;height: auto;float: none;max-width: 32px !important">
+                                                        </a>
+                                                        <div style="line-height:5px;font-size:1px">&#160;</div>
+                                                    </td>
+                                                </tr>
+                                                </tbody></table></td></tr></table></td></tr></table></div></div></div></div></div></td></tr></table></td></tr></table></div></div></div></td></tr></table></td></tr></tbody></table></div></body></html>`,
+          email,
+          subject: 'Exciting Accessories to complement your product!',
+        },
+      }).catch(err => {
+        throw err;
+      });
+    }
   }
 }
 

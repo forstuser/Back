@@ -17,6 +17,10 @@ var _main = require('../../config/main');
 
 var _main2 = _interopRequireDefault(_main);
 
+var _moment = require('moment/moment');
+
+var _moment2 = _interopRequireDefault(_moment);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 let modals;
@@ -146,16 +150,14 @@ class AccessoryController {
           seller_detail, delivery_date, product_id, accessory_product_id,
           payment_mode, details_url, delivery_address, online_seller_id
         } = request.payload;
+        delivery_date = (0, _moment2.default)(delivery_date, _moment2.default.ISO_8601).isValid() ? (0, _moment2.default)(delivery_date, _moment2.default.ISO_8601) : (0, _moment2.default)().add(3, 'days');
         const user_id = user.id || user.ID;
         status_type = status_type || 1;
-        return reply.response({
-          status: true,
-          result: await accessoryAdaptor.createTransaction({
-            transaction_id, status_type, price, quantity, seller_detail,
-            delivery_date, product_id, accessory_product_id, payment_mode,
-            details_url, delivery_address, online_seller_id, user_id
-          })
-        });
+        return await accessoryAdaptor.createTransaction({
+          transaction_id, status_type, price, quantity, seller_detail,
+          delivery_date, product_id, accessory_product_id, payment_mode,
+          details_url, delivery_address, online_seller_id, user_id
+        }, reply, request);
       } catch (err) {
         console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
         modals.logs.create({
@@ -173,7 +175,7 @@ class AccessoryController {
         }).catch(ex => console.log('error while logging on db,', ex));
         return reply.response({
           status: false,
-          message: 'Unable to retrieve order history'
+          message: 'Unable to create transaction'
         });
       }
     } else {

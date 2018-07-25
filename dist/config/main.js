@@ -21,7 +21,8 @@ exports.default = {
       CALENDAR_ITEM_IMAGE: 'calendarserviceimages',
       BRAND_IMAGE: 'brandimages',
       PROVIDER_IMAGE: 'providerimages',
-      KNOW_ITEM_IMAGE: 'knowitemimages'
+      KNOW_ITEM_IMAGE: 'knowitemimages',
+      OFFER_BANNERS: 'offer_banners'
     },
     ACCESS_DETAILS: {
       accessKeyId: process.env.AWS_ACCESS_KEY,
@@ -76,6 +77,10 @@ exports.default = {
     ACCESSORY: process.env.ACCESSORY_LIMITS || 5,
     OFFER: process.env.OFFER_LIMITS || 6
   },
+  OFFERS: {
+    DISCOUNTS: process.env.OFFER_DISCOUNTS,
+    CASHBACKS: process.env.OFFER_CASHBACKS
+  },
   CATEGORIES: {
     AUTOMOBILE: process.env.AUTOMOBILE_CATEGORY.split(','),
     FURNITURE: process.env.FURNITURE_CATEGORY.split(','),
@@ -84,6 +89,14 @@ exports.default = {
     OFFER: process.env.OFFER_CATEGORY.split(','),
     ACCESSORY: process.env.ACCESSORY_CATEGORY.split(','),
     MODEL_ACCESSORIES: process.env.MODEL_ACCESSORIES.split(',')
+  },
+  IOS: {
+    FORCE_VERSION: process.env.IOS_FORCE_VERSION,
+    RECOMMENDED_VERSION: process.env.IOS_RECOMMENDED_VERSION
+  },
+  ANDROID: {
+    FORCE_VERSION: process.env.ANDROID_FORCE_VERSION,
+    RECOMMENDED_VERSION: process.env.ANDROID_RECOMMENDED_VERSION
   },
   TRUECALLER_PUBLIC_KEY: '-----BEGIN PUBLIC KEY-----\nMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDEpFwIarbm48m6ueG+jhpt2vCGaqXZlwR/HPuL4zH1DQ/eWFbgQtVnrta8QhQz3ywLnbX6s7aecxUzzNJsTtS8VxKAYll4E1lJUqrNdWt8CU+TaUQuFm8vzLoPiYKEXl4bX5rzMQUMqA228gWuYmRFQnpduQTgnYIMO8XVUQXl5wIDAQAB\n-----END PUBLIC KEY-----'
 };

@@ -69,6 +69,7 @@ function prepareUploadRoutes(modal, routeObject, middleware) {
         }
       }
     });
+
     /*Upload Wearable Image*/
     routeObject.push({
       method: 'POST',
@@ -129,6 +130,7 @@ function prepareUploadRoutes(modal, routeObject, middleware) {
         handler: _upload2.default.retrieveProductImage
       }
     });
+
     /*Allow user to upload document*/
     routeObject.push({
       method: 'POST',
@@ -227,6 +229,7 @@ function prepareUploadRoutes(modal, routeObject, middleware) {
         handler: _upload2.default.retrieveUserImage
       }
     });
+
     /*Retrieve Category images*/
     routeObject.push({
       method: 'GET',
@@ -235,6 +238,7 @@ function prepareUploadRoutes(modal, routeObject, middleware) {
         handler: _upload2.default.retrieveCategoryImage
       }
     });
+
     /*Retrieve Category images*/
     routeObject.push({
       method: 'GET',
@@ -249,6 +253,31 @@ function prepareUploadRoutes(modal, routeObject, middleware) {
       path: '/offer/categories/{id}/images',
       config: {
         handler: _upload2.default.retrieveOfferCategoryImage
+      }
+    });
+
+    routeObject.push({
+      method: 'GET',
+      path: '/offer/{offer_id}/banners',
+      config: {
+        handler: _upload2.default.retrieveOfferBannerImage
+      }
+    });
+
+    /*Retrieve Category images*/
+    routeObject.push({
+      method: 'GET',
+      path: '/accessory/{id}/images/{file_type}',
+      config: {
+        handler: _upload2.default.retrieveAccessoryCategoryImage
+      }
+    });
+
+    routeObject.push({
+      method: 'GET',
+      path: '/accessory/{id}/images',
+      config: {
+        handler: _upload2.default.retrieveAccessoryCategoryImage
       }
     });
 

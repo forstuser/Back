@@ -10,6 +10,8 @@ import {stringify} from 'querystring';
 import url from 'url-join';
 import uuid from 'uuid';
 import config from '../config/main';
+import request from 'request';
+import Promise from 'bluebird';
 
 const filePath = '';
 const jsonFileType = '.json';
@@ -137,6 +139,96 @@ function retrieveDaysInsight(distinctInsight) {
     purchaseDay: moment.utc(weekItem.purchaseDate, moment.ISO_8601).
         format('ddd'),
   }));
+}
+
+export async function notifyUser(userId, data, notification, fcm_details) {
+  const androidFcmKeys = fcm_details.filter(fcm => fcm.platform_id === 1).
+      map(user => ({fcm_id: user.fcm_id, user_id: user.user_id}));
+  const iosFcmKeys = fcm_details.filter(fcm => fcm.platform_id === 2).
+      map(user => ({fcm_id: user.fcm_id, user_id: user.user_id}));
+  data.big_text = data.description;
+  notification.big_text = notification.description;
+  if (androidFcmKeys.length > 0) {
+    await androidNotificationDispatcher(androidFcmKeys, fcm_details, data);
+  }
+
+  if (iosFcmKeys.length > 0) {
+    await iosNotificationDispatcher(iosFcmKeys, fcm_details, notification,
+        data);
+  }
+
+  return '';
+}
+
+async function iosNotificationDispatcher(
+    iosFcmKeys, result, notification, data) {
+  await iosFcmKeys.forEach(async (fcm_detail, index) => {
+    await Promise.try(() => setTimeout(
+        ((fcm_detail, notification, data, config) => () => {
+          return request({
+            uri: 'https://fcm.googleapis.com/fcm/send',
+            method: 'POST',
+            headers: {Authorization: `key=${config.GOOGLE.FCM_KEY}`},
+            json: {
+              priority: 'high',
+              data,
+              registration_ids: [fcm_detail.fcm_id],
+              notification: notification || {
+                title: data.title,
+                body: data.description,
+                big_text: data.big_text || data.description,
+              },
+            },
+          }, (error, response, body) => {
+            if (error) {
+              console.log(error);
+            }
+            // extract invalid registration for removal
+            if (body.failure > 0 && Array.isArray(body.results) &&
+                body.results.length === result.length) {
+              const results = body.results;
+              for (let i = 0; i < result.length; i += 1) {
+                if (results[i].error === 'InvalidRegistration') {
+                  result[i].destroy().then(console.log);
+                }
+              }
+            }
+          });
+        })(fcm_detail, notification, data, config), index * 50));
+  });
+}
+
+async function androidNotificationDispatcher(androidFcmKeys, result, data) {
+  await androidFcmKeys.forEach(async (fcm_detail, index) => {
+    await Promise.try(() => setTimeout(
+        ((fcm_detail, data, config) => () => {
+          return request({
+            uri: 'https://fcm.googleapis.com/fcm/send',
+            method: 'POST',
+            headers: {Authorization: `key=${config.GOOGLE.FCM_KEY}`},
+            json: {
+              priority: 'high',
+              data,
+              registration_ids: [fcm_detail.fcm_id],
+            },
+          }, (error, response, body) => {
+            if (error) {
+              console.log(error);
+            }
+
+            // extract invalid registration for removal
+            if (body.failure > 0 && Array.isArray(body.results) &&
+                body.results.length === result.length) {
+              const results = body.results;
+              for (let i = 0; i < result.length; i += 1) {
+                if (results[i].error === 'InvalidRegistration') {
+                  result[i].destroy().then(console.log);
+                }
+              }
+            }
+          });
+        })(fcm_detail, data, config), index * 50));
+  });
 }
 
 export function preparePaymentDetails(parameters) {
@@ -664,8 +756,7 @@ export function retrieveMailTemplate(user, templateType) {
           '' },</p>
                                     <p style="-webkit-margin-before: 0;margin-bottom: 5% !important;
                                         -webkit-margin-after: 0;margin:0 auto;font-weight:normal;font-size:15px;padding-left:20px;padding-right:20px; ">
-                                        We are glad to have you on board! Adding BinBill to your daily routine can help you manage your Home smarter and live better.
-                                        Here are few instances that make BinBill a habit :
+                                        We are glad to have you on board! Adding BinBill to your daily routine can help you manage your Home smarter and live better. Here are few instances that make BinBill a habit:
                                     </p>
                                     <table role="presentation" cellspacing="0" cellpadding="0" style="background:white;" border="0" align="center" width="100%"
                                         background-color="white" style="max-width: 600px;">
@@ -726,25 +817,9 @@ export function retrieveMailTemplate(user, templateType) {
                                             <td style="text-align:right;padding-right:20px;">
                                                 <p style="font-size: 18px;
                                                     font-weight: bold;
-                                                    margin-bottom: 0px;">Documents’ Recorde</p>
+                                                    margin-bottom: 0px;">Documents' Record</p>
                                                 <p style="padding: 0px;
                                                     margin-top: 5px;    margin-bottom: 5%;">Worried about a lost document or bill? </p>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td style="padding:0px 15px;width:30%; text-align:center">
-                                                <div style="padding:20px 0px 0px 0px;">
-                                                    <img src="https://s3.ap-south-1.amazonaws.com/binbill-static/easy-day-planner.png" alt="alt_text" border="0" style="height: auto; font-family: sans-serif; font-size: 15px; line-height: 20px; color: #555555;">
-                                                    <!-- <p>Your Own Home Manager</p> -->
-                                                </div>
-                                            </td>
-                                            <td style="text-align:right;padding-right:20px;">
-                                                <p style="font-size: 18px;
-                                                    font-weight: bold;
-                                                    margin-bottom: 0px;">EazyDay Planner</p>
-                                                <p style="padding: 0px;
-                                                    margin-top: 5px;margin-bottom: 5%;">Can’t decide what needs to be done around the household and daily household
-                                                    decisions making you crazy?</p>
                                             </td>
                                         </tr>
                                     </table>
