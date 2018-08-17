@@ -21,16 +21,16 @@ class SellerAdaptor {
 
   async retrieveOfflineSellers(options) {
     options.status_type = [1, 11];
-    const result = await this.modals.offlineSellers.findAll({
+    const result = await this.modals.sellers.findAll({
       where: options,
-      attributes: [['sid', 'id'], ['seller_name', 'name'], ['owner_name', 'ownerName'], 'gstin', ['pan_no', 'panNo'], ['reg_no', 'registrationNo'], ['is_service', 'isService'], ['is_onboarded', 'isOnboarded'], 'address', 'city', 'state', 'pincode', 'latitude', 'longitude', 'url', ['contact_no', 'contact'], 'email']
+      attributes: ['id', ['seller_name', 'name'], ['owner_name', 'ownerName'], 'gstin', ['pan_no', 'panNo'], ['reg_no', 'registrationNo'], ['is_service', 'isService'], ['is_onboarded', 'isOnboarded'], 'address', 'city', 'state', 'pincode', 'latitude', 'longitude', 'url', ['contact_no', 'contact'], 'email']
     });
     return result.map(item => item.toJSON());
   }
 
   async retrieveSellers(options, query_options) {
     const { user_id, seller_offer_ids, latitude, longitude, city, limit, offset } = options;
-    const result = await this.modals.offlineSellers.findAll(query_options);
+    const result = await this.modals.sellers.findAll(query_options);
     let sellers = result.map(item => item.toJSON());
     if (sellers.length > 0) {
       if (latitude && longitude) {
@@ -40,17 +40,18 @@ class SellerAdaptor {
       let seller_id = sellers.map(item => item.id),
           city_ids = sellers.map(item => item.city_id).filter(item => item),
           state_ids = sellers.map(item => item.state_id).filter(item => item),
-          location_ids = sellers.map(item => item.location_id).filter(item => item);
-      const [seller_categories, seller_cities, seller_states, seller_locations] = await Promise.all([this.retrieveSellerCategories({ seller_id }), city_ids.length > 0 ? this.retrieveSellerCities({ id: city_ids }) : [], state_ids.length > 0 ? this.retrieveSellerStates({ id: state_ids }) : [], location_ids.length > 0 ? this.retrieveSellerLocations({ id: location_ids }) : []]);
+          locality_ids = sellers.map(item => item.locality_id).filter(item => item);
+      const [seller_categories, seller_cities, seller_states, seller_locations] = await Promise.all([this.retrieveSellerCategories({ seller_id }), city_ids.length > 0 ? this.retrieveSellerCities({ id: city_ids }) : [], state_ids.length > 0 ? this.retrieveSellerStates({ id: state_ids }) : [], locality_ids.length > 0 ? this.retrieveSellerLocations({ id: locality_ids }) : []]);
       sellers = sellers.map(item => {
         item.categories = seller_categories.filter(cItem => cItem.seller_id === item.id);
         item.city = seller_cities.find(cItem => cItem.id === item.city_id);
         item.state = seller_states.find(cItem => cItem.id === item.state_id);
-        item.location = seller_locations.find(cItem => cItem.id === item.location_id);
+        item.location = seller_locations.find(cItem => cItem.id === item.locality_id);
         item.cashback_total = item.cashback_total || 0;
         item.loyalty_total = item.loyalty_total || 0;
         item.credit_total = item.credit_total || 0;
         item.offer_count = item.offer_count || 0;
+        item.ratings = item.ratings || 0;
         return item;
       });
     }
@@ -58,16 +59,59 @@ class SellerAdaptor {
     return sellers;
   }
 
+  async retrieveSellersOnInit(query_options) {
+    let result = await this.modals.sellers.findAll(query_options);
+    return result ? result.map(item => item.toJSON()) : result;
+  }
+
+  async retrieveOrUpdateSellerDetail(query_options, seller_detail, is_create) {
+    let result = await this.modals.sellers.findOne(query_options);
+    if (!result && is_create) {
+      result = await this.modals.sellers.create(seller_detail);
+    }
+
+    if (result) {
+      (await seller_detail) ? result.updateAttributes(JSON.parse(JSON.stringify(seller_detail))) : seller_detail;
+      return result.toJSON();
+    }
+
+    return result;
+  }
+
+  async retrieveSellerDetail(query_options) {
+    const result = await this.modals.sellers.findOne(query_options);
+    return result ? result.toJSON() : result;
+  }
+
+  async retrieveProviderTypes(query_options) {
+    const result = await this.modals.provider_types.findAll(query_options);
+    return result ? result.map(item => item.toJSON()) : result;
+  }
+
+  async retrieveAssistedServiceTypes(query_options) {
+    const result = await this.modals.assisted_service_types.findAll(query_options);
+    return result ? result.map(item => item.toJSON()) : result;
+  }
+
+  async createSellerOnInit(seller_detail) {
+    let result = await this.modals.sellers.create(seller_detail);
+    return result.toJSON();
+  }
+
   async retrieveSellerById(options, query_options) {
-    const { user_id, seller_offer_ids } = options;
-    const result = await this.modals.offlineSellers.findOne(query_options);
+    const { user_id, seller_offer_ids, latitude, longitude, city } = options;
+    const result = await this.modals.sellers.findOne(query_options);
     let seller = result ? result.toJSON() : result;
     if (seller) {
       let seller_id = seller.id,
           city_id = seller.city_id,
           state_id = seller.state_id,
-          location_id = seller.location_id;
-      const [seller_categories, seller_cash_backs, seller_loyalty_points, seller_offers, seller_credits, seller_cities, seller_states, seller_locations, seller_reviews] = await Promise.all([this.retrieveSellerCategories({ seller_id }), user_id ? this.retrieveSellerCashBack({ seller_id, user_id }) : [], user_id ? this.retrieveSellerLoyaltyPoints({ seller_id, user_id }) : [], seller_offer_ids && seller_offer_ids.length > 0 ? this.retrieveSellerOffers({ seller_id, id: seller_offer_ids }) : [], user_id ? this.retrieveSellerCredits({ seller_id, user_id }) : [], city_id ? this.retrieveSellerCities({ id: city_id }) : [], state_id ? this.retrieveSellerStates({ id: state_id }) : [], location_id ? this.retrieveSellerLocations({ id: location_id }) : [], this.retrieveSellerReviews({ offline_seller_id: seller_id })]);
+          locality_id = seller.locality_id;
+
+      if (latitude && longitude) {
+        seller = await this.retrieveSellerByLocation(latitude, longitude, city, seller);
+      }
+      const [seller_categories, seller_cash_backs, seller_loyalty_points, seller_offers, seller_credits, seller_cities, seller_states, seller_locations, seller_reviews] = await Promise.all([this.retrieveSellerCategories({ seller_id }), user_id ? this.retrieveSellerCashBack({ seller_id, user_id }) : [], user_id ? this.retrieveSellerLoyaltyPoints({ seller_id, user_id }) : [], seller_offer_ids && seller_offer_ids.length > 0 ? this.retrieveSellerOffers({ seller_id, id: seller_offer_ids }) : [], user_id ? this.retrieveSellerCredits({ seller_id, user_id }) : [], city_id ? this.retrieveSellerCities({ id: city_id }) : [], state_id ? this.retrieveSellerStates({ id: state_id }) : [], locality_id ? this.retrieveSellerLocations({ id: locality_id }) : [], this.retrieveSellerReviews({ offline_seller_id: seller_id })]);
       seller.categories = seller_categories;
       seller.seller_cash_backs = seller_cash_backs;
       seller.seller_loyalty_points = seller_loyalty_points;
@@ -88,18 +132,30 @@ class SellerAdaptor {
   }
 
   async doesSellerExist(options) {
-    const result = await this.modals.offlineSellers.count(options);
+    const result = await this.modals.sellers.count(options);
     return result > 0;
   }
 
   async retrieveSellerCategories(options) {
-    let seller_categories = await this.modals.seller_categories.findAll({ where: JSON.parse(JSON.stringify(options)) });
+    let seller_categories = await this.modals.seller_provider_type.findAll({
+      where: JSON.parse(JSON.stringify(options)),
+      attributes: ['sub_category_id', 'category_4_id', 'provider_type_id']
+    });
     seller_categories = seller_categories.map(item => item.toJSON());
     if (seller_categories.length > 0) {
-      const sku_categories = await this.retrieveSKUCategories({ id: seller_categories.map(item => item.category_id) });
+      const [sku_categories, provider_types] = await Promise.all([this.retrieveSKUCategories({
+        where: {
+          category_id: seller_categories.map(item => item.sub_category_id)
+        }, attributes: ['category_id', 'category_name']
+      }), this.retrieveProviderTypes({
+        where: { id: seller_categories.map(item => item.provider_type_id) },
+        attributes: ['id', 'title']
+      })]);
       seller_categories = seller_categories.map(item => {
-        const category_detail = sku_categories.find(cItem => cItem.id === item.category_id);
-        item.category_name = category_detail.title;
+        const provider_type = provider_types.find(pItem => pItem.id === item.provider_type_id);
+        const category_detail = sku_categories.find(cItem => cItem.category_id === item.sub_category_id);
+        item.category_name = category_detail.category_name;
+        item.provider_type = provider_type.title;
         return item;
       });
     }
@@ -155,8 +211,8 @@ class SellerAdaptor {
     return seller_locations;
   }
 
-  async retrieveSKUCategories(options) {
-    const result = await this.modals.sku_categories.findAll({ where: JSON.parse(JSON.stringify(options)) });
+  async retrieveCategories(options) {
+    const result = await this.modals.categories.findAll(options);
     return result.map(item => item.toJSON());
   }
 
@@ -164,7 +220,7 @@ class SellerAdaptor {
     options.status_type = [1, 11];
     const result = await this.modals.onlineSellers.findAll({
       where: JSON.parse(JSON.stringify(options)),
-      attributes: [['sid', 'id'], 'url', 'contact', ['seller_name', 'name'], 'gstin', 'email']
+      attributes: ['id', 'url', 'contact', ['seller_name', 'name'], 'gstin', 'email']
     });
     return result.map(item => item.toJSON());
   }
@@ -172,15 +228,15 @@ class SellerAdaptor {
   async retrieveOfflineSellerById(options) {
     options.status_type = [1, 11];
 
-    const result = await this.modals.offlineSellers.findOne({
+    const result = await this.modals.sellers.findOne({
       where: options,
-      attributes: [['sid', 'id'], 'gstin', 'seller_name', 'owner_name', 'email', 'pan_no', 'reg_no', 'seller_type_id', 'is_service', 'is_onboarded', 'address', 'city', 'state', 'pincode', 'latitude', 'longitude', 'url', 'user_id', 'contact_no']
+      attributes: ['id', 'gstin', 'seller_name', 'owner_name', 'email', 'pan_no', 'reg_no', 'seller_type_id', 'is_service', 'is_onboarded', 'address', 'city', 'state', 'pincode', 'latitude', 'longitude', 'url', 'user_id', 'contact_no']
     });
     return result ? result.toJSON() : result;
   }
 
   async retrieveOrCreateSellers(options, defaults) {
-    let sellerResult = await this.modals.offlineSellers.findOne({
+    let sellerResult = await this.modals.sellers.findOne({
       where: options
     });
     if (sellerResult) {
@@ -188,7 +244,7 @@ class SellerAdaptor {
       defaults.status_type = sellerDetail.status_type;
       await sellerResult.updateAttributes(defaults);
     } else {
-      sellerResult = await this.modals.offlineSellers.create(defaults);
+      sellerResult = await this.modals.sellers.create(defaults);
     }
     return sellerResult.toJSON();
   }
@@ -209,6 +265,8 @@ class SellerAdaptor {
       seller.geo_location = seller.latitude && seller.longitude && seller.latitude.toString() !== '0' && seller.longitude.toString() !== '0' ? `${seller.latitude}, ${seller.longitude}` : '';
       if (seller.geo_location) {
         destinations.push(seller.geo_location);
+      } else if (seller.address) {
+        destinations.push(seller.address);
       }
 
       if (origins.length > 0 && destinations.length > 0) {
@@ -238,5 +296,79 @@ class SellerAdaptor {
       return _lodash2.default.orderBy(final_result.filter(elem => !!elem.distance && parseFloat(elem.distance) <= 40), ['distance'], ['asc']);
     }
   }
+
+  async retrieveSellerByLocation(latitude, longitude, city, seller) {
+    const lat_long = latitude && longitude ? `${latitude}, ${longitude}` : '';
+    const origins = [];
+    const destinations = [];
+    if (lat_long) {
+      origins.push(lat_long);
+    } else if (city) {
+      origins.push(city);
+    }
+    const sellers_with_location = [];
+    const final_result = [];
+    seller.geo_location = seller.latitude && seller.longitude && seller.latitude.toString() !== '0' && seller.longitude.toString() !== '0' ? `${seller.latitude}, ${seller.longitude}` : '';
+    if (seller.geo_location) {
+      destinations.push(seller.geo_location);
+    } else if (seller.address) {
+      destinations.push(seller.address);
+    }
+
+    if (origins.length > 0 && destinations.length > 0) {
+      sellers_with_location.push(seller);
+    } else {
+      seller.distanceMetrics = 'km';
+      seller.distance = parseFloat(500.001);
+      final_result.push(seller);
+    }
+
+    if (origins.length > 0 && destinations.length > 0) {
+      const result = await _google2.default.distanceMatrix(origins, destinations);
+      for (let i = 0; i < sellers_with_location.length; i += 1) {
+        if (result.length > 0) {
+          const tempMatrix = result[i];
+          sellers_with_location[i].distanceMetrics = 'km';
+          sellers_with_location[i].distance = tempMatrix && tempMatrix.distance ? parseFloat((tempMatrix.distance.value / 1000).toFixed(2)) : null;
+        } else {
+          sellers_with_location[i].distanceMetrics = 'km';
+          sellers_with_location[i].distance = parseFloat(500.001);
+        }
+
+        final_result.push(sellers_with_location[i]);
+      }
+
+      return final_result[0];
+    }
+  }
+
+  async retrieveOrCreateSellerProviderTypes(options, defaults) {
+    let seller_provider_type = await this.modals.seller_provider_type.findOne({
+      where: options
+    });
+    if (seller_provider_type) {
+      const seller_provider_type_result = seller_provider_type.toJSON();
+      defaults.status_type = seller_provider_type_result.status_type;
+      await seller_provider_type.updateAttributes(defaults);
+    } else {
+      seller_provider_type = await this.modals.seller_provider_type.create(defaults);
+    }
+    return seller_provider_type.toJSON();
+  }
+
+  async retrieveOrCreateSellerAssistedServiceTypes(options, defaults) {
+    let seller_service_type = await this.modals.seller_service_types.findOne({
+      where: options
+    });
+    if (seller_provider_type) {
+      const seller_service_type_result = seller_service_type.toJSON();
+      defaults.status_type = seller_service_type_result.status_type;
+      await seller_service_type.updateAttributes(defaults);
+    } else {
+      seller_service_type = await this.modals.seller_service_types.create(defaults);
+    }
+    return seller_service_type.toJSON();
+  }
+
 }
 exports.default = SellerAdaptor;

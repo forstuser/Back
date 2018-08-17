@@ -455,7 +455,7 @@ class ShopEarnController {
         })));
 
         if (product && product.seller_id) {
-          const seller = await sellerAdaptor.retrieveOfflineSellerById({ sid: product.seller_id });
+          const seller = await sellerAdaptor.retrieveOfflineSellerById({ id: product.seller_id });
           await _bluebird2.default.all([jobAdaptor.updateCashBackJobs({
             job_id: product.job_id, jobDetail: JSON.parse(JSON.stringify({
               user_id: user.id || user.ID,

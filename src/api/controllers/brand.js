@@ -21,18 +21,16 @@ class BrandController {
       if (!user && !isWebMode) {
         return reply.response({status: false, message: 'Unauthorized'});
       } else if (!request.pre.forceUpdate) {
-        const categoryId = request.query.categoryid || undefined;
+        let category_id = (request.query.categoryid || '').split(',');
+
 
         const options = {
           status_type: 1,
-          category_id: categoryId,
+          category_id: category_id.length > 0 ? category_id : undefined,
         };
 
-        if (categoryId) {
-          options.category_id = categoryId;
-        }
         let results = [];
-        if (categoryId) {
+        if (category_id) {
           results = await
               modals.brands.findAll({
                 where: {

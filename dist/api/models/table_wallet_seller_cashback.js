@@ -58,7 +58,7 @@ exports.default = (sequelize, DataTypes) => {
       onDelete: 'cascade',
       onUpdate: 'cascade'
     });
-    cashback_wallet.belongsTo(models.offlineSellers, {
+    cashback_wallet.belongsTo(models.sellers, {
       foreignKey: 'seller_id',
       as: 'seller',
       onDelete: 'cascade',

@@ -117,7 +117,7 @@ class ProductItemController {
         const sellerList = await Promise.all([sellerPromise]);
         const product_id = parseInt(request.params.id);
         const repairId = parseInt(request.params.repairId);
-        const newSellerId = sellerList[0] ? sellerList[0].sid : undefined;
+        const newSellerId = sellerList[0] ? sellerList[0].id : undefined;
         const document_date = request.payload.document_date ? _moment2.default.utc(request.payload.document_date, _moment2.default.ISO_8601).isValid() ? _moment2.default.utc(request.payload.document_date, _moment2.default.ISO_8601).startOf('day') : _moment2.default.utc(request.payload.document_date, 'DD MMM YY').startOf('day') : '';
 
         const values = {
@@ -422,7 +422,7 @@ class ProductItemController {
           status_type: 11, product_id,
           job_id: request.payload.job_id || productResult.jobId,
           renewal_cost: request.payload.value,
-          seller_id: sellerList ? sellerList.sid : request.payload.seller_id,
+          seller_id: sellerList ? sellerList.id : request.payload.seller_id,
           expiry_date: effective_date ? _moment2.default.utc(expiry_date).format('YYYY-MM-DD') : undefined,
           effective_date: effective_date ? _moment2.default.utc(effective_date).format('YYYY-MM-DD') : undefined,
           document_date: effective_date ? _moment2.default.utc(effective_date).format('YYYY-MM-DD') : undefined,
@@ -567,7 +567,7 @@ class ProductItemController {
           renewal_cost: request.payload.value,
           product_id,
           job_id: request.payload.job_id || productResult.jobId,
-          seller_id: sellerList ? sellerList.sid : request.payload.seller_id,
+          seller_id: sellerList ? sellerList.id : request.payload.seller_id,
           expiry_date: effective_date ? _moment2.default.utc(expiry_date).format('YYYY-MM-DD') : undefined,
           effective_date: effective_date ? _moment2.default.utc(effective_date).format('YYYY-MM-DD') : undefined,
           document_date: effective_date ? _moment2.default.utc(effective_date).format('YYYY-MM-DD') : undefined,

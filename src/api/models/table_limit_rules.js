@@ -47,7 +47,7 @@ export default (sequelize, DataTypes) => {
           onDelete: 'cascade',
           onUpdate: 'cascade',
         });
-    limit_rules.belongsTo(models.offlineSellers,
+    limit_rules.belongsTo(models.sellers,
         {
           foreignKey: 'seller_id',
           as: 'seller',

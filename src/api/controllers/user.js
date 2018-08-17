@@ -16,6 +16,7 @@ import UserAdaptor from '../Adaptors/user';
 import authentication from './authentication';
 import S3FS from 's3fs';
 import Promise from 'bluebird';
+import SellerAdaptor from '../Adaptors/sellers';
 
 const PUBLIC_KEY = new RSA(config.TRUECALLER_PUBLIC_KEY,
     {signingScheme: 'sha512'});
@@ -26,15 +27,8 @@ let replyObject = {
   message: 'success',
 };
 
-let userModel;
-let userRelationModel;
-let modals;
-let dashboardAdaptor;
-let userAdaptor;
-let nearByAdaptor;
-let notificationAdaptor;
-let fcmModel;
-let fcmManager;
+let userModel, userRelationModel, modals, dashboardAdaptor, userAdaptor,
+    nearByAdaptor, notificationAdaptor, fcmModel, fcmManager, sellerAdaptor;
 
 const validatePayloadSignature = function(payload, signature) {
   return PUBLIC_KEY.verify(payload, signature, '', 'base64');
@@ -130,12 +124,13 @@ class UserController {
     userModel = modal.users;
     userRelationModel = modal.users_temp;
     modals = modal;
-    fcmModel = modal.fcmDetails;
-    fcmManager = new FCMManager(modal.fcmDetails);
+    fcmModel = modal.fcm_details;
+    fcmManager = new FCMManager(modal.fcm_details);
     dashboardAdaptor = new DashboardAdaptor(modals);
     userAdaptor = new UserAdaptor(modals);
     nearByAdaptor = new NearByAdaptor(modals);
     notificationAdaptor = new NotificationAdaptor(modals);
+    sellerAdaptor = new SellerAdaptor(modals);
   }
 
   static async subscribeUser(request, reply) {
@@ -244,6 +239,95 @@ class UserController {
         replyObject.status = false;
         replyObject.message = 'User with same mobile number exist.';
         replyObject.error = err;
+        return reply.response(replyObject);
+      }
+    } catch (err) {
+      console.log(err);
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to send OTP on provided number.',
+        forceUpdate: request.pre.forceUpdate,
+        err,
+      });
+    }
+  }
+
+  static async dispatchSellerOTP(request, reply) {
+    replyObject = {
+      status: true,
+      message: 'success',
+    };
+    try {
+
+      if (!request.pre.hasSellerMultipleAccounts) {
+        const {mobile_no, gstin, pan, email} = request.payload || {};
+        const [is_valid_phone_no, gst_detail] = await Promise.all([
+          GoogleHelper.isValidPhoneNumber(mobile_no),
+          gstin ? GoogleHelper.isValidGSTIN(gstin) : true]);
+        if (!is_valid_phone_no) {
+          console.log(`Phone number: ${mobile_no} is not a valid phone number`);
+          replyObject.status = false;
+          replyObject.message = 'Invalid Phone number';
+          return reply.response(replyObject);
+        } else if (!gst_detail) {
+          console.log(`GSTIN number ${gstin} is not a valid`);
+          replyObject.status = false;
+          replyObject.message = 'Invalid GST number.';
+          return reply.response(replyObject);
+        }
+        let seller_updates = JSON.parse(JSON.stringify(
+            (gst_detail && gst_detail === true) ? {gstin, pan} : {
+              gstin, pan, seller_name: gst_detail.lgnm || undefined,
+              pincode: gst_detail.pradr.addr.pncd || undefined,
+              state: gst_detail.pradr.addr.stcd || undefined,
+              city: gst_detail.pradr.addr.city || undefined,
+              latitude: gst_detail.pradr.addr.lt || undefined,
+              longitude: gst_detail.pradr.addr.lg || undefined,
+              address: `${gst_detail.pradr.addr.bno}, ${gst_detail.pradr.addr.flno} ${gst_detail.pradr.addr.bnm}, ${gst_detail.pradr.addr.st}, ${gst_detail.pradr.addr.loc}`,
+            }));
+        const [otpStatus, user, seller_detail] = await Promise.all([
+          OTPHelper.sendOTPToUser(mobile_no, 4),
+          userAdaptor.retrieveSellerUser(
+              {where: JSON.parse(JSON.stringify({mobile_no, email}))}),
+          gstin || pan ? sellerAdaptor.retrieveOrUpdateSellerDetail(
+              {where: JSON.parse(JSON.stringify({$or: {gstin, pan}}))},
+              seller_updates, false) : undefined]);
+
+        if (otpStatus.type === 'success') {
+          console.log('SMS SENT WITH ID: ', otpStatus.message);
+          replyObject.mobile_no = mobile_no;
+          replyObject.seller_detail = JSON.parse(
+              JSON.stringify(seller_detail || seller_updates || {}));
+          if (user) {
+            replyObject.name = user.name;
+            replyObject.image_url = user.image_url;
+            return reply.response(JSON.parse(JSON.stringify(replyObject))).
+                code(201);
+          } else {
+            return reply.response(JSON.parse(JSON.stringify(replyObject))).
+                code(201);
+          }
+        } else {
+          replyObject.status = false;
+          replyObject.message = response[0].ErrorMessage;
+          replyObject.error = response[0].ErrorMessage;
+          return reply.response(replyObject).code(403);
+        }
+      } else {
+        replyObject.status = false;
+        replyObject.message = 'User with same mobile number or email exist.';
         return reply.response(replyObject);
       }
     } catch (err) {
@@ -445,7 +529,7 @@ class UserController {
           if (fbSecret) {
             const fbResult = await requestPromise({
               uri: config.FB_GRAPH_ROUTE +
-              'me?fields=id,email,name,picture{url}',
+                  'me?fields=id,email,name,picture{url}',
               qs: {
                 access_token: fbSecret,
               },
@@ -482,6 +566,76 @@ class UserController {
               reply,
             });
           }
+        }
+      } else {
+        replyObject.status = false;
+        replyObject.message = 'Forbidden';
+        return reply.response(replyObject);
+      }
+    } catch (err) {
+      console.log(err);
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to validate.',
+        forceUpdate: request.pre.forceUpdate,
+        err,
+      });
+    }
+  }
+
+  static async validateSellerOTP(request, reply) {
+    replyObject = {
+      status: true,
+      message: 'success',
+      forceUpdate: request.pre.forceUpdate,
+    };
+    try {
+      let {mobile_no, gstin, pan, email, fcm_id, seller_detail, platform, login_type, token} = request.payload ||
+      {};
+      let userWhere = JSON.parse(JSON.stringify({
+        where: {
+          mobile_no, email, status_type: 1,
+        },
+      }));
+
+      if (!request.pre.forceUpdate) {
+        const data = await OTPHelper.verifyOTPForUser(mobile_no, token);
+        console.log('VALIDATE OTP RESPONSE: ', data);
+        if (data.type === 'success') {
+          const user_detail = await userAdaptor.retrieveSellerUser(userWhere, true);
+          const [seller_detail] = await Promise.all([
+            sellerAdaptor.retrieveOrUpdateSellerDetail(
+                {where: JSON.parse(JSON.stringify({user_id: user_detail.id}))},
+                false, false),
+            fcmManager.insertSellerFcmDetails({
+              seller_user_id: user_detail.id,
+              fcm_id, platform_id: platform || 1,
+            })]);
+          user_detail.seller_detail = seller_detail || true;
+
+          replyObject.authorization = `bearer ${authentication.generateSellerToken(
+              JSON.parse(JSON.stringify(user_detail))).token}`;
+          replyObject.seller = seller_detail;
+          replyObject.status = true;
+          return reply.response(replyObject).code(201);
+
+        } else {
+          replyObject.status = false;
+          replyObject.message = 'Invalid/Expired OTP';
+
+          return reply.response(replyObject);
         }
       } else {
         replyObject.status = false;

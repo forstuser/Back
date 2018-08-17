@@ -51,7 +51,7 @@ export default (sequelize, DataTypes) => {
   credit_wallet.associate = (models) => {
     credit_wallet.belongsTo(models.users,
         {foreignKey: 'updated_by', as: 'updater', onDelete: 'cascade', onUpdate: 'cascade'});
-    credit_wallet.belongsTo(models.offlineSellers,
+    credit_wallet.belongsTo(models.sellers,
         {foreignKey: 'seller_id', as: 'seller', onDelete: 'cascade', onUpdate: 'cascade'});
     credit_wallet.belongsTo(models.cashback_jobs,
         {foreignKey: 'job_id', onDelete: 'cascade', onUpdate: 'cascade'});

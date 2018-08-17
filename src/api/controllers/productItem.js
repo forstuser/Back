@@ -76,7 +76,7 @@ class ProductItemController {
         const sellerList = await Promise.all([sellerPromise]);
         const product_id = parseInt(request.params.id);
         const repairId = parseInt(request.params.repairId);
-        const newSellerId = sellerList[0] ? sellerList[0].sid : undefined;
+        const newSellerId = sellerList[0] ? sellerList[0].id : undefined;
         const document_date = request.payload.document_date ? moment.utc(
             request.payload.document_date,
             moment.ISO_8601).isValid() ?
@@ -461,7 +461,7 @@ class ProductItemController {
           status_type: 11, product_id,
           job_id: request.payload.job_id || productResult.jobId,
           renewal_cost: request.payload.value,
-          seller_id: sellerList ? sellerList.sid : request.payload.seller_id,
+          seller_id: sellerList ? sellerList.id : request.payload.seller_id,
           expiry_date: effective_date ?
               moment.utc(expiry_date).format('YYYY-MM-DD') : undefined,
           effective_date: effective_date ? moment.utc(effective_date).
@@ -641,7 +641,7 @@ class ProductItemController {
           product_id,
           job_id: request.payload.job_id || productResult.jobId,
           seller_id: sellerList ?
-              sellerList.sid :
+              sellerList.id :
               request.payload.seller_id,
           expiry_date: effective_date ?
               moment.utc(expiry_date).format('YYYY-MM-DD') :

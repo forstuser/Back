@@ -474,7 +474,7 @@ class ShopEarnController {
 
         if (product && product.seller_id) {
           const seller = await sellerAdaptor.retrieveOfflineSellerById(
-              {sid: product.seller_id});
+              {id: product.seller_id});
           await Promise.all([
             jobAdaptor.updateCashBackJobs({
               job_id: product.job_id, jobDetail: JSON.parse(JSON.stringify({

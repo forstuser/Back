@@ -45,7 +45,7 @@ export default (sequelize, DataTypes) => {
         {foreignKey: 'sku_id', onDelete: 'cascade', onUpdate: 'cascade'});
     sku_seller.belongsTo(models.sku_measurement,
         {foreignKey: 'sku_measurement_id', onDelete: 'cascade', onUpdate: 'cascade'});
-    sku_seller.belongsTo(models.offlineSellers,
+    sku_seller.belongsTo(models.sellers,
         {foreignKey: 'seller_id', as: 'seller', onDelete: 'cascade', onUpdate: 'cascade'});
     sku_seller.belongsTo(models.statuses,
         {foreignKey: 'status_type', targetKey: 'status_type', onDelete: 'cascade', onUpdate: 'cascade'});

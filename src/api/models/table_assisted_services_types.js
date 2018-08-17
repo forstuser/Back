@@ -1,15 +1,12 @@
 'use strict';
 
 export default (sequelize, DataTypes) => {
-  const seller_offers = sequelize.define('seller_offers', {
+  const assisted_service_types = sequelize.define('assisted_service_types', {
         title: {
           type: DataTypes.STRING,
         },
-        description: {
+        description : {
           type: DataTypes.STRING,
-        },
-        seller_id: {
-          type: DataTypes.INTEGER,
         },
         updated_by: {
           type: DataTypes.INTEGER,
@@ -32,16 +29,14 @@ export default (sequelize, DataTypes) => {
         defaultPrimaryKey: true,
         timestamps: true,
         underscored: true,
-        tableName: 'table_seller_offers',
+        tableName: 'table_assisted_service_types',
       });
 
-  seller_offers.associate = (models) => {
-    seller_offers.belongsTo(models.users,
+  assisted_service_types.associate = (models) => {
+    assisted_service_types.belongsTo(models.users,
         {foreignKey: 'updated_by', onDelete: 'cascade', onUpdate: 'cascade'});
-    seller_offers.belongsTo(models.sellers,
-        {foreignKey: 'seller_id', as: 'seller', onDelete: 'cascade', onUpdate: 'cascade'});
-    seller_offers.belongsTo(models.statuses,
+    assisted_service_types.belongsTo(models.statuses,
         {foreignKey: 'status_type', targetKey: 'status_type', onDelete: 'cascade', onUpdate: 'cascade'});
   };
-  return seller_offers;
+  return assisted_service_types;
 };

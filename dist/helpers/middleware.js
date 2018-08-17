@@ -125,6 +125,18 @@ const hasMultipleAccounts = async (request, reply) => {
   }
 };
 
+const hasSellerMultipleAccounts = async (request, reply) => {
+  const { mobile_no, email } = request.payload || {};
+  try {
+    const userCounts = await MODAL.seller_users.count(JSON.parse(JSON.stringify({ where: { $or: { mobile_no, email } } })));
+
+    return userCounts > 1;
+  } catch (err) {
+    console.log(`Error on ${new Date()} for user ${request.payload.mobile_no} is as follow: \n \n ${err}`);
+    return false;
+  }
+};
+
 const updateUserPIN = async (request, reply) => {
   const user = _shared2.default.verifyAuthorization(request.headers);
   if (!user) {
@@ -293,13 +305,10 @@ const checkForAppUpdate = async (request, reply) => {
 exports.default = models => {
   MODAL = models;
   return {
-    checkAppVersion,
-    updateUserActiveStatus,
-    verifyUserPIN,
-    updateUserPIN,
-    hasMultipleAccounts,
-    verifyUserEmail,
-    verifyUserOTP,
+    checkAppVersion, updateUserActiveStatus,
+    verifyUserPIN, updateUserPIN,
+    hasMultipleAccounts, verifyUserEmail,
+    verifyUserOTP, hasSellerMultipleAccounts,
     checkForAppUpdate
   };
 };

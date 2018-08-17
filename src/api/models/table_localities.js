@@ -1,6 +1,6 @@
 'use strict';
 exports.default = (sequelize, DataTypes) => {
-  const locations = sequelize.define('locations', {
+  const locality = sequelize.define('locality', {
         name: {
           type: DataTypes.STRING,
           allowNull: false,
@@ -36,20 +36,20 @@ exports.default = (sequelize, DataTypes) => {
         defaultPrimaryKey: true,
         timestamps: true,
         underscored: true,
-        tableName: 'table_cities',
+        tableName: 'table_localities',
       });
 
-  locations.associate = (models) => {
-    locations.belongsTo(models.users,
+  locality.associate = (models) => {
+    locality.belongsTo(models.users,
         {foreignKey: 'created_by', onDelete: 'cascade', onUpdate: 'cascade'});
-    locations.belongsTo(models.statuses,
+    locality.belongsTo(models.statuses,
         {foreignKey: 'status_type', targetKey: 'status_type', onDelete: 'cascade', onUpdate: 'cascade'});
-    locations.belongsTo(models.states,
+    locality.belongsTo(models.states,
         {foreignKey: 'state_id', onDelete: 'cascade', onUpdate: 'cascade'});
-    locations.belongsTo(models.cities,
+    locality.belongsTo(models.cities,
         {foreignKey: 'city_id', onDelete: 'cascade', onUpdate: 'cascade'});
   };
-  return locations;
+  return locality;
 };
 
 

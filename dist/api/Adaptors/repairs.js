@@ -57,7 +57,7 @@ class RepairAdaptor {
       include: [{
         model: this.modals.onlineSellers,
         as: 'onlineSellers',
-        attributes: [['sid', 'id'], ['seller_name', 'sellerName'], 'url', 'gstin', 'contact', 'email'],
+        attributes: ['id', ['seller_name', 'sellerName'], 'url', 'gstin', 'contact', 'email'],
         required: false
       }, {
         model: this.modals.products,
@@ -65,9 +65,9 @@ class RepairAdaptor {
         attributes: [],
         required: productOptions !== undefined
       }, {
-        model: this.modals.offlineSellers,
+        model: this.modals.sellers,
         as: 'sellers',
-        attributes: [['sid', 'id'], ['seller_name', 'sellerName'], ['owner_name', 'ownerName'], ['pan_no', 'panNo'], ['reg_no', 'regNo'], ['is_service', 'isService'], 'url', 'gstin', ['contact_no', 'contact'], 'email', 'address', 'city', 'state', 'pincode', 'latitude', 'longitude'],
+        attributes: ['id', ['seller_name', 'sellerName'], ['owner_name', 'ownerName'], ['pan_no', 'panNo'], ['reg_no', 'regNo'], ['is_service', 'isService'], 'url', 'gstin', ['contact_no', 'contact'], 'email', 'address', 'city', 'state', 'pincode', 'latitude', 'longitude'],
         required: false
       }],
       attributes: ['id', ['product_id', 'productId'], ['job_id', 'jobId'], [this.modals.sequelize.literal('"product"."main_category_id"'), 'masterCategoryId'], 'user_id', ['document_number', 'policyNo'], ['repair_cost', 'premiumAmount'], [this.modals.sequelize.literal('"product"."product_name"'), 'productName'], ['repair_cost', 'value'], ['repair_taxes', 'taxes'], ['document_date', 'purchaseDate'], ['updated_at', 'updatedDate'], 'warranty_upto', 'repair_for', [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"product_id"')), 'productURL'], 'copies'],

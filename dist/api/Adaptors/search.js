@@ -203,13 +203,13 @@ class SearchAdaptor {
   fetchProductDetailOffline(user, searchValue) {
     return this.sellerAdaptor.retrieveOfflineSellers({
       $and: [this.modals.sequelize.where(this.modals.sequelize.fn('lower', this.modals.sequelize.col('seller_name')), { $iLike: this.modals.sequelize.fn('lower', searchValue) })]
-    }).then(offlineSellers => {
+    }).then(sellers => {
 
-      if (offlineSellers && offlineSellers.length > 0) {
+      if (sellers && sellers.length > 0) {
         return this.productAdaptor.retrieveProductIds({
           user_id: user.id || user.ID,
           status_type: [5, 8, 11],
-          seller_id: offlineSellers.map(item => item.id)
+          seller_id: sellers.map(item => item.id)
         });
       }
 

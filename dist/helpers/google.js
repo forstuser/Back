@@ -7,6 +7,10 @@ Object.defineProperty(exports, "__esModule", {
 
 var _maps = require('@google/maps');
 
+var _requestPromise = require('request-promise');
+
+var _requestPromise2 = _interopRequireDefault(_requestPromise);
+
 var _bluebird = require('bluebird');
 
 var _bluebird2 = _interopRequireDefault(_bluebird);
@@ -52,8 +56,8 @@ const distanceMatrix = (origins, destinations) => {
   });
 };
 
-const isValidPhoneNumber = phone => {
-  return _bluebird2.default.try(() => {
+const isValidPhoneNumber = async phone => {
+  return await _bluebird2.default.try(() => {
     const regionCode = phoneUtil.getRegionCodeForCountryCode('91');
     if (regionCode.toUpperCase() === 'ZZ') {
       return false;
@@ -73,7 +77,28 @@ const isValidPhoneNumber = phone => {
   });
 };
 
+const isValidGSTIN = async gstin => {
+  const qs = {
+    aspid: _main2.default.GST.ID, password: _main2.default.GST.PASSWORD, gstin,
+    Action: _main2.default.GST.ACTION
+  };
+  if (_main2.default.GST.ENABLED) {
+    const gstDetails = await (0, _requestPromise2.default)({
+      uri: `${_main2.default.GST.HOST}${_main2.default.GST.ROUTE}`,
+      qs, json: true
+    });
+
+    if (gstDetails.error && gstDetails.sts.toLowerCase() !== 'active') {
+      return false;
+    }
+
+    return gstDetails;
+  }
+  return true;
+};
+
 exports.default = {
   distanceMatrix,
-  isValidPhoneNumber
+  isValidPhoneNumber,
+  isValidGSTIN
 };

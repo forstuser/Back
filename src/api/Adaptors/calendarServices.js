@@ -1135,7 +1135,7 @@ export default class CalendarServiceAdaptor {
           document_date: servicePaymentDetail.paid_on,
           category_id, main_category_id, sub_category_id,
           product_name,
-          seller_id: sellerDetail ? sellerDetail.sid : undefined,
+          seller_id: sellerDetail ? sellerDetail.id : undefined,
           purchase_cost: servicePaymentDetail.amount_paid,
           status_type: 11,
           updated_by: user_id,

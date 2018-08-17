@@ -879,7 +879,7 @@ class NotificationAdaptor {
   }
 
   notifyUserCron(userId, payload) {
-    return this.modals.fcmDetails.findAll({
+    return this.modals.fcm_details.findAll({
       where: {
         user_id: userId
       }
@@ -920,7 +920,7 @@ class NotificationAdaptor {
   }
 
   notifyUser(userId, payload, reply) {
-    return this.modals.fcmDetails.findAll({
+    return this.modals.fcm_details.findAll({
       where: {
         user_id: userId
       }

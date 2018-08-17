@@ -44,7 +44,44 @@ export function prepareAuthRoutes(modal, routeObject, middleware) {
       },
     });
 
-    /*Update FCM of consumer*/
+    /*Send OTP To seller*/
+    routeObject.push({
+      method: 'POST',
+      path: '/sellers/getotp',
+      config: {
+        pre: [
+          {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: middleware.hasSellerMultipleAccounts,
+            assign: 'hasSellerMultipleAccounts',
+          },
+        ],
+        handler: ControllerObject.dispatchSellerOTP,
+        description: 'Generate OTP.',
+        tags: ['api', 'User', 'Authentication'],
+        validate: {
+          payload: {
+            mobile_no: joi.string().required(),
+            email: joi.string(),
+            gstin: joi.string(),
+            pan: joi.string(),
+            output: 'data',
+            parse: true,
+          },
+        },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              {code: 200, message: 'Authenticated'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
+            ],
+          },
+        },
+      },
+    });
 
     /*Update FCM of consumer*/
     routeObject.push({
@@ -236,6 +273,43 @@ export function prepareAuthRoutes(modal, routeObject, middleware) {
             BBLogin_Type: joi.number().required(),
             transactionId: joi.string().allow(null),
             TrueSecret: joi.string().allow(null),
+            output: 'data',
+            parse: true,
+          },
+        },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              {code: 200, message: 'Authenticated'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
+            ],
+          },
+        },
+      },
+    });
+
+    /*Validate Seller OTP*/
+    routeObject.push({
+      method: 'POST',
+      path: '/sellers/validate',
+      config: {
+        handler: ControllerObject.validateSellerOTP,
+        description: 'Register User for Consumer Portal.',
+        tags: ['api', 'User', 'Authentication'],
+        validate: {
+          payload: {
+            token: joi.string().allow(null),
+            fcm_id: joi.string().allow(null),
+            gstin: joi.string(),
+            pan: joi.string(),
+            email: [joi.string(), joi.allow(null)],
+            mobile_no: joi.string().required(),
+            seller_detail: joi.object(),
+            platform: [joi.number(), joi.allow(null)],
+            login_type: joi.number(),
             output: 'data',
             parse: true,
           },

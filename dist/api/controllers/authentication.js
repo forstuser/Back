@@ -71,6 +71,12 @@ class AuthenticationController {
     };
   }
 
+  static generateSellerToken(user) {
+    const expiresIn = new Date().getTime() + 647000;
+    const token = _jsonwebtoken2.default.sign(JSON.parse(JSON.stringify(user, replacer)), _main2.default.JWT_SECRET, { algorithm: 'HS512', expiresIn });
+    return { token, expiresIn };
+  }
+
   static expireToken(user) {
     return _jsonwebtoken2.default.sign(user, _main2.default.JWT_SECRET, {
       expiresIn: 0, // in seconds

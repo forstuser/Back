@@ -1,35 +1,32 @@
 'use strict';
 
 export default (sequelize, DataTypes) => {
-  const cashback_wallet = sequelize.define('cashback_wallet', {
-        title: {
-          type: DataTypes.STRING,
-        },
-        description: {
-          type: DataTypes.STRING,
-        },
-        job_id: {
+  const seller_service_types = sequelize.define('seller_service_types', {
+        service_type_id: {
           type: DataTypes.INTEGER,
         },
         seller_id: {
           type: DataTypes.INTEGER,
         },
-        user_id: {
-          type: DataTypes.INTEGER,
+        name: {
+          type: DataTypes.STRING,
         },
-        transaction_type: {
-          type: DataTypes.INTEGER,
-          comment: 'Credit: 1, Debit: 2',
+        mobile_no: {
+          type: DataTypes.STRING,
         },
-        amount: {
-          type: DataTypes.FLOAT,
+        price: {
+          type: DataTypes.JSONB,
+        },
+        document_name: {
+          type: DataTypes.STRING,
         },
         updated_by: {
           type: DataTypes.INTEGER,
+          defaultValue: 1,
         },
         status_type: {
           type: DataTypes.INTEGER,
-          defaultValue: 13,
+          defaultValue: 1,
         },
         created_at: {
           type: DataTypes.DATE,
@@ -45,34 +42,26 @@ export default (sequelize, DataTypes) => {
         defaultPrimaryKey: true,
         timestamps: true,
         underscored: true,
-        tableName: 'table_wallet_seller_cashback',
+        tableName: 'table_seller_assisted_services_types',
       });
 
-  cashback_wallet.associate = (models) => {
-    cashback_wallet.belongsTo(models.users,
+  seller_service_types.associate = (models) => {
+    seller_service_types.belongsTo(models.users,
+        {foreignKey: 'updated_by', onDelete: 'cascade', onUpdate: 'cascade'});
+    seller_service_types.belongsTo(models.assisted_service_types,
         {
-          foreignKey: 'updated_by',
-          as: 'updater',
+          foreignKey: 'service_type_id',
           onDelete: 'cascade',
           onUpdate: 'cascade',
         });
-    cashback_wallet.belongsTo(models.sellers,
+    seller_service_types.belongsTo(models.sellers,
         {
           foreignKey: 'seller_id',
           as: 'seller',
           onDelete: 'cascade',
           onUpdate: 'cascade',
         });
-    cashback_wallet.belongsTo(models.cashback_jobs,
-        {foreignKey: 'job_id', onDelete: 'cascade', onUpdate: 'cascade'});
-    cashback_wallet.belongsTo(models.users,
-        {
-          foreignKey: 'user_id',
-          as: 'user',
-          onDelete: 'cascade',
-          onUpdate: 'cascade',
-        });
-    cashback_wallet.belongsTo(models.statuses,
+    seller_service_types.belongsTo(models.statuses,
         {
           foreignKey: 'status_type',
           targetKey: 'status_type',
@@ -80,5 +69,5 @@ export default (sequelize, DataTypes) => {
           onUpdate: 'cascade',
         });
   };
-  return cashback_wallet;
+  return seller_service_types;
 };

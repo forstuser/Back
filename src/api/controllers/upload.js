@@ -13,10 +13,12 @@ import WarrantyAdaptor from '../Adaptors/warranties';
 import RepairAdaptor from '../Adaptors/repairs';
 import PUCAdaptor from '../Adaptors/pucs';
 import ProductAdaptor from '../Adaptors/product';
+import CategoryAdaptor from '../Adaptors/category';
 import RegCertificateAdaptor from '../Adaptors/reg_certificates';
 import FuelingAdaptor from '../Adaptors/refueling';
 import Promise from 'bluebird';
 import Guid from 'guid';
+import SellerAdaptor from '../Adaptors/sellers';
 
 const fsImpl = new S3FS(config.AWS.S3.BUCKET, config.AWS.ACCESS_DETAILS);
 
@@ -45,17 +47,9 @@ const isFileTypeAllowedMagicNumber = buffer => {
 };
 
 const getTypeFromBuffer = buffer => fileType(buffer);
-let modals;
-let userAdaptor;
-let jobAdaptor;
-let amcAdaptor;
-let warrantyAdaptor;
-let insuranceAdaptor;
-let repairAdaptor;
-let pucAdaptor;
-let productAdaptor;
-let regCertAdaptor;
-let fuelingAdaptor;
+let modals, userAdaptor, jobAdaptor, amcAdaptor, warrantyAdaptor,
+    insuranceAdaptor, repairAdaptor, pucAdaptor, productAdaptor, regCertAdaptor,
+    fuelingAdaptor, sellerAdaptor, categoryAdaptor;
 
 class UploadController {
   constructor(modal) {
@@ -70,6 +64,8 @@ class UploadController {
     productAdaptor = new ProductAdaptor(modals);
     regCertAdaptor = new RegCertificateAdaptor(modals);
     fuelingAdaptor = new FuelingAdaptor(modals);
+    sellerAdaptor = new SellerAdaptor(modals);
+    categoryAdaptor = new CategoryAdaptor(modals);
   }
 
   static async uploadUserImage(request, reply) {
@@ -399,6 +395,67 @@ class UploadController {
     }
   }
 
+  static async uploadSellerFiles(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    if (request.payload) {
+      try {
+        console.log('Request received to upload file by seller id ', user.id);
+        // if (!request.pre.forceUpdate && request.payload) {
+        const fieldNameHere = request.payload.fieldNameHere;
+        let filteredFileData = fieldNameHere || request.payload.filesName ||
+            request.payload.file;
+        if (filteredFileData) {
+          filteredFileData = Array.isArray(filteredFileData) ?
+              filteredFileData : [filteredFileData];
+
+          if (filteredFileData.length === 0) {
+            console.log('No valid documents in request');
+            return reply.response(
+                {status: false, message: 'No valid documents in request'});
+          }
+
+          filteredFileData = filteredFileData.filter((datum) => {
+            const name = datum.hapi.filename;
+            const file_type = (/[.]/.exec(name))
+                ? /[^.]+$/.exec(name) : undefined;
+            return file_type && !isFileTypeAllowed(file_type) ? false :
+                !(!file_type && !isFileTypeAllowedMagicNumber(datum._data));
+          });
+          const {id, type} = request.params || {};
+          const {image_types, business_type} = request.query || {};
+          console.log(
+              `Request received for Shop ID ${request.params.id} to upload file by seller id ${user.id}`);
+          return await UploadController.retrieveSellerUpdateDetails(
+              {
+                user, fileData: filteredFileData, reply, request,
+                id, type, image_types, business_type,
+              });
+        } else {
+          return reply.response(
+              {status: false, message: 'No documents in request'}); //, forceUpdate: request.pre.forceUpdate});
+        }
+      } catch (err) {
+        console.log(
+            `Error on ${new Date()} for user ${user.id} is as follow: \n \n ${err}`);
+
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user.id || user.ID,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
+        return reply.response(
+            {status: false, message: 'Unable to upload document'});
+      }
+    }
+  }
+
   static async retrieveJobCreateCopies(parameters) {
     let {user, fileData, reply, request} = parameters;
     const type = request.query ? parseInt(request.query.type || '1') : 1;
@@ -489,6 +546,45 @@ class UploadController {
         }
       }
     } catch (err) {
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user.id || user.ID,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
+      return reply.response({status: false, message: 'Upload Failed', err});// , forceUpdate: request.pre.forceUpdate});
+    }
+  }
+
+  static async retrieveSellerUpdateDetails(parameters) {
+    let {user, fileData, reply, request, id, type, image_types, business_type} = parameters;
+    try {
+      const seller_data = await sellerAdaptor.retrieveSellerDetail(
+          {where: {id, user_id: user.id}});
+      if (!seller_data) {
+        return reply.response({
+          status: false,
+          message: 'Shop is not linked with you.',
+        });
+      }
+      console.log(`Request has multiple files`);
+      return await UploadController.uploadSellerFileItems({
+        requiredDetail: {
+          fileData, user, seller_data, type,
+          image_types, business_type,
+        }, reply, request,
+      });
+    } catch (err) {
+      console.log(
+          `Error on ${new Date()} for user ${user.id ||
+          user.ID} is as follow: \n \n ${err}`);
+
       modals.logs.create({
         api_action: request.method,
         api_path: request.url.pathname,
@@ -638,6 +734,102 @@ class UploadController {
         type, reply,
       });
     } catch (err) {
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user.id || user.ID,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Upload Failed',
+        err: JSON.stringify(err),
+        // forceUpdate: request.pre.forceUpdate
+      });
+    }
+  }
+
+  static async uploadSellerFileItems(parameters) {
+    console.log('Multiple File Upload');
+    let {requiredDetail, reply, request} = parameters;
+    let {user, fileData, seller_data, type, image_types, business_type} = requiredDetail;
+    try {
+      const seller_image_types = config.SELLER_IMAGE_TYPE.split(',');
+      const fileNames = [];
+      const fileTypes = [];
+      const fileTypeDataArray = [];
+      const fileUploadPromises = fileData.map(async (elem, index) => {
+        const name = elem.hapi.filename;
+        const file_type = (/[.]/.exec(name)) ? /[^.]+$/.exec(name) : undefined;
+        const fileTypeData = getTypeFromBuffer(elem._data);
+        const fileName = `${user.id}-${Math.random().toString(36).
+            substr(2, 9)}${(user.id).toString(36)}.${(file_type) ?
+            file_type.toString() : fileTypeData.ext}`;
+
+        fileNames.push(fileName);
+        fileTypes.push(file_type);
+        fileTypeDataArray.push(fileTypeData);
+        // const file = fs.createReadStream();
+        return await fsImpl.writeFile(
+            `sellers/${seller_data.id}/${seller_image_types[type]}/${fileName}`,
+            elem._data, {ContentType: mime.lookup(fileName) || 'image/jpeg'});
+      });
+      const fileResult = await Promise.all(fileUploadPromises);
+      console.log('\n\n\n\n', JSON.stringify({seller_data}));
+      let {seller_details} = seller_data;
+      seller_details = seller_details || (type.toString() === '1' ?
+          {basic_details: {documents: []}} :
+          {basic_details: {documents: []}, business_details: {documents: []}});
+      console.log('\n\n\n\n', JSON.stringify({seller_details}));
+      const basic_details = seller_details.basic_details || {documents: []};
+      const business_details = seller_details.business_details ||
+          {documents: []};
+      basic_details.documents = basic_details.documents || [];
+      business_details.documents = business_details.documents || [];
+      image_types = (image_types || '').split(',');
+      fileResult.forEach((elem, index) => {
+        if (type.toString() === '1') {
+          basic_details.documents.push({
+            file_name: fileNames[index],
+            file_type: (fileTypes[index])
+                ? fileTypes[index].toString()
+                : fileTypeDataArray[index].ext,
+            updated_by: user.id, type,
+          });
+          seller_details.basic_details = basic_details;
+        } else {
+          business_details.documents.push({
+            file_name: fileNames[index],
+            file_type: (fileTypes[index])
+                ? fileTypes[index].toString()
+                : fileTypeDataArray[index].ext,
+            updated_by: user.id, type, image_type: image_types[index],
+          });
+          business_details.business_type = business_type;
+          seller_details.business_details = business_details;
+        }
+      });
+
+      return reply.response(JSON.parse(JSON.stringify({
+        status: true,
+        message: 'Upload Successfull',
+        categories: basic_details.category_id && type.toString() === '1' ?
+            await categoryAdaptor.retrieveCategories({
+              options: {category_id: basic_details.category_id},
+              isSubCategoryRequiredForAll: true,
+            }) : undefined,
+        seller: await sellerAdaptor.retrieveOrUpdateSellerDetail(
+            {where: {id: seller_data.id}}, {seller_details}, false),
+        // forceUpdate: request.pre.forceUpdate
+      })));
+    } catch (err) {
+      console.log(err);
       modals.logs.create({
         api_action: request.method,
         api_path: request.url.pathname,
@@ -1070,6 +1262,82 @@ class UploadController {
         return reply.response(
             {status: false, err, forceUpdate: request.pre.forceUpdate});
       }
+    }
+  }
+
+  static async retrieveSellerImages(request, reply) {
+    if (!request.pre.forceUpdate) {
+      try {
+        const user = shared.verifyAuthorization(request.headers);
+        const {id, type, index} = request.params || {};
+        const seller_image_types = config.SELLER_IMAGE_TYPE.split(',');
+        const seller_data = await sellerAdaptor.retrieveSellerDetail(
+            {where: {id, user_id: user.id}, attributes: ['seller_details']});
+        let file_name;
+        if (seller_data.seller_details) {
+          if (type.toString() === '1') {
+            const document = seller_data.seller_details.basic_details.documents[index];
+            file_name = (document || {}).file_name;
+          } else {
+            const document = seller_data.seller_details.business_details.documents[index];
+            file_name = (document || {}).file_name;
+          }
+          if (file_name) {
+            const fileResult = await fsImpl.readFile(
+                `sellers/${id}/${seller_image_types[type]}/${file_name}`,
+                'utf8');
+
+            console.log(fileResult);
+            return reply.response(fileResult.Body).
+                header('Content-Type', fileResult.ContentType).
+                header('Content-Disposition',
+                    `attachment; filename=${file_name}`);
+          } else {
+
+            return reply.response({
+              status: false,
+              message: 'Look like there is no more files.',
+              forceUpdate: request.pre.forceUpdate,
+            });
+          }
+        } else {
+
+          return reply.response({
+            status: false,
+            message: 'Look like seller details are not available',
+            forceUpdate: request.pre.forceUpdate,
+          });
+        }
+      } catch (err) {
+        console.log(
+            `Error on ${new Date()} for user while retrieving category image is as follow: \n \n ${err}`);
+
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: 1,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
+        return reply.response({
+          status: false,
+          message: 'Unable to retrieve image',
+          err,
+          forceUpdate: request.pre.forceUpdate,
+        });
+      }
+    } else {
+      return reply.response({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
     }
   }
 

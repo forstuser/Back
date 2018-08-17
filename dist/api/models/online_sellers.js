@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", {
 
 exports.default = (sequelize, DataTypes) => {
   const onlineSellers = sequelize.define('onlineSellers', {
-    sid: {
+    id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,

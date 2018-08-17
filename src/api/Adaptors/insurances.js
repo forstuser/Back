@@ -57,7 +57,7 @@ class InsuranceAdaptor {
           model: this.modals.onlineSellers,
           as: 'onlineSellers',
           attributes: [
-            ['sid', 'id'], ['seller_name', 'sellerName'],
+            'id', ['seller_name', 'sellerName'],
             'url', 'contact', 'email'],
           required: false,
         },
@@ -74,10 +74,10 @@ class InsuranceAdaptor {
           required: false,
         },
         {
-          model: this.modals.offlineSellers,
+          model: this.modals.sellers,
           as: 'sellers',
           attributes: [
-            ['sid', 'id'], ['seller_name', 'sellerName'],
+            'id', ['seller_name', 'sellerName'],
             ['owner_name', 'ownerName'], 'url',
             ['contact_no', 'contact'], 'email', 'address',
             'city', 'state', 'pincode', 'latitude', 'longitude'],

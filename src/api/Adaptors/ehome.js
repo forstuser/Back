@@ -208,7 +208,7 @@ class EHomeAdaptor {
           offline_seller_id, online_seller_id, sort_by,
           search_value: `%${search_value || ''}%`, limit, offset,
         }, request.language), this.retrieveRecentSearch(user)]);
-      let brands, offlineSellers, onlineSellers;
+      let brands, sellers, onlineSellers;
       let {productList, categories} = categoryData;
       categories = categories.map((result) => {
         result.brands = _.uniqBy(
@@ -219,7 +219,7 @@ class EHomeAdaptor {
                   return brandItem;
                 }), 'id');
 
-        result.offlineSellers = _.uniqBy(result.productList.filter(
+        result.sellers = _.uniqBy(result.productList.filter(
             (item) => item.sellers).map((item) => {
           const sellerItem = item.sellers;
           sellerItem.name = sellerItem.sellerName;
@@ -365,14 +365,14 @@ class EHomeAdaptor {
           });
       brands = _.uniqBy(brands, 'id');
 
-      let offlineSellers = result.productList.filter(
+      let sellers = result.productList.filter(
           (item) => item.sellers).map((item) => {
         const sellerItem = item.sellers;
         sellerItem.name = sellerItem.sellerName;
         return sellerItem;
       });
 
-      offlineSellers = _.uniqBy(offlineSellers, 'id');
+      sellers = _.uniqBy(sellers, 'id');
 
       let onlineSellers = result.productList.filter(
           item => item.bill && item.bill.sellers).
@@ -391,7 +391,7 @@ class EHomeAdaptor {
               (productItem) => productItem.categoryId === item.id)),
           brands: brands.filter(item => item.id !== 0),
           sellers: {
-            offlineSellers: offlineSellers.filter(item => item.id !== 0),
+            sellers: sellers.filter(item => item.id !== 0),
             onlineSellers: onlineSellers.filter(item => item.id !== 0),
           },
         },

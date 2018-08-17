@@ -121,7 +121,7 @@ exports.default = (sequelize, DataTypes) => {
   users.associate = models => {
     users.hasMany(models.userAddress, { as: 'addresses' });
     users.hasMany(models.jobs, { foreignKey: 'user_id', onDelete: 'cascade', hooks: true });
-    users.hasMany(models.fcmDetails, { foreignKey: 'user_id', onDelete: 'cascade', hooks: true });
+    users.hasMany(models.fcm_details, { foreignKey: 'user_id', onDelete: 'cascade', hooks: true });
     users.hasMany(models.jobs, { foreignKey: 'uploaded_by' });
     users.hasMany(models.jobs, { foreignKey: 'updated_by' });
     users.belongsTo(models.userRoles, { foreignKey: 'role_type', targetKey: 'role_type' });

@@ -205,7 +205,7 @@ class EHomeAdaptor {
         offline_seller_id, online_seller_id, sort_by,
         search_value: `%${search_value || ''}%`, limit, offset
       }, request.language), this.retrieveRecentSearch(user)]);
-      let brands, offlineSellers, onlineSellers;
+      let brands, sellers, onlineSellers;
       let { productList, categories } = categoryData;
       categories = categories.map(result => {
         result.brands = _lodash2.default.uniqBy(result.productList.filter(item => item.brand).map(item => {
@@ -214,7 +214,7 @@ class EHomeAdaptor {
           return brandItem;
         }), 'id');
 
-        result.offlineSellers = _lodash2.default.uniqBy(result.productList.filter(item => item.sellers).map(item => {
+        result.sellers = _lodash2.default.uniqBy(result.productList.filter(item => item.sellers).map(item => {
           const sellerItem = item.sellers;
           sellerItem.name = sellerItem.sellerName;
           return sellerItem;
@@ -347,13 +347,13 @@ class EHomeAdaptor {
       });
       brands = _lodash2.default.uniqBy(brands, 'id');
 
-      let offlineSellers = result.productList.filter(item => item.sellers).map(item => {
+      let sellers = result.productList.filter(item => item.sellers).map(item => {
         const sellerItem = item.sellers;
         sellerItem.name = sellerItem.sellerName;
         return sellerItem;
       });
 
-      offlineSellers = _lodash2.default.uniqBy(offlineSellers, 'id');
+      sellers = _lodash2.default.uniqBy(sellers, 'id');
 
       let onlineSellers = result.productList.filter(item => item.bill && item.bill.sellers).map(item => {
         const sellerItem = item.bill.sellers;
@@ -369,7 +369,7 @@ class EHomeAdaptor {
           categories: result.subCategories.filter(item => productList.find(productItem => productItem.categoryId === item.id)),
           brands: brands.filter(item => item.id !== 0),
           sellers: {
-            offlineSellers: offlineSellers.filter(item => item.id !== 0),
+            sellers: sellers.filter(item => item.id !== 0),
             onlineSellers: onlineSellers.filter(item => item.id !== 0)
           }
         },

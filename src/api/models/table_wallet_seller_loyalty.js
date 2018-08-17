@@ -59,7 +59,7 @@ export default (sequelize, DataTypes) => {
           onDelete: 'cascade',
           onUpdate: 'cascade',
         });
-    loyalty_wallet.belongsTo(models.offlineSellers,
+    loyalty_wallet.belongsTo(models.sellers,
         {
           foreignKey: 'seller_id',
           as: 'seller',

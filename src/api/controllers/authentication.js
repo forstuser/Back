@@ -60,6 +60,13 @@ class AuthenticationController {
     };
   }
 
+  static generateSellerToken(user) {
+    const expiresIn = new Date().getTime() + 647000;
+    const token = jwt.sign(JSON.parse(JSON.stringify(user, replacer)),
+        config.JWT_SECRET, {algorithm: 'HS512', expiresIn});
+    return {token, expiresIn};
+  }
+
   static expireToken(user) {
     return jwt.sign(user, config.JWT_SECRET, {
       expiresIn: 0, // in seconds

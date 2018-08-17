@@ -82,7 +82,7 @@ export default (sequelize, DataTypes) => {
     amcs.belongsTo(models.jobs, {as: 'jobs', foreignKey: 'job_id'});
     amcs.belongsTo(models.onlineSellers,
         {foreignKey: 'online_seller_id', as: 'onlineSellers'});
-    amcs.belongsTo(models.offlineSellers,
+    amcs.belongsTo(models.sellers,
         {foreignKey: 'seller_id', as: 'sellers'});
     amcs.belongsTo(models.renewalTypes,
         {foreignKey: 'renewal_type', targetKey: 'type'});

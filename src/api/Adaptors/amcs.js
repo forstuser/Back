@@ -59,15 +59,15 @@ class AmcAdaptor {
           model: this.modals.onlineSellers,
           as: 'onlineSellers',
           attributes: [
-            ['sid', 'id'], ['seller_name', 'sellerName'],
+            'id', ['seller_name', 'sellerName'],
             'url', 'gstin', 'contact', 'email'],
           required: false,
         },
         {
-          model: this.modals.offlineSellers,
+          model: this.modals.sellers,
           as: 'sellers',
           attributes: [
-            ['sid', 'id'], ['seller_name', 'sellerName'],
+            'id', ['seller_name', 'sellerName'],
             'url', ['contact_no', 'contact'], 'email', 'address',
             'city', 'state', 'pincode', 'latitude', 'longitude'],
           required: false,

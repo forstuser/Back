@@ -90,7 +90,7 @@ exports.default = (sequelize, DataTypes) => {
       onUpdate: 'cascade'
     });
 
-    table_transaction.belongsTo(models.offlineSellers, {
+    table_transaction.belongsTo(models.sellers, {
       foreignKey: 'seller_id',
       onDelete: 'cascade',
       onUpdate: 'cascade'

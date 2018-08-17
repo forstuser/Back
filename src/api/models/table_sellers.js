@@ -1,8 +1,8 @@
 'use strict';
 
 export default (sequelize, DataTypes) => {
-  const offlineSellers = sequelize.define('offlineSellers', {
-        sid: {
+  const sellers = sequelize.define('sellers', {
+        id: {
           type: DataTypes.INTEGER,
           primaryKey: true,
           autoIncrement: true,
@@ -38,9 +38,12 @@ export default (sequelize, DataTypes) => {
         state_id: {
           type: DataTypes.INTEGER,
         },
-        location_id: {
+        locality_id: {
           type: DataTypes.INTEGER,
         },
+        seller_details: {type: DataTypes.JSONB},
+        customer_ids: {type: DataTypes.JSONB},
+        rush_hours: {type: DataTypes.BOOLEAN},
         latitude: {
           type: DataTypes.FLOAT,
           allowNull: true,
@@ -75,9 +78,6 @@ export default (sequelize, DataTypes) => {
           type: DataTypes.DATE,
           defaultValue: sequelize.literal('NOW()'),
         },
-        documents: {
-          type: DataTypes.JSONB,
-        },
         seller_type_id: {
           type: DataTypes.INTEGER,
         },
@@ -90,50 +90,50 @@ export default (sequelize, DataTypes) => {
         defaultPrimaryKey: false,
         timestamps: true,
         underscored: true,
-        tableName: 'offline_sellers',
+        tableName: 'table_sellers',
       });
 
-  offlineSellers.associate = (models) => {
-    offlineSellers.belongsTo(models.users,
+  sellers.associate = (models) => {
+    sellers.belongsTo(models.users,
         {
           foreignKey: 'updated_by',
           as: 'updater',
           onDelete: 'cascade',
           onUpdate: 'cascade',
         });
-    offlineSellers.belongsTo(models.users,
+    sellers.belongsTo(models.seller_users,
         {
           foreignKey: 'user_id',
           as: 'user',
           onDelete: 'cascade',
           onUpdate: 'cascade',
         });
-    offlineSellers.belongsTo(models.seller_types,
+    sellers.belongsTo(models.seller_types,
         {
           foreignKey: 'seller_type_id',
           onDelete: 'cascade',
           onUpdate: 'cascade',
         });
-    offlineSellers.belongsTo(models.statuses,
+    sellers.belongsTo(models.statuses,
         {
           foreignKey: 'status_type',
           targetKey: 'status_type',
           onDelete: 'cascade',
           onUpdate: 'cascade',
         });
-    offlineSellers.hasMany(models.sellerReviews,
+    sellers.hasMany(models.sellerReviews,
         {
           foreignKey: 'seller_id',
           as: 'sellerReviews',
           onDelete: 'cascade',
           onUpdate: 'cascade',
         });
-    offlineSellers.belongsTo(models.states,
+    sellers.belongsTo(models.states,
         {foreignKey: 'state_id', onDelete: 'cascade', onUpdate: 'cascade'});
-    offlineSellers.belongsTo(models.cities,
+    sellers.belongsTo(models.cities,
         {foreignKey: 'city_id', onDelete: 'cascade', onUpdate: 'cascade'});
-    offlineSellers.belongsTo(models.locations,
-        {foreignKey: 'location_id', onDelete: 'cascade', onUpdate: 'cascade'});
+    sellers.belongsTo(models.locality,
+        {foreignKey: 'locality_id', onDelete: 'cascade', onUpdate: 'cascade'});
   };
-  return offlineSellers;
+  return sellers;
 };

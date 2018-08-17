@@ -114,7 +114,7 @@ export default (sequelize, DataTypes) => {
     users.hasMany(models.userAddress, {as: 'addresses'});
     users.hasMany(models.jobs,
         {foreignKey: 'user_id', onDelete: 'cascade', hooks: true});
-    users.hasMany(models.fcmDetails,
+    users.hasMany(models.fcm_details,
         {foreignKey: 'user_id', onDelete: 'cascade', hooks: true});
     users.hasMany(models.jobs, {foreignKey: 'uploaded_by'});
     users.hasMany(models.jobs, {foreignKey: 'updated_by'});

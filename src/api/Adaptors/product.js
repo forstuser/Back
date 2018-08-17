@@ -120,11 +120,11 @@ export default class ProductAdaptor {
               model: this.modals.onlineSellers,
               as: 'sellers',
               attributes: [
-                ['sid', 'id'], ['seller_name', 'sellerName'],
+                'id', ['seller_name', 'sellerName'],
                 'url', 'gstin', 'contact', 'email',
                 [
                   this.modals.sequelize.fn('CONCAT', 'sellers/',
-                      this.modals.sequelize.literal('"bill->sellers"."sid"'),
+                      this.modals.sequelize.literal('"bill->sellers"."id"'),
                       '/reviews?isonlineseller=true'), 'reviewUrl']],
               include: [
                 {
@@ -142,17 +142,17 @@ export default class ProductAdaptor {
           required: options.status_type === 8,
         },
         {
-          model: this.modals.offlineSellers,
+          model: this.modals.sellers,
           as: 'sellers',
           attributes: [
-            ['sid', 'id'], ['seller_name', 'sellerName'],
+            'id', ['seller_name', 'sellerName'],
             ['owner_name', 'ownerName'], ['pan_no', 'panNo'],
             ['reg_no', 'regNo'], ['is_service', 'isService'],
             'url', 'gstin', ['contact_no', 'contact'], 'email', 'address',
             'city', 'state', 'pincode', 'latitude', 'longitude',
             [
               this.modals.sequelize.fn('CONCAT', 'sellers/',
-                  this.modals.sequelize.literal('"sellers"."sid"'),
+                  this.modals.sequelize.literal('"sellers"."id"'),
                   '/reviews?isonlineseller=false'), 'reviewUrl']],
           include: [
             {
@@ -476,11 +476,11 @@ export default class ProductAdaptor {
                 model: this.modals.onlineSellers,
                 as: 'sellers',
                 attributes: [
-                  ['sid', 'id'], ['seller_name', 'sellerName'],
+                  'id', ['seller_name', 'sellerName'],
                   'url', 'gstin', 'contact', 'email',
                   [
                     this.modals.sequelize.fn('CONCAT', 'sellers/',
-                        this.modals.sequelize.literal('"sellers"."sid"'),
+                        this.modals.sequelize.literal('"sellers"."id"'),
                         '/reviews?isonlineseller=true'), 'reviewUrl']],
                 include: [
                   {
@@ -497,17 +497,17 @@ export default class ProductAdaptor {
               }],
             required: options.status_type === 8,
           }),
-          this.modals.offlineSellers.findAll({
-            where: {sid: products.map(item => item.seller_id).filter(Boolean)},
+          this.modals.sellers.findAll({
+            where: {id: products.map(item => item.seller_id).filter(Boolean)},
             attributes: [
-              ['sid', 'id'], ['seller_name', 'sellerName'],
+              'id', ['seller_name', 'sellerName'],
               ['owner_name', 'ownerName'], ['pan_no', 'panNo'],
               ['reg_no', 'regNo'], ['is_service', 'isService'],
               'url', 'gstin', ['contact_no', 'contact'], 'email', 'address',
               'city', 'state', 'pincode', 'latitude', 'longitude',
               [
                 this.modals.sequelize.fn('CONCAT', 'sellers/',
-                    this.modals.sequelize.literal('"sid"'),
+                    this.modals.sequelize.literal('"id"'),
                     '/reviews?isonlineseller=false'), 'reviewUrl']],
             include: [
               {
@@ -830,19 +830,10 @@ export default class ProductAdaptor {
               model: this.modals.onlineSellers,
               as: 'sellers',
               attributes: [
-                [
-                  'sid',
-                  'id'],
-                [
-                  'seller_name',
-                  'sellerName'],
-                'url',
-                'gstin',
-                'contact',
-                'email',
-                [
+                'id', ['seller_name', 'sellerName'], 'url', 'gstin',
+                'contact', 'email', [
                   this.modals.sequelize.fn('CONCAT', 'sellers/',
-                      this.modals.sequelize.literal('"bill->sellers"."sid"'),
+                      this.modals.sequelize.literal('"bill->sellers"."id"'),
                       '/reviews?isonlineseller=true'), 'reviewUrl']],
               include: [
                 {
@@ -866,17 +857,17 @@ export default class ProductAdaptor {
           required: false,
         },
         {
-          model: this.modals.offlineSellers,
+          model: this.modals.sellers,
           as: 'sellers',
           attributes: [
-            ['sid', 'id'], ['seller_name', 'sellerName'],
+            'id', ['seller_name', 'sellerName'],
             ['owner_name', 'ownerName'], ['pan_no', 'panNo'],
             ['reg_no', 'regNo'], ['is_service', 'isService'],
             'url', 'gstin', ['contact_no', 'contact'],
             'email', 'address', 'city', 'state',
             'pincode', 'latitude', 'longitude', [
               this.modals.sequelize.fn('CONCAT', 'sellers/',
-                  this.modals.sequelize.literal('"sellers"."sid"'),
+                  this.modals.sequelize.literal('"sellers"."id"'),
                   '/reviews?isonlineseller=false'), 'reviewUrl']],
           include: [
             {
@@ -1182,7 +1173,7 @@ export default class ProductAdaptor {
                   ['seller_name', 'sellerName'], 'url',
                   'contact', 'email', [
                     this.modals.sequelize.fn('CONCAT', 'sellers/',
-                        this.modals.sequelize.literal('"bill->sellers"."sid"'),
+                        this.modals.sequelize.literal('"bill->sellers"."id"'),
                         '/reviews?isonlineseller=true'), 'reviewUrl']],
                 include: [
                   {
@@ -1197,14 +1188,14 @@ export default class ProductAdaptor {
               }], required: false,
           },
           {
-            model: this.modals.offlineSellers, as: 'sellers',
+            model: this.modals.sellers, as: 'sellers',
             attributes: [
-              ['sid', 'id'], ['seller_name', 'sellerName'],
+              'id', ['seller_name', 'sellerName'],
               'url', ['contact_no', 'contact'], 'email',
               'address', 'city', 'state', 'pincode',
               'latitude', 'longitude', [
                 this.modals.sequelize.fn('CONCAT', 'sellers/',
-                    this.modals.sequelize.literal('"sellers"."sid"'),
+                    this.modals.sequelize.literal('"sellers"."id"'),
                     '/reviews?isonlineseller=false'), 'reviewUrl']], include: [
               {
                 model: this.modals.sellerReviews, as: 'sellerReviews',
@@ -1504,7 +1495,7 @@ export default class ProductAdaptor {
       product = _.omit(product, 'seller_name');
       product = _.omit(product, 'seller_contact');
       product = _.omit(product, 'brand_name');
-      product.seller_id = newSeller ? newSeller.sid : product.seller_id;
+      product.seller_id = newSeller ? newSeller.id : product.seller_id;
       product.brand_id = brandDetail ? brandDetail.brand_id : brand_id;
 
       let metadata = metaDataBody.map((mdItem) => {
@@ -1576,7 +1567,7 @@ export default class ProductAdaptor {
           this.retrieveAccessoryForProducts(
               {category_id: productBody.category_id}),
           this.modals.brands.findById(product.brand_id),
-          this.modals.fcmDetails.findAll({where: {user_id: product.user_id}})]);
+          this.modals.fcm_details.findAll({where: {user_id: product.user_id}})]);
 
         console.log('\n\n\n\n\n\n', JSON.stringify({fcm_detail, accessories}));
         if (fcm_detail && accessories.length > 0) {
@@ -1922,8 +1913,8 @@ export default class ProductAdaptor {
     const values = {
       renewal_type: expiry_period || 6, updated_by: user_id, status_type: 11,
       renewal_cost: value, product_id, job_id, user_id,
-      seller_id: isProductPUCSellerSame ? sellerDetail.sid :
-          seller_name || seller_contact ? pucSeller.sid : undefined,
+      seller_id: isProductPUCSellerSame ? sellerDetail.id :
+          seller_name || seller_contact ? pucSeller.id : undefined,
       expiry_date: moment.utc(expiry_date).format('YYYY-MM-DD'),
       effective_date: moment.utc(effective_date).format('YYYY-MM-DD'),
       document_date: moment.utc(effective_date).format('YYYY-MM-DD'),
@@ -1943,10 +1934,10 @@ export default class ProductAdaptor {
         moment.utc(document_date, moment.ISO_8601).startOf('day') :
         moment.utc(document_date, 'DD MMM YY').startOf('day');
 
-    const seller_id = isProductRepairSellerSame ? sellerDetail.sid :
-        isAMCRepairSellerSame ? amcSeller.sid :
+    const seller_id = isProductRepairSellerSame ? sellerDetail.id :
+        isAMCRepairSellerSame ? amcSeller.id :
             seller_name || seller_name === '' || seller_contact ?
-                repairSeller.sid : undefined;
+                repairSeller.id : undefined;
     const values = {
       updated_by: user_id, status_type: 11, product_id, seller_id,
       document_date: moment.utc(document_date).format('YYYY-MM-DD'),
@@ -1971,8 +1962,8 @@ export default class ProductAdaptor {
     const values = {
       renewal_type: 8, updated_by: user_id, status_type: 11, product_id, job_id,
       renewal_cost: value,
-      seller_id: isProductAMCSellerSame ? sellerDetail.sid :
-          seller_name || seller_name === '' || seller_contact ? amcSeller.sid :
+      seller_id: isProductAMCSellerSame ? sellerDetail.id :
+          seller_name || seller_name === '' || seller_contact ? amcSeller.id :
               undefined, user_id,
       expiry_date: moment.utc(expiry_date).format('YYYY-MM-DD'),
       effective_date: moment.utc(effective_date).format('YYYY-MM-DD'),
@@ -2092,7 +2083,7 @@ export default class ProductAdaptor {
     let {seller_id, seller_name, seller_contact, seller_email, seller_address, user_id} = productBody;
     seller_name = seller_name || '';
     if (seller_id) {
-      sellerOption = {sid: seller_id};
+      sellerOption = {id: seller_id};
     } else {
       sellerOption = {
         $or: {

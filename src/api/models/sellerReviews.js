@@ -48,7 +48,7 @@ export default (sequelize, DataTypes) => {
   sellerReviews.associate = (models) => {
     sellerReviews.belongsTo(models.users,
         {foreignKey: 'user_id'});
-    sellerReviews.belongsTo(models.offlineSellers,
+    sellerReviews.belongsTo(models.sellers,
         {foreignKey: 'offline_seller_id'});
     sellerReviews.belongsTo(models.onlineSellers, {foreignKey: 'seller_id'});
   };

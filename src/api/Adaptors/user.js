@@ -90,6 +90,33 @@ class UserAdaptor {
   }
 
   /**
+   *
+   * @param filterObject
+   * @param is_create
+   * @returns {Promise<Model>}
+   */
+  async retrieveSellerUser(filterObject, is_create) {
+    filterObject.attributes = [
+      'id', ['full_name', 'name'], 'mobile_no',
+      'email', 'email_verified', 'email_secret',
+      [
+        this.modals.sequelize.fn('CONCAT', 'consumer/',
+            this.modals.sequelize.col('id'), '/images'), 'imageUrl'],
+    ];
+    console.log(filterObject);
+    let seller_user = await this.modals.seller_users.findOne(filterObject);
+    if (is_create) {
+      filterObject.last_active_date = moment();
+      if (!seller_user) {
+        seller_user = await this.modals.seller_users.create(filterObject.where);
+      }
+      await seller_user.updateAttributes(filterObject.where);
+    }
+
+    return seller_user ? seller_user.toJSON() : seller_user;
+  }
+
+  /**
    * Retrieve User by user ID
    * @param user
    * @returns {User}

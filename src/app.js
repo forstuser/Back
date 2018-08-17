@@ -45,9 +45,15 @@ const init = async () => {
         {
           key: jwtKey.toString(),
           validate: async (decoded, request) => {
-            let userList = await models.users.findAll({
-              where: JSON.parse(JSON.stringify({role_type: 5, id: decoded.id})),
-            });
+            let userList = await (decoded.seller_detail ?
+                models.seller_users.findAll({
+                  where: JSON.parse(
+                      JSON.stringify({role_type: 6, id: decoded.id})),
+                }) :
+                models.users.findAll({
+                  where: JSON.parse(
+                      JSON.stringify({role_type: 5, id: decoded.id})),
+                }));
             const people = {};
             userList.forEach((item) => {
               item = item.toJSON();

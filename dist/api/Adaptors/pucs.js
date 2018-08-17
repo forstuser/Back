@@ -57,8 +57,8 @@ class PUCAdaptor {
         model: this.modals.products, where: productOptions,
         attributes: [], required: productOptions !== undefined
       }, {
-        model: this.modals.offlineSellers, as: 'sellers',
-        attributes: [['sid', 'id'], ['seller_name', 'sellerName'], 'url', ['contact_no', 'contact'], 'email', 'address', 'city', 'state', 'pincode', 'latitude', 'longitude'],
+        model: this.modals.sellers, as: 'sellers',
+        attributes: ['id', ['seller_name', 'sellerName'], 'url', ['contact_no', 'contact'], 'email', 'address', 'city', 'state', 'pincode', 'latitude', 'longitude'],
         required: false
       }],
       attributes: ['id', ['product_id', 'productId'], ['job_id', 'jobId'], 'user_id', ['document_number', 'policyNo'], [this.modals.sequelize.literal('"product"."main_category_id"'), 'masterCategoryId'], ['renewal_cost', 'premiumAmount'], [this.modals.sequelize.literal('"product"."product_name"'), 'productName'], ['renewal_cost', 'value'], 'renewal_type', ['renewal_taxes', 'taxes'], ['effective_date', 'effectiveDate'], ['expiry_date', 'expiryDate'], ['document_date', 'purchaseDate'], ['updated_at', 'updatedDate'], 'copies', [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"product_id"')), 'productURL']],

@@ -75,7 +75,7 @@ exports.default = (sequelize, DataTypes) => {
       onDelete: 'cascade',
       onUpdate: 'cascade'
     });
-    expense_sku_items.belongsTo(models.offlineSellers, {
+    expense_sku_items.belongsTo(models.sellers, {
       foreignKey: 'seller_id',
       as: 'seller',
       onDelete: 'cascade',

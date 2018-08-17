@@ -113,7 +113,7 @@ export default (sequelize, DataTypes) => {
     products.belongsTo(models.statuses,
         {foreignKey: 'status_type', targetKey: 'status_type'});
     products.belongsTo(models.jobs, {as: 'jobs', foreignKey: 'job_id'});
-    products.belongsTo(models.offlineSellers,
+    products.belongsTo(models.sellers,
         {foreignKey: 'seller_id', as: 'sellers'});
     products.belongsTo(models.table_accessory_categories,
         {foreignKey: 'accessory_id', as: 'accessory', onDelete: 'cascade'});

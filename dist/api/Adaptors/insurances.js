@@ -64,7 +64,7 @@ class InsuranceAdaptor {
       }, {
         model: this.modals.onlineSellers,
         as: 'onlineSellers',
-        attributes: [['sid', 'id'], ['seller_name', 'sellerName'], 'url', 'contact', 'email'],
+        attributes: ['id', ['seller_name', 'sellerName'], 'url', 'contact', 'email'],
         required: false
       }, {
         model: this.modals.insuranceBrands,
@@ -72,9 +72,9 @@ class InsuranceAdaptor {
         attributes: ['id', 'name', 'url', ['contact_no', 'contact'], 'email', 'address', 'city', 'state', 'pincode', 'latitude', 'longitude', [this.modals.sequelize.fn('CONCAT', 'providers/', this.modals.sequelize.col('"provider"."id"'), '/images'), 'imageUrl'], 'status_type'],
         required: false
       }, {
-        model: this.modals.offlineSellers,
+        model: this.modals.sellers,
         as: 'sellers',
-        attributes: [['sid', 'id'], ['seller_name', 'sellerName'], ['owner_name', 'ownerName'], 'url', ['contact_no', 'contact'], 'email', 'address', 'city', 'state', 'pincode', 'latitude', 'longitude'],
+        attributes: ['id', ['seller_name', 'sellerName'], ['owner_name', 'ownerName'], 'url', ['contact_no', 'contact'], 'email', 'address', 'city', 'state', 'pincode', 'latitude', 'longitude'],
         required: false
       }],
       attributes: ['id', ['product_id', 'productId'], [this.modals.sequelize.literal('"product"."main_category_id"'), 'masterCategoryId'], ['job_id', 'jobId'], 'provider_id', [this.modals.sequelize.literal('"renewalType"."title"'), 'premiumType'], ['document_number', 'policyNo'], [this.modals.sequelize.literal('"product"."product_name"'), 'productName'], ['renewal_cost', 'premiumAmount'], ['renewal_cost', 'value'], ['renewal_taxes', 'taxes'], ['amount_insured', 'amountInsured'], ['expiry_date', 'expiryDate'], ['document_date', 'purchaseDate'], ['updated_at', 'updatedDate'], ['effective_date', 'effectiveDate'], 'renewal_type', [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"product_id"')), 'productURL'], 'copies', 'user_id'],

@@ -10,10 +10,6 @@ exports.default = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false
     },
-    pincodes: {
-      type: DataTypes.JSONB,
-      allowNull: false
-    },
     status_type: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -37,7 +33,12 @@ exports.default = (sequelize, DataTypes) => {
 
   cities.associate = models => {
     cities.belongsTo(models.users, { foreignKey: 'created_by', onDelete: 'cascade', onUpdate: 'cascade' });
-    cities.belongsTo(models.statuses, { foreignKey: 'status_type', targetKey: 'status_type', onDelete: 'cascade', onUpdate: 'cascade' });
+    cities.belongsTo(models.statuses, {
+      foreignKey: 'status_type',
+      targetKey: 'status_type',
+      onDelete: 'cascade',
+      onUpdate: 'cascade'
+    });
     cities.belongsTo(models.states, { foreignKey: 'state_id', onDelete: 'cascade', onUpdate: 'cascade' });
   };
   return cities;

@@ -45,7 +45,7 @@ exports.default = (sequelize, DataTypes) => {
     sku_seller.belongsTo(models.users, { foreignKey: 'updated_by', onDelete: 'cascade', onUpdate: 'cascade' });
     sku_seller.belongsTo(models.sku, { foreignKey: 'sku_id', onDelete: 'cascade', onUpdate: 'cascade' });
     sku_seller.belongsTo(models.sku_measurement, { foreignKey: 'sku_measurement_id', onDelete: 'cascade', onUpdate: 'cascade' });
-    sku_seller.belongsTo(models.offlineSellers, { foreignKey: 'seller_id', as: 'seller', onDelete: 'cascade', onUpdate: 'cascade' });
+    sku_seller.belongsTo(models.sellers, { foreignKey: 'seller_id', as: 'seller', onDelete: 'cascade', onUpdate: 'cascade' });
     sku_seller.belongsTo(models.statuses, { foreignKey: 'status_type', targetKey: 'status_type', onDelete: 'cascade', onUpdate: 'cascade' });
   };
   return sku_seller;

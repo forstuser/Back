@@ -48,9 +48,9 @@ class PUCAdaptor {
           attributes: [], required: productOptions !== undefined,
         },
         {
-          model: this.modals.offlineSellers, as: 'sellers',
+          model: this.modals.sellers, as: 'sellers',
           attributes: [
-            ['sid', 'id'], ['seller_name', 'sellerName'],
+            'id', ['seller_name', 'sellerName'],
             'url', ['contact_no', 'contact'], 'email',
             'address', 'city', 'state', 'pincode',
             'latitude', 'longitude'],

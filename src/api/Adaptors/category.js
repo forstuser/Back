@@ -296,4 +296,22 @@ export default class CategoryAdaptor {
     });
     return accessory_parts.map(item => item.toJSON());
   }
+
+  async retrieveStates(options) {
+    options.order = [['id', 'ASC']];
+    const states = await this.modals.states.findAll(options);
+    return states.map(item => item.toJSON());
+  }
+
+  async retrieveCities(options) {
+    options.order = [['id', 'ASC']];
+    const cities = await this.modals.cities.findAll(options);
+    return cities.map(item => item.toJSON());
+  }
+
+  async retrieveLocalities(options) {
+    options.order = [['id', 'ASC']];
+    const localities = await this.modals.locality.findAll(options);
+    return localities.map(item => item.toJSON());
+  }
 }
