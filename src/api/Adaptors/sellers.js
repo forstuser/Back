@@ -35,7 +35,7 @@ export default class SellerAdaptor {
           state_ids = sellers.map(item => item.state_id).filter(item => item),
           locality_ids = sellers.map(item => item.locality_id).
               filter(item => item);
-      const [seller_categories, seller_cities, seller_states, seller_locations] = await Promise.all(
+      const [seller_categories, seller_cities, seller_states, seller_locations, assisted_services] = await Promise.all(
           [
             this.retrieveSellerCategories({seller_id}),
             city_ids.length > 0 ?
@@ -43,7 +43,8 @@ export default class SellerAdaptor {
             state_ids.length > 0 ?
                 this.retrieveSellerStates({id: state_ids}) : [],
             locality_ids.length > 0 ?
-                this.retrieveSellerLocations({id: locality_ids}) : []]);
+                this.retrieveSellerLocations({id: locality_ids}) : [],
+            this.retrieveSellerAssistedServices({seller_id})]);
       sellers = sellers.map(item => {
         item.categories = seller_categories.filter(
             cItem => cItem.seller_id === item.id);
@@ -51,6 +52,7 @@ export default class SellerAdaptor {
         item.state = seller_states.find(cItem => cItem.id === item.state_id);
         item.location = seller_locations.find(
             cItem => cItem.id === item.locality_id);
+        item.assisted_services = assisted_services;
         item.cashback_total = item.cashback_total || 0;
         item.loyalty_total = item.loyalty_total || 0;
         item.credit_total = item.credit_total || 0;
@@ -95,8 +97,35 @@ export default class SellerAdaptor {
   }
 
   async retrieveAssistedServiceTypes(query_options) {
-    const result = await this.modals.assisted_service_types.findAll(query_options);
+    const result = await this.modals.assisted_service_types.findAll(
+        query_options);
     return result ? result.map(item => item.toJSON()) : result;
+  }
+
+  async retrieveSellerAssistedServices(query_options) {
+    const result = await this.modals.seller_service_types.findAll(
+        query_options);
+    return result ? result.map(item => item.toJSON()) : result;
+  }
+
+  async retrieveSellerOffers(query_options) {
+    const result = await this.modals.seller_offers.findAll(
+        query_options);
+    return result ? result.map(item => item.toJSON()) : result;
+  }
+
+  async retrieveSellerAssistedServiceDetail(query_options) {
+    const result = await this.modals.seller_service_types.findOne(
+        query_options);
+    return result ? result.toJSON() : result;
+  }
+
+  async deleteSellerAssistedService(query_options) {
+    return await this.modals.seller_service_types.destroy(query_options);
+  }
+
+  async deleteSellerOffers(query_options) {
+    return await this.modals.seller_offers.destroy(query_options);
   }
 
   async createSellerOnInit(seller_detail) {
@@ -118,14 +147,15 @@ export default class SellerAdaptor {
         seller = await this.retrieveSellerByLocation(latitude, longitude, city,
             seller);
       }
-      const [seller_categories, seller_cash_backs, seller_loyalty_points, seller_offers, seller_credits, seller_cities, seller_states, seller_locations, seller_reviews] = await Promise.all(
+      const [seller_categories, seller_cash_backs, seller_loyalty_points, seller_offers, seller_credits, seller_cities, seller_states, seller_locations, seller_reviews, assisted_services] = await Promise.all(
           [
             this.retrieveSellerCategories({seller_id}),
             user_id ? this.retrieveSellerCashBack({seller_id, user_id}) : [],
             user_id ? this.retrieveSellerLoyaltyPoints({seller_id, user_id}) :
                 [],
             seller_offer_ids && seller_offer_ids.length > 0 ?
-                this.retrieveSellerOffers({seller_id, id: seller_offer_ids}) :
+                this.retrieveSellerOffersForConsumer(
+                    {seller_id, id: seller_offer_ids}) :
                 [],
             user_id ? this.retrieveSellerCredits({seller_id, user_id}) : [],
             city_id ?
@@ -134,7 +164,8 @@ export default class SellerAdaptor {
                 this.retrieveSellerStates({id: state_id}) : [],
             locality_id ?
                 this.retrieveSellerLocations({id: locality_id}) : [],
-            this.retrieveSellerReviews({offline_seller_id: seller_id})]);
+            this.retrieveSellerReviews({offline_seller_id: seller_id}),
+            this.retrieveSellerAssistedServices({seller_id})]);
       seller.categories = seller_categories;
       seller.seller_cash_backs = seller_cash_backs;
       seller.seller_loyalty_points = seller_loyalty_points;
@@ -149,6 +180,7 @@ export default class SellerAdaptor {
       seller.credit_total = seller.credit_total || 0;
       seller.offer_count = seller.offer_count || 0;
       seller.ratings = seller.ratings || 0;
+      seller.assisted_services = assisted_services;
     }
 
     return seller;
@@ -200,7 +232,7 @@ export default class SellerAdaptor {
     return seller_cash_back;
   }
 
-  async retrieveSellerOffers(options) {
+  async retrieveSellerOffersForConsumer(options) {
     let seller_offers = await this.modals.seller_offers.findAll(
         {where: JSON.parse(JSON.stringify(options))});
     seller_offers = seller_offers.map(item => item.toJSON());
@@ -421,7 +453,7 @@ export default class SellerAdaptor {
     let seller_service_type = await this.modals.seller_service_types.findOne({
       where: options,
     });
-    if (seller_provider_type) {
+    if (seller_service_type) {
       const seller_service_type_result = seller_service_type.toJSON();
       defaults.status_type = seller_service_type_result.status_type;
       await seller_service_type.updateAttributes(defaults);
@@ -430,6 +462,20 @@ export default class SellerAdaptor {
           defaults);
     }
     return seller_service_type.toJSON();
+  }
+
+  async retrieveOrCreateSellerOffers(options, defaults) {
+    let seller_offer = await this.modals.seller_offers.findOne({
+      where: options,
+    });
+    if (seller_offer) {
+      const seller_offer_result = seller_offer.toJSON();
+      defaults.status_type = seller_offer_result.status_type;
+      await seller_offer.updateAttributes(defaults);
+    } else {
+      seller_offer = await this.modals.seller_service_types.create(defaults);
+    }
+    return seller_offer.toJSON();
   }
 
 }

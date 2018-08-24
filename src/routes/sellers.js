@@ -4,7 +4,12 @@
 import controller from '../api/controllers/sellers';
 import joi from 'joi';
 
-//Shop and earn routes
+/**
+ * Seller Routes
+ * @param modal
+ * @param route
+ * @param middleware
+ */
 export function prepareSellerRoutes(modal, route, middleware) {
 
   const varController = new controller(modal);
@@ -334,10 +339,53 @@ export function prepareSellerRoutes(modal, route, middleware) {
                 service_type_id: joi.number().required(),
                 mobile_no: joi.string().required(),
                 name: [joi.string(), joi.allow(null)],
-                document_name: [joi.string(), joi.allow(null)],
-                price: [joi.object().keys({
-                  price_type: joi.number().required(),
-                  value: joi.number().required()}), joi.allow(null)],
+                document_details: [
+                  joi.array().items(joi.number()),
+                  joi.allow(null)],
+                price: [
+                  joi.object().keys({
+                    price_type: joi.number().required(),
+                    value: joi.number().required(),
+                  }), joi.allow(null)],
+              })).required()],
+            output: 'data',
+            parse: true,
+          },
+        },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              {code: 200, message: 'Authenticated'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
+            ],
+          },
+        },
+      },
+    });
+
+    route.push({
+      method: 'PUT',
+      path: '/sellers/{id}/offers',
+      config: {
+        pre: [{method: middleware.checkAppVersion, assign: 'forceUpdate'}],
+        auth: 'jwt', handler: controller.updateSellerOffers,
+        description: 'Update Seller Offers',
+        tags: ['api', 'Seller', 'Offer', 'Details'],
+        validate: {
+          payload: {
+            seller_offers: [
+              joi.array().items(joi.object().keys({
+                id: [joi.number(), joi.allow(null)],
+                title: joi.string().required(),
+                description: [joi.string(), joi.allow(null)],
+                document_details: [
+                  joi.array().items(joi.number()),
+                  joi.allow(null)],
+                start_date: joi.string().required(),
+                end_date: [joi.string(), joi.allow(null)],
               })).required()],
             output: 'data',
             parse: true,
@@ -365,6 +413,92 @@ export function prepareSellerRoutes(modal, route, middleware) {
         auth: 'jwt', handler: controller.getBrandsForSeller,
         description: 'Retrieve Seller Brands',
         tags: ['api', 'Seller', 'Brands'],
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              {code: 200, message: 'Authenticated'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
+            ],
+          },
+        },
+      },
+    });
+
+    route.push({
+      method: 'GET',
+      path: '/sellers/{seller_id}/assisted',
+      config: {
+        pre: [{method: middleware.checkAppVersion, assign: 'forceUpdate'}],
+        auth: 'jwt', handler: controller.getAssistedServicesForSeller,
+        description: 'Get Seller assisted service types details',
+        tags: ['api', 'Seller', 'Assisted Service Types', 'Details'],
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              {code: 200, message: 'Authenticated'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
+            ],
+          },
+        },
+      },
+    });
+
+    route.push({
+      method: 'GET',
+      path: '/sellers/{seller_id}/offers',
+      config: {
+        pre: [{method: middleware.checkAppVersion, assign: 'forceUpdate'}],
+        auth: 'jwt', handler: controller.retrieveSellerOffers,
+        description: 'Get Seller offers',
+        tags: ['api', 'Seller', 'Offer', 'List'],
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              {code: 200, message: 'Authenticated'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
+            ],
+          },
+        },
+      },
+    });
+
+    route.push({
+      method: 'DELETE',
+      path: '/sellers/{seller_id}/assisted/{id}',
+      config: {
+        auth: 'jwt',
+        pre: [{method: middleware.checkAppVersion, assign: 'forceUpdate'}],
+        handler: controller.deleteAssistedService,
+      },
+    });
+
+    route.push({
+      method: 'DELETE',
+      path: '/sellers/{seller_id}/offers/{id}',
+      config: {
+        auth: 'jwt',
+        pre: [{method: middleware.checkAppVersion, assign: 'forceUpdate'}],
+        handler: controller.deleteOffer,
+      },
+    });
+
+    route.push({
+      method: 'GET',
+      path: '/sellers/categories',
+      config: {
+        pre: [{method: middleware.checkAppVersion, assign: 'forceUpdate'}],
+        auth: 'jwt', handler: controller.getCategoriesForSeller,
+        description: 'Retrieve Seller Categories',
+        tags: ['api', 'Seller', 'Categories'],
         plugins: {
           'hapi-swagger': {
             responseMessages: [

@@ -773,10 +773,10 @@ class SellerController {
       const { id: seller_id } = request.params || {};
       let { id: user_id, mobile_no: contact_no, email } = token_user;
       const seller_service_types = await _bluebird2.default.all(request.payload.service_type_detail.map(item => {
-        const { service_type_id, name, mobile_no, price, document_name } = item;
+        const { service_type_id, name, mobile_no, price, document_details } = item;
         return sellerAdaptor.retrieveOrCreateSellerAssistedServiceTypes(JSON.parse(JSON.stringify({ service_type_id, seller_id, name, mobile_no })), JSON.parse(JSON.stringify({
           seller_id, service_type_id, name, mobile_no,
-          price, document_name
+          price, document_details
         })));
       }));
 
@@ -798,9 +798,287 @@ class SellerController {
       }).catch(ex => console.log('error while logging on db,', ex));
       return reply.response({
         status: false,
-        message: 'Unable to update seller provider types.',
+        message: 'Unable to update seller assisted services.',
         forceUpdate: request.pre.forceUpdate,
         err
+      });
+    }
+  }
+
+  static async updateSellerOffers(request, reply) {
+    let replyObject = {
+      status: true,
+      message: 'success'
+    };
+    try {
+      let token_user = _shared2.default.verifyAuthorization(request.headers);
+      const { id: seller_id } = request.params || {};
+      let { id: user_id, mobile_no: contact_no, email } = token_user;
+      const seller_offers = await _bluebird2.default.all(request.payload.seller_offers.map(item => {
+        const { start_date, end_date, title, description, id, document_details } = item;
+        return sellerAdaptor.retrieveOrCreateSellerOffers(JSON.parse(JSON.stringify({ id, seller_id })), JSON.parse(JSON.stringify({
+          seller_id, start_date, end_date, title,
+          description, document_details
+        })));
+      }));
+
+      replyObject.seller_offers = JSON.parse(JSON.stringify(seller_offers));
+      return reply.response(JSON.parse(JSON.stringify(replyObject))).code(201);
+    } catch (err) {
+      console.log(err);
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err
+        })
+      }).catch(ex => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to update seller offers.',
+        forceUpdate: request.pre.forceUpdate,
+        err
+      });
+    }
+  }
+
+  static async getCategoriesForSeller(request, reply) {
+    const user = _shared2.default.verifyAuthorization(request.headers);
+    try {
+      if (!request.pre.forceUpdate) {
+        const seller_data = await sellerAdaptor.retrieveSellerDetail({
+          where: { user_id: user.id },
+          attributes: ['id', 'seller_details', 'is_onboarded', 'gstin', 'pan_no']
+        });
+
+        const { seller_details } = seller_data || {};
+
+        const { basic_details, business_details } = seller_details || {};
+        let categories;
+        if (basic_details && basic_details.category_id && business_details) {
+          categories = await generalAdaptor.retrieveCategories({
+            options: { ref_id: basic_details.category_id },
+            isSubCategoryRequiredForAll: true
+          });
+
+          return reply.response({
+            status: true,
+            message: 'Successful',
+            categories,
+            forceUpdate: request.pre.forceUpdate
+          });
+        } else {
+          return reply.response({
+            status: false,
+            message: 'Please select category.',
+            forceUpdate: request.pre.forceUpdate
+          });
+        }
+      } else {
+        return reply.response({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    } catch (err) {
+      console.log(err);
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err
+        })
+      }).catch(ex => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Something wrong',
+        forceUpdate: request.pre.forceUpdate
+      });
+    }
+  }
+
+  static async getAssistedServicesForSeller(request, reply) {
+    try {
+      if (!request.pre.forceUpdate) {
+        const { seller_id } = request.params;
+        const [service_types, seller_service_types] = await _bluebird2.default.all([sellerAdaptor.retrieveAssistedServiceTypes({}), sellerAdaptor.retrieveSellerAssistedServices({
+          where: { seller_id },
+          attributes: ['service_type_id', 'seller_id', 'name', 'mobile_no', 'price', 'document_details']
+        })]);
+
+        return reply.response({
+          status: true,
+          message: 'Successful',
+          result: seller_service_types.map(item => {
+            const service_type = service_types.find(stItem => stItem.id === item.service_type_id);
+            item.service_type = service_type.title;
+            return item;
+          }),
+          forceUpdate: request.pre.forceUpdate
+        });
+      } else {
+        return reply.response({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    } catch (err) {
+      console.log(err);
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err
+        })
+      }).catch(ex => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to retrieve assisted services for seller',
+        forceUpdate: request.pre.forceUpdate
+      });
+    }
+  }
+
+  static async retrieveSellerOffers(request, reply) {
+    try {
+      if (!request.pre.forceUpdate) {
+        const { seller_id } = request.params;
+        return reply.response({
+          status: true,
+          message: 'Successful',
+          result: await sellerAdaptor.retrieveSellerOffers({
+            where: { seller_id },
+            attributes: ['id', 'seller_id', 'title', 'description', 'start_date', 'end_date', 'document_details']
+          }),
+          forceUpdate: request.pre.forceUpdate
+        });
+      } else {
+        return reply.response({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    } catch (err) {
+      console.log(err);
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err
+        })
+      }).catch(ex => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to retrieve offers for seller',
+        forceUpdate: request.pre.forceUpdate
+      });
+    }
+  }
+
+  static async deleteAssistedService(request, reply) {
+    try {
+      if (!request.pre.forceUpdate) {
+        const { seller_id, id } = request.params;
+        await sellerAdaptor.deleteSellerAssistedService({ seller_id, id });
+
+        return reply.response({
+          status: true,
+          message: 'Successful',
+          forceUpdate: request.pre.forceUpdate
+        });
+      } else {
+        return reply.response({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    } catch (err) {
+      console.log(err);
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err
+        })
+      }).catch(ex => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to delete selected assisted service.',
+        forceUpdate: request.pre.forceUpdate
+      });
+    }
+  }
+
+  static async deleteOffer(request, reply) {
+    try {
+      if (!request.pre.forceUpdate) {
+        const { seller_id, id } = request.params;
+        await sellerAdaptor.deleteSellerOffers({ seller_id, id });
+
+        return reply.response({
+          status: true,
+          message: 'Successful',
+          forceUpdate: request.pre.forceUpdate
+        });
+      } else {
+        return reply.response({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    } catch (err) {
+      console.log(err);
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err
+        })
+      }).catch(ex => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to delete selected assisted service.',
+        forceUpdate: request.pre.forceUpdate
       });
     }
   }

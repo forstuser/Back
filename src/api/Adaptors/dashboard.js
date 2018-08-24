@@ -29,6 +29,56 @@ class DashboardAdaptor {
     this._ = _;
   }
 
+  async retrieveSellerDashboard(options, request) {
+    try {
+      const {seller_id} = options;
+      let [total_transactions, credit_pending, loyalty_points, debit_loyalty_points, consumer_counts] = await Promise.all(
+          [
+            this.modals.products.aggregate('purchase_cost', 'sum',
+                {where: {seller_id, status_type: [5, 11]}}),
+            this.modals.credit_wallet.aggregate('*', 'count',
+                {where: {seller_id, status_type: 16}}),
+            this.modals.loyalty_wallet.aggregate('amount', 'sum',
+                {where: {seller_id, transaction_type: 1}}),
+            this.modals.loyalty_wallet.aggregate('amount', 'sum',
+                {where: {seller_id, transaction_type: 2}}),
+            this.modals.products.aggregate('user_id', 'count',
+                {where: {seller_id, status_type: [5, 11]}, distinct: true})]);
+      return {
+        status: true,
+        message: 'Dashboard restore Successful',
+        total_transactions,
+        credit_pending,
+        loyalty_points: (loyalty_points || 0) - (debit_loyalty_points || 0),
+        consumer_counts,
+        notification_count: 0,
+        forceUpdate: request.pre.forceUpdate,
+      };
+    } catch (err) {
+      console.log(err);
+      this.modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user.id || user.ID,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
+      return ({
+        status: false,
+        message: 'Dashboard restore failed',
+        err,
+        forceUpdate: request.pre.forceUpdate,
+        showDashboard: false,
+      });
+    }
+  }
+
   async retrieveDashboardResult(user, request) {
     try {
       let [upcomingServices, recentSearches, notificationCount] = await Promise.all(

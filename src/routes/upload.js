@@ -224,6 +224,36 @@ export function prepareUploadRoutes(modal, routeObject, middleware) {
       },
     });
 
+    routeObject.push({
+      method: 'DELETE',
+      path: '/sellers/{id}/upload/{type}/images/{index}',
+      config: {
+        auth: 'jwt',
+        pre: [{method: middleware.checkAppVersion, assign: 'forceUpdate'}],
+        handler: ControllerObject.deleteSellerImages,
+      },
+    });
+
+    routeObject.push({
+      method: 'DELETE',
+      path: '/sellers/{id}/details',
+      config: {
+        auth: 'jwt',
+        pre: [{method: middleware.checkAppVersion, assign: 'forceUpdate'}],
+        handler: ControllerObject.deleteSellerDetails,
+      },
+    });
+
+    routeObject.push({
+      method: 'DELETE',
+      path: '/sellers/{id}/details/{type}',
+      config: {
+        auth: 'jwt',
+        pre: [{method: middleware.checkAppVersion, assign: 'forceUpdate'}],
+        handler: ControllerObject.deleteSellerDetails,
+      },
+    });
+
     /*Retrieve user job copies*/
     routeObject.push({
       method: 'GET',

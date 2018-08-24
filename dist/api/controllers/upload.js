@@ -762,13 +762,24 @@ class UploadController {
       const fileResult = await _bluebird2.default.all(fileUploadPromises);
       console.log('\n\n\n\n', JSON.stringify({ seller_data }));
       let { seller_details } = seller_data;
-      seller_details = seller_details || (type.toString() === '1' ? { basic_details: { documents: [] } } : { basic_details: { documents: [] }, business_details: { documents: [] } });
+      seller_details = seller_details || (type.toString() === '1' ? { basic_details: { documents: [] } } : type.toString() === '2' ? {
+        basic_details: { documents: [] },
+        business_details: { documents: [] }
+      } : {
+        basic_details: { documents: [] },
+        business_details: { documents: [] },
+        assisted_type_images: [],
+        offers: []
+      });
       console.log('\n\n\n\n', JSON.stringify({ seller_details }));
       const basic_details = seller_details.basic_details || { documents: [] };
       const business_details = seller_details.business_details || { documents: [] };
+      seller_details.assisted_type_images = seller_details.assisted_type_images || [];
+      seller_details.offers = seller_details.offers || [];
       basic_details.documents = basic_details.documents || [];
       business_details.documents = business_details.documents || [];
       image_types = (image_types || '').split(',');
+      const file_details = [];
       fileResult.forEach((elem, index) => {
         if (type.toString() === '1') {
           basic_details.documents.push({
@@ -777,7 +788,7 @@ class UploadController {
             updated_by: user.id, type
           });
           seller_details.basic_details = basic_details;
-        } else {
+        } else if (type.toString() === '2') {
           business_details.documents.push({
             file_name: fileNames[index],
             file_type: fileTypes[index] ? fileTypes[index].toString() : fileTypeDataArray[index].ext,
@@ -785,17 +796,31 @@ class UploadController {
           });
           business_details.business_type = business_type;
           seller_details.business_details = business_details;
+          seller_details.is_onboarded = true;
+        } else if (type.toString() === '3') {
+          const file_detail = {
+            file_name: fileNames[index],
+            file_type: fileTypes[index] ? fileTypes[index].toString() : fileTypeDataArray[index].ext,
+            updated_by: user.id, type, image_type: image_types[index]
+          };
+          file_details.push(file_detail);
+          seller_details.assisted_type_images.push(file_detail);
+        } else if (type.toString() === '4') {
+          const file_detail = {
+            file_name: fileNames[index],
+            file_type: fileTypes[index] ? fileTypes[index].toString() : fileTypeDataArray[index].ext,
+            updated_by: user.id, type, image_type: image_types[index]
+          };
+          file_details.push(file_detail);
+          seller_details.offers.push(file_detail);
         }
       });
 
       return reply.response(JSON.parse(JSON.stringify({
         status: true,
         message: 'Upload Successfull',
-        categories: basic_details.category_id && type.toString() === '1' ? await categoryAdaptor.retrieveCategories({
-          options: { category_id: basic_details.category_id },
-          isSubCategoryRequiredForAll: true
-        }) : undefined,
-        seller: await sellerAdaptor.retrieveOrUpdateSellerDetail({ where: { id: seller_data.id } }, { seller_details }, false)
+        seller: await sellerAdaptor.retrieveOrUpdateSellerDetail({ where: { id: seller_data.id } }, { seller_details }, false),
+        file_details
         // forceUpdate: request.pre.forceUpdate
       })));
     } catch (err) {
@@ -1215,8 +1240,11 @@ class UploadController {
           if (type.toString() === '1') {
             const document = seller_data.seller_details.basic_details.documents[index];
             file_name = (document || {}).file_name;
-          } else {
+          } else if (type.toString() === '2') {
             const document = seller_data.seller_details.business_details.documents[index];
+            file_name = (document || {}).file_name;
+          } else {
+            const document = seller_data.seller_details.assisted_type_images.documents[index];
             file_name = (document || {}).file_name;
           }
           if (file_name) {
@@ -1232,6 +1260,167 @@ class UploadController {
               forceUpdate: request.pre.forceUpdate
             });
           }
+        } else {
+
+          return reply.response({
+            status: false,
+            message: 'Look like seller details are not available',
+            forceUpdate: request.pre.forceUpdate
+          });
+        }
+      } catch (err) {
+        console.log(`Error on ${new Date()} for user while retrieving category image is as follow: \n \n ${err}`);
+
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: 1,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err
+          })
+        }).catch(ex => console.log('error while logging on db,', ex));
+        return reply.response({
+          status: false,
+          message: 'Unable to retrieve image',
+          err,
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    } else {
+      return reply.response({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate
+      });
+    }
+  }
+
+  static async deleteSellerImages(request, reply) {
+
+    if (!request.pre.forceUpdate) {
+      try {
+        const user = _shared2.default.verifyAuthorization(request.headers);
+        const { id, type, index } = request.params || {};
+        const seller_image_types = _main2.default.SELLER_IMAGE_TYPE.split(',');
+        const seller_data = await sellerAdaptor.retrieveSellerDetail({ where: { id, user_id: user.id }, attributes: ['seller_details'] });
+        let file_name;
+        if (seller_data.seller_details) {
+          if (type.toString() === '1') {
+            const document = seller_data.seller_details.basic_details.documents[index];
+            file_name = (document || {}).file_name;
+          } else if (type.toString() === '2') {
+            const document = seller_data.seller_details.business_details.documents[index];
+            file_name = (document || {}).file_name;
+          } else {
+            const document = seller_data.seller_details.assisted_type_images.documents[index];
+            file_name = (document || {}).file_name;
+          }
+          if (file_name) {
+            await fsImpl.unlink(`sellers/${id}/${seller_image_types[type]}/${file_name}`);
+            console.log(file_name);
+            if (type.toString() === '1') {
+              seller_data.seller_details.basic_details.documents = seller_data.seller_details.basic_details.documents.filter(item => item.file_name !== file_name);
+            } else if (type.toString() === '2') {
+              seller_data.seller_details.business_details.documents = seller_data.seller_details.business_details.documents.filter(item => item.file_name !== file_name);
+            } else {
+              seller_data.seller_details.assisted_type_images.documents = seller_data.seller_details.assisted_type_images.documents.filter(item => item.file_name !== file_name);
+            }
+
+            return reply.response({
+              status: true,
+              seller: await sellerAdaptor.retrieveOrUpdateSellerDetail({ where: { id } }, seller_data, false)
+            });
+          } else {
+
+            return reply.response({
+              status: false,
+              message: 'Look like there is no more files.',
+              forceUpdate: request.pre.forceUpdate
+            });
+          }
+        } else {
+
+          return reply.response({
+            status: false,
+            message: 'Look like seller details are not available',
+            forceUpdate: request.pre.forceUpdate
+          });
+        }
+      } catch (err) {
+        console.log(`Error on ${new Date()} for user while retrieving category image is as follow: \n \n ${err}`);
+
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: 1,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err
+          })
+        }).catch(ex => console.log('error while logging on db,', ex));
+        return reply.response({
+          status: false,
+          message: 'Unable to retrieve image',
+          err,
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    } else {
+      return reply.response({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate
+      });
+    }
+  }
+
+  static async deleteSellerDetails(request, reply) {
+    if (!request.pre.forceUpdate) {
+      try {
+        const user = _shared2.default.verifyAuthorization(request.headers);
+        const { id, type, index } = request.params || {};
+        const seller_image_types = _main2.default.SELLER_IMAGE_TYPE.split(',');
+        const seller_data = await sellerAdaptor.retrieveSellerDetail({ where: { id, user_id: user.id }, attributes: ['seller_details'] });
+        let file_name;
+        if (seller_data.seller_details) {
+          const seller_image_update = [];
+          if (!type || type && type.toString() === '1') {
+            seller_data.seller_details.basic_details.documents.forEach(document => {
+              file_name = (document || {}).file_name;
+              seller_image_update.push(fsImpl.unlink(`sellers/${id}/${seller_image_types[1]}/${file_name}`));
+            });
+            seller_data.seller_details.basic_details = undefined;
+          }
+          if (!type || type && type.toString() === '2') {
+            seller_data.seller_details.business_details.documents.forEach(document => {
+              file_name = (document || {}).file_name;
+              seller_image_update.push(fsImpl.unlink(`sellers/${id}/${seller_image_types[2]}/${file_name}`));
+            });
+            seller_data.seller_details.business_details = undefined;
+          }
+
+          seller_data.seller_details.assisted_type_images.documents.forEach(document => {
+            file_name = (document || {}).file_name;
+            seller_image_update.push(fsImpl.unlink(`sellers/${id}/${seller_image_types[2]}/${file_name}`));
+          });
+          seller_data.seller_details.assisted_type_images = undefined;
+
+          await _bluebird2.default.all(seller_image_update);
+          seller_data.seller_details.basic_details = null;
+          seller_data.seller_details = !type ? {} : seller_data.seller_details;
+          return reply.response({
+            status: true,
+            seller: await sellerAdaptor.retrieveOrUpdateSellerDetail({ where: { id } }, seller_data, false)
+          });
         } else {
 
           return reply.response({

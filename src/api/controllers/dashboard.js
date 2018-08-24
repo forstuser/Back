@@ -70,6 +70,44 @@ class DashboardController {
     }
   }
 
+  static async getSellerDashboard(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    try {
+      if (!request.pre.forceUpdate) {
+        const {seller_id} = request.params;
+        return reply.response(
+            await dashboardAdaptor.retrieveSellerDashboard({seller_id},
+                request));
+      } else {
+        return reply.response({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate,
+        });
+      }
+    } catch (err) {
+      console.log(err);
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to retrieve dashboard.',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
   static async retrieveUpcomingService(request, reply) {
     try {
       if (request.pre.userExist && !request.pre.forceUpdate) {

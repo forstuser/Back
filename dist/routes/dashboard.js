@@ -137,5 +137,15 @@ function prepareDashboardRoutes(modal, routeObject, middleware) {
         }
       }
     });
+
+    routeObject.push({
+      method: 'GET',
+      path: '/sellers/{seller_id}/dashboard',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        handler: _dashboard2.default.getSellerDashboard
+      }
+    });
   }
 }

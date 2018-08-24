@@ -17,8 +17,8 @@ export default (sequelize, DataTypes) => {
         price: {
           type: DataTypes.JSONB,
         },
-        document_name: {
-          type: DataTypes.STRING,
+        document_details: {
+          type: DataTypes.JSONB,
         },
         updated_by: {
           type: DataTypes.INTEGER,
