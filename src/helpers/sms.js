@@ -17,15 +17,7 @@ export const sendSMS = (message, to) => {
     },
     body: {
       sender: 'BINBIL',
-      route: '4',
-      country: '91',
-      sms:
-          [
-            {
-              message,
-              to,
-            },
-          ],
+      route: '4', country: '91', sms: [{message, to}],
     },
     json: true, // Automatically stringifies the body to JSON
   };

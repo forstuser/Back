@@ -815,12 +815,10 @@ class UploadController {
           seller_details.offers.push(file_detail);
         }
       });
-
+      const seller = await sellerAdaptor.retrieveOrUpdateSellerDetail({ where: { id: seller_data.id } }, { seller_details }, false);
       return reply.response(JSON.parse(JSON.stringify({
-        status: true,
-        message: 'Upload Successfull',
-        seller: await sellerAdaptor.retrieveOrUpdateSellerDetail({ where: { id: seller_data.id } }, { seller_details }, false),
-        file_details
+        status: true, message: 'Upload Successful',
+        seller: type.toString() === '1' || type.toString() === '2' ? seller : undefined, file_details
         // forceUpdate: request.pre.forceUpdate
       })));
     } catch (err) {
@@ -1235,6 +1233,77 @@ class UploadController {
         const { id, type, index } = request.params || {};
         const seller_image_types = _main2.default.SELLER_IMAGE_TYPE.split(',');
         const seller_data = await sellerAdaptor.retrieveSellerDetail({ where: { id, user_id: user.id }, attributes: ['seller_details'] });
+        let file_name;
+        if (seller_data.seller_details) {
+          if (type.toString() === '1') {
+            const document = seller_data.seller_details.basic_details.documents[index];
+            file_name = (document || {}).file_name;
+          } else if (type.toString() === '2') {
+            const document = seller_data.seller_details.business_details.documents[index];
+            file_name = (document || {}).file_name;
+          } else {
+            const document = seller_data.seller_details.assisted_type_images.documents[index];
+            file_name = (document || {}).file_name;
+          }
+          if (file_name) {
+            const fileResult = await fsImpl.readFile(`sellers/${id}/${seller_image_types[type]}/${file_name}`, 'utf8');
+
+            console.log(fileResult);
+            return reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${file_name}`);
+          } else {
+
+            return reply.response({
+              status: false,
+              message: 'Look like there is no more files.',
+              forceUpdate: request.pre.forceUpdate
+            });
+          }
+        } else {
+
+          return reply.response({
+            status: false,
+            message: 'Look like seller details are not available',
+            forceUpdate: request.pre.forceUpdate
+          });
+        }
+      } catch (err) {
+        console.log(`Error on ${new Date()} for user while retrieving category image is as follow: \n \n ${err}`);
+
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: 1,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err
+          })
+        }).catch(ex => console.log('error while logging on db,', ex));
+        return reply.response({
+          status: false,
+          message: 'Unable to retrieve image',
+          err,
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    } else {
+      return reply.response({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate
+      });
+    }
+  }
+
+  static async retrieveSellerImagesForConsumer(request, reply) {
+    if (!request.pre.forceUpdate) {
+      try {
+        const { id, type, index } = request.params || {};
+        const seller_image_types = _main2.default.SELLER_IMAGE_TYPE.split(',');
+        const seller_data = await sellerAdaptor.retrieveSellerDetail({ where: { id }, attributes: ['seller_details'] });
         let file_name;
         if (seller_data.seller_details) {
           if (type.toString() === '1') {
@@ -1864,6 +1933,124 @@ class UploadController {
     }
   }
 
+  static async retrieveSellerOfferImages(request, reply) {
+    if (!request.pre.forceUpdate) {
+      try {
+        const seller_image_types = _main2.default.SELLER_IMAGE_TYPE.split(',');
+        const { offer_id, index } = request.params;
+        const seller_offer = await sellerAdaptor.retrieveSellerOfferDetail({
+          where: { id: offer_id },
+          attributes: ['document_details', 'seller_id']
+        });
+        const document = !isNaN(index) ? (seller_offer || {}).document_details[index] : (seller_offer || {}).document_details.find(item => item.index && item.index === index);
+        let file_name = (document || {}).file_name;
+        const fileResult = await fsImpl.readFile(`sellers/${(seller_offer || {}).seller_id}/${seller_image_types[4]}/${file_name}`, 'utf8');
+        return reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${request.params.id}.png`);
+      } catch (err) {
+        console.log(`Error on ${new Date()} retrieving fact image is as follow: \n \n ${err}`);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: 1,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err
+          })
+        }).catch(ex => console.log('error while logging on db,', ex));
+        return reply.response({
+          status: false,
+          message: 'Unable to retrieve image',
+          err,
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    } else {
+      return reply.response({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate
+      });
+    }
+  }
+
+  static async uploadSellerOfferImages(request, reply) {
+    if (!request.pre.forceUpdate) {
+      try {
+        const user = _shared2.default.verifyAuthorization(request.headers);
+        const seller_image_types = _main2.default.SELLER_IMAGE_TYPE.split(',');
+        const { offer_id, index } = request.params;
+        const seller_offer = await sellerAdaptor.retrieveSellerOfferDetail({
+          where: { id: offer_id },
+          attributes: ['document_details', 'seller_id']
+        });
+        const document = !isNaN(index) ? (seller_offer || {}).document_details[index] : (seller_offer || {}).document_details.find(item => item.index && item.index === index);
+        let file_name = (document || {}).file_name;
+        const fieldNameHere = request.payload.fieldNameHere;
+        let filteredFileData = fieldNameHere || request.payload.filesName || request.payload.file;
+        if (filteredFileData) {
+          filteredFileData = Array.isArray(filteredFileData) ? filteredFileData : [filteredFileData];
+
+          if (filteredFileData.length === 0) {
+            console.log('No valid documents in request');
+            return reply.response({ status: false, message: 'No valid documents in request' });
+          }
+
+          filteredFileData = filteredFileData.filter(datum => {
+            const name = datum.hapi.filename;
+            const file_type = /[.]/.exec(name) ? /[^.]+$/.exec(name) : undefined;
+            return file_type && !isFileTypeAllowed(file_type) ? false : !(!file_type && !isFileTypeAllowedMagicNumber(datum._data));
+          });
+          const elem = filteredFileData[0];
+          const file_index = `${Math.random().toString(36).substr(2, 9)}${user.id.toString(36)}`;
+          const name = elem.hapi.filename;
+          const file_type = /[.]/.exec(name) ? /[^.]+$/.exec(name) : undefined;
+          const fileTypeData = getTypeFromBuffer(elem._data);
+          const fileName = `${user.id}-${file_index}.${file_type ? file_type.toString() : fileTypeData.ext}`;
+          await fsImpl.writeFile(`sellers/${(seller_offer || {}).seller_id}/${seller_image_types[4]}/${file_name}`, elem._data, { ContentType: _mimeTypes2.default.lookup(fileName) || 'image/jpeg' });
+          document.index = file_index;
+
+          return reply.response({
+            status: true,
+            offer: await sellerAdaptor.retrieveOrCreateSellerOffers({ id: offer_id }, seller_offer)
+          });
+        } else {
+          return reply.response({ status: false, message: 'No documents in request' }); //, forceUpdate: request.pre.forceUpdate});
+        }
+      } catch (err) {
+        console.log(`Error on ${new Date()} retrieving fact image is as follow: \n \n ${err}`);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: 1,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err
+          })
+        }).catch(ex => console.log('error while logging on db,', ex));
+        return reply.response({
+          status: false,
+          message: 'Unable to retrieve image',
+          err,
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    } else {
+      return reply.response({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate
+      });
+    }
+  }
+
   static async retrieveOfferBannerImage(request, reply) {
     if (!request.pre.forceUpdate) {
       try {
@@ -1918,8 +2105,15 @@ class UploadController {
       if (!request.pre.forceUpdate) {
         try {
           let userData = await userAdaptor.retrieveUserImageNameById(user);
-          const fileResult = await fsImpl.readFile(userData.image_name);
-          return reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${userData.image_name}`);
+          if (userData.image_name) {
+            const fileResult = await fsImpl.readFile(userData.image_name);
+            return reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${userData.image_name}`);
+          }
+          return reply.response({
+            status: false,
+            message: 'No Result Found',
+            forceUpdate: request.pre.forceUpdate
+          }).code(404);
         } catch (err) {
           console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
           const fsImplUser = new _s3fs2.default(`${_main2.default.AWS.S3.BUCKET}/${_main2.default.AWS.S3.USER_IMAGE}`, _main2.default.AWS.ACCESS_DETAILS);
@@ -1956,6 +2150,60 @@ class UploadController {
           forceUpdate: request.pre.forceUpdate
         });
       }
+    }
+  }
+
+  static async retrieveUserImageForSeller(request, reply) {
+    const user = _shared2.default.verifyAuthorization(request.headers);
+    if (!request.pre.forceUpdate) {
+      try {
+        const { id } = request.params;
+        let userData = await userAdaptor.retrieveUserImageNameById({ id });
+        if (userData.image_name) {
+          const fileResult = await fsImpl.readFile(userData.image_name);
+          return reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${userData.image_name}`);
+        }
+
+        return reply.response({
+          status: false,
+          message: 'No Result Found',
+          forceUpdate: request.pre.forceUpdate
+        }).code(404);
+      } catch (err) {
+        console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
+        const fsImplUser = new _s3fs2.default(`${_main2.default.AWS.S3.BUCKET}/${_main2.default.AWS.S3.USER_IMAGE}`, _main2.default.AWS.ACCESS_DETAILS);
+        try {
+          const fileResult = await fsImplUser.readFile(userData.image_name);
+          return reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${fileResult.CopyName}`);
+        } catch (err) {
+          console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n ${JSON.stringify(err.toJSON())}`);
+
+          modals.logs.create({
+            api_action: request.method,
+            api_path: request.url.pathname,
+            log_type: 2,
+            user_id: user.id || user.ID,
+            log_content: JSON.stringify({
+              params: request.params,
+              query: request.query,
+              headers: request.headers,
+              payload: request.payload,
+              err
+            })
+          }).catch(ex => console.log('error while logging on db,', ex));
+          return reply.response({
+            status: false,
+            message: 'No Result Found',
+            forceUpdate: request.pre.forceUpdate
+          }).code(404);
+        }
+      }
+    } else {
+      return reply.response({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate
+      });
     }
   }
 }

@@ -1,9 +1,13 @@
 import google from '../../helpers/google';
 import _ from 'lodash';
+import CategoryAdaptor from './category';
+import UserAdaptor from './user';
 
 export default class SellerAdaptor {
   constructor(modals) {
     this.modals = modals;
+    this.categoryAdaptor = new CategoryAdaptor(modals);
+    this.userAdaptor = new UserAdaptor(modals);
   }
 
   async retrieveOfflineSellers(options) {
@@ -23,7 +27,9 @@ export default class SellerAdaptor {
   async retrieveSellers(options, query_options) {
     const {user_id, seller_offer_ids, latitude, longitude, city, limit, offset} = options;
     const result = await this.modals.sellers.findAll(query_options);
-    let sellers = result.map(item => item.toJSON());
+    let sellers = result.map(item => {
+      return item.toJSON();
+    });
     if (sellers.length > 0) {
       if (latitude && longitude) {
         sellers = await this.orderSellerByLocation(latitude, longitude, city,
@@ -44,7 +50,7 @@ export default class SellerAdaptor {
                 this.retrieveSellerStates({id: state_ids}) : [],
             locality_ids.length > 0 ?
                 this.retrieveSellerLocations({id: locality_ids}) : [],
-            this.retrieveSellerAssistedServices({seller_id})]);
+            this.retrieveSellerAssistedServices({where: {seller_id}})]);
       sellers = sellers.map(item => {
         item.categories = seller_categories.filter(
             cItem => cItem.seller_id === item.id);
@@ -53,9 +59,12 @@ export default class SellerAdaptor {
         item.location = seller_locations.find(
             cItem => cItem.id === item.locality_id);
         item.assisted_services = assisted_services;
-        item.cashback_total = item.cashback_total || 0;
-        item.loyalty_total = item.loyalty_total || 0;
-        item.credit_total = item.credit_total || 0;
+        item.cashback_total = (item.cashback_total || 0) -
+            (item.redeemed_cashback || 0);
+        item.loyalty_total = (item.loyalty_total || 0) -
+            (item.redeemed_loyalty || 0);
+        item.credit_total = (item.credit_total || 0) -
+            (item.redeemed_credits || 0);
         item.offer_count = item.offer_count || 0;
         item.ratings = item.ratings || 0;
         return item;
@@ -102,6 +111,12 @@ export default class SellerAdaptor {
     return result ? result.map(item => item.toJSON()) : result;
   }
 
+  async retrieveSellerAssistedServiceUsers(query_options) {
+    const result = await this.modals.assisted_service_users.findAll(
+        query_options);
+    return result ? result.map(item => item.toJSON()) : result;
+  }
+
   async retrieveSellerAssistedServices(query_options) {
     const result = await this.modals.seller_service_types.findAll(
         query_options);
@@ -112,6 +127,143 @@ export default class SellerAdaptor {
     const result = await this.modals.seller_offers.findAll(
         query_options);
     return result ? result.map(item => item.toJSON()) : result;
+  }
+
+  async retrieveSellerOfferDetail(query_options) {
+    const result = await this.modals.seller_offers.findOne(
+        query_options);
+    return result ? result.toJSON() : result;
+  }
+
+  async retrieveSellerConsumers(seller_id, mobile_no, offer_id) {
+    let productUsers, seller_users, id, user_index_data;
+    mobile_no = mobile_no ? {$ilike: `${mobile_no}%`} : undefined;
+    [productUsers, seller_users] = await Promise.all([
+      this.modals.products.findAll({
+        where: {seller_id, status_type: [5, 11]},
+        attributes: ['user_id'],
+        group: 'user_id',
+      }),
+      this.retrieveSellerDetail(
+          {where: {id: seller_id}, attributes: ['customer_ids']})]);
+    const {seller_offer_ids, wallet_seller_cashback_ids, wallet_seller_credit_ids, wallet_seller_loyalty_ids} = user_index_data ||
+    {};
+
+    productUsers = productUsers.map(item => item.toJSON());
+    id = seller_users.customer_ids || [];
+
+    productUsers.forEach(item => id.push(item.user_id));
+    const result = await this.modals.users.findAll({
+      where: JSON.parse(JSON.stringify({id, mobile_no})),
+      attributes: [
+        ['full_name', 'name'], 'image_name', 'email',
+        'mobile_no', 'location', 'id', [
+          this.modals.sequelize.literal(
+              `(select sum(seller_cashback.amount) from table_wallet_seller_cashback as seller_cashback where status_type in (16) and transaction_type = 1 and seller_cashback.user_id = "users"."id" and seller_cashback.seller_id = ${seller_id})`),
+          'cashback_total'],
+        [
+          this.modals.sequelize.literal(
+              `(select sum(seller_cashback.amount) from table_wallet_seller_cashback as seller_cashback where status_type in (16) and transaction_type = 2 and seller_cashback.user_id = "users"."id" and seller_cashback.seller_id = ${seller_id})`),
+          'redeemed_cashback'],
+        [
+          this.modals.sequelize.literal(
+              `(select sum(amount) from table_wallet_seller_loyalty as seller_loyalty where status_type in (16) and transaction_type = 1 and seller_loyalty.user_id = "users"."id" and seller_loyalty.seller_id = ${seller_id})`),
+          'loyalty_total'],
+        [
+          this.modals.sequelize.literal(
+              `(select sum(amount) from table_wallet_seller_loyalty as seller_loyalty where status_type in (16) and transaction_type = 2 and seller_loyalty.user_id = "users"."id" and seller_loyalty.seller_id = ${seller_id})`),
+          'redeemed_loyalty'],
+        [
+          this.modals.sequelize.literal(
+              `(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16) and transaction_type = 1 and seller_credit.user_id = "users"."id" and seller_credit.seller_id = ${seller_id})`),
+          'credit_total'],
+        [
+          this.modals.sequelize.literal(
+              `(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16) and transaction_type = 2 and seller_credit.user_id = "users"."id" and seller_credit.seller_id = ${seller_id})`),
+          'redeemed_credits'],
+        [
+          this.modals.sequelize.literal(
+              `(select count(*) from table_cashback_jobs as cashback_jobs where cashback_jobs.user_id = "users"."id" and cashback_jobs.seller_id = ${seller_id})`),
+          'transaction_counts']
+            [
+            this.modals.sequelize.literal(
+                `(select seller_offer_ids from table_user_index as user_index where user_index.user_id = "users"."id")`),
+                'seller_offer_ids']],
+    });
+    return result ? result.map(item => {
+      item = item.toJSON();
+      const linked_user = (seller_users.customer_ids || []).find(
+          suItem => suItem.toString() === item.id.toString());
+      item.linked = !!linked_user;
+      item.cashback_total = (item.cashback_total || 0) -
+          (item.redeemed_cashback || 0);
+      item.loyalty_total = (item.loyalty_total || 0) -
+          (item.redeemed_loyalty || 0);
+      item.credit_total = (item.credit_total || 0) -
+          (item.redeemed_credits || 0);
+      const seller_offer_id = (item.seller_offer_ids || []).find(
+          item => item.toString() === (offer_id).toString());
+      item.linked_offer = !!seller_offer_id;
+      return item;
+    }) : result;
+  }
+
+  async retrieveSellerCustomerDetail(seller_id, customer_id, mobile_no) {
+    let productUsers, seller_users, id = customer_id;
+    mobile_no = mobile_no ? {$ilike: `${mobile_no}%`} : undefined;
+    const result = await this.modals.users.findOne({
+      where: JSON.parse(JSON.stringify({id, mobile_no})),
+
+      include: [
+        {
+          where: {seller_id, admin_status: 5},
+          model: this.modals.cashback_jobs,
+          required: false,
+          attributes: [
+            'id', 'home_delivered', [
+              this.modals.sequelize.literal(
+                  `(select sum(purchase_cost) from consumer_products as product where product.user_id = "users"."id" and product.job_id = "cashback_jobs"."job_id" and product.seller_id = ${seller_id})`),
+              'amount_paid'], [
+              this.modals.sequelize.literal(
+                  `(select sum(amount) from table_wallet_seller_credit as seller_credit where seller_credit.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 1 and seller_credit.user_id = "users"."id" and seller_credit.seller_id = ${seller_id})`),
+              'total_credits'], [
+              this.modals.sequelize.literal(
+                  `(select sum(amount) from table_wallet_seller_credit as seller_credit where seller_credit.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 2 and seller_credit.user_id = "users"."id" and seller_credit.seller_id = ${seller_id})`),
+              'redeemed_credits'], [
+              this.modals.sequelize.literal(
+                  `(select sum(amount) from table_wallet_seller_loyalty as loyalty_wallet where loyalty_wallet.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 1 and loyalty_wallet.user_id = "users"."id" and loyalty_wallet.seller_id = ${seller_id})`),
+              'total_loyalty'], [
+              this.modals.sequelize.literal(
+                  `(select sum(amount) from table_wallet_seller_loyalty as loyalty_wallet where loyalty_wallet.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 2 and loyalty_wallet.user_id = "users"."id" and loyalty_wallet.seller_id = ${seller_id})`),
+              'redeemed_loyalty'], [
+              this.modals.sequelize.literal(
+                  `(select sum(amount) from table_wallet_user_cashback as user_wallet where user_wallet.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 1 and user_wallet.user_id = "users"."id" and user_wallet.seller_id = ${seller_id})`),
+              'total_cashback'], [
+              this.modals.sequelize.literal(
+                  `(select count(*) from table_expense_sku as expense_skus where expense_skus.user_id = "users"."id" and expense_skus.seller_id = ${seller_id} and expense_skus.job_id = "cashback_jobs"."job_id" )`),
+              'item_counts']],
+        },
+        {
+          where: {seller_id}, model: this.modals.credit_wallet, required: false,
+          attributes: ['title', 'description', 'transaction_type', 'amount'],
+        },
+        {
+          where: {seller_id},
+          model: this.modals.loyalty_wallet,
+          required: false,
+          attributes: ['title', 'description', 'transaction_type', 'amount'],
+        }],
+      attributes: [['full_name', 'name'], 'email', 'mobile_no', 'id'],
+    });
+    const user_detail = result ? result.toJSON() : result;
+    user_detail.cashback_jobs = (user_detail.cashback_jobs || []).map(item => {
+      item.total_credit = (item.total_credit || 0) -
+          (item.redeemed_credits || 0);
+      item.total_loyalty = (item.total_loyalty || 0) -
+          (item.redeemed_loyalty || 0);
+      return item;
+    });
+    return user_detail;
   }
 
   async retrieveSellerAssistedServiceDetail(query_options) {
@@ -147,7 +299,9 @@ export default class SellerAdaptor {
         seller = await this.retrieveSellerByLocation(latitude, longitude, city,
             seller);
       }
-      const [seller_categories, seller_cash_backs, seller_loyalty_points, seller_offers, seller_credits, seller_cities, seller_states, seller_locations, seller_reviews, assisted_services] = await Promise.all(
+      const [
+        seller_categories, seller_cash_backs, seller_loyalty_points, seller_offers, seller_credits,
+        seller_cities, seller_states, seller_locations, seller_reviews, service_types, assisted_services] = await Promise.all(
           [
             this.retrieveSellerCategories({seller_id}),
             user_id ? this.retrieveSellerCashBack({seller_id, user_id}) : [],
@@ -165,7 +319,16 @@ export default class SellerAdaptor {
             locality_id ?
                 this.retrieveSellerLocations({id: locality_id}) : [],
             this.retrieveSellerReviews({offline_seller_id: seller_id}),
-            this.retrieveSellerAssistedServices({seller_id})]);
+            this.retrieveAssistedServiceTypes({}),
+            this.retrieveSellerAssistedServiceUsers({
+              include: {
+                as: 'service_types', where: {seller_id},
+                model: this.modals.seller_service_types, required: true,
+                attributes: ['service_type_id', 'seller_id', 'price', 'id'],
+              }, attributes: [
+                'id', 'name', 'mobile_no',
+                'reviews', 'document_details'],
+            })]);
       seller.categories = seller_categories;
       seller.seller_cash_backs = seller_cash_backs;
       seller.seller_loyalty_points = seller_loyalty_points;
@@ -180,7 +343,16 @@ export default class SellerAdaptor {
       seller.credit_total = seller.credit_total || 0;
       seller.offer_count = seller.offer_count || 0;
       seller.ratings = seller.ratings || 0;
-      seller.assisted_services = assisted_services;
+      seller.assisted_services = assisted_services.map(item => {
+        item.service_types = item.service_types.map(typeItem => {
+          const service_type = service_types.find(
+              stItem => stItem.id === typeItem.service_type_id);
+          typeItem.service_type = service_type.title;
+          return typeItem;
+        });
+
+        return item;
+      });
     }
 
     return seller;
@@ -195,12 +367,14 @@ export default class SellerAdaptor {
     let seller_categories = await this.modals.seller_provider_type.findAll(
         {
           where: JSON.parse(JSON.stringify(options)),
-          attributes: ['sub_category_id', 'category_4_id', 'provider_type_id'],
+          attributes: [
+            'sub_category_id', 'category_4_id',
+            'seller_id', 'provider_type_id'],
         });
     seller_categories = seller_categories.map(item => item.toJSON());
     if (seller_categories.length > 0) {
       const [sku_categories, provider_types] = await Promise.all([
-        this.retrieveSKUCategories(
+        this.categoryAdaptor.retrieveSellerCategories(
             {
               where: {
                 category_id: seller_categories.map(
@@ -248,7 +422,14 @@ export default class SellerAdaptor {
 
   async retrieveSellerReviews(options) {
     let seller_reviews = await this.modals.sellerReviews.findAll(
-        {where: JSON.parse(JSON.stringify(options))});
+        {
+          where: JSON.parse(JSON.stringify(options)), include: {
+            model: this.modals.users, required: true,
+            attributes: [
+              'image_name', 'id', ['full_name', 'name'],
+              'mobile_no', 'email'],
+          },
+        });
     seller_reviews = seller_reviews.map(item => item.toJSON());
     return seller_reviews;
   }
@@ -258,6 +439,36 @@ export default class SellerAdaptor {
         {where: JSON.parse(JSON.stringify(options))});
     seller_credits = seller_credits.map(item => item.toJSON());
     return seller_credits;
+  }
+
+  async retrieveSellerCreditsPerUser(options) {
+    let seller_credits = await this.modals.credit_wallet.findAll(options);
+    const result = [];
+    seller_credits.forEach(item => {
+      item = item.toJSON();
+      const user_credit = result.find(uItem => uItem.user_id === item.user_id);
+      if (user_credit) {
+        user_credit.total_credit = user_credit.total_credit - item.total_credit;
+      } else {
+        result.push(item);
+      }
+    });
+    return result;
+  }
+
+  async retrieveSellerLoyaltyPointsPerUser(options) {
+    let seller_points = await this.modals.loyalty_wallet.findAll(options);
+    const result = [];
+    seller_points.forEach(item => {
+      item = item.toJSON();
+      const user_point = result.find(uItem => uItem.user_id === item.user_id);
+      if (user_point) {
+        user_point.total_points = user_point.total_points - item.total_points;
+      } else {
+        result.push(item);
+      }
+    });
+    return result;
   }
 
   async retrieveSellerCities(options) {
@@ -275,7 +486,7 @@ export default class SellerAdaptor {
   }
 
   async retrieveSellerLocations(options) {
-    let seller_locations = await this.modals.locations.findAll(
+    let seller_locations = await this.modals.locality.findAll(
         {where: JSON.parse(JSON.stringify(options))});
     seller_locations = seller_locations.map(item => item.toJSON());
     return seller_locations;
@@ -315,6 +526,7 @@ export default class SellerAdaptor {
     let sellerResult = await this.modals.sellers.findOne({
       where: options,
     });
+
     if (sellerResult) {
       const sellerDetail = sellerResult.toJSON();
       defaults.status_type = sellerDetail.status_type;
@@ -464,18 +676,71 @@ export default class SellerAdaptor {
     return seller_service_type.toJSON();
   }
 
+  async retrieveOrCreateAssistedServiceUsers(options, defaults, service_types) {
+    let assisted_service_user = await this.modals.assisted_service_users.findOne(
+        {where: options});
+    if (assisted_service_user) {
+      const assisted_service_users_result = assisted_service_user.toJSON();
+      defaults.status_type = assisted_service_users_result.status_type;
+      await assisted_service_user.updateAttributes(defaults);
+    } else {
+      assisted_service_user = await this.modals.assisted_service_users.create(
+          defaults);
+    }
+    const assisted_service_user_result = assisted_service_user.toJSON();
+    const service_user_id = assisted_service_user_result.id;
+    assisted_service_user_result.service_types = await Promise.all(
+        service_types.map(item => {
+          const {price, service_type_id, seller_id, id} = item;
+          return this.retrieveOrCreateSellerAssistedServiceTypes(
+              JSON.parse(JSON.stringify(
+                  {service_type_id, seller_id, service_user_id, id})),
+              JSON.parse(JSON.stringify(
+                  {service_type_id, seller_id, service_user_id, price})));
+        }));
+    return assisted_service_user_result;
+  }
+
   async retrieveOrCreateSellerOffers(options, defaults) {
     let seller_offer = await this.modals.seller_offers.findOne({
       where: options,
     });
-    if (seller_offer) {
+    if (seller_offer && options.id && seller_offer.id === options.id) {
       const seller_offer_result = seller_offer.toJSON();
-      defaults.status_type = seller_offer_result.status_type;
+      defaults.status_type = seller_offer_result.status_type || 1;
       await seller_offer.updateAttributes(defaults);
     } else {
-      seller_offer = await this.modals.seller_service_types.create(defaults);
+      seller_offer = await this.modals.seller_offers.create(defaults);
     }
     return seller_offer.toJSON();
+  }
+
+  async retrieveOrCreateSellerCredits(options, defaults) {
+    let credit_wallet = await this.modals.credit_wallet.findOne({
+      where: options,
+    });
+    if (credit_wallet) {
+      const credit_wallet_result = credit_wallet.toJSON();
+      defaults.status_type = credit_wallet_result.status_type;
+      await credit_wallet.updateAttributes(defaults);
+    } else if (!options.id) {
+      credit_wallet = await this.modals.credit_wallet.create(defaults);
+    }
+
+    return credit_wallet ? credit_wallet.toJSON() : credit_wallet;
+  }
+
+  async retrieveOrCreateSellerPoints(options, defaults) {
+    let loyalty_wallet = await this.modals.loyalty_wallet.findOne(
+        {where: options});
+    if (loyalty_wallet) {
+      const loyalty_wallet_result = loyalty_wallet.toJSON();
+      defaults.status_type = loyalty_wallet_result.status_type;
+      await loyalty_wallet.updateAttributes(defaults);
+    } else if (!options.id) {
+      loyalty_wallet = await this.modals.loyalty_wallet.create(defaults);
+    }
+    return loyalty_wallet ? loyalty_wallet.toJSON() : loyalty_wallet;
   }
 
 }

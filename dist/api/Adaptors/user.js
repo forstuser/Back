@@ -88,6 +88,28 @@ class UserAdaptor {
   }
 
   /**
+   * This is for getting user login or register for OTP and true caller
+   * @param whereObject
+   * @param defaultObject
+   * @returns {Promise.<Model, created>}
+   */
+  async createUserForSeller(whereObject, defaultObject) {
+    if (!whereObject.mobile_no) {
+      whereObject = _lodash2.default.omit(whereObject, 'mobile_no');
+    }
+
+    let result = await this.modals.users.findOne({
+      where: whereObject, attributes: ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', 'image_name', 'gender', 'fb_id']
+    });
+
+    if (!result || result && !result.id) {
+      result = await this.modals.users.create(defaultObject);
+    }
+
+    return result.toJSON();
+  }
+
+  /**
    *
    * @param filterObject
    * @returns {Promise<Model>}
@@ -325,12 +347,38 @@ class UserAdaptor {
     return result && result.length > 0 ? result[0].toJSON() : undefined;
   }
 
+  async retrieveUserIndexes(options) {
+    const result = await this.modals.user_index.findAll(options);
+    return result && result.length > 0 ? result.map(item => item.toJSON()) : undefined;
+  }
+
   async updateUserIndexedData(updateValues, filterOptions) {
     return await this.modals.user_index.update(updateValues, filterOptions);
   }
 
   async createUserIndexedData(updateValues, filterOptions) {
     return await this.modals.user_index.create(updateValues, filterOptions);
+  }
+
+  async retrieveOrUpdateUserIndexedData(options, defaults) {
+    let result = await this.modals.user_index.findOne(options);
+
+    const userIndex = result ? result.toJSON() : { user_id: defaults.user_id };
+    if (defaults.credit_id) {
+      userIndex.wallet_seller_credit_ids = userIndex.wallet_seller_credit_ids || [];
+      userIndex.wallet_seller_credit_ids.push(defaults.credit_id);
+    }
+    if (defaults.point_id) {
+      userIndex.wallet_seller_loyalty_ids = userIndex.wallet_seller_loyalty_ids || [];
+      userIndex.wallet_seller_loyalty_ids.push(defaults.point_id);
+    }
+    if (result) {
+      await result.updateAttributes(userIndex);
+    } else {
+      result = this.createUserIndexedData(userIndex, options);
+    }
+
+    return result.toJSON();
   }
 }
 

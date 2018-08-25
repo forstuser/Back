@@ -225,6 +225,16 @@ export function prepareUploadRoutes(modal, routeObject, middleware) {
     });
 
     routeObject.push({
+      method: 'GET',
+      path: '/consumer/sellers/{id}/upload/{type}/images/{index}',
+      config: {
+        auth: 'jwt',
+        pre: [{method: middleware.checkAppVersion, assign: 'forceUpdate'}],
+        handler: ControllerObject.retrieveSellerImagesForConsumer,
+      },
+    });
+
+    routeObject.push({
       method: 'DELETE',
       path: '/sellers/{id}/upload/{type}/images/{index}',
       config: {
@@ -305,6 +315,22 @@ export function prepareUploadRoutes(modal, routeObject, middleware) {
       },
     });
 
+    routeObject.push({
+      method: 'GET',
+      path: '/customer/{id}/images',
+      config: {
+        // auth: 'jwt',
+        pre: [
+          {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: middleware.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: ControllerObject.retrieveUserImageForSeller,
+      },
+    });
+
     /*Retrieve Category images*/
     routeObject.push({
       method: 'GET',
@@ -336,6 +362,39 @@ export function prepareUploadRoutes(modal, routeObject, middleware) {
       path: '/offer/{offer_id}/banners',
       config: {
         handler: ControllerObject.retrieveOfferBannerImage,
+      },
+    });
+
+    routeObject.push({
+      method: 'GET',
+      path: '/offer/{offer_id}/images/{index}',
+      config: {
+        handler: ControllerObject.retrieveSellerOfferImages,
+      },
+    });
+
+    routeObject.push({
+      method: 'POST',
+      path: '/offer/{offer_id}/images/{index}',
+      config: {
+        auth: 'jwt',
+        pre: [{method: middleware.checkAppVersion, assign: 'forceUpdate'}],
+        files: {
+          relativeTo: Path.join(__dirname, '../static/src'),
+        },
+        handler: ControllerObject.uploadSellerOfferImages,
+        payload: {
+          output: 'stream',
+          parse: true,
+          uploads: 'up_files',
+          timeout: 3003400,
+          allow: 'multipart/form-data',
+          failAction: 'log',
+          maxBytes: 209715200,
+        },
+        timeout: {
+          socket: false,
+        },
       },
     });
 

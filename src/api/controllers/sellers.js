@@ -11,6 +11,7 @@ import GeneralAdaptor from '../Adaptors/category';
 import Promise from 'bluebird';
 import config from '../../config/main';
 import _ from 'lodash';
+import {sendSMS} from '../../helpers/sms';
 
 let modals, shopEarnAdaptor, jobAdaptor, userAdaptor, sellerAdaptor,
     generalAdaptor;
@@ -33,12 +34,15 @@ class SellerController {
         const user_id = user.id || user.ID;
         const user_index_data = await userAdaptor.retrieveUserIndexedData({
           where: {user_id},
-          attributes: ['my_seller_ids', 'seller_offer_ids'],
+          attributes: [
+            'my_seller_ids', 'seller_offer_ids', 'wallet_seller_cashback_ids',
+            'wallet_seller_credit_ids', 'wallet_seller_loyalty_ids'],
         });
 
         let {search_value, limit, offset, latitude, longitude, city} = request.query ||
         {};
-        const {seller_offer_ids, my_seller_ids: id} = user_index_data || {};
+        const {seller_offer_ids, my_seller_ids: id, wallet_seller_cashback_ids, wallet_seller_credit_ids, wallet_seller_loyalty_ids} = user_index_data ||
+        {};
         search_value = search_value || '';
         let contact_no, seller_name = {
           $or: {},
@@ -65,17 +69,60 @@ class SellerController {
                   id, $or: {seller_name, contact_no},
                 })),
                 attributes: [
-                  'id', ['seller_name', 'name'], 'owner_name',
+                  'id', ['seller_name', 'name'], 'owner_name', 'seller_details',
                   'gstin', 'pan_no', 'reg_no', 'is_service', 'is_onboarded',
                   'address', 'city_id', 'state_id', 'locality_id', 'latitude',
-                  'longitude', 'url', 'contact_no', 'email', 'seller_type_id',
-                  modals.sequelize.literal(
-                      `(select sum(seller_cashback.amount) from table_wallet_seller_cashback as seller_cashback where status_type in (16) and seller_cashback.user_id = ${user_id} and seller_cashback.seller_id = id) as cashback_total,(select sum(amount) from table_wallet_seller_loyalty as seller_loyalty where status_type in (16) and seller_loyalty.user_id = ${user_id} and seller_loyalty.seller_id = id) as loyalty_total,(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16) and seller_credit.user_id = ${user_id} and seller_credit.seller_id = id) as credit_total, ${seller_offer_ids &&
-                      seller_offer_ids.length > 0 ?
-                          `(select count(*) from table_seller_offers as seller_offers where status_type in (1) and seller_offers.id in (${(seller_offer_ids ||
-                              []).join(
-                              ',')}) and seller_offers.seller_id = id)` :
-                          0} as offer_count`)],
+                  'longitude', 'url', 'contact_no', 'email', 'seller_type_id', [
+                    modals.sequelize.literal(
+                        `${wallet_seller_cashback_ids &&
+                        wallet_seller_cashback_ids.length > 0 ?
+                            `(select sum(seller_cashback.amount) from table_wallet_seller_cashback as seller_cashback where seller_cashback.id in (${(wallet_seller_cashback_ids ||
+                                []).join(
+                                ',')}) status_type in (16) and transaction_type = 1 and seller_cashback.user_id = ${user_id} and seller_cashback.seller_id = "sellers"."id")` :
+                            0}`),
+                    'cashback_total'], [
+                    modals.sequelize.literal(
+                        `${wallet_seller_cashback_ids &&
+                        wallet_seller_cashback_ids.length > 0 ?
+                            `(select sum(seller_cashback.amount) from table_wallet_seller_cashback as seller_cashback where seller_cashback.id in (${(wallet_seller_cashback_ids ||
+                                []).join(
+                                ',')}) status_type in (16) and transaction_type = 2 and seller_cashback.user_id = ${user_id} and seller_cashback.seller_id = "sellers"."id")` :
+                            0}`),
+                    'redeemed_cashback'], [
+                    modals.sequelize.literal(
+                        `${wallet_seller_loyalty_ids &&
+                        wallet_seller_loyalty_ids.length > 0 ?
+                            `(select sum(amount) from table_wallet_seller_loyalty as seller_loyalty where seller_loyalty.id in (${(wallet_seller_loyalty_ids ||
+                                []).join(
+                                ',')}) and status_type in (16) and transaction_type = 1 and seller_loyalty.user_id = ${user_id} and seller_loyalty.seller_id = "sellers"."id")` :
+                            0}`), 'loyalty_total'], [
+                    modals.sequelize.literal(
+                        `${wallet_seller_loyalty_ids &&
+                        wallet_seller_loyalty_ids.length > 0 ?
+                            `(select sum(amount) from table_wallet_seller_loyalty as seller_loyalty where seller_loyalty.id in (${(wallet_seller_loyalty_ids ||
+                                []).join(
+                                ',')}) and status_type in (16) and transaction_type = 2 and seller_loyalty.user_id = ${user_id} and seller_loyalty.seller_id = "sellers"."id")` :
+                            0}`), 'redeemed_loyalty'], [
+                    modals.sequelize.literal(
+                        `${wallet_seller_credit_ids &&
+                        wallet_seller_credit_ids.length > 0 ?
+                            `(select sum(amount) from table_wallet_seller_credit as seller_credit where seller_credit.id in (${(wallet_seller_credit_ids ||
+                                []).join(
+                                ',')}) and status_type in (16) and transaction_type = 1 and seller_credit.user_id = ${user_id} and seller_credit.seller_id = "sellers"."id")` :
+                            0}`), 'credit_total'], [
+                    modals.sequelize.literal(
+                        `${wallet_seller_credit_ids &&
+                        wallet_seller_credit_ids.length > 0 ?
+                            `(select sum(amount) from table_wallet_seller_credit as seller_credit where seller_credit.id in (${(wallet_seller_credit_ids ||
+                                []).join(
+                                ',')}) and status_type in (16) and transaction_type = 2 and seller_credit.user_id = ${user_id} and seller_credit.seller_id = "sellers"."id")` :
+                            0}`), 'redeemed_credits'], [
+                    modals.sequelize.literal(
+                        `${seller_offer_ids && seller_offer_ids.length > 0 ?
+                            `(select count(*) from table_seller_offers as seller_offers where status_type in (1) and seller_offers.id in (${(seller_offer_ids ||
+                                []).join(
+                                ',')}) and seller_offers.seller_id = "sellers"."id")` :
+                            0}`), 'offer_count']],
               }),
         });
       } catch (err) {
@@ -112,9 +159,12 @@ class SellerController {
         const user_id = user.id || user.ID;
         const user_index_data = await userAdaptor.retrieveUserIndexedData({
           where: {user_id, status_type: [1, 11]},
-          attributes: ['my_seller_ids', 'seller_offer_ids'],
+          attributes: [
+            'my_seller_ids', 'seller_offer_ids', 'wallet_seller_cashback_ids',
+            'wallet_seller_credit_ids', 'wallet_seller_loyalty_ids'],
         });
-        let {my_seller_ids, seller_offer_ids} = user_index_data || {};
+        let {my_seller_ids, seller_offer_ids, wallet_seller_cashback_ids, wallet_seller_credit_ids, wallet_seller_loyalty_ids} = user_index_data ||
+        {};
         let {search_value, limit, offset, latitude, longitude, city} = request.query ||
         {};
         search_value = search_value || '';
@@ -142,17 +192,60 @@ class SellerController {
                   status_type: [1, 11],
                 })),
                 attributes: [
-                  'id', ['seller_name', 'name'], 'owner_name',
+                  'id', ['seller_name', 'name'], 'owner_name', 'seller_details',
                   'gstin', 'pan_no', 'reg_no', 'is_service', 'is_onboarded',
                   'address', 'city_id', 'state_id', 'locality_id', 'latitude',
-                  'longitude', 'url', 'contact_no', 'email', 'seller_type_id',
-                  modals.sequelize.literal(
-                      `(select sum(seller_cashback.amount) from table_wallet_seller_cashback as seller_cashback where status_type in (16) and seller_cashback.user_id = ${user_id} and seller_cashback.seller_id = id) as cashback_total,(select sum(amount) from table_wallet_seller_loyalty as seller_loyalty where status_type in (16) and seller_loyalty.user_id = ${user_id} and seller_loyalty.seller_id = id) as loyalty_total,(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16) and seller_credit.user_id = ${user_id} and seller_credit.seller_id = id) as credit_total, ${seller_offer_ids &&
-                      seller_offer_ids.length > 0 ?
-                          `(select count(*) from table_seller_offers as seller_offers where status_type in (1) and seller_offers.id in (${(seller_offer_ids ||
-                              []).join(
-                              ',')}) and seller_offers.seller_id = id)` :
-                          0} as offer_count`)],
+                  'longitude', 'url', 'contact_no', 'email', 'seller_type_id', [
+                    modals.sequelize.literal(
+                        `${wallet_seller_cashback_ids &&
+                        wallet_seller_cashback_ids.length > 0 ?
+                            `(select sum(seller_cashback.amount) from table_wallet_seller_cashback as seller_cashback where seller_cashback.id in (${(wallet_seller_cashback_ids ||
+                                []).join(
+                                ',')}) status_type in (16) and transaction_type = 1 and seller_cashback.user_id = ${user_id} and seller_cashback.seller_id = "sellers"."id")` :
+                            0}`),
+                    'cashback_total'], [
+                    modals.sequelize.literal(
+                        `${wallet_seller_cashback_ids &&
+                        wallet_seller_cashback_ids.length > 0 ?
+                            `(select sum(seller_cashback.amount) from table_wallet_seller_cashback as seller_cashback where seller_cashback.id in (${(wallet_seller_cashback_ids ||
+                                []).join(
+                                ',')}) status_type in (16) and transaction_type = 2 and seller_cashback.user_id = ${user_id} and seller_cashback.seller_id = "sellers"."id")` :
+                            0}`),
+                    'redeemed_cashback'], [
+                    modals.sequelize.literal(
+                        `${wallet_seller_loyalty_ids &&
+                        wallet_seller_loyalty_ids.length > 0 ?
+                            `(select sum(amount) from table_wallet_seller_loyalty as seller_loyalty where seller_loyalty.id in (${(wallet_seller_loyalty_ids ||
+                                []).join(
+                                ',')}) and status_type in (16) and transaction_type = 1 and seller_loyalty.user_id = ${user_id} and seller_loyalty.seller_id = "sellers"."id")` :
+                            0}`), 'loyalty_total'], [
+                    modals.sequelize.literal(
+                        `${wallet_seller_loyalty_ids &&
+                        wallet_seller_loyalty_ids.length > 0 ?
+                            `(select sum(amount) from table_wallet_seller_loyalty as seller_loyalty where seller_loyalty.id in (${(wallet_seller_loyalty_ids ||
+                                []).join(
+                                ',')}) and status_type in (16) and transaction_type = 2 and seller_loyalty.user_id = ${user_id} and seller_loyalty.seller_id = "sellers"."id")` :
+                            0}`), 'redeemed_loyalty'], [
+                    modals.sequelize.literal(
+                        `${wallet_seller_credit_ids &&
+                        wallet_seller_credit_ids.length > 0 ?
+                            `(select sum(amount) from table_wallet_seller_credit as seller_credit where seller_credit.id in (${(wallet_seller_credit_ids ||
+                                []).join(
+                                ',')}) and status_type in (16) and transaction_type = 1 and seller_credit.user_id = ${user_id} and seller_credit.seller_id = "sellers"."id")` :
+                            0}`), 'credit_total'], [
+                    modals.sequelize.literal(
+                        `${wallet_seller_credit_ids &&
+                        wallet_seller_credit_ids.length > 0 ?
+                            `(select sum(amount) from table_wallet_seller_credit as seller_credit where seller_credit.id in (${(wallet_seller_credit_ids ||
+                                []).join(
+                                ',')}) and status_type in (16) and transaction_type = 2 and seller_credit.user_id = ${user_id} and seller_credit.seller_id = "sellers"."id")` :
+                            0}`), 'redeemed_credits'], [
+                    modals.sequelize.literal(
+                        `${seller_offer_ids && seller_offer_ids.length > 0 ?
+                            `(select count(*) from table_seller_offers as seller_offers where status_type in (1) and seller_offers.id in (${(seller_offer_ids ||
+                                []).join(
+                                ',')}) and seller_offers.seller_id = "sellers"."id")` :
+                            0}`), 'offer_count']],
               }),
         });
       } catch (err) {
@@ -189,12 +282,15 @@ class SellerController {
         const user_id = user.id || user.ID;
         const user_index_data = await userAdaptor.retrieveUserIndexedData({
           where: {user_id},
-          attributes: ['my_seller_ids', 'seller_offer_ids'],
+          attributes: [
+            'my_seller_ids', 'seller_offer_ids', 'wallet_seller_credit_ids',
+            'wallet_seller_loyalty_ids', 'wallet_seller_cashback_ids'],
         });
 
         let {search_value, limit, offset, latitude, longitude, city} = request.query ||
         {};
-        const {seller_offer_ids} = user_index_data || {};
+        const {seller_offer_ids, wallet_seller_loyalty_ids, wallet_seller_credit_ids, wallet_seller_cashback_ids} = user_index_data ||
+        {};
         const {id} = request.params;
         search_value = search_value || '';
         let contact_no, seller_name = {
@@ -211,8 +307,14 @@ class SellerController {
         }
         seller_name.$or.$iLike = `%${search_value}%`;
 
+        let seller_payment_modes = (config.SELLER_PAYMENT_MODES || '').split(
+            ',');
         return reply.response({
           status: true,
+          payment_modes: seller_payment_modes.map(item => {
+            item = item.split('|');
+            return {id: item[1], title: item[0].split('_').join(' ')};
+          }),
           result: await sellerAdaptor.retrieveSellerById(
               {user_id, seller_offer_ids, latitude, longitude, city}, {
                 where: JSON.parse(JSON.stringify({
@@ -223,13 +325,35 @@ class SellerController {
                   'gstin', 'pan_no', 'reg_no', 'is_service', 'is_onboarded',
                   'address', 'city_id', 'state_id', 'locality_id', 'latitude',
                   'longitude', 'url', 'contact_no', 'email', 'seller_type_id',
-                  modals.sequelize.literal(
-                      `(select sum(seller_cashback.amount) from table_wallet_seller_cashback as seller_cashback where status_type in (16) and seller_cashback.user_id = ${user_id} and seller_cashback.seller_id = id) as cashback_total,(select sum(amount) from table_wallet_seller_loyalty as seller_loyalty where status_type in (16) and seller_loyalty.user_id = ${user_id} and seller_loyalty.seller_id = id) as loyalty_total,(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16) and seller_credit.user_id = ${user_id} and seller_credit.seller_id = id) as credit_total, ${seller_offer_ids &&
-                      seller_offer_ids.length > 0 ?
-                          `(select count(*) from table_seller_offers as seller_offers where status_type in (1) and seller_offers.id in (${(seller_offer_ids ||
-                              []).join(
-                              ',')}) and seller_offers.seller_id = id)` :
-                          0} as offer_count`)],
+                  'seller_details', [
+                    modals.sequelize.literal(
+                        `${wallet_seller_cashback_ids &&
+                        wallet_seller_cashback_ids.length > 0 ?
+                            `(select sum(seller_cashback.amount) from table_wallet_seller_cashback as seller_cashback where seller_cashback.id in (${(wallet_seller_cashback_ids ||
+                                []).join(
+                                ',')}) status_type in (16) and seller_cashback.user_id = ${user_id} and seller_cashback.seller_id = "sellers"."id")` :
+                            0}`),
+                    'cashback_total'], [
+                    modals.sequelize.literal(
+                        `${wallet_seller_loyalty_ids &&
+                        wallet_seller_loyalty_ids.length > 0 ?
+                            `(select sum(amount) from table_wallet_seller_loyalty as seller_loyalty where seller_loyalty.id in (${(wallet_seller_loyalty_ids ||
+                                []).join(
+                                ',')}) and status_type in (16) and seller_loyalty.user_id = ${user_id} and seller_loyalty.seller_id = "sellers"."id")` :
+                            0}`), 'loyalty_total'], [
+                    modals.sequelize.literal(
+                        `${wallet_seller_credit_ids &&
+                        wallet_seller_credit_ids.length > 0 ?
+                            `(select sum(amount) from table_wallet_seller_credit as seller_credit where seller_credit.id in (${(wallet_seller_credit_ids ||
+                                []).join(
+                                ',')}) and status_type in (16) and seller_credit.user_id = ${user_id} and seller_credit.seller_id = "sellers"."id")` :
+                            0}`), 'credit_total'], [
+                    modals.sequelize.literal(
+                        `${seller_offer_ids && seller_offer_ids.length > 0 ?
+                            `(select count(*) from table_seller_offers as seller_offers where status_type in (1) and seller_offers.id in (${(seller_offer_ids ||
+                                []).join(
+                                ',')}) and seller_offers.seller_id = "sellers"."id")` :
+                            0}`), 'offer_count']],
               }),
         });
       } catch (err) {
@@ -303,11 +427,11 @@ class SellerController {
                     'address', 'city_id', 'state_id', 'locality_id', 'latitude',
                     'longitude', 'url', 'contact_no', 'email', 'seller_type_id',
                     modals.sequelize.literal(
-                        `(select sum(seller_cashback.amount) from table_wallet_seller_cashback as seller_cashback where status_type in (16) and seller_cashback.user_id = ${user_id} and seller_cashback.seller_id = id) as cashback_total,(select sum(amount) from table_wallet_seller_loyalty as seller_loyalty where status_type in (16) and seller_loyalty.user_id = ${user_id} and seller_loyalty.seller_id = id) as loyalty_total,(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16) and seller_credit.user_id = ${user_id} and seller_credit.seller_id = id) as credit_total, ${seller_offer_ids &&
+                        `(select sum(seller_cashback.amount) from table_wallet_seller_cashback as seller_cashback where status_type in (16) and seller_cashback.user_id = ${user_id} and seller_cashback.seller_id = "sellers"."id") as cashback_total,(select sum(amount) from table_wallet_seller_loyalty as seller_loyalty where status_type in (16) and seller_loyalty.user_id = ${user_id} and seller_loyalty.seller_id = "sellers"."id") as loyalty_total,(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16) and seller_credit.user_id = ${user_id} and seller_credit.seller_id = "sellers"."id") as credit_total, ${seller_offer_ids &&
                         seller_offer_ids.length > 0 ?
                             `(select count(*) from table_seller_offers as seller_offers where status_type in (1) and seller_offers.id in (${(seller_offer_ids ||
                                 []).join(
-                                ',')}) and seller_offers.seller_id = id)` :
+                                ',')}) and seller_offers.seller_id = "sellers"."id")` :
                             0} as offer_count,(select AVG(seller_reviews.review_ratings) from table_seller_reviews as seller_reviews where seller_reviews.offline_seller_id = id) as ratings`)],
                 }))[0],
           });
@@ -413,6 +537,7 @@ class SellerController {
             $iLike: email.trim(),
           };
         }
+        const message = `Hello Seller, We are glad to invite you to get on board on BinBill and maintain a healthy relationship with your user.`;
         const [user_index_data, seller] = await Promise.all([
           userAdaptor.retrieveUserIndexedData({
             where: {user_id, status_type: [1, 11]},
@@ -423,7 +548,8 @@ class SellerController {
                 status_type: 11, state_id, locality_id, gstin,
                 updated_by: user_id, pan_no, reg_no, longitude, latitude,
                 seller_type_id: 4,
-              })))]);
+              }))), sendSMS(message, [contact_no])]);
+
         let {seller_offer_ids, my_seller_ids} = user_index_data || {};
 
         my_seller_ids = (my_seller_ids || []);
@@ -567,8 +693,7 @@ class SellerController {
       replyObject.mobile_no = mobile_no;
       replyObject.seller_detail = JSON.parse(
           JSON.stringify(seller_detail || seller_updates || {}));
-      return reply.response(JSON.parse(JSON.stringify(replyObject))).
-          code(201);
+      return reply.response(JSON.parse(JSON.stringify(replyObject))).code(201);
     } catch (err) {
       console.log(err);
       modals.logs.create({
@@ -611,8 +736,7 @@ class SellerController {
       replyObject.mobile_no = mobile_no;
       replyObject.seller_detail = JSON.parse(
           JSON.stringify(seller_detail || seller_updates || {}));
-      return reply.response(JSON.parse(JSON.stringify(replyObject))).
-          code(201);
+      return reply.response(JSON.parse(JSON.stringify(replyObject))).code(201);
     } catch (err) {
       console.log(err);
       modals.logs.create({
@@ -639,20 +763,26 @@ class SellerController {
   static async retrieveReferenceData(request, reply) {
     try {
       let token_user = shared.verifyAuthorization(request.headers);
+      let {data_required} = request.query;
+      data_required = !(!!data_required && data_required.toLowerCase() ===
+          'false');
       let [states, provider_types, seller_data, assisted_service_types] = await Promise.all(
           [
-            generalAdaptor.retrieveStates(
-                {where: {id: {$notIn: [0]}}, attributes: ['id', 'state_name']}),
-            sellerAdaptor.retrieveProviderTypes(
-                {attributes: ['id', 'title', 'description']}),
+            data_required ? generalAdaptor.retrieveStates(
+                {
+                  where: {id: {$notIn: [0]}},
+                  attributes: ['id', 'state_name'],
+                }) : [],
+            data_required ? sellerAdaptor.retrieveProviderTypes(
+                {attributes: ['id', 'title', 'description']}) : [],
             token_user ? sellerAdaptor.retrieveSellerDetail({
               where: {user_id: token_user.id},
               attributes: [
                 'id', 'seller_details', 'is_onboarded',
                 'gstin', 'pan_no'],
             }) : {},
-            sellerAdaptor.retrieveAssistedServiceTypes(
-                {attributes: ['id', 'title', 'description']})]);
+            data_required ? sellerAdaptor.retrieveAssistedServiceTypes(
+                {attributes: ['id', 'title', 'description']}) : []]);
       const {is_onboarded, seller_details, gstin, pan_no, id} = seller_data ||
       {is_onboarded: false};
       const {basic_details, business_details} = seller_details || {};
@@ -683,13 +813,16 @@ class SellerController {
       let seller_business_types = (config.SELLER_BUSINESS_TYPES || '').split(
           ',');
       return reply.response(JSON.parse(JSON.stringify({
-        status: true, is_onboarded, seller_id: id,
+        status: true,
+        is_onboarded,
+        seller_id: id,
         next_step: (!gstin && !pan_no) ? 'fresh_seller' :
             !basic_details || (basic_details && !basic_details.is_complete) ?
                 'basic_details' : !business_details ?
-                'business_details' : 'category_brand_selection',
-        categories, main_category_id: (basic_details || {}).category_id,
-        data: {
+                'business_details' : 'dashboard',
+        categories: data_required || !is_onboarded ? categories : undefined,
+        main_category_id: (basic_details || {}).category_id,
+        data: data_required || !is_onboarded ? {
           provider_types, states, categories: seller_categories.map(item => {
             item = item.split('|');
             return {id: item[1], title: item[0].split('_').join(' ')};
@@ -706,7 +839,7 @@ class SellerController {
               image_types: (image_maps || {}).image_types,
             };
           }), assisted_service_types,
-        },
+        } : undefined,
       })));
     } catch (err) {
       console.log(err);
@@ -778,8 +911,105 @@ class SellerController {
           JSON.stringify(await sellerAdaptor.retrieveOrUpdateSellerDetail(
               {where: JSON.parse(JSON.stringify({id}))}, seller_updates,
               true) || {}));
-      return reply.response(JSON.parse(JSON.stringify(replyObject))).
-          code(201);
+      return reply.response(JSON.parse(JSON.stringify(replyObject))).code(201);
+    } catch (err) {
+      console.log(err);
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to update seller basic details.',
+        forceUpdate: request.pre.forceUpdate,
+        err,
+      });
+    }
+  }
+
+  static async linkCustomers(request, reply) {
+    let replyObject = {
+      status: true,
+      message: 'success',
+    };
+    try {
+      let token_user = shared.verifyAuthorization(request.headers);
+      const {seller_id, customer_id} = request.params || {};
+      let {id: user_id, mobile_no: contact_no, email} = token_user;
+      let seller_data = await sellerAdaptor.retrieveSellerDetail(
+          {
+            where: {id: seller_id, user_id},
+            attributes: ['customer_ids', 'id'],
+          });
+      seller_data.customer_ids = (seller_data.customer_ids || []);
+      seller_data.customer_ids.push(parseInt(customer_id));
+      seller_data.customer_ids = _.uniq(seller_data.customer_ids);
+      replyObject.seller_detail = JSON.parse(
+          JSON.stringify(await sellerAdaptor.retrieveOrUpdateSellerDetail(
+              {where: JSON.parse(JSON.stringify({id: seller_id}))}, seller_data,
+              true) || {}));
+      return reply.response(JSON.parse(JSON.stringify(replyObject))).code(201);
+    } catch (err) {
+      console.log(err);
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to update seller basic details.',
+        forceUpdate: request.pre.forceUpdate,
+        err,
+      });
+    }
+  }
+
+  static async inviteCustomers(request, reply) {
+    let replyObject = {
+      status: true,
+      message: 'success',
+    };
+    try {
+      let token_user = shared.verifyAuthorization(request.headers);
+      const {mobile_no, full_name, email} = request.payload || {};
+      const {seller_id} = request.params || {};
+      let {id: user_id} = token_user;
+      let [seller_data, user_data] = await Promise.all([
+        sellerAdaptor.retrieveSellerDetail(
+            {
+              where: {id: seller_id, user_id},
+              attributes: ['customer_ids', 'id'],
+            }), userAdaptor.createUserForSeller(
+            JSON.parse(JSON.stringify({mobile_no})), JSON.parse(
+                JSON.stringify(
+                    {
+                      mobile_no, full_name, email,
+                      user_status_type: 2, role_type: 5,
+                    })))]);
+      seller_data.customer_ids = (seller_data.customer_ids || []);
+      seller_data.customer_ids.push(user_data.id);
+      seller_data.customer_ids = _.uniq(seller_data.customer_ids);
+      replyObject.seller_detail = JSON.parse(
+          JSON.stringify(await sellerAdaptor.retrieveOrUpdateSellerDetail(
+              {where: JSON.parse(JSON.stringify({id: seller_id}))}, seller_data,
+              true) || {}));
+      return reply.response(JSON.parse(JSON.stringify(replyObject))).code(201);
     } catch (err) {
       console.log(err);
       modals.logs.create({
@@ -831,8 +1061,7 @@ class SellerController {
           {where: {id: seller_id}}, {is_onboarded: true}, false);
       replyObject.seller_provider_types = JSON.parse(
           JSON.stringify(seller_provider_types));
-      return reply.response(JSON.parse(JSON.stringify(replyObject))).
-          code(201);
+      return reply.response(JSON.parse(JSON.stringify(replyObject))).code(201);
     } catch (err) {
       console.log(err);
       modals.logs.create({
@@ -856,7 +1085,7 @@ class SellerController {
     }
   }
 
-  static async updateSellerAssistedServiceTypes(request, reply) {
+  static async updateAssistedServiceUsers(request, reply) {
     let replyObject = {
       status: true,
       message: 'success',
@@ -865,24 +1094,19 @@ class SellerController {
       let token_user = shared.verifyAuthorization(request.headers);
       const {id: seller_id} = request.params || {};
       let {id: user_id, mobile_no: contact_no, email} = token_user;
-      const seller_service_types = await Promise.all(
-          request.payload.service_type_detail.map((item) => {
-            const {service_type_id, name, mobile_no, price, document_details} = item;
-            return sellerAdaptor.retrieveOrCreateSellerAssistedServiceTypes(
-                JSON.parse(
-                    JSON.stringify(
-                        {service_type_id, seller_id, name, mobile_no})),
-                JSON.parse(JSON.stringify(
-                    {
-                      seller_id, service_type_id, name, mobile_no,
-                      price, document_details,
-                    })));
-          }));
+      let {name, mobile_no, document_details, service_type_detail} = request.payload;
+      service_type_detail = (service_type_detail || [{}]).map(item => {
+        item.seller_id = seller_id;
+        return item;
+      });
+      const seller_service_types = await sellerAdaptor.retrieveOrCreateAssistedServiceUsers(
+          JSON.parse(JSON.stringify({name, mobile_no})),
+          JSON.parse(JSON.stringify({name, mobile_no, document_details})),
+          JSON.parse(JSON.stringify(service_type_detail)));
 
       replyObject.seller_service_types = JSON.parse(
           JSON.stringify(seller_service_types));
-      return reply.response(JSON.parse(JSON.stringify(replyObject))).
-          code(201);
+      return reply.response(JSON.parse(JSON.stringify(replyObject))).code(201);
     } catch (err) {
       console.log(err);
       modals.logs.create({
@@ -915,23 +1139,164 @@ class SellerController {
       let token_user = shared.verifyAuthorization(request.headers);
       const {id: seller_id} = request.params || {};
       let {id: user_id, mobile_no: contact_no, email} = token_user;
-      const seller_offers = await Promise.all(
-          request.payload.seller_offers.map((item) => {
-            const {start_date, end_date, title, description, id, document_details} = item;
-            return sellerAdaptor.retrieveOrCreateSellerOffers(
-                JSON.parse(
-                    JSON.stringify({id, seller_id})),
-                JSON.parse(JSON.stringify(
-                    {
-                      seller_id, start_date, end_date, title,
-                      description, document_details,
-                    })));
-          }));
+      const {start_date, end_date, title, description, id, document_details} = request.payload;
+      const seller_offer = await sellerAdaptor.retrieveOrCreateSellerOffers(
+          JSON.parse(JSON.stringify({id, seller_id})),
+          JSON.parse(JSON.stringify(
+              {
+                seller_id, start_date, end_date, title,
+                description, document_details,
+              })));
 
-      replyObject.seller_offers = JSON.parse(
-          JSON.stringify(seller_offers));
-      return reply.response(JSON.parse(JSON.stringify(replyObject))).
-          code(201);
+      replyObject.seller_offer = JSON.parse(JSON.stringify(seller_offer));
+      return reply.response(JSON.parse(JSON.stringify(replyObject))).code(201);
+    } catch (err) {
+      console.log(err);
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to update seller offers.',
+        forceUpdate: request.pre.forceUpdate,
+        err,
+      });
+    }
+  }
+
+  static async updateSellerCredits(request, reply) {
+    let replyObject = {
+      status: true,
+      message: 'success',
+    };
+    try {
+      let token_user = shared.verifyAuthorization(request.headers);
+      const {id: seller_id} = request.params || {};
+      const {id, amount, transaction_type, consumer_id} = request.payload;
+      const seller_credits = await sellerAdaptor.retrieveOrCreateSellerCredits(
+          JSON.parse(
+              JSON.stringify({id, user_id: consumer_id, seller_id})),
+          JSON.parse(JSON.stringify(
+              {
+                id, amount, transaction_type,
+                user_id: consumer_id, status_type: 16, seller_id,
+              })));
+      await userAdaptor.retrieveOrUpdateUserIndexedData({user_id: consumer_id},
+          {credit_id: seller_credits.id, user_id: consumer_id});
+      replyObject.seller_credits = JSON.parse(
+          JSON.stringify(seller_credits));
+      return reply.response(JSON.parse(JSON.stringify(replyObject))).code(201);
+    } catch (err) {
+      console.log(err);
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to update seller credits.',
+        forceUpdate: request.pre.forceUpdate,
+        err,
+      });
+    }
+  }
+
+  static async updateSellerPoints(request, reply) {
+    let replyObject = {
+      status: true,
+      message: 'success',
+    };
+    try {
+      let token_user = shared.verifyAuthorization(request.headers);
+      const {id: seller_id} = request.params || {};
+      const {id, amount, transaction_type, consumer_id} = request.payload;
+      const seller_points = await sellerAdaptor.retrieveOrCreateSellerPoints(
+          JSON.parse(
+              JSON.stringify({id, user_id: consumer_id, seller_id})),
+          JSON.parse(JSON.stringify(
+              {
+                id, amount, transaction_type,
+                user_id: consumer_id, status_type: 16, seller_id,
+              })));
+
+      await userAdaptor.retrieveOrUpdateUserIndexedData({user_id: consumer_id},
+          {point_id: seller_points.id, user_id: consumer_id});
+      replyObject.seller_points = JSON.parse(
+          JSON.stringify(seller_points));
+      return reply.response(JSON.parse(JSON.stringify(replyObject))).code(201);
+    } catch (err) {
+      console.log(err);
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to update seller points.',
+        forceUpdate: request.pre.forceUpdate,
+        err,
+      });
+    }
+  }
+
+  static async publishSellerOffersToUsers(request, reply) {
+    let replyObject = {
+      status: true,
+      message: 'success',
+    };
+    try {
+      let token_user = shared.verifyAuthorization(request.headers);
+      const {seller_id, id} = request.params || {};
+      let user_indexes = await userAdaptor.retrieveUserIndexes({
+        where: {user_id: request.payload.user_ids || []},
+        attributes: ['seller_offer_ids', 'user_id', 'id'],
+      });
+
+      user_indexes = user_indexes || request.payload.user_ids.map(item => ({
+        user_id: item, seller_offer_ids: [parseInt(id)],
+        my_seller_ids: [seller_id],
+      }));
+      await Promise.all(user_indexes.map(item => {
+        if (item.id) {
+          item.seller_offer_ids = item.seller_offer_ids || [];
+          item.seller_offer_ids.push(parseInt(id));
+          item.seller_offer_ids = _.uniq(item.seller_offer_ids);
+          return userAdaptor.updateUserIndexedData(item,
+              {where: {user_id: item.user_id, id: item.id}});
+        }
+
+        return userAdaptor.createUserIndexedData(item,
+            {where: {user_id: item.user_id}});
+      }));
+      replyObject.user_indexes = JSON.parse(
+          JSON.stringify(await userAdaptor.retrieveUserIndexedData(
+              {where: {user_id: request.payload.user_ids || []}})));
+      return reply.response(JSON.parse(JSON.stringify(replyObject))).code(201);
     } catch (err) {
       console.log(err);
       modals.logs.create({
@@ -1023,22 +1388,29 @@ class SellerController {
     try {
       if (!request.pre.forceUpdate) {
         const {seller_id} = request.params;
-        const [service_types, seller_service_types] = await Promise.all([
+        const [service_types, seller_service_users] = await Promise.all([
           sellerAdaptor.retrieveAssistedServiceTypes({}),
-          sellerAdaptor.retrieveSellerAssistedServices({
-            where: {seller_id},
-            attributes: [
-              'service_type_id', 'seller_id', 'name',
-              'mobile_no', 'price', 'document_details'],
+          sellerAdaptor.retrieveSellerAssistedServiceUsers({
+            include: {
+              as: 'service_types', where: {seller_id},
+              model: modals.seller_service_types, required: true,
+              attributes: ['service_type_id', 'seller_id', 'price', 'id'],
+            }, attributes: [
+              'id', 'name', 'mobile_no',
+              'reviews', 'document_details'],
           })]);
 
         return reply.response({
           status: true,
           message: 'Successful',
-          result: seller_service_types.map(item => {
-            const service_type = service_types.find(
-                stItem => stItem.id === item.service_type_id);
-            item.service_type = service_type.title;
+          result: seller_service_users.map(item => {
+            item.service_types = item.service_types.map(typeItem => {
+              const service_type = service_types.find(
+                  stItem => stItem.id === typeItem.service_type_id);
+              typeItem.service_type = service_type.title;
+              return typeItem;
+            });
+
             return item;
           }),
           forceUpdate: request.pre.forceUpdate,
@@ -1118,11 +1490,386 @@ class SellerController {
     }
   }
 
+  static async retrieveSellerCredits(request, reply) {
+    try {
+      if (!request.pre.forceUpdate) {
+        const {seller_id} = request.params;
+        return reply.response({
+          status: true,
+          message: 'Successful',
+          result: await sellerAdaptor.retrieveSellerCreditsPerUser({
+            where: {seller_id}, include: {
+              model: modals.users, as: 'user', attributes: [
+                'id', ['full_name', 'name'], 'image_name',
+                'mobile_no', 'email'], required: true,
+            }, order: [['user_id'], ['transaction_type']], group: [
+              'user_id', modals.sequelize.literal('"user"."id"'),
+              'transaction_type'], attributes: [
+              'user_id', 'transaction_type',
+              [modals.sequelize.literal('sum(amount)'), 'total_credit']],
+
+          }),
+          forceUpdate: request.pre.forceUpdate,
+        });
+      } else {
+        return reply.response({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate,
+        });
+      }
+    } catch (err) {
+      console.log(err);
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: 1,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to retrieve offers for seller',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
+  static async retrieveSellerLoyaltyPoints(request, reply) {
+    try {
+      if (!request.pre.forceUpdate) {
+        const {seller_id} = request.params;
+        return reply.response({
+          status: true,
+          message: 'Successful',
+          result: await sellerAdaptor.retrieveSellerLoyaltyPointsPerUser({
+            where: {seller_id}, include: {
+              model: modals.users, as: 'user', attributes: [
+                'id', ['full_name', 'name'], 'image_name',
+                'mobile_no', 'email'], required: true,
+            }, order: [['user_id'], ['transaction_type']], group: [
+              'user_id', modals.sequelize.literal('"user"."id"'),
+              'transaction_type'], attributes: [
+              'user_id', 'transaction_type',
+              [modals.sequelize.literal('sum(amount)'), 'total_points']],
+
+          }),
+          forceUpdate: request.pre.forceUpdate,
+        });
+      } else {
+        return reply.response({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate,
+        });
+      }
+    } catch (err) {
+      console.log(err);
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: 1,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to retrieve offers for seller',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
+  static async retrieveSellerConsumers(request, reply) {
+    try {
+      if (!request.pre.forceUpdate) {
+        const {seller_id} = request.params;
+        const {mobile_no, offer_id} = request.query || {};
+        return reply.response({
+          status: true,
+          message: 'Successful',
+          result: await sellerAdaptor.retrieveSellerConsumers(seller_id,
+              mobile_no, offer_id),
+          forceUpdate: request.pre.forceUpdate,
+        });
+      } else {
+        return reply.response({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate,
+        });
+      }
+    } catch (err) {
+      console.log(err);
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to retrieve users for seller',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
+  static async retrieveSellerConsumerDetails(request, reply) {
+    try {
+      if (!request.pre.forceUpdate) {
+        const {seller_id, customer_id} = request.params;
+        const {mobile_no} = request.query || {};
+        return reply.response({
+          status: true,
+          message: 'Successful',
+          result: await sellerAdaptor.retrieveSellerCustomerDetail(seller_id,
+              customer_id,
+              mobile_no),
+          forceUpdate: request.pre.forceUpdate,
+        });
+      } else {
+        return reply.response({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate,
+        });
+      }
+    } catch (err) {
+      console.log(err);
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to retrieve users for seller',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
+  static async retrieveSellerConsumerCredits(request, reply) {
+    try {
+      if (!request.pre.forceUpdate) {
+        const {seller_id, customer_id} = request.params;
+        return reply.response({
+          status: true,
+          message: 'Successful',
+          result: await sellerAdaptor.retrieveSellerCreditsPerUser({
+            where: {seller_id, user_id: customer_id},
+            attributes: ['title', 'description', 'transaction_type', 'amount'],
+            order: [['created_at', 'desc']],
+          }),
+          forceUpdate: request.pre.forceUpdate,
+        });
+      } else {
+        return reply.response({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate,
+        });
+      }
+    } catch (err) {
+      console.log(err);
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: 1,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to retrieve offers for seller',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
+  static async updateSellerConsumerCredits(request, reply) {
+    try {
+      if (!request.pre.forceUpdate) {
+        const {seller_id, customer_id, credit_id, job_id} = request.params;
+        const credit_wallet = await sellerAdaptor.retrieveOrCreateSellerCredits(
+            {seller_id, id: credit_id, user_id: customer_id}, {job_id});
+        if (credit_wallet) {
+          return reply.response({
+            status: true,
+            message: 'Successful',
+            result: credit_wallet,
+            forceUpdate: request.pre.forceUpdate,
+          });
+        }
+
+        return reply.response({
+          status: false,
+          message: 'Unable to link credit with job.',
+          forceUpdate: request.pre.forceUpdate,
+        });
+      }
+      return reply.response({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
+
+    } catch (err) {
+      console.log(err);
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: 1,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to link credit with job.',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
+  static async updateSellerConsumerPoints(request, reply) {
+    try {
+      if (!request.pre.forceUpdate) {
+        const {seller_id, customer_id, point_id, job_id} = request.params;
+        const loyalty_wallet = await sellerAdaptor.retrieveOrCreateSellerPoints(
+            {seller_id, id: point_id, user_id: customer_id}, {job_id});
+        if (loyalty_wallet) {
+          return reply.response({
+            status: true,
+            message: 'Successful',
+            result: loyalty_wallet,
+            forceUpdate: request.pre.forceUpdate,
+          });
+        }
+
+        return reply.response({
+          status: false,
+          message: 'Invalid identity of seller, customer and loyalty.',
+          forceUpdate: request.pre.forceUpdate,
+        });
+      }
+      return reply.response({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
+
+    } catch (err) {
+      console.log(err);
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: 1,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to link loyalty points with job.',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
+  static async retrieveSellerConsumerPoints(request, reply) {
+    try {
+      if (!request.pre.forceUpdate) {
+        const {seller_id, customer_id} = request.params;
+        return reply.response({
+          status: true,
+          message: 'Successful',
+          result: await sellerAdaptor.retrieveSellerLoyaltyPointsPerUser({
+            where: {seller_id, user_id: customer_id},
+            attributes: ['title', 'description', 'transaction_type', 'amount'],
+            order: [['created_at', 'desc']],
+          }),
+          forceUpdate: request.pre.forceUpdate,
+        });
+      } else {
+        return reply.response({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate,
+        });
+      }
+    } catch (err) {
+      console.log(err);
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: 1,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to retrieve offers for seller',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
   static async deleteAssistedService(request, reply) {
     try {
       if (!request.pre.forceUpdate) {
         const {seller_id, id} = request.params;
-        await sellerAdaptor.deleteSellerAssistedService({seller_id, id});
+        await sellerAdaptor.deleteSellerAssistedService(
+            {where: {seller_id, id}});
 
         return reply.response({
           status: true,
@@ -1163,7 +1910,7 @@ class SellerController {
     try {
       if (!request.pre.forceUpdate) {
         const {seller_id, id} = request.params;
-        await sellerAdaptor.deleteSellerOffers({seller_id, id});
+        await sellerAdaptor.deleteSellerOffers({where: {seller_id, id}});
 
         return reply.response({
           status: true,
@@ -1183,7 +1930,6 @@ class SellerController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,

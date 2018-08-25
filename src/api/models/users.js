@@ -93,6 +93,9 @@ export default (sequelize, DataTypes) => {
     otp_created_at: {
       type: DataTypes.DATE,
     },
+    socket_id: {
+      type: DataTypes.STRING,
+    },
   }, {
     freezeTableName: true,
     defaultPrimaryKey: true,
@@ -122,7 +125,11 @@ export default (sequelize, DataTypes) => {
         {foreignKey: 'role_type', targetKey: 'role_type'});
     users.belongsTo(models.statuses,
         {foreignKey: 'user_status_type', targetKey: 'status_type'});
-    users.hasMany(models.jobCopies, {foreignKey: 'updated_by'});
+    users.hasMany(models.cashback_wallet, {foreignKey: 'user_id'});
+    users.hasMany(models.credit_wallet, {foreignKey: 'user_id'});
+    users.hasMany(models.loyalty_wallet, {foreignKey: 'user_id'});
+    users.hasMany(models.user_wallet, {foreignKey: 'user_id'});
+    users.hasMany(models.cashback_jobs, {foreignKey: 'user_id'});
 
     users.hasMany(models.jobs, {foreignKey: 'assigned_to_ce'});
     users.hasMany(models.jobs, {foreignKey: 'assigned_to_qe'});

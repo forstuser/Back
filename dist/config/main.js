@@ -71,7 +71,8 @@ exports.default = {
     operatorsAliases: {}
   },
   APP: {
-    PORT: process.env.APP_PORT || 3000
+    PORT: process.env.APP_PORT || 3000,
+    SOCKET_PORT: process.env.SOCKET_PORT || 3002
   },
   LIMITS: {
     ACCESSORY: process.env.ACCESSORY_LIMITS || 5,

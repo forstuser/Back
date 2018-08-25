@@ -37,12 +37,19 @@ var _router = require('./routes/router');
 
 var _router2 = _interopRequireDefault(_router);
 
+var _socket = require('./api/socket');
+
+var _socket2 = _interopRequireDefault(_socket);
+
+var _socket3 = require('socket.io');
+
+var _socket4 = _interopRequireDefault(_socket3);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 // Create a server with a host and port
-
+let socket_server;
 const PORT = _main2.default.APP.PORT || 8443;
-
 const init = async () => {
   const server = new _hapi2.default.Server({
     port: PORT,
@@ -54,6 +61,8 @@ const init = async () => {
       }
     }
   });
+
+  const io = _socket4.default.listen(server.listener);
   try {
     await server.register({
       plugin: _inert2.default
@@ -107,6 +116,9 @@ const init = async () => {
       }
     });
     (0, _router2.default)(server, _models2.default);
+    /* if (!socket_server) {
+       socket_server = new SocketServer({server, models});
+     }*/
     await server.start();
   } catch (e) {
     console.log(e);

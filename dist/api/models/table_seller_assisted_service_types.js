@@ -9,19 +9,13 @@ exports.default = (sequelize, DataTypes) => {
     service_type_id: {
       type: DataTypes.INTEGER
     },
+    service_user_id: {
+      type: DataTypes.INTEGER
+    },
     seller_id: {
       type: DataTypes.INTEGER
     },
-    name: {
-      type: DataTypes.STRING
-    },
-    mobile_no: {
-      type: DataTypes.STRING
-    },
     price: {
-      type: DataTypes.JSONB
-    },
-    document_details: {
       type: DataTypes.JSONB
     },
     updated_by: {
@@ -45,13 +39,18 @@ exports.default = (sequelize, DataTypes) => {
     defaultPrimaryKey: true,
     timestamps: true,
     underscored: true,
-    tableName: 'table_seller_assisted_services_types'
+    tableName: 'table_seller_assisted_service_types'
   });
 
   seller_service_types.associate = models => {
     seller_service_types.belongsTo(models.users, { foreignKey: 'updated_by', onDelete: 'cascade', onUpdate: 'cascade' });
     seller_service_types.belongsTo(models.assisted_service_types, {
       foreignKey: 'service_type_id',
+      onDelete: 'cascade',
+      onUpdate: 'cascade'
+    });
+    seller_service_types.belongsTo(models.assisted_service_users, {
+      foreignKey: 'service_user_id',
       onDelete: 'cascade',
       onUpdate: 'cascade'
     });

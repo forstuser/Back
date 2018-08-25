@@ -55,6 +55,11 @@ export default class CategoryAdaptor {
     return JSON.parse(JSON.stringify(categoryData));
   }
 
+  async retrieveSellerCategories(options) {
+    const categories = await this.modals.categories.findAll(options);
+    return categories.map(item => item.toJSON());
+  }
+
   async retrieveSubCategories(options, isBrandFormRequired, language, user) {
     let categoryData;
     options.status_type = 1;

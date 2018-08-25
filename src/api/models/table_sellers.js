@@ -84,6 +84,9 @@ export default (sequelize, DataTypes) => {
         user_id: {
           type: DataTypes.INTEGER,
         },
+        socket_id: {
+          type: DataTypes.STRING,
+        },
       },
       {
         freezeTableName: true,

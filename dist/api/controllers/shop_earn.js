@@ -445,7 +445,7 @@ class ShopEarnController {
     try {
       if (request.pre.userExist && !request.pre.forceUpdate) {
         const product = await productAdaptor.updateProduct(request.params.product_id, JSON.parse(JSON.stringify({
-          purchase_cost: request.payload.purchase_cost,
+          purchase_cost: request.payload.value,
           taxes: request.payload.taxes,
           updated_by: user.id || user.ID,
           seller_id: request.payload.seller_id,

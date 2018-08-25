@@ -281,7 +281,7 @@ export function prepareGeneralRoutes(modal, routeObject, middleware) {
     });
 
     routeObject.push({
-      method: 'POST',
+      method: 'GET',
       path: '/sendsms',
       config: {
         handler: ControllerObject.sendMessages,

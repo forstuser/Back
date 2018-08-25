@@ -271,7 +271,7 @@ function prepareGeneralRoutes(modal, routeObject, middleware) {
     });
 
     routeObject.push({
-      method: 'POST',
+      method: 'GET',
       path: '/sendsms',
       config: {
         handler: _general2.default.sendMessages,

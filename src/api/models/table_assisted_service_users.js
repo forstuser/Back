@@ -1,17 +1,17 @@
 'use strict';
 
 export default (sequelize, DataTypes) => {
-  const seller_service_types = sequelize.define('seller_service_types', {
-        service_type_id: {
-          type: DataTypes.INTEGER,
+  const assisted_service_users = sequelize.define('assisted_service_users', {
+        name: {
+          type: DataTypes.STRING,
         },
-        service_user_id: {
-          type: DataTypes.INTEGER,
+        mobile_no: {
+          type: DataTypes.STRING,
         },
-        seller_id: {
-          type: DataTypes.INTEGER,
+        reviews: {
+          type: DataTypes.JSONB,
         },
-        price: {
+        document_details: {
           type: DataTypes.JSONB,
         },
         updated_by: {
@@ -36,32 +36,25 @@ export default (sequelize, DataTypes) => {
         defaultPrimaryKey: true,
         timestamps: true,
         underscored: true,
-        tableName: 'table_seller_assisted_service_types',
+        tableName: 'table_assisted_service_users',
       });
 
-  seller_service_types.associate = (models) => {
-    seller_service_types.belongsTo(models.users,
+  assisted_service_users.associate = (models) => {
+    assisted_service_users.belongsTo(models.users,
         {foreignKey: 'updated_by', onDelete: 'cascade', onUpdate: 'cascade'});
-    seller_service_types.belongsTo(models.assisted_service_types,
+    assisted_service_users.hasMany(models.seller_service_types,
         {
-          foreignKey: 'service_type_id',
-          onDelete: 'cascade',
-          onUpdate: 'cascade',
+          foreignKey: 'service_user_id',as:'service_types',
+          onDelete: 'cascade', onUpdate: 'cascade',
         });
-    seller_service_types.belongsTo(models.assisted_service_users,
-        {
-          foreignKey: 'service_user_id',
-          onDelete: 'cascade',
-          onUpdate: 'cascade',
-        });
-    seller_service_types.belongsTo(models.sellers,
+    assisted_service_users.belongsTo(models.sellers,
         {
           foreignKey: 'seller_id',
           as: 'seller',
           onDelete: 'cascade',
           onUpdate: 'cascade',
         });
-    seller_service_types.belongsTo(models.statuses,
+    assisted_service_users.belongsTo(models.statuses,
         {
           foreignKey: 'status_type',
           targetKey: 'status_type',
@@ -69,5 +62,5 @@ export default (sequelize, DataTypes) => {
           onUpdate: 'cascade',
         });
   };
-  return seller_service_types;
+  return assisted_service_users;
 };

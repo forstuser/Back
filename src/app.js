@@ -7,10 +7,10 @@ import vision from 'vision';
 import models from './api/models';
 import config from './config/main';
 import routers from './routes/router';
+import SocketIO from 'socket.io';
 // Create a server with a host and port
-
+let socket_server;
 const PORT = config.APP.PORT || 8443;
-
 const init = async () => {
   const server = new Hapi.Server({
     port: PORT,
@@ -22,6 +22,8 @@ const init = async () => {
       },
     },
   });
+
+  const io = SocketIO.listen(server.listener);
   try {
     await server.register(
         {
@@ -82,6 +84,9 @@ const init = async () => {
       }
     });
     routers(server, models);
+   /* if (!socket_server) {
+      socket_server = new SocketServer({server, models});
+    }*/
     await server.start();
   } catch (e) {
     console.log(e);

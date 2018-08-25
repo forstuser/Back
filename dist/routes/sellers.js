@@ -280,25 +280,26 @@ function prepareSellerRoutes(modal, route, middleware) {
     });
 
     route.push({
-      method: 'PUT',
+      method: 'POST',
       path: '/sellers/{id}/assisted',
       config: {
         pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
-        auth: 'jwt', handler: _sellers2.default.updateSellerAssistedServiceTypes,
-        description: 'Update Seller assisted service types details',
+        auth: 'jwt', handler: _sellers2.default.updateAssistedServiceUsers,
+        description: 'Add Seller assisted service types details',
         tags: ['api', 'Seller', 'Assisted Service Types', 'Details'],
         validate: {
           payload: {
-            service_type_detail: [_joi2.default.array().items(_joi2.default.object().keys({
+            mobile_no: _joi2.default.string().required(),
+            name: [_joi2.default.string(), _joi2.default.allow(null)],
+            document_details: [_joi2.default.array(), _joi2.default.allow(null)],
+            service_type_detail: _joi2.default.array().items(_joi2.default.object().keys({
+              id: [_joi2.default.number(), _joi2.default.allow(null)],
               service_type_id: _joi2.default.number().required(),
-              mobile_no: _joi2.default.string().required(),
-              name: [_joi2.default.string(), _joi2.default.allow(null)],
-              document_details: [_joi2.default.array().items(_joi2.default.number()), _joi2.default.allow(null)],
               price: [_joi2.default.object().keys({
                 price_type: _joi2.default.number().required(),
                 value: _joi2.default.number().required()
               }), _joi2.default.allow(null)]
-            })).required()],
+            })).required(),
             output: 'data',
             parse: true
           }
@@ -321,14 +322,35 @@ function prepareSellerRoutes(modal, route, middleware) {
         tags: ['api', 'Seller', 'Offer', 'Details'],
         validate: {
           payload: {
-            seller_offers: [_joi2.default.array().items(_joi2.default.object().keys({
-              id: [_joi2.default.number(), _joi2.default.allow(null)],
-              title: _joi2.default.string().required(),
-              description: [_joi2.default.string(), _joi2.default.allow(null)],
-              document_details: [_joi2.default.array().items(_joi2.default.number()), _joi2.default.allow(null)],
-              start_date: _joi2.default.string().required(),
-              end_date: [_joi2.default.string(), _joi2.default.allow(null)]
-            })).required()],
+            id: [_joi2.default.number(), _joi2.default.allow(null)],
+            title: _joi2.default.string().required(),
+            description: [_joi2.default.string(), _joi2.default.allow(null)],
+            document_details: [_joi2.default.array(), _joi2.default.allow(null)],
+            start_date: _joi2.default.string().required(),
+            end_date: [_joi2.default.string(), _joi2.default.allow(null)],
+            output: 'data',
+            parse: true
+          }
+        },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [{ code: 200, message: 'Authenticated' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
+          }
+        }
+      }
+    });
+
+    route.push({
+      method: 'PUT',
+      path: '/sellers/{seller_id}/offers/{id}/publish',
+      config: {
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        auth: 'jwt', handler: _sellers2.default.publishSellerOffersToUsers,
+        description: 'Publish Seller Offers to Users',
+        tags: ['api', 'Publish', 'Seller', 'Offers', 'Users'],
+        validate: {
+          payload: {
+            user_ids: _joi2.default.array().items(_joi2.default.number()).required(),
             output: 'data',
             parse: true
           }
@@ -381,6 +403,227 @@ function prepareSellerRoutes(modal, route, middleware) {
         auth: 'jwt', handler: _sellers2.default.retrieveSellerOffers,
         description: 'Get Seller offers',
         tags: ['api', 'Seller', 'Offer', 'List'],
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [{ code: 200, message: 'Authenticated' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
+          }
+        }
+      }
+    });
+
+    route.push({
+      method: 'GET',
+      path: '/sellers/{seller_id}/credits',
+      config: {
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        auth: 'jwt', handler: _sellers2.default.retrieveSellerCredits,
+        description: 'Get Seller Credits',
+        tags: ['api', 'Seller', 'Credit', 'List'],
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [{ code: 200, message: 'Authenticated' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
+          }
+        }
+      }
+    });
+
+    route.push({
+      method: 'PUT',
+      path: '/sellers/{id}/credits',
+      config: {
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        auth: 'jwt', handler: _sellers2.default.updateSellerCredits,
+        description: 'Update Seller Credits',
+        tags: ['api', 'Seller', 'Credit', 'Details'],
+        validate: {
+          payload: {
+            id: [_joi2.default.number(), _joi2.default.allow(null)],
+            amount: _joi2.default.number().required(),
+            transaction_type: _joi2.default.number().required(),
+            consumer_id: _joi2.default.number().required(),
+            output: 'data',
+            parse: true
+          }
+        },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [{ code: 200, message: 'Authenticated' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
+          }
+        }
+      }
+    });
+
+    route.push({
+      method: 'GET',
+      path: '/sellers/{seller_id}/points',
+      config: {
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        auth: 'jwt', handler: _sellers2.default.retrieveSellerLoyaltyPoints,
+        description: 'Get Seller Points',
+        tags: ['api', 'Seller', 'Point', 'List'],
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [{ code: 200, message: 'Authenticated' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
+          }
+        }
+      }
+    });
+
+    route.push({
+      method: 'PUT',
+      path: '/sellers/{id}/points',
+      config: {
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        auth: 'jwt', handler: _sellers2.default.updateSellerPoints,
+        description: 'Update Seller Points',
+        tags: ['api', 'Seller', 'Point', 'Details'],
+        validate: {
+          payload: {
+            id: [_joi2.default.number(), _joi2.default.allow(null)],
+            amount: _joi2.default.number().required(),
+            transaction_type: _joi2.default.number().required(),
+            consumer_id: _joi2.default.number().required(),
+            output: 'data',
+            parse: true
+          }
+        },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [{ code: 200, message: 'Authenticated' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
+          }
+        }
+      }
+    });
+
+    route.push({
+      method: 'GET',
+      path: '/sellers/{seller_id}/users',
+      config: {
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        auth: 'jwt', handler: _sellers2.default.retrieveSellerConsumers,
+        description: 'Get Seller users',
+        tags: ['api', 'Seller', 'user', 'List'],
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [{ code: 200, message: 'Authenticated' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
+          }
+        }
+      }
+    });
+
+    route.push({
+      method: 'GET',
+      path: '/sellers/{seller_id}/users/{customer_id}',
+      config: {
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        auth: 'jwt', handler: _sellers2.default.retrieveSellerConsumerDetails,
+        description: 'Get Seller customer details',
+        tags: ['api', 'Seller', 'customer', 'details'],
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [{ code: 200, message: 'Authenticated' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
+          }
+        }
+      }
+    });
+
+    route.push({
+      method: 'GET',
+      path: '/sellers/{seller_id}/users/{customer_id}/credits',
+      config: {
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        auth: 'jwt', handler: _sellers2.default.retrieveSellerConsumerCredits,
+        description: 'Get Seller customer credits',
+        tags: ['api', 'Seller', 'customer', 'credits'],
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [{ code: 200, message: 'Authenticated' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
+          }
+        }
+      }
+    });
+
+    route.push({
+      method: 'PUT',
+      path: '/seller/{seller_id}/users/{customer_id}/credits/{credit_id}/jobs/{job_id}',
+      config: {
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        auth: 'jwt', handler: _sellers2.default.updateSellerConsumerCredits,
+        description: 'Linking Seller customer credits with jobs',
+        tags: ['api', 'Seller', 'customer', 'credits'],
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [{ code: 200, message: 'Authenticated' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
+          }
+        }
+      }
+    });
+
+    route.push({
+      method: 'PUT',
+      path: '/seller/{seller_id}/users/{customer_id}/points/{point_id}/jobs/{job_id}',
+      config: {
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        auth: 'jwt', handler: _sellers2.default.updateSellerConsumerPoints,
+        description: 'Linking Seller customer loyalty points with jobs',
+        tags: ['api', 'Seller', 'customer', 'loyalty points'],
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [{ code: 200, message: 'Authenticated' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
+          }
+        }
+      }
+    });
+
+    route.push({
+      method: 'GET',
+      path: '/sellers/{seller_id}/users/{customer_id}/points',
+      config: {
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        auth: 'jwt', handler: _sellers2.default.retrieveSellerConsumerPoints,
+        description: 'Get Seller customer loyalty points',
+        tags: ['api', 'Seller', 'customer', 'Loyalty Points'],
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [{ code: 200, message: 'Authenticated' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
+          }
+        }
+      }
+    });
+
+    route.push({
+      method: 'PUT',
+      path: '/sellers/{seller_id}/users/{customer_id}',
+      config: {
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        auth: 'jwt', handler: _sellers2.default.linkCustomers,
+        description: 'Link Consumer with Seller',
+        tags: ['api', 'Seller', 'Consumer'],
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [{ code: 200, message: 'Authenticated' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
+          }
+        }
+      }
+    });
+
+    route.push({
+      method: 'PUT',
+      path: '/sellers/{seller_id}/users',
+      config: {
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        auth: 'jwt', handler: _sellers2.default.inviteCustomers,
+        description: 'Invite Consumer with Seller',
+        tags: ['api', 'Seller', 'Consumer'],
+        validate: {
+          payload: {
+            mobile_no: _joi2.default.string().required(),
+            full_name: [_joi2.default.string(), _joi2.default.allow(null)],
+            email: [_joi2.default.string(), _joi2.default.allow(null)],
+            output: 'data',
+            parse: true
+          }
+        },
         plugins: {
           'hapi-swagger': {
             responseMessages: [{ code: 200, message: 'Authenticated' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
