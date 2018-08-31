@@ -69,10 +69,26 @@ class SellerController {
                   id, $or: {seller_name, contact_no},
                 })),
                 attributes: [
-                  'id', ['seller_name', 'name'], 'owner_name', 'seller_details',
-                  'gstin', 'pan_no', 'reg_no', 'is_service', 'is_onboarded',
-                  'address', 'city_id', 'state_id', 'locality_id', 'latitude',
-                  'longitude', 'url', 'contact_no', 'email', 'seller_type_id', [
+                  'id',
+                  ['seller_name', 'name'],
+                  'owner_name',
+                  'seller_details',
+                  'gstin',
+                  'pan_no',
+                  'reg_no',
+                  'is_service',
+                  'is_onboarded',
+                  'address',
+                  'city_id',
+                  'state_id',
+                  'locality_id',
+                  'latitude',
+                  'longitude',
+                  'url',
+                  'contact_no',
+                  'email',
+                  'seller_type_id',
+                  [
                     modals.sequelize.literal(
                         `${wallet_seller_cashback_ids &&
                         wallet_seller_cashback_ids.length > 0 ?
@@ -80,7 +96,8 @@ class SellerController {
                                 []).join(
                                 ',')}) status_type in (16) and transaction_type = 1 and seller_cashback.user_id = ${user_id} and seller_cashback.seller_id = "sellers"."id")` :
                             0}`),
-                    'cashback_total'], [
+                    'cashback_total'],
+                  [
                     modals.sequelize.literal(
                         `${wallet_seller_cashback_ids &&
                         wallet_seller_cashback_ids.length > 0 ?
@@ -88,41 +105,50 @@ class SellerController {
                                 []).join(
                                 ',')}) status_type in (16) and transaction_type = 2 and seller_cashback.user_id = ${user_id} and seller_cashback.seller_id = "sellers"."id")` :
                             0}`),
-                    'redeemed_cashback'], [
+                    'redeemed_cashback'],
+                  [
                     modals.sequelize.literal(
                         `${wallet_seller_loyalty_ids &&
                         wallet_seller_loyalty_ids.length > 0 ?
                             `(select sum(amount) from table_wallet_seller_loyalty as seller_loyalty where seller_loyalty.id in (${(wallet_seller_loyalty_ids ||
                                 []).join(
                                 ',')}) and status_type in (16) and transaction_type = 1 and seller_loyalty.user_id = ${user_id} and seller_loyalty.seller_id = "sellers"."id")` :
-                            0}`), 'loyalty_total'], [
+                            0}`), 'loyalty_total'],
+                  [
                     modals.sequelize.literal(
                         `${wallet_seller_loyalty_ids &&
                         wallet_seller_loyalty_ids.length > 0 ?
                             `(select sum(amount) from table_wallet_seller_loyalty as seller_loyalty where seller_loyalty.id in (${(wallet_seller_loyalty_ids ||
                                 []).join(
                                 ',')}) and status_type in (16) and transaction_type = 2 and seller_loyalty.user_id = ${user_id} and seller_loyalty.seller_id = "sellers"."id")` :
-                            0}`), 'redeemed_loyalty'], [
+                            0}`), 'redeemed_loyalty'],
+                  [
                     modals.sequelize.literal(
                         `${wallet_seller_credit_ids &&
                         wallet_seller_credit_ids.length > 0 ?
                             `(select sum(amount) from table_wallet_seller_credit as seller_credit where seller_credit.id in (${(wallet_seller_credit_ids ||
                                 []).join(
                                 ',')}) and status_type in (16) and transaction_type = 1 and seller_credit.user_id = ${user_id} and seller_credit.seller_id = "sellers"."id")` :
-                            0}`), 'credit_total'], [
+                            0}`), 'credit_total'],
+                  [
                     modals.sequelize.literal(
                         `${wallet_seller_credit_ids &&
                         wallet_seller_credit_ids.length > 0 ?
                             `(select sum(amount) from table_wallet_seller_credit as seller_credit where seller_credit.id in (${(wallet_seller_credit_ids ||
                                 []).join(
                                 ',')}) and status_type in (16) and transaction_type = 2 and seller_credit.user_id = ${user_id} and seller_credit.seller_id = "sellers"."id")` :
-                            0}`), 'redeemed_credits'], [
+                            0}`), 'redeemed_credits'],
+                  [
                     modals.sequelize.literal(
                         `${seller_offer_ids && seller_offer_ids.length > 0 ?
                             `(select count(*) from table_seller_offers as seller_offers where status_type in (1) and seller_offers.id in (${(seller_offer_ids ||
                                 []).join(
                                 ',')}) and seller_offers.seller_id = "sellers"."id")` :
-                            0}`), 'offer_count']],
+                            0}`), 'offer_count'],
+                  [
+                    modals.sequelize.literal(
+                        `(select AVG(seller_reviews.review_ratings) from table_seller_reviews as seller_reviews where seller_reviews.offline_seller_id = "sellers"."id")`),
+                    'ratings']],
               }),
         });
       } catch (err) {
@@ -192,10 +218,26 @@ class SellerController {
                   status_type: [1, 11],
                 })),
                 attributes: [
-                  'id', ['seller_name', 'name'], 'owner_name', 'seller_details',
-                  'gstin', 'pan_no', 'reg_no', 'is_service', 'is_onboarded',
-                  'address', 'city_id', 'state_id', 'locality_id', 'latitude',
-                  'longitude', 'url', 'contact_no', 'email', 'seller_type_id', [
+                  'id',
+                  ['seller_name', 'name'],
+                  'owner_name',
+                  'seller_details',
+                  'gstin',
+                  'pan_no',
+                  'reg_no',
+                  'is_service',
+                  'is_onboarded',
+                  'address',
+                  'city_id',
+                  'state_id',
+                  'locality_id',
+                  'latitude',
+                  'longitude',
+                  'url',
+                  'contact_no',
+                  'email',
+                  'seller_type_id',
+                  [
                     modals.sequelize.literal(
                         `${wallet_seller_cashback_ids &&
                         wallet_seller_cashback_ids.length > 0 ?
@@ -203,7 +245,8 @@ class SellerController {
                                 []).join(
                                 ',')}) status_type in (16) and transaction_type = 1 and seller_cashback.user_id = ${user_id} and seller_cashback.seller_id = "sellers"."id")` :
                             0}`),
-                    'cashback_total'], [
+                    'cashback_total'],
+                  [
                     modals.sequelize.literal(
                         `${wallet_seller_cashback_ids &&
                         wallet_seller_cashback_ids.length > 0 ?
@@ -211,41 +254,50 @@ class SellerController {
                                 []).join(
                                 ',')}) status_type in (16) and transaction_type = 2 and seller_cashback.user_id = ${user_id} and seller_cashback.seller_id = "sellers"."id")` :
                             0}`),
-                    'redeemed_cashback'], [
+                    'redeemed_cashback'],
+                  [
                     modals.sequelize.literal(
                         `${wallet_seller_loyalty_ids &&
                         wallet_seller_loyalty_ids.length > 0 ?
                             `(select sum(amount) from table_wallet_seller_loyalty as seller_loyalty where seller_loyalty.id in (${(wallet_seller_loyalty_ids ||
                                 []).join(
                                 ',')}) and status_type in (16) and transaction_type = 1 and seller_loyalty.user_id = ${user_id} and seller_loyalty.seller_id = "sellers"."id")` :
-                            0}`), 'loyalty_total'], [
+                            0}`), 'loyalty_total'],
+                  [
                     modals.sequelize.literal(
                         `${wallet_seller_loyalty_ids &&
                         wallet_seller_loyalty_ids.length > 0 ?
                             `(select sum(amount) from table_wallet_seller_loyalty as seller_loyalty where seller_loyalty.id in (${(wallet_seller_loyalty_ids ||
                                 []).join(
                                 ',')}) and status_type in (16) and transaction_type = 2 and seller_loyalty.user_id = ${user_id} and seller_loyalty.seller_id = "sellers"."id")` :
-                            0}`), 'redeemed_loyalty'], [
+                            0}`), 'redeemed_loyalty'],
+                  [
                     modals.sequelize.literal(
                         `${wallet_seller_credit_ids &&
                         wallet_seller_credit_ids.length > 0 ?
                             `(select sum(amount) from table_wallet_seller_credit as seller_credit where seller_credit.id in (${(wallet_seller_credit_ids ||
                                 []).join(
                                 ',')}) and status_type in (16) and transaction_type = 1 and seller_credit.user_id = ${user_id} and seller_credit.seller_id = "sellers"."id")` :
-                            0}`), 'credit_total'], [
+                            0}`), 'credit_total'],
+                  [
                     modals.sequelize.literal(
                         `${wallet_seller_credit_ids &&
                         wallet_seller_credit_ids.length > 0 ?
                             `(select sum(amount) from table_wallet_seller_credit as seller_credit where seller_credit.id in (${(wallet_seller_credit_ids ||
                                 []).join(
                                 ',')}) and status_type in (16) and transaction_type = 2 and seller_credit.user_id = ${user_id} and seller_credit.seller_id = "sellers"."id")` :
-                            0}`), 'redeemed_credits'], [
+                            0}`), 'redeemed_credits'],
+                  [
                     modals.sequelize.literal(
                         `${seller_offer_ids && seller_offer_ids.length > 0 ?
                             `(select count(*) from table_seller_offers as seller_offers where status_type in (1) and seller_offers.id in (${(seller_offer_ids ||
                                 []).join(
                                 ',')}) and seller_offers.seller_id = "sellers"."id")` :
-                            0}`), 'offer_count']],
+                            0}`), 'offer_count'],
+                  [
+                    modals.sequelize.literal(
+                        `(select AVG(seller_reviews.review_ratings) from table_seller_reviews as seller_reviews where seller_reviews.offline_seller_id = "sellers"."id")`),
+                    'ratings']],
               }),
         });
       } catch (err) {
@@ -353,7 +405,11 @@ class SellerController {
                             `(select count(*) from table_seller_offers as seller_offers where status_type in (1) and seller_offers.id in (${(seller_offer_ids ||
                                 []).join(
                                 ',')}) and seller_offers.seller_id = "sellers"."id")` :
-                            0}`), 'offer_count']],
+                            0}`), 'offer_count'],
+                  [
+                    modals.sequelize.literal(
+                        `(select AVG(seller_reviews.review_ratings) from table_seller_reviews as seller_reviews where seller_reviews.offline_seller_id = "sellers"."id")`),
+                    'ratings']],
               }),
         });
       } catch (err) {
@@ -546,8 +602,8 @@ class SellerController {
               seller_options, JSON.parse(JSON.stringify({
                 seller_name, contact_no, email, address, city_id,
                 status_type: 11, state_id, locality_id, gstin,
-                updated_by: user_id, pan_no, reg_no, longitude, latitude,
-                seller_type_id: 4,
+                updated_by: user_id, created_by: user_id, pan_no,
+                reg_no, longitude, latitude, seller_type_id: 4,
               }))), sendSMS(message, [contact_no])]);
 
         let {seller_offer_ids, my_seller_ids} = user_index_data || {};
@@ -612,8 +668,8 @@ class SellerController {
       let {id, mobile_no} = token_user;
 
       let seller_updates = JSON.parse(JSON.stringify({
-        gstin, pan_no, mobile_no, email, seller_type_id: 2
-        , status_type: 1, created_by: 1, updated_by: 1,
+        gstin, pan_no, contact_no: mobile_no, email, seller_type_id: 2
+        , status_type: 1, created_by: 1, updated_by: 1,user_id: id
       }));
       let [user, seller_detail] = await Promise.all([
         userAdaptor.retrieveSellerUser(
@@ -621,7 +677,8 @@ class SellerController {
         sellerAdaptor.retrieveSellersOnInit(
             {
               where: JSON.parse(
-                  JSON.stringify({$or: {gstin, pan_no, mobile_no, email}})),
+                  JSON.stringify(
+                      {$or: {gstin, pan_no, contact_no: mobile_no, email}})),
             })]);
       if (!seller_detail || seller_detail.length === 0) {
         const gst_detail = await (gstin ?
@@ -636,7 +693,8 @@ class SellerController {
         seller_detail = await sellerAdaptor.retrieveOrUpdateSellerDetail(
             {
               where: JSON.parse(
-                  JSON.stringify({$or: {gstin, pan_no, mobile_no, email}})),
+                  JSON.stringify(
+                      {$or: {gstin, pan_no, contact_no: mobile_no, email}})),
             },
             seller_updates, true);
       }
@@ -764,17 +822,17 @@ class SellerController {
     try {
       let token_user = shared.verifyAuthorization(request.headers);
       let {data_required} = request.query;
+      console.log(data_required);
       data_required = !(!!data_required && data_required.toLowerCase() ===
           'false');
       let [states, provider_types, seller_data, assisted_service_types] = await Promise.all(
           [
-            data_required ? generalAdaptor.retrieveStates(
+            generalAdaptor.retrieveStates(
                 {
                   where: {id: {$notIn: [0]}},
                   attributes: ['id', 'state_name'],
-                }) : [],
-            data_required ? sellerAdaptor.retrieveProviderTypes(
-                {attributes: ['id', 'title', 'description']}) : [],
+                }), sellerAdaptor.retrieveProviderTypes(
+              {attributes: ['id', 'title', 'description']}),
             token_user ? sellerAdaptor.retrieveSellerDetail({
               where: {user_id: token_user.id},
               attributes: [
@@ -1596,12 +1654,20 @@ class SellerController {
     try {
       if (!request.pre.forceUpdate) {
         const {seller_id} = request.params;
-        const {mobile_no, offer_id} = request.query || {};
+        const {mobile_no, offer_id, is_linked_offers, linked_only} = request.query ||
+        {};
+        const seller_customers = await sellerAdaptor.retrieveSellerConsumers(
+            seller_id,
+            mobile_no, offer_id);
         return reply.response({
           status: true,
           message: 'Successful',
-          result: await sellerAdaptor.retrieveSellerConsumers(seller_id,
-              mobile_no, offer_id),
+          result: offer_id ?
+              is_linked_offers && is_linked_offers === 'false' ?
+                  seller_customers.filter(item => !item.linked_offer) :
+                  seller_customers.filter(item => item.linked_offer) :
+              mobile_no || !linked_only ? seller_customers :
+                  seller_customers.filter(item => item.linked),
           forceUpdate: request.pre.forceUpdate,
         });
       } else {

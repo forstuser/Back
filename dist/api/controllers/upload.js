@@ -796,7 +796,7 @@ class UploadController {
           });
           business_details.business_type = business_type;
           seller_details.business_details = business_details;
-          seller_details.is_onboarded = true;
+          seller_data.is_onboarded = true;
         } else if (type.toString() === '3') {
           const file_detail = {
             file_name: fileNames[index],
@@ -815,7 +815,7 @@ class UploadController {
           seller_details.offers.push(file_detail);
         }
       });
-      const seller = await sellerAdaptor.retrieveOrUpdateSellerDetail({ where: { id: seller_data.id } }, { seller_details }, false);
+      const seller = await sellerAdaptor.retrieveOrUpdateSellerDetail({ where: { id: seller_data.id } }, { is_onboarded: type.toString() === '2', seller_details }, false);
       return reply.response(JSON.parse(JSON.stringify({
         status: true, message: 'Upload Successful',
         seller: type.toString() === '1' || type.toString() === '2' ? seller : undefined, file_details

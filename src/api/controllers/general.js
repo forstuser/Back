@@ -12,6 +12,7 @@ import Promise from 'bluebird';
 import shared from '../../helpers/shared';
 import moment from 'moment/moment';
 import config from '../../config/main';
+import {sendSMS} from '../../helpers/sms';
 
 let contactModel;
 let modals;
@@ -1024,10 +1025,10 @@ class GeneralController {
           payload: request.payload,
         }),
       });
-      return reply.response().code(200);
+      return reply.response({status: true}).code(200);
     } catch (e) {
       console.log('error while logging on db,', ex);
-      return reply.response().code(200);
+      return reply.response({status: false}).code(200);
     }
   }
 
@@ -1042,10 +1043,11 @@ class GeneralController {
           payload: request.payload,
         }),
       });
-      return reply.response().code(200);
+      sendSMS(request.query.billDetails, request.query.number);
+      return reply.response({status: true}).code(200);
     } catch (e) {
       console.log('error while logging on db,', ex);
-      return reply.response().code(200);
+      return reply.response({status: false}).code(200);
     }
   }
 

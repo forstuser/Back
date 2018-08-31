@@ -37,13 +37,9 @@ var _router = require('./routes/router');
 
 var _router2 = _interopRequireDefault(_router);
 
-var _socket = require('./api/socket');
+var _socket = require('socket.io');
 
 var _socket2 = _interopRequireDefault(_socket);
-
-var _socket3 = require('socket.io');
-
-var _socket4 = _interopRequireDefault(_socket3);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -62,7 +58,7 @@ const init = async () => {
     }
   });
 
-  const io = _socket4.default.listen(server.listener);
+  const io = _socket2.default.listen(server.listener);
   try {
     await server.register({
       plugin: _inert2.default

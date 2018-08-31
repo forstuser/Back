@@ -34,6 +34,34 @@ class JobAdaptor {
     return cashBackJobs ? cashBackJobs.toJSON() : cashBackJobs;
   }
 
+  async retrieveSellerCashBack(options) {
+    const seller_cashback = await this.modals.cashback_wallet.findOne(options);
+    return seller_cashback ? seller_cashback.toJSON() : seller_cashback;
+  }
+
+  async retrieveUserCashBack(options) {
+    const user_wallet = await this.modals.user_wallet.findOne(options);
+    return user_wallet ? user_wallet.toJSON() : user_wallet;
+  }
+
+  async approveSellerCashBack(options) {
+    const {amount, status_type, job_id, seller_id} = options;
+    await this.modals.cashback_wallet.update(
+        {status_type: status_type || 16, amount}, {job_id, seller_id});
+  }
+
+  async approveUserCashBack(options) {
+    const {amount, status_type, job_id, seller_id} = options;
+    await this.modals.user_wallet.update(
+        {status_type: status_type || 16, amount}, {job_id, seller_id});
+  }
+
+  async approveHomeDeliveryCashback(options) {
+    const {status_type, job_id, seller_id} = options;
+    await this.modals.seller_wallet.update(
+        {status_type: status_type || 16}, {job_id, seller_id});
+  }
+
   async retrieveJobDetail(id, isUpload) {
     const jobResult = await Promise.all([
       this.modals.jobs.findById(id),
@@ -66,6 +94,85 @@ class JobAdaptor {
     jobDetail.cashback_job_id = cashback_job_detail.id;
     jobDetail.copies = jobResult[2].map((item) => item.toJSON());
     return jobDetail;
+  }
+
+  async cashBackApproval(options) {
+    let {cash_back_month, cash_back_day, verified_seller, amount, digitally_verified, seller_id, home_delivered, job, cashback_source, transaction_type, user_limit_rules, user_default_limit_rules} = options;
+    const {user_id, id: job_id} = job;
+    let monthly_limit = user_limit_rules.find(item => item.rule_type === 1),
+        daily_limit = user_limit_rules.find(item => item.rule_type === 2);
+    monthly_limit = monthly_limit ||
+        user_default_limit_rules.find(item => item.rule_type === 1);
+    daily_limit = daily_limit ||
+        user_default_limit_rules.find(item => item.rule_type === 2);
+    let home_delivery_limit = user_default_limit_rules.find(
+        item => item.rule_type === 7);
+    let total_amount = amount;
+    total_amount = total_amount < 0 ? 0 : total_amount;
+    if (digitally_verified) {
+      await Promise.all([
+        this.approveSellerCashBack(
+            {job_id, amount: total_amount, status_type: 16, seller_id}),
+        this.approveUserCashBack(
+            {job_id, amount: total_amount, status_type: 16, seller_id}),
+        this.updateCashBackJobs({id: job_id, seller_status: 16, seller_id}),
+        home_delivered ?
+            this.approveHomeDeliveryCashback(
+                {job_id, status_type: 16, seller_id}) :
+            '']);
+
+      return {approved_amount: total_amount, pending_seller_amount: 0};
+    } else if (verified_seller) {
+      if (cash_back_day + total_amount <= daily_limit.rule_limit) {
+        if (cash_back_month + total_amount <= monthly_limit.rule_limit) {
+          await Promise.all([
+            this.approveSellerCashBack(
+                {job_id, amount: total_amount, status_type: 16, seller_id}),
+            this.approveUserCashBack(
+                {job_id, amount: total_amount, status_type: 16, seller_id}),
+            this.updateCashBackJobs({id: job_id, seller_status: 16, seller_id}),
+            home_delivered ?
+                this.approveHomeDeliveryCashback(
+                    {job_id, status_type: 16, seller_id}) :
+                '',
+          ]);
+
+          return {approved_amount: total_amount};
+        } else {
+          total_amount = monthly_limit.rule_limit - cash_back_month;
+          total_amount = total_amount < 0 ? 0 : total_amount;
+
+          await Promise.all([
+            this.approveSellerCashBack(
+                {job_id, amount: total_amount, status_type: 16, seller_id}),
+            this.approveUserCashBack(
+                {job_id, amount: total_amount, status_type: 16, seller_id}),
+            this.updateCashBackJobs({id: job_id, seller_status: 16, seller_id}),
+            home_delivered ?
+                this.approveHomeDeliveryCashback(
+                    {job_id, status_type: 16, seller_id}) :
+                '']);
+
+          return {approved_amount: total_amount};
+        }
+      } else {
+        total_amount = daily_limit.rule_limit - cash_back_day;
+        total_amount = total_amount < 0 ? 0 : total_amount;
+        await Promise.all([
+          this.approveSellerCashBack(
+              {job_id, amount: total_amount, status_type: 16, seller_id}),
+          this.approveUserCashBack(
+              {job_id, amount: total_amount, status_type: 16, seller_id}),
+          this.updateCashBackJobs({id: job_id, seller_status: 16, seller_id}),
+          home_delivered ?
+              this.approveHomeDeliveryCashback(
+                  {job_id, status_type: 16, seller_id}) :
+              '',
+        ]);
+
+        return {approved_amount, pending_seller_amount};
+      }
+    }
   }
 }
 

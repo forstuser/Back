@@ -247,5 +247,10 @@ class CategoryAdaptor {
     const localities = await this.modals.locality.findAll(options);
     return localities.map(item => item.toJSON());
   }
+
+  async retrieveLimitRules(options) {
+    const limit_rules = await this.modals.limit_rules.findAll(options);
+    return limit_rules.map(item => item.toJSON());
+  }
 }
 exports.default = CategoryAdaptor;
