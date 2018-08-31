@@ -99,7 +99,7 @@ class UserAdaptor {
     }
 
     let result = await this.modals.users.findOne({
-      where: whereObject, attributes: ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', 'image_name', 'gender', 'fb_id']
+      where: whereObject, attributes: ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', 'image_name', 'gender', 'fb_id', 'user_status_type']
     });
 
     if (!result || result && !result.id) {
@@ -115,7 +115,7 @@ class UserAdaptor {
    * @returns {Promise<Model>}
    */
   async retrieveSingleUser(filterObject) {
-    filterObject.attributes = ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', 'gender', [this.modals.sequelize.fn('CONCAT', 'consumer/', this.modals.sequelize.col('id'), '/images'), 'imageUrl']];
+    filterObject.attributes = ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', 'gender', 'user_status_type', [this.modals.sequelize.fn('CONCAT', 'consumer/', this.modals.sequelize.col('id'), '/images'), 'imageUrl']];
     const item = await this.modals.users.findOne(filterObject);
     return item ? item.toJSON() : item;
   }

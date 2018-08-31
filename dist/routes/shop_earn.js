@@ -312,5 +312,31 @@ function prepareShopEarnRoute(modal, route, middleware) {
         handler: _shop_earn2.default.getCashBackTransactions
       }
     });
+
+    route.push({
+      method: 'PUT',
+      path: '/sellers/{seller_id}/cashbacks/{id}/approve',
+      config: {
+        auth: 'jwt',
+        pre: [{
+          method: middleware.checkAppVersion,
+          assign: 'forceUpdate'
+        }],
+        handler: _shop_earn2.default.cashBackApproval
+      }
+    });
+
+    route.push({
+      method: 'GET',
+      path: '/sellers/{seller_id}/cashbacks',
+      config: {
+        auth: 'jwt',
+        pre: [{
+          method: middleware.checkAppVersion,
+          assign: 'forceUpdate'
+        }],
+        handler: _shop_earn2.default.retrieveTransactions
+      }
+    });
   }
 }

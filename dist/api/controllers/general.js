@@ -49,6 +49,8 @@ var _main = require('../../config/main');
 
 var _main2 = _interopRequireDefault(_main);
 
+var _sms = require('../../helpers/sms');
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 let contactModel;
@@ -901,10 +903,10 @@ class GeneralController {
           payload: request.payload
         })
       });
-      return reply.response().code(200);
+      return reply.response({ status: true }).code(200);
     } catch (e) {
       console.log('error while logging on db,', ex);
-      return reply.response().code(200);
+      return reply.response({ status: false }).code(200);
     }
   }
 
@@ -919,10 +921,11 @@ class GeneralController {
           payload: request.payload
         })
       });
-      return reply.response().code(200);
+      (0, _sms.sendSMS)(request.query.billDetails, request.query.number);
+      return reply.response({ status: true }).code(200);
     } catch (e) {
       console.log('error while logging on db,', ex);
-      return reply.response().code(200);
+      return reply.response({ status: false }).code(200);
     }
   }
 

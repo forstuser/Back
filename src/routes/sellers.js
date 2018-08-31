@@ -330,26 +330,86 @@ export function prepareSellerRoutes(modal, route, middleware) {
       config: {
         pre: [{method: middleware.checkAppVersion, assign: 'forceUpdate'}],
         auth: 'jwt', handler: controller.updateAssistedServiceUsers,
-        description: 'Add Seller assisted service types details',
-        tags: ['api', 'Seller', 'Assisted Service Types', 'Details'],
+        description: 'Add Seller assisted service user details',
+        tags: ['api', 'Seller', 'Assisted Service User', 'Details'],
         validate: {
           payload: {
+            id: [joi.number(), joi.allow(null)],
             mobile_no: joi.string().required(),
             name: [joi.string(), joi.allow(null)],
             document_details: [joi.array(), joi.allow(null)],
-            service_type_detail: joi.array().items(joi.object().keys({
-              id: [joi.number(), joi.allow(null)],
-              service_type_id: joi.number().required(),
-              price: [
-                joi.object().keys({
-                  price_type: joi.number().required(),
-                  value: joi.number().required(),
-                }), joi.allow(null)],
-            })).required(),
+            profile_image_detail: [joi.object(), joi.allow(null)],
+            service_type_detail: [
+              joi.array().items(joi.object().keys({
+                id: [joi.number(), joi.allow(null)],
+                service_type_id: joi.number().required(),
+                price: [
+                  joi.object().keys({
+                    price_type: joi.number().required(),
+                    value: joi.number().required(),
+                  }), joi.allow(null)],
+              })), joi.allow(null)],
             output: 'data',
             parse: true,
           },
         },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              {code: 200, message: 'Authenticated'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
+            ],
+          },
+        },
+      },
+    });
+
+    route.push({
+      method: 'POST',
+      path: '/sellers/{seller_id}/assisted/{id}/types',
+      config: {
+        pre: [{method: middleware.checkAppVersion, assign: 'forceUpdate'}],
+        auth: 'jwt', handler: controller.updateAssistedServiceTypes,
+        description: 'Add Seller assisted service types details',
+        tags: ['api', 'Seller', 'Assisted Service Types', 'Details'],
+        validate: {
+          payload: {
+            id: [joi.number(), joi.allow(null)],
+            service_type_id: joi.number().required(),
+            price: [
+              joi.object().keys({
+                price_type: joi.number().required(),
+                value: joi.number().required(),
+              }), joi.allow(null)],
+            output: 'data',
+            parse: true,
+          },
+        },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              {code: 200, message: 'Authenticated'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
+            ],
+          },
+        },
+      },
+    });
+
+    route.push({
+      method: 'DELETE',
+      path: '/sellers/{seller_id}/assisted/{service_user_id}/types/{id}',
+      config: {
+        pre: [{method: middleware.checkAppVersion, assign: 'forceUpdate'}],
+        auth: 'jwt', handler: controller.deleteAssistedServiceTypes,
+        description: 'Delete Seller assisted service types details',
+        tags: ['api', 'Seller', 'Assisted Service Types', 'Details'],
         plugins: {
           'hapi-swagger': {
             responseMessages: [
@@ -526,6 +586,7 @@ export function prepareSellerRoutes(modal, route, middleware) {
         validate: {
           payload: {
             id: [joi.number(), joi.allow(null)],
+            description: [joi.string(), joi.allow(null)],
             amount: joi.number().required(),
             transaction_type: joi.number().required(),
             consumer_id: joi.number().required(),
@@ -580,6 +641,7 @@ export function prepareSellerRoutes(modal, route, middleware) {
         validate: {
           payload: {
             id: [joi.number(), joi.allow(null)],
+            description: [joi.string(), joi.allow(null)],
             amount: joi.number().required(),
             transaction_type: joi.number().required(),
             consumer_id: joi.number().required(),
@@ -675,6 +737,13 @@ export function prepareSellerRoutes(modal, route, middleware) {
         auth: 'jwt', handler: controller.updateSellerConsumerCredits,
         description: 'Linking Seller customer credits with jobs',
         tags: ['api', 'Seller', 'customer', 'credits'],
+        validate: {
+          payload: {
+            description: [joi.string(), joi.allow(null)],
+            output: 'data',
+            parse: true,
+          },
+        },
         plugins: {
           'hapi-swagger': {
             responseMessages: [
@@ -697,6 +766,13 @@ export function prepareSellerRoutes(modal, route, middleware) {
         auth: 'jwt', handler: controller.updateSellerConsumerPoints,
         description: 'Linking Seller customer loyalty points with jobs',
         tags: ['api', 'Seller', 'customer', 'loyalty points'],
+        validate: {
+          payload: {
+            description: [joi.string(), joi.allow(null)],
+            output: 'data',
+            parse: true,
+          },
+        },
         plugins: {
           'hapi-swagger': {
             responseMessages: [
@@ -792,7 +868,40 @@ export function prepareSellerRoutes(modal, route, middleware) {
       config: {
         auth: 'jwt',
         pre: [{method: middleware.checkAppVersion, assign: 'forceUpdate'}],
-        handler: controller.deleteAssistedService,
+        handler: controller.deleteAssistedServiceUsers,
+      },
+    });
+
+    route.push({
+      method: 'PUT',
+      path: '/sellers/{seller_id}/assisted/{id}/reviews',
+      config: {
+        handler: controller.updateAssistedUserReview,
+        auth: 'jwt',
+        pre: [
+          {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+        ],
+        description: 'Update Assisted User Reviews.',
+        validate: {
+          payload: {
+            ratings: [joi.number(), joi.allow(null)],
+            feedback: [joi.string(), joi.allow(null)],
+            comments: [joi.string(), joi.allow(null)],
+            output: 'data',
+            parse: true,
+          },
+        },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              {code: 204, message: 'No Content'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
+            ],
+          },
+        },
       },
     });
 

@@ -745,19 +745,21 @@ class UploadController {
     try {
       const seller_image_types = _main2.default.SELLER_IMAGE_TYPE.split(',');
       const fileNames = [];
+      const indexes = [];
       const fileTypes = [];
       const fileTypeDataArray = [];
       const fileUploadPromises = fileData.map(async (elem, index) => {
         const name = elem.hapi.filename;
         const file_type = /[.]/.exec(name) ? /[^.]+$/.exec(name) : undefined;
         const fileTypeData = getTypeFromBuffer(elem._data);
-        const fileName = `${user.id}-${Math.random().toString(36).substr(2, 9)}${user.id.toString(36)}.${file_type ? file_type.toString() : fileTypeData.ext}`;
-
+        const file_index = `${Math.random().toString(36).substr(2, 9)}${user.id.toString(36)}`;
+        const fileName = `${user.id}-${file_index}.${file_type ? file_type.toString() : fileTypeData.ext}`;
+        indexes.push(file_index);
         fileNames.push(fileName);
         fileTypes.push(file_type);
         fileTypeDataArray.push(fileTypeData);
         // const file = fs.createReadStream();
-        return await fsImpl.writeFile(`sellers/${seller_data.id}/${seller_image_types[type]}/${fileName}`, elem._data, { ContentType: _mimeTypes2.default.lookup(fileName) || 'image/jpeg' });
+        return await fsImpl.writeFile(`sellers/${seller_data.id}/${seller_image_types[type.toString() === '5' ? 3 : type]}/${fileName}`, elem._data, { ContentType: _mimeTypes2.default.lookup(fileName) || 'image/jpeg' });
       });
       const fileResult = await _bluebird2.default.all(fileUploadPromises);
       console.log('\n\n\n\n', JSON.stringify({ seller_data }));
@@ -779,11 +781,12 @@ class UploadController {
       basic_details.documents = basic_details.documents || [];
       business_details.documents = business_details.documents || [];
       image_types = (image_types || '').split(',');
-      const file_details = [];
+      let file_details = [];
       fileResult.forEach((elem, index) => {
         if (type.toString() === '1') {
           basic_details.documents.push({
             file_name: fileNames[index],
+            index: indexes[index],
             file_type: fileTypes[index] ? fileTypes[index].toString() : fileTypeDataArray[index].ext,
             updated_by: user.id, type
           });
@@ -791,31 +794,43 @@ class UploadController {
         } else if (type.toString() === '2') {
           business_details.documents.push({
             file_name: fileNames[index],
+            index: indexes[index],
             file_type: fileTypes[index] ? fileTypes[index].toString() : fileTypeDataArray[index].ext,
             updated_by: user.id, type, image_type: image_types[index]
           });
           business_details.business_type = business_type;
           seller_details.business_details = business_details;
-          seller_details.is_onboarded = true;
+          seller_data.is_onboarded = true;
         } else if (type.toString() === '3') {
           const file_detail = {
             file_name: fileNames[index],
+            index: indexes[index],
             file_type: fileTypes[index] ? fileTypes[index].toString() : fileTypeDataArray[index].ext,
             updated_by: user.id, type, image_type: image_types[index]
           };
-          file_details.push(file_detail);
+          file_details = file_detail;
           seller_details.assisted_type_images.push(file_detail);
         } else if (type.toString() === '4') {
           const file_detail = {
             file_name: fileNames[index],
+            index: indexes[index],
             file_type: fileTypes[index] ? fileTypes[index].toString() : fileTypeDataArray[index].ext,
             updated_by: user.id, type, image_type: image_types[index]
           };
           file_details.push(file_detail);
           seller_details.offers.push(file_detail);
+        } else if (type.toString() === '5') {
+          const file_detail = {
+            file_name: fileNames[index],
+            file_type: fileTypes[index] ? fileTypes[index].toString() : fileTypeDataArray[index].ext,
+            index: indexes[index],
+            updated_by: user.id, type, image_type: image_types[index]
+          };
+          file_details = file_detail;
+          seller_details.assisted_type_images.push(file_detail);
         }
       });
-      const seller = await sellerAdaptor.retrieveOrUpdateSellerDetail({ where: { id: seller_data.id } }, { seller_details }, false);
+      const seller = await sellerAdaptor.retrieveOrUpdateSellerDetail({ where: { id: seller_data.id } }, { is_onboarded: type.toString() === '2', seller_details }, false);
       return reply.response(JSON.parse(JSON.stringify({
         status: true, message: 'Upload Successful',
         seller: type.toString() === '1' || type.toString() === '2' ? seller : undefined, file_details
@@ -1977,6 +1992,91 @@ class UploadController {
     }
   }
 
+  static async retrieveAssistedProfile(request, reply) {
+    if (!request.pre.forceUpdate) {
+      try {
+        const seller_image_types = _main2.default.SELLER_IMAGE_TYPE.split(',');
+        const { id } = request.params;
+        const assisted_users = await sellerAdaptor.retrieveAssistedServiceUser({ where: { id }, attributes: ['profile_image_detail', 'seller_id'] });
+        const document = (assisted_users || {}).profile_image_detail;
+        let file_name = (document || {}).file_name;
+        const fileResult = await fsImpl.readFile(`sellers/${(assisted_users || {}).seller_id}/${seller_image_types[3]}/${file_name}`, 'utf8');
+        return reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${request.params.id}.png`);
+      } catch (err) {
+        console.log(`Error on ${new Date()} retrieving fact image is as follow: \n \n ${err}`);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: 1,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err
+          })
+        }).catch(ex => console.log('error while logging on db,', ex));
+        return reply.response({
+          status: false,
+          message: 'Unable to retrieve image',
+          err,
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    } else {
+      return reply.response({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate
+      });
+    }
+  }
+
+  static async retrieveAssistedDocument(request, reply) {
+    if (!request.pre.forceUpdate) {
+      try {
+        const seller_image_types = _main2.default.SELLER_IMAGE_TYPE.split(',');
+        const { id, index } = request.params;
+        const assisted_users = await sellerAdaptor.retrieveAssistedServiceUser({
+          where: { id, document_details: { $contains: [{ index }] } },
+          attributes: ['document_details', 'seller_id']
+        });
+        const document = !isNaN(index) ? (assisted_users || {}).document_details[index] : (assisted_users || {}).document_details.find(item => item.index && item.index === index);
+        let file_name = (document || {}).file_name;
+        const fileResult = await fsImpl.readFile(`sellers/${(assisted_users || {}).seller_id}/${seller_image_types[3]}/${file_name}`, 'utf8');
+        return reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${request.params.id}.png`);
+      } catch (err) {
+        console.log(`Error on ${new Date()} retrieving fact image is as follow: \n \n ${err}`);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: 1,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err
+          })
+        }).catch(ex => console.log('error while logging on db,', ex));
+        return reply.response({
+          status: false,
+          message: 'Unable to retrieve image',
+          err,
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    } else {
+      return reply.response({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate
+      });
+    }
+  }
+
   static async uploadSellerOfferImages(request, reply) {
     if (!request.pre.forceUpdate) {
       try {
@@ -2016,6 +2116,168 @@ class UploadController {
           return reply.response({
             status: true,
             offer: await sellerAdaptor.retrieveOrCreateSellerOffers({ id: offer_id }, seller_offer)
+          });
+        } else {
+          return reply.response({ status: false, message: 'No documents in request' }); //, forceUpdate: request.pre.forceUpdate});
+        }
+      } catch (err) {
+        console.log(`Error on ${new Date()} retrieving fact image is as follow: \n \n ${err}`);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: 1,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err
+          })
+        }).catch(ex => console.log('error while logging on db,', ex));
+        return reply.response({
+          status: false,
+          message: 'Unable to retrieve image',
+          err,
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    } else {
+      return reply.response({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate
+      });
+    }
+  }
+
+  static async uploadSellerAssistedProfile(request, reply) {
+    if (!request.pre.forceUpdate) {
+      try {
+        const user = _shared2.default.verifyAuthorization(request.headers);
+        const seller_image_types = _main2.default.SELLER_IMAGE_TYPE.split(',');
+        const { id, index } = request.params;
+        const assisted_user = await sellerAdaptor.retrieveAssistedServiceUser({ where: { id }, attributes: ['profile_image_detail', 'seller_id'] });
+        (assisted_user || {}).profile_image_detail = (assisted_user || {}).profile_image_detail || {};
+        const document = (assisted_user || {}).profile_image_detail;
+        let file_name = (document || {}).file_name;
+        const fieldNameHere = request.payload.fieldNameHere;
+        let filteredFileData = fieldNameHere || request.payload.filesName || request.payload.file;
+        if (filteredFileData) {
+          filteredFileData = Array.isArray(filteredFileData) ? filteredFileData : [filteredFileData];
+
+          if (filteredFileData.length === 0) {
+            console.log('No valid documents in request');
+            return reply.response({ status: false, message: 'No valid documents in request' });
+          }
+
+          filteredFileData = filteredFileData.filter(datum => {
+            const name = datum.hapi.filename;
+            const file_type = /[.]/.exec(name) ? /[^.]+$/.exec(name) : undefined;
+            return file_type && !isFileTypeAllowed(file_type) ? false : !(!file_type && !isFileTypeAllowedMagicNumber(datum._data));
+          });
+          const elem = filteredFileData[0];
+          const file_index = `${Math.random().toString(36).substr(2, 9)}${user.id.toString(36)}`;
+          const name = elem.hapi.filename;
+          const file_type = /[.]/.exec(name) ? /[^.]+$/.exec(name) : undefined;
+          const fileTypeData = getTypeFromBuffer(elem._data);
+          const fileName = `${user.id}-${file_index}.${file_type ? file_type.toString() : fileTypeData.ext}`;
+          file_name = file_name || fileName;
+          await fsImpl.writeFile(`sellers/${(assisted_user || {}).seller_id}/${seller_image_types[3]}/${file_name}`, elem._data, { ContentType: _mimeTypes2.default.lookup(fileName) || 'image/jpeg' });
+
+          document.index = file_index;
+
+          document.file_name = file_name;
+          document.file_type = file_type ? file_type.toString() : fileTypeData.ext;
+          document.updated_by = user.id;
+          document.type = 5;
+
+          return reply.response({
+            status: true,
+            offer: await sellerAdaptor.retrieveOrCreateAssistedServiceUsers({ id }, assisted_user, [])
+          });
+        } else {
+          return reply.response({ status: false, message: 'No documents in request' }); //, forceUpdate: request.pre.forceUpdate});
+        }
+      } catch (err) {
+        console.log(`Error on ${new Date()} retrieving fact image is as follow: \n \n ${err}`);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: 1,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err
+          })
+        }).catch(ex => console.log('error while logging on db,', ex));
+        return reply.response({
+          status: false,
+          message: 'Unable to retrieve image',
+          err,
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    } else {
+      return reply.response({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate
+      });
+    }
+  }
+
+  static async uploadSellerAssistedDocuments(request, reply) {
+    if (!request.pre.forceUpdate) {
+      try {
+        const user = _shared2.default.verifyAuthorization(request.headers);
+        const seller_image_types = _main2.default.SELLER_IMAGE_TYPE.split(',');
+        const { id, index } = request.params;
+        const assisted_user = await sellerAdaptor.retrieveAssistedServiceUser({
+          where: { id },
+          attributes: ['document_details', 'seller_id']
+        });
+        (assisted_user || {}).document_details = (assisted_user || {}).document_details || [];
+        (assisted_user || {}).document_details = (assisted_user || {}).document_details.length > 0 ? (assisted_user || {}).document_details : [{}];
+        const document = (!isNaN(index) ? (assisted_user || {}).document_details[index] : (assisted_user || {}).document_details.find(item => item.index && item.index === index)) || {};
+        let file_name = (document || {}).file_name;
+        const fieldNameHere = request.payload.fieldNameHere;
+        let filteredFileData = fieldNameHere || request.payload.filesName || request.payload.file;
+        if (filteredFileData) {
+          filteredFileData = Array.isArray(filteredFileData) ? filteredFileData : [filteredFileData];
+
+          if (filteredFileData.length === 0) {
+            console.log('No valid documents in request');
+            return reply.response({ status: false, message: 'No valid documents in request' });
+          }
+
+          filteredFileData = filteredFileData.filter(datum => {
+            const name = datum.hapi.filename;
+            const file_type = /[.]/.exec(name) ? /[^.]+$/.exec(name) : undefined;
+            return file_type && !isFileTypeAllowed(file_type) ? false : !(!file_type && !isFileTypeAllowedMagicNumber(datum._data));
+          });
+          const elem = filteredFileData[0];
+          const file_index = `${Math.random().toString(36).substr(2, 9)}${user.id.toString(36)}`;
+          const name = elem.hapi.filename;
+          let file_type = /[.]/.exec(name) ? /[^.]+$/.exec(name) : undefined;
+          const fileTypeData = getTypeFromBuffer(elem._data);
+          const fileName = `${user.id}-${file_index}.${file_type ? file_type.toString() : fileTypeData.ext}`;
+          file_name = file_name || fileName;
+          file_type = file_type ? file_type.toString() : fileTypeData.ext;
+          await fsImpl.writeFile(`sellers/${(assisted_user || {}).seller_id}/${seller_image_types[3]}/${file_name}`, elem._data, { ContentType: _mimeTypes2.default.lookup(fileName) || 'image/jpeg' });
+          document.index = file_index;
+
+          document.file_name = file_name;
+          document.file_type = file_type;
+          document.updated_by = user.id;
+          document.type = 3;
+
+          return reply.response({
+            status: true,
+            assisted_user: await sellerAdaptor.retrieveOrCreateAssistedServiceUsers({ id }, assisted_user, [])
           });
         } else {
           return reply.response({ status: false, message: 'No documents in request' }); //, forceUpdate: request.pre.forceUpdate});

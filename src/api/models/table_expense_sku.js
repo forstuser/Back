@@ -14,6 +14,9 @@ export default (sequelize, DataTypes) => {
         job_id: {
           type: DataTypes.INTEGER,
         },
+        available_cashback: {
+          type: DataTypes.FLOAT,
+        },
         selling_price: {
           type: DataTypes.FLOAT,
         },

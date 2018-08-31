@@ -18,6 +18,9 @@ exports.default = (sequelize, DataTypes) => {
     document_details: {
       type: DataTypes.JSONB
     },
+    profile_image_detail: {
+      type: DataTypes.JSONB
+    },
     updated_by: {
       type: DataTypes.INTEGER,
       defaultValue: 1

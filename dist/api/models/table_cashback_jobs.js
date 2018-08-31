@@ -161,6 +161,8 @@ exports.default = (sequelize, DataTypes) => {
       foreignKey: 'user_status',
       targetKey: 'status_type'
     });
+
+    cashback_jobs.hasMany(models.expense_sku_items, { foreignKey: 'job_id', onDelete: 'cascade', onUpdate: 'cascade' });
   };
   return cashback_jobs;
 };

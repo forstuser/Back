@@ -14,6 +14,9 @@ export default (sequelize, DataTypes) => {
         document_details: {
           type: DataTypes.JSONB,
         },
+        profile_image_detail: {
+          type: DataTypes.JSONB,
+        },
         updated_by: {
           type: DataTypes.INTEGER,
           defaultValue: 1,
@@ -44,7 +47,7 @@ export default (sequelize, DataTypes) => {
         {foreignKey: 'updated_by', onDelete: 'cascade', onUpdate: 'cascade'});
     assisted_service_users.hasMany(models.seller_service_types,
         {
-          foreignKey: 'service_user_id',as:'service_types',
+          foreignKey: 'service_user_id', as: 'service_types',
           onDelete: 'cascade', onUpdate: 'cascade',
         });
     assisted_service_users.belongsTo(models.sellers,

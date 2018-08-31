@@ -341,5 +341,35 @@ export function prepareShopEarnRoute(modal, route, middleware) {
         handler: controller.getCashBackTransactions,
       },
     });
+
+    route.push({
+      method: 'PUT',
+      path: '/sellers/{seller_id}/cashbacks/{id}/approve',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {
+            method: middleware.checkAppVersion,
+            assign: 'forceUpdate',
+          },
+        ],
+        handler: controller.cashBackApproval,
+      },
+    });
+
+    route.push({
+      method: 'GET',
+      path: '/sellers/{seller_id}/cashbacks',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {
+            method: middleware.checkAppVersion,
+            assign: 'forceUpdate',
+          },
+        ],
+        handler: controller.retrieveTransactions,
+      },
+    })
   }
 }

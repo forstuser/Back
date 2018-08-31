@@ -215,8 +215,13 @@ export default class ShopEarnAdaptor {
   async retrieveWalletDetails(options) {
     try {
       const {user_id} = options;
-      const user_wallet_details = await this.modals.user_wallet({
+      const user_wallet_details = await this.modals.user_wallet.findAll({
         where: {user_id, status_type: [14, 16]},
+        include: {
+          model: this.modals.sellers,
+          as: 'seller',
+          attributes: ['seller_name'],
+        },
       });
       return user_wallet_details.map(item => item.toJSON());
     } catch (e) {
@@ -227,10 +232,78 @@ export default class ShopEarnAdaptor {
   async retrieveCashBackTransactions(options) {
     try {
       const {user_id} = options;
-      const transaction_detail = await this.modals.cashback_jobs({
+      const transaction_detail = await this.modals.cashback_jobs.findAll({
         where: {user_id},
+        include: {
+          model: this.modals.expense_sku_items,
+          include: [
+            {
+              model: this.modals.sku,
+              attributes: ['title', 'hsn_code'],
+            }, {
+              model: this.modals.sku_measurement,
+              include: {
+                model: this.modals.measurement,
+                attributes: ['acronym'],
+              },
+              attributes: [
+                'measurement_value', 'pack_numbers',
+                'cashback_percent', 'bar_code'],
+            }],
+          attributes: [
+            'sku_id', 'sku_measurement_id', 'selling_price',
+            'quantity', 'available_cashback'],
+        },
+        attributes: [
+          'id', 'home_delivered', 'cashback_status', 'copies', [
+            this.modals.sequelize.literal(
+                `(select sum(purchase_cost) from consumer_products as product where product.user_id = "cashback_jobs"."user_id" and product.job_id = "cashback_jobs"."job_id")`),
+            'amount_paid'], [
+            this.modals.sequelize.literal(
+                `(select sum(amount) from table_wallet_seller_credit as seller_credit where seller_credit.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 1 and seller_credit.user_id = "cashback_jobs"."user_id")`),
+            'total_credits'], [
+            this.modals.sequelize.literal(
+                `(select sum(amount) from table_wallet_seller_credit as seller_credit where seller_credit.job_id = "cashback_jobs"."id" and status_type in (14) and transaction_type = 2 and seller_credit.user_id = "cashback_jobs"."user_id")`),
+            'redeemed_credits'], [
+            this.modals.sequelize.literal(
+                `(select sum(amount) from table_wallet_seller_loyalty as loyalty_wallet where loyalty_wallet.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 1 and loyalty_wallet.user_id = "cashback_jobs"."user_id")`),
+            'total_loyalty'], [
+            this.modals.sequelize.literal(
+                `(select sum(amount) from table_wallet_seller_loyalty as loyalty_wallet where loyalty_wallet.job_id = "cashback_jobs"."id" and status_type in (14) and transaction_type = 2 and loyalty_wallet.user_id = "cashback_jobs"."user_id")`),
+            'redeemed_loyalty'], [
+            this.modals.sequelize.literal(
+                `(select sum(amount) from table_wallet_user_cashback as user_wallet where user_wallet.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 1 and user_wallet.user_id = "cashback_jobs"."user_id")`),
+            'total_cashback'], [
+            this.modals.sequelize.literal(
+                `(select sum(amount) from table_wallet_user_cashback as user_wallet where user_wallet.job_id = "cashback_jobs"."id" and status_type in (14) and transaction_type = 2 and user_wallet.user_id = "cashback_jobs"."user_id")`),
+            'redeemed_cashback'], [
+            this.modals.sequelize.literal(
+                `(select sum(amount) from table_wallet_user_cashback as user_wallet where user_wallet.job_id = "cashback_jobs"."id" and status_type in (13) and transaction_type = 1 and user_wallet.user_id = "cashback_jobs"."user_id")`),
+            'pending_cashback'], [
+            this.modals.sequelize.literal(
+                `(select count(*) from table_expense_sku as expense_skus where expense_skus.user_id = "cashback_jobs"."user_id" and expense_skus.job_id = "cashback_jobs"."job_id" )`),
+            'item_counts']],
       });
-      return transaction_detail.map(item => item.toJSON());
+      return transaction_detail.map(item => {
+        item = item.toJSON();
+        item.total_cashback = item.total_cashback || 0;
+        item.pending_cashback = item.pending_cashback || 0;
+        item.is_partial = item.pending_cashback > 0 && item.total_cashback > 0;
+        item.is_pending = item.pending_cashback > 0 && item.total_cashback ===
+            0;
+        item.is_rejected = item.pending_cashback === 0 &&
+            item.total_cashback === 0 && item.cashback_status === 16;
+        item.is_underprogress = item.pending_cashback === 0 &&
+            item.total_cashback === 0 && item.cashback_status === 13;
+        item.total_credit = (item.total_credit || 0) -
+            (item.redeemed_credits || 0);
+        item.total_loyalty = (item.total_loyalty || 0) -
+            (item.redeemed_loyalty || 0);
+        item.total_cashback = (item.total_cashback || 0) -
+            (item.redeemed_cashback || 0);
+        item.pending_cashback = (item.pending_cashback || 0);
+        return item;
+      });
     } catch (e) {
       throw e;
     }
@@ -459,5 +532,34 @@ export default class ShopEarnAdaptor {
   async addUserSKUExpenses(options) {
     return await this.modals.expense_sku_items.bulkCreate(options,
         {returning: true});
+  }
+
+  async retrievePendingTransactions(options) {
+    try {
+      const {seller_id} = options;
+      const transaction_detail = await this.modals.cashback_jobs.findAll({
+        where: {seller_id, seller_status: 13},
+        attributes: [
+          'id', 'home_delivered', 'cashback_status', 'copies', [
+            this.modals.sequelize.literal(
+                `(select sum(purchase_cost) from consumer_products as product where product.user_id = "cashback_jobs"."user_id" and product.job_id = "cashback_jobs"."job_id")`),
+            'amount_paid'], [
+            this.modals.sequelize.literal(
+                `(select sum(amount) from table_wallet_seller_cashback as user_wallet where user_wallet.job_id = "cashback_jobs"."id" and status_type in (13) and transaction_type = 1 and user_wallet.user_id = "cashback_jobs"."user_id")`),
+            'pending_cashback'], [
+            this.modals.sequelize.literal(
+                `(select count(*) from table_expense_sku as expense_skus where expense_skus.user_id = "cashback_jobs"."user_id" and expense_skus.job_id = "cashback_jobs"."job_id" )`),
+            'item_counts']],
+      });
+      return transaction_detail.map(item => {
+        item = item.toJSON();
+        item.pending_cashback = item.pending_cashback || 0;
+        item.is_pending = item.pending_cashback > 0 && item.total_cashback ===
+            0;
+        return item;
+      });
+    } catch (e) {
+      throw e;
+    }
   }
 }

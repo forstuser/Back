@@ -128,21 +128,20 @@ class SellerAdaptor {
 
   async retrieveSellerConsumers(seller_id, mobile_no, offer_id) {
     let productUsers, seller_users, id, user_index_data;
-    mobile_no = mobile_no ? { $ilike: `${mobile_no}%` } : undefined;
+    mobile_no = mobile_no ? { $iLike: `${mobile_no}%` } : undefined;
     [productUsers, seller_users] = await Promise.all([this.modals.products.findAll({
       where: { seller_id, status_type: [5, 11] },
       attributes: ['user_id'],
       group: 'user_id'
     }), this.retrieveSellerDetail({ where: { id: seller_id }, attributes: ['customer_ids'] })]);
-    const { seller_offer_ids, wallet_seller_cashback_ids, wallet_seller_credit_ids, wallet_seller_loyalty_ids } = user_index_data || {};
 
     productUsers = productUsers.map(item => item.toJSON());
     id = seller_users.customer_ids || [];
 
     productUsers.forEach(item => id.push(item.user_id));
     const result = await this.modals.users.findAll({
-      where: JSON.parse(JSON.stringify({ id, mobile_no })),
-      attributes: [['full_name', 'name'], 'image_name', 'email', 'mobile_no', 'location', 'id', [this.modals.sequelize.literal(`(select sum(seller_cashback.amount) from table_wallet_seller_cashback as seller_cashback where status_type in (16) and transaction_type = 1 and seller_cashback.user_id = "users"."id" and seller_cashback.seller_id = ${seller_id})`), 'cashback_total'], [this.modals.sequelize.literal(`(select sum(seller_cashback.amount) from table_wallet_seller_cashback as seller_cashback where status_type in (16) and transaction_type = 2 and seller_cashback.user_id = "users"."id" and seller_cashback.seller_id = ${seller_id})`), 'redeemed_cashback'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_loyalty as seller_loyalty where status_type in (16) and transaction_type = 1 and seller_loyalty.user_id = "users"."id" and seller_loyalty.seller_id = ${seller_id})`), 'loyalty_total'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_loyalty as seller_loyalty where status_type in (16) and transaction_type = 2 and seller_loyalty.user_id = "users"."id" and seller_loyalty.seller_id = ${seller_id})`), 'redeemed_loyalty'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16) and transaction_type = 1 and seller_credit.user_id = "users"."id" and seller_credit.seller_id = ${seller_id})`), 'credit_total'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16) and transaction_type = 2 and seller_credit.user_id = "users"."id" and seller_credit.seller_id = ${seller_id})`), 'redeemed_credits'], [this.modals.sequelize.literal(`(select count(*) from table_cashback_jobs as cashback_jobs where cashback_jobs.user_id = "users"."id" and cashback_jobs.seller_id = ${seller_id})`), 'transaction_counts'][(this.modals.sequelize.literal(`(select seller_offer_ids from table_user_index as user_index where user_index.user_id = "users"."id")`), 'seller_offer_ids')]]
+      where: mobile_no ? JSON.parse(JSON.stringify({ $and: { mobile_no } })) : { id },
+      attributes: [['full_name', 'name'], 'image_name', 'email', 'mobile_no', 'location', 'id', 'user_status_type', [this.modals.sequelize.literal(`(select sum(seller_cashback.amount) from table_wallet_seller_cashback as seller_cashback where status_type in (16) and transaction_type = 1 and seller_cashback.user_id = "users"."id" and seller_cashback.seller_id = ${seller_id})`), 'cashback_total'], [this.modals.sequelize.literal(`(select sum(seller_cashback.amount) from table_wallet_seller_cashback as seller_cashback where status_type in (16) and transaction_type = 2 and seller_cashback.user_id = "users"."id" and seller_cashback.seller_id = ${seller_id})`), 'redeemed_cashback'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_loyalty as seller_loyalty where status_type in (16) and transaction_type = 1 and seller_loyalty.user_id = "users"."id" and seller_loyalty.seller_id = ${seller_id})`), 'loyalty_total'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_loyalty as seller_loyalty where status_type in (16) and transaction_type = 2 and seller_loyalty.user_id = "users"."id" and seller_loyalty.seller_id = ${seller_id})`), 'redeemed_loyalty'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16) and transaction_type = 1 and seller_credit.user_id = "users"."id" and seller_credit.seller_id = ${seller_id})`), 'credit_total'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16) and transaction_type = 2 and seller_credit.user_id = "users"."id" and seller_credit.seller_id = ${seller_id})`), 'redeemed_credits'], [this.modals.sequelize.literal(`(select count(*) from table_cashback_jobs as cashback_jobs where cashback_jobs.user_id = "users"."id" and cashback_jobs.seller_id = ${seller_id})`), 'transaction_counts'], [this.modals.sequelize.literal(`(select seller_offer_ids from table_user_index as user_index where user_index.user_id = "users"."id")`), 'seller_offer_ids']]
     });
     return result ? result.map(item => {
       item = item.toJSON();
@@ -151,8 +150,10 @@ class SellerAdaptor {
       item.cashback_total = (item.cashback_total || 0) - (item.redeemed_cashback || 0);
       item.loyalty_total = (item.loyalty_total || 0) - (item.redeemed_loyalty || 0);
       item.credit_total = (item.credit_total || 0) - (item.redeemed_credits || 0);
-      const seller_offer_id = (item.seller_offer_ids || []).find(item => item.toString() === offer_id.toString());
-      item.linked_offer = !!seller_offer_id;
+      if (offer_id) {
+        const seller_offer_id = (item.seller_offer_ids || []).find(item => item.toString() === offer_id.toString());
+        item.linked_offer = !!seller_offer_id;
+      }
       return item;
     }) : result;
   }
@@ -172,12 +173,11 @@ class SellerAdaptor {
         attributes: ['id', 'home_delivered', [this.modals.sequelize.literal(`(select sum(purchase_cost) from consumer_products as product where product.user_id = "users"."id" and product.job_id = "cashback_jobs"."job_id" and product.seller_id = ${seller_id})`), 'amount_paid'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where seller_credit.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 1 and seller_credit.user_id = "users"."id" and seller_credit.seller_id = ${seller_id})`), 'total_credits'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where seller_credit.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 2 and seller_credit.user_id = "users"."id" and seller_credit.seller_id = ${seller_id})`), 'redeemed_credits'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_loyalty as loyalty_wallet where loyalty_wallet.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 1 and loyalty_wallet.user_id = "users"."id" and loyalty_wallet.seller_id = ${seller_id})`), 'total_loyalty'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_loyalty as loyalty_wallet where loyalty_wallet.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 2 and loyalty_wallet.user_id = "users"."id" and loyalty_wallet.seller_id = ${seller_id})`), 'redeemed_loyalty'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_user_cashback as user_wallet where user_wallet.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 1 and user_wallet.user_id = "users"."id" and user_wallet.seller_id = ${seller_id})`), 'total_cashback'], [this.modals.sequelize.literal(`(select count(*) from table_expense_sku as expense_skus where expense_skus.user_id = "users"."id" and expense_skus.seller_id = ${seller_id} and expense_skus.job_id = "cashback_jobs"."job_id" )`), 'item_counts']]
       }, {
         where: { seller_id }, model: this.modals.credit_wallet, required: false,
-        attributes: ['title', 'description', 'transaction_type', 'amount']
+        attributes: ['title', 'description', 'transaction_type', 'amount', 'created_at']
       }, {
         where: { seller_id },
-        model: this.modals.loyalty_wallet,
-        required: false,
-        attributes: ['title', 'description', 'transaction_type', 'amount']
+        model: this.modals.loyalty_wallet, required: false,
+        attributes: ['title', 'description', 'transaction_type', 'amount', 'created_at']
       }],
       attributes: [['full_name', 'name'], 'email', 'mobile_no', 'id']
     });
@@ -195,7 +195,16 @@ class SellerAdaptor {
     return result ? result.toJSON() : result;
   }
 
-  async deleteSellerAssistedService(query_options) {
+  async retrieveAssistedServiceUser(query_options) {
+    const result = await this.modals.assisted_service_users.findOne(query_options);
+    return result ? result.toJSON() : result;
+  }
+
+  async deleteSellerAssistedServiceUsers(query_options) {
+    return await this.modals.assisted_service_users.destroy(query_options);
+  }
+
+  async deleteSellerAssistedServiceTypes(query_options) {
     return await this.modals.seller_service_types.destroy(query_options);
   }
 
@@ -521,13 +530,14 @@ class SellerAdaptor {
     let seller_service_type = await this.modals.seller_service_types.findOne({
       where: options
     });
-    if (seller_service_type) {
+    if (seller_service_type && options.id) {
       const seller_service_type_result = seller_service_type.toJSON();
       defaults.status_type = seller_service_type_result.status_type;
       await seller_service_type.updateAttributes(defaults);
     } else {
       seller_service_type = await this.modals.seller_service_types.create(defaults);
     }
+
     return seller_service_type.toJSON();
   }
 
@@ -535,6 +545,9 @@ class SellerAdaptor {
     let assisted_service_user = await this.modals.assisted_service_users.findOne({ where: options });
     if (assisted_service_user) {
       const assisted_service_users_result = assisted_service_user.toJSON();
+      const document_details = assisted_service_users_result.document_details || [];
+      document_details.push(...(defaults.document_details || []));
+      defaults.document_details = _lodash2.default.uniqBy(document_details, 'file_name');
       defaults.status_type = assisted_service_users_result.status_type;
       await assisted_service_user.updateAttributes(defaults);
     } else {
@@ -542,11 +555,27 @@ class SellerAdaptor {
     }
     const assisted_service_user_result = assisted_service_user.toJSON();
     const service_user_id = assisted_service_user_result.id;
-    assisted_service_user_result.service_types = await Promise.all(service_types.map(item => {
+    assisted_service_user_result.service_types = service_types ? await Promise.all(service_types.map(item => {
       const { price, service_type_id, seller_id, id } = item;
       return this.retrieveOrCreateSellerAssistedServiceTypes(JSON.parse(JSON.stringify({ service_type_id, seller_id, service_user_id, id })), JSON.parse(JSON.stringify({ service_type_id, seller_id, service_user_id, price })));
-    }));
+    })) : [];
     return assisted_service_user_result;
+  }
+
+  async updateAssistedUserReview(options, review) {
+    let assisted_service_user = await this.modals.assisted_service_users.findOne({ where: options });
+    if (assisted_service_user) {
+      const assisted_service_users_result = assisted_service_user.toJSON();
+      const reviews = assisted_service_users_result.reviews || [];
+      reviews.push(review);
+      assisted_service_users_result.reviews = _lodash2.default.uniqBy(reviews, 'updated_by');
+      await assisted_service_user.updateAttributes(assisted_service_users_result);
+      const assisted_service_user_result = assisted_service_user.toJSON();
+      const service_user_id = assisted_service_user_result.id;
+      return assisted_service_user_result;
+    }
+
+    return undefined;
   }
 
   async retrieveOrCreateSellerOffers(options, defaults) {

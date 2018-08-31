@@ -33,6 +33,10 @@ var _sellers = require('../Adaptors/sellers');
 
 var _sellers2 = _interopRequireDefault(_sellers);
 
+var _category = require('../Adaptors/category');
+
+var _category2 = _interopRequireDefault(_category);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 let modals;
@@ -40,6 +44,7 @@ let shopEarnAdaptor;
 let jobAdaptor;
 let productAdaptor;
 let sellerAdaptor;
+let categoryAdaptor;
 
 class ShopEarnController {
   constructor(modal) {
@@ -47,6 +52,7 @@ class ShopEarnController {
     jobAdaptor = new _job2.default(modal);
     productAdaptor = new _product2.default(modal);
     sellerAdaptor = new _sellers2.default(modal);
+    categoryAdaptor = new _category2.default(modal);
     modals = modal;
   }
 
@@ -229,7 +235,7 @@ class ShopEarnController {
         }).catch(ex => console.log('error while logging on db,', ex));
         return reply.response({
           status: false,
-          message: 'Unable to retrieve wish list'
+          message: 'Unable to retrieve Cash back details'
         });
       }
     } else {
@@ -577,6 +583,125 @@ class ShopEarnController {
         message: 'Unable to update link sku with expense.',
         forceUpdate: request.pre.forceUpdate
       }).code(200);
+    }
+  }
+
+  static async cashBackApproval(request, reply) {
+    const user = _shared2.default.verifyAuthorization(request.headers);
+
+    try {
+      if (!request.pre.forceUpdate) {
+        let { seller_id, id } = request.params;
+        const seller_cashback = await jobAdaptor.retrieveSellerCashBack({
+          where: { seller_id, id, status_type: 13 }, attributes: ['job_id', 'id', 'user_id', 'amount', [modals.sequelize.literal(`Select id from table_wallet_user_cashback as user_cashback where user_cashback.user_id = cashback_wallet.user_id and user_cashback.amount = cashback_wallet.amount and user_cashback.job_id = cashback_wallet.job_id`), 'user_cashback_id'], 'status_type', 'created_at']
+        });
+        if (seller_cashback) {
+
+          const startOfMonth = (0, _moment2.default)(seller_cashback.created_at).startOf('month').utcOffset(utcOffset);
+          const endOfMonth = (0, _moment2.default)(seller_cashback.created_at).endOf('month').utcOffset(utcOffset);
+          const startOfDay = (0, _moment2.default)(seller_cashback.created_at).startOf('day').utcOffset(utcOffset);
+          const endOfDay = (0, _moment2.default)(seller_cashback.created_at).endOf('day').utcOffset(utcOffset);
+          const [cash_back_job, user_cash_back_month, user_cash_back_day, user_limit_rules, user_default_limit_rules] = await _bluebird2.default.all([jobAdaptor.retrieveCashBackJobs({ id: seller_cashback.job_id }), jobAdaptor.retrieveUserCashBack({
+            where: {
+              user_id: seller_cashback.user_id,
+              status_type: [16], created_at: {
+                $between: [startOfMonth, endOfMonth]
+              }
+            }, attributes: [[modals.sequelize.literal('sum(amount)'), 'total_amount']], group: 'user_id'
+          }), jobAdaptor.retrieveUserCashBack({
+            where: {
+              user_id: seller_cashback.user_id,
+              status_type: [16], created_at: {
+                $between: [startOfDay, endOfDay]
+              }
+            }, attributes: [[modals.sequelize.literal('sum(amount)'), 'total_amount']], group: 'user_id'
+          }), categoryAdaptor.retrieveLimitRules({ where: { user_id: seller_cashback.user_id } }), categoryAdaptor.retrieveLimitRules({ where: { user_id: 1 } })]);
+
+          const cash_back_month = user_cash_back_month ? user_cash_back_month.total_amount : 0;
+          const cash_back_day = user_cash_back_day ? user_cash_back_day.total_amount : 0;
+          const { verified_seller, digitally_verified, home_delivered } = cash_back_job;
+
+          return reply.response({
+            status: true,
+            result: await jobAdaptor.cashBackApproval({
+              cash_back_month,
+              user_limit_rules,
+              user_default_limit_rules,
+              cash_back_day,
+              verified_seller,
+              digitally_verified,
+              seller_id,
+              transaction_type: 1,
+              cashback_source: 1,
+              job_id: seller_cashback.job_id,
+              home_delivered,
+              job: cash_back_job,
+              amount: seller_cashback.amount
+            })
+          });
+        }
+
+        return reply.response({
+          status: false,
+          message: 'Cash Back not available for request parameters.'
+        });
+      } else {
+        return _shared2.default.preValidation(request.pre, reply);
+      }
+    } catch (err) {
+      console.log(err);
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err
+        })
+      }).catch(ex => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to approve cash back.',
+        forceUpdate: request.pre.forceUpdate
+      }).code(200);
+    }
+  }
+
+  static async retrieveTransactions(request, reply) {
+    const user = _shared2.default.verifyAuthorization(request.headers);
+    if (!request.pre.forceUpdate) {
+      try {
+        const { seller_id } = request.params;
+        return reply.response({
+          status: true,
+          result: await shopEarnAdaptor.retrievePendingTransactions({ seller_id })
+        });
+      } catch (err) {
+        console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user ? user.id || user.ID : undefined,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err
+          })
+        }).catch(ex => console.log('error while logging on db,', ex));
+        return reply.response({
+          status: false,
+          message: 'Unable to retrieve Cash back details'
+        });
+      }
+    } else {
+      return _shared2.default.preValidation(request.pre, reply);
     }
   }
 }

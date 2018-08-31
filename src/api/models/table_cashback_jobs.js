@@ -56,27 +56,27 @@ export default (sequelize, DataTypes) => {
         },
         digitally_verified: {
           type: DataTypes.BOOLEAN,
-          defaultValue: false
+          defaultValue: false,
         },
         verified_seller: {
           type: DataTypes.BOOLEAN,
-          defaultValue: false
+          defaultValue: false,
         },
         non_binbill_seller: {
           type: DataTypes.BOOLEAN,
-          defaultValue: false
+          defaultValue: false,
         },
         online_seller: {
           type: DataTypes.BOOLEAN,
-          defaultValue: false
+          defaultValue: false,
         },
         non_verified_seller: {
           type: DataTypes.BOOLEAN,
-          defaultValue: false
+          defaultValue: false,
         },
         home_delivered: {
           type: DataTypes.BOOLEAN,
-          defaultValue: false
+          defaultValue: false,
         },
         created_at: {
           type: DataTypes.DATE,
@@ -171,6 +171,9 @@ export default (sequelize, DataTypes) => {
           foreignKey: 'user_status',
           targetKey: 'status_type',
         });
+
+    cashback_jobs.hasMany(models.expense_sku_items,
+        {foreignKey: 'job_id', onDelete: 'cascade', onUpdate: 'cascade'});
   };
   return cashback_jobs;
 };
