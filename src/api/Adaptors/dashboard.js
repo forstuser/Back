@@ -235,12 +235,13 @@ class DashboardAdaptor {
     }
 
     // welcome email
-    this.notificationAdaptor.notifyUser(user_id,
-        {
-          title: 'Welcome to BinBill!',
-          description: 'Hello User. Greetings from Rohit BinBill CEO. I welcome...',
-          big_text: 'Hello User. Greetings from Rohit BinBill CEO. I welcome you to your eHome. We promise to constantly evolve and make managing your eHome ever efficient and smarter. As it is a new home, you may take some time to get accustomed to it. Your Home Manager and I would always welcome your suggestions to improve your eHome. Please reach me at - rohit@binbill.com or eHome@binbill.com',
-        });
+    this.notificationAdaptor.notifyUser({
+      userId: user_id, payload: {
+        title: 'Welcome to BinBill!',
+        description: 'Hello User. Greetings from Rohit BinBill CEO. I welcome...',
+        big_text: 'Hello User. Greetings from Rohit BinBill CEO. I welcome you to your eHome. We promise to constantly evolve and make managing your eHome ever efficient and smarter. As it is a new home, you may take some time to get accustomed to it. Your Home Manager and I would always welcome your suggestions to improve your eHome. Please reach me at - rohit@binbill.com or eHome@binbill.com',
+      }
+    });
 
     // welcome sms
     if (user.mobile_no) {

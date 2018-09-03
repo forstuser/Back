@@ -424,7 +424,11 @@ class DashboardController {
 
   static notifyUser(request, reply) {
     const payload = request.payload || { userId: '', data: { title: '', description: '' } };
-    notificationAdaptor.notifyUser(payload.userId || '', payload.data, reply);
+    notificationAdaptor.notifyUser({
+      userId: payload.userId || '',
+      payload: payload.data,
+      reply: reply
+    });
   }
 }
 

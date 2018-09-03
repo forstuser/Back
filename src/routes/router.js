@@ -19,10 +19,11 @@ import {prepareAccessoryRoute} from './accessory_routes';
 import {prepareOfferRoutes} from './offer';
 import {prepareShopEarnRoute} from './shop_earn';
 import {prepareSellerRoutes} from './sellers';
+import {prepareOrderRoutes} from './order';
 
 let middleware;
 
-export default (app, modals) => {
+export default (app, modals, socket_server) => {
   middleware = Middleware(modals);
   // Initializing route groups
   const authRoutes = [];
@@ -43,6 +44,7 @@ export default (app, modals) => {
   const accessoryServicesRoutes = [];
   const offerRoutes = [];
   const shopEarnRoutes = [];
+  const orderRoutes = [];
   const searchController = new SearchController(modals);
   prepareAuthRoutes(modals, authRoutes, middleware);
 
@@ -75,6 +77,8 @@ export default (app, modals) => {
   prepareShopEarnRoute(modals, shopEarnRoutes, middleware);
 
   prepareSellerRoutes(modals, sellerRoutes, middleware);
+
+  prepareOrderRoutes(modals, orderRoutes, middleware, socket_server);
 
   if (searchController) {
     searchRoutes.push({
@@ -124,9 +128,9 @@ export default (app, modals) => {
     ...whatToServiceRoutes,
     ...accessoryServicesRoutes,
     ...offerRoutes,
-    ...shopEarnRoutes,
+    ...shopEarnRoutes, ...orderRoutes,
   ]).forEach((routeItem) => app.route(routeItem));
-  const handler = function(request, h, err) {
+  const handler = (request, h, err) => {
     console.log(err);
     return h.response('The page was not found').code(404);
   };

@@ -370,6 +370,43 @@ export function prepareShopEarnRoute(modal, route, middleware) {
         ],
         handler: controller.retrieveTransactions,
       },
-    })
+    });
   }
+
+  route.push({
+    method: 'PUT',
+    path: '/sellers/{seller_id}/redeem',
+    config: {
+      auth: 'jwt',
+      pre: [
+        {
+          method: middleware.checkAppVersion,
+          assign: 'forceUpdate',
+        },
+        {
+          method: middleware.updateUserActiveStatus,
+          assign: 'userExist',
+        },
+      ],
+      handler: controller.redeemCashBackAtSeller,
+      validate: {
+        payload: {
+          cashback_ids: joi.array().required(),
+        },
+      },
+    },
+  });
+
+  route.push({
+    method: 'GET',
+    path: '/skus/{sku_id}/measurements',
+    config: {
+      auth: 'jwt',
+      pre: [
+        {
+          method: middleware.checkAppVersion,
+          assign: 'forceUpdate',
+        }], handler: controller.retrieveSKUMeasurements,
+    },
+  });
 }

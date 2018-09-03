@@ -171,6 +171,78 @@ export function prepareAuthRoutes(modal, routeObject, middleware) {
       },
     });
 
+    routeObject.push({
+      method: 'POST',
+      path: '/consumer/addresses',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: middleware.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: ControllerObject.updateUserAddress,
+        description: 'Update User Address.',
+        validate: {
+          payload: {
+            address_line_1: [joi.string(), joi.allow(null)],
+            address_line_2: [joi.string(), joi.allow(null)],
+            id: [joi.number(), joi.allow(null)],
+            city_id: [joi.number(), joi.allow(null)],
+            state_id: [joi.number(), joi.allow(null)],
+            locality_id: [joi.number(), joi.allow(null)],
+            address_type: [joi.number(), joi.allow(null)],
+            pin: [joi.string(), joi.allow(null)],
+            latitude: [joi.number(), joi.allow(null)],
+            longitude: [joi.number(), joi.allow(null)],
+            output: 'data',
+            parse: true,
+          },
+        },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              {code: 202, message: 'Authenticated'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
+            ],
+          },
+        },
+      },
+    });
+
+    routeObject.push({
+      method: 'GET',
+      path: '/consumer/addresses',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: middleware.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: ControllerObject.retrieveUserAddresses,
+        description: 'Retrieve User Address List.',
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              {code: 202, message: 'Authenticated'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
+            ],
+          },
+        },
+      },
+    });
+
     /*Retrieve Profile of Consumer*/
     routeObject.push({
       method: 'GET',

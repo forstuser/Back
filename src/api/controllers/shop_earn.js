@@ -9,6 +9,7 @@ import JobAdaptor from '../Adaptors/job';
 import ProductAdaptor from '../Adaptors/product';
 import SellerAdaptor from '../Adaptors/sellers';
 import CategoryAdaptor from '../Adaptors/category';
+import _ from 'lodash';
 
 let modals;
 let shopEarnAdaptor;
@@ -230,10 +231,15 @@ class ShopEarnController {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
       try {
+        const result = await shopEarnAdaptor.retrieveWalletDetails(
+            {user_id: (user.id || user.ID)});
         return reply.response({
           status: true,
-          result: await shopEarnAdaptor.retrieveWalletDetails(
-              {user_id: (user.id || user.ID)}),
+          total_cashback: _.sumBy(
+              result.filter(item => item.transaction_type === 1), 'amount') -
+              _.sumBy(result.filter(item => item.transaction_type === 2),
+                  'amount'),
+          result,
         });
       } catch (err) {
         console.log(`Error on ${new Date()} for user ${user.id ||
@@ -614,7 +620,7 @@ class ShopEarnController {
           where: {seller_id, id, status_type: 13}, attributes: [
             'job_id', 'id', 'user_id', 'amount', [
               modals.sequelize.literal(
-                  `Select id from table_wallet_user_cashback as user_cashback where user_cashback.user_id = cashback_wallet.user_id and user_cashback.amount = cashback_wallet.amount and user_cashback.job_id = cashback_wallet.job_id`),
+                  `(Select id from table_wallet_user_cashback as user_cashback where user_cashback.user_id = cashback_wallet.user_id and user_cashback.amount = cashback_wallet.amount and user_cashback.job_id = cashback_wallet.job_id)`),
               'user_cashback_id'], 'status_type', 'created_at'],
         });
         if (seller_cashback) {
@@ -717,6 +723,65 @@ class ShopEarnController {
     }
   }
 
+  static async redeemCashBackAtSeller(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+
+    try {
+      if (!request.pre.forceUpdate) {
+        let {seller_id} = request.params;
+        const {cashback_ids: id} = request.payload;
+        const seller_cashback = await sellerAdaptor.retrieveSellerCashBack({
+          where: {seller_id, id, status_type: 16}, attributes: [
+            'job_id', 'id', 'user_id', 'amount', [
+              modals.sequelize.literal(
+                  `(Select id from table_wallet_user_cashback as user_cashback where user_cashback.seller_id = cashback_wallet.seller_id and user_cashback.user_id = cashback_wallet.user_id and user_cashback.amount = cashback_wallet.amount and user_cashback.job_id = cashback_wallet.job_id)`),
+              'user_cashback_id'], 'status_type', 'created_at'],
+        });
+        if (seller_cashback) {
+          return reply.response({
+            status: true,
+            result: await jobAdaptor.cashBackRedemption(
+                {
+                  seller_id, transaction_type: 2,
+                  seller_cashback_id: seller_cashback.map(item => item.id),
+                  user_cashback_id: seller_cashback.map(
+                      item => item.user_cashback_id),
+                  job_id: seller_cashback.job_id, job: cash_back_job,
+                  amount: seller_cashback.amount,
+                }),
+          });
+        }
+
+        return reply.response({
+          status: false,
+          message: 'Cash Back not available for request parameters.',
+        });
+      } else {
+        return shared.preValidation(request.pre, reply);
+      }
+    } catch (err) {
+      console.log(err);
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to approve cash back.',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(200);
+    }
+  }
+
   static async retrieveTransactions(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (!request.pre.forceUpdate) {
@@ -724,6 +789,7 @@ class ShopEarnController {
         const {seller_id} = request.params;
         return reply.response({
           status: true,
+          reasons: await categoryAdaptor.retrieveRejectReasons({}),
           result: await shopEarnAdaptor.retrievePendingTransactions(
               {seller_id}),
         });
@@ -734,7 +800,6 @@ class ShopEarnController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user ? user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -745,7 +810,41 @@ class ShopEarnController {
         }).catch((ex) => console.log('error while logging on db,', ex));
         return reply.response({
           status: false,
-          message: 'Unable to retrieve Cash back details',
+          message: 'Unable to retrieve transactions',
+        });
+      }
+    } else {
+      return shared.preValidation(request.pre, reply);
+    }
+  }
+
+  static async retrieveSKUMeasurements(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    if (!request.pre.forceUpdate) {
+      try {
+        const {sku_id} = request.params;
+        return reply.response({
+          status: true,
+          result: await shopEarnAdaptor.retrieveSKUMeasurements({sku_id}),
+        });
+      } catch (err) {
+        console.log(`Error on ${new Date()} for user ${user.id ||
+        user.ID} is as follow: \n \n ${err}`);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
+        return reply.response({
+          status: false,
+          message: 'Unable to retrieve SKU measurement details',
         });
       }
     } else {

@@ -11,7 +11,7 @@ var _moment2 = _interopRequireDefault(_moment);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 exports.default = (sequelize, DataTypes) => {
-  const userAddress = sequelize.define('userAddress', {
+  const user_addresses = sequelize.define('user_addresses', {
     address_type: {
       type: DataTypes.INTEGER,
       defaultValue: 1
@@ -22,11 +22,14 @@ exports.default = (sequelize, DataTypes) => {
     address_line_2: {
       type: DataTypes.STRING
     },
-    city: {
-      type: DataTypes.STRING
+    city_id: {
+      type: DataTypes.INTEGER
     },
-    state: {
-      type: DataTypes.STRING
+    state_id: {
+      type: DataTypes.INTEGER
+    },
+    locality_id: {
+      type: DataTypes.INTEGER
     },
     country: {
       type: DataTypes.STRING
@@ -66,7 +69,7 @@ exports.default = (sequelize, DataTypes) => {
     defaultPrimaryKey: true,
     timestamps: true,
     underscored: true,
-    tableName: 'user_addresses',
+    tableName: 'table_user_addresses',
     hooks: {
       afterCreate: user => {
         user.updateAttributes({
@@ -76,11 +79,14 @@ exports.default = (sequelize, DataTypes) => {
     }
   });
 
-  userAddress.associate = models => {
-    userAddress.belongsTo(models.users, { onDelete: 'cascade', hooks: true });
-    userAddress.belongsTo(models.users, { foreignKey: 'updated_by', as: 'updatedByUser' });
-    userAddress.belongsTo(models.statuses, { foreignKey: 'status_type', targetKey: 'status_type' });
+  user_addresses.associate = models => {
+    user_addresses.belongsTo(models.users, { onDelete: 'cascade', hooks: true });
+    user_addresses.belongsTo(models.users, { foreignKey: 'updated_by', as: 'updater' });
+    user_addresses.belongsTo(models.cities, { foreignKey: 'city_id' });
+    user_addresses.belongsTo(models.states, { foreignKey: 'state_id' });
+    user_addresses.belongsTo(models.locality, { foreignKey: 'locality_id' });
+    user_addresses.belongsTo(models.statuses, { foreignKey: 'status_type', targetKey: 'status_type' });
   };
 
-  return userAddress;
+  return user_addresses;
 };

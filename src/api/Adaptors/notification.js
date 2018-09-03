@@ -692,8 +692,10 @@ class NotificationAdaptor {
       });
       const notificationPromise = upcomingServices.map(
           (upcomingNotification) => {
-            this.notifyUserCron(upcomingNotification.user_id,
-                upcomingNotification);
+            this.notifyUserCron({
+              user_id: upcomingNotification.user_id,
+              payload: upcomingNotification,
+            });
           });
 
       return Promise.all(notificationPromise);
@@ -762,8 +764,10 @@ class NotificationAdaptor {
 
       const notificationPromise = upcomingServices.map(
           (upcomingNotification) => {
-            this.notifyUserCron(upcomingNotification.user_id,
-                upcomingNotification);
+            this.notifyUserCron({
+              user_id: upcomingNotification.user_id,
+              payload: upcomingNotification,
+            });
           });
 
       return Promise.all(notificationPromise);
@@ -820,8 +824,10 @@ class NotificationAdaptor {
 
       const notificationPromise = upcomingServices.map(
           (upcomingNotification) => {
-            this.notifyUserCron(upcomingNotification.user_id,
-                upcomingNotification);
+            this.notifyUserCron({
+              user_id: upcomingNotification.user_id,
+              payload: upcomingNotification,
+            });
           });
 
       return Promise.all(notificationPromise);
@@ -988,103 +994,157 @@ class NotificationAdaptor {
     });
   }
 
-  notifyUserCron(userId, payload) {
-    return this.modals.fcm_details.findAll({
-      where: {
-        user_id: userId,
-      },
-    }).then((result) => {
-      const options = {
-        uri: 'https://fcm.googleapis.com/fcm/send',
-        method: 'POST',
-        headers: {Authorization: `key=${config.GOOGLE.FCM_KEY}`},
-        json: {
-          // note that Sequelize returns token object array, we map it with token value only
-          registration_ids: result.map(user => user.fcm_id),
-          // iOS requires priority to be set as 'high' for message to be received in background
-          priority: 'high',
-          data: payload,
-        },
-      };
-      request(options, (error, response, body) => {
-        if (!(!error && response.statusCode === 200)) {
-          console.log(`Error on ${new Date()} is as follow: \n \n ${{
-            error,
-            userId,
-            user: JSON.stringify(result),
-          }}`);
-        }
-        // extract invalid registration for removal
-        if (body.failure > 0 && Array.isArray(body.results) &&
-            body.results.length === result.length) {
-          const results = body.results;
-          for (let i = 0; i < result.length; i += 1) {
-            if (results[i].error === 'InvalidRegistration') {
-              result[i].destroy().then(rows => {
-                console.log('FCM ID\'s DELETED: ', rows);
-              });
-            }
-          }
-        }
-      });
+  async notifyUserCron(parameters) {
+    let {user_id, payload, seller_user_id, notification} = parameters;
+    let result = await this.modals.fcm_details.findAll({
+      where: JSON.parse(JSON.stringify({
+        user_id, seller_user_id,
+      })),
+    });
+    result = result.map(item => item.toJSON());
+    const androidFcmKeys = result.filter(fcm => fcm.platform_id === 1).
+        map(user => ({fcm_id: user.fcm_id, user_id, seller_user_id}));
+    const iosFcmKeys = result.filter(fcm => fcm.platform_id === 2).
+        map(user => ({fcm_id: user.fcm_id, user_id, seller_user_id}));
+    console.log(JSON.stringify(
+        {user_id, seller_user_id, androidFcmKeys, iosFcmKeys, payload}));
+    payload.big_text = payload.description;
+    if (androidFcmKeys.length > 0) {
+      await this.androidNotificationDispatcher(androidFcmKeys, result, payload);
+    }
+
+    if (iosFcmKeys.length > 0) {
+      await this.iosNotificationDispatcher(iosFcmKeys, result, notification,
+          payload);
+    }
+  }
+
+  async iosNotificationDispatcher(fcm_keys, result, notification, data) {
+    fcm_keys.forEach((fcm_detail, index) => {
+      Promise.try(() => setTimeout(
+          ((fcm_detail, notification, data, config) => () => {
+            return request({
+              uri: 'https://fcm.googleapis.com/fcm/send',
+              method: 'POST',
+              headers: {Authorization: `key=${config.GOOGLE.FCM_KEY}`},
+              json: {
+                priority: 'high',
+                data,
+                registration_ids: [fcm_detail.fcm_id],
+                notification: notification || {
+                  title: data.title,
+                  body: data.description,
+                  big_text: data.big_text || data.description,
+                },
+              },
+            }, (error, response, body) => {
+              if (error) {
+                console.log(error);
+              }
+              // extract invalid registration for removal
+              if (body.failure > 0 && Array.isArray(body.results) &&
+                  body.results.length === result.length) {
+                const results = body.results;
+                for (let i = 0; i < result.length; i += 1) {
+                  if (results[i].error === 'InvalidRegistration') {
+                    result[i].destroy().then(console.log);
+                  }
+                }
+              }
+            });
+          })(fcm_detail, notification, data, config), index * 50));
     });
   }
 
-  notifyUser(userId, payload, reply) {
-    return this.modals.fcm_details.findAll({
-      where: {
-        user_id: userId,
-      },
-    }).then((result) => {
-      const options = {
-        uri: 'https://fcm.googleapis.com/fcm/send',
-        method: 'POST',
-        headers: {Authorization: `key=${config.GOOGLE.FCM_KEY}`},
-        json: {
-          registration_ids: result.map(user => user.fcm_id),
-          priority: 'high',
-          data: payload,
-          notification_type: 26,
-          notification: {
-            title: payload.title,
-            body: payload.description || payload.big_text,
-          },
-        },
-      };
-      request(options, (error, response, body) => {
-        this.modals.logs.create({
-          log_type: 3,
-          user_id: userId,
-          log_content: JSON.stringify({options}),
-        }).catch((ex) => console.log('error while logging on db,',
-            ex));
-        // extract invalid registration for removal
-        if (body.failure > 0 && Array.isArray(body.results) &&
-            body.results.length === result.length) {
-          const results = body.results;
-          for (let i = 0; i < result.length; i += 1) {
-            if (results[i].error === 'InvalidRegistration') {
-              result[i].destroy().then(rows => {
-                console.log('FCM ID\'s DELETED: ', rows);
-              });
-            }
-          }
-        }
+  async androidNotificationDispatcher(fcm_keys, result, data) {
+    fcm_keys.forEach((fcm_detail, index) => {
+      Promise.try(() => setTimeout(
+          ((fcm_detail, data, config) => () => {
+            return request({
+              uri: 'https://fcm.googleapis.com/fcm/send',
+              method: 'POST',
+              headers: {Authorization: `key=${config.GOOGLE.FCM_KEY}`},
+              json: {
+                priority: 'high',
+                data,
+                registration_ids: [fcm_detail.fcm_id],
+              },
+            }, (error, response, body) => {
+              if (error) {
+                console.log(error);
+              }
 
-        if (reply) {
-          if (!error && response.statusCode === 200) {
-            // request was success, should early return response to client
-            return reply.response({
-              status: true,
-            }).code(200);
-          } else {
-            return reply.response({
-              status: false,
-              error,
+              // extract invalid registration for removal
+              if (body.failure > 0 && Array.isArray(body.results) &&
+                  body.results.length === result.length) {
+                const results = body.results;
+                for (let i = 0; i < result.length; i += 1) {
+                  if (results[i].error === 'InvalidRegistration') {
+                    result[i].destroy().then(console.log);
+                  }
+                }
+              }
+            });
+          })(fcm_detail, data, config), index * 50));
+    });
+  }
+
+  async notifyUser(parameters) {
+    let {userId: user_id, payload, reply, seller_user_id} = parameters;
+    let result = await this.modals.fcm_details.findAll({
+      where: JSON.parse(JSON.stringify({
+        user_id, seller_user_id,
+      })),
+    });
+    result = result.map(item => item.toJSON());
+    const options = {
+      uri: 'https://fcm.googleapis.com/fcm/send',
+      method: 'POST',
+      headers: {Authorization: `key=${config.GOOGLE.FCM_KEY}`},
+      json: {
+        registration_ids: result.map(user => user.fcm_id),
+        priority: 'high',
+        data: payload,
+        notification_type: 26,
+        notification: {
+          title: payload.title,
+          body: payload.description || payload.big_text,
+        },
+      },
+    };
+    request(options, (error, response, body) => {
+      this.modals.logs.create({
+        log_type: 3,
+        user_id: user_id,
+        log_content: JSON.stringify({options}),
+      }).catch((ex) => console.log('error while logging on db,',
+          ex));
+      // extract invalid registration for removal
+      if (body.failure > 0 && Array.isArray(body.results) &&
+          body.results.length === result.length) {
+        const results = body.results;
+        for (let i = 0; i < result.length; i += 1) {
+          if (results[i].error === 'InvalidRegistration') {
+            result[i].destroy().then(rows => {
+              console.log('FCM ID\'s DELETED: ', rows);
             });
           }
         }
-      });
+      }
+
+      if (reply) {
+        if (!error && response.statusCode === 200) {
+          // request was success, should early return response to client
+          return reply.response({
+            status: true,
+          }).code(200);
+        } else {
+          return reply.response({
+            status: false,
+            error,
+          });
+        }
+      }
     });
   }
 

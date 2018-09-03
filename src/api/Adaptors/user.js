@@ -85,8 +85,16 @@ class UserAdaptor {
 
     let result = await this.modals.users.findOne({
       where: whereObject, attributes: [
-        'id', ['full_name', 'name'], 'mobile_no', 'email',
-        'email_verified', 'email_secret', 'image_name', 'gender', 'fb_id', 'user_status_type'],
+        'id',
+        ['full_name', 'name'],
+        'mobile_no',
+        'email',
+        'email_verified',
+        'email_secret',
+        'image_name',
+        'gender',
+        'fb_id',
+        'user_status_type'],
     });
 
     if (!result || (result && !result.id)) {
@@ -145,7 +153,7 @@ class UserAdaptor {
    * @param user
    * @returns {User}
    */
-  async retrieveUserById(user) {
+  async retrieveUserById(user, address_id) {
     const result = await Promise.all([
       this.modals.users.findById(user.id || user.ID, {
         attributes: [
@@ -158,7 +166,11 @@ class UserAdaptor {
                 `(Select sum(amount) from table_wallet_user_cashback where user_id = ${user.id ||
                 user.ID} and status_type in (16) group by user_id)`),
             'wallet_value']],
-      }), this.retrieveUserAddress({where: {user_id: user.id || user.ID}})]);
+      }),
+      this.retrieveUserAddresses({
+        where: JSON.parse(
+            JSON.stringify({user_id: user.id || user.ID, id: address_id})),
+      })]);
     if (result[0]) {
       let user = result[0].toJSON();
       const imageDiff = user.image_name ?
@@ -341,7 +353,7 @@ class UserAdaptor {
    * @param filterOptions
    */
   async updateUserAddress(updateValues, filterOptions) {
-    return await this.modals.userAddress.update(updateValues, filterOptions);
+    return await this.modals.user_addresses.update(updateValues, filterOptions);
   }
 
   /**
@@ -350,14 +362,47 @@ class UserAdaptor {
    * @param filterOptions
    */
   async createUserAddress(updateValues, filterOptions) {
-    return await this.modals.userAddress.create(updateValues, filterOptions);
+    return await this.modals.user_addresses.create(updateValues, filterOptions);
+  }
+
+  async retrieveUserAddresses(filterOptions) {
+    filterOptions.attributes = [
+      'address_type', 'address_line_1', 'address_line_2',
+      'city_id', 'state_id', 'locality_id', 'pin', 'latitude',
+      'longitude', 'id', [
+        this.modals.sequelize.literal(
+            '(Select state_name from table_states as state where state.id = user_addresses.state_id)'),
+        'state_name'], [
+        this.modals.sequelize.literal(
+            '(Select name from table_cities as city where city.id = user_addresses.city_id)'),
+        'city_name'], [
+        this.modals.sequelize.literal(
+            '(Select name from table_localities as locality where locality.id = user_addresses.locality_id)'),
+        'locality_name'], [
+        this.modals.sequelize.literal(
+            '(Select pin_code from table_localities as locality where locality.id = user_addresses.locality_id)'),
+        'pin_code']];
+    return await this.modals.user_addresses.findAll(filterOptions);
   }
 
   async retrieveUserAddress(filterOptions) {
     filterOptions.attributes = [
       'address_type', 'address_line_1', 'address_line_2',
-      'city', 'state', 'pin', 'latitude', 'longitude'];
-    return await this.modals.userAddress.findAll(filterOptions);
+      'city_id', 'state_id', 'locality_id', 'pin', 'latitude',
+      'longitude', 'id', [
+        this.modals.sequelize.literal(
+            '(Select state_name from table_states as state where state.id = user_addresses.state_id)'),
+        'state_name'], [
+        this.modals.sequelize.literal(
+            '(Select name from table_cities as city where city.id = user_addresses.city_id)'),
+        'city_name'], [
+        this.modals.sequelize.literal(
+            '(Select name from table_localities as locality where locality.id = user_addresses.locality_id)'),
+        'locality_name'], [
+        this.modals.sequelize.literal(
+            '(Select pin_code from table_localities as locality where locality.id = user_addresses.locality_id)'),
+        'pin_code']];
+    return await this.modals.user_addresses.findOne(filterOptions);
   }
 
   async retrieveUserIndexedData(options) {
@@ -385,11 +430,13 @@ class UserAdaptor {
 
     const userIndex = result ? result.toJSON() : {user_id: defaults.user_id};
     if (defaults.credit_id) {
-      userIndex.wallet_seller_credit_ids = userIndex.wallet_seller_credit_ids || [];
+      userIndex.wallet_seller_credit_ids = userIndex.wallet_seller_credit_ids ||
+          [];
       userIndex.wallet_seller_credit_ids.push(defaults.credit_id);
     }
     if (defaults.point_id) {
-      userIndex.wallet_seller_loyalty_ids = userIndex.wallet_seller_loyalty_ids || [];
+      userIndex.wallet_seller_loyalty_ids = userIndex.wallet_seller_loyalty_ids ||
+          [];
       userIndex.wallet_seller_loyalty_ids.push(defaults.point_id);
     }
     if (result) {

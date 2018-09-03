@@ -74,6 +74,9 @@ exports.default = (sequelize, DataTypes) => {
     seller_offer_ids: {
       type: DataTypes.JSONB
     },
+    assisted_services: {
+      type: DataTypes.JSONB
+    },
     updated_by: {
       type: DataTypes.INTEGER
     },

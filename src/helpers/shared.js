@@ -49,8 +49,10 @@ function validateAccessToken(authorization) {
   const data = config.JWT_SECRET;
   const auth = authorization.split(spaceString)[1];
   try {
+    console.log(auth);
     return verify(auth, data, {algorithms: ['HS512']});
   } catch (e) {
+    console.log('We are here');
     return null;
   }
 }
@@ -1531,7 +1533,7 @@ export default {
   readJSONFile,
   formatDate,
   prepareUrl,
-  verifyParameters,
+  verifyParameters, isAccessTokenBasic,
   queryStringFromObject,
   verifyAuthorization,
   retrieveHeaderValue,

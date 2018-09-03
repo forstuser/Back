@@ -45,11 +45,13 @@ var _shop_earn = require('./shop_earn');
 
 var _sellers = require('./sellers');
 
+var _order = require('./order');
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 let middleware;
 
-exports.default = (app, modals) => {
+exports.default = (app, modals, socket_server) => {
   middleware = (0, _middleware2.default)(modals);
   // Initializing route groups
   const authRoutes = [];
@@ -70,6 +72,7 @@ exports.default = (app, modals) => {
   const accessoryServicesRoutes = [];
   const offerRoutes = [];
   const shopEarnRoutes = [];
+  const orderRoutes = [];
   const searchController = new _search2.default(modals);
   (0, _auth.prepareAuthRoutes)(modals, authRoutes, middleware);
 
@@ -103,6 +106,8 @@ exports.default = (app, modals) => {
 
   (0, _sellers.prepareSellerRoutes)(modals, sellerRoutes, middleware);
 
+  (0, _order.prepareOrderRoutes)(modals, orderRoutes, middleware, socket_server);
+
   if (searchController) {
     searchRoutes.push({
       method: 'GET',
@@ -124,8 +129,8 @@ exports.default = (app, modals) => {
     });
   }
 
-  [...authRoutes, ...categoryRoutes, ...brandRoutes, ...sellerRoutes, ...serviceCenterRoutes, ...billManagementRoutes, ...uploadFileRoute, ...dashboardRoutes, ...productRoutes, ...insightRoutes, ...searchRoutes, ...generalRoutes, ...repairRoutes, ...calendarRoutes, ...whatToServiceRoutes, ...accessoryServicesRoutes, ...offerRoutes, ...shopEarnRoutes].forEach(routeItem => app.route(routeItem));
-  const handler = function (request, h, err) {
+  [...authRoutes, ...categoryRoutes, ...brandRoutes, ...sellerRoutes, ...serviceCenterRoutes, ...billManagementRoutes, ...uploadFileRoute, ...dashboardRoutes, ...productRoutes, ...insightRoutes, ...searchRoutes, ...generalRoutes, ...repairRoutes, ...calendarRoutes, ...whatToServiceRoutes, ...accessoryServicesRoutes, ...offerRoutes, ...shopEarnRoutes, ...orderRoutes].forEach(routeItem => app.route(routeItem));
+  const handler = (request, h, err) => {
     console.log(err);
     return h.response('The page was not found').code(404);
   };

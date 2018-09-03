@@ -76,6 +76,10 @@ var _sellers = require('../Adaptors/sellers');
 
 var _sellers2 = _interopRequireDefault(_sellers);
 
+var _lodash = require('lodash');
+
+var _lodash2 = _interopRequireDefault(_lodash);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 const PUBLIC_KEY = new _nodeRsa2.default(_main2.default.TRUECALLER_PUBLIC_KEY, { signingScheme: 'sha512' });
@@ -623,12 +627,16 @@ class UserController {
         const data = await _otp2.default.verifyOTPForUser(mobile_no, token);
         console.log('VALIDATE OTP RESPONSE: ', data);
         if (data.type === 'success') {
-          const user_detail = await userAdaptor.retrieveSellerUser(userWhere, true);
-          const [seller_detail] = await _bluebird2.default.all([sellerAdaptor.retrieveOrUpdateSellerDetail({ where: JSON.parse(JSON.stringify({ user_id: user_detail.id })) }, false, false), fcmManager.insertSellerFcmDetails({
+          let user_detail = await userAdaptor.retrieveSellerUser(userWhere, true);
+          let [seller_detail] = await _bluebird2.default.all([sellerAdaptor.retrieveOrUpdateSellerDetail({ where: JSON.parse(JSON.stringify({ user_id: user_detail.id })) }, false, false), fcmManager.insertSellerFcmDetails({
             seller_user_id: user_detail.id,
             fcm_id, platform_id: platform || 1
           })]);
-          user_detail.seller_detail = seller_detail || true;
+          if (seller_detail) {
+            seller_detail = _lodash2.default.omit(seller_detail, ['rush_hours', 'latitude', 'longitude', 'url', 'updated_by', 'created_by', 'status_type', 'updated_at', 'user_id', 'socket_id', 'created_at', 'customer_ids']);
+            seller_detail.seller_details = seller_detail.seller_details ? _lodash2.default.omit(seller_detail.seller_details, ['offers', 'assisted_type_images']) : seller_detail.seller_details;
+          }
+          user_detail.seller_detail = _lodash2.default.omit(seller_detail || true);
 
           replyObject.authorization = `bearer ${_authentication2.default.generateSellerToken(JSON.parse(JSON.stringify(user_detail))).token}`;
           replyObject.seller = seller_detail;
@@ -994,6 +1002,127 @@ class UserController {
     try {
       if (request.pre.isValidEmail && request.pre.userExist && !request.pre.forceUpdate) {
         return await userAdaptor.updateUserProfile(user, request, reply);
+      } else if (request.pre.isValidEmail === null) {
+        replyObject.status = false;
+        replyObject.message = 'Account already exists with the email.';
+        return reply.response(replyObject);
+      } else if (!request.pre.isValidEmail) {
+        replyObject.status = false;
+        replyObject.message = 'Invalid Email, Please provide correct one.';
+        return reply.response(replyObject);
+      } else if (request.pre.userExist === 0) {
+        return reply.response({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
+        return reply.response({
+          message: 'Invalid Token',
+          status: false,
+          forceUpdate: request.pre.forceUpdate
+        });
+      } else {
+        return reply.response({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    } catch (err) {
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err
+        })
+      }).catch(ex => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to update profile.',
+        forceUpdate: request.pre.forceUpdate,
+        err
+      });
+    }
+  }
+
+  static async retrieveUserAddresses(request, reply) {
+    const user = _shared2.default.verifyAuthorization(request.headers);
+    try {
+      if (request.pre.userExist && !request.pre.forceUpdate) {
+        return reply.response({ status: true,
+          result: await userAdaptor.retrieveUserAddresses({
+            where: JSON.parse(JSON.stringify({ user_id: user.id || user.ID }))
+          }) });
+      } else if (request.pre.userExist === 0) {
+        return reply.response({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
+        return reply.response({
+          message: 'Invalid Token',
+          status: false,
+          forceUpdate: request.pre.forceUpdate
+        });
+      } else {
+        return reply.response({
+          message: 'Forbidden',
+          status: false,
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    } catch (err) {
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err
+        })
+      }).catch(ex => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to retrieve user addresses.',
+        forceUpdate: request.pre.forceUpdate,
+        err
+      });
+    }
+  }
+
+  static async updateUserAddress(request, reply) {
+    const user = _shared2.default.verifyAuthorization(request.headers);
+    try {
+      const user_id = user.id;
+      if (request.pre.isValidEmail && request.pre.userExist && !request.pre.forceUpdate) {
+        const { id } = request.payload;
+        request.payload.user_id = user_id;
+        request.payload.updated_by = user_id;
+        if (id) {
+          return reply.response({
+            status: true,
+            result: await userAdaptor.updateUserAddress(JSON.parse(JSON.stringify(request.payload)), {
+              where: { user_id, id }
+            })
+          });
+        } else {
+          return reply.response({
+            status: true,
+            result: await userAdaptor.createUserAddress(JSON.parse(JSON.stringify(request.payload)))
+          });
+        }
       } else if (request.pre.isValidEmail === null) {
         replyObject.status = false;
         replyObject.message = 'Account already exists with the email.';

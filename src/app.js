@@ -7,7 +7,7 @@ import vision from 'vision';
 import models from './api/models';
 import config from './config/main';
 import routers from './routes/router';
-import SocketIO from 'socket.io';
+import SocketServer from './api/socket';
 // Create a server with a host and port
 let socket_server;
 const PORT = config.APP.PORT || 8443;
@@ -23,7 +23,6 @@ const init = async () => {
     },
   });
 
-  const io = SocketIO.listen(server.listener);
   try {
     await server.register(
         {
@@ -83,10 +82,12 @@ const init = async () => {
         });
       }
     });
-    routers(server, models);
-   /* if (!socket_server) {
+    if (!socket_server) {
       socket_server = new SocketServer({server, models});
-    }*/
+    }
+    if (socket_server) {
+      routers(server, models, SocketServer);
+    }
     await server.start();
   } catch (e) {
     console.log(e);

@@ -36,6 +36,18 @@ export function prepareSellerRoutes(modal, route, middleware) {
     });
 
     route.push({
+      method: 'GET', path: '/sellers/cashbacks',
+      handler: controller.getCashBackSellers, config: {
+        auth: 'jwt', pre: [
+          {
+            method: middleware.checkAppVersion, assign: 'forceUpdate',
+          }, {
+            method: middleware.updateUserActiveStatus, assign: 'userExist',
+          }],
+      },
+    });
+
+    route.push({
       method: 'GET',
       path: '/sellers',
       handler: controller.getSellers,
@@ -68,6 +80,21 @@ export function prepareSellerRoutes(modal, route, middleware) {
           {
             method: middleware.updateUserActiveStatus,
             assign: 'userExist',
+          },
+        ],
+      },
+    });
+
+    route.push({
+      method: 'GET',
+      path: '/sellers/{id}/details',
+      handler: controller.getSellerDetails,
+      config: {
+        auth: 'jwt',
+        pre: [
+          {
+            method: middleware.checkAppVersion,
+            assign: 'forceUpdate',
           },
         ],
       },
@@ -533,6 +560,50 @@ export function prepareSellerRoutes(modal, route, middleware) {
 
     route.push({
       method: 'GET',
+      path: '/sellers/{seller_id}/delivery',
+      config: {
+        pre: [{method: middleware.checkAppVersion, assign: 'forceUpdate'}],
+        auth: 'jwt', handler: controller.getDeliveryPersonForSellers,
+        description: 'Get Seller Delivery Person list',
+        tags: ['api', 'Seller', 'Delivery Person', 'List'],
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              {code: 200, message: 'Authenticated'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
+            ],
+          },
+        },
+      },
+    });
+
+    route.push({
+      method: 'GET',
+      path: '/sellers/{seller_id}/services',
+      config: {
+        pre: [{method: middleware.checkAppVersion, assign: 'forceUpdate'}],
+        auth: 'jwt', handler: controller.getSellerAssistedServiceTypes,
+        description: 'Get Seller assisted service types details',
+        tags: ['api', 'Seller', 'Assisted Service Types', 'Details'],
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              {code: 200, message: 'Authenticated'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
+            ],
+          },
+        },
+      },
+    });
+
+    route.push({
+      method: 'GET',
       path: '/sellers/{seller_id}/offers',
       config: {
         pre: [{method: middleware.checkAppVersion, assign: 'forceUpdate'}],
@@ -795,6 +866,28 @@ export function prepareSellerRoutes(modal, route, middleware) {
         auth: 'jwt', handler: controller.retrieveSellerConsumerPoints,
         description: 'Get Seller customer loyalty points',
         tags: ['api', 'Seller', 'customer', 'Loyalty Points'],
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              {code: 200, message: 'Authenticated'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
+            ],
+          },
+        },
+      },
+    });
+
+    route.push({
+      method: 'GET',
+      path: '/sellers/{seller_id}/users/{customer_id}/transactions',
+      config: {
+        pre: [{method: middleware.checkAppVersion, assign: 'forceUpdate'}],
+        auth: 'jwt', handler: controller.retrieveSellerConsumerTransactions,
+        description: 'Get Seller customer transactions',
+        tags: ['api', 'Seller', 'customer', 'transactions'],
         plugins: {
           'hapi-swagger': {
             responseMessages: [

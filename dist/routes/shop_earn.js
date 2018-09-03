@@ -339,4 +339,37 @@ function prepareShopEarnRoute(modal, route, middleware) {
       }
     });
   }
+
+  route.push({
+    method: 'PUT',
+    path: '/sellers/{seller_id}/redeem',
+    config: {
+      auth: 'jwt',
+      pre: [{
+        method: middleware.checkAppVersion,
+        assign: 'forceUpdate'
+      }, {
+        method: middleware.updateUserActiveStatus,
+        assign: 'userExist'
+      }],
+      handler: _shop_earn2.default.redeemCashBackAtSeller,
+      validate: {
+        payload: {
+          cashback_ids: _joi2.default.array().required()
+        }
+      }
+    }
+  });
+
+  route.push({
+    method: 'GET',
+    path: '/skus/{sku_id}/measurements',
+    config: {
+      auth: 'jwt',
+      pre: [{
+        method: middleware.checkAppVersion,
+        assign: 'forceUpdate'
+      }], handler: _shop_earn2.default.retrieveSKUMeasurements
+    }
+  });
 }

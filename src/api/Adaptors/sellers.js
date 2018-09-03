@@ -74,6 +74,24 @@ export default class SellerAdaptor {
     return sellers;
   }
 
+  async retrieveCashBackSellers(query_options) {
+    const result = await this.modals.sellers.findAll(query_options);
+    let sellers = result.map(item => {
+      return item.toJSON();
+    });
+    if (sellers.length > 0) {
+      sellers = sellers.map(item => {
+        item.cashback_total = (item.cashback_total || 0);
+        item.cashback_ids = item.cashback_wallet.map(item => item.id).join(',');
+        item.offer_count = item.offer_count || 0;
+        item.ratings = item.ratings || 0;
+        return item;
+      });
+    }
+
+    return sellers;
+  }
+
   async retrieveSellersOnInit(query_options) {
     let result = await this.modals.sellers.findAll(query_options);
     return result ? result.map(item => item.toJSON()) : result;
@@ -356,6 +374,8 @@ export default class SellerAdaptor {
       seller.offer_count = seller.offer_count || 0;
       seller.ratings = seller.ratings || 0;
       seller.assisted_services = assisted_services.map(item => {
+        item.rating =  (_.sumBy(item.reviews || [{ratings: 0}], 'ratings')) /
+            (item.reviews || [{ratings: 0}]).length;
         item.service_types = item.service_types.map(typeItem => {
           const service_type = service_types.find(
               stItem => stItem.id === typeItem.service_type_id);
@@ -365,6 +385,42 @@ export default class SellerAdaptor {
 
         return item;
       });
+    }
+
+    return seller;
+  }
+
+  async retrieveSellerDetails(options, query_options) {
+    const {latitude, longitude, city} = options;
+    const result = await this.modals.sellers.findOne(query_options);
+    let seller = result ? result.toJSON() : result;
+    if (seller) {
+      let seller_id = seller.id,
+          city_id = seller.city_id,
+          state_id = seller.state_id,
+          locality_id = seller.locality_id;
+
+      if (latitude && longitude) {
+        seller = await this.retrieveSellerByLocation(latitude, longitude, city,
+            seller);
+      }
+      const [
+        seller_categories, seller_cities, seller_states, seller_locations, seller_reviews] = await Promise.all(
+          [
+            this.retrieveSellerCategories({seller_id}),
+            city_id ?
+                this.retrieveSellerCities({id: city_id}) : [],
+            state_id ?
+                this.retrieveSellerStates({id: state_id}) : [],
+            locality_id ?
+                this.retrieveSellerLocations({id: locality_id}) : []]);
+      seller.categories = seller_categories;
+      seller.city = seller_cities[0];
+      seller.state = seller_states[0];
+      seller.location = seller_locations[0];
+      seller.cashback_total = seller.cashback_total || 0;
+      seller.offer_count = seller.offer_count || 0;
+      seller.ratings = seller.ratings || 0;
     }
 
     return seller;
@@ -418,6 +474,16 @@ export default class SellerAdaptor {
     return seller_cash_back;
   }
 
+  async updateSellerCashBack(options) {
+
+  }
+
+  async retrieveSellerTransactions(options) {
+    let seller_cash_back = await this.modals.cashback_jobs.findAll(options);
+    seller_cash_back = seller_cash_back.map(item => item.toJSON());
+    return seller_cash_back;
+  }
+
   async retrieveSellerOffersForConsumer(options) {
     let seller_offers = await this.modals.seller_offers.findAll(
         {where: JSON.parse(JSON.stringify(options))});
@@ -458,12 +524,7 @@ export default class SellerAdaptor {
     const result = [];
     seller_credits.forEach(item => {
       item = item.toJSON();
-      const user_credit = result.find(uItem => uItem.user_id === item.user_id);
-      if (user_credit) {
-        user_credit.total_credit = user_credit.total_credit - item.total_credit;
-      } else {
-        result.push(item);
-      }
+      result.push(item);
     });
     return result;
   }
@@ -473,12 +534,7 @@ export default class SellerAdaptor {
     const result = [];
     seller_points.forEach(item => {
       item = item.toJSON();
-      const user_point = result.find(uItem => uItem.user_id === item.user_id);
-      if (user_point) {
-        user_point.total_points = user_point.total_points - item.total_points;
-      } else {
-        result.push(item);
-      }
+      result.push(item);
     });
     return result;
   }
@@ -755,7 +811,7 @@ export default class SellerAdaptor {
     let credit_wallet = await this.modals.credit_wallet.findOne({
       where: options,
     });
-    if (credit_wallet) {
+    if (credit_wallet && options.id) {
       const credit_wallet_result = credit_wallet.toJSON();
       defaults.status_type = credit_wallet_result.status_type;
       await credit_wallet.updateAttributes(defaults);
@@ -769,7 +825,7 @@ export default class SellerAdaptor {
   async retrieveOrCreateSellerPoints(options, defaults) {
     let loyalty_wallet = await this.modals.loyalty_wallet.findOne(
         {where: options});
-    if (loyalty_wallet) {
+    if (loyalty_wallet && options.id) {
       const loyalty_wallet_result = loyalty_wallet.toJSON();
       defaults.status_type = loyalty_wallet_result.status_type;
       await loyalty_wallet.updateAttributes(defaults);

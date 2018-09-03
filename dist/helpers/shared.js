@@ -87,8 +87,10 @@ function validateAccessToken(authorization) {
     const data = _main2.default.JWT_SECRET;
     const auth = authorization.split(spaceString)[1];
     try {
+        console.log(auth);
         return (0, _jsonwebtoken.verify)(auth, data, { algorithms: ['HS512'] });
     } catch (e) {
+        console.log('We are here');
         return null;
     }
 }
@@ -1549,7 +1551,7 @@ exports.default = {
     readJSONFile,
     formatDate,
     prepareUrl,
-    verifyParameters,
+    verifyParameters, isAccessTokenBasic,
     queryStringFromObject,
     verifyAuthorization,
     retrieveHeaderValue,

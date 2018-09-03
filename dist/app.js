@@ -37,7 +37,7 @@ var _router = require('./routes/router');
 
 var _router2 = _interopRequireDefault(_router);
 
-var _socket = require('socket.io');
+var _socket = require('./api/socket');
 
 var _socket2 = _interopRequireDefault(_socket);
 
@@ -58,7 +58,6 @@ const init = async () => {
     }
   });
 
-  const io = _socket2.default.listen(server.listener);
   try {
     await server.register({
       plugin: _inert2.default
@@ -111,10 +110,12 @@ const init = async () => {
         });
       }
     });
-    (0, _router2.default)(server, _models2.default);
-    /* if (!socket_server) {
-       socket_server = new SocketServer({server, models});
-     }*/
+    if (!socket_server) {
+      socket_server = new _socket2.default({ server, models: _models2.default });
+    }
+    if (socket_server) {
+      (0, _router2.default)(server, _models2.default, _socket2.default);
+    }
     await server.start();
   } catch (e) {
     console.log(e);

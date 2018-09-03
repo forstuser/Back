@@ -148,6 +148,60 @@ function prepareAuthRoutes(modal, routeObject, middleware) {
       }
     });
 
+    routeObject.push({
+      method: 'POST',
+      path: '/consumer/addresses',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, {
+          method: middleware.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _user2.default.updateUserAddress,
+        description: 'Update User Address.',
+        validate: {
+          payload: {
+            address_line_1: [_joi2.default.string(), _joi2.default.allow(null)],
+            address_line_2: [_joi2.default.string(), _joi2.default.allow(null)],
+            id: [_joi2.default.number(), _joi2.default.allow(null)],
+            city_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            state_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            locality_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            address_type: [_joi2.default.number(), _joi2.default.allow(null)],
+            pin: [_joi2.default.string(), _joi2.default.allow(null)],
+            latitude: [_joi2.default.number(), _joi2.default.allow(null)],
+            longitude: [_joi2.default.number(), _joi2.default.allow(null)],
+            output: 'data',
+            parse: true
+          }
+        },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [{ code: 202, message: 'Authenticated' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
+          }
+        }
+      }
+    });
+
+    routeObject.push({
+      method: 'GET',
+      path: '/consumer/addresses',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, {
+          method: middleware.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _user2.default.retrieveUserAddresses,
+        description: 'Retrieve User Address List.',
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [{ code: 202, message: 'Authenticated' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
+          }
+        }
+      }
+    });
+
     /*Retrieve Profile of Consumer*/
     routeObject.push({
       method: 'GET',

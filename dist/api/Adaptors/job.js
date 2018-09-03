@@ -46,18 +46,23 @@ class JobAdaptor {
   }
 
   async approveSellerCashBack(options) {
-    const { amount, status_type, job_id, seller_id } = options;
-    await this.modals.cashback_wallet.update({ status_type: status_type || 16, amount }, { job_id, seller_id });
+    const { amount, status_type, job_id, seller_id, id, transaction_type } = options;
+    await this.modals.cashback_wallet.update(JSON.parse(JSON.stringify({ status_type: status_type || 16, amount, transaction_type })), { where: JSON.parse(JSON.stringify({ job_id, seller_id, id })) });
   }
 
   async approveUserCashBack(options) {
-    const { amount, status_type, job_id, seller_id } = options;
-    await this.modals.user_wallet.update({ status_type: status_type || 16, amount }, { job_id, seller_id });
+    const { amount, status_type, job_id, seller_id, id, transaction_type } = options;
+    await this.modals.user_wallet.update(JSON.parse(JSON.stringify({ status_type: status_type || 16, amount, transaction_type })), { where: JSON.parse(JSON.stringify({ job_id, seller_id, id })) });
   }
 
   async approveHomeDeliveryCashback(options) {
     const { status_type, job_id, seller_id } = options;
     await this.modals.seller_wallet.update({ status_type: status_type || 16 }, { job_id, seller_id });
+  }
+
+  async addCashBackToSeller(options) {
+    const { status_type, job_id, seller_id, amount, transaction_type, user_id } = options;
+    await this.modals.seller_wallet.create(JSON.parse(JSON.stringify({ status_type: status_type || 16, amount, transaction_type, user_id, seller_id })));
   }
 
   async retrieveJobDetail(id, isUpload) {
@@ -126,6 +131,12 @@ class JobAdaptor {
         return { approved_amount, pending_seller_amount };
       }
     }
+  }
+
+  async cashBackRedemption(options) {
+    let { job, seller_cashback_id, user_cashback_id, seller_id, transaction_type, cashback_amount } = options;
+    const { user_id, id: job_id } = job;
+    await Promise.all([this.approveSellerCashBack({ job_id, id: seller_cashback_id, seller_id, status_type: 14, transaction_type }), this.approveUserCashBack({ job_id, id: user_cashback_id, seller_id, status_type: 14, transaction_type }), this.updateCashBackJobs({ id: job_id, seller_status: 16, cashback_status: 14, seller_id }), this.approveHomeDeliveryCashback({ job_id, status_type: 16, amount: cashback_amount, seller_id, user_id, transaction_type: 1 })]);
   }
 }
 

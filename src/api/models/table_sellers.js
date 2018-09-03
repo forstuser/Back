@@ -131,6 +131,12 @@ export default (sequelize, DataTypes) => {
           onDelete: 'cascade',
           onUpdate: 'cascade',
         });
+    sellers.hasMany(models.cashback_wallet,
+        {
+          foreignKey: 'seller_id',
+          onDelete: 'cascade',
+          onUpdate: 'cascade',
+        });
     sellers.belongsTo(models.states,
         {foreignKey: 'state_id', onDelete: 'cascade', onUpdate: 'cascade'});
     sellers.belongsTo(models.cities,
