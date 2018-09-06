@@ -137,8 +137,15 @@ export default class ShopEarnAdaptor {
   }
 
   async retrieveSKUMeasurements(options) {
-    let skuMeasurements = this.modals.sku_measurement.findAll({
+    let skuMeasurements = await this.modals.sku_measurement.findAll({
       where: JSON.parse(JSON.stringify(options)),
+      attributes: [
+        'measurement_type', 'measurement_value', 'mrp',
+        'pack_numbers', 'cashback_percent', 'bar_code',
+        'id', 'sku_id', [
+          this.modals.sequelize.literal(
+              '(Select acronym from table_sku_measurement as measurement where measurement.id =sku_measurement.measurement_type)'),
+          'measurement_acronym']],
     });
 
     return skuMeasurements.map(item => item.toJSON());

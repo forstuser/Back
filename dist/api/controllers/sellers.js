@@ -288,7 +288,6 @@ class SellerController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user ? user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -986,14 +985,16 @@ class SellerController {
       const { id: seller_id } = request.params || {};
       let { id: user_id, mobile_no: contact_no, email } = token_user;
       let { name, mobile_no, id, document_details, service_type_detail, profile_image_detail } = request.payload;
-      service_type_detail = (service_type_detail || [{}]).map(item => {
-        item.seller_id = seller_id;
-        return item;
-      });
+      if (service_type_detail && service_type_detail.length > 0) {
+        service_type_detail = (service_type_detail || [{}]).map(item => {
+          item.seller_id = seller_id;
+          return item;
+        });
+      }
       const seller_service_types = await sellerAdaptor.retrieveOrCreateAssistedServiceUsers(JSON.parse(JSON.stringify(id ? { id } : { name, id, mobile_no })), JSON.parse(JSON.stringify({
         name, mobile_no, document_details, profile_image_detail,
         seller_id
-      })), JSON.parse(JSON.stringify(service_type_detail)));
+      })), JSON.parse(JSON.stringify(service_type_detail || [])));
 
       replyObject.seller_service_types = JSON.parse(JSON.stringify(seller_service_types));
       return reply.response(JSON.parse(JSON.stringify(replyObject))).code(201);
