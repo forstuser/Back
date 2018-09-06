@@ -713,5 +713,136 @@ class SocketServer {
     }
   }
 
+  /*static async mark_order_complete(data, fn) {
+    let {seller_id, user_id, order_id, status_type} = data;
+    const [seller_detail, user_index_data, order_data] = await Promise.all([
+      sellerAdaptor.retrieveSellerDetail(
+          {
+            where: {id: seller_id},
+            attributes: ['seller_type_id', 'seller_name', 'user_id'],
+          }),
+      userAdaptor.retrieveUserIndexedData({
+        where: {user_id}, attributes: [
+          'wishlist_items', 'assisted_services', [
+            modals.sequelize.literal(
+                `(Select full_name from users where users.id = ${user_id})`),
+            'user_name']],
+      }),
+      orderAdaptor.retrieveOrUpdateOrder(
+          {
+            where: {id: order_id, user_id, seller_id, status_type: 4},
+            attributes: ['id'],
+          }, {}, false)]);
+    if (order_data) {
+      order_data.status_type = status_type || 17;
+      let order = await orderAdaptor.retrieveOrUpdateOrder(
+          {
+            where: {
+              id: order_id,
+              user_id,
+              seller_id,
+              status_type: 4,
+              is_modified: false,
+            },
+            include: [
+              {
+                model: modals.users, as: 'user', attributes: [
+                  'id', ['full_name', 'name'], 'mobile_no', 'email',
+                  'email_verified', 'email_secret', 'location',
+                  'latitude', 'longitude', 'image_name', 'password',
+                  'gender', [
+                    modals.sequelize.fn('CONCAT', '/consumer/',
+                        modals.sequelize.col('user.id'), '/images'),
+                    'imageUrl'], [
+                    modals.sequelize.literal(
+                        `(Select sum(amount) from table_wallet_user_cashback where user_id = ${user_id} and status_type in (16) group by user_id)`),
+                    'wallet_value']],
+              },
+              {
+                model: modals.sellers, as: 'seller', attributes: [
+                  'seller_name', 'address', 'contact_no', 'email',
+                  [
+                    modals.sequelize.literal(
+                        `"seller"."seller_details"->'basic_details'`),
+                    'basic_details'],
+                  [
+                    modals.sequelize.literal(
+                        `"seller"."seller_details"->'business_details'`),
+                    'business_details']],
+              },
+              {
+                model: modals.user_addresses,
+                as: 'user_address',
+                attributes: [
+                  'address_type', 'address_line_1', 'address_line_2',
+                  'city_id', 'state_id', 'locality_id', 'pin',
+                  'latitude', 'longitude', [
+                    modals.sequelize.literal(
+                        '(Select state_name from table_states as state where state.id = user_address.state_id)'),
+                    'state_name'], [
+                    modals.sequelize.literal(
+                        '(Select name from table_cities as city where city.id = user_address.city_id)'),
+                    'city_name'], [
+                    modals.sequelize.literal(
+                        '(Select name from table_localities as locality where locality.id = user_address.locality_id)'),
+                    'locality_name'], [
+                    modals.sequelize.literal(
+                        '(Select pin_code from table_localities as locality where locality.id = user_address.locality_id)'),
+                    'pin_code']],
+              }],
+          }, order_data, false);
+      if (order) {
+        if (io.sockets.adapter.rooms[`seller-${seller_detail.user_id}`]) {
+          io.sockets.in(`seller-${seller_detail.user_id}`).
+              emit('order-status-change', JSON.stringify({
+                order_id: order.id, is_modified: order.is_modified,
+                status_type: order.status_type,
+                order, user_id,
+              }));
+        } else {
+          await notificationAdaptor.notifyUserCron({
+            seller_user_id: seller_detail.user_id,
+            payload: {
+              order_id: order.id, status_type: order.status_type,
+              is_modified: order.is_modified, user_id,
+              title: `Oops! Look a like ${user_index_data.user_name} has cancelled the order.`,
+              description: 'Please click here for further detail.',
+              notification_type: 1,
+            },
+          });
+        }
+         if (fn) {
+          fn(order);
+        } else {
+          if (io.sockets.adapter.rooms[`user-${data.user_id}`]) {
+            io.sockets.in(`user-${data.user_id}`).
+                emit('order-status-change', JSON.stringify({
+                  order_id: order.id,
+                  is_modified: true,
+                  status_type: order.status_type,
+                  order,
+                  user_id,
+                }));
+          } else {
+            await notificationAdaptor.notifyUserCron({
+              user_id, payload: {
+                order_id: order.id,
+                status_type: order.status_type, is_modified: true, user_id,
+                title: `Order has cancelled successfully and we have updated the same to ${seller_detail.seller_name}.`,
+                description: 'Please click here for further detail.',
+                notification_type: 31,
+              },
+            });
+          }
+        }
+         return order;
+      } else {
+        return false;
+      }
+    } else {
+      return undefined;
+    }
+  }*/
+
 }
 exports.default = SocketServer;
