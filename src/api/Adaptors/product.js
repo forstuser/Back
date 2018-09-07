@@ -128,7 +128,7 @@ export default class ProductAdaptor {
                       '/reviews?isonlineseller=true'), 'reviewUrl']],
               include: [
                 {
-                  model: this.modals.sellerReviews,
+                  model: this.modals.seller_reviews,
                   as: 'sellerReviews',
                   attributes: [
                     ['review_ratings', 'ratings'],
@@ -156,7 +156,7 @@ export default class ProductAdaptor {
                   '/reviews?isonlineseller=false'), 'reviewUrl']],
           include: [
             {
-              model: this.modals.sellerReviews,
+              model: this.modals.seller_reviews,
               as: 'sellerReviews',
               attributes: [
                 ['review_ratings', 'ratings'],
@@ -484,7 +484,7 @@ export default class ProductAdaptor {
                         '/reviews?isonlineseller=true'), 'reviewUrl']],
                 include: [
                   {
-                    model: this.modals.sellerReviews,
+                    model: this.modals.seller_reviews,
                     as: 'sellerReviews',
                     attributes: [
                       ['review_ratings', 'ratings'],
@@ -507,11 +507,11 @@ export default class ProductAdaptor {
               'city', 'state', 'pincode', 'latitude', 'longitude',
               [
                 this.modals.sequelize.fn('CONCAT', 'sellers/',
-                    this.modals.sequelize.literal('"id"'),
+                    this.modals.sequelize.literal('"sellers"."id"'),
                     '/reviews?isonlineseller=false'), 'reviewUrl']],
             include: [
               {
-                model: this.modals.sellerReviews,
+                model: this.modals.seller_reviews,
                 as: 'sellerReviews',
                 attributes: [
                   ['review_ratings', 'ratings'],
@@ -837,7 +837,7 @@ export default class ProductAdaptor {
                       '/reviews?isonlineseller=true'), 'reviewUrl']],
               include: [
                 {
-                  model: this.modals.sellerReviews,
+                  model: this.modals.seller_reviews,
                   as: 'sellerReviews',
                   attributes: [
                     [
@@ -871,7 +871,7 @@ export default class ProductAdaptor {
                   '/reviews?isonlineseller=false'), 'reviewUrl']],
           include: [
             {
-              model: this.modals.sellerReviews,
+              model: this.modals.seller_reviews,
               as: 'sellerReviews', attributes: [
                 ['review_ratings', 'ratings'],
                 ['review_feedback', 'feedback'],
@@ -1177,7 +1177,7 @@ export default class ProductAdaptor {
                         '/reviews?isonlineseller=true'), 'reviewUrl']],
                 include: [
                   {
-                    model: this.modals.sellerReviews, as: 'sellerReviews',
+                    model: this.modals.seller_reviews, as: 'sellerReviews',
                     attributes: [
                       ['review_ratings', 'ratings'],
                       ['review_feedback', 'feedback'],
@@ -1198,7 +1198,7 @@ export default class ProductAdaptor {
                     this.modals.sequelize.literal('"sellers"."id"'),
                     '/reviews?isonlineseller=false'), 'reviewUrl']], include: [
               {
-                model: this.modals.sellerReviews, as: 'sellerReviews',
+                model: this.modals.seller_reviews, as: 'sellerReviews',
                 attributes: [
                   ['review_ratings', 'ratings'],
                   ['review_feedback', 'feedback'],
@@ -1567,7 +1567,8 @@ export default class ProductAdaptor {
           this.retrieveAccessoryForProducts(
               {category_id: productBody.category_id}),
           this.modals.brands.findById(product.brand_id),
-          this.modals.fcm_details.findAll({where: {user_id: product.user_id}})]);
+          this.modals.fcm_details.findAll(
+              {where: {user_id: product.user_id}})]);
 
         console.log('\n\n\n\n\n\n', JSON.stringify({fcm_detail, accessories}));
         if (fcm_detail && accessories.length > 0) {
@@ -2280,29 +2281,29 @@ export default class ProductAdaptor {
 
   async updateSellerReview(user, seller_id, isOnlineSeller, request) {
     const payload = request.payload;
-    const {ratings: review_ratings, feedback: review_feedback, comments: review_comments} = request.payload;
+    const {ratings: review_ratings, feedback: review_feedback, comments: review_comments, order_id} = request.payload;
     const user_id = user.id || user.ID;
     const status_id = 1;
 
     const whereClause = isOnlineSeller ?
         {user_id, seller_id, status_id} :
-        {user_id, offline_seller_id: seller_id, status_id};
+        JSON.parse(JSON.stringify(
+            {user_id, offline_seller_id: seller_id, status_id, order_id}));
 
     const defaultClause = isOnlineSeller ? {
       user_id, seller_id, status_id, review_ratings,
       review_feedback, review_comments,
-    } : {
+    } : JSON.parse(JSON.stringify({
       user_id, offline_seller_id: seller_id, status_id,
-      review_ratings, review_feedback, review_comments,
-    };
+      review_ratings, review_feedback, review_comments, order_id,
+    }));
     try {
-      const result = await this.modals.sellerReviews.findCreateFind({
-        where: whereClause,
-        defaults: defaultClause,
+      const result = await this.modals.seller_reviews.findCreateFind({
+        where: whereClause, defaults: defaultClause,
       });
       if (!result[1]) {
-        await result[0].updateAttributes(
-            {review_ratings, review_feedback, review_comments});
+        await result[0].updateAttributes(JSON.parse(JSON.stringify(
+            {review_ratings, review_feedback, review_comments, order_id})));
       }
 
       return {

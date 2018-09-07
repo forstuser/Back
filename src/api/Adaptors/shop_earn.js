@@ -631,7 +631,10 @@ export default class ShopEarnAdaptor {
             'amount_paid'], 'created_at', [
             this.modals.sequelize.literal(
                 `(select sum(amount) from table_wallet_seller_cashback as user_wallet where user_wallet.job_id = "cashback_jobs"."id" and status_type in (13) and transaction_type = 1 and user_wallet.user_id = "cashback_jobs"."user_id")`),
-            'pending_cashback'], [
+            'pending_cashback'],[
+            this.modals.sequelize.literal(
+                `(select id from table_wallet_seller_cashback as user_wallet where user_wallet.job_id = "cashback_jobs"."id" and status_type in (13) and transaction_type = 1 and user_wallet.user_id = "cashback_jobs"."user_id")`),
+            'cashback_id'], [
             this.modals.sequelize.literal(
                 `(select status_name from statuses where statuses.status_type = "cashback_jobs"."cashback_status")`),
             'status_name'], [

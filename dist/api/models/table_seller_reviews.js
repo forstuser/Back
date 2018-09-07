@@ -6,16 +6,14 @@ Object.defineProperty(exports, "__esModule", {
 });
 
 exports.default = (sequelize, DataTypes) => {
-  const sellerReviews = sequelize.define('sellerReviews', {
-    seller_review_id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
-      primaryKey: true
-    },
+  const seller_reviews = sequelize.define('seller_reviews', {
     seller_id: {
       type: DataTypes.INTEGER
     },
     offline_seller_id: {
+      type: DataTypes.INTEGER
+    },
+    order_id: {
       type: DataTypes.INTEGER
     },
     review_ratings: {
@@ -46,14 +44,15 @@ exports.default = (sequelize, DataTypes) => {
     freezeTableName: true,
     timestamps: true,
     underscored: true,
-    defaultPrimaryKey: false,
+    defaultPrimaryKey: true,
     tableName: 'table_seller_reviews'
   });
-  sellerReviews.associate = models => {
-    sellerReviews.belongsTo(models.users, { foreignKey: 'user_id' });
-    sellerReviews.belongsTo(models.sellers, { foreignKey: 'offline_seller_id' });
-    sellerReviews.belongsTo(models.onlineSellers, { foreignKey: 'seller_id' });
+  seller_reviews.associate = models => {
+    seller_reviews.belongsTo(models.users, { foreignKey: 'user_id' });
+    seller_reviews.belongsTo(models.sellers, { foreignKey: 'offline_seller_id' });
+    seller_reviews.belongsTo(models.onlineSellers, { foreignKey: 'seller_id' });
+    seller_reviews.belongsTo(models.order, { foreignKey: 'order_id' });
   };
 
-  return sellerReviews;
+  return seller_reviews;
 };

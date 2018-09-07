@@ -374,12 +374,12 @@ export default class SellerAdaptor {
       seller.offer_count = seller.offer_count || 0;
       seller.ratings = seller.ratings || 0;
       seller.assisted_services = assisted_services.map(item => {
-        item.rating =  (_.sumBy(item.reviews || [{ratings: 0}], 'ratings')) /
+        item.rating = (_.sumBy(item.reviews || [{ratings: 0}], 'ratings')) /
             (item.reviews || [{ratings: 0}]).length;
         item.service_types = item.service_types.map(typeItem => {
           const service_type = service_types.find(
               stItem => stItem.id === typeItem.service_type_id);
-          typeItem.service_type = service_type.title;
+          typeItem.service_type = (service_type || {}).title;
           return typeItem;
         });
 
@@ -418,6 +418,10 @@ export default class SellerAdaptor {
       seller.city = seller_cities[0];
       seller.state = seller_states[0];
       seller.location = seller_locations[0];
+      seller.address_detail = (`${seller.address},${(seller.location ||
+          {}).name},${(seller.city || {}).name},${(seller.state ||
+          {}).state_name}-${(seller.location || {}).pin_code}`).replace(',,',
+          ',').replace(',,', ',').replace(',,', ',');
       seller.cashback_total = seller.cashback_total || 0;
       seller.offer_count = seller.offer_count || 0;
       seller.ratings = seller.ratings || 0;
@@ -499,7 +503,8 @@ export default class SellerAdaptor {
   }
 
   async retrieveSellerReviews(options) {
-    let seller_reviews = await this.modals.sellerReviews.findAll(
+    /*options.order_id = options.order_id || null*/
+    let seller_reviews = await this.modals.seller_reviews.findAll(
         {
           where: JSON.parse(JSON.stringify(options)), include: {
             model: this.modals.users, required: true,
@@ -781,8 +786,20 @@ export default class SellerAdaptor {
       const assisted_service_users_result = assisted_service_user.toJSON();
       const reviews = assisted_service_users_result.reviews ||
           [];
-      reviews.push(review);
-      assisted_service_users_result.reviews = _.uniqBy(reviews, 'updated_by');
+      let current_review = assisted_service_users_result.reviews.find(
+          item => item.order_id === review.order_id);
+      if (current_review) {
+        assisted_service_users_result.reviews.map(
+            item => {
+              if (item.order_id === review.order_id) {
+                return review;
+              }
+
+              return item;
+            });
+      } else {
+        reviews.push(review);
+      }
       await assisted_service_user.updateAttributes(
           assisted_service_users_result);
       const assisted_service_user_result = assisted_service_user.toJSON();
@@ -797,7 +814,8 @@ export default class SellerAdaptor {
     let seller_offer = await this.modals.seller_offers.findOne({
       where: options,
     });
-    if (seller_offer && options.id && seller_offer.id === options.id) {
+    if (seller_offer && options.id && seller_offer.id.toString() ===
+        options.id.toString()) {
       const seller_offer_result = seller_offer.toJSON();
       defaults.status_type = seller_offer_result.status_type || 1;
       await seller_offer.updateAttributes(defaults);

@@ -225,9 +225,17 @@ function prepareUploadRoutes(modal, routeObject, middleware) {
 
     routeObject.push({
       method: 'GET',
+      path: '/assisted/{id}/images',
+      config: {
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        handler: _upload2.default.retrieveAssistedTypeImages
+      }
+    });
+
+    routeObject.push({
+      method: 'GET',
       path: '/consumer/sellers/{id}/upload/{type}/images/{index}',
       config: {
-        auth: 'jwt',
         pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
         handler: _upload2.default.retrieveSellerImagesForConsumer
       }

@@ -33,7 +33,7 @@ var _product_item = require('./product_item');
 
 var _general = require('./general');
 
-var _auth = require('./auth');
+var _users = require('./users');
 
 var _brand = require('./brand');
 
@@ -74,7 +74,7 @@ exports.default = (app, modals, socket_server) => {
   const shopEarnRoutes = [];
   const orderRoutes = [];
   const searchController = new _search2.default(modals);
-  (0, _auth.prepareAuthRoutes)(modals, authRoutes, middleware);
+  (0, _users.prepareAuthRoutes)(modals, authRoutes, middleware);
 
   (0, _category.prepareCategoryRoutes)(modals, categoryRoutes, middleware);
 

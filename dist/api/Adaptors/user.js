@@ -339,8 +339,18 @@ class UserAdaptor {
     return await this.modals.user_addresses.create(updateValues, filterOptions);
   }
 
+  /**
+   * Create user address
+   * @param updateValues
+   * @param filterOptions
+   */
+  async deleteUserAddress(updateValues, filterOptions) {
+    return await this.modals.user_addresses.destroy(updateValues, filterOptions);
+  }
+
   async retrieveUserAddresses(filterOptions) {
     filterOptions.attributes = ['address_type', 'address_line_1', 'address_line_2', 'city_id', 'state_id', 'locality_id', 'pin', 'latitude', 'longitude', 'id', [this.modals.sequelize.literal('(Select state_name from table_states as state where state.id = user_addresses.state_id)'), 'state_name'], [this.modals.sequelize.literal('(Select name from table_cities as city where city.id = user_addresses.city_id)'), 'city_name'], [this.modals.sequelize.literal('(Select name from table_localities as locality where locality.id = user_addresses.locality_id)'), 'locality_name'], [this.modals.sequelize.literal('(Select pin_code from table_localities as locality where locality.id = user_addresses.locality_id)'), 'pin_code']];
+    filterOptions.order = [['address_type']];
     return await this.modals.user_addresses.findAll(filterOptions);
   }
 

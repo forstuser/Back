@@ -243,6 +243,34 @@ export function prepareAuthRoutes(modal, routeObject, middleware) {
       },
     });
 
+    routeObject.push({
+      method: 'DELETE',
+      path: '/consumer/addresses/{id}',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: middleware.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: ControllerObject.deleteUserAddress,
+        description: 'Delete User Address By Identity.',
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              {code: 202, message: 'Authenticated'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
+            ],
+          },
+        },
+      },
+    });
+
     /*Retrieve Profile of Consumer*/
     routeObject.push({
       method: 'GET',

@@ -46,7 +46,27 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
       config: {
         auth: 'jwt',
         pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
-        handler: _order2.default.getActiveOrders
+        handler: _order2.default.getAssistedServiceList
+      }
+    });
+
+    routeObject.push({
+      method: 'GET',
+      path: '/sellers/{seller_id}/assisted/past',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        handler: _order2.default.getOrderList
+      }
+    });
+
+    routeObject.push({
+      method: 'GET',
+      path: '/sellers/{seller_id}/assisted/active',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        handler: _order2.default.getActiveAssistedServices
       }
     });
 
@@ -64,6 +84,54 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
     });
 
     routeObject.push({
+      method: 'GET',
+      path: '/consumer/orders',
+      config: {
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, {
+          method: middleware.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _order2.default.getOrderList
+      }
+    });
+
+    routeObject.push({
+      method: 'GET',
+      path: '/consumer/orders/active',
+      config: {
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, {
+          method: middleware.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _order2.default.getActiveOrders
+      }
+    });
+
+    routeObject.push({
+      method: 'GET',
+      path: '/consumer/assisted',
+      config: {
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, {
+          method: middleware.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _order2.default.getAssistedServiceList
+      }
+    });
+
+    routeObject.push({
+      method: 'GET',
+      path: '/consumer/assisted/active',
+      config: {
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, {
+          method: middleware.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _order2.default.getActiveAssistedServices
+      }
+    });
+
+    routeObject.push({
       method: 'PUT',
       path: '/consumer/orders/{order_id}/approve',
       config: {
@@ -75,6 +143,57 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
           payload: {
             seller_id: _joi2.default.number().required(),
             order_details: [_joi2.default.array().items(_joi2.default.object()), _joi2.default.allow(null)]
+          }
+        }
+      }
+    });
+
+    routeObject.push({
+      method: 'PUT',
+      path: '/consumer/assisted/{order_id}/approve',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        handler: _order2.default.approveOrder,
+        description: 'Approved order on behalf of Consumer.',
+        validate: {
+          payload: {
+            seller_id: _joi2.default.number().required(),
+            order_details: [_joi2.default.object(), _joi2.default.allow(null)]
+          }
+        }
+      }
+    });
+
+    routeObject.push({
+      method: 'PUT',
+      path: '/consumer/assisted/{order_id}/start',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        handler: _order2.default.startOrder,
+        description: 'Start order on behalf of Consumer.',
+        validate: {
+          payload: {
+            seller_id: _joi2.default.number().required(),
+            order_details: [_joi2.default.object(), _joi2.default.allow(null)]
+          }
+        }
+      }
+    });
+
+    routeObject.push({
+      method: 'PUT',
+      path: '/consumer/assisted/{order_id}/end',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        handler: _order2.default.endOrder,
+        description: 'End order on behalf of Consumer.',
+        validate: {
+          payload: {
+            seller_id: _joi2.default.number().required(),
+            order_details: [_joi2.default.object(), _joi2.default.allow(null)]
           }
         }
       }
@@ -113,26 +232,18 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
     });
 
     routeObject.push({
-      method: 'GET',
-      path: '/consumer/orders',
+      method: 'PUT',
+      path: '/consumer/orders/{order_id}/paid',
       config: {
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, {
-          method: middleware.updateUserActiveStatus,
-          assign: 'userExist'
-        }],
-        handler: _order2.default.getOrderList
-      }
-    });
-
-    routeObject.push({
-      method: 'GET',
-      path: '/consumer/orders/active',
-      config: {
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, {
-          method: middleware.updateUserActiveStatus,
-          assign: 'userExist'
-        }],
-        handler: _order2.default.getActiveOrders
+        auth: 'jwt',
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        handler: _order2.default.completeOrder,
+        description: 'Complete order on behalf of Consumer.',
+        validate: {
+          payload: {
+            seller_id: _joi2.default.number().required()
+          }
+        }
       }
     });
 
@@ -166,7 +277,8 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
               output: 'data',
               parse: true
             }), _joi2.default.allow(null)],
-            service_type_id: [_joi2.default.number(), _joi2.default.allow(null)]
+            service_type_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            service_name: [_joi2.default.string(), _joi2.default.allow(null)]
           }
         }
       }
@@ -184,6 +296,23 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
           payload: {
             user_id: _joi2.default.number().required(),
             order_details: [_joi2.default.array().items(_joi2.default.object()), _joi2.default.allow(null)]
+          }
+        }
+      }
+    });
+
+    routeObject.push({
+      method: 'PUT',
+      path: '/sellers/{seller_id}/assisted/{order_id}/modify',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        handler: _order2.default.modifyOrder,
+        description: 'Modify order on behalf of Seller.',
+        validate: {
+          payload: {
+            user_id: _joi2.default.number().required(),
+            order_details: [_joi2.default.object(), _joi2.default.allow(null)]
           }
         }
       }
@@ -233,7 +362,7 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
         validate: {
           payload: {
             user_id: _joi2.default.number().required(),
-            delivery_user_id: _joi2.default.number().required(),
+            delivery_user_id: [_joi2.default.number(), _joi2.default.allow(null)],
             order_details: [_joi2.default.array().items(_joi2.default.object()), _joi2.default.allow(null)]
           }
         }

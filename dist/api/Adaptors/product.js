@@ -155,7 +155,7 @@ class ProductAdaptor {
           as: 'sellers',
           attributes: ['id', ['seller_name', 'sellerName'], 'url', 'gstin', 'contact', 'email', [this.modals.sequelize.fn('CONCAT', 'sellers/', this.modals.sequelize.literal('"bill->sellers"."id"'), '/reviews?isonlineseller=true'), 'reviewUrl']],
           include: [{
-            model: this.modals.sellerReviews,
+            model: this.modals.seller_reviews,
             as: 'sellerReviews',
             attributes: [['review_ratings', 'ratings'], ['review_feedback', 'feedback'], ['review_comments', 'comments']],
             required: false
@@ -168,7 +168,7 @@ class ProductAdaptor {
         as: 'sellers',
         attributes: ['id', ['seller_name', 'sellerName'], ['owner_name', 'ownerName'], ['pan_no', 'panNo'], ['reg_no', 'regNo'], ['is_service', 'isService'], 'url', 'gstin', ['contact_no', 'contact'], 'email', 'address', 'city', 'state', 'pincode', 'latitude', 'longitude', [this.modals.sequelize.fn('CONCAT', 'sellers/', this.modals.sequelize.literal('"sellers"."id"'), '/reviews?isonlineseller=false'), 'reviewUrl']],
         include: [{
-          model: this.modals.sellerReviews,
+          model: this.modals.seller_reviews,
           as: 'sellerReviews',
           attributes: [['review_ratings', 'ratings'], ['review_feedback', 'feedback'], ['review_comments', 'comments']],
           required: false
@@ -342,7 +342,7 @@ class ProductAdaptor {
         as: 'sellers',
         attributes: ['id', ['seller_name', 'sellerName'], 'url', 'gstin', 'contact', 'email', [this.modals.sequelize.fn('CONCAT', 'sellers/', this.modals.sequelize.literal('"sellers"."id"'), '/reviews?isonlineseller=true'), 'reviewUrl']],
         include: [{
-          model: this.modals.sellerReviews,
+          model: this.modals.seller_reviews,
           as: 'sellerReviews',
           attributes: [['review_ratings', 'ratings'], ['review_feedback', 'feedback'], ['review_comments', 'comments']],
           required: false
@@ -352,9 +352,9 @@ class ProductAdaptor {
       required: options.status_type === 8
     }), this.modals.sellers.findAll({
       where: { id: products.map(item => item.seller_id).filter(Boolean) },
-      attributes: ['id', ['seller_name', 'sellerName'], ['owner_name', 'ownerName'], ['pan_no', 'panNo'], ['reg_no', 'regNo'], ['is_service', 'isService'], 'url', 'gstin', ['contact_no', 'contact'], 'email', 'address', 'city', 'state', 'pincode', 'latitude', 'longitude', [this.modals.sequelize.fn('CONCAT', 'sellers/', this.modals.sequelize.literal('"id"'), '/reviews?isonlineseller=false'), 'reviewUrl']],
+      attributes: ['id', ['seller_name', 'sellerName'], ['owner_name', 'ownerName'], ['pan_no', 'panNo'], ['reg_no', 'regNo'], ['is_service', 'isService'], 'url', 'gstin', ['contact_no', 'contact'], 'email', 'address', 'city', 'state', 'pincode', 'latitude', 'longitude', [this.modals.sequelize.fn('CONCAT', 'sellers/', this.modals.sequelize.literal('"sellers"."id"'), '/reviews?isonlineseller=false'), 'reviewUrl']],
       include: [{
-        model: this.modals.sellerReviews,
+        model: this.modals.seller_reviews,
         as: 'sellerReviews',
         attributes: [['review_ratings', 'ratings'], ['review_feedback', 'feedback'], ['review_comments', 'comments']],
         required: false
@@ -548,7 +548,7 @@ class ProductAdaptor {
           as: 'sellers',
           attributes: ['id', ['seller_name', 'sellerName'], 'url', 'gstin', 'contact', 'email', [this.modals.sequelize.fn('CONCAT', 'sellers/', this.modals.sequelize.literal('"bill->sellers"."id"'), '/reviews?isonlineseller=true'), 'reviewUrl']],
           include: [{
-            model: this.modals.sellerReviews,
+            model: this.modals.seller_reviews,
             as: 'sellerReviews',
             attributes: [['review_ratings', 'ratings'], ['review_feedback', 'feedback'], ['review_comments', 'comments']],
             required: false
@@ -561,7 +561,7 @@ class ProductAdaptor {
         as: 'sellers',
         attributes: ['id', ['seller_name', 'sellerName'], ['owner_name', 'ownerName'], ['pan_no', 'panNo'], ['reg_no', 'regNo'], ['is_service', 'isService'], 'url', 'gstin', ['contact_no', 'contact'], 'email', 'address', 'city', 'state', 'pincode', 'latitude', 'longitude', [this.modals.sequelize.fn('CONCAT', 'sellers/', this.modals.sequelize.literal('"sellers"."id"'), '/reviews?isonlineseller=false'), 'reviewUrl']],
         include: [{
-          model: this.modals.sellerReviews,
+          model: this.modals.seller_reviews,
           as: 'sellerReviews', attributes: [['review_ratings', 'ratings'], ['review_feedback', 'feedback'], ['review_comments', 'comments']],
           required: false
         }],
@@ -733,7 +733,7 @@ class ProductAdaptor {
             as: 'sellers',
             attributes: [['seller_name', 'sellerName'], 'url', 'contact', 'email', [this.modals.sequelize.fn('CONCAT', 'sellers/', this.modals.sequelize.literal('"bill->sellers"."id"'), '/reviews?isonlineseller=true'), 'reviewUrl']],
             include: [{
-              model: this.modals.sellerReviews, as: 'sellerReviews',
+              model: this.modals.seller_reviews, as: 'sellerReviews',
               attributes: [['review_ratings', 'ratings'], ['review_feedback', 'feedback'], ['review_comments', 'comments']],
               required: false
             }],
@@ -742,7 +742,7 @@ class ProductAdaptor {
         }, {
           model: this.modals.sellers, as: 'sellers',
           attributes: ['id', ['seller_name', 'sellerName'], 'url', ['contact_no', 'contact'], 'email', 'address', 'city', 'state', 'pincode', 'latitude', 'longitude', [this.modals.sequelize.fn('CONCAT', 'sellers/', this.modals.sequelize.literal('"sellers"."id"'), '/reviews?isonlineseller=false'), 'reviewUrl']], include: [{
-            model: this.modals.sellerReviews, as: 'sellerReviews',
+            model: this.modals.seller_reviews, as: 'sellerReviews',
             attributes: [['review_ratings', 'ratings'], ['review_feedback', 'feedback'], ['review_comments', 'comments']], required: false
           }], required: false
         }, {
@@ -1526,26 +1526,25 @@ class ProductAdaptor {
 
   async updateSellerReview(user, seller_id, isOnlineSeller, request) {
     const payload = request.payload;
-    const { ratings: review_ratings, feedback: review_feedback, comments: review_comments } = request.payload;
+    const { ratings: review_ratings, feedback: review_feedback, comments: review_comments, order_id } = request.payload;
     const user_id = user.id || user.ID;
     const status_id = 1;
 
-    const whereClause = isOnlineSeller ? { user_id, seller_id, status_id } : { user_id, offline_seller_id: seller_id, status_id };
+    const whereClause = isOnlineSeller ? { user_id, seller_id, status_id } : JSON.parse(JSON.stringify({ user_id, offline_seller_id: seller_id, status_id, order_id }));
 
     const defaultClause = isOnlineSeller ? {
       user_id, seller_id, status_id, review_ratings,
       review_feedback, review_comments
-    } : {
+    } : JSON.parse(JSON.stringify({
       user_id, offline_seller_id: seller_id, status_id,
-      review_ratings, review_feedback, review_comments
-    };
+      review_ratings, review_feedback, review_comments, order_id
+    }));
     try {
-      const result = await this.modals.sellerReviews.findCreateFind({
-        where: whereClause,
-        defaults: defaultClause
+      const result = await this.modals.seller_reviews.findCreateFind({
+        where: whereClause, defaults: defaultClause
       });
       if (!result[1]) {
-        await result[0].updateAttributes({ review_ratings, review_feedback, review_comments });
+        await result[0].updateAttributes(JSON.parse(JSON.stringify({ review_ratings, review_feedback, review_comments, order_id })));
       }
 
       return {

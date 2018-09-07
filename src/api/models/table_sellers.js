@@ -124,7 +124,7 @@ export default (sequelize, DataTypes) => {
           onDelete: 'cascade',
           onUpdate: 'cascade',
         });
-    sellers.hasMany(models.sellerReviews,
+    sellers.hasMany(models.seller_reviews,
         {
           foreignKey: 'seller_id',
           as: 'sellerReviews',

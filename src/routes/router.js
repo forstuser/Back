@@ -13,7 +13,7 @@ import {prepareWhatToServiceRoutes} from './what_to_service';
 import {prepareCalendarServiceRoutes} from './calendar_service';
 import {prepareProductItemRoutes} from './product_item';
 import {prepareGeneralRoutes} from './general';
-import {prepareAuthRoutes} from './auth';
+import {prepareAuthRoutes} from './users';
 import {prepareBrandRoutes} from './brand';
 import {prepareAccessoryRoute} from './accessory_routes';
 import {prepareOfferRoutes} from './offer';

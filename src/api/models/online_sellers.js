@@ -53,7 +53,7 @@ export default (sequelize, DataTypes) => {
     onlineSellers.belongsTo(models.statuses,
         {foreignKey: 'status_type', targetKey: 'status_type'});
     onlineSellers.hasMany(models.bills, {foreignKey: 'seller_id'});
-    onlineSellers.hasMany(models.sellerReviews,
+    onlineSellers.hasMany(models.seller_reviews,
         {foreignKey: 'seller_id', as: 'sellerReviews'});
   };
   return onlineSellers;

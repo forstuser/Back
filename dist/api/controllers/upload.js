@@ -617,12 +617,19 @@ class UploadController {
       await modals.users.findById(updated_by);
       UploadController.notifyTeam(user, jobResult);
       let productItemResult;
-      let { productId, category_id, main_category_id, id, cashback_job_id } = jobResult;
+      let { productId, category_id, main_category_id, id, cashback_job_id, online_order } = jobResult;
       productId = requiredDetail.productId || productId;
       if (type && productId) {
         productItemResult = await UploadController.createProductItems({
-          type, jobId: job_id, user, productId, category_id, main_category_id,
-          cashback_job_id, itemId: requiredDetail.itemId,
+          type,
+          jobId: job_id,
+          user,
+          productId,
+          category_id,
+          main_category_id,
+          online_order,
+          cashback_job_id,
+          itemId: requiredDetail.itemId,
           copies: copyData.map(copyItem => ({
             copyId: copyItem.id,
             copyUrl: `/jobs/${job_id}/files/${copyItem.id}`,
@@ -817,7 +824,7 @@ class UploadController {
             file_type: fileTypes[index] ? fileTypes[index].toString() : fileTypeDataArray[index].ext,
             updated_by: user.id, type, image_type: image_types[index]
           };
-          file_details.push(file_detail);
+          file_details = file_detail;
           seller_details.offers.push(file_detail);
         } else if (type.toString() === '5') {
           const file_detail = {
@@ -830,7 +837,10 @@ class UploadController {
           seller_details.assisted_type_images.push(file_detail);
         }
       });
-      const seller = await sellerAdaptor.retrieveOrUpdateSellerDetail({ where: { id: seller_data.id } }, { is_onboarded: type.toString() === '2', seller_details }, false);
+      const seller = await sellerAdaptor.retrieveOrUpdateSellerDetail({ where: { id: seller_data.id } }, JSON.parse(JSON.stringify({
+        is_onboarded: type.toString() === '2' ? true : undefined,
+        seller_details
+      })), false);
       return reply.response(JSON.parse(JSON.stringify({
         status: true, message: 'Upload Successful',
         seller: type.toString() === '1' || type.toString() === '2' ? seller : undefined, file_details
@@ -932,7 +942,7 @@ class UploadController {
   }
 
   static async createProductItems(parameters) {
-    let { type, jobId: job_id, user, productId: product_id, itemId, copies, category_id, main_category_id, cashback_job_id } = parameters;
+    let { type, jobId: job_id, user, productId: product_id, itemId, copies, category_id, main_category_id, cashback_job_id, online_order } = parameters;
     const productItemPromise = [];
     let user_id = user.id || user.ID;
     switch (type) {
@@ -1035,10 +1045,12 @@ class UploadController {
       productItemPromise.push(productAdaptor.updateProduct(product_id, { job_id, user_id, updated_by: user_id }));
     } else if (cashback_job_id) {
       productItemPromise.push(jobAdaptor.updateCashBackJobs({
-        id: cashback_job_id, jobDetail: {
+        id: cashback_job_id, jobDetail: JSON.parse(JSON.stringify({
           job_id, user_id, updated_by: user_id,
-          copies, admin_status: 2
-        }
+          copies, admin_status: online_order ? 8 : 2,
+          ce_status: online_order ? 4 : undefined,
+          ce_id: online_order ? 65 : undefined
+        }))
       }));
     }
 
@@ -1278,6 +1290,56 @@ class UploadController {
           return reply.response({
             status: false,
             message: 'Look like seller details are not available',
+            forceUpdate: request.pre.forceUpdate
+          });
+        }
+      } catch (err) {
+        console.log(`Error on ${new Date()} for user while retrieving category image is as follow: \n \n ${err}`);
+
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: 1,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err
+          })
+        }).catch(ex => console.log('error while logging on db,', ex));
+        return reply.response({
+          status: false,
+          message: 'Unable to retrieve image',
+          err,
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    } else {
+      return reply.response({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate
+      });
+    }
+  }
+
+  static async retrieveAssistedTypeImages(request, reply) {
+    if (!request.pre.forceUpdate) {
+      try {
+        const user = _shared2.default.verifyAuthorization(request.headers);
+        const { id } = request.params || {};
+        let file_name = `${id}.png`;
+        if (file_name) {
+          const fileResult = await fsImpl.readFile(`sellers/service_types/${file_name}`, 'utf8');
+
+          console.log(fileResult);
+          return reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${file_name}`);
+        } else {
+          return reply.response({
+            status: false,
+            message: 'Look like there is no image for requested id.',
             forceUpdate: request.pre.forceUpdate
           });
         }
@@ -1959,6 +2021,7 @@ class UploadController {
         });
         const document = !isNaN(index) ? (seller_offer || {}).document_details[index] : (seller_offer || {}).document_details.find(item => item.index && item.index === index);
         let file_name = (document || {}).file_name;
+        console.log(`sellers/${(seller_offer || {}).seller_id}/${seller_image_types[4]}/${file_name}`);
         const fileResult = await fsImpl.readFile(`sellers/${(seller_offer || {}).seller_id}/${seller_image_types[4]}/${file_name}`, 'utf8');
         return reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${request.params.id}.png`);
       } catch (err) {
@@ -2087,38 +2150,53 @@ class UploadController {
           where: { id: offer_id },
           attributes: ['document_details', 'seller_id']
         });
-        const document = !isNaN(index) ? (seller_offer || {}).document_details[index] : (seller_offer || {}).document_details.find(item => item.index && item.index === index);
-        let file_name = (document || {}).file_name;
-        const fieldNameHere = request.payload.fieldNameHere;
-        let filteredFileData = fieldNameHere || request.payload.filesName || request.payload.file;
-        if (filteredFileData) {
-          filteredFileData = Array.isArray(filteredFileData) ? filteredFileData : [filteredFileData];
-
-          if (filteredFileData.length === 0) {
-            console.log('No valid documents in request');
-            return reply.response({ status: false, message: 'No valid documents in request' });
+        if (seller_offer) {
+          (seller_offer || {}).document_details = (seller_offer || {}).document_details && (seller_offer || {}).document_details.length > 0 ? (seller_offer || {}).document_details : [{
+            file_name: undefined,
+            index: 0,
+            file_type: undefined,
+            updated_by: user.id, type: 1, image_type: 1
+          }];
+          let document = seller_offer.document_details[0];
+          if (seller_offer.document_details && seller_offer.document_details.length > 0) {
+            document = !isNaN(index) ? (seller_offer || {}).document_details[index] : (seller_offer || {}).document_details.find(item => item.index && item.index === index);
           }
+          let file_name = (document || {}).file_name;
+          const fieldNameHere = request.payload.fieldNameHere;
+          let filteredFileData = fieldNameHere || request.payload.filesName || request.payload.file;
+          if (filteredFileData) {
+            filteredFileData = Array.isArray(filteredFileData) ? filteredFileData : [filteredFileData];
 
-          filteredFileData = filteredFileData.filter(datum => {
-            const name = datum.hapi.filename;
+            if (filteredFileData.length === 0) {
+              console.log('No valid documents in request');
+              return reply.response({ status: false, message: 'No valid documents in request' });
+            }
+
+            filteredFileData = filteredFileData.filter(datum => {
+              const name = datum.hapi.filename;
+              const file_type = /[.]/.exec(name) ? /[^.]+$/.exec(name) : undefined;
+              return file_type && !isFileTypeAllowed(file_type) ? false : !(!file_type && !isFileTypeAllowedMagicNumber(datum._data));
+            });
+            const elem = filteredFileData[0];
+            const file_index = `${Math.random().toString(36).substr(2, 9)}${user.id.toString(36)}`;
+            const name = elem.hapi.filename;
             const file_type = /[.]/.exec(name) ? /[^.]+$/.exec(name) : undefined;
-            return file_type && !isFileTypeAllowed(file_type) ? false : !(!file_type && !isFileTypeAllowedMagicNumber(datum._data));
-          });
-          const elem = filteredFileData[0];
-          const file_index = `${Math.random().toString(36).substr(2, 9)}${user.id.toString(36)}`;
-          const name = elem.hapi.filename;
-          const file_type = /[.]/.exec(name) ? /[^.]+$/.exec(name) : undefined;
-          const fileTypeData = getTypeFromBuffer(elem._data);
-          const fileName = `${user.id}-${file_index}.${file_type ? file_type.toString() : fileTypeData.ext}`;
-          await fsImpl.writeFile(`sellers/${(seller_offer || {}).seller_id}/${seller_image_types[4]}/${file_name}`, elem._data, { ContentType: _mimeTypes2.default.lookup(fileName) || 'image/jpeg' });
-          document.index = file_index;
-
-          return reply.response({
-            status: true,
-            offer: await sellerAdaptor.retrieveOrCreateSellerOffers({ id: offer_id }, seller_offer)
-          });
+            const fileTypeData = getTypeFromBuffer(elem._data);
+            const fileName = `${user.id}-${file_index}.${file_type ? file_type.toString() : fileTypeData.ext}`;
+            document.file_name = document.file_name || fileName;
+            document.file_type = document.file_type || file_type;
+            await fsImpl.writeFile(`sellers/${(seller_offer || {}).seller_id}/${seller_image_types[4]}/${document.file_name}`, elem._data, { ContentType: _mimeTypes2.default.lookup(fileName) || 'image/jpeg' });
+            document.index = file_index;
+            seller_offer.document_details = (seller_offer.document_details || [document]).length > 0 ? seller_offer.document_details || [document] : [document];
+            return reply.response({
+              status: true,
+              offer: await sellerAdaptor.retrieveOrCreateSellerOffers({ id: offer_id }, seller_offer)
+            });
+          } else {
+            return reply.response({ status: false, message: 'No documents in request' }); //, forceUpdate: request.pre.forceUpdate});
+          }
         } else {
-          return reply.response({ status: false, message: 'No documents in request' }); //, forceUpdate: request.pre.forceUpdate});
+          return reply.response({ status: false, message: 'No a valid offer in request' }); //, forceUpdate: request.pre.forceUpdate});
         }
       } catch (err) {
         console.log(`Error on ${new Date()} retrieving fact image is as follow: \n \n ${err}`);
@@ -2131,7 +2209,6 @@ class UploadController {
             params: request.params,
             query: request.query,
             headers: request.headers,
-            payload: request.payload,
             err
           })
         }).catch(ex => console.log('error while logging on db,', ex));
@@ -2158,46 +2235,51 @@ class UploadController {
         const seller_image_types = _main2.default.SELLER_IMAGE_TYPE.split(',');
         const { id, index } = request.params;
         const assisted_user = await sellerAdaptor.retrieveAssistedServiceUser({ where: { id }, attributes: ['profile_image_detail', 'seller_id'] });
-        (assisted_user || {}).profile_image_detail = (assisted_user || {}).profile_image_detail || {};
-        const document = (assisted_user || {}).profile_image_detail;
-        let file_name = (document || {}).file_name;
-        const fieldNameHere = request.payload.fieldNameHere;
-        let filteredFileData = fieldNameHere || request.payload.filesName || request.payload.file;
-        if (filteredFileData) {
-          filteredFileData = Array.isArray(filteredFileData) ? filteredFileData : [filteredFileData];
+        if (assisted_user) {
+          (assisted_user || {}).profile_image_detail = (assisted_user || {}).profile_image_detail || {};
+          const document = (assisted_user || {}).profile_image_detail;
+          let file_name = (document || {}).file_name;
+          const fieldNameHere = request.payload.fieldNameHere;
+          let filteredFileData = fieldNameHere || request.payload.filesName || request.payload.file;
+          if (filteredFileData) {
+            filteredFileData = Array.isArray(filteredFileData) ? filteredFileData : [filteredFileData];
 
-          if (filteredFileData.length === 0) {
-            console.log('No valid documents in request');
-            return reply.response({ status: false, message: 'No valid documents in request' });
-          }
+            if (filteredFileData.length === 0) {
+              console.log('No valid documents in request');
+              return reply.response({ status: false, message: 'No valid documents in request' });
+            }
 
-          filteredFileData = filteredFileData.filter(datum => {
-            const name = datum.hapi.filename;
+            filteredFileData = filteredFileData.filter(datum => {
+              const name = datum.hapi.filename;
+              const file_type = /[.]/.exec(name) ? /[^.]+$/.exec(name) : undefined;
+              return file_type && !isFileTypeAllowed(file_type) ? false : !(!file_type && !isFileTypeAllowedMagicNumber(datum._data));
+            });
+            const elem = filteredFileData[0];
+            const file_index = `${Math.random().toString(36).substr(2, 9)}${user.id.toString(36)}`;
+            const name = elem.hapi.filename;
             const file_type = /[.]/.exec(name) ? /[^.]+$/.exec(name) : undefined;
-            return file_type && !isFileTypeAllowed(file_type) ? false : !(!file_type && !isFileTypeAllowedMagicNumber(datum._data));
-          });
-          const elem = filteredFileData[0];
-          const file_index = `${Math.random().toString(36).substr(2, 9)}${user.id.toString(36)}`;
-          const name = elem.hapi.filename;
-          const file_type = /[.]/.exec(name) ? /[^.]+$/.exec(name) : undefined;
-          const fileTypeData = getTypeFromBuffer(elem._data);
-          const fileName = `${user.id}-${file_index}.${file_type ? file_type.toString() : fileTypeData.ext}`;
-          file_name = file_name || fileName;
-          await fsImpl.writeFile(`sellers/${(assisted_user || {}).seller_id}/${seller_image_types[3]}/${file_name}`, elem._data, { ContentType: _mimeTypes2.default.lookup(fileName) || 'image/jpeg' });
+            const fileTypeData = getTypeFromBuffer(elem._data);
+            const fileName = `${user.id}-${file_index}.${file_type ? file_type.toString() : fileTypeData.ext}`;
+            file_name = file_name || fileName;
+            await fsImpl.writeFile(`sellers/${(assisted_user || {}).seller_id}/${seller_image_types[3]}/${file_name}`, elem._data, { ContentType: _mimeTypes2.default.lookup(fileName) || 'image/jpeg' });
 
-          document.index = file_index;
+            document.index = file_index;
 
-          document.file_name = file_name;
-          document.file_type = file_type ? file_type.toString() : fileTypeData.ext;
-          document.updated_by = user.id;
-          document.type = 5;
+            document.file_name = file_name;
+            document.file_type = file_type ? file_type.toString() : fileTypeData.ext;
+            document.updated_by = user.id;
+            document.type = 5;
+            assisted_user.profile_image_detail = assisted_user.profile_image_detail || document;
 
-          return reply.response({
-            status: true,
-            offer: await sellerAdaptor.retrieveOrCreateAssistedServiceUsers({ id }, assisted_user, [])
-          });
+            return reply.response({
+              status: true,
+              assisted_user: await sellerAdaptor.retrieveOrCreateAssistedServiceUsers({ id }, assisted_user, [])
+            });
+          } else {
+            return reply.response({ status: false, message: 'No documents in request' }); //, forceUpdate: request.pre.forceUpdate});
+          }
         } else {
-          return reply.response({ status: false, message: 'No documents in request' }); //, forceUpdate: request.pre.forceUpdate});
+          return reply.response({ status: false, message: 'No assisted user in request' });
         }
       } catch (err) {
         console.log(`Error on ${new Date()} retrieving fact image is as follow: \n \n ${err}`);

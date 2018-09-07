@@ -327,6 +327,24 @@ function prepareShopEarnRoute(modal, route, middleware) {
     });
 
     route.push({
+      method: 'PUT',
+      path: '/sellers/{seller_id}/cashbacks/{id}/reject',
+      config: {
+        auth: 'jwt',
+        pre: [{
+          method: middleware.checkAppVersion,
+          assign: 'forceUpdate'
+        }],
+        validate: {
+          payload: {
+            reason_id: _joi2.default.number().required()
+          }
+        },
+        handler: _shop_earn2.default.rejectCashBack
+      }
+    });
+
+    route.push({
       method: 'GET',
       path: '/sellers/{seller_id}/cashbacks',
       config: {

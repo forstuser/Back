@@ -330,6 +330,42 @@ export function prepareSellerRoutes(modal, route, middleware) {
               joi.array().items(joi.object().keys({
                 provider_type_id: joi.number().required(),
                 sub_category_id: joi.number().required(),
+                category_4_id: [
+                  joi.array().items(joi.number()),
+                  joi.allow(null)],
+              })).required()],
+            output: 'data',
+            parse: true,
+          },
+        },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              {code: 200, message: 'Authenticated'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
+            ],
+          },
+        },
+      },
+    });
+
+    route.push({
+      method: 'PUT',
+      path: '/sellers/{seller_id}/providers/{provider_id}',
+      config: {
+        pre: [{method: middleware.checkAppVersion, assign: 'forceUpdate'}],
+        auth: 'jwt', handler: controller.updateSellerProviderTypeBrands,
+        description: 'Update Seller Details provider type brands',
+        tags: ['api', 'Seller', 'provider type', 'Details'],
+        validate: {
+          payload: {
+            provider_type_detail: [
+              joi.array().items(joi.object().keys({
+                provider_type_id: [joi.number(), joi.allow(null)],
+                sub_category_id: [joi.number(), joi.allow(null)],
                 category_4_id: [joi.number(), joi.allow(null)],
                 brand_ids: [joi.array().items(joi.number()), joi.allow(null)],
               })).required()],
@@ -980,6 +1016,7 @@ export function prepareSellerRoutes(modal, route, middleware) {
             ratings: [joi.number(), joi.allow(null)],
             feedback: [joi.string(), joi.allow(null)],
             comments: [joi.string(), joi.allow(null)],
+            order_id: [joi.number(), joi.allow(null)],
             output: 'data',
             parse: true,
           },

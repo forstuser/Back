@@ -62,6 +62,10 @@ exports.default = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       defaultValue: false
     },
+    online_order: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
     verified_seller: {
       type: DataTypes.BOOLEAN,
       defaultValue: false

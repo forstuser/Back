@@ -365,6 +365,16 @@ class UserAdaptor {
     return await this.modals.user_addresses.create(updateValues, filterOptions);
   }
 
+  /**
+   * Create user address
+   * @param updateValues
+   * @param filterOptions
+   */
+  async deleteUserAddress(updateValues, filterOptions) {
+    return await this.modals.user_addresses.destroy(updateValues,
+        filterOptions);
+  }
+
   async retrieveUserAddresses(filterOptions) {
     filterOptions.attributes = [
       'address_type', 'address_line_1', 'address_line_2',
@@ -382,6 +392,7 @@ class UserAdaptor {
         this.modals.sequelize.literal(
             '(Select pin_code from table_localities as locality where locality.id = user_addresses.locality_id)'),
         'pin_code']];
+    filterOptions.order = [['address_type']];
     return await this.modals.user_addresses.findAll(filterOptions);
   }
 

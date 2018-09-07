@@ -660,6 +660,56 @@ class ShopEarnController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err
+        })
+      }).catch(ex => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to approve cash back.',
+        forceUpdate: request.pre.forceUpdate
+      }).code(200);
+    }
+  }
+
+  static async rejectCashBack(request, reply) {
+    const user = _shared2.default.verifyAuthorization(request.headers);
+
+    try {
+      if (!request.pre.forceUpdate) {
+        let { seller_id, id } = request.params;
+        const { reason_id } = request.payload;
+        const seller_cashback = await jobAdaptor.retrieveSellerCashBack({
+          where: { seller_id, id, status_type: 13 }, attributes: ['job_id', 'id', 'user_id', 'amount', [modals.sequelize.literal(`(Select id from table_wallet_user_cashback as user_cashback where user_cashback.user_id = cashback_wallet.user_id and user_cashback.amount = cashback_wallet.amount and user_cashback.job_id = cashback_wallet.job_id)`), 'user_cashback_id'], 'status_type', 'created_at']
+        });
+        if (seller_cashback) {
+          const { job_id } = seller_cashback;
+          const cash_back_job = await jobAdaptor.retrieveCashBackJobs({ id: seller_cashback.job_id });
+
+          const { verified_seller, digitally_verified, home_delivered } = cash_back_job;
+          return reply.response({
+            status: true,
+            result: await _bluebird2.default.all([jobAdaptor.approveSellerCashBack({ job_id, status_type: 18, seller_id }), jobAdaptor.approveUserCashBack({ job_id, status_type: 18, seller_id }), jobAdaptor.updateCashBackJobs({ id: job_id, seller_status: 18, reason_id, seller_id }), home_delivered ? jobAdaptor.approveHomeDeliveryCashback({ job_id, status_type: 18, seller_id }) : ''])
+          });
+        }
+
+        return reply.response({
+          status: false,
+          message: 'Cash Back not available for request parameters.'
+        });
+      } else {
+        return _shared2.default.preValidation(request.pre, reply);
+      }
+    } catch (err) {
+      console.log(err);
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
         user_id: user ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
@@ -735,10 +785,11 @@ class ShopEarnController {
     if (!request.pre.forceUpdate) {
       try {
         const { seller_id } = request.params;
+        const result = await shopEarnAdaptor.retrievePendingTransactions({ seller_id });
         return reply.response({
           status: true,
           reasons: await categoryAdaptor.retrieveRejectReasons({}),
-          result: await shopEarnAdaptor.retrievePendingTransactions({ seller_id })
+          result: result.filter(item => item.pending_cashback && item.cashback_id)
         });
       } catch (err) {
         console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);

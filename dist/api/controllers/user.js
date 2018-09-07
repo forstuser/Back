@@ -76,6 +76,10 @@ var _sellers = require('../Adaptors/sellers');
 
 var _sellers2 = _interopRequireDefault(_sellers);
 
+var _category = require('../Adaptors/category');
+
+var _category2 = _interopRequireDefault(_category);
+
 var _lodash = require('lodash');
 
 var _lodash2 = _interopRequireDefault(_lodash);
@@ -90,7 +94,7 @@ let replyObject = {
   message: 'success'
 };
 
-let userModel, userRelationModel, modals, dashboardAdaptor, userAdaptor, nearByAdaptor, notificationAdaptor, fcmModel, fcmManager, sellerAdaptor;
+let userModel, userRelationModel, modals, dashboardAdaptor, userAdaptor, nearByAdaptor, notificationAdaptor, fcmModel, fcmManager, sellerAdaptor, categoryAdaptor;
 
 const validatePayloadSignature = function (payload, signature) {
   return PUBLIC_KEY.verify(payload, signature, '', 'base64');
@@ -182,6 +186,7 @@ class UserController {
     nearByAdaptor = new _nearby2.default(modals);
     notificationAdaptor = new _notification2.default(modals);
     sellerAdaptor = new _sellers2.default(modals);
+    categoryAdaptor = new _category2.default(modals);
   }
 
   static async subscribeUser(request, reply) {
@@ -636,7 +641,7 @@ class UserController {
             seller_detail = _lodash2.default.omit(seller_detail, ['rush_hours', 'latitude', 'longitude', 'url', 'updated_by', 'created_by', 'status_type', 'updated_at', 'user_id', 'socket_id', 'created_at', 'customer_ids']);
             seller_detail.seller_details = seller_detail.seller_details ? _lodash2.default.omit(seller_detail.seller_details, ['offers', 'assisted_type_images']) : seller_detail.seller_details;
           }
-          user_detail.seller_detail = _lodash2.default.omit(seller_detail || true);
+          user_detail.seller_detail = true;
 
           replyObject.authorization = `bearer ${_authentication2.default.generateSellerToken(JSON.parse(JSON.stringify(user_detail))).token}`;
           replyObject.seller = seller_detail;
@@ -1056,10 +1061,65 @@ class UserController {
     const user = _shared2.default.verifyAuthorization(request.headers);
     try {
       if (request.pre.userExist && !request.pre.forceUpdate) {
-        return reply.response({ status: true,
+        return reply.response({
+          status: true,
           result: await userAdaptor.retrieveUserAddresses({
             where: JSON.parse(JSON.stringify({ user_id: user.id || user.ID }))
-          }) });
+          })
+        });
+      } else if (request.pre.userExist === 0) {
+        return reply.response({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate
+        }).code(402);
+      } else if (!request.pre.userExist) {
+        return reply.response({
+          message: 'Invalid Token',
+          status: false,
+          forceUpdate: request.pre.forceUpdate
+        });
+      } else {
+        return reply.response({
+          message: 'Forbidden',
+          status: false,
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    } catch (err) {
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err
+        })
+      }).catch(ex => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to retrieve user addresses.',
+        forceUpdate: request.pre.forceUpdate,
+        err
+      });
+    }
+  }
+
+  static async deleteUserAddress(request, reply) {
+    const user = _shared2.default.verifyAuthorization(request.headers);
+    try {
+      if (request.pre.userExist && !request.pre.forceUpdate) {
+        const { id } = request.params;
+        return reply.response({
+          status: true,
+          result: await userAdaptor.deleteUserAddress({
+            where: JSON.parse(JSON.stringify({ user_id: user.id || user.ID, id }))
+          })
+        });
       } else if (request.pre.userExist === 0) {
         return reply.response({
           status: false,
@@ -1106,11 +1166,25 @@ class UserController {
     const user = _shared2.default.verifyAuthorization(request.headers);
     try {
       const user_id = user.id;
-      if (request.pre.isValidEmail && request.pre.userExist && !request.pre.forceUpdate) {
+      if (request.pre.userExist && !request.pre.forceUpdate) {
         const { id } = request.payload;
         request.payload.user_id = user_id;
         request.payload.updated_by = user_id;
+        request.payload.address_type = request.payload.address_type || 2;
+
+        const locality = request.payload.pin ? await categoryAdaptor.retrieveLocalities({ where: { pin_code: request.payload.pin } }) : undefined;
+        if (locality && locality.length > 0) {
+          request.payload.city_id = locality[0].city_id;
+          request.payload.state_id = locality[0].state_id;
+          request.payload.locality_id = locality[0].id;
+        }
+        if (request.payload.address_type === 1) {
+          await userAdaptor.updateUserAddress(JSON.parse(JSON.stringify({ address_type: 2 })), {
+            where: { user_id }
+          });
+        }
         if (id) {
+
           return reply.response({
             status: true,
             result: await userAdaptor.updateUserAddress(JSON.parse(JSON.stringify(request.payload)), {
@@ -1123,14 +1197,6 @@ class UserController {
             result: await userAdaptor.createUserAddress(JSON.parse(JSON.stringify(request.payload)))
           });
         }
-      } else if (request.pre.isValidEmail === null) {
-        replyObject.status = false;
-        replyObject.message = 'Account already exists with the email.';
-        return reply.response(replyObject);
-      } else if (!request.pre.isValidEmail) {
-        replyObject.status = false;
-        replyObject.message = 'Invalid Email, Please provide correct one.';
-        return reply.response(replyObject);
       } else if (request.pre.userExist === 0) {
         return reply.response({
           status: false,

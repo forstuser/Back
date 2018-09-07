@@ -710,7 +710,10 @@ class SellerController {
       }), sellerAdaptor.retrieveProviderTypes({ attributes: ['id', 'title', 'description'] }), token_user ? sellerAdaptor.retrieveSellerDetail({
         where: { user_id: token_user.id },
         attributes: ['id', 'seller_details', 'is_onboarded', 'gstin', 'pan_no']
-      }) : {}, data_required ? sellerAdaptor.retrieveAssistedServiceTypes({ attributes: ['id', 'title', 'description'] }) : []]);
+      }) : {}, data_required ? sellerAdaptor.retrieveAssistedServiceTypes({
+        where: { id: { $ne: 0 } },
+        attributes: ['id', 'title', 'description']
+      }) : []]);
       const { is_onboarded, seller_details, gstin, pan_no, id } = seller_data || { is_onboarded: false };
       const { basic_details, business_details } = seller_details || {};
       const image_type_ref = (_main2.default.SELLER_BUSINESS_IMAGE_TYPES || '').split(',').map(item => {
@@ -938,18 +941,69 @@ class SellerController {
       let token_user = _shared2.default.verifyAuthorization(request.headers);
       const { id: seller_id } = request.params || {};
       let { id: user_id, mobile_no: contact_no, email } = token_user;
-      const seller_provider_types = await _bluebird2.default.all(request.payload.provider_type_detail.map(item => {
-        const { provider_type_id, sub_category_id, category_4_id, brand_ids } = item;
+      const provider_type_details = [];
+      request.payload.provider_type_detail.forEach(item => {
+        const { provider_type_id, sub_category_id, category_4_id } = item;
+        provider_type_details.push(...category_4_id.map(cItem => ({
+          category_4_id: cItem,
+          sub_category_id,
+          provider_type_id
+        })));
+      });
+      const seller_provider_types = await _bluebird2.default.all(provider_type_details.map(item => {
+        const { provider_type_id, sub_category_id, category_4_id } = item;
         return sellerAdaptor.retrieveOrCreateSellerProviderTypes(JSON.parse(JSON.stringify({
           provider_type_id, seller_id,
           sub_category_id, category_4_id
         })), JSON.parse(JSON.stringify({
           provider_type_id, seller_id, sub_category_id,
+          category_4_id
+        })));
+      }));
+
+      await sellerAdaptor.retrieveOrUpdateSellerDetail({ where: { id: seller_id } }, { is_onboarded: true }, false);
+      replyObject.seller_provider_types = JSON.parse(JSON.stringify(seller_provider_types));
+      return reply.response(JSON.parse(JSON.stringify(replyObject))).code(201);
+    } catch (err) {
+      console.log(err);
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err
+        })
+      }).catch(ex => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to update seller provider types.',
+        forceUpdate: request.pre.forceUpdate,
+        err
+      });
+    }
+  }
+
+  static async updateSellerProviderTypeBrands(request, reply) {
+    let replyObject = {
+      status: true,
+      message: 'success'
+    };
+    try {
+      let token_user = _shared2.default.verifyAuthorization(request.headers);
+      const { seller_id, provider_id: id } = request.params || {};
+      let { id: user_id, mobile_no: contact_no, email } = token_user;
+      const seller_provider_types = await _bluebird2.default.all(request.payload.provider_type_detail.map(item => {
+        const { provider_type_id, sub_category_id, category_4_id, brand_ids } = item;
+        return sellerAdaptor.retrieveOrCreateSellerProviderTypes(JSON.parse(JSON.stringify({ id, seller_id })), JSON.parse(JSON.stringify({
+          provider_type_id, seller_id, sub_category_id,
           category_4_id, brand_ids
         })));
       }));
 
-      const seller = await sellerAdaptor.retrieveOrUpdateSellerDetail({ where: { id: seller_id } }, { is_onboarded: true }, false);
       replyObject.seller_provider_types = JSON.parse(JSON.stringify(seller_provider_types));
       return reply.response(JSON.parse(JSON.stringify(replyObject))).code(201);
     } catch (err) {
@@ -1403,7 +1457,7 @@ class SellerController {
             as: 'service_types', where: { seller_id, service_type_id: 0 },
             model: modals.seller_service_types, required: true,
             attributes: ['service_type_id', 'seller_id', 'price', 'id']
-          }, attributes: ['id', 'name', 'mobile_no', 'reviews', 'document_details', 'profile_image_detail']
+          }, attributes: ['id', 'name', 'mobile_no', 'reviews', 'document_details', 'profile_image_detail', [modals.sequelize.literal(`(Select count(*) as order_counts from table_orders as orders where orders.delivery_user_id = assisted_service_users.id and orders.status_type = 19)`), 'order_counts']]
         })]);
 
         return reply.response({
@@ -1456,8 +1510,8 @@ class SellerController {
       if (!request.pre.forceUpdate) {
         const { seller_id } = request.params;
         const [service_types] = await _bluebird2.default.all([sellerAdaptor.retrieveSellerAssistedServices({
-          where: { seller_id }, distinct: true, group: ['service_type_id'],
-          attributes: ['service_type_id', modals.sequelize.literal(`(select title from table_assisted_service_types as service_types where service_types.id = seller_service_types.service_type_id)`, 'service_name')]
+          where: { seller_id, service_type_id: { $ne: 0 } },
+          distinct: true, group: ['service_type_id'], attributes: ['service_type_id', [modals.sequelize.literal(`(select title from table_assisted_service_types as service_types where service_types.id = seller_service_types.service_type_id)`), 'service_name']]
         })]);
 
         return reply.response({
@@ -1716,7 +1770,7 @@ class SellerController {
         const { seller_id, customer_id } = request.params;
         const transaction_list = await sellerAdaptor.retrieveSellerTransactions({
           where: JSON.parse(JSON.stringify({ seller_id, user_id: customer_id })),
-          attributes: ['id', 'home_delivered', 'cashback_status', 'copies', [modals.sequelize.literal(`(select sum(purchase_cost) from consumer_products as product where product.user_id = "cashback_jobs"."user_id" and product.job_id = "cashback_jobs"."job_id" and product.seller_id = ${seller_id})`), 'amount_paid'], [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where seller_credit.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 1 and seller_credit.user_id = "cashback_jobs"."user_id" and seller_credit.seller_id = ${seller_id})`), 'total_credits'], [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where seller_credit.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 2 and seller_credit.user_id = "cashback_jobs"."user_id" and seller_credit.seller_id = ${seller_id})`), 'redeemed_credits'], 'created_at', [this.modals.sequelize.literal(`(select full_name from users where users.id = "cashback_jobs"."user_id")`), 'user_name'], [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_loyalty as loyalty_wallet where loyalty_wallet.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 1 and loyalty_wallet.user_id = "cashback_jobs"."user_id" and loyalty_wallet.seller_id = ${seller_id})`), 'total_loyalty'], [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_loyalty as loyalty_wallet where loyalty_wallet.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 2 and loyalty_wallet.user_id = "cashback_jobs"."user_id" and loyalty_wallet.seller_id = ${seller_id})`), 'redeemed_loyalty'], [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_cashback as user_wallet where user_wallet.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 1 and user_wallet.user_id = "cashback_jobs"."user_id" and user_wallet.seller_id = ${seller_id})`), 'total_cashback'], [modals.sequelize.literal(`(select count(*) from table_expense_sku as expense_skus where expense_skus.user_id = "cashback_jobs"."user_id" and expense_skus.seller_id = ${seller_id} and expense_skus.job_id = "cashback_jobs"."job_id" )`), 'item_counts']],
+          attributes: ['id', 'home_delivered', 'cashback_status', 'copies', [modals.sequelize.literal(`(select sum(purchase_cost) from consumer_products as product where product.user_id = "cashback_jobs"."user_id" and product.job_id = "cashback_jobs"."job_id" and product.seller_id = ${seller_id})`), 'amount_paid'], [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where seller_credit.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 1 and seller_credit.user_id = "cashback_jobs"."user_id" and seller_credit.seller_id = ${seller_id})`), 'total_credits'], [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where seller_credit.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 2 and seller_credit.user_id = "cashback_jobs"."user_id" and seller_credit.seller_id = ${seller_id})`), 'redeemed_credits'], 'created_at', [modals.sequelize.literal(`(select full_name from users where users.id = "cashback_jobs"."user_id")`), 'user_name'], [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_loyalty as loyalty_wallet where loyalty_wallet.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 1 and loyalty_wallet.user_id = "cashback_jobs"."user_id" and loyalty_wallet.seller_id = ${seller_id})`), 'total_loyalty'], [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_loyalty as loyalty_wallet where loyalty_wallet.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 2 and loyalty_wallet.user_id = "cashback_jobs"."user_id" and loyalty_wallet.seller_id = ${seller_id})`), 'redeemed_loyalty'], [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_cashback as user_wallet where user_wallet.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 1 and user_wallet.user_id = "cashback_jobs"."user_id" and user_wallet.seller_id = ${seller_id})`), 'total_cashback'], [modals.sequelize.literal(`(select count(*) from table_expense_sku as expense_skus where expense_skus.user_id = "cashback_jobs"."user_id" and expense_skus.seller_id = ${seller_id} and expense_skus.job_id = "cashback_jobs"."job_id" )`), 'item_counts']],
           order: [['created_at', 'desc']]
         });
 
@@ -1990,11 +2044,28 @@ class SellerController {
     try {
       if (!request.pre.forceUpdate) {
         const { seller_id, service_user_id, id } = request.params;
-        await sellerAdaptor.deleteSellerAssistedServiceTypes({ where: { seller_id, service_user_id, id } });
+        const seller_assisted_services = await sellerAdaptor.retrieveSellerAssistedServices({ where: { seller_id, service_user_id } });
+        if (seller_assisted_services.length > 1) {
+          const seller_assisted_service = seller_assisted_services.find(item => item.id === parseInt(id));
+          if (seller_assisted_service) {
+            await sellerAdaptor.deleteSellerAssistedServiceTypes({ where: { seller_id, service_user_id, id } });
 
+            return reply.response({
+              status: true,
+              message: 'Successful',
+              forceUpdate: request.pre.forceUpdate
+            });
+          }
+
+          return reply.response({
+            status: false,
+            message: 'Service type is not linked with service user.',
+            forceUpdate: request.pre.forceUpdate
+          });
+        }
         return reply.response({
-          status: true,
-          message: 'Successful',
+          status: false,
+          message: 'Service user should have more than one services or you should delete the user.',
           forceUpdate: request.pre.forceUpdate
         });
       } else {

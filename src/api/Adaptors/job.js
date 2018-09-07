@@ -70,7 +70,7 @@ class JobAdaptor {
     const {status_type, job_id, seller_id, amount, transaction_type, user_id} = options;
     await this.modals.seller_wallet.create(
         JSON.parse(JSON.stringify(
-            {status_type: status_type || 16, amount, transaction_type, user_id, seller_id})));
+            {status_type: status_type || 16, job_id, amount, transaction_type, user_id, seller_id})));
   }
 
   async retrieveJobDetail(id, isUpload) {
@@ -83,7 +83,7 @@ class JobAdaptor {
       this.modals.jobCopies.findAll({where: {job_id: id}}),
       this.modals.cashback_jobs.findOne({
         where: {job_id: id},
-        attributes: ['id'],
+        attributes: ['id', 'online_order'],
       })]);
     let jobDetail = jobResult[0] ? jobResult[0].toJSON() : undefined;
     if (jobDetail && jobDetail.admin_status === 8 || isUpload) {
@@ -103,6 +103,7 @@ class JobAdaptor {
     jobDetail.category_id = productDetail.category_id;
     jobDetail.main_category_id = productDetail.main_category_id;
     jobDetail.cashback_job_id = cashback_job_detail.id;
+    jobDetail.online_order = cashback_job_detail.online_order;
     jobDetail.copies = jobResult[2].map((item) => item.toJSON());
     return jobDetail;
   }
