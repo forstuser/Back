@@ -214,6 +214,7 @@ function prepareGeneralRoutes(modal, routeObject, middleware) {
             brand_name: [_joi2.default.string(), _joi2.default.allow(null)],
             main_category_id: _joi2.default.number(),
             category_id: _joi2.default.number(),
+            sub_category_id: [_joi2.default.number(), _joi2.default.allow(null)],
             brand_id: [_joi2.default.number(), _joi2.default.allow(null)],
             colour_id: [_joi2.default.number(), _joi2.default.allow(null)],
             value: [_joi2.default.number(), _joi2.default.allow(null)],

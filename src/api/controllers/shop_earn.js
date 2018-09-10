@@ -19,9 +19,9 @@ let sellerAdaptor;
 let categoryAdaptor;
 
 class ShopEarnController {
-  constructor(modal) {
+  constructor(modal, socket) {
     shopEarnAdaptor = new ShopEarnAdaptor(modal);
-    jobAdaptor = new JobAdaptor(modal);
+    jobAdaptor = new JobAdaptor(modal, socket);
     productAdaptor = new ProductAdaptor(modal);
     sellerAdaptor = new SellerAdaptor(modal);
     categoryAdaptor = new CategoryAdaptor(modal);
@@ -29,16 +29,33 @@ class ShopEarnController {
   }
 
   static async getSKUs(request, reply) {
-    const user = shared.verifyAuthorization(request.headers);
+    let user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
       // this is where make us of adapter
       try {
-        return reply.response({
-          status: true,
-          result: await shopEarnAdaptor.retrieveSKUs({
-            user_id: (user.id || user.ID),
+        const result = await modals.user_index.findOne({
+          where: {user_id: (user.id || user.ID)}, attributes: [
+            [
+              modals.sequelize.literal(
+                  '(Select location from users as "user" where "user".id = "user_index".user_id)'),
+              'location'], 'my_seller_ids',
+            ['user_id', 'id']],
+        });
+        user = result ? result.toJSON() : user;
+        const [sku_result, seller_list] = await Promise.all([
+          shopEarnAdaptor.retrieveSKUs({
+            location: user.location, user_id: user.id,
             queryOptions: request.query,
           }),
+          user.my_seller_ids ?
+              sellerAdaptor.retrieveSellersOnInit({
+                where: {id: user.my_seller_ids},
+                attributes: ['id', 'seller_name', 'seller_type_id', 'address'],
+              }) :
+              undefined]);
+        return reply.response({
+          status: true,
+          result: sku_result, seller_list,
         });
       } catch (err) {
         console.log(`Error on ${new Date()} for user ${user.id ||
@@ -237,7 +254,10 @@ class ShopEarnController {
           status: true,
           total_cashback: _.sumBy(
               result.filter(item => item.transaction_type === 1), 'amount') -
-              _.sumBy(result.filter(item => item.transaction_type === 2),
+              _.sumBy(result.filter(
+                  item => (item.status_type === 14 || item.transaction_type ===
+                      2) && item.is_paytm),
+                  /*Only amount redeemed on payTM will be subtracted not all*/
                   'amount'),
           result,
         });
@@ -616,6 +636,7 @@ class ShopEarnController {
     try {
       if (!request.pre.forceUpdate) {
         let {seller_id, id} = request.params;
+        const utcOffset = 330;
         const seller_cashback = await jobAdaptor.retrieveSellerCashBack({
           where: {seller_id, id, status_type: 13}, attributes: [
             'job_id', 'id', 'user_id', 'amount', [
@@ -624,19 +645,14 @@ class ShopEarnController {
               'user_cashback_id'], 'status_type', 'created_at'],
         });
         if (seller_cashback) {
-
           const startOfMonth = moment(seller_cashback.created_at).
-              startOf('month').
-              utcOffset(utcOffset);
+              startOf('month').utcOffset(utcOffset).format();
           const endOfMonth = moment(seller_cashback.created_at).
-              endOf('month').
-              utcOffset(utcOffset);
+              endOf('month').utcOffset(utcOffset).format();
           const startOfDay = moment(seller_cashback.created_at).
-              startOf('day').
-              utcOffset(utcOffset);
+              startOf('day').utcOffset(utcOffset).format();
           const endOfDay = moment(seller_cashback.created_at).
-              endOf('day').
-              utcOffset(utcOffset);
+              endOf('day').utcOffset(utcOffset).format();
           const [cash_back_job, user_cash_back_month, user_cash_back_day, user_limit_rules, user_default_limit_rules] = await Promise.all(
               [
                 jobAdaptor.retrieveCashBackJobs({id: seller_cashback.job_id}),
@@ -793,9 +809,10 @@ class ShopEarnController {
 
     try {
       if (!request.pre.forceUpdate) {
+        const {id: user_id, mobile_no, email} = user;
         let {seller_id} = request.params;
         const {cashback_ids: id} = request.payload;
-        const seller_cashback = await sellerAdaptor.retrieveSellerCashBack({
+        const seller_cashback = await jobAdaptor.retrieveSellerCashBacks({
           where: {seller_id, id, status_type: 16}, attributes: [
             'job_id', 'id', 'user_id', 'amount', [
               modals.sequelize.literal(
@@ -805,15 +822,17 @@ class ShopEarnController {
         if (seller_cashback) {
           return reply.response({
             status: true,
+            redeemed_amount: _.sumBy(seller_cashback, 'amount'),
             result: await jobAdaptor.cashBackRedemption(
-                {
+                JSON.parse(JSON.stringify({
                   seller_id, transaction_type: 2,
                   seller_cashback_id: seller_cashback.map(item => item.id),
                   user_cashback_id: seller_cashback.map(
                       item => item.user_cashback_id),
-                  job_id: seller_cashback.job_id, job: cash_back_job,
-                  amount: seller_cashback.amount,
-                }),
+                  job_id: seller_cashback.map(item => item.job_id),
+                  user_id, mobile_no, email, seller_cashback,
+                  amount: seller_cashback.map(item => item.amount),
+                }))),
           });
         }
 
@@ -843,6 +862,155 @@ class ShopEarnController {
         status: false,
         message: 'Unable to approve cash back.',
         forceUpdate: request.pre.forceUpdate,
+      }).code(200);
+    }
+  }
+
+  static async redeemLoyaltyAtSeller(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+
+    try {
+      if (!request.pre.forceUpdate) {
+        const {id: user_id, mobile_no, email} = user;
+        let {seller_id} = request.params;
+        let {amount} = request.payload;
+        let [seller_default_loyalty_rules, seller_loyalty_rules] = await Promise.all(
+            [
+              modals.loyalty_rules.findOne({where: {seller_id}}),
+              modals.loyalty_rules.findOne({where: {seller_id, user_id}})]);
+        if (!seller_default_loyalty_rules) {
+          return reply.response({
+            status: false,
+            message: `Seller don't have any rules yet.`,
+          });
+        }
+        const loyalty_rules = seller_loyalty_rules ?
+            seller_loyalty_rules.toJSON() :
+            seller_default_loyalty_rules.toJSON();
+        const seller_loyalties = await jobAdaptor.retrieveSellerLoyalties({
+          where: {seller_id, status_type: 16, user_id}, attributes: [
+            'job_id', 'id', 'user_id', 'amount', 'status_type', 'created_at'],
+        });
+
+        if (seller_loyalties) {
+          const total_points = _.sumBy(seller_loyalties, 'amount');
+          if (total_points < loyalty_rules.minimum_points) {
+            return reply.response({
+              status: false,
+              message: `You doesn't have efficient loyalty points to redeem at this seller.`,
+            });
+          }
+
+          if (total_points < amount) {
+            return reply.response({
+              status: false,
+              message: `You have lesser point than you requested.`,
+              total_points,
+            });
+          }
+
+          return reply.response({
+            status: true,
+            redeemed_amount: amount,
+            result: await jobAdaptor.addLoyaltyToSeller(
+                JSON.parse(JSON.stringify({
+                  seller_id, transaction_type: 2, user_id,
+                  amount, status_type: 14,
+                }))),
+          });
+        }
+
+        return reply.response({
+          status: false,
+          message: 'Loyalty points not available for requested seller.',
+        });
+      } else {
+        return shared.preValidation(request.pre, reply);
+      }
+    } catch (err) {
+      console.log(err);
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to redeem loyalty points.',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(200);
+    }
+  }
+
+  static async redeemCashBackAtPayTM(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+
+    try {
+      if (!request.pre.forceUpdate) {
+        const {id: user_id, mobile_no, email} = user;
+        const user_cashback = await jobAdaptor.retrieveUserCashBacks({
+          where: {
+            user_id, $or: {
+              status_type: 16,
+              $and: {status_type: 14, is_paytm: true},
+            },
+          }, attributes: [
+            'job_id', 'id', 'user_id', 'amount', 'status_type', 'created_at'],
+        });
+        if (user_cashback) {
+          const redeemed_amount = _.sumBy(
+              user_cashback.filter(item => item.status_type === 16), 'amount') -
+              _.sumBy(user_cashback.filter(item => item.status_type === 14),
+                  'amount');
+          return reply.response({
+            status: true,
+            redeemed_amount,
+            result: await jobAdaptor.cashBackRedemptionAtPayTM(
+                JSON.parse(JSON.stringify({
+                  transaction_type: 2,
+                  user_cashback_id: user_cashback.map(item => item.id),
+                  job_id: user_cashback.map(item => item.job_id),
+                  user_id, mobile_no, email, seller_cashback: user_cashback,
+                  amount: redeemed_amount,
+                }))),
+          });
+        }
+
+        return reply.response({
+          status: false,
+          message: 'Cash Back not available for request parameters.',
+        });
+      } else {
+        return shared.preValidation(request.pre, reply);
+      }
+    } catch (err) {
+      console.log(err);
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to redeem cash back at PayTM.',
+        forceUpdate: request.pre.forceUpdate,
+        err,
       }).code(200);
     }
   }

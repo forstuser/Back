@@ -17,9 +17,9 @@ var _joi2 = _interopRequireDefault(_joi);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 //Shop and earn routes
-function prepareShopEarnRoute(modal, route, middleware) {
+function prepareShopEarnRoute(modal, route, middleware, socket) {
 
-  const varController = new _shop_earn2.default(modal);
+  const varController = new _shop_earn2.default(modal, socket);
 
   if (varController) {
 
@@ -141,6 +141,7 @@ function prepareShopEarnRoute(modal, route, middleware) {
             'sub_category_id': [_joi2.default.number(), _joi2.default.allow(null)],
             'title': _joi2.default.string().required(),
             'hsn_code': [_joi2.default.string(), _joi2.default.allow(null)],
+            'added_date': [_joi2.default.string(), _joi2.default.allow(null)],
             'mrp': [_joi2.default.number(), _joi2.default.allow(null)],
             'quantity': _joi2.default.number().required(),
             'sku_measurement': [_joi2.default.object().keys({
@@ -151,7 +152,8 @@ function prepareShopEarnRoute(modal, route, middleware) {
               'pack_numbers': [_joi2.default.number(), _joi2.default.allow(null)],
               'cashback_percent': [_joi2.default.number(), _joi2.default.allow(null)],
               'discount_percent': [_joi2.default.number(), _joi2.default.allow(null)],
-              'bar_code': [_joi2.default.string(), _joi2.default.allow(null)]
+              'bar_code': [_joi2.default.string(), _joi2.default.allow(null)],
+              'mrp': [_joi2.default.number(), _joi2.default.allow(null)]
             }), _joi2.default.allow(null)]
           }
         }
@@ -376,6 +378,43 @@ function prepareShopEarnRoute(modal, route, middleware) {
           cashback_ids: _joi2.default.array().required()
         }
       }
+    }
+  });
+
+  route.push({
+    method: 'PUT',
+    path: '/sellers/{seller_id}/loyalty/redeem',
+    config: {
+      auth: 'jwt',
+      pre: [{
+        method: middleware.checkAppVersion,
+        assign: 'forceUpdate'
+      }, {
+        method: middleware.updateUserActiveStatus,
+        assign: 'userExist'
+      }],
+      handler: _shop_earn2.default.redeemLoyaltyAtSeller,
+      validate: {
+        payload: {
+          amount: _joi2.default.number().required()
+        }
+      }
+    }
+  });
+
+  route.push({
+    method: 'PUT',
+    path: '/cashback/redeem',
+    config: {
+      auth: 'jwt',
+      pre: [{
+        method: middleware.checkAppVersion,
+        assign: 'forceUpdate'
+      }, {
+        method: middleware.updateUserActiveStatus,
+        assign: 'userExist'
+      }],
+      handler: _shop_earn2.default.redeemCashBackAtPayTM
     }
   });
 

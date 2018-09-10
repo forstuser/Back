@@ -75,14 +75,14 @@ class DashboardAdaptor {
     this._ = _lodash2.default;
   }
 
-  async retrieveSellerDashboard(options, request) {
+  async retrieveSellerDashboard(options, request, seller_type_id) {
     try {
       const { seller_id } = options;
       let [total_transactions, credit_pending, loyalty_points, debit_loyalty_points, consumer_counts] = await _bluebird2.default.all([this.modals.products.aggregate('purchase_cost', 'sum', { where: { seller_id, status_type: [5, 11] } }), this.modals.credit_wallet.aggregate('*', 'count', { where: { seller_id, status_type: 16 } }), this.modals.loyalty_wallet.aggregate('amount', 'sum', { where: { seller_id, transaction_type: 1 } }), this.modals.loyalty_wallet.aggregate('amount', 'sum', { where: { seller_id, transaction_type: 2 } }), this.modals.products.aggregate('user_id', 'count', { where: { seller_id, status_type: [5, 11] }, distinct: true })]);
       return {
         status: true,
         message: 'Dashboard restore Successful',
-        total_transactions,
+        total_transactions, seller_type_id,
         credit_pending,
         loyalty_points: (loyalty_points || 0) - (debit_loyalty_points || 0),
         consumer_counts,

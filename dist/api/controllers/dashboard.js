@@ -94,7 +94,8 @@ class DashboardController {
     try {
       if (!request.pre.forceUpdate) {
         const { seller_id } = request.params;
-        return reply.response((await dashboardAdaptor.retrieveSellerDashboard({ seller_id }, request)));
+        const { seller_type_id } = user;
+        return reply.response((await dashboardAdaptor.retrieveSellerDashboard({ seller_id }, request, seller_type_id)));
       } else {
         return reply.response({
           status: false,

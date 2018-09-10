@@ -24,12 +24,12 @@ let productAdaptor;
 let userAdaptor;
 
 class GeneralController {
-  constructor(modal) {
+  constructor(modal, socket) {
     contactModel = modal.contactUs;
     categoryAdaptor = new CategoryAdaptor(modal);
     brandAdaptor = new BrandAdaptor(modal);
     sellerAdaptor = new SellerAdaptor(modal);
-    jobAdaptor = new JobAdaptor(modal);
+    jobAdaptor = new JobAdaptor(modal, socket);
     productAdaptor = new ProductAdaptor(modal);
     userAdaptor = new UserAdaptor(modal);
     modals = modal;
@@ -863,6 +863,7 @@ class GeneralController {
             user_id: user.id || user.ID,
             main_category_id: request.payload.main_category_id,
             category_id: request.payload.category_id,
+            sub_category_id: request.payload.sub_category_id,
             brand_id: request.payload.brand_id,
             colour_id: request.payload.colour_id,
             purchase_cost: request.payload.purchase_cost,

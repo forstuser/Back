@@ -22,9 +22,9 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * @param route
  * @param middleware
  */
-function prepareSellerRoutes(modal, route, middleware) {
+function prepareSellerRoutes(modal, route, middleware, socket) {
 
-  const varController = new _sellers2.default(modal);
+  const varController = new _sellers2.default(modal, socket);
 
   if (varController) {
 
@@ -91,6 +91,19 @@ function prepareSellerRoutes(modal, route, middleware) {
       method: 'GET',
       path: '/sellers/{id}/details',
       handler: _sellers2.default.getSellerDetails,
+      config: {
+        auth: 'jwt',
+        pre: [{
+          method: middleware.checkAppVersion,
+          assign: 'forceUpdate'
+        }]
+      }
+    });
+
+    route.push({
+      method: 'GET',
+      path: '/sellers/{id}/categories',
+      handler: _sellers2.default.getSellerCategories,
       config: {
         auth: 'jwt',
         pre: [{
@@ -171,6 +184,7 @@ function prepareSellerRoutes(modal, route, middleware) {
             email: _joi2.default.string(),
             gstin: _joi2.default.string(),
             pan: _joi2.default.string(),
+            category_id: [_joi2.default.number(), _joi2.default.allow(null)],
             output: 'data',
             parse: true
           }
@@ -192,6 +206,7 @@ function prepareSellerRoutes(modal, route, middleware) {
           payload: {
             gstin: [_joi2.default.string(), _joi2.default.allow(null)],
             pan: [_joi2.default.string(), _joi2.default.allow(null)],
+            category_id: [_joi2.default.number(), _joi2.default.allow(null)],
             output: 'data',
             parse: true
           }
@@ -213,6 +228,7 @@ function prepareSellerRoutes(modal, route, middleware) {
           payload: {
             gstin: [_joi2.default.string(), _joi2.default.allow(null)],
             pan: [_joi2.default.string(), _joi2.default.allow(null)],
+            category_id: [_joi2.default.number(), _joi2.default.allow(null)],
             id: _joi2.default.number().required(),
             output: 'data',
             parse: true
@@ -304,7 +320,7 @@ function prepareSellerRoutes(modal, route, middleware) {
 
     route.push({
       method: 'PUT',
-      path: '/sellers/{seller_id}/providers/{provider_id}',
+      path: '/sellers/{seller_id}/providers/brands',
       config: {
         pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
         auth: 'jwt', handler: _sellers2.default.updateSellerProviderTypeBrands,
@@ -348,10 +364,10 @@ function prepareSellerRoutes(modal, route, middleware) {
             service_type_detail: [_joi2.default.array().items(_joi2.default.object().keys({
               id: [_joi2.default.number(), _joi2.default.allow(null)],
               service_type_id: _joi2.default.number().required(),
-              price: [_joi2.default.object().keys({
+              price: [_joi2.default.array().items(_joi2.default.object().keys({
                 price_type: _joi2.default.number().required(),
                 value: _joi2.default.number().required()
-              }), _joi2.default.allow(null)]
+              })), _joi2.default.allow(null)]
             })), _joi2.default.allow(null)],
             output: 'data',
             parse: true
@@ -377,10 +393,10 @@ function prepareSellerRoutes(modal, route, middleware) {
           payload: {
             id: [_joi2.default.number(), _joi2.default.allow(null)],
             service_type_id: _joi2.default.number().required(),
-            price: [_joi2.default.object().keys({
+            price: [_joi2.default.array().items(_joi2.default.object().keys({
               price_type: _joi2.default.number().required(),
               value: _joi2.default.number().required()
-            }), _joi2.default.allow(null)],
+            })), _joi2.default.allow(null)],
             output: 'data',
             parse: true
           }
@@ -628,6 +644,50 @@ function prepareSellerRoutes(modal, route, middleware) {
 
     route.push({
       method: 'GET',
+      path: '/sellers/{id}/loyalty/rules',
+      config: {
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        auth: 'jwt', handler: _sellers2.default.retrieveSellerLoyaltyRules,
+        description: 'Retrieve Seller Loyalty Rules',
+        tags: ['api', 'Seller', 'Loyalty', 'Rules'],
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [{ code: 200, message: 'Authenticated' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
+          }
+        }
+      }
+    });
+
+    route.push({
+      method: 'PUT',
+      path: '/sellers/{id}/loyalty/rules',
+      config: {
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        auth: 'jwt', handler: _sellers2.default.updateSellerLoyaltyRules,
+        description: 'Update Seller Loyalty Rules',
+        tags: ['api', 'Seller', 'Loyalty', 'Rules'],
+        validate: {
+          payload: {
+            id: [_joi2.default.number(), _joi2.default.allow(null)],
+            item_value: [_joi2.default.string(), _joi2.default.allow(null)],
+            rule_type: [_joi2.default.number(), _joi2.default.allow(null)],
+            minimum_points: [_joi2.default.number(), _joi2.default.allow(null)],
+            user_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            points_per_item: [_joi2.default.number(), _joi2.default.allow(null)],
+            output: 'data',
+            parse: true
+          }
+        },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [{ code: 200, message: 'Authenticated' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
+          }
+        }
+      }
+    });
+
+    route.push({
+      method: 'GET',
       path: '/sellers/{seller_id}/users',
       config: {
         pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
@@ -682,13 +742,6 @@ function prepareSellerRoutes(modal, route, middleware) {
         auth: 'jwt', handler: _sellers2.default.updateSellerConsumerCredits,
         description: 'Linking Seller customer credits with jobs',
         tags: ['api', 'Seller', 'customer', 'credits'],
-        validate: {
-          payload: {
-            description: [_joi2.default.string(), _joi2.default.allow(null)],
-            output: 'data',
-            parse: true
-          }
-        },
         plugins: {
           'hapi-swagger': {
             responseMessages: [{ code: 200, message: 'Authenticated' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
@@ -705,13 +758,6 @@ function prepareSellerRoutes(modal, route, middleware) {
         auth: 'jwt', handler: _sellers2.default.updateSellerConsumerPoints,
         description: 'Linking Seller customer loyalty points with jobs',
         tags: ['api', 'Seller', 'customer', 'loyalty points'],
-        validate: {
-          payload: {
-            description: [_joi2.default.string(), _joi2.default.allow(null)],
-            output: 'data',
-            parse: true
-          }
-        },
         plugins: {
           'hapi-swagger': {
             responseMessages: [{ code: 200, message: 'Authenticated' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]

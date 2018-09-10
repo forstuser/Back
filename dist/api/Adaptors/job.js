@@ -4,9 +4,24 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+
+var _payTMAdaptor = require('./payTMAdaptor');
+
+var _payTMAdaptor2 = _interopRequireDefault(_payTMAdaptor);
+
+var _main = require('../../config/main');
+
+var _main2 = _interopRequireDefault(_main);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
 class JobAdaptor {
-  constructor(modals) {
+  constructor(modals, socket) {
     this.modals = modals;
+    this.payTMAdaptor = new _payTMAdaptor2.default(modals);
+    if (socket) {
+      this.socketAdaptor = socket;
+    }
   }
 
   async createJobs(jobDetail) {
@@ -21,6 +36,7 @@ class JobAdaptor {
 
   async updateCashBackJobs(parameters) {
     let { id, job_id, jobDetail } = parameters;
+    console.log(JSON.stringify(jobDetail));
     return await this.modals.cashback_jobs.update(jobDetail, { where: JSON.parse(JSON.stringify({ id, job_id })) });
   }
 
@@ -40,9 +56,29 @@ class JobAdaptor {
     return seller_cashback ? seller_cashback.toJSON() : seller_cashback;
   }
 
+  async retrieveSellerCashBacks(options) {
+    let seller_cash_back = await this.modals.cashback_wallet.findAll(options);
+    seller_cash_back = seller_cash_back.map(item => item.toJSON());
+    return seller_cash_back;
+  }
+
+  async retrieveSellerLoyalties(options) {
+    let seller_loyalty = await this.modals.loyalty_wallet.findAll(options);
+    seller_loyalty = seller_loyalty.map(item => item.toJSON());
+    return seller_loyalty;
+  }
+
   async retrieveUserCashBack(options) {
     const user_wallet = await this.modals.user_wallet.findOne(options);
     return user_wallet ? user_wallet.toJSON() : user_wallet;
+  }
+
+  async retrieveUserCashBacks(options) {
+    console.log(options);
+    let user_cash_back = await this.modals.user_wallet.findAll(options);
+
+    user_cash_back = user_cash_back.map(item => item.toJSON());
+    return user_cash_back;
   }
 
   async approveSellerCashBack(options) {
@@ -55,14 +91,40 @@ class JobAdaptor {
     await this.modals.user_wallet.update(JSON.parse(JSON.stringify({ status_type: status_type || 16, amount, transaction_type })), { where: JSON.parse(JSON.stringify({ job_id, seller_id, id })) });
   }
 
+  async addUserCashBackRedeemed(options) {
+    const { status_type, amount, transaction_type, user_id, is_paytm, paytm_detail } = options;
+    return await this.modals.user_wallet.create(JSON.parse(JSON.stringify({
+      status_type: status_type || 14, is_paytm,
+      amount, transaction_type, user_id, paytm_detail
+    })));
+  }
+
   async approveHomeDeliveryCashback(options) {
     const { status_type, job_id, seller_id } = options;
-    await this.modals.seller_wallet.update({ status_type: status_type || 16 }, { job_id, seller_id });
+    await this.modals.seller_wallet.update({ status_type: status_type || 16 }, { where: { job_id, seller_id } });
   }
 
   async addCashBackToSeller(options) {
     const { status_type, job_id, seller_id, amount, transaction_type, user_id } = options;
-    await this.modals.seller_wallet.create(JSON.parse(JSON.stringify({ status_type: status_type || 16, job_id, amount, transaction_type, user_id, seller_id })));
+    console.log(JSON.stringify(options));
+    let cash_back_details = await this.modals.seller_wallet.create(JSON.parse(JSON.stringify({
+      status_type: status_type || 16, job_id,
+      amount, transaction_type, user_id, seller_id
+    })));
+
+    cash_back_details = cash_back_details.toJSON();
+
+    await this.socketAdaptor.redeem_cash_back_at_seller({ user_id, seller_id, cash_back_details, amount });
+
+    return cash_back_details;
+  }
+
+  async addLoyaltyToSeller(options) {
+    const { status_type, job_id, seller_id, amount, transaction_type, user_id } = options;
+    await this.modals.loyalty_wallet.create(JSON.parse(JSON.stringify({
+      status_type: status_type || 14,
+      amount, transaction_type, user_id, seller_id
+    })));
   }
 
   async retrieveJobDetail(id, isUpload) {
@@ -97,7 +159,7 @@ class JobAdaptor {
   }
 
   async cashBackApproval(options) {
-    let { cash_back_month, cash_back_day, verified_seller, amount, digitally_verified, seller_id, home_delivered, job, cashback_source, transaction_type, user_limit_rules, user_default_limit_rules } = options;
+    let { cash_back_month, cash_back_day, verified_seller, amount, digitally_verified, seller_id, home_delivered, job, cashback_source, transaction_type, user_loyalty_rules, user_limit_rules, user_default_limit_rules } = options;
     const { user_id, id: job_id } = job;
     let monthly_limit = user_limit_rules.find(item => item.rule_type === 1),
         daily_limit = user_limit_rules.find(item => item.rule_type === 2);
@@ -107,27 +169,39 @@ class JobAdaptor {
     let total_amount = amount;
     total_amount = total_amount < 0 ? 0 : total_amount;
     if (digitally_verified) {
-      await Promise.all([this.approveSellerCashBack({ job_id, amount: total_amount, status_type: 16, seller_id }), this.approveUserCashBack({ job_id, amount: total_amount, status_type: 16, seller_id }), this.updateCashBackJobs({ id: job_id, seller_status: 16, seller_id }), home_delivered ? this.approveHomeDeliveryCashback({ job_id, status_type: 16, seller_id }) : '']);
+      await Promise.all([this.approveSellerCashBack({ job_id, amount: total_amount, status_type: 16, seller_id }), this.approveUserCashBack({ job_id, amount: total_amount, status_type: 16, seller_id }), this.updateCashBackJobs({
+        id: job_id, seller_status: 16, seller_id,
+        jobDetail: { seller_status: 16, seller_id }
+      }), home_delivered ? this.approveHomeDeliveryCashback({ job_id, status_type: 16, seller_id }) : '']);
 
       return { approved_amount: total_amount, pending_seller_amount: 0 };
     } else if (verified_seller) {
       if (cash_back_day + total_amount <= daily_limit.rule_limit) {
         if (cash_back_month + total_amount <= monthly_limit.rule_limit) {
-          await Promise.all([this.approveSellerCashBack({ job_id, amount: total_amount, status_type: 16, seller_id }), this.approveUserCashBack({ job_id, amount: total_amount, status_type: 16, seller_id }), this.updateCashBackJobs({ id: job_id, seller_status: 16, seller_id }), home_delivered ? this.approveHomeDeliveryCashback({ job_id, status_type: 16, seller_id }) : '']);
+          await Promise.all([this.approveSellerCashBack({ job_id, amount: total_amount, status_type: 16, seller_id }), this.approveUserCashBack({ job_id, amount: total_amount, status_type: 16, seller_id }), this.updateCashBackJobs({
+            id: job_id, seller_status: 16, seller_id,
+            jobDetail: { seller_status: 16, seller_id }
+          }), home_delivered ? this.approveHomeDeliveryCashback({ job_id, status_type: 16, seller_id }) : '']);
 
           return { approved_amount: total_amount };
         } else {
           total_amount = monthly_limit.rule_limit - cash_back_month;
           total_amount = total_amount < 0 ? 0 : total_amount;
 
-          await Promise.all([this.approveSellerCashBack({ job_id, amount: total_amount, status_type: 16, seller_id }), this.approveUserCashBack({ job_id, amount: total_amount, status_type: 16, seller_id }), this.updateCashBackJobs({ id: job_id, seller_status: 16, seller_id }), home_delivered ? this.approveHomeDeliveryCashback({ job_id, status_type: 16, seller_id }) : '']);
+          await Promise.all([this.approveSellerCashBack({ job_id, amount: total_amount, status_type: 16, seller_id }), this.approveUserCashBack({ job_id, amount: total_amount, status_type: 16, seller_id }), this.updateCashBackJobs({
+            id: job_id, seller_status: 16, seller_id,
+            jobDetail: { seller_status: 16, seller_id }
+          }), home_delivered ? this.approveHomeDeliveryCashback({ job_id, status_type: 16, seller_id }) : '']);
 
           return { approved_amount: total_amount };
         }
       } else {
         total_amount = daily_limit.rule_limit - cash_back_day;
         total_amount = total_amount < 0 ? 0 : total_amount;
-        await Promise.all([this.approveSellerCashBack({ job_id, amount: total_amount, status_type: 16, seller_id }), this.approveUserCashBack({ job_id, amount: total_amount, status_type: 16, seller_id }), this.updateCashBackJobs({ id: job_id, seller_status: 16, seller_id }), home_delivered ? this.approveHomeDeliveryCashback({ job_id, status_type: 16, seller_id }) : '']);
+        await Promise.all([this.approveSellerCashBack({ job_id, amount: total_amount, status_type: 16, seller_id }), this.approveUserCashBack({ job_id, amount: total_amount, status_type: 16, seller_id }), this.updateCashBackJobs({
+          id: job_id, seller_status: 16, seller_id,
+          jobDetail: { seller_status: 16, seller_id }
+        }), home_delivered ? this.approveHomeDeliveryCashback({ job_id, status_type: 16, seller_id }) : '']);
 
         return { approved_amount, pending_seller_amount };
       }
@@ -135,9 +209,45 @@ class JobAdaptor {
   }
 
   async cashBackRedemption(options) {
-    let { job, seller_cashback_id, user_cashback_id, seller_id, transaction_type, cashback_amount } = options;
-    const { user_id, id: job_id } = job;
-    await Promise.all([this.approveSellerCashBack({ job_id, id: seller_cashback_id, seller_id, status_type: 14, transaction_type }), this.approveUserCashBack({ job_id, id: user_cashback_id, seller_id, status_type: 14, transaction_type }), this.updateCashBackJobs({ id: job_id, seller_status: 16, cashback_status: 14, seller_id }), this.approveHomeDeliveryCashback({ job_id, status_type: 16, amount: cashback_amount, seller_id, user_id, transaction_type: 1 })]);
+    let { job_id, seller_cashback_id, user_cashback_id, seller_id, transaction_type, user_id, mobile_no, email, seller_cashback } = options;
+
+    return await Promise.all([this.approveSellerCashBack({
+      job_id, id: seller_cashback_id,
+      seller_id, status_type: 14, transaction_type
+    }), this.approveUserCashBack({
+      job_id, id: user_cashback_id, seller_id,
+      status_type: 14, transaction_type
+    }), this.updateCashBackJobs({
+      id: job_id, seller_status: 14, cashback_status: 14, seller_id,
+      jobDetail: { seller_status: 14, cashback_status: 14, seller_id }
+    }), ...seller_cashback.map(item => {
+      const { job_id, amount } = item;
+      return this.addCashBackToSeller({
+        status_type: 16, amount, seller_id, user_id, transaction_type: 1
+      });
+    })]);
+  }
+
+  async cashBackRedemptionAtPayTM(options) {
+    let { seller_cashback_id, user_cashback_id, transaction_type, amount, user_id, mobile_no, email, job_id } = options;
+    const order_id = `${Math.random().toString(36).substr(2, 9)}${user_id.toString(36)}`;
+    const pay_TM_response = JSON.parse((await this.payTMAdaptor.salesToUserCredit({ amount, order_id, mobile_no, email })));
+    console.log(JSON.stringify(pay_TM_response));
+    if (pay_TM_response && pay_TM_response.status !== 'SUCCESS' && pay_TM_response.status !== 'PENDING' && pay_TM_response.status.toLowerCase() !== 'init') {
+      throw Error(_main2.default.PAYTM.ERROR[pay_TM_response.statusCode] || 'Unable to redeem amount on PayTM for now.');
+    }
+
+    const paytm_detail = {
+      my_order_id: order_id,
+      pay_TM_response
+    };
+    return await Promise.all([this.approveSellerCashBack({ job_id, status_type: 14, transaction_type }), this.approveUserCashBack({ id: user_cashback_id, status_type: 14, transaction_type }), this.updateCashBackJobs({
+      id: job_id, seller_status: 14, cashback_status: 14,
+      jobDetail: { seller_status: 14, cashback_status: 14 }
+    }), this.addUserCashBackRedeemed({
+      status_type: pay_TM_response.status !== 'PENDING' && pay_TM_response.status.toLowerCase() !== 'init' ? 13 : 14,
+      amount, transaction_type, user_id, is_paytm: true, paytm_detail
+    })]);
   }
 }
 

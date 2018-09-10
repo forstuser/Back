@@ -1,7 +1,7 @@
 'use strict';
 
 export default (sequelize, DataTypes) => {
-  const limit_rules = sequelize.define('limit_rules', {
+  const loyalty_rules = sequelize.define('loyalty_rules', {
         seller_id: {
           type: DataTypes.INTEGER,
         },
@@ -10,13 +10,20 @@ export default (sequelize, DataTypes) => {
         },
         rule_type: {
           type: DataTypes.INTEGER,
-          comment: 'User Monthly Limit: 1, User Daily Limit: 2, User Per Bill Limit: 3, Seller Monthly Limit: 4, Seller Daily Limit: 5 and Seller Per Bill Limit: 6',
+          comments: '1: Cash, 2: Item',
+          defaultValue: 1,
         },
-        rule_limit: {
+        minimum_points: {
           type: DataTypes.FLOAT,
+          defaultValue: 0,
         },
-        updated_by: {
-          type: DataTypes.INTEGER,
+        points_per_item: {
+          type: DataTypes.FLOAT,
+          defaultValue: 10,
+        },
+        item_value: {
+          type: DataTypes.STRING,
+          defaultValue: 1,
         },
         status_type: {
           type: DataTypes.INTEGER,
@@ -39,35 +46,22 @@ export default (sequelize, DataTypes) => {
         tableName: 'table_loyalty_rules',
       });
 
-  limit_rules.associate = (models) => {
-    limit_rules.belongsTo(models.users,
-        {
-          foreignKey: 'updated_by',
-          as: 'updater',
-          onDelete: 'cascade',
-          onUpdate: 'cascade',
-        });
-    limit_rules.belongsTo(models.sellers,
+  loyalty_rules.associate = (models) => {
+    loyalty_rules.belongsTo(models.sellers,
         {
           foreignKey: 'seller_id',
           as: 'seller',
           onDelete: 'cascade',
           onUpdate: 'cascade',
         });
-    limit_rules.hasMany(models.cashback_jobs,
-        {
-          foreignKey: 'limit_rule_id',
-          onDelete: 'cascade',
-          onUpdate: 'cascade',
-        });
-    limit_rules.belongsTo(models.users,
+    loyalty_rules.belongsTo(models.users,
         {
           foreignKey: 'user_id',
           as: 'user',
           onDelete: 'cascade',
           onUpdate: 'cascade',
         });
-    limit_rules.belongsTo(models.statuses,
+    loyalty_rules.belongsTo(models.statuses,
         {
           foreignKey: 'status_type',
           targetKey: 'status_type',
@@ -75,5 +69,5 @@ export default (sequelize, DataTypes) => {
           onUpdate: 'cascade',
         });
   };
-  return limit_rules;
+  return loyalty_rules;
 };

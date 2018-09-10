@@ -20,18 +20,23 @@ export default (sequelize, DataTypes) => {
         transaction_type: {
           type: DataTypes.INTEGER,
           comment: 'Credit: 1, Debit: 2',
-          defaultValue: 2
+          defaultValue: 2,
         },
         cashback_source: {
           type: DataTypes.INTEGER,
           comment: 'FMCG: 1, E&E: 2, Referral: 3',
-          defaultValue: 1
+          defaultValue: 1,
         },
         amount: {
           type: DataTypes.FLOAT,
         },
         updated_by: {
           type: DataTypes.INTEGER,
+        },
+        is_paytm: {
+          type: DataTypes.BOOLEAN, defaultValue: false,
+        }, paytm_detail: {
+          type: DataTypes.JSONB,
         },
         status_type: {
           type: DataTypes.INTEGER,

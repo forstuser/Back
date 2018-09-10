@@ -37,6 +37,11 @@ exports.default = (sequelize, DataTypes) => {
     updated_by: {
       type: DataTypes.INTEGER
     },
+    is_paytm: {
+      type: DataTypes.BOOLEAN, defaultValue: false
+    }, paytm_detail: {
+      type: DataTypes.JSONB
+    },
     status_type: {
       type: DataTypes.INTEGER,
       defaultValue: 13

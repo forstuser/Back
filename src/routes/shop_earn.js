@@ -5,9 +5,9 @@ import controller from '../api/controllers/shop_earn';
 import joi from 'joi';
 
 //Shop and earn routes
-export function prepareShopEarnRoute(modal, route, middleware) {
+export function prepareShopEarnRoute(modal, route, middleware, socket) {
 
-  const varController = new controller(modal);
+  const varController = new controller(modal, socket);
 
   if (varController) {
 
@@ -150,6 +150,7 @@ export function prepareShopEarnRoute(modal, route, middleware) {
             'sub_category_id': [joi.number(), joi.allow(null)],
             'title': joi.string().required(),
             'hsn_code': [joi.string(), joi.allow(null)],
+            'added_date': [joi.string(), joi.allow(null)],
             'mrp': [joi.number(), joi.allow(null)],
             'quantity': joi.number().required(),
             'sku_measurement': [
@@ -162,6 +163,7 @@ export function prepareShopEarnRoute(modal, route, middleware) {
                 'cashback_percent': [joi.number(), joi.allow(null)],
                 'discount_percent': [joi.number(), joi.allow(null)],
                 'bar_code': [joi.string(), joi.allow(null)],
+                'mrp': [joi.number(), joi.allow(null)],
               }), joi.allow(null)],
           },
         },
@@ -414,6 +416,49 @@ export function prepareShopEarnRoute(modal, route, middleware) {
           cashback_ids: joi.array().required(),
         },
       },
+    },
+  });
+
+  route.push({
+    method: 'PUT',
+    path: '/sellers/{seller_id}/loyalty/redeem',
+    config: {
+      auth: 'jwt',
+      pre: [
+        {
+          method: middleware.checkAppVersion,
+          assign: 'forceUpdate',
+        },
+        {
+          method: middleware.updateUserActiveStatus,
+          assign: 'userExist',
+        },
+      ],
+      handler: controller.redeemLoyaltyAtSeller,
+      validate: {
+        payload: {
+          amount: joi.number().required(),
+        },
+      },
+    },
+  });
+
+  route.push({
+    method: 'PUT',
+    path: '/cashback/redeem',
+    config: {
+      auth: 'jwt',
+      pre: [
+        {
+          method: middleware.checkAppVersion,
+          assign: 'forceUpdate',
+        },
+        {
+          method: middleware.updateUserActiveStatus,
+          assign: 'userExist',
+        },
+      ],
+      handler: controller.redeemCashBackAtPayTM,
     },
   });
 

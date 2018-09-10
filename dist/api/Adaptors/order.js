@@ -47,7 +47,7 @@ class OrderAdaptor {
       item = item.toJSON();
 
       const { address_line_1, address_line_2, city_name, state_name, locality_name, pin_code } = item.user_address || {};
-      item.user_address_detail = `${address_line_1}${address_line_2 ? ` ${address_line_2}` : ''},${locality_name},${city_name},${state_name}-${pin_code}`.split('null', '').split('undefined', '').split(',,').join(',');
+      item.user_address_detail = `${address_line_1}${address_line_2 ? ` ${address_line_2}` : ''},${locality_name},${city_name},${state_name}-${pin_code}`.split('null', '').join(',').split('undefined', '').join(',').split(',,').join(',');
       return item;
     }) : result;
   }

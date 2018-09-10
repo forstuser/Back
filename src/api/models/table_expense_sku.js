@@ -16,6 +16,7 @@ export default (sequelize, DataTypes) => {
         },
         available_cashback: {
           type: DataTypes.FLOAT,
+          defaultValue: 0,
         },
         selling_price: {
           type: DataTypes.FLOAT,

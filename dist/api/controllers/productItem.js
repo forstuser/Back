@@ -72,7 +72,7 @@ let regCertificateAdaptor;
 let fuelAdaptor;
 
 class ProductItemController {
-  constructor(modal) {
+  constructor(modal, socket) {
     modals = modal;
     repairAdaptor = new _repairs2.default(modal);
     sellerAdaptor = new _sellers2.default(modal);
@@ -82,7 +82,7 @@ class ProductItemController {
     warrantyAdaptor = new _warranties2.default(modal);
     categoryAdaptor = new _category2.default(modal);
     productAdaptor = new _product2.default(modal);
-    jobAdaptor = new _job2.default(modal);
+    jobAdaptor = new _job2.default(modal, socket);
     regCertificateAdaptor = new _reg_certificates2.default(modal);
     fuelAdaptor = new _refueling2.default(modals);
   }

@@ -29,7 +29,7 @@ class DashboardAdaptor {
     this._ = _;
   }
 
-  async retrieveSellerDashboard(options, request) {
+  async retrieveSellerDashboard(options, request, seller_type_id) {
     try {
       const {seller_id} = options;
       let [total_transactions, credit_pending, loyalty_points, debit_loyalty_points, consumer_counts] = await Promise.all(
@@ -47,7 +47,7 @@ class DashboardAdaptor {
       return {
         status: true,
         message: 'Dashboard restore Successful',
-        total_transactions,
+        total_transactions, seller_type_id,
         credit_pending,
         loyalty_points: (loyalty_points || 0) - (debit_loyalty_points || 0),
         consumer_counts,
@@ -240,7 +240,7 @@ class DashboardAdaptor {
         title: 'Welcome to BinBill!',
         description: 'Hello User. Greetings from Rohit BinBill CEO. I welcome...',
         big_text: 'Hello User. Greetings from Rohit BinBill CEO. I welcome you to your eHome. We promise to constantly evolve and make managing your eHome ever efficient and smarter. As it is a new home, you may take some time to get accustomed to it. Your Home Manager and I would always welcome your suggestions to improve your eHome. Please reach me at - rohit@binbill.com or eHome@binbill.com',
-      }
+      },
     });
 
     // welcome sms

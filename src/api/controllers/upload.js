@@ -52,10 +52,10 @@ let modals, userAdaptor, jobAdaptor, amcAdaptor, warrantyAdaptor,
     fuelingAdaptor, sellerAdaptor, categoryAdaptor;
 
 class UploadController {
-  constructor(modal) {
+  constructor(modal, socket) {
     modals = modal;
     userAdaptor = new UserAdaptor(modals);
-    jobAdaptor = new JobAdaptor(modals);
+    jobAdaptor = new JobAdaptor(modals, socket);
     amcAdaptor = new AMCAdaptor(modals);
     insuranceAdaptor = new InsuranceAdaptor(modals);
     warrantyAdaptor = new WarrantyAdaptor(modals);
@@ -630,15 +630,9 @@ class UploadController {
       productId = requiredDetail.productId || productId;
       if (type && productId) {
         productItemResult = await UploadController.createProductItems({
-          type,
-          jobId: job_id,
-          user,
-          productId,
-          category_id,
-          main_category_id,
-          online_order,
-          cashback_job_id,
-          itemId: requiredDetail.itemId,
+          type, jobId: job_id, user, productId,
+          category_id, main_category_id, online_order,
+          cashback_job_id, itemId: requiredDetail.itemId,
           copies: copyData.map((copyItem) => ({
             copyId: copyItem.id,
             copyUrl: `/jobs/${job_id}/files/${copyItem.id}`,
@@ -1077,14 +1071,16 @@ class UploadController {
     if (type > 1 && type < 12) {
       productItemPromise.push(productAdaptor.updateProduct(product_id,
           {job_id, user_id, updated_by: user_id}));
-    } else if (cashback_job_id) {
+    }
+
+    if (cashback_job_id) {
       productItemPromise.push(
           jobAdaptor.updateCashBackJobs({
             id: cashback_job_id, jobDetail: JSON.parse(JSON.stringify({
               job_id, user_id, updated_by: user_id,
               copies, admin_status: online_order ? 8 : 2,
               ce_status: online_order ? 4 : undefined,
-              ce_id: online_order ? 65 : undefined,
+              ce_id: online_order ? 65 : undefined, cashback_status: 13,
             })),
           }));
     }

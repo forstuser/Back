@@ -10,9 +10,9 @@ import joi from 'joi';
  * @param route
  * @param middleware
  */
-export function prepareSellerRoutes(modal, route, middleware) {
+export function prepareSellerRoutes(modal, route, middleware, socket) {
 
-  const varController = new controller(modal);
+  const varController = new controller(modal, socket);
 
   if (varController) {
 
@@ -89,6 +89,21 @@ export function prepareSellerRoutes(modal, route, middleware) {
       method: 'GET',
       path: '/sellers/{id}/details',
       handler: controller.getSellerDetails,
+      config: {
+        auth: 'jwt',
+        pre: [
+          {
+            method: middleware.checkAppVersion,
+            assign: 'forceUpdate',
+          },
+        ],
+      },
+    });
+
+    route.push({
+      method: 'GET',
+      path: '/sellers/{id}/categories',
+      handler: controller.getSellerCategories,
       config: {
         auth: 'jwt',
         pre: [
@@ -182,6 +197,7 @@ export function prepareSellerRoutes(modal, route, middleware) {
             email: joi.string(),
             gstin: joi.string(),
             pan: joi.string(),
+            category_id: [joi.number(), joi.allow(null)],
             output: 'data',
             parse: true,
           },
@@ -211,6 +227,7 @@ export function prepareSellerRoutes(modal, route, middleware) {
           payload: {
             gstin: [joi.string(), joi.allow(null)],
             pan: [joi.string(), joi.allow(null)],
+            category_id: [joi.number(), joi.allow(null)],
             output: 'data',
             parse: true,
           },
@@ -240,6 +257,7 @@ export function prepareSellerRoutes(modal, route, middleware) {
           payload: {
             gstin: [joi.string(), joi.allow(null)],
             pan: [joi.string(), joi.allow(null)],
+            category_id: [joi.number(), joi.allow(null)],
             id: joi.number().required(),
             output: 'data',
             parse: true,
@@ -354,7 +372,7 @@ export function prepareSellerRoutes(modal, route, middleware) {
 
     route.push({
       method: 'PUT',
-      path: '/sellers/{seller_id}/providers/{provider_id}',
+      path: '/sellers/{seller_id}/providers/brands',
       config: {
         pre: [{method: middleware.checkAppVersion, assign: 'forceUpdate'}],
         auth: 'jwt', handler: controller.updateSellerProviderTypeBrands,
@@ -407,10 +425,10 @@ export function prepareSellerRoutes(modal, route, middleware) {
                 id: [joi.number(), joi.allow(null)],
                 service_type_id: joi.number().required(),
                 price: [
-                  joi.object().keys({
+                  joi.array().items(joi.object().keys({
                     price_type: joi.number().required(),
                     value: joi.number().required(),
-                  }), joi.allow(null)],
+                  })), joi.allow(null)],
               })), joi.allow(null)],
             output: 'data',
             parse: true,
@@ -443,10 +461,10 @@ export function prepareSellerRoutes(modal, route, middleware) {
             id: [joi.number(), joi.allow(null)],
             service_type_id: joi.number().required(),
             price: [
-              joi.object().keys({
+              joi.array().items(joi.object().keys({
                 price_type: joi.number().required(),
                 value: joi.number().required(),
-              }), joi.allow(null)],
+              })), joi.allow(null)],
             output: 'data',
             parse: true,
           },
@@ -772,6 +790,62 @@ export function prepareSellerRoutes(modal, route, middleware) {
 
     route.push({
       method: 'GET',
+      path: '/sellers/{id}/loyalty/rules',
+      config: {
+        pre: [{method: middleware.checkAppVersion, assign: 'forceUpdate'}],
+        auth: 'jwt', handler: controller.retrieveSellerLoyaltyRules,
+        description: 'Retrieve Seller Loyalty Rules',
+        tags: ['api', 'Seller', 'Loyalty', 'Rules'],
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              {code: 200, message: 'Authenticated'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
+            ],
+          },
+        },
+      },
+    });
+
+    route.push({
+      method: 'PUT',
+      path: '/sellers/{id}/loyalty/rules',
+      config: {
+        pre: [{method: middleware.checkAppVersion, assign: 'forceUpdate'}],
+        auth: 'jwt', handler: controller.updateSellerLoyaltyRules,
+        description: 'Update Seller Loyalty Rules',
+        tags: ['api', 'Seller', 'Loyalty', 'Rules'],
+        validate: {
+          payload: {
+            id: [joi.number(), joi.allow(null)],
+            item_value: [joi.string(), joi.allow(null)],
+            rule_type: [joi.number(), joi.allow(null)],
+            minimum_points: [joi.number(), joi.allow(null)],
+            user_id: [joi.number(), joi.allow(null)],
+            points_per_item: [joi.number(), joi.allow(null)],
+            output: 'data',
+            parse: true,
+          },
+        },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              {code: 200, message: 'Authenticated'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
+            ],
+          },
+        },
+      },
+    });
+
+    route.push({
+      method: 'GET',
       path: '/sellers/{seller_id}/users',
       config: {
         pre: [{method: middleware.checkAppVersion, assign: 'forceUpdate'}],
@@ -844,13 +918,6 @@ export function prepareSellerRoutes(modal, route, middleware) {
         auth: 'jwt', handler: controller.updateSellerConsumerCredits,
         description: 'Linking Seller customer credits with jobs',
         tags: ['api', 'Seller', 'customer', 'credits'],
-        validate: {
-          payload: {
-            description: [joi.string(), joi.allow(null)],
-            output: 'data',
-            parse: true,
-          },
-        },
         plugins: {
           'hapi-swagger': {
             responseMessages: [
@@ -873,13 +940,6 @@ export function prepareSellerRoutes(modal, route, middleware) {
         auth: 'jwt', handler: controller.updateSellerConsumerPoints,
         description: 'Linking Seller customer loyalty points with jobs',
         tags: ['api', 'Seller', 'customer', 'loyalty points'],
-        validate: {
-          payload: {
-            description: [joi.string(), joi.allow(null)],
-            output: 'data',
-            parse: true,
-          },
-        },
         plugins: {
           'hapi-swagger': {
             responseMessages: [

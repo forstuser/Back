@@ -74,37 +74,37 @@ exports.default = (app, modals, socket_server) => {
   const shopEarnRoutes = [];
   const orderRoutes = [];
   const searchController = new _search2.default(modals);
-  (0, _users.prepareAuthRoutes)(modals, authRoutes, middleware);
+  (0, _users.prepareAuthRoutes)(modals, authRoutes, middleware, socket_server);
 
-  (0, _category.prepareCategoryRoutes)(modals, categoryRoutes, middleware);
+  (0, _category.prepareCategoryRoutes)(modals, categoryRoutes, middleware, socket_server);
 
-  (0, _brand.prepareBrandRoutes)(modals, brandRoutes, middleware);
+  (0, _brand.prepareBrandRoutes)(modals, brandRoutes, middleware, socket_server);
 
-  (0, _service_center.prepareServiceCenterRoutes)(modals, serviceCenterRoutes, middleware);
+  (0, _service_center.prepareServiceCenterRoutes)(modals, serviceCenterRoutes, middleware, socket_server);
 
-  (0, _upload.prepareUploadRoutes)(modals, uploadFileRoute, middleware);
+  (0, _upload.prepareUploadRoutes)(modals, uploadFileRoute, middleware, socket_server);
 
-  (0, _dashboard.prepareDashboardRoutes)(modals, dashboardRoutes, middleware);
+  (0, _dashboard.prepareDashboardRoutes)(modals, dashboardRoutes, middleware, socket_server);
 
-  (0, _product.prepareProductRoutes)(modals, productRoutes, middleware);
+  (0, _product.prepareProductRoutes)(modals, productRoutes, middleware, socket_server);
 
-  (0, _insight.prepareInsightRoutes)(modals, insightRoutes, middleware);
+  (0, _insight.prepareInsightRoutes)(modals, insightRoutes, middleware, socket_server);
 
-  (0, _general.prepareGeneralRoutes)(modals, generalRoutes, middleware);
+  (0, _general.prepareGeneralRoutes)(modals, generalRoutes, middleware, socket_server);
 
-  (0, _product_item.prepareProductItemRoutes)(modals, repairRoutes, middleware);
+  (0, _product_item.prepareProductItemRoutes)(modals, repairRoutes, middleware, socket_server);
 
-  (0, _calendar_service.prepareCalendarServiceRoutes)(modals, calendarRoutes, middleware);
+  (0, _calendar_service.prepareCalendarServiceRoutes)(modals, calendarRoutes, middleware, socket_server);
 
-  (0, _what_to_service.prepareWhatToServiceRoutes)(modals, whatToServiceRoutes, middleware);
+  (0, _what_to_service.prepareWhatToServiceRoutes)(modals, whatToServiceRoutes, middleware, socket_server);
 
-  (0, _accessory_routes.prepareAccessoryRoute)(modals, accessoryServicesRoutes, middleware);
+  (0, _accessory_routes.prepareAccessoryRoute)(modals, accessoryServicesRoutes, middleware, socket_server);
 
-  (0, _offer.prepareOfferRoutes)(modals, offerRoutes, middleware);
+  (0, _offer.prepareOfferRoutes)(modals, offerRoutes, middleware, socket_server);
 
-  (0, _shop_earn.prepareShopEarnRoute)(modals, shopEarnRoutes, middleware);
+  (0, _shop_earn.prepareShopEarnRoute)(modals, shopEarnRoutes, middleware, socket_server);
 
-  (0, _sellers.prepareSellerRoutes)(modals, sellerRoutes, middleware);
+  (0, _sellers.prepareSellerRoutes)(modals, sellerRoutes, middleware, socket_server);
 
   (0, _order.prepareOrderRoutes)(modals, orderRoutes, middleware, socket_server);
 

@@ -26,7 +26,7 @@ let regCertificateAdaptor;
 let fuelAdaptor;
 
 class ProductItemController {
-  constructor(modal) {
+  constructor(modal, socket) {
     modals = modal;
     repairAdaptor = new RepairAdaptor(modal);
     sellerAdaptor = new SellerAdaptor(modal);
@@ -36,7 +36,7 @@ class ProductItemController {
     warrantyAdaptor = new WarrantyAdaptor(modal);
     categoryAdaptor = new CategoryAdaptor(modal);
     productAdaptor = new ProductAdaptor(modal);
-    jobAdaptor = new JobAdaptor(modal);
+    jobAdaptor = new JobAdaptor(modal, socket);
     regCertificateAdaptor = new RegCertificateAdaptor(modal);
     fuelAdaptor = new FuelAdaptor(modals);
   }

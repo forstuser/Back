@@ -33,7 +33,6 @@ export default (sequelize, DataTypes) => {
         },
         cashback_status: {
           type: DataTypes.INTEGER,
-          defaultValue: 13,
         },
         seller_status: {
           type: DataTypes.INTEGER,

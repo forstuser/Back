@@ -11,6 +11,12 @@ export default (sequelize, DataTypes) => {
         seller_id: {
           type: DataTypes.INTEGER,
         },
+        job_id: {
+          type: DataTypes.INTEGER,
+        },
+        expense_id: {
+          type: DataTypes.INTEGER,
+        },
         user_address_id: {
           type: DataTypes.INTEGER,
         },
@@ -77,6 +83,18 @@ export default (sequelize, DataTypes) => {
         {
           foreignKey: 'status_type',
           targetKey: 'status_type',
+          onDelete: 'cascade',
+          onUpdate: 'cascade',
+        });
+    order.belongsTo(models.cashback_jobs,
+        {
+          foreignKey: 'job_id',
+          onDelete: 'cascade',
+          onUpdate: 'cascade',
+        });
+    order.belongsTo(models.products,
+        {
+          foreignKey: 'expense_id',
           onDelete: 'cascade',
           onUpdate: 'cascade',
         });

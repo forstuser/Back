@@ -36,8 +36,7 @@ exports.default = (sequelize, DataTypes) => {
       type: DataTypes.FLOAT
     },
     cashback_status: {
-      type: DataTypes.INTEGER,
-      defaultValue: 13
+      type: DataTypes.INTEGER
     },
     seller_status: {
       type: DataTypes.INTEGER,

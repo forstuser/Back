@@ -40,7 +40,9 @@ export default class OrderAdaptor {
       item.user_address_detail = (`${address_line_1}${address_line_2 ?
           ` ${address_line_2}` :
           ''},${locality_name},${city_name},${state_name}-${pin_code}`).
-          split('null', '').split('undefined', '').split(',,').join(',');
+          split('null', '').join(',').
+          split('undefined', '').join(',').
+          split(',,').join(',');
       return item;
     }) : result;
   }

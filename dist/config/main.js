@@ -108,6 +108,43 @@ exports.default = {
     PASSWORD: process.env.GST_PWD,
     ACTION: process.env.GST_ACTION
   },
+  PAYTM: {
+    END_POINT: process.env.PAYTM_ENDPOINTS,
+    PAYTMMKEY: process.env.PAYTMMKEY,
+    PAYTMMID: process.env.PAYTMMID,
+    REQUEST: {
+      request: {
+        requestType: 'null',
+        merchantGuid: process.env.PAYTMMID,
+        merchantOrderId: '',
+        salesWalletName: '',
+        salesWalletGuid: process.env.PAYTMSID,
+        payeeEmailId: '',
+        payeePhoneNumber: '',
+        payeeSsoId: '',
+        appliedToNewUsers: process.env.PAYTMTONEW,
+        amount: '0',
+        currencyCode: 'INR'
+      }, metadata: 'Testing Data',
+      ipAddress: '127.0.0.1',
+      platformName: 'PayTM',
+      operationType: 'SALES_TO_USER_CREDIT'
+    },
+    ERROR: {
+      GE_0003: 'Could not complete request. Please retry again.',
+      GE_1026: 'User wallet is in inactive mode.',
+      GE_1033: 'Found multiple accounts with same phone no. and all are unverified.',
+      GE_1034: 'Found multiple accounts with same mail-id and all are unverified.',
+      STUC_1001: 'Payee wallet could not found. STUC_1010=Payee mobile not verified',
+      STUC_1011: 'Payee email not verified',
+      STUC_1012: 'Payee mobile and email not verified',
+      WA_1004: 'Payee wallet not found.',
+      RWL_0001: 'Could not check validity of the request',
+      RWL_0002: 'Exceeded maximum allowed transacted amount',
+      RWL_0003: 'Exceeded maximum per transaction amount',
+      RWL_0004: 'Exceeded maximum no of allowed transactions'
+    }
+  },
   SELLER_IMAGE_TYPE: process.env.SELLER_IMAGE_TYPE,
   SELLER_CATEGORIES: process.env.SELLER_CATEGORIES,
   SELLER_PAYMENT_MODES: process.env.SELLER_PAYMENT_MODES,

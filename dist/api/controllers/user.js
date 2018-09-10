@@ -498,7 +498,7 @@ class UserController {
 
     let userWhere = {
       mobile_no: trueObject.PhoneNo,
-      user_status_type: 1,
+      user_status_type: [1, 2],
       role_type: 5
     };
     const userInput = {
@@ -542,11 +542,7 @@ class UserController {
             userInput.mobile_no = trueObject.PhoneNo;
             userInput.user_status_type = 1;
             return await loginOrRegisterUser({
-              userWhere,
-              userInput,
-              trueObject,
-              request,
-              reply
+              userWhere, userInput, trueObject, request, reply
             });
           }
         } else if (request.payload.BBLogin_Type === 3) {
@@ -1172,7 +1168,9 @@ class UserController {
         request.payload.updated_by = user_id;
         request.payload.address_type = request.payload.address_type || 2;
 
+        const address_count = modals.user_addresses.count({ where: { user_id, address_type: 1 } });
         const locality = request.payload.pin ? await categoryAdaptor.retrieveLocalities({ where: { pin_code: request.payload.pin } }) : undefined;
+        request.payload.address_type = address_count && address_count > 0 ? 2 : 1;
         if (locality && locality.length > 0) {
           request.payload.city_id = locality[0].city_id;
           request.payload.state_id = locality[0].state_id;
@@ -1184,7 +1182,6 @@ class UserController {
           });
         }
         if (id) {
-
           return reply.response({
             status: true,
             result: await userAdaptor.updateUserAddress(JSON.parse(JSON.stringify(request.payload)), {

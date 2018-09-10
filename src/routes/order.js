@@ -38,7 +38,7 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
         pre: [
           {method: middleware.checkAppVersion, assign: 'forceUpdate'},
         ],
-        handler: ControllerObject.getAssistedServiceList,
+        handler: ControllerObject.getActiveOrders,
       },
     });
 
@@ -50,7 +50,7 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
         pre: [
           {method: middleware.checkAppVersion, assign: 'forceUpdate'},
         ],
-        handler: ControllerObject.getOrderList,
+        handler: ControllerObject.getAssistedServiceList,
       },
     });
 
@@ -114,7 +114,7 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
 
     routeObject.push({
       method: 'GET',
-      path: '/consumer/assisted',
+      path: '/consumer/assisted/past',
       config: {
         pre: [
           {method: middleware.checkAppVersion, assign: 'forceUpdate'},
@@ -174,7 +174,7 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
         validate: {
           payload: {
             seller_id: joi.number().required(),
-            order_details: [joi.object(), joi.allow(null)],
+            order_details: [joi.array().items(joi.object()), joi.allow(null)],
           },
         },
       },
@@ -193,7 +193,7 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
         validate: {
           payload: {
             seller_id: joi.number().required(),
-            order_details: [joi.object(), joi.allow(null)],
+            order_details: [joi.array().items(joi.object()), joi.allow(null)],
           },
         },
       },
@@ -212,7 +212,7 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
         validate: {
           payload: {
             seller_id: joi.number().required(),
-            order_details: [joi.object(), joi.allow(null)],
+            order_details: [joi.array().items(joi.object()), joi.allow(null)],
           },
         },
       },
@@ -326,12 +326,12 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
         validate: {
           payload: {
             user_id: joi.number().required(),
+            delivery_user_id: [joi.number(), joi.allow(null)],
             order_details: [joi.array().items(joi.object()), joi.allow(null)],
           },
         },
       },
     });
-
     routeObject.push({
       method: 'PUT',
       path: '/sellers/{seller_id}/assisted/{order_id}/modify',
@@ -345,7 +345,8 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
         validate: {
           payload: {
             user_id: joi.number().required(),
-            order_details: [joi.object(), joi.allow(null)],
+            delivery_user_id: [joi.number(), joi.allow(null)],
+            order_details: [joi.array().items(joi.object()), joi.allow(null)],
           },
         },
       },
