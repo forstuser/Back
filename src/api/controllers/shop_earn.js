@@ -9,14 +9,11 @@ import JobAdaptor from '../Adaptors/job';
 import ProductAdaptor from '../Adaptors/product';
 import SellerAdaptor from '../Adaptors/sellers';
 import CategoryAdaptor from '../Adaptors/category';
+import UserAdaptor from '../Adaptors/user';
 import _ from 'lodash';
 
-let modals;
-let shopEarnAdaptor;
-let jobAdaptor;
-let productAdaptor;
-let sellerAdaptor;
-let categoryAdaptor;
+let modals, shopEarnAdaptor, jobAdaptor, productAdaptor, sellerAdaptor,
+    categoryAdaptor, userAdaptor;
 
 class ShopEarnController {
   constructor(modal, socket) {
@@ -25,6 +22,7 @@ class ShopEarnController {
     productAdaptor = new ProductAdaptor(modal);
     sellerAdaptor = new SellerAdaptor(modal);
     categoryAdaptor = new CategoryAdaptor(modal);
+    userAdaptor = new UserAdaptor(modal);
     modals = modal;
   }
 
@@ -215,6 +213,7 @@ class ShopEarnController {
       try {
         return reply.response({
           status: true,
+          reasons: await categoryAdaptor.retrieveReasons({}),
           result: await shopEarnAdaptor.retrieveCashBackTransactions(
               {user_id: (user.id || user.ID)}),
         });
@@ -255,7 +254,8 @@ class ShopEarnController {
           total_cashback: _.sumBy(
               result.filter(item => item.transaction_type === 1), 'amount') -
               _.sumBy(result.filter(
-                  item => (item.status_type === 14 || item.transaction_type ===
+                  item => (item.status_type === 14 || item.status_type === 13 ||
+                      item.transaction_type ===
                       2) && item.is_paytm),
                   /*Only amount redeemed on payTM will be subtracted not all*/
                   'amount'),
@@ -809,7 +809,7 @@ class ShopEarnController {
 
     try {
       if (!request.pre.forceUpdate) {
-        const {id: user_id, mobile_no, email} = user;
+        const {id: user_id} = user;
         let {seller_id} = request.params;
         const {cashback_ids: id} = request.payload;
         const seller_cashback = await jobAdaptor.retrieveSellerCashBacks({
@@ -830,7 +830,7 @@ class ShopEarnController {
                   user_cashback_id: seller_cashback.map(
                       item => item.user_cashback_id),
                   job_id: seller_cashback.map(item => item.job_id),
-                  user_id, mobile_no, email, seller_cashback,
+                  user_id, seller_cashback,
                   amount: seller_cashback.map(item => item.amount),
                 }))),
           });
@@ -871,7 +871,7 @@ class ShopEarnController {
 
     try {
       if (!request.pre.forceUpdate) {
-        const {id: user_id, mobile_no, email} = user;
+        const {id: user_id} = user;
         let {seller_id} = request.params;
         let {amount} = request.payload;
         let [seller_default_loyalty_rules, seller_loyalty_rules] = await Promise.all(
@@ -951,16 +951,20 @@ class ShopEarnController {
   }
 
   static async redeemCashBackAtPayTM(request, reply) {
-    const user = shared.verifyAuthorization(request.headers);
+    let user = shared.verifyAuthorization(request.headers);
 
     try {
       if (!request.pre.forceUpdate) {
-        const {id: user_id, mobile_no, email} = user;
+        const {id: user_id} = user;
+        user = await modals.users.findOne(
+            {where: {id: user_id}, attributes: ['mobile_no', 'email']});
+        user = user.toJSON();
+        const {mobile_no, email} = user;
         const user_cashback = await jobAdaptor.retrieveUserCashBacks({
           where: {
             user_id, $or: {
               status_type: 16,
-              $and: {status_type: 14, is_paytm: true},
+              $and: {status_type: [14, 13], is_paytm: true},
             },
           }, attributes: [
             'job_id', 'id', 'user_id', 'amount', 'status_type', 'created_at'],
@@ -968,7 +972,8 @@ class ShopEarnController {
         if (user_cashback) {
           const redeemed_amount = _.sumBy(
               user_cashback.filter(item => item.status_type === 16), 'amount') -
-              _.sumBy(user_cashback.filter(item => item.status_type === 14),
+              _.sumBy(user_cashback.filter(
+                  item => item.status_type === 14 || item.status_type === 13),
                   'amount');
           return reply.response({
             status: true,
@@ -980,6 +985,77 @@ class ShopEarnController {
                   job_id: user_cashback.map(item => item.job_id),
                   user_id, mobile_no, email, seller_cashback: user_cashback,
                   amount: redeemed_amount,
+                }))),
+          });
+        }
+
+        return reply.response({
+          status: false,
+          message: 'Cash Back not available for request parameters.',
+        });
+      } else {
+        return shared.preValidation(request.pre, reply);
+      }
+    } catch (err) {
+      console.log(err);
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to redeem cash back at PayTM.',
+        forceUpdate: request.pre.forceUpdate,
+        err,
+      }).code(200);
+    }
+  }
+
+  static async redeemSellerCashBackAtPayTM(request, reply) {
+    let user = shared.verifyAuthorization(request.headers);
+
+    try {
+      if (!request.pre.forceUpdate) {
+        const {id: user_id} = user;
+        user = await modals.seller_users.findOne(
+            {where: {id: user_id}, attributes: ['mobile_no', 'email']});
+        user = user.toJSON();
+        const {seller_id} = request.params;
+        const {mobile_no, email} = user;
+        const user_cashback = await sellerAdaptor.retrieveSellerWalletDetail({
+          where: {
+            seller_id, $or: {
+              status_type: 16,
+              $and: {status_type: [14, 13], is_paytm: true},
+            },
+          }, attributes: [
+            'job_id', 'id', 'user_id', 'amount', 'status_type', 'created_at'],
+        });
+        if (user_cashback) {
+          const redeemed_amount = _.sumBy(
+              user_cashback.filter(item => item.status_type === 16), 'amount') -
+              _.sumBy(user_cashback.filter(
+                  item => item.status_type === 14 || item.status_type === 13),
+                  'amount');
+          return reply.response({
+            status: true,
+            redeemed_amount,
+            result: await jobAdaptor.sellerCashBackRedemptionAtPayTM(
+                JSON.parse(JSON.stringify({
+                  transaction_type: 2,
+                  user_cashback_id: user_cashback.map(item => item.id),
+                  job_id: user_cashback.map(item => item.job_id),
+                  user_id, mobile_no, email, seller_cashback: user_cashback,
+                  amount: redeemed_amount, seller_id,
                 }))),
           });
         }

@@ -1327,7 +1327,7 @@ class UploadController {
         const {id, type, index} = request.params || {};
         const seller_image_types = config.SELLER_IMAGE_TYPE.split(',');
         const seller_data = await sellerAdaptor.retrieveSellerDetail(
-            {where: {id, user_id: user.id}, attributes: ['seller_details']});
+            {where: {id, user_id: user.id}, attributes: ['seller_details', 'id','user_id']});
         let file_name;
         if (seller_data.seller_details) {
           if (type.toString() === '1') {
@@ -1461,7 +1461,7 @@ class UploadController {
         const {id, type, index} = request.params || {};
         const seller_image_types = config.SELLER_IMAGE_TYPE.split(',');
         const seller_data = await sellerAdaptor.retrieveSellerDetail(
-            {where: {id}, attributes: ['seller_details']});
+            {where: {id}, attributes: ['seller_details', 'id','user_id']});
         let file_name;
         if (seller_data.seller_details) {
           if (type.toString() === '1') {
@@ -1541,7 +1541,7 @@ class UploadController {
         const {id, type, index} = request.params || {};
         const seller_image_types = config.SELLER_IMAGE_TYPE.split(',');
         const seller_data = await sellerAdaptor.retrieveSellerDetail(
-            {where: {id, user_id: user.id}, attributes: ['seller_details']});
+            {where: {id, user_id: user.id}, attributes: ['seller_details', 'id','user_id']});
         let file_name;
         if (seller_data.seller_details) {
           if (type.toString() === '1') {
@@ -1631,7 +1631,7 @@ class UploadController {
         const {id, type, index} = request.params || {};
         const seller_image_types = config.SELLER_IMAGE_TYPE.split(',');
         const seller_data = await sellerAdaptor.retrieveSellerDetail(
-            {where: {id, user_id: user.id}, attributes: ['seller_details']});
+            {where: {id, user_id: user.id}, attributes: ['seller_details', 'id','user_id']});
         let file_name;
         if (seller_data.seller_details) {
           const seller_image_update = [];
@@ -2838,8 +2838,7 @@ class UploadController {
         }).code(404);
       } catch (err) {
         console.log(
-            `Error on ${new Date()} for user ${user.id ||
-            user.ID} is as follow: \n \n ${err}`);
+            `Error on ${new Date()} for user is as follow: \n \n ${err}`);
         const fsImplUser = new S3FS(
             `${config.AWS.S3.BUCKET}/${config.AWS.S3.USER_IMAGE}`,
             config.AWS.ACCESS_DETAILS);

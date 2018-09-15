@@ -34,15 +34,18 @@ export default class OrderAdaptor {
     const result = await this.modals.order.findAll(query_options);
     return result ? result.map(item => {
       item = item.toJSON();
-
+      if (item.order_type === 1) {
+        item.order_item_counts = item.order_details.length;
+        // item = _.omit(item, 'order_details');
+      }
       const {address_line_1, address_line_2, city_name, state_name, locality_name, pin_code} = item.user_address ||
       {};
       item.user_address_detail = (`${address_line_1}${address_line_2 ?
           ` ${address_line_2}` :
           ''},${locality_name},${city_name},${state_name}-${pin_code}`).
-          split('null', '').join(',').
-          split('undefined', '').join(',').
-          split(',,').join(',');
+          split('null').join(',').
+          split('undefined').join(',').
+          split(',,').join(',').split(',-,').join(',').split(',,').join(',').split(',,').join(',');
       return item;
     }) : result;
   }

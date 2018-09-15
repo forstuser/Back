@@ -11,51 +11,7 @@ import InsuranceAdaptor from './insurances';
 import RepairAdaptor from './repairs';
 import WarrantyAdaptor from './warranties';
 import PUCAdaptor from './pucs';
-
-function weekAndDay(d) {
-  const days = [1, 2, 3, 4, 5, 6, 7];
-  const prefixes = [1, 2, 3, 4, 5];
-
-  return {
-    monthWeek: prefixes[Math.round(moment.utc(d).date() / 7)],
-    day: days[moment.utc(d).day()],
-  };
-}
-
-const dateFormatString = 'YYYY-MM-DD';
-const monthArray = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const monthStartDay = moment.utc().startOf('month');
-const monthLastDay = moment.utc().endOf('month');
-const yearStartDay = moment.utc().startOf('year');
-const yearLastDay = moment.utc().startOf('year');
-
-function customSortCategories(categoryData) {
-  const OtherCategory = categoryData.find((elem) => elem.id === 9);
-
-  const categoryDataWithoutOthers = categoryData.filter(
-      (elem) => (elem.id !== 9));
-
-  const newCategoryData = [];
-
-  let pushed = false;
-
-  categoryDataWithoutOthers.forEach((elem) => {
-    if ((OtherCategory && elem) && (parseFloat(OtherCategory.totalAmount) >
-        parseFloat(elem.totalAmount)) && !pushed) {
-      newCategoryData.push(OtherCategory);
-      pushed = true;
-    }
-    newCategoryData.push(elem);
-  });
-
-  if (!pushed && OtherCategory) {
-    newCategoryData.push(OtherCategory);
-  }
-
-  return newCategoryData;
-}
+import RefuelingAdaptor from './refueling';
 
 class InsightAdaptor {
   constructor(modals) {
@@ -67,6 +23,7 @@ class InsightAdaptor {
     this.repairAdaptor = new RepairAdaptor(modals);
     this.warrantyAdaptor = new WarrantyAdaptor(modals);
     this.pucAdaptor = new PUCAdaptor(modals);
+    this.refuelingAdaptor = new RefuelingAdaptor(modals);
   }
 
   async prepareInsightData(user, request) {
@@ -166,12 +123,9 @@ class InsightAdaptor {
     try {
       const [category] = await this.prepareCategoryData(user,
           JSON.parse(JSON.stringify({
-            category_id,
-            document_date: for_lifetime ?
+            category_id, document_date: for_lifetime ?
                 {$lte: moment()} : {$between: [min_date, max_date]},
-            ref_id: {
-              $or: [{$not: null}, {$is: null}],
-            },
+            ref_id: {$or: [{$not: null}, {$is: null}]},
           })));
       const productList = _.chain(category.expenses).
           filter((item) => (item.purchaseDate &&
@@ -179,8 +133,7 @@ class InsightAdaptor {
                   isSameOrBefore(moment.utc().valueOf()))).
           orderBy(['purchaseDate'], ['desc']).value();
       return {
-        status: true,
-        productList,
+        status: true, productList,
         categoryName: category.name,
         forceUpdate: request.pre.forceUpdate,
       };
@@ -222,7 +175,7 @@ class InsightAdaptor {
       categoryOption.category_id = {$notIn: [9, 10]};
     }
 
-    let [categories, products, amcs, insurances, repairs, warranties, pucs] = await Promise.all(
+    let [categories, products, amcs, insurances, repairs, warranties, pucs, fuel_expenses] = await Promise.all(
         [
           this.categoryAdaptor.retrieveCategories({
             options: JSON.parse(JSON.stringify(categoryOption)),
@@ -233,7 +186,8 @@ class InsightAdaptor {
           this.insuranceAdaptor.retrieveInsurances(productOptions),
           this.repairAdaptor.retrieveRepairs(productOptions),
           this.warrantyAdaptor.retrieveWarranties(productOptions),
-          this.pucAdaptor.retrievePUCs(productOptions)]);
+          this.pucAdaptor.retrievePUCs(productOptions),
+          this.refuelingAdaptor.retrieveRefueling(productOptions)]);
 
     products = products.map((pItem) => {
       pItem.dataIndex = 1;
@@ -259,17 +213,26 @@ class InsightAdaptor {
       puc.dataIndex = 6;
       return puc;
     });
+    fuel_expenses = fuel_expenses.map((fuel_expense) => {
+      fuel_expense.dataIndex = 7;
+      fuel_expense.purchaseDate = fuel_expense.document_date;
+      fuel_expense.masterCategoryId = fuel_expense.main_category_id;
+      return fuel_expense;
+    });
     return categories.map((category) => {
       category.expenses = _.chain([
-        ...products.filter((pItem) => pItem.masterCategoryId === category.id),
-        ...amcs.filter((amcItem) => amcItem.masterCategoryId === category.id),
-        ...insurances.filter(
-            (insurance) => insurance.masterCategoryId === category.id),
-        ...repairs.filter((repair) => repair.masterCategoryId === category.id),
-        ...warranties.filter(
-            (warranty) => warranty.masterCategoryId === category.id),
-        ...pucs.filter((puc) => puc.masterCategoryId === category.id)] || []).
-          sortBy((item) => moment.utc(item.purchaseDate || item.updatedDate)).
+            ...products.filter((pItem) => pItem.masterCategoryId === category.id),
+            ...amcs.filter((amcItem) => amcItem.masterCategoryId === category.id),
+            ...insurances.filter(
+                (insurance) => insurance.masterCategoryId === category.id),
+            ...repairs.filter((repair) => repair.masterCategoryId === category.id),
+            ...warranties.filter(
+                (warranty) => warranty.masterCategoryId === category.id),
+            ...pucs.filter((puc) => puc.masterCategoryId === category.id),
+            ...fuel_expenses.filter(
+                (fuel_expense) => fuel_expense.main_category_id === category.id)] ||
+          []).sortBy((item) => moment.utc(
+          item.purchaseDate || item.document_date || item.updatedDate)).
           reverse().value();
 
       return category;

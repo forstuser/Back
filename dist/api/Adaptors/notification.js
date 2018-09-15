@@ -899,22 +899,23 @@ class NotificationAdaptor {
     const iosFcmKeys = result.filter(fcm => fcm.platform_id === 2).map(user => ({ fcm_id: user.fcm_id, user_id, seller_user_id }));
     console.log(JSON.stringify({ user_id, seller_user_id, androidFcmKeys, iosFcmKeys, payload }));
     payload.big_text = payload.description;
+    const fcm_key = _main2.default.GOOGLE[user_id ? 'FCM_KEY' : 'SELLER_FCM_KEY'];
     if (androidFcmKeys.length > 0) {
-      await this.androidNotificationDispatcher(androidFcmKeys, result, payload);
+      await this.androidNotificationDispatcher(androidFcmKeys, result, payload, fcm_key);
     }
 
     if (iosFcmKeys.length > 0) {
-      await this.iosNotificationDispatcher(iosFcmKeys, result, notification, payload);
+      await this.iosNotificationDispatcher(iosFcmKeys, result, notification, payload, fcm_key);
     }
   }
 
-  async iosNotificationDispatcher(fcm_keys, result, notification, data) {
+  async iosNotificationDispatcher(fcm_keys, result, notification, data, fcm_key) {
     fcm_keys.forEach((fcm_detail, index) => {
       _bluebird2.default.try(() => setTimeout(((fcm_detail, notification, data, config) => () => {
         return (0, _request2.default)({
           uri: 'https://fcm.googleapis.com/fcm/send',
           method: 'POST',
-          headers: { Authorization: `key=${config.GOOGLE.FCM_KEY}` },
+          headers: { Authorization: `key=${fcm_key}` },
           json: {
             priority: 'high',
             data,
@@ -943,13 +944,13 @@ class NotificationAdaptor {
     });
   }
 
-  async androidNotificationDispatcher(fcm_keys, result, data) {
+  async androidNotificationDispatcher(fcm_keys, result, data, fcm_key) {
     fcm_keys.forEach((fcm_detail, index) => {
       _bluebird2.default.try(() => setTimeout(((fcm_detail, data, config) => () => {
         return (0, _request2.default)({
           uri: 'https://fcm.googleapis.com/fcm/send',
           method: 'POST',
-          headers: { Authorization: `key=${config.GOOGLE.FCM_KEY}` },
+          headers: { Authorization: `key=${fcm_key}` },
           json: {
             priority: 'high',
             data,
@@ -975,60 +976,64 @@ class NotificationAdaptor {
   }
 
   async notifyUser(parameters) {
-    let { userId: user_id, payload, reply, seller_user_id } = parameters;
-    let result = await this.modals.fcm_details.findAll({
-      where: JSON.parse(JSON.stringify({
-        user_id, seller_user_id
-      }))
-    });
-    result = result.map(item => item.toJSON());
-    const options = {
-      uri: 'https://fcm.googleapis.com/fcm/send',
-      method: 'POST',
-      headers: { Authorization: `key=${_main2.default.GOOGLE.FCM_KEY}` },
-      json: {
-        registration_ids: result.map(user => user.fcm_id),
-        priority: 'high',
-        data: payload,
-        notification_type: 26,
-        notification: {
-          title: payload.title,
-          body: payload.description || payload.big_text
-        }
-      }
-    };
-    (0, _request2.default)(options, (error, response, body) => {
-      this.modals.logs.create({
-        log_type: 3,
-        user_id: user_id,
-        log_content: JSON.stringify({ options })
-      }).catch(ex => console.log('error while logging on db,', ex));
-      // extract invalid registration for removal
-      if (body.failure > 0 && Array.isArray(body.results) && body.results.length === result.length) {
-        const results = body.results;
-        for (let i = 0; i < result.length; i += 1) {
-          if (results[i].error === 'InvalidRegistration') {
-            result[i].destroy().then(rows => {
-              console.log('FCM ID\'s DELETED: ', rows);
-            });
+    try {
+      let { userId: user_id, payload, reply, seller_user_id } = parameters;
+      let result = await this.modals.fcm_details.findAll({
+        where: JSON.parse(JSON.stringify({
+          user_id, seller_user_id
+        }))
+      });
+      result = result.map(item => item.toJSON());
+      const options = {
+        uri: 'https://fcm.googleapis.com/fcm/send',
+        method: 'POST',
+        headers: {
+          Authorization: `key=${_main2.default.GOOGLE[user_id ? 'FCM_KEY' : 'SELLER_FCM_KEY']}`
+        },
+        json: {
+          registration_ids: result.map(user => user.fcm_id),
+          priority: 'high',
+          data: payload,
+          notification_type: 26,
+          notification: {
+            title: payload.title,
+            body: payload.description || payload.big_text
           }
         }
-      }
-
+      };
+      const body = await (0, _requestPromise2.default)(options);
+      console.log(body);
       if (reply) {
-        if (!error && response.statusCode === 200) {
-          // request was success, should early return response to client
+        if (body.success > 0) {
           return reply.response({
             status: true
           }).code(200);
         } else {
+          this.modals.logs.create({
+            log_type: 3,
+            log_content: JSON.stringify({ options, body })
+          }).catch(ex => console.log('error while logging on db,', ex));
+          // extract invalid registration for removal
+          if (body.failure > 0 && Array.isArray(body.results) && body.results.length === result.length) {
+            const results = body.results;
+            for (let i = 0; i < result.length; i += 1) {
+              if (results[i].error === 'InvalidRegistration') {
+                result[i].destroy().then(rows => {
+                  console.log('FCM ID\'s DELETED: ', rows);
+                });
+              }
+            }
+          }
+
           return reply.response({
             status: false,
-            error
+            body
           });
         }
       }
-    });
+    } catch (e) {
+      console.log(e);
+    }
   }
 
   verifyEmailAddress(emailSecret, reply) {

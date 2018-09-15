@@ -21,37 +21,34 @@ class BrandController {
       if (!user && !isWebMode) {
         return reply.response({status: false, message: 'Unauthorized'});
       } else if (!request.pre.forceUpdate) {
-        let category_id = (request.query.categoryid || '').split(',');
-
-
-        const options = {
-          status_type: 1,
-          category_id: category_id.length > 0 ? category_id : undefined,
-        };
-
         let results = [];
-        if (category_id) {
-          results = await
-              modals.brands.findAll({
-                where: {
-                  status_type: 1,
-                },
-                include: [
-                  {
-                    model: modals.brandDetails,
-                    as: 'details',
-                    where: options,
-                    required: true,
-                  }, {
-                    model: modals.serviceCenters,
-                    as: 'centers',
-                    attributes: [],
-                    required: true,
-                  },
-                ],
-                order: [['brand_name', 'ASC']],
-                attributes: [['brand_name', 'brandName'], ['brand_id', 'id']],
-              });
+        if (request.query.categoryid) {
+          let category_id = (request.query.categoryid || '').split(',');
+
+          const options = JSON.parse(JSON.stringify({
+            status_type: 1,
+            category_id: category_id.length > 0 ? category_id : undefined,
+          }));
+
+          results = await modals.brands.findAll({
+            where: {
+              status_type: 1,
+            },
+            include: [
+              {
+                model: modals.brandDetails,
+                as: 'details',
+                where: options,
+                required: true,
+              }, {
+                model: modals.serviceCenters,
+                as: 'centers',
+                attributes: [],
+                required: true,
+              }],
+            order: [['brand_name', 'ASC']],
+            attributes: [['brand_name', 'brandName'], ['brand_id', 'id']],
+          });
         } else {
           results = await
               modals.brands.findAll({

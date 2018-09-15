@@ -116,16 +116,16 @@ class ProductAdaptor {
     let inProgressProductOption = {};
     _lodash2.default.assignIn(inProgressProductOption, options);
     options = _lodash2.default.omit(options, 'product_status_type');
-    if (!inProgressProductOption.product_name) {
+    if (inProgressProductOption.product_name) {
       inProgressProductOption = _lodash2.default.omit(options, 'product_name');
     }
-    if (!inProgressProductOption.brand_id) {
+    if (inProgressProductOption.brand_id) {
       inProgressProductOption = _lodash2.default.omit(options, 'brand_id');
     }
-    if (!inProgressProductOption.seller_id) {
+    if (inProgressProductOption.seller_id) {
       inProgressProductOption = _lodash2.default.omit(options, 'seller_id');
     }
-    if (!inProgressProductOption.online_seller_id) {
+    if (inProgressProductOption.online_seller_id) {
       inProgressProductOption = _lodash2.default.omit(options, 'online_seller_id');
     }
 
@@ -216,13 +216,10 @@ class ProductAdaptor {
     if (billOption.seller_id && billOption.seller_id.length > 0) {
       products = products.filter(item => item.bill && billOption.seller_id.find(sItem => parseInt(item.bill.seller_id) === parseInt(sItem)));
     }
-    inProgressProductOption = _lodash2.default.omit(inProgressProductOption, 'product_name');
-    inProgressProductOption = _lodash2.default.omit(inProgressProductOption, 'bill_id');
-    inProgressProductOption = _lodash2.default.omit(inProgressProductOption, 'accessory_part_id');
-    inProgressProductOption = _lodash2.default.omit(inProgressProductOption, 'accessory_id');
     inProgressProductOption.status_type = [5, 11, 12];
     inProgressProductOption.product_status_type = options.status_type;
-    inProgressProductOption = _lodash2.default.omit(inProgressProductOption, 'ref_id');
+
+    inProgressProductOption = _lodash2.default.omit(inProgressProductOption, ['product_name', 'bill_id', 'id', '$or', '$and', 'accessory_part_id', 'accessory_id', 'ref_id']);
     let warrantyOptions = {};
     _lodash2.default.assignIn(warrantyOptions, inProgressProductOption);
     warrantyOptions.warranty_type = [1, 2];

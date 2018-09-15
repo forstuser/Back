@@ -28,10 +28,28 @@ exports.default = (sequelize, DataTypes) => {
       type: DataTypes.STRING
     },
     is_service: {
-      type: DataTypes.BOOLEAN
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
     },
     is_onboarded: {
-      type: DataTypes.BOOLEAN
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
+    is_assisted: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true
+    },
+    is_data_manually_added: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true
+    },
+    is_fmcg: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true
+    },
+    has_pos: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true
     },
     address: {
       type: DataTypes.STRING
@@ -47,7 +65,10 @@ exports.default = (sequelize, DataTypes) => {
     },
     seller_details: { type: DataTypes.JSONB },
     customer_ids: { type: DataTypes.JSONB },
-    rush_hours: { type: DataTypes.BOOLEAN },
+    rush_hours: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
     latitude: {
       type: DataTypes.FLOAT,
       allowNull: true,

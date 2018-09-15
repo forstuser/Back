@@ -65,16 +65,16 @@ export default class ProductAdaptor {
     let inProgressProductOption = {};
     _.assignIn(inProgressProductOption, options);
     options = _.omit(options, 'product_status_type');
-    if (!inProgressProductOption.product_name) {
+    if (inProgressProductOption.product_name) {
       inProgressProductOption = _.omit(options, 'product_name');
     }
-    if (!inProgressProductOption.brand_id) {
+    if (inProgressProductOption.brand_id) {
       inProgressProductOption = _.omit(options, 'brand_id');
     }
-    if (!inProgressProductOption.seller_id) {
+    if (inProgressProductOption.seller_id) {
       inProgressProductOption = _.omit(options, 'seller_id');
     }
-    if (!inProgressProductOption.online_seller_id) {
+    if (inProgressProductOption.online_seller_id) {
       inProgressProductOption = _.omit(options, 'online_seller_id');
     }
 
@@ -282,14 +282,12 @@ export default class ProductAdaptor {
           (item) => item.bill && billOption.seller_id.find(
               sItem => parseInt(item.bill.seller_id) === parseInt(sItem)));
     }
-    inProgressProductOption = _.omit(inProgressProductOption, 'product_name');
-    inProgressProductOption = _.omit(inProgressProductOption, 'bill_id');
-    inProgressProductOption = _.omit(inProgressProductOption,
-        'accessory_part_id');
-    inProgressProductOption = _.omit(inProgressProductOption, 'accessory_id');
     inProgressProductOption.status_type = [5, 11, 12];
     inProgressProductOption.product_status_type = options.status_type;
-    inProgressProductOption = _.omit(inProgressProductOption, 'ref_id');
+
+    inProgressProductOption = _.omit(inProgressProductOption, [
+      'product_name', 'bill_id', 'id', '$or','$and',
+      'accessory_part_id', 'accessory_id', 'ref_id']);
     let warrantyOptions = {};
     _.assignIn(warrantyOptions, inProgressProductOption);
     warrantyOptions.warranty_type = [1, 2];

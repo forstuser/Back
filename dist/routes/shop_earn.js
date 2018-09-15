@@ -419,6 +419,19 @@ function prepareShopEarnRoute(modal, route, middleware, socket) {
   });
 
   route.push({
+    method: 'PUT',
+    path: '/sellers/{seller_id}/wallet/redeem',
+    config: {
+      auth: 'jwt',
+      pre: [{
+        method: middleware.checkAppVersion,
+        assign: 'forceUpdate'
+      }],
+      handler: _shop_earn2.default.redeemSellerCashBackAtPayTM
+    }
+  });
+
+  route.push({
     method: 'GET',
     path: '/skus/{sku_id}/measurements',
     config: {

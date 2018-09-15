@@ -293,12 +293,23 @@ class GeneralController {
 
   static async retrieveFAQs(request, reply) {
     try {
+      let user_location, user;
+      if (request.headers) {
+        user = shared.verifyAuthorization(request.headers);
+        user_location = user.seller_detail ?
+            await modals.seller_users.findOne(
+                {where: {id: user.id}, attributes: ['address']}) :
+            await modals.users.findOne(
+                {where: {id: user.id}, attributes: ['location']});
+        user_location = user_location.toJSON();
+      }
+
+      const type = user ?
+          (user_location && user_location.location.toLowerCase() ===
+          'other' ? 1 : user.seller_detail ? 3 : [1, 2]) :
+          undefined;
       const faq = await modals.faqs.findAll({
-        where: {
-          status_id: {
-            $ne: 3,
-          },
-        },
+        where: JSON.parse(JSON.stringify({status_id: {$ne: 3}, type})),
         order: [['id']],
       });
       return reply.response({status: true, faq}).code(200);

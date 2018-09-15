@@ -35,11 +35,10 @@ class WarrantyAdaptor {
     }));
 
     productOptions = productOptions === {} ? undefined : productOptions;
-    options = _.omit(options, 'ref_id');
-    options = _.omit(options, 'category_id');
-    options = _.omit(options, 'main_category_id');
-    options = _.omit(options, 'product_status_type');
-    options = _.omit(options, 'brand_id');
+    options = _.omit(options, [
+      'ref_id', 'category_id', 'main_category_id', 'product_status_type',
+      'brand_id', 'product_name', 'bill_id', 'accessory_part_id',
+      'accessory_id']);
 
     const warrantyResult = await this.modals.warranties.findAll({
       where: options,

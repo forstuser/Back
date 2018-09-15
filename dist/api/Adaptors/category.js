@@ -257,5 +257,10 @@ class CategoryAdaptor {
     const reasons = await this.modals.reject_reasons.findAll(options);
     return reasons.map(item => item.toJSON());
   }
+
+  async retrieveReasons(options) {
+    const reasons = await this.modals.reject_reasons.findAll(options);
+    return reasons.map(item => item.toJSON());
+  }
 }
 exports.default = CategoryAdaptor;

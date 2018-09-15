@@ -79,19 +79,7 @@ class SearchAdaptor {
         categoryList,
       };
     } catch (err) {
-      this.modals.logs.create({
-        api_action: request.method,
-        api_path: request.url.pathname,
-        log_type: 2,
-        user_id: user.id || user.ID,
-        log_content: JSON.stringify({
-          params: request.params,
-          query: request.query,
-          headers: request.headers,
-          payload: request.payload,
-          err,
-        }),
-      }).catch((ex) => console.log('error while logging on db,', ex));
+      console.log(err);
       return {
         status: false,
         message: 'Search failed',
@@ -103,19 +91,7 @@ class SearchAdaptor {
   prepareCategoryData(user, searchValue, language) {
     const categoryOption = {
       status_type: 1,
-      $and: [
-        {
-          $or: [
-            this.modals.sequelize.where(this.modals.sequelize.fn('lower',
-                this.modals.sequelize.col('categories.category_name')),
-                {$iLike: this.modals.sequelize.fn('lower', searchValue)}),
-            this.modals.sequelize.where(this.modals.sequelize.fn('lower',
-                this.modals.sequelize.col(`${language ?
-                    `"categories"."category_name_${language}"` :
-                    `"categories"."category_name"`}`)),
-                {$iLike: this.modals.sequelize.fn('lower', searchValue)}),
-          ],
-        }],
+      $and: [{$or: [{category_name: {$iLike: searchValue}}]}],
     };
 
     const productOptions = {
@@ -185,29 +161,20 @@ class SearchAdaptor {
   }
 
   fetchProductDetails(user, searchValue, productIds, language) {
-    return this.productAdaptor.retrieveProducts({
+    productIds = (productIds || []).filter(item => item);
+    return this.productAdaptor.retrieveProducts(JSON.parse(JSON.stringify({
       user_id: user.id || user.ID,
-      product_name: {
-        $not: null,
-      },
-      status_type: [5, 11],
+      product_name: {$not: null,}, status_type: [5, 11],
       $or: {
-        id: productIds,
-        $and: [
-          this.modals.sequelize.where(this.modals.sequelize.fn('lower',
-              this.modals.sequelize.col('product_name')),
-              {$iLike: this.modals.sequelize.fn('lower', searchValue)}),
-        ],
+        id: productIds.length > 0 ? productIds : undefined,
+        $and: [{product_name: {$iLike: searchValue}}],
       },
-    }, language);
+    })), language);
   }
 
   fetchProductDetailOnline(user, searchValue) {
     return this.sellerAdaptor.retrieveOnlineSellers({
-      $and: [
-        this.modals.sequelize.where(this.modals.sequelize.fn('lower',
-            this.modals.sequelize.col('seller_name')),
-            {$iLike: this.modals.sequelize.fn('lower', searchValue)})],
+      $and: [{seller_name: {$iLike: searchValue}}],
     }).then((onlineSellers) => {
       if (onlineSellers && onlineSellers.length > 0) {
         return this.productAdaptor.retrieveProductIds({
@@ -223,10 +190,7 @@ class SearchAdaptor {
 
   fetchProductDetailOffline(user, searchValue) {
     return this.sellerAdaptor.retrieveOfflineSellers({
-      $and: [
-        this.modals.sequelize.where(this.modals.sequelize.fn('lower',
-            this.modals.sequelize.col('seller_name')),
-            {$iLike: this.modals.sequelize.fn('lower', searchValue)})],
+      $and: [{seller_name:{$iLike: searchValue}}],
     }).then((sellers) => {
 
       if (sellers && sellers.length > 0) {
@@ -243,10 +207,7 @@ class SearchAdaptor {
 
   fetchProductDetailBrand(user, searchValue) {
     return this.brandAdaptor.retrieveBrands({
-      $and: [
-        this.modals.sequelize.where(this.modals.sequelize.fn('lower',
-            this.modals.sequelize.col('brand_name')),
-            {$iLike: this.modals.sequelize.fn('lower', searchValue)})],
+      $and: [{brand_name:{$iLike: searchValue}}],
     }).then((brands) => {
 
       if (brands && brands.length > 0) {

@@ -50,6 +50,7 @@ class RefuelingAdaptor {
     options = _lodash2.default.omit(options, 'main_category_id');
     options = _lodash2.default.omit(options, 'product_status_type');
     options = _lodash2.default.omit(options, 'brand_id');
+    options = _lodash2.default.omit(options, 'ref_id');
 
     const refuelingResult = await this.modals.refueling.findAll({
       where: options,

@@ -20,6 +20,10 @@ var _user = require('./user');
 
 var _user2 = _interopRequireDefault(_user);
 
+var _bluebird = require('bluebird');
+
+var _bluebird2 = _interopRequireDefault(_bluebird);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 class SellerAdaptor {
@@ -41,9 +45,7 @@ class SellerAdaptor {
   async retrieveSellers(options, query_options) {
     const { user_id, seller_offer_ids, latitude, longitude, city, limit, offset } = options;
     const result = await this.modals.sellers.findAll(query_options);
-    let sellers = result.map(item => {
-      return item.toJSON();
-    });
+    let sellers = result.map(item => item.toJSON());
     if (sellers.length > 0) {
       if (latitude && longitude) {
         sellers = await this.orderSellerByLocation(latitude, longitude, city, sellers);
@@ -53,7 +55,7 @@ class SellerAdaptor {
           city_ids = sellers.map(item => item.city_id).filter(item => item),
           state_ids = sellers.map(item => item.state_id).filter(item => item),
           locality_ids = sellers.map(item => item.locality_id).filter(item => item);
-      const [seller_categories, seller_cities, seller_states, seller_locations, assisted_services] = await Promise.all([this.retrieveSellerCategories({ seller_id }), city_ids.length > 0 ? this.retrieveSellerCities({ id: city_ids }) : [], state_ids.length > 0 ? this.retrieveSellerStates({ id: state_ids }) : [], locality_ids.length > 0 ? this.retrieveSellerLocations({ id: locality_ids }) : [], this.retrieveSellerAssistedServices({ where: { seller_id } })]);
+      const [seller_categories, seller_cities, seller_states, seller_locations, assisted_services] = await _bluebird2.default.all([this.retrieveSellerCategories({ seller_id }), city_ids.length > 0 ? this.retrieveSellerCities({ id: city_ids }) : [], state_ids.length > 0 ? this.retrieveSellerStates({ id: state_ids }) : [], locality_ids.length > 0 ? this.retrieveSellerLocations({ id: locality_ids }) : [], this.retrieveSellerAssistedServices({ where: { seller_id } })]);
       sellers = sellers.map(item => {
         item.categories = seller_categories.filter(cItem => cItem.seller_id === item.id);
         item.city = seller_cities.find(cItem => cItem.id === item.city_id);
@@ -65,11 +67,38 @@ class SellerAdaptor {
         item.credit_total = (item.credit_total || 0) - (item.redeemed_credits || 0);
         item.offer_count = item.offer_count || 0;
         item.ratings = item.ratings || 0;
+        item.transaction_counts = parseInt(item.transaction_counts || 0) + parseInt(item.order_counts || 0);
+
+        if (item.seller_details) {
+          item.seller_details = _lodash2.default.omit(item.seller_details, ['offers', 'assisted_type_images']);
+        }
         return item;
       });
     }
 
     return sellers;
+  }
+
+  async retrieveOfferSellers(options, query_options) {
+    const { seller_offer_ids, latitude, longitude, city, limit, offset } = options;
+    const result = await this.modals.sellers.findAll(query_options);
+    let sellers = result.map(item => item.toJSON());
+    if (sellers.length > 0) {
+      if (latitude && longitude) {
+        sellers = await this.orderSellerByLocation(latitude, longitude, city, sellers);
+      }
+
+      let seller_id = sellers.map(item => item.id);
+      const seller_offers = await (seller_offer_ids && seller_offer_ids.length > 0 ? this.retrieveSellerOffersForConsumer({ seller_id, id: seller_offer_ids }) : []);
+      sellers = sellers.map(item => {
+        item.offer_count = item.offer_count || 0;
+        item.ratings = item.ratings || 0;
+        item.offers = seller_offers.filter(offerItem => item.id === offerItem.seller_id);
+        return item;
+      });
+    }
+
+    return sellers.filter(item => item.offers && item.offers.length > 0);
   }
 
   async retrieveCashBackSellers(query_options) {
@@ -139,48 +168,48 @@ class SellerAdaptor {
     return result ? result.map(item => item.toJSON()) : result;
   }
 
+  async retrieveSellerWalletDetail(query_options) {
+    const result = await this.modals.seller_wallet.findAll(query_options);
+    return result ? result.map(item => item.toJSON()) : result;
+  }
+
   async retrieveSellerOfferDetail(query_options) {
     const result = await this.modals.seller_offers.findOne(query_options);
     return result ? result.toJSON() : result;
   }
 
   async retrieveSellerConsumers(seller_id, mobile_no, offer_id) {
-    let productUsers, seller_users, id, user_index_data;
+    let seller_users, id, user_index_data;
     mobile_no = mobile_no ? { $iLike: `${mobile_no}%` } : undefined;
-    [productUsers, seller_users] = await Promise.all([this.modals.products.findAll({
-      where: { seller_id, status_type: [5, 11] },
-      attributes: ['user_id'],
-      group: 'user_id'
-    }), this.retrieveSellerDetail({
+    seller_users = await this.retrieveSellerDetail({
       where: { id: seller_id }, attributes: ['customer_ids', 'latitude', 'longitude', 'address', [this.modals.sequelize.literal('(Select state_name from table_states as state where state.id = sellers.state_id)'), 'state_name'], [this.modals.sequelize.literal('(Select name from table_cities as city where city.id = sellers.city_id)'), 'city_name'], [this.modals.sequelize.literal('(Select name from table_localities as locality where locality.id = sellers.locality_id)'), 'locality_name'], [this.modals.sequelize.literal('(Select pin_code from table_localities as locality where locality.id = sellers.locality_id)'), 'pin_code']]
-    })]);
-    productUsers = productUsers.map(item => item.toJSON());
+    });
     id = seller_users.customer_ids || [];
     const { latitude, longitude, address, city_name: city } = seller_users;
-    productUsers.forEach(item => id.push(item.user_id));
     const result = await this.modals.users.findAll({
       where: mobile_no ? JSON.parse(JSON.stringify({ $and: { mobile_no } })) : { id },
-      include: {
-        model: this.modals.user_addresses,
-        as: 'addresses', where: { address_type: 1 },
-        attributes: ['address_type', 'address_line_1', 'address_line_2', 'city_id', 'state_id', 'locality_id', 'pin', 'latitude', 'longitude', [this.modals.sequelize.literal('(Select state_name from table_states as state where state.id = addresses.state_id)'), 'state_name'], [this.modals.sequelize.literal('(Select name from table_cities as city where city.id = addresses.city_id)'), 'city_name'], [this.modals.sequelize.literal('(Select name from table_localities as locality where locality.id = addresses.locality_id)'), 'locality_name'], [this.modals.sequelize.literal('(Select pin_code from table_localities as locality where locality.id = addresses.locality_id)'), 'pin_code']],
-        required: false
-      },
-      attributes: [['full_name', 'name'], 'image_name', 'email', 'mobile_no', 'location', 'id', 'user_status_type', [this.modals.sequelize.literal(`(select sum(seller_cashback.amount) from table_wallet_seller_cashback as seller_cashback where status_type in (16) and transaction_type = 1 and seller_cashback.user_id = "users"."id" and seller_cashback.seller_id = ${seller_id})`), 'cashback_total'], [this.modals.sequelize.literal(`(select sum(seller_cashback.amount) from table_wallet_seller_cashback as seller_cashback where status_type in (16) and transaction_type = 2 and seller_cashback.user_id = "users"."id" and seller_cashback.seller_id = ${seller_id})`), 'redeemed_cashback'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_loyalty as seller_loyalty where status_type in (16) and transaction_type = 1 and seller_loyalty.user_id = "users"."id" and seller_loyalty.seller_id = ${seller_id})`), 'loyalty_total'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_loyalty as seller_loyalty where status_type in (16) and transaction_type = 2 and seller_loyalty.user_id = "users"."id" and seller_loyalty.seller_id = ${seller_id})`), 'redeemed_loyalty'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16) and transaction_type = 1 and seller_credit.user_id = "users"."id" and seller_credit.seller_id = ${seller_id})`), 'credit_total'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16) and transaction_type = 2 and seller_credit.user_id = "users"."id" and seller_credit.seller_id = ${seller_id})`), 'redeemed_credits'], [this.modals.sequelize.literal(`(select count(*) from table_cashback_jobs as cashback_jobs where cashback_jobs.user_id = "users"."id" and cashback_jobs.seller_id = ${seller_id})`), 'transaction_counts'], [this.modals.sequelize.literal(`(select seller_offer_ids from table_user_index as user_index where user_index.user_id = "users"."id")`), 'seller_offer_ids']]
+      attributes: [['full_name', 'name'], 'image_name', 'email', 'mobile_no', 'location', 'id', 'user_status_type', [this.modals.sequelize.literal(`(select sum(seller_cashback.amount) from table_wallet_seller_cashback as seller_cashback where status_type in (16) and transaction_type = 1 and seller_cashback.user_id = "users"."id" and seller_cashback.seller_id = ${seller_id})`), 'cashback_total'], [this.modals.sequelize.literal(`(select sum(seller_cashback.amount) from table_wallet_seller_cashback as seller_cashback where status_type in (16,14) and transaction_type = 2 and seller_cashback.user_id = "users"."id" and seller_cashback.seller_id = ${seller_id})`), 'redeemed_cashback'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_loyalty as seller_loyalty where status_type in (16) and transaction_type = 1 and seller_loyalty.user_id = "users"."id" and seller_loyalty.seller_id = ${seller_id})`), 'loyalty_total'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_loyalty as seller_loyalty where status_type in (16,14) and transaction_type = 2 and seller_loyalty.user_id = "users"."id" and seller_loyalty.seller_id = ${seller_id})`), 'redeemed_loyalty'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16) and transaction_type = 1 and seller_credit.user_id = "users"."id" and seller_credit.seller_id = ${seller_id})`), 'credit_total'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16,14) and transaction_type = 2 and seller_credit.user_id = "users"."id" and seller_credit.seller_id = ${seller_id})`), 'redeemed_credits'], [this.modals.sequelize.literal(`(select count(*) from table_cashback_jobs as cashback_jobs where cashback_jobs.user_id = "users"."id" and cashback_jobs.seller_id = ${seller_id})`), 'transaction_counts'], [this.modals.sequelize.literal(`(select count(*) from table_orders as order_detail where order_detail.user_id = "users"."id" and order_detail.seller_id = ${seller_id} and order_detail.job_id is null and order_detail.status_type = 5)`), 'order_counts'], [this.modals.sequelize.literal(`(select seller_offer_ids from table_user_index as user_index where user_index.user_id = "users"."id")`), 'seller_offer_ids']]
     });
 
-    return await this.orderUserByLocation(latitude, longitude, city, result.map(item => {
-      item = item.toJSON();
+    const user_list = result.map(item => item.toJSON());
+    const addresses = (await this.userAdaptor.retrieveUserAddresses({
+      where: {
+        address_type: 1,
+        user_id: (user_list || []).map(item => item.id).filter(item => item)
+      }
+    })).map(item => item.toJSON());
+    return await this.orderUserByLocation(latitude, longitude, city, user_list.map(item => {
       const linked_user = (seller_users.customer_ids || []).find(suItem => suItem.toString() === item.id.toString());
       item.linked = !!linked_user;
-      item.cashback_total = (item.cashback_total || 0) - (item.redeemed_cashback || 0);
+      item.cashback_total = item.cashback_total || 0;
+      item.redeemed_cashback = item.redeemed_cashback || 0;
       item.loyalty_total = (item.loyalty_total || 0) - (item.redeemed_loyalty || 0);
       item.credit_total = (item.credit_total || 0) - (item.redeemed_credits || 0);
-      item.addresses = item.addresses[0];
-
+      item.addresses = (addresses || []).find(aItem => aItem.user_id === item.id) || {};
+      item.transaction_counts = (item.transaction_counts || 0) + (item.order_counts || 0);
       if (item.addresses) {
         const { address_line_1, address_line_2, city_name, state_name, locality_name, pin_code } = item.addresses || {};
-        item.address = `${address_line_1}${address_line_2 ? ` ${address_line_2}` : ''},${locality_name},${city_name},${state_name}-${pin_code}`.split('null', '').join(',').split('undefined', '').join(',').split(',,').join(',');
+        item.address = `${address_line_1}${address_line_2 ? ` ${address_line_2}` : ''},${locality_name},${city_name},${state_name}-${pin_code}`.split('null').join(',').split('undefined').join(',').split(',,').join(',').split(',-,').join(',').split(',,').join(',').split(',,').join(',');
       }
       if (offer_id) {
         const seller_offer_id = (item.seller_offer_ids || []).find(item => item.toString() === offer_id.toString());
@@ -188,6 +217,84 @@ class SellerAdaptor {
       }
       return item;
     }));
+  }
+
+  async retrieveSellerConsumerCashBack(seller_id, mobile_no) {
+    let seller_users, id, user_index_data;
+    seller_users = await this.retrieveSellerDetail({
+      where: { id: seller_id }, attributes: ['customer_ids']
+    });
+    id = seller_users.customer_ids || [];
+    const result = await this.modals.users.findAll({
+      where: mobile_no ? JSON.parse(JSON.stringify({ $and: { mobile_no } })) : { id },
+      attributes: [['full_name', 'name'], 'image_name', 'email', 'mobile_no', 'location', 'id', 'user_status_type', [this.modals.sequelize.literal(`(select sum(seller_cashback.amount) from table_wallet_user_cashback as seller_cashback where status_type in (16,14) and transaction_type in (1,2) and seller_cashback.user_id = "users"."id" and seller_cashback.seller_id = ${seller_id})`), 'cashback_total']]
+    });
+    const user_list = result.map(item => item.toJSON());
+    const addresses = (await this.userAdaptor.retrieveUserAddresses({
+      where: {
+        address_type: 1,
+        user_id: (user_list || []).map(item => item.id).filter(item => item)
+      }
+    })).map(item => item.toJSON());
+    return user_list.map(item => {
+      const linked_user = (seller_users.customer_ids || []).find(suItem => suItem.toString() === item.id.toString());
+      item.linked = !!linked_user;
+      item.cashback_total = item.cashback_total || 0;
+      item.addresses = addresses.find(aItem => item.id === aItem.user_id) || {};
+      if (item.addresses) {
+        const { address_line_1, address_line_2, city_name, state_name, locality_name, pin_code } = item.addresses || {};
+        item.user_address_detail = `${address_line_1}${address_line_2 ? ` ${address_line_2}` : ''},${locality_name},${city_name},${state_name}-${pin_code}`.split('null').join(',').split('undefined').join(',').split(',,').join(',').split(',,').join(',').split(',-,').join(',').split(',,').join(',').split(',,').join(',');
+      }
+      return item;
+    });
+  }
+
+  async retrieveSellerConsumerTransactions(seller_id) {
+    let id, job_id, expense_id;
+    let [cashback_jobs, orders, seller_users] = await _bluebird2.default.all([this.modals.cashback_jobs.findAll({ where: { seller_id }, attributes: ['job_id', 'user_id'] }), this.modals.order.findAll({
+      where: { seller_id, status_type: 5 },
+      attributes: ['expense_id', 'user_id']
+    }), this.retrieveSellerDetail({
+      where: { id: seller_id }, attributes: ['customer_ids']
+    })]);
+    id = _lodash2.default.uniq([...cashback_jobs.map(item => {
+      item = item.toJSON();
+      return item.user_id;
+    }), ...orders.map(item => {
+      item = item.toJSON();
+      return item.user_id;
+    }), ...seller_users.customer_ids]);
+    job_id = cashback_jobs.map(item => {
+      item = item.toJSON();
+      return item.job_id;
+    });
+    expense_id = orders.map(item => {
+      item = item.toJSON();
+      return item.expense_id;
+    });
+    const result = await this.modals.users.findAll({
+      where: { id },
+      attributes: [['full_name', 'name'], 'image_name', 'email', 'mobile_no', 'location', 'id', 'user_status_type', [this.modals.sequelize.literal(`(select sum(products.purchase_cost) from consumer_products as products where ${job_id.length > 0 ? `job_id in (${job_id.join(',')}) and` : ''} ${expense_id.length > 0 ? `id in (${expense_id.join(',')}) and` : ''} products.user_id = "users"."id" and products.seller_id = ${seller_id})`), 'total_transactions']]
+    });
+    const user_list = result.map(item => item.toJSON());
+    const addresses = (await this.userAdaptor.retrieveUserAddresses({
+      where: {
+        address_type: 1,
+        user_id: (user_list || []).map(item => item.id).filter(item => item)
+      }
+    })).map(item => item.toJSON());
+    return user_list.map(item => {
+      const linked_user = (seller_users.customer_ids || []).find(suItem => suItem.toString() === item.id.toString());
+      item.linked = !!linked_user;
+      item.total_transactions = item.total_transactions || 0;
+      item.addresses = addresses.find(aItem => aItem.user_id === item.id) || {};
+      if (item.addresses) {
+        const { address_line_1, address_line_2, city_name, state_name, locality_name, pin_code } = item.addresses || {};
+        item.user_address_detail = `${address_line_1}${address_line_2 ? ` ${address_line_2}` : ''},${locality_name},${city_name},${state_name}-${pin_code}`.split('null').join(',').split('undefined').join(',').split(',,').join(',').split(',,').join(',').split(',-,').join(',').split(',,').join(',').split(',,').join(',');
+      }
+
+      return item;
+    });
   }
 
   async retrieveSellerCustomerDetail(seller_id, customer_id, mobile_no) {
@@ -266,7 +373,7 @@ class SellerAdaptor {
       if (latitude && longitude) {
         seller = await this.retrieveSellerByLocation(latitude, longitude, city, seller);
       }
-      const [seller_categories, seller_cash_backs, seller_loyalty_points, seller_offers, seller_credits, seller_cities, seller_states, seller_locations, seller_reviews, service_types, assisted_services] = await Promise.all([this.retrieveSellerCategories({ seller_id }), user_id ? this.retrieveSellerCashBack({ seller_id, user_id }) : [], user_id ? this.retrieveSellerLoyaltyPoints({ seller_id, user_id }) : [], seller_offer_ids && seller_offer_ids.length > 0 ? this.retrieveSellerOffersForConsumer({ seller_id, id: seller_offer_ids }) : [], user_id ? this.retrieveSellerCredits({ seller_id, user_id }) : [], city_id ? this.retrieveSellerCities({ id: city_id }) : [], state_id ? this.retrieveSellerStates({ id: state_id }) : [], locality_id ? this.retrieveSellerLocations({ id: locality_id }) : [], this.retrieveSellerReviews({ offline_seller_id: seller_id }), this.retrieveAssistedServiceTypes({}), this.retrieveSellerAssistedServiceUsers({
+      const [seller_categories, seller_cash_backs, seller_loyalty_points, seller_offers, seller_credits, seller_cities, seller_states, seller_locations, seller_reviews, service_types, assisted_services] = await _bluebird2.default.all([this.retrieveSellerCategories({ seller_id }), user_id ? this.retrieveSellerCashBack({ seller_id, user_id }) : [], user_id ? this.retrieveSellerLoyaltyPoints({ seller_id, user_id }) : [], seller_offer_ids && seller_offer_ids.length > 0 ? this.retrieveSellerOffersForConsumer({ seller_id, id: seller_offer_ids }) : [], user_id ? this.retrieveSellerCredits({ seller_id, user_id }) : [], city_id ? this.retrieveSellerCities({ id: city_id }) : [], state_id ? this.retrieveSellerStates({ id: state_id }) : [], locality_id ? this.retrieveSellerLocations({ id: locality_id }) : [], this.retrieveSellerReviews({ offline_seller_id: seller_id }), this.retrieveAssistedServiceTypes({}), this.retrieveSellerAssistedServiceUsers({
         include: {
           as: 'service_types', where: { seller_id },
           model: this.modals.seller_service_types, required: true,
@@ -287,6 +394,11 @@ class SellerAdaptor {
       seller.credit_total = seller.credit_total || 0;
       seller.offer_count = seller.offer_count || 0;
       seller.ratings = seller.ratings || 0;
+      seller.transaction_counts = parseInt(seller.transaction_counts || 0) + parseInt(seller.order_counts || 0);
+
+      if (seller.seller_details) {
+        seller.seller_details = _lodash2.default.omit(seller.seller_details, ['offers', 'assisted_type_images']);
+      }
       seller.assisted_services = assisted_services.map(item => {
         item.rating = _lodash2.default.sumBy(item.reviews || [{ ratings: 0 }], 'ratings') / (item.reviews || [{ ratings: 0 }]).length;
         item.service_types = item.service_types.map(typeItem => {
@@ -315,7 +427,7 @@ class SellerAdaptor {
       if (latitude && longitude) {
         seller = await this.retrieveSellerByLocation(latitude, longitude, city, seller);
       }
-      const [seller_categories, seller_cities, seller_states, seller_locations, seller_reviews] = await Promise.all([this.retrieveSellerCategories({ seller_id }), city_id ? this.retrieveSellerCities({ id: city_id }) : [], state_id ? this.retrieveSellerStates({ id: state_id }) : [], locality_id ? this.retrieveSellerLocations({ id: locality_id }) : []]);
+      const [seller_categories, seller_cities, seller_states, seller_locations, seller_reviews] = await _bluebird2.default.all([this.retrieveSellerCategories({ seller_id }), city_id ? this.retrieveSellerCities({ id: city_id }) : [], state_id ? this.retrieveSellerStates({ id: state_id }) : [], locality_id ? this.retrieveSellerLocations({ id: locality_id }) : []]);
       seller.categories = seller_categories;
       seller.city = seller_cities[0];
       seller.state = seller_states[0];
@@ -342,7 +454,7 @@ class SellerAdaptor {
       if (latitude && longitude) {
         seller = await this.retrieveSellerByLocation(latitude, longitude, city, seller);
       }
-      const [seller_cities, seller_states, seller_locations, seller_reviews] = await Promise.all([city_id ? this.retrieveSellerCities({ id: city_id }) : [], state_id ? this.retrieveSellerStates({ id: state_id }) : [], locality_id ? this.retrieveSellerLocations({ id: locality_id }) : []]);
+      const [seller_cities, seller_states, seller_locations, seller_reviews] = await _bluebird2.default.all([city_id ? this.retrieveSellerCities({ id: city_id }) : [], state_id ? this.retrieveSellerStates({ id: state_id }) : [], locality_id ? this.retrieveSellerLocations({ id: locality_id }) : []]);
       seller.city = seller_cities[0];
       seller.state = seller_states[0];
       seller.location = seller_locations[0];
@@ -350,6 +462,9 @@ class SellerAdaptor {
       seller.cashback_total = seller.cashback_total || 0;
       seller.offer_count = seller.offer_count || 0;
       seller.ratings = seller.ratings || 0;
+      if (seller.seller_details) {
+        seller.seller_details = _lodash2.default.omit(seller.seller_details, ['offers', 'assisted_type_images']);
+      }
     }
 
     return seller;
@@ -363,30 +478,47 @@ class SellerAdaptor {
   async retrieveSellerCategories(options) {
     let seller_categories = await this.modals.seller_provider_type.findAll({
       where: JSON.parse(JSON.stringify(options)),
-      attributes: ['sub_category_id', 'category_4_id', 'seller_id', 'provider_type_id', 'brand_ids']
+      attributes: ['sub_category_id', 'category_brands', 'seller_id', 'provider_type_id', 'category_4_id', 'brand_ids']
     });
     seller_categories = seller_categories.map(item => item.toJSON());
-    if (seller_categories.length > 0) {
-      const [sku_categories, provider_types] = await Promise.all([this.categoryAdaptor.retrieveSellerCategories({
+    let categories_data = [];
+    seller_categories.forEach(item => {
+      item.category_brands = item.category_brands || [{}];
+      categories_data.push(...item.category_brands.map(cbItem => {
+        cbItem.seller_id = item.seller_id;
+        cbItem.sub_category_id = item.sub_category_id;
+        cbItem.provider_type_id = item.provider_type_id;
+        cbItem.category_4_id = cbItem.category_4_id || item.category_4_id;
+        cbItem.brand_ids = cbItem.brand_ids || item.brand_ids;
+
+        return cbItem;
+      }));
+    });
+
+    if (categories_data.length > 0) {
+      const [sku_categories, provider_types] = await _bluebird2.default.all([this.categoryAdaptor.retrieveSellerCategories({
         where: {
-          category_id: [...seller_categories.map(item => item.sub_category_id), ...seller_categories.map(item => item.category_4_id)]
+          category_id: _lodash2.default.uniq([...categories_data.map(item => item.sub_category_id), ...categories_data.map(item => item.category_4_id)])
         }, attributes: ['category_id', 'category_name']
       }), this.retrieveProviderTypes({
-        where: { id: seller_categories.map(item => item.provider_type_id) },
+        where: {
+          id: _lodash2.default.uniq(categories_data.map(item => item.provider_type_id))
+        },
         attributes: ['id', 'title']
       })]);
-      seller_categories = seller_categories.map(item => {
+      categories_data = categories_data.map(item => {
         const provider_type = provider_types.find(pItem => pItem.id === item.provider_type_id);
         const category_detail = sku_categories.find(cItem => cItem.category_id === item.sub_category_id);
         const category_4_detail = sku_categories.find(cItem => cItem.category_id === item.category_4_id);
-        item.category_name = category_detail.category_name;
-        item.category_4_name = category_4_detail.category_name;
-        item.provider_type = provider_type.title;
+        console.log(JSON.stringify({ category_detail, category_4_detail }));
+        item.category_name = (category_detail || {}).category_name;
+        item.category_4_name = (category_4_detail || {}).category_name;
+        item.provider_type = (provider_type || {}).title;
         return item;
       });
     }
 
-    return seller_categories;
+    return categories_data;
   }
 
   async retrieveSellerCashBack(options) {
@@ -397,7 +529,12 @@ class SellerAdaptor {
 
   async retrieveSellerTransactions(options) {
     let seller_cash_back = await this.modals.cashback_jobs.findAll(options);
-    seller_cash_back = seller_cash_back.map(item => item.toJSON());
+    seller_cash_back = seller_cash_back.map(item => {
+      item = item.toJSON();
+      item.total_cashback = item.total_cashback || 0;
+      item.amount_paid = item.amount_paid || 0;
+      return item;
+    });
     return seller_cash_back;
   }
 
@@ -434,8 +571,15 @@ class SellerAdaptor {
   async retrieveSellerCreditsPerUser(options) {
     let seller_credits = await this.modals.credit_wallet.findAll(options);
     const result = [];
+    const addresses = (await this.userAdaptor.retrieveUserAddresses({
+      where: {
+        address_type: 1,
+        user_id: seller_credits.map(item => item.user_id).filter(item => item)
+      }
+    })).map(item => item.toJSON());
     seller_credits.forEach(item => {
       item = item.toJSON();
+      item.address = addresses.find(aItem => aItem.user_id === item.user_id) || {};
       result.push(item);
     });
     return result;
@@ -444,8 +588,15 @@ class SellerAdaptor {
   async retrieveSellerLoyaltyPointsPerUser(options) {
     let seller_points = await this.modals.loyalty_wallet.findAll(options);
     const result = [];
+    const addresses = (await this.userAdaptor.retrieveUserAddresses({
+      where: {
+        address_type: 1,
+        user_id: seller_points.map(item => item.user_id).filter(item => item)
+      }
+    })).map(item => item.toJSON());
     seller_points.forEach(item => {
       item = item.toJSON();
+      item.address = addresses.find(aItem => aItem.user_id === item.user_id) || {};
       result.push(item);
     });
     return result;
@@ -532,13 +683,9 @@ class SellerAdaptor {
         if (origins.length > 0 && destinations.length > 0) {
           user_with_location.push(user);
         } else {
-          user.distanceMetrics = 'km';
-          user.distance = parseFloat(500.001);
           final_result.push(user);
         }
       } else {
-        user.distanceMetrics = 'km';
-        user.distance = parseFloat(500.001);
         final_result.push(user);
       }
     });
@@ -550,9 +697,6 @@ class SellerAdaptor {
           const tempMatrix = result[i];
           user_with_location[i].distanceMetrics = 'km';
           user_with_location[i].distance = tempMatrix && tempMatrix.distance ? parseFloat((tempMatrix.distance.value / 1000).toFixed(2)) : null;
-        } else {
-          user_with_location[i].distanceMetrics = 'km';
-          user_with_location[i].distance = parseFloat(500.001);
         }
 
         final_result.push(user_with_location[i]);
@@ -585,8 +729,6 @@ class SellerAdaptor {
       if (origins.length > 0 && destinations.length > 0) {
         sellers_with_location.push(seller);
       } else {
-        seller.distanceMetrics = 'km';
-        seller.distance = parseFloat(500.001);
         final_result.push(seller);
       }
     });
@@ -606,7 +748,7 @@ class SellerAdaptor {
         final_result.push(sellers_with_location[i]);
       }
 
-      return _lodash2.default.orderBy(final_result.filter(elem => !!elem.distance && parseFloat(elem.distance) <= 40), ['distance'], ['asc']);
+      return _lodash2.default.orderBy(final_result.filter(elem => !!elem.distance && parseFloat(elem.distance) <= 100), ['distance'], ['asc']);
     }
   }
 
@@ -631,8 +773,6 @@ class SellerAdaptor {
     if (origins.length > 0 && destinations.length > 0) {
       sellers_with_location.push(seller);
     } else {
-      seller.distanceMetrics = 'km';
-      seller.distance = parseFloat(500.001);
       final_result.push(seller);
     }
 
@@ -655,12 +795,35 @@ class SellerAdaptor {
     }
   }
 
-  async retrieveOrCreateSellerProviderTypes(options, defaults) {
-    let seller_provider_type = await this.modals.seller_provider_type.findOne({
-      where: options
-    });
+  async retrieveOrCreateSellerProviderTypes(options, defaults, category_4_id) {
+    let seller_provider_type = await this.modals.seller_provider_type.findOne({ where: options });
     if (seller_provider_type) {
       const seller_provider_type_result = seller_provider_type.toJSON();
+      if (!defaults.category_brands && category_4_id && category_4_id.length > 0) {
+        defaults.category_brands = (seller_provider_type_result.category_brands || category_4_id.map(item => ({ category_4_id: parseInt(item) }))).filter(item => _lodash2.default.includes(category_4_id, item.category_4_id));
+      }
+
+      defaults.status_type = seller_provider_type_result.status_type;
+      await seller_provider_type.updateAttributes(defaults);
+    } else {
+      if (!defaults.category_brands && category_4_id && category_4_id.length > 0) {
+        defaults.category_brands = category_4_id.map(item => ({ category_4_id: parseInt(item) })).filter(item => _lodash2.default.includes(category_4_id, item.category_4_id));
+      }
+      seller_provider_type = await this.modals.seller_provider_type.create(defaults);
+    }
+    return seller_provider_type.toJSON();
+  }
+
+  async retrieveOrCreateSellerProviderBrands(options, defaults, category_4_id, brand_ids) {
+    let seller_provider_type = await this.modals.seller_provider_type.findOne({ where: options });
+    brand_ids = brand_ids.map(item => parseInt(item || 0));
+    if (seller_provider_type) {
+      const seller_provider_type_result = seller_provider_type.toJSON();
+      defaults.category_brands = (seller_provider_type_result.category_brands || [{ category_4_id: parseInt(category_4_id || 0), brand_ids }]).map(item => {
+        item.brand_ids = parseInt(item.category_4_id || 0) === parseInt(category_4_id || 0) ? brand_ids : item.brand_ids || [];
+        item.category_4_id = parseInt(item.category_4_id || 0);
+        return item;
+      });
       defaults.status_type = seller_provider_type_result.status_type;
       await seller_provider_type.updateAttributes(defaults);
     } else {
@@ -698,7 +861,7 @@ class SellerAdaptor {
     }
     const assisted_service_user_result = assisted_service_user.toJSON();
     const service_user_id = assisted_service_user_result.id;
-    assisted_service_user_result.service_types = service_types ? await Promise.all(service_types.map(item => {
+    assisted_service_user_result.service_types = service_types ? await _bluebird2.default.all(service_types.map(item => {
       const { price, service_type_id, seller_id, id } = item;
       return this.retrieveOrCreateSellerAssistedServiceTypes(JSON.parse(JSON.stringify({ service_type_id, seller_id, service_user_id, id })), JSON.parse(JSON.stringify({ service_type_id, seller_id, service_user_id, price })));
     })) : [];
@@ -709,23 +872,22 @@ class SellerAdaptor {
     let assisted_service_user = await this.modals.assisted_service_users.findOne({ where: options });
     if (assisted_service_user) {
       const assisted_service_users_result = assisted_service_user.toJSON();
-      const reviews = assisted_service_users_result.reviews || [];
-      let current_review = assisted_service_users_result.reviews.find(item => item.order_id === review.order_id);
+      assisted_service_users_result.reviews = assisted_service_users_result.reviews || [];
+      console.log(JSON.stringify({ review, options }));
+      let current_review = assisted_service_users_result.reviews.find(item => item.order_id.toString() === review.order_id.toString());
       if (current_review) {
-        assisted_service_users_result.reviews.map(item => {
-          if (item.order_id === review.order_id) {
+        assisted_service_users_result.reviews = assisted_service_users_result.reviews.map(item => {
+          if (item.order_id.toString() === review.order_id.toString()) {
             return review;
           }
 
           return item;
         });
       } else {
-        reviews.push(review);
+        assisted_service_users_result.reviews.push(review);
       }
       await assisted_service_user.updateAttributes(assisted_service_users_result);
-      const assisted_service_user_result = assisted_service_user.toJSON();
-      const service_user_id = assisted_service_user_result.id;
-      return assisted_service_user_result;
+      return assisted_service_user.toJSON();
     }
 
     return undefined;
@@ -786,7 +948,7 @@ class SellerAdaptor {
 
   async retrieveSellerLoyaltyRules(options) {
     let loyalty_rules = await this.modals.loyalty_rules.findAll({ where: options });
-    return loyalty_rules.map(item => item.toJSON());
+    return loyalty_rules.map(item => item.toJSON())[0];
   }
 
 }

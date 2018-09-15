@@ -45,48 +45,11 @@ var _pucs = require('./pucs');
 
 var _pucs2 = _interopRequireDefault(_pucs);
 
+var _refueling = require('./refueling');
+
+var _refueling2 = _interopRequireDefault(_refueling);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function weekAndDay(d) {
-  const days = [1, 2, 3, 4, 5, 6, 7];
-  const prefixes = [1, 2, 3, 4, 5];
-
-  return {
-    monthWeek: prefixes[Math.round(_moment2.default.utc(d).date() / 7)],
-    day: days[_moment2.default.utc(d).day()]
-  };
-}
-
-const dateFormatString = 'YYYY-MM-DD';
-const monthArray = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const monthStartDay = _moment2.default.utc().startOf('month');
-const monthLastDay = _moment2.default.utc().endOf('month');
-const yearStartDay = _moment2.default.utc().startOf('year');
-const yearLastDay = _moment2.default.utc().startOf('year');
-
-function customSortCategories(categoryData) {
-  const OtherCategory = categoryData.find(elem => elem.id === 9);
-
-  const categoryDataWithoutOthers = categoryData.filter(elem => elem.id !== 9);
-
-  const newCategoryData = [];
-
-  let pushed = false;
-
-  categoryDataWithoutOthers.forEach(elem => {
-    if (OtherCategory && elem && parseFloat(OtherCategory.totalAmount) > parseFloat(elem.totalAmount) && !pushed) {
-      newCategoryData.push(OtherCategory);
-      pushed = true;
-    }
-    newCategoryData.push(elem);
-  });
-
-  if (!pushed && OtherCategory) {
-    newCategoryData.push(OtherCategory);
-  }
-
-  return newCategoryData;
-}
 
 class InsightAdaptor {
   constructor(modals) {
@@ -98,6 +61,7 @@ class InsightAdaptor {
     this.repairAdaptor = new _repairs2.default(modals);
     this.warrantyAdaptor = new _warranties2.default(modals);
     this.pucAdaptor = new _pucs2.default(modals);
+    this.refuelingAdaptor = new _refueling2.default(modals);
   }
 
   async prepareInsightData(user, request) {
@@ -177,16 +141,12 @@ class InsightAdaptor {
     max_date = (max_date ? (0, _moment2.default)(max_date, _moment2.default.ISO_8601).endOf('day') : for_year && !for_month ? (0, _moment2.default)(for_year_date).endOf('year') : (0, _moment2.default)(for_month_date).endOf('month')).format();
     try {
       const [category] = await this.prepareCategoryData(user, JSON.parse(JSON.stringify({
-        category_id,
-        document_date: for_lifetime ? { $lte: (0, _moment2.default)() } : { $between: [min_date, max_date] },
-        ref_id: {
-          $or: [{ $not: null }, { $is: null }]
-        }
+        category_id, document_date: for_lifetime ? { $lte: (0, _moment2.default)() } : { $between: [min_date, max_date] },
+        ref_id: { $or: [{ $not: null }, { $is: null }] }
       })));
       const productList = _lodash2.default.chain(category.expenses).filter(item => item.purchaseDate && _moment2.default.utc(item.purchaseDate, _moment2.default.ISO_8601).isSameOrBefore(_moment2.default.utc().valueOf())).orderBy(['purchaseDate'], ['desc']).value();
       return {
-        status: true,
-        productList,
+        status: true, productList,
         categoryName: category.name,
         forceUpdate: request.pre.forceUpdate
       };
@@ -226,11 +186,11 @@ class InsightAdaptor {
       categoryOption.category_id = { $notIn: [9, 10] };
     }
 
-    let [categories, products, amcs, insurances, repairs, warranties, pucs] = await Promise.all([this.categoryAdaptor.retrieveCategories({
+    let [categories, products, amcs, insurances, repairs, warranties, pucs, fuel_expenses] = await Promise.all([this.categoryAdaptor.retrieveCategories({
       options: JSON.parse(JSON.stringify(categoryOption)),
       isSubCategoryRequiredForAll: false,
       isBrandFormRequired: false, language
-    }), this.productAdaptor.retrieveProducts(productOptions, language), this.amcAdaptor.retrieveAMCs(productOptions), this.insuranceAdaptor.retrieveInsurances(productOptions), this.repairAdaptor.retrieveRepairs(productOptions), this.warrantyAdaptor.retrieveWarranties(productOptions), this.pucAdaptor.retrievePUCs(productOptions)]);
+    }), this.productAdaptor.retrieveProducts(productOptions, language), this.amcAdaptor.retrieveAMCs(productOptions), this.insuranceAdaptor.retrieveInsurances(productOptions), this.repairAdaptor.retrieveRepairs(productOptions), this.warrantyAdaptor.retrieveWarranties(productOptions), this.pucAdaptor.retrievePUCs(productOptions), this.refuelingAdaptor.retrieveRefueling(productOptions)]);
 
     products = products.map(pItem => {
       pItem.dataIndex = 1;
@@ -256,8 +216,14 @@ class InsightAdaptor {
       puc.dataIndex = 6;
       return puc;
     });
+    fuel_expenses = fuel_expenses.map(fuel_expense => {
+      fuel_expense.dataIndex = 7;
+      fuel_expense.purchaseDate = fuel_expense.document_date;
+      fuel_expense.masterCategoryId = fuel_expense.main_category_id;
+      return fuel_expense;
+    });
     return categories.map(category => {
-      category.expenses = _lodash2.default.chain([...products.filter(pItem => pItem.masterCategoryId === category.id), ...amcs.filter(amcItem => amcItem.masterCategoryId === category.id), ...insurances.filter(insurance => insurance.masterCategoryId === category.id), ...repairs.filter(repair => repair.masterCategoryId === category.id), ...warranties.filter(warranty => warranty.masterCategoryId === category.id), ...pucs.filter(puc => puc.masterCategoryId === category.id)] || []).sortBy(item => _moment2.default.utc(item.purchaseDate || item.updatedDate)).reverse().value();
+      category.expenses = _lodash2.default.chain([...products.filter(pItem => pItem.masterCategoryId === category.id), ...amcs.filter(amcItem => amcItem.masterCategoryId === category.id), ...insurances.filter(insurance => insurance.masterCategoryId === category.id), ...repairs.filter(repair => repair.masterCategoryId === category.id), ...warranties.filter(warranty => warranty.masterCategoryId === category.id), ...pucs.filter(puc => puc.masterCategoryId === category.id), ...fuel_expenses.filter(fuel_expense => fuel_expense.main_category_id === category.id)] || []).sortBy(item => _moment2.default.utc(item.purchaseDate || item.document_date || item.updatedDate)).reverse().value();
 
       return category;
     });

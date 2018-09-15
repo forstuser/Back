@@ -49,23 +49,23 @@ export default (sequelize, DataTypes) => {
   sku.associate = (models) => {
     sku.belongsTo(models.users,
         {foreignKey: 'updated_by', onDelete: 'cascade', onUpdate: 'cascade'});
-    sku.belongsTo(models.sku_brands,
+    sku.belongsTo(models.brands,
         {foreignKey: 'brand_id', onDelete: 'cascade', onUpdate: 'cascade'});
-    sku.belongsTo(models.sku_categories,
+    sku.belongsTo(models.categories,
         {
           foreignKey: 'category_id',
           as: 'category',
           onDelete: 'cascade',
           onUpdate: 'cascade',
         });
-    sku.belongsTo(models.sku_categories,
+    sku.belongsTo(models.categories,
         {
           foreignKey: 'main_category_id',
           as: 'main_category',
           onDelete: 'cascade',
           onUpdate: 'cascade',
         });
-    sku.belongsTo(models.sku_categories,
+    sku.belongsTo(models.categories,
         {
           foreignKey: 'sub_category_id',
           as: 'sub_category',

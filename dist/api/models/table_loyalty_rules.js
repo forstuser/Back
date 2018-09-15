@@ -19,7 +19,7 @@ exports.default = (sequelize, DataTypes) => {
     },
     minimum_points: {
       type: DataTypes.FLOAT,
-      defaultValue: 0
+      defaultValue: 10
     },
     points_per_item: {
       type: DataTypes.FLOAT,

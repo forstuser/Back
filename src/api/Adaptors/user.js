@@ -76,32 +76,31 @@ class UserAdaptor {
    * This is for getting user login or register for OTP and true caller
    * @param whereObject
    * @param defaultObject
+   * @param seller_id
    * @returns {Promise.<Model, created>}
    */
-  async createUserForSeller(whereObject, defaultObject) {
+  async createUserForSeller(whereObject, defaultObject, seller_id) {
     if (!whereObject.mobile_no) {
       whereObject = _.omit(whereObject, 'mobile_no');
     }
 
     let result = await this.modals.users.findOne({
       where: whereObject, attributes: [
-        'id',
-        ['full_name', 'name'],
-        'mobile_no',
-        'email',
-        'email_verified',
-        'email_secret',
-        'image_name',
-        'gender',
-        'fb_id',
-        'user_status_type'],
+        'id', ['full_name', 'name'], 'mobile_no',
+        'email', 'email_verified', 'email_secret',
+        'image_name', 'gender', 'fb_id', 'user_status_type'],
     });
 
     if (!result || (result && !result.id)) {
       result = await this.modals.users.create(defaultObject);
     }
 
-    return result.toJSON();
+    const user_detail = result.toJSON();
+    await this.retrieveOrUpdateUserIndexedData(
+        {where: {user_id: user_detail.id}, attributes: ['my_seller_ids']},
+        {seller_id});
+
+    return user_detail;
   }
 
   /**
@@ -125,24 +124,22 @@ class UserAdaptor {
    *
    * @param filterObject
    * @param is_create
+   * @param updates
    * @returns {Promise<Model>}
    */
-  async retrieveSellerUser(filterObject, is_create) {
-    filterObject.attributes = [
-      'id', ['full_name', 'name'], 'mobile_no',
-      'email', 'email_verified', 'email_secret',
-      [
-        this.modals.sequelize.fn('CONCAT', 'consumer/',
-            this.modals.sequelize.col('id'), '/images'), 'imageUrl'],
-    ];
+  async retrieveSellerUser(filterObject, is_create, updates) {
+    filterObject.attributes = ['id', 'mobile_no', 'email'];
     console.log(filterObject);
     let seller_user = await this.modals.seller_users.findOne(filterObject);
     if (is_create) {
       filterObject.last_active_date = moment();
       if (!seller_user) {
-        seller_user = await this.modals.seller_users.create(filterObject.where);
+        seller_user = await this.modals.seller_users.create(
+            updates || filterObject.where);
       }
-      await seller_user.updateAttributes(filterObject.where);
+    }
+    if (seller_user) {
+      await seller_user.updateAttributes(updates || filterObject.where);
     }
 
     return seller_user ? seller_user.toJSON() : seller_user;
@@ -379,7 +376,7 @@ class UserAdaptor {
     filterOptions.attributes = [
       'address_type', 'address_line_1', 'address_line_2',
       'city_id', 'state_id', 'locality_id', 'pin', 'latitude',
-      'longitude', 'id', [
+      'longitude', 'id', 'user_id', [
         this.modals.sequelize.literal(
             '(Select state_name from table_states as state where state.id = user_addresses.state_id)'),
         'state_name'], [
@@ -413,7 +410,9 @@ class UserAdaptor {
         this.modals.sequelize.literal(
             '(Select pin_code from table_localities as locality where locality.id = user_addresses.locality_id)'),
         'pin_code']];
-    return await this.modals.user_addresses.findOne(filterOptions);
+    let address = await this.modals.user_addresses.findOne(filterOptions);
+
+    return address ? address.toJSON() : {};
   }
 
   async retrieveUserIndexedData(options) {
@@ -450,10 +449,15 @@ class UserAdaptor {
           [];
       userIndex.wallet_seller_loyalty_ids.push(defaults.point_id);
     }
+    if (defaults.seller_id) {
+      userIndex.my_seller_ids = userIndex.my_seller_ids || [];
+      userIndex.my_seller_ids.push(defaults.seller_id);
+      userIndex.my_seller_ids = _.uniq(userIndex.my_seller_ids);
+    }
     if (result) {
       await result.updateAttributes(userIndex);
     } else {
-      result = this.createUserIndexedData(userIndex, options);
+      result = await this.createUserIndexedData(userIndex, options);
     }
 
     return result.toJSON();

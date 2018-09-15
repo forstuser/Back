@@ -1255,7 +1255,7 @@ class UploadController {
         const user = _shared2.default.verifyAuthorization(request.headers);
         const { id, type, index } = request.params || {};
         const seller_image_types = _main2.default.SELLER_IMAGE_TYPE.split(',');
-        const seller_data = await sellerAdaptor.retrieveSellerDetail({ where: { id, user_id: user.id }, attributes: ['seller_details'] });
+        const seller_data = await sellerAdaptor.retrieveSellerDetail({ where: { id, user_id: user.id }, attributes: ['seller_details', 'id', 'user_id'] });
         let file_name;
         if (seller_data.seller_details) {
           if (type.toString() === '1') {
@@ -1376,7 +1376,7 @@ class UploadController {
       try {
         const { id, type, index } = request.params || {};
         const seller_image_types = _main2.default.SELLER_IMAGE_TYPE.split(',');
-        const seller_data = await sellerAdaptor.retrieveSellerDetail({ where: { id }, attributes: ['seller_details'] });
+        const seller_data = await sellerAdaptor.retrieveSellerDetail({ where: { id }, attributes: ['seller_details', 'id', 'user_id'] });
         let file_name;
         if (seller_data.seller_details) {
           if (type.toString() === '1') {
@@ -1449,7 +1449,7 @@ class UploadController {
         const user = _shared2.default.verifyAuthorization(request.headers);
         const { id, type, index } = request.params || {};
         const seller_image_types = _main2.default.SELLER_IMAGE_TYPE.split(',');
-        const seller_data = await sellerAdaptor.retrieveSellerDetail({ where: { id, user_id: user.id }, attributes: ['seller_details'] });
+        const seller_data = await sellerAdaptor.retrieveSellerDetail({ where: { id, user_id: user.id }, attributes: ['seller_details', 'id', 'user_id'] });
         let file_name;
         if (seller_data.seller_details) {
           if (type.toString() === '1') {
@@ -1531,7 +1531,7 @@ class UploadController {
         const user = _shared2.default.verifyAuthorization(request.headers);
         const { id, type, index } = request.params || {};
         const seller_image_types = _main2.default.SELLER_IMAGE_TYPE.split(',');
-        const seller_data = await sellerAdaptor.retrieveSellerDetail({ where: { id, user_id: user.id }, attributes: ['seller_details'] });
+        const seller_data = await sellerAdaptor.retrieveSellerDetail({ where: { id, user_id: user.id }, attributes: ['seller_details', 'id', 'user_id'] });
         let file_name;
         if (seller_data.seller_details) {
           const seller_image_update = [];
@@ -2510,7 +2510,7 @@ class UploadController {
           forceUpdate: request.pre.forceUpdate
         }).code(404);
       } catch (err) {
-        console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
+        console.log(`Error on ${new Date()} for user is as follow: \n \n ${err}`);
         const fsImplUser = new _s3fs2.default(`${_main2.default.AWS.S3.BUCKET}/${_main2.default.AWS.S3.USER_IMAGE}`, _main2.default.AWS.ACCESS_DETAILS);
         try {
           const fileResult = await fsImplUser.readFile(userData.image_name);

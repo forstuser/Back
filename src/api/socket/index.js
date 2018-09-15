@@ -11,6 +11,7 @@ import CategoryAdaptor from '../Adaptors/category';
 import _ from 'lodash';
 import Promise from 'bluebird';
 import moment from 'moment';
+import config from '../../config/main';
 
 let connected_socket, modals, sellerAdaptor, shopEarnAdaptor, io, userAdaptor,
     orderAdaptor, notificationAdaptor, productAdaptor, jobAdaptor,
@@ -136,7 +137,7 @@ export default class SocketServer {
           sellerAdaptor.retrieveSellerDetail(
               {
                 where: {id: seller_id},
-                attributes: ['seller_type_id', 'seller_name', 'user_id'],
+                attributes: ['seller_type_id', 'seller_name', 'user_id', 'id'],
               }),
           userAdaptor.retrieveUserIndexedData({
             where: {user_id}, attributes: [
@@ -196,7 +197,8 @@ export default class SocketServer {
             payload: {
               order_id: order.id, order_type,
               status_type: order.status_type, order, user_id,
-              title: `New order has been placed by user ${user_index_data.user_name}.`,
+              title: `New order has been placed by user ${user_index_data.user_name ||
+              ''}.`,
               description: 'Please click here for further detail.',
               notification_type: 1,
             },
@@ -218,7 +220,8 @@ export default class SocketServer {
               user_id, payload: {
                 order_id: order.id, order_type,
                 status_type: order.status_type, order, user_id,
-                title: `New order has been placed to seller ${seller_detail.seller_name}.`,
+                title: `New order has been placed to seller ${seller_detail.seller_name ||
+                ''}.`,
                 description: 'Please click here for further detail.',
                 notification_type: 31,
               },
@@ -251,7 +254,8 @@ export default class SocketServer {
             payload: {
               order_id: order.id, order_type,
               status_type: order.status_type, order, service_users, user_id,
-              title: `New order has been placed by user ${user_index_data.user_name}.`,
+              title: `New order has been placed by user ${user_index_data.user_name ||
+              ''}.`,
               description: 'Please click here for further detail.',
               notification_type: 1,
             },
@@ -273,7 +277,8 @@ export default class SocketServer {
               user_id, payload: {
                 order_id: order.id, order_type,
                 status_type: order.status_type, order, user_id,
-                title: `New order has been placed to seller ${seller_detail.seller_name}.`,
+                title: `New order has been placed to seller ${seller_detail.seller_name ||
+                ''}.`,
                 description: 'Please click here for further detail.',
                 notification_type: 31,
               },
@@ -295,7 +300,7 @@ export default class SocketServer {
           sellerAdaptor.retrieveSellerDetail(
               {
                 where: {id: seller_id},
-                attributes: ['seller_type_id', 'seller_name', 'user_id'],
+                attributes: ['seller_type_id', 'seller_name', 'user_id', 'id'],
               }),
           userAdaptor.retrieveUserIndexedData({
             where: {user_id}, attributes: [
@@ -428,7 +433,8 @@ export default class SocketServer {
             status_type: order.status_type,
             is_modified: order.is_modified,
             user_id,
-            title: `Order has been modified by seller ${seller_detail.seller_name}, please review.`,
+            title: `Order has been modified by seller ${seller_detail.seller_name ||
+            ''}, please review.`,
             description: 'Please click here for further detail.',
             notification_type: 31,
           },
@@ -450,7 +456,7 @@ export default class SocketServer {
           sellerAdaptor.retrieveSellerDetail(
               {
                 where: {id: seller_id},
-                attributes: ['seller_type_id', 'seller_name', 'user_id'],
+                attributes: ['seller_type_id', 'seller_name', 'id', 'user_id'],
               }),
           userAdaptor.retrieveUserIndexedData({
             where: {user_id}, attributes: [
@@ -464,6 +470,7 @@ export default class SocketServer {
               false), modals.measurement.findAll({where: {status_type: 1}})]);
     if (order_data) {
       order_data.order_details = order_details || order_data.order_details;
+      order_data.status_type = 20;
       let order = await orderAdaptor.retrieveOrUpdateOrder(
           {
             where: {id: order_id, user_id, seller_id, status_type: 19},
@@ -541,15 +548,15 @@ export default class SocketServer {
             order.order_details.map(item => {
               if (item.sku_measurement) {
                 const measurement_type = measurement_types.find(
-                    mtItem => mtItem.id ===
-                        item.sku_measurement.measurement_type);
+                    mtItem => mtItem.id.toString() ===
+                        item.sku_measurement.measurement_type.toString());
                 item.sku_measurement.measurement_acronym = measurement_type ?
                     measurement_type.acronym : 'unit';
               }
               if (item.updated_measurement) {
                 const updated_measurement_type = measurement_types.find(
-                    mtItem => mtItem.id ===
-                        item.updated_measurement.measurement_type);
+                    mtItem => mtItem.id.toString() ===
+                        item.updated_measurement.measurement_type.toString());
                 item.updated_measurement.measurement_acronym = updated_measurement_type ?
                     updated_measurement_type.acronym : 'unit';
               }
@@ -573,7 +580,8 @@ export default class SocketServer {
               status_type: order.status_type,
               is_modified: order.is_modified,
               user_id,
-              title: `Order has marked started by ${user_index_data.user_name}.`,
+              title: `Order has marked started by ${user_index_data.user_name ||
+              ''}.`,
               description: 'Please click here for further detail.',
               notification_type: 1,
               start_date: order.order_type ?
@@ -622,7 +630,7 @@ export default class SocketServer {
           sellerAdaptor.retrieveSellerDetail(
               {
                 where: {id: seller_id},
-                attributes: ['seller_type_id', 'seller_name', 'user_id'],
+                attributes: ['seller_type_id', 'seller_name', 'id', 'user_id'],
               }),
           userAdaptor.retrieveUserIndexedData({
             where: {user_id}, attributes: [
@@ -632,7 +640,7 @@ export default class SocketServer {
                 'user_name']],
           }),
           orderAdaptor.retrieveOrUpdateOrder(
-              {where: {id: order_id, user_id, seller_id, status_type: 19}}, {},
+              {where: {id: order_id, user_id, seller_id, status_type: 20}}, {},
               false), modals.measurement.findAll({where: {status_type: 1}}),
           sellerAdaptor.retrieveAssistedServiceUser({
             where: JSON.parse(
@@ -652,6 +660,7 @@ export default class SocketServer {
           })]);
     if (order_data) {
       order_data.order_details = order_details || order_data.order_details;
+      order_data.status_type = 21;
       const {start_date, end_date} = order_data.order_details[0];
       const {service_types} = service_user;
       const {price} = service_types[0] || {};
@@ -664,19 +673,19 @@ export default class SocketServer {
             base_price.value || 0 : 0;
         if (total_minutes > 60 && other_price) {
           order_data.order_details[0].hourly_price = Math.round(
-              ((total_minutes - 60) / 30) * other_price.value);
+              Math.ceil((total_minutes - 60) / 30) * other_price.value);
           order_data.order_details[0].total_amount += Math.round(
-              ((total_minutes - 60) / 30) * other_price.value);
+              Math.ceil((total_minutes - 60) / 30) * other_price.value);
         }
         order_data.order_details[0].base_price = base_price ?
             base_price.value || 0 : 0;
       } else {
         order_data.order_details[0].total_amount = Math.round(
-            (total_minutes / 60) * price.value);
+            Math.ceil(total_minutes / 60) * price.value);
       }
       let order = await orderAdaptor.retrieveOrUpdateOrder(
           {
-            where: {id: order_id, user_id, seller_id, status_type: 19},
+            where: {id: order_id, user_id, seller_id, status_type: 20},
             include: [
               {
                 model: modals.users, as: 'user', attributes: [
@@ -750,15 +759,15 @@ export default class SocketServer {
             order.order_details.map(item => {
               if (item.sku_measurement) {
                 const measurement_type = measurement_types.find(
-                    mtItem => mtItem.id ===
-                        item.sku_measurement.measurement_type);
+                    mtItem => mtItem.id.toString() ===
+                        item.sku_measurement.measurement_type.toString());
                 item.sku_measurement.measurement_acronym = measurement_type ?
                     measurement_type.acronym : 'unit';
               }
               if (item.updated_measurement) {
                 const updated_measurement_type = measurement_types.find(
-                    mtItem => mtItem.id ===
-                        item.updated_measurement.measurement_type);
+                    mtItem => mtItem.id.toString() ===
+                        item.updated_measurement.measurement_type.toString());
                 item.updated_measurement.measurement_acronym = updated_measurement_type ?
                     updated_measurement_type.acronym : 'unit';
               }
@@ -782,7 +791,8 @@ export default class SocketServer {
               status_type: order.status_type,
               is_modified: order.is_modified,
               user_id,
-              title: `Order has marked ended by ${user_index_data.user_name}.`,
+              title: `Order has marked ended by ${user_index_data.user_name ||
+              ''}.`,
               description: 'Please click here for further detail.',
               notification_type: 1,
               start_date: order.order_type ?
@@ -837,7 +847,7 @@ export default class SocketServer {
           sellerAdaptor.retrieveSellerDetail(
               {
                 where: {id: seller_id},
-                attributes: ['seller_type_id', 'seller_name', 'user_id'],
+                attributes: ['seller_type_id', 'seller_name', 'id', 'user_id'],
               }),
           userAdaptor.retrieveUserIndexedData({
             where: {user_id}, attributes: [
@@ -943,15 +953,15 @@ export default class SocketServer {
             order.order_details.map(item => {
               if (item.sku_measurement) {
                 const measurement_type = measurement_types.find(
-                    mtItem => mtItem.id ===
-                        item.sku_measurement.measurement_type);
+                    mtItem => mtItem.id.toString() ===
+                        item.sku_measurement.measurement_type.toString());
                 item.sku_measurement.measurement_acronym = measurement_type ?
                     measurement_type.acronym : 'unit';
               }
               if (item.updated_measurement) {
                 const updated_measurement_type = measurement_types.find(
-                    mtItem => mtItem.id ===
-                        item.updated_measurement.measurement_type);
+                    mtItem => mtItem.id.toString() ===
+                        item.updated_measurement.measurement_type.toString());
                 item.updated_measurement.measurement_acronym = updated_measurement_type ?
                     updated_measurement_type.acronym : 'unit';
               }
@@ -971,8 +981,10 @@ export default class SocketServer {
               order_id: order.id, status_type: order.status_type,
               is_modified: order.is_modified, user_id,
               title: is_user ?
-                  `Order Approved successfully by ${user_index_data.user_name}.` :
-                  `Order Approved successfully for ${user_index_data.user_name}.`,
+                  `Order Approved successfully by ${user_index_data.user_name ||
+                  ''}.` :
+                  `Order Approved successfully for ${user_index_data.user_name ||
+                  ''}.`,
               description: 'Please click here for further detail.',
               notification_type: 1, order_type: order.order_type,
             },
@@ -1000,7 +1012,8 @@ export default class SocketServer {
               is_modified: order.is_modified,
               user_id,
               title: !is_user ?
-                  `Order has been approved by seller ${seller_detail.seller_name}, delivery detail will be updated shortly.` :
+                  `Order has been approved by seller ${seller_detail.seller_name ||
+                  ''}, delivery detail will be updated shortly.` :
                   `Your request to approve order is successful. Waiting for seller to assign a delivery boy.`,
               description: 'Please click here for further detail.',
               notification_type: 31,
@@ -1024,7 +1037,7 @@ export default class SocketServer {
           sellerAdaptor.retrieveSellerDetail(
               {
                 where: {id: seller_id},
-                attributes: ['seller_type_id', 'seller_name', 'user_id'],
+                attributes: ['seller_type_id', 'seller_name', 'id', 'user_id'],
               }),
           userAdaptor.retrieveUserIndexedData({
             where: {user_id}, attributes: [
@@ -1122,15 +1135,15 @@ export default class SocketServer {
             order.order_details.map(item => {
               if (item.sku_measurement) {
                 const measurement_type = measurement_types.find(
-                    mtItem => mtItem.id ===
-                        item.sku_measurement.measurement_type);
+                    mtItem => mtItem.id.toString() ===
+                        item.sku_measurement.measurement_type.toString());
                 item.sku_measurement.measurement_acronym = measurement_type ?
                     measurement_type.acronym : 'unit';
               }
               if (item.updated_measurement) {
                 const updated_measurement_type = measurement_types.find(
-                    mtItem => mtItem.id ===
-                        item.updated_measurement.measurement_type);
+                    mtItem => mtItem.id.toString() ===
+                        item.updated_measurement.measurement_type.toString());
                 item.updated_measurement.measurement_acronym = updated_measurement_type ?
                     updated_measurement_type.acronym : 'unit';
               }
@@ -1167,8 +1180,13 @@ export default class SocketServer {
             order_id: order.id,
             status_type: order.status_type,
             is_modified: order.is_modified, user_id,
-            title: `Hurray! ${(order.delivery_user ||
-                {}).name} is on the way with your order from seller ${seller_detail.seller_name}.`,
+            title: `Hurray! ${order.delivery_user ?
+                `${(order.delivery_user ||
+                    {}).name ||
+                ''} with your order from seller ${seller_detail.seller_name ||
+                ''}` :
+                `your order from seller ${seller_detail.seller_name ||
+                ''}`} is on the way.`,
             description: 'Please click here for further detail.',
             notification_type: 31,
             order_type: order.order_type,
@@ -1191,7 +1209,7 @@ export default class SocketServer {
           sellerAdaptor.retrieveSellerDetail(
               {
                 where: {id: seller_id},
-                attributes: ['seller_type_id', 'seller_name', 'user_id'],
+                attributes: ['seller_type_id', 'seller_name', 'id', 'user_id'],
               }),
           userAdaptor.retrieveUserIndexedData({
             where: {user_id}, attributes: [
@@ -1286,15 +1304,15 @@ export default class SocketServer {
             order.order_details.map(item => {
               if (item.sku_measurement) {
                 const measurement_type = measurement_types.find(
-                    mtItem => mtItem.id ===
-                        item.sku_measurement.measurement_type);
+                    mtItem => mtItem.id.toString() ===
+                        item.sku_measurement.measurement_type.toString());
                 item.sku_measurement.measurement_acronym = measurement_type ?
                     measurement_type.acronym : 'unit';
               }
               if (item.updated_measurement) {
                 const updated_measurement_type = measurement_types.find(
-                    mtItem => mtItem.id ===
-                        item.updated_measurement.measurement_type);
+                    mtItem => mtItem.id.toString() ===
+                        item.updated_measurement.measurement_type.toString());
                 item.updated_measurement.measurement_acronym = updated_measurement_type ?
                     updated_measurement_type.acronym : 'unit';
               }
@@ -1316,7 +1334,8 @@ export default class SocketServer {
           user_id, payload: {
             order_id: order.id, status_type: order.status_type,
             is_modified: order.is_modified, user_id,
-            title: `Oops! Look a like seller ${seller_detail.seller_name} rejected your order.`,
+            title: `Oops! Look a like seller ${seller_detail.seller_name ||
+            ''} rejected your order.`,
             description: 'Please click here for further detail.',
             notification_type: 31, order_type: order.order_type,
           },
@@ -1338,7 +1357,7 @@ export default class SocketServer {
           sellerAdaptor.retrieveSellerDetail(
               {
                 where: {id: seller_id},
-                attributes: ['seller_type_id', 'seller_name', 'user_id'],
+                attributes: ['seller_type_id', 'seller_name', 'id', 'user_id'],
               }),
           userAdaptor.retrieveUserIndexedData({
             where: {user_id}, attributes: [
@@ -1438,15 +1457,15 @@ export default class SocketServer {
             order.order_details.map(item => {
               if (item.sku_measurement) {
                 const measurement_type = measurement_types.find(
-                    mtItem => mtItem.id ===
-                        item.sku_measurement.measurement_type);
+                    mtItem => mtItem.id.toString() ===
+                        item.sku_measurement.measurement_type.toString());
                 item.sku_measurement.measurement_acronym = measurement_type ?
                     measurement_type.acronym : 'unit';
               }
               if (item.updated_measurement) {
                 const updated_measurement_type = measurement_types.find(
-                    mtItem => mtItem.id ===
-                        item.updated_measurement.measurement_type);
+                    mtItem => mtItem.id.toString() ===
+                        item.updated_measurement.measurement_type.toString());
                 item.updated_measurement.measurement_acronym = updated_measurement_type ?
                     updated_measurement_type.acronym : 'unit';
               }
@@ -1464,7 +1483,8 @@ export default class SocketServer {
           payload: {
             order_id: order.id, status_type: order.status_type,
             is_modified: order.is_modified, user_id,
-            title: `Oops! Look a like ${user_index_data.user_name} is not satisfied by modification in order and rejected the order.`,
+            title: `Oops! Look a like ${user_index_data.user_name ||
+            ''} is not satisfied by modification in order and rejected the order.`,
             description: 'Please click here for further detail.',
             notification_type: 1, order_type: order.order_type,
           },
@@ -1490,7 +1510,8 @@ export default class SocketServer {
                 status_type: order.status_type,
                 is_modified: order.is_modified,
                 user_id,
-                title: `Order has been rejected successfully and we have updated same to ${seller_detail.seller_name}.`,
+                title: `Order has been rejected successfully and we have updated same to ${seller_detail.seller_name ||
+                ''}.`,
                 description: 'Please click here for further detail.',
                 notification_type: 31,
                 order_type: order.order_type,
@@ -1515,7 +1536,7 @@ export default class SocketServer {
           sellerAdaptor.retrieveSellerDetail(
               {
                 where: {id: seller_id},
-                attributes: ['seller_type_id', 'seller_name', 'user_id'],
+                attributes: ['seller_type_id', 'seller_name', 'id', 'user_id'],
               }),
           userAdaptor.retrieveUserIndexedData({
             where: {user_id}, attributes: [
@@ -1612,15 +1633,15 @@ export default class SocketServer {
             order.order_details.map(item => {
               if (item.sku_measurement) {
                 const measurement_type = measurement_types.find(
-                    mtItem => mtItem.id ===
-                        item.sku_measurement.measurement_type);
+                    mtItem => mtItem.id.toString() ===
+                        item.sku_measurement.measurement_type.toString());
                 item.sku_measurement.measurement_acronym = measurement_type ?
                     measurement_type.acronym : 'unit';
               }
               if (item.updated_measurement) {
                 const updated_measurement_type = measurement_types.find(
-                    mtItem => mtItem.id ===
-                        item.updated_measurement.measurement_type);
+                    mtItem => mtItem.id.toString() ===
+                        item.updated_measurement.measurement_type.toString());
                 item.updated_measurement.measurement_acronym = updated_measurement_type ?
                     updated_measurement_type.acronym : 'unit';
               }
@@ -1638,7 +1659,8 @@ export default class SocketServer {
           payload: {
             order_id: order.id, status_type: order.status_type,
             is_modified: order.is_modified, user_id,
-            title: `Oops! Look a like ${user_index_data.user_name} has cancelled the order.`,
+            title: `Oops! Look a like ${user_index_data.user_name ||
+            ''} has cancelled the order.`,
             description: 'Please click here for further detail.',
             notification_type: 1, order_type: order.order_type,
           },
@@ -1664,7 +1686,8 @@ export default class SocketServer {
                 status_type: order.status_type,
                 is_modified: order.is_modified,
                 user_id,
-                title: `Order has cancelled successfully and we have updated the same to ${seller_detail.seller_name}.`,
+                title: `Order has cancelled successfully and we have updated the same to ${seller_detail.seller_name ||
+                ''}.`,
                 description: 'Please click here for further detail.',
                 notification_type: 31,
                 order_type: order.order_type,
@@ -1689,7 +1712,14 @@ export default class SocketServer {
           sellerAdaptor.retrieveSellerDetail(
               {
                 where: {id: seller_id},
-                attributes: ['seller_type_id', 'seller_name', 'user_id'],
+                attributes: [
+                  'seller_type_id',
+                  'seller_name',
+                  'id',
+                  'user_id',
+                  'is_fmcg',
+                  'has_pos',
+                  'is_assisted'],
               }),
           userAdaptor.retrieveUserIndexedData({
             where: {user_id}, attributes: [
@@ -1702,16 +1732,18 @@ export default class SocketServer {
               {
                 where: {
                   id: order_id, user_id, seller_id,
-                  status_type: [16, 19],
-                },
-                attributes: ['id'],
+                  status_type: [16, 19, 21],
+                }, attributes: ['id'],
               }, {}, false),
           modals.measurement.findAll({where: {status_type: 1}})]);
     if (order_data) {
       order_data.status_type = status_type || 5;
       let order = await orderAdaptor.retrieveOrUpdateOrder(
           {
-            where: {id: order_id, user_id, seller_id, status_type: [16, 19]},
+            where: {
+              id: order_id, user_id, seller_id,
+              status_type: [16, 19, 21],
+            },
           }, order_data, false);
       if (order) {
         if (order.order_type === 2 && order.delivery_user_id) {
@@ -1740,15 +1772,15 @@ export default class SocketServer {
             order.order_details.map(item => {
               if (item.sku_measurement) {
                 const measurement_type = measurement_types.find(
-                    mtItem => mtItem.id ===
-                        item.sku_measurement.measurement_type);
+                    mtItem => mtItem.id.toString() ===
+                        item.sku_measurement.measurement_type.toString());
                 item.sku_measurement.measurement_acronym = measurement_type ?
                     measurement_type.acronym : 'unit';
               }
               if (item.updated_measurement) {
                 const updated_measurement_type = measurement_types.find(
-                    mtItem => mtItem.id ===
-                        item.updated_measurement.measurement_type);
+                    mtItem => mtItem.id.toString() ===
+                        item.updated_measurement.measurement_type.toString());
                 item.updated_measurement.measurement_acronym = updated_measurement_type ?
                     updated_measurement_type.acronym : 'unit';
               }
@@ -1756,8 +1788,7 @@ export default class SocketServer {
               return item;
             }) : order.order_details;
         const payment_details = await SocketServer.init_on_payment({
-          user_id,
-          seller_id,
+          user_id, seller_id, has_pos: seller_detail.has_pos,
           home_delivered: !!order.delivery_user_id,
           sku_details: order.order_type === 2 ? order.order_details :
               order.order_details.map(item => {
@@ -1774,8 +1805,8 @@ export default class SocketServer {
           seller_type_id: seller_detail.seller_type_id,
         });
 
-        order_data.expense_id = payment_details.product.id;
-        order_data.job_id = payment_details.cashback_jobs.id;
+        order_data.expense_id = (payment_details.product || {}).id;
+        order_data.job_id = (payment_details.cashback_jobs || {}).id;
         order = await orderAdaptor.retrieveOrUpdateOrder(
             {
               where: {
@@ -1830,6 +1861,8 @@ export default class SocketServer {
                 }],
             }, order_data, false);
 
+        order.upload_id = seller_detail.has_pos ?
+            (payment_details.product || {}).job_id : undefined;
         order.available_cashback = 0;
         order.total_amount = 0;
 
@@ -1843,7 +1876,8 @@ export default class SocketServer {
           seller_user_id: seller_detail.user_id,
           payload: {
             order,
-            title: `${user_index_data.user_name} has marked payment complete for his order.`,
+            title: `${user_index_data.user_name ||
+            ''} has marked payment complete for his order.`,
             description: 'Please click here for further detail.',
             notification_type: 1,
           },
@@ -1887,7 +1921,7 @@ export default class SocketServer {
   }
 
   static async init_on_payment(data) {
-    let {user_id, seller_id, sku_details, home_delivered, order_type, seller_type_id} = data;
+    let {user_id, seller_id, sku_details, home_delivered, order_type, seller_type_id, has_pos} = data;
     const total_amount = order_type && order_type === 1 ?
         _.sumBy(sku_details, 'selling_price') :
         sku_details.total_amount;
@@ -1900,18 +1934,33 @@ export default class SocketServer {
     const [product, cashback_jobs, user_default_limit_rules] = await Promise.all(
         [
           productAdaptor.createEmptyProduct({
-            job_id: jobResult.id, user_id, main_category_id: 8,
-            category_id: 26, purchase_cost: total_amount,
-            updated_by: user_id, seller_id, status_type: 11, copies: [],
+            job_id: jobResult.id,
+            user_id,
+            main_category_id: 8,
+            category_id: config.HOUSEHOLD_CATEGORY_ID,
+            purchase_cost: total_amount,
+            updated_by: user_id,
+            seller_id,
+            status_type: 11,
+            copies: [],
             document_date: moment.utc().startOf('day').format('YYYY-MM-DD'),
           }),
-          order_type && order_type === 1 && seller_type_id === 1 ?
+          order_type && order_type === 1 && /*seller_type_id === 1 &&*/
+          has_pos ?
               jobAdaptor.createCashBackJobs({
-                job_id: jobResult.id, user_id, updated_by: user_id,
-                uploaded_by: user_id, user_status: 8, admin_status: 2,
-                seller_id, cashback_status: 13, online_order: true,
-                verified_seller: true, seller_status: 16,
-                digitally_verified: true, home_delivered,
+                job_id: jobResult.id,
+                user_id,
+                updated_by: user_id,
+                uploaded_by: user_id,
+                user_status: 8,
+                admin_status: 2,
+                seller_id,
+                cashback_status: 13,
+                online_order: true,
+                verified_seller: seller_type_id === 1,
+                seller_status: seller_type_id === 1 ? 16 : 17,
+                digitally_verified: true,
+                home_delivered,
               }) :
               undefined,
           categoryAdaptor.retrieveLimitRules({where: {user_id: 1}})]);
@@ -1924,7 +1973,7 @@ export default class SocketServer {
         shopEarnAdaptor.addUserSKUExpenses(
             sku_details.map(item => {
               item.expense_id = product.id;
-              item.job_id = cashback_jobs.id;
+              item.job_id = (cashback_jobs || {}).id;
               return item;
             })), home_delivered ? jobAdaptor.addCashBackToSeller({
           amount: home_delivery_limit.rule_limit,
@@ -1946,7 +1995,7 @@ export default class SocketServer {
           sellerAdaptor.retrieveSellerDetail(
               {
                 where: {id: seller_id},
-                attributes: ['seller_type_id', 'seller_name', 'user_id'],
+                attributes: ['seller_type_id', 'seller_name', 'id', 'user_id'],
               }),
           userAdaptor.retrieveUserIndexedData({
             where: {user_id}, attributes: [
@@ -1965,7 +2014,8 @@ export default class SocketServer {
       seller_user_id: seller_detail.user_id,
       payload: {
         cash_back_details, amount,
-        title: `Your wallet has been credited with INR${amount} against redemption request from ${user_index_data.user_name}.`,
+        title: `Your wallet has been credited with INR${amount} against redemption request from ${user_index_data.user_name ||
+        ''}.`,
         description: 'Please click here for further detail.',
         notification_type: 2,
       },

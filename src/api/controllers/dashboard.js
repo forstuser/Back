@@ -75,7 +75,7 @@ class DashboardController {
     try {
       if (!request.pre.forceUpdate) {
         const {seller_id} = request.params;
-        const{seller_type_id} = user;
+        const {seller_type_id} = user;
         return reply.response(
             await dashboardAdaptor.retrieveSellerDashboard({seller_id},
                 request, seller_type_id));
@@ -888,14 +888,18 @@ class DashboardController {
     }
   }
 
-  static notifyUser(request, reply) {
-    const payload = request.payload ||
-        {userId: '', data: {title: '', description: ''}};
-    notificationAdaptor.notifyUser({
-      userId: payload.userId || '',
-      payload: payload.data,
-      reply: reply
-    });
+  static async notifyUser(request, reply) {
+    try {
+      const payload = request.payload;
+      return await notificationAdaptor.notifyUser({
+        seller_user_id: payload.seller_user_id,
+        userId: payload.userId,
+        payload: payload.data,
+        reply,
+      });
+    } catch (e) {
+      console.log(e);
+    }
   }
 }
 

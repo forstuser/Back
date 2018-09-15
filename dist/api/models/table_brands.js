@@ -18,6 +18,9 @@ exports.default = (sequelize, DataTypes) => {
     brand_description: {
       type: DataTypes.STRING
     },
+    category_ids: {
+      type: DataTypes.JSONB
+    },
     created_by: {
       type: DataTypes.INTEGER
     },

@@ -21,6 +21,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * @param modal
  * @param route
  * @param middleware
+ * @param socket
  */
 function prepareSellerRoutes(modal, route, middleware, socket) {
 
@@ -47,6 +48,17 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
     route.push({
       method: 'GET', path: '/sellers/cashbacks',
       handler: _sellers2.default.getCashBackSellers, config: {
+        auth: 'jwt', pre: [{
+          method: middleware.checkAppVersion, assign: 'forceUpdate'
+        }, {
+          method: middleware.updateUserActiveStatus, assign: 'userExist'
+        }]
+      }
+    });
+
+    route.push({
+      method: 'GET', path: '/sellers/offers',
+      handler: _sellers2.default.getOfferSellers, config: {
         auth: 'jwt', pre: [{
           method: middleware.checkAppVersion, assign: 'forceUpdate'
         }, {
@@ -104,6 +116,19 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       method: 'GET',
       path: '/sellers/{id}/categories',
       handler: _sellers2.default.getSellerCategories,
+      config: {
+        auth: 'jwt',
+        pre: [{
+          method: middleware.checkAppVersion,
+          assign: 'forceUpdate'
+        }]
+      }
+    });
+
+    route.push({
+      method: 'PUT',
+      path: '/sellers/{id}/rush/{flag}',
+      handler: _sellers2.default.updateSellerRushHours,
       config: {
         auth: 'jwt',
         pre: [{
@@ -184,6 +209,9 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
             email: _joi2.default.string(),
             gstin: _joi2.default.string(),
             pan: _joi2.default.string(),
+            is_assisted: [_joi2.default.boolean(), _joi2.default.allow(null)],
+            is_fmcg: [_joi2.default.boolean(), _joi2.default.allow(null)],
+            has_pos: [_joi2.default.boolean(), _joi2.default.allow(null)],
             category_id: [_joi2.default.number(), _joi2.default.allow(null)],
             output: 'data',
             parse: true
@@ -206,6 +234,9 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
           payload: {
             gstin: [_joi2.default.string(), _joi2.default.allow(null)],
             pan: [_joi2.default.string(), _joi2.default.allow(null)],
+            is_assisted: [_joi2.default.boolean(), _joi2.default.allow(null)],
+            is_fmcg: [_joi2.default.boolean(), _joi2.default.allow(null)],
+            has_pos: [_joi2.default.boolean(), _joi2.default.allow(null)],
             category_id: [_joi2.default.number(), _joi2.default.allow(null)],
             output: 'data',
             parse: true
@@ -228,6 +259,9 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
           payload: {
             gstin: [_joi2.default.string(), _joi2.default.allow(null)],
             pan: [_joi2.default.string(), _joi2.default.allow(null)],
+            is_assisted: [_joi2.default.boolean(), _joi2.default.allow(null)],
+            is_fmcg: [_joi2.default.boolean(), _joi2.default.allow(null)],
+            has_pos: [_joi2.default.boolean(), _joi2.default.allow(null)],
             category_id: [_joi2.default.number(), _joi2.default.allow(null)],
             id: _joi2.default.number().required(),
             output: 'data',
@@ -302,9 +336,12 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
         validate: {
           payload: {
             provider_type_detail: [_joi2.default.array().items(_joi2.default.object().keys({
+              id: [_joi2.default.number(), _joi2.default.allow(null)],
               provider_type_id: _joi2.default.number().required(),
               sub_category_id: _joi2.default.number().required(),
-              category_4_id: [_joi2.default.array().items(_joi2.default.number()), _joi2.default.allow(null)]
+              category_brands: [_joi2.default.array().items(_joi2.default.object()), _joi2.default.allow(null)],
+              category_4_id: [_joi2.default.array(), _joi2.default.allow(null)],
+              brand_ids: [_joi2.default.array().items(_joi2.default.number()), _joi2.default.allow(null)]
             })).required()],
             output: 'data',
             parse: true
@@ -329,8 +366,10 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
         validate: {
           payload: {
             provider_type_detail: [_joi2.default.array().items(_joi2.default.object().keys({
+              id: [_joi2.default.number(), _joi2.default.allow(null)],
               provider_type_id: [_joi2.default.number(), _joi2.default.allow(null)],
               sub_category_id: [_joi2.default.number(), _joi2.default.allow(null)],
+              category_brands: [_joi2.default.array().items(_joi2.default.object()), _joi2.default.allow(null)],
               category_4_id: [_joi2.default.number(), _joi2.default.allow(null)],
               brand_ids: [_joi2.default.array().items(_joi2.default.number()), _joi2.default.allow(null)]
             })).required()],
@@ -644,7 +683,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
 
     route.push({
       method: 'GET',
-      path: '/sellers/{id}/loyalty/rules',
+      path: '/sellers/{seller_id}/loyalty/rules',
       config: {
         pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
         auth: 'jwt', handler: _sellers2.default.retrieveSellerLoyaltyRules,
@@ -688,11 +727,78 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
 
     route.push({
       method: 'GET',
+      path: '/sellers/{seller_id}/wallet',
+      config: {
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        auth: 'jwt', handler: _sellers2.default.retrieveSellerWallet,
+        description: 'Get Seller Wallet',
+        tags: ['api', 'Seller', 'Wallet', 'List'],
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [{ code: 200, message: 'Authenticated' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
+          }
+        }
+      }
+    });
+
+    route.push({
+      method: 'GET',
       path: '/sellers/{seller_id}/users',
       config: {
         pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
         auth: 'jwt', handler: _sellers2.default.retrieveSellerConsumers,
         description: 'Get Seller users',
+        tags: ['api', 'Seller', 'user', 'List'],
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [{ code: 200, message: 'Authenticated' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
+          }
+        }
+      }
+    });
+
+    route.push({
+      method: 'GET',
+      path: '/sellers/{seller_id}/users/cashbacks',
+      config: {
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        auth: 'jwt', handler: _sellers2.default.retrieveSellerConsumerCashBacks,
+        description: 'Get Seller users Cash Back Details',
+        tags: ['api', 'Seller', 'user', 'List'],
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [{ code: 200, message: 'Authenticated' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
+          }
+        }
+      }
+    });
+
+    route.push({
+      method: 'GET',
+      path: '/sellers/{seller_id}/users/transactions',
+      config: {
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        auth: 'jwt', handler: _sellers2.default.retrieveSellerConsumerTransactions,
+        description: 'Get Seller users Transaction Details',
+        tags: ['api', 'Seller', 'user', 'List'],
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [{ code: 200, message: 'Authenticated' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
+          }
+        }
+      }
+    });
+
+    route.push({
+      method: 'GET',
+      path: '/sellers/{seller_id}/transactions',
+      config: {
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, {
+          method: middleware.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        auth: 'jwt', handler: _sellers2.default.retrieveTransactions,
+        description: 'Get Seller Transaction Details for consumer',
         tags: ['api', 'Seller', 'user', 'List'],
         plugins: {
           'hapi-swagger': {
@@ -787,7 +893,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       path: '/sellers/{seller_id}/users/{customer_id}/transactions',
       config: {
         pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
-        auth: 'jwt', handler: _sellers2.default.retrieveSellerConsumerTransactions,
+        auth: 'jwt', handler: _sellers2.default.retrieveSellerTransactions,
         description: 'Get Seller customer transactions',
         tags: ['api', 'Seller', 'customer', 'transactions'],
         plugins: {

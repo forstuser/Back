@@ -18,7 +18,6 @@ import S3FS from 's3fs';
 import Promise from 'bluebird';
 import SellerAdaptor from '../Adaptors/sellers';
 import CategoryAdaptor from '../Adaptors/category';
-import _ from 'lodash';
 
 const PUBLIC_KEY = new RSA(config.TRUECALLER_PUBLIC_KEY,
     {signingScheme: 'sha512'});
@@ -618,21 +617,15 @@ class UserController {
               true);
           let [seller_detail] = await Promise.all([
             sellerAdaptor.retrieveOrUpdateSellerDetail(
-                {where: JSON.parse(JSON.stringify({user_id: user_detail.id}))},
+                {where: JSON.parse(JSON.stringify({user_id: user_detail.id})), attributes: ['seller_type_id', 'id']},
                 false, false),
             fcmManager.insertSellerFcmDetails({
               seller_user_id: user_detail.id,
               fcm_id, platform_id: platform || 1,
             })]);
           if (seller_detail) {
-            seller_detail = _.omit(seller_detail, [
-              'rush_hours', 'latitude', 'longitude', 'url',
-              'updated_by', 'created_by', 'status_type', 'updated_at',
-              'user_id', 'socket_id', 'created_at', 'customer_ids']);
-            seller_detail.seller_details = seller_detail.seller_details ?
-                _.omit(seller_detail.seller_details, [
-                  'offers', 'assisted_type_images']) :
-                seller_detail.seller_details;
+            user_detail.seller_type_id = seller_detail.seller_type_id;
+            user_detail.seller_id = seller_detail.id;
           }
           user_detail.seller_detail = true;
 

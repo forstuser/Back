@@ -31,15 +31,15 @@ class BrandController {
       if (!user && !isWebMode) {
         return reply.response({ status: false, message: 'Unauthorized' });
       } else if (!request.pre.forceUpdate) {
-        let category_id = (request.query.categoryid || '').split(',');
-
-        const options = {
-          status_type: 1,
-          category_id: category_id.length > 0 ? category_id : undefined
-        };
-
         let results = [];
-        if (category_id) {
+        if (request.query.categoryid) {
+          let category_id = (request.query.categoryid || '').split(',');
+
+          const options = JSON.parse(JSON.stringify({
+            status_type: 1,
+            category_id: category_id.length > 0 ? category_id : undefined
+          }));
+
           results = await modals.brands.findAll({
             where: {
               status_type: 1

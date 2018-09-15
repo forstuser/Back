@@ -35,7 +35,13 @@ class OrderController {
                 'delivery_user_id', 'job_id', 'expense_id', [
                   modals.sequelize.literal(
                       '(Select cashback_status from table_cashback_jobs as jobs where jobs.id = "order".job_id)'),
-                  'cashback_status'], [
+                  'cashback_status'],[
+                  modals.sequelize.literal(
+                      '(Select copies from table_cashback_jobs as jobs where jobs.id = "order".job_id)'),
+                  'copies'], [
+                  modals.sequelize.literal(
+                      '(Select job_id from table_cashback_jobs as jobs where jobs.id = "order".job_id)'),
+                  'upload_id'], [
                   modals.sequelize.literal(
                       '(Select purchase_cost from consumer_products as expense where expense.id = "order".expense_id)'),
                   'total_amount'], [
@@ -49,8 +55,7 @@ class OrderController {
           result.user = {};
           let measurement_types = [];
           [
-            result.seller, result.user, measurement_types,
-            result.user_address,
+            result.seller, result.user, measurement_types, result.user_address,
             result[result.order_type === 2 ? 'service_user' : 'delivery_user'],
             result.seller_review] = await Promise.all([
             sellerAdaptor.retrieveSellerDetail({
@@ -58,8 +63,7 @@ class OrderController {
                 'seller_name', 'address', 'contact_no', 'email', [
                   modals.sequelize.literal(
                       `(select AVG(seller_reviews.review_ratings) from table_seller_reviews as seller_reviews where seller_reviews.offline_seller_id = "sellers"."id")`),
-                  'ratings'],
-                [
+                  'ratings'], [
                   modals.sequelize.json(
                       `"seller_details"->'basic_details'`),
                   'basic_details'], [
@@ -85,8 +89,7 @@ class OrderController {
                     })), model: modals.seller_service_types, required: true,
                     attributes: ['service_type_id', 'seller_id', 'price', 'id'],
                   },
-                }) : undefined,
-            sellerAdaptor.retrieveSellerReviews(
+                }) : undefined, sellerAdaptor.retrieveSellerReviews(
                 {offline_seller_id: result.seller_id, order_id: id})]);
           if (result.delivery_user_id) {
             const service_user_key = result.order_type === 2 ?
@@ -126,10 +129,12 @@ class OrderController {
             {};
             result.user_address_detail = (`${address_line_1}${address_line_2 ?
                 ` ${address_line_2}` :
-                ''},${locality_name},${city_name},${state_name}-${pin_code}`).
-                split('null', '').join(',').
-                split('undefined', '').join(',').
-                split(',,').join(',');
+                ''},${locality_name},${city_name},${state_name}-${pin_code}`);
+            console.log(result.user_address_detail);
+            result.user_address_detail = result.user_address_detail.
+                split('null').join(',').
+                split('undefined').join(',').
+                split(',,').join(',').split(',-,').join(',').split(',,').join(',').split(',,').join(',');
           }
           return reply.response(
               {
@@ -317,7 +322,7 @@ class OrderController {
         const user_id = !user.seller_detail ? user.id : undefined;
         const {seller_id} = request.params;
         let {status_type} = request.query;
-        status_type = status_type || [4, 16, 19];
+        status_type = status_type || [4, 16, 19, 20, 21];
         const include = seller_id ? [
           {
             model: modals.users, as: 'user', attributes: [
@@ -367,12 +372,10 @@ class OrderController {
           },
           {
             model: modals.sellers, as: 'seller', attributes: [
-              'seller_name', 'address', 'contact_no', 'email',
-              [
+              'seller_name', 'address', 'contact_no', 'email', [
                 modals.sequelize.literal(
                     `"seller"."seller_details"->'basic_details'`),
-                'basic_details'],
-              [
+                'basic_details'], [
                 modals.sequelize.literal(
                     `"seller"."seller_details"->'business_details'`),
                 'business_details']],

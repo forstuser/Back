@@ -9,6 +9,11 @@ export default (sequelize, DataTypes) => {
     force_version: {
       type: DataTypes.INTEGER,
     },
+    os: {
+      type: DataTypes.STRING,
+    }, details: {
+      type: DataTypes.JSONB,
+    },
     createdAt: {
       type: DataTypes.DATEONLY,
       defaultValue: sequelize.literal('NOW()'),

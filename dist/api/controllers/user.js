@@ -80,10 +80,6 @@ var _category = require('../Adaptors/category');
 
 var _category2 = _interopRequireDefault(_category);
 
-var _lodash = require('lodash');
-
-var _lodash2 = _interopRequireDefault(_lodash);
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 const PUBLIC_KEY = new _nodeRsa2.default(_main2.default.TRUECALLER_PUBLIC_KEY, { signingScheme: 'sha512' });
@@ -629,13 +625,13 @@ class UserController {
         console.log('VALIDATE OTP RESPONSE: ', data);
         if (data.type === 'success') {
           let user_detail = await userAdaptor.retrieveSellerUser(userWhere, true);
-          let [seller_detail] = await _bluebird2.default.all([sellerAdaptor.retrieveOrUpdateSellerDetail({ where: JSON.parse(JSON.stringify({ user_id: user_detail.id })) }, false, false), fcmManager.insertSellerFcmDetails({
+          let [seller_detail] = await _bluebird2.default.all([sellerAdaptor.retrieveOrUpdateSellerDetail({ where: JSON.parse(JSON.stringify({ user_id: user_detail.id })), attributes: ['seller_type_id', 'id'] }, false, false), fcmManager.insertSellerFcmDetails({
             seller_user_id: user_detail.id,
             fcm_id, platform_id: platform || 1
           })]);
           if (seller_detail) {
-            seller_detail = _lodash2.default.omit(seller_detail, ['rush_hours', 'latitude', 'longitude', 'url', 'updated_by', 'created_by', 'status_type', 'updated_at', 'user_id', 'socket_id', 'created_at', 'customer_ids']);
-            seller_detail.seller_details = seller_detail.seller_details ? _lodash2.default.omit(seller_detail.seller_details, ['offers', 'assisted_type_images']) : seller_detail.seller_details;
+            user_detail.seller_type_id = seller_detail.seller_type_id;
+            user_detail.seller_id = seller_detail.id;
           }
           user_detail.seller_detail = true;
 
