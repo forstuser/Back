@@ -131,14 +131,11 @@ export function prepareDashboardRoutes(modal, routeObject, middleware) {
         auth: 'jwt',
         pre: [
           {method: middleware.checkAppVersion, assign: 'forceUpdate'},
-          {
-            method: middleware.updateUserActiveStatus,
-            assign: 'userExist',
-          },
         ],
         handler: ControllerObject.notifyUser,
         validate: {
           payload: joi.object({
+            seller_user_id: [joi.number(), joi.allow(null)],
             userId: [joi.number(), joi.allow(null)],
             data: joi.object(),
             output: 'data',

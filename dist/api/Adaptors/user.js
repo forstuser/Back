@@ -91,9 +91,10 @@ class UserAdaptor {
    * This is for getting user login or register for OTP and true caller
    * @param whereObject
    * @param defaultObject
+   * @param seller_id
    * @returns {Promise.<Model, created>}
    */
-  async createUserForSeller(whereObject, defaultObject) {
+  async createUserForSeller(whereObject, defaultObject, seller_id) {
     if (!whereObject.mobile_no) {
       whereObject = _lodash2.default.omit(whereObject, 'mobile_no');
     }
@@ -106,7 +107,10 @@ class UserAdaptor {
       result = await this.modals.users.create(defaultObject);
     }
 
-    return result.toJSON();
+    const user_detail = result.toJSON();
+    await this.retrieveOrUpdateUserIndexedData({ where: { user_id: user_detail.id }, attributes: ['my_seller_ids'] }, { seller_id });
+
+    return user_detail;
   }
 
   /**
@@ -124,18 +128,21 @@ class UserAdaptor {
    *
    * @param filterObject
    * @param is_create
+   * @param updates
    * @returns {Promise<Model>}
    */
-  async retrieveSellerUser(filterObject, is_create) {
-    filterObject.attributes = ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', [this.modals.sequelize.fn('CONCAT', 'consumer/', this.modals.sequelize.col('id'), '/images'), 'imageUrl']];
+  async retrieveSellerUser(filterObject, is_create, updates) {
+    filterObject.attributes = ['id', 'mobile_no', 'email'];
     console.log(filterObject);
     let seller_user = await this.modals.seller_users.findOne(filterObject);
     if (is_create) {
       filterObject.last_active_date = (0, _moment2.default)();
       if (!seller_user) {
-        seller_user = await this.modals.seller_users.create(filterObject.where);
+        seller_user = await this.modals.seller_users.create(updates || filterObject.where);
       }
-      await seller_user.updateAttributes(filterObject.where);
+    }
+    if (seller_user) {
+      await seller_user.updateAttributes(updates || filterObject.where);
     }
 
     return seller_user ? seller_user.toJSON() : seller_user;
@@ -389,10 +396,15 @@ class UserAdaptor {
       userIndex.wallet_seller_loyalty_ids = userIndex.wallet_seller_loyalty_ids || [];
       userIndex.wallet_seller_loyalty_ids.push(defaults.point_id);
     }
+    if (defaults.seller_id) {
+      userIndex.my_seller_ids = userIndex.my_seller_ids || [];
+      userIndex.my_seller_ids.push(defaults.seller_id);
+      userIndex.my_seller_ids = _lodash2.default.uniq(userIndex.my_seller_ids);
+    }
     if (result) {
       await result.updateAttributes(userIndex);
     } else {
-      result = this.createUserIndexedData(userIndex, options);
+      result = await this.createUserIndexedData(userIndex, options);
     }
 
     return result.toJSON();

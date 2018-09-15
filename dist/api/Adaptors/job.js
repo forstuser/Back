@@ -99,22 +99,31 @@ class JobAdaptor {
     })));
   }
 
+  async addSellerCashBackRedeemed(options) {
+    const { status_type, amount, transaction_type, seller_id, is_paytm, paytm_detail } = options;
+    return await this.modals.seller_wallet.create(JSON.parse(JSON.stringify({
+      status_type: status_type || 14, is_paytm,
+      amount, transaction_type, paytm_detail, seller_id
+    })));
+  }
+
   async approveHomeDeliveryCashback(options) {
     const { status_type, job_id, seller_id } = options;
     await this.modals.seller_wallet.update({ status_type: status_type || 16 }, { where: { job_id, seller_id } });
   }
 
   async addCashBackToSeller(options) {
-    const { status_type, job_id, seller_id, amount, transaction_type, user_id } = options;
+    const { status_type, job_id, seller_id, amount, transaction_type, user_id, cashback_source } = options;
     console.log(JSON.stringify(options));
     let cash_back_details = await this.modals.seller_wallet.create(JSON.parse(JSON.stringify({
-      status_type: status_type || 16, job_id,
+      status_type: status_type || 16, job_id, cashback_source,
       amount, transaction_type, user_id, seller_id
     })));
 
     cash_back_details = cash_back_details.toJSON();
-
-    await this.socketAdaptor.redeem_cash_back_at_seller({ user_id, seller_id, cash_back_details, amount });
+    if (this.socketAdaptor) {
+      await this.socketAdaptor.redeem_cash_back_at_seller({ user_id, seller_id, cash_back_details, amount });
+    }
 
     return cash_back_details;
   }
@@ -209,7 +218,7 @@ class JobAdaptor {
   }
 
   async cashBackRedemption(options) {
-    let { job_id, seller_cashback_id, user_cashback_id, seller_id, transaction_type, user_id, mobile_no, email, seller_cashback } = options;
+    let { job_id, seller_cashback_id, user_cashback_id, seller_id, transaction_type, user_id, seller_cashback } = options;
 
     return await Promise.all([this.approveSellerCashBack({
       job_id, id: seller_cashback_id,
@@ -223,7 +232,12 @@ class JobAdaptor {
     }), ...seller_cashback.map(item => {
       const { job_id, amount } = item;
       return this.addCashBackToSeller({
-        status_type: 16, amount, seller_id, user_id, transaction_type: 1
+        status_type: 16,
+        amount,
+        seller_id,
+        user_id,
+        transaction_type: 1,
+        cashback_source: 2
       });
     })]);
   }
@@ -237,17 +251,30 @@ class JobAdaptor {
       throw Error(_main2.default.PAYTM.ERROR[pay_TM_response.statusCode] || 'Unable to redeem amount on PayTM for now.');
     }
 
-    const paytm_detail = {
-      my_order_id: order_id,
-      pay_TM_response
-    };
-    return await Promise.all([this.approveSellerCashBack({ job_id, status_type: 14, transaction_type }), this.approveUserCashBack({ id: user_cashback_id, status_type: 14, transaction_type }), this.updateCashBackJobs({
+    const paytm_detail = { my_order_id: order_id, pay_TM_response };
+    return await Promise.all([this.approveSellerCashBack({ job_id, status_type: 14, transaction_type }), this.updateCashBackJobs({
       id: job_id, seller_status: 14, cashback_status: 14,
       jobDetail: { seller_status: 14, cashback_status: 14 }
     }), this.addUserCashBackRedeemed({
-      status_type: pay_TM_response.status !== 'PENDING' && pay_TM_response.status.toLowerCase() !== 'init' ? 13 : 14,
+      status_type: pay_TM_response.status !== 'PENDING' && pay_TM_response.status.toLowerCase() !== 'init' ? 14 : 13,
       amount, transaction_type, user_id, is_paytm: true, paytm_detail
     })]);
+  }
+
+  async sellerCashBackRedemptionAtPayTM(options) {
+    let { seller_id, transaction_type, amount, user_id, mobile_no, email, job_id } = options;
+    const order_id = `${Math.random().toString(36).substr(2, 9)}${user_id.toString(36)}`;
+    const pay_TM_response = JSON.parse((await this.payTMAdaptor.salesToUserCredit({ amount, order_id, mobile_no, email })));
+    console.log(JSON.stringify(pay_TM_response));
+    if (pay_TM_response && pay_TM_response.status !== 'SUCCESS' && pay_TM_response.status !== 'PENDING' && pay_TM_response.status.toLowerCase() !== 'init') {
+      throw Error(_main2.default.PAYTM.ERROR[pay_TM_response.statusCode] || 'Unable to redeem amount on PayTM for now.');
+    }
+
+    const paytm_detail = { my_order_id: order_id, pay_TM_response };
+    return await this.addSellerCashBackRedeemed({
+      status_type: pay_TM_response.status !== 'PENDING' && pay_TM_response.status.toLowerCase() !== 'init' ? 14 : 13,
+      amount, transaction_type, seller_id, is_paytm: true, paytm_detail
+    });
   }
 }
 

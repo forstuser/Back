@@ -39,6 +39,7 @@ class RefuelingAdaptor {
     options = _.omit(options, 'main_category_id');
     options = _.omit(options, 'product_status_type');
     options = _.omit(options, 'brand_id');
+    options = _.omit(options, 'ref_id');
 
     const refuelingResult = await this.modals.refueling.findAll({
       where: options,

@@ -9,6 +9,7 @@ import joi from 'joi';
  * @param modal
  * @param route
  * @param middleware
+ * @param socket
  */
 export function prepareSellerRoutes(modal, route, middleware, socket) {
 
@@ -38,6 +39,18 @@ export function prepareSellerRoutes(modal, route, middleware, socket) {
     route.push({
       method: 'GET', path: '/sellers/cashbacks',
       handler: controller.getCashBackSellers, config: {
+        auth: 'jwt', pre: [
+          {
+            method: middleware.checkAppVersion, assign: 'forceUpdate',
+          }, {
+            method: middleware.updateUserActiveStatus, assign: 'userExist',
+          }],
+      },
+    });
+
+    route.push({
+      method: 'GET', path: '/sellers/offers',
+      handler: controller.getOfferSellers, config: {
         auth: 'jwt', pre: [
           {
             method: middleware.checkAppVersion, assign: 'forceUpdate',
@@ -197,6 +210,9 @@ export function prepareSellerRoutes(modal, route, middleware, socket) {
             email: joi.string(),
             gstin: joi.string(),
             pan: joi.string(),
+            is_assisted: [joi.boolean(), joi.allow(null)],
+            is_fmcg: [joi.boolean(), joi.allow(null)],
+            has_pos: [joi.boolean(), joi.allow(null)],
             category_id: [joi.number(), joi.allow(null)],
             output: 'data',
             parse: true,
@@ -227,6 +243,9 @@ export function prepareSellerRoutes(modal, route, middleware, socket) {
           payload: {
             gstin: [joi.string(), joi.allow(null)],
             pan: [joi.string(), joi.allow(null)],
+            is_assisted: [joi.boolean(), joi.allow(null)],
+            is_fmcg: [joi.boolean(), joi.allow(null)],
+            has_pos: [joi.boolean(), joi.allow(null)],
             category_id: [joi.number(), joi.allow(null)],
             output: 'data',
             parse: true,
@@ -257,6 +276,9 @@ export function prepareSellerRoutes(modal, route, middleware, socket) {
           payload: {
             gstin: [joi.string(), joi.allow(null)],
             pan: [joi.string(), joi.allow(null)],
+            is_assisted: [joi.boolean(), joi.allow(null)],
+            is_fmcg: [joi.boolean(), joi.allow(null)],
+            has_pos: [joi.boolean(), joi.allow(null)],
             category_id: [joi.number(), joi.allow(null)],
             id: joi.number().required(),
             output: 'data',
@@ -790,7 +812,7 @@ export function prepareSellerRoutes(modal, route, middleware, socket) {
 
     route.push({
       method: 'GET',
-      path: '/sellers/{id}/loyalty/rules',
+      path: '/sellers/{seller_id}/loyalty/rules',
       config: {
         pre: [{method: middleware.checkAppVersion, assign: 'forceUpdate'}],
         auth: 'jwt', handler: controller.retrieveSellerLoyaltyRules,
@@ -830,6 +852,28 @@ export function prepareSellerRoutes(modal, route, middleware, socket) {
             parse: true,
           },
         },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              {code: 200, message: 'Authenticated'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
+            ],
+          },
+        },
+      },
+    });
+
+    route.push({
+      method: 'GET',
+      path: '/sellers/{seller_id}/wallet',
+      config: {
+        pre: [{method: middleware.checkAppVersion, assign: 'forceUpdate'}],
+        auth: 'jwt', handler: controller.retrieveSellerWallet,
+        description: 'Get Seller Wallet',
+        tags: ['api', 'Seller', 'Wallet', 'List'],
         plugins: {
           'hapi-swagger': {
             responseMessages: [

@@ -78,16 +78,48 @@ class DashboardAdaptor {
   async retrieveSellerDashboard(options, request, seller_type_id) {
     try {
       const { seller_id } = options;
-      let [total_transactions, credit_pending, loyalty_points, debit_loyalty_points, consumer_counts] = await _bluebird2.default.all([this.modals.products.aggregate('purchase_cost', 'sum', { where: { seller_id, status_type: [5, 11] } }), this.modals.credit_wallet.aggregate('*', 'count', { where: { seller_id, status_type: 16 } }), this.modals.loyalty_wallet.aggregate('amount', 'sum', { where: { seller_id, transaction_type: 1 } }), this.modals.loyalty_wallet.aggregate('amount', 'sum', { where: { seller_id, transaction_type: 2 } }), this.modals.products.aggregate('user_id', 'count', { where: { seller_id, status_type: [5, 11] }, distinct: true })]);
+      let [cashback_jobs, seller, orders] = await _bluebird2.default.all([this.modals.cashback_jobs.findAll({ where: { seller_id }, attributes: ['job_id'] }), this.modals.sellers.findOne({ where: { id: seller_id } }), this.modals.order.findAll({ where: { seller_id }, attributes: ['expense_id'] })]);
+
+      seller = seller.toJSON();
+      const user_id = seller.customer_ids && seller.customer_ids.length > 0 ? seller.customer_ids : undefined;
+
+      let job_id = cashback_jobs.map(item => {
+        item = item.toJSON();
+        return item.job_id;
+      }).filter(item => item),
+          id = orders.map(item => {
+        item = item.toJSON();
+        return item.expense_id;
+      }).filter(item => item);
+      job_id = job_id.length > 0 ? job_id : undefined;
+      id = id.length > 0 ? id : undefined;
+      let [total_transactions, credits, debit_credits, loyalty_points, debit_loyalty_points, assisted_count, user_cashback] = await _bluebird2.default.all([this.modals.products.aggregate('purchase_cost', 'sum', {
+        where: JSON.parse(JSON.stringify({ seller_id, status_type: [5, 11], job_id, id }))
+      }), this.modals.credit_wallet.aggregate('amount', 'sum', {
+        where: JSON.parse(JSON.stringify({ seller_id, status_type: 16, user_id }))
+      }), this.modals.credit_wallet.aggregate('amount', 'sum', {
+        where: JSON.parse(JSON.stringify({ seller_id, status_type: 14, user_id }))
+      }), this.modals.loyalty_wallet.aggregate('amount', 'sum', {
+        where: JSON.parse(JSON.stringify({ seller_id, transaction_type: 1, user_id }))
+      }), this.modals.loyalty_wallet.aggregate('amount', 'sum', {
+        where: JSON.parse(JSON.stringify({ seller_id, transaction_type: 2, user_id }))
+      }), this.modals.seller_service_types.aggregate('service_user_id', 'count', {
+        where: { seller_id }, distinct: true,
+        group: ['service_user_id']
+      }), this.modals.cashback_wallet.aggregate('amount', 'sum', { where: { seller_id, transaction_type: 1, status_type: 16 } })]);
       return {
         status: true,
         message: 'Dashboard restore Successful',
-        total_transactions, seller_type_id,
-        credit_pending,
+        total_transactions: total_transactions || 0,
+        seller_type_id: seller.seller_type_id,
+        is_assisted: seller.is_assisted, is_fmcg: seller.is_fmcg,
+        has_pos: seller.has_pos, forceUpdate: request.pre.forceUpdate,
         loyalty_points: (loyalty_points || 0) - (debit_loyalty_points || 0),
-        consumer_counts,
+        consumer_counts: (seller.customer_ids || []).length,
+        credit_pending: (credits || 0) - (debit_credits || 0),
         notification_count: 0,
-        forceUpdate: request.pre.forceUpdate
+        assisted_count: assisted_count || 0,
+        user_cashback: user_cashback || 0
       };
     } catch (err) {
       console.log(err);
@@ -95,7 +127,6 @@ class DashboardAdaptor {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user.id || user.ID,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,

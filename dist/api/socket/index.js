@@ -56,6 +56,10 @@ var _moment = require('moment');
 
 var _moment2 = _interopRequireDefault(_moment);
 
+var _main = require('../../config/main');
+
+var _main2 = _interopRequireDefault(_main);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 let connected_socket, modals, sellerAdaptor, shopEarnAdaptor, io, userAdaptor, orderAdaptor, notificationAdaptor, productAdaptor, jobAdaptor, categoryAdaptor;
@@ -163,7 +167,7 @@ class SocketServer {
     user_address.updated_by = user_id;
     let [seller_detail, user_index_data, user_address_detail, service_users] = await _bluebird2.default.all([sellerAdaptor.retrieveSellerDetail({
       where: { id: seller_id },
-      attributes: ['seller_type_id', 'seller_name', 'user_id']
+      attributes: ['seller_type_id', 'seller_name', 'user_id', 'id']
     }), userAdaptor.retrieveUserIndexedData({
       where: { user_id }, attributes: ['wishlist_items', 'assisted_services', [modals.sequelize.literal(`(Select full_name from users where users.id = ${user_id})`), 'user_name']]
     }), !user_address_id && user_address ? userAdaptor.createUserAddress(JSON.parse(JSON.stringify(user_address))) : undefined, service_type_id ? sellerAdaptor.retrieveSellerAssistedServiceUsers({
@@ -205,7 +209,7 @@ class SocketServer {
             payload: {
               order_id: order.id, order_type,
               status_type: order.status_type, order, user_id,
-              title: `New order has been placed by user ${user_index_data.user_name}.`,
+              title: `New order has been placed by user ${user_index_data.user_name || ''}.`,
               description: 'Please click here for further detail.',
               notification_type: 1
             }
@@ -226,7 +230,7 @@ class SocketServer {
               user_id, payload: {
                 order_id: order.id, order_type,
                 status_type: order.status_type, order, user_id,
-                title: `New order has been placed to seller ${seller_detail.seller_name}.`,
+                title: `New order has been placed to seller ${seller_detail.seller_name || ''}.`,
                 description: 'Please click here for further detail.',
                 notification_type: 31
               }
@@ -256,7 +260,7 @@ class SocketServer {
             payload: {
               order_id: order.id, order_type,
               status_type: order.status_type, order, service_users, user_id,
-              title: `New order has been placed by user ${user_index_data.user_name}.`,
+              title: `New order has been placed by user ${user_index_data.user_name || ''}.`,
               description: 'Please click here for further detail.',
               notification_type: 1
             }
@@ -277,7 +281,7 @@ class SocketServer {
               user_id, payload: {
                 order_id: order.id, order_type,
                 status_type: order.status_type, order, user_id,
-                title: `New order has been placed to seller ${seller_detail.seller_name}.`,
+                title: `New order has been placed to seller ${seller_detail.seller_name || ''}.`,
                 description: 'Please click here for further detail.',
                 notification_type: 31
               }
@@ -296,7 +300,7 @@ class SocketServer {
     let { seller_id, user_id, order_id, order_details, delivery_user_id } = data;
     const [seller_detail, user_index_data, order_data, measurement_types, service_user] = await _bluebird2.default.all([sellerAdaptor.retrieveSellerDetail({
       where: { id: seller_id },
-      attributes: ['seller_type_id', 'seller_name', 'user_id']
+      attributes: ['seller_type_id', 'seller_name', 'user_id', 'id']
     }), userAdaptor.retrieveUserIndexedData({
       where: { user_id }, attributes: ['wishlist_items', 'assisted_services', [modals.sequelize.literal(`(Select full_name from users where users.id = ${user_id})`), 'user_name']]
     }), orderAdaptor.retrieveOrUpdateOrder({ where: { id: order_id, user_id, seller_id, status_type: 4 } }, {}, false), modals.measurement.findAll({ where: { status_type: 1 } }), sellerAdaptor.retrieveAssistedServiceUser({
@@ -362,7 +366,7 @@ class SocketServer {
             status_type: order.status_type,
             is_modified: order.is_modified,
             user_id,
-            title: `Order has been modified by seller ${seller_detail.seller_name}, please review.`,
+            title: `Order has been modified by seller ${seller_detail.seller_name || ''}, please review.`,
             description: 'Please click here for further detail.',
             notification_type: 31
           }
@@ -381,12 +385,13 @@ class SocketServer {
     let { seller_id, user_id, order_id, order_details } = data;
     const [seller_detail, user_index_data, order_data, measurement_types] = await _bluebird2.default.all([sellerAdaptor.retrieveSellerDetail({
       where: { id: seller_id },
-      attributes: ['seller_type_id', 'seller_name', 'user_id']
+      attributes: ['seller_type_id', 'seller_name', 'id', 'user_id']
     }), userAdaptor.retrieveUserIndexedData({
       where: { user_id }, attributes: ['wishlist_items', 'assisted_services', [modals.sequelize.literal(`(Select full_name from users where users.id = ${user_id})`), 'user_name']]
     }), orderAdaptor.retrieveOrUpdateOrder({ where: { id: order_id, user_id, seller_id, status_type: 19 } }, {}, false), modals.measurement.findAll({ where: { status_type: 1 } })]);
     if (order_data) {
       order_data.order_details = order_details || order_data.order_details;
+      order_data.status_type = 20;
       let order = await orderAdaptor.retrieveOrUpdateOrder({
         where: { id: order_id, user_id, seller_id, status_type: 19 },
         include: [{
@@ -441,7 +446,7 @@ class SocketServer {
               status_type: order.status_type,
               is_modified: order.is_modified,
               user_id,
-              title: `Order has marked started by ${user_index_data.user_name}.`,
+              title: `Order has marked started by ${user_index_data.user_name || ''}.`,
               description: 'Please click here for further detail.',
               notification_type: 1,
               start_date: order.order_type ? order.order_details.start_date : undefined
@@ -481,10 +486,10 @@ class SocketServer {
     let { seller_id, user_id, order_id, order_details } = data;
     const [seller_detail, user_index_data, order_data, measurement_types, service_user] = await _bluebird2.default.all([sellerAdaptor.retrieveSellerDetail({
       where: { id: seller_id },
-      attributes: ['seller_type_id', 'seller_name', 'user_id']
+      attributes: ['seller_type_id', 'seller_name', 'id', 'user_id']
     }), userAdaptor.retrieveUserIndexedData({
       where: { user_id }, attributes: ['wishlist_items', 'assisted_services', [modals.sequelize.literal(`(Select full_name from users where users.id = ${user_id})`), 'user_name']]
-    }), orderAdaptor.retrieveOrUpdateOrder({ where: { id: order_id, user_id, seller_id, status_type: 19 } }, {}, false), modals.measurement.findAll({ where: { status_type: 1 } }), sellerAdaptor.retrieveAssistedServiceUser({
+    }), orderAdaptor.retrieveOrUpdateOrder({ where: { id: order_id, user_id, seller_id, status_type: 20 } }, {}, false), modals.measurement.findAll({ where: { status_type: 1 } }), sellerAdaptor.retrieveAssistedServiceUser({
       where: JSON.parse(JSON.stringify({ id: order_details[0].service_user.id })),
       attributes: ['id', 'name', 'mobile_no', 'reviews', 'document_details'],
       include: {
@@ -498,6 +503,7 @@ class SocketServer {
     })]);
     if (order_data) {
       order_data.order_details = order_details || order_data.order_details;
+      order_data.status_type = 21;
       const { start_date, end_date } = order_data.order_details[0];
       const { service_types } = service_user;
       const { price } = service_types[0] || {};
@@ -507,15 +513,15 @@ class SocketServer {
         const other_price = price.find(item => item.price_type !== 1);
         order_data.order_details[0].total_amount = base_price ? base_price.value || 0 : 0;
         if (total_minutes > 60 && other_price) {
-          order_data.order_details[0].hourly_price = Math.round((total_minutes - 60) / 30 * other_price.value);
-          order_data.order_details[0].total_amount += Math.round((total_minutes - 60) / 30 * other_price.value);
+          order_data.order_details[0].hourly_price = Math.round(Math.ceil((total_minutes - 60) / 30) * other_price.value);
+          order_data.order_details[0].total_amount += Math.round(Math.ceil((total_minutes - 60) / 30) * other_price.value);
         }
         order_data.order_details[0].base_price = base_price ? base_price.value || 0 : 0;
       } else {
-        order_data.order_details[0].total_amount = Math.round(total_minutes / 60 * price.value);
+        order_data.order_details[0].total_amount = Math.round(Math.ceil(total_minutes / 60) * price.value);
       }
       let order = await orderAdaptor.retrieveOrUpdateOrder({
-        where: { id: order_id, user_id, seller_id, status_type: 19 },
+        where: { id: order_id, user_id, seller_id, status_type: 20 },
         include: [{
           model: modals.users, as: 'user', attributes: ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', 'location', 'latitude', 'longitude', 'image_name', 'password', 'gender', [modals.sequelize.fn('CONCAT', '/consumer/', modals.sequelize.col('user.id'), '/images'), 'imageUrl'], [modals.sequelize.literal(`(Select sum(amount) from table_wallet_user_cashback where user_id = ${user_id} and status_type in (16) group by user_id)`), 'wallet_value']]
         }, {
@@ -569,7 +575,7 @@ class SocketServer {
               status_type: order.status_type,
               is_modified: order.is_modified,
               user_id,
-              title: `Order has marked ended by ${user_index_data.user_name}.`,
+              title: `Order has marked ended by ${user_index_data.user_name || ''}.`,
               description: 'Please click here for further detail.',
               notification_type: 1,
               start_date: order.order_type ? order.order_details.start_date : undefined,
@@ -612,7 +618,7 @@ class SocketServer {
     let { seller_id, user_id, order_id, status_type, is_user, order_details } = data;
     const [seller_detail, user_index_data, order_data, measurement_types] = await _bluebird2.default.all([sellerAdaptor.retrieveSellerDetail({
       where: { id: seller_id },
-      attributes: ['seller_type_id', 'seller_name', 'user_id']
+      attributes: ['seller_type_id', 'seller_name', 'id', 'user_id']
     }), userAdaptor.retrieveUserIndexedData({
       where: { user_id }, attributes: ['wishlist_items', 'assisted_services', [modals.sequelize.literal(`(Select full_name from users where users.id = ${user_id})`), 'user_name']]
     }), orderAdaptor.retrieveOrUpdateOrder({
@@ -681,7 +687,7 @@ class SocketServer {
             payload: {
               order_id: order.id, status_type: order.status_type,
               is_modified: order.is_modified, user_id,
-              title: is_user ? `Order Approved successfully by ${user_index_data.user_name}.` : `Order Approved successfully for ${user_index_data.user_name}.`,
+              title: is_user ? `Order Approved successfully by ${user_index_data.user_name || ''}.` : `Order Approved successfully for ${user_index_data.user_name || ''}.`,
               description: 'Please click here for further detail.',
               notification_type: 1, order_type: order.order_type
             }
@@ -705,7 +711,7 @@ class SocketServer {
               status_type: order.status_type,
               is_modified: order.is_modified,
               user_id,
-              title: !is_user ? `Order has been approved by seller ${seller_detail.seller_name}, delivery detail will be updated shortly.` : `Your request to approve order is successful. Waiting for seller to assign a delivery boy.`,
+              title: !is_user ? `Order has been approved by seller ${seller_detail.seller_name || ''}, delivery detail will be updated shortly.` : `Your request to approve order is successful. Waiting for seller to assign a delivery boy.`,
               description: 'Please click here for further detail.',
               notification_type: 31
             }
@@ -725,7 +731,7 @@ class SocketServer {
     let { seller_id, user_id, order_id, status_type, delivery_user_id, order_details } = data;
     const [seller_detail, user_index_data, order_data, measurement_types] = await _bluebird2.default.all([sellerAdaptor.retrieveSellerDetail({
       where: { id: seller_id },
-      attributes: ['seller_type_id', 'seller_name', 'user_id']
+      attributes: ['seller_type_id', 'seller_name', 'id', 'user_id']
     }), userAdaptor.retrieveUserIndexedData({
       where: { user_id }, attributes: ['wishlist_items', 'assisted_services', [modals.sequelize.literal(`(Select full_name from users where users.id = ${user_id})`), 'user_name']]
     }), orderAdaptor.retrieveOrUpdateOrder({
@@ -799,7 +805,7 @@ class SocketServer {
             order_id: order.id,
             status_type: order.status_type,
             is_modified: order.is_modified, user_id,
-            title: `Hurray! ${(order.delivery_user || {}).name} is on the way with your order from seller ${seller_detail.seller_name}.`,
+            title: `Hurray! ${order.delivery_user ? `${(order.delivery_user || {}).name || ''} with your order from seller ${seller_detail.seller_name || ''}` : `your order from seller ${seller_detail.seller_name || ''}`} is on the way.`,
             description: 'Please click here for further detail.',
             notification_type: 31,
             order_type: order.order_type
@@ -819,7 +825,7 @@ class SocketServer {
     let { seller_id, user_id, order_id, status_type } = data;
     const [seller_detail, user_index_data, order_data, measurement_types] = await _bluebird2.default.all([sellerAdaptor.retrieveSellerDetail({
       where: { id: seller_id },
-      attributes: ['seller_type_id', 'seller_name', 'user_id']
+      attributes: ['seller_type_id', 'seller_name', 'id', 'user_id']
     }), userAdaptor.retrieveUserIndexedData({
       where: { user_id }, attributes: ['wishlist_items', 'assisted_services', [modals.sequelize.literal(`(Select full_name from users where users.id = ${user_id})`), 'user_name']]
     }), orderAdaptor.retrieveOrUpdateOrder({
@@ -883,7 +889,7 @@ class SocketServer {
           user_id, payload: {
             order_id: order.id, status_type: order.status_type,
             is_modified: order.is_modified, user_id,
-            title: `Oops! Look a like seller ${seller_detail.seller_name} rejected your order.`,
+            title: `Oops! Look a like seller ${seller_detail.seller_name || ''} rejected your order.`,
             description: 'Please click here for further detail.',
             notification_type: 31, order_type: order.order_type
           }
@@ -902,7 +908,7 @@ class SocketServer {
     let { seller_id, user_id, order_id, status_type } = data;
     const [seller_detail, user_index_data, order_data, measurement_types] = await _bluebird2.default.all([sellerAdaptor.retrieveSellerDetail({
       where: { id: seller_id },
-      attributes: ['seller_type_id', 'seller_name', 'user_id']
+      attributes: ['seller_type_id', 'seller_name', 'id', 'user_id']
     }), userAdaptor.retrieveUserIndexedData({
       where: { user_id }, attributes: ['wishlist_items', 'assisted_services', [modals.sequelize.literal(`(Select full_name from users where users.id = ${user_id})`), 'user_name']]
     }), orderAdaptor.retrieveOrUpdateOrder({
@@ -965,7 +971,7 @@ class SocketServer {
           payload: {
             order_id: order.id, status_type: order.status_type,
             is_modified: order.is_modified, user_id,
-            title: `Oops! Look a like ${user_index_data.user_name} is not satisfied by modification in order and rejected the order.`,
+            title: `Oops! Look a like ${user_index_data.user_name || ''} is not satisfied by modification in order and rejected the order.`,
             description: 'Please click here for further detail.',
             notification_type: 1, order_type: order.order_type
           }
@@ -988,7 +994,7 @@ class SocketServer {
                 status_type: order.status_type,
                 is_modified: order.is_modified,
                 user_id,
-                title: `Order has been rejected successfully and we have updated same to ${seller_detail.seller_name}.`,
+                title: `Order has been rejected successfully and we have updated same to ${seller_detail.seller_name || ''}.`,
                 description: 'Please click here for further detail.',
                 notification_type: 31,
                 order_type: order.order_type
@@ -1010,7 +1016,7 @@ class SocketServer {
     let { seller_id, user_id, order_id, status_type } = data;
     const [seller_detail, user_index_data, order_data, measurement_types] = await _bluebird2.default.all([sellerAdaptor.retrieveSellerDetail({
       where: { id: seller_id },
-      attributes: ['seller_type_id', 'seller_name', 'user_id']
+      attributes: ['seller_type_id', 'seller_name', 'id', 'user_id']
     }), userAdaptor.retrieveUserIndexedData({
       where: { user_id }, attributes: ['wishlist_items', 'assisted_services', [modals.sequelize.literal(`(Select full_name from users where users.id = ${user_id})`), 'user_name']]
     }), orderAdaptor.retrieveOrUpdateOrder({
@@ -1070,7 +1076,7 @@ class SocketServer {
           payload: {
             order_id: order.id, status_type: order.status_type,
             is_modified: order.is_modified, user_id,
-            title: `Oops! Look a like ${user_index_data.user_name} has cancelled the order.`,
+            title: `Oops! Look a like ${user_index_data.user_name || ''} has cancelled the order.`,
             description: 'Please click here for further detail.',
             notification_type: 1, order_type: order.order_type
           }
@@ -1093,7 +1099,7 @@ class SocketServer {
                 status_type: order.status_type,
                 is_modified: order.is_modified,
                 user_id,
-                title: `Order has cancelled successfully and we have updated the same to ${seller_detail.seller_name}.`,
+                title: `Order has cancelled successfully and we have updated the same to ${seller_detail.seller_name || ''}.`,
                 description: 'Please click here for further detail.',
                 notification_type: 31,
                 order_type: order.order_type
@@ -1115,20 +1121,22 @@ class SocketServer {
     let { seller_id, user_id, order_id, status_type } = data;
     const [seller_detail, user_index_data, order_data, measurement_types] = await _bluebird2.default.all([sellerAdaptor.retrieveSellerDetail({
       where: { id: seller_id },
-      attributes: ['seller_type_id', 'seller_name', 'user_id']
+      attributes: ['seller_type_id', 'seller_name', 'id', 'user_id', 'is_fmcg', 'has_pos', 'is_assisted']
     }), userAdaptor.retrieveUserIndexedData({
       where: { user_id }, attributes: ['wishlist_items', 'assisted_services', [modals.sequelize.literal(`(Select full_name from users where users.id = ${user_id})`), 'user_name']]
     }), orderAdaptor.retrieveOrUpdateOrder({
       where: {
         id: order_id, user_id, seller_id,
-        status_type: [16, 19]
-      },
-      attributes: ['id']
+        status_type: [16, 19, 21]
+      }, attributes: ['id']
     }, {}, false), modals.measurement.findAll({ where: { status_type: 1 } })]);
     if (order_data) {
       order_data.status_type = status_type || 5;
       let order = await orderAdaptor.retrieveOrUpdateOrder({
-        where: { id: order_id, user_id, seller_id, status_type: [16, 19] }
+        where: {
+          id: order_id, user_id, seller_id,
+          status_type: [16, 19, 21]
+        }
       }, order_data, false);
       if (order) {
         if (order.order_type === 2 && order.delivery_user_id) {
@@ -1159,8 +1167,7 @@ class SocketServer {
           return item;
         }) : order.order_details;
         const payment_details = await SocketServer.init_on_payment({
-          user_id,
-          seller_id,
+          user_id, seller_id, has_pos: seller_detail.has_pos,
           home_delivered: !!order.delivery_user_id,
           sku_details: order.order_type === 2 ? order.order_details : order.order_details.map(item => {
             const { id: sku_id, quantity, sku_measurement, selling_price } = item;
@@ -1175,8 +1182,8 @@ class SocketServer {
           seller_type_id: seller_detail.seller_type_id
         });
 
-        order_data.expense_id = payment_details.product.id;
-        order_data.job_id = payment_details.cashback_jobs.id;
+        order_data.expense_id = (payment_details.product || {}).id;
+        order_data.job_id = (payment_details.cashback_jobs || {}).id;
         order = await orderAdaptor.retrieveOrUpdateOrder({
           where: {
             id: order_id, user_id, seller_id,
@@ -1193,6 +1200,7 @@ class SocketServer {
           }]
         }, order_data, false);
 
+        order.upload_id = seller_detail.has_pos ? (payment_details.product || {}).job_id : undefined;
         order.available_cashback = 0;
         order.total_amount = 0;
 
@@ -1203,7 +1211,7 @@ class SocketServer {
           seller_user_id: seller_detail.user_id,
           payload: {
             order,
-            title: `${user_index_data.user_name} has marked payment complete for his order.`,
+            title: `${user_index_data.user_name || ''} has marked payment complete for his order.`,
             description: 'Please click here for further detail.',
             notification_type: 1
           }
@@ -1244,7 +1252,7 @@ class SocketServer {
   }
 
   static async init_on_payment(data) {
-    let { user_id, seller_id, sku_details, home_delivered, order_type, seller_type_id } = data;
+    let { user_id, seller_id, sku_details, home_delivered, order_type, seller_type_id, has_pos } = data;
     const total_amount = order_type && order_type === 1 ? _lodash2.default.sumBy(sku_details, 'selling_price') : sku_details.total_amount;
     const jobResult = await jobAdaptor.createJobs({
       job_id: `${Math.random().toString(36).substr(2, 9)}${user_id.toString(36)}`, user_id,
@@ -1253,14 +1261,14 @@ class SocketServer {
     });
     const [product, cashback_jobs, user_default_limit_rules] = await _bluebird2.default.all([productAdaptor.createEmptyProduct({
       job_id: jobResult.id, user_id, main_category_id: 8,
-      category_id: 26, purchase_cost: total_amount,
+      category_id: _main2.default.HOUSEHOLD_CATEGORY_ID, purchase_cost: total_amount,
       updated_by: user_id, seller_id, status_type: 11, copies: [],
       document_date: _moment2.default.utc().startOf('day').format('YYYY-MM-DD')
-    }), order_type && order_type === 1 && seller_type_id === 1 ? jobAdaptor.createCashBackJobs({
+    }), order_type && order_type === 1 && /*seller_type_id === 1 &&*/has_pos ? jobAdaptor.createCashBackJobs({
       job_id: jobResult.id, user_id, updated_by: user_id,
       uploaded_by: user_id, user_status: 8, admin_status: 2,
       seller_id, cashback_status: 13, online_order: true,
-      verified_seller: true, seller_status: 16,
+      verified_seller: seller_type_id === 1, seller_status: seller_type_id === 1 ? 16 : 17,
       digitally_verified: true, home_delivered
     }) : undefined, categoryAdaptor.retrieveLimitRules({ where: { user_id: 1 } })]);
 
@@ -1269,7 +1277,7 @@ class SocketServer {
     if (order_type && order_type === 1) {
       [sku_expenses, home_delivery_cash_back] = await _bluebird2.default.all([shopEarnAdaptor.addUserSKUExpenses(sku_details.map(item => {
         item.expense_id = product.id;
-        item.job_id = cashback_jobs.id;
+        item.job_id = (cashback_jobs || {}).id;
         return item;
       })), home_delivered ? jobAdaptor.addCashBackToSeller({
         amount: home_delivery_limit.rule_limit,
@@ -1288,7 +1296,7 @@ class SocketServer {
 
     const [seller_detail, user_index_data] = await _bluebird2.default.all([sellerAdaptor.retrieveSellerDetail({
       where: { id: seller_id },
-      attributes: ['seller_type_id', 'seller_name', 'user_id']
+      attributes: ['seller_type_id', 'seller_name', 'id', 'user_id']
     }), userAdaptor.retrieveUserIndexedData({
       where: { user_id }, attributes: ['wishlist_items', 'assisted_services', [modals.sequelize.literal(`(Select full_name from users where users.id = ${user_id})`), 'user_name']]
     })]);
@@ -1300,7 +1308,7 @@ class SocketServer {
       seller_user_id: seller_detail.user_id,
       payload: {
         cash_back_details, amount,
-        title: `Your wallet has been credited with INR${amount} against redemption request from ${user_index_data.user_name}.`,
+        title: `Your wallet has been credited with INR${amount} against redemption request from ${user_index_data.user_name || ''}.`,
         description: 'Please click here for further detail.',
         notification_type: 2
       }

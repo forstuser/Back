@@ -423,13 +423,18 @@ class DashboardController {
     }
   }
 
-  static notifyUser(request, reply) {
-    const payload = request.payload || { userId: '', data: { title: '', description: '' } };
-    notificationAdaptor.notifyUser({
-      userId: payload.userId || '',
-      payload: payload.data,
-      reply: reply
-    });
+  static async notifyUser(request, reply) {
+    try {
+      const payload = request.payload;
+      return await notificationAdaptor.notifyUser({
+        seller_user_id: payload.seller_user_id,
+        userId: payload.userId,
+        payload: payload.data,
+        reply
+      });
+    } catch (e) {
+      console.log(e);
+    }
   }
 }
 

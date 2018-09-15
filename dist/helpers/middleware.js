@@ -58,7 +58,7 @@ const updateUserActiveStatus = async (request, reply) => {
   }
   try {
     const id = user.id || user.ID;
-    const userResult = await retrieveUser(id);
+    const userResult = await retrieveUser({ where: { id }, attributes: ['id', 'last_active_date', 'last_api', 'password'] });
     const userDetail = userResult ? userResult.toJSON() : userResult;
     request.user = userDetail || user;
     const { url, headers } = request;
@@ -146,7 +146,7 @@ const updateUserPIN = async (request, reply) => {
     request.hashedPassword = await _bluebird2.default.try(() => (0, _password.hashPassword)(request.payload.pin));
 
     const id = user.id || user.ID;
-    const userResult = await retrieveUser(id);
+    const userResult = await retrieveUser({ where: { id } });
     if (userResult) {
       console.log(`Last route ${request.url.pathname} accessed by user id ${id} from ${request.headers.ios_app_version ? 'iOS' : 'android'}`);
       request.user = userResult;
@@ -174,7 +174,7 @@ const verifyUserPIN = async (request, reply) => {
   try {
     request.hashedPassword = await _bluebird2.default.try(() => (0, _password.hashPassword)(request.payload.pin));
     const id = user.id || user.ID;
-    const userResult = await retrieveUser(id);
+    const userResult = await retrieveUser({ where: { id } });
     if (userResult) {
       console.log(`Last route ${request.url.pathname} accessed by user id ${id} from ${request.headers.ios_app_version ? 'iOS' : 'android'}`);
       request.user = userResult;
@@ -196,8 +196,9 @@ const verifyUserPIN = async (request, reply) => {
   }
 };
 
-async function retrieveUser(id) {
-  return await MODAL.users.findOne({ where: { id } });
+async function retrieveUser(option) {
+  console.log('We are here');
+  return await MODAL.users.findOne(option);
 }
 
 const verifyUserOTP = async (request, reply) => {
@@ -207,7 +208,7 @@ const verifyUserOTP = async (request, reply) => {
   }
   try {
     const id = user.id || user.ID;
-    const userResult = await retrieveUser(id);
+    const userResult = await retrieveUser({ where: { id } });
     if (userResult) {
       console.log(`Last route ${request.url.pathname} accessed by user id ${user.id || user.ID} from ${request.headers.ios_app_version ? 'iOS' : 'android'}`);
       request.user = userResult;

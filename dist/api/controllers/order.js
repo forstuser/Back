@@ -50,7 +50,7 @@ class OrderController {
         const { id } = request.params;
         const result = await orderAdaptor.retrieveOrUpdateOrder({
           where: { id },
-          attributes: ['id', 'order_details', 'order_type', 'status_type', 'seller_id', 'user_id', 'created_at', 'updated_at', 'is_modified', 'user_address_id', 'delivery_user_id', 'job_id', 'expense_id', [modals.sequelize.literal('(Select cashback_status from table_cashback_jobs as jobs where jobs.id = "order".job_id)'), 'cashback_status'], [modals.sequelize.literal('(Select purchase_cost from consumer_products as expense where expense.id = "order".expense_id)'), 'total_amount'], [modals.sequelize.literal('(Select sum(amount) from table_wallet_user_cashback as user_wallet where user_wallet.job_id = "order".job_id)'), 'available_cashback']]
+          attributes: ['id', 'order_details', 'order_type', 'status_type', 'seller_id', 'user_id', 'created_at', 'updated_at', 'is_modified', 'user_address_id', 'delivery_user_id', 'job_id', 'expense_id', [modals.sequelize.literal('(Select cashback_status from table_cashback_jobs as jobs where jobs.id = "order".job_id)'), 'cashback_status'], [modals.sequelize.literal('(Select copies from table_cashback_jobs as jobs where jobs.id = "order".job_id)'), 'copies'], [modals.sequelize.literal('(Select job_id from table_cashback_jobs as jobs where jobs.id = "order".job_id)'), 'upload_id'], [modals.sequelize.literal('(Select purchase_cost from consumer_products as expense where expense.id = "order".expense_id)'), 'total_amount'], [modals.sequelize.literal('(Select sum(amount) from table_wallet_user_cashback as user_wallet where user_wallet.job_id = "order".job_id)'), 'available_cashback']]
         }, {}, false);
         if (result) {
           result.seller = {};
@@ -91,7 +91,9 @@ class OrderController {
           }) : result.order_details;
           if (result.user_address) {
             const { address_line_1, address_line_2, city_name, state_name, locality_name, pin_code } = result.user_address || {};
-            result.user_address_detail = `${address_line_1}${address_line_2 ? ` ${address_line_2}` : ''},${locality_name},${city_name},${state_name}-${pin_code}`.split('null', '').join(',').split('undefined', '').join(',').split(',,').join(',');
+            result.user_address_detail = `${address_line_1}${address_line_2 ? ` ${address_line_2}` : ''},${locality_name},${city_name},${state_name}-${pin_code}`;
+            console.log(result.user_address_detail);
+            result.user_address_detail = result.user_address_detail.split('null').join(',').split('undefined').join(',').split(',,').join(',').split(',-,').join(',').split(',,').join(',').split(',,').join(',');
           }
           return reply.response({
             result: JSON.parse(JSON.stringify(result)), status: true
@@ -197,7 +199,7 @@ class OrderController {
         const user_id = !user.seller_detail ? user.id : undefined;
         const { seller_id } = request.params;
         let { status_type } = request.query;
-        status_type = status_type || [4, 16, 19];
+        status_type = status_type || [4, 16, 19, 20, 21];
         const include = seller_id ? [{
           model: modals.users, as: 'user', attributes: ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', 'location', 'latitude', 'longitude', 'image_name', 'password', 'gender', [modals.sequelize.fn('CONCAT', '/consumer/', modals.sequelize.col('user.id'), '/images'), 'imageUrl'], [modals.sequelize.literal(`(Select sum(amount) from table_wallet_user_cashback where user_id = "user"."id" and status_type in (16) group by user_id)`), 'wallet_value']]
         }, {

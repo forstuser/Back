@@ -33,7 +33,7 @@ class SearchController {
             request.query.searchvalue, request.language));
       }
     } catch (err) {
-
+      console.log(err);
       modals.logs.create({
         api_action: request.method,
         api_path: request.url.pathname,

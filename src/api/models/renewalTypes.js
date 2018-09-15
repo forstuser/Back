@@ -7,6 +7,7 @@ export default (sequelize, DataTypes) => {
         },
         type: {
           type: DataTypes.INTEGER,
+          unique: true,
         },
         description: {
           type: DataTypes.STRING,

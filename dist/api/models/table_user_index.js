@@ -14,6 +14,9 @@ exports.default = (sequelize, DataTypes) => {
     expense_ids: {
       type: DataTypes.JSONB
     },
+    seller_contact_no: {
+      type: DataTypes.JSONB
+    },
     product_ids: {
       type: DataTypes.JSONB
     },

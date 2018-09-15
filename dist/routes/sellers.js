@@ -21,6 +21,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * @param modal
  * @param route
  * @param middleware
+ * @param socket
  */
 function prepareSellerRoutes(modal, route, middleware, socket) {
 
@@ -47,6 +48,17 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
     route.push({
       method: 'GET', path: '/sellers/cashbacks',
       handler: _sellers2.default.getCashBackSellers, config: {
+        auth: 'jwt', pre: [{
+          method: middleware.checkAppVersion, assign: 'forceUpdate'
+        }, {
+          method: middleware.updateUserActiveStatus, assign: 'userExist'
+        }]
+      }
+    });
+
+    route.push({
+      method: 'GET', path: '/sellers/offers',
+      handler: _sellers2.default.getOfferSellers, config: {
         auth: 'jwt', pre: [{
           method: middleware.checkAppVersion, assign: 'forceUpdate'
         }, {
@@ -184,6 +196,9 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
             email: _joi2.default.string(),
             gstin: _joi2.default.string(),
             pan: _joi2.default.string(),
+            is_assisted: [_joi2.default.boolean(), _joi2.default.allow(null)],
+            is_fmcg: [_joi2.default.boolean(), _joi2.default.allow(null)],
+            has_pos: [_joi2.default.boolean(), _joi2.default.allow(null)],
             category_id: [_joi2.default.number(), _joi2.default.allow(null)],
             output: 'data',
             parse: true
@@ -206,6 +221,9 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
           payload: {
             gstin: [_joi2.default.string(), _joi2.default.allow(null)],
             pan: [_joi2.default.string(), _joi2.default.allow(null)],
+            is_assisted: [_joi2.default.boolean(), _joi2.default.allow(null)],
+            is_fmcg: [_joi2.default.boolean(), _joi2.default.allow(null)],
+            has_pos: [_joi2.default.boolean(), _joi2.default.allow(null)],
             category_id: [_joi2.default.number(), _joi2.default.allow(null)],
             output: 'data',
             parse: true
@@ -228,6 +246,9 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
           payload: {
             gstin: [_joi2.default.string(), _joi2.default.allow(null)],
             pan: [_joi2.default.string(), _joi2.default.allow(null)],
+            is_assisted: [_joi2.default.boolean(), _joi2.default.allow(null)],
+            is_fmcg: [_joi2.default.boolean(), _joi2.default.allow(null)],
+            has_pos: [_joi2.default.boolean(), _joi2.default.allow(null)],
             category_id: [_joi2.default.number(), _joi2.default.allow(null)],
             id: _joi2.default.number().required(),
             output: 'data',
@@ -644,7 +665,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
 
     route.push({
       method: 'GET',
-      path: '/sellers/{id}/loyalty/rules',
+      path: '/sellers/{seller_id}/loyalty/rules',
       config: {
         pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
         auth: 'jwt', handler: _sellers2.default.retrieveSellerLoyaltyRules,
@@ -678,6 +699,22 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
             parse: true
           }
         },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [{ code: 200, message: 'Authenticated' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
+          }
+        }
+      }
+    });
+
+    route.push({
+      method: 'GET',
+      path: '/sellers/{seller_id}/wallet',
+      config: {
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        auth: 'jwt', handler: _sellers2.default.retrieveSellerWallet,
+        description: 'Get Seller Wallet',
+        tags: ['api', 'Seller', 'Wallet', 'List'],
         plugins: {
           'hapi-swagger': {
             responseMessages: [{ code: 200, message: 'Authenticated' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]

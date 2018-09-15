@@ -1,6 +1,7 @@
 'use strict';
 
 export default {
+  HOUSEHOLD_CATEGORY_ID: process.env.HOUSEHOLD_CATEGORY_ID,
   SMS: {
     AUTH_KEY: process.env.SMS_AUTH_KEY,
     HOST_NAME: 'http://api.msg91.com',
@@ -32,6 +33,7 @@ export default {
     FCM_KEY: process.env.FCM_KEY,
     SECRET: process.env.GOOGLE_SECRET,
     SITE_VERIFY: process.env.SITE_VERIFY,
+    SELLER_FCM_KEY: process.env.SELLER_FCM_KEY,
   },
   SERVER_HOST: process.env.SERVER_HOST,
   EMAIL: {

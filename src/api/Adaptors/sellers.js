@@ -27,9 +27,7 @@ export default class SellerAdaptor {
   async retrieveSellers(options, query_options) {
     const {user_id, seller_offer_ids, latitude, longitude, city, limit, offset} = options;
     const result = await this.modals.sellers.findAll(query_options);
-    let sellers = result.map(item => {
-      return item.toJSON();
-    });
+    let sellers = result.map(item => item.toJSON());
     if (sellers.length > 0) {
       if (latitude && longitude) {
         sellers = await this.orderSellerByLocation(latitude, longitude, city,
@@ -67,11 +65,45 @@ export default class SellerAdaptor {
             (item.redeemed_credits || 0);
         item.offer_count = item.offer_count || 0;
         item.ratings = item.ratings || 0;
+        item.transaction_counts = parseInt(item.transaction_counts || 0) +
+            parseInt(item.order_counts || 0);
+
+        if (item.seller_details) {
+          item.seller_details = _.omit(item.seller_details,
+              ['offers', 'assisted_type_images']);
+        }
         return item;
       });
     }
 
     return sellers;
+  }
+
+  async retrieveOfferSellers(options, query_options) {
+    const {seller_offer_ids, latitude, longitude, city, limit, offset} = options;
+    const result = await this.modals.sellers.findAll(query_options);
+    let sellers = result.map(item => item.toJSON());
+    if (sellers.length > 0) {
+      if (latitude && longitude) {
+        sellers = await this.orderSellerByLocation(latitude, longitude, city,
+            sellers);
+      }
+
+      let seller_id = sellers.map(item => item.id);
+      const seller_offers = await
+          (seller_offer_ids && seller_offer_ids.length > 0 ?
+              this.retrieveSellerOffersForConsumer(
+                  {seller_id, id: seller_offer_ids}) : []);
+      sellers = sellers.map(item => {
+        item.offer_count = item.offer_count || 0;
+        item.ratings = item.ratings || 0;
+        item.offers = seller_offers.filter(
+            offerItem => item.id === offerItem.seller_id);
+        return item;
+      });
+    }
+
+    return sellers.filter(item => item.offers && item.offers.length > 0);
   }
 
   async retrieveCashBackSellers(query_options) {
@@ -147,6 +179,12 @@ export default class SellerAdaptor {
     return result ? result.map(item => item.toJSON()) : result;
   }
 
+  async retrieveSellerWalletDetail(query_options) {
+    const result = await this.modals.seller_wallet.findAll(
+        query_options);
+    return result ? result.map(item => item.toJSON()) : result;
+  }
+
   async retrieveSellerOfferDetail(query_options) {
     const result = await this.modals.seller_offers.findOne(
         query_options);
@@ -154,36 +192,27 @@ export default class SellerAdaptor {
   }
 
   async retrieveSellerConsumers(seller_id, mobile_no, offer_id) {
-    let productUsers, seller_users, id, user_index_data;
+    let seller_users, id, user_index_data;
     mobile_no = mobile_no ? {$iLike: `${mobile_no}%`} : undefined;
-    [productUsers, seller_users] = await Promise.all([
-      this.modals.products.findAll({
-        where: {seller_id, status_type: [5, 11]},
-        attributes: ['user_id'],
-        group: 'user_id',
-      }),
-      this.retrieveSellerDetail(
-          {
-            where: {id: seller_id}, attributes: [
-              'customer_ids', 'latitude', 'longitude', 'address',
-              [
-                this.modals.sequelize.literal(
-                    '(Select state_name from table_states as state where state.id = sellers.state_id)'),
-                'state_name'], [
-                this.modals.sequelize.literal(
-                    '(Select name from table_cities as city where city.id = sellers.city_id)'),
-                'city_name'], [
-                this.modals.sequelize.literal(
-                    '(Select name from table_localities as locality where locality.id = sellers.locality_id)'),
-                'locality_name'], [
-                this.modals.sequelize.literal(
-                    '(Select pin_code from table_localities as locality where locality.id = sellers.locality_id)'),
-                'pin_code']],
-          })]);
-    productUsers = productUsers.map(item => item.toJSON());
+    seller_users = await this.retrieveSellerDetail({
+      where: {id: seller_id}, attributes: [
+        'customer_ids', 'latitude', 'longitude', 'address',
+        [
+          this.modals.sequelize.literal(
+              '(Select state_name from table_states as state where state.id = sellers.state_id)'),
+          'state_name'], [
+          this.modals.sequelize.literal(
+              '(Select name from table_cities as city where city.id = sellers.city_id)'),
+          'city_name'], [
+          this.modals.sequelize.literal(
+              '(Select name from table_localities as locality where locality.id = sellers.locality_id)'),
+          'locality_name'], [
+          this.modals.sequelize.literal(
+              '(Select pin_code from table_localities as locality where locality.id = sellers.locality_id)'),
+          'pin_code']],
+    });
     id = seller_users.customer_ids || [];
     const {latitude, longitude, address, city_name: city} = seller_users;
-    productUsers.forEach(item => id.push(item.user_id));
     const result = await this.modals.users.findAll({
       where: mobile_no ? JSON.parse(JSON.stringify({$and: {mobile_no}})) : {id},
       include: {
@@ -232,6 +261,9 @@ export default class SellerAdaptor {
               `(select count(*) from table_cashback_jobs as cashback_jobs where cashback_jobs.user_id = "users"."id" and cashback_jobs.seller_id = ${seller_id})`),
           'transaction_counts'], [
           this.modals.sequelize.literal(
+              `(select count(*) from table_orders as order_detail where order_detail.user_id = "users"."id" and order_detail.seller_id = ${seller_id} and order_detail.job_id is null and order_detail.status_type = 5)`),
+          'order_counts'], [
+          this.modals.sequelize.literal(
               `(select seller_offer_ids from table_user_index as user_index where user_index.user_id = "users"."id")`),
           'seller_offer_ids']],
     });
@@ -248,7 +280,10 @@ export default class SellerAdaptor {
               (item.redeemed_loyalty || 0);
           item.credit_total = (item.credit_total || 0) -
               (item.redeemed_credits || 0);
-          item.addresses = item.addresses[0];
+          item.addresses = (item.addresses || []).find(
+              aItem => aItem.address_type === 1);
+          item.transaction_counts = (item.transaction_counts || 0) +
+              (item.order_counts || 0);
 
           if (item.addresses) {
             const {address_line_1, address_line_2, city_name, state_name, locality_name, pin_code} = item.addresses ||
@@ -256,8 +291,9 @@ export default class SellerAdaptor {
             item.address = (`${address_line_1}${address_line_2 ?
                 ` ${address_line_2}` :
                 ''},${locality_name},${city_name},${state_name}-${pin_code}`).
-                split('null', '').join(',').
-                split('undefined', '').join(',').
+                split('null').join(',').
+                split('undefined').join(',').
+                split(',,').join(',').
                 split(',,').join(',');
           }
           if (offer_id) {
@@ -428,6 +464,13 @@ export default class SellerAdaptor {
       seller.credit_total = seller.credit_total || 0;
       seller.offer_count = seller.offer_count || 0;
       seller.ratings = seller.ratings || 0;
+      seller.transaction_counts = parseInt(seller.transaction_counts || 0) +
+          parseInt(seller.order_counts || 0);
+
+      if (seller.seller_details) {
+        seller.seller_details = _.omit(seller.seller_details,
+            ['offers', 'assisted_type_images']);
+      }
       seller.assisted_services = assisted_services.map(item => {
         item.rating = (_.sumBy(item.reviews || [{ratings: 0}], 'ratings')) /
             (item.reviews || [{ratings: 0}]).length;
@@ -517,6 +560,10 @@ export default class SellerAdaptor {
       seller.cashback_total = seller.cashback_total || 0;
       seller.offer_count = seller.offer_count || 0;
       seller.ratings = seller.ratings || 0;
+      if (seller.seller_details) {
+        seller.seller_details = _.omit(seller.seller_details,
+            ['offers', 'assisted_type_images']);
+      }
     }
 
     return seller;
@@ -577,7 +624,12 @@ export default class SellerAdaptor {
 
   async retrieveSellerTransactions(options) {
     let seller_cash_back = await this.modals.cashback_jobs.findAll(options);
-    seller_cash_back = seller_cash_back.map(item => item.toJSON());
+    seller_cash_back = seller_cash_back.map(item => {
+      item = item.toJSON();
+      item.total_cashback = item.total_cashback || 0;
+      item.amount_paid = item.amount_paid || 0;
+      return item;
+    });
     return seller_cash_back;
   }
 
@@ -732,13 +784,9 @@ export default class SellerAdaptor {
         if (origins.length > 0 && destinations.length > 0) {
           user_with_location.push(user);
         } else {
-          user.distanceMetrics = 'km';
-          user.distance = parseFloat(500.001);
           final_result.push(user);
         }
       } else {
-        user.distanceMetrics = 'km';
-        user.distance = parseFloat(500.001);
         final_result.push(user);
       }
     });
@@ -753,9 +801,6 @@ export default class SellerAdaptor {
           (tempMatrix.distance) ?
               parseFloat((tempMatrix.distance.value / 1000).toFixed(2)) :
               null;
-        } else {
-          user_with_location[i].distanceMetrics = 'km';
-          user_with_location[i].distance = parseFloat(500.001);
         }
 
         final_result.push(user_with_location[i]);
@@ -792,8 +837,6 @@ export default class SellerAdaptor {
       if (origins.length > 0 && destinations.length > 0) {
         sellers_with_location.push(seller);
       } else {
-        seller.distanceMetrics = 'km';
-        seller.distance = parseFloat(500.001);
         final_result.push(seller);
       }
     });
@@ -818,7 +861,7 @@ export default class SellerAdaptor {
 
       return _.orderBy(final_result.filter(
           (elem) => (!!elem.distance &&
-              parseFloat(elem.distance) <= 40)), ['distance'], ['asc']);
+              parseFloat(elem.distance) <= 100)), ['distance'], ['asc']);
     }
   }
 
@@ -847,8 +890,6 @@ export default class SellerAdaptor {
     if (origins.length > 0 && destinations.length > 0) {
       sellers_with_location.push(seller);
     } else {
-      seller.distanceMetrics = 'km';
-      seller.distance = parseFloat(500.001);
       final_result.push(seller);
     }
 
@@ -939,7 +980,7 @@ export default class SellerAdaptor {
         {where: options});
     if (assisted_service_user) {
       const assisted_service_users_result = assisted_service_user.toJSON();
-      const reviews = assisted_service_users_result.reviews ||
+      assisted_service_users_result.reviews = assisted_service_users_result.reviews ||
           [];
       let current_review = assisted_service_users_result.reviews.find(
           item => item.order_id === review.order_id);
@@ -953,7 +994,7 @@ export default class SellerAdaptor {
               return item;
             });
       } else {
-        reviews.push(review);
+        assisted_service_users_result.reviews.push(review);
       }
       await assisted_service_user.updateAttributes(
           assisted_service_users_result);
@@ -1024,7 +1065,7 @@ export default class SellerAdaptor {
   async retrieveSellerLoyaltyRules(options) {
     let loyalty_rules = await this.modals.loyalty_rules.findAll(
         {where: options});
-    return loyalty_rules.map(item => item.toJSON());
+    return loyalty_rules.map(item => item.toJSON())[0];
   }
 
 }
