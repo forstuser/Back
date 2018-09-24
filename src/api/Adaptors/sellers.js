@@ -186,6 +186,12 @@ export default class SellerAdaptor {
     return result ? result.map(item => item.toJSON()) : result;
   }
 
+  async retrieveSellerWalletDetail(query_options) {
+    const result = await this.modals.seller_wallet.findAll(
+        query_options);
+    return result ? result.map(item => item.toJSON()) : result;
+  }
+
   async retrieveSellerOfferDetail(query_options) {
     const result = await this.modals.seller_offers.findOne(
         query_options);
