@@ -434,12 +434,12 @@ class UploadController {
             const file_type = /[.]/.exec(name) ? /[^.]+$/.exec(name) : undefined;
             return file_type && !isFileTypeAllowed(file_type) ? false : !(!file_type && !isFileTypeAllowedMagicNumber(datum._data));
           });
-          const { id, type } = request.params || {};
+          const { id, type, index } = request.params || {};
           const { image_types, business_type } = request.query || {};
           console.log(`Request received for Shop ID ${request.params.id} to upload file by seller id ${user.id}`);
           return await UploadController.retrieveSellerUpdateDetails({
             user, fileData: filteredFileData, reply, request,
-            id, type, image_types, business_type
+            id, type, image_types, business_type, index
           });
         } else {
           return reply.response({ status: false, message: 'No documents in request' }); //, forceUpdate: request.pre.forceUpdate});
@@ -560,7 +560,7 @@ class UploadController {
   }
 
   static async retrieveSellerUpdateDetails(parameters) {
-    let { user, fileData, reply, request, id, type, image_types, business_type } = parameters;
+    let { user, fileData, reply, request, id, type, image_types, business_type, index } = parameters;
     try {
       const seller_data = await sellerAdaptor.retrieveSellerDetail({ where: { id, user_id: user.id } });
       if (!seller_data) {
@@ -573,7 +573,7 @@ class UploadController {
       return await UploadController.uploadSellerFileItems({
         requiredDetail: {
           fileData, user, seller_data, type,
-          image_types, business_type
+          image_types, business_type, index
         }, reply, request
       });
     } catch (err) {
@@ -742,7 +742,7 @@ class UploadController {
   static async uploadSellerFileItems(parameters) {
     console.log('Multiple File Upload');
     let { requiredDetail, reply, request } = parameters;
-    let { user, fileData, seller_data, type, image_types, business_type } = requiredDetail;
+    let { user, fileData, seller_data, type, image_types, business_type, index: image_index } = requiredDetail;
     try {
       const seller_image_types = _main2.default.SELLER_IMAGE_TYPE.split(',');
       const fileNames = [];
@@ -754,7 +754,8 @@ class UploadController {
         const file_type = /[.]/.exec(name) ? /[^.]+$/.exec(name) : undefined;
         const fileTypeData = getTypeFromBuffer(elem._data);
         const file_index = `${Math.random().toString(36).substr(2, 9)}${user.id.toString(36)}`;
-        const fileName = `${user.id}-${file_index}.${file_type ? file_type.toString() : fileTypeData.ext}`;
+        const image_detail = image_index && seller_data.seller_details ? type.toString() === '1' ? isNaN(image_index) ? seller_data.seller_details.basic_details.documents.find(item => item.index === image_index) : seller_data.seller_details.basic_details.documents[image_index] : type.toString() === '2' ? isNaN(image_index) ? seller_data.seller_details.business_details.documents.find(item => item.index === image_index) : seller_data.seller_details.business_details.documents[image_index] : undefined : undefined;
+        const fileName = image_detail ? image_detail.file_name : `${user.id}-${file_index}.${file_type ? file_type.toString() : fileTypeData.ext}`;
         indexes.push(file_index);
         fileNames.push(fileName);
         fileTypes.push(file_type);
@@ -784,51 +785,82 @@ class UploadController {
       image_types = (image_types || '').split(',');
       let file_details = [];
       fileResult.forEach((elem, index) => {
-        if (type.toString() === '1') {
-          basic_details.documents.push({
-            file_name: fileNames[index],
-            index: indexes[index],
-            file_type: fileTypes[index] ? fileTypes[index].toString() : fileTypeDataArray[index].ext,
-            updated_by: user.id, type
-          });
-          seller_details.basic_details = basic_details;
-        } else if (type.toString() === '2') {
-          business_details.documents.push({
-            file_name: fileNames[index],
-            index: indexes[index],
-            file_type: fileTypes[index] ? fileTypes[index].toString() : fileTypeDataArray[index].ext,
-            updated_by: user.id, type, image_type: image_types[index]
-          });
-          business_details.business_type = business_type;
-          seller_details.business_details = business_details;
-          seller_data.is_onboarded = true;
-        } else if (type.toString() === '3') {
-          const file_detail = {
-            file_name: fileNames[index],
-            index: indexes[index],
-            file_type: fileTypes[index] ? fileTypes[index].toString() : fileTypeDataArray[index].ext,
-            updated_by: user.id, type, image_type: image_types[index]
-          };
-          file_details = file_detail;
-          seller_details.assisted_type_images.push(file_detail);
-        } else if (type.toString() === '4') {
-          const file_detail = {
-            file_name: fileNames[index],
-            index: indexes[index],
-            file_type: fileTypes[index] ? fileTypes[index].toString() : fileTypeDataArray[index].ext,
-            updated_by: user.id, type, image_type: image_types[index]
-          };
-          file_details = file_detail;
-          seller_details.offers.push(file_detail);
-        } else if (type.toString() === '5') {
-          const file_detail = {
-            file_name: fileNames[index],
-            file_type: fileTypes[index] ? fileTypes[index].toString() : fileTypeDataArray[index].ext,
-            index: indexes[index],
-            updated_by: user.id, type, image_type: image_types[index]
-          };
-          file_details = file_detail;
-          seller_details.assisted_type_images.push(file_detail);
+        if (image_index) {
+          if (type.toString() === '1') {
+            const image_detail = isNaN(image_index) ? basic_details.documents.find(item => item.index === image_index) : basic_details.documents[image_index];
+            if (image_detail) {
+              image_detail.index = indexes[index];
+            } else {
+              basic_details.documents.push({
+                file_name: fileNames[index],
+                index: indexes[index],
+                file_type: fileTypes[index] ? fileTypes[index].toString() : fileTypeDataArray[index].ext,
+                updated_by: user.id, type
+              });
+            }
+            seller_details.basic_details = basic_details;
+          } else if (type.toString() === '2') {
+            const image_detail = isNaN(image_index) ? business_details.documents.find(item => item.index === image_index) : business_details.documents[image_index];
+            if (image_detail) {
+              image_detail.index = indexes[index];
+            } else {
+              business_details.documents.push({
+                file_name: fileNames[index],
+                index: indexes[index],
+                file_type: fileTypes[index] ? fileTypes[index].toString() : fileTypeDataArray[index].ext,
+                updated_by: user.id, type, image_type: image_types[index]
+              });
+            }
+            business_details.business_type = business_type;
+            seller_details.business_details = business_details;
+          }
+        } else {
+          if (type.toString() === '1') {
+            basic_details.documents.push({
+              file_name: fileNames[index],
+              index: indexes[index],
+              file_type: fileTypes[index] ? fileTypes[index].toString() : fileTypeDataArray[index].ext,
+              updated_by: user.id, type
+            });
+            seller_details.basic_details = basic_details;
+          } else if (type.toString() === '2') {
+            business_details.documents.push({
+              file_name: fileNames[index],
+              index: indexes[index],
+              file_type: fileTypes[index] ? fileTypes[index].toString() : fileTypeDataArray[index].ext,
+              updated_by: user.id, type, image_type: image_types[index]
+            });
+            business_details.business_type = business_type;
+            seller_details.business_details = business_details;
+            seller_data.is_onboarded = true;
+          } else if (type.toString() === '3') {
+            const file_detail = {
+              file_name: fileNames[index],
+              index: indexes[index],
+              file_type: fileTypes[index] ? fileTypes[index].toString() : fileTypeDataArray[index].ext,
+              updated_by: user.id, type, image_type: image_types[index]
+            };
+            file_details = file_detail;
+            seller_details.assisted_type_images.push(file_detail);
+          } else if (type.toString() === '4') {
+            const file_detail = {
+              file_name: fileNames[index],
+              index: indexes[index],
+              file_type: fileTypes[index] ? fileTypes[index].toString() : fileTypeDataArray[index].ext,
+              updated_by: user.id, type, image_type: image_types[index]
+            };
+            file_details = file_detail;
+            seller_details.offers.push(file_detail);
+          } else if (type.toString() === '5') {
+            const file_detail = {
+              file_name: fileNames[index],
+              file_type: fileTypes[index] ? fileTypes[index].toString() : fileTypeDataArray[index].ext,
+              index: indexes[index],
+              updated_by: user.id, type, image_type: image_types[index]
+            };
+            file_details = file_detail;
+            seller_details.assisted_type_images.push(file_detail);
+          }
         }
       });
       const seller = await sellerAdaptor.retrieveOrUpdateSellerDetail({ where: { id: seller_data.id } }, JSON.parse(JSON.stringify({
@@ -1255,7 +1287,10 @@ class UploadController {
         const user = _shared2.default.verifyAuthorization(request.headers);
         const { id, type, index } = request.params || {};
         const seller_image_types = _main2.default.SELLER_IMAGE_TYPE.split(',');
-        const seller_data = await sellerAdaptor.retrieveSellerDetail({ where: { id, user_id: user.id }, attributes: ['seller_details', 'id', 'user_id'] });
+        const seller_data = await sellerAdaptor.retrieveSellerDetail({
+          where: { id, user_id: user.id },
+          attributes: ['seller_details', 'id', 'user_id']
+        });
         let file_name;
         if (seller_data.seller_details) {
           if (type.toString() === '1') {
@@ -1449,7 +1484,10 @@ class UploadController {
         const user = _shared2.default.verifyAuthorization(request.headers);
         const { id, type, index } = request.params || {};
         const seller_image_types = _main2.default.SELLER_IMAGE_TYPE.split(',');
-        const seller_data = await sellerAdaptor.retrieveSellerDetail({ where: { id, user_id: user.id }, attributes: ['seller_details', 'id', 'user_id'] });
+        const seller_data = await sellerAdaptor.retrieveSellerDetail({
+          where: { id, user_id: user.id },
+          attributes: ['seller_details', 'id', 'user_id']
+        });
         let file_name;
         if (seller_data.seller_details) {
           if (type.toString() === '1') {
@@ -1531,7 +1569,10 @@ class UploadController {
         const user = _shared2.default.verifyAuthorization(request.headers);
         const { id, type, index } = request.params || {};
         const seller_image_types = _main2.default.SELLER_IMAGE_TYPE.split(',');
-        const seller_data = await sellerAdaptor.retrieveSellerDetail({ where: { id, user_id: user.id }, attributes: ['seller_details', 'id', 'user_id'] });
+        const seller_data = await sellerAdaptor.retrieveSellerDetail({
+          where: { id, user_id: user.id },
+          attributes: ['seller_details', 'id', 'user_id']
+        });
         let file_name;
         if (seller_data.seller_details) {
           const seller_image_update = [];

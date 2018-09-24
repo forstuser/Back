@@ -129,7 +129,7 @@ class SellerController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user ? user.id || user.ID : undefined,
+          user_id: user && !user.seller_details ? user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -191,13 +191,13 @@ class SellerController {
             });
           }
           return reply.response({
-            status: false,
+            status: true, result: [],
             message: 'No offer from any seller for you.'
           });
         }
 
         return reply.response({
-          status: false,
+          status: true, result: [],
           message: 'Please add a seller in your my seller list.'
         });
       } catch (err) {
@@ -206,7 +206,7 @@ class SellerController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user ? user.id || user.ID : undefined,
+          user_id: user && !user.seller_details ? user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -270,7 +270,7 @@ class SellerController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user ? user.id || user.ID : undefined,
+          user_id: user && !user.seller_details ? user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -317,7 +317,7 @@ class SellerController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user ? user.id || user.ID : undefined,
+          user_id: user && !user.seller_details ? user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -447,7 +447,7 @@ class SellerController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user ? user.id || user.ID : undefined,
+          user_id: user && !user.seller_details ? user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -472,17 +472,29 @@ class SellerController {
       // this is where make us of adapter
       try {
         const { id } = request.params;
-        return reply.response({
-          status: true,
-          result: _lodash2.default.orderBy((await sellerAdaptor.retrieveSellerCategories({ seller_id: id })), ['category_name', 'category_4_name'])
+        const result = [];
+        let seller_categories = _lodash2.default.orderBy((await sellerAdaptor.retrieveSellerCategories({ seller_id: id })), ['category_name', 'category_4_name']);
+        seller_categories.forEach(item => {
+          const { sub_category_id, seller_id, provider_type_id, category_4_id, brand_ids, category_name, category_4_name, provider_type } = item;
+          const category_data = result.find(cdItem => cdItem.sub_category_id === sub_category_id);
+          if (category_data) {
+            category_data.category_brands.push({ category_4_id, category_4_name, brand_ids });
+          } else {
+            result.push({
+              sub_category_id, seller_id, provider_type_id,
+              category_name, provider_type,
+              category_brands: [{ category_4_id, category_4_name, brand_ids }]
+            });
+          }
         });
+        return reply.response({ status: true, result });
       } catch (err) {
         console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
         modals.logs.create({
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user ? user.id || user.ID : undefined,
+          user_id: user && !user.seller_details ? user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -552,7 +564,7 @@ class SellerController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user ? user.id || user.ID : undefined,
+          user_id: user && !user.seller_details ? user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -596,7 +608,7 @@ class SellerController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user ? user.id || user.ID : undefined,
+          user_id: user && !user.seller_details ? user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -685,7 +697,7 @@ class SellerController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user ? user.id || user.ID : undefined,
+          user_id: user && !user.seller_details ? user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -903,12 +915,12 @@ class SellerController {
         attributes: ['id', 'state_name']
       }), sellerAdaptor.retrieveProviderTypes({ attributes: ['id', 'title', 'description'] }), token_user ? sellerAdaptor.retrieveSellerDetail({
         where: { user_id: token_user.id },
-        attributes: ['id', 'seller_details', 'is_onboarded', 'gstin', 'pan_no']
+        attributes: ['id', 'seller_details', 'is_onboarded', 'gstin', 'pan_no', 'is_assisted', 'is_fmcg', 'has_pos']
       }) : {}, data_required ? sellerAdaptor.retrieveAssistedServiceTypes({
         where: { id: { $ne: 0 } },
         attributes: ['id', 'title', 'description']
       }) : []]);
-      const { is_onboarded, seller_details, gstin, pan_no, id } = seller_data || { is_onboarded: false };
+      const { is_onboarded, seller_details, gstin, pan_no, id, is_assisted, is_fmcg, has_pos } = seller_data || { is_onboarded: false };
       const { basic_details, business_details } = seller_details || {};
       const image_type_ref = (_main2.default.SELLER_BUSINESS_IMAGE_TYPES || '').split(',').map(item => {
         item = item.split('|');
@@ -934,9 +946,8 @@ class SellerController {
       let seller_payment_modes = (_main2.default.SELLER_PAYMENT_MODES || '').split(',');
       let seller_business_types = (_main2.default.SELLER_BUSINESS_TYPES || '').split(',');
       return reply.response(JSON.parse(JSON.stringify({
-        status: true,
-        is_onboarded,
-        seller_id: id,
+        status: true, is_onboarded, is_assisted, is_fmcg,
+        seller_id: id, has_pos,
         next_step: !gstin && !pan_no ? 'fresh_seller' : !basic_details || basic_details && !basic_details.is_complete ? 'basic_details' : !business_details ? 'business_details' : 'dashboard',
         categories: data_required || !is_onboarded ? _lodash2.default.orderBy(categories, 'name') : undefined,
         main_category_id: (basic_details || {}).category_id,
@@ -1014,7 +1025,7 @@ class SellerController {
       seller_details.basic_details = basic_details;
       let seller_updates = JSON.parse(JSON.stringify({
         seller_name, address, pincode, seller_details,
-        locality_id, city_id, state_id
+        locality_id, city_id, state_id, is_onboarded: true
       }));
 
       replyObject.seller_detail = JSON.parse(JSON.stringify((await sellerAdaptor.retrieveOrUpdateSellerDetail({ where: JSON.parse(JSON.stringify({ id })) }, seller_updates, true)) || {}));
@@ -1358,7 +1369,7 @@ class SellerController {
       const { seller_id, id } = request.params || {};
       let { id: user_id } = token_user;
       request.payload.updated_by = user_id;
-      const seller_service_types = await sellerAdaptor.updateAssistedUserReview(JSON.parse(JSON.stringify({ id, seller_id })), request.payload);
+      const seller_service_types = await sellerAdaptor.updateAssistedUserReview(JSON.parse(JSON.stringify({ id })), request.payload);
       if (seller_service_types) {
         replyObject.seller_service_types = JSON.parse(JSON.stringify(seller_service_types));
         return reply.response(JSON.parse(JSON.stringify(replyObject))).code(201);
@@ -1679,7 +1690,7 @@ class SellerController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_details ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -1711,18 +1722,30 @@ class SellerController {
             attributes: ['service_type_id', 'seller_id', 'price', 'id']
           }, attributes: ['id', 'name', 'mobile_no', 'reviews', 'document_details', 'profile_image_detail']
         })]);
-
+        const reviews = [];
+        seller_service_users.forEach(item => reviews.push(...(item.reviews || [])));
+        const review_user_ids = _lodash2.default.uniq(reviews.map(item => item.updated_by));
+        const review_users = await userAdaptor.retrieveUsers({
+          where: { id: review_user_ids }, attributes: ['id', ['full_name', 'name'], 'image_name']
+        });
         return reply.response({
           status: true,
           message: 'Successful',
           result: seller_service_users.map(item => {
-            item.rating = _lodash2.default.sumBy(item.reviews || [{ ratings: 0 }], 'ratings') / (item.reviews || [{ ratings: 0 }]).length;
+            item.rating = _lodash2.default.sumBy(item.reviews, 'ratings') / (item.reviews || [{ ratings: 0 }]).length;
             item.service_types = item.service_types.map(typeItem => {
               const service_type = service_types.find(stItem => stItem.id === typeItem.service_type_id);
               typeItem.service_type = (service_type || {}).title;
               return typeItem;
             });
 
+            item.reviews = (item.reviews || []).map(rItem => {
+              if (rItem.updated_by) {
+                const review_user = review_users.find(ruItem => ruItem.id.toString() === rItem.updated_by.toString());
+                rItem.user_name = (review_user || {}).name;
+              }
+              return rItem;
+            });
             return item;
           }),
           forceUpdate: request.pre.forceUpdate
@@ -1740,7 +1763,7 @@ class SellerController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_details ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -1769,6 +1792,14 @@ class SellerController {
           }, attributes: ['id', 'name', 'mobile_no', 'reviews', 'document_details', 'profile_image_detail', [modals.sequelize.literal(`(Select count(*) as order_counts from table_orders as orders where orders.delivery_user_id = assisted_service_users.id and orders.status_type = 19 and orders.seller_id = ${seller_id})`), 'order_counts']]
         })]);
 
+        const reviews = [];
+        seller_service_users.forEach(item => reviews.push(...(item.reviews || [])));
+
+        const review_user_ids = _lodash2.default.uniq(reviews.map(item => item.updated_by));
+        const review_users = await userAdaptor.retrieveUsers({
+          where: { id: review_user_ids }, attributes: ['id', ['full_name', 'name'], 'image_name']
+        });
+
         return reply.response({
           status: true,
           message: 'Successful',
@@ -1778,6 +1809,14 @@ class SellerController {
               const service_type = service_types.find(stItem => stItem.id === typeItem.service_type_id);
               typeItem.service_type = (service_type || {}).title;
               return typeItem;
+            });
+
+            item.reviews = (item.reviews || []).map(rItem => {
+              if (rItem.updated_by) {
+                const review_user = review_users.find(ruItem => ruItem.id.toString() === rItem.updated_by.toString());
+                rItem.user_name = (review_user || {}).name;
+              }
+              return rItem;
             });
 
             return item;
@@ -1797,7 +1836,6 @@ class SellerController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -1870,7 +1908,7 @@ class SellerController {
         const redeemed_cashback = _lodash2.default.sumBy(result.filter(item => item.transaction_type === 2), 'amount');
         return reply.response({
           status: true, message: 'Successful', result,
-          total_cashback: Math.round(assigned_cashback || 0) - Math.round(redeemed_cashback || 0),
+          total_cashback: (assigned_cashback || 0) - (redeemed_cashback || 0),
           forceUpdate: request.pre.forceUpdate
         });
       } else {
@@ -1886,7 +1924,7 @@ class SellerController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_details ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -1929,7 +1967,7 @@ class SellerController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_details ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -2258,7 +2296,7 @@ class SellerController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_details ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -2280,7 +2318,11 @@ class SellerController {
       if (!request.pre.forceUpdate) {
         const { seller_id, customer_id } = request.params;
         const transaction_list = await sellerAdaptor.retrieveSellerTransactions({
-          where: JSON.parse(JSON.stringify({ seller_id, user_id: customer_id })),
+          where: JSON.parse(JSON.stringify({
+            seller_id,
+            user_id: customer_id,
+            admin_status: { $ne: 2 }
+          })),
           attributes: ['id', 'home_delivered', 'cashback_status', 'copies', [modals.sequelize.literal(`(select sum(purchase_cost) from consumer_products as product where product.user_id = "cashback_jobs"."user_id" and product.job_id = "cashback_jobs"."job_id" and product.seller_id = ${seller_id})`), 'amount_paid'], [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where seller_credit.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 1 and seller_credit.user_id = "cashback_jobs"."user_id" and seller_credit.seller_id = ${seller_id})`), 'total_credits'], [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where seller_credit.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 2 and seller_credit.user_id = "cashback_jobs"."user_id" and seller_credit.seller_id = ${seller_id})`), 'redeemed_credits'], 'created_at', [modals.sequelize.literal(`(select full_name from users where users.id = "cashback_jobs"."user_id")`), 'user_name'], [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_loyalty as loyalty_wallet where loyalty_wallet.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 1 and loyalty_wallet.user_id = "cashback_jobs"."user_id" and loyalty_wallet.seller_id = ${seller_id})`), 'total_loyalty'], [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_loyalty as loyalty_wallet where loyalty_wallet.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 2 and loyalty_wallet.user_id = "cashback_jobs"."user_id" and loyalty_wallet.seller_id = ${seller_id})`), 'redeemed_loyalty'], [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_cashback as user_wallet where user_wallet.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 1 and user_wallet.user_id = "cashback_jobs"."user_id" and user_wallet.seller_id = ${seller_id})`), 'total_cashback'], [modals.sequelize.literal(`(select count(*) from table_expense_sku as expense_skus where expense_skus.user_id = "cashback_jobs"."user_id" and expense_skus.seller_id = ${seller_id} and expense_skus.job_id = "cashback_jobs"."job_id" )`), 'item_counts']],
           order: [['created_at', 'desc']]
         });
@@ -2327,7 +2369,7 @@ class SellerController {
       const user = _shared2.default.verifyAuthorization(request.headers);
       if (!request.pre.forceUpdate) {
         const { seller_id } = request.params;
-        const transaction_list = await shopEarnAdaptor.retrieveCashBackTransactions(JSON.parse(JSON.stringify({ seller_id, user_id: user.id })));
+        const transaction_list = await shopEarnAdaptor.retrieveCashBackTransactions(JSON.parse(JSON.stringify({ seller_id, user_id: user.id, admin_status: { $ne: 2 } })));
 
         return reply.response({
           status: true, message: 'Successful',
@@ -2574,7 +2616,7 @@ class SellerController {
     try {
       if (!request.pre.forceUpdate) {
         const { seller_id, id } = request.params;
-        await sellerAdaptor.deleteSellerAssistedServiceUsers({ where: { seller_id, id } });
+        await sellerAdaptor.deleteSellerAssistedServiceUsers({ seller_id, id });
 
         return reply.response({
           status: true,
@@ -2594,7 +2636,7 @@ class SellerController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_details ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -2619,7 +2661,7 @@ class SellerController {
         if (seller_assisted_services.length > 1) {
           const seller_assisted_service = seller_assisted_services.find(item => item.id === parseInt(id));
           if (seller_assisted_service) {
-            await sellerAdaptor.deleteSellerAssistedServiceTypes({ where: { seller_id, service_user_id, id } });
+            await sellerAdaptor.deleteSellerAssistedServiceTypes({ seller_id, service_user_id, id });
 
             return reply.response({
               status: true,
@@ -2652,7 +2694,7 @@ class SellerController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_details ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -2779,7 +2821,7 @@ class SellerController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_details ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,

@@ -57,6 +57,9 @@ exports.default = (sequelize, DataTypes) => {
     last_active_date: {
       type: DataTypes.DATE
     },
+    last_logout_at: {
+      type: DataTypes.DATE
+    },
     last_password_change_at: {
       type: DataTypes.DATEONLY
     },

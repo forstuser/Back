@@ -169,7 +169,7 @@ class GeneralController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -201,7 +201,7 @@ class GeneralController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -298,16 +298,16 @@ class GeneralController {
         user = shared.verifyAuthorization(request.headers);
         user_location = user.seller_detail ?
             await modals.seller_users.findOne(
-                {where: {id: user.id}, attributes: ['address']}) :
+                {where: {id: user.id}, attributes: ['id']}) :
             await modals.users.findOne(
                 {where: {id: user.id}, attributes: ['location']});
         user_location = user_location.toJSON();
       }
 
-      const type = user ?
-          (user_location && user_location.location.toLowerCase() ===
-          'other' ? 1 : user.seller_detail ? 3 : [1, 2]) :
-          undefined;
+      const type = user ? user.seller_detail ? 3 :
+          (user_location && (user_location.location &&
+          user_location.location.toLowerCase() ===
+          'other') || !user_location.location ? 1 : [1, 2]) : undefined;
       const faq = await modals.faqs.findAll({
         where: JSON.parse(JSON.stringify({status_id: {$ne: 3}, type})),
         order: [['id']],
@@ -461,7 +461,7 @@ class GeneralController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -644,7 +644,7 @@ class GeneralController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -725,7 +725,7 @@ class GeneralController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -776,7 +776,7 @@ class GeneralController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -830,7 +830,7 @@ class GeneralController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -933,7 +933,7 @@ class GeneralController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -972,7 +972,7 @@ class GeneralController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user ? user.id || user.ID : undefined,
+          user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -1104,7 +1104,7 @@ class GeneralController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,

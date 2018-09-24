@@ -71,15 +71,15 @@ class ShopEarnController {
         user = result ? result.toJSON() : user;
         const seller_list = user.my_seller_ids ? await sellerAdaptor.retrieveSellersOnInit({
           where: { id: user.my_seller_ids, is_onboarded: true },
-          attributes: ['id', 'seller_name', 'seller_type_id', 'address', 'is_data_manually_added']
+          attributes: ['id', 'seller_name', 'seller_type_id', 'address', 'is_data_manually_added', [modals.sequelize.literal(`(Select count(*) from table_seller_provider_types as provider_type where provider_type.seller_id = sellers.id)`), 'provider_counts'], [modals.sequelize.literal(`(Select count(*) from table_sku_seller_mapping as sku_seller where sku_seller.seller_id = sellers.id)`), 'sku_seller_counts']]
         }) : undefined;
         const sku_result = await shopEarnAdaptor.retrieveSKUs({
           location: user.location, user_id: user.id,
           queryOptions: request.query, seller_list
         });
         return reply.response({
-          status: true,
-          result: sku_result, seller_list
+          status: true, result: sku_result,
+          seller_list: (seller_list || []).filter(item => parseInt(item.provider_counts || 0) > 0 || parseInt(item.sku_seller_counts || 0) > 0 || item.is_data_manually_added)
         });
       } catch (err) {
         console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
@@ -87,7 +87,7 @@ class ShopEarnController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user ? user.id || user.ID : undefined,
+          user_id: user && !user.seller_details ? user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -128,7 +128,7 @@ class ShopEarnController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user ? user.id || user.ID : undefined,
+          user_id: user && !user.seller_details ? user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -162,7 +162,7 @@ class ShopEarnController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user ? user.id || user.ID : undefined,
+          user_id: user && !user.seller_details ? user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -204,7 +204,7 @@ class ShopEarnController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user ? user.id || user.ID : undefined,
+          user_id: user && !user.seller_details ? user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -229,7 +229,7 @@ class ShopEarnController {
       try {
         return reply.response({
           status: true,
-          reasons: await categoryAdaptor.retrieveReasons({}),
+          reasons: await categoryAdaptor.retrieveReasons({ where: { query_type: 2 }, order: [['id']] }),
           result: await shopEarnAdaptor.retrieveCashBackTransactions({ user_id: user.id || user.ID })
         });
       } catch (err) {
@@ -238,7 +238,7 @@ class ShopEarnController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user ? user.id || user.ID : undefined,
+          user_id: user && !user.seller_details ? user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -275,7 +275,7 @@ class ShopEarnController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user ? user.id || user.ID : undefined,
+          user_id: user && !user.seller_details ? user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -308,7 +308,7 @@ class ShopEarnController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user ? user.id || user.ID : undefined,
+          user_id: user && !user.seller_details ? user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -341,7 +341,7 @@ class ShopEarnController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user ? user.id || user.ID : undefined,
+          user_id: user && !user.seller_details ? user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -372,7 +372,7 @@ class ShopEarnController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user ? user.id || user.ID : undefined,
+          user_id: user && !user.seller_details ? user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -446,7 +446,7 @@ class ShopEarnController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_details ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -534,7 +534,7 @@ class ShopEarnController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_details ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -587,7 +587,7 @@ class ShopEarnController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_details ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -722,7 +722,7 @@ class ShopEarnController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_details ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -778,7 +778,7 @@ class ShopEarnController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_details ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -855,7 +855,7 @@ class ShopEarnController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_details ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -917,7 +917,7 @@ class ShopEarnController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_details ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -981,7 +981,7 @@ class ShopEarnController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_details ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,

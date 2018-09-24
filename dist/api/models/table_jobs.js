@@ -41,6 +41,12 @@ exports.default = (sequelize, DataTypes) => {
     comments: {
       type: DataTypes.STRING(2000)
     },
+    ce_task_date: {
+      type: DataTypes.DATE
+    },
+    qe_task_date: {
+      type: DataTypes.DATE
+    },
     created_at: {
       type: DataTypes.DATE,
       defaultValue: sequelize.literal('NOW()')

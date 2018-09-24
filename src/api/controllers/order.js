@@ -84,7 +84,6 @@ class OrderController {
                     'id', 'name', 'mobile_no',
                     'reviews', 'document_details'], include: {
                     as: 'service_types', where: JSON.parse(JSON.stringify({
-                      seller_id: result.seller_id,
                       service_type_id: result.order_details[0].service_type_id,
                     })), model: modals.seller_service_types, required: true,
                     attributes: ['service_type_id', 'seller_id', 'price', 'id'],
@@ -102,14 +101,16 @@ class OrderController {
             result[service_user_key].service_type = result[service_user_key].service_types.find(
                 item => item.service_type_id ===
                     result.order_details[0].service_type_id);
+            result[service_user_key].rating = result[service_user_key].ratings;
             const review_user_ids = (result[service_user_key].reviews ||
-                []).map(
-                item => item.updated_by);
-            review_users = userAdaptor.retrieveUsers({id: review_user_ids});
+                []).map(item => item.updated_by);
+            review_users = await userAdaptor.retrieveUsers(
+                {where: {id: review_user_ids}});
             result[service_user_key].reviews = (result[service_user_key].reviews ||
                 []).map(item => {
               item.user = review_users.find(
                   uItem => uItem.id === item.updated_by);
+              item.user_name = (item.user || {}).name;
               return item;
             });
           }
@@ -133,8 +134,7 @@ class OrderController {
                 }
 
                 return item;
-              }) :
-              result.order_details;
+              }) : result.order_details;
           if (result.user_address) {
             const {address_line_1, address_line_2, city_name, state_name, locality_name, pin_code} = result.user_address ||
             {};
@@ -143,18 +143,12 @@ class OrderController {
                 ''},${locality_name},${city_name},${state_name}-${pin_code}`);
             console.log(result.user_address_detail);
             result.user_address_detail = result.user_address_detail.
-                split('null').
-                join(',').
-                split('undefined').
-                join(',').
-                split(',,').
-                join(',').
-                split(',-,').
-                join(',').
-                split(',,').
-                join(',').
-                split(',,').
-                join(',');
+                split('null').join(',').
+                split('undefined').join(',').
+                split(',,').join(',').
+                split(',-,').join(',').
+                split(',,').join(',').
+                split(',,').join(',');
           }
           return reply.response(
               {
@@ -584,7 +578,7 @@ class OrderController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -712,7 +706,7 @@ class OrderController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,

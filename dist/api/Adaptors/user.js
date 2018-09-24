@@ -125,7 +125,7 @@ class UserAdaptor {
   }
 
   async retrieveUsers(filterObject) {
-    filterObject.attributes = ['id', ['full_name', 'name'], 'mobile_no', 'image_name', 'email', 'email_verified', 'email_secret', 'gender', 'user_status_type'];
+    filterObject.attributes = filterObject.attributes || ['id', ['full_name', 'name'], 'mobile_no', 'image_name', 'email', 'email_verified', 'email_secret', 'gender', 'user_status_type'];
     const users = await this.modals.users.findAll(filterObject);
     return users.map(item => item.toJSON());
   }
@@ -207,7 +207,7 @@ class UserAdaptor {
         api_action: method,
         api_path: url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_details ? user.id || user.ID : undefined,
         log_content: JSON.stringify({ params, query, headers, payload, err })
       }).catch(ex => console.log('error while logging on db,', ex));
       return {
@@ -298,7 +298,7 @@ class UserAdaptor {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_details ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,

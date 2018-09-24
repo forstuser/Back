@@ -57,7 +57,7 @@ class WarrantyAdaptor {
         required: productOptions !== undefined
       }, {
         model: this.modals.insuranceBrands, as: 'provider',
-        attributes: ['id', 'name', 'url', ['contact_no', 'contact'], 'email', 'address', 'city', 'state', 'pincode', 'latitude', 'longitude', [this.modals.sequelize.fn('CONCAT', 'providers/', this.modals.sequelize.col('"provider"."id"'), '/images'), 'imageUrl'], 'status_type'],
+        attributes: ['id', 'name', 'url', ['contact_no', 'contact'], 'email', 'address', 'state', 'city', 'pincode', 'latitude', 'longitude', [this.modals.sequelize.fn('CONCAT', 'providers/', this.modals.sequelize.col('"provider"."id"'), '/images'), 'imageUrl'], 'status_type'],
         required: false
       }],
       attributes: ['id', ['job_id', 'jobId'], ['document_number', 'policyNo'], [this.modals.sequelize.literal('"product"."product_name"'), 'productName'], ['product_id', 'productId'], [this.modals.sequelize.literal('"renewalType"."title"'), 'premiumType'], ['renewal_cost', 'premiumAmount'], [this.modals.sequelize.literal('"product"."main_category_id"'), 'masterCategoryId'], 'renewal_type', 'user_id', 'warranty_type', ['renewal_cost', 'value'], ['renewal_taxes', 'taxes'], ['effective_date', 'effectiveDate'], ['expiry_date', 'expiryDate'], ['document_date', 'purchaseDate'], ['updated_at', 'updatedDate'], [this.modals.sequelize.fn('CONCAT', 'products/', this.modals.sequelize.literal('"product_id"')), 'productURL'], 'copies'],

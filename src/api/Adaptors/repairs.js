@@ -66,7 +66,18 @@ class RepairAdaptor {
             ['owner_name', 'ownerName'], ['pan_no', 'panNo'],
             ['reg_no', 'regNo'], ['is_service', 'isService'],
             'url', 'gstin', ['contact_no', 'contact'], 'email',
-            'address', 'city', 'state', 'pincode', 'latitude',
+            'address', [this.modals.sequelize.literal(
+                '(Select state_name from table_states as state where state.id = sellers.state_id)'),
+              'state_name'], [
+              this.modals.sequelize.literal(
+                  '(Select name from table_cities as city where city.id = sellers.city_id)'),
+              'city_name'], [
+              this.modals.sequelize.literal(
+                  '(Select name from table_localities as locality where locality.id = sellers.locality_id)'),
+              'locality_name'], [
+              this.modals.sequelize.literal(
+                  '(Select pin_code from table_localities as locality where locality.id = sellers.locality_id)'),
+              'pin_code'], 'latitude',
             'longitude'],
           required: false,
         }],

@@ -166,7 +166,7 @@ class ProductAdaptor {
       }, {
         model: this.modals.sellers,
         as: 'sellers',
-        attributes: ['id', ['seller_name', 'sellerName'], ['owner_name', 'ownerName'], ['pan_no', 'panNo'], ['reg_no', 'regNo'], ['is_service', 'isService'], 'url', 'gstin', ['contact_no', 'contact'], 'email', 'address', 'city', 'state', 'pincode', 'latitude', 'longitude', [this.modals.sequelize.fn('CONCAT', 'sellers/', this.modals.sequelize.literal('"sellers"."id"'), '/reviews?isonlineseller=false'), 'reviewUrl']],
+        attributes: ['id', ['seller_name', 'sellerName'], ['owner_name', 'ownerName'], ['pan_no', 'panNo'], ['reg_no', 'regNo'], ['is_service', 'isService'], 'url', 'gstin', ['contact_no', 'contact'], 'email', 'address', [this.modals.sequelize.literal('(Select state_name from table_states as state where state.id = sellers.state_id)'), 'state_name'], [this.modals.sequelize.literal('(Select name from table_cities as city where city.id = sellers.city_id)'), 'city_name'], [this.modals.sequelize.literal('(Select name from table_localities as locality where locality.id = sellers.locality_id)'), 'locality_name'], [this.modals.sequelize.literal('(Select pin_code from table_localities as locality where locality.id = sellers.locality_id)'), 'pin_code'], 'latitude', 'longitude', [this.modals.sequelize.fn('CONCAT', 'sellers/', this.modals.sequelize.literal('"sellers"."id"'), '/reviews?isonlineseller=false'), 'reviewUrl']],
         include: [{
           model: this.modals.seller_reviews,
           as: 'sellerReviews',
@@ -319,6 +319,7 @@ class ProductAdaptor {
     });
     products = productResult.map(item => item.toJSON());
     billOption.id = products.map(item => item.bill_id).filter(Boolean);
+    const seller_ids = products.map(item => item.seller_id).filter(Boolean);
     let [brands, colours, service_schedules, bills, offline_sellers, product_reviews, categories, accessory_parts] = await _bluebird2.default.all([this.modals.brands.findAll({
       where: {
         brand_id: products.map(item => item.brand_id).filter(Boolean)
@@ -331,7 +332,7 @@ class ProductAdaptor {
       where: {
         id: products.map(item => item.service_schedule_id).filter(Boolean)
       }, attributes: ['id', 'inclusions', 'exclusions', 'service_number', 'service_type', 'distance', 'due_in_months', 'due_in_days']
-    }), this.modals.bills.findAll({
+    }), billOption.id && billOption.id.length > 0 ? this.modals.bills.findAll({
       where: billOption,
       attributes: ['id', ['consumer_name', 'consumerName'], ['consumer_email', 'consumerEmail'], ['consumer_phone_no', 'consumerPhoneNo'], ['document_number', 'invoiceNo'], 'seller_id'],
       include: [{
@@ -347,16 +348,14 @@ class ProductAdaptor {
         required: false
       }],
       required: options.status_type === 8
-    }), this.modals.sellers.findAll({
-      where: { id: products.map(item => item.seller_id).filter(Boolean) },
-      attributes: ['id', ['seller_name', 'sellerName'], ['owner_name', 'ownerName'], ['pan_no', 'panNo'], ['reg_no', 'regNo'], ['is_service', 'isService'], 'url', 'gstin', ['contact_no', 'contact'], 'email', 'address', 'city', 'state', 'pincode', 'latitude', 'longitude', [this.modals.sequelize.fn('CONCAT', 'sellers/', this.modals.sequelize.literal('"sellers"."id"'), '/reviews?isonlineseller=false'), 'reviewUrl']],
+    }) : [], seller_ids && seller_ids.length > 0 ? this.modals.sellers.findAll({
+      where: { id: seller_ids },
+      attributes: ['id', ['seller_name', 'sellerName'], ['owner_name', 'ownerName'], ['pan_no', 'panNo'], ['reg_no', 'regNo'], ['is_service', 'isService'], 'url', 'gstin', ['contact_no', 'contact'], 'email', 'address', [this.modals.sequelize.literal('(Select state_name from table_states as state where state.id = sellers.state_id)'), 'state_name'], [this.modals.sequelize.literal('(Select name from table_cities as city where city.id = sellers.city_id)'), 'city_name'], [this.modals.sequelize.literal('(Select name from table_localities as locality where locality.id = sellers.locality_id)'), 'locality_name'], [this.modals.sequelize.literal('(Select pin_code from table_localities as locality where locality.id = sellers.locality_id)'), 'pin_code'], 'latitude', 'longitude', [this.modals.sequelize.fn('CONCAT', 'sellers/', this.modals.sequelize.literal('"sellers"."id"'), '/reviews?isonlineseller=false'), 'reviewUrl']],
       include: [{
         model: this.modals.seller_reviews,
-        as: 'sellerReviews',
-        attributes: [['review_ratings', 'ratings'], ['review_feedback', 'feedback'], ['review_comments', 'comments']],
-        required: false
+        as: 'sellerReviews', attributes: [['review_ratings', 'ratings'], ['review_feedback', 'feedback'], ['review_comments', 'comments']], required: false
       }]
-    }), this.modals.productReviews.findAll({
+    }) : [], this.modals.productReviews.findAll({
       where: {
         bill_product_id: products.map(item => item.id).filter(Boolean)
       },
@@ -556,7 +555,7 @@ class ProductAdaptor {
       }, {
         model: this.modals.sellers,
         as: 'sellers',
-        attributes: ['id', ['seller_name', 'sellerName'], ['owner_name', 'ownerName'], ['pan_no', 'panNo'], ['reg_no', 'regNo'], ['is_service', 'isService'], 'url', 'gstin', ['contact_no', 'contact'], 'email', 'address', 'city', 'state', 'pincode', 'latitude', 'longitude', [this.modals.sequelize.fn('CONCAT', 'sellers/', this.modals.sequelize.literal('"sellers"."id"'), '/reviews?isonlineseller=false'), 'reviewUrl']],
+        attributes: ['id', ['seller_name', 'sellerName'], ['owner_name', 'ownerName'], ['pan_no', 'panNo'], ['reg_no', 'regNo'], ['is_service', 'isService'], 'url', 'gstin', ['contact_no', 'contact'], 'email', 'address', [this.modals.sequelize.literal('(Select state_name from table_states as state where state.id = sellers.state_id)'), 'state_name'], [this.modals.sequelize.literal('(Select name from table_cities as city where city.id = sellers.city_id)'), 'city_name'], [this.modals.sequelize.literal('(Select name from table_localities as locality where locality.id = sellers.locality_id)'), 'locality_name'], [this.modals.sequelize.literal('(Select pin_code from table_localities as locality where locality.id = sellers.locality_id)'), 'pin_code'], 'latitude', 'longitude', [this.modals.sequelize.fn('CONCAT', 'sellers/', this.modals.sequelize.literal('"sellers"."id"'), '/reviews?isonlineseller=false'), 'reviewUrl']],
         include: [{
           model: this.modals.seller_reviews,
           as: 'sellerReviews', attributes: [['review_ratings', 'ratings'], ['review_feedback', 'feedback'], ['review_comments', 'comments']],
@@ -738,7 +737,7 @@ class ProductAdaptor {
           }], required: false
         }, {
           model: this.modals.sellers, as: 'sellers',
-          attributes: ['id', ['seller_name', 'sellerName'], 'url', ['contact_no', 'contact'], 'email', 'address', 'city', 'state', 'pincode', 'latitude', 'longitude', [this.modals.sequelize.fn('CONCAT', 'sellers/', this.modals.sequelize.literal('"sellers"."id"'), '/reviews?isonlineseller=false'), 'reviewUrl']], include: [{
+          attributes: ['id', ['seller_name', 'sellerName'], 'url', ['contact_no', 'contact'], 'email', 'address', [this.modals.sequelize.literal('(Select state_name from table_states as state where state.id = sellers.state_id)'), 'state_name'], [this.modals.sequelize.literal('(Select name from table_cities as city where city.id = sellers.city_id)'), 'city_name'], [this.modals.sequelize.literal('(Select name from table_localities as locality where locality.id = sellers.locality_id)'), 'locality_name'], [this.modals.sequelize.literal('(Select pin_code from table_localities as locality where locality.id = sellers.locality_id)'), 'pin_code'], 'latitude', 'longitude', [this.modals.sequelize.fn('CONCAT', 'sellers/', this.modals.sequelize.literal('"sellers"."id"'), '/reviews?isonlineseller=false'), 'reviewUrl']], include: [{
             model: this.modals.seller_reviews, as: 'sellerReviews',
             attributes: [['review_ratings', 'ratings'], ['review_feedback', 'feedback'], ['review_comments', 'comments']], required: false
           }], required: false

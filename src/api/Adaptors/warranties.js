@@ -54,7 +54,7 @@ class WarrantyAdaptor {
           model: this.modals.insuranceBrands, as: 'provider',
           attributes: [
             'id', 'name', 'url', ['contact_no', 'contact'],
-            'email', 'address', 'city', 'state', 'pincode',
+            'email', 'address', 'state', 'city', 'pincode',
             'latitude', 'longitude', [
               this.modals.sequelize.fn('CONCAT', 'providers/',
                   this.modals.sequelize.col('"provider"."id"'), '/images'),

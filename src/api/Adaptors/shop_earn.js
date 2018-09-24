@@ -17,35 +17,62 @@ export default class ShopEarnAdaptor {
       let {main_category_id, category_id, brand_ids, sub_category_ids, measurement_values, measurement_types, bar_code, title, limit, offset, id, seller_id} = queryOptions ||
       {};
       let seller, seller_skus = [], seller_categories = [];
+      category_id = (category_id || '').trim().
+          split(',').filter(item => !!item);
+      main_category_id = (main_category_id || '').trim().
+          split(',').filter(item => !!item);
+      brand_ids = (brand_ids || '').trim().split(',').filter(item => !!item);
       if (seller_id && seller_list && seller_list.length > 0) {
         seller = seller_list.find(
             item => item.id.toString() === seller_id.toString());
+        let categories_data;
         if (seller.is_data_manually_added) {
           seller_skus = await this.modals.sku_seller.findAll(
               {where: {seller_id}});
+        } else {
+          categories_data = await this.modals.seller_provider_type.findAll(
+              {
+                where: JSON.parse(JSON.stringify({
+                  seller_id, provider_type_id: 1,
+                  sub_category_id: main_category_id.length > 0 ?
+                      main_category_id : undefined,
+                  category_brands: category_id.length > 0 ?
+                      {
+                        $contains: [
+                          category_id.map(
+                              item => ({
+                                'category_4_id': parseInt(item || 0),
+                              }))],
+                      } :
+                      undefined,
+                })),
+                attributes: [
+                  'sub_category_id', 'category_brands',
+                  'seller_id', 'provider_type_id',
+                  'category_4_id', 'brand_ids'],
+              });
+          seller_categories = categories_data.map(item => item.toJSON());
         }
-
-        seller_categories = await this.sellerAdapter.retrieveSellerCategories(
-            {seller_id});
       }
-
+      console.log(JSON.stringify({seller_categories}),
+      );
       const seller_main_categories = seller_categories.map(
-          item => item.sub_category_id);
-      const seller_4_categories = seller_categories.map(
-          item => item.category_4_id);
-      const seller_brands = [];
-      seller_categories.forEach(item => seller_brands.push(...item.brand_ids));
+          item => ({
+            main_category_id: item.sub_category_id,
+            $or: item.category_brands.length > 0 ?
+                [
+                  item.category_brands.map(cbItem => ({
+                    category_id: cbItem.category_4_id,
+                    brand_id: cbItem.brand_ids,
+                  }))] :
+                undefined,
+          }));
       const seller_sku_ids = seller_skus.map(item => item.sku_id);
       const seller_sku_measurement_ids = seller_skus.map(
           item => item.sku_measurement_id);
       title = {$iLike: `%${title || ''}%`};
       limit = limit || 50;
       offset = offset || 0;
-      category_id = (category_id || '').trim().
-          split(',').filter(item => !!item);
-      main_category_id = (main_category_id || '').trim().
-          split(',').filter(item => !!item);
-      brand_ids = (brand_ids || '').trim().split(',').filter(item => !!item);
       sub_category_ids = (sub_category_ids || '').trim().
           split(',').filter(item => !!item);
       measurement_values = (measurement_values || '').trim().
@@ -60,30 +87,59 @@ export default class ShopEarnAdaptor {
           'status_type', 'updated_by', 'updated_at', 'created_at'],
       };
       console.log(location);
+      const sku_options = seller_main_categories.length > 0 ? {
+        status_type: 1, $or: seller_main_categories,
+        brand_id: brand_ids.length > 0 ? brand_ids : undefined,
+        sub_category_id: sub_category_ids.length > 0 ?
+            sub_category_ids : undefined, title,
+        id: id ? id : seller_sku_ids && seller_sku_ids.length > 0 ?
+            seller_sku_ids : undefined,
+      } : {
+        status_type: 1,
+        main_category_id: main_category_id.length > 0 ?
+            main_category_id : undefined,
+        category_id: category_id.length > 0 ?
+            category_id : undefined,
+        brand_id: brand_ids.length > 0 ?
+            brand_ids : undefined,
+        sub_category_id: sub_category_ids.length > 0 ?
+            sub_category_ids : undefined, title,
+        id: id ? id : seller_sku_ids && seller_sku_ids.length > 0 ?
+            seller_sku_ids : undefined,
+      };
+      const sku_brand_options = seller_main_categories.length > 0 ? {
+        status_type: 1, $or: seller_main_categories,
+        sub_category_id: sub_category_ids.length > 0 ?
+            sub_category_ids : undefined, title,
+        id: id ? id : seller_sku_ids && seller_sku_ids.length > 0 ?
+            seller_sku_ids : undefined,
+      } : {
+        status_type: 1,
+        main_category_id: main_category_id.length > 0 ?
+            main_category_id : undefined,
+        category_id: category_id.length > 0 ?
+            category_id : undefined,
+        sub_category_id: sub_category_ids.length > 0 ?
+            sub_category_ids : undefined, title,
+        id: id ? id : seller_sku_ids && seller_sku_ids.length > 0 ?
+            seller_sku_ids : undefined,
+      };
       const [skuItems, sku_ids] = await Promise.all([
         this.modals.sku.findAll({
-          where: JSON.parse(JSON.stringify({
-            status_type: 1,
-            main_category_id: main_category_id.length > 0 ?
-                main_category_id : seller_main_categories.length > 0 ?
-                    seller_main_categories : undefined,
-            category_id: category_id.length > 0 ?
-                category_id : seller_4_categories.length > 0 ?
-                    seller_4_categories : undefined,
-            brand_id: brand_ids.length > 0 ?
-                brand_ids : seller_brands.length ? seller_brands : undefined,
-            sub_category_id: sub_category_ids.length > 0 ?
-                sub_category_ids : undefined, title, id: id || seller_sku_ids,
-          })),
+          where: JSON.parse(JSON.stringify(sku_options)),
           include: [
             {
               model: this.modals.sku_measurement,
               where: JSON.parse(JSON.stringify({
-                status_type: 1, id: seller_sku_measurement_ids,
+                status_type: 1,
+                id: seller_sku_measurement_ids &&
+                seller_sku_measurement_ids.length > 0 ?
+                    seller_sku_measurement_ids : undefined,
                 measurement_value: measurement_values.length > 0 ?
                     measurement_values : undefined,
                 measurement_type: measurement_types.length > 0 ?
-                    measurement_types : undefined, bar_code,
+                    measurement_types : undefined,
+                bar_code,
               })),
               attributes: sku_measurement_attributes,
               required: false,
@@ -91,12 +147,7 @@ export default class ShopEarnAdaptor {
             exclude: ['status_type', 'updated_by', 'updated_at', 'created_at'],
           }, limit, offset,
         }), this.modals.sku.findAll({
-          where: JSON.parse(JSON.stringify({
-            status_type: 1,
-            category_id: category_id.length > 0 ? category_id : undefined,
-            sub_category_id: sub_category_ids.length > 0 ?
-                sub_category_ids : undefined, title,
-          })),
+          where: JSON.parse(JSON.stringify(sku_brand_options)),
           attributes: ['brand_id'],
           order: [['id']],
         })]);
@@ -241,7 +292,7 @@ export default class ShopEarnAdaptor {
                 where: {
                   status_type: 1,
                   category_ids: {
-                    $contains: JSON.stringify([{category_id: item.id}]),
+                    $contains: [{'category_id': item.id}],
                   },
                 },
               })));
@@ -678,6 +729,47 @@ export default class ShopEarnAdaptor {
           payload: request.payload,
           err,
         }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false, message: 'Unable to create transaction.', err,
+      });
+    }
+  }
+
+  async updatePastWishList(user_id) {
+    try {
+      const userSKUWishList = await this.retrieveUserSKUs({
+        where: {user_id},
+        attributes: ['wishlist_items', 'past_selections'],
+      });
+      let {wishlist_items, past_selections} = (userSKUWishList || {});
+      past_selections = past_selections || [];
+      wishlist_items.forEach((item) => {
+        let {measurement_type: item_measurement_type, measurement_value: item_measurement_value} = item.sku_measurement;
+        const alreadySelected = past_selections.find((pItem) => {
+          let {measurement_type, measurement_value} = pItem.sku_measurement;
+          return item.id === pItem.id && item_measurement_type ===
+              measurement_type && item_measurement_value === measurement_value;
+        });
+
+        if (!alreadySelected) {
+          item.count = 1;
+          past_selections.push(item);
+        } else {
+          alreadySelected.count += 1;
+          alreadySelected.added_date = item.added_date;
+        }
+      });
+      await this.addSKUToWishList(
+          {
+            past_selections, wishlist_items: [],
+            is_new: !userSKUWishList, user_id,
+          });
+    } catch (err) {
+      this.modals.logs.create({
+        api_action: 'PUT', api_path: 'updatePastWishList',
+        log_type: 2, user_id,
+        log_content: JSON.stringify({err}),
       }).catch((ex) => console.log('error while logging on db,', ex));
       return reply.response({
         status: false, message: 'Unable to create transaction.', err,

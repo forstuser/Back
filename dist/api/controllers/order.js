@@ -64,7 +64,6 @@ class OrderController {
             where: JSON.parse(JSON.stringify({ id: result.delivery_user_id })),
             attributes: ['id', 'name', 'mobile_no', 'reviews', 'document_details'], include: {
               as: 'service_types', where: JSON.parse(JSON.stringify({
-                seller_id: result.seller_id,
                 service_type_id: result.order_details[0].service_type_id
               })), model: modals.seller_service_types, required: true,
               attributes: ['service_type_id', 'seller_id', 'price', 'id']
@@ -75,10 +74,12 @@ class OrderController {
             const service_user_key = result.order_type === 2 ? 'service_user' : 'delivery_user';
             result[service_user_key].ratings = _lodash2.default.sumBy(result[service_user_key].reviews || [{ ratings: 0 }], 'ratings') / (result[service_user_key].reviews || [{ ratings: 0 }]).length;
             result[service_user_key].service_type = result[service_user_key].service_types.find(item => item.service_type_id === result.order_details[0].service_type_id);
+            result[service_user_key].rating = result[service_user_key].ratings;
             const review_user_ids = (result[service_user_key].reviews || []).map(item => item.updated_by);
-            review_users = userAdaptor.retrieveUsers({ id: review_user_ids });
+            review_users = await userAdaptor.retrieveUsers({ where: { id: review_user_ids } });
             result[service_user_key].reviews = (result[service_user_key].reviews || []).map(item => {
               item.user = review_users.find(uItem => uItem.id === item.updated_by);
+              item.user_name = (item.user || {}).name;
               return item;
             });
           }
@@ -302,7 +303,7 @@ class OrderController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_details ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -362,7 +363,7 @@ class OrderController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_details ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,

@@ -214,10 +214,34 @@ function prepareUploadRoutes(modal, routeObject, middleware) {
     });
 
     routeObject.push({
-      method: 'GET',
+      method: 'POST',
       path: '/sellers/{id}/upload/{type}/images/{index}',
       config: {
         auth: 'jwt',
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        files: {
+          relativeTo: _path2.default.join(__dirname, '../static/src')
+        },
+        handler: _upload2.default.uploadSellerFiles,
+        payload: {
+          output: 'stream',
+          parse: true,
+          uploads: 'up_files',
+          timeout: 3003400,
+          allow: 'multipart/form-data',
+          failAction: 'log',
+          maxBytes: 209715200
+        },
+        timeout: {
+          socket: false
+        }
+      }
+    });
+
+    routeObject.push({
+      method: 'GET',
+      path: '/sellers/{id}/upload/{type}/images/{index}',
+      config: {
         pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
         handler: _upload2.default.retrieveSellerImages
       }

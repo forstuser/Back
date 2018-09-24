@@ -713,5 +713,39 @@ export function prepareAuthRoutes(modal, routeObject, middleware) {
         },
       },
     });
+
+    /*Logout Seller from app*/
+    routeObject.push({
+      method: 'POST',
+      path: '/sellers/logout',
+      config: {
+        handler: ControllerObject.logout,
+        auth: 'jwt',
+        pre: [
+          {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+        ],
+        description: 'Logout Seller User.',
+        tags: ['api', 'User', 'Authentication'],
+        validate: {
+          payload: joi.object({
+            fcmId: [joi.string()],
+            platform: [joi.number(), joi.allow(null)],
+            output: 'data',
+            parse: true,
+          }).allow(null),
+        },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              {code: 202, message: 'Authenticated'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
+            ],
+          },
+        },
+      },
+    });
   }
 }

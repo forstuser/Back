@@ -37,7 +37,7 @@ class SellerAdaptor {
     options.status_type = [1, 11];
     const result = await this.modals.sellers.findAll({
       where: options,
-      attributes: ['id', ['seller_name', 'name'], ['owner_name', 'ownerName'], 'gstin', ['pan_no', 'panNo'], ['reg_no', 'registrationNo'], ['is_service', 'isService'], ['is_onboarded', 'isOnboarded'], 'address', 'city', 'state', 'pincode', 'latitude', 'longitude', 'url', ['contact_no', 'contact'], 'email']
+      attributes: ['id', ['seller_name', 'name'], ['owner_name', 'ownerName'], 'gstin', ['pan_no', 'panNo'], ['reg_no', 'registrationNo'], ['is_service', 'isService'], ['is_onboarded', 'isOnboarded'], 'address', [this.modals.sequelize.literal('(Select state_name from table_states as state where state.id = sellers.state_id)'), 'state_name'], [this.modals.sequelize.literal('(Select name from table_cities as city where city.id = sellers.city_id)'), 'city_name'], [this.modals.sequelize.literal('(Select name from table_localities as locality where locality.id = sellers.locality_id)'), 'locality_name'], [this.modals.sequelize.literal('(Select pin_code from table_localities as locality where locality.id = sellers.locality_id)'), 'pin_code'], 'latitude', 'longitude', 'url', ['contact_no', 'contact'], 'email']
     });
     return result.map(item => item.toJSON());
   }
@@ -173,11 +173,6 @@ class SellerAdaptor {
     return result ? result.map(item => item.toJSON()) : result;
   }
 
-  async retrieveSellerWalletDetail(query_options) {
-    const result = await this.modals.seller_wallet.findAll(query_options);
-    return result ? result.map(item => item.toJSON()) : result;
-  }
-
   async retrieveSellerOfferDetail(query_options) {
     const result = await this.modals.seller_offers.findOne(query_options);
     return result ? result.toJSON() : result;
@@ -193,7 +188,7 @@ class SellerAdaptor {
     const { latitude, longitude, address, city_name: city } = seller_users;
     const result = await this.modals.users.findAll({
       where: mobile_no ? JSON.parse(JSON.stringify({ $and: { mobile_no } })) : { id },
-      attributes: [['full_name', 'name'], 'image_name', 'email', 'mobile_no', 'location', 'id', 'user_status_type', [this.modals.sequelize.literal(`(select sum(seller_cashback.amount) from table_wallet_seller_cashback as seller_cashback where status_type in (16) and transaction_type = 1 and seller_cashback.user_id = "users"."id" and seller_cashback.seller_id = ${seller_id})`), 'cashback_total'], [this.modals.sequelize.literal(`(select sum(seller_cashback.amount) from table_wallet_seller_cashback as seller_cashback where status_type in (16,14) and transaction_type = 2 and seller_cashback.user_id = "users"."id" and seller_cashback.seller_id = ${seller_id})`), 'redeemed_cashback'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_loyalty as seller_loyalty where status_type in (16) and transaction_type = 1 and seller_loyalty.user_id = "users"."id" and seller_loyalty.seller_id = ${seller_id})`), 'loyalty_total'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_loyalty as seller_loyalty where status_type in (16,14) and transaction_type = 2 and seller_loyalty.user_id = "users"."id" and seller_loyalty.seller_id = ${seller_id})`), 'redeemed_loyalty'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16) and transaction_type = 1 and seller_credit.user_id = "users"."id" and seller_credit.seller_id = ${seller_id})`), 'credit_total'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16,14) and transaction_type = 2 and seller_credit.user_id = "users"."id" and seller_credit.seller_id = ${seller_id})`), 'redeemed_credits'], [this.modals.sequelize.literal(`(select count(*) from table_cashback_jobs as cashback_jobs where cashback_jobs.user_id = "users"."id" and cashback_jobs.seller_id = ${seller_id})`), 'transaction_counts'], [this.modals.sequelize.literal(`(select count(*) from table_orders as order_detail where order_detail.user_id = "users"."id" and order_detail.seller_id = ${seller_id} and order_detail.job_id is null and order_detail.status_type = 5)`), 'order_counts'], [this.modals.sequelize.literal(`(select seller_offer_ids from table_user_index as user_index where user_index.user_id = "users"."id")`), 'seller_offer_ids']]
+      attributes: [['full_name', 'name'], 'image_name', 'email', 'mobile_no', 'location', 'id', 'user_status_type', [this.modals.sequelize.literal(`(select sum(seller_cashback.amount) from table_wallet_seller_cashback as seller_cashback where status_type in (16) and transaction_type = 1 and seller_cashback.user_id = "users"."id" and seller_cashback.seller_id = ${seller_id})`), 'cashback_total'], [this.modals.sequelize.literal(`(select sum(seller_cashback.amount) from table_wallet_seller_cashback as seller_cashback where status_type in (16,14) and transaction_type = 2 and seller_cashback.user_id = "users"."id" and seller_cashback.seller_id = ${seller_id})`), 'redeemed_cashback'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_loyalty as seller_loyalty where status_type in (16) and transaction_type = 1 and seller_loyalty.user_id = "users"."id" and seller_loyalty.seller_id = ${seller_id})`), 'loyalty_total'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_loyalty as seller_loyalty where status_type in (16,14) and transaction_type = 2 and seller_loyalty.user_id = "users"."id" and seller_loyalty.seller_id = ${seller_id})`), 'redeemed_loyalty'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16) and transaction_type = 1 and seller_credit.user_id = "users"."id" and seller_credit.seller_id = ${seller_id})`), 'credit_total'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16,14) and transaction_type = 2 and seller_credit.user_id = "users"."id" and seller_credit.seller_id = ${seller_id})`), 'redeemed_credits'], [this.modals.sequelize.literal(`(select count(*) from table_cashback_jobs as cashback_jobs where cashback_jobs.user_id = "users"."id" and cashback_jobs.admin_status <> 2 and cashback_jobs.seller_id = ${seller_id})`), 'transaction_counts'], [this.modals.sequelize.literal(`(select count(*) from table_orders as order_detail where order_detail.user_id = "users"."id" and order_detail.seller_id = ${seller_id} and order_detail.job_id is null and order_detail.status_type = 5)`), 'order_counts'], [this.modals.sequelize.literal(`(select seller_offer_ids from table_user_index as user_index where user_index.user_id = "users"."id")`), 'seller_offer_ids']]
     });
 
     const user_list = result.map(item => item.toJSON());
@@ -206,12 +201,13 @@ class SellerAdaptor {
     return await this.orderUserByLocation(latitude, longitude, city, user_list.map(item => {
       const linked_user = (seller_users.customer_ids || []).find(suItem => suItem.toString() === item.id.toString());
       item.linked = !!linked_user;
-      item.cashback_total = item.cashback_total || 0;
-      item.redeemed_cashback = item.redeemed_cashback || 0;
-      item.loyalty_total = (item.loyalty_total || 0) - (item.redeemed_loyalty || 0);
-      item.credit_total = (item.credit_total || 0) - (item.redeemed_credits || 0);
+      item.cashback_total = parseInt(item.cashback_total || 0);
+      item.redeemed_cashback = parseInt(item.redeemed_cashback || 0);
+      item.loyalty_total = parseInt(item.loyalty_total || 0) - parseInt(item.redeemed_loyalty || 0);
+      item.credit_total = parseInt(item.credit_total || 0) - parseInt(item.redeemed_credits || 0);
       item.addresses = (addresses || []).find(aItem => aItem.user_id === item.id) || {};
-      item.transaction_counts = (item.transaction_counts || 0) + (item.order_counts || 0);
+      item.transaction_counts = parseInt(item.transaction_counts || 0);
+      item.order_counts = parseInt(item.order_counts || 0);
       if (item.addresses) {
         const { address_line_1, address_line_2, city_name, state_name, locality_name, pin_code } = item.addresses || {};
         item.address = `${address_line_1}${address_line_2 ? ` ${address_line_2}` : ''},${locality_name},${city_name},${state_name}-${pin_code}`.split('null').join(',').split('undefined').join(',').split(',,').join(',').split(',-,').join(',').split(',,').join(',').split(',,').join(',');
@@ -256,7 +252,10 @@ class SellerAdaptor {
 
   async retrieveSellerConsumerTransactions(seller_id) {
     let id, job_id, expense_id;
-    let [cashback_jobs, orders, seller_users] = await _bluebird2.default.all([this.modals.cashback_jobs.findAll({ where: { seller_id }, attributes: ['job_id', 'user_id'] }), this.modals.order.findAll({
+    let [cashback_jobs, orders, seller_users] = await _bluebird2.default.all([this.modals.cashback_jobs.findAll({
+      where: { seller_id, admin_status: { $ne: 2 } },
+      attributes: ['job_id', 'user_id']
+    }), this.modals.order.findAll({
       where: { seller_id, status_type: 5 },
       attributes: ['expense_id', 'user_id']
     }), this.retrieveSellerDetail({
@@ -345,11 +344,13 @@ class SellerAdaptor {
   }
 
   async deleteSellerAssistedServiceUsers(query_options) {
-    return await this.modals.assisted_service_users.destroy(query_options);
+    const { seller_id, id } = query_options;
+    return await _bluebird2.default.all([this.modals.assisted_service_users.update({ seller_id: null }, { where: query_options }), this.modals.seller_service_types.update({ seller_id: null }, { where: { seller_id, service_user_id: id } })]);
   }
 
   async deleteSellerAssistedServiceTypes(query_options) {
-    return await this.modals.seller_service_types.destroy(query_options);
+    const { seller_id, service_user_id, id } = query_options;
+    return await _bluebird2.default.all([this.modals.seller_service_types.update({ seller_id: null }, { where: query_options })]);
   }
 
   async deleteSellerOffers(query_options) {
@@ -644,7 +645,7 @@ class SellerAdaptor {
 
     const result = await this.modals.sellers.findOne({
       where: options,
-      attributes: ['id', 'gstin', 'seller_name', 'owner_name', 'email', 'pan_no', 'reg_no', 'seller_type_id', 'is_service', 'is_onboarded', 'address', 'city', 'state', 'pincode', 'latitude', 'longitude', 'url', 'user_id', 'contact_no']
+      attributes: ['id', 'gstin', 'seller_name', 'owner_name', 'email', 'pan_no', 'reg_no', 'seller_type_id', 'is_service', 'is_onboarded', 'address', [this.modals.sequelize.literal('(Select state_name from table_states as state where state.id = sellers.state_id)'), 'state_name'], [this.modals.sequelize.literal('(Select name from table_cities as city where city.id = sellers.city_id)'), 'city_name'], [this.modals.sequelize.literal('(Select name from table_localities as locality where locality.id = sellers.locality_id)'), 'locality_name'], [this.modals.sequelize.literal('(Select pin_code from table_localities as locality where locality.id = sellers.locality_id)'), 'pin_code'], 'latitude', 'longitude', 'url', 'user_id', 'contact_no']
     });
     return result ? result.toJSON() : result;
   }
@@ -802,10 +803,12 @@ class SellerAdaptor {
 
   async retrieveOrCreateSellerProviderTypes(options, defaults, category_4_id) {
     let seller_provider_type = await this.modals.seller_provider_type.findOne({ where: options });
+    category_4_id = category_4_id.map(item => parseInt(item));
     if (seller_provider_type) {
       const seller_provider_type_result = seller_provider_type.toJSON();
       if (!defaults.category_brands && category_4_id && category_4_id.length > 0) {
-        defaults.category_brands = (seller_provider_type_result.category_brands || category_4_id.map(item => ({ category_4_id: parseInt(item || 0) }))).filter(item => _lodash2.default.includes(category_4_id, item.category_4_id));
+        const category_brands = seller_provider_type_result.category_brands;
+        defaults.category_brands = (category_brands && category_brands.length > 0 ? category_brands : category_4_id.map(item => ({ category_4_id: parseInt(item || 0) }))).filter(item => _lodash2.default.includes(category_4_id, item.category_4_id));
       }
 
       defaults.status_type = seller_provider_type_result.status_type;

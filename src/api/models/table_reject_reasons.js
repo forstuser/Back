@@ -10,10 +10,13 @@ export default (sequelize, DataTypes) => {
         },
         updated_by: {
           type: DataTypes.INTEGER,
+        }, query_type: {
+          type: DataTypes.INTEGER,
+          defaultValue: 1,
         },
         status_type: {
           type: DataTypes.INTEGER,
-          defaultValue: 1
+          defaultValue: 1,
         },
         created_at: {
           type: DataTypes.DATE,
@@ -34,9 +37,19 @@ export default (sequelize, DataTypes) => {
 
   reject_reasons.associate = (models) => {
     reject_reasons.belongsTo(models.users,
-        {foreignKey: 'updated_by', as: 'updater', onDelete: 'cascade', onUpdate: 'cascade'});
+        {
+          foreignKey: 'updated_by',
+          as: 'updater',
+          onDelete: 'cascade',
+          onUpdate: 'cascade',
+        });
     reject_reasons.belongsTo(models.statuses,
-        {foreignKey: 'status_type', targetKey: 'status_type', onDelete: 'cascade', onUpdate: 'cascade'});
+        {
+          foreignKey: 'status_type',
+          targetKey: 'status_type',
+          onDelete: 'cascade',
+          onUpdate: 'cascade',
+        });
   };
   return reject_reasons;
 };
