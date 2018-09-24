@@ -1084,7 +1084,7 @@ export default class SellerAdaptor {
           0) {
         defaults.category_brands = (seller_provider_type_result.category_brands ||
             category_4_id.map(
-                item => ({category_4_id: parseInt(item)}))).filter(
+                item => ({category_4_id: parseInt(item || 0)}))).filter(
             item => _.includes(category_4_id, item.category_4_id));
       }
 
@@ -1094,7 +1094,7 @@ export default class SellerAdaptor {
       if (!defaults.category_brands && category_4_id && category_4_id.length >
           0) {
         defaults.category_brands = (category_4_id.map(
-            item => ({category_4_id: parseInt(item)}))).filter(
+            item => ({category_4_id: parseInt(item || 0)}))).filter(
             item => _.includes(category_4_id, item.category_4_id));
       }
       seller_provider_type = await this.modals.seller_provider_type.create(

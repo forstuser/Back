@@ -35,8 +35,26 @@ class ShopEarnAdaptor {
 
   async retrieveSKUs(options) {
     try {
-      const { user_id, location, queryOptions } = options;
-      let { main_category_id, category_id, brand_ids, sub_category_ids, measurement_values, measurement_types, bar_code, title, limit, offset, id } = queryOptions || {};
+      const { user_id, location, queryOptions, seller_list } = options;
+      let { main_category_id, category_id, brand_ids, sub_category_ids, measurement_values, measurement_types, bar_code, title, limit, offset, id, seller_id } = queryOptions || {};
+      let seller,
+          seller_skus = [],
+          seller_categories = [];
+      if (seller_id && seller_list && seller_list.length > 0) {
+        seller = seller_list.find(item => item.id.toString() === seller_id.toString());
+        if (seller.is_data_manually_added) {
+          seller_skus = await this.modals.sku_seller.findAll({ where: { seller_id } });
+        }
+
+        seller_categories = await this.sellerAdapter.retrieveSellerCategories({ seller_id });
+      }
+
+      const seller_main_categories = seller_categories.map(item => item.sub_category_id);
+      const seller_4_categories = seller_categories.map(item => item.category_4_id);
+      const seller_brands = [];
+      seller_categories.forEach(item => seller_brands.push(...item.brand_ids));
+      const seller_sku_ids = seller_skus.map(item => item.sku_id);
+      const seller_sku_measurement_ids = seller_skus.map(item => item.sku_measurement_id);
       title = { $iLike: `%${title || ''}%` };
       limit = limit || 50;
       offset = offset || 0;
@@ -53,28 +71,23 @@ class ShopEarnAdaptor {
       const [skuItems, sku_ids] = await _bluebird2.default.all([this.modals.sku.findAll({
         where: JSON.parse(JSON.stringify({
           status_type: 1,
-          main_category_id: main_category_id.length > 0 ? main_category_id : undefined,
-          category_id: category_id.length > 0 ? category_id : undefined,
-          brand_id: brand_ids.length > 0 ? brand_ids : undefined,
-          sub_category_id: sub_category_ids.length > 0 ? sub_category_ids : undefined, title, id
+          main_category_id: main_category_id.length > 0 ? main_category_id : seller_main_categories.length > 0 ? seller_main_categories : undefined,
+          category_id: category_id.length > 0 ? category_id : seller_4_categories.length > 0 ? seller_4_categories : undefined,
+          brand_id: brand_ids.length > 0 ? brand_ids : seller_brands.length ? seller_brands : undefined,
+          sub_category_id: sub_category_ids.length > 0 ? sub_category_ids : undefined, title, id: id || seller_sku_ids
         })),
         include: [{
           model: this.modals.sku_measurement,
           where: JSON.parse(JSON.stringify({
-            status_type: 1,
+            status_type: 1, id: seller_sku_measurement_ids,
             measurement_value: measurement_values.length > 0 ? measurement_values : undefined,
-            measurement_type: measurement_types.length > 0 ? measurement_types : undefined,
-            bar_code
+            measurement_type: measurement_types.length > 0 ? measurement_types : undefined, bar_code
           })),
           attributes: sku_measurement_attributes,
           required: false
-        }],
-        order: [['id']],
-        attributes: {
+        }], order: [['id']], attributes: {
           exclude: ['status_type', 'updated_by', 'updated_at', 'created_at']
-        },
-        limit,
-        offset
+        }, limit, offset
       }), this.modals.sku.findAll({
         where: JSON.parse(JSON.stringify({
           status_type: 1,

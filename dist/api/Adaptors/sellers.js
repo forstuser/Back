@@ -173,6 +173,11 @@ class SellerAdaptor {
     return result ? result.map(item => item.toJSON()) : result;
   }
 
+  async retrieveSellerWalletDetail(query_options) {
+    const result = await this.modals.seller_wallet.findAll(query_options);
+    return result ? result.map(item => item.toJSON()) : result;
+  }
+
   async retrieveSellerOfferDetail(query_options) {
     const result = await this.modals.seller_offers.findOne(query_options);
     return result ? result.toJSON() : result;
@@ -800,14 +805,14 @@ class SellerAdaptor {
     if (seller_provider_type) {
       const seller_provider_type_result = seller_provider_type.toJSON();
       if (!defaults.category_brands && category_4_id && category_4_id.length > 0) {
-        defaults.category_brands = (seller_provider_type_result.category_brands || category_4_id.map(item => ({ category_4_id: parseInt(item) }))).filter(item => _lodash2.default.includes(category_4_id, item.category_4_id));
+        defaults.category_brands = (seller_provider_type_result.category_brands || category_4_id.map(item => ({ category_4_id: parseInt(item || 0) }))).filter(item => _lodash2.default.includes(category_4_id, item.category_4_id));
       }
 
       defaults.status_type = seller_provider_type_result.status_type;
       await seller_provider_type.updateAttributes(defaults);
     } else {
       if (!defaults.category_brands && category_4_id && category_4_id.length > 0) {
-        defaults.category_brands = category_4_id.map(item => ({ category_4_id: parseInt(item) })).filter(item => _lodash2.default.includes(category_4_id, item.category_4_id));
+        defaults.category_brands = category_4_id.map(item => ({ category_4_id: parseInt(item || 0) })).filter(item => _lodash2.default.includes(category_4_id, item.category_4_id));
       }
       seller_provider_type = await this.modals.seller_provider_type.create(defaults);
     }

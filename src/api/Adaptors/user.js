@@ -110,7 +110,7 @@ class UserAdaptor {
    */
   async retrieveSingleUser(filterObject) {
     filterObject.attributes = [
-      'id', ['full_name', 'name'], 'mobile_no',
+      'id', ['full_name', 'name'], 'mobile_no', 'image_name',
       'email', 'email_verified', 'email_secret', 'gender', 'user_status_type',
       [
         this.modals.sequelize.fn('CONCAT', 'consumer/',
@@ -118,6 +118,15 @@ class UserAdaptor {
     ];
     const item = await this.modals.users.findOne(filterObject);
     return item ? item.toJSON() : item;
+  }
+
+  async retrieveUsers(filterObject) {
+    filterObject.attributes = [
+      'id', ['full_name', 'name'], 'mobile_no', 'image_name',
+      'email', 'email_verified', 'email_secret', 'gender', 'user_status_type',
+    ];
+    const users = await this.modals.users.findAll(filterObject);
+    return users.map(item => item.toJSON());
   }
 
   /**

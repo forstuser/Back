@@ -40,17 +40,15 @@ class ShopEarnController {
             ['user_id', 'id']],
         });
         user = result ? result.toJSON() : user;
-        const [sku_result, seller_list] = await Promise.all([
-          shopEarnAdaptor.retrieveSKUs({
-            location: user.location, user_id: user.id,
-            queryOptions: request.query,
-          }),
-          user.my_seller_ids ?
-              sellerAdaptor.retrieveSellersOnInit({
-                where: {id: user.my_seller_ids},
-                attributes: ['id', 'seller_name', 'seller_type_id', 'address'],
-              }) :
-              undefined]);
+        const seller_list = user.my_seller_ids ?
+            await sellerAdaptor.retrieveSellersOnInit({
+              where: {id: user.my_seller_ids, is_onboarded: true},
+              attributes: ['id', 'seller_name', 'seller_type_id', 'address', 'is_data_manually_added'],
+            }) : undefined;
+        const sku_result = await shopEarnAdaptor.retrieveSKUs({
+          location: user.location, user_id: user.id,
+          queryOptions: request.query,seller_list
+        });
         return reply.response({
           status: true,
           result: sku_result, seller_list,

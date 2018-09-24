@@ -70,10 +70,17 @@ class OrderController {
               attributes: ['service_type_id', 'seller_id', 'price', 'id']
             }
           }) : undefined, sellerAdaptor.retrieveSellerReviews({ offline_seller_id: result.seller_id, order_id: id })]);
+          let review_users = [];
           if (result.delivery_user_id) {
             const service_user_key = result.order_type === 2 ? 'service_user' : 'delivery_user';
             result[service_user_key].ratings = _lodash2.default.sumBy(result[service_user_key].reviews || [{ ratings: 0 }], 'ratings') / (result[service_user_key].reviews || [{ ratings: 0 }]).length;
             result[service_user_key].service_type = result[service_user_key].service_types.find(item => item.service_type_id === result.order_details[0].service_type_id);
+            const review_user_ids = (result[service_user_key].reviews || []).map(item => item.updated_by);
+            review_users = userAdaptor.retrieveUsers({ id: review_user_ids });
+            result[service_user_key].reviews = (result[service_user_key].reviews || []).map(item => {
+              item.user = review_users.find(uItem => uItem.id === item.updated_by);
+              return item;
+            });
           }
 
           result.seller_review = result.seller_review[0];

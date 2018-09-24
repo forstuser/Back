@@ -35,7 +35,7 @@ class OrderController {
                 'delivery_user_id', 'job_id', 'expense_id', [
                   modals.sequelize.literal(
                       '(Select cashback_status from table_cashback_jobs as jobs where jobs.id = "order".job_id)'),
-                  'cashback_status'],[
+                  'cashback_status'], [
                   modals.sequelize.literal(
                       '(Select copies from table_cashback_jobs as jobs where jobs.id = "order".job_id)'),
                   'copies'], [
@@ -91,6 +91,7 @@ class OrderController {
                   },
                 }) : undefined, sellerAdaptor.retrieveSellerReviews(
                 {offline_seller_id: result.seller_id, order_id: id})]);
+          let review_users = [];
           if (result.delivery_user_id) {
             const service_user_key = result.order_type === 2 ?
                 'service_user' : 'delivery_user';
@@ -101,6 +102,16 @@ class OrderController {
             result[service_user_key].service_type = result[service_user_key].service_types.find(
                 item => item.service_type_id ===
                     result.order_details[0].service_type_id);
+            const review_user_ids = (result[service_user_key].reviews ||
+                []).map(
+                item => item.updated_by);
+            review_users = userAdaptor.retrieveUsers({id: review_user_ids});
+            result[service_user_key].reviews = (result[service_user_key].reviews ||
+                []).map(item => {
+              item.user = review_users.find(
+                  uItem => uItem.id === item.updated_by);
+              return item;
+            });
           }
 
           result.seller_review = result.seller_review[0];
@@ -132,9 +143,18 @@ class OrderController {
                 ''},${locality_name},${city_name},${state_name}-${pin_code}`);
             console.log(result.user_address_detail);
             result.user_address_detail = result.user_address_detail.
-                split('null').join(',').
-                split('undefined').join(',').
-                split(',,').join(',').split(',-,').join(',').split(',,').join(',').split(',,').join(',');
+                split('null').
+                join(',').
+                split('undefined').
+                join(',').
+                split(',,').
+                join(',').
+                split(',-,').
+                join(',').
+                split(',,').
+                join(',').
+                split(',,').
+                join(',');
           }
           return reply.response(
               {
