@@ -728,7 +728,7 @@ export function prepareAuthRoutes(modal, routeObject, middleware) {
         tags: ['api', 'User', 'Authentication'],
         validate: {
           payload: joi.object({
-            fcmId: [joi.string()],
+            fcmId: [joi.string(), joi.allow(null)],
             platform: [joi.number(), joi.allow(null)],
             output: 'data',
             parse: true,

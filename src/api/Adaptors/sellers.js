@@ -3,6 +3,7 @@ import _ from 'lodash';
 import CategoryAdaptor from './category';
 import UserAdaptor from './user';
 import Promise from 'bluebird';
+import moment from 'moment';
 
 export default class SellerAdaptor {
   constructor(modals) {
@@ -379,15 +380,15 @@ export default class SellerAdaptor {
       }), ...orders.map(item => {
         item = item.toJSON();
         return item.user_id;
-      }), ...seller_users.customer_ids]);
+      }), ...seller_users.customer_ids]).filter(item => item);
     job_id = cashback_jobs.map(item => {
       item = item.toJSON();
       return item.job_id;
-    });
+    }).filter(item => item);
     expense_id = orders.map(item => {
       item = item.toJSON();
       return item.expense_id;
-    });
+    }).filter(item => item);
     const result = await this.modals.users.findAll({
       where: {id},
       attributes: [
@@ -697,6 +698,8 @@ export default class SellerAdaptor {
           {}).state_name}-${(seller.location || {}).pin_code}`).replace(',,',
           ',').replace(',,', ',').replace(',,', ',');
       seller.cashback_total = seller.cashback_total || 0;
+      seller.cashback_redeemed = seller.cashback_redeemed || 0;
+      seller.cashback_total = seller.cashback_total - seller.cashback_redeemed;
       seller.offer_count = seller.offer_count || 0;
       seller.ratings = seller.ratings || 0;
       if (seller.seller_details) {
@@ -791,6 +794,7 @@ export default class SellerAdaptor {
   }
 
   async retrieveSellerOffersForConsumer(options) {
+    options.end_date = {$gte: moment.utc()};
     let seller_offers = await this.modals.seller_offers.findAll(
         {where: JSON.parse(JSON.stringify(options))});
     seller_offers = seller_offers.map(item => item.toJSON());

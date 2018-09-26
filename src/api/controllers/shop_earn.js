@@ -41,7 +41,11 @@ class ShopEarnController {
         user = result ? result.toJSON() : user;
         const seller_list = user.my_seller_ids ?
             await sellerAdaptor.retrieveSellersOnInit({
-              where: {id: user.my_seller_ids, is_onboarded: true},
+              where: {
+                id: user.my_seller_ids,
+                is_onboarded: true,
+                is_fmcg: true,
+              },
               attributes: [
                 'id', 'seller_name', 'seller_type_id', 'address',
                 'is_data_manually_added', [
@@ -73,6 +77,48 @@ class ShopEarnController {
           user_id: user && !user.seller_details ?
               user.id || user.ID :
               undefined,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
+        return reply.response({
+          status: false,
+          message: 'Unable to retrieve SKU list',
+        });
+      }
+    } else {
+      return shared.preValidation(request.pre, reply);
+    }
+  }
+
+  static async getSellerCategories(request, reply) {
+    let user = shared.verifyAuthorization(request.headers);
+    if (request.pre.userExist && !request.pre.forceUpdate) {
+      // this is where make us of adapter
+      try {
+        const {seller_id} = request.params;
+        const seller = (await sellerAdaptor.retrieveSellersOnInit({
+          where: {id: seller_id, is_onboarded: true, is_fmcg: true},
+          attributes: ['is_data_manually_added', 'id'],
+        }, {}))[0];
+        const seller_categories = await shopEarnAdaptor.retrieveSellerCategories(
+            {seller});
+        return reply.response({
+          status: true, result: seller_categories,
+        });
+      } catch (err) {
+        console.log(`Error on ${new Date()} for user ${user.id ||
+        user.ID} is as follow: \n \n ${err}`);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user && !user.seller_details ?
+              user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -424,8 +470,7 @@ class ShopEarnController {
     try {
       if (request.pre.userExist && !request.pre.forceUpdate) {
         const jobResult = await jobAdaptor.createJobs({
-          job_id: `${Math.random().
-              toString(36).substr(2, 9)}${(user.id ||
+          job_id: `${Math.random().toString(36).substr(2, 9)}${(user.id ||
               user.ID).toString(36)}`,
           user_id: user.id || user.ID,
           updated_by: user.id || user.ID,
@@ -451,12 +496,9 @@ class ShopEarnController {
             document_number: request.payload.document_number,
             document_date: request.payload.document_date ?
                 moment.utc(request.payload.document_date,
-                    moment.ISO_8601).
-                    isValid() ?
+                    moment.ISO_8601).isValid() ?
                     moment.utc(request.payload.document_date,
-                        moment.ISO_8601).
-                        startOf('day').
-                        format('YYYY-MM-DD') :
+                        moment.ISO_8601).startOf('day').format('YYYY-MM-DD') :
                     moment.utc(request.payload.document_date, 'DD MMM YY').
                         startOf('day').
                         format('YYYY-MM-DD') :
@@ -522,10 +564,10 @@ class ShopEarnController {
                   moment.utc(request.payload.document_date,
                       moment.ISO_8601).isValid() ?
                       moment.utc(request.payload.document_date,
-                          moment.ISO_8601).
-                          startOf('day').format() :
+                          moment.ISO_8601).startOf('day').format() :
                       moment.utc(request.payload.document_date, 'DD MMM YY').
-                          startOf('day').format() : undefined,
+                          startOf('day').
+                          format() : undefined,
             })));
 
         if (product && product.seller_id) {
@@ -673,13 +715,21 @@ class ShopEarnController {
         });
         if (seller_cashback) {
           const startOfMonth = moment(seller_cashback.created_at).
-              startOf('month').utcOffset(utcOffset).format();
+              startOf('month').
+              utcOffset(utcOffset).
+              format();
           const endOfMonth = moment(seller_cashback.created_at).
-              endOf('month').utcOffset(utcOffset).format();
+              endOf('month').
+              utcOffset(utcOffset).
+              format();
           const startOfDay = moment(seller_cashback.created_at).
-              startOf('day').utcOffset(utcOffset).format();
+              startOf('day').
+              utcOffset(utcOffset).
+              format();
           const endOfDay = moment(seller_cashback.created_at).
-              endOf('day').utcOffset(utcOffset).format();
+              endOf('day').
+              utcOffset(utcOffset).
+              format();
           const [cash_back_job, user_cash_back_month, user_cash_back_day, user_limit_rules, user_default_limit_rules] = await Promise.all(
               [
                 jobAdaptor.retrieveCashBackJobs({id: seller_cashback.job_id}),

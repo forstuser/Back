@@ -109,21 +109,19 @@ export default class SocketServer {
     if (data.verified_seller) {
       console.log(io.sockets.adapter.rooms[`seller-${data.seller_id}`]);
       if (io.sockets.adapter.rooms[`seller-${data.seller_id}`]) {
-        io.sockets.in(`seller-${data.seller_id}`).
-            emit('request-approval',
-                shopEarnAdaptor.retrievePendingTransaction(
-                    {seller_id: data.seller_id, id: data.job_id}));
+        io.sockets.in(`seller-${data.seller_id}`).emit('request-approval',
+            shopEarnAdaptor.retrievePendingTransaction(
+                {seller_id: data.seller_id, id: data.job_id}));
       }
     }
     if (io.sockets.adapter.rooms[`user-${data.user_id}`]) {
-      io.sockets.in(`user-${data.user_id}`).
-          emit('request-approval',
-              shopEarnAdaptor.retrieveCashBackTransaction(
-                  {
-                    seller_id: data.seller_id,
-                    id: data.job_id,
-                    user_id: data.user_id,
-                  }));
+      io.sockets.in(`user-${data.user_id}`).emit('request-approval',
+          shopEarnAdaptor.retrieveCashBackTransaction(
+              {
+                seller_id: data.seller_id,
+                id: data.job_id,
+                user_id: data.user_id,
+              }));
     }
   }
 
@@ -413,14 +411,13 @@ export default class SocketServer {
               return item;
             }) : order.order_details;
         if (io.sockets.adapter.rooms[`user-${data.user_id}`]) {
-          io.sockets.in(`user-${data.user_id}`).
-              emit(order.order_type === 1 ?
-                  'order-status-change' : 'assisted-status-change',
-                  JSON.stringify({
-                    order_id: order.id, is_modified: order.is_modified,
-                    status_type: order.status_type, order, user_id,
-                    order_type: order.order_type,
-                  }));
+          io.sockets.in(`user-${data.user_id}`).emit(order.order_type === 1 ?
+              'order-status-change' : 'assisted-status-change',
+              JSON.stringify({
+                order_id: order.id, is_modified: order.is_modified,
+                status_type: order.status_type, order, user_id,
+                order_type: order.order_type,
+              }));
         }
         await notificationAdaptor.notifyUserCron({
           user_id, payload: {
@@ -587,16 +584,15 @@ export default class SocketServer {
         }
 
         if (io.sockets.adapter.rooms[`user-${data.user_id}`]) {
-          io.sockets.in(`user-${data.user_id}`).
-              emit(order.order_type === 1 ?
-                  'order-status-change' :
-                  'assisted-status-change', JSON.stringify({
-                order_id: order.id,
-                is_modified: order.is_modified,
-                status_type: order.status_type, order, user_id,
-                order_type: order.order_type, start_date: order.order_type ?
-                    order.order_details.start_date : undefined,
-              }));
+          io.sockets.in(`user-${data.user_id}`).emit(order.order_type === 1 ?
+              'order-status-change' :
+              'assisted-status-change', JSON.stringify({
+            order_id: order.id,
+            is_modified: order.is_modified,
+            status_type: order.status_type, order, user_id,
+            order_type: order.order_type, start_date: order.order_type ?
+                order.order_details.start_date : undefined,
+          }));
         }
         await notificationAdaptor.notifyUserCron({
           user_id, payload: {
@@ -796,18 +792,17 @@ export default class SocketServer {
         });
 
         if (io.sockets.adapter.rooms[`user-${data.user_id}`]) {
-          io.sockets.in(`user-${data.user_id}`).
-              emit(order.order_type === 1 ?
-                  'order-status-change' :
-                  'assisted-status-change', JSON.stringify({
-                order_id: order.id, is_modified: order.is_modified,
-                status_type: order.status_type, order, user_id,
-                order_type: order.order_type,
-                start_date: order.order_type ?
-                    order.order_details.start_date : undefined,
-                end_date: order.order_type ?
-                    order.order_details.end_date : undefined,
-              }));
+          io.sockets.in(`user-${data.user_id}`).emit(order.order_type === 1 ?
+              'order-status-change' :
+              'assisted-status-change', JSON.stringify({
+            order_id: order.id, is_modified: order.is_modified,
+            status_type: order.status_type, order, user_id,
+            order_type: order.order_type,
+            start_date: order.order_type ?
+                order.order_details.start_date : undefined,
+            end_date: order.order_type ?
+                order.order_details.end_date : undefined,
+          }));
         }
         await notificationAdaptor.notifyUserCron({
           user_id, payload: {
@@ -857,8 +852,9 @@ export default class SocketServer {
       if (order_data.order_type === 2) {
         order_data.order_details = (order_details || order_data.order_details);
       } else {
-        order_data.order_details = (order_details || order_data.order_details).
-            filter(item => item.item_availability).map(item => {
+        order_data.order_details = (order_details ||
+            order_data.order_details).filter(item => item.item_availability).
+            map(item => {
               if (item.updated_measurement) {
                 item.sku_measurement = item.updated_measurement;
                 item = _.omit(item, 'updated_measurement');
@@ -987,14 +983,13 @@ export default class SocketServer {
           fn(order);
         } else {
           if (io.sockets.adapter.rooms[`user-${data.user_id}`]) {
-            io.sockets.in(`user-${data.user_id}`).
-                emit(order.order_type === 1 ?
-                    'order-status-change' :
-                    'assisted-status-change', JSON.stringify({
-                  order_id: order.id,
-                  is_modified: order.is_modified, order_type: order.order_type,
-                  status_type: order.status_type, order, user_id,
-                }));
+            io.sockets.in(`user-${data.user_id}`).emit(order.order_type === 1 ?
+                'order-status-change' :
+                'assisted-status-change', JSON.stringify({
+              order_id: order.id,
+              is_modified: order.is_modified, order_type: order.order_type,
+              status_type: order.status_type, order, user_id,
+            }));
           }
           if (!is_user) {
             await notificationAdaptor.notifyUserCron({
@@ -1155,7 +1150,7 @@ export default class SocketServer {
 
               return item;
             }) : order.order_details;
-        if (delivery_user_id && order.order_type === 1) {
+        if (delivery_user_id && order.order_type === 1)  {
           order.delivery_user = await sellerAdaptor.retrieveAssistedServiceUser(
               {
                 where: JSON.parse(
@@ -1184,15 +1179,14 @@ export default class SocketServer {
         }
 
         if (io.sockets.adapter.rooms[`user-${data.user_id}`]) {
-          io.sockets.in(`user-${data.user_id}`).
-              emit(order.order_type === 1 ?
-                  'order-status-change' :
-                  'assisted-status-change', JSON.stringify({
-                order_id: order.id, is_modified: order.is_modified,
-                status_type: order.status_type,
-                delivery_user: order.delivery_user,
-                order, user_id, order_type: order.order_type,
-              }));
+          io.sockets.in(`user-${data.user_id}`).emit(order.order_type === 1 ?
+              'order-status-change' :
+              'assisted-status-change', JSON.stringify({
+            order_id: order.id, is_modified: order.is_modified,
+            status_type: order.status_type,
+            delivery_user: order.delivery_user,
+            order, user_id, order_type: order.order_type,
+          }));
         }
 
         await notificationAdaptor.notifyUserCron({
@@ -1204,7 +1198,7 @@ export default class SocketServer {
                 `${(order.delivery_user ||
                     {}).name ||
                 ''} from Seller ${seller_detail.seller_name ||
-                ''} is on his way with your order.` :
+                ''} is on the way ${order.order_type === 1 ? 'with your order.' :'for your assistance.'}` :
                 `Your Order is on it's way from Seller ${seller_detail.seller_name ||
                 ''}`}.`,
             description: 'Please click here for more detail.',
@@ -1341,14 +1335,13 @@ export default class SocketServer {
             }) : order.order_details;
 
         if (io.sockets.adapter.rooms[`user-${data.user_id}`]) {
-          io.sockets.in(`user-${data.user_id}`).
-              emit(order.order_type === 1 ?
-                  'order-status-change' :
-                  'assisted-status-change', JSON.stringify({
-                order_id: order.id,
-                is_modified: order.is_modified, order_type: order.order_type,
-                status_type: order.status_type, order, user_id,
-              }));
+          io.sockets.in(`user-${data.user_id}`).emit(order.order_type === 1 ?
+              'order-status-change' :
+              'assisted-status-change', JSON.stringify({
+            order_id: order.id,
+            is_modified: order.is_modified, order_type: order.order_type,
+            status_type: order.status_type, order, user_id,
+          }));
         }
         await notificationAdaptor.notifyUserCron({
           user_id, payload: {
@@ -1514,15 +1507,14 @@ export default class SocketServer {
           fn(order);
         } else {
           if (io.sockets.adapter.rooms[`user-${data.user_id}`]) {
-            io.sockets.in(`user-${data.user_id}`).
-                emit(order.order_type === 1 ?
-                    'order-status-change' :
-                    'assisted-status-change', JSON.stringify({
-                  order_id: order.id, is_modified: order.is_modified,
-                  status_type: order.status_type,
-                  order, order_type: order.order_type,
-                  user_id,
-                }));
+            io.sockets.in(`user-${data.user_id}`).emit(order.order_type === 1 ?
+                'order-status-change' :
+                'assisted-status-change', JSON.stringify({
+              order_id: order.id, is_modified: order.is_modified,
+              status_type: order.status_type,
+              order, order_type: order.order_type,
+              user_id,
+            }));
           }
           await notificationAdaptor.notifyUserCron({
             user_id, payload: {
@@ -1685,15 +1677,14 @@ export default class SocketServer {
         });
 
         if (io.sockets.adapter.rooms[`user-${data.user_id}`]) {
-          io.sockets.in(`user-${data.user_id}`).
-              emit(order.order_type === 1 ?
-                  'order-status-change' :
-                  'assisted-status-change', JSON.stringify({
-                order_id: order.id, is_modified: order.is_modified,
-                status_type: order.status_type,
-                order, order_type: order.order_type,
-                user_id,
-              }));
+          io.sockets.in(`user-${data.user_id}`).emit(order.order_type === 1 ?
+              'order-status-change' :
+              'assisted-status-change', JSON.stringify({
+            order_id: order.id, is_modified: order.is_modified,
+            status_type: order.status_type,
+            order, order_type: order.order_type,
+            user_id,
+          }));
         }
         await notificationAdaptor.notifyUserCron({
           user_id, payload: {
@@ -1802,9 +1793,16 @@ export default class SocketServer {
                 const {id: sku_id, quantity, sku_measurement, selling_price} = item;
                 const {id: sku_measurement_id, cashback_percent} = sku_measurement;
                 return JSON.parse(JSON.stringify({
-                  sku_id, sku_measurement_id, seller_id, user_id,
-                  updated_by: user_id, quantity, selling_price, status_type: 11,
-                  available_cashback: selling_price && cashback_percent ?
+                  sku_id,
+                  sku_measurement_id,
+                  seller_id,
+                  user_id,
+                  updated_by: user_id,
+                  quantity,
+                  selling_price: parseInt(selling_price || 0),
+                  status_type: 11,
+                  available_cashback: parseInt(selling_price || 0) &&
+                  cashback_percent ?
                       (selling_price * cashback_percent) / 100 : undefined,
                 }));
               }),
@@ -1891,16 +1889,15 @@ export default class SocketServer {
 
         payment_details.order = order;
         if (io.sockets.adapter.rooms[`user-${data.user_id}`]) {
-          io.sockets.in(`user-${data.user_id}`).
-              emit(order.order_type === 1 ?
-                  'order-status-change' :
-                  'assisted-status-change', JSON.stringify({
-                seller_type_id: seller_detail.seller_type_id,
-                order_id: order.id, is_modified: order.is_modified,
-                status_type: order.status_type,
-                user_id, order_type: order.order_type,
-                result: payment_details, order,
-              }));
+          io.sockets.in(`user-${data.user_id}`).emit(order.order_type === 1 ?
+              'order-status-change' :
+              'assisted-status-change', JSON.stringify({
+            seller_type_id: seller_detail.seller_type_id,
+            order_id: order.id, is_modified: order.is_modified,
+            status_type: order.status_type,
+            user_id, order_type: order.order_type,
+            result: payment_details, order,
+          }));
         }
         await notificationAdaptor.notifyUserCron({
           user_id, payload: {
@@ -1927,8 +1924,8 @@ export default class SocketServer {
         _.sumBy(sku_details, 'selling_price') :
         _.sumBy(sku_details, 'total_amount');
     const jobResult = await jobAdaptor.createJobs({
-      job_id: `${Math.random().
-          toString(36).substr(2, 9)}${(user_id).toString(36)}`, user_id,
+      job_id: `${Math.random().toString(36).substr(2, 9)}${(user_id).toString(
+          36)}`, user_id,
       updated_by: user_id, uploaded_by: user_id, user_status: 8,
       admin_status: 2, comments: `This job is sent for online expense`,
     });

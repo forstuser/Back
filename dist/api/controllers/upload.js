@@ -1075,9 +1075,7 @@ class UploadController {
       productItemPromise.push(jobAdaptor.updateCashBackJobs({
         id: cashback_job_id, jobDetail: JSON.parse(JSON.stringify({
           job_id, user_id, updated_by: user_id,
-          copies, admin_status: online_order ? 8 : 2,
-          ce_status: online_order ? 4 : undefined,
-          ce_id: online_order ? 65 : undefined, cashback_status: 13
+          copies, admin_status: online_order ? 4 : 2, cashback_status: 13
         }))
       }));
     }
@@ -1284,11 +1282,10 @@ class UploadController {
   static async retrieveSellerImages(request, reply) {
     if (!request.pre.forceUpdate) {
       try {
-        const user = _shared2.default.verifyAuthorization(request.headers);
         const { id, type, index } = request.params || {};
         const seller_image_types = _main2.default.SELLER_IMAGE_TYPE.split(',');
         const seller_data = await sellerAdaptor.retrieveSellerDetail({
-          where: { id, user_id: user.id },
+          where: { id },
           attributes: ['seller_details', 'id', 'user_id']
         });
         let file_name;

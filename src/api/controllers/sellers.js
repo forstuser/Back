@@ -145,7 +145,9 @@ class SellerController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
+          user_id: user && !user.seller_details ?
+              user.id || user.ID :
+              undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -240,7 +242,9 @@ class SellerController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
+          user_id: user && !user.seller_details ?
+              user.id || user.ID :
+              undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -341,7 +345,9 @@ class SellerController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
+          user_id: user && !user.seller_details ?
+              user.id || user.ID :
+              undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -411,7 +417,9 @@ class SellerController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
+          user_id: user && !user.seller_details ?
+              user.id || user.ID :
+              undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -571,14 +579,38 @@ class SellerController {
                   id, $or: {seller_name, contact_no},
                 })),
                 attributes: [
-                  'id', ['seller_name', 'name'], 'owner_name', 'has_pos',
-                  'gstin', 'pan_no', 'reg_no', 'is_service', 'is_onboarded',
-                  'address', 'city_id', 'state_id', 'locality_id', 'latitude',
-                  'longitude', 'url', 'contact_no', 'email', 'seller_type_id',
-                  'seller_details', 'is_assisted', 'is_fmcg', 'rush_hours', [
+                  'id',
+                  ['seller_name', 'name'],
+                  'owner_name',
+                  'has_pos',
+                  'gstin',
+                  'pan_no',
+                  'reg_no',
+                  'is_service',
+                  'is_onboarded',
+                  'address',
+                  'city_id',
+                  'state_id',
+                  'locality_id',
+                  'latitude',
+                  'longitude',
+                  'url',
+                  'contact_no',
+                  'email',
+                  'seller_type_id',
+                  [
+                    modals.sequelize.literal(
+                        `(select sum(seller_cashback.amount) from table_seller_wallet as seller_cashback where status_type in (14, 13) and is_paytm = true and seller_cashback.seller_id = "sellers"."id")`),
+                    'cashback_redeemed'],
+                  'seller_details',
+                  'is_assisted',
+                  'is_fmcg',
+                  'rush_hours',
+                  [
                     modals.sequelize.literal(
                         `(select sum(seller_cashback.amount) from table_seller_wallet as seller_cashback where status_type in (16) and seller_cashback.seller_id = "sellers"."id")`),
-                    'cashback_total'], [
+                    'cashback_total'],
+                  [
                     modals.sequelize.literal(
                         `(select AVG(seller_reviews.review_ratings) from table_seller_reviews as seller_reviews where seller_reviews.offline_seller_id = "sellers"."id")`),
                     'ratings']],
@@ -591,7 +623,9 @@ class SellerController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
+          user_id: user && !user.seller_details ?
+              user.id || user.ID :
+              undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -643,7 +677,9 @@ class SellerController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
+          user_id: user && !user.seller_details ?
+              user.id || user.ID :
+              undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -734,7 +770,9 @@ class SellerController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
+          user_id: user && !user.seller_details ?
+              user.id || user.ID :
+              undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -782,7 +820,9 @@ class SellerController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
+          user_id: user && !user.seller_details ?
+              user.id || user.ID :
+              undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -888,7 +928,9 @@ class SellerController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
+          user_id: user && !user.seller_details ?
+              user.id || user.ID :
+              undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -2009,7 +2051,7 @@ class SellerController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_details ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -2093,7 +2135,7 @@ class SellerController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_details ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -2249,7 +2291,11 @@ class SellerController {
       if (!request.pre.forceUpdate) {
         const {seller_id} = request.params;
         const result = await sellerAdaptor.retrieveSellerWalletDetail({
-          where: {seller_id},
+          where: {
+            seller_id, $or: [
+              {status_type: 16},
+              {$and: {status_type: [14, 13], is_paytm: true}}],
+          },
           attributes: [
             'id', 'seller_id', 'title', 'job_id',
             'user_id', 'transaction_type', 'cashback_source',
@@ -2281,7 +2327,7 @@ class SellerController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_details ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -2326,7 +2372,7 @@ class SellerController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_details ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -2698,7 +2744,7 @@ class SellerController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_details ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -2723,9 +2769,7 @@ class SellerController {
             {
               where: JSON.parse(
                   JSON.stringify({
-                    seller_id,
-                    user_id: customer_id,
-                    admin_status: {$ne: 2},
+                    seller_id, user_id: customer_id, admin_status: {$ne: 2},
                   })),
               attributes: [
                 'id', 'home_delivered', 'cashback_status', 'copies', [
@@ -2865,8 +2909,7 @@ class SellerController {
           total_credits: _.sumBy(
               result.filter(item => item.transaction_type === 1), 'amount') -
               _.sumBy(result.filter(item => item.transaction_type === 2),
-                  'amount'),
-          result,
+                  'amount'), result,
           forceUpdate: request.pre.forceUpdate,
         });
       } else {
@@ -3086,7 +3129,7 @@ class SellerController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_details ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -3148,7 +3191,7 @@ class SellerController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_details ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -3291,7 +3334,7 @@ class SellerController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_details ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,

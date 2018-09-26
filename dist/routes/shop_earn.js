@@ -41,6 +41,22 @@ function prepareShopEarnRoute(modal, route, middleware, socket) {
 
     route.push({
       method: 'GET',
+      path: '/sku/sellers/{seller_id}/categories',
+      handler: _shop_earn2.default.getSellerCategories,
+      config: {
+        auth: 'jwt',
+        pre: [{
+          method: middleware.checkAppVersion,
+          assign: 'forceUpdate'
+        }, {
+          method: middleware.updateUserActiveStatus,
+          assign: 'userExist'
+        }]
+      }
+    });
+
+    route.push({
+      method: 'GET',
       path: '/sku/{bar_code}/item',
       handler: _shop_earn2.default.getSKUItem,
       config: {

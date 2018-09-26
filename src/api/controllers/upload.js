@@ -158,7 +158,8 @@ class UploadController {
         const productResult = await modals.products.findOne(
             {where: {id: request.params.id, user_id}});
         if (productResult) {
-          const file_ref = `${Math.random().toString(36).
+          const file_ref = `${Math.random().
+              toString(36).
               substr(2, 9)}${(user_id).toString(36)}`;
           const productDetail = productResult.toJSON();
           const fieldNameHere = request.payload.fieldNameHere;
@@ -239,7 +240,8 @@ class UploadController {
           },
         });
         if (wearableResult) {
-          const image_code = `${Math.random().toString(36).
+          const image_code = `${Math.random().
+              toString(36).
               substr(2, 9)}${(user.id || user.ID).toString(36)}`;
           const wearableItem = wearableResult.toJSON();
           const fieldNameHere = request.payload.fieldNameHere;
@@ -770,7 +772,8 @@ class UploadController {
         const name = elem.hapi.filename;
         const file_type = (/[.]/.exec(name)) ? /[^.]+$/.exec(name) : undefined;
         const fileTypeData = getTypeFromBuffer(elem._data);
-        const file_index = `${Math.random().toString(36).
+        const file_index = `${Math.random().
+            toString(36).
             substr(2, 9)}${(user.id).toString(36)}`;
         const image_detail = image_index && seller_data.seller_details ?
             type.toString() === '1' ?
@@ -1134,9 +1137,7 @@ class UploadController {
           jobAdaptor.updateCashBackJobs({
             id: cashback_job_id, jobDetail: JSON.parse(JSON.stringify({
               job_id, user_id, updated_by: user_id,
-              copies, admin_status: online_order ? 8 : 2,
-              ce_status: online_order ? 4 : undefined,
-              ce_id: online_order ? 65 : undefined, cashback_status: 13,
+              copies, admin_status: online_order ? 4 : 2, cashback_status: 13,
             })),
           }));
     }
@@ -1379,12 +1380,11 @@ class UploadController {
   static async retrieveSellerImages(request, reply) {
     if (!request.pre.forceUpdate) {
       try {
-        const user = shared.verifyAuthorization(request.headers);
         const {id, type, index} = request.params || {};
         const seller_image_types = config.SELLER_IMAGE_TYPE.split(',');
         const seller_data = await sellerAdaptor.retrieveSellerDetail(
             {
-              where: {id, user_id: user.id},
+              where: {id},
               attributes: ['seller_details', 'id', 'user_id'],
             });
         let file_name;
@@ -2019,9 +2019,8 @@ class UploadController {
             payload: request.payload,
             err,
           }),
-        }).
-            catch((ex) => console.log('error while logging on db,',
-                ex));
+        }).catch((ex) => console.log('error while logging on db,',
+            ex));
         return reply.response({
           status: false,
           message: 'Unable to retrieve image',
@@ -2481,7 +2480,8 @@ class UploadController {
                   !(!file_type && !isFileTypeAllowedMagicNumber(datum._data));
             });
             const elem = filteredFileData[0];
-            const file_index = `${Math.random().toString(36).
+            const file_index = `${Math.random().
+                toString(36).
                 substr(2, 9)}${(user.id).toString(36)}`;
             const name = elem.hapi.filename;
             const file_type = (/[.]/.exec(name)) ?
@@ -2582,7 +2582,8 @@ class UploadController {
                   !(!file_type && !isFileTypeAllowedMagicNumber(datum._data));
             });
             const elem = filteredFileData[0];
-            const file_index = `${Math.random().toString(36).
+            const file_index = `${Math.random().
+                toString(36).
                 substr(2, 9)}${(user.id).toString(36)}`;
             const name = elem.hapi.filename;
             const file_type = (/[.]/.exec(name)) ?
@@ -2697,7 +2698,8 @@ class UploadController {
                 !(!file_type && !isFileTypeAllowedMagicNumber(datum._data));
           });
           const elem = filteredFileData[0];
-          const file_index = `${Math.random().toString(36).
+          const file_index = `${Math.random().
+              toString(36).
               substr(2, 9)}${(user.id).toString(36)}`;
           const name = elem.hapi.filename;
           let file_type = (/[.]/.exec(name)) ? /[^.]+$/.exec(name) : undefined;

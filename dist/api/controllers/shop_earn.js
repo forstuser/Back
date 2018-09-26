@@ -70,7 +70,11 @@ class ShopEarnController {
         });
         user = result ? result.toJSON() : user;
         const seller_list = user.my_seller_ids ? await sellerAdaptor.retrieveSellersOnInit({
-          where: { id: user.my_seller_ids, is_onboarded: true },
+          where: {
+            id: user.my_seller_ids,
+            is_onboarded: true,
+            is_fmcg: true
+          },
           attributes: ['id', 'seller_name', 'seller_type_id', 'address', 'is_data_manually_added', [modals.sequelize.literal(`(Select count(*) from table_seller_provider_types as provider_type where provider_type.seller_id = sellers.id)`), 'provider_counts'], [modals.sequelize.literal(`(Select count(*) from table_sku_seller_mapping as sku_seller where sku_seller.seller_id = sellers.id)`), 'sku_seller_counts']]
         }) : undefined;
         const sku_result = await shopEarnAdaptor.retrieveSKUs({
@@ -80,6 +84,45 @@ class ShopEarnController {
         return reply.response({
           status: true, result: sku_result,
           seller_list: (seller_list || []).filter(item => parseInt(item.provider_counts || 0) > 0 || parseInt(item.sku_seller_counts || 0) > 0 || item.is_data_manually_added)
+        });
+      } catch (err) {
+        console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user && !user.seller_details ? user.id || user.ID : undefined,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err
+          })
+        }).catch(ex => console.log('error while logging on db,', ex));
+        return reply.response({
+          status: false,
+          message: 'Unable to retrieve SKU list'
+        });
+      }
+    } else {
+      return _shared2.default.preValidation(request.pre, reply);
+    }
+  }
+
+  static async getSellerCategories(request, reply) {
+    let user = _shared2.default.verifyAuthorization(request.headers);
+    if (request.pre.userExist && !request.pre.forceUpdate) {
+      // this is where make us of adapter
+      try {
+        const { seller_id } = request.params;
+        const seller = (await sellerAdaptor.retrieveSellersOnInit({
+          where: { id: seller_id, is_onboarded: true, is_fmcg: true },
+          attributes: ['is_data_manually_added', 'id']
+        }, {}))[0];
+        const seller_categories = await shopEarnAdaptor.retrieveSellerCategories({ seller });
+        return reply.response({
+          status: true, result: seller_categories
         });
       } catch (err) {
         console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);

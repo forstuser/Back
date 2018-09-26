@@ -438,7 +438,7 @@ class SellerController {
             where: JSON.parse(JSON.stringify({
               id, $or: { seller_name, contact_no }
             })),
-            attributes: ['id', ['seller_name', 'name'], 'owner_name', 'has_pos', 'gstin', 'pan_no', 'reg_no', 'is_service', 'is_onboarded', 'address', 'city_id', 'state_id', 'locality_id', 'latitude', 'longitude', 'url', 'contact_no', 'email', 'seller_type_id', 'seller_details', 'is_assisted', 'is_fmcg', 'rush_hours', [modals.sequelize.literal(`(select sum(seller_cashback.amount) from table_seller_wallet as seller_cashback where status_type in (16) and seller_cashback.seller_id = "sellers"."id")`), 'cashback_total'], [modals.sequelize.literal(`(select AVG(seller_reviews.review_ratings) from table_seller_reviews as seller_reviews where seller_reviews.offline_seller_id = "sellers"."id")`), 'ratings']]
+            attributes: ['id', ['seller_name', 'name'], 'owner_name', 'has_pos', 'gstin', 'pan_no', 'reg_no', 'is_service', 'is_onboarded', 'address', 'city_id', 'state_id', 'locality_id', 'latitude', 'longitude', 'url', 'contact_no', 'email', 'seller_type_id', [modals.sequelize.literal(`(select sum(seller_cashback.amount) from table_seller_wallet as seller_cashback where status_type in (14, 13) and is_paytm = true and seller_cashback.seller_id = "sellers"."id")`), 'cashback_redeemed'], 'seller_details', 'is_assisted', 'is_fmcg', 'rush_hours', [modals.sequelize.literal(`(select sum(seller_cashback.amount) from table_seller_wallet as seller_cashback where status_type in (16) and seller_cashback.seller_id = "sellers"."id")`), 'cashback_total'], [modals.sequelize.literal(`(select AVG(seller_reviews.review_ratings) from table_seller_reviews as seller_reviews where seller_reviews.offline_seller_id = "sellers"."id")`), 'ratings']]
           })
         });
       } catch (err) {
@@ -1901,7 +1901,9 @@ class SellerController {
       if (!request.pre.forceUpdate) {
         const { seller_id } = request.params;
         const result = await sellerAdaptor.retrieveSellerWalletDetail({
-          where: { seller_id },
+          where: {
+            seller_id, $or: [{ status_type: 16 }, { $and: { status_type: [14, 13], is_paytm: true } }]
+          },
           attributes: ['id', 'seller_id', 'title', 'job_id', 'user_id', 'transaction_type', 'cashback_source', 'amount', 'status_type', 'is_paytm', 'created_at', [modals.sequelize.literal('(select full_name from users where users.id = "seller_wallet".user_id)'), 'user_name']], order: [['created_at', 'desc']]
         });
         const assigned_cashback = _lodash2.default.sumBy(result.filter(item => item.transaction_type === 1), 'amount');
@@ -2319,9 +2321,7 @@ class SellerController {
         const { seller_id, customer_id } = request.params;
         const transaction_list = await sellerAdaptor.retrieveSellerTransactions({
           where: JSON.parse(JSON.stringify({
-            seller_id,
-            user_id: customer_id,
-            admin_status: { $ne: 2 }
+            seller_id, user_id: customer_id, admin_status: { $ne: 2 }
           })),
           attributes: ['id', 'home_delivered', 'cashback_status', 'copies', [modals.sequelize.literal(`(select sum(purchase_cost) from consumer_products as product where product.user_id = "cashback_jobs"."user_id" and product.job_id = "cashback_jobs"."job_id" and product.seller_id = ${seller_id})`), 'amount_paid'], [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where seller_credit.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 1 and seller_credit.user_id = "cashback_jobs"."user_id" and seller_credit.seller_id = ${seller_id})`), 'total_credits'], [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where seller_credit.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 2 and seller_credit.user_id = "cashback_jobs"."user_id" and seller_credit.seller_id = ${seller_id})`), 'redeemed_credits'], 'created_at', [modals.sequelize.literal(`(select full_name from users where users.id = "cashback_jobs"."user_id")`), 'user_name'], [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_loyalty as loyalty_wallet where loyalty_wallet.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 1 and loyalty_wallet.user_id = "cashback_jobs"."user_id" and loyalty_wallet.seller_id = ${seller_id})`), 'total_loyalty'], [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_loyalty as loyalty_wallet where loyalty_wallet.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 2 and loyalty_wallet.user_id = "cashback_jobs"."user_id" and loyalty_wallet.seller_id = ${seller_id})`), 'redeemed_loyalty'], [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_cashback as user_wallet where user_wallet.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 1 and user_wallet.user_id = "cashback_jobs"."user_id" and user_wallet.seller_id = ${seller_id})`), 'total_cashback'], [modals.sequelize.literal(`(select count(*) from table_expense_sku as expense_skus where expense_skus.user_id = "cashback_jobs"."user_id" and expense_skus.seller_id = ${seller_id} and expense_skus.job_id = "cashback_jobs"."job_id" )`), 'item_counts']],
           order: [['created_at', 'desc']]
@@ -2427,8 +2427,7 @@ class SellerController {
         return reply.response({
           status: true,
           message: 'Successful',
-          total_credits: _lodash2.default.sumBy(result.filter(item => item.transaction_type === 1), 'amount') - _lodash2.default.sumBy(result.filter(item => item.transaction_type === 2), 'amount'),
-          result,
+          total_credits: _lodash2.default.sumBy(result.filter(item => item.transaction_type === 1), 'amount') - _lodash2.default.sumBy(result.filter(item => item.transaction_type === 2), 'amount'), result,
           forceUpdate: request.pre.forceUpdate
         });
       } else {

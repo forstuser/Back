@@ -83,7 +83,7 @@ class DashboardAdaptor {
                         }),
                     this.modals.seller_service_types.aggregate('service_user_id',
                         'count', {
-                            where: {seller_id}, distinct: true,
+                            where: {seller_id, service_type_id: {$not: 0}}, distinct: true,
                             group: ['seller_id'],
                         }),
                     this.modals.cashback_wallet.aggregate('amount', 'sum',

@@ -24,6 +24,10 @@ var _bluebird = require('bluebird');
 
 var _bluebird2 = _interopRequireDefault(_bluebird);
 
+var _moment = require('moment');
+
+var _moment2 = _interopRequireDefault(_moment);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 class SellerAdaptor {
@@ -267,15 +271,15 @@ class SellerAdaptor {
     }), ...orders.map(item => {
       item = item.toJSON();
       return item.user_id;
-    }), ...seller_users.customer_ids]);
+    }), ...seller_users.customer_ids]).filter(item => item);
     job_id = cashback_jobs.map(item => {
       item = item.toJSON();
       return item.job_id;
-    });
+    }).filter(item => item);
     expense_id = orders.map(item => {
       item = item.toJSON();
       return item.expense_id;
-    });
+    }).filter(item => item);
     const result = await this.modals.users.findAll({
       where: { id },
       attributes: [['full_name', 'name'], 'image_name', 'email', 'mobile_no', 'location', 'id', 'user_status_type', [this.modals.sequelize.literal(`(select sum(products.purchase_cost) from consumer_products as products where ${job_id.length > 0 ? `job_id in (${job_id.join(',')}) and` : ''} ${expense_id.length > 0 ? `id in (${expense_id.join(',')}) and` : ''} products.user_id = "users"."id" and products.seller_id = ${seller_id})`), 'total_transactions']]
@@ -466,6 +470,8 @@ class SellerAdaptor {
       seller.location = seller_locations[0];
       seller.address_detail = `${seller.address},${(seller.location || {}).name},${(seller.city || {}).name},${(seller.state || {}).state_name}-${(seller.location || {}).pin_code}`.replace(',,', ',').replace(',,', ',').replace(',,', ',');
       seller.cashback_total = seller.cashback_total || 0;
+      seller.cashback_redeemed = seller.cashback_redeemed || 0;
+      seller.cashback_total = seller.cashback_total - seller.cashback_redeemed;
       seller.offer_count = seller.offer_count || 0;
       seller.ratings = seller.ratings || 0;
       if (seller.seller_details) {
@@ -545,6 +551,7 @@ class SellerAdaptor {
   }
 
   async retrieveSellerOffersForConsumer(options) {
+    options.end_date = { $gte: _moment2.default.utc() };
     let seller_offers = await this.modals.seller_offers.findAll({ where: JSON.parse(JSON.stringify(options)) });
     seller_offers = seller_offers.map(item => item.toJSON());
     return seller_offers;

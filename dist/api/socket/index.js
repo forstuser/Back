@@ -817,7 +817,7 @@ class SocketServer {
             order_id: order.id,
             status_type: order.status_type,
             is_modified: order.is_modified, user_id,
-            title: `Hurray! ${order.delivery_user ? `${(order.delivery_user || {}).name || ''} from Seller ${seller_detail.seller_name || ''} is on his way with your order.` : `Your Order is on it's way from Seller ${seller_detail.seller_name || ''}`}.`,
+            title: `Hurray! ${order.delivery_user ? `${(order.delivery_user || {}).name || ''} from Seller ${seller_detail.seller_name || ''} is on the way ${order.order_type === 1 ? 'with your order.' : 'for your assistance.'}` : `Your Order is on it's way from Seller ${seller_detail.seller_name || ''}`}.`,
             description: 'Please click here for more detail.',
             notification_type: 31,
             order_type: order.order_type
@@ -1177,9 +1177,15 @@ class SocketServer {
             const { id: sku_id, quantity, sku_measurement, selling_price } = item;
             const { id: sku_measurement_id, cashback_percent } = sku_measurement;
             return JSON.parse(JSON.stringify({
-              sku_id, sku_measurement_id, seller_id, user_id,
-              updated_by: user_id, quantity, selling_price, status_type: 11,
-              available_cashback: selling_price && cashback_percent ? selling_price * cashback_percent / 100 : undefined
+              sku_id,
+              sku_measurement_id,
+              seller_id,
+              user_id,
+              updated_by: user_id,
+              quantity,
+              selling_price: parseInt(selling_price || 0),
+              status_type: 11,
+              available_cashback: parseInt(selling_price || 0) && cashback_percent ? selling_price * cashback_percent / 100 : undefined
             }));
           }),
           order_type: order.order_type,
