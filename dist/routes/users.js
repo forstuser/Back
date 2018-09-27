@@ -564,11 +564,11 @@ function prepareAuthRoutes(modal, routeObject, middleware) {
       method: 'POST',
       path: '/sellers/logout',
       config: {
-        handler: _user2.default.logout,
+        handler: _user2.default.logoutSeller,
         auth: 'jwt',
         pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
         description: 'Logout Seller User.',
-        tags: ['api', 'User', 'Authentication'],
+        tags: ['api', 'seller', 'Authentication'],
         validate: {
           payload: _joi2.default.object({
             fcmId: [_joi2.default.string(), _joi2.default.allow(null)],

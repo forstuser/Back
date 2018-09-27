@@ -41,7 +41,7 @@ exports.default = (sequelize, DataTypes) => {
     },
     is_data_manually_added: {
       type: DataTypes.BOOLEAN,
-      defaultValue: true
+      defaultValue: false
     },
     is_fmcg: {
       type: DataTypes.BOOLEAN,

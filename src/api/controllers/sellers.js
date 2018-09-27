@@ -21,7 +21,7 @@ class SellerController {
   constructor(modal, socket) {
     shopEarnAdaptor = new ShopEarnAdaptor(modal);
     userAdaptor = new UserAdaptor(modal);
-    notificationAdaptor = new NotificationAdaptor(modals);
+    notificationAdaptor = new NotificationAdaptor(modal);
     sellerAdaptor = new SellerAdaptor(modal, notificationAdaptor);
     jobAdaptor = new JobAdaptor(modal, socket, notificationAdaptor);
     generalAdaptor = new GeneralAdaptor(modal);
@@ -244,7 +244,7 @@ class SellerController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user && !user.seller_details ?
+          user_id: user && !user.seller_detail ?
               user.id || user.ID :
               undefined,
           log_content: JSON.stringify({
@@ -303,7 +303,7 @@ class SellerController {
               }, {
                 where: JSON.parse(JSON.stringify({
                   $or: {seller_name, contact_no},
-                  status_type: [1, 11],
+                  status_type: [1, 11], is_onboarded: true,
                 })),
                 attributes: [
                   'id', ['seller_name', 'name'], 'owner_name', 'is_fmcg',
@@ -347,7 +347,7 @@ class SellerController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user && !user.seller_details ?
+          user_id: user && !user.seller_detail ?
               user.id || user.ID :
               undefined,
           log_content: JSON.stringify({
@@ -419,7 +419,7 @@ class SellerController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user && !user.seller_details ?
+          user_id: user && !user.seller_detail ?
               user.id || user.ID :
               undefined,
           log_content: JSON.stringify({
@@ -500,8 +500,14 @@ class SellerController {
                         `(select sum(amount) from table_wallet_seller_loyalty as seller_loyalty where status_type in (16) and seller_loyalty.user_id = ${user_id} and seller_loyalty.seller_id = "sellers"."id")`),
                     'loyalty_total'], [
                     modals.sequelize.literal(
-                        `(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16) and seller_credit.user_id = ${user_id} and seller_credit.seller_id = "sellers"."id")`),
+                        `(select sum(amount) from table_wallet_seller_loyalty as seller_loyalty where status_type in (16,14) and transaction_type = 2 and seller_loyalty.user_id = ${user_id} and seller_loyalty.seller_id = "sellers"."id")`),
+                    'loyalty_redeemed'], [
+                    modals.sequelize.literal(
+                        `(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16) and transaction_type = 1 and seller_credit.user_id = ${user_id} and seller_credit.seller_id = "sellers"."id")`),
                     'credit_total'], [
+                    modals.sequelize.literal(
+                        `(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (14, 16) and transaction_type = 2 and seller_credit.user_id = ${user_id} and seller_credit.seller_id = "sellers"."id")`),
+                    'credit_redeemed'], [
                     modals.sequelize.literal(
                         `${seller_offer_ids && seller_offer_ids.length > 0 ?
                             `(select count(*) from table_seller_offers as seller_offers where status_type in (1) and seller_offers.id in (${(seller_offer_ids ||
@@ -581,33 +587,16 @@ class SellerController {
                   id, $or: {seller_name, contact_no},
                 })),
                 attributes: [
-                  'id',
-                  ['seller_name', 'name'],
-                  'owner_name',
-                  'has_pos',
-                  'gstin',
-                  'pan_no',
-                  'reg_no',
-                  'is_service',
-                  'is_onboarded',
-                  'address',
-                  'city_id',
-                  'state_id',
-                  'locality_id',
-                  'latitude',
-                  'longitude',
-                  'url',
-                  'contact_no',
-                  'email',
-                  'seller_type_id',
-                  [
+                  'id', ['seller_name', 'name'], 'owner_name',
+                  'has_pos', 'gstin', 'pan_no', 'reg_no',
+                  'is_service', 'is_onboarded', 'address',
+                  'city_id', 'state_id', 'locality_id', 'latitude',
+                  'longitude', 'url', 'contact_no', 'email',
+                  'seller_type_id', [
                     modals.sequelize.literal(
                         `(select sum(seller_cashback.amount) from table_seller_wallet as seller_cashback where status_type in (14, 13) and is_paytm = true and seller_cashback.seller_id = "sellers"."id")`),
-                    'cashback_redeemed'],
-                  'seller_details',
-                  'is_assisted',
-                  'is_fmcg',
-                  'rush_hours',
+                    'cashback_redeemed'], 'seller_details',
+                  'is_assisted', 'is_fmcg', 'rush_hours',
                   [
                     modals.sequelize.literal(
                         `(select sum(seller_cashback.amount) from table_seller_wallet as seller_cashback where status_type in (16) and seller_cashback.seller_id = "sellers"."id")`),
@@ -625,7 +614,7 @@ class SellerController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user && !user.seller_details ?
+          user_id: user && !user.seller_detail ?
               user.id || user.ID :
               undefined,
           log_content: JSON.stringify({
@@ -679,9 +668,8 @@ class SellerController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user && !user.seller_details ?
-              user.id || user.ID :
-              undefined,
+          user_id: user && !user.seller_detail ?
+              user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -706,10 +694,17 @@ class SellerController {
       // this is where make us of adapter
       try {
         const user_id = user.id || user.ID;
-        const [user_index_data, seller] = await Promise.all([
+        const [user_detail, user_index_data, seller] = await Promise.all([
+          userAdaptor.retrieveSingleUser({where: {id: user_id}}),
           userAdaptor.retrieveUserIndexedData({
             where: {user_id, status_type: [1, 11]},
-            attributes: ['my_seller_ids', 'seller_offer_ids'],
+            attributes: [
+              'my_seller_ids',
+              'seller_offer_ids',
+              [
+                modals.sequelize.literal(
+                    `(Select full_name from users where id = ${user_id})`),
+                'user_name']],
           }),
           sellerAdaptor.retrieveSellerDetail(
               {where: {id: request.params.id}})]);
@@ -729,10 +724,27 @@ class SellerController {
             await userAdaptor.createUserIndexedData({my_seller_ids, user_id},
                 {where: {user_id}});
 
+            await notificationAdaptor.notifyUserCron({
+              seller_user_id: seller.user_id, payload: {
+                title: `${user_detail.name ||
+                'User'} has added you as a Seller for future orders and communication.`,
+                description: 'Please click here for more detail.',
+                notification_type: 2,
+              },
+            });
           } else if (!already_in_list) {
             my_seller_ids.push(parseInt(request.params.id));
             await userAdaptor.updateUserIndexedData({my_seller_ids},
                 {where: {user_id}});
+
+            await notificationAdaptor.notifyUserCron({
+              seller_user_id: seller.user_id, payload: {
+                title: `${user_index_data.user_name ||
+                'User'} has added you as a Seller for future orders and communication.`,
+                description: 'Please click here for more detail.',
+                notification_type: 2,
+              },
+            });
           } else {
             return reply.response({
               status: false,
@@ -772,7 +784,7 @@ class SellerController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user && !user.seller_details ?
+          user_id: user && !user.seller_detail ?
               user.id || user.ID :
               undefined,
           log_content: JSON.stringify({
@@ -822,7 +834,7 @@ class SellerController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user && !user.seller_details ?
+          user_id: user && !user.seller_detail ?
               user.id || user.ID :
               undefined,
           log_content: JSON.stringify({
@@ -864,24 +876,32 @@ class SellerController {
             $iLike: email.trim(),
           };
         }
-        const message = `Hello Seller, We are glad to invite you to get on board on BinBill and maintain a healthy relationship with your user.`;
-        const [user_index_data, seller] = await Promise.all([
+
+        const [user_detail, user_index_data, seller] = await Promise.all([
+          userAdaptor.retrieveSingleUser({where: {id: user_id}}),
           userAdaptor.retrieveUserIndexedData({
             where: {user_id, status_type: [1, 11]},
-            attributes: ['my_seller_ids', 'seller_contact_no'],
+            attributes: [
+              'my_seller_ids', 'seller_contact_no',
+              [
+                modals.sequelize.literal(
+                    `(select full_name from users as user where user.id = ${user_id})`),
+                'user_name']],
           }),
           sellerAdaptor.retrieveSellerDetail(
               {
                 where: seller_options,
                 attributes: ['id', 'customer_ids', 'contact_no'],
-              }),
-          sendSMS(message, [contact_no])]);
+              })]);
+        let {seller_contact_no, my_seller_ids} = (user_index_data ||
+            {});
+        let {name} = user_detail;
 
-        let {seller_contact_no, my_seller_ids} = user_index_data || {};
-
-        let {customer_ids} = seller;
+        let {customer_ids} = (seller || {});
         my_seller_ids = (my_seller_ids || []);
-
+        seller_contact_no = (seller_contact_no || []);
+        const message = `Yay! Your Customer ${name ||
+        ''} has invited you to BinBill Partner – for online orders & much more. Get your Free App Now, contact us on ${contact_no}!`;
         let already_in_my_seller_list;
         if (seller) {
           customer_ids = customer_ids || [];
@@ -890,28 +910,37 @@ class SellerController {
               parseInt(seller.id));
           seller_contact_no.push(seller.contact_no);
         } else {
+          await sendSMS(message, [contact_no]);
           seller_contact_no.push(contact_no.trim());
         }
         seller_contact_no = _.uniq(seller_contact_no);
         my_seller_ids = _.uniq(my_seller_ids);
         customer_ids = _.uniq(customer_ids);
         if (!user_index_data) {
-          my_seller_ids.push(parseInt(seller.id));
+          if (seller) {
+            my_seller_ids.push(parseInt(seller.id));
+          }
           await Promise.all([
             userAdaptor.createUserIndexedData(
                 {my_seller_ids, seller_contact_no, user_id},
                 {where: {user_id}}),
-            sellerAdaptor.retrieveOrUpdateSellerDetail({where: seller_options},
-                {customer_ids})]);
+            seller ?
+                sellerAdaptor.retrieveOrUpdateSellerDetail(
+                    {where: seller_options},
+                    {customer_ids}) :
+                '']);
 
         } else if (!already_in_my_seller_list) {
-          my_seller_ids.push(parseInt(seller.id));
+          if (seller) {
+            my_seller_ids.push(parseInt(seller.id));
+          }
           await Promise.all([
             userAdaptor.updateUserIndexedData(
-                {my_seller_ids, seller_contact_no},
-                {where: {user_id}}),
-            sellerAdaptor.retrieveOrUpdateSellerDetail({where: seller_options},
-                {customer_ids})]);
+                {my_seller_ids, seller_contact_no}, {where: {user_id}}),
+            seller ?
+                sellerAdaptor.retrieveOrUpdateSellerDetail(
+                    {where: seller_options}, {customer_ids}) :
+                '']);
         } else {
           return reply.response({
             status: false,
@@ -930,7 +959,7 @@ class SellerController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user && !user.seller_details ?
+          user_id: user && !user.seller_detail ?
               user.id || user.ID :
               undefined,
           log_content: JSON.stringify({
@@ -995,6 +1024,7 @@ class SellerController {
             category_id: category_id || config.HOUSEHOLD_CATEGORY_ID,
           },
         };
+        console.log(JSON.stringify(seller_updates));
         let seller_detail = await sellerAdaptor.retrieveOrUpdateSellerDetail(
             {
               where: JSON.parse(
@@ -1209,12 +1239,13 @@ class SellerController {
             };
           });
       let categories;
-      if (basic_details && basic_details.category_id && business_details) {
-        categories = await generalAdaptor.retrieveCategories({
-          options: {ref_id: basic_details.category_id},
-          isSubCategoryRequiredForAll: true,
-        });
-      }
+      categories = await generalAdaptor.retrieveCategories({
+        options: {
+          ref_id: (basic_details || {}).category_id ||
+              config.HOUSEHOLD_CATEGORY_ID,
+        },
+        isSubCategoryRequiredForAll: true,
+      });
       let seller_categories = (config.SELLER_CATEGORIES || '').split(',');
       let seller_payment_modes = (config.SELLER_PAYMENT_MODES || '').split(',');
       let seller_business_types = (config.SELLER_BUSINESS_TYPES || '').split(
@@ -1224,12 +1255,13 @@ class SellerController {
         seller_id: id, has_pos,
         next_step: (!gstin && !pan_no) ? 'fresh_seller' :
             !basic_details || (basic_details && !basic_details.is_complete) ?
-                'basic_details' : !business_details ?
-                'business_details' : 'dashboard',
+                'basic_details' /*: !business_details ?
+                'business_details'*/ : 'dashboard',
         categories: data_required || !is_onboarded ?
             _.orderBy(categories, 'name') :
             undefined,
-        main_category_id: (basic_details || {}).category_id,
+        main_category_id: (basic_details || {}).category_id ||
+            config.HOUSEHOLD_CATEGORY_ID,
         data: data_required || !is_onboarded ? {
           provider_types, states, categories: seller_categories.map(item => {
             item = item.split('|');
@@ -1279,6 +1311,7 @@ class SellerController {
     };
     try {
       let token_user = shared.verifyAuthorization(request.headers);
+      console.log(JSON.stringify(request.payload));
       let {seller_name, address, pincode, locality_id, city_id, state_id, business_name, category_id, shop_open_day, shop_open_timings, start_time, close_time, home_delivery, home_delivery_remarks, payment_modes} = request.payload ||
       {};
       const {id} = request.params || {};
@@ -1306,8 +1339,8 @@ class SellerController {
           basic_details.close_time || '09:00 PM';
       basic_details.shop_open_timings = shop_open_timings ||
           basic_details.shop_open_timings;
-      basic_details.home_delivery = home_delivery ||
-          basic_details.home_delivery || false;
+      basic_details.home_delivery = home_delivery && home_delivery === true ?
+          true : home_delivery === false ? false : false;
       basic_details.home_delivery_remarks = home_delivery_remarks ||
           basic_details.home_delivery_remarks;
       basic_details.payment_modes = payment_modes ||
@@ -1800,8 +1833,9 @@ class SellerController {
           JSON.parse(JSON.stringify(
               {
                 id, amount, transaction_type, description,
-                user_id: consumer_id, status_type: 16, seller_id,
-              })), seller.seller_name);
+                user_id: consumer_id, seller_id,
+                status_type: transaction_type.toString() === '1' ? 16 : 14,
+              })), seller.seller_name, seller_id);
       await userAdaptor.retrieveOrUpdateUserIndexedData({user_id: consumer_id},
           {credit_id: seller_credits.id, user_id: consumer_id});
       replyObject.seller_credits = JSON.parse(
@@ -1848,7 +1882,7 @@ class SellerController {
                 id, amount, transaction_type, description, seller_id,
                 user_id: consumer_id,
                 status_type: transaction_type === 1 ? 16 : 14,
-              })), seller.seller_name);
+              })), seller.seller_name, seller_id);
 
       await userAdaptor.retrieveOrUpdateUserIndexedData({user_id: consumer_id},
           {point_id: seller_points.id, user_id: consumer_id});

@@ -2,6 +2,7 @@
 'use strict';
 
 import PayTMAdaptor from './payTMAdaptor';
+import _ from 'lodash';
 import config from '../../config/main';
 
 class JobAdaptor {
@@ -137,13 +138,19 @@ class JobAdaptor {
   }
 
   async addLoyaltyToSeller(options) {
-    const {status_type, job_id, seller_id, amount, transaction_type, user_id} = options;
+    const {status_type, job_id, seller_id, amount, transaction_type, user_id, seller_user_id, user_name} = options;
     await this.modals.loyalty_wallet.create(
         JSON.parse(JSON.stringify(
             {
               status_type: status_type || 14,
               amount, transaction_type, user_id, seller_id,
             })));
+    await this.notificationAdaptor.notifyUserCron({
+      seller_user_id, payload: {
+        title: `Loyalty Points have been redeemed by ${user_name}.`,user_id,
+        notification_type: 4,
+      },
+    });
   }
 
   async retrieveJobDetail(id, isUpload) {
@@ -182,7 +189,7 @@ class JobAdaptor {
   }
 
   async cashBackApproval(options, seller_name) {
-    let {cash_back_month, cash_back_day, verified_seller, amount, digitally_verified, seller_id, home_delivered, job, cashback_source, transaction_type, user_loyalty_rules, user_limit_rules, user_default_limit_rules} = options;
+    let {cash_back_month, cash_back_day, verified_seller, amount, digitally_verified, seller_id, home_delivered, job, user_limit_rules, user_default_limit_rules, online_order, seller_user_id, user_name} = options;
     const {user_id, id: job_id} = job;
     let monthly_limit = user_limit_rules.find(item => item.rule_type === 1),
         daily_limit = user_limit_rules.find(item => item.rule_type === 2);
@@ -209,14 +216,25 @@ class JobAdaptor {
                 {job_id, status_type: 16, seller_id}) :
             '']);
 
-      await this.notificationAdaptor.notifyUserCron({
-        user_id, payload: {
-          title: `Hurray! You can redeem your Cashback ₹ ${total_amount} in your next order with Seller ${seller_name ||
-          ''}!`,
-          description: 'Please click here for more detail.',
-          notification_type: 34,
-        },
-      });
+      await Promise.all([
+        this.notificationAdaptor.notifyUserCron({
+          user_id, payload: {
+            title: `Hurray! You can redeem your Cashback ₹ ${total_amount} in your next order with Seller ${seller_name ||
+            ''}!`,
+            description: 'Please click here for more detail.',
+            notification_type: 34,
+          },
+        }),
+        home_delivered ?
+            this.notificationAdaptor.notifyUserCron({
+              seller_user_id, payload: {
+                title: `Hurray! Cashback on Home Delivery to User ${user_name ||
+                ''} has been credited to your BB Wallet!`,
+                description: 'Please click here for more detail.',
+                notification_type: 3,
+              },
+            }) :
+            '']);
       return {approved_amount: total_amount, pending_seller_amount: 0};
     } else if (verified_seller) {
       if (cash_back_day + total_amount <= daily_limit.rule_limit) {
@@ -235,14 +253,25 @@ class JobAdaptor {
                     {job_id, status_type: 16, seller_id}) :
                 '',
           ]);
-          await this.notificationAdaptor.notifyUserCron({
-            user_id, payload: {
-              title: `Hurray! Cashback ₹ ${total_amount} approved by Seller ${seller_name ||
-              ''}!`,
-              description: 'Please click here for more detail.',
-              notification_type: 34,
-            },
-          });
+          await Promise.all([
+            this.notificationAdaptor.notifyUserCron({
+              user_id, payload: {
+                title: `Your Seller ${seller_name ||
+                ''} has verified your transaction for Cashback Redemption.`,
+                description: 'Please click here for more detail.',
+                notification_type: 34,
+              },
+            }),
+            home_delivered ?
+                this.notificationAdaptor.notifyUserCron({
+                  seller_user_id, payload: {
+                    title: `Hurray! Cashback on Home Delivery to User ${user_name ||
+                    ''} has been credited to your BB Wallet!`,
+                    description: 'Please click here for more detail.',
+                    notification_type: 3,
+                  },
+                }) :
+                '']);
           return {approved_amount: total_amount};
         } else {
           total_amount = monthly_limit.rule_limit - cash_back_month;
@@ -261,14 +290,26 @@ class JobAdaptor {
                 this.approveHomeDeliveryCashback(
                     {job_id, status_type: 16, seller_id}) :
                 '']);
-          await this.notificationAdaptor.notifyUserCron({
-            user_id, payload: {
-              title: `Hurray! Cashback ₹ ${total_amount} approved by Seller ${seller_name ||
-              ''}!`,
-              description: 'Please click here for more detail.',
-              notification_type: 34,
-            },
-          });
+
+          await Promise.all([
+            this.notificationAdaptor.notifyUserCron({
+              user_id, payload: {
+                title: `Your Seller ${seller_name ||
+                ''} has verified your transaction for Cashback Redemption.`,
+                description: 'Please click here for more detail.',
+                notification_type: 34,
+              },
+            }),
+            home_delivered ?
+                this.notificationAdaptor.notifyUserCron({
+                  seller_user_id, payload: {
+                    title: `Hurray! Cashback on Home Delivery to User ${user_name ||
+                    ''} has been credited to your BB Wallet!`,
+                    description: 'Please click here for more detail.',
+                    notification_type: 3,
+                  },
+                }) :
+                '']);
           return {approved_amount: total_amount};
         }
       } else {
@@ -288,14 +329,24 @@ class JobAdaptor {
                   {job_id, status_type: 16, seller_id}) :
               '',
         ]);
-        await this.notificationAdaptor.notifyUserCron({
-          user_id, payload: {
-            title: `Hurray! Cashback ₹ ${total_amount} approved by Seller ${seller_name ||
-            ''}!`,
-            description: 'Please click here for more detail.',
-            notification_type: 34,
-          },
-        });
+        await Promise.all([
+          this.notificationAdaptor.notifyUserCron({
+            user_id, payload: {
+              title: `Your Seller ${seller_name ||
+              ''} has verified your transaction for Cashback Redemption.`,
+              description: 'Please click here for more detail.',
+              notification_type: 34,
+            },
+          }),
+          home_delivered ?
+              this.notificationAdaptor.notifyUserCron({
+                seller_user_id, payload: {
+                  title: `Hurray! Cashback on Home Delivery to User ${user_name ||
+                  ''} has been credited to your BB Wallet!`,
+                  description: 'Please click here for more detail.',
+                  notification_type: 3,
+                },
+              }) : '']);
 
         return {approved_amount: total_amount};
       }
@@ -304,34 +355,32 @@ class JobAdaptor {
 
   async cashBackRedemption(options) {
     let {job_id, seller_cashback_id, user_cashback_id, seller_id, transaction_type, user_id, seller_cashback} = options;
-
+    const total_amount = _.sumBy(seller_cashback, 'amount');
+    const {seller_user_id, user_name} = (seller_cashback[0] || {});
     return await Promise.all([
       this.approveSellerCashBack(
           {
             job_id, id: seller_cashback_id,
             seller_id, status_type: 14, transaction_type,
-          }),
-      this.approveUserCashBack(
+          }), this.approveUserCashBack(
           {
             job_id, id: user_cashback_id, seller_id,
             status_type: 14, transaction_type,
-          }),
-      this.updateCashBackJobs(
+          }), this.updateCashBackJobs(
           {
             id: job_id, seller_status: 14, cashback_status: 14, seller_id,
             jobDetail: {seller_status: 14, cashback_status: 14, seller_id},
-          }),
-      ...seller_cashback.map(item => {
-        const {job_id, amount} = item;
-        return this.addCashBackToSeller(
-            {
-              status_type: 16,
-              amount,
-              seller_id,
-              user_id,
-              transaction_type: 1,
-              cashback_source: 2,
-            });
+          }), this.addCashBackToSeller(
+          {
+            status_type: 16, amount: total_amount, seller_id,
+            user_id, transaction_type: 1, cashback_source: 2,
+          }), this.notificationAdaptor.notifyUserCron({
+        seller_user_id, payload: {
+          title: `${user_name ||
+          ''} has opted for cashback redemption & it has been credited to your BB Wallet.`,
+          description: 'Please click here for more detail.',
+          notification_type: 3,
+        },
       })]);
   }
 

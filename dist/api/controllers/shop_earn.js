@@ -155,13 +155,18 @@ class ShopEarnController {
   }
 
   static async getSKUItem(request, reply) {
-    const user = _shared2.default.verifyAuthorization(request.headers);
+    let user = _shared2.default.verifyAuthorization(request.headers);
     if (request.pre.userExist && !request.pre.forceUpdate) {
       // this is where make us of adapter
       try {
+        const result = await modals.user_index.findOne({
+          where: { user_id: user.id || user.ID }, attributes: [[modals.sequelize.literal('(Select location from users as "user" where "user".id = "user_index".user_id)'), 'location'], 'my_seller_ids', ['user_id', 'id']]
+        });
+        user = result ? result.toJSON() : user;
         const sku_item = await shopEarnAdaptor.retrieveSKUItem({
           bar_code: (request.params || {}).bar_code,
-          id: (request.params || {}).id
+          id: (request.params || {}).id,
+          location: user.location
         });
         if ((request.params || {}).bar_code && sku_item) {
           sku_item.sku_measurement = sku_item.sku_measurements.find(item => item.bar_code.toLowerCase() === (request.params || {}).bar_code.toLowerCase());
@@ -661,7 +666,7 @@ class ShopEarnController {
         const utcOffset = 330;
         const seller = await sellerAdaptor.retrieveSellerDetail({ where: { id: seller_id }, attributes: ['seller_name'] });
         const seller_cashback = await jobAdaptor.retrieveSellerCashBack({
-          where: { seller_id, id, status_type: 13 }, attributes: ['job_id', 'id', 'user_id', 'amount', [modals.sequelize.literal(`(Select id from table_wallet_user_cashback as user_cashback where user_cashback.user_id = cashback_wallet.user_id and user_cashback.amount = cashback_wallet.amount and user_cashback.job_id = cashback_wallet.job_id)`), 'user_cashback_id'], 'status_type', 'created_at']
+          where: { seller_id, id, status_type: 13 }, attributes: ['job_id', 'id', 'user_id', 'amount', 'status_type', 'created_at', [modals.sequelize.literal(`(Select user_id from table_sellers as seller where seller.id = ${seller_id})`), 'seller_user_id'], [modals.sequelize.literal(`(Select full_name from users as "user" where "user".id = cashback_wallet.user_id)`), 'user_name']]
         });
         if (seller_cashback) {
           const startOfMonth = (0, _moment2.default)(seller_cashback.created_at).startOf('month').utcOffset(utcOffset).format();
@@ -686,14 +691,15 @@ class ShopEarnController {
 
           const cash_back_month = user_cash_back_month ? user_cash_back_month.total_amount : 0;
           const cash_back_day = user_cash_back_day ? user_cash_back_day.total_amount : 0;
-          const { verified_seller, digitally_verified, home_delivered } = cash_back_job;
+          const { verified_seller, digitally_verified, home_delivered, online_order } = cash_back_job;
+          const { seller_user_id, user_name } = seller_cashback;
 
           return reply.response({
             status: true,
             result: await jobAdaptor.cashBackApproval({
-              cash_back_month, user_limit_rules,
-              user_default_limit_rules, cash_back_day,
-              verified_seller, digitally_verified, seller_id,
+              cash_back_month, user_limit_rules, seller_user_id,
+              user_default_limit_rules, cash_back_day, user_name,
+              verified_seller, digitally_verified, online_order, seller_id,
               transaction_type: 1, cashback_source: 1,
               job_id: seller_cashback.job_id, home_delivered,
               job: cash_back_job, amount: seller_cashback.amount
@@ -738,7 +744,7 @@ class ShopEarnController {
         let { seller_id, id } = request.params;
         const { reason_id } = request.payload;
         const seller_cashback = await jobAdaptor.retrieveSellerCashBack({
-          where: { seller_id, id, status_type: 13 }, attributes: ['job_id', 'id', 'user_id', 'amount', [modals.sequelize.literal(`(Select id from table_wallet_user_cashback as user_cashback where user_cashback.user_id = cashback_wallet.user_id and user_cashback.amount = cashback_wallet.amount and user_cashback.job_id = cashback_wallet.job_id)`), 'user_cashback_id'], 'status_type', 'created_at']
+          where: { seller_id, id, status_type: 13 }, attributes: ['job_id', 'id', 'user_id', 'amount', 'status_type', 'created_at']
         });
         if (seller_cashback) {
           const { job_id } = seller_cashback;
@@ -747,7 +753,13 @@ class ShopEarnController {
           const { verified_seller, digitally_verified, home_delivered } = cash_back_job;
           return reply.response({
             status: true,
-            result: await _bluebird2.default.all([jobAdaptor.approveSellerCashBack({ job_id, status_type: 18, seller_id }), jobAdaptor.approveUserCashBack({ job_id, status_type: 18, seller_id }), jobAdaptor.updateCashBackJobs({ id: job_id, seller_status: 18, reason_id, seller_id }), home_delivered ? jobAdaptor.approveHomeDeliveryCashback({ job_id, status_type: 18, seller_id }) : ''])
+            result: await _bluebird2.default.all([jobAdaptor.approveSellerCashBack({ job_id, status_type: 18, seller_id }), jobAdaptor.approveUserCashBack({ job_id, status_type: 18, seller_id }), jobAdaptor.updateCashBackJobs({
+              id: job_id, reason_id, seller_id,
+              jobDetail: { seller_status: 18, reason_id, seller_id }
+            }), home_delivered ? jobAdaptor.approveHomeDeliveryCashback({
+              job_id, status_type: 18, seller_id,
+              jobDetail: { status_type: 18, seller_id }
+            }) : ''])
           });
         }
 
@@ -764,7 +776,6 @@ class ShopEarnController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user && !user.seller_details ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -775,7 +786,7 @@ class ShopEarnController {
       }).catch(ex => console.log('error while logging on db,', ex));
       return reply.response({
         status: false,
-        message: 'Unable to approve cash back.',
+        message: 'Unable to reject cash back.',
         forceUpdate: request.pre.forceUpdate
       }).code(200);
     }
@@ -790,7 +801,7 @@ class ShopEarnController {
         let { seller_id } = request.params;
         const { cashback_ids: id } = request.payload;
         const seller_cashback = await jobAdaptor.retrieveSellerCashBacks({
-          where: { seller_id, id, status_type: 16 }, attributes: ['job_id', 'id', 'user_id', 'amount', [modals.sequelize.literal(`(Select id from table_wallet_user_cashback as user_cashback where user_cashback.seller_id = cashback_wallet.seller_id and user_cashback.user_id = cashback_wallet.user_id and user_cashback.amount = cashback_wallet.amount and user_cashback.job_id = cashback_wallet.job_id)`), 'user_cashback_id'], 'status_type', 'created_at']
+          where: { seller_id, id, status_type: 16 }, attributes: ['job_id', 'id', 'user_id', 'amount', [modals.sequelize.literal(`(Select user_id from table_sellers as seller where seller.id = ${seller_id})`), 'seller_user_id'], [modals.sequelize.literal(`(Select full_name from users as "user" where "user".id = cashback_wallet.user_id)`), 'user_name'], [modals.sequelize.literal(`(Select id from table_wallet_user_cashback as user_cashback where user_cashback.seller_id = cashback_wallet.seller_id and user_cashback.user_id = cashback_wallet.user_id and user_cashback.amount = cashback_wallet.amount and user_cashback.job_id = cashback_wallet.job_id)`), 'user_cashback_id'], 'status_type', 'created_at']
         });
         if (seller_cashback) {
           return reply.response({
@@ -831,7 +842,7 @@ class ShopEarnController {
       }).catch(ex => console.log('error while logging on db,', ex));
       return reply.response({
         status: false,
-        message: 'Unable to approve cash back.',
+        message: 'Unable to redeem cash back on seller.',
         forceUpdate: request.pre.forceUpdate
       }).code(200);
     }
@@ -854,10 +865,10 @@ class ShopEarnController {
         }
         const loyalty_rules = seller_loyalty_rules ? seller_loyalty_rules.toJSON() : seller_default_loyalty_rules.toJSON();
         const seller_loyalties = await jobAdaptor.retrieveSellerLoyalties({
-          where: { seller_id, status_type: 16, user_id }, attributes: ['job_id', 'id', 'user_id', 'amount', 'status_type', 'created_at']
+          where: { seller_id, status_type: 16, user_id }, attributes: ['job_id', 'id', 'user_id', 'amount', 'status_type', 'created_at', [modals.sequelize.literal(`(Select user_id from table_sellers as seller where seller.id = ${seller_id})`), 'seller_user_id'], [modals.sequelize.literal(`(Select full_name from users as "user" where "user".id = ${user_id})`), 'user_name']]
         });
 
-        if (seller_loyalties) {
+        if (seller_loyalties && seller_loyalties.length > 0) {
           const total_points = _lodash2.default.sumBy(seller_loyalties, 'amount');
           if (total_points < loyalty_rules.minimum_points) {
             return reply.response({
@@ -873,13 +884,13 @@ class ShopEarnController {
               total_points
             });
           }
-
+          const { seller_user_id, user_name } = seller_loyalties[0] || {};
           return reply.response({
             status: true,
             redeemed_amount: amount,
             result: await jobAdaptor.addLoyaltyToSeller(JSON.parse(JSON.stringify({
               seller_id, transaction_type: 2, user_id,
-              amount, status_type: 14
+              amount, status_type: 14, seller_user_id, user_name
             })))
           });
         }

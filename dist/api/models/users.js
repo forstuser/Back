@@ -31,6 +31,9 @@ exports.default = (sequelize, DataTypes) => {
     location: {
       type: DataTypes.STRING
     },
+    last_active: {
+      type: DataTypes.INTEGER
+    },
     latitude: {
       type: DataTypes.FLOAT,
       allowNull: true,

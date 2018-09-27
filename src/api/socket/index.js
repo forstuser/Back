@@ -195,8 +195,8 @@ export default class SocketServer {
             payload: {
               order_id: order.id, order_type,
               status_type: order.status_type, order, user_id,
-              title: `New order has been placed by user ${user_index_data.user_name ||
-              ''}.`,
+              title: `${user_index_data.user_name ||
+              ''} has placed an order.`,
               description: 'Please click here for further detail.',
               notification_type: 1,
             },
@@ -253,8 +253,8 @@ export default class SocketServer {
             payload: {
               order_id: order.id, order_type,
               status_type: order.status_type, order, service_users, user_id,
-              title: `New order has been placed by user ${user_index_data.user_name ||
-              ''}.`,
+              title: `${user_index_data.user_name ||
+              ''} has placed an order.`,
               description: 'Please click here for further detail.',
               notification_type: 1,
             },
@@ -426,9 +426,11 @@ export default class SocketServer {
             status_type: order.status_type,
             is_modified: order.is_modified,
             user_id,
-            title: `Your Order has been modified by Seller ${seller_detail.seller_name ||
-            ''}.`,
-            description: 'Click here to review the details.',
+            title: order.order_type === 1 ?
+                `Your Order has been modified by Seller ${seller_detail.seller_name ||
+                ''}.` :
+                `${order[service_user_key].name} has been assigned to assist you by Seller ${seller_detail.seller_name}`,
+            description: 'Click here to review the details and approve it.',
             notification_type: 31,
           },
         });
@@ -568,16 +570,13 @@ export default class SocketServer {
           await notificationAdaptor.notifyUserCron({
             seller_user_id: seller_detail.user_id,
             payload: {
-              order_id: order.id,
-              order_type: order.order_type,
-              status_type: order.status_type,
-              is_modified: order.is_modified,
-              user_id,
-              title: `Order has marked started by ${user_index_data.user_name ||
-              ''}.`,
-              description: 'Please click here for further detail.',
-              notification_type: 1,
-              start_date: order.order_type ?
+              order_id: order.id, order_type: order.order_type,
+              status_type: order.status_type, is_modified: order.is_modified,
+              user_id, title: `Service has been initiated${order.service_user ?
+                  ` by ${order.service_user.name ||
+                  ''}.` : '.'}`,
+              description: 'Please click here for more details.',
+              notification_type: 1, start_date: order.order_type === 2 ?
                   order.order_details.start_date : undefined,
             },
           });
@@ -598,7 +597,9 @@ export default class SocketServer {
           user_id, payload: {
             order_id: order.id, order_type: order.order_type, user_id,
             status_type: order.status_type, is_modified: order.is_modified,
-            title: `Order has been started, please mark end after it get completed so we can provide you better calculation.`,
+            title: `Service has been initiated${order.service_user ?
+                `by ${order.service_user.name || ''}.` :
+                '.'}`,
             description: 'Please click here for further detail.',
             notification_type: 31,
             start_date: order.order_type ?
@@ -775,18 +776,15 @@ export default class SocketServer {
         await notificationAdaptor.notifyUserCron({
           seller_user_id: seller_detail.user_id,
           payload: {
-            order_id: order.id,
-            order_type: order.order_type,
-            status_type: order.status_type,
-            is_modified: order.is_modified,
-            user_id,
-            title: `Order has marked ended by ${user_index_data.user_name ||
-            ''}.`,
+            order_id: order.id, order_type: order.order_type,
+            status_type: order.status_type, is_modified: order.is_modified,
+            user_id, title: `Service has been provided${order.service_user ?
+                ` by ${order.service_user.name ||
+                ''}.` : '.'}`,
             description: 'Please click here for further detail.',
-            notification_type: 1,
-            start_date: order.order_type ?
+            notification_type: 1, start_date: order.order_type === 2 ?
                 order.order_details.start_date : undefined,
-            end_date: order.order_type ?
+            end_date: order.order_type === 2 ?
                 order.order_details.end_date : undefined,
           },
         });
@@ -809,7 +807,8 @@ export default class SocketServer {
             order_id: order.id, order_type: order.order_type,
             status_type: order.status_type, notification_type: 31,
             is_modified: order.is_modified, user_id,
-            title: `Order has been started, please mark end after it get completed so we can provide you better calculation.`,
+            title: `Service has been provided${order.service_user ?
+                `by ${order.service_user.name || ''}.` : '.'}`,
             description: 'Please click here for further detail.',
             start_date: order.order_type ?
                 order.order_details.start_date : undefined,
@@ -968,12 +967,11 @@ export default class SocketServer {
             payload: {
               order_id: order.id, status_type: order.status_type,
               is_modified: order.is_modified, user_id,
-              title: is_user ?
-                  `Order Approved successfully by ${user_index_data.user_name ||
-                  ''}.` :
-                  `Order Approved successfully for ${user_index_data.user_name ||
-                  ''}.`,
-              description: 'Please click here for further detail.',
+              title: `${user_index_data.user_name ||
+              ''} has approved ${order.order_type === 1 ?
+                  `modifications.` :
+                  `${order.service_user.name} for assistance.`}`,
+              description: 'Click here for more details.',
               notification_type: 1, order_type: order.order_type,
             },
           });
@@ -1198,8 +1196,7 @@ export default class SocketServer {
                 `${(order.delivery_user || {}).name ||
                 ''} from Seller ${seller_detail.seller_name ||
                 ''} is on the way ${order.order_type === 1 ?
-                    'with your order.' :
-                    'for your assistance.'}` :
+                    'with your order.' : 'for your assistance.'}` :
                 `Your Order is on it's way from Seller ${seller_detail.seller_name ||
                 ''}`}.`,
             description: 'Please click here for more detail.',
@@ -1497,9 +1494,9 @@ export default class SocketServer {
           payload: {
             order_id: order.id, status_type: order.status_type,
             is_modified: order.is_modified, user_id,
-            title: `Oops! Look a like ${user_index_data.user_name ||
+            title: `Oops! Looks like ${user_index_data.user_name ||
             ''} is not satisfied by modification in order and rejected the order.`,
-            description: 'Please click here for further detail.',
+            description: 'Please click here for more details.',
             notification_type: 1, order_type: order.order_type,
           },
         });
@@ -1517,18 +1514,6 @@ export default class SocketServer {
               user_id,
             }));
           }
-          await notificationAdaptor.notifyUserCron({
-            user_id, payload: {
-              order_id: order.id,
-              status_type: order.status_type,
-              is_modified: order.is_modified,
-              user_id,
-              title: `Your Order has been rejected successfully and the Seller ${seller_detail.seller_name ||
-              ''} has been updated.`,
-              notification_type: 31,
-              order_type: order.order_type,
-            },
-          });
         }
 
         return order;
@@ -1670,9 +1655,9 @@ export default class SocketServer {
           payload: {
             order_id: order.id, status_type: order.status_type,
             is_modified: order.is_modified, user_id,
-            title: `Oops! Look a like ${user_index_data.user_name ||
+            title: `Oops! ${user_index_data.user_name ||
             ''} has cancelled the order.`,
-            description: 'Please click here for further detail.',
+            description: 'Please click here for more details.',
             notification_type: 1, order_type: order.order_type,
           },
         });
@@ -1687,18 +1672,6 @@ export default class SocketServer {
             user_id,
           }));
         }
-        await notificationAdaptor.notifyUserCron({
-          user_id, payload: {
-            order_id: order.id,
-            status_type: order.status_type,
-            is_modified: order.is_modified,
-            user_id,
-            title: `Your Order has been cancelled successfully and the Seller ${seller_detail.seller_name ||
-            ''} has been updated.`,
-            notification_type: 31,
-            order_type: order.order_type,
-          },
-        });
 
         return order;
       } else {
@@ -1794,20 +1767,15 @@ export default class SocketServer {
                 const {id: sku_id, quantity, sku_measurement, selling_price} = item;
                 const {id: sku_measurement_id, cashback_percent} = sku_measurement;
                 return JSON.parse(JSON.stringify({
-                  sku_id,
-                  sku_measurement_id,
-                  seller_id,
-                  user_id,
-                  updated_by: user_id,
-                  quantity,
+                  sku_id, sku_measurement_id, seller_id, user_id,
+                  updated_by: user_id, quantity,
                   selling_price: parseInt(selling_price || 0),
                   status_type: 11,
                   available_cashback: parseInt(selling_price || 0) &&
                   cashback_percent ?
                       (selling_price * cashback_percent) / 100 : undefined,
                 }));
-              }),
-          order_type: order.order_type,
+              }), order_type: order.order_type,
           seller_type_id: seller_detail.seller_type_id,
         });
 
@@ -1939,15 +1907,14 @@ export default class SocketServer {
             status_type: 11, copies: [],
             document_date: moment.utc().startOf('day').format('YYYY-MM-DD'),
           }),
-          order_type && order_type === 1 && /*seller_type_id === 1 &&*/
-          has_pos ?
+          order_type && order_type === 1 && has_pos ?
               jobAdaptor.createCashBackJobs({
                 job_id: jobResult.id, user_id,
                 updated_by: user_id, uploaded_by: user_id,
                 user_status: 8, admin_status: 2, seller_id,
                 cashback_status: 13, online_order: true,
                 verified_seller: seller_type_id === 1,
-                seller_status: seller_type_id === 1 ? 16 : 17,
+                seller_status: seller_type_id === 1 ? 13 : 17,
                 digitally_verified: true, home_delivered,
               }) : undefined,
           categoryAdaptor.retrieveLimitRules({where: {user_id: 1}})]);
@@ -1956,18 +1923,13 @@ export default class SocketServer {
         item => item.rule_type === 7);
     let sku_expenses, home_delivery_cash_back;
     if (order_type && order_type === 1) {
-      [sku_expenses, home_delivery_cash_back] = await Promise.all([
+      [sku_expenses] = await Promise.all([
         shopEarnAdaptor.addUserSKUExpenses(
             sku_details.map(item => {
               item.expense_id = product.id;
               item.job_id = (cashback_jobs || {}).id;
               return item;
-            })), order_type && order_type === 1 && /*seller_type_id === 1 &&*/
-        has_pos ? jobAdaptor.addCashBackToSeller({
-          amount: home_delivery_limit.rule_limit,
-          status_type: 16, cashback_source: 1, user_id, seller_id,
-          job_id: cashback_jobs.id, transaction_type: 1, updated_by: user_id,
-        }) : undefined]);
+            }))]);
     }
 
     return {

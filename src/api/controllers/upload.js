@@ -781,13 +781,25 @@ class UploadController {
                     seller_data.seller_details.basic_details.documents.find(
                         item => item.index === image_index) :
                     seller_data.seller_details.basic_details.documents[image_index] :
-                type.toString() === '2' ?
+                type.toString() === '2' &&
+                seller_data.seller_details.business_details ?
                     isNaN(image_index) ?
                         seller_data.seller_details.business_details.documents.find(
                             item => item.index === image_index) :
                         seller_data.seller_details.business_details.documents[image_index] :
-                    undefined :
-            undefined;
+                    (type.toString() === '3' || type.toString() === '5') &&
+                    seller_data.seller_details.assisted_type_images ?
+                        isNaN(image_index) ?
+                            seller_data.seller_details.assisted_type_images.find(
+                                item => item.index === image_index) :
+                            seller_data.seller_details.assisted_type_images[image_index] :
+                        type.toString() === '4' &&
+                        seller_data.seller_details.offers ?
+                            isNaN(image_index) ?
+                                seller_data.seller_details.offers.find(
+                                    item => item.index === image_index) :
+                                seller_data.seller_details.offers[image_index] :
+                            undefined : undefined;
         const fileName = image_detail ?
             image_detail.file_name :
             `${user.id}-${file_index}.${(file_type) ?
@@ -814,18 +826,15 @@ class UploadController {
               {
                 basic_details: {documents: []},
                 business_details: {documents: []},
-                assisted_type_images: [],
-                offers: [],
+                assisted_type_images: [], offers: [],
               });
       console.log('\n\n\n\n', JSON.stringify({seller_details}));
+      let business_details;
       const basic_details = seller_details.basic_details || {documents: []};
-      const business_details = seller_details.business_details ||
-          {documents: []};
       seller_details.assisted_type_images = seller_details.assisted_type_images ||
           [];
       seller_details.offers = seller_details.offers || [];
       basic_details.documents = basic_details.documents || [];
-      business_details.documents = business_details.documents || [];
       image_types = (image_types || '').split(',');
       let file_details = [];
       fileResult.forEach((elem, index) => {
@@ -849,6 +858,9 @@ class UploadController {
             }
             seller_details.basic_details = basic_details;
           } else if (type.toString() === '2') {
+            business_details = seller_details.business_details ||
+                {documents: []};
+            business_details.documents = business_details.documents || [];
             const image_detail = isNaN(image_index) ?
                 business_details.documents.find(
                     item => item.index === image_index) :
@@ -880,6 +892,9 @@ class UploadController {
             });
             seller_details.basic_details = basic_details;
           } else if (type.toString() === '2') {
+            business_details = seller_details.business_details ||
+                {documents: []};
+            business_details.documents = business_details.documents || [];
             business_details.documents.push({
               file_name: fileNames[index],
               index: indexes[index],
@@ -1380,7 +1395,7 @@ class UploadController {
   static async retrieveSellerImages(request, reply) {
     if (!request.pre.forceUpdate) {
       try {
-        const {id, type, index} = request.params || {};
+        let {id, type, index} = request.params || {};
         const seller_image_types = config.SELLER_IMAGE_TYPE.split(',');
         const seller_data = await sellerAdaptor.retrieveSellerDetail(
             {
@@ -1390,13 +1405,29 @@ class UploadController {
         let file_name;
         if (seller_data.seller_details) {
           if (type.toString() === '1') {
-            const document = seller_data.seller_details.basic_details.documents[index];
+            const document = isNaN(index) ?
+                seller_data.seller_details.basic_details.documents.find(
+                    item => item.index === index) :
+                seller_data.seller_details.basic_details.documents[index];
             file_name = (document || {}).file_name;
           } else if (type.toString() === '2') {
-            const document = seller_data.seller_details.business_details.documents[index];
+            const document = isNaN(index) ?
+                seller_data.seller_details.business_details.documents.find(
+                    item => item.index === index) :
+                seller_data.seller_details.business_details.documents[index];
             file_name = (document || {}).file_name;
+          } else if (type.toString() === '5' || type.toString() === '3') {
+            const document = isNaN(index) ?
+                seller_data.seller_details.assisted_type_images.find(
+                    item => item.index === index) :
+                seller_data.seller_details.assisted_type_images[index];
+            file_name = (document || {}).file_name;
+            type = 3;
           } else {
-            const document = seller_data.seller_details.assisted_type_images.documents[index];
+            const document = isNaN(index) ?
+                seller_data.seller_details.offers.find(
+                    item => item.index === index) :
+                seller_data.seller_details.offers[index];
             file_name = (document || {}).file_name;
           }
           if (file_name) {
@@ -1723,7 +1754,7 @@ class UploadController {
               document => {
                 file_name = (document || {}).file_name;
                 seller_image_update.push(fsImpl.unlink(
-                    `sellers/${id}/${seller_image_types[2]}/${file_name}`));
+                    `sellers/${id}/${seller_image_types[3]}/${file_name}`));
               });
           seller_data.seller_details.assisted_type_images = undefined;
 

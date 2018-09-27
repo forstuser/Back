@@ -49,8 +49,9 @@ class OrderAdaptor {
         item.order_item_counts = item.order_details.length;
         // item = _.omit(item, 'order_details');
       }
+      item.seller_exist = item.my_seller_ids && item.my_seller_ids.length > 0;
       const { address_line_1, address_line_2, city_name, state_name, locality_name, pin_code } = item.user_address || {};
-      item.user_address_detail = `${address_line_1}${address_line_2 ? ` ${address_line_2}` : ''},${locality_name},${city_name},${state_name}-${pin_code}`.split('null').join(',').split('undefined').join(',').split(',,').join(',').split(',-,').join(',').split(',,').join(',').split(',,').join(',');
+      item.user_address_detail = `${address_line_1}${address_line_2 ? ` ${address_line_2}` : ''}, ${locality_name}, ${city_name}, ${state_name}-${pin_code}`.split('null').join(',').split('undefined').join(',').split(',,').join(',').split(',-,').join(',').split(',,').join(',').split(',,').join(',');
       return item;
     }) : result;
   }

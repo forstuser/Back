@@ -149,8 +149,9 @@ export default class ProductAdaptor {
             ['owner_name', 'ownerName'], ['pan_no', 'panNo'],
             ['reg_no', 'regNo'], ['is_service', 'isService'],
             'url', 'gstin', ['contact_no', 'contact'], 'email', 'address',
-            [this.modals.sequelize.literal(
-                '(Select state_name from table_states as state where state.id = sellers.state_id)'),
+            [
+              this.modals.sequelize.literal(
+                  '(Select state_name from table_states as state where state.id = sellers.state_id)'),
               'state_name'], [
               this.modals.sequelize.literal(
                   '(Select name from table_cities as city where city.id = sellers.city_id)'),
@@ -516,8 +517,9 @@ export default class ProductAdaptor {
               ['owner_name', 'ownerName'], ['pan_no', 'panNo'],
               ['reg_no', 'regNo'], ['is_service', 'isService'],
               'url', 'gstin', ['contact_no', 'contact'], 'email', 'address',
-              [this.modals.sequelize.literal(
-                  '(Select state_name from table_states as state where state.id = sellers.state_id)'),
+              [
+                this.modals.sequelize.literal(
+                    '(Select state_name from table_states as state where state.id = sellers.state_id)'),
                 'state_name'], [
                 this.modals.sequelize.literal(
                     '(Select name from table_cities as city where city.id = sellers.city_id)'),
@@ -885,8 +887,9 @@ export default class ProductAdaptor {
             ['owner_name', 'ownerName'], ['pan_no', 'panNo'],
             ['reg_no', 'regNo'], ['is_service', 'isService'],
             'url', 'gstin', ['contact_no', 'contact'],
-            'email', 'address', [this.modals.sequelize.literal(
-                '(Select state_name from table_states as state where state.id = sellers.state_id)'),
+            'email', 'address', [
+              this.modals.sequelize.literal(
+                  '(Select state_name from table_states as state where state.id = sellers.state_id)'),
               'state_name'], [
               this.modals.sequelize.literal(
                   '(Select name from table_cities as city where city.id = sellers.city_id)'),
@@ -1223,8 +1226,9 @@ export default class ProductAdaptor {
             attributes: [
               'id', ['seller_name', 'sellerName'],
               'url', ['contact_no', 'contact'], 'email',
-              'address', [this.modals.sequelize.literal(
-                  '(Select state_name from table_states as state where state.id = sellers.state_id)'),
+              'address', [
+                this.modals.sequelize.literal(
+                    '(Select state_name from table_states as state where state.id = sellers.state_id)'),
                 'state_name'], [
                 this.modals.sequelize.literal(
                     '(Select name from table_cities as city where city.id = sellers.city_id)'),
@@ -1812,7 +1816,8 @@ export default class ProductAdaptor {
         }
 
         if (!warranty) {
-          if ((productModel || !model) && (normalWarranties || []).length > 0) {
+          if ((productModel || !model) && (normalWarranties || []).length > 0 &&
+              (main_category_id === 2 || main_category_id === 3)) {
             warrantyItemPromise.push(...normalWarranties.map(
                 (wItem) => this.warrantyAdaptor.deleteWarranties(wItem.id,
                     user_id)));
@@ -2044,9 +2049,9 @@ export default class ProductAdaptor {
       document_date: moment.utc(effective_date).format('YYYY-MM-DD'),
       provider_id: insuranceProvider ? insuranceProvider.id : provider_id,
     };
-    insurancePromise.push(id ?
-        this.insuranceAdaptor.updateInsurances(otherItems.insurance.id,
-            values) : this.insuranceAdaptor.createInsurances(values));
+    insurancePromise.push(
+        id ? this.insuranceAdaptor.updateInsurances(id, values) :
+            this.insuranceAdaptor.createInsurances(values));
   }
 
   async prepareWarrantyPromise(parameters) {
@@ -2086,7 +2091,7 @@ export default class ProductAdaptor {
       };
 
       warrantyItemPromise.push(id ?
-          this.warrantyAdaptor.updateWarranties(warranty.id, warrantyOptions)
+          this.warrantyAdaptor.updateWarranties(id, warrantyOptions)
           : this.warrantyAdaptor.createWarranties(warrantyOptions));
     }
 
@@ -2131,9 +2136,7 @@ export default class ProductAdaptor {
       sellerOption = {
         $or: {
           $and: {
-            seller_name: {
-              $iLike: seller_name,
-            },
+            seller_name: {$iLike: seller_name},
           },
         },
       };
@@ -2154,15 +2157,10 @@ export default class ProductAdaptor {
     seller_email && seller_email.trim() ||
     seller_address && seller_address.trim() ?
         this.sellerAdaptor.retrieveOrCreateSellers(sellerOption, {
-          seller_name,
-          contact_no: seller_contact,
-          email: seller_email,
-          address: seller_address,
-          updated_by: user_id,
-          created_by: user_id,
-          status_type: 11,
-        }) :
-        '');
+          seller_name, contact_no: seller_contact,
+          email: seller_email, address: seller_address,
+          updated_by: user_id, created_by: user_id, status_type: 11,
+        }) : '');
 
     if (amc) {
       let {seller_name, seller_contact} = amc;

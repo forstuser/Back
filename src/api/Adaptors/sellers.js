@@ -159,7 +159,7 @@ export default class SellerAdaptor {
           seller_detail;
       return result.toJSON();
     }
-    if (user.user_status_type === 1) {
+    if (user && user.user_status_type === 1) {
       await this.notificationAdaptor.notifyUserCron({
         user_id: user.id, payload: {
           title: `You have been added as a customer by your Seller ${seller_detail.seller_name ||
@@ -613,8 +613,11 @@ export default class SellerAdaptor {
       seller.location = seller_locations[0];
       seller.reviews = seller_reviews;
       seller.cashback_total = seller.cashback_total || 0;
-      seller.loyalty_total = seller.loyalty_total || 0;
-      seller.credit_total = seller.credit_total || 0;
+      seller.loyalty_redeemed = seller.loyalty_redeemed || 0;
+      seller.credit_redeemed = seller.credit_redeemed || 0;
+      seller.loyalty_total = (seller.loyalty_total || 0) -
+          seller.loyalty_redeemed;
+      seller.credit_total = (seller.credit_total || 0) - seller.credit_redeemed;
       seller.offer_count = seller.offer_count || 0;
       seller.ratings = seller.ratings || 0;
       seller.transaction_counts = parseInt(seller.transaction_counts || 0) +
@@ -1267,7 +1270,8 @@ export default class SellerAdaptor {
     return seller_offer.toJSON();
   }
 
-  async retrieveOrCreateSellerCredits(options, defaults, seller_name) {
+  async retrieveOrCreateSellerCredits(
+      options, defaults, seller_name, seller_id) {
     let credit_wallet = await this.modals.credit_wallet.findOne({
       where: options,
     });
@@ -1283,7 +1287,7 @@ export default class SellerAdaptor {
             title: `₹${defaults.amount} has been added as Credit by your Seller ${seller_name ||
             ''}!`,
             description: 'Please click here for more detail.',
-            notification_type: 33,
+            notification_type: 33, seller_id,
           },
         });
       } else {
@@ -1292,7 +1296,7 @@ export default class SellerAdaptor {
             title: `₹${defaults.amount} has been settled against Credit by your Seller ${seller_name ||
             ''}!`,
             description: 'Please click here for more detail.',
-            notification_type: 33,
+            notification_type: 33, seller_id,
           },
         });
       }
@@ -1301,7 +1305,8 @@ export default class SellerAdaptor {
     return credit_wallet ? credit_wallet.toJSON() : credit_wallet;
   }
 
-  async retrieveOrCreateSellerPoints(options, defaults, seller_name) {
+  async retrieveOrCreateSellerPoints(
+      options, defaults, seller_name, seller_id) {
     let loyalty_wallet = await this.modals.loyalty_wallet.findOne(
         {where: options});
     if (loyalty_wallet && options.id) {
@@ -1316,7 +1321,7 @@ export default class SellerAdaptor {
             title: `Yay! You have received ${defaults.amount} Loyalty Points from your Seller ${seller_name ||
             ''}!`,
             description: 'Please click here for more detail.',
-            notification_type: 32,
+            notification_type: 32, seller_id,
           },
         });
       }

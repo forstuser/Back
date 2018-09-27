@@ -45,6 +45,9 @@ exports.default = (sequelize, DataTypes) => {
     updated_by: {
       type: DataTypes.INTEGER
     },
+    created_by: {
+      type: DataTypes.INTEGER
+    },
     status_type: {
       type: DataTypes.INTEGER
     },
@@ -66,6 +69,7 @@ exports.default = (sequelize, DataTypes) => {
 
   serviceCenters.associate = models => {
     serviceCenters.belongsTo(models.users, { foreignKey: 'updated_by' });
+    serviceCenters.belongsTo(models.users, { foreignKey: 'created_by' });
 
     serviceCenters.belongsTo(models.statuses, { foreignKey: 'status_type', targetKey: 'status_type' });
     serviceCenters.belongsToMany(models.brands, {

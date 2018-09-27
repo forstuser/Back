@@ -1127,7 +1127,7 @@ class ProductAdaptor {
         }
 
         if (!warranty) {
-          if ((productModel || !model) && (normalWarranties || []).length > 0) {
+          if ((productModel || !model) && (normalWarranties || []).length > 0 && (main_category_id === 2 || main_category_id === 3)) {
             warrantyItemPromise.push(...normalWarranties.map(wItem => this.warrantyAdaptor.deleteWarranties(wItem.id, user_id)));
           }
 
@@ -1305,7 +1305,7 @@ class ProductAdaptor {
       document_date: _moment2.default.utc(effective_date).format('YYYY-MM-DD'),
       provider_id: insuranceProvider ? insuranceProvider.id : provider_id
     };
-    insurancePromise.push(id ? this.insuranceAdaptor.updateInsurances(otherItems.insurance.id, values) : this.insuranceAdaptor.createInsurances(values));
+    insurancePromise.push(id ? this.insuranceAdaptor.updateInsurances(id, values) : this.insuranceAdaptor.createInsurances(values));
   }
 
   async prepareWarrantyPromise(parameters) {
@@ -1337,7 +1337,7 @@ class ProductAdaptor {
         document_date: _moment2.default.utc(effective_date).format('YYYY-MM-DD')
       };
 
-      warrantyItemPromise.push(id ? this.warrantyAdaptor.updateWarranties(warranty.id, warrantyOptions) : this.warrantyAdaptor.createWarranties(warrantyOptions));
+      warrantyItemPromise.push(id ? this.warrantyAdaptor.updateWarranties(id, warrantyOptions) : this.warrantyAdaptor.createWarranties(warrantyOptions));
     }
 
     if (extended_renewal_type) {
@@ -1371,9 +1371,7 @@ class ProductAdaptor {
       sellerOption = {
         $or: {
           $and: {
-            seller_name: {
-              $iLike: seller_name
-            }
+            seller_name: { $iLike: seller_name }
           }
         }
       };
@@ -1390,13 +1388,9 @@ class ProductAdaptor {
     }
 
     sellerPromise.push(seller_contact && seller_contact.trim() || seller_name && seller_name.trim() || seller_name === '' || seller_email && seller_email.trim() || seller_address && seller_address.trim() ? this.sellerAdaptor.retrieveOrCreateSellers(sellerOption, {
-      seller_name,
-      contact_no: seller_contact,
-      email: seller_email,
-      address: seller_address,
-      updated_by: user_id,
-      created_by: user_id,
-      status_type: 11
+      seller_name, contact_no: seller_contact,
+      email: seller_email, address: seller_address,
+      updated_by: user_id, created_by: user_id, status_type: 11
     }) : '');
 
     if (amc) {

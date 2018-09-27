@@ -160,6 +160,7 @@ function prepareShopEarnRoute(modal, route, middleware, socket) {
             'added_date': [_joi2.default.string(), _joi2.default.allow(null)],
             'mrp': [_joi2.default.number(), _joi2.default.allow(null)],
             'quantity': _joi2.default.number().required(),
+            'created_at': [_joi2.default.string(), _joi2.default.allow(null)],
             'sku_measurement': [_joi2.default.object().keys({
               'id': [_joi2.default.number(), _joi2.default.allow(null)],
               'sku_id': [_joi2.default.number(), _joi2.default.allow(null)],
@@ -169,7 +170,9 @@ function prepareShopEarnRoute(modal, route, middleware, socket) {
               'cashback_percent': [_joi2.default.number(), _joi2.default.allow(null)],
               'discount_percent': [_joi2.default.number(), _joi2.default.allow(null)],
               'bar_code': [_joi2.default.string(), _joi2.default.allow(null)],
-              'mrp': [_joi2.default.number(), _joi2.default.allow(null)]
+              'mrp': [_joi2.default.number(), _joi2.default.allow(null)],
+              'selected': [_joi2.default.number(), _joi2.default.allow(null)],
+              'measurement_acronym': [_joi2.default.string(), _joi2.default.allow(null)]
             }), _joi2.default.allow(null)]
           }
         }

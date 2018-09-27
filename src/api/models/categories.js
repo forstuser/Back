@@ -82,6 +82,10 @@ export default (sequelize, DataTypes) => {
         dual_warranty_item: {
           type: DataTypes.STRING,
         },
+        priority_index: {
+          type: DataTypes.INTEGER,
+          defaultValue: 0,
+        },
       },
       {
         freezeTableName: true,

@@ -172,6 +172,7 @@ export function prepareShopEarnRoute(modal, route, middleware, socket) {
             'added_date': [joi.string(), joi.allow(null)],
             'mrp': [joi.number(), joi.allow(null)],
             'quantity': joi.number().required(),
+            'created_at': [joi.string(), joi.allow(null)],
             'sku_measurement': [
               joi.object().keys({
                 'id': [joi.number(), joi.allow(null)],
@@ -183,6 +184,8 @@ export function prepareShopEarnRoute(modal, route, middleware, socket) {
                 'discount_percent': [joi.number(), joi.allow(null)],
                 'bar_code': [joi.string(), joi.allow(null)],
                 'mrp': [joi.number(), joi.allow(null)],
+                'selected': [joi.number(), joi.allow(null)],
+                'measurement_acronym': [joi.string(), joi.allow(null)],
               }), joi.allow(null)],
           },
         },

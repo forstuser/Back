@@ -169,7 +169,7 @@ class GeneralController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -201,7 +201,7 @@ class GeneralController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -461,7 +461,7 @@ class GeneralController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -644,7 +644,7 @@ class GeneralController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -725,7 +725,7 @@ class GeneralController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -776,7 +776,7 @@ class GeneralController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -830,7 +830,7 @@ class GeneralController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -933,7 +933,7 @@ class GeneralController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -972,7 +972,7 @@ class GeneralController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
+          user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -1104,7 +1104,7 @@ class GeneralController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,

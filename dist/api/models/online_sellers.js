@@ -30,6 +30,9 @@ exports.default = (sequelize, DataTypes) => {
     updated_by: {
       type: DataTypes.INTEGER
     },
+    created_by: {
+      type: DataTypes.INTEGER
+    },
     status_type: {
       type: DataTypes.INTEGER
     },

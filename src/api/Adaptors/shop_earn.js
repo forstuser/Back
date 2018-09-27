@@ -284,7 +284,7 @@ export default class ShopEarnAdaptor {
 
   async retrieveSKUItem(options) {
     try {
-      let {bar_code, id} = options;
+      let {bar_code, id, location} = options;
       const bar_code_filter = bar_code;
       bar_code = bar_code ? {$iLike: bar_code} : bar_code;
       let skuItems = await this.modals.sku.findAll({
@@ -294,15 +294,17 @@ export default class ShopEarnAdaptor {
             model: this.modals.sku_measurement,
             where: JSON.parse(JSON.stringify({status_type: 1, bar_code})),
             required: true, attributes: [],
-          }],
-        order: [['id']],
+          }], attributes: {
+          exclude:
+              ['status_type', 'updated_by', 'updated_at', 'created_at'],
+        }, order: [['id']],
       });
 
       skuItems = skuItems.map(item => item.toJSON());
       const skuItem = skuItems.length > 0 ? skuItems[0] : undefined;
       if (skuItem) {
         skuItem.sku_measurements = (await this.retrieveSKUMeasurements(
-            {status_type: 1, sku_id: skuItem.id})).map(item => {
+            {status_type: 1, sku_id: skuItem.id}, location)).map(item => {
           item.selected = item.bar_code.toLowerCase() ===
               bar_code_filter.toLowerCase();
           return item;
@@ -315,16 +317,23 @@ export default class ShopEarnAdaptor {
     }
   }
 
-  async retrieveSKUMeasurements(options) {
+  async retrieveSKUMeasurements(options, location) {
+    const sku_measurement_attributes = (location && location.toLowerCase() ===
+        'other') || !location ? [
+      'measurement_type', 'measurement_value', 'mrp',
+      'pack_numbers', 'cashback_percent', 'bar_code',
+      'id', 'sku_id', [
+        this.modals.sequelize.literal(
+            '(Select acronym from table_sku_measurement as measurement where measurement.id =sku_measurement.measurement_type)'),
+        'measurement_acronym']] : [
+      'measurement_type', 'measurement_value', 'mrp',
+      'pack_numbers', 'bar_code', 'id', 'sku_id', [
+        this.modals.sequelize.literal(
+            '(Select acronym from table_sku_measurement as measurement where measurement.id =sku_measurement.measurement_type)'),
+        'measurement_acronym']];
     let skuMeasurements = await this.modals.sku_measurement.findAll({
       where: JSON.parse(JSON.stringify(options)),
-      attributes: [
-        'measurement_type', 'measurement_value', 'mrp',
-        'pack_numbers', 'cashback_percent', 'bar_code',
-        'id', 'sku_id', [
-          this.modals.sequelize.literal(
-              '(Select acronym from table_sku_measurement as measurement where measurement.id =sku_measurement.measurement_type)'),
-          'measurement_acronym']],
+      attributes: sku_measurement_attributes,
     });
 
     return skuMeasurements.map(item => item.toJSON());
@@ -339,7 +348,7 @@ export default class ShopEarnAdaptor {
                   where: {
                     category_level: 3, ref_id: config.HOUSEHOLD_CATEGORY_ID,
                     category_id: {$notIn: [17, 18, 19]}, status_type: 1,
-                  }, attributes: [
+                  }, order: [['priority_index']], attributes: [
                     ['category_id', 'id'], ['category_name', 'title'],
                     'ref_id', [
                       this.modals.sequelize.literal(
@@ -348,7 +357,8 @@ export default class ShopEarnAdaptor {
                 }),
             this.modals.categories.findAll(
                 {
-                  where: {category_level: 4, status_type: 1}, attributes: [
+                  where: {category_level: 4, status_type: 1},
+                  order: [['priority_index']], attributes: [
                     ['category_id', 'id'], ['category_name', 'title'],
                     'ref_id', [
                       this.modals.sequelize.literal(
@@ -357,7 +367,8 @@ export default class ShopEarnAdaptor {
                 }),
             this.modals.categories.findAll(
                 {
-                  where: {category_level: 5, status_type: 1}, attributes: [
+                  where: {category_level: 5, status_type: 1},
+                  order: [['priority_index']], attributes: [
                     ['category_id', 'id'], ['category_name', 'title'],
                     'ref_id', [
                       this.modals.sequelize.literal(
@@ -551,9 +562,10 @@ export default class ShopEarnAdaptor {
         item.is_pending = item.pending_cashback > 0 && item.total_cashback ===
             0 &&
             (item.admin_status !== 9 && item.ce_status !== 9);
-        item.is_rejected = item.pending_cashback === 0 &&
+        item.is_rejected = (item.pending_cashback === 0 &&
             item.total_cashback === 0 && item.cashback_status === 16 &&
-            (item.admin_status !== 9 && item.ce_status !== 9);
+            (item.admin_status !== 9 && item.ce_status !== 9)) ||
+            item.seller_status === 18;
         item.is_underprogress = item.pending_cashback === 0 &&
             item.total_cashback === 0 && item.cashback_status === 13 &&
             (item.admin_status !== 9 && item.ce_status !== 9);
@@ -611,8 +623,11 @@ export default class ShopEarnAdaptor {
                   case 14:
                     item.status_message = `You have Received Cashback "₹${total_cashback}".`;
                     break;
+                  case 18:
+                    item.status_message = `Your claim for cashback has been rejected by the seller. You have received the fixed BinBill Cashback.`;
+                    break;
                   default:
-                    item.status_message = `Your seller haven't approved cash back "₹${total_cashback}".`;
+                    item.status_message = `Your claim for cashback has been cancelled as your seller hasn't taken any action.`;
                     break;
 
                 }
@@ -949,7 +964,7 @@ export default class ShopEarnAdaptor {
 
   async addSKUToWishList(options) {
     let {wishlist_items, past_selections, is_new, user_id} = options;
-    wishlist_items = wishlist_items.filter(item => item.quantity > 0);
+    wishlist_items = (wishlist_items || []).filter(item => item.quantity > 0);
     return await is_new ?
         this.modals.user_index.create(JSON.parse(
             JSON.stringify({wishlist_items, past_selections, user_id}))) :

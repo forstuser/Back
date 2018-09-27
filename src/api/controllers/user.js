@@ -175,7 +175,7 @@ class UserController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -391,7 +391,7 @@ class UserController {
       modals.logs.create({
         api_action: request.method,
         api_path: request.url.pathname,
-        user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_type: 2,
         log_content: JSON.stringify({
           params: request.params,
@@ -885,7 +885,66 @@ class UserController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to logout user.',
+        forceUpdate: request.pre.forceUpdate,
+        err,
+      });
+    }
+  }
+
+  static async logoutSeller(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    replyObject = {
+      status: true,
+      message: 'success',
+      forceUpdate: request.pre.forceUpdate,
+    };
+    try {
+      if (!request.pre.forceUpdate) {
+        if (request.payload && request.payload.fcmId) {
+          await fcmManager.deleteFcmDetails(JSON.parse(JSON.stringify({
+            user_id: !user.seller_details ? user.id : undefined,
+            seller_user_id: user.seller_details ? user.id : undefined,
+            fcm_id: request.payload.fcmId,
+            platform_id: request.payload.platform || 1,
+          })));
+        }
+
+        await (!user.seller_details ?
+            userAdaptor.updateUserDetail(
+                {last_logout_at: moment.utc().format('YYYY-MM-DD HH:mm:ss')},
+                {where: {id: user.id}}) :
+            sellerAdaptor.retrieveOrUpdateSellerDetail(
+                {where: JSON.parse(JSON.stringify({id: user.id}))},
+                {last_logout_at: moment.utc().format('YYYY-MM-DD HH:mm:ss')},
+                false));
+        return reply.response(replyObject).code(201);
+      } else if (!request.pre.userExist) {
+        replyObject.status = false;
+        replyObject.message = 'Unauthorized';
+        return reply.response(replyObject).code(401);
+      } else {
+        replyObject.status = false;
+        replyObject.message = 'Forbidden';
+        return reply.response(replyObject);
+      }
+    } catch (err) {
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -940,7 +999,7 @@ class UserController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -989,7 +1048,7 @@ class UserController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -1046,7 +1105,7 @@ class UserController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -1100,7 +1159,7 @@ class UserController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -1155,7 +1214,7 @@ class UserController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -1244,7 +1303,7 @@ class UserController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user && !user.seller_details  ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,

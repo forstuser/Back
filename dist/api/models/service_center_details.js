@@ -19,10 +19,16 @@ exports.default = (sequelize, DataTypes) => {
       type: DataTypes.STRING
     },
     updated_by: {
-      type: DataTypes.INTEGER
+      type: DataTypes.INTEGER,
+      defaultValue: 1
+    },
+    created_by: {
+      type: DataTypes.INTEGER,
+      defaultValue: 1
     },
     status_type: {
-      type: DataTypes.INTEGER
+      type: DataTypes.INTEGER,
+      defaultValue: 1
     },
     created_at: {
       type: DataTypes.DATE,
@@ -42,6 +48,7 @@ exports.default = (sequelize, DataTypes) => {
 
   centerDetails.associate = models => {
     centerDetails.belongsTo(models.users, { foreignKey: 'updated_by' });
+    centerDetails.belongsTo(models.users, { foreignKey: 'created_by' });
 
     centerDetails.belongsTo(models.serviceCenters, { foreignKey: 'center_id', targetKey: 'center_id' });
 

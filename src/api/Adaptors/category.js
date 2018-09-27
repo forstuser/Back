@@ -121,7 +121,7 @@ export default class CategoryAdaptor {
               $and: {
                 main_category_id: categoryData.map(item => item.refId),
                 title: {
-                  $iLike: 'Chasis Number',
+                  $iLike: 'Chassis Number',
                 },
               },
             }, {
