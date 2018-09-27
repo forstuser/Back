@@ -11,16 +11,18 @@ import SellerAdaptor from '../Adaptors/sellers';
 import CategoryAdaptor from '../Adaptors/category';
 import UserAdaptor from '../Adaptors/user';
 import _ from 'lodash';
+import NotificationAdaptor from '../Adaptors/notification';
 
 let modals, shopEarnAdaptor, jobAdaptor, productAdaptor, sellerAdaptor,
-    categoryAdaptor, userAdaptor;
+    categoryAdaptor, userAdaptor, notificationAdaptor;
 
 class ShopEarnController {
   constructor(modal, socket) {
+    notificationAdaptor = new NotificationAdaptor(modal);
     shopEarnAdaptor = new ShopEarnAdaptor(modal);
-    jobAdaptor = new JobAdaptor(modal, socket);
+    jobAdaptor = new JobAdaptor(modal, socket, notificationAdaptor);
     productAdaptor = new ProductAdaptor(modal);
-    sellerAdaptor = new SellerAdaptor(modal);
+    sellerAdaptor = new SellerAdaptor(modal, notificationAdaptor);
     categoryAdaptor = new CategoryAdaptor(modal);
     userAdaptor = new UserAdaptor(modal);
     modals = modal;
@@ -706,6 +708,7 @@ class ShopEarnController {
       if (!request.pre.forceUpdate) {
         let {seller_id, id} = request.params;
         const utcOffset = 330;
+        const seller = await sellerAdaptor.retrieveSellerDetail({where: {id:seller_id}, attributes: ['seller_name']});
         const seller_cashback = await jobAdaptor.retrieveSellerCashBack({
           where: {seller_id, id, status_type: 13}, attributes: [
             'job_id', 'id', 'user_id', 'amount', [
@@ -715,21 +718,13 @@ class ShopEarnController {
         });
         if (seller_cashback) {
           const startOfMonth = moment(seller_cashback.created_at).
-              startOf('month').
-              utcOffset(utcOffset).
-              format();
+              startOf('month').utcOffset(utcOffset).format();
           const endOfMonth = moment(seller_cashback.created_at).
-              endOf('month').
-              utcOffset(utcOffset).
-              format();
+              endOf('month').utcOffset(utcOffset).format();
           const startOfDay = moment(seller_cashback.created_at).
-              startOf('day').
-              utcOffset(utcOffset).
-              format();
+              startOf('day').utcOffset(utcOffset).format();
           const endOfDay = moment(seller_cashback.created_at).
-              endOf('day').
-              utcOffset(utcOffset).
-              format();
+              endOf('day').utcOffset(utcOffset).format();
           const [cash_back_job, user_cash_back_month, user_cash_back_day, user_limit_rules, user_default_limit_rules] = await Promise.all(
               [
                 jobAdaptor.retrieveCashBackJobs({id: seller_cashback.job_id}),
@@ -761,28 +756,20 @@ class ShopEarnController {
           const cash_back_month = user_cash_back_month ?
               user_cash_back_month.total_amount : 0;
           const cash_back_day = user_cash_back_day ?
-              user_cash_back_day.total_amount :
-              0;
+              user_cash_back_day.total_amount : 0;
           const {verified_seller, digitally_verified, home_delivered} = cash_back_job;
 
           return reply.response({
             status: true,
             result: await jobAdaptor.cashBackApproval(
                 {
-                  cash_back_month,
-                  user_limit_rules,
-                  user_default_limit_rules,
-                  cash_back_day,
-                  verified_seller,
-                  digitally_verified,
-                  seller_id,
-                  transaction_type: 1,
-                  cashback_source: 1,
-                  job_id: seller_cashback.job_id,
-                  home_delivered,
-                  job: cash_back_job,
-                  amount: seller_cashback.amount,
-                }),
+                  cash_back_month, user_limit_rules,
+                  user_default_limit_rules, cash_back_day,
+                  verified_seller, digitally_verified, seller_id,
+                  transaction_type: 1, cashback_source: 1,
+                  job_id: seller_cashback.job_id, home_delivered,
+                  job: cash_back_job, amount: seller_cashback.amount,
+                }, seller.seller_name),
           });
         }
 

@@ -138,7 +138,7 @@ class UserAdaptor {
    * @returns {Promise<Model>}
    */
   async retrieveSellerUser(filterObject, is_create, updates) {
-    filterObject.attributes = ['id', 'mobile_no', 'email'];
+    filterObject.attributes = filterObject.attributes || ['id', 'mobile_no', 'email'];
     console.log(filterObject);
     let seller_user = await this.modals.seller_users.findOne(filterObject);
     if (is_create) {

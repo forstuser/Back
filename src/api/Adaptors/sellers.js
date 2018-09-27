@@ -6,10 +6,13 @@ import Promise from 'bluebird';
 import moment from 'moment';
 
 export default class SellerAdaptor {
-  constructor(modals) {
+  constructor(modals, notificationAdaptor) {
     this.modals = modals;
     this.categoryAdaptor = new CategoryAdaptor(modals);
     this.userAdaptor = new UserAdaptor(modals);
+    if (notificationAdaptor) {
+      this.notificationAdaptor = notificationAdaptor;
+    }
   }
 
   async retrieveOfflineSellers(options) {
@@ -143,7 +146,8 @@ export default class SellerAdaptor {
     return result ? result.map(item => item.toJSON()) : result;
   }
 
-  async retrieveOrUpdateSellerDetail(query_options, seller_detail, is_create) {
+  async retrieveOrUpdateSellerDetail(
+      query_options, seller_detail, is_create, user) {
     let result = await this.modals.sellers.findOne(query_options);
     if (!result && is_create) {
       result = await this.modals.sellers.create(seller_detail);
@@ -155,7 +159,16 @@ export default class SellerAdaptor {
           seller_detail;
       return result.toJSON();
     }
-
+    if (user.user_status_type === 1) {
+      await this.notificationAdaptor.notifyUserCron({
+        user_id: user.id, payload: {
+          title: `You have been added as a customer by your Seller ${seller_detail.seller_name ||
+          ''} to experience multiple benefits.`,
+          description: 'Please click here for more detail.',
+          notification_type: 35,
+        },
+      });
+    }
     return result;
   }
 
@@ -1254,7 +1267,7 @@ export default class SellerAdaptor {
     return seller_offer.toJSON();
   }
 
-  async retrieveOrCreateSellerCredits(options, defaults) {
+  async retrieveOrCreateSellerCredits(options, defaults, seller_name) {
     let credit_wallet = await this.modals.credit_wallet.findOne({
       where: options,
     });
@@ -1264,12 +1277,31 @@ export default class SellerAdaptor {
       await credit_wallet.updateAttributes(defaults);
     } else if (!options.id) {
       credit_wallet = await this.modals.credit_wallet.create(defaults);
+      if (defaults.status_type === 16) {
+        await this.notificationAdaptor.notifyUserCron({
+          user_id: defaults.user_id, payload: {
+            title: `₹${defaults.amount} has been added as Credit by your Seller ${seller_name ||
+            ''}!`,
+            description: 'Please click here for more detail.',
+            notification_type: 33,
+          },
+        });
+      } else {
+        await this.notificationAdaptor.notifyUserCron({
+          user_id: defaults.user_id, payload: {
+            title: `₹${defaults.amount} has been settled against Credit by your Seller ${seller_name ||
+            ''}!`,
+            description: 'Please click here for more detail.',
+            notification_type: 33,
+          },
+        });
+      }
     }
 
     return credit_wallet ? credit_wallet.toJSON() : credit_wallet;
   }
 
-  async retrieveOrCreateSellerPoints(options, defaults) {
+  async retrieveOrCreateSellerPoints(options, defaults, seller_name) {
     let loyalty_wallet = await this.modals.loyalty_wallet.findOne(
         {where: options});
     if (loyalty_wallet && options.id) {
@@ -1278,6 +1310,16 @@ export default class SellerAdaptor {
       await loyalty_wallet.updateAttributes(defaults);
     } else if (!options.id) {
       loyalty_wallet = await this.modals.loyalty_wallet.create(defaults);
+      if (defaults.status_type === 16) {
+        await this.notificationAdaptor.notifyUserCron({
+          user_id: defaults.user_id, payload: {
+            title: `Yay! You have received ${defaults.amount} Loyalty Points from your Seller ${seller_name ||
+            ''}!`,
+            description: 'Please click here for more detail.',
+            notification_type: 32,
+          },
+        });
+      }
     }
     return loyalty_wallet ? loyalty_wallet.toJSON() : loyalty_wallet;
   }

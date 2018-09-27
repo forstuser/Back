@@ -45,16 +45,21 @@ var _lodash = require('lodash');
 
 var _lodash2 = _interopRequireDefault(_lodash);
 
+var _notification = require('../Adaptors/notification');
+
+var _notification2 = _interopRequireDefault(_notification);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-let modals, shopEarnAdaptor, jobAdaptor, productAdaptor, sellerAdaptor, categoryAdaptor, userAdaptor;
+let modals, shopEarnAdaptor, jobAdaptor, productAdaptor, sellerAdaptor, categoryAdaptor, userAdaptor, notificationAdaptor;
 
 class ShopEarnController {
   constructor(modal, socket) {
+    notificationAdaptor = new _notification2.default(modal);
     shopEarnAdaptor = new _shop_earn2.default(modal);
-    jobAdaptor = new _job2.default(modal, socket);
+    jobAdaptor = new _job2.default(modal, socket, notificationAdaptor);
     productAdaptor = new _product2.default(modal);
-    sellerAdaptor = new _sellers2.default(modal);
+    sellerAdaptor = new _sellers2.default(modal, notificationAdaptor);
     categoryAdaptor = new _category2.default(modal);
     userAdaptor = new _user2.default(modal);
     modals = modal;
@@ -654,6 +659,7 @@ class ShopEarnController {
       if (!request.pre.forceUpdate) {
         let { seller_id, id } = request.params;
         const utcOffset = 330;
+        const seller = await sellerAdaptor.retrieveSellerDetail({ where: { id: seller_id }, attributes: ['seller_name'] });
         const seller_cashback = await jobAdaptor.retrieveSellerCashBack({
           where: { seller_id, id, status_type: 13 }, attributes: ['job_id', 'id', 'user_id', 'amount', [modals.sequelize.literal(`(Select id from table_wallet_user_cashback as user_cashback where user_cashback.user_id = cashback_wallet.user_id and user_cashback.amount = cashback_wallet.amount and user_cashback.job_id = cashback_wallet.job_id)`), 'user_cashback_id'], 'status_type', 'created_at']
         });
@@ -685,20 +691,13 @@ class ShopEarnController {
           return reply.response({
             status: true,
             result: await jobAdaptor.cashBackApproval({
-              cash_back_month,
-              user_limit_rules,
-              user_default_limit_rules,
-              cash_back_day,
-              verified_seller,
-              digitally_verified,
-              seller_id,
-              transaction_type: 1,
-              cashback_source: 1,
-              job_id: seller_cashback.job_id,
-              home_delivered,
-              job: cash_back_job,
-              amount: seller_cashback.amount
-            })
+              cash_back_month, user_limit_rules,
+              user_default_limit_rules, cash_back_day,
+              verified_seller, digitally_verified, seller_id,
+              transaction_type: 1, cashback_source: 1,
+              job_id: seller_cashback.job_id, home_delivered,
+              job: cash_back_job, amount: seller_cashback.amount
+            }, seller.seller_name)
           });
         }
 

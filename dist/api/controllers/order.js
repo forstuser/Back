@@ -40,7 +40,7 @@ class OrderController {
     userAdaptor = new _user2.default(modal);
     modals = modal;
     socket_instance = socket;
-    sellerAdaptor = new _sellers2.default(modals);
+    sellerAdaptor = new _sellers2.default(modals, notificationAdaptor);
   }
 
   static async getOrderDetails(request, reply) {

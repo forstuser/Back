@@ -18,7 +18,7 @@ class OrderController {
     userAdaptor = new UserAdaptor(modal);
     modals = modal;
     socket_instance = socket;
-    sellerAdaptor = new SellerAdaptor(modals);
+    sellerAdaptor = new SellerAdaptor(modals, notificationAdaptor);
   }
 
   static async getOrderDetails(request, reply) {

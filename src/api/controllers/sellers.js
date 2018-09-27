@@ -8,20 +8,22 @@ import UserAdaptor from '../Adaptors/user';
 import SellerAdaptor from '../Adaptors/sellers';
 import GoogleHelper from '../../helpers/google';
 import GeneralAdaptor from '../Adaptors/category';
+import NotificationAdaptor from '../Adaptors/notification';
 import Promise from 'bluebird';
 import config from '../../config/main';
 import _ from 'lodash';
 import {sendSMS} from '../../helpers/sms';
 
 let modals, shopEarnAdaptor, jobAdaptor, userAdaptor, sellerAdaptor,
-    generalAdaptor;
+    generalAdaptor, notificationAdaptor;
 
 class SellerController {
   constructor(modal, socket) {
     shopEarnAdaptor = new ShopEarnAdaptor(modal);
-    jobAdaptor = new JobAdaptor(modal, socket);
     userAdaptor = new UserAdaptor(modal);
-    sellerAdaptor = new SellerAdaptor(modal);
+    notificationAdaptor = new NotificationAdaptor(modals);
+    sellerAdaptor = new SellerAdaptor(modal, notificationAdaptor);
+    jobAdaptor = new JobAdaptor(modal, socket, notificationAdaptor);
     generalAdaptor = new GeneralAdaptor(modal);
     modals = modal;
   }
@@ -1465,7 +1467,7 @@ class SellerController {
         sellerAdaptor.retrieveSellerDetail(
             {
               where: {id: seller_id, user_id},
-              attributes: ['customer_ids', 'id'],
+              attributes: ['customer_ids', 'seller_name', 'id'],
             }), userAdaptor.createUserForSeller(
             JSON.parse(JSON.stringify({mobile_no})), JSON.parse(
                 JSON.stringify(
@@ -1479,7 +1481,7 @@ class SellerController {
       replyObject.seller_detail = JSON.parse(
           JSON.stringify(await sellerAdaptor.retrieveOrUpdateSellerDetail(
               {where: JSON.parse(JSON.stringify({id: seller_id}))}, seller_data,
-              true) || {}));
+              true, user_data) || {}));
       return reply.response(JSON.parse(JSON.stringify(replyObject))).code(201);
     } catch (err) {
       console.log(err);
@@ -1789,6 +1791,8 @@ class SellerController {
     try {
 
       const {id: seller_id} = request.params || {};
+      const seller = await sellerAdaptor.retrieveSellerDetail(
+          {where: {id: seller_id}, attributes: ['seller_name']});
       const {id, amount, transaction_type, consumer_id, description} = request.payload;
       const seller_credits = await sellerAdaptor.retrieveOrCreateSellerCredits(
           JSON.parse(
@@ -1797,7 +1801,7 @@ class SellerController {
               {
                 id, amount, transaction_type, description,
                 user_id: consumer_id, status_type: 16, seller_id,
-              })));
+              })), seller.seller_name);
       await userAdaptor.retrieveOrUpdateUserIndexedData({user_id: consumer_id},
           {credit_id: seller_credits.id, user_id: consumer_id});
       replyObject.seller_credits = JSON.parse(
@@ -1832,8 +1836,9 @@ class SellerController {
       message: 'success',
     };
     try {
-
       const {id: seller_id} = request.params || {};
+      const seller = await sellerAdaptor.retrieveSellerDetail(
+          {where: {id: seller_id}, attributes: ['seller_name']});
       const {id, amount, transaction_type, consumer_id, description} = request.payload;
       const seller_points = await sellerAdaptor.retrieveOrCreateSellerPoints(
           JSON.parse(
@@ -1843,7 +1848,7 @@ class SellerController {
                 id, amount, transaction_type, description, seller_id,
                 user_id: consumer_id,
                 status_type: transaction_type === 1 ? 16 : 14,
-              })));
+              })), seller.seller_name);
 
       await userAdaptor.retrieveOrUpdateUserIndexedData({user_id: consumer_id},
           {point_id: seller_points.id, user_id: consumer_id});
@@ -1956,10 +1961,13 @@ class SellerController {
     try {
 
       const {seller_id, id} = request.params || {};
-      let user_indexes = await userAdaptor.retrieveUserIndexes({
-        where: {user_id: request.payload.user_ids || []},
-        attributes: ['seller_offer_ids', 'user_id', 'id'],
-      });
+      let [user_indexes, seller] = await Promise.all([
+        userAdaptor.retrieveUserIndexes({
+          where: {user_id: request.payload.user_ids || []},
+          attributes: ['seller_offer_ids', 'user_id', 'id'],
+        }),
+        sellerAdaptor.retrieveSellerDetail(
+            {where: {id: seller_id}, attributes: ['seller_name']})]);
 
       user_indexes = user_indexes || request.payload.user_ids.map(item => ({
         user_id: item, seller_offer_ids: [parseInt(id)],
@@ -1977,9 +1985,16 @@ class SellerController {
         return userAdaptor.createUserIndexedData(item,
             {where: {user_id: item.user_id}});
       }));
-      replyObject.user_indexes = JSON.parse(
-          JSON.stringify(await userAdaptor.retrieveUserIndexedData(
-              {where: {user_id: request.payload.user_ids || []}})));
+
+      await Promise.all(request.payload.user_ids.map(
+          item => notificationAdaptor.notifyUserCron({
+            user_id: item, payload: {
+              title: `A New Offer has been published by Seller ${seller.seller_name ||
+              ''}.`,
+              description: 'Please click here for more detail.',
+              notification_type: 35,
+            },
+          })));
       return reply.response(JSON.parse(JSON.stringify(replyObject))).code(201);
     } catch (err) {
       console.log(err);

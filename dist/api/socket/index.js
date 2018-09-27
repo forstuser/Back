@@ -77,11 +77,11 @@ class SocketServer {
   constructor(props) {
     io = _socket2.default.listen(props.server.listener);
     modals = props.models;
-    sellerAdaptor = new _sellers2.default(modals);
     shopEarnAdaptor = new _shop_earn2.default(modals);
     userAdaptor = new _user2.default(modals);
     orderAdaptor = new _order2.default(modals);
     notificationAdaptor = new _notification2.default(modals);
+    sellerAdaptor = new _sellers2.default(modals, notificationAdaptor);
     productAdaptor = new _product2.default(modals);
     jobAdaptor = new _job2.default(modals);
     categoryAdaptor = new _category2.default(modals);
