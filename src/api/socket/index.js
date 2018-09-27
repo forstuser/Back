@@ -1150,7 +1150,7 @@ export default class SocketServer {
 
               return item;
             }) : order.order_details;
-        if (delivery_user_id && order.order_type === 1)  {
+        if (delivery_user_id && order.order_type === 1) {
           order.delivery_user = await sellerAdaptor.retrieveAssistedServiceUser(
               {
                 where: JSON.parse(
@@ -1195,10 +1195,11 @@ export default class SocketServer {
             status_type: order.status_type,
             is_modified: order.is_modified, user_id,
             title: `Hurray! ${order.delivery_user ?
-                `${(order.delivery_user ||
-                    {}).name ||
+                `${(order.delivery_user || {}).name ||
                 ''} from Seller ${seller_detail.seller_name ||
-                ''} is on the way ${order.order_type === 1 ? 'with your order.' :'for your assistance.'}` :
+                ''} is on the way ${order.order_type === 1 ?
+                    'with your order.' :
+                    'for your assistance.'}` :
                 `Your Order is on it's way from Seller ${seller_detail.seller_name ||
                 ''}`}.`,
             description: 'Please click here for more detail.',

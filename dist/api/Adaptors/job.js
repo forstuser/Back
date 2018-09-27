@@ -9,6 +9,10 @@ var _payTMAdaptor = require('./payTMAdaptor');
 
 var _payTMAdaptor2 = _interopRequireDefault(_payTMAdaptor);
 
+var _notification = require('./notification');
+
+var _notification2 = _interopRequireDefault(_notification);
+
 var _main = require('../../config/main');
 
 var _main2 = _interopRequireDefault(_main);
@@ -18,6 +22,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 class JobAdaptor {
   constructor(modals, socket) {
     this.modals = modals;
+    this.notificationAdaptor = new _notification2.default(modals);
     this.payTMAdaptor = new _payTMAdaptor2.default(modals);
     if (socket) {
       this.socketAdaptor = socket;
@@ -167,7 +172,7 @@ class JobAdaptor {
     return jobDetail;
   }
 
-  async cashBackApproval(options) {
+  async cashBackApproval(options, seller_name) {
     let { cash_back_month, cash_back_day, verified_seller, amount, digitally_verified, seller_id, home_delivered, job, cashback_source, transaction_type, user_loyalty_rules, user_limit_rules, user_default_limit_rules } = options;
     const { user_id, id: job_id } = job;
     let monthly_limit = user_limit_rules.find(item => item.rule_type === 1),
@@ -183,15 +188,28 @@ class JobAdaptor {
         jobDetail: { seller_status: 16, seller_id }
       }), home_delivered ? this.approveHomeDeliveryCashback({ job_id, status_type: 16, seller_id }) : '']);
 
+      await this.notificationAdaptor.notifyUserCron({
+        user_id, payload: {
+          title: `Hurray! You can redeem your Cashback ₹ ${total_amount} in your next order with Seller ${seller_name || ''}!`,
+          description: 'Please click here for more detail.',
+          notification_type: 34
+        }
+      });
       return { approved_amount: total_amount, pending_seller_amount: 0 };
     } else if (verified_seller) {
       if (cash_back_day + total_amount <= daily_limit.rule_limit) {
         if (cash_back_month + total_amount <= monthly_limit.rule_limit) {
           await Promise.all([this.approveSellerCashBack({ job_id, amount: total_amount, status_type: 16, seller_id }), this.approveUserCashBack({ job_id, amount: total_amount, status_type: 16, seller_id }), this.updateCashBackJobs({
             id: job_id, seller_status: 16, seller_id,
-            jobDetail: { seller_status: 16, seller_id }
+            jobDetail: { seller_status: 16, cashback_status: 16, seller_id }
           }), home_delivered ? this.approveHomeDeliveryCashback({ job_id, status_type: 16, seller_id }) : '']);
-
+          await this.notificationAdaptor.notifyUserCron({
+            user_id, payload: {
+              title: `Hurray! Cashback ₹ ${total_amount} approved by Seller ${seller_name || ''}!`,
+              description: 'Please click here for more detail.',
+              notification_type: 34
+            }
+          });
           return { approved_amount: total_amount };
         } else {
           total_amount = monthly_limit.rule_limit - cash_back_month;
@@ -199,9 +217,15 @@ class JobAdaptor {
 
           await Promise.all([this.approveSellerCashBack({ job_id, amount: total_amount, status_type: 16, seller_id }), this.approveUserCashBack({ job_id, amount: total_amount, status_type: 16, seller_id }), this.updateCashBackJobs({
             id: job_id, seller_status: 16, seller_id,
-            jobDetail: { seller_status: 16, seller_id }
+            jobDetail: { seller_status: 16, cashback_status: 16, seller_id }
           }), home_delivered ? this.approveHomeDeliveryCashback({ job_id, status_type: 16, seller_id }) : '']);
-
+          await this.notificationAdaptor.notifyUserCron({
+            user_id, payload: {
+              title: `Hurray! Cashback ₹ ${total_amount} approved by Seller ${seller_name || ''}!`,
+              description: 'Please click here for more detail.',
+              notification_type: 34
+            }
+          });
           return { approved_amount: total_amount };
         }
       } else {
@@ -209,10 +233,17 @@ class JobAdaptor {
         total_amount = total_amount < 0 ? 0 : total_amount;
         await Promise.all([this.approveSellerCashBack({ job_id, amount: total_amount, status_type: 16, seller_id }), this.approveUserCashBack({ job_id, amount: total_amount, status_type: 16, seller_id }), this.updateCashBackJobs({
           id: job_id, seller_status: 16, seller_id,
-          jobDetail: { seller_status: 16, seller_id }
+          jobDetail: { seller_status: 16, cashback_status: 16, seller_id }
         }), home_delivered ? this.approveHomeDeliveryCashback({ job_id, status_type: 16, seller_id }) : '']);
+        await this.notificationAdaptor.notifyUserCron({
+          user_id, payload: {
+            title: `Hurray! Cashback ₹ ${total_amount} approved by Seller ${seller_name || ''}!`,
+            description: 'Please click here for more detail.',
+            notification_type: 34
+          }
+        });
 
-        return { approved_amount, pending_seller_amount };
+        return { approved_amount: total_amount };
       }
     }
   }
