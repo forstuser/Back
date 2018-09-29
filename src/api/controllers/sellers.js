@@ -25,6 +25,7 @@ class SellerController {
     sellerAdaptor = new SellerAdaptor(modal, notificationAdaptor);
     jobAdaptor = new JobAdaptor(modal, socket, notificationAdaptor);
     generalAdaptor = new GeneralAdaptor(modal);
+    notificationAdaptor = new NotificationAdaptor(modals);
     modals = modal;
   }
 

@@ -2,6 +2,7 @@ import google from '../../helpers/google';
 import _ from 'lodash';
 import CategoryAdaptor from './category';
 import UserAdaptor from './user';
+import NotificationAdaptor from './notification';
 import Promise from 'bluebird';
 import moment from 'moment';
 
