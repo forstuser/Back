@@ -214,6 +214,36 @@ export function prepareSellerRoutes(modal, route, middleware, socket) {
 
     route.push({
       method: 'POST',
+      path: '/sellers/invite/details',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: middleware.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: controller.addInviteSellerByName,
+        description: 'Add Seller to database so we can invite him on behalf of user.',
+        validate: {
+          payload: {
+            seller_name: [joi.string(), joi.allow(null)],
+            contact_no: joi.string().required(),
+            email: [joi.string(), joi.allow(null)],
+            address: [joi.string(), joi.allow(null)],
+            city_id: [joi.number(), joi.allow(null)],
+            state_id: [joi.number(), joi.allow(null)],
+            locality_id: [joi.number(), joi.allow(null)],
+            longitude: [joi.string(), joi.allow(null)],
+            latitude: [joi.string(), joi.allow(null)],
+          },
+        },
+      },
+    });
+
+    route.push({
+      method: 'POST',
       path: '/sellers/init',
       config: {
         auth: 'jwt', pre: [

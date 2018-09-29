@@ -62,19 +62,26 @@ class SellerAdaptor {
           city_ids = sellers.map(item => item.city_id).filter(item => item),
           state_ids = sellers.map(item => item.state_id).filter(item => item),
           locality_ids = sellers.map(item => item.locality_id).filter(item => item);
-      const [seller_categories, seller_cities, seller_states, seller_locations, assisted_services] = await _bluebird2.default.all([this.retrieveSellerCategories({ seller_id }), city_ids.length > 0 ? this.retrieveSellerCities({ id: city_ids }) : [], state_ids.length > 0 ? this.retrieveSellerStates({ id: state_ids }) : [], locality_ids.length > 0 ? this.retrieveSellerLocations({ id: locality_ids }) : [], this.retrieveSellerAssistedServices({ where: { seller_id } })]);
+      const [seller_categories, seller_cities, seller_states, seller_locations, assisted_services] = await _bluebird2.default.all([this.retrieveSellerCategories({ seller_id }), city_ids.length > 0 ? this.retrieveSellerCities({ id: city_ids }) : [], state_ids.length > 0 ? this.retrieveSellerStates({ id: state_ids }) : [], locality_ids.length > 0 ? this.retrieveSellerLocations({ id: locality_ids }) : [], this.retrieveSellerAssistedServices({
+        where: { seller_id },
+        include: {
+          model: this.modals.assisted_service_users,
+          attributes: ['is_verified']
+        }
+      })]);
       sellers = sellers.map(item => {
         item.categories = seller_categories.filter(cItem => cItem.seller_id === item.id);
         item.city = seller_cities.find(cItem => cItem.id === item.city_id);
         item.state = seller_states.find(cItem => cItem.id === item.state_id);
         item.location = seller_locations.find(cItem => cItem.id === item.locality_id);
-        item.assisted_services = assisted_services;
+        item.assisted_services = assisted_services.filter(item => item.assisted_service_user.is_verified);
         item.cashback_total = (item.cashback_total || 0) - (item.redeemed_cashback || 0);
         item.loyalty_total = (item.loyalty_total || 0) - (item.redeemed_loyalty || 0);
         item.credit_total = (item.credit_total || 0) - (item.redeemed_credits || 0);
         item.offer_count = item.offer_count || 0;
         item.ratings = item.ratings || 0;
-        item.transaction_counts = parseInt(item.transaction_counts || 0) + parseInt(item.order_counts || 0);
+        item.order_counts = parseInt(item.order_counts || 0);
+        item.transaction_counts = parseInt(item.transaction_counts || 0);
 
         if (item.seller_details) {
           item.seller_details = _lodash2.default.omit(item.seller_details, ['offers', 'assisted_type_images']);
@@ -153,9 +160,26 @@ class SellerAdaptor {
     return result;
   }
 
+  async retrieveOrUpdateInvitedSellerDetail(query_options, seller_detail, is_create) {
+    let result = await this.modals.invited_sellers.findOne(query_options);
+    if (!result && is_create) {
+      result = await this.modals.invited_sellers.create(seller_detail);
+    }
+
+    if (result) {
+      (await seller_detail) ? result.updateAttributes(JSON.parse(JSON.stringify(seller_detail))) : seller_detail;
+      return result.toJSON();
+    }
+    return result;
+  }
+
   async retrieveSellerDetail(query_options) {
     const result = await this.modals.sellers.findOne(query_options);
     return result ? result.toJSON() : result;
+  }
+
+  async retrieveSellerDetailNonJSON(query_options) {
+    return await this.modals.sellers.findOne(query_options);
   }
 
   async retrieveProviderTypes(query_options) {
@@ -417,7 +441,8 @@ class SellerAdaptor {
       seller.credit_total = (seller.credit_total || 0) - seller.credit_redeemed;
       seller.offer_count = seller.offer_count || 0;
       seller.ratings = seller.ratings || 0;
-      seller.transaction_counts = parseInt(seller.transaction_counts || 0) + parseInt(seller.order_counts || 0);
+      seller.transaction_counts = parseInt(seller.transaction_counts || 0);
+      seller.order_counts = parseInt(seller.order_counts || 0);
 
       if (seller.seller_details) {
         seller.seller_details = _lodash2.default.omit(seller.seller_details, ['offers', 'assisted_type_images']);

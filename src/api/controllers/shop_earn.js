@@ -33,20 +33,18 @@ class ShopEarnController {
     if (request.pre.userExist && !request.pre.forceUpdate) {
       // this is where make us of adapter
       try {
-        const result = await modals.user_index.findOne({
-          where: {user_id: (user.id || user.ID)}, attributes: [
+        const result = await modals.users.findOne({
+          where: {id: (user.id || user.ID)}, attributes: [
             [
               modals.sequelize.literal(
-                  '(Select location from users as "user" where "user".id = "user_index".user_id)'),
-              'location'], 'my_seller_ids', ['user_id', 'id']],
+                  '(Select my_seller_ids from table_user_index as "user_index" where "users".id = "user_index".user_id)'),
+              'my_seller_ids'], 'location', 'id'],
         });
         user = result ? result.toJSON() : user;
         const seller_list = user.my_seller_ids ?
             await sellerAdaptor.retrieveSellersOnInit({
               where: {
-                id: user.my_seller_ids,
-                is_onboarded: true,
-                is_fmcg: true,
+                id: user.my_seller_ids, is_onboarded: true, is_fmcg: true,
               },
               attributes: [
                 'id', 'seller_name', 'seller_type_id', 'address',
@@ -155,7 +153,7 @@ class ShopEarnController {
         const sku_item = await shopEarnAdaptor.retrieveSKUItem({
           bar_code: (request.params || {}).bar_code,
           id: (request.params || {}).id,
-          location: user.location
+          location: user.location,
         });
         if ((request.params || {}).bar_code && sku_item) {
           sku_item.sku_measurement = sku_item.sku_measurements.find(
@@ -731,13 +729,21 @@ class ShopEarnController {
         });
         if (seller_cashback) {
           const startOfMonth = moment(seller_cashback.created_at).
-              startOf('month').utcOffset(utcOffset).format();
+              startOf('month').
+              utcOffset(utcOffset).
+              format();
           const endOfMonth = moment(seller_cashback.created_at).
-              endOf('month').utcOffset(utcOffset).format();
+              endOf('month').
+              utcOffset(utcOffset).
+              format();
           const startOfDay = moment(seller_cashback.created_at).
-              startOf('day').utcOffset(utcOffset).format();
+              startOf('day').
+              utcOffset(utcOffset).
+              format();
           const endOfDay = moment(seller_cashback.created_at).
-              endOf('day').utcOffset(utcOffset).format();
+              endOf('day').
+              utcOffset(utcOffset).
+              format();
           const [cash_back_job, user_cash_back_month, user_cash_back_day, user_limit_rules, user_default_limit_rules] = await Promise.all(
               [
                 jobAdaptor.retrieveCashBackJobs({id: seller_cashback.job_id}),
@@ -843,7 +849,10 @@ class ShopEarnController {
               jobAdaptor.updateCashBackJobs(
                   {
                     id: job_id, reason_id, seller_id,
-                    jobDetail: {seller_status: 18, reason_id, seller_id},
+                    jobDetail: {
+                      seller_status: 18,
+                      cashback_status: 18, reason_id, seller_id,
+                    },
                   }),
               home_delivered ?
                   jobAdaptor.approveHomeDeliveryCashback(
@@ -1192,7 +1201,8 @@ class ShopEarnController {
             {seller_id});
         return reply.response({
           status: true,
-          reasons: await categoryAdaptor.retrieveRejectReasons({}),
+          reasons: await categoryAdaptor.retrieveRejectReasons(
+              {where: {query_type: 3}}),
           result: result.filter(
               item => item.pending_cashback && item.cashback_id),
         });

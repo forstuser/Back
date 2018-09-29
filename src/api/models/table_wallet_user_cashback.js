@@ -35,7 +35,8 @@ export default (sequelize, DataTypes) => {
         },
         is_paytm: {
           type: DataTypes.BOOLEAN, defaultValue: false,
-        }, paytm_detail: {
+        },
+        paytm_detail: {
           type: DataTypes.JSONB,
         },
         status_type: {

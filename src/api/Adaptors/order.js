@@ -1,5 +1,6 @@
 import CategoryAdaptor from './category';
 import UserAdaptor from './user';
+import _ from 'lodash';
 
 export default class OrderAdaptor {
   constructor(modals) {
@@ -36,7 +37,7 @@ export default class OrderAdaptor {
       item = item.toJSON();
       if (item.order_type === 1) {
         item.order_item_counts = item.order_details.length;
-        // item = _.omit(item, 'order_details');
+        item = _.omit(item, 'order_details');
       }
       item.seller_exist = item.my_seller_ids && item.my_seller_ids.length > 0;
       const {address_line_1, address_line_2, city_name, state_name, locality_name, pin_code} = item.user_address ||
@@ -46,7 +47,10 @@ export default class OrderAdaptor {
           ''}, ${locality_name}, ${city_name}, ${state_name}-${pin_code}`).
           split('null').join(',').
           split('undefined').join(',').
-          split(',,').join(',').split(',-,').join(',').split(',,').join(',').split(',,').join(',');
+          split(',,').join(',').
+          split(',-,').join(',').
+          split(',,').join(',').
+          split(',,').join(',');
       return item;
     }) : result;
   }

@@ -135,6 +135,18 @@ class OrderController {
                       updated_measurement_type.acronym : 'unit';
                 }
 
+                item.unit_price = parseFloat((item.unit_price || 0).toString());
+                item.selling_price = item.selling_price ?
+                    parseFloat(item.selling_price.toString()) :
+                    parseFloat((item.unit_price *
+                        parseFloat(item.quantity)).toString());
+                if (item.updated_quantity) {
+                  item.updated_selling_price = item.updated_selling_price ?
+                      parseFloat(item.updated_selling_price.toString()) :
+                      parseFloat((item.unit_price *
+                          parseFloat(item.updated_quantity)).toString());
+                }
+
                 return item;
               }) : result.order_details;
           if (result.user_address) {

@@ -58,7 +58,10 @@ const updateUserActiveStatus = async (request, reply) => {
   }
   try {
     const id = user.id || user.ID;
-    const userResult = await retrieveUser({ where: { id }, attributes: ['id', 'last_active_date', 'last_api', 'password'] });
+    const userResult = await retrieveUser({
+      where: { id },
+      attributes: ['id', 'last_active_date', 'last_api', 'password']
+    });
     const userDetail = userResult ? userResult.toJSON() : userResult;
     request.user = userDetail || user;
     const { url, headers } = request;

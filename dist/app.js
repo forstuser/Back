@@ -53,7 +53,8 @@ const init = async () => {
       log: { collect: true },
       cors: {
         origin: ['*'],
-        headers: ['Accept', 'Content-Type', 'Authorization', 'language']
+        headers: ['Accept', 'Content-Type', 'Authorization'],
+        additionalHeaders: ['language', 'app_version', 'ios_app_version']
       }
     }
   });

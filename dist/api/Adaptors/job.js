@@ -204,7 +204,7 @@ class JobAdaptor {
         }
       }), home_delivered ? this.notificationAdaptor.notifyUserCron({
         seller_user_id, payload: {
-          title: `Hurray! Cashback on Home Delivery to User ${user_name || ''} has been credited to your BB Wallet!`,
+          title: `Hurray! You have received Cashback on Home Delivery to ${user_name || ''} in your BB Wallet!`,
           description: 'Please click here for more detail.',
           notification_type: 3
         }
@@ -225,7 +225,7 @@ class JobAdaptor {
             }
           }), home_delivered ? this.notificationAdaptor.notifyUserCron({
             seller_user_id, payload: {
-              title: `Hurray! Cashback on Home Delivery to User ${user_name || ''} has been credited to your BB Wallet!`,
+              title: `Hurray! You have received Cashback on Home Delivery to ${user_name || ''} in your BB Wallet!`,
               description: 'Please click here for more detail.',
               notification_type: 3
             }
@@ -248,7 +248,7 @@ class JobAdaptor {
             }
           }), home_delivered ? this.notificationAdaptor.notifyUserCron({
             seller_user_id, payload: {
-              title: `Hurray! Cashback on Home Delivery to User ${user_name || ''} has been credited to your BB Wallet!`,
+              title: `Hurray! You have received Cashback on Home Delivery to ${user_name || ''} in your BB Wallet!`,
               description: 'Please click here for more detail.',
               notification_type: 3
             }
@@ -270,7 +270,7 @@ class JobAdaptor {
           }
         }), home_delivered ? this.notificationAdaptor.notifyUserCron({
           seller_user_id, payload: {
-            title: `Hurray! Cashback on Home Delivery to User ${user_name || ''} has been credited to your BB Wallet!`,
+            title: `Hurray! You have received Cashback on Home Delivery to ${user_name || ''} in your BB Wallet!`,
             description: 'Please click here for more detail.',
             notification_type: 3
           }

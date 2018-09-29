@@ -184,8 +184,7 @@ class DashboardAdaptor {
           distinctItem => (moment.utc(distinctItem.purchaseDate,
               moment.ISO_8601).startOf('day').valueOf() ===
               moment.utc(insightItem.purchaseDate, moment.ISO_8601).
-                  startOf('day').
-                  valueOf()));
+                  startOf('day').valueOf()));
 
       if (index === -1) {
         distinctInsight.push(insightItem);
@@ -203,8 +202,7 @@ class DashboardAdaptor {
           endDate: moment.utc(),
           totalSpend: shared.sumProps(distinctInsight, 'value'),
           totalDays: moment.utc().
-              endOf('d').
-              diff(moment.utc().startOf('M'), 'days'),
+              endOf('d').diff(moment.utc().startOf('M'), 'days'),
           insightData: distinctInsight,
         } :
         {

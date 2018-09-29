@@ -25,7 +25,6 @@ class SellerController {
     sellerAdaptor = new SellerAdaptor(modal, notificationAdaptor);
     jobAdaptor = new JobAdaptor(modal, socket, notificationAdaptor);
     generalAdaptor = new GeneralAdaptor(modal);
-    notificationAdaptor = new NotificationAdaptor(modals);
     modals = modal;
   }
 
@@ -35,14 +34,15 @@ class SellerController {
       // this is where make us of adapter
       try {
         const user_id = user.id || user.ID;
-        const user_index_data = await userAdaptor.retrieveUserIndexedData({
-          where: {user_id},
-          attributes: [
-            'my_seller_ids', 'seller_offer_ids', 'wallet_seller_cashback_ids',
-            'wallet_seller_credit_ids', 'wallet_seller_loyalty_ids'],
-        });
+        const [user_index_data, user_detail] = await Promise.all([
+          userAdaptor.retrieveUserIndexedData({
+            where: {user_id},
+            attributes: [
+              'my_seller_ids', 'seller_offer_ids', 'wallet_seller_cashback_ids',
+              'wallet_seller_credit_ids', 'wallet_seller_loyalty_ids'],
+          }), userAdaptor.retrieveSingleUser({where: {id: user_id}})]);
 
-        let {search_value, limit, offset, latitude, longitude, city, is_fmcg, is_assisted, has_pos} = request.query ||
+        let {search_value, limit, offset, latitude, longitude, city, is_fmcg, is_assisted, has_pos, for_order, for_claim} = request.query ||
         {};
         const {seller_offer_ids, my_seller_ids: id} = user_index_data ||
         {};
@@ -105,7 +105,7 @@ class SellerController {
                         `(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16) and transaction_type = 2 and seller_credit.user_id = ${user_id} and seller_credit.seller_id = "sellers"."id")`),
                     'redeemed_credits'], [
                     modals.sequelize.literal(
-                        `(select count(*) from table_cashback_jobs as cashback_jobs where cashback_jobs.user_id = ${user_id} and cashback_jobs.seller_id = "sellers"."id")`),
+                        `(select count(*) from table_cashback_jobs as cashback_jobs where cashback_jobs.user_id = ${user_id} and cashback_jobs.seller_id = "sellers"."id" and "cashback_jobs"."admin_status" != 2)`),
                     'transaction_counts'], [
                     modals.sequelize.literal(
                         `(select count(*) from table_orders as order_detail where order_detail.user_id = ${user_id} and order_detail.seller_id = "sellers"."id" and order_detail.job_id is null and order_detail.status_type = 5)`),
@@ -114,16 +114,32 @@ class SellerController {
                         `${seller_offer_ids && seller_offer_ids.length > 0 ?
                             `(select count(*) from table_seller_offers as seller_offers where status_type in (1) and seller_offers.id in (${(seller_offer_ids ||
                                 []).join(
-                                ',')}) and seller_offers.seller_id = "sellers"."id")` :
+                                ',')}) and end_date > '${moment.utc().
+                                format()}' and seller_offers.seller_id = "sellers"."id")` :
                             0}`), 'offer_count'], [
                     modals.sequelize.literal(
                         `(select AVG(seller_reviews.review_ratings) from table_seller_reviews as seller_reviews where seller_reviews.offline_seller_id = "sellers"."id")`),
-                    'ratings']],
+                    'ratings'], [
+                    modals.sequelize.literal(
+                        `(select is_logged_out from table_seller_users as "users" where "users".id = "sellers"."user_id")`),
+                    'is_logged_out']],
               });
           if (sellers.length > 0) {
             return reply.response({
               status: true,
-              result: sellers,
+              result: for_order && for_order.toLowerCase() === 'true' ?
+                  sellers.filter(
+                      item => !item.is_logged_out && item.contact_no !==
+                          user_detail.mobile_no) :
+                  for_claim && for_claim.toLowerCase() === 'true' ?
+                      sellers.filter(
+                          item => item.contact_no !== user_detail.mobile_no) :
+                      sellers.map(item => {
+                        if (item.is_logged_out) {
+                          item.assisted_services = [];
+                        }
+                        return item;
+                      }),
             });
           } else {
             return reply.response({
@@ -519,7 +535,7 @@ class SellerController {
                         `(select AVG(seller_reviews.review_ratings) from table_seller_reviews as seller_reviews where seller_reviews.offline_seller_id = "sellers"."id")`),
                     'ratings'], [
                     modals.sequelize.literal(
-                        `(select count(*) from table_cashback_jobs as cashback_jobs where cashback_jobs.user_id = ${user_id} and cashback_jobs.seller_id = "sellers"."id")`),
+                        `(select count(*) from table_cashback_jobs as cashback_jobs where cashback_jobs.user_id = ${user_id} and cashback_jobs.seller_id = "sellers"."id" and "cashback_jobs"."admin_status" != 2)`),
                     'transaction_counts'], [
                     modals.sequelize.literal(
                         `(select count(*) from table_orders as order_detail where order_detail.user_id = ${user_id} and order_detail.seller_id = "sellers"."id" and order_detail.job_id is null and order_detail.status_type = 5)`),
@@ -812,17 +828,24 @@ class SellerController {
       // this is where make us of adapter
       try {
         const user_id = user.id || user.ID;
-        const [user_index_data] = await Promise.all([
+        const [user_index_data, seller_detail] = await Promise.all([
           userAdaptor.retrieveUserIndexedData({
             where: {user_id, status_type: [1, 11]},
             attributes: ['my_seller_ids', 'seller_offer_ids'],
+          }),
+          sellerAdaptor.retrieveSellerDetailNonJSON({
+            where: {id: request.params.id},
+            attributes: ['customer_ids'],
           })]);
 
         let {my_seller_ids} = user_index_data || {};
+        let {customer_ids} = seller_detail.toJSON();
         my_seller_ids = (my_seller_ids || []).filter(
             item => item !== parseInt(request.params.id));
         await userAdaptor.updateUserIndexedData({my_seller_ids},
             {where: {user_id}});
+        customer_ids = customer_ids.filter(item => parseInt(item) !== user_id);
+        await seller_detail.updateAttributes({customer_ids});
 
         return reply.response({
           status: true,
@@ -886,7 +909,7 @@ class SellerController {
               'my_seller_ids', 'seller_contact_no',
               [
                 modals.sequelize.literal(
-                    `(select full_name from users as user where user.id = ${user_id})`),
+                    `(select full_name from users as "user" where "user".id = ${user_id})`),
                 'user_name']],
           }),
           sellerAdaptor.retrieveSellerDetail(
@@ -902,7 +925,7 @@ class SellerController {
         my_seller_ids = (my_seller_ids || []);
         seller_contact_no = (seller_contact_no || []);
         const message = `Yay! Your Customer ${name ||
-        ''} has invited you to BinBill Partner – for online orders & much more. Get your Free App Now, contact us on ${contact_no}!`;
+        ''} has invited you to BinBill Partner – for online orders & much more. Get your Free App Now, contact us on 8800850275!`;
         let already_in_my_seller_list;
         if (seller) {
           customer_ids = customer_ids || [];
@@ -952,6 +975,53 @@ class SellerController {
         return reply.response({
           status: true,
           result: seller,
+        });
+      } catch (err) {
+        console.log(`Error on ${new Date()} for user ${user.id ||
+        user.ID} is as follow: \n \n ${err}`);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user && !user.seller_detail ?
+              user.id || user.ID :
+              undefined,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
+        return reply.response({
+          status: false,
+          message: `Unable to link seller`,
+        });
+      }
+    } else {
+      return shared.preValidation(request.pre, reply);
+    }
+  }
+
+  static async addInviteSellerByName(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    if (request.pre.userExist && !request.pre.forceUpdate) {
+      // this is where make us of adapter
+      try {
+        const user_id = user.id || user.ID;
+        let {
+          seller_name, locality_id, city_id, state_id, address,
+        } = request.payload || {};
+
+        return reply.response({
+          status: true,
+          result: await sellerAdaptor.retrieveOrUpdateInvitedSellerDetail(
+              {where: {seller_name, locality_id, city_id, state_id, address}},
+              {
+                seller_name, locality_id, city_id, state_id,
+                address, customer_id: user_id,
+              }, true),
         });
       } catch (err) {
         console.log(`Error on ${new Date()} for user ${user.id ||
@@ -1509,6 +1579,8 @@ class SellerController {
                       mobile_no, full_name, email,
                       user_status_type: 2, role_type: 5,
                     })), seller_id)]);
+      await userAdaptor.createUserIndexedData(
+          {user_id: user_data.id, my_seller_ids: [parseInt(seller_id)]});
       seller_data.customer_ids = (seller_data.customer_ids || []);
       seller_data.customer_ids.push(user_data.id);
       seller_data.customer_ids = _.uniq(seller_data.customer_ids);
@@ -1516,6 +1588,9 @@ class SellerController {
           JSON.stringify(await sellerAdaptor.retrieveOrUpdateSellerDetail(
               {where: JSON.parse(JSON.stringify({id: seller_id}))}, seller_data,
               true, user_data) || {}));
+      const message = `Yay! Seller ${seller_data.seller_name} has invited you to BinBill for online orders, faster delivery, home services & ongoing offers. 
+Download Now: http://bit.ly/binbill`;
+      await sendSMS(message, [mobile_no]);
       return reply.response(JSON.parse(JSON.stringify(replyObject))).code(201);
     } catch (err) {
       console.log(err);
@@ -2027,6 +2102,7 @@ class SellerController {
               title: `A New Offer has been published by Seller ${seller.seller_name ||
               ''}.`,
               description: 'Please click here for more detail.',
+              image_url: `https://consumer.binbill.com/offer/${id}/images/${0}`,
               notification_type: 26,
             },
           })));
@@ -2122,6 +2198,7 @@ class SellerController {
     try {
       if (!request.pre.forceUpdate) {
         let {service_type_id} = request.query;
+        const is_verified = service_type_id ? true : undefined;
         service_type_id = service_type_id || {
           $notIn: [0],
         };
@@ -2129,6 +2206,7 @@ class SellerController {
         const [service_types, seller_service_users] = await Promise.all([
           sellerAdaptor.retrieveAssistedServiceTypes({}),
           sellerAdaptor.retrieveSellerAssistedServiceUsers({
+            where: JSON.parse(JSON.stringify({is_verified})),
             include: {
               as: 'service_types', where: JSON.parse(
                   JSON.stringify({seller_id, service_type_id})),

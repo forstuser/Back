@@ -70,15 +70,13 @@ class ShopEarnController {
     if (request.pre.userExist && !request.pre.forceUpdate) {
       // this is where make us of adapter
       try {
-        const result = await modals.user_index.findOne({
-          where: { user_id: user.id || user.ID }, attributes: [[modals.sequelize.literal('(Select location from users as "user" where "user".id = "user_index".user_id)'), 'location'], 'my_seller_ids', ['user_id', 'id']]
+        const result = await modals.users.findOne({
+          where: { id: user.id || user.ID }, attributes: [[modals.sequelize.literal('(Select my_seller_ids from table_user_index as "user_index" where "users".id = "user_index".user_id)'), 'my_seller_ids'], 'location', 'id']
         });
         user = result ? result.toJSON() : user;
         const seller_list = user.my_seller_ids ? await sellerAdaptor.retrieveSellersOnInit({
           where: {
-            id: user.my_seller_ids,
-            is_onboarded: true,
-            is_fmcg: true
+            id: user.my_seller_ids, is_onboarded: true, is_fmcg: true
           },
           attributes: ['id', 'seller_name', 'seller_type_id', 'address', 'is_data_manually_added', [modals.sequelize.literal(`(Select count(*) from table_seller_provider_types as provider_type where provider_type.seller_id = sellers.id)`), 'provider_counts'], [modals.sequelize.literal(`(Select count(*) from table_sku_seller_mapping as sku_seller where sku_seller.seller_id = sellers.id)`), 'sku_seller_counts']]
         }) : undefined;
@@ -755,7 +753,10 @@ class ShopEarnController {
             status: true,
             result: await _bluebird2.default.all([jobAdaptor.approveSellerCashBack({ job_id, status_type: 18, seller_id }), jobAdaptor.approveUserCashBack({ job_id, status_type: 18, seller_id }), jobAdaptor.updateCashBackJobs({
               id: job_id, reason_id, seller_id,
-              jobDetail: { seller_status: 18, reason_id, seller_id }
+              jobDetail: {
+                seller_status: 18,
+                cashback_status: 18, reason_id, seller_id
+              }
             }), home_delivered ? jobAdaptor.approveHomeDeliveryCashback({
               job_id, status_type: 18, seller_id,
               jobDetail: { status_type: 18, seller_id }
@@ -1060,7 +1061,7 @@ class ShopEarnController {
         const result = await shopEarnAdaptor.retrievePendingTransactions({ seller_id });
         return reply.response({
           status: true,
-          reasons: await categoryAdaptor.retrieveRejectReasons({}),
+          reasons: await categoryAdaptor.retrieveRejectReasons({ where: { query_type: 3 } }),
           result: result.filter(item => item.pending_cashback && item.cashback_id)
         });
       } catch (err) {

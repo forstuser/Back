@@ -175,7 +175,7 @@ class UserController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -391,7 +391,7 @@ class UserController {
       modals.logs.create({
         api_action: request.method,
         api_path: request.url.pathname,
-        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
         log_type: 2,
         log_content: JSON.stringify({
           params: request.params,
@@ -485,7 +485,7 @@ class UserController {
     try {
       if (!request.pre.forceUpdate) {
         if (request.payload.BBLogin_Type === 1) {
-          if (trueObject.PhoneNo !== '8750568036' && trueObject.PhoneNo !==
+          if (trueObject.PhoneNo !== '7589145713' && trueObject.PhoneNo !==
               '9661086188') {
             const data = await OTPHelper.verifyOTPForUser(trueObject.PhoneNo,
                 request.payload.Token);
@@ -614,7 +614,7 @@ class UserController {
         console.log('VALIDATE OTP RESPONSE: ', data);
         if (data.type === 'success') {
           let user_detail = await userAdaptor.retrieveSellerUser(userWhere,
-              true);
+              true, {mobile_no, email, status_type: 1, is_logged_out: false});
           let [seller_detail] = await Promise.all([
             sellerAdaptor.retrieveOrUpdateSellerDetail(
                 {
@@ -885,7 +885,7 @@ class UserController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -912,14 +912,14 @@ class UserController {
     };
     try {
       if (!request.pre.forceUpdate) {
-        if (request.payload && request.payload.fcmId) {
-          await fcmManager.deleteFcmDetails(JSON.parse(JSON.stringify({
+        await Promise.all([
+          fcmManager.updateFcmDetails(JSON.parse(JSON.stringify({
             user_id: !user.seller_details ? user.id : undefined,
             seller_user_id: user.seller_details ? user.id : undefined,
-            fcm_id: request.payload.fcmId,
             platform_id: request.payload.platform || 1,
-          })));
-        }
+          }))),
+          userAdaptor.retrieveSellerUser({where:{id: user.id}}, false,
+              {is_logged_out: true})]);
 
         await (!user.seller_details ?
             userAdaptor.updateUserDetail(
@@ -927,7 +927,9 @@ class UserController {
                 {where: {id: user.id}}) :
             sellerAdaptor.retrieveOrUpdateSellerDetail(
                 {where: JSON.parse(JSON.stringify({id: user.id}))},
-                {last_logout_at: moment.utc().format('YYYY-MM-DD HH:mm:ss')},
+                {
+                  last_logout_at: moment.utc().format('YYYY-MM-DD HH:mm:ss'),
+                },
                 false));
         return reply.response(replyObject).code(201);
       } else if (!request.pre.userExist) {
@@ -944,7 +946,7 @@ class UserController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -999,7 +1001,7 @@ class UserController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -1048,7 +1050,7 @@ class UserController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -1105,7 +1107,7 @@ class UserController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -1159,7 +1161,7 @@ class UserController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -1214,7 +1216,7 @@ class UserController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -1303,7 +1305,7 @@ class UserController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,

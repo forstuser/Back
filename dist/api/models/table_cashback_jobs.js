@@ -166,6 +166,8 @@ exports.default = (sequelize, DataTypes) => {
     });
 
     cashback_jobs.hasMany(models.expense_sku_items, { foreignKey: 'job_id', onDelete: 'cascade', onUpdate: 'cascade' });
+
+    cashback_jobs.hasMany(models.user_wallet, { foreignKey: 'job_id', onDelete: 'cascade', onUpdate: 'cascade' });
   };
   return cashback_jobs;
 };

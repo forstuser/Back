@@ -12,6 +12,10 @@ var _user = require('./user');
 
 var _user2 = _interopRequireDefault(_user);
 
+var _lodash = require('lodash');
+
+var _lodash2 = _interopRequireDefault(_lodash);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 class OrderAdaptor {
@@ -47,7 +51,7 @@ class OrderAdaptor {
       item = item.toJSON();
       if (item.order_type === 1) {
         item.order_item_counts = item.order_details.length;
-        // item = _.omit(item, 'order_details');
+        item = _lodash2.default.omit(item, 'order_details');
       }
       item.seller_exist = item.my_seller_ids && item.my_seller_ids.length > 0;
       const { address_line_1, address_line_2, city_name, state_name, locality_name, pin_code } = item.user_address || {};
