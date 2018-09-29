@@ -257,7 +257,7 @@ class UserController {
       }
 
       if (!request.pre.hasMultipleAccounts) {
-        const [otpStatus, user] = await _bluebird2.default.all([_otp2.default.sendOTPToUser(request.payload.PhoneNo, request.headers.ios_app_version && request.headers.ios_app_version < 14 || request.headers.app_version && request.headers.app_version < 13 ? 6 : 4), userAdaptor.retrieveSingleUser({
+        const [otpStatus, user] = await _bluebird2.default.all([_otp2.default.sendOTPToUser(request.payload.PhoneNo, request.headers['ios-app-version'] && request.headers['ios-app-version'] < 14 || request.headers['app-version'] && request.headers['app-version'] < 13 ? 6 : 4), userAdaptor.retrieveSingleUser({
           where: {
             mobile_no: request.payload.PhoneNo
           }
@@ -392,7 +392,7 @@ class UserController {
     const user = request.user;
     try {
       if (request.pre.isValidEmail) {
-        const response = await _otp2.default.sendOTPOverEmail(request.payload.email, request.user.name, request.headers.ios_app_version && request.headers.ios_app_version < 14 || request.headers.app_version && request.headers.app_version < 13 ? 6 : 4);
+        const response = await _otp2.default.sendOTPOverEmail(request.payload.email, request.user.name, request.headers['ios-app-version'] && request.headers['ios-app-version'] < 14 || request.headers['app-version'] && request.headers['app-version'] < 13 ? 6 : 4);
         await userAdaptor.updateUserDetail({
           email: request.payload.email.toLowerCase(),
           email_secret: response[0],
@@ -509,7 +509,7 @@ class UserController {
     try {
       if (!request.pre.forceUpdate) {
         if (request.payload.BBLogin_Type === 1) {
-          if (trueObject.PhoneNo !== '8750568036' && trueObject.PhoneNo !== '9661086188') {
+          if (trueObject.PhoneNo !== '7589145713' && trueObject.PhoneNo !== '9661086188') {
             const data = await _otp2.default.verifyOTPForUser(trueObject.PhoneNo, request.payload.Token);
             console.log('VALIDATE OTP RESPONSE: ', data);
             if (data.type === 'success') {
@@ -624,7 +624,7 @@ class UserController {
         const data = await _otp2.default.verifyOTPForUser(mobile_no, token);
         console.log('VALIDATE OTP RESPONSE: ', data);
         if (data.type === 'success') {
-          let user_detail = await userAdaptor.retrieveSellerUser(userWhere, true);
+          let user_detail = await userAdaptor.retrieveSellerUser(userWhere, true, { mobile_no, email, status_type: 1, is_logged_out: false });
           let [seller_detail] = await _bluebird2.default.all([sellerAdaptor.retrieveOrUpdateSellerDetail({
             where: JSON.parse(JSON.stringify({ user_id: user_detail.id })),
             attributes: ['seller_type_id', 'id']
@@ -902,16 +902,15 @@ class UserController {
     };
     try {
       if (!request.pre.forceUpdate) {
-        if (request.payload && request.payload.fcmId) {
-          await fcmManager.deleteFcmDetails(JSON.parse(JSON.stringify({
-            user_id: !user.seller_details ? user.id : undefined,
-            seller_user_id: user.seller_details ? user.id : undefined,
-            fcm_id: request.payload.fcmId,
-            platform_id: request.payload.platform || 1
-          })));
-        }
+        await _bluebird2.default.all([fcmManager.updateFcmDetails(JSON.parse(JSON.stringify({
+          user_id: !user.seller_details ? user.id : undefined,
+          seller_user_id: user.seller_details ? user.id : undefined,
+          platform_id: request.payload.platform || 1
+        }))), userAdaptor.retrieveSellerUser({ where: { id: user.id } }, false, { is_logged_out: true })]);
 
-        await (!user.seller_details ? userAdaptor.updateUserDetail({ last_logout_at: _moment2.default.utc().format('YYYY-MM-DD HH:mm:ss') }, { where: { id: user.id } }) : sellerAdaptor.retrieveOrUpdateSellerDetail({ where: JSON.parse(JSON.stringify({ id: user.id })) }, { last_logout_at: _moment2.default.utc().format('YYYY-MM-DD HH:mm:ss') }, false));
+        await (!user.seller_details ? userAdaptor.updateUserDetail({ last_logout_at: _moment2.default.utc().format('YYYY-MM-DD HH:mm:ss') }, { where: { id: user.id } }) : sellerAdaptor.retrieveOrUpdateSellerDetail({ where: JSON.parse(JSON.stringify({ id: user.id })) }, {
+          last_logout_at: _moment2.default.utc().format('YYYY-MM-DD HH:mm:ss')
+        }, false));
         return reply.response(replyObject).code(201);
       } else if (!request.pre.userExist) {
         replyObject.status = false;

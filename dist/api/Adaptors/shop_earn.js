@@ -40,8 +40,137 @@ class ShopEarnAdaptor {
 
   async retrieveSKUs(options) {
     try {
-      const { user_id, location, queryOptions, seller_list } = options;
+      const { location, queryOptions, seller_list } = options;
       let { main_category_id, category_id, brand_ids, sub_category_ids, measurement_values, measurement_types, bar_code, title, limit, offset, id, seller_id } = queryOptions || {};
+      let seller,
+          seller_skus = [],
+          seller_categories = [];
+      category_id = !title ? (category_id || '').trim().split(',').filter(item => !!item) : [];
+      main_category_id = !title ? (main_category_id || '').trim().split(',').filter(item => !!item) : [];
+      brand_ids = (brand_ids || '').trim().split(',').filter(item => !!item);
+      sub_category_ids = !title ? (sub_category_ids || '').trim().split(',').filter(item => !!item) : [];
+      if (seller_id && seller_list && seller_list.length > 0) {
+        seller = seller_list.find(item => item.id.toString() === seller_id.toString());
+        let categories_data;
+        if (seller) {
+          if (seller.is_data_manually_added) {
+            seller_skus = await this.modals.sku_seller.findAll({ where: { seller_id } });
+          } else {
+            categories_data = await this.modals.seller_provider_type.findAll({
+              where: JSON.parse(JSON.stringify({
+                seller_id, provider_type_id: 1,
+                sub_category_id: main_category_id.length > 0 ? main_category_id : undefined,
+                category_brands: category_id.length > 0 ? {
+                  $contains: [category_id.map(item => ({
+                    'category_4_id': parseInt(item || 0)
+                  }))]
+                } : undefined
+              })),
+              attributes: ['sub_category_id', 'category_brands', 'seller_id', 'provider_type_id', 'category_4_id', 'brand_ids']
+            });
+            seller_categories = categories_data.map(item => item.toJSON());
+          }
+        }
+      }
+
+      const seller_main_categories = seller_categories.map(item => ({
+        main_category_id: item.sub_category_id,
+        $or: item.category_brands.length > 0 ? item.category_brands.map(cbItem => ({
+          category_id: cbItem.category_4_id,
+          brand_id: cbItem.brand_ids && cbItem.brand_ids.length > 0 ? cbItem.brand_ids : undefined
+        })) : undefined
+      }));
+      const seller_sku_ids = seller_skus.map(item => item.sku_id);
+      const seller_sku_measurement_ids = seller_skus.map(item => item.sku_measurement_id);
+      title = { $iLike: `%${title || ''}%` };
+      limit = limit || 100;
+      offset = offset || 0;
+      measurement_values = (measurement_values || '').trim().split(',').filter(item => !!item);
+      measurement_types = (measurement_types || '').trim().split(',').filter(item => !!item);
+      const sku_measurement_attributes = {
+        exclude: location && location.toLowerCase() === 'other' || !location ? ['status_type', 'updated_by', 'updated_at', 'created_at', 'cashback_percent', 'discount_percent'] : ['status_type', 'updated_by', 'updated_at', 'created_at', 'discount_percent']
+      };
+      const sku_attributes = [[this.modals.sequelize.literal('(select category_name from categories as category where category.category_id = sku.sub_category_id)'), 'sub_category_name'], 'brand_id', 'category_id', 'sub_category_id', 'main_category_id', 'title', 'id', 'priority_index'];
+      const sku_options = seller_main_categories.length > 0 ? {
+        status_type: 1, $or: seller_main_categories,
+        brand_id: brand_ids.length > 0 ? brand_ids : undefined,
+        sub_category_id: sub_category_ids.length > 0 ? sub_category_ids : undefined, title,
+        id: id ? id : seller_sku_ids && seller_sku_ids.length > 0 ? seller_sku_ids : undefined
+      } : {
+        status_type: 1,
+        main_category_id: main_category_id.length > 0 ? main_category_id : undefined,
+        category_id: category_id.length > 0 ? category_id : undefined,
+        brand_id: brand_ids.length > 0 ? brand_ids : undefined,
+        sub_category_id: sub_category_ids.length > 0 ? sub_category_ids : undefined, title,
+        id: id ? id : seller_sku_ids && seller_sku_ids.length > 0 ? seller_sku_ids : undefined
+      };
+      const sku_brand_options = seller_main_categories.length > 0 ? {
+        status_type: 1, $or: seller_main_categories,
+        sub_category_id: sub_category_ids.length > 0 ? sub_category_ids : undefined, title,
+        id: id ? id : seller_sku_ids && seller_sku_ids.length > 0 ? seller_sku_ids : undefined
+      } : {
+        status_type: 1,
+        main_category_id: main_category_id.length > 0 ? main_category_id : undefined,
+        category_id: category_id.length > 0 ? category_id : undefined,
+        sub_category_id: sub_category_ids.length > 0 ? sub_category_ids : undefined, title,
+        id: id ? id : seller_sku_ids && seller_sku_ids.length > 0 ? seller_sku_ids : undefined
+      };
+      const [skuItems, sku_ids] = await _bluebird2.default.all([this.modals.sku.findAll({
+        where: JSON.parse(JSON.stringify(sku_options)),
+        include: [{
+          model: this.modals.sku_measurement,
+          where: JSON.parse(JSON.stringify({
+            status_type: 1,
+            id: seller_sku_measurement_ids && seller_sku_measurement_ids.length > 0 ? seller_sku_measurement_ids : undefined,
+            measurement_value: measurement_values.length > 0 ? measurement_values : undefined,
+            measurement_type: measurement_types.length > 0 ? measurement_types : undefined,
+            bar_code
+          })),
+          attributes: sku_measurement_attributes,
+          required: false
+        }], order: [['priority_index'], ['title']], limit, offset,
+        attributes: sku_attributes
+      }), this.modals.sku.findAll({
+        where: JSON.parse(JSON.stringify(sku_brand_options)),
+        attributes: ['brand_id'], order: [['id']]
+      })]);
+
+      const brands = await this.modals.brands.findAll({
+        order: [['brand_index'], ['brand_name']], where: {
+          brand_id: _lodash2.default.uniq(sku_ids.map(item => {
+            item = item.toJSON();
+            return item.brand_id;
+          }))
+        }, attributes: [['brand_id', 'id'], ['brand_name', 'title']]
+      });
+
+      return {
+        sku_items: skuItems.map(item => item.toJSON()).filter(item => item.sku_measurements && item.sku_measurements.length > 0).map(item => {
+          item.sku_measurements = _lodash2.default.sortBy(item.sku_measurements, [measureItem => {
+            switch (measureItem.measurement_type) {
+              case 2:
+                return parseFloat(measureItem.measurement_value || 0) * 1000;
+              case 4:
+                return parseFloat(measureItem.measurement_value || 0) * 1000;
+              case 11:
+                return parseFloat(measureItem.measurement_value || 0) / 1000;
+              default:
+                return parseFloat(measureItem.measurement_value || 0);
+            }
+          }]);
+          return item;
+        }),
+        brands: brands.map(item => item.toJSON())
+      };
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  async retrieveSellerSKUs(options) {
+    try {
+      const { queryOptions, seller_list } = options;
+      let { main_category_id, category_id, brand_ids, sub_category_ids, measurement_values, measurement_types, bar_code, title, limit, offset, id, seller_id, sku_id } = queryOptions || {};
       let seller,
           seller_skus = [],
           seller_categories = [];
@@ -82,40 +211,33 @@ class ShopEarnAdaptor {
       const seller_sku_ids = seller_skus.map(item => item.sku_id);
       const seller_sku_measurement_ids = seller_skus.map(item => item.sku_measurement_id);
       title = { $iLike: `%${title || ''}%` };
-      limit = limit || 50;
+      limit = limit || 100;
       offset = offset || 0;
       sub_category_ids = (sub_category_ids || '').trim().split(',').filter(item => !!item);
       measurement_values = (measurement_values || '').trim().split(',').filter(item => !!item);
       measurement_types = (measurement_types || '').trim().split(',').filter(item => !!item);
-      const sku_measurement_attributes = {
-        exclude: location && location.toLowerCase() === 'other' || !location ? ['status_type', 'updated_by', 'updated_at', 'created_at', 'cashback_percent'] : ['status_type', 'updated_by', 'updated_at', 'created_at']
-      };
-      console.log(location);
+      const sku_measurement_attributes = ['id', 'pack_numbers', 'measurement_type', 'measurement_value', [this.modals.sequelize.literal('(select acronym from table_sku_measurement as measurement where measurement.id = "sku_measurements".measurement_type)'), 'measurement_acronym'], 'mrp', 'bar_code', 'cashback_percent'];
+      const sku_attributes = [[this.modals.sequelize.literal('(select category_name from categories as category where category.category_id = sku.sub_category_id)'), 'sub_category_name'], 'brand_id', 'category_id', 'sub_category_id', 'main_category_id', 'title', 'id', 'priority_index'];
       const sku_options = seller_main_categories.length > 0 ? {
         status_type: 1, $or: seller_main_categories,
         brand_id: brand_ids.length > 0 ? brand_ids : undefined,
-        sub_category_id: sub_category_ids.length > 0 ? sub_category_ids : undefined, title,
-        id: id ? id : seller_sku_ids && seller_sku_ids.length > 0 ? seller_sku_ids : undefined
+        sub_category_id: sub_category_ids.length > 0 ? sub_category_ids : undefined, title, id: {
+          $and: {
+            $in: seller_sku_ids && seller_sku_ids.length > 0 ? seller_sku_ids : undefined, $ne: sku_id
+          }
+        }
       } : {
         status_type: 1,
         main_category_id: main_category_id.length > 0 ? main_category_id : undefined,
         category_id: category_id.length > 0 ? category_id : undefined,
         brand_id: brand_ids.length > 0 ? brand_ids : undefined,
-        sub_category_id: sub_category_ids.length > 0 ? sub_category_ids : undefined, title,
-        id: id ? id : seller_sku_ids && seller_sku_ids.length > 0 ? seller_sku_ids : undefined
+        sub_category_id: sub_category_ids.length > 0 ? sub_category_ids : undefined, title, id: {
+          $and: {
+            $in: seller_sku_ids && seller_sku_ids.length > 0 ? seller_sku_ids : undefined, $ne: sku_id
+          }
+        }
       };
-      const sku_brand_options = seller_main_categories.length > 0 ? {
-        status_type: 1, $or: seller_main_categories,
-        sub_category_id: sub_category_ids.length > 0 ? sub_category_ids : undefined, title,
-        id: id ? id : seller_sku_ids && seller_sku_ids.length > 0 ? seller_sku_ids : undefined
-      } : {
-        status_type: 1,
-        main_category_id: main_category_id.length > 0 ? main_category_id : undefined,
-        category_id: category_id.length > 0 ? category_id : undefined,
-        sub_category_id: sub_category_ids.length > 0 ? sub_category_ids : undefined, title,
-        id: id ? id : seller_sku_ids && seller_sku_ids.length > 0 ? seller_sku_ids : undefined
-      };
-      const [skuItems, sku_ids] = await _bluebird2.default.all([this.modals.sku.findAll({
+      const skuItems = await this.modals.sku.findAll({
         where: JSON.parse(JSON.stringify(sku_options)),
         include: [{
           model: this.modals.sku_measurement,
@@ -128,44 +250,25 @@ class ShopEarnAdaptor {
           })),
           attributes: sku_measurement_attributes,
           required: false
-        }],
-        order: [['id']],
-        attributes: sku_measurement_attributes,
-        limit,
-        offset
-      }), this.modals.sku.findAll({
-        where: JSON.parse(JSON.stringify(sku_brand_options)),
-        attributes: ['brand_id'],
-        order: [['id']]
-      })]);
-
-      const brands = await this.modals.brands.findAll({
-        order: [['brand_name']], where: {
-          brand_id: _lodash2.default.uniq(sku_ids.map(item => {
-            item = item.toJSON();
-            return item.brand_id;
-          }))
-        }, attributes: [['brand_id', 'id'], ['brand_name', 'title'], 'category_ids']
+        }], order: [['priority_index'], ['title']], limit, offset,
+        attributes: sku_attributes
       });
 
-      return {
-        sku_items: skuItems.map(item => item.toJSON()).filter(item => item.sku_measurements && item.sku_measurements.length > 0).map(item => {
-          item.sku_measurements = _lodash2.default.sortBy(item.sku_measurements, [measureItem => {
-            switch (measureItem.measurement_type) {
-              case 2:
-                return parseFloat(measureItem.measurement_value || 0) * 1000;
-              case 4:
-                return parseFloat(measureItem.measurement_value || 0) * 1000;
-              case 11:
-                return parseFloat(measureItem.measurement_value || 0) / 1000;
-              default:
-                return parseFloat(measureItem.measurement_value || 0);
-            }
-          }]);
-          return item;
-        }),
-        brands: brands.map(item => item.toJSON())
-      };
+      return skuItems.map(item => item.toJSON()).filter(item => item.sku_measurements && item.sku_measurements.length > 0).map(item => {
+        item.sku_measurements = _lodash2.default.sortBy(item.sku_measurements, [measureItem => {
+          switch (measureItem.measurement_type) {
+            case 2:
+              return parseFloat(measureItem.measurement_value || 0) * 1000;
+            case 4:
+              return parseFloat(measureItem.measurement_value || 0) * 1000;
+            case 11:
+              return parseFloat(measureItem.measurement_value || 0) / 1000;
+            default:
+              return parseFloat(measureItem.measurement_value || 0);
+          }
+        }]);
+        return item;
+      });
     } catch (e) {
       throw e;
     }
@@ -282,6 +385,11 @@ class ShopEarnAdaptor {
     return skuMeasurements.map(item => item.toJSON());
   }
 
+  async retrieveSKUMeasurement(options) {
+    let skuMeasurements = await this.modals.sku_measurement.findOne(options);
+    return skuMeasurements ? skuMeasurements.toJSON() : undefined;
+  }
+
   async retrieveReferenceData() {
     try {
       let [main_categories, categories, sub_categories, measurement_types] = await _bluebird2.default.all([this.modals.categories.findAll({
@@ -307,7 +415,7 @@ class ShopEarnAdaptor {
           category_ids: {
             $contains: [{ 'category_id': item.id }]
           }
-        }
+        }, order: [['brand_index'], ['brand_name']]
       })));
       categories = categories.map((item, index) => {
         item.sub_categories = sub_categories.filter(bItem => bItem.ref_id === item.id);
@@ -386,9 +494,11 @@ class ShopEarnAdaptor {
   async retrieveCashBackTransactions(options) {
     try {
       const { user_id, seller_id } = options;
-      const [reasons, transaction_detail] = await _bluebird2.default.all([this.categoryAdapter.retrieveReasons({ where: { query_type: 1 }, order: [['id']] }), this.modals.cashback_jobs.findAll({
-        where: JSON.parse(JSON.stringify({ seller_id, user_id, admin_status: { $ne: 2 } })),
-        include: {
+      const [reasons, transaction_detail] = await _bluebird2.default.all([this.categoryAdapter.retrieveReasons({ where: { query_type: [1, 3] }, order: [['id']] }), this.modals.cashback_jobs.findAll({
+        where: JSON.parse(JSON.stringify({
+          seller_id, user_id, $or: [{ admin_status: { $notIn: [2, 9] } }, { $and: { admin_status: { $eq: 9 }, reason_id: { $not: null } } }]
+        })),
+        include: [{
           model: this.modals.expense_sku_items,
           include: [{
             model: this.modals.sku,
@@ -402,9 +512,12 @@ class ShopEarnAdaptor {
             attributes: ['measurement_value', 'pack_numbers', 'cashback_percent', 'bar_code']
           }],
           attributes: ['sku_id', 'sku_measurement_id', 'selling_price', 'quantity', 'available_cashback', 'timely_added']
-        },
-        attributes: ['id', 'admin_status', 'ce_status', 'home_delivered', 'cashback_status', 'seller_status', 'copies', [this.modals.sequelize.literal(`(select sum(purchase_cost) from consumer_products as product where product.user_id = "cashback_jobs"."user_id" and product.job_id = "cashback_jobs"."job_id")`), 'amount_paid'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where seller_credit.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 1 and seller_credit.user_id = "cashback_jobs"."user_id")`), 'total_credits'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where seller_credit.job_id = "cashback_jobs"."id" and (status_type in (14) or (status_type in (16) and transaction_type = 2)) and seller_credit.user_id = "cashback_jobs"."user_id")`), 'redeemed_credits'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_loyalty as loyalty_wallet where loyalty_wallet.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 1 and loyalty_wallet.user_id = "cashback_jobs"."user_id")`), 'total_loyalty'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_loyalty as loyalty_wallet where loyalty_wallet.job_id = "cashback_jobs"."id" and (status_type in (14) or (status_type in (16) and transaction_type = 2)) and loyalty_wallet.user_id = "cashback_jobs"."user_id")`), 'redeemed_loyalty'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_user_cashback as user_wallet where user_wallet.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 1 and user_wallet.user_id = "cashback_jobs"."user_id")`), 'total_cashback'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_user_cashback as user_wallet where user_wallet.job_id = "cashback_jobs"."id" and status_type in (14) and user_wallet.user_id = "cashback_jobs"."user_id")`), 'redeemed_cashback'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_user_cashback as user_wallet where user_wallet.job_id = "cashback_jobs"."id" and status_type in (13) and transaction_type = 1 and user_wallet.user_id = "cashback_jobs"."user_id")`), 'pending_cashback'], [this.modals.sequelize.literal(`(select count(*) from table_expense_sku as expense_skus where expense_skus.user_id = "cashback_jobs"."user_id" and expense_skus.job_id = "cashback_jobs"."id" )`), 'item_counts'], 'reason_id', 'verified_seller', 'digitally_verified'],
-        order: [['id', 'desc'], ['updated_at', 'desc']]
+        }, {
+          model: this.modals.user_wallet,
+          attributes: ['seller_id', 'amount', 'transaction_type', 'cashback_source', 'is_paytm', 'status_type']
+        }],
+        attributes: ['id', 'admin_status', 'ce_status', 'home_delivered', 'cashback_status', 'seller_status', 'copies', [this.modals.sequelize.literal(`(select sum(purchase_cost) from consumer_products as product where product.user_id = "cashback_jobs"."user_id" and product.job_id = "cashback_jobs"."job_id")`), 'amount_paid'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where seller_credit.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 1 and seller_credit.user_id = "cashback_jobs"."user_id")`), 'total_credits'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where seller_credit.job_id = "cashback_jobs"."id" and (status_type in (14) or (status_type in (16) and transaction_type = 2)) and seller_credit.user_id = "cashback_jobs"."user_id")`), 'redeemed_credits'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_loyalty as loyalty_wallet where loyalty_wallet.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 1 and loyalty_wallet.user_id = "cashback_jobs"."user_id")`), 'total_loyalty'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_loyalty as loyalty_wallet where loyalty_wallet.job_id = "cashback_jobs"."id" and (status_type in (14) or (status_type in (16) and transaction_type = 2)) and loyalty_wallet.user_id = "cashback_jobs"."user_id")`), 'redeemed_loyalty'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_user_cashback as user_wallet where user_wallet.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 1 and user_wallet.user_id = "cashback_jobs"."user_id")`), 'total_cashback'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_user_cashback as user_wallet where user_wallet.job_id = "cashback_jobs"."id" and status_type in (14) and user_wallet.user_id = "cashback_jobs"."user_id")`), 'redeemed_cashback'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_user_cashback as user_wallet where user_wallet.job_id = "cashback_jobs"."id" and status_type in (13) and transaction_type = 1 and user_wallet.user_id = "cashback_jobs"."user_id")`), 'pending_cashback'], [this.modals.sequelize.literal(`(select count(*) from table_expense_sku as expense_skus where expense_skus.user_id = "cashback_jobs"."user_id" and expense_skus.job_id = "cashback_jobs"."id" )`), 'item_counts'], 'created_at', 'updated_at', 'reason_id', 'verified_seller', 'digitally_verified'],
+        order: [['updated_at', 'desc'], ['id', 'desc']]
       })]);
       return transaction_detail.map(item => {
         item = item.toJSON();
@@ -421,6 +534,13 @@ class ShopEarnAdaptor {
         item.redeemed_credits = item.redeemed_credits || 0;
         item.redeemed_loyalty = item.redeemed_loyalty || 0;
         item.pending_cashback = item.pending_cashback || 0;
+        if (item.user_wallet && item.user_wallet.length > 0) {
+          item.fixed_cashback = item.user_wallet.find(item => !item.seller_id);
+        }
+
+        if (item.user_wallet && item.user_wallet.length > 0) {
+          item.seller_cashback = item.user_wallet.find(item => item.seller_id);
+        }
 
         if (!item.verified_seller && !item.digitally_verified) {
           item.expense_sku_items = item.expense_sku_items.filter(esItem => esItem.timely_added);
@@ -456,10 +576,9 @@ class ShopEarnAdaptor {
                 if (verified_seller || digitally_verified) {
                   item.status_message = `You have Received Cashback "₹${total_cashback}" `;
                 } else {
-                  item.status_message = `We have credited "₹${total_cashback}" in your Wallet. You have received Cashback for the mentioned items as you had added these items in your Shopping List before you went shopping! `;
+                  item.status_message = `You have received "₹${total_cashback}" cashback on your bill. To avail Cashback on FMCG items, please complete your Bill Verification Process through either of the following steps: \n\n\t\t 1) Add Your Seller in the BinBill Network so he can verify your Bills.\n\t\t2) Create your Shopping List in our Shop & Earn section before uploading your Shopping Bills.\n\t\t3) Make a Digital Bill Payments.`;
                 }
                 break;
-
               default:
                 switch (seller_status) {
                   case 13:
@@ -470,7 +589,7 @@ class ShopEarnAdaptor {
                     item.status_message = `You have Received Cashback "₹${total_cashback}".`;
                     break;
                   case 18:
-                    item.status_message = `Your claim for cashback has been rejected by the seller. You have received the fixed BinBill Cashback.`;
+                    item.status_message = `Your claim for cashback has been rejected by the seller. You have received "₹${(item.fixed_cashback || { amount: 0 }).amount}" the fixed BinBill Cashback.`;
                     break;
                   default:
                     item.status_message = `Your claim for cashback has been cancelled as your seller hasn't taken any action.`;
@@ -746,9 +865,14 @@ class ShopEarnAdaptor {
     }
   }
 
-  async retrieveSKUData(parameters) {
+  async retrieveSKUData(options) {
     const result = await this.modals.sku.findAll(options);
     return result.map(item => item.toJSON());
+  }
+
+  async retrieveSKU(options) {
+    const result = await this.modals.sku.findOne(options);
+    return result ? result.toJSON() : undefined;
   }
 
   async retrieveUserSKUs(options) {

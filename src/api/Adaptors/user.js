@@ -172,7 +172,11 @@ class UserAdaptor {
             this.modals.sequelize.literal(
                 `(Select sum(amount) from table_wallet_user_cashback where user_id = ${user.id ||
                 user.ID} and status_type in (16) group by user_id)`),
-            'wallet_value']],
+            'wallet_value'], [
+            this.modals.sequelize.literal(
+                `(Select sum(amount) from table_wallet_user_cashback where user_id = ${user.id ||
+                user.ID} and status_type in (16,13,14) and transaction_type = 2 group by user_id)`),
+            'redeemed_value']],
       }),
       this.retrieveUserAddresses({
         where: JSON.parse(
@@ -187,6 +191,7 @@ class UserAdaptor {
       user.addresses = result[1].map(item => item.toJSON());
       user.hasPin = !!(user.password);
       user = _.omit(user, 'password');
+      user.wallet_value = (user.wallet_value || 0) - (user.redeemed_value || 0);
       return JSON.parse(JSON.stringify(user));
     }
 

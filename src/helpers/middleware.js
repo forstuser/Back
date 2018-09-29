@@ -7,14 +7,14 @@ import Promise from 'bluebird';
 import {comparePasswords, hashPassword} from './password';
 
 const checkAppVersion = async (request, reply) => {
-  if (request.headers.app_version !== undefined ||
-      request.headers.ios_app_version !== undefined) {
-    const appVersion = request.headers.ios_app_version ||
-        request.headers.app_version;
+  if (request.headers['app-version'] !== undefined ||
+      request.headers['ios-app-version'] !== undefined) {
+    const appVersion = request.headers['ios-app-version'] ||
+        request.headers['app-version'];
     const currentAppVersion = (!isNaN(parseInt(appVersion)) ?
         parseInt(appVersion) : null);
 
-    const appVersionDetail = (request.headers.ios_app_version ?
+    const appVersionDetail = (request.headers['ios-app-version'] ?
         config.IOS : config.ANDROID);
     if (appVersionDetail && currentAppVersion) {
       const FORCE_VERSION = appVersionDetail.FORCE_VERSION;
@@ -32,6 +32,34 @@ const checkAppVersion = async (request, reply) => {
   console.log('App Version not in Headers');
   return null;
 };
+const logSellerAction = async (request, reply) => {
+  const user = shared.verifyAuthorization(request.headers);
+  if (!user) {
+    return null;
+  }
+  try {
+    const id = user.id;
+    const userResult = await retrieveSellerUser({
+      where: {id},
+      attributes: ['id'],
+    });
+    const {method, url, params, query, headers, payload} = request;
+    if (userResult) {
+      await MODAL.logs.create({
+        api_action: method,
+        api_path: url.pathname,
+        log_type: 1, seller_user_id: id,
+        log_content: JSON.stringify({params, query, headers, payload}),
+      });
+      return true;
+    }
+
+    return false;
+  } catch (e) {
+    console.log(
+        `Error on ${moment()} for seller user ${user.id} is as follow: \n \n ${e}`);
+  }
+};
 
 const updateUserActiveStatus = async (request, reply) => {
   const user = shared.verifyAuthorization(request.headers);
@@ -43,11 +71,14 @@ const updateUserActiveStatus = async (request, reply) => {
   }
   try {
     const id = user.id || user.ID;
-    const userResult = await retrieveUser({where: {id}, attributes: ['id', 'last_active_date', 'last_api', 'password']});
+    const userResult = await retrieveUser({
+      where: {id},
+      attributes: ['id', 'last_active_date', 'last_api', 'password'],
+    });
     const userDetail = userResult ? userResult.toJSON() : userResult;
     request.user = userDetail || user;
     const {url, headers} = request;
-    const {ios_app_version: ios_version} = headers;
+    const {'ios-app-version': ios_version} = headers;
     const {pathname} = url;
     const excludedPaths = [
       '/consumer/otp/send', '/consumer/otp/validate',
@@ -152,7 +183,7 @@ const updateUserPIN = async (request, reply) => {
     const userResult = await retrieveUser({where: {id}});
     if (userResult) {
       console.log(
-          `Last route ${request.url.pathname} accessed by user id ${id} from ${request.headers.ios_app_version ?
+          `Last route ${request.url.pathname} accessed by user id ${id} from ${request.headers['ios-app-version'] ?
               'iOS' : 'android'}`);
       request.user = userResult;
       const currentUser = request.user.toJSON();
@@ -186,7 +217,7 @@ const verifyUserPIN = async (request, reply) => {
     const userResult = await retrieveUser({where: {id}});
     if (userResult) {
       console.log(
-          `Last route ${request.url.pathname} accessed by user id ${id} from ${request.headers.ios_app_version ?
+          `Last route ${request.url.pathname} accessed by user id ${id} from ${request.headers['ios-app-version'] ?
               'iOS' : 'android'}`);
       request.user = userResult;
       const currentUser = request.user.toJSON();
@@ -215,6 +246,11 @@ async function retrieveUser(option) {
   return await MODAL.users.findOne(option);
 }
 
+async function retrieveSellerUser(option) {
+  console.log('We are here');
+  return await MODAL.seller_users.findOne(option);
+}
+
 const verifyUserOTP = async (request, reply) => {
   const user = shared.verifyAuthorization(request.headers);
   if (!user) {
@@ -226,7 +262,7 @@ const verifyUserOTP = async (request, reply) => {
     if (userResult) {
       console.log(
           `Last route ${request.url.pathname} accessed by user id ${user.id ||
-          user.ID} from ${request.headers.ios_app_version ? 'iOS' :
+          user.ID} from ${request.headers['ios-app-version'] ? 'iOS' :
               'android'}`);
       request.user = userResult;
       const currentUser = request.user.toJSON();
@@ -282,7 +318,7 @@ const verifyUserEmail = async (request, reply) => {
           const userDetail = userResult ? userResult.toJSON() : userResult;
           console.log(
               `Last route ${request.url.pathname} accessed by user id ${user.id ||
-              user.ID} from ${request.headers.ios_app_version ? 'iOS' :
+              user.ID} from ${request.headers['ios-app-version'] ? 'iOS' :
                   'android'}`);
           if (userDetail) {
             request.user = userDetail;
@@ -316,9 +352,9 @@ const verifyUserEmail = async (request, reply) => {
 };
 
 const checkForAppUpdate = async (request, reply) => {
-  if (request.headers.app_version !== undefined ||
-      request.headers.ios_app_version !== undefined) {
-    const id = request.headers.ios_app_version ? 2 : 1;
+  if (request.headers['app-version'] !== undefined ||
+      request.headers['ios-app-version'] !== undefined) {
+    const id = request.headers['ios-app-version'] ? 2 : 1;
     const result = await MODAL.appVersion.findOne({
       where: {id}, order: [['updatedAt', 'DESC']],
       attributes: [
@@ -341,6 +377,6 @@ export default (models) => {
     verifyUserPIN, updateUserPIN,
     hasMultipleAccounts, verifyUserEmail,
     verifyUserOTP, hasSellerMultipleAccounts,
-    checkForAppUpdate,
+    checkForAppUpdate, logSellerAction,
   };
 };

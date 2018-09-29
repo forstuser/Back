@@ -21,6 +21,10 @@ exports.default = (sequelize, DataTypes) => {
     profile_image_detail: {
       type: DataTypes.JSONB
     },
+    is_verified: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
     updated_by: {
       type: DataTypes.INTEGER,
       defaultValue: 1

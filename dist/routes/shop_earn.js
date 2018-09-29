@@ -158,7 +158,9 @@ function prepareShopEarnRoute(modal, route, middleware, socket) {
             'title': _joi2.default.string().required(),
             'hsn_code': [_joi2.default.string(), _joi2.default.allow(null)],
             'added_date': [_joi2.default.string(), _joi2.default.allow(null)],
+            'sub_category_name': [_joi2.default.string(), _joi2.default.allow(null)],
             'mrp': [_joi2.default.number(), _joi2.default.allow(null)],
+            'priority_index': [_joi2.default.number(), _joi2.default.allow(null)],
             'quantity': _joi2.default.number().required(),
             'created_at': [_joi2.default.string(), _joi2.default.allow(null)],
             'sku_measurement': [_joi2.default.object().keys({
@@ -199,9 +201,11 @@ function prepareShopEarnRoute(modal, route, middleware, socket) {
             'main_category_id': [_joi2.default.number(), _joi2.default.allow(null)],
             'category_id': [_joi2.default.number(), _joi2.default.allow(null)],
             'sub_category_id': [_joi2.default.number(), _joi2.default.allow(null)],
+            'sub_category_name': [_joi2.default.string(), _joi2.default.allow(null)],
             'title': _joi2.default.string().required(),
             'hsn_code': [_joi2.default.string(), _joi2.default.allow(null)],
             'mrp': [_joi2.default.number(), _joi2.default.allow(null)],
+            'priority_index': [_joi2.default.number(), _joi2.default.allow(null)],
             'quantity': _joi2.default.number().required(),
             'added_date': [_joi2.default.string(), _joi2.default.allow(null)],
             'sku_measurement': [_joi2.default.object().keys({
@@ -459,6 +463,16 @@ function prepareShopEarnRoute(modal, route, middleware, socket) {
         method: middleware.checkAppVersion,
         assign: 'forceUpdate'
       }], handler: _shop_earn2.default.retrieveSKUMeasurements
+    }
+  });
+
+  route.push({
+    method: 'GET',
+    path: '/sellers/skus/{sku_id}',
+    config: {
+      auth: 'jwt',
+      pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
+      handler: _shop_earn2.default.getSKUSuggestions
     }
   });
 }

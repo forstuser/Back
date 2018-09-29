@@ -45,6 +45,10 @@ var _lodash = require('lodash');
 
 var _lodash2 = _interopRequireDefault(_lodash);
 
+var _main = require('../../config/main');
+
+var _main2 = _interopRequireDefault(_main);
+
 var _notification = require('../Adaptors/notification');
 
 var _notification2 = _interopRequireDefault(_notification);
@@ -70,15 +74,13 @@ class ShopEarnController {
     if (request.pre.userExist && !request.pre.forceUpdate) {
       // this is where make us of adapter
       try {
-        const result = await modals.user_index.findOne({
-          where: { user_id: user.id || user.ID }, attributes: [[modals.sequelize.literal('(Select location from users as "user" where "user".id = "user_index".user_id)'), 'location'], 'my_seller_ids', ['user_id', 'id']]
+        const result = await modals.users.findOne({
+          where: { id: user.id || user.ID }, attributes: [[modals.sequelize.literal('(Select my_seller_ids from table_user_index as "user_index" where "users".id = "user_index".user_id)'), 'my_seller_ids'], 'location', 'id']
         });
         user = result ? result.toJSON() : user;
         const seller_list = user.my_seller_ids ? await sellerAdaptor.retrieveSellersOnInit({
           where: {
-            id: user.my_seller_ids,
-            is_onboarded: true,
-            is_fmcg: true
+            id: user.my_seller_ids, is_onboarded: true, is_fmcg: true
           },
           attributes: ['id', 'seller_name', 'seller_type_id', 'address', 'is_data_manually_added', [modals.sequelize.literal(`(Select count(*) from table_seller_provider_types as provider_type where provider_type.seller_id = sellers.id)`), 'provider_counts'], [modals.sequelize.literal(`(Select count(*) from table_sku_seller_mapping as sku_seller where sku_seller.seller_id = sellers.id)`), 'sku_seller_counts']]
         }) : undefined;
@@ -88,6 +90,7 @@ class ShopEarnController {
         });
         return reply.response({
           status: true, result: sku_result,
+          max_wish_list_items: _main2.default.MAX_WISH_LIST_ITEMS,
           seller_list: (seller_list || []).filter(item => parseInt(item.provider_counts || 0) > 0 || parseInt(item.sku_seller_counts || 0) > 0 || item.is_data_manually_added)
         });
       } catch (err) {
@@ -97,6 +100,57 @@ class ShopEarnController {
           api_path: request.url.pathname,
           log_type: 2,
           user_id: user && !user.seller_details ? user.id || user.ID : undefined,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err
+          })
+        }).catch(ex => console.log('error while logging on db,', ex));
+        return reply.response({
+          status: false,
+          message: 'Unable to retrieve SKU list'
+        });
+      }
+    } else {
+      return _shared2.default.preValidation(request.pre, reply);
+    }
+  }
+
+  static async getSKUSuggestions(request, reply) {
+    let user = _shared2.default.verifyAuthorization(request.headers);
+    if (!request.pre.forceUpdate) {
+      // this is where make us of adapter
+      try {
+        request.params.seller_id = user.seller_id;
+        const seller_id = request.params.seller_id;
+        const [seller_list, sku_items] = await _bluebird2.default.all([sellerAdaptor.retrieveSellersOnInit({
+          where: { id: seller_id },
+          attributes: ['id', 'seller_name', 'seller_type_id', 'address', 'is_data_manually_added', [modals.sequelize.literal(`(Select count(*) from table_seller_provider_types as provider_type where provider_type.seller_id = sellers.id)`), 'provider_counts'], [modals.sequelize.literal(`(Select count(*) from table_sku_seller_mapping as sku_seller where sku_seller.seller_id = sellers.id)`), 'sku_seller_counts']]
+        }), shopEarnAdaptor.retrieveSKUData({
+          where: { id: request.params.sku_id },
+          attributes: ['sub_category_id', 'category_id', 'main_category_id']
+        })]);
+        const sku_item = sku_items[0];
+        request.params.category_id = sku_item.category_id.toString();
+        request.params.main_category_id = sku_item.main_category_id.toString();
+        request.params.sub_category_ids = sku_item.sub_category_id.toString();
+        request.params.limit = request.query.limit;
+        request.params.offset = request.query.offset;
+        const sku_result = await shopEarnAdaptor.retrieveSellerSKUs({
+          queryOptions: request.params, seller_list
+        });
+        return reply.response({
+          status: true, result: sku_result
+        });
+      } catch (err) {
+        console.log(`Error on ${new Date()} for seller user ${user.id} is as follow: \n \n ${err}`);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          seller_user_id: user.id,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -687,7 +741,14 @@ class ShopEarnController {
                 $between: [startOfDay, endOfDay]
               }
             }, attributes: [[modals.sequelize.literal('sum(amount)'), 'total_amount']], group: 'user_id'
-          }), categoryAdaptor.retrieveLimitRules({ where: { user_id: seller_cashback.user_id } }), categoryAdaptor.retrieveLimitRules({ where: { user_id: 1 } })]);
+          }), categoryAdaptor.retrieveLimitRules({
+            where: {
+              $or: {
+                user_id: seller_cashback.user_id,
+                seller_id
+              }
+            }
+          }), categoryAdaptor.retrieveLimitRules({ where: { user_id: 1 } })]);
 
           const cash_back_month = user_cash_back_month ? user_cash_back_month.total_amount : 0;
           const cash_back_day = user_cash_back_day ? user_cash_back_day.total_amount : 0;
@@ -755,7 +816,10 @@ class ShopEarnController {
             status: true,
             result: await _bluebird2.default.all([jobAdaptor.approveSellerCashBack({ job_id, status_type: 18, seller_id }), jobAdaptor.approveUserCashBack({ job_id, status_type: 18, seller_id }), jobAdaptor.updateCashBackJobs({
               id: job_id, reason_id, seller_id,
-              jobDetail: { seller_status: 18, reason_id, seller_id }
+              jobDetail: {
+                seller_status: 18,
+                cashback_status: 18, reason_id, seller_id
+              }
             }), home_delivered ? jobAdaptor.approveHomeDeliveryCashback({
               job_id, status_type: 18, seller_id,
               jobDetail: { status_type: 18, seller_id }
@@ -1060,7 +1124,7 @@ class ShopEarnController {
         const result = await shopEarnAdaptor.retrievePendingTransactions({ seller_id });
         return reply.response({
           status: true,
-          reasons: await categoryAdaptor.retrieveRejectReasons({}),
+          reasons: await categoryAdaptor.retrieveRejectReasons({ where: { query_type: 3 } }),
           result: result.filter(item => item.pending_cashback && item.cashback_id)
         });
       } catch (err) {

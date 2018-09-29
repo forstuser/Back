@@ -199,8 +199,8 @@ class EHomeAdaptor {
 
   async retrieveEHomeProducts(parameters) {
     let {user, type, brand_id, category_id, offline_seller_id, online_seller_id, sort_by, search_value, request, limit, offset} = parameters;
-    const main_category_id = type === 1 ? [1, 2, 3, 7] :
-        type === 2 ? [4, 5, 6, 8] : [9, 10];
+    const main_category_id = type === 1 ? [1, 2, 3] :
+        type === 2 ? [4, 5, 6, 7, 8] : [9, 10];
     try {
       let [categoryData, recent_searches] = await Promise.all([
         this.fetchEHomeProducts({

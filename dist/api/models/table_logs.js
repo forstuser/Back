@@ -9,6 +9,9 @@ exports.default = (sequelize, DataTypes) => {
     user_id: {
       type: DataTypes.INTEGER
     },
+    seller_user_id: {
+      type: DataTypes.INTEGER
+    },
     log_type: {
       type: DataTypes.INTEGER
     },
@@ -32,6 +35,7 @@ exports.default = (sequelize, DataTypes) => {
 
   logs.associate = models => {
     logs.belongsTo(models.users, { foreignKey: 'user_id', as: 'user' });
+    logs.belongsTo(models.seller_users, { foreignKey: 'seller_user_id', as: 'seller_user' });
   };
   return logs;
 };

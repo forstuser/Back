@@ -25,7 +25,7 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
       path: '/sellers/{seller_id}/orders/{id}',
       config: {
         auth: 'jwt',
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         handler: _order2.default.getOrderDetails
       }
     });
@@ -35,7 +35,7 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
       path: '/sellers/{seller_id}/orders',
       config: {
         auth: 'jwt',
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         handler: _order2.default.getOrderList
       }
     });
@@ -45,7 +45,7 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
       path: '/sellers/{seller_id}/orders/active',
       config: {
         auth: 'jwt',
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         handler: _order2.default.getActiveOrders
       }
     });
@@ -55,7 +55,7 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
       path: '/sellers/{seller_id}/assisted/past',
       config: {
         auth: 'jwt',
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         handler: _order2.default.getAssistedServiceList
       }
     });
@@ -65,7 +65,7 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
       path: '/sellers/{seller_id}/assisted/active',
       config: {
         auth: 'jwt',
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         handler: _order2.default.getActiveAssistedServices
       }
     });
@@ -75,10 +75,7 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
       method: 'GET',
       path: '/consumer/orders/{id}',
       config: {
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, {
-          method: middleware.updateUserActiveStatus,
-          assign: 'userExist'
-        }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.updateUserActiveStatus, assign: 'userExist' }],
         handler: _order2.default.getOrderDetails
       }
     });
@@ -87,10 +84,7 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
       method: 'GET',
       path: '/consumer/orders',
       config: {
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, {
-          method: middleware.updateUserActiveStatus,
-          assign: 'userExist'
-        }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.updateUserActiveStatus, assign: 'userExist' }],
         handler: _order2.default.getOrderList
       }
     });
@@ -99,10 +93,7 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
       method: 'GET',
       path: '/consumer/orders/active',
       config: {
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, {
-          method: middleware.updateUserActiveStatus,
-          assign: 'userExist'
-        }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.updateUserActiveStatus, assign: 'userExist' }],
         handler: _order2.default.getActiveOrders
       }
     });
@@ -111,10 +102,7 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
       method: 'GET',
       path: '/consumer/assisted/past',
       config: {
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, {
-          method: middleware.updateUserActiveStatus,
-          assign: 'userExist'
-        }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.updateUserActiveStatus, assign: 'userExist' }],
         handler: _order2.default.getAssistedServiceList
       }
     });
@@ -123,10 +111,7 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
       method: 'GET',
       path: '/consumer/assisted/active',
       config: {
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, {
-          method: middleware.updateUserActiveStatus,
-          assign: 'userExist'
-        }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.updateUserActiveStatus, assign: 'userExist' }],
         handler: _order2.default.getActiveAssistedServices
       }
     });
@@ -136,7 +121,7 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
       path: '/consumer/orders/{order_id}/approve',
       config: {
         auth: 'jwt',
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.updateUserActiveStatus, assign: 'userExist' }],
         handler: _order2.default.approveOrder,
         description: 'Approved order on behalf of Consumer.',
         validate: {
@@ -153,7 +138,7 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
       path: '/consumer/assisted/{order_id}/approve',
       config: {
         auth: 'jwt',
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.updateUserActiveStatus, assign: 'userExist' }],
         handler: _order2.default.approveOrder,
         description: 'Approved order on behalf of Consumer.',
         validate: {
@@ -170,7 +155,7 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
       path: '/consumer/assisted/{order_id}/start',
       config: {
         auth: 'jwt',
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.updateUserActiveStatus, assign: 'userExist' }],
         handler: _order2.default.startOrder,
         description: 'Start order on behalf of Consumer.',
         validate: {
@@ -187,7 +172,7 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
       path: '/consumer/assisted/{order_id}/end',
       config: {
         auth: 'jwt',
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.updateUserActiveStatus, assign: 'userExist' }],
         handler: _order2.default.endOrder,
         description: 'End order on behalf of Consumer.',
         validate: {
@@ -204,7 +189,7 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
       path: '/consumer/orders/{order_id}/reject',
       config: {
         auth: 'jwt',
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.updateUserActiveStatus, assign: 'userExist' }],
         handler: _order2.default.rejectOrderFromConsumer,
         description: 'Reject order on behalf of Consumer.',
         validate: {
@@ -220,7 +205,7 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
       path: '/consumer/orders/{order_id}/cancel',
       config: {
         auth: 'jwt',
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.updateUserActiveStatus, assign: 'userExist' }],
         handler: _order2.default.cancelOrderFromConsumer,
         description: 'Cancel order on behalf of Consumer.',
         validate: {
@@ -236,7 +221,7 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
       path: '/consumer/orders/{order_id}/paid',
       config: {
         auth: 'jwt',
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.updateUserActiveStatus, assign: 'userExist' }],
         handler: _order2.default.completeOrder,
         description: 'Complete order on behalf of Consumer.',
         validate: {
@@ -252,7 +237,7 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
       path: '/consumer/orders/place',
       config: {
         auth: 'jwt',
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, {
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.updateUserActiveStatus, assign: 'userExist' }, {
           method: middleware.updateUserActiveStatus,
           assign: 'userExist'
         }],
@@ -289,7 +274,7 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
       path: '/sellers/{seller_id}/orders/{order_id}/modify',
       config: {
         auth: 'jwt',
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         handler: _order2.default.modifyOrder,
         description: 'Modify order on behalf of Seller.',
         validate: {
@@ -301,12 +286,13 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
         }
       }
     });
+
     routeObject.push({
       method: 'PUT',
       path: '/sellers/{seller_id}/assisted/{order_id}/modify',
       config: {
         auth: 'jwt',
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         handler: _order2.default.modifyOrder,
         description: 'Modify order on behalf of Seller.',
         validate: {
@@ -324,7 +310,7 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
       path: '/sellers/{seller_id}/orders/{order_id}/approve',
       config: {
         auth: 'jwt',
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         handler: _order2.default.approveOrder,
         description: 'Approved order on behalf of Seller.',
         validate: {
@@ -341,7 +327,7 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
       path: '/sellers/{seller_id}/orders/{order_id}/reject',
       config: {
         auth: 'jwt',
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         handler: _order2.default.rejectOrderFromSeller,
         description: 'Reject order on behalf of Seller.',
         validate: {
@@ -357,7 +343,7 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
       path: '/sellers/{seller_id}/orders/{order_id}/outfordelivery',
       config: {
         auth: 'jwt',
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         handler: _order2.default.orderOutForDelivery,
         description: 'Approved order on behalf of Seller.',
         validate: {

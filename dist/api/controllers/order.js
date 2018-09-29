@@ -86,13 +86,21 @@ class OrderController {
 
           result.seller_review = result.seller_review[0];
           result.order_details = Array.isArray(result.order_details) ? result.order_details.map(item => {
+            item.uid = item.id;
             if (item.sku_measurement && item.sku_measurement.measurement_type) {
               const measurement_type = measurement_types.find(mtItem => mtItem.id.toString() === item.sku_measurement.measurement_type.toString());
               item.sku_measurement.measurement_acronym = measurement_type ? measurement_type.acronym : 'unit';
+              item.uid = `${item.uid}-${item.sku_measurement.id}`;
             }
             if (item.updated_measurement && item.updated_measurement.measurement_type) {
               const updated_measurement_type = measurement_types.find(mtItem => mtItem.id.toString() === item.updated_measurement.measurement_type.toString());
               item.updated_measurement.measurement_acronym = updated_measurement_type ? updated_measurement_type.acronym : 'unit';
+            }
+
+            item.unit_price = parseFloat((item.unit_price || 0).toString());
+            item.selling_price = item.selling_price && item.selling_price.toString() !== '0' ? parseFloat(item.selling_price.toString()) : parseFloat((item.unit_price * parseFloat(item.quantity)).toString());
+            if (item.updated_quantity) {
+              item.updated_selling_price = item.updated_selling_price && item.updated_selling_price.toString() !== '0' ? parseFloat(item.updated_selling_price.toString()) : parseFloat((item.unit_price * parseFloat(item.updated_quantity)).toString());
             }
 
             return item;
@@ -912,12 +920,8 @@ class OrderController {
         let { seller_id, order_id } = request.params;
         let { user_id, delivery_user_id, order_details } = request.payload;
         const result = await socket_instance.order_out_for_delivery({
-          seller_id,
-          user_id,
-          order_id,
-          status_type: 19,
-          delivery_user_id,
-          order_details
+          seller_id, user_id, order_id,
+          status_type: 19, delivery_user_id, order_details
         });
         if (result) {
           return reply.response({ result, status: true });

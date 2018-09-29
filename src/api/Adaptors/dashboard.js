@@ -86,7 +86,11 @@ class DashboardAdaptor {
                   group: ['seller_id'],
                 }),
             this.modals.cashback_wallet.aggregate('amount', 'sum',
-                {where: {seller_id, transaction_type: 1, status_type: 16}})]);
+                {
+                  where: {
+                    seller_id, transaction_type: [1, 2], status_type: [16, 14],
+                  },
+                })]);
       return {
         status: true,
         message: 'Dashboard restore Successful',
@@ -184,8 +188,7 @@ class DashboardAdaptor {
           distinctItem => (moment.utc(distinctItem.purchaseDate,
               moment.ISO_8601).startOf('day').valueOf() ===
               moment.utc(insightItem.purchaseDate, moment.ISO_8601).
-                  startOf('day').
-                  valueOf()));
+                  startOf('day').valueOf()));
 
       if (index === -1) {
         distinctInsight.push(insightItem);
@@ -203,8 +206,7 @@ class DashboardAdaptor {
           endDate: moment.utc(),
           totalSpend: shared.sumProps(distinctInsight, 'value'),
           totalDays: moment.utc().
-              endOf('d').
-              diff(moment.utc().startOf('M'), 'days'),
+              endOf('d').diff(moment.utc().startOf('M'), 'days'),
           insightData: distinctInsight,
         } :
         {

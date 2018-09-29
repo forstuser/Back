@@ -13,6 +13,7 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
         auth: 'jwt',
         pre: [
           {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {method: middleware.logSellerAction, assign: 'seller_action'},
         ],
         handler: ControllerObject.getOrderDetails,
       },
@@ -25,6 +26,7 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
         auth: 'jwt',
         pre: [
           {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {method: middleware.logSellerAction, assign: 'seller_action'},
         ],
         handler: ControllerObject.getOrderList,
       },
@@ -37,6 +39,7 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
         auth: 'jwt',
         pre: [
           {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {method: middleware.logSellerAction, assign: 'seller_action'},
         ],
         handler: ControllerObject.getActiveOrders,
       },
@@ -49,6 +52,7 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
         auth: 'jwt',
         pre: [
           {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {method: middleware.logSellerAction, assign: 'seller_action'},
         ],
         handler: ControllerObject.getAssistedServiceList,
       },
@@ -61,6 +65,7 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
         auth: 'jwt',
         pre: [
           {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {method: middleware.logSellerAction, assign: 'seller_action'},
         ],
         handler: ControllerObject.getActiveAssistedServices,
       },
@@ -73,10 +78,7 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
       config: {
         pre: [
           {method: middleware.checkAppVersion, assign: 'forceUpdate'},
-          {
-            method: middleware.updateUserActiveStatus,
-            assign: 'userExist',
-          },
+          {method: middleware.updateUserActiveStatus, assign: 'userExist'},
         ],
         handler: ControllerObject.getOrderDetails,
       },
@@ -88,10 +90,7 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
       config: {
         pre: [
           {method: middleware.checkAppVersion, assign: 'forceUpdate'},
-          {
-            method: middleware.updateUserActiveStatus,
-            assign: 'userExist',
-          },
+          {method: middleware.updateUserActiveStatus, assign: 'userExist'},
         ],
         handler: ControllerObject.getOrderList,
       },
@@ -103,10 +102,7 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
       config: {
         pre: [
           {method: middleware.checkAppVersion, assign: 'forceUpdate'},
-          {
-            method: middleware.updateUserActiveStatus,
-            assign: 'userExist',
-          },
+          {method: middleware.updateUserActiveStatus, assign: 'userExist'},
         ],
         handler: ControllerObject.getActiveOrders,
       },
@@ -118,10 +114,7 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
       config: {
         pre: [
           {method: middleware.checkAppVersion, assign: 'forceUpdate'},
-          {
-            method: middleware.updateUserActiveStatus,
-            assign: 'userExist',
-          },
+          {method: middleware.updateUserActiveStatus, assign: 'userExist'},
         ],
         handler: ControllerObject.getAssistedServiceList,
       },
@@ -133,10 +126,7 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
       config: {
         pre: [
           {method: middleware.checkAppVersion, assign: 'forceUpdate'},
-          {
-            method: middleware.updateUserActiveStatus,
-            assign: 'userExist',
-          },
+          {method: middleware.updateUserActiveStatus, assign: 'userExist'},
         ],
         handler: ControllerObject.getActiveAssistedServices,
       },
@@ -149,6 +139,7 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
         auth: 'jwt',
         pre: [
           {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {method: middleware.updateUserActiveStatus, assign: 'userExist'},
         ],
         handler: ControllerObject.approveOrder,
         description: 'Approved order on behalf of Consumer.',
@@ -168,6 +159,7 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
         auth: 'jwt',
         pre: [
           {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {method: middleware.updateUserActiveStatus, assign: 'userExist'},
         ],
         handler: ControllerObject.approveOrder,
         description: 'Approved order on behalf of Consumer.',
@@ -187,6 +179,7 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
         auth: 'jwt',
         pre: [
           {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {method: middleware.updateUserActiveStatus, assign: 'userExist'},
         ],
         handler: ControllerObject.startOrder,
         description: 'Start order on behalf of Consumer.',
@@ -206,6 +199,7 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
         auth: 'jwt',
         pre: [
           {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {method: middleware.updateUserActiveStatus, assign: 'userExist'},
         ],
         handler: ControllerObject.endOrder,
         description: 'End order on behalf of Consumer.',
@@ -225,6 +219,7 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
         auth: 'jwt',
         pre: [
           {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {method: middleware.updateUserActiveStatus, assign: 'userExist'},
         ],
         handler: ControllerObject.rejectOrderFromConsumer,
         description: 'Reject order on behalf of Consumer.',
@@ -243,6 +238,7 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
         auth: 'jwt',
         pre: [
           {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {method: middleware.updateUserActiveStatus, assign: 'userExist'},
         ],
         handler: ControllerObject.cancelOrderFromConsumer,
         description: 'Cancel order on behalf of Consumer.',
@@ -261,6 +257,7 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
         auth: 'jwt',
         pre: [
           {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {method: middleware.updateUserActiveStatus, assign: 'userExist'},
         ],
         handler: ControllerObject.completeOrder,
         description: 'Complete order on behalf of Consumer.',
@@ -279,6 +276,7 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
         auth: 'jwt',
         pre: [
           {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {method: middleware.updateUserActiveStatus, assign: 'userExist'},
           {
             method: middleware.updateUserActiveStatus,
             assign: 'userExist',
@@ -320,6 +318,7 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
         auth: 'jwt',
         pre: [
           {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {method: middleware.logSellerAction, assign: 'seller_action'},
         ],
         handler: ControllerObject.modifyOrder,
         description: 'Modify order on behalf of Seller.',
@@ -332,6 +331,7 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
         },
       },
     });
+
     routeObject.push({
       method: 'PUT',
       path: '/sellers/{seller_id}/assisted/{order_id}/modify',
@@ -339,6 +339,7 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
         auth: 'jwt',
         pre: [
           {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {method: middleware.logSellerAction, assign: 'seller_action'},
         ],
         handler: ControllerObject.modifyOrder,
         description: 'Modify order on behalf of Seller.',
@@ -359,6 +360,7 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
         auth: 'jwt',
         pre: [
           {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {method: middleware.logSellerAction, assign: 'seller_action'},
         ],
         handler: ControllerObject.approveOrder,
         description: 'Approved order on behalf of Seller.',
@@ -378,6 +380,7 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
         auth: 'jwt',
         pre: [
           {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {method: middleware.logSellerAction, assign: 'seller_action'},
         ],
         handler: ControllerObject.rejectOrderFromSeller,
         description: 'Reject order on behalf of Seller.',
@@ -396,6 +399,7 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
         auth: 'jwt',
         pre: [
           {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {method: middleware.logSellerAction, assign: 'seller_action'},
         ],
         handler: ControllerObject.orderOutForDelivery,
         description: 'Approved order on behalf of Seller.',

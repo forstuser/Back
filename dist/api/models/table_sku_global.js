@@ -27,6 +27,9 @@ exports.default = (sequelize, DataTypes) => {
     mrp: {
       type: DataTypes.FLOAT
     },
+    priority_index: {
+      type: DataTypes.INTEGER
+    },
     updated_by: {
       type: DataTypes.INTEGER
     },

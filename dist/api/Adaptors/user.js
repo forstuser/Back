@@ -161,7 +161,7 @@ class UserAdaptor {
    */
   async retrieveUserById(user, address_id) {
     const result = await _bluebird2.default.all([this.modals.users.findById(user.id || user.ID, {
-      attributes: ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', 'location', 'latitude', 'longitude', 'image_name', 'password', 'gender', [this.modals.sequelize.fn('CONCAT', '/consumer/', this.modals.sequelize.col('id'), '/images'), 'imageUrl'], [this.modals.sequelize.literal(`(Select sum(amount) from table_wallet_user_cashback where user_id = ${user.id || user.ID} and status_type in (16) group by user_id)`), 'wallet_value']]
+      attributes: ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', 'location', 'latitude', 'longitude', 'image_name', 'password', 'gender', [this.modals.sequelize.fn('CONCAT', '/consumer/', this.modals.sequelize.col('id'), '/images'), 'imageUrl'], [this.modals.sequelize.literal(`(Select sum(amount) from table_wallet_user_cashback where user_id = ${user.id || user.ID} and status_type in (16) group by user_id)`), 'wallet_value'], [this.modals.sequelize.literal(`(Select sum(amount) from table_wallet_user_cashback where user_id = ${user.id || user.ID} and status_type in (16,13,14) and transaction_type = 2 group by user_id)`), 'redeemed_value']]
     }), this.retrieveUserAddresses({
       where: JSON.parse(JSON.stringify({ user_id: user.id || user.ID, id: address_id }))
     })]);
@@ -172,6 +172,7 @@ class UserAdaptor {
       user.addresses = result[1].map(item => item.toJSON());
       user.hasPin = !!user.password;
       user = _lodash2.default.omit(user, 'password');
+      user.wallet_value = (user.wallet_value || 0) - (user.redeemed_value || 0);
       return JSON.parse(JSON.stringify(user));
     }
 

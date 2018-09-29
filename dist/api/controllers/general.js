@@ -76,8 +76,8 @@ class GeneralController {
 
   static async checkForAppUpdate(request, reply) {
     try {
-      if (request.headers.app_version !== undefined || request.headers.ios_app_version !== undefined) {
-        const id = request.headers.ios_app_version ? 2 : 1;
+      if (request.headers['app-version'] !== undefined || request.headers['ios-app-version'] !== undefined) {
+        const id = request.headers['ios-app-version'] ? 2 : 1;
 
         const result = await modals.appVersion.findOne({
           where: { id },

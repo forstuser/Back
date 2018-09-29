@@ -123,6 +123,11 @@ class SocketServer {
         return next(new Error('authentication error'));
       }
 
+      console.log({
+        decoded,
+        seller_detail: decoded.seller_detail,
+        seller_room: `seller-${decoded.id}`
+      });
       socket.status = true;
       socket.join(decoded.seller_detail ? `seller-${decoded.id}` : `user-${decoded.id}`);
       socket.user = user;
@@ -167,7 +172,7 @@ class SocketServer {
     user_address.updated_by = user_id;
     let [seller_detail, user_index_data, user_address_detail, service_users] = await _bluebird2.default.all([sellerAdaptor.retrieveSellerDetail({
       where: { id: seller_id },
-      attributes: ['seller_type_id', 'seller_name', 'user_id', 'id']
+      attributes: ['seller_type_id', 'seller_name', 'user_id', 'id', 'rush_hours']
     }), userAdaptor.retrieveUserIndexedData({
       where: { user_id }, attributes: ['wishlist_items', 'assisted_services', [modals.sequelize.literal(`(Select full_name from users where users.id = ${user_id})`), 'user_name']]
     }), !user_address_id && user_address ? userAdaptor.createUserAddress(JSON.parse(JSON.stringify(user_address))) : undefined, service_type_id ? sellerAdaptor.retrieveSellerAssistedServiceUsers({
@@ -188,6 +193,7 @@ class SocketServer {
           const { id: sku_measurement_id, mrp, bar_code, pack_numbers, cashback_percent, measurement_type, measurement_value } = sku_measurement || {};
           return {
             item_availability: true, id, title, brand_id,
+            uid: `${id}${sku_measurement_id ? `-${sku_measurement_id}` : ''}`,
             quantity, category_id, sub_category_id, main_category_id,
             sku_measurement: sku_measurement ? {
               id: sku_measurement_id, mrp, bar_code, pack_numbers,
@@ -202,6 +208,10 @@ class SocketServer {
 
         if (order) {
           if (io.sockets.adapter.rooms[`seller-${seller_detail.user_id}`]) {
+            console.log({
+              soket_status: io.sockets.adapter.rooms[`seller-${seller_detail.user_id}`],
+              user_id: seller_detail.user_id
+            });
             io.sockets.in(`seller-${seller_detail.user_id}`).emit('order-placed', JSON.stringify(order));
           }
           await notificationAdaptor.notifyUserCron({
@@ -217,13 +227,14 @@ class SocketServer {
           if (fn) {
             fn(order);
           } else {
+            console.log({
+              soket_status: io.sockets.adapter.rooms[`user-${data.user_id}`],
+              user_id: data.user_id
+            });
             if (io.sockets.adapter.rooms[`user-${data.user_id}`]) {
               io.sockets.in(`user-${data.user_id}`).emit('order-placed', JSON.stringify({
-                order_id: order.id,
-                order_type,
-                status_type: order.status_type,
-                order,
-                user_id
+                order_id: order.id, order_type,
+                status_type: order.status_type, order, user_id
               }));
             }
           }
@@ -232,7 +243,7 @@ class SocketServer {
               order_id: order.id, order_type,
               status_type: order.status_type, order, user_id,
               title: `Your order has been placed with Seller ${seller_detail.seller_name || ''}.`,
-              description: 'Click here to track your order status.',
+              description: seller_detail.rush_hours ? `Seller ${seller_detail.seller_name || ''} response may be delayed due to busy hours. Click here to track your order status.` : 'Click here to track your order status.',
               notification_type: 31
             }
           });
@@ -253,6 +264,11 @@ class SocketServer {
         });
 
         if (order) {
+          console.log({
+            soket_status: io.sockets.adapter.rooms[`user-${seller_detail.user_id}`],
+            user_id: seller_detail.user_id
+          });
+
           if (io.sockets.adapter.rooms[`seller-${seller_detail.user_id}`]) {
             io.sockets.in(`seller-${seller_detail.user_id}`).emit('assisted-status-change', JSON.stringify(order));
           }
@@ -266,9 +282,8 @@ class SocketServer {
               notification_type: 1
             }
           });
-          if (fn) {
-            fn(order);
-          } else {
+
+          if (io.sockets.adapter.rooms[`user-${data.user_id}`]) {
             io.sockets.in(`user-${data.user_id}`).emit('assisted-status-change', JSON.stringify({
               order_id: order.id, order_type,
               status_type: order.status_type, order, user_id
@@ -279,7 +294,7 @@ class SocketServer {
               order_id: order.id, order_type,
               status_type: order.status_type, order, user_id,
               title: `Your order has been placed with Seller ${seller_detail.seller_name || ''}.`,
-              description: 'Click here to track your order status.',
+              description: seller_detail.rush_hours ? `Seller ${seller_detail.seller_name || ''} response may be delayed due to busy hours. Click here to track your order status.` : 'Click here to track your order status.',
               notification_type: 31
             }
           });
@@ -298,7 +313,7 @@ class SocketServer {
       where: { id: seller_id },
       attributes: ['seller_type_id', 'seller_name', 'user_id', 'id']
     }), userAdaptor.retrieveUserIndexedData({
-      where: { user_id }, attributes: ['wishlist_items', 'assisted_services', [modals.sequelize.literal(`(Select full_name from users where users.id = ${user_id})`), 'user_name']]
+      where: { user_id }, attributes: ['wishlist_items', 'assisted_services', [modals.sequelize.literal(`(Select full_name from users where users.id = ${user_id})`), 'user_name'], [modals.sequelize.literal(`(Select location from users where users.id = ${user_id})`), 'location']]
     }), orderAdaptor.retrieveOrUpdateOrder({ where: { id: order_id, user_id, seller_id, status_type: 4 } }, {}, false), modals.measurement.findAll({ where: { status_type: 1 } }), sellerAdaptor.retrieveAssistedServiceUser({
       where: JSON.parse(JSON.stringify({ id: delivery_user_id })), attributes: ['id', 'name', 'mobile_no', 'reviews', 'document_details'], include: {
         as: 'service_types',
@@ -312,6 +327,61 @@ class SocketServer {
       order_data.order_details = order_details || order_data.order_details;
       if (order_data.order_type === 2) {
         order_data.order_details[0].service_user = order_data.order_details[0].service_user || { id: delivery_user_id, name: service_user.name };
+      } else if (order_data.order_type === 1) {
+        let sku_item_promise = [],
+            sku_measurement_promise = [],
+            measurement_values = [];
+        order_data.order_details.forEach(item => {
+          if (!item.item_availability && item.suggestion) {
+            const { title, measurement_value } = item.suggestion;
+            if (!item.suggestion.id) {
+              measurement_values.push(measurement_value);
+              sku_item_promise.push(shopEarnAdaptor.addUserSKU({
+                title: `${title}${measurement_value ? `(${measurement_value})` : ''}`,
+                status_type: 11
+              }));
+            } else {
+              const { location } = user_index_data;
+              const sku_measurement_attributes = location && location.toLowerCase() === 'other' || !location ? ['id', 'pack_numbers', 'measurement_type', 'measurement_value', 'mrp', [modals.sequelize.literal('(select acronym from table_sku_measurement as measurement where measurement.id = "sku_measurement".measurement_type)'), 'measurement_acronym'], 'bar_code'] : ['id', 'pack_numbers', 'measurement_type', 'measurement_value', 'mrp', [modals.sequelize.literal('(select acronym from table_sku_measurement as measurement where measurement.id = "sku_measurement".measurement_type)'), 'measurement_acronym'], 'bar_code', 'cashback_percent'];
+              const sku_attributes = ['sub_category_id', 'main_category_id', 'title', [modals.sequelize.literal('(select category_name from categories as category where category.category_id = sku.sub_category_id)'), 'sub_category_name'], 'brand_id', 'category_id', 'id', 'priority_index'];
+              measurement_values.push(measurement_value);
+              sku_item_promise.push(shopEarnAdaptor.retrieveSKU({
+                where: { id: item.suggestion.id },
+                attributes: sku_attributes
+              }));
+              sku_measurement_promise.push(shopEarnAdaptor.retrieveSKUMeasurement({
+                where: {
+                  id: item.suggestion.measurement_id,
+                  sku_id: item.suggestion.id
+                }, attributes: sku_measurement_attributes
+              }));
+            }
+          }
+
+          measurement_values.push('');
+          sku_item_promise.push('');
+        });
+        const [sku_items, sku_measurement_detail] = await _bluebird2.default.all([_bluebird2.default.all(sku_item_promise), _bluebird2.default.all(sku_measurement_promise)]);
+        order_data.order_details = order_data.order_details.map((item, index) => {
+          if (!item.item_availability && item.suggestion) {
+            if (!item.suggestion.id) {
+              item.suggestion.id = sku_items[index].id;
+            } else {
+              const { measurement_id, measurement_value } = item.suggestion;
+              item.suggestion = sku_items[index];
+              item.suggestion.measurement_value = measurement_value;
+              item.suggestion.sku_measurement = sku_measurement_detail.find(mdItem => mdItem.id = measurement_id);
+            }
+          }
+
+          item.unit_price = parseFloat((item.unit_price ? item.unit_price : 0).toString());
+          item.selling_price = parseFloat((item.unit_price * parseFloat(item.quantity)).toString());
+          if (item.updated_quantity) {
+            item.updated_selling_price = parseFloat((item.unit_price * parseFloat(item.updated_quantity)).toString());
+          }
+
+          return item;
+        });
       }
       order_data.is_modified = true;
       order_data.delivery_user_id = delivery_user_id;
@@ -349,6 +419,10 @@ class SocketServer {
           return item;
         }) : order.order_details;
         if (io.sockets.adapter.rooms[`user-${data.user_id}`]) {
+          console.log({
+            soket_status: io.sockets.adapter.rooms[`user-${data.user_id}`],
+            user_id: data.user_id
+          });
           io.sockets.in(`user-${data.user_id}`).emit(order.order_type === 1 ? 'order-status-change' : 'assisted-status-change', JSON.stringify({
             order_id: order.id, is_modified: order.is_modified,
             status_type: order.status_type, order, user_id,
@@ -458,7 +532,7 @@ class SocketServer {
           user_id, payload: {
             order_id: order.id, order_type: order.order_type, user_id,
             status_type: order.status_type, is_modified: order.is_modified,
-            title: `Service has been initiated${order.service_user ? `by ${order.service_user.name || ''}.` : '.'}`,
+            title: `Service has been initiated ${order.service_user ? `by ${order.service_user.name || ''}.` : '.'}`,
             description: 'Please click here for further detail.',
             notification_type: 31,
             start_date: order.order_type ? order.order_details.start_date : undefined
@@ -561,7 +635,7 @@ class SocketServer {
           payload: {
             order_id: order.id, order_type: order.order_type,
             status_type: order.status_type, is_modified: order.is_modified,
-            user_id, title: `Service has been provided${order.service_user ? ` by ${order.service_user.name || ''}.` : '.'}`,
+            user_id, title: `Service has been completed ${order.service_user ? `by ${order.service_user.name || ''}.` : '.'}`,
             description: 'Please click here for further detail.',
             notification_type: 1, start_date: order.order_type === 2 ? order.order_details.start_date : undefined,
             end_date: order.order_type === 2 ? order.order_details.end_date : undefined
@@ -612,14 +686,31 @@ class SocketServer {
       if (order_data.order_type === 2) {
         order_data.order_details = order_details || order_data.order_details;
       } else {
-        order_data.order_details = (order_details || order_data.order_details).filter(item => item.item_availability).map(item => {
+        order_data.order_details = (order_details || order_data.order_details).map(item => {
           if (item.updated_measurement) {
             item.sku_measurement = item.updated_measurement;
-            item = _lodash2.default.omit(item, 'updated_measurement');
+          } else {
+            item = _lodash2.default.omit(item, 'sku_measurement');
           }
 
+          item.quantity = item.updated_quantity ? parseFloat(item.updated_quantity) : parseFloat(item.quantity);
+
+          if (!item.item_availability && item.suggestion) {
+            const { id, title, measurement_value, sku_measurement, brand_id } = item.suggestion;
+            item.id = id;
+            item.sku_measurement = item.updated_measurement || sku_measurement;
+            const { id: sku_measurement_id } = item.sku_measurement || {};
+            item.uid = `${id}${sku_measurement_id ? `-${sku_measurement_id}` : ''}`;
+            item.title = `${title}${measurement_value && !sku_measurement ? `(${measurement_value})` : ''}`;
+            item.brand_id = brand_id;
+            item.item_availability = true;
+          }
+
+          item = _lodash2.default.omit(item, 'updated_measurement');
+          item.unit_price = parseFloat((item.unit_price || 0).toString());
+          item.selling_price = parseFloat((item.unit_price * parseFloat(item.quantity.toString())).toString());
           return item;
-        });
+        }).filter(item => item.item_availability);
       }
       order_data.status_type = status_type || 16;
       let order = await orderAdaptor.retrieveOrUpdateOrder({
@@ -633,7 +724,7 @@ class SocketServer {
           as: 'user_address',
           attributes: ['address_type', 'address_line_1', 'address_line_2', 'city_id', 'state_id', 'locality_id', 'pin', 'latitude', 'longitude', [modals.sequelize.literal('(Select state_name from table_states as state where state.id = user_address.state_id)'), 'state_name'], [modals.sequelize.literal('(Select name from table_cities as city where city.id = user_address.city_id)'), 'city_name'], [modals.sequelize.literal('(Select name from table_localities as locality where locality.id = user_address.locality_id)'), 'locality_name'], [modals.sequelize.literal('(Select pin_code from table_localities as locality where locality.id = user_address.locality_id)'), 'pin_code']]
         }]
-      }, order_data, false);
+      }, JSON.parse(JSON.stringify(order_data)), false);
       if (order) {
         if (order.order_type === 2 && order.delivery_user_id) {
           order.service_user = await sellerAdaptor.retrieveAssistedServiceUser({
@@ -678,30 +769,26 @@ class SocketServer {
           });
         }
 
-        if (fn && is_user) {
-          fn(order);
-        } else {
-          if (io.sockets.adapter.rooms[`user-${data.user_id}`]) {
-            io.sockets.in(`user-${data.user_id}`).emit(order.order_type === 1 ? 'order-status-change' : 'assisted-status-change', JSON.stringify({
+        if (io.sockets.adapter.rooms[`user-${data.user_id}`]) {
+          io.sockets.in(`user-${data.user_id}`).emit(order.order_type === 1 ? 'order-status-change' : 'assisted-status-change', JSON.stringify({
+            order_id: order.id,
+            is_modified: order.is_modified, order_type: order.order_type,
+            status_type: order.status_type, order, user_id
+          }));
+        }
+        if (!is_user) {
+          await notificationAdaptor.notifyUserCron({
+            user_id, payload: {
               order_id: order.id,
-              is_modified: order.is_modified, order_type: order.order_type,
-              status_type: order.status_type, order, user_id
-            }));
-          }
-          if (!is_user) {
-            await notificationAdaptor.notifyUserCron({
-              user_id, payload: {
-                order_id: order.id,
-                order_type: order.order_type,
-                status_type: order.status_type,
-                is_modified: order.is_modified,
-                user_id,
-                title: `Your Order has been approved by Seller ${seller_detail.seller_name || ''}.`,
-                description: 'Delivery details will be updated shortly.',
-                notification_type: 31
-              }
-            });
-          }
+              order_type: order.order_type,
+              status_type: order.status_type,
+              is_modified: order.is_modified,
+              user_id,
+              title: `Your Order has been approved by Seller ${seller_detail.seller_name || ''}.`,
+              description: 'Delivery details will be updated shortly.',
+              notification_type: 31
+            }
+          });
         }
 
         return order;
@@ -714,114 +801,127 @@ class SocketServer {
   }
 
   static async order_out_for_delivery(data, fn) {
-    let { seller_id, user_id, order_id, status_type, delivery_user_id, order_details } = data;
-    const [seller_detail, user_index_data, order_data, measurement_types] = await _bluebird2.default.all([sellerAdaptor.retrieveSellerDetail({
-      where: { id: seller_id },
-      attributes: ['seller_type_id', 'seller_name', 'id', 'user_id']
-    }), userAdaptor.retrieveUserIndexedData({
-      where: { user_id }, attributes: ['wishlist_items', 'assisted_services', [modals.sequelize.literal(`(Select full_name from users where users.id = ${user_id})`), 'user_name']]
-    }), orderAdaptor.retrieveOrUpdateOrder({
-      where: { id: order_id, user_id, seller_id, status_type: 16 },
-      attributes: ['id', 'order_details']
-    }, {}, false), modals.measurement.findAll({ where: { status_type: 1 } })]);
-    if (order_data) {
-      order_data.order_details = order_details || order_data.order_details;
-      order_data.status_type = status_type || 19;
-      order_data.delivery_user_id = delivery_user_id;
-      let order = await orderAdaptor.retrieveOrUpdateOrder({
+    try {
+      let { seller_id, user_id, order_id, status_type, delivery_user_id, order_details } = data;
+      const [seller_detail, user_index_data, order_data, measurement_types] = await _bluebird2.default.all([sellerAdaptor.retrieveSellerDetail({
+        where: { id: seller_id },
+        attributes: ['seller_type_id', 'seller_name', 'id', 'user_id']
+      }), userAdaptor.retrieveUserIndexedData({
+        where: { user_id }, attributes: ['wishlist_items', 'assisted_services', [modals.sequelize.literal(`(Select full_name from users where users.id = ${user_id})`), 'user_name']]
+      }), orderAdaptor.retrieveOrUpdateOrder({
         where: { id: order_id, user_id, seller_id, status_type: 16 },
-        include: [{
-          model: modals.users, as: 'user', attributes: ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', 'location', 'latitude', 'longitude', 'image_name', 'password', 'gender', [modals.sequelize.fn('CONCAT', '/consumer/', modals.sequelize.col('user.id'), '/images'), 'imageUrl'], [modals.sequelize.literal(`(Select sum(amount) from table_wallet_user_cashback where user_id = ${user_id} and status_type in (16) group by user_id)`), 'wallet_value']]
-        }, {
-          model: modals.sellers, as: 'seller', attributes: ['seller_name', 'address', 'contact_no', 'email', [modals.sequelize.literal(`"seller"."seller_details"->'basic_details'`), 'basic_details'], [modals.sequelize.literal(`"seller"."seller_details"->'business_details'`), 'business_details']]
-        }, {
-          model: modals.user_addresses,
-          as: 'user_address',
-          attributes: ['address_type', 'address_line_1', 'address_line_2', 'city_id', 'state_id', 'locality_id', 'pin', 'latitude', 'longitude', [modals.sequelize.literal('(Select state_name from table_states as state where state.id = user_address.state_id)'), 'state_name'], [modals.sequelize.literal('(Select name from table_cities as city where city.id = user_address.city_id)'), 'city_name'], [modals.sequelize.literal('(Select name from table_localities as locality where locality.id = user_address.locality_id)'), 'locality_name'], [modals.sequelize.literal('(Select pin_code from table_localities as locality where locality.id = user_address.locality_id)'), 'pin_code']]
-        }]
-      }, order_data, false);
+        attributes: ['id', 'order_details']
+      }, {}, false), modals.measurement.findAll({ where: { status_type: 1 } })]);
+      if (order_data) {
+        order_data.order_details = order_details || order_data.order_details;
+        if (order_data.order_type === 1) {
+          order_data.order_details = order_data.order_details.map(item => {
+            item.unit_price = parseFloat((item.unit_price || 0).toString());
+            item.selling_price = item.selling_price && item.selling_price.toString() !== '0' ? parseFloat(item.selling_price.toString()) : parseFloat((item.unit_price * parseFloat(item.quantity.toString())).toString());
+            return item;
+          });
+        }
+        order_data.status_type = status_type || 19;
+        order_data.delivery_user_id = delivery_user_id;
+        let order = await orderAdaptor.retrieveOrUpdateOrder({
+          where: { id: order_id, user_id, seller_id, status_type: 16 },
+          include: [{
+            model: modals.users, as: 'user', attributes: ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', 'location', 'latitude', 'longitude', 'image_name', 'password', 'gender', [modals.sequelize.fn('CONCAT', '/consumer/', modals.sequelize.col('user.id'), '/images'), 'imageUrl'], [modals.sequelize.literal(`(Select sum(amount) from table_wallet_user_cashback where user_id = ${user_id} and status_type in (16) group by user_id)`), 'wallet_value']]
+          }, {
+            model: modals.sellers, as: 'seller', attributes: ['seller_name', 'address', 'contact_no', 'email', [modals.sequelize.literal(`"seller"."seller_details"->'basic_details'`), 'basic_details'], [modals.sequelize.literal(`"seller"."seller_details"->'business_details'`), 'business_details']]
+          }, {
+            model: modals.user_addresses,
+            as: 'user_address',
+            attributes: ['address_type', 'address_line_1', 'address_line_2', 'city_id', 'state_id', 'locality_id', 'pin', 'latitude', 'longitude', [modals.sequelize.literal('(Select state_name from table_states as state where state.id = user_address.state_id)'), 'state_name'], [modals.sequelize.literal('(Select name from table_cities as city where city.id = user_address.city_id)'), 'city_name'], [modals.sequelize.literal('(Select name from table_localities as locality where locality.id = user_address.locality_id)'), 'locality_name'], [modals.sequelize.literal('(Select pin_code from table_localities as locality where locality.id = user_address.locality_id)'), 'pin_code']]
+          }]
+        }, order_data, false);
 
-      if (order) {
+        if (order) {
+          if (order.order_type === 2 && order.delivery_user_id) {
+            order.service_user = await sellerAdaptor.retrieveAssistedServiceUser({
+              where: JSON.parse(JSON.stringify({ id: order.delivery_user_id })),
+              attributes: ['id', 'name', 'mobile_no', 'reviews', 'document_details'],
+              include: {
+                as: 'service_types',
+                where: JSON.parse(JSON.stringify({ seller_id })),
+                model: modals.seller_service_types,
+                required: true,
+                attributes: ['service_type_id', 'seller_id', 'price', 'id']
+              }
+            });
+            order.service_user.ratings = _lodash2.default.sumBy(order.service_user.reviews || [{ ratings: 0 }], 'ratings') / (order.service_user.reviews || [{ ratings: 0 }]).length;
+            order.service_user.service_type = order.service_user.service_types.find(item => item.service_type_id === order.order_details[0].service_type_id);
+            order.service_user.reviews = order.service_user.reviews || [];
+            const review_user_ids = order.service_user.reviews.map(item => item.updated_by);
+            const review_users = await userAdaptor.retrieveUsers({
+              where: { id: review_user_ids }, attributes: ['id', ['full_name', 'name'], 'image_name']
+            });
+            order.service_user.reviews = order.service_user.reviews.map(item => {
+              item.user = review_users.find(uItem => uItem.id === item.updated_by);
+              item.user_name = (item.user || {}).name;
+              return item;
+            });
+          }
+          order.order_details = order.order_type === 1 ? order.order_details.map(item => {
+            if (item.sku_measurement) {
+              const measurement_type = measurement_types.find(mtItem => mtItem.id.toString() === item.sku_measurement.measurement_type.toString());
+              item.sku_measurement.measurement_acronym = measurement_type ? measurement_type.acronym : 'unit';
+            }
+            if (item.updated_measurement) {
+              const updated_measurement_type = measurement_types.find(mtItem => mtItem.id.toString() === item.updated_measurement.measurement_type.toString());
+              item.updated_measurement.measurement_acronym = updated_measurement_type ? updated_measurement_type.acronym : 'unit';
+            }
 
-        if (order.order_type === 2 && order.delivery_user_id) {
-          order.service_user = await sellerAdaptor.retrieveAssistedServiceUser({
-            where: JSON.parse(JSON.stringify({ id: order.delivery_user_id })), attributes: ['id', 'name', 'mobile_no', 'reviews', 'document_details'], include: {
-              as: 'service_types',
-              where: JSON.parse(JSON.stringify({ seller_id })),
-              model: modals.seller_service_types,
-              required: true,
-              attributes: ['service_type_id', 'seller_id', 'price', 'id']
+            return item;
+          }) : order.order_details;
+          if (delivery_user_id && order.order_type === 1) {
+            order.delivery_user = await sellerAdaptor.retrieveAssistedServiceUser({
+              where: JSON.parse(JSON.stringify({ id: delivery_user_id })), attributes: ['id', 'name', 'mobile_no', 'reviews', 'document_details']
+            });
+            order.delivery_user.ratings = _lodash2.default.sumBy(order.delivery_user.reviews || [{ ratings: 0 }], 'ratings') / (order.delivery_user.reviews || [{ ratings: 0 }]).length;
+            order.delivery_user.reviews = order.delivery_user.reviews || [];
+            const review_user_ids = order.delivery_user.reviews.map(item => item.updated_by);
+            const review_users = await userAdaptor.retrieveUsers({
+              where: { id: review_user_ids }, attributes: ['id', ['full_name', 'name'], 'image_name']
+            });
+            order.delivery_user.reviews = order.delivery_user.reviews.map(item => {
+              item.user = review_users.find(uItem => uItem.id === item.updated_by);
+              item.user_name = (item.user || {}).name;
+              return item;
+            });
+          }
+
+          if (io.sockets.adapter.rooms[`user-${data.user_id}`]) {
+            io.sockets.in(`user-${data.user_id}`).emit(order.order_type === 1 ? 'order-status-change' : 'assisted-status-change', JSON.stringify({
+              order_id: order.id, is_modified: order.is_modified,
+              status_type: order.status_type,
+              delivery_user: order.delivery_user,
+              order, user_id, order_type: order.order_type
+            }));
+          }
+
+          await notificationAdaptor.notifyUserCron({
+            user_id, payload: {
+              order_id: order.id,
+              status_type: order.status_type,
+              is_modified: order.is_modified, user_id,
+              title: `Hurray! ${order.delivery_user ? `${(order.delivery_user || {}).name || ''} from Seller ${seller_detail.seller_name || ''} is on the way ${order.order_type === 1 ? 'with your order.' : 'for your assistance.'}` : `Your Order is on it's way from Seller ${seller_detail.seller_name || ''}`}.`,
+              description: 'Please click here for more detail.',
+              notification_type: 31,
+              order_type: order.order_type
             }
           });
-          order.service_user.ratings = _lodash2.default.sumBy(order.service_user.reviews || [{ ratings: 0 }], 'ratings') / (order.service_user.reviews || [{ ratings: 0 }]).length;
-          order.service_user.service_type = order.service_user.service_types.find(item => item.service_type_id === order.order_details[0].service_type_id);
-          order.service_user.reviews = order.service_user.reviews || [];
-          const review_user_ids = order.service_user.reviews.map(item => item.updated_by);
-          const review_users = await userAdaptor.retrieveUsers({
-            where: { id: review_user_ids }, attributes: ['id', ['full_name', 'name'], 'image_name']
-          });
-          order.service_user.reviews = order.service_user.reviews.map(item => {
-            item.user = review_users.find(uItem => uItem.id === item.updated_by);
-            item.user_name = (item.user || {}).name;
-            return item;
-          });
+
+          return order;
+        } else {
+          return false;
         }
-        order.order_details = order.order_type === 1 ? order.order_details.map(item => {
-          if (item.sku_measurement) {
-            const measurement_type = measurement_types.find(mtItem => mtItem.id.toString() === item.sku_measurement.measurement_type.toString());
-            item.sku_measurement.measurement_acronym = measurement_type ? measurement_type.acronym : 'unit';
-          }
-          if (item.updated_measurement) {
-            const updated_measurement_type = measurement_types.find(mtItem => mtItem.id.toString() === item.updated_measurement.measurement_type.toString());
-            item.updated_measurement.measurement_acronym = updated_measurement_type ? updated_measurement_type.acronym : 'unit';
-          }
-
-          return item;
-        }) : order.order_details;
-        if (delivery_user_id && order.order_type === 1) {
-          order.delivery_user = await sellerAdaptor.retrieveAssistedServiceUser({
-            where: JSON.parse(JSON.stringify({ id: delivery_user_id })), attributes: ['id', 'name', 'mobile_no', 'reviews', 'document_details']
-          });
-          order.delivery_user.ratings = _lodash2.default.sumBy(order.delivery_user.reviews || [{ ratings: 0 }], 'ratings') / (order.delivery_user.reviews || [{ ratings: 0 }]).length;
-          order.delivery_user.reviews = order.delivery_user.reviews || [];
-          const review_user_ids = order.delivery_user.reviews.map(item => item.updated_by);
-          const review_users = await userAdaptor.retrieveUsers({
-            where: { id: review_user_ids }, attributes: ['id', ['full_name', 'name'], 'image_name']
-          });
-          order.delivery_user.reviews = order.delivery_user.reviews.map(item => {
-            item.user = review_users.find(uItem => uItem.id === item.updated_by);
-            item.user_name = (item.user || {}).name;
-            return item;
-          });
-        }
-
-        if (io.sockets.adapter.rooms[`user-${data.user_id}`]) {
-          io.sockets.in(`user-${data.user_id}`).emit(order.order_type === 1 ? 'order-status-change' : 'assisted-status-change', JSON.stringify({
-            order_id: order.id, is_modified: order.is_modified,
-            status_type: order.status_type,
-            delivery_user: order.delivery_user,
-            order, user_id, order_type: order.order_type
-          }));
-        }
-
-        await notificationAdaptor.notifyUserCron({
-          user_id, payload: {
-            order_id: order.id,
-            status_type: order.status_type,
-            is_modified: order.is_modified, user_id,
-            title: `Hurray! ${order.delivery_user ? `${(order.delivery_user || {}).name || ''} from Seller ${seller_detail.seller_name || ''} is on the way ${order.order_type === 1 ? 'with your order.' : 'for your assistance.'}` : `Your Order is on it's way from Seller ${seller_detail.seller_name || ''}`}.`,
-            description: 'Please click here for more detail.',
-            notification_type: 31,
-            order_type: order.order_type
-          }
-        });
-
-        return order;
       } else {
-        return false;
+        return undefined;
       }
-    } else {
-      return undefined;
+    } catch (e) {
+      console.log(e);
+      throw e;
     }
   }
 
@@ -981,17 +1081,13 @@ class SocketServer {
           }
         });
 
-        if (fn) {
-          fn(order);
-        } else {
-          if (io.sockets.adapter.rooms[`user-${data.user_id}`]) {
-            io.sockets.in(`user-${data.user_id}`).emit(order.order_type === 1 ? 'order-status-change' : 'assisted-status-change', JSON.stringify({
-              order_id: order.id, is_modified: order.is_modified,
-              status_type: order.status_type,
-              order, order_type: order.order_type,
-              user_id
-            }));
-          }
+        if (io.sockets.adapter.rooms[`user-${data.user_id}`]) {
+          io.sockets.in(`user-${data.user_id}`).emit(order.order_type === 1 ? 'order-status-change' : 'assisted-status-change', JSON.stringify({
+            order_id: order.id, is_modified: order.is_modified,
+            status_type: order.status_type,
+            order, order_type: order.order_type,
+            user_id
+          }));
         }
 
         return order;
@@ -1145,13 +1241,13 @@ class SocketServer {
           home_delivered: !!order.delivery_user_id,
           sku_details: order.order_type === 2 ? order.order_details : order.order_details.map(item => {
             const { id: sku_id, quantity, sku_measurement, selling_price } = item;
-            const { id: sku_measurement_id, cashback_percent } = sku_measurement;
+            const { id: sku_measurement_id, cashback_percent } = sku_measurement || {};
             return JSON.parse(JSON.stringify({
               sku_id, sku_measurement_id, seller_id, user_id,
               updated_by: user_id, quantity,
-              selling_price: parseInt(selling_price || 0),
+              selling_price: parseFloat(selling_price || 0),
               status_type: 11,
-              available_cashback: parseInt(selling_price || 0) && cashback_percent ? selling_price * cashback_percent / 100 : undefined
+              available_cashback: parseFloat(selling_price || 0) && cashback_percent ? selling_price * cashback_percent / 100 : undefined
             }));
           }), order_type: order.order_type,
           seller_type_id: seller_detail.seller_type_id
@@ -1177,8 +1273,7 @@ class SocketServer {
 
         order.upload_id = seller_detail.has_pos ? (payment_details.product || {}).job_id : undefined;
         order.available_cashback = 0;
-        order.total_amount = 0;
-
+        order.total_amount = order.order_type && order.order_type === 1 ? _lodash2.default.sumBy(order.order_details, 'selling_price') : _lodash2.default.sumBy(order.order_details, 'total_amount');
         if (io.sockets.adapter.rooms[`seller-${seller_detail.user_id}`]) {
           io.sockets.in(`seller-${seller_detail.user_id}`).emit(order.order_type === 1 ? 'order-status-change' : 'assisted-status-change', JSON.stringify(order));
         }

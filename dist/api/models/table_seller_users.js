@@ -73,6 +73,10 @@ exports.default = (sequelize, DataTypes) => {
     },
     otp_created_at: {
       type: DataTypes.DATE
+    },
+    is_logged_out: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
     }
   }, {
     freezeTableName: true,
@@ -93,7 +97,6 @@ exports.default = (sequelize, DataTypes) => {
 
   seller_users.associate = models => {
     seller_users.hasMany(models.sellers, { as: 'businesses', foreignKey: 'user_id' });
-    seller_users.hasMany(models.jobs, { foreignKey: 'user_id', onDelete: 'cascade', hooks: true });
     seller_users.hasMany(models.fcm_details, { foreignKey: 'seller_user_id', onDelete: 'cascade', hooks: true });
     seller_users.belongsTo(models.userRoles, { foreignKey: 'role_type', targetKey: 'role_type' });
     seller_users.belongsTo(models.statuses, { foreignKey: 'status_type', targetKey: 'status_type' });

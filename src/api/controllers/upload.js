@@ -24,8 +24,9 @@ const fsImpl = new S3FS(config.AWS.S3.BUCKET, config.AWS.ACCESS_DETAILS);
 
 const ALLOWED_FILE_TYPES = [
   'txt', 'pdf', 'doc', 'docx',
-  'rtf', 'xls', 'xlsx', 'png',
-  'bmp', 'jpg', 'jpeg', 'heif', 'heic'];
+  'rtf', 'xls', 'xlsx', 'png', '3gp',
+  'bmp', 'jpg', 'jpeg', 'heif', 'heic',
+  'avi', 'flv', 'wmv', 'mov', 'mp4', 'ts'];
 
 const categoryImageType = ['xxhdpi-small', 'xxhdpi'];
 
@@ -433,6 +434,8 @@ class UploadController {
                 id, type, image_types, business_type, index,
               });
         } else {
+          console.log(filteredFileData);
+          console.log('No documents in request');
           return reply.response(
               {status: false, message: 'No documents in request'}); //, forceUpdate: request.pre.forceUpdate});
         }
@@ -575,7 +578,7 @@ class UploadController {
           message: 'Shop is not linked with you.',
         });
       }
-      console.log(`Request has multiple files`);
+
       return await UploadController.uploadSellerFileItems({
         requiredDetail: {
           fileData, user, seller_data, type,
@@ -772,36 +775,38 @@ class UploadController {
         const name = elem.hapi.filename;
         const file_type = (/[.]/.exec(name)) ? /[^.]+$/.exec(name) : undefined;
         const fileTypeData = getTypeFromBuffer(elem._data);
-        const file_index = `${Math.random().
-            toString(36).
+        const file_index = `${Math.random().toString(36).
             substr(2, 9)}${(user.id).toString(36)}`;
-        const image_detail = image_index && seller_data.seller_details ?
-            type.toString() === '1' ?
-                isNaN(image_index) ?
-                    seller_data.seller_details.basic_details.documents.find(
+        let image_detail;
+        if (seller_data.seller_details) {
+          const {basic_details, business_details, assisted_type_images, offers} = seller_data.seller_details;
+          if (image_index) {
+            image_detail = type.toString() === '1' && basic_details ?
+                isNaN(image_index) ? basic_details.documents.find(
+                    item => item.index === image_index) :
+                    basic_details.documents[image_index] :
+                type.toString() === '2' && business_details ?
+                    isNaN(image_index) ? business_details.documents.find(
                         item => item.index === image_index) :
-                    seller_data.seller_details.basic_details.documents[image_index] :
-                type.toString() === '2' &&
-                seller_data.seller_details.business_details ?
-                    isNaN(image_index) ?
-                        seller_data.seller_details.business_details.documents.find(
-                            item => item.index === image_index) :
-                        seller_data.seller_details.business_details.documents[image_index] :
+                        business_details.documents[image_index] :
                     (type.toString() === '3' || type.toString() === '5') &&
-                    seller_data.seller_details.assisted_type_images ?
-                        isNaN(image_index) ?
-                            seller_data.seller_details.assisted_type_images.find(
-                                item => item.index === image_index) :
-                            seller_data.seller_details.assisted_type_images[image_index] :
-                        type.toString() === '4' &&
-                        seller_data.seller_details.offers ?
+                    assisted_type_images ? isNaN(image_index) ?
+                        assisted_type_images.find(
+                            item => item.index === image_index) :
+                        assisted_type_images[image_index] :
+                        type.toString() === '4' && offers ?
                             isNaN(image_index) ?
-                                seller_data.seller_details.offers.find(
+                                offers.find(
                                     item => item.index === image_index) :
-                                seller_data.seller_details.offers[image_index] :
-                            undefined : undefined;
-        const fileName = image_detail ?
-            image_detail.file_name :
+                                offers[image_index] : undefined;
+          }
+          if (type.toString() === '1' && basic_details &&
+              basic_details.documents && basic_details.documents.length > 0) {
+            image_detail = basic_details.documents[0];
+          }
+        }
+
+        const fileName = image_detail ? image_detail.file_name :
             `${user.id}-${file_index}.${(file_type) ?
                 file_type.toString() : fileTypeData.ext}`;
         indexes.push(file_index);
@@ -979,11 +984,13 @@ class UploadController {
 
   static async uploadResponse(parameters) {
     let {jobResult, copyData, productItemResult, type, reply} = parameters;
+    const fixed_cash_backs = (config.FIXED_CASH_BACK ||'').split('||');
     const replyResult = {
       status: true,
       job_id: jobResult.id,
       message: 'Uploaded Successfully',
       billResult: copyData,
+      fixed_cashback: jobResult.cashback_job_count > 0 ? fixed_cash_backs[1]: fixed_cash_backs[0]
     };
     if (productItemResult) {
       replyResult.product = productItemResult[1];
@@ -2181,6 +2188,51 @@ class UploadController {
       } catch (err) {
         console.log(
             `Error on ${new Date()} retrieving brand image is as follow: \n \n ${err}`);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: 1,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
+        return reply.response({
+          status: false,
+          message: 'Unable to retrieve image',
+          err,
+          forceUpdate: request.pre.forceUpdate,
+        });
+      }
+    } else {
+      return reply.response({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
+  static async retrieveSKUImage(request, reply) {
+    if (!request.pre.forceUpdate) {
+      try {
+        const fsImplBrand = new S3FS(
+            `${config.AWS.S3.BUCKET}/${config.AWS.S3.SKU_IMAGE}${request.params.file_type
+                ? `/${request.params.file_type}` : ''}`,
+            config.AWS.ACCESS_DETAILS);
+        const fileResult = await fsImplBrand.readFile(
+            `${request.params.id}.png`, 'utf8');
+        return reply.response(fileResult.Body).
+            header('Content-Type', fileResult.ContentType).
+            header('Content-Disposition',
+                `attachment; filename=${request.params.id}.png`);
+      } catch (err) {
+        console.log(
+            `Error on ${new Date()} retrieving sku image is as follow: \n \n ${err}`);
         modals.logs.create({
           api_action: request.method,
           api_path: request.url.pathname,

@@ -170,7 +170,9 @@ export function prepareShopEarnRoute(modal, route, middleware, socket) {
             'title': joi.string().required(),
             'hsn_code': [joi.string(), joi.allow(null)],
             'added_date': [joi.string(), joi.allow(null)],
+            'sub_category_name': [joi.string(), joi.allow(null)],
             'mrp': [joi.number(), joi.allow(null)],
+            'priority_index': [joi.number(), joi.allow(null)],
             'quantity': joi.number().required(),
             'created_at': [joi.string(), joi.allow(null)],
             'sku_measurement': [
@@ -215,9 +217,11 @@ export function prepareShopEarnRoute(modal, route, middleware, socket) {
             'main_category_id': [joi.number(), joi.allow(null)],
             'category_id': [joi.number(), joi.allow(null)],
             'sub_category_id': [joi.number(), joi.allow(null)],
+            'sub_category_name': [joi.string(), joi.allow(null)],
             'title': joi.string().required(),
             'hsn_code': [joi.string(), joi.allow(null)],
             'mrp': [joi.number(), joi.allow(null)],
+            'priority_index': [joi.number(), joi.allow(null)],
             'quantity': joi.number().required(),
             'added_date': [joi.string(), joi.allow(null)],
             'sku_measurement': [
@@ -509,6 +513,18 @@ export function prepareShopEarnRoute(modal, route, middleware, socket) {
           method: middleware.checkAppVersion,
           assign: 'forceUpdate',
         }], handler: controller.retrieveSKUMeasurements,
+    },
+  });
+
+  route.push({
+    method: 'GET',
+    path: '/sellers/skus/{sku_id}',
+    config: {
+      auth: 'jwt',
+      pre: [
+        {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+        {method: middleware.logSellerAction, assign: 'seller_action'}],
+      handler: controller.getSKUSuggestions,
     },
   });
 }

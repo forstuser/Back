@@ -89,13 +89,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       handler: _sellers2.default.getSellerById,
       config: {
         auth: 'jwt',
-        pre: [{
-          method: middleware.checkAppVersion,
-          assign: 'forceUpdate'
-        }, {
-          method: middleware.updateUserActiveStatus,
-          assign: 'userExist'
-        }]
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.updateUserActiveStatus, assign: 'userExist' }]
       }
     });
 
@@ -105,10 +99,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       handler: _sellers2.default.getSellerDetails,
       config: {
         auth: 'jwt',
-        pre: [{
-          method: middleware.checkAppVersion,
-          assign: 'forceUpdate'
-        }]
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }]
       }
     });
 
@@ -118,10 +109,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       handler: _sellers2.default.getSellerCategories,
       config: {
         auth: 'jwt',
-        pre: [{
-          method: middleware.checkAppVersion,
-          assign: 'forceUpdate'
-        }]
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }]
       }
     });
 
@@ -131,10 +119,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       handler: _sellers2.default.updateSellerRushHours,
       config: {
         auth: 'jwt',
-        pre: [{
-          method: middleware.checkAppVersion,
-          assign: 'forceUpdate'
-        }]
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }]
       }
     });
 
@@ -200,9 +185,36 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
 
     route.push({
       method: 'POST',
+      path: '/sellers/invite/details',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, {
+          method: middleware.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _sellers2.default.addInviteSellerByName,
+        description: 'Add Seller to database so we can invite him on behalf of user.',
+        validate: {
+          payload: {
+            seller_name: [_joi2.default.string(), _joi2.default.allow(null)],
+            contact_no: _joi2.default.string().required(),
+            email: [_joi2.default.string(), _joi2.default.allow(null)],
+            address: [_joi2.default.string(), _joi2.default.allow(null)],
+            city_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            state_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            locality_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            longitude: [_joi2.default.string(), _joi2.default.allow(null)],
+            latitude: [_joi2.default.string(), _joi2.default.allow(null)]
+          }
+        }
+      }
+    });
+
+    route.push({
+      method: 'POST',
       path: '/sellers/init',
       config: {
-        auth: 'jwt', pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }], handler: _sellers2.default.initializeSeller,
+        auth: 'jwt', pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }], handler: _sellers2.default.initializeSeller,
         description: 'Initialize Seller Details by GSTIN or PAN.',
         tags: ['api', 'Seller', 'GSTIN', 'PAN'], validate: {
           payload: {
@@ -228,7 +240,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       method: 'POST',
       path: '/sellers/link',
       config: {
-        auth: 'jwt', pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }], handler: _sellers2.default.createLinkSeller,
+        auth: 'jwt', pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }], handler: _sellers2.default.createLinkSeller,
         description: 'Create Seller Details by GSTIN or PAN and link it with user identity.',
         tags: ['api', 'Seller', 'GSTIN', 'PAN'], validate: {
           payload: {
@@ -253,7 +265,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       method: 'PUT',
       path: '/sellers/link',
       config: {
-        auth: 'jwt', pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }], handler: _sellers2.default.updateLinkSeller,
+        auth: 'jwt', pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }], handler: _sellers2.default.updateLinkSeller,
         description: 'Update Seller Details by GSTIN or PAN and link it with user identity',
         tags: ['api', 'Seller', 'GSTIN', 'PAN'], validate: {
           payload: {
@@ -292,7 +304,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       method: 'PUT',
       path: '/sellers/{id}/basic',
       config: {
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         auth: 'jwt', handler: _sellers2.default.updateSellerBasicDetail,
         description: 'Update Seller Details by GSTIN or PAN and link it with user identity',
         tags: ['api', 'Seller', 'Provider', 'Types'],
@@ -329,7 +341,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       method: 'PUT',
       path: '/sellers/{id}/providers',
       config: {
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         auth: 'jwt', handler: _sellers2.default.updateSellerProviderTypes,
         description: 'Update Seller Details provider type details',
         tags: ['api', 'Seller', 'provider type', 'Details'],
@@ -359,7 +371,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       method: 'PUT',
       path: '/sellers/{seller_id}/providers/brands',
       config: {
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         auth: 'jwt', handler: _sellers2.default.updateSellerProviderTypeBrands,
         description: 'Update Seller Details provider type brands',
         tags: ['api', 'Seller', 'provider type', 'Details'],
@@ -389,7 +401,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       method: 'POST',
       path: '/sellers/{id}/assisted',
       config: {
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         auth: 'jwt', handler: _sellers2.default.updateAssistedServiceUsers,
         description: 'Add Seller assisted service user details',
         tags: ['api', 'Seller', 'Assisted Service User', 'Details'],
@@ -424,7 +436,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       method: 'POST',
       path: '/sellers/{seller_id}/assisted/{id}/types',
       config: {
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         auth: 'jwt', handler: _sellers2.default.updateAssistedServiceTypes,
         description: 'Add Seller assisted service types details',
         tags: ['api', 'Seller', 'Assisted Service Types', 'Details'],
@@ -452,7 +464,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       method: 'DELETE',
       path: '/sellers/{seller_id}/assisted/{service_user_id}/types/{id}',
       config: {
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         auth: 'jwt', handler: _sellers2.default.deleteAssistedServiceTypes,
         description: 'Delete Seller assisted service types details',
         tags: ['api', 'Seller', 'Assisted Service Types', 'Details'],
@@ -468,7 +480,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       method: 'PUT',
       path: '/sellers/{id}/offers',
       config: {
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         auth: 'jwt', handler: _sellers2.default.updateSellerOffers,
         description: 'Update Seller Offers',
         tags: ['api', 'Seller', 'Offer', 'Details'],
@@ -496,7 +508,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       method: 'PUT',
       path: '/sellers/{seller_id}/offers/{id}/publish',
       config: {
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         auth: 'jwt', handler: _sellers2.default.publishSellerOffersToUsers,
         description: 'Publish Seller Offers to Users',
         tags: ['api', 'Publish', 'Seller', 'Offers', 'Users'],
@@ -519,7 +531,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       method: 'GET',
       path: '/sellers/brands',
       config: {
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         auth: 'jwt', handler: _sellers2.default.getBrandsForSeller,
         description: 'Retrieve Seller Brands',
         tags: ['api', 'Seller', 'Brands'],
@@ -535,7 +547,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       method: 'GET',
       path: '/sellers/{seller_id}/assisted',
       config: {
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         auth: 'jwt', handler: _sellers2.default.getAssistedServicesForSeller,
         description: 'Get Seller assisted service types details',
         tags: ['api', 'Seller', 'Assisted Service Types', 'Details'],
@@ -551,7 +563,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       method: 'GET',
       path: '/sellers/{seller_id}/delivery',
       config: {
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         auth: 'jwt', handler: _sellers2.default.getDeliveryPersonForSellers,
         description: 'Get Seller Delivery Person list',
         tags: ['api', 'Seller', 'Delivery Person', 'List'],
@@ -567,7 +579,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       method: 'GET',
       path: '/sellers/{seller_id}/services',
       config: {
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         auth: 'jwt', handler: _sellers2.default.getSellerAssistedServiceTypes,
         description: 'Get Seller assisted service types details',
         tags: ['api', 'Seller', 'Assisted Service Types', 'Details'],
@@ -583,7 +595,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       method: 'GET',
       path: '/sellers/{seller_id}/offers',
       config: {
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         auth: 'jwt', handler: _sellers2.default.retrieveSellerOffers,
         description: 'Get Seller offers',
         tags: ['api', 'Seller', 'Offer', 'List'],
@@ -599,7 +611,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       method: 'GET',
       path: '/sellers/{seller_id}/credits',
       config: {
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         auth: 'jwt', handler: _sellers2.default.retrieveSellerCredits,
         description: 'Get Seller Credits',
         tags: ['api', 'Seller', 'Credit', 'List'],
@@ -615,7 +627,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       method: 'PUT',
       path: '/sellers/{id}/credits',
       config: {
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         auth: 'jwt', handler: _sellers2.default.updateSellerCredits,
         description: 'Update Seller Credits',
         tags: ['api', 'Seller', 'Credit', 'Details'],
@@ -642,7 +654,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       method: 'GET',
       path: '/sellers/{seller_id}/points',
       config: {
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         auth: 'jwt', handler: _sellers2.default.retrieveSellerLoyaltyPoints,
         description: 'Get Seller Points',
         tags: ['api', 'Seller', 'Point', 'List'],
@@ -658,7 +670,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       method: 'PUT',
       path: '/sellers/{id}/points',
       config: {
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         auth: 'jwt', handler: _sellers2.default.updateSellerPoints,
         description: 'Update Seller Points',
         tags: ['api', 'Seller', 'Point', 'Details'],
@@ -685,7 +697,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       method: 'GET',
       path: '/sellers/{seller_id}/loyalty/rules',
       config: {
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         auth: 'jwt', handler: _sellers2.default.retrieveSellerLoyaltyRules,
         description: 'Retrieve Seller Loyalty Rules',
         tags: ['api', 'Seller', 'Loyalty', 'Rules'],
@@ -701,7 +713,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       method: 'PUT',
       path: '/sellers/{id}/loyalty/rules',
       config: {
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         auth: 'jwt', handler: _sellers2.default.updateSellerLoyaltyRules,
         description: 'Update Seller Loyalty Rules',
         tags: ['api', 'Seller', 'Loyalty', 'Rules'],
@@ -729,7 +741,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       method: 'GET',
       path: '/sellers/{seller_id}/wallet',
       config: {
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         auth: 'jwt', handler: _sellers2.default.retrieveSellerWallet,
         description: 'Get Seller Wallet',
         tags: ['api', 'Seller', 'Wallet', 'List'],
@@ -745,7 +757,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       method: 'GET',
       path: '/sellers/{seller_id}/users',
       config: {
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         auth: 'jwt', handler: _sellers2.default.retrieveSellerConsumers,
         description: 'Get Seller users',
         tags: ['api', 'Seller', 'user', 'List'],
@@ -761,7 +773,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       method: 'GET',
       path: '/sellers/{seller_id}/users/cashbacks',
       config: {
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         auth: 'jwt', handler: _sellers2.default.retrieveSellerConsumerCashBacks,
         description: 'Get Seller users Cash Back Details',
         tags: ['api', 'Seller', 'user', 'List'],
@@ -777,7 +789,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       method: 'GET',
       path: '/sellers/{seller_id}/users/transactions',
       config: {
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         auth: 'jwt', handler: _sellers2.default.retrieveSellerConsumerTransactions,
         description: 'Get Seller users Transaction Details',
         tags: ['api', 'Seller', 'user', 'List'],
@@ -812,7 +824,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       method: 'GET',
       path: '/sellers/{seller_id}/users/{customer_id}',
       config: {
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         auth: 'jwt', handler: _sellers2.default.retrieveSellerConsumerDetails,
         description: 'Get Seller customer details',
         tags: ['api', 'Seller', 'customer', 'details'],
@@ -828,7 +840,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       method: 'GET',
       path: '/sellers/{seller_id}/users/{customer_id}/credits',
       config: {
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         auth: 'jwt', handler: _sellers2.default.retrieveSellerConsumerCredits,
         description: 'Get Seller customer credits',
         tags: ['api', 'Seller', 'customer', 'credits'],
@@ -844,7 +856,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       method: 'PUT',
       path: '/seller/{seller_id}/users/{customer_id}/credits/{credit_id}/jobs/{job_id}',
       config: {
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         auth: 'jwt', handler: _sellers2.default.updateSellerConsumerCredits,
         description: 'Linking Seller customer credits with jobs',
         tags: ['api', 'Seller', 'customer', 'credits'],
@@ -860,7 +872,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       method: 'PUT',
       path: '/seller/{seller_id}/users/{customer_id}/points/{point_id}/jobs/{job_id}',
       config: {
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         auth: 'jwt', handler: _sellers2.default.updateSellerConsumerPoints,
         description: 'Linking Seller customer loyalty points with jobs',
         tags: ['api', 'Seller', 'customer', 'loyalty points'],
@@ -876,7 +888,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       method: 'GET',
       path: '/sellers/{seller_id}/users/{customer_id}/points',
       config: {
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         auth: 'jwt', handler: _sellers2.default.retrieveSellerConsumerPoints,
         description: 'Get Seller customer loyalty points',
         tags: ['api', 'Seller', 'customer', 'Loyalty Points'],
@@ -892,7 +904,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       method: 'GET',
       path: '/sellers/{seller_id}/users/{customer_id}/transactions',
       config: {
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         auth: 'jwt', handler: _sellers2.default.retrieveSellerTransactions,
         description: 'Get Seller customer transactions',
         tags: ['api', 'Seller', 'customer', 'transactions'],
@@ -908,7 +920,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       method: 'PUT',
       path: '/sellers/{seller_id}/users/{customer_id}',
       config: {
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         auth: 'jwt', handler: _sellers2.default.linkCustomers,
         description: 'Link Consumer with Seller',
         tags: ['api', 'Seller', 'Consumer'],
@@ -924,7 +936,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       method: 'PUT',
       path: '/sellers/{seller_id}/users',
       config: {
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         auth: 'jwt', handler: _sellers2.default.inviteCustomers,
         description: 'Invite Consumer with Seller',
         tags: ['api', 'Seller', 'Consumer'],
@@ -950,7 +962,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       path: '/sellers/{seller_id}/assisted/{id}',
       config: {
         auth: 'jwt',
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         handler: _sellers2.default.deleteAssistedServiceUsers
       }
     });
@@ -986,7 +998,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       path: '/sellers/{seller_id}/offers/{id}',
       config: {
         auth: 'jwt',
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         handler: _sellers2.default.deleteOffer
       }
     });
@@ -995,7 +1007,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       method: 'GET',
       path: '/sellers/categories',
       config: {
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         auth: 'jwt', handler: _sellers2.default.getCategoriesForSeller,
         description: 'Retrieve Seller Categories',
         tags: ['api', 'Seller', 'Categories'],

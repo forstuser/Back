@@ -82,6 +82,8 @@ export default (sequelize, DataTypes) => {
         {foreignKey: 'admin_status', targetKey: 'status_type'});
     jobs.hasMany(models.jobCopies,
         {onDelete: 'cascade', hooks: true, as: 'copies'});
+    jobs.hasMany(models.products,
+        {onDelete: 'cascade', hooks: true, foreignKey: 'job_id'});
   };
   return jobs;
 };

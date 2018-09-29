@@ -12,6 +12,7 @@ exports.default = {
   },
   FB_GRAPH_ROUTE: process.env.FB_GRAPH_ROUTE,
   MESSAGE: process.env.MESSAGE,
+  FIXED_CASH_BACK: process.env.FIXED_CASH_BACK,
   AWS: {
     S3: {
       BUCKET: process.env.AWS_S3_BUCKET,
@@ -21,6 +22,7 @@ exports.default = {
       WEARABLE_IMAGE: 'wearableimages',
       CALENDAR_ITEM_IMAGE: 'calendarserviceimages',
       BRAND_IMAGE: 'brandimages',
+      SKU_IMAGE: 'skuimages',
       PROVIDER_IMAGE: 'providerimages',
       KNOW_ITEM_IMAGE: 'knowitemimages',
       OFFER_BANNERS: 'offer_banners'
@@ -147,6 +149,7 @@ exports.default = {
       RWL_0004: 'Exceeded maximum no of allowed transactions'
     }
   },
+  MAX_WISH_LIST_ITEMS: process.env.MAX_WISH_LIST_ITEMS,
   SELLER_IMAGE_TYPE: process.env.SELLER_IMAGE_TYPE,
   SELLER_CATEGORIES: process.env.SELLER_CATEGORIES,
   SELLER_PAYMENT_MODES: process.env.SELLER_PAYMENT_MODES,

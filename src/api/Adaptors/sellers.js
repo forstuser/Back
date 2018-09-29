@@ -2,7 +2,6 @@ import google from '../../helpers/google';
 import _ from 'lodash';
 import CategoryAdaptor from './category';
 import UserAdaptor from './user';
-import NotificationAdaptor from './notification';
 import Promise from 'bluebird';
 import moment from 'moment';
 
@@ -43,7 +42,7 @@ export default class SellerAdaptor {
   }
 
   async retrieveSellers(options, query_options) {
-    const {user_id, seller_offer_ids, latitude, longitude, city, limit, offset} = options;
+    const {latitude, longitude, city, limit, offset} = options;
     const result = await this.modals.sellers.findAll(query_options);
     let sellers = result.map(item => item.toJSON());
     if (sellers.length > 0) {
@@ -66,7 +65,13 @@ export default class SellerAdaptor {
                 this.retrieveSellerStates({id: state_ids}) : [],
             locality_ids.length > 0 ?
                 this.retrieveSellerLocations({id: locality_ids}) : [],
-            this.retrieveSellerAssistedServices({where: {seller_id}})]);
+            this.retrieveSellerAssistedServices({
+              where: {seller_id},
+              include: {
+                model: this.modals.assisted_service_users,
+                attributes: ['is_verified'],
+              },
+            })]);
       sellers = sellers.map(item => {
         item.categories = seller_categories.filter(
             cItem => cItem.seller_id === item.id);
@@ -74,7 +79,8 @@ export default class SellerAdaptor {
         item.state = seller_states.find(cItem => cItem.id === item.state_id);
         item.location = seller_locations.find(
             cItem => cItem.id === item.locality_id);
-        item.assisted_services = assisted_services;
+        item.assisted_services = assisted_services.filter(
+            asItem => asItem.assisted_service_user.is_verified && asItem.seller_id === item.id );
         item.cashback_total = (item.cashback_total || 0) -
             (item.redeemed_cashback || 0);
         item.loyalty_total = (item.loyalty_total || 0) -
@@ -83,8 +89,8 @@ export default class SellerAdaptor {
             (item.redeemed_credits || 0);
         item.offer_count = item.offer_count || 0;
         item.ratings = item.ratings || 0;
-        item.transaction_counts = parseInt(item.transaction_counts || 0) +
-            parseInt(item.order_counts || 0);
+        item.order_counts = parseInt(item.order_counts || 0);
+        item.transaction_counts = parseInt(item.transaction_counts || 0);
 
         if (item.seller_details) {
           item.seller_details = _.omit(item.seller_details,
@@ -173,9 +179,29 @@ export default class SellerAdaptor {
     return result;
   }
 
+  async retrieveOrUpdateInvitedSellerDetail(
+      query_options, seller_detail, is_create) {
+    let result = await this.modals.invited_sellers.findOne(query_options);
+    if (!result && is_create) {
+      result = await this.modals.invited_sellers.create(seller_detail);
+    }
+
+    if (result) {
+      await seller_detail ?
+          result.updateAttributes(JSON.parse(JSON.stringify(seller_detail))) :
+          seller_detail;
+      return result.toJSON();
+    }
+    return result;
+  }
+
   async retrieveSellerDetail(query_options) {
     const result = await this.modals.sellers.findOne(query_options);
     return result ? result.toJSON() : result;
+  }
+
+  async retrieveSellerDetailNonJSON(query_options) {
+    return await this.modals.sellers.findOne(query_options);
   }
 
   async retrieveProviderTypes(query_options) {
@@ -337,7 +363,7 @@ export default class SellerAdaptor {
               `(select sum(seller_cashback.amount) from table_wallet_user_cashback as seller_cashback where status_type in (16,14) and transaction_type in (1,2) and seller_cashback.user_id = "users"."id" and seller_cashback.seller_id = ${seller_id})`),
           'cashback_total']],
     });
-    const user_list = result.map(item => item.toJSON());
+    const user_list = result.map(item => item.toJSON()).filter(item => item.cashback_total > 0);
     const addresses = (await this.userAdaptor.retrieveUserAddresses(
         {
           where: {
@@ -621,8 +647,8 @@ export default class SellerAdaptor {
       seller.credit_total = (seller.credit_total || 0) - seller.credit_redeemed;
       seller.offer_count = seller.offer_count || 0;
       seller.ratings = seller.ratings || 0;
-      seller.transaction_counts = parseInt(seller.transaction_counts || 0) +
-          parseInt(seller.order_counts || 0);
+      seller.transaction_counts = parseInt(seller.transaction_counts || 0);
+      seller.order_counts = parseInt(seller.order_counts || 0);
 
       if (seller.seller_details) {
         seller.seller_details = _.omit(seller.seller_details,

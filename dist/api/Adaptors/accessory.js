@@ -210,7 +210,9 @@ class AccessoryAdaptor {
         where: { created_by: options.user_id },
         order: [['updated_at', 'desc']]
       });
-      let accessory_product_ids, product_ids, payment_mode_ids;
+      let accessory_product_ids = [],
+          product_ids = [],
+          payment_mode_ids = [];
       if (transactions.length > 0) {
         accessory_product_ids = transactions.map(transaction => transaction.accessory_product_id);
         product_ids = transactions.map(transaction => transaction.product_id);
@@ -220,17 +222,17 @@ class AccessoryAdaptor {
       const [accessoryProducts, products, paymentModes] = await _bluebird2.default.all([
       // these transactions have the accessory product id
       // get the accessory products using that
-      this.retrieveAccessoryProducts({
+      accessory_product_ids.length > 0 ? this.retrieveAccessoryProducts({
         options: {
           where: JSON.parse(JSON.stringify({ id: accessory_product_ids }))
         }
-      }),
+      }) : [],
       // they also have product id
       // get the consumer product using that
-      this.retrieveProducts({ where: JSON.parse(JSON.stringify({ id: product_ids })) }),
+      product_ids.length > 0 ? this.retrieveProducts({ where: JSON.parse(JSON.stringify({ id: product_ids })) }) : [],
       // payment mode is also there.
       // add the payment mode in the result of each transactions well.
-      this.retrievePaymentMode({ where: JSON.parse(JSON.stringify({ id: payment_mode_ids })) })]);
+      payment_mode_ids.length > 0 ? this.retrievePaymentMode({ where: JSON.parse(JSON.stringify({ id: payment_mode_ids })) }) : []]);
 
       return transactions.map(item => {
         item.accessory_product = accessoryProducts.find(pmItem => pmItem.id === item.accessory_product_id);

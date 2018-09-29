@@ -147,7 +147,7 @@ class JobAdaptor {
             })));
     await this.notificationAdaptor.notifyUserCron({
       seller_user_id, payload: {
-        title: `Loyalty Points have been redeemed by ${user_name}.`,user_id,
+        title: `Loyalty Points have been redeemed by ${user_name}.`, user_id,
         notification_type: 4,
       },
     });
@@ -163,7 +163,7 @@ class JobAdaptor {
       this.modals.jobCopies.findAll({where: {job_id: id}}),
       this.modals.cashback_jobs.findOne({
         where: {job_id: id},
-        attributes: ['id', 'online_order'],
+        attributes: ['id', 'online_order', [this.modals.sequelize.literal(`(Select count(*) from table_cashback_jobs as cJobs where cJobs.user_id = cashback_jobs.user_id and cJobs.admin_status <> 2)`), 'job_counts']],
       })]);
     let jobDetail = jobResult[0] ? jobResult[0].toJSON() : undefined;
     if (jobDetail && jobDetail.admin_status === 8 || isUpload) {
@@ -183,6 +183,7 @@ class JobAdaptor {
     jobDetail.category_id = productDetail.category_id;
     jobDetail.main_category_id = productDetail.main_category_id;
     jobDetail.cashback_job_id = cashback_job_detail.id;
+    jobDetail.cashback_job_count = cashback_job_detail.job_counts;
     jobDetail.online_order = cashback_job_detail.online_order;
     jobDetail.copies = jobResult[2].map((item) => item.toJSON());
     return jobDetail;
@@ -197,7 +198,9 @@ class JobAdaptor {
         user_default_limit_rules.find(item => item.rule_type === 1);
     daily_limit = daily_limit ||
         user_default_limit_rules.find(item => item.rule_type === 2);
-    let home_delivery_limit = user_default_limit_rules.find(
+    let home_delivery_limit = user_limit_rules.find(
+        item => item.rule_type === 7 && item.seller_id);
+    home_delivery_limit = home_delivery_limit && user_default_limit_rules.find(
         item => item.rule_type === 7);
     let total_amount = amount;
     total_amount = total_amount < 0 ? 0 : total_amount;
@@ -228,8 +231,8 @@ class JobAdaptor {
         home_delivered ?
             this.notificationAdaptor.notifyUserCron({
               seller_user_id, payload: {
-                title: `Hurray! Cashback on Home Delivery to User ${user_name ||
-                ''} has been credited to your BB Wallet!`,
+                title: `Hurray! You have received Cashback on Home Delivery to ${user_name ||
+                ''} in your BB Wallet!`,
                 description: 'Please click here for more detail.',
                 notification_type: 3,
               },
@@ -265,8 +268,8 @@ class JobAdaptor {
             home_delivered ?
                 this.notificationAdaptor.notifyUserCron({
                   seller_user_id, payload: {
-                    title: `Hurray! Cashback on Home Delivery to User ${user_name ||
-                    ''} has been credited to your BB Wallet!`,
+                    title: `Hurray! You have received Cashback on Home Delivery to ${user_name ||
+                    ''} in your BB Wallet!`,
                     description: 'Please click here for more detail.',
                     notification_type: 3,
                   },
@@ -303,8 +306,8 @@ class JobAdaptor {
             home_delivered ?
                 this.notificationAdaptor.notifyUserCron({
                   seller_user_id, payload: {
-                    title: `Hurray! Cashback on Home Delivery to User ${user_name ||
-                    ''} has been credited to your BB Wallet!`,
+                    title: `Hurray! You have received Cashback on Home Delivery to ${user_name ||
+                    ''} in your BB Wallet!`,
                     description: 'Please click here for more detail.',
                     notification_type: 3,
                   },
@@ -341,8 +344,8 @@ class JobAdaptor {
           home_delivered ?
               this.notificationAdaptor.notifyUserCron({
                 seller_user_id, payload: {
-                  title: `Hurray! Cashback on Home Delivery to User ${user_name ||
-                  ''} has been credited to your BB Wallet!`,
+                  title: `Hurray! You have received Cashback on Home Delivery to ${user_name ||
+                  ''} in your BB Wallet!`,
                   description: 'Please click here for more detail.',
                   notification_type: 3,
                 },

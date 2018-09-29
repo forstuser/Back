@@ -101,7 +101,11 @@ class DashboardAdaptor {
         where: { seller_id, service_type_id: { $not: 0 } },
         distinct: true,
         group: ['seller_id']
-      }), this.modals.cashback_wallet.aggregate('amount', 'sum', { where: { seller_id, transaction_type: 1, status_type: 16 } })]);
+      }), this.modals.cashback_wallet.aggregate('amount', 'sum', {
+        where: {
+          seller_id, transaction_type: [1, 2], status_type: [16, 14]
+        }
+      })]);
       return {
         status: true,
         message: 'Dashboard restore Successful',
