@@ -118,14 +118,16 @@ class OrderController {
           result.seller_review = result.seller_review[0];
           result.order_details = Array.isArray(result.order_details) ?
               result.order_details.map(item => {
-                if (item.sku_measurement) {
+                if (item.sku_measurement &&
+                    item.sku_measurement.measurement_type) {
                   const measurement_type = measurement_types.find(
                       mtItem => mtItem.id.toString() ===
                           item.sku_measurement.measurement_type.toString());
                   item.sku_measurement.measurement_acronym = measurement_type ?
                       measurement_type.acronym : 'unit';
                 }
-                if (item.updated_measurement) {
+                if (item.updated_measurement &&
+                    item.updated_measurement.measurement_type) {
                   const updated_measurement_type = measurement_types.find(
                       mtItem => mtItem.id.toString() ===
                           item.updated_measurement.measurement_type.toString());
@@ -305,7 +307,7 @@ class OrderController {
                         modals.sequelize.literal(
                             '(Select sum(amount) from table_wallet_user_cashback as user_wallet where user_wallet.job_id = "order".job_id)'),
                         'available_cashback']],
-                    include, order: [['created_at', 'desc']],
+                    include, order: [['id', 'desc']],
                   }),
               seller_exist: (user_index_data && user_index_data.my_seller_ids &&
                   user_index_data.my_seller_ids.length > 0),
@@ -437,7 +439,7 @@ class OrderController {
             where: JSON.parse(
                 JSON.stringify(
                     {seller_id, user_id, status_type})),
-            include, order: [['created_at', 'desc']],
+            include, order: [['id', 'desc']],
             attributes: [
               'id', 'order_details', 'order_type', 'status_type',
               'seller_id', 'user_id', [
@@ -770,7 +772,7 @@ class OrderController {
 
         return reply.response(
             {
-              message: `Looks a like you haven't added any item in your wishlist yet.`,
+              message: `Looks like you haven't added any item in your wishlist yet.`,
               status: false,
             });
       } else if (request.pre.userExist === 0) {

@@ -86,11 +86,11 @@ class OrderController {
 
           result.seller_review = result.seller_review[0];
           result.order_details = Array.isArray(result.order_details) ? result.order_details.map(item => {
-            if (item.sku_measurement) {
+            if (item.sku_measurement && item.sku_measurement.measurement_type) {
               const measurement_type = measurement_types.find(mtItem => mtItem.id.toString() === item.sku_measurement.measurement_type.toString());
               item.sku_measurement.measurement_acronym = measurement_type ? measurement_type.acronym : 'unit';
             }
-            if (item.updated_measurement) {
+            if (item.updated_measurement && item.updated_measurement.measurement_type) {
               const updated_measurement_type = measurement_types.find(mtItem => mtItem.id.toString() === item.updated_measurement.measurement_type.toString());
               item.updated_measurement.measurement_acronym = updated_measurement_type ? updated_measurement_type.acronym : 'unit';
             }
@@ -173,7 +173,7 @@ class OrderController {
           result: await orderAdaptor.retrieveOrderList({
             where: JSON.parse(JSON.stringify({ seller_id, user_id, status_type })),
             attributes: ['id', 'order_details', 'order_type', 'status_type', 'seller_id', 'user_id', [modals.sequelize.literal('(Select my_seller_ids from table_user_index as user_index where user_index.user_id = "order".user_id)'), 'my_seller_ids'], [modals.sequelize.literal('(Select purchase_cost from consumer_products as expense where expense.id = "order".expense_id)'), 'total_amount'], 'job_id', 'expense_id', [modals.sequelize.literal('(Select cashback_status from table_cashback_jobs as jobs where jobs.id = "order".job_id)'), 'cashback_status'], 'created_at', 'updated_at', 'is_modified', 'user_address_id', 'delivery_user_id', [modals.sequelize.literal('(Select sum(amount) from table_wallet_user_cashback as user_wallet where user_wallet.job_id = "order".job_id)'), 'available_cashback']],
-            include, order: [['created_at', 'desc']]
+            include, order: [['id', 'desc']]
           }),
           seller_exist: user_index_data && user_index_data.my_seller_ids && user_index_data.my_seller_ids.length > 0,
           status: true
@@ -240,7 +240,7 @@ class OrderController {
         return reply.response({
           result: await orderAdaptor.retrieveOrderList({
             where: JSON.parse(JSON.stringify({ seller_id, user_id, status_type })),
-            include, order: [['created_at', 'desc']],
+            include, order: [['id', 'desc']],
             attributes: ['id', 'order_details', 'order_type', 'status_type', 'seller_id', 'user_id', [modals.sequelize.literal('(Select my_seller_ids from table_user_index as user_index where user_index.user_id = "order".user_id)'), 'my_seller_ids'], [modals.sequelize.literal('(Select purchase_cost from consumer_products as expense where expense.id = "order".expense_id)'), 'total_amount'], 'job_id', 'expense_id', [modals.sequelize.literal('(Select cashback_status from table_cashback_jobs as jobs where jobs.id = "order".job_id)'), 'cashback_status'], 'created_at', 'updated_at', 'is_modified', 'user_address_id', 'delivery_user_id', [modals.sequelize.literal('(Select sum(amount) from table_wallet_user_cashback as user_wallet where user_wallet.job_id = "order".job_id)'), 'available_cashback']]
           }),
           seller_exist: !!(user_index_data && user_index_data.my_seller_ids && user_index_data.my_seller_ids.length > 0),
@@ -418,7 +418,7 @@ class OrderController {
         }
 
         return reply.response({
-          message: `Looks a like you haven't added any item in your wishlist yet.`,
+          message: `Looks like you haven't added any item in your wishlist yet.`,
           status: false
         });
       } else if (request.pre.userExist === 0) {

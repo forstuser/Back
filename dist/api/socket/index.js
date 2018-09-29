@@ -185,14 +185,14 @@ class SocketServer {
       if (order_type === 1 && user_index_data.wishlist_items && user_index_data.wishlist_items.length > 0) {
         const order_details = user_index_data.wishlist_items.map(item => {
           const { id, title, brand_id, quantity, category_id, sku_measurement, sub_category_id, main_category_id } = item;
-          const { id: sku_measurement_id, mrp, bar_code, pack_numbers, cashback_percent, measurement_type, measurement_value } = sku_measurement;
+          const { id: sku_measurement_id, mrp, bar_code, pack_numbers, cashback_percent, measurement_type, measurement_value } = sku_measurement || {};
           return {
             item_availability: true, id, title, brand_id,
             quantity, category_id, sub_category_id, main_category_id,
-            sku_measurement: {
+            sku_measurement: sku_measurement ? {
               id: sku_measurement_id, mrp, bar_code, pack_numbers,
               cashback_percent, measurement_type, measurement_value
-            }
+            } : undefined
           };
         });
         const order = await orderAdaptor.placeNewOrder({

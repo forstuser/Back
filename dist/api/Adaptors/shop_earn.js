@@ -401,7 +401,7 @@ class ShopEarnAdaptor {
             },
             attributes: ['measurement_value', 'pack_numbers', 'cashback_percent', 'bar_code']
           }],
-          attributes: ['sku_id', 'sku_measurement_id', 'selling_price', 'quantity', 'available_cashback']
+          attributes: ['sku_id', 'sku_measurement_id', 'selling_price', 'quantity', 'available_cashback', 'timely_added']
         },
         attributes: ['id', 'admin_status', 'ce_status', 'home_delivered', 'cashback_status', 'seller_status', 'copies', [this.modals.sequelize.literal(`(select sum(purchase_cost) from consumer_products as product where product.user_id = "cashback_jobs"."user_id" and product.job_id = "cashback_jobs"."job_id")`), 'amount_paid'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where seller_credit.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 1 and seller_credit.user_id = "cashback_jobs"."user_id")`), 'total_credits'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where seller_credit.job_id = "cashback_jobs"."id" and (status_type in (14) or (status_type in (16) and transaction_type = 2)) and seller_credit.user_id = "cashback_jobs"."user_id")`), 'redeemed_credits'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_loyalty as loyalty_wallet where loyalty_wallet.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 1 and loyalty_wallet.user_id = "cashback_jobs"."user_id")`), 'total_loyalty'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_loyalty as loyalty_wallet where loyalty_wallet.job_id = "cashback_jobs"."id" and (status_type in (14) or (status_type in (16) and transaction_type = 2)) and loyalty_wallet.user_id = "cashback_jobs"."user_id")`), 'redeemed_loyalty'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_user_cashback as user_wallet where user_wallet.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 1 and user_wallet.user_id = "cashback_jobs"."user_id")`), 'total_cashback'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_user_cashback as user_wallet where user_wallet.job_id = "cashback_jobs"."id" and status_type in (14) and user_wallet.user_id = "cashback_jobs"."user_id")`), 'redeemed_cashback'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_user_cashback as user_wallet where user_wallet.job_id = "cashback_jobs"."id" and status_type in (13) and transaction_type = 1 and user_wallet.user_id = "cashback_jobs"."user_id")`), 'pending_cashback'], [this.modals.sequelize.literal(`(select count(*) from table_expense_sku as expense_skus where expense_skus.user_id = "cashback_jobs"."user_id" and expense_skus.job_id = "cashback_jobs"."id" )`), 'item_counts'], 'reason_id', 'verified_seller', 'digitally_verified'],
         order: [['id', 'desc'], ['updated_at', 'desc']]
@@ -421,6 +421,10 @@ class ShopEarnAdaptor {
         item.redeemed_credits = item.redeemed_credits || 0;
         item.redeemed_loyalty = item.redeemed_loyalty || 0;
         item.pending_cashback = item.pending_cashback || 0;
+
+        if (!item.verified_seller && !item.digitally_verified) {
+          item.expense_sku_items = item.expense_sku_items.filter(esItem => esItem.timely_added);
+        }
 
         const { admin_status, ce_status, cashback_status, seller_status, total_cashback, verified_seller, pending_cashback, digitally_verified } = item;
         switch (admin_status) {
@@ -533,10 +537,11 @@ class ShopEarnAdaptor {
       });
       let { wishlist_items, past_selections } = userSKUWishList || {};
       past_selections = past_selections || [];
+      wishlist_items = wishlist_items || [];
       let payload_added = false;
       if (id) {
         wishlist_items = (wishlist_items && wishlist_items.length > 0 ? wishlist_items.map(item => {
-          let { measurement_type: item_measurement_type, measurement_value: item_measurement_value } = item.sku_measurement;
+          let { measurement_type: item_measurement_type, measurement_value: item_measurement_value } = item.sku_measurement || {};
 
           if (item.id === id && item_measurement_type === measurement_type && item_measurement_value === measurement_value) {
             if (request.payload.quantity === 0) {
@@ -555,15 +560,18 @@ class ShopEarnAdaptor {
           return request.payload;
         })).filter(item => !!item);
         if (!payload_added) {
-          wishlist_items.push(request.payload);
+          wishlist_items.push(JSON.parse(JSON.stringify(_lodash2.default.omit(request.payload, ['status_type', 'updated_by', 'created_at', 'updated_at']))));
         }
       } else {
         request.payload.status_type = 11;
         request.payload.updated_by = user_id;
-        const userSku = await this.addUserSKU(request.payload);
-        wishlist_items.push(userSku.toJSON());
+        let userSku = await this.addUserSKU(request.payload);
+        userSku = userSku.toJSON();
+        userSku.added_date = request.payload.added_date;
+        userSku.quantity = request.payload.quantity;
+        wishlist_items.push(JSON.parse(JSON.stringify(_lodash2.default.omit(userSku, ['status_type', 'updated_by', 'created_at', 'updated_at']))));
       }
-
+      console.log(JSON.stringify({ wishlist_items, payload: request.payload }));
       await this.addSKUToWishList({
         wishlist_items, is_new: !userSKUWishList,
         user_id, past_selections
@@ -604,10 +612,11 @@ class ShopEarnAdaptor {
       let { past_selections, wishlist_items } = userSKUWishList || {};
       let wishlists = [request.payload];
       past_selections = past_selections || [];
+      wishlist_items = wishlist_items || [];
       wishlists.forEach(item => {
-        let { measurement_type: item_measurement_type, measurement_value: item_measurement_value } = item.sku_measurement;
+        let { measurement_type: item_measurement_type, measurement_value: item_measurement_value } = item.sku_measurement || {};
         const alreadySelected = past_selections.find(pItem => {
-          let { measurement_type, measurement_value } = pItem.sku_measurement;
+          let { measurement_type, measurement_value } = pItem.sku_measurement || {};
           return item.id === pItem.id && item_measurement_type === measurement_type && item_measurement_value === measurement_value;
         });
 
@@ -642,7 +651,7 @@ class ShopEarnAdaptor {
         })
       }).catch(ex => console.log('error while logging on db,', ex));
       return reply.response({
-        status: false, message: 'Unable to update past selection', err
+        status: false, message: 'Something went wrong.', err
       });
     }
   }
@@ -654,11 +663,12 @@ class ShopEarnAdaptor {
         attributes: ['wishlist_items', 'past_selections']
       });
       let { wishlist_items, past_selections } = userSKUWishList || {};
+      wishlist_items = wishlist_items || [];
       past_selections = past_selections || [];
       wishlist_items.forEach(item => {
-        let { measurement_type: item_measurement_type, measurement_value: item_measurement_value } = item.sku_measurement;
+        let { measurement_type: item_measurement_type, measurement_value: item_measurement_value } = item.sku_measurement || {};
         const alreadySelected = past_selections.find(pItem => {
-          let { measurement_type, measurement_value } = pItem.sku_measurement;
+          let { measurement_type, measurement_value } = pItem.sku_measurement || {};
           return item.id === pItem.id && item_measurement_type === measurement_type && item_measurement_value === measurement_value;
         });
 
@@ -693,7 +703,7 @@ class ShopEarnAdaptor {
         })
       }).catch(ex => console.log('error while logging on db,', ex));
       return reply.response({
-        status: false, message: 'Unable to create transaction.', err
+        status: false, message: 'Something went wrong.', err
       });
     }
   }
@@ -707,9 +717,9 @@ class ShopEarnAdaptor {
       let { wishlist_items, past_selections } = userSKUWishList || {};
       past_selections = past_selections || [];
       wishlist_items.forEach(item => {
-        let { measurement_type: item_measurement_type, measurement_value: item_measurement_value } = item.sku_measurement;
+        let { measurement_type: item_measurement_type, measurement_value: item_measurement_value } = item.sku_measurement || {};
         const alreadySelected = past_selections.find(pItem => {
-          let { measurement_type, measurement_value } = pItem.sku_measurement;
+          let { measurement_type, measurement_value } = pItem.sku_measurement || {};
           return item.id === pItem.id && item_measurement_type === measurement_type && item_measurement_value === measurement_value;
         });
 
@@ -726,14 +736,13 @@ class ShopEarnAdaptor {
         is_new: !userSKUWishList, user_id
       });
     } catch (err) {
+      console.log(err);
       this.modals.logs.create({
         api_action: 'PUT', api_path: 'updatePastWishList',
         log_type: 2, user_id,
         log_content: JSON.stringify({ err })
       }).catch(ex => console.log('error while logging on db,', ex));
-      return reply.response({
-        status: false, message: 'Unable to create transaction.', err
-      });
+      throw err;
     }
   }
 

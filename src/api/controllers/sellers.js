@@ -1029,7 +1029,7 @@ class SellerController {
             {
               where: JSON.parse(
                   JSON.stringify(
-                      {$or: {gstin, pan_no, contact_no, email}})),
+                      {$or: {gstin, pan_no, contact_no}})),
             }, seller_updates, true);
         replyObject.seller_detail = JSON.parse(
             JSON.stringify(seller_detail || seller_updates || {}));
@@ -2022,11 +2022,11 @@ class SellerController {
 
       await Promise.all(request.payload.user_ids.map(
           item => notificationAdaptor.notifyUserCron({
-            user_id: item, payload: {
+            user_id: item, seller_id, payload: {
               title: `A New Offer has been published by Seller ${seller.seller_name ||
               ''}.`,
               description: 'Please click here for more detail.',
-              notification_type: 35,
+              notification_type: 26,
             },
           })));
       return reply.response(JSON.parse(JSON.stringify(replyObject))).code(201);
