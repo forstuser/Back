@@ -1049,6 +1049,53 @@ class SellerController {
     }
   }
 
+  static async addInviteSellerByName(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    if (request.pre.userExist && !request.pre.forceUpdate) {
+      // this is where make us of adapter
+      try {
+        const user_id = user.id || user.ID;
+        let {
+          seller_name, locality_id, city_id, state_id, address,
+        } = request.payload || {};
+
+        return reply.response({
+          status: true,
+          result: await sellerAdaptor.retrieveOrUpdateInvitedSellerDetail(
+              {where: {seller_name, locality_id, city_id, state_id, address}},
+              {
+                seller_name, locality_id, city_id, state_id,
+                address, customer_id: user_id,
+              }, true),
+        });
+      } catch (err) {
+        console.log(`Error on ${new Date()} for user ${user.id ||
+        user.ID} is as follow: \n \n ${err}`);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user && !user.seller_detail ?
+              user.id || user.ID :
+              undefined,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
+        return reply.response({
+          status: false,
+          message: `Unable to link seller`,
+        });
+      }
+    } else {
+      return shared.preValidation(request.pre, reply);
+    }
+  }
+
   static async initializeSeller(request, reply) {
     let replyObject = {
       status: true,

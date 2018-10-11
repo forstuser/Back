@@ -793,13 +793,21 @@ class ShopEarnController {
         });
         if (seller_cashback) {
           const startOfMonth = moment(seller_cashback.created_at).
-              startOf('month').utcOffset(utcOffset).format();
+              startOf('month').
+              utcOffset(utcOffset).
+              format();
           const endOfMonth = moment(seller_cashback.created_at).
-              endOf('month').utcOffset(utcOffset).format();
+              endOf('month').
+              utcOffset(utcOffset).
+              format();
           const startOfDay = moment(seller_cashback.created_at).
-              startOf('day').utcOffset(utcOffset).format();
+              startOf('day').
+              utcOffset(utcOffset).
+              format();
           const endOfDay = moment(seller_cashback.created_at).
-              endOf('day').utcOffset(utcOffset).format();
+              endOf('day').
+              utcOffset(utcOffset).
+              format();
           const [cash_back_job, user_cash_back_month, user_cash_back_day, user_limit_rules, user_default_limit_rules] = await Promise.all(
               [
                 jobAdaptor.retrieveCashBackJobs({id: seller_cashback.job_id}),

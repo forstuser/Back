@@ -195,6 +195,22 @@ export default class SellerAdaptor {
     return result;
   }
 
+  async retrieveOrUpdateInvitedSellerDetail(
+      query_options, seller_detail, is_create) {
+    let result = await this.modals.invited_sellers.findOne(query_options);
+    if (!result && is_create) {
+      result = await this.modals.invited_sellers.create(seller_detail);
+    }
+
+    if (result) {
+      await seller_detail ?
+          result.updateAttributes(JSON.parse(JSON.stringify(seller_detail))) :
+          seller_detail;
+      return result.toJSON();
+    }
+    return result;
+  }
+
   async retrieveSellerDetail(query_options) {
     const result = await this.modals.sellers.findOne(query_options);
     return result ? result.toJSON() : result;
