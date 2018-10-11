@@ -547,17 +547,14 @@ function retrieveMailTemplate(user, templateType) {
             <table role="presentation" cellspacing="0" cellpadding="0" style="background:white;" border="0" align="center" width="100%"
                 background-color="white" style="max-width: 600px;">
                 <tr>
-                    <td style="padding:0px 15px;" class="text-left">
-                        <div style="padding:20px 0px 0px 0px;">
+                    <td style="padding:0 15px;" class="text-left">
+                        <div style="padding:20px 0 0 0;">
                             <img src="https://binbill.com/static/images/logo-color.png" width="150" height="auto" alt="alt_text" border="0" style="height: auto; font-family: sans-serif; font-size: 15px; line-height: 20px; color: #555555;">
                             <p style="font-family: 'Quicksand', sans-serif;
-                            font-size: 12px;
-                            padding: 0px;
-                            margin: 0px;
+                            font-size: 12px; padding: 0; margin: 0;
                             font-weight: bold;">Your Own Home Manager</p>
                         </div>
                     </td>
-
                 </tr>
             </table>
 
@@ -568,14 +565,14 @@ function retrieveMailTemplate(user, templateType) {
                             <tr>
                                 <td style="padding: 20px; font-family: sans-serif; font-size: 15px;line-height: 20px; color: #555555;">
                                     <p style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0; font-family: 'Quicksand', sans-serif;font-size: 14px;font-weight: bold;letter-spacing: 0.3px;text-align: left;color: #3b3b3b; padding: 20px 0;">
-                                        Hello (UserName), </p>
-                                    <p style="-webkit-margin-before: 0; -webkit-margin-after: 0;margin:0 auto;font-weight:normal;font-size:15px;"> We are happy that you have decided to hop on for the easy ride to Manage Your Home!
-                                    </p>
-                                    <p style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0;font-size:15px;font-weight:normal;padding: 20px 0px;">
-                                        For security purpose, please verify your email address by clicking below:-
-                                    </p>
-                                    <p style="margin-top:0px;text-align:center;margin-bottom:30px;">
-                                        <a href="${verificationUrl}">
+                                        Hello${user && user.name ? `${user.name}` : ''}, </p>
+                                        <p style="-webkit-margin-before: 0; -webkit-margin-after: 0;margin:0 auto;font-weight:normal;font-size:15px;"> We are happy that you have decided to hop on for the easy ride to Manage Your Home!
+                                        </p>
+                                        <p style="margin:0 auto;-webkit-margin-before: 0; -webkit-margin-after: 0;font-size:15px;font-weight:normal;padding: 20px 0px;">
+                                            For security purpose, please verify your email address by clicking below:-
+                                        </p>
+                                        <p style="margin-top:0px;text-align:center;margin-bottom:30px;">
+                                            <a href="${verificationUrl}">
                                             <button type="button" style="
                                             background-color: #5070ff;
                                             border-radius: 20px;
@@ -616,11 +613,11 @@ function retrieveMailTemplate(user, templateType) {
         </div>
     </center>
 </body>
-
 </html>`;
             }
         case 1:
             {
+                console.log('Welcome Mail Going to Send Now');
                 return `<!DOCTYPE html><html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
     <meta charset="utf-8">
@@ -776,73 +773,19 @@ function retrieveMailTemplate(user, templateType) {
                                         Hello${user.name ? ` ${user.name}` : ''},</p>
                                     <p style="-webkit-margin-before: 0;margin-bottom: 5% !important;
                                         -webkit-margin-after: 0;margin:0 auto;font-weight:normal;font-size:15px;padding-left:20px;padding-right:20px; ">
-                                        We are glad to have you on board! Adding BinBill to your daily routine can help you manage your Home smarter and live better. Here are few instances that make BinBill a habit:
+                                        We are glad to have you on board! Your Home Manager will assist you with your <b>daily life and struggles to manage your Home smarter and live better.</b> Here are some popular features that make BinBill your life saver:
                                     </p>
-                                    <table role="presentation" cellspacing="0" cellpadding="0" style="background:white;" border="0" align="center" width="100%"
-                                        background-color="white" style="max-width: 600px;">
-                                        <tr style="padding:20px;">
-                                            <td style="padding:0px 15px;width:30%;text-align:center">
-                                                <div style="padding:20px 0px 0px 0px;">
-                                                    <img src="https://s3.ap-south-1.amazonaws.com/binbill-static/track_products_lifecycle.png" alt="alt_text" border="0" style="height: auto; font-family: sans-serif; font-size: 15px; line-height: 20px; color: #555555;">
-                                                    <!-- <p>Your Own Home Manager</p> -->
-                                                </div>
-                                            </td>
-                                            <td style="text-align:right;padding-right:20px;">
-                                                <p style="font-size: 18px;
-                                                font-weight: bold;
-                                                margin-bottom: 0px;">Track Product Lifecycle</p>
-                                                <p style="padding: 0px;
-                                                margin-top: 5px;    margin-bottom:5%;">Want to avoid missing out on Warranty, Insurance, AMC and other benefits
-                                                    for your product? </p>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td style="padding:0px 15px;width:30%;text-align:center">
-                                                <div style="padding:20px 0px 0px 0px;">
-                                                    <img src="https://s3.ap-south-1.amazonaws.com/binbill-static/hassel_free_write-up-sales.png" alt="alt_text" border="0" style="height: auto; font-family: sans-serif; font-size: 15px; line-height: 20px; color: #555555;">
-                                                    <!-- <p>Your Own Home Manager</p> -->
-                                                </div>
-                                            </td>
-                                            <td style="text-align:right;padding-right:20px;">
-                                                <p style="font-size: 18px;
-                                                    font-weight: bold;
-                                                    margin-bottom: 0px;">Hassle-free After Sales</p>
-                                                <p style="padding: 0px;
-                                                    margin-top: 5px;    margin-bottom: 5%;">Do you find yourself desperately searching for Service Centre contact details
-                                                    and product details? </p>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td style="padding:0px 15px;width:30%;text-align:center">
-                                                <div style="padding:20px 0px 0px 0px;">
-                                                    <img src="https://s3.ap-south-1.amazonaws.com/binbill-static/expense_control.png" alt="alt_text" border="0" style="height: auto; font-family: sans-serif; font-size: 15px; line-height: 20px; color: #555555;">
-                                                    <!-- <p>Your Own Home Manager</p> -->
-                                                </div>
-                                            </td>
-                                            <td style="text-align:right;padding-right:20px;">
-                                                <p style="font-size: 18px;
-                                                    font-weight: bold;
-                                                    margin-bottom: 0px;">Expense Control</p>
-                                                <p style="padding: 0px;
-                                                    margin-top: 5px;    margin-bottom: 5%;">Don’t know where your expenses are going?</p>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td style="padding:0px 15px;width:30%; text-align:center">
-                                                <div style="padding:20px 0px 0px 0px;">
-                                                    <img src="https://s3.ap-south-1.amazonaws.com/binbill-static/documents_record.png" alt="alt_text" border="0" style="height: auto; font-family: sans-serif; font-size: 15px; line-height: 20px; color: #555555;">
-                                                    <!-- <p>Your Own Home Manager</p> -->
-                                                </div>
-                                            </td>
-                                            <td style="text-align:right;padding-right:20px;">
-                                                <p style="font-size: 18px;
-                                                    font-weight: bold;
-                                                    margin-bottom: 0px;">Documents' Record</p>
-                                                <p style="padding: 0px;
-                                                    margin-top: 5px;    margin-bottom: 5%;">Worried about a lost document or bill? </p>
-                                            </td>
-                                        </tr>
-                                    </table>
+                                    <ul><li style="-webkit-margin-before: 0;margin-bottom: 5% !important;
+                                        -webkit-margin-after: 0;margin:0 auto;font-weight:normal;font-size:15px;padding-left:20px;padding-right:20px; "><b>Instant Groceries:</b> Need some grocery in an instant? Create your Shopping List and connect with your local kirana store online for quick, on demand grocery needs!</li>
+                                    ${user.location && user.location.toLowerCase() !== 'other' ? '<li style="-webkit-margin-before: 0;margin-bottom: 5% !important; -webkit-margin-after: 0;margin:0 auto;font-weight:normal;font-size:15px;padding-left:20px;padding-right:20px; "><b>Cashback on every Grocery Bill:</b> Now upload your Grocery Bill to avail a Fixed Cashback & Bonus Cashback on multiple items.</li>' : ''}
+                                    <li style="-webkit-margin-before: 0;margin-bottom: 5% !important;
+                                        -webkit-margin-after: 0;margin:0 auto;font-weight:normal;font-size:15px;padding-left:20px;padding-right:20px; "><b>Attractive Loyalty Points & Offers:</b> Connect with your local Kirana Stores for Loyalty Discounts & be the first to know of ongoing Attractive Offers.</li>
+                                    <li style="-webkit-margin-before: 0;margin-bottom: 5% !important;
+                                        -webkit-margin-after: 0;margin:0 auto;font-weight:normal;font-size:15px;padding-left:20px;padding-right:20px; "><b>Track Product Lifecycle:</b> Want to avoid missing out on Warranty, Insurance or AMC? Your BinBill eHome saves all product details for important timely reminders and assists you with After Sales Information.</li>
+                                    <li style="-webkit-margin-before: 0;margin-bottom: 5% !important;
+                                        -webkit-margin-after: 0;margin:0 auto;font-weight:normal;font-size:15px;padding-left:20px;padding-right:20px; "><b>Expense Insights:</b> Don’t know where your expenses are going?! BinBill helps you track your expenses & lends helpful expense insights.</li>
+                                    <li style="-webkit-margin-before: 0;margin-bottom: 5% !important;
+                                        -webkit-margin-after: 0;margin:0 auto;font-weight:normal;font-size:15px;padding-left:20px;padding-right:20px; "><b>Bills & Documents’ Record:</b> Worried about a lost document or bill? No more. Save all your bills and important documents with us and don’t worry about your privacy and safety.</li></ul>         
                                     <table>
                                         <tr>
                                             <td style="background: #c3c1c1;
@@ -850,9 +793,7 @@ function retrieveMailTemplate(user, templateType) {
                                             padding: 10px 20px 10px 10px;
                                             font-weight: normal;">
                                                 <p style="width: 95%;
-                                                margin: 0 auto;">Now you know where to put your important bills the instant you receive them!
-                                                    Best way to digitally store them for easy access anytime, anywhere.
-                                                </p>
+                                                margin: 0 auto;">So sit back and enjoy the easy ride with Your Own Home Manager.</p>
                                                 <a href="https://g8fb8.app.goo.gl/oCXm">
                                                     <button type="button" style="background-color: #5070ff; border-radius: 20px; border: 1px solid
                                                     #5070ff; color: white; padding: 10px 20px; margin-top: 2%; margin-bottom: 1%;font-weight:bold">Visit Your Home Manager</button>
@@ -894,13 +835,13 @@ function retrieveMailTemplate(user, templateType) {
                             <span style="font-weight:bold">CEO, BinBill</span>
                         </p>
                     </td>
-                    <td style="text-align:center; ">
+                    <!--<td style="text-align:center; ">
                         <div style="padding:20px 0px 0px 0px; ">
                             <img src="https://binbill.com/static/images/logo-color.png " width="150 " height="auto
                                         " alt="alt_text " border="0 " style="height: auto; font-family: sans-serif; font-size: 15px;
                                         line-height: 20px; color: #555555; ">
                         </div>
-                    </td>
+                    </td>-->
                 </tr>
             </table>
         </div>

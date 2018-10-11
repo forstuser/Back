@@ -80,7 +80,8 @@ export default class SellerAdaptor {
         item.location = seller_locations.find(
             cItem => cItem.id === item.locality_id);
         item.assisted_services = assisted_services.filter(
-            asItem => asItem.assisted_service_user.is_verified && asItem.seller_id === item.id );
+            asItem => asItem.assisted_service_user.is_verified &&
+                asItem.seller_id === item.id);
         item.cashback_total = (item.cashback_total || 0) -
             (item.redeemed_cashback || 0);
         item.loyalty_total = (item.loyalty_total || 0) -
@@ -379,7 +380,8 @@ export default class SellerAdaptor {
               `(select sum(seller_cashback.amount) from table_wallet_user_cashback as seller_cashback where status_type in (16,14) and transaction_type in (1,2) and seller_cashback.user_id = "users"."id" and seller_cashback.seller_id = ${seller_id})`),
           'cashback_total']],
     });
-    const user_list = result.map(item => item.toJSON()).filter(item => item.cashback_total > 0);
+    const user_list = result.map(item => item.toJSON()).
+        filter(item => item.cashback_total > 0);
     const addresses = (await this.userAdaptor.retrieveUserAddresses(
         {
           where: {
@@ -426,8 +428,7 @@ export default class SellerAdaptor {
             attributes: ['expense_id', 'user_id'],
           }),
       this.retrieveSellerDetail({
-        where: {id: seller_id}, attributes: [
-          'customer_ids'],
+        where: {id: seller_id}, attributes: ['customer_ids'],
       })]);
     id = _.uniq([
       ...cashback_jobs.map(item => {
@@ -451,12 +452,14 @@ export default class SellerAdaptor {
         ['full_name', 'name'], 'image_name', 'email',
         'mobile_no', 'location', 'id', 'user_status_type', [
           this.modals.sequelize.literal(
-              `(select sum(products.purchase_cost) from consumer_products as products where ${job_id.length >
-              0 ?
-                  `job_id in (${job_id.join(',')}) and` :
-                  ''} ${expense_id.length > 0 ?
-                  `id in (${expense_id.join(',')}) and` :
-                  '' } products.user_id = "users"."id" and products.seller_id = ${seller_id})`),
+              `(select sum(products.purchase_cost) from consumer_products as products where  products.user_id = "users"."id" and products.seller_id = ${seller_id} and status_type in (5,11) and (${job_id.length >
+              0 && expense_id.length > 0 ?
+                  `"products"."job_id" in (${job_id.join(',')}) or "products"."id" in (${expense_id.join(
+                      ',')})` : `${job_id.length >
+                  0 ? `"products"."job_id" in (${job_id.join(',')})` :
+                      ''} ${expense_id.length > 0 ?
+                      `"products"."id" in (${expense_id.join(',')})` :
+                      '' }`}))`),
           'total_transactions']],
     });
     const user_list = result.map(item => item.toJSON());
@@ -1375,7 +1378,7 @@ export default class SellerAdaptor {
   async retrieveOrCreateSellerLoyaltyRules(options, defaults) {
     let loyalty_rules = await this.modals.loyalty_rules.findOne(
         {where: options});
-    if (loyalty_rules && options.id) {
+    if (loyalty_rules) {
       const loyalty_rules_result = loyalty_rules.toJSON();
       defaults.status_type = loyalty_rules_result.status_type;
       await loyalty_rules.updateAttributes(defaults);

@@ -24,6 +24,12 @@ exports.default = (sequelize, DataTypes) => {
     hsn_code: {
       type: DataTypes.STRING
     },
+    image_name: {
+      type: DataTypes.STRING
+    },
+    image_code: {
+      type: DataTypes.STRING
+    },
     mrp: {
       type: DataTypes.FLOAT
     },

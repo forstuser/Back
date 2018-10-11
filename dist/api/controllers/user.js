@@ -1044,7 +1044,7 @@ class UserController {
   }
 
   static async updateUserProfile(request, reply) {
-    const user = _shared2.default.verifyAuthorization(request.headers);
+    let user = _shared2.default.verifyAuthorization(request.headers);
     try {
       if (request.pre.isValidEmail && request.pre.userExist && !request.pre.forceUpdate) {
         return await userAdaptor.updateUserProfile(user, request, reply);

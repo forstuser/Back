@@ -61,6 +61,7 @@ export default (sequelize, DataTypes) => {
         },
         seller_details: {type: DataTypes.JSONB},
         customer_ids: {type: DataTypes.JSONB},
+        customer_invite_detail: {type: DataTypes.JSONB},
         rush_hours: {
           type: DataTypes.BOOLEAN,
           defaultValue: false,

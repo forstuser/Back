@@ -36,9 +36,13 @@ var _shared = require('../../helpers/shared');
 
 var _shared2 = _interopRequireDefault(_shared);
 
-var _notification = require('../Adaptors/notification');
+var _notification = require('./notification');
 
 var _notification2 = _interopRequireDefault(_notification);
+
+var _user = require('./user');
+
+var _user2 = _interopRequireDefault(_user);
 
 var _moment = require('moment');
 
@@ -65,6 +69,7 @@ class DashboardAdaptor {
     this.pucAdaptor = new _pucs2.default(modals);
     this.calendarServiceAdaptor = new _calendarServices2.default(modals);
     this.notificationAdaptor = new _notification2.default(modals);
+    this.userAdaptor = new _user2.default(modals);
     this.date = _moment2.default.utc();
     this._ = _lodash2.default;
   }
@@ -72,7 +77,10 @@ class DashboardAdaptor {
   async retrieveSellerDashboard(options, request, seller_type_id) {
     try {
       const { seller_id } = options;
-      let [cashback_jobs, seller, orders] = await _bluebird2.default.all([this.modals.cashback_jobs.findAll({ where: { seller_id }, attributes: ['job_id'] }), this.modals.sellers.findOne({ where: { id: seller_id } }), this.modals.order.findAll({ where: { seller_id, status_type: 5 }, attributes: ['expense_id'] })]);
+      let [cashback_jobs, seller, orders] = await _bluebird2.default.all([this.modals.cashback_jobs.findAll({
+        where: { seller_id, admin_status: { $ne: 2 } },
+        attributes: ['job_id']
+      }), this.modals.sellers.findOne({ where: { id: seller_id } }), this.modals.order.findAll({ where: { seller_id, status_type: 5 }, attributes: ['expense_id'] })]);
 
       seller = seller.toJSON();
       const user_id = seller.customer_ids && seller.customer_ids.length > 0 ? seller.customer_ids : undefined;
@@ -88,11 +96,26 @@ class DashboardAdaptor {
       job_id = job_id.length > 0 ? job_id : undefined;
       id = id.length > 0 ? id : undefined;
       let [total_transactions, credits, debit_credits, loyalty_points, debit_loyalty_points, assisted_count, user_cashback] = await _bluebird2.default.all([this.modals.products.aggregate('purchase_cost', 'sum', {
-        where: JSON.parse(JSON.stringify({ seller_id, status_type: [5, 11], job_id, id }))
+        where: JSON.parse(JSON.stringify({
+          seller_id,
+          status_type: [5, 11],
+          user_id,
+          $or: { job_id, id }
+        }))
       }), this.modals.credit_wallet.aggregate('amount', 'sum', {
-        where: JSON.parse(JSON.stringify({ seller_id, status_type: 16, user_id }))
+        where: JSON.parse(JSON.stringify({
+          seller_id,
+          status_type: 16,
+          transaction_type: 1,
+          user_id
+        }))
       }), this.modals.credit_wallet.aggregate('amount', 'sum', {
-        where: JSON.parse(JSON.stringify({ seller_id, status_type: 14, user_id }))
+        where: JSON.parse(JSON.stringify({
+          seller_id,
+          status_type: [16, 14],
+          transaction_type: 2,
+          user_id
+        }))
       }), this.modals.loyalty_wallet.aggregate('amount', 'sum', {
         where: JSON.parse(JSON.stringify({ seller_id, transaction_type: 1, user_id }))
       }), this.modals.loyalty_wallet.aggregate('amount', 'sum', {
@@ -223,6 +246,7 @@ class DashboardAdaptor {
     let { isNewUser, user, token, request } = parameters;
     console.log(isNewUser);
     let user_id = user.id || user.ID;
+    user = await this.userAdaptor.retrieveSingleUser({ where: { id: user_id } });
     if (!isNewUser) {
       try {
         let [productCounts, /*calendarItemCounts, todoCounts, mealCounts,
@@ -272,7 +296,14 @@ class DashboardAdaptor {
         };
       }
     }
-
+    setTimeout(() => {
+      console.log('New User Mail will be sent now');
+      this.userAdaptor.retrieveSingleUser({ where: { id: user_id } }).then(user => {
+        if (user.email) {
+          _notification2.default.sendMailOnDifferentSteps('Welcome to BinBill', user.email, user, 1);
+        }
+      });
+    }, 300000);
     /* if (user.email) {
        notificationAdaptor.sendMailOnDifferentSteps(
            'Welcome to BinBill',

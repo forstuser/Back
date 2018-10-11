@@ -122,17 +122,23 @@ class ShopEarnController {
             attributes: ['sub_category_id', 'category_id', 'main_category_id'],
           })]);
         const sku_item = sku_items[0];
-        request.params.category_id = sku_item.category_id.toString();
-        request.params.main_category_id = sku_item.main_category_id.toString();
-        request.params.sub_category_ids = sku_item.sub_category_id.toString();
-        request.params.limit = request.query.limit;
-        request.params.offset = request.query.offset;
-        const sku_result = await shopEarnAdaptor.retrieveSellerSKUs({
-          queryOptions: request.params, seller_list,
-        });
-        return reply.response({
-          status: true, result: sku_result,
-        });
+        if (sku_item.sub_category_id) {
+          request.params.category_id = (sku_item.category_id || '').toString();
+          request.params.main_category_id = (sku_item.main_category_id ||
+              '').toString();
+          request.params.sub_category_ids = (sku_item.sub_category_id ||
+              '').toString();
+          request.params.limit = request.query.limit;
+          request.params.offset = request.query.offset;
+          const sku_result = await shopEarnAdaptor.retrieveSellerSKUs({
+            queryOptions: request.params, seller_list,
+          });
+          return reply.response({
+            status: true, result: sku_result,
+          });
+        }
+
+        return reply.response({status: true, result: []});
       } catch (err) {
         console.log(
             `Error on ${new Date()} for seller user ${user.id } is as follow: \n \n ${err}`);
@@ -302,10 +308,7 @@ class ShopEarnController {
         if (result && ((result.wishlist_items && result.wishlist_items.length >
             0) ||
             (result.past_selections && result.past_selections.length > 0))) {
-          return reply.response({
-            status: true,
-            result,
-          });
+          return reply.response({status: true, result});
         }
 
         return reply.response(

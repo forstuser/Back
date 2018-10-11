@@ -19,7 +19,7 @@ export default class CategoryAdaptor {
         [
           this.modals.sequelize.fn('CONCAT', '/categories/',
               this.modals.sequelize.literal('"categories"."category_id"'),
-              '/images/1'), 'categoryImageUrl']], order: ['category_id'],
+              '/images/1'), 'categoryImageUrl'], 'priority_index'], order: ['category_id'],
     });
     categoryData = result.map(item => {
       const categoryItem = item.toJSON();
@@ -40,10 +40,16 @@ export default class CategoryAdaptor {
     const subCategories = await this.retrieveSubCategories(subCategoryOption,
         isBrandFormRequired, language, user);
     categoryData = categoryData.map((item) => {
-      item.subCategories = _.sortBy(subCategories.filter(
-          (categoryItem) => categoryItem.refId === item.id),
-          categoryItem => item.default_ids.indexOf(
-              categoryItem.id));
+      if (item.id === 11) {
+        item.subCategories = _.sortBy(subCategories,
+            categoryItem => item.default_ids.indexOf(
+                categoryItem.id));
+      } else {
+        item.subCategories = _.sortBy(subCategories.filter(
+            (categoryItem) => categoryItem.refId === item.id),
+            categoryItem => item.default_ids.indexOf(
+                categoryItem.id));
+      }
 
       return item;
     });

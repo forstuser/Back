@@ -49,6 +49,10 @@ var _lodash = require('lodash');
 
 var _lodash2 = _interopRequireDefault(_lodash);
 
+var _moment = require('moment');
+
+var _moment2 = _interopRequireDefault(_moment);
+
 var _sms = require('../../helpers/sms');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -74,11 +78,11 @@ class SellerController {
         const user_id = user.id || user.ID;
         const [user_index_data, user_detail] = await _bluebird2.default.all([userAdaptor.retrieveUserIndexedData({
           where: { user_id },
-          attributes: ['my_seller_ids', 'seller_offer_ids', 'wallet_seller_cashback_ids', 'wallet_seller_credit_ids', 'wallet_seller_loyalty_ids']
+          attributes: ['my_seller_ids', 'seller_offer_ids']
         }), userAdaptor.retrieveSingleUser({ where: { id: user_id } })]);
 
         let { search_value, limit, offset, latitude, longitude, city, is_fmcg, is_assisted, has_pos, for_order, for_claim } = request.query || {};
-        const { seller_offer_ids, my_seller_ids: id } = user_index_data || {};
+        let { seller_offer_ids, my_seller_ids: id } = user_index_data || {};
         if (id) {
           search_value = search_value || '';
           let contact_no,
@@ -104,12 +108,16 @@ class SellerController {
           } : {
             id, $or: { seller_name, contact_no }, is_onboarded: true
           };
+          if (user_detail.mobile_no) {
+            where.contact_no = { $ne: user_detail.mobile_no };
+          }
+
           const sellers = await sellerAdaptor.retrieveSellers({
             user_id, seller_offer_ids, limit, offset,
             latitude, longitude, city
           }, {
             where: JSON.parse(JSON.stringify(where)),
-            attributes: ['id', ['seller_name', 'name'], 'owner_name', 'seller_details', 'gstin', 'pan_no', 'reg_no', 'is_service', 'is_onboarded', 'address', 'city_id', 'state_id', 'locality_id', 'latitude', 'longitude', 'url', 'contact_no', 'email', 'seller_type_id', 'rush_hours', 'is_fmcg', 'is_assisted', 'has_pos', [modals.sequelize.literal(`(select minimum_points from table_loyalty_rules as loyalty_rules where (loyalty_rules.user_id = ${user_id} or loyalty_rules.user_id is null) and loyalty_rules.seller_id = "sellers"."id" limit 1)`), 'minimum_points'], [modals.sequelize.literal(`(select sum(seller_cashback.amount) from table_wallet_seller_cashback as seller_cashback where status_type in (16) and transaction_type = 1 and seller_cashback.user_id = ${user_id} and seller_cashback.seller_id = "sellers"."id")`), 'cashback_total'], [modals.sequelize.literal(`(select sum(seller_cashback.amount) from table_wallet_seller_cashback as seller_cashback where status_type in (16) and transaction_type = 2 and seller_cashback.user_id = ${user_id} and seller_cashback.seller_id = "sellers"."id")`), 'redeemed_cashback'], [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_loyalty as seller_loyalty where status_type in (16) and transaction_type = 1 and seller_loyalty.user_id = ${user_id} and seller_loyalty.seller_id = "sellers"."id")`), 'loyalty_total'], [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_loyalty as seller_loyalty where status_type in (14) and seller_loyalty.user_id = ${user_id} and seller_loyalty.seller_id = "sellers"."id")`), 'redeemed_loyalty'], [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16) and transaction_type = 1 and seller_credit.user_id = ${user_id} and seller_credit.seller_id = "sellers"."id")`), 'credit_total'], [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16) and transaction_type = 2 and seller_credit.user_id = ${user_id} and seller_credit.seller_id = "sellers"."id")`), 'redeemed_credits'], [modals.sequelize.literal(`(select count(*) from table_cashback_jobs as cashback_jobs where cashback_jobs.user_id = ${user_id} and cashback_jobs.seller_id = "sellers"."id" and "cashback_jobs"."admin_status" != 2)`), 'transaction_counts'], [modals.sequelize.literal(`(select count(*) from table_orders as order_detail where order_detail.user_id = ${user_id} and order_detail.seller_id = "sellers"."id" and order_detail.job_id is null and order_detail.status_type = 5)`), 'order_counts'], [modals.sequelize.literal(`${seller_offer_ids && seller_offer_ids.length > 0 ? `(select count(*) from table_seller_offers as seller_offers where status_type in (1) and seller_offers.id in (${(seller_offer_ids || []).join(',')}) and end_date > '${moment.utc().format()}' and seller_offers.seller_id = "sellers"."id")` : 0}`), 'offer_count'], [modals.sequelize.literal(`(select AVG(seller_reviews.review_ratings) from table_seller_reviews as seller_reviews where seller_reviews.offline_seller_id = "sellers"."id")`), 'ratings'], [modals.sequelize.literal(`(select is_logged_out from table_seller_users as "users" where "users".id = "sellers"."user_id")`), 'is_logged_out'], 'is_data_manually_added', [modals.sequelize.literal(`(Select count(*) from table_seller_provider_types as provider_type where provider_type.seller_id = sellers.id)`), 'provider_counts'], [modals.sequelize.literal(`(Select count(*) from table_sku_seller_mapping as sku_seller where sku_seller.seller_id = sellers.id)`), 'sku_seller_counts']]
+            attributes: ['id', ['seller_name', 'name'], 'owner_name', 'seller_details', 'gstin', 'pan_no', 'reg_no', 'is_service', 'is_onboarded', 'address', 'city_id', 'state_id', 'locality_id', 'latitude', 'longitude', 'url', 'contact_no', 'email', 'seller_type_id', 'rush_hours', 'is_fmcg', 'is_assisted', 'has_pos', [modals.sequelize.literal(`(select minimum_points from table_loyalty_rules as loyalty_rules where (loyalty_rules.user_id = ${user_id} or loyalty_rules.user_id is null) and loyalty_rules.seller_id = "sellers"."id" limit 1)`), 'minimum_points'], [modals.sequelize.literal(`(select sum(seller_cashback.amount) from table_wallet_seller_cashback as seller_cashback where status_type in (16) and transaction_type = 1 and seller_cashback.user_id = ${user_id} and seller_cashback.seller_id = "sellers"."id")`), 'cashback_total'], [modals.sequelize.literal(`(select sum(seller_cashback.amount) from table_wallet_seller_cashback as seller_cashback where status_type in (16) and transaction_type = 2 and seller_cashback.user_id = ${user_id} and seller_cashback.seller_id = "sellers"."id")`), 'redeemed_cashback'], [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_loyalty as seller_loyalty where status_type in (16) and transaction_type = 1 and seller_loyalty.user_id = ${user_id} and seller_loyalty.seller_id = "sellers"."id")`), 'loyalty_total'], [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_loyalty as seller_loyalty where status_type in (14) and seller_loyalty.user_id = ${user_id} and seller_loyalty.seller_id = "sellers"."id")`), 'redeemed_loyalty'], [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16) and transaction_type = 1 and seller_credit.user_id = ${user_id} and seller_credit.seller_id = "sellers"."id")`), 'credit_total'], [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16) and transaction_type = 2 and seller_credit.user_id = ${user_id} and seller_credit.seller_id = "sellers"."id")`), 'redeemed_credits'], [modals.sequelize.literal(`(select count(*) from table_cashback_jobs as cashback_jobs where cashback_jobs.user_id = ${user_id} and cashback_jobs.seller_id = "sellers"."id" and "cashback_jobs"."admin_status" != 2)`), 'transaction_counts'], [modals.sequelize.literal(`(select count(*) from table_orders as order_detail where order_detail.user_id = ${user_id} and order_detail.seller_id = "sellers"."id" and order_detail.job_id is null and order_detail.status_type = 5)`), 'order_counts'], [modals.sequelize.literal(`${seller_offer_ids && seller_offer_ids.length > 0 ? `(select count(*) from table_seller_offers as seller_offers where status_type in (1) and seller_offers.id in (${(seller_offer_ids || []).join(',')}) and end_date > '${_moment2.default.utc().format()}' and seller_offers.seller_id = "sellers"."id")` : 0}`), 'offer_count'], [modals.sequelize.literal(`(select AVG(seller_reviews.review_ratings) from table_seller_reviews as seller_reviews where seller_reviews.offline_seller_id = "sellers"."id")`), 'ratings'], [modals.sequelize.literal(`(select is_logged_out from table_seller_users as "users" where "users".id = "sellers"."user_id")`), 'is_logged_out'], 'is_data_manually_added', [modals.sequelize.literal(`(Select count(*) from table_seller_provider_types as provider_type where provider_type.seller_id = sellers.id)`), 'provider_counts'], [modals.sequelize.literal(`(Select count(*) from table_sku_seller_mapping as sku_seller where sku_seller.seller_id = sellers.id)`), 'sku_seller_counts']]
           });
           if (sellers.length > 0) {
             return reply.response({
@@ -118,8 +126,8 @@ class SellerController {
             });
           } else {
             return reply.response({
-              status: false,
-              message: is_fmcg && has_pos ? 'Seller in your list could not have .' : is_assisted ? 'No seller in your list have assisted users.' : 'No seller with '
+              status: true, result: [],
+              message: is_fmcg && has_pos ? 'Seller in your list could not have .' : is_assisted ? 'No seller in your list have assisted users.' : 'No seller found '
             });
           }
         }
@@ -236,12 +244,13 @@ class SellerController {
       // this is where make us of adapter
       try {
         const user_id = user.id || user.ID;
-        const user_index_data = await userAdaptor.retrieveUserIndexedData({
-          where: { user_id, status_type: [1, 11] },
-          attributes: ['my_seller_ids', 'seller_offer_ids', 'wallet_seller_cashback_ids', 'wallet_seller_credit_ids', 'wallet_seller_loyalty_ids']
-        });
+        const [user_index_data, user_detail] = await _bluebird2.default.all([userAdaptor.retrieveUserIndexedData({
+          where: { user_id },
+          attributes: ['my_seller_ids', 'seller_offer_ids']
+        }), userAdaptor.retrieveSingleUser({ where: { id: user_id } })]);
         let { seller_offer_ids } = user_index_data || {};
-        let { search_value, limit, offset, latitude, longitude, city } = request.query || {};
+        let { search_value, limit, offset, latitude, longitude, city, is_default } = request.query || {};
+        const id = is_default && is_default.toLowerCase() === 'true' && _main2.default.DEFAULT_SELLER_IDS.length > 0 ? _main2.default.DEFAULT_SELLER_IDS : undefined;
         search_value = search_value || '';
         let contact_no,
             seller_name = { $or: {} };
@@ -255,6 +264,20 @@ class SellerController {
           }
         }
         seller_name.$or.$iLike = `%${search_value}%`;
+        const where = JSON.parse(JSON.stringify({
+          id, status_type: [1, 11], is_onboarded: true
+        }));
+        if (seller_name && contact_no) {
+          where.$or = { seller_name, contact_no };
+        } else if (seller_name) {
+          where.seller_name = seller_name;
+        }
+
+        if (user_detail.mobile_no && contact_no) {
+          where.$or.contact_no = JSON.parse(JSON.stringify({ $eq: contact_no, $ne: user_detail.mobile_no }));
+        } else if (user_detail.mobile_no) {
+          where.contact_no = { $ne: user_detail.mobile_no };
+        }
 
         return reply.response({
           status: true,
@@ -262,10 +285,7 @@ class SellerController {
             user_id, seller_offer_ids, latitude, longitude,
             limit, city, offset, is_onboarded: true
           }, {
-            where: JSON.parse(JSON.stringify({
-              $or: { seller_name, contact_no },
-              status_type: [1, 11], is_onboarded: true
-            })),
+            where,
             attributes: ['id', ['seller_name', 'name'], 'owner_name', 'is_fmcg', 'seller_details', 'gstin', 'pan_no', 'reg_no', 'is_assisted', 'is_service', 'is_onboarded', 'address', 'city_id', 'state_id', 'locality_id', 'latitude', 'longitude', 'url', 'contact_no', 'email', 'seller_type_id', 'has_pos', [modals.sequelize.literal(`(select sum(seller_cashback.amount) from table_wallet_seller_cashback as seller_cashback where status_type in (16) and transaction_type = 1 and seller_cashback.user_id = ${user_id} and seller_cashback.seller_id = "sellers"."id")`), 'cashback_total'], [modals.sequelize.literal(`(select sum(seller_cashback.amount) from table_wallet_seller_cashback as seller_cashback where status_type in (16) and transaction_type = 2 and seller_cashback.user_id = ${user_id} and seller_cashback.seller_id = "sellers"."id")`), 'redeemed_cashback'], [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_loyalty as seller_loyalty where status_type in (16) and transaction_type = 1 and seller_loyalty.user_id = ${user_id} and seller_loyalty.seller_id = "sellers"."id")`), 'loyalty_total'], [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_loyalty as seller_loyalty where status_type in (16) and transaction_type = 2 and seller_loyalty.user_id = ${user_id} and seller_loyalty.seller_id = "sellers"."id")`), 'redeemed_loyalty'], [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16) and transaction_type = 1 and seller_credit.user_id = ${user_id} and seller_credit.seller_id = "sellers"."id")`), 'credit_total'], [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16) and transaction_type = 2 and seller_credit.user_id = ${user_id} and seller_credit.seller_id = "sellers"."id")`), 'redeemed_credits'], [modals.sequelize.literal(`${seller_offer_ids && seller_offer_ids.length > 0 ? `(select count(*) from table_seller_offers as seller_offers where status_type in (1) and seller_offers.id in (${(seller_offer_ids || []).join(',')}) and seller_offers.seller_id = "sellers"."id")` : 0}`), 'offer_count'], [modals.sequelize.literal(`(select AVG(seller_reviews.review_ratings) from table_seller_reviews as seller_reviews where seller_reviews.offline_seller_id = "sellers"."id")`), 'ratings']]
           })
         });
@@ -545,7 +565,7 @@ class SellerController {
               seller_user_id: seller.user_id, payload: {
                 title: `${user_detail.name || 'User'} has added you as a Seller for future orders and communication.`,
                 description: 'Please click here for more detail.',
-                notification_type: 2
+                notification_type: 2, notification_id: Math.random()
               }
             });
           } else if (!already_in_list) {
@@ -556,7 +576,7 @@ class SellerController {
               seller_user_id: seller.user_id, payload: {
                 title: `${user_index_data.user_name || 'User'} has added you as a Seller for future orders and communication.`,
                 description: 'Please click here for more detail.',
-                notification_type: 2
+                notification_type: 2, notification_id: Math.random()
               }
             });
           } else {
@@ -612,16 +632,16 @@ class SellerController {
         const user_id = user.id || user.ID;
         const [user_index_data, seller_detail] = await _bluebird2.default.all([userAdaptor.retrieveUserIndexedData({
           where: { user_id, status_type: [1, 11] },
-          attributes: ['my_seller_ids', 'seller_offer_ids']
+          attributes: ['my_seller_ids', 'seller_offer_ids', 'id']
         }), sellerAdaptor.retrieveSellerDetailNonJSON({
           where: { id: request.params.id },
-          attributes: ['customer_ids']
+          attributes: ['customer_ids', 'id']
         })]);
 
-        let { my_seller_ids } = user_index_data || {};
+        let { my_seller_ids, id } = user_index_data || {};
         let { customer_ids } = seller_detail.toJSON();
         my_seller_ids = (my_seller_ids || []).filter(item => item !== parseInt(request.params.id));
-        await userAdaptor.updateUserIndexedData({ my_seller_ids }, { where: { user_id } });
+        await userAdaptor.updateUserIndexedData({ my_seller_ids }, { where: { user_id, id } });
         customer_ids = customer_ids.filter(item => parseInt(item) !== user_id);
         await seller_detail.updateAttributes({ customer_ids });
 
@@ -689,7 +709,7 @@ class SellerController {
         let { customer_ids } = seller || {};
         my_seller_ids = my_seller_ids || [];
         seller_contact_no = seller_contact_no || [];
-        const message = `Yay! Your Customer ${name || ''} has invited you to BinBill Partner – for online orders & much more. Get your Free App Now, contact us on 8800850275!`;
+        const message = `Yay! Your Customer ${name || ''} has invited you to BinBill Partner - for online orders & much more. Get your Free App Now, contact us on 8800850275!`;
         let already_in_my_seller_list;
         if (seller) {
           customer_ids = customer_ids || [];
@@ -1068,7 +1088,7 @@ class SellerController {
         seller_id: id, has_pos,
         next_step: !gstin && !pan_no ? 'fresh_seller' : !basic_details || basic_details && !basic_details.is_complete ? 'basic_details' /*: !business_details ?
                                                                                                                                         'business_details'*/ : 'dashboard',
-        categories: data_required || !is_onboarded ? _lodash2.default.orderBy(categories, 'name') : undefined,
+        categories: data_required || !is_onboarded ? _lodash2.default.orderBy(categories, ['priority_index', 'name']) : undefined,
         main_category_id: (basic_details || {}).category_id || _main2.default.HOUSEHOLD_CATEGORY_ID,
         data: data_required || !is_onboarded ? {
           provider_types, states, categories: seller_categories.map(item => {
@@ -1149,7 +1169,7 @@ class SellerController {
       }));
 
       replyObject.seller_detail = JSON.parse(JSON.stringify((await sellerAdaptor.retrieveOrUpdateSellerDetail({ where: JSON.parse(JSON.stringify({ id })) }, seller_updates, true)) || {}));
-      await sellerAdaptor.retrieveOrCreateSellerLoyaltyRules(JSON.parse(JSON.stringify({ seller_id: replyObject.seller_detail.id })), JSON.parse(JSON.stringify({ seller_id: replyObject.seller_detail.id, status_type: 1 })));
+      await sellerAdaptor.retrieveOrCreateSellerLoyaltyRules(JSON.parse(JSON.stringify({ seller_id: id })), JSON.parse(JSON.stringify({ seller_id: replyObject.seller_detail.id, status_type: 1 })));
       return reply.response(JSON.parse(JSON.stringify(replyObject))).code(201);
     } catch (err) {
       console.log(err);
@@ -1231,14 +1251,17 @@ class SellerController {
       let { id: user_id } = token_user;
       let [seller_data] = await _bluebird2.default.all([sellerAdaptor.retrieveSellerDetail({
         where: { id: seller_id, user_id },
-        attributes: ['customer_ids', 'id']
+        attributes: ['customer_ids', 'customer_invite_detail', 'id']
       }), userAdaptor.retrieveOrUpdateUserIndexedData({
         where: { user_id: customer_id },
         attributes: ['id', 'user_id', 'my_seller_ids']
       }, { seller_id: parseInt(seller_id), user_id: customer_id })]);
+      seller_data.customer_invite_detail = seller_data.customer_invite_detail || [];
       seller_data.customer_ids = seller_data.customer_ids || [];
       seller_data.customer_ids.push(parseInt(customer_id));
       seller_data.customer_ids = _lodash2.default.uniq(seller_data.customer_ids);
+      seller_data.customer_invite_detail.push({ customer_id, invited_date: (0, _moment2.default)().utcOffset(330) });
+      seller_data.customer_invite_detail = _lodash2.default.uniqBy(seller_data.customer_invite_detail, 'customer_id');
       replyObject.seller_detail = JSON.parse(JSON.stringify((await sellerAdaptor.retrieveOrUpdateSellerDetail({ where: JSON.parse(JSON.stringify({ id: seller_id })) }, seller_data, true)) || {}));
       return reply.response(JSON.parse(JSON.stringify(replyObject))).code(201);
     } catch (err) {
@@ -1856,7 +1879,7 @@ Download Now: http://bit.ly/binbill`;
             as: 'service_types', where: JSON.parse(JSON.stringify({ seller_id, service_type_id })),
             model: modals.seller_service_types, required: true,
             attributes: ['service_type_id', 'seller_id', 'price', 'id']
-          }, attributes: ['id', 'name', 'mobile_no', 'reviews', 'document_details', 'profile_image_detail']
+          }, attributes: ['id', 'name', 'mobile_no', 'reviews', 'document_details', 'profile_image_detail', [modals.sequelize.literal(`(Select count(*) as order_counts from table_orders as orders where orders.delivery_user_id = assisted_service_users.id and orders.status_type <> 5 and orders.seller_id = ${seller_id})`), 'order_counts']]
         })]);
         const reviews = [];
         seller_service_users.forEach(item => reviews.push(...(item.reviews || [])));
@@ -2897,7 +2920,7 @@ Download Now: http://bit.ly/binbill`;
         };
         let [brand_id, category_details] = await _bluebird2.default.all([modals.sequelize.query(`Select distinct(brand_id) from brand_details where status_type = 1 and category_id in (${category_id.join(',')})`), modals.categories.findAll({
           where: { category_id },
-          attributes: ['category_id', 'category_name', 'ref_id']
+          attributes: ['category_id', 'category_name', 'ref_id', 'priority_index']
         })]);
         category_details = category_details.map(item => item.toJSON());
         let result = await _bluebird2.default.all(category_details.map(item => modals.brands.findAll({
@@ -2936,11 +2959,11 @@ Download Now: http://bit.ly/binbill`;
         return reply.response({
           status: true,
           message: 'Successful',
-          result: category_details.map((item, index) => {
+          result: _lodash2.default.orderBy(category_details.map((item, index) => {
             const filter_brands = result[index].map(bItem => bItem.toJSON());
             item.brands = filter_brands.map(bItem => _lodash2.default.omit(bItem, ['category_ids', 'details']));
             return item;
-          }),
+          }), ['priority_index', 'category_name']),
           forceUpdate: request.pre.forceUpdate
         });
       } else {

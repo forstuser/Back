@@ -7,7 +7,8 @@ import WarrantyAdaptor from './warranties';
 import CalendarServiceAdaptor from './calendarServices';
 import PUCAdaptor from './pucs';
 import shared from '../../helpers/shared';
-import NotificationAdaptor from '../Adaptors/notification';
+import NotificationAdaptor from './notification';
+import UserAdaptor from './user';
 import moment from 'moment';
 import Promise from 'bluebird';
 import _ from 'lodash';
@@ -23,6 +24,7 @@ class DashboardAdaptor {
     this.pucAdaptor = new PUCAdaptor(modals);
     this.calendarServiceAdaptor = new CalendarServiceAdaptor(modals);
     this.notificationAdaptor = new NotificationAdaptor(modals);
+    this.userAdaptor = new UserAdaptor(modals);
     this.date = moment.utc();
     this._ = _;
   }
@@ -32,7 +34,10 @@ class DashboardAdaptor {
       const {seller_id} = options;
       let [cashback_jobs, seller, orders] = await Promise.all([
         this.modals.cashback_jobs.findAll(
-            {where: {seller_id}, attributes: ['job_id']}),
+            {
+              where: {seller_id, admin_status: {$ne: 2}},
+              attributes: ['job_id'],
+            }),
         this.modals.sellers.findOne({where: {id: seller_id}}),
         this.modals.order.findAll(
             {where: {seller_id, status_type: 5}, attributes: ['expense_id']})]);
@@ -55,17 +60,32 @@ class DashboardAdaptor {
             this.modals.products.aggregate('purchase_cost', 'sum',
                 {
                   where: JSON.parse(JSON.stringify(
-                      {seller_id, status_type: [5, 11], job_id, id})),
+                      {
+                        seller_id,
+                        status_type: [5, 11],
+                        user_id,
+                        $or: {job_id, id},
+                      })),
                 }),
             this.modals.credit_wallet.aggregate('amount', 'sum',
                 {
                   where: JSON.parse(
-                      JSON.stringify({seller_id, status_type: 16, user_id})),
+                      JSON.stringify({
+                        seller_id,
+                        status_type: 16,
+                        transaction_type: 1,
+                        user_id,
+                      })),
                 }),
             this.modals.credit_wallet.aggregate('amount', 'sum',
                 {
                   where: JSON.parse(
-                      JSON.stringify({seller_id, status_type: 14, user_id})),
+                      JSON.stringify({
+                        seller_id,
+                        status_type: [16, 14],
+                        transaction_type: 2,
+                        user_id,
+                      })),
                 }),
             this.modals.loyalty_wallet.aggregate('amount', 'sum',
                 {
@@ -224,6 +244,7 @@ class DashboardAdaptor {
     let {isNewUser, user, token, request} = parameters;
     console.log(isNewUser);
     let user_id = user.id || user.ID;
+    user = await this.userAdaptor.retrieveSingleUser({where: {id: user_id}});
     if (!isNewUser) {
       try {
         let [
@@ -277,7 +298,16 @@ class DashboardAdaptor {
         };
       }
     }
-
+    setTimeout((() => {
+      console.log('New User Mail will be sent now');
+      this.userAdaptor.retrieveSingleUser({where: {id: user_id}}).then(user => {
+        if (user.email) {
+          NotificationAdaptor.sendMailOnDifferentSteps(
+              'Welcome to BinBill',
+              user.email, user, 1);
+        }
+      });
+    }), 300000);
     /* if (user.email) {
        notificationAdaptor.sendMailOnDifferentSteps(
            'Welcome to BinBill',

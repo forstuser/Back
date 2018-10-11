@@ -12,6 +12,7 @@ import NotificationAdaptor from '../Adaptors/notification';
 import Promise from 'bluebird';
 import config from '../../config/main';
 import _ from 'lodash';
+import moment from 'moment';
 import {sendSMS} from '../../helpers/sms';
 
 let modals, shopEarnAdaptor, jobAdaptor, userAdaptor, sellerAdaptor,
@@ -38,14 +39,12 @@ class SellerController {
           userAdaptor.retrieveUserIndexedData({
             where: {user_id},
             attributes: [
-              'my_seller_ids', 'seller_offer_ids', 'wallet_seller_cashback_ids',
-              'wallet_seller_credit_ids', 'wallet_seller_loyalty_ids'],
+              'my_seller_ids', 'seller_offer_ids'],
           }), userAdaptor.retrieveSingleUser({where: {id: user_id}})]);
 
         let {search_value, limit, offset, latitude, longitude, city, is_fmcg, is_assisted, has_pos, for_order, for_claim} = request.query ||
         {};
-        const {seller_offer_ids, my_seller_ids: id} = user_index_data ||
-        {};
+        let {seller_offer_ids, my_seller_ids: id} = user_index_data || {};
         if (id) {
           search_value = search_value || '';
           let contact_no, seller_name = {$or: {}};
@@ -70,6 +69,10 @@ class SellerController {
           } : {
             id, $or: {seller_name, contact_no}, is_onboarded: true,
           };
+          if (user_detail.mobile_no) {
+            where.contact_no = {$ne: user_detail.mobile_no};
+          }
+
           const sellers = await sellerAdaptor.retrieveSellers(
               {
                 user_id, seller_offer_ids, limit, offset,
@@ -143,12 +146,12 @@ class SellerController {
             });
           } else {
             return reply.response({
-              status: false,
+              status: true, result: [],
               message: is_fmcg && has_pos ?
                   'Seller in your list could not have .' :
                   is_assisted ?
                       'No seller in your list have assisted users.' :
-                      'No seller with ',
+                      'No seller found ',
             });
           }
         }
@@ -197,8 +200,7 @@ class SellerController {
 
         let {search_value, limit, offset, latitude, longitude, city, is_fmcg, is_assisted, is_pos} = request.query ||
         {};
-        const {seller_offer_ids, my_seller_ids: id} = user_index_data ||
-        {};
+        const {seller_offer_ids, my_seller_ids: id} = user_index_data || {};
         if (id) {
           search_value = search_value || '';
           let contact_no, seller_name = {$or: {}};
@@ -288,16 +290,18 @@ class SellerController {
       // this is where make us of adapter
       try {
         const user_id = user.id || user.ID;
-        const user_index_data = await userAdaptor.retrieveUserIndexedData({
-          where: {user_id, status_type: [1, 11]},
-          attributes: [
-            'my_seller_ids', 'seller_offer_ids', 'wallet_seller_cashback_ids',
-            'wallet_seller_credit_ids', 'wallet_seller_loyalty_ids'],
-        });
-        let {seller_offer_ids} = user_index_data ||
+        const [user_index_data, user_detail] = await Promise.all([
+          userAdaptor.retrieveUserIndexedData({
+            where: {user_id},
+            attributes: [
+              'my_seller_ids', 'seller_offer_ids'],
+          }), userAdaptor.retrieveSingleUser({where: {id: user_id}})]);
+        let {seller_offer_ids} = user_index_data || {};
+        let {search_value, limit, offset, latitude, longitude, city, is_default} = request.query ||
         {};
-        let {search_value, limit, offset, latitude, longitude, city} = request.query ||
-        {};
+        const id = is_default && is_default.toLowerCase() === 'true' &&
+        config.DEFAULT_SELLER_IDS.length > 0 ?
+            config.DEFAULT_SELLER_IDS : undefined;
         search_value = search_value || '';
         let contact_no, seller_name = {$or: {}};
         const reg = /^\d+$/;
@@ -310,6 +314,21 @@ class SellerController {
           }
         }
         seller_name.$or.$iLike = `%${search_value}%`;
+        const where = JSON.parse(JSON.stringify({
+          id, status_type: [1, 11], is_onboarded: true,
+        }));
+        if (seller_name && contact_no) {
+          where.$or = {seller_name, contact_no};
+        } else if (seller_name) {
+          where.seller_name = seller_name;
+        }
+
+        if (user_detail.mobile_no && contact_no) {
+          where.$or.contact_no = JSON.parse(
+              JSON.stringify({$eq: contact_no, $ne: user_detail.mobile_no}));
+        } else if (user_detail.mobile_no) {
+          where.contact_no = {$ne: user_detail.mobile_no};
+        }
 
         return reply.response({
           status: true,
@@ -318,10 +337,7 @@ class SellerController {
                 user_id, seller_offer_ids, latitude, longitude,
                 limit, city, offset, is_onboarded: true,
               }, {
-                where: JSON.parse(JSON.stringify({
-                  $or: {seller_name, contact_no},
-                  status_type: [1, 11], is_onboarded: true,
-                })),
+                where,
                 attributes: [
                   'id', ['seller_name', 'name'], 'owner_name', 'is_fmcg',
                   'seller_details', 'gstin', 'pan_no', 'reg_no', 'is_assisted',
@@ -744,7 +760,7 @@ class SellerController {
                 title: `${user_detail.name ||
                 'User'} has added you as a Seller for future orders and communication.`,
                 description: 'Please click here for more detail.',
-                notification_type: 2,
+                notification_type: 2, notification_id: Math.random(),
               },
             });
           } else if (!already_in_list) {
@@ -757,7 +773,7 @@ class SellerController {
                 title: `${user_index_data.user_name ||
                 'User'} has added you as a Seller for future orders and communication.`,
                 description: 'Please click here for more detail.',
-                notification_type: 2,
+                notification_type: 2, notification_id: Math.random(),
               },
             });
           } else {
@@ -829,19 +845,19 @@ class SellerController {
         const [user_index_data, seller_detail] = await Promise.all([
           userAdaptor.retrieveUserIndexedData({
             where: {user_id, status_type: [1, 11]},
-            attributes: ['my_seller_ids', 'seller_offer_ids'],
+            attributes: ['my_seller_ids', 'seller_offer_ids', 'id'],
           }),
           sellerAdaptor.retrieveSellerDetailNonJSON({
             where: {id: request.params.id},
-            attributes: ['customer_ids'],
+            attributes: ['customer_ids', 'id'],
           })]);
 
-        let {my_seller_ids} = user_index_data || {};
+        let {my_seller_ids, id} = user_index_data || {};
         let {customer_ids} = seller_detail.toJSON();
         my_seller_ids = (my_seller_ids || []).filter(
             item => item !== parseInt(request.params.id));
         await userAdaptor.updateUserIndexedData({my_seller_ids},
-            {where: {user_id}});
+            {where: {user_id, id}});
         customer_ids = customer_ids.filter(item => parseInt(item) !== user_id);
         await seller_detail.updateAttributes({customer_ids});
 
@@ -923,7 +939,7 @@ class SellerController {
         my_seller_ids = (my_seller_ids || []);
         seller_contact_no = (seller_contact_no || []);
         const message = `Yay! Your Customer ${name ||
-        ''} has invited you to BinBill Partner – for online orders & much more. Get your Free App Now, contact us on 8800850275!`;
+        ''} has invited you to BinBill Partner - for online orders & much more. Get your Free App Now, contact us on 8800850275!`;
         let already_in_my_seller_list;
         if (seller) {
           customer_ids = customer_ids || [];
@@ -1374,7 +1390,7 @@ class SellerController {
                 'basic_details' /*: !business_details ?
                 'business_details'*/ : 'dashboard',
         categories: data_required || !is_onboarded ?
-            _.orderBy(categories, 'name') :
+            _.orderBy(categories, ['priority_index', 'name']) :
             undefined,
         main_category_id: (basic_details || {}).category_id ||
             config.HOUSEHOLD_CATEGORY_ID,
@@ -1473,7 +1489,7 @@ class SellerController {
               {where: JSON.parse(JSON.stringify({id}))}, seller_updates,
               true) || {}));
       await sellerAdaptor.retrieveOrCreateSellerLoyaltyRules(
-          JSON.parse(JSON.stringify({seller_id: replyObject.seller_detail.id})),
+          JSON.parse(JSON.stringify({seller_id: id})),
           JSON.parse(JSON.stringify(
               {seller_id: replyObject.seller_detail.id, status_type: 1})));
       return reply.response(JSON.parse(JSON.stringify(replyObject))).code(201);
@@ -1564,16 +1580,21 @@ class SellerController {
         sellerAdaptor.retrieveSellerDetail(
             {
               where: {id: seller_id, user_id},
-              attributes: ['customer_ids', 'id'],
+              attributes: ['customer_ids', 'customer_invite_detail', 'id'],
             }), userAdaptor.retrieveOrUpdateUserIndexedData(
             {
               where: {user_id: customer_id},
               attributes: ['id', 'user_id', 'my_seller_ids'],
             },
             {seller_id: parseInt(seller_id), user_id: customer_id})]);
+      seller_data.customer_invite_detail = (seller_data.customer_invite_detail ||
+          []);
       seller_data.customer_ids = (seller_data.customer_ids || []);
       seller_data.customer_ids.push(parseInt(customer_id));
       seller_data.customer_ids = _.uniq(seller_data.customer_ids);
+      seller_data.customer_invite_detail.push(
+          {customer_id, invited_date: moment().utcOffset(330)});
+      seller_data.customer_invite_detail = _.uniqBy(seller_data.customer_invite_detail, 'customer_id' );
       replyObject.seller_detail = JSON.parse(
           JSON.stringify(await sellerAdaptor.retrieveOrUpdateSellerDetail(
               {where: JSON.parse(JSON.stringify({id: seller_id}))}, seller_data,
@@ -2259,7 +2280,10 @@ Download Now: http://bit.ly/binbill`;
               attributes: ['service_type_id', 'seller_id', 'price', 'id'],
             }, attributes: [
               'id', 'name', 'mobile_no', 'reviews',
-              'document_details', 'profile_image_detail'],
+              'document_details', 'profile_image_detail',[
+                  modals.sequelize.literal(
+                      `(Select count(*) as order_counts from table_orders as orders where orders.delivery_user_id = assisted_service_users.id and orders.status_type <> 5 and orders.seller_id = ${seller_id})`),
+                      'order_counts']],
           })]);
         const reviews = [];
         seller_service_users.forEach(
@@ -3436,7 +3460,8 @@ Download Now: http://bit.ly/binbill`;
                   ',')})`),
           modals.categories.findAll({
             where: {category_id},
-            attributes: ['category_id', 'category_name', 'ref_id'],
+            attributes: [
+              'category_id', 'category_name', 'ref_id', 'priority_index'],
           })]);
         category_details = category_details.map(item => item.toJSON());
         let result = await Promise.all(
@@ -3486,12 +3511,12 @@ Download Now: http://bit.ly/binbill`;
         return reply.response({
           status: true,
           message: 'Successful',
-          result: category_details.map((item, index) => {
+          result: _.orderBy(category_details.map((item, index) => {
             const filter_brands = result[index].map(bItem => bItem.toJSON());
             item.brands = filter_brands.map(
                 bItem => _.omit(bItem, ['category_ids', 'details']));
             return item;
-          }),
+          }), ['priority_index', 'category_name']),
           forceUpdate: request.pre.forceUpdate,
         });
       } else {

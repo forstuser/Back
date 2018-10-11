@@ -215,7 +215,8 @@ class UserController {
               (request.headers['ios-app-version'] &&
                   request.headers['ios-app-version'] <
                   14) ||
-              (request.headers['app-version'] && request.headers['app-version'] <
+              (request.headers['app-version'] &&
+                  request.headers['app-version'] <
                   13) ? 6 : 4),
           userAdaptor.retrieveSingleUser({
             where: {
@@ -367,7 +368,8 @@ class UserController {
         const response = await OTPHelper.sendOTPOverEmail(request.payload.email,
             request.user.name, (request.headers['ios-app-version'] &&
                 request.headers['ios-app-version'] < 14) ||
-            (request.headers['app-version'] && request.headers['app-version'] < 13) ?
+            (request.headers['app-version'] && request.headers['app-version'] <
+                13) ?
                 6 : 4);
         await userAdaptor.updateUserDetail({
           email: request.payload.email.toLowerCase(),
@@ -918,7 +920,7 @@ class UserController {
             seller_user_id: user.seller_details ? user.id : undefined,
             platform_id: request.payload.platform || 1,
           }))),
-          userAdaptor.retrieveSellerUser({where:{id: user.id}}, false,
+          userAdaptor.retrieveSellerUser({where: {id: user.id}}, false,
               {is_logged_out: true})]);
 
         await (!user.seller_details ?
@@ -1069,7 +1071,7 @@ class UserController {
   }
 
   static async updateUserProfile(request, reply) {
-    const user = shared.verifyAuthorization(request.headers);
+    let user = shared.verifyAuthorization(request.headers);
     try {
       if (request.pre.isValidEmail && request.pre.userExist &&
           !request.pre.forceUpdate) {

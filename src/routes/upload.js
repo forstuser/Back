@@ -556,6 +556,32 @@ export function prepareUploadRoutes(modal, routeObject, middleware) {
       },
     });
 
+    routeObject.push({
+      method: 'POST',
+      path: '/sku/{id}/images',
+      config: {
+        pre: [
+          {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+        ],
+        files: {
+          relativeTo: Path.join(__dirname, '../static/src'),
+        },
+        handler: ControllerObject.uploadSKUImage,
+        payload: {
+          output: 'stream',
+          parse: true,
+          uploads: 'up_files',
+          timeout: 3003400,
+          allow: 'multipart/form-data',
+          failAction: 'log',
+          maxBytes: 209715200,
+        },
+        timeout: {
+          socket: false,
+        },
+      },
+    });
+
     /*Retrieve SKU images*/
     routeObject.push({
       method: 'GET',

@@ -330,7 +330,7 @@ class SellerAdaptor {
     }).filter(item => item);
     const result = await this.modals.users.findAll({
       where: { id },
-      attributes: [['full_name', 'name'], 'image_name', 'email', 'mobile_no', 'location', 'id', 'user_status_type', [this.modals.sequelize.literal(`(select sum(products.purchase_cost) from consumer_products as products where ${job_id.length > 0 ? `job_id in (${job_id.join(',')}) and` : ''} ${expense_id.length > 0 ? `id in (${expense_id.join(',')}) and` : ''} products.user_id = "users"."id" and products.seller_id = ${seller_id})`), 'total_transactions']]
+      attributes: [['full_name', 'name'], 'image_name', 'email', 'mobile_no', 'location', 'id', 'user_status_type', [this.modals.sequelize.literal(`(select sum(products.purchase_cost) from consumer_products as products where  products.user_id = "users"."id" and products.seller_id = ${seller_id} and status_type in (5,11) and (${job_id.length > 0 && expense_id.length > 0 ? `"products"."job_id" in (${job_id.join(',')}) or "products"."id" in (${expense_id.join(',')})` : `${job_id.length > 0 ? `"products"."job_id" in (${job_id.join(',')})` : ''} ${expense_id.length > 0 ? `"products"."id" in (${expense_id.join(',')})` : ''}`}))`), 'total_transactions']]
     });
     const user_list = result.map(item => item.toJSON());
     const addresses = (await this.userAdaptor.retrieveUserAddresses({
@@ -1028,7 +1028,7 @@ class SellerAdaptor {
 
   async retrieveOrCreateSellerLoyaltyRules(options, defaults) {
     let loyalty_rules = await this.modals.loyalty_rules.findOne({ where: options });
-    if (loyalty_rules && options.id) {
+    if (loyalty_rules) {
       const loyalty_rules_result = loyalty_rules.toJSON();
       defaults.status_type = loyalty_rules_result.status_type;
       await loyalty_rules.updateAttributes(defaults);

@@ -148,7 +148,7 @@ class JobAdaptor {
     await this.notificationAdaptor.notifyUserCron({
       seller_user_id, payload: {
         title: `Loyalty Points have been redeemed by ${user_name}.`, user_id,
-        notification_type: 4,
+        notification_type: 4, notification_id: Math.random()
       },
     });
   }
@@ -234,7 +234,7 @@ class JobAdaptor {
                 title: `Hurray! You have received Cashback on Home Delivery to ${user_name ||
                 ''} in your BB Wallet!`,
                 description: 'Please click here for more detail.',
-                notification_type: 3,
+                notification_type: 3, notification_id: Math.random(),
               },
             }) :
             '']);
@@ -271,7 +271,7 @@ class JobAdaptor {
                     title: `Hurray! You have received Cashback on Home Delivery to ${user_name ||
                     ''} in your BB Wallet!`,
                     description: 'Please click here for more detail.',
-                    notification_type: 3,
+                    notification_type: 3, notification_id: Math.random(),
                   },
                 }) :
                 '']);
@@ -309,7 +309,7 @@ class JobAdaptor {
                     title: `Hurray! You have received Cashback on Home Delivery to ${user_name ||
                     ''} in your BB Wallet!`,
                     description: 'Please click here for more detail.',
-                    notification_type: 3,
+                    notification_type: 3, notification_id: Math.random(),
                   },
                 }) :
                 '']);
@@ -347,7 +347,7 @@ class JobAdaptor {
                   title: `Hurray! You have received Cashback on Home Delivery to ${user_name ||
                   ''} in your BB Wallet!`,
                   description: 'Please click here for more detail.',
-                  notification_type: 3,
+                  notification_type: 3, notification_id: Math.random(),
                 },
               }) : '']);
 
@@ -382,7 +382,7 @@ class JobAdaptor {
           title: `${user_name ||
           ''} has opted for cashback redemption & it has been credited to your BB Wallet.`,
           description: 'Please click here for more detail.',
-          notification_type: 3,
+          notification_type: 3, notification_id: Math.random(),
         },
       })]);
   }

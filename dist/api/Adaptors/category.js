@@ -29,7 +29,7 @@ class CategoryAdaptor {
     options.status_type = 1;
     let categoryData;
     const result = await this.modals.categories.findAll({
-      where: options, attributes: [['category_id', 'id'], ['category_name', 'default_name'], [`${language ? `category_name_${language}` : `category_name`}`, 'name'], [this.modals.sequelize.fn('CONCAT', '/categories/', this.modals.sequelize.literal('"categories"."category_id"'), '/images/1'), 'categoryImageUrl']], order: ['category_id']
+      where: options, attributes: [['category_id', 'id'], ['category_name', 'default_name'], [`${language ? `category_name_${language}` : `category_name`}`, 'name'], [this.modals.sequelize.fn('CONCAT', '/categories/', this.modals.sequelize.literal('"categories"."category_id"'), '/images/1'), 'categoryImageUrl'], 'priority_index'], order: ['category_id']
     });
     categoryData = result.map(item => {
       const categoryItem = item.toJSON();
@@ -41,7 +41,11 @@ class CategoryAdaptor {
     const subCategoryOption = { status_type: 1, ref_id };
     const subCategories = await this.retrieveSubCategories(subCategoryOption, isBrandFormRequired, language, user);
     categoryData = categoryData.map(item => {
-      item.subCategories = _lodash2.default.sortBy(subCategories.filter(categoryItem => categoryItem.refId === item.id), categoryItem => item.default_ids.indexOf(categoryItem.id));
+      if (item.id === 11) {
+        item.subCategories = _lodash2.default.sortBy(subCategories, categoryItem => item.default_ids.indexOf(categoryItem.id));
+      } else {
+        item.subCategories = _lodash2.default.sortBy(subCategories.filter(categoryItem => categoryItem.refId === item.id), categoryItem => item.default_ids.indexOf(categoryItem.id));
+      }
 
       return item;
     });

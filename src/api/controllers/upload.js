@@ -303,6 +303,75 @@ class UploadController {
     }
   }
 
+  static async uploadSKUImage(request, reply) {
+    if (request.payload) {
+      try {
+        const skuResult = await modals.sku.findOne({
+          where: {
+            id: request.params.id,
+          },
+        });
+        if (skuResult) {
+          const image_code = `${Math.random().
+              toString(36).substr(2, 9)}${(request.params.id).toString(36)}`;
+          const skuItem = skuResult.toJSON();
+          const fieldNameHere = request.payload.fieldNameHere;
+          const fileData = fieldNameHere || request.payload.filesName;
+
+          const name = fileData.hapi.filename;
+          const file_type = name.split('.')[name.split('.').length - 1];
+          const image_name = `${skuItem.id}.png`;
+
+          const fsImplProduct = new S3FS(
+              `${config.AWS.S3.BUCKET}/${config.AWS.S3.SKU_IMAGE}`,
+              config.AWS.ACCESS_DETAILS);
+          await fsImplProduct.writeFile(image_name, fileData._data,
+              {ContentType: mime.lookup(image_name)});
+
+          await skuResult.updateAttributes({image_name, image_code});
+          return reply.response({
+            status: true,
+            message: 'Uploaded Successfully',
+            wearableResult: skuResult,
+          });
+        }
+
+        return reply.response({
+          status: false,
+          message: 'Invalid Wearable Id Upload Failed',
+          err,
+          // forceUpdate: request.pre.forceUpdate
+        });
+      } catch (err) {
+        console.log(
+            `Error on ${new Date()} for user ${user.id ||
+            user.ID} is as follow: \n \n ${err}`);
+
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user.id || user.ID,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
+        return reply.response({
+          status: false,
+          message: 'Upload Failed',
+          err,
+          // forceUpdate: request.pre.forceUpdate
+        });
+      }
+    } else {
+      return reply.response(
+          {status: false, message: 'No documents in request'}); //, forceUpdate: request.pre.forceUpdate});
+    }
+  }
+
   static async uploadFiles(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (request.pre.userExist === 0) {
@@ -984,13 +1053,15 @@ class UploadController {
 
   static async uploadResponse(parameters) {
     let {jobResult, copyData, productItemResult, type, reply} = parameters;
-    const fixed_cash_backs = (config.FIXED_CASH_BACK ||'').split('||');
+    const fixed_cash_backs = (config.FIXED_CASH_BACK || '').split('||');
     const replyResult = {
       status: true,
       job_id: jobResult.id,
       message: 'Uploaded Successfully',
       billResult: copyData,
-      fixed_cashback: jobResult.cashback_job_count > 0 ? fixed_cash_backs[1]: fixed_cash_backs[0]
+      fixed_cashback: jobResult.cashback_job_count > 0 ?
+          parseFloat((fixed_cash_backs[1] || 0).toString()) :
+          parseFloat((fixed_cash_backs[0] || 0).toString()),
     };
     if (productItemResult) {
       replyResult.product = productItemResult[1];
@@ -2220,16 +2291,44 @@ class UploadController {
   static async retrieveSKUImage(request, reply) {
     if (!request.pre.forceUpdate) {
       try {
-        const fsImplBrand = new S3FS(
+        const fsImplSKU = new S3FS(
             `${config.AWS.S3.BUCKET}/${config.AWS.S3.SKU_IMAGE}${request.params.file_type
                 ? `/${request.params.file_type}` : ''}`,
             config.AWS.ACCESS_DETAILS);
-        const fileResult = await fsImplBrand.readFile(
-            `${request.params.id}.png`, 'utf8');
-        return reply.response(fileResult.Body).
-            header('Content-Type', fileResult.ContentType).
-            header('Content-Disposition',
-                `attachment; filename=${request.params.id}.png`);
+        let sku_detail = await modals.sku.findOne({
+          where: {id: request.params.id},
+          attributes: ['id', 'brand_id', 'image_code', 'main_category_id'],
+        });
+        if (sku_detail) {
+          sku_detail = sku_detail.toJSON();
+          console.log(sku_detail);
+          if (sku_detail.image_code) {
+            const fileResult = await fsImplSKU.readFile(
+                `${request.params.id}.png`, 'utf8');
+            return reply.response(fileResult.Body).
+                header('Content-Type', fileResult.ContentType).
+                header('Content-Disposition',
+                    `attachment; filename=${request.params.id}.png`);
+          } else if (sku_detail.brand_id) {
+            const fsImplBrand = new S3FS(
+                `${config.AWS.S3.BUCKET}/${config.AWS.S3.BRAND_IMAGE}${request.params.file_type
+                    ? `/${request.params.file_type}` : ''}`,
+                config.AWS.ACCESS_DETAILS);
+            const fileResult = await fsImplBrand.readFile(
+                `${sku_detail.brand_id}.png`, 'utf8');
+            return reply.response(fileResult.Body).
+                header('Content-Type', fileResult.ContentType).
+                header('Content-Disposition',
+                    `attachment; filename=${sku_detail.brand_id}.png`);
+
+          }
+        }
+
+        return reply.response({
+          status: false,
+          message: 'Unable to retrieve image',
+          forceUpdate: request.pre.forceUpdate,
+        });
       } catch (err) {
         console.log(
             `Error on ${new Date()} retrieving sku image is as follow: \n \n ${err}`);

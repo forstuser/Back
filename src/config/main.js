@@ -2,6 +2,7 @@
 
 export default {
   HOUSEHOLD_CATEGORY_ID: process.env.HOUSEHOLD_CATEGORY_ID,
+  DEFAULT_SELLER_IDS: (process.env.DEFAULT_SELLER_IDS || '').split(','),
   SMS: {
     AUTH_KEY: process.env.SMS_AUTH_KEY,
     HOST_NAME: 'http://api.msg91.com',

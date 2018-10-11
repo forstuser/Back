@@ -119,7 +119,7 @@ class UserAdaptor {
    * @returns {Promise<Model>}
    */
   async retrieveSingleUser(filterObject) {
-    filterObject.attributes = ['id', ['full_name', 'name'], 'mobile_no', 'image_name', 'email', 'email_verified', 'email_secret', 'gender', 'user_status_type', [this.modals.sequelize.fn('CONCAT', 'consumer/', this.modals.sequelize.col('id'), '/images'), 'imageUrl']];
+    filterObject.attributes = ['id', ['full_name', 'name'], 'mobile_no', 'image_name', 'location', 'email', 'email_verified', 'email_secret', 'gender', 'user_status_type', 'created_at', [this.modals.sequelize.fn('CONCAT', 'consumer/', this.modals.sequelize.col('id'), '/images'), 'imageUrl']];
     const item = await this.modals.users.findOne(filterObject);
     return item ? item.toJSON() : item;
   }
@@ -161,7 +161,7 @@ class UserAdaptor {
    */
   async retrieveUserById(user, address_id) {
     const result = await _bluebird2.default.all([this.modals.users.findById(user.id || user.ID, {
-      attributes: ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', 'location', 'latitude', 'longitude', 'image_name', 'password', 'gender', [this.modals.sequelize.fn('CONCAT', '/consumer/', this.modals.sequelize.col('id'), '/images'), 'imageUrl'], [this.modals.sequelize.literal(`(Select sum(amount) from table_wallet_user_cashback where user_id = ${user.id || user.ID} and status_type in (16) group by user_id)`), 'wallet_value'], [this.modals.sequelize.literal(`(Select sum(amount) from table_wallet_user_cashback where user_id = ${user.id || user.ID} and status_type in (16,13,14) and transaction_type = 2 group by user_id)`), 'redeemed_value']]
+      attributes: ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', 'location', 'latitude', 'created_at', 'longitude', 'image_name', 'password', 'gender', [this.modals.sequelize.fn('CONCAT', '/consumer/', this.modals.sequelize.col('id'), '/images'), 'imageUrl'], [this.modals.sequelize.literal(`(Select sum(amount) from table_wallet_user_cashback where user_id = ${user.id || user.ID} and status_type in (16) group by user_id)`), 'wallet_value'], [this.modals.sequelize.literal(`(Select sum(amount) from table_wallet_user_cashback where user_id = ${user.id || user.ID} and status_type in (16,13,14) and transaction_type = 2 group by user_id)`), 'redeemed_value']]
     }), this.retrieveUserAddresses({
       where: JSON.parse(JSON.stringify({ user_id: user.id || user.ID, id: address_id }))
     })]);
@@ -292,6 +292,7 @@ class UserAdaptor {
       return reply.response({
         status: true,
         message: 'User Details Updated Successfully',
+        result: await this.retrieveSingleUser({ where: { id: user_id } }),
         forceUpdate: request.pre.forceUpdate
       }).code(200);
     } catch (err) {
