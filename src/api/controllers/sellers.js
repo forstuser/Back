@@ -1471,8 +1471,8 @@ class SellerController {
           basic_details.close_time || '09:00 PM';
       basic_details.shop_open_timings = shop_open_timings ||
           basic_details.shop_open_timings;
-      basic_details.home_delivery = home_delivery && home_delivery === true ?
-          true : home_delivery === false ? false : false;
+      basic_details.home_delivery = !home_delivery && home_delivery !== false  ?!!(basic_details.home_delivery):
+          home_delivery.toString().toLowerCase() === 'true';
       basic_details.home_delivery_remarks = home_delivery_remarks ||
           basic_details.home_delivery_remarks;
       basic_details.payment_modes = payment_modes ||
@@ -1594,7 +1594,8 @@ class SellerController {
       seller_data.customer_ids = _.uniq(seller_data.customer_ids);
       seller_data.customer_invite_detail.push(
           {customer_id, invited_date: moment().utcOffset(330)});
-      seller_data.customer_invite_detail = _.uniqBy(seller_data.customer_invite_detail, 'customer_id' );
+      seller_data.customer_invite_detail = _.uniqBy(
+          seller_data.customer_invite_detail, 'customer_id');
       replyObject.seller_detail = JSON.parse(
           JSON.stringify(await sellerAdaptor.retrieveOrUpdateSellerDetail(
               {where: JSON.parse(JSON.stringify({id: seller_id}))}, seller_data,
@@ -2280,10 +2281,10 @@ Download Now: http://bit.ly/binbill`;
               attributes: ['service_type_id', 'seller_id', 'price', 'id'],
             }, attributes: [
               'id', 'name', 'mobile_no', 'reviews',
-              'document_details', 'profile_image_detail',[
-                  modals.sequelize.literal(
-                      `(Select count(*) as order_counts from table_orders as orders where orders.delivery_user_id = assisted_service_users.id and orders.status_type <> 5 and orders.seller_id = ${seller_id})`),
-                      'order_counts']],
+              'document_details', 'profile_image_detail', [
+                modals.sequelize.literal(
+                    `(Select count(*) as order_counts from table_orders as orders where orders.delivery_user_id = assisted_service_users.id and orders.status_type <> 5 and orders.seller_id = ${seller_id})`),
+                'order_counts']],
           })]);
         const reviews = [];
         seller_service_users.forEach(

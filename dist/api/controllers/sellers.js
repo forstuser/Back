@@ -1158,7 +1158,7 @@ class SellerController {
       basic_details.start_time = start_time || basic_details.start_time || '09:00 AM';
       basic_details.close_time = close_time || basic_details.close_time || '09:00 PM';
       basic_details.shop_open_timings = shop_open_timings || basic_details.shop_open_timings;
-      basic_details.home_delivery = home_delivery && home_delivery === true ? true : home_delivery === false ? false : false;
+      basic_details.home_delivery = !home_delivery && home_delivery !== false ? !!basic_details.home_delivery : home_delivery.toString().toLowerCase() === 'true';
       basic_details.home_delivery_remarks = home_delivery_remarks || basic_details.home_delivery_remarks;
       basic_details.payment_modes = payment_modes || basic_details.payment_modes;
       basic_details.is_complete = true;

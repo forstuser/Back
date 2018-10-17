@@ -454,7 +454,8 @@ export default class SellerAdaptor {
           this.modals.sequelize.literal(
               `(select sum(products.purchase_cost) from consumer_products as products where  products.user_id = "users"."id" and products.seller_id = ${seller_id} and status_type in (5,11) and (${job_id.length >
               0 && expense_id.length > 0 ?
-                  `"products"."job_id" in (${job_id.join(',')}) or "products"."id" in (${expense_id.join(
+                  `"products"."job_id" in (${job_id.join(
+                      ',')}) or "products"."id" in (${expense_id.join(
                       ',')})` : `${job_id.length >
                   0 ? `"products"."job_id" in (${job_id.join(',')})` :
                       ''} ${expense_id.length > 0 ?
@@ -1002,8 +1003,11 @@ export default class SellerAdaptor {
 
     if (sellerResult) {
       const sellerDetail = sellerResult.toJSON();
+      defaults.seller_name = defaults.seller_name && defaults.seller_name !==
+      '' ? defaults.seller_name :
+          sellerDetail.seller_name ? sellerDetail.seller_name : '';
       defaults.status_type = sellerDetail.status_type;
-      await sellerResult.updateAttributes(defaults);
+      await sellerResult.updateAttributes(JSON.parse(JSON.stringify(defaults)));
     } else {
       sellerResult = await this.modals.sellers.create(defaults);
     }

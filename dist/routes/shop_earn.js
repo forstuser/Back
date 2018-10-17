@@ -350,7 +350,7 @@ function prepareShopEarnRoute(modal, route, middleware, socket) {
         pre: [{
           method: middleware.checkAppVersion,
           assign: 'forceUpdate'
-        }],
+        }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         handler: _shop_earn2.default.cashBackApproval
       }
     });
@@ -363,7 +363,7 @@ function prepareShopEarnRoute(modal, route, middleware, socket) {
         pre: [{
           method: middleware.checkAppVersion,
           assign: 'forceUpdate'
-        }],
+        }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         validate: {
           payload: {
             reason_id: _joi2.default.number().required()
@@ -381,7 +381,7 @@ function prepareShopEarnRoute(modal, route, middleware, socket) {
         pre: [{
           method: middleware.checkAppVersion,
           assign: 'forceUpdate'
-        }],
+        }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         handler: _shop_earn2.default.retrieveTransactions
       }
     });
@@ -453,7 +453,7 @@ function prepareShopEarnRoute(modal, route, middleware, socket) {
       pre: [{
         method: middleware.checkAppVersion,
         assign: 'forceUpdate'
-      }],
+      }, { method: middleware.logSellerAction, assign: 'seller_action' }],
       handler: _shop_earn2.default.redeemSellerCashBackAtPayTM
     }
   });

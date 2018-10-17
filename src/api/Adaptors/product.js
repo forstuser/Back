@@ -2156,11 +2156,11 @@ export default class ProductAdaptor {
     seller_name && seller_name.trim() || seller_name === '' ||
     seller_email && seller_email.trim() ||
     seller_address && seller_address.trim() ?
-        this.sellerAdaptor.retrieveOrCreateSellers(sellerOption, {
+        this.sellerAdaptor.retrieveOrCreateSellers(sellerOption, JSON.parse(JSON.stringify({
           seller_name, contact_no: seller_contact,
           email: seller_email, address: seller_address,
           updated_by: user_id, created_by: user_id, status_type: 11,
-        }) : '');
+        }))) : '');
 
     if (amc) {
       let {seller_name, seller_contact} = amc;

@@ -358,6 +358,7 @@ class SocketServer {
             }
           }
 
+          sku_item_promise.push({});
           measurement_values.push('');
         });
         const [sku_items, sku_measurement_detail] = await _bluebird2.default.all([_bluebird2.default.all(sku_item_promise), _bluebird2.default.all(sku_measurement_promise)]);

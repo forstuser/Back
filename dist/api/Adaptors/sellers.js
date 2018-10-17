@@ -715,8 +715,9 @@ class SellerAdaptor {
 
     if (sellerResult) {
       const sellerDetail = sellerResult.toJSON();
+      defaults.seller_name = defaults.seller_name && defaults.seller_name !== '' ? defaults.seller_name : sellerDetail.seller_name ? sellerDetail.seller_name : '';
       defaults.status_type = sellerDetail.status_type;
-      await sellerResult.updateAttributes(defaults);
+      await sellerResult.updateAttributes(JSON.parse(JSON.stringify(defaults)));
     } else {
       sellerResult = await this.modals.sellers.create(defaults);
     }

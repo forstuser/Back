@@ -404,6 +404,7 @@ export default class SocketServer {
             }
           }
 
+          sku_item_promise.push({});
           measurement_values.push('');
         });
         const [sku_items, sku_measurement_detail] = await Promise.all(

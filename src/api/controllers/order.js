@@ -43,6 +43,9 @@ class OrderController {
                       '(Select job_id from table_cashback_jobs as jobs where jobs.id = "order".job_id)'),
                   'upload_id'], [
                   modals.sequelize.literal(
+                      '(Select admin_status from table_cashback_jobs as jobs where jobs.id = "order".job_id)'),
+                  'admin_status'], [
+                  modals.sequelize.literal(
                       '(Select purchase_cost from consumer_products as expense where expense.id = "order".expense_id)'),
                   'total_amount'], [
                   modals.sequelize.literal(
@@ -267,8 +270,7 @@ class OrderController {
                 modals.sequelize.literal(
                     `(Select sum(amount) from table_wallet_user_cashback where user_id = "user"."id" and status_type in (16) group by user_id)`),
                 'wallet_value']],
-          },
-          {
+          }, {
             model: modals.sellers, as: 'seller', attributes: [
               'seller_name', 'address', 'contact_no', 'email',
               [
@@ -279,8 +281,7 @@ class OrderController {
                 modals.sequelize.literal(
                     `"seller"."seller_details"->'business_details'`),
                 'business_details']],
-          },
-          {
+          }, {
             model: modals.user_addresses,
             as: 'user_address',
             attributes: [
@@ -317,9 +318,11 @@ class OrderController {
                         'total_amount'], 'job_id', 'expense_id', [
                         modals.sequelize.literal(
                             '(Select cashback_status from table_cashback_jobs as jobs where jobs.id = "order".job_id)'),
-                        'cashback_status'],
-                      'created_at', 'updated_at', 'is_modified',
-                      'user_address_id', 'delivery_user_id', [
+                        'cashback_status'], [
+                        modals.sequelize.literal(
+                            '(Select admin_status from table_cashback_jobs as jobs where jobs.id = "order".job_id)'),
+                        'admin_status'], 'created_at', 'updated_at',
+                      'is_modified', 'user_address_id', 'delivery_user_id', [
                         modals.sequelize.literal(
                             '(Select sum(amount) from table_wallet_user_cashback as user_wallet where user_wallet.job_id = "order".job_id)'),
                         'available_cashback']],
@@ -467,7 +470,10 @@ class OrderController {
                 'total_amount'], 'job_id', 'expense_id', [
                 modals.sequelize.literal(
                     '(Select cashback_status from table_cashback_jobs as jobs where jobs.id = "order".job_id)'),
-                'cashback_status'], 'created_at', 'updated_at',
+                'cashback_status'], [
+                modals.sequelize.literal(
+                    '(Select admin_status from table_cashback_jobs as jobs where jobs.id = "order".job_id)'),
+                'admin_status'], 'created_at', 'updated_at',
               'is_modified', 'user_address_id', 'delivery_user_id', [
                 modals.sequelize.literal(
                     '(Select sum(amount) from table_wallet_user_cashback as user_wallet where user_wallet.job_id = "order".job_id)'),

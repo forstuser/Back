@@ -384,6 +384,7 @@ export function prepareShopEarnRoute(modal, route, middleware, socket) {
             method: middleware.checkAppVersion,
             assign: 'forceUpdate',
           },
+          {method: middleware.logSellerAction, assign: 'seller_action'}
         ],
         handler: controller.cashBackApproval,
       },
@@ -399,6 +400,7 @@ export function prepareShopEarnRoute(modal, route, middleware, socket) {
             method: middleware.checkAppVersion,
             assign: 'forceUpdate',
           },
+          {method: middleware.logSellerAction, assign: 'seller_action'}
         ],
         validate: {
           payload: {
@@ -419,6 +421,7 @@ export function prepareShopEarnRoute(modal, route, middleware, socket) {
             method: middleware.checkAppVersion,
             assign: 'forceUpdate',
           },
+          {method: middleware.logSellerAction, assign: 'seller_action'}
         ],
         handler: controller.retrieveTransactions,
       },
@@ -502,6 +505,7 @@ export function prepareShopEarnRoute(modal, route, middleware, socket) {
           method: middleware.checkAppVersion,
           assign: 'forceUpdate',
         },
+        {method: middleware.logSellerAction, assign: 'seller_action'}
       ],
       handler: controller.redeemSellerCashBackAtPayTM,
     },
