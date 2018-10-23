@@ -82,6 +82,8 @@ class OrderController {
               item.user_name = (item.user || {}).name;
               return item;
             });
+
+            result.delivery_review = (result[service_user_key].reviews || [{}]).find(item => item.order_id.toString() === id.toString());
           }
 
           result.seller_review = result.seller_review[0];
@@ -112,7 +114,7 @@ class OrderController {
             result.user_address_detail = result.user_address_detail.split('null').join(',').split('undefined').join(',').split(',,').join(',').split(',-,').join(',').split(',,').join(',').split(',,').join(',');
           }
           return reply.response({
-            result: JSON.parse(JSON.stringify(result)), status: true
+            result: JSON.parse(JSON.stringify(user.seller_detail ? _lodash2.default.omit(result, ['seller', 'user_address', 'copies']) : result)), status: true
           });
         } else {
           return reply.response({

@@ -305,7 +305,35 @@ export default class SocketServer {
               notification_type: 31,
             },
           });
+setTimeout(async () => {
+  let order_exist = await modals.order.findOne({where: {id: order.id, status_type: 4, is_modified: false}});
+  if(order_exist){
+    order_exist.updateAttributes({status_type: 2});
+  }
 
+  await notificationAdaptor.notifyUserCron({
+    user_id, payload: {
+      order_id: order.id, order_type,
+      status_type: 2, user_id,
+      title: `Your order has been automatically marked cancelled.`,
+      description: `Your order has been automatically marked cancelled as no response from Seller ${seller_detail.seller_name ||
+      ''} for more than ${config.AUTO_CANCELLATION_TIMING} minutes. Please place a new order.`,
+      notification_type: 31,
+    },
+  });
+
+  await notificationAdaptor.notifyUserCron({
+    seller_user_id: seller_detail.user_id,
+    payload: {
+      order_id: order.id, order_type,
+      status_type: 2, user_id,
+      title: `${user_index_data.user_name ||
+      ''} order has been automatically marked cancelled.`,
+      description: `Order automatically marked cancelled as no response from your end for more than ${config.AUTO_CANCELLATION_TIMING} minutes.`,
+      notification_type: 1, notification_id: order.id,
+    },
+  });
+}, config.AUTO_CANCELLATION_TIMING * 60 * 1000);
           return order;
         }
       } else {

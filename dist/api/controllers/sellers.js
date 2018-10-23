@@ -1352,7 +1352,13 @@ Download Now: http://bit.ly/binbill`;
           category_brands
         })), category_4_id);
       }));
-
+      await modals.seller_provider_type.destroy({
+        where: {
+          sub_category_id: {
+            $notIn: provider_type_details.map(item => item.sub_category_id)
+          }, seller_id
+        }
+      });
       await sellerAdaptor.retrieveOrUpdateSellerDetail({ where: { id: seller_id } }, { is_onboarded: true }, false);
       replyObject.seller_provider_types = JSON.parse(JSON.stringify(seller_provider_types));
       return reply.response(JSON.parse(JSON.stringify(replyObject))).code(201);
@@ -1385,7 +1391,6 @@ Download Now: http://bit.ly/binbill`;
       message: 'success'
     };
     try {
-
       const { seller_id } = request.params || {};
       const seller_provider_types = await _bluebird2.default.all(request.payload.provider_type_detail.map(item => {
         const { provider_type_id, sub_category_id, category_brands, category_4_id, brand_ids } = item;
@@ -1429,7 +1434,6 @@ Download Now: http://bit.ly/binbill`;
       message: 'success'
     };
     try {
-
       const { id: seller_id } = request.params || {};
       let { name, mobile_no, id, document_details, service_type_detail, profile_image_detail } = request.payload;
       if (service_type_detail && service_type_detail.length > 0) {
@@ -1474,7 +1478,6 @@ Download Now: http://bit.ly/binbill`;
       message: 'success'
     };
     try {
-
       const { id: service_user_id, seller_id } = request.params || {};
       let { service_type_id, price, id } = request.payload;
       const seller_service_types = await sellerAdaptor.retrieveOrCreateSellerAssistedServiceTypes(JSON.parse(JSON.stringify({ id, service_user_id, seller_id })), JSON.parse(JSON.stringify({
@@ -1556,7 +1559,6 @@ Download Now: http://bit.ly/binbill`;
       message: 'success'
     };
     try {
-
       const { id: seller_id } = request.params || {};
       const { start_date, end_date, title, description, id, document_details } = request.payload;
       const seller_offer = await sellerAdaptor.retrieveOrCreateSellerOffers(JSON.parse(JSON.stringify({ id, seller_id })), JSON.parse(JSON.stringify({
@@ -1748,7 +1750,6 @@ Download Now: http://bit.ly/binbill`;
       message: 'success'
     };
     try {
-
       const { seller_id, id } = request.params || {};
       let [user_indexes, seller] = await _bluebird2.default.all([userAdaptor.retrieveUserIndexes({
         where: { user_id: request.payload.user_ids || [] },

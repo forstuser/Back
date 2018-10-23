@@ -1159,9 +1159,8 @@ class SellerController {
         console.log(JSON.stringify(seller_updates));
         let seller_detail = await sellerAdaptor.retrieveOrUpdateSellerDetail(
             {
-              where: JSON.parse(
-                  JSON.stringify(
-                      {$or: {gstin, pan_no, contact_no}})),
+              where: JSON.parse(JSON.stringify(
+                  {$or: {gstin, pan_no, contact_no}})),
             }, seller_updates, true);
         replyObject.seller_detail = JSON.parse(
             JSON.stringify(seller_detail || seller_updates || {}));
@@ -1471,7 +1470,8 @@ class SellerController {
           basic_details.close_time || '09:00 PM';
       basic_details.shop_open_timings = shop_open_timings ||
           basic_details.shop_open_timings;
-      basic_details.home_delivery = !home_delivery && home_delivery !== false  ?!!(basic_details.home_delivery):
+      basic_details.home_delivery = !home_delivery && home_delivery !== false ?
+          !!(basic_details.home_delivery) :
           home_delivery.toString().toLowerCase() === 'true';
       basic_details.home_delivery_remarks = home_delivery_remarks ||
           basic_details.home_delivery_remarks;
@@ -1702,7 +1702,14 @@ Download Now: http://bit.ly/binbill`;
                   category_brands,
                 })), category_4_id);
           }));
-
+      await modals.seller_provider_type.destroy(
+          {
+            where: {
+              sub_category_id: {
+                $notIn: provider_type_details.map(item => item.sub_category_id),
+              }, seller_id,
+            },
+          });
       await sellerAdaptor.retrieveOrUpdateSellerDetail(
           {where: {id: seller_id}}, {is_onboarded: true}, false);
       replyObject.seller_provider_types = JSON.parse(
@@ -1737,7 +1744,6 @@ Download Now: http://bit.ly/binbill`;
       message: 'success',
     };
     try {
-
       const {seller_id} = request.params || {};
       const seller_provider_types = await Promise.all(
           request.payload.provider_type_detail.map(item => {
@@ -1787,7 +1793,6 @@ Download Now: http://bit.ly/binbill`;
       message: 'success',
     };
     try {
-
       const {id: seller_id} = request.params || {};
       let {name, mobile_no, id, document_details, service_type_detail, profile_image_detail} = request.payload;
       if (service_type_detail && service_type_detail.length > 0) {
@@ -1835,7 +1840,6 @@ Download Now: http://bit.ly/binbill`;
       message: 'success',
     };
     try {
-
       const {id: service_user_id, seller_id} = request.params || {};
       let {service_type_id, price, id} = request.payload;
       const seller_service_types = await sellerAdaptor.retrieveOrCreateSellerAssistedServiceTypes(
@@ -1923,7 +1927,6 @@ Download Now: http://bit.ly/binbill`;
       message: 'success',
     };
     try {
-
       const {id: seller_id} = request.params || {};
       const {start_date, end_date, title, description, id, document_details} = request.payload;
       const seller_offer = await sellerAdaptor.retrieveOrCreateSellerOffers(
@@ -2136,7 +2139,6 @@ Download Now: http://bit.ly/binbill`;
       message: 'success',
     };
     try {
-
       const {seller_id, id} = request.params || {};
       let [user_indexes, seller] = await Promise.all([
         userAdaptor.retrieveUserIndexes({

@@ -65,8 +65,10 @@ const init = async () => {
 
             if (!people[decoded.id]) {
               return {isValid: false};
-            }
-            else {
+            } else if (decoded.seller_detail &&
+                people[decoded.id].is_logged_out) {
+              return {isValid: false};
+            } else {
               return {isValid: true};
             }
           },

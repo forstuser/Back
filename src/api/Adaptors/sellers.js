@@ -880,7 +880,13 @@ export default class SellerAdaptor {
             attributes: [
               'image_name', 'id', ['full_name', 'name'],
               'mobile_no', 'email'],
-          },
+          }, attributes: [
+            'review_feedback', 'review_ratings', 'order_id', 'user_id',
+            ['review_feedback', 'feedback'], ['review_ratings', 'ratings'],
+            ['user_id', 'updated_by'], 'offline_seller_id', [
+              this.modals.sequelize.literal(
+                  '(Select full_name from users where users.id = user_id)'),
+              'user_name']],
         });
     seller_reviews = seller_reviews.map(item => item.toJSON());
     return seller_reviews;

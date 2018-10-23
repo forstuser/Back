@@ -14,6 +14,7 @@ exports.default = {
   FB_GRAPH_ROUTE: process.env.FB_GRAPH_ROUTE,
   MESSAGE: process.env.MESSAGE,
   FIXED_CASH_BACK: process.env.FIXED_CASH_BACK,
+  AUTO_CANCELLATION_TIMING: process.env.AUTO_CANCELLATION_TIMING,
   AWS: {
     S3: {
       BUCKET: process.env.AWS_S3_BUCKET,

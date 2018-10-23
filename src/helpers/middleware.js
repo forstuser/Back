@@ -41,20 +41,23 @@ const logSellerAction = async (request, reply) => {
     const id = user.id;
     const userResult = await retrieveSellerUser({
       where: {id},
-      attributes: ['id'],
+      attributes: ['id', 'is_logged_out'],
     });
     const {method, url, params, query, headers, payload} = request;
+    let seller_user;
     if (userResult) {
-      await MODAL.logs.create({
-        api_action: method,
-        api_path: url.pathname,
-        log_type: 1, seller_user_id: id,
-        log_content: JSON.stringify({params, query, headers, payload}),
-      });
-      return true;
+      seller_user = userResult.toJSON();
+        await MODAL.logs.create({
+          api_action: method,
+          api_path: url.pathname,
+          log_type: 1, seller_user_id: id,
+          log_content: JSON.stringify({params, query, headers, payload}),
+        });
+
+      return !seller_user.is_logged_out
     }
 
-    return false;
+    return null;
   } catch (e) {
     console.log(
         `Error on ${moment()} for seller user ${user.id} is as follow: \n \n ${e}`);
