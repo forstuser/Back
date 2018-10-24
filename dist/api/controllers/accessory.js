@@ -9,7 +9,7 @@ var _shared = require('../../helpers/shared');
 
 var _shared2 = _interopRequireDefault(_shared);
 
-var _accessory = require('../Adaptors/accessory');
+var _accessory = require('../adaptors/accessory');
 
 var _accessory2 = _interopRequireDefault(_accessory);
 

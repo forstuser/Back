@@ -252,6 +252,25 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
 
     routeObject.push({
       method: 'PUT',
+      path: '/consumer/orders/{order_id}/reorder',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {method: middleware.updateUserActiveStatus, assign: 'userExist'},
+        ],
+        handler: ControllerObject.reOrderOrderFromConsumer,
+        description: 'Re-order on behalf of Consumer.',
+        validate: {
+          payload: {
+            seller_id: joi.number().required(),
+          },
+        },
+      },
+    });
+
+    routeObject.push({
+      method: 'PUT',
       path: '/consumer/orders/{order_id}/paid',
       config: {
         auth: 'jwt',
@@ -277,10 +296,6 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
         pre: [
           {method: middleware.checkAppVersion, assign: 'forceUpdate'},
           {method: middleware.updateUserActiveStatus, assign: 'userExist'},
-          {
-            method: middleware.updateUserActiveStatus,
-            assign: 'userExist',
-          },
         ],
         handler: ControllerObject.placeOrder,
         description: 'Place order on behalf of User.',
@@ -407,9 +422,49 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
           payload: {
             user_id: joi.number().required(),
             delivery_user_id: [joi.number(), joi.allow(null)],
+            total_amount: [joi.number(), joi.allow(null)],
             order_details: [joi.array().items(joi.object()), joi.allow(null)],
           },
         },
+      },
+    });
+
+    routeObject.push({
+      method: 'PUT',
+      path: '/consumer/payments/signature',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {method: middleware.updateUserActiveStatus, assign: 'userExist'},
+        ],
+        validate: {
+          payload: {
+            appId: joi.string().required(),
+            orderId: joi.string().required(),
+            orderAmount: joi.string().required(),
+            orderCurrency: [joi.string(), joi.allow(null)],
+            orderNote: [joi.string(), joi.allow(null)],
+            customerName: joi.string().required(),
+            customerPhone: joi.string().required(),
+            customerEmail: joi.string().required(),
+            returnUrl: [joi.string(), joi.allow(null)],
+            notifyUrl: [joi.string(), joi.allow(null)],
+            paymentModes: [joi.string(), joi.allow(null)],
+            pc: [joi.string(), joi.allow(null)],
+          },
+        },
+        handler: ControllerObject.generateSignature,
+        description: 'Generate Signature for Consumer Payment Using Cash Free.',
+      },
+    });
+
+    routeObject.push({
+      method: 'POST',
+      path: '/consumer/payments',
+      config: {
+        handler: ControllerObject.paymentPostBackUrl,
+        description: 'Generate Signature for Consumer Payment Using Cash Free.',
       },
     });
   }

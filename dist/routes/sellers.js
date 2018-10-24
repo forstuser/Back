@@ -725,6 +725,8 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
             minimum_points: [_joi2.default.number(), _joi2.default.allow(null)],
             user_id: [_joi2.default.number(), _joi2.default.allow(null)],
             points_per_item: [_joi2.default.number(), _joi2.default.allow(null)],
+            order_value: [_joi2.default.number(), _joi2.default.allow(null)],
+            allow_auto_loyalty: [_joi2.default.boolean(), _joi2.default.allow(null)],
             output: 'data',
             parse: true
           }
@@ -924,6 +926,14 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
         auth: 'jwt', handler: _sellers2.default.linkCustomers,
         description: 'Link Consumer with Seller',
         tags: ['api', 'Seller', 'Consumer'],
+        validate: {
+          payload: {
+            credit_limit: [_joi2.default.number(), _joi2.default.allow(null)],
+            is_credit_allowed: [_joi2.default.boolean(), _joi2.default.allow(null)],
+            output: 'data',
+            parse: true
+          }
+        },
         plugins: {
           'hapi-swagger': {
             responseMessages: [{ code: 200, message: 'Authenticated' }, { code: 400, message: 'Bad Request' }, { code: 401, message: 'Invalid Credentials' }, { code: 404, message: 'Not Found' }, { code: 500, message: 'Internal Server Error' }]
@@ -942,6 +952,8 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
         tags: ['api', 'Seller', 'Consumer'],
         validate: {
           payload: {
+            credit_limit: [_joi2.default.number(), _joi2.default.allow(null)],
+            is_credit_allowed: [_joi2.default.boolean(), _joi2.default.allow(null)],
             mobile_no: _joi2.default.string().required(),
             full_name: [_joi2.default.string(), _joi2.default.allow(null)],
             email: [_joi2.default.string(), _joi2.default.allow(null)],

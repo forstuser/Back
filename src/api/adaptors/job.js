@@ -190,7 +190,7 @@ class JobAdaptor {
   }
 
   async cashBackApproval(options, seller_name) {
-    let {cash_back_month, cash_back_day, verified_seller, amount, digitally_verified, seller_id, home_delivered, job, user_limit_rules, user_default_limit_rules, online_order, seller_user_id, user_name} = options;
+    let {cash_back_month, cash_back_day, verified_seller, amount, digitally_verified, seller_id, home_delivered, job, user_limit_rules, user_default_limit_rules, online_order, seller_user_id, user_name, seller_loyalty_rules, purchase_cost,order_id} = options;
     const {user_id, id: job_id} = job;
     let monthly_limit = user_limit_rules.find(item => item.rule_type === 1),
         daily_limit = user_limit_rules.find(item => item.rule_type === 2);

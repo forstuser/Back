@@ -2,7 +2,7 @@
 'use strict';
 
 import shared from '../../helpers/shared';
-import AccessoryAdaptor from '../Adaptors/accessory';
+import AccessoryAdaptor from '../adaptors/accessory';
 import config from '../../config/main';
 import moment from 'moment/moment';
 

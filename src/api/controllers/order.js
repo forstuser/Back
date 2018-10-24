@@ -1,15 +1,27 @@
 /*jshint esversion: 6 */
 'use strict';
 
-import NotificationAdaptor from '../Adaptors/notification';
-import OrderAdaptor from '../Adaptors/order';
-import UserAdaptor from '../Adaptors/user';
-import SellerAdaptor from '../Adaptors/sellers';
+import NotificationAdaptor from '../adaptors/notification';
+import OrderAdaptor from '../adaptors/order';
+import UserAdaptor from '../adaptors/user';
+import SellerAdaptor from '../adaptors/sellers';
 import shared from '../../helpers/shared';
 import _ from 'lodash';
+import SocketServer from '../socket';
+import config from '../../config/main';
+import crypto from 'crypto';
 
 let orderAdaptor, eHomeAdaptor, notificationAdaptor, userAdaptor, modals,
     socket_instance, sellerAdaptor;
+
+const payment_status = {
+  SUCCESS: 16,
+  FAILED: 18,
+  PENDING: 13,
+  CANCELLED: 17,
+  FLAGGED: 8,
+  VALIDATION_ERROR: 9,
+};
 
 class OrderController {
   constructor(modal, socket) {
@@ -26,10 +38,10 @@ class OrderController {
     try {
       if (!request.pre.forceUpdate) {
         const {id} = request.params;
-        const result = await orderAdaptor.retrieveOrUpdateOrder({
+        let result = await orderAdaptor.retrieveOrUpdateOrder({
               where: {id},
               attributes: [
-                'id', 'order_details', 'order_type',
+                'id', 'order_details', 'order_type', 'in_review',
                 'status_type', 'seller_id', 'user_id',
                 'created_at', 'updated_at', 'is_modified', 'user_address_id',
                 'delivery_user_id', 'job_id', 'expense_id', [
@@ -72,7 +84,7 @@ class OrderController {
                   'basic_details'], [
                   modals.sequelize.literal(
                       `"seller_details"->'business_details'`),
-                  'business_details']],
+                  'business_details'], 'customer_ids'],
             }),
             userAdaptor.retrieveUserById({id: result.user_id},
                 result.user_address_id),
@@ -93,6 +105,21 @@ class OrderController {
                   },
                 }) : undefined, sellerAdaptor.retrieveSellerReviews(
                 {offline_seller_id: result.seller_id, order_id: id})]);
+
+          result.seller.customer_ids = (result.seller.customer_ids || []).find(
+              item => (item.customer_id ?
+                  item.customer_id :
+                  item).toString() === result.user_id.toString());
+          result.seller.customer_ids = result.seller.customer_ids &&
+          result.seller.customer_ids.customer_id ?
+              result.seller.customer_ids :
+              {
+                customer_id: result.seller.customer_ids,
+                is_credit_allowed: false,
+                credit_limit: 0,
+              };
+          result.is_credit_allowed = result.seller.customer_ids.is_credit_allowed;
+          result.credit_limit = result.seller.customer_ids.credit_limit;
           let review_users = [];
           if (result.delivery_user_id) {
             const service_user_key = result.order_type === 2 ?
@@ -174,6 +201,16 @@ class OrderController {
                 split(',,').join(',').
                 split(',,').join(',');
           }
+          if (user.seller_detail && result.status_type === 4 &&
+              !result.in_review) {
+            await orderAdaptor.retrieveOrUpdateOrder(
+                {where: {id}, attributes: ['id', 'in_review']},
+                {in_review: true}, false);
+            result.in_review = true;
+            await SocketServer.notify_user_socket(
+                {user_id: result.user_id, order: result});
+          }
+
           return reply.response(
               {
                 result: JSON.parse(JSON.stringify(user.seller_detail ?
@@ -228,7 +265,7 @@ class OrderController {
         }
         const {seller_id} = request.params;
         let {status_type} = request.query;
-        status_type = status_type || [5, 17, 18];
+        status_type = status_type || [5, 15, 17, 18];
         const include = seller_id ? [
           {
             model: modals.users, as: 'user', attributes: [
@@ -285,7 +322,7 @@ class OrderController {
               [
                 modals.sequelize.literal(
                     `"seller"."seller_details"->'business_details'`),
-                'business_details']],
+                'business_details'], 'customer_ids'],
           }, {
             model: modals.user_addresses,
             as: 'user_address',
@@ -314,7 +351,7 @@ class OrderController {
                         JSON.stringify({seller_id, user_id, status_type})),
                     attributes: [
                       'id', 'order_details', 'order_type', 'status_type',
-                      'seller_id', 'user_id', [
+                      'seller_id', 'user_id', 'in_review', [
                         modals.sequelize.literal(
                             '(Select my_seller_ids from table_user_index as user_index where user_index.user_id = "order".user_id)'),
                         'my_seller_ids'], [
@@ -379,7 +416,8 @@ class OrderController {
         }
         const {seller_id} = request.params;
         let {status_type} = request.query;
-        status_type = status_type || [4, 16, 19, 20, 21];
+        status_type = status_type ? status_type :
+            !user.seller_detail ? [2, 4, 16, 19, 20, 21] : [4, 16, 19, 20, 21];
         const include = seller_id ? [
           {
             model: modals.users, as: 'user', attributes: [
@@ -466,7 +504,7 @@ class OrderController {
             include, order: [['id', 'desc']],
             attributes: [
               'id', 'order_details', 'order_type', 'status_type',
-              'seller_id', 'user_id', [
+              'seller_id', 'user_id', 'in_review', [
                 modals.sequelize.literal(
                     '(Select my_seller_ids from table_user_index as user_index where user_index.user_id = "order".user_id)'),
                 'my_seller_ids'], [
@@ -1243,6 +1281,71 @@ class OrderController {
     }
   }
 
+  static async reOrderOrderFromConsumer(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    try {
+      if (!request.pre.forceUpdate) {
+        let {order_id} = request.params;
+        let {seller_id} = request.payload;
+        const user_id = user.id;
+        const result = await socket_instance.re_order_by_user(
+            {seller_id, user_id, order_id, status_type: 4});
+        if (result) {
+          return reply.response({result, status: true});
+        } else if (result && result === false) {
+          return reply.response(
+              {
+                message: 'Unable to re-order, as order is not in auto cancelled state.',
+                status: false,
+              });
+        }
+
+        return reply.response(
+            {
+              message: 'Make sure order is in cancelled state.',
+              status: false,
+            });
+      } else if (request.pre.userExist === 0) {
+        return reply.response({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate,
+        }).code(402);
+      } else if (!request.pre.userExist) {
+        return reply.response({
+          status: false,
+          message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate,
+        }).code(401);
+      } else {
+        return reply.response({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate,
+        });
+      }
+    } catch (err) {
+      console.log(err);
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to retrieve order by id.',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
   static async rejectOrderFromSeller(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     try {
@@ -1312,10 +1415,10 @@ class OrderController {
     try {
       if (!request.pre.forceUpdate) {
         let {seller_id, order_id} = request.params;
-        let {user_id, delivery_user_id, order_details} = request.payload;
+        let {user_id, delivery_user_id, order_details, total_amount} = request.payload;
         const result = await socket_instance.order_out_for_delivery(
             {
-              seller_id, user_id, order_id,
+              seller_id, user_id, order_id, total_amount,
               status_type: 19, delivery_user_id, order_details,
             });
         if (result) {
@@ -1417,6 +1520,168 @@ class OrderController {
           forceUpdate: request.pre.forceUpdate,
         });
       }
+    } catch (err) {
+      console.log(err);
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to retrieve order by id.',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
+  static async generateSignature(request, reply) {
+    try {
+      if (!request.pre.forceUpdate) {
+        const {appId, orderId, orderAmount, orderCurrency, orderNote, customerName, customerPhone, customerEmail, returnUrl, notifyUrl, paymentModes, pc} = request.payload;
+        let postData = request.payload,
+            secretKey = config.CASH_FREE.SECRET_KEY,
+            sorted_keys = Object.keys(postData),
+            signatureData = '', k;
+        postData.returnUrl = `${config.API_HOST}${config.CASH_FREE.POST_BACK_URL}`;
+        postData.notifyUrl = `${config.API_HOST}${config.CASH_FREE.POST_BACK_URL}`;
+        let order_detail = await modals.order.findOne({where: {id: orderId}});
+        order_detail = order_detail ? order_detail.toJSON() : order_detail;
+        if (order_detail) {
+          const {seller_id, user_id, id: order_id} = order_detail;
+          const defaults = {
+            order_id, user_id, seller_id, amount: orderAmount, payment_mode: 4,
+            ref_id: `${(user_id).toString(36)}${(order_id).toString(
+                36)}${Math.random().toString(36).
+                substr(2, 9)}${(seller_id).toString(36)}${(appId).toString(
+                36)}`,
+            updated_by: user_id,
+          };
+          let payment_detail = await orderAdaptor.retrieveOrUpdatePaymentDetails(
+              {where: {order_id, seller_id, user_id}}, defaults);
+          postData.orderId = payment_detail.ref_id;
+          sorted_keys = Object.keys(postData);
+          sorted_keys.sort();
+          for (let i = 0; i < sorted_keys.length; i++) {
+            k = sorted_keys[i];
+            signatureData += k + postData[k].toString();
+          }
+          postData['signature'] = payment_detail.signature ||
+              crypto.createHmac('sha256',
+                  secretKey.toString()).
+                  update(signatureData).digest('base64');
+          payment_detail = await orderAdaptor.retrieveOrUpdatePaymentDetails(
+              {where: {order_id, seller_id, user_id}},
+              {
+                signature: postData['signature'],
+                payment_detail: {request: postData},
+              });
+          return reply.response(
+              {status: true, result: postData, payment_detail});
+        }
+
+        return reply.response({
+          status: false,
+          message: 'Not a valid order id.',
+          forceUpdate: request.pre.forceUpdate,
+        });
+      } else if (request.pre.userExist === 0) {
+        return reply.response({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate,
+        }).code(402);
+      } else if (!request.pre.userExist) {
+        return reply.response({
+          status: false,
+          message: 'Unauthorized',
+          forceUpdate: request.pre.forceUpdate,
+        }).code(401);
+      } else {
+        return reply.response({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate,
+        });
+      }
+    } catch (err) {
+      console.log(err);
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to retrieve order by id.',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
+  static async paymentPostBackUrl(request, reply) {
+    try {
+      const {orderId, orderAmount, referenceId, txStatus, paymentMode, txMsg, txTime, signature} = request.payload;
+      let postData = {
+            orderId,
+            orderAmount,
+            referenceId,
+            txStatus,
+            paymentMode,
+            txMsg,
+            txTime,
+          },
+          secretKey = config.CASH_FREE.SECRET_KEY,
+          sorted_keys = Object.keys(postData),
+          signatureData = '', k;
+      for (let i = 0; i < sorted_keys.length; i++) {
+        k = sorted_keys[i];
+        signatureData += k + postData[k].toString();
+      }
+
+      const computed_signature = crypto.createHmac('sha256',
+          secretKey.toString()).
+          update(signatureData).digest('base64');
+      let payment_detail = await orderAdaptor.retrieveOrUpdatePaymentDetails(
+          {where: {ref_id: orderId}}, {});
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 10,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
+      if (payment_detail) {
+        if (computed_signature === signature) {
+          payment_detail.payment_detail.response = request.payload;
+          payment_detail.status_type = payment_status[txStatus];
+          payment_detail.amount = orderAmount;
+          payment_detail = await orderAdaptor.retrieveOrUpdatePaymentDetails(
+              {where: {ref_id: orderId}}, payment_detail);
+          return reply.response({status: true});
+        }
+
+        return reply.response({status: false});
+      }
+      return reply.response({status: false});
     } catch (err) {
       console.log(err);
       modals.logs.create({

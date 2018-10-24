@@ -13,11 +13,11 @@ var _shared = require('../../helpers/shared');
 
 var _shared2 = _interopRequireDefault(_shared);
 
-var _serviceCenter = require('../Adaptors/serviceCenter');
+var _serviceCenter = require('../adaptors/serviceCenter');
 
 var _serviceCenter2 = _interopRequireDefault(_serviceCenter);
 
-var _brands = require('../Adaptors/brands');
+var _brands = require('../adaptors/brands');
 
 var _brands2 = _interopRequireDefault(_brands);
 

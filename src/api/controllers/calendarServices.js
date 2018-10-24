@@ -1,7 +1,7 @@
 /*jshint esversion: 6 */
 'use strict';
 
-import CalendarServiceAdaptor from '../Adaptors/calendarServices';
+import CalendarServiceAdaptor from '../adaptors/calendarServices';
 import shared, {monthlyPaymentCalc} from '../../helpers/shared';
 import Promise from 'bluebird';
 import moment from 'moment/moment';

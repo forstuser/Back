@@ -21,6 +21,14 @@ export default (sequelize, DataTypes) => {
           type: DataTypes.FLOAT,
           defaultValue: 10,
         },
+        order_value: {
+          type: DataTypes.FLOAT,
+          defaultValue: 0,
+        },
+        allow_auto_loyalty: {
+          type: DataTypes.BOOLEAN,
+          defaultValue: 0,
+        },
         item_value: {
           type: DataTypes.STRING,
           defaultValue: 1,

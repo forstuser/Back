@@ -8,23 +8,23 @@ var _socket = require('socket.io');
 
 var _socket2 = _interopRequireDefault(_socket);
 
-var _sellers = require('../Adaptors/sellers');
+var _sellers = require('../adaptors/sellers');
 
 var _sellers2 = _interopRequireDefault(_sellers);
 
-var _user = require('../Adaptors/user');
+var _user = require('../adaptors/user');
 
 var _user2 = _interopRequireDefault(_user);
 
-var _shop_earn = require('../Adaptors/shop_earn');
+var _shop_earn = require('../adaptors/shop_earn');
 
 var _shop_earn2 = _interopRequireDefault(_shop_earn);
 
-var _product = require('../Adaptors/product');
+var _product = require('../adaptors/product');
 
 var _product2 = _interopRequireDefault(_product);
 
-var _job = require('../Adaptors/job');
+var _job = require('../adaptors/job');
 
 var _job2 = _interopRequireDefault(_job);
 
@@ -32,15 +32,15 @@ var _shared = require('../../helpers/shared');
 
 var _shared2 = _interopRequireDefault(_shared);
 
-var _order = require('../Adaptors/order');
+var _order = require('../adaptors/order');
 
 var _order2 = _interopRequireDefault(_order);
 
-var _notification = require('../Adaptors/notification');
+var _notification = require('../adaptors/notification');
 
 var _notification2 = _interopRequireDefault(_notification);
 
-var _category = require('../Adaptors/category');
+var _category = require('../adaptors/category');
 
 var _category2 = _interopRequireDefault(_category);
 
@@ -137,6 +137,21 @@ class SocketServer {
     }
   }
 
+  static async notify_user_socket(parameters) {
+    const { user_id, seller_user_id, order } = parameters;
+    if (io.sockets.adapter.rooms[`user-${user_id}`]) {
+      io.sockets.in(`user-${user_id}`).emit('order-placed', JSON.stringify({ order, user_id }));
+    }
+    await notificationAdaptor.notifyUserCron({
+      user_id, payload: {
+        order, user_id, order_id: order.id,
+        title: `Seller ${order.seller.seller_name || ''} is currently reviewing your Order.`,
+        description: 'We will update you on your order status shortly.',
+        notification_type: 31
+      }
+    });
+  }
+
   static async init(data) {
     console.log('We are here');
     if (data.is_seller) {
@@ -170,7 +185,7 @@ class SocketServer {
     user_address = user_address || {};
     user_address.user_id = user_id;
     user_address.updated_by = user_id;
-    let [seller_detail, user_index_data, user_address_detail, service_users] = await _bluebird2.default.all([sellerAdaptor.retrieveSellerDetail({
+    let [seller_detail, user_index_data, user_address_detail, service_users, seller_skus] = await _bluebird2.default.all([sellerAdaptor.retrieveSellerDetail({
       where: { id: seller_id },
       attributes: ['seller_type_id', 'seller_name', 'user_id', 'id', 'rush_hours']
     }), userAdaptor.retrieveUserIndexedData({
@@ -181,7 +196,7 @@ class SocketServer {
         model: modals.seller_service_types, required: true,
         attributes: ['service_type_id', 'seller_id', 'price', 'id']
       }, attributes: ['id', 'name', 'mobile_no', 'reviews', 'document_details', 'profile_image_detail', [modals.sequelize.literal(`(Select count(*) as order_counts from table_orders as orders where (orders."order_details"->'service_user'->>'id')::numeric = assisted_service_users.id and orders.status_type = 19)`), 'order_counts']]
-    }) : undefined, SocketServer.linkSellerWithUser(seller_id, user_id)]);
+    }) : undefined, sellerAdaptor.retrieveSellerSKUs({ where: { seller_id } }), SocketServer.linkSellerWithUser(seller_id, user_id)]);
     if (!user_address_id && !user_address_detail) {
       return false;
     }
@@ -191,10 +206,12 @@ class SocketServer {
         const order_details = user_index_data.wishlist_items.map(item => {
           const { id, title, brand_id, quantity, category_id, sku_measurement, sub_category_id, main_category_id } = item;
           const { id: sku_measurement_id, mrp, bar_code, pack_numbers, cashback_percent, measurement_type, measurement_value } = sku_measurement || {};
+          const seller_sku_detail = seller_skus.find(skuItem => skuItem.sku_id === id);
           return {
             item_availability: true, id, title, brand_id,
             uid: `${id}${sku_measurement_id ? `-${sku_measurement_id}` : ''}`,
             quantity, category_id, sub_category_id, main_category_id,
+            selling_price: ((seller_sku_detail || {}).selling_price || sku_measurement.mrp || 0) * item.quantity,
             sku_measurement: sku_measurement ? {
               id: sku_measurement_id, mrp, bar_code, pack_numbers,
               cashback_percent, measurement_type, measurement_value
@@ -224,19 +241,15 @@ class SocketServer {
               notification_type: 1, notification_id: order.id
             }
           });
-          if (fn) {
-            fn(order);
-          } else {
-            console.log({
-              soket_status: io.sockets.adapter.rooms[`user-${data.user_id}`],
-              user_id: data.user_id
-            });
-            if (io.sockets.adapter.rooms[`user-${data.user_id}`]) {
-              io.sockets.in(`user-${data.user_id}`).emit('order-placed', JSON.stringify({
-                order_id: order.id, order_type,
-                status_type: order.status_type, order, user_id
-              }));
-            }
+          console.log({
+            soket_status: io.sockets.adapter.rooms[`user-${data.user_id}`],
+            user_id: data.user_id
+          });
+          if (io.sockets.adapter.rooms[`user-${data.user_id}`]) {
+            io.sockets.in(`user-${data.user_id}`).emit('order-placed', JSON.stringify({
+              order_id: order.id, order_type,
+              status_type: order.status_type, order, user_id
+            }));
           }
           await notificationAdaptor.notifyUserCron({
             user_id, payload: {
@@ -249,6 +262,39 @@ class SocketServer {
           });
 
           await shopEarnAdaptor.updatePastWishList(user_id);
+
+          setTimeout(async () => {
+            let order_exist = await modals.order.findOne({
+              where: {
+                id: order.id, status_type: 4,
+                is_modified: false, in_review: false
+              }
+            });
+            if (order_exist) {
+              order_exist.updateAttributes({ status_type: 2 });
+
+              await notificationAdaptor.notifyUserCron({
+                user_id, payload: {
+                  order_id: order.id, order_type,
+                  status_type: 2, user_id,
+                  title: `Your Order has been Cancelled.`,
+                  description: `Your order has been automatically cancelled as there was no response from Seller ${seller_detail.seller_name || ''} for more than ${_main2.default.AUTO_CANCELLATION_TIMING} minutes. You can place a fresh order with the seller.`,
+                  notification_type: 31
+                }
+              });
+
+              await notificationAdaptor.notifyUserCron({
+                seller_user_id: seller_detail.user_id,
+                payload: {
+                  order_id: order.id, order_type,
+                  status_type: 2, user_id,
+                  title: `Customer ${user_index_data.user_name || ''} Order stands Cancelled.`,
+                  description: `This customer's Order automatically cancelled due to no response for more than ${_main2.default.AUTO_CANCELLATION_TIMING} minutes from your end.`,
+                  notification_type: 1, notification_id: order.id
+                }
+              });
+            }
+          }, _main2.default.AUTO_CANCELLATION_TIMING * 60 * 1000);
           return order;
         }
       } else if (service_users && service_users.length > 0) {
@@ -299,7 +345,14 @@ class SocketServer {
             }
           });
           setTimeout(async () => {
-            let order_exist = await modals.order.findOne({ where: { id: order.id, status_type: 4, is_modified: false } });
+            let order_exist = await modals.order.findOne({
+              where: {
+                id: order.id,
+                status_type: 4,
+                is_modified: false,
+                in_review: false
+              }
+            });
             if (order_exist) {
               order_exist.updateAttributes({ status_type: 2 });
             }
@@ -308,8 +361,8 @@ class SocketServer {
               user_id, payload: {
                 order_id: order.id, order_type,
                 status_type: 2, user_id,
-                title: `Your order has been automatically marked cancelled.`,
-                description: `Your order has been automatically marked cancelled as no response from Seller ${seller_detail.seller_name || ''} for more than ${_main2.default.AUTO_CANCELLATION_TIMING} minutes. Please place a new order.`,
+                title: `Your Order has been Cancelled.`,
+                description: `Your order has been automatically cancelled as there was no response from Seller ${seller_detail.seller_name || ''} for more than ${_main2.default.AUTO_CANCELLATION_TIMING} minutes. You can place a fresh order with the seller.`,
                 notification_type: 31
               }
             });
@@ -319,8 +372,8 @@ class SocketServer {
               payload: {
                 order_id: order.id, order_type,
                 status_type: 2, user_id,
-                title: `${user_index_data.user_name || ''} order has been automatically marked cancelled.`,
-                description: `Order automatically marked cancelled as no response from your end for more than ${_main2.default.AUTO_CANCELLATION_TIMING} minutes.`,
+                title: `Customer ${user_index_data.user_name || ''} Order stands Cancelled.`,
+                description: `This customer's Order automatically cancelled due to no response for more than ${_main2.default.AUTO_CANCELLATION_TIMING} minutes from your end.`,
                 notification_type: 1, notification_id: order.id
               }
             });
@@ -848,23 +901,26 @@ class SocketServer {
 
   static async order_out_for_delivery(data, fn) {
     try {
-      let { seller_id, user_id, order_id, status_type, delivery_user_id, order_details } = data;
-      const [seller_detail, user_index_data, order_data, measurement_types] = await _bluebird2.default.all([sellerAdaptor.retrieveSellerDetail({
+      let { seller_id, user_id, order_id, status_type, delivery_user_id, order_details, total_amount } = data;
+      const [seller_detail, user_index_data, order_data, measurement_types, seller_skus] = await _bluebird2.default.all([sellerAdaptor.retrieveSellerDetail({
         where: { id: seller_id },
-        attributes: ['seller_type_id', 'seller_name', 'id', 'user_id']
+        attributes: ['seller_type_id', 'seller_name', 'id', 'user_id', 'has_pos']
       }), userAdaptor.retrieveUserIndexedData({
         where: { user_id }, attributes: ['wishlist_items', 'assisted_services', [modals.sequelize.literal(`(Select full_name from users where users.id = ${user_id})`), 'user_name']]
       }), orderAdaptor.retrieveOrUpdateOrder({
         where: { id: order_id, user_id, seller_id, status_type: 16 },
         attributes: ['id', 'order_details', 'order_type', 'status_type']
-      }, {}, false), modals.measurement.findAll({ where: { status_type: 1 } })]);
+      }, {}, false), modals.measurement.findAll({ where: { status_type: 1 } }), sellerAdaptor.retrieveSellerSKUs({ where: { seller_id } })]);
       if (order_data) {
         order_data.order_details = order_details || order_data.order_details;
         if (order_data.order_type === 1) {
           order_data.order_details = order_data.order_details.map(item => {
+            const seller_sku = seller_skus.find(sItem => sItem.sku_id.toString() === item.id.toString());
             item.quantity = parseFloat(item.quantity.toString());
             item.unit_price = parseFloat((item.unit_price || 0).toString());
             item.selling_price = item.selling_price && item.selling_price.toString() !== '0' ? parseFloat(item.selling_price.toString()) : parseFloat((item.unit_price * item.quantity).toString());
+            const mrp = item.sku_measurement ? item.sku_measurement.mrp : 0;
+            item.selling_price = item.selling_price > 0 ? item.selling_price : ((seller_sku || {}).selling_price ? (seller_sku || {}).selling_price : mrp || 0) * item.quantity;
             return item;
           });
         }
@@ -884,6 +940,43 @@ class SocketServer {
         }, order_data, false);
 
         if (order) {
+          if (total_amount) {
+            const payment_details = await SocketServer.init_on_payment({
+              user_id, seller_id, has_pos: seller_detail.has_pos,
+              home_delivered: !!order.delivery_user_id,
+              sku_details: order.order_type === 2 ? order.order_details : order.order_details.map(item => {
+                let { id: sku_id, quantity, sku_measurement, selling_price } = item;
+                const { id: sku_measurement_id, cashback_percent } = sku_measurement || {};
+                selling_price = parseFloat((selling_price || 0).toString());
+                return JSON.parse(JSON.stringify({
+                  sku_id, sku_measurement_id, seller_id, user_id,
+                  updated_by: user_id, quantity,
+                  selling_price: selling_price, status_type: 11,
+                  available_cashback: selling_price && cashback_percent ? selling_price * (cashback_percent || 0) / 100 : undefined
+                }));
+              }), order_type: order.order_type,
+              seller_type_id: seller_detail.seller_type_id, total_amount
+            });
+
+            order_data.expense_id = (payment_details.product || {}).id;
+            order_data.job_id = (payment_details.cashback_jobs || {}).id;
+            order = await orderAdaptor.retrieveOrUpdateOrder({
+              where: {
+                id: order_id, user_id, seller_id,
+                status_type: [16, 19, 5]
+              },
+              include: [{
+                model: modals.users, as: 'user', attributes: ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', 'location', 'latitude', 'longitude', 'image_name', 'password', 'gender', [modals.sequelize.fn('CONCAT', '/consumer/', modals.sequelize.col('user.id'), '/images'), 'imageUrl'], [modals.sequelize.literal(`(Select sum(amount) from table_wallet_user_cashback where user_id = ${user_id} and status_type in (16) group by user_id)`), 'wallet_value']]
+              }, {
+                model: modals.sellers, as: 'seller', attributes: ['seller_name', 'address', 'contact_no', 'email', [modals.sequelize.literal(`"seller"."seller_details"->'basic_details'`), 'basic_details'], [modals.sequelize.literal(`"seller"."seller_details"->'business_details'`), 'business_details']]
+              }, {
+                model: modals.user_addresses,
+                as: 'user_address',
+                attributes: ['address_type', 'address_line_1', 'address_line_2', 'city_id', 'state_id', 'locality_id', 'pin', 'latitude', 'longitude', [modals.sequelize.literal('(Select state_name from table_states as state where state.id = user_address.state_id)'), 'state_name'], [modals.sequelize.literal('(Select name from table_cities as city where city.id = user_address.city_id)'), 'city_name'], [modals.sequelize.literal('(Select name from table_localities as locality where locality.id = user_address.locality_id)'), 'locality_name'], [modals.sequelize.literal('(Select pin_code from table_localities as locality where locality.id = user_address.locality_id)'), 'pin_code']]
+              }]
+            }, order_data, false);
+            order.total_amount = (payment_details.product || {}).purchase_cost;
+          }
           if (order.order_type === 2 && order.delivery_user_id) {
             order.service_user = await sellerAdaptor.retrieveAssistedServiceUser({
               where: JSON.parse(JSON.stringify({ id: order.delivery_user_id })),
@@ -926,6 +1019,7 @@ class SocketServer {
               where: JSON.parse(JSON.stringify({ id: delivery_user_id })), attributes: ['id', 'name', 'mobile_no', 'reviews', 'document_details']
             });
             order.delivery_user.ratings = _lodash2.default.sumBy(order.delivery_user.reviews || [{ ratings: 0 }], 'ratings') / (order.delivery_user.reviews || [{ ratings: 0 }]).length;
+            order.delivery_user.rating = order.delivery_user.ratings;
             order.delivery_user.reviews = order.delivery_user.reviews || [];
             const review_user_ids = order.delivery_user.reviews.map(item => item.updated_by);
             const review_users = await userAdaptor.retrieveUsers({
@@ -1158,7 +1252,7 @@ class SocketServer {
     }), userAdaptor.retrieveUserIndexedData({
       where: { user_id }, attributes: ['wishlist_items', 'assisted_services', [modals.sequelize.literal(`(Select full_name from users where users.id = ${user_id})`), 'user_name']]
     }), orderAdaptor.retrieveOrUpdateOrder({
-      where: { id: order_id, user_id, seller_id, status_type: 4 },
+      where: { id: order_id, user_id, seller_id, status_type: [2, 4] },
       attributes: ['id']
     }, {}, false), modals.measurement.findAll({ where: { status_type: 1 } })]);
     if (order_data) {
@@ -1166,7 +1260,7 @@ class SocketServer {
       let order = await orderAdaptor.retrieveOrUpdateOrder({
         where: {
           id: order_id, user_id, seller_id,
-          status_type: 4, is_modified: false
+          status_type: [2, 4], is_modified: false
         },
         include: [{
           model: modals.users, as: 'user', attributes: ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', 'location', 'latitude', 'longitude', 'image_name', 'password', 'gender', [modals.sequelize.fn('CONCAT', '/consumer/', modals.sequelize.col('user.id'), '/images'), 'imageUrl'], [modals.sequelize.literal(`(Select sum(amount) from table_wallet_user_cashback where user_id = ${user_id} and status_type in (16) group by user_id)`), 'wallet_value']]
@@ -1242,9 +1336,99 @@ class SocketServer {
     }
   }
 
-  static async mark_order_complete(data, fn) {
+  static async re_order_by_user(data, fn) {
     let { seller_id, user_id, order_id, status_type } = data;
     const [seller_detail, user_index_data, order_data, measurement_types] = await _bluebird2.default.all([sellerAdaptor.retrieveSellerDetail({
+      where: { id: seller_id },
+      attributes: ['seller_type_id', 'seller_name', 'id', 'user_id']
+    }), userAdaptor.retrieveUserIndexedData({
+      where: { user_id }, attributes: ['wishlist_items', 'assisted_services', [modals.sequelize.literal(`(Select full_name from users where users.id = ${user_id})`), 'user_name']]
+    }), orderAdaptor.retrieveOrUpdateOrder({
+      where: { id: order_id, user_id, seller_id, status_type: [2, 4] },
+      attributes: ['id']
+    }, {}, false), modals.measurement.findAll({ where: { status_type: 1 } })]);
+    if (order_data) {
+      order_data.status_type = 4;
+      let order = await orderAdaptor.retrieveOrUpdateOrder({
+        where: {
+          id: order_id, user_id, seller_id,
+          status_type: [2, 4], is_modified: false
+        },
+        include: [{
+          model: modals.users, as: 'user', attributes: ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', 'location', 'latitude', 'longitude', 'image_name', 'password', 'gender', [modals.sequelize.fn('CONCAT', '/consumer/', modals.sequelize.col('user.id'), '/images'), 'imageUrl'], [modals.sequelize.literal(`(Select sum(amount) from table_wallet_user_cashback where user_id = ${user_id} and status_type in (16) group by user_id)`), 'wallet_value']]
+        }, {
+          model: modals.sellers, as: 'seller', attributes: ['seller_name', 'address', 'contact_no', 'email', [modals.sequelize.literal(`"seller"."seller_details"->'basic_details'`), 'basic_details'], [modals.sequelize.literal(`"seller"."seller_details"->'business_details'`), 'business_details']]
+        }, {
+          model: modals.user_addresses,
+          as: 'user_address',
+          attributes: ['address_type', 'address_line_1', 'address_line_2', 'city_id', 'state_id', 'locality_id', 'pin', 'latitude', 'longitude', [modals.sequelize.literal('(Select state_name from table_states as state where state.id = user_address.state_id)'), 'state_name'], [modals.sequelize.literal('(Select name from table_cities as city where city.id = user_address.city_id)'), 'city_name'], [modals.sequelize.literal('(Select name from table_localities as locality where locality.id = user_address.locality_id)'), 'locality_name'], [modals.sequelize.literal('(Select pin_code from table_localities as locality where locality.id = user_address.locality_id)'), 'pin_code']]
+        }]
+      }, order_data, false);
+      if (order) {
+        if (order.order_type === 2 && order.delivery_user_id) {
+          order.service_user = await sellerAdaptor.retrieveAssistedServiceUser({
+            where: JSON.parse(JSON.stringify({ id: order.delivery_user_id })), attributes: ['id', 'name', 'mobile_no', 'reviews', 'document_details'], include: {
+              as: 'service_types',
+              where: JSON.parse(JSON.stringify({ seller_id })),
+              model: modals.seller_service_types,
+              required: true,
+              attributes: ['service_type_id', 'seller_id', 'price', 'id']
+            }
+          });
+          order.service_user.ratings = _lodash2.default.sumBy(order.service_user.reviews || [{ ratings: 0 }], 'ratings') / (order.service_user.reviews || [{ ratings: 0 }]).length;
+          if (order.order_type === 2) {
+            order.service_user.service_type = order.service_user.service_types.find(item => item.service_type_id === order.order_details[0].service_type_id);
+          }
+        }
+        order.order_details = order.order_type === 1 ? order.order_details.map(item => {
+          if (item.sku_measurement) {
+            const measurement_type = measurement_types.find(mtItem => mtItem.id.toString() === item.sku_measurement.measurement_type.toString());
+            item.sku_measurement.measurement_acronym = measurement_type ? measurement_type.acronym : 'unit';
+          }
+          if (item.updated_measurement) {
+            const updated_measurement_type = measurement_types.find(mtItem => mtItem.id.toString() === item.updated_measurement.measurement_type.toString());
+            item.updated_measurement.measurement_acronym = updated_measurement_type ? updated_measurement_type.acronym : 'unit';
+          }
+
+          return item;
+        }) : order.order_details;
+        if (io.sockets.adapter.rooms[`seller-${seller_detail.user_id}`]) {
+          io.sockets.in(`seller-${seller_detail.user_id}`).emit(order.order_type === 1 ? 'order-status-change' : 'assisted-status-change', JSON.stringify(order));
+        }
+        await notificationAdaptor.notifyUserCron({
+          seller_user_id: seller_detail.user_id,
+          payload: {
+            order_id: order.id, status_type: order.status_type,
+            is_modified: order.is_modified, user_id,
+            title: `Yay! ${user_index_data.user_name || ''} has re-ordered his last auto cancelled order.`,
+            description: 'Please click here for more details.',
+            notification_type: 1,
+            notification_id: order.id,
+            order_type: order.order_type
+          }
+        });
+
+        if (io.sockets.adapter.rooms[`user-${data.user_id}`]) {
+          io.sockets.in(`user-${data.user_id}`).emit(order.order_type === 1 ? 'order-status-change' : 'assisted-status-change', JSON.stringify({
+            order_id: order.id, is_modified: order.is_modified,
+            status_type: order.status_type,
+            order, order_type: order.order_type,
+            user_id
+          }));
+        }
+
+        return order;
+      } else {
+        return false;
+      }
+    } else {
+      return undefined;
+    }
+  }
+
+  static async mark_order_complete(data, fn) {
+    let { seller_id, user_id, order_id, status_type } = data;
+    const [seller_detail, user_index_data, order_data, measurement_types, seller_loyalty_rules, milk_sku_list] = await _bluebird2.default.all([sellerAdaptor.retrieveSellerDetail({
       where: { id: seller_id },
       attributes: ['seller_type_id', 'seller_name', 'id', 'user_id', 'is_fmcg', 'has_pos', 'is_assisted']
     }), userAdaptor.retrieveUserIndexedData({
@@ -1254,7 +1438,22 @@ class SocketServer {
         id: order_id, user_id, seller_id,
         status_type: [16, 19, 21]
       }, attributes: ['id']
-    }, {}, false), modals.measurement.findAll({ where: { status_type: 1 } })]);
+    }, {}, false), modals.measurement.findAll({ where: { status_type: 1 } }), sellerAdaptor.retrieveSellerLoyaltyRules(JSON.parse(JSON.stringify({ seller_id }))), shopEarnAdaptor.retrieveSKUData({
+      where: JSON.parse(JSON.stringify({ category_id: 691, main_category_id: 181 })),
+      attributes: ['id']
+    })]);
+    let today_sku_expense = 0;
+    if (milk_sku_list.length > 0) {
+      today_sku_expense = await modals.expense_sku_items.count({
+        where: {
+          sku_id: milk_sku_list.map(item => item.id),
+          created_at: {
+            $gte: (0, _moment2.default)().startOf('days'),
+            $lte: (0, _moment2.default)().endOf('days')
+          }
+        }
+      });
+    }
     if (order_data) {
       order_data.status_type = status_type || 5;
       let order = await orderAdaptor.retrieveOrUpdateOrder({
@@ -1292,25 +1491,41 @@ class SocketServer {
 
           return item;
         }) : order.order_details;
-        const payment_details = await SocketServer.init_on_payment({
-          user_id, seller_id, has_pos: seller_detail.has_pos,
-          home_delivered: !!order.delivery_user_id,
-          sku_details: order.order_type === 2 ? order.order_details : order.order_details.map(item => {
-            let { id: sku_id, quantity, sku_measurement, selling_price } = item;
-            const { id: sku_measurement_id, cashback_percent } = sku_measurement || {};
-            selling_price = parseFloat((selling_price || 0).toString());
-            return JSON.parse(JSON.stringify({
-              sku_id, sku_measurement_id, seller_id, user_id,
-              updated_by: user_id, quantity,
-              selling_price: selling_price, status_type: 11,
-              available_cashback: selling_price && cashback_percent ? selling_price * (cashback_percent || 0) / 100 : undefined
-            }));
-          }), order_type: order.order_type,
-          seller_type_id: seller_detail.seller_type_id
-        });
+        let payment_details = { product: {} };
+        if (!order.expense_id) {
+          payment_details = await SocketServer.init_on_payment({
+            user_id, seller_id, has_pos: seller_detail.has_pos,
+            home_delivered: !!order.delivery_user_id,
+            sku_details: order.order_type === 2 ? order.order_details : order.order_details.map(item => {
+              let { id: sku_id, quantity, sku_measurement, selling_price } = item;
+              let { id: sku_measurement_id, cashback_percent } = sku_measurement || {};
+              selling_price = parseFloat((selling_price || 0).toString());
+              if (today_sku_expense === 0) {
+                const milk_sku = milk_sku_list.find(mskuItem => mskuItem.id.toString() === sku_id.toString());
+                if (milk_sku) {
+                  cashback_percent = _main2.default.MILK_SKU_CASH_BACK_PERCENT;
+                }
+              }
+              return JSON.parse(JSON.stringify({
+                sku_id, sku_measurement_id, seller_id, user_id,
+                updated_by: user_id, quantity,
+                selling_price: selling_price, status_type: 11,
+                available_cashback: selling_price && cashback_percent ? selling_price * (cashback_percent || 0) / 100 : undefined
+              }));
+            }),
+            order_type: order.order_type,
+            expense_id: order.expense_id,
+            seller_type_id: seller_detail.seller_type_id
+          });
 
-        order_data.expense_id = (payment_details.product || {}).id;
-        order_data.job_id = (payment_details.cashback_jobs || {}).id;
+          order_data.expense_id = (payment_details.product || {}).id;
+          order_data.job_id = (payment_details.cashback_jobs || {}).id;
+        } else {
+          payment_details.product = (await modals.products.findOne({
+            where: { id: order.expense_id },
+            attributes: ['job_id', 'purchase_cost']
+          })).toJSON();
+        }
         order = await orderAdaptor.retrieveOrUpdateOrder({
           where: {
             id: order_id, user_id, seller_id,
@@ -1334,7 +1549,14 @@ class SocketServer {
           return item;
         }) : order.order_details;
         console.log('It\' here.', JSON.stringify(order.order_details));
-        order.total_amount = order.order_type && order.order_type === 1 ? _lodash2.default.sumBy(order.order_details, 'selling_price') : _lodash2.default.sumBy(order.order_details, 'total_amount');
+        order.total_amount = payment_details.product.purchase_cost;
+        if (seller_loyalty_rules.order_value && seller_loyalty_rules.order_value > 0) {
+          const seller_points = await sellerAdaptor.retrieveOrCreateSellerPoints({ seller_id, user_id }, {
+            amount: Math.floor(order.total_amount / seller_loyalty_rules.order_value * seller_loyalty_rules.points_per_item), transaction_type: 1,
+            status_type: 16, user_id, seller_id, job_id: order.job_id
+          }, seller_detail.seller_name, seller_id);
+          await userAdaptor.retrieveOrUpdateUserIndexedData({ user_id }, { point_id: seller_points.id, user_id });
+        }
         if (io.sockets.adapter.rooms[`seller-${seller_detail.user_id}`]) {
           io.sockets.in(`seller-${seller_detail.user_id}`).emit(order.order_type === 1 ? 'order-status-change' : 'assisted-status-change', JSON.stringify(order));
         }
@@ -1342,6 +1564,7 @@ class SocketServer {
           seller_user_id: seller_detail.user_id,
           payload: {
             order, title: `${user_index_data.user_name || ''} has marked payment complete for his order.`,
+
             description: 'Please click here for further detail.',
             notification_type: 1, notification_id: order.id
           }
@@ -1363,6 +1586,7 @@ class SocketServer {
             order_id: order.id, result: payment_details, order, user_id,
             status_type: order.status_type, is_modified: order.is_modified,
             title: `Your Order has been successfully completed!`,
+
             notification_type: 31, order_type: order.order_type
           }
         });
@@ -1377,12 +1601,13 @@ class SocketServer {
   }
 
   static async init_on_payment(data) {
-    let { user_id, seller_id, sku_details, home_delivered, order_type, seller_type_id, has_pos } = data;
-    const total_amount = order_type && order_type === 1 ? _lodash2.default.sumBy(sku_details, 'selling_price') : _lodash2.default.sumBy(sku_details, 'total_amount');
+    let { user_id, seller_id, sku_details, home_delivered, order_type, seller_type_id, has_pos, total_amount } = data;
+    total_amount = total_amount ? total_amount : order_type && order_type === 1 ? _lodash2.default.sumBy(sku_details, 'selling_price') : _lodash2.default.sumBy(sku_details, 'total_amount');
     const jobResult = await jobAdaptor.createJobs({
       job_id: `${Math.random().toString(36).substr(2, 9)}${user_id.toString(36)}`, user_id,
       updated_by: user_id, uploaded_by: user_id, user_status: 8,
       admin_status: 2, comments: `This job is sent for online expense`
+
     });
     const [product, cashback_jobs, user_default_limit_rules] = await _bluebird2.default.all([productAdaptor.createEmptyProduct({
       job_id: jobResult.id, user_id, main_category_id: 8,
@@ -1401,11 +1626,13 @@ class SocketServer {
     }) : undefined, categoryAdaptor.retrieveLimitRules({ where: { user_id: 1 } })]);
 
     let home_delivery_limit = user_default_limit_rules.find(item => item.rule_type === 7);
+    let sku_cash_back = user_default_limit_rules.find(item => item.rule_type === 8);
     let sku_expenses, home_delivery_cash_back;
     if (order_type && order_type === 1) {
       [sku_expenses] = await _bluebird2.default.all([shopEarnAdaptor.addUserSKUExpenses(sku_details.map(item => {
         item.expense_id = product.id;
         item.job_id = (cashback_jobs || {}).id;
+        item.available_cashback = sku_cash_back && item.available_cashback <= sku_cash_back.rule_limit ? item.available_cashback : sku_cash_back.rule_limit;
         return item;
       }))]);
     }
@@ -1433,8 +1660,10 @@ class SocketServer {
       payload: {
         cash_back_details, amount,
         title: `Your wallet has been credited with INR${amount} against redemption request from ${user_index_data.user_name || ''}.`,
+
         description: 'Please click here for further detail.',
-        notification_type: 2
+        notification_type: 10,
+        notification_id: Math.random()
       }
     });
   }
@@ -1446,34 +1675,43 @@ class SocketServer {
         attributes: ['my_seller_ids', 'seller_offer_ids', [modals.sequelize.literal(`(Select full_name from users where id = ${user_id})`), 'user_name']]
       }), sellerAdaptor.retrieveSellerDetail({ where: { id: seller_id } })]);
       if (seller) {
-        let { seller_offer_ids, my_seller_ids } = user_index_data || {};
+        let { my_seller_ids } = user_index_data || {};
         let { customer_ids } = seller;
-        customer_ids = customer_ids || [];
-        customer_ids.push(user_id);
-        customer_ids = _lodash2.default.uniq(customer_ids);
-        my_seller_ids = my_seller_ids || [];
-        sellerAdaptor.retrieveOrUpdateSellerDetail({ where: { id: seller_id } }, { customer_ids });
-        my_seller_ids.push(parseInt(seller_id));
-        if (!user_index_data) {
-          await userAdaptor.createUserIndexedData({ my_seller_ids, user_id }, { where: { user_id } });
-
-          await notificationAdaptor.notifyUserCron({
-            seller_user_id: seller.user_id, payload: {
-              title: `${user_detail.name || 'User'} has added you as a Seller for future orders and communication.`,
-              description: 'Please click here for more detail.',
-              notification_type: 2
-            }
+        customer_ids = (customer_ids || []).map(item => item.customer_id ? item : { customer_id: item, is_credit_allowed: false, credit_limit: 0 });
+        const customer_id = customer_ids.find(item => item.customer_id && item.customer_id.toString() === user_id.toString());
+        if (!customer_id) {
+          customer_ids.push({
+            customer_id: user_id,
+            is_credit_allowed: false,
+            credit_limit: 0
           });
-        } else {
-          await userAdaptor.updateUserIndexedData({ my_seller_ids: _lodash2.default.uniq(my_seller_ids) }, { where: { user_id } });
+          customer_ids = _lodash2.default.uniqBy(customer_ids, 'customer_id');
+          my_seller_ids = my_seller_ids || [];
+          sellerAdaptor.retrieveOrUpdateSellerDetail({ where: { id: seller_id } }, { customer_ids });
+          my_seller_ids.push(parseInt(seller_id));
+          if (!user_index_data) {
+            await userAdaptor.createUserIndexedData({ my_seller_ids, user_id }, { where: { user_id } });
 
-          await notificationAdaptor.notifyUserCron({
-            seller_user_id: seller.user_id, payload: {
-              title: `${user_index_data.user_name || 'User'} has added you as a Seller for future orders and communication.`,
-              description: 'Please click here for more detail.',
-              notification_type: 2
-            }
-          });
+            await notificationAdaptor.notifyUserCron({
+              seller_user_id: seller.user_id, payload: {
+                title: `${user_detail.name || 'User'} has added you as a Seller for future orders and communication.`,
+
+                description: 'Please click here for more detail.',
+                notification_type: 2, notification_id: Math.random()
+              }
+            });
+          } else {
+            await userAdaptor.updateUserIndexedData({ my_seller_ids: _lodash2.default.uniq(my_seller_ids) }, { where: { user_id } });
+
+            await notificationAdaptor.notifyUserCron({
+              seller_user_id: seller.user_id, payload: {
+                title: `${user_index_data.user_name || 'User'} has added you as a Seller for future orders and communication.`,
+
+                description: 'Please click here for more detail.',
+                notification_type: 2, notification_id: Math.random()
+              }
+            });
+          }
         }
       }
     } catch (err) {
@@ -1487,6 +1725,7 @@ class SocketServer {
       return reply.response({
         status: false,
         message: `Unable to link seller`
+
       });
     }
   }

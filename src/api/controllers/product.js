@@ -1,8 +1,8 @@
 /*jshint esversion: 6 */
 'use strict';
 
-import ProductAdaptor from '../Adaptors/product';
-import NotificationAdaptor from '../Adaptors/notification';
+import ProductAdaptor from '../adaptors/product';
+import NotificationAdaptor from '../adaptors/notification';
 import shared from '../../helpers/shared';
 import moment from 'moment/moment';
 

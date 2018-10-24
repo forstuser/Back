@@ -1,13 +1,13 @@
 /*jshint esversion: 6 */
 'use strict';
 
-import NotificationAdaptor from '../Adaptors/notification';
-import CategoryAdaptor from '../Adaptors/category';
-import BrandAdaptor from '../Adaptors/brands';
-import SellerAdaptor from '../Adaptors/sellers';
-import JobAdaptor from '../Adaptors/job';
-import ProductAdaptor from '../Adaptors/product';
-import UserAdaptor from '../Adaptors/user';
+import NotificationAdaptor from '../adaptors/notification';
+import CategoryAdaptor from '../adaptors/category';
+import BrandAdaptor from '../adaptors/brands';
+import SellerAdaptor from '../adaptors/sellers';
+import JobAdaptor from '../adaptors/job';
+import ProductAdaptor from '../adaptors/product';
+import UserAdaptor from '../adaptors/user';
 import Promise from 'bluebird';
 import shared from '../../helpers/shared';
 import moment from 'moment/moment';

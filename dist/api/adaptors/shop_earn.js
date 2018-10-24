@@ -376,7 +376,7 @@ class ShopEarnAdaptor {
   }
 
   async retrieveSKUMeasurements(options, location) {
-    const sku_measurement_attributes = location && location.toLowerCase() === 'other' || !location ? ['measurement_type', 'measurement_value', 'mrp', 'pack_numbers', 'cashback_percent', 'bar_code', 'id', 'sku_id', [this.modals.sequelize.literal('(Select acronym from table_sku_measurement as measurement where measurement.id =sku_measurement.measurement_type)'), 'measurement_acronym']] : ['measurement_type', 'measurement_value', 'mrp', 'pack_numbers', 'bar_code', 'id', 'sku_id', [this.modals.sequelize.literal('(Select acronym from table_sku_measurement as measurement where measurement.id =sku_measurement.measurement_type)'), 'measurement_acronym']];
+    const sku_measurement_attributes = location && location.toLowerCase() !== 'other' ? ['measurement_type', 'measurement_value', 'mrp', 'pack_numbers', 'cashback_percent', 'bar_code', 'id', 'sku_id', [this.modals.sequelize.literal('(Select acronym from table_sku_measurement as measurement where measurement.id =sku_measurement.measurement_type)'), 'measurement_acronym']] : ['measurement_type', 'measurement_value', 'mrp', 'pack_numbers', 'bar_code', 'id', 'sku_id', [this.modals.sequelize.literal('(Select acronym from table_sku_measurement as measurement where measurement.id =sku_measurement.measurement_type)'), 'measurement_acronym']];
     let skuMeasurements = await this.modals.sku_measurement.findAll({
       where: JSON.parse(JSON.stringify(options)),
       attributes: sku_measurement_attributes
@@ -931,6 +931,11 @@ class ShopEarnAdaptor {
     } catch (e) {
       throw e;
     }
+  }
+
+  async retrieveUserSKUExpenses(options) {
+    const sku_expenses = await this.modals.expense_sku_items.findAll(options);
+    return sku_expenses.map(item => item.toJSON());
   }
 }
 exports.default = ShopEarnAdaptor;

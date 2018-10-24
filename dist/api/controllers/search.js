@@ -9,7 +9,7 @@ var _shared = require('../../helpers/shared');
 
 var _shared2 = _interopRequireDefault(_shared);
 
-var _search = require('../Adaptors/search');
+var _search = require('../adaptors/search');
 
 var _search2 = _interopRequireDefault(_search);
 

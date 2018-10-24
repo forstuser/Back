@@ -5,11 +5,11 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _product = require('../Adaptors/product');
+var _product = require('../adaptors/product');
 
 var _product2 = _interopRequireDefault(_product);
 
-var _notification = require('../Adaptors/notification');
+var _notification = require('../adaptors/notification');
 
 var _notification2 = _interopRequireDefault(_notification);
 

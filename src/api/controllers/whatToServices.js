@@ -1,7 +1,7 @@
 /*jshint esversion: 6 */
 'use strict';
 
-import WhatToServiceAdaptor from '../Adaptors/whatToServices';
+import WhatToServiceAdaptor from '../adaptors/whatToServices';
 import shared from '../../helpers/shared';
 
 let modals;

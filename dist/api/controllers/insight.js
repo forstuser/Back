@@ -5,7 +5,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _insight = require('../Adaptors/insight');
+var _insight = require('../adaptors/insight');
 
 var _insight2 = _interopRequireDefault(_insight);
 

@@ -12,47 +12,47 @@ var _shared = require('../../helpers/shared');
 
 var _shared2 = _interopRequireDefault(_shared);
 
-var _insurances = require('../Adaptors/insurances');
+var _insurances = require('../adaptors/insurances');
 
 var _insurances2 = _interopRequireDefault(_insurances);
 
-var _amcs = require('../Adaptors/amcs');
+var _amcs = require('../adaptors/amcs');
 
 var _amcs2 = _interopRequireDefault(_amcs);
 
-var _pucs = require('../Adaptors/pucs');
+var _pucs = require('../adaptors/pucs');
 
 var _pucs2 = _interopRequireDefault(_pucs);
 
-var _reg_certificates = require('../Adaptors/reg_certificates');
+var _reg_certificates = require('../adaptors/reg_certificates');
 
 var _reg_certificates2 = _interopRequireDefault(_reg_certificates);
 
-var _warranties = require('../Adaptors/warranties');
+var _warranties = require('../adaptors/warranties');
 
 var _warranties2 = _interopRequireDefault(_warranties);
 
-var _repairs = require('../Adaptors/repairs');
+var _repairs = require('../adaptors/repairs');
 
 var _repairs2 = _interopRequireDefault(_repairs);
 
-var _sellers = require('../Adaptors/sellers');
+var _sellers = require('../adaptors/sellers');
 
 var _sellers2 = _interopRequireDefault(_sellers);
 
-var _category = require('../Adaptors/category');
+var _category = require('../adaptors/category');
 
 var _category2 = _interopRequireDefault(_category);
 
-var _product = require('../Adaptors/product');
+var _product = require('../adaptors/product');
 
 var _product2 = _interopRequireDefault(_product);
 
-var _job = require('../Adaptors/job');
+var _job = require('../adaptors/job');
 
 var _job2 = _interopRequireDefault(_job);
 
-var _refueling = require('../Adaptors/refueling');
+var _refueling = require('../adaptors/refueling');
 
 var _refueling2 = _interopRequireDefault(_refueling);
 

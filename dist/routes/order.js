@@ -218,6 +218,22 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
 
     routeObject.push({
       method: 'PUT',
+      path: '/consumer/orders/{order_id}/reorder',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.updateUserActiveStatus, assign: 'userExist' }],
+        handler: _order2.default.reOrderOrderFromConsumer,
+        description: 'Re-order on behalf of Consumer.',
+        validate: {
+          payload: {
+            seller_id: _joi2.default.number().required()
+          }
+        }
+      }
+    });
+
+    routeObject.push({
+      method: 'PUT',
       path: '/consumer/orders/{order_id}/paid',
       config: {
         auth: 'jwt',
@@ -237,10 +253,7 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
       path: '/consumer/orders/place',
       config: {
         auth: 'jwt',
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.updateUserActiveStatus, assign: 'userExist' }, {
-          method: middleware.updateUserActiveStatus,
-          assign: 'userExist'
-        }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.updateUserActiveStatus, assign: 'userExist' }],
         handler: _order2.default.placeOrder,
         description: 'Place order on behalf of User.',
         validate: {
@@ -350,9 +363,46 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
           payload: {
             user_id: _joi2.default.number().required(),
             delivery_user_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            total_amount: [_joi2.default.number(), _joi2.default.allow(null)],
             order_details: [_joi2.default.array().items(_joi2.default.object()), _joi2.default.allow(null)]
           }
         }
+      }
+    });
+
+    routeObject.push({
+      method: 'PUT',
+      path: '/consumer/payments/signature',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.updateUserActiveStatus, assign: 'userExist' }],
+        validate: {
+          payload: {
+            appId: _joi2.default.string().required(),
+            orderId: _joi2.default.string().required(),
+            orderAmount: _joi2.default.string().required(),
+            orderCurrency: [_joi2.default.string(), _joi2.default.allow(null)],
+            orderNote: [_joi2.default.string(), _joi2.default.allow(null)],
+            customerName: _joi2.default.string().required(),
+            customerPhone: _joi2.default.string().required(),
+            customerEmail: _joi2.default.string().required(),
+            returnUrl: [_joi2.default.string(), _joi2.default.allow(null)],
+            notifyUrl: [_joi2.default.string(), _joi2.default.allow(null)],
+            paymentModes: [_joi2.default.string(), _joi2.default.allow(null)],
+            pc: [_joi2.default.string(), _joi2.default.allow(null)]
+          }
+        },
+        handler: _order2.default.generateSignature,
+        description: 'Generate Signature for Consumer Payment Using Cash Free.'
+      }
+    });
+
+    routeObject.push({
+      method: 'POST',
+      path: '/consumer/payments',
+      config: {
+        handler: _order2.default.paymentPostBackUrl,
+        description: 'Generate Signature for Consumer Payment Using Cash Free.'
       }
     });
   }

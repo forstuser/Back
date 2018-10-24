@@ -5,31 +5,31 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _notification = require('../Adaptors/notification');
+var _notification = require('../adaptors/notification');
 
 var _notification2 = _interopRequireDefault(_notification);
 
-var _category = require('../Adaptors/category');
+var _category = require('../adaptors/category');
 
 var _category2 = _interopRequireDefault(_category);
 
-var _brands = require('../Adaptors/brands');
+var _brands = require('../adaptors/brands');
 
 var _brands2 = _interopRequireDefault(_brands);
 
-var _sellers = require('../Adaptors/sellers');
+var _sellers = require('../adaptors/sellers');
 
 var _sellers2 = _interopRequireDefault(_sellers);
 
-var _job = require('../Adaptors/job');
+var _job = require('../adaptors/job');
 
 var _job2 = _interopRequireDefault(_job);
 
-var _product = require('../Adaptors/product');
+var _product = require('../adaptors/product');
 
 var _product2 = _interopRequireDefault(_product);
 
-var _user = require('../Adaptors/user');
+var _user = require('../adaptors/user');
 
 var _user2 = _interopRequireDefault(_user);
 

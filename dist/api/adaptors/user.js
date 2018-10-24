@@ -1,12 +1,35 @@
 /*jshint esversion: 6 */
 'use strict';
 
-import uuid from 'uuid';
-import validator from 'validator';
-import NotificationAdaptor from './notification';
-import _ from 'lodash';
-import moment from 'moment/moment';
-import Promise from 'bluebird';
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _uuid = require('uuid');
+
+var _uuid2 = _interopRequireDefault(_uuid);
+
+var _validator = require('validator');
+
+var _validator2 = _interopRequireDefault(_validator);
+
+var _notification = require('./notification');
+
+var _notification2 = _interopRequireDefault(_notification);
+
+var _lodash = require('lodash');
+
+var _lodash2 = _interopRequireDefault(_lodash);
+
+var _moment = require('moment/moment');
+
+var _moment2 = _interopRequireDefault(_moment);
+
+var _bluebird = require('bluebird');
+
+var _bluebird2 = _interopRequireDefault(_bluebird);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 /**
  * This is being used to validate email address.
@@ -14,7 +37,7 @@ import Promise from 'bluebird';
  * @returns {*}
  */
 const validateEmail = email => {
-  if (validator.isEmail(email) || email === '') {
+  if (_validator2.default.isEmail(email) || email === '') {
     return email;
   }
 
@@ -28,13 +51,10 @@ class UserAdaptor {
 
   async isUserValid(user) {
     try {
-      const userCount = await this.modals.users.count(
-          {where: {id: user.id || user.ID}});
+      const userCount = await this.modals.users.count({ where: { id: user.id || user.ID } });
       return !!(userCount && userCount > 0);
     } catch (err) {
-      console.log(
-          `Error on ${new Date()} for user ${user.mobile_no ||
-          user.mobile_no} is as follow: \n \n ${err}`);
+      console.log(`Error on ${new Date()} for user ${user.mobile_no || user.mobile_no} is as follow: \n \n ${err}`);
       return false;
     }
   }
@@ -47,29 +67,24 @@ class UserAdaptor {
    */
   async loginOrRegister(whereObject, defaultObject) {
     if (!whereObject.mobile_no) {
-      whereObject = _.omit(whereObject, 'mobile_no');
+      whereObject = _lodash2.default.omit(whereObject, 'mobile_no');
     }
 
     const result = await this.modals.users.findOne({
-      where: whereObject, attributes: [
-        'id', ['full_name', 'name'], 'mobile_no', 'email',
-        'email_verified', 'email_secret', 'image_name', 'gender', 'fb_id'],
+      where: whereObject, attributes: ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', 'image_name', 'gender', 'fb_id', 'user_status_type']
     });
 
-    if (!result || (result && !result.id)) {
+    if (!result || result && !result.id) {
       return this.modals.users.findCreateFind({
         where: whereObject, defaults: defaultObject,
-        attributes: [
-          'id', ['full_name', 'name'], 'mobile_no', 'email',
-          'email_verified', 'email_secret', 'image_name', 'gender'],
+        attributes: ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', 'image_name', 'gender']
       });
     }
 
-    return Promise.all([
-      Promise.try(() => result.updateAttributes({
-        fb_id: defaultObject.fb_id, last_active_date: moment.utc(),
-        last_api: defaultObject.last_api,
-      })), false]);
+    return await _bluebird2.default.all([_bluebird2.default.try(() => result.updateAttributes({
+      fb_id: defaultObject.fb_id, last_active_date: _moment2.default.utc(),
+      last_api: defaultObject.last_api
+    })), false]);
   }
 
   /**
@@ -81,24 +96,19 @@ class UserAdaptor {
    */
   async createUserForSeller(whereObject, defaultObject, seller_id) {
     if (!whereObject.mobile_no) {
-      whereObject = _.omit(whereObject, 'mobile_no');
+      whereObject = _lodash2.default.omit(whereObject, 'mobile_no');
     }
 
     let result = await this.modals.users.findOne({
-      where: whereObject, attributes: [
-        'id', ['full_name', 'name'], 'mobile_no',
-        'email', 'email_verified', 'email_secret',
-        'image_name', 'gender', 'fb_id', 'user_status_type'],
+      where: whereObject, attributes: ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', 'image_name', 'gender', 'fb_id', 'user_status_type']
     });
 
-    if (!result || (result && !result.id)) {
+    if (!result || result && !result.id) {
       result = await this.modals.users.create(defaultObject);
     }
 
     const user_detail = result.toJSON();
-    await this.retrieveOrUpdateUserIndexedData(
-        {where: {user_id: user_detail.id}, attributes: ['my_seller_ids']},
-        {seller_id});
+    await this.retrieveOrUpdateUserIndexedData({ where: { user_id: user_detail.id }, attributes: ['my_seller_ids', 'id'] }, { seller_id, user_id: user_detail.id });
 
     return user_detail;
   }
@@ -109,22 +119,13 @@ class UserAdaptor {
    * @returns {Promise<Model>}
    */
   async retrieveSingleUser(filterObject) {
-    filterObject.attributes = [
-      'id', ['full_name', 'name'], 'mobile_no', 'image_name', 'location',
-      'email', 'email_verified', 'email_secret', 'gender', 'user_status_type',
-      'created_at', [
-        this.modals.sequelize.fn('CONCAT', 'consumer/',
-            this.modals.sequelize.col('id'), '/images'), 'imageUrl'],
-    ];
+    filterObject.attributes = ['id', ['full_name', 'name'], 'mobile_no', 'image_name', 'location', 'email', 'email_verified', 'email_secret', 'gender', 'user_status_type', 'created_at', [this.modals.sequelize.fn('CONCAT', 'consumer/', this.modals.sequelize.col('id'), '/images'), 'imageUrl']];
     const item = await this.modals.users.findOne(filterObject);
     return item ? item.toJSON() : item;
   }
 
   async retrieveUsers(filterObject) {
-    filterObject.attributes = filterObject.attributes || [
-      'id', ['full_name', 'name'], 'mobile_no', 'image_name',
-      'email', 'email_verified', 'email_secret', 'gender', 'user_status_type',
-    ];
+    filterObject.attributes = filterObject.attributes || ['id', ['full_name', 'name'], 'mobile_no', 'image_name', 'email', 'email_verified', 'email_secret', 'gender', 'user_status_type'];
     const users = await this.modals.users.findAll(filterObject);
     return users.map(item => item.toJSON());
   }
@@ -137,15 +138,13 @@ class UserAdaptor {
    * @returns {Promise<Model>}
    */
   async retrieveSellerUser(filterObject, is_create, updates) {
-    filterObject.attributes = filterObject.attributes ||
-        ['id', 'mobile_no', 'email'];
+    filterObject.attributes = filterObject.attributes || ['id', 'mobile_no', 'email'];
     console.log(filterObject);
     let seller_user = await this.modals.seller_users.findOne(filterObject);
     if (is_create) {
-      filterObject.last_active_date = moment();
+      filterObject.last_active_date = (0, _moment2.default)();
       if (!seller_user) {
-        seller_user = await this.modals.seller_users.create(
-            updates || filterObject.where);
+        seller_user = await this.modals.seller_users.create(updates || filterObject.where);
       }
     }
     if (seller_user) {
@@ -161,49 +160,18 @@ class UserAdaptor {
    * @returns {User}
    */
   async retrieveUserById(user, address_id) {
-    const result = await Promise.all([
-      this.modals.users.findById(user.id || user.ID, {
-        attributes: [
-          'id',
-          ['full_name', 'name'],
-          'mobile_no',
-          'email',
-          'email_verified',
-          'email_secret',
-          'location',
-          'latitude',
-          'created_at',
-          'longitude',
-          'image_name',
-          'password',
-          'gender',
-          [
-            this.modals.sequelize.fn('CONCAT', '/consumer/',
-                this.modals.sequelize.col('id'), '/images'), 'imageUrl'],
-          [
-            this.modals.sequelize.literal(
-                `(Select sum(amount) from table_wallet_user_cashback where user_id = ${user.id ||
-                user.ID} and status_type in (16) group by user_id)`),
-            'wallet_value'],
-          [
-            this.modals.sequelize.literal(
-                `(Select sum(amount) from table_wallet_user_cashback where user_id = ${user.id ||
-                user.ID} and status_type in (16,13,14) and transaction_type = 2 group by user_id)`),
-            'redeemed_value']],
-      }),
-      this.retrieveUserAddresses({
-        where: JSON.parse(
-            JSON.stringify({user_id: user.id || user.ID, id: address_id})),
-      })]);
+    const result = await _bluebird2.default.all([this.modals.users.findById(user.id || user.ID, {
+      attributes: ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', 'location', 'latitude', 'created_at', 'longitude', 'image_name', 'password', 'gender', [this.modals.sequelize.fn('CONCAT', '/consumer/', this.modals.sequelize.col('id'), '/images'), 'imageUrl'], [this.modals.sequelize.literal(`(Select sum(amount) from table_wallet_user_cashback where user_id = ${user.id || user.ID} and status_type in (16) group by user_id)`), 'wallet_value'], [this.modals.sequelize.literal(`(Select sum(amount) from table_wallet_user_cashback where user_id = ${user.id || user.ID} and status_type in (16,13,14) and transaction_type = 2 group by user_id)`), 'redeemed_value']]
+    }), this.retrieveUserAddresses({
+      where: JSON.parse(JSON.stringify({ user_id: user.id || user.ID, id: address_id }))
+    })]);
     if (result[0]) {
       let user = result[0].toJSON();
-      const imageDiff = user.image_name ?
-          user.image_name.split('.')[0].split('-') : '';
-      user.imageUrl = user.image_name ?
-          `${user.imageUrl}/${imageDiff[imageDiff.length - 1]}` : undefined;
+      const imageDiff = user.image_name ? user.image_name.split('.')[0].split('-') : '';
+      user.imageUrl = user.image_name ? `${user.imageUrl}/${imageDiff[imageDiff.length - 1]}` : undefined;
       user.addresses = result[1].map(item => item.toJSON());
-      user.hasPin = !!(user.password);
-      user = _.omit(user, 'password');
+      user.hasPin = !!user.password;
+      user = _lodash2.default.omit(user, 'password');
       user.wallet_value = (user.wallet_value || 0) - (user.redeemed_value || 0);
       return JSON.parse(JSON.stringify(user));
     }
@@ -212,8 +180,7 @@ class UserAdaptor {
   }
 
   async retrieveUserImageNameById(user) {
-    const result = await this.modals.users.findById(user.id || user.ID,
-        {attributes: ['image_name']});
+    const result = await this.modals.users.findById(user.id || user.ID, { attributes: ['image_name'] });
     return result.toJSON();
   }
 
@@ -232,23 +199,23 @@ class UserAdaptor {
           callUs: '+91-124-4343177', emailUs: 'support@binbill.com',
           aboutUs: 'http://www.binbill.com/homes/about',
           reportAnErrorOn: 'support@binbill.com',
-          faqUrl: 'http://www.binbill.com/faqs',
-        }, userProfile: result, forceUpdate: request.pre.forceUpdate,
+          faqUrl: 'http://www.binbill.com/faqs'
+        }, userProfile: result, forceUpdate: request.pre.forceUpdate
       };
     } catch (err) {
-      const {params, query, headers, payload, method, url} = request;
+      const { params, query, headers, payload, method, url } = request;
       this.modals.logs.create({
         api_action: method,
         api_path: url.pathname,
         log_type: 2,
         user_id: user && !user.seller_details ? user.id || user.ID : undefined,
-        log_content: JSON.stringify({params, query, headers, payload, err}),
-      }).catch((ex) => console.log('error while logging on db,', ex));
+        log_content: JSON.stringify({ params, query, headers, payload, err })
+      }).catch(ex => console.log('error while logging on db,', ex));
       return {
         status: false,
         message: 'User Data Retrieval Failed',
         err,
-        forceUpdate: request.pre.forceUpdate,
+        forceUpdate: request.pre.forceUpdate
       };
     }
   }
@@ -269,35 +236,33 @@ class UserAdaptor {
         emailID = validateEmail(payload.email);
 
         if (emailID === undefined) {
-          return reply.response({status: false}).code(400);
+          return reply.response({ status: false }).code(400);
         }
       }
 
-      const {mobile_no, name, location, latitude, longitude, gender, addresses} = payload;
+      const { mobile_no, name, location, latitude, longitude, gender, addresses } = payload;
 
       const userUpdates = {
         mobile_no, full_name: name,
-        location, latitude, longitude, gender,
+        location, latitude, longitude, gender
       };
 
       const user_id = user.id || user.ID;
-      const userAddresses = addresses ? addresses.map((item) => {
+      const userAddresses = addresses ? addresses.map(item => {
         item.updated_by = user.id;
         return item;
       }) : [];
 
-      const filterOptions = {where: {id: user.id || user.ID}};
+      const filterOptions = { where: { id: user.id || user.ID } };
       const result = await this.retrieveUserById(user);
       let userPromise = [];
       if (userAddresses && userAddresses.length > 0) {
-        userPromise = userAddresses.map((item) => {
+        userPromise = userAddresses.map(item => {
           item.user_id = user_id;
-          const existingAddress = result.addresses.find(
-              (existingItem) => existingItem.address_type ===
-                  item.address_type);
+          const existingAddress = result.addresses.find(existingItem => existingItem.address_type === item.address_type);
           if (existingAddress) {
             return this.updateUserAddress(item, {
-              where: {user_id, id: existingAddress.id},
+              where: { user_id, id: existingAddress.id }
             });
           } else {
             return this.createUserAddress(item);
@@ -307,29 +272,28 @@ class UserAdaptor {
 
       if (emailID !== null && emailID !== result.email) {
         userUpdates.email = emailID;
-        userUpdates.email_secret = uuid.v4();
+        userUpdates.email_secret = _uuid2.default.v4();
         userUpdates.email_verified = false;
       } else if (emailID !== null) {
         userUpdates.email = result.email;
-        userUpdates.email_secret = result.secret || uuid.v4();
+        userUpdates.email_secret = result.secret || _uuid2.default.v4();
         userUpdates.email_verified = result.email_verified || false;
       }
 
       userPromise.push(this.updateUserDetail(userUpdates, filterOptions));
 
-      await Promise.all(userPromise);
+      await _bluebird2.default.all(userPromise);
 
       const updatedUser = userUpdates;
       if (!updatedUser.email_verified) {
-        NotificationAdaptor.sendVerificationMail(updatedUser.email,
-            updatedUser);
+        _notification2.default.sendVerificationMail(updatedUser.email, updatedUser);
       }
 
       return reply.response({
         status: true,
         message: 'User Details Updated Successfully',
-        result: await this.retrieveSingleUser({where: {id: user_id}}),
-        forceUpdate: request.pre.forceUpdate,
+        result: await this.retrieveSingleUser({ where: { id: user_id } }),
+        forceUpdate: request.pre.forceUpdate
       }).code(200);
     } catch (err) {
       this.modals.logs.create({
@@ -342,24 +306,23 @@ class UserAdaptor {
           query: request.query,
           headers: request.headers,
           payload: request.payload,
-          err,
-        }),
-      }).catch((ex) => console.log('error while logging on db,', ex));
+          err
+        })
+      }).catch(ex => console.log('error while logging on db,', ex));
 
-      if (err && err.errors && err.errors.findIndex(
-          (item) => item.message === 'email must be unique') !== -1) {
+      if (err && err.errors && err.errors.findIndex(item => item.message === 'email must be unique') !== -1) {
         return reply.response({
           status: false,
           message: 'The email mentioned is already linked with other account',
           err,
-          forceUpdate: request.pre.forceUpdate,
+          forceUpdate: request.pre.forceUpdate
         });
       }
       return reply.response({
         status: false,
         message: 'User Detail Update failed',
         err,
-        forceUpdate: request.pre.forceUpdate,
+        forceUpdate: request.pre.forceUpdate
       });
     }
   }
@@ -397,48 +360,17 @@ class UserAdaptor {
    * @param filterOptions
    */
   async deleteUserAddress(updateValues, filterOptions) {
-    return await this.modals.user_addresses.destroy(updateValues,
-        filterOptions);
+    return await this.modals.user_addresses.destroy(updateValues, filterOptions);
   }
 
   async retrieveUserAddresses(filterOptions) {
-    filterOptions.attributes = [
-      'address_type', 'address_line_1', 'address_line_2',
-      'city_id', 'state_id', 'locality_id', 'pin', 'latitude',
-      'longitude', 'id', 'user_id', [
-        this.modals.sequelize.literal(
-            '(Select state_name from table_states as state where state.id = user_addresses.state_id)'),
-        'state_name'], [
-        this.modals.sequelize.literal(
-            '(Select name from table_cities as city where city.id = user_addresses.city_id)'),
-        'city_name'], [
-        this.modals.sequelize.literal(
-            '(Select name from table_localities as locality where locality.id = user_addresses.locality_id)'),
-        'locality_name'], [
-        this.modals.sequelize.literal(
-            '(Select pin_code from table_localities as locality where locality.id = user_addresses.locality_id)'),
-        'pin_code']];
+    filterOptions.attributes = ['address_type', 'address_line_1', 'address_line_2', 'city_id', 'state_id', 'locality_id', 'pin', 'latitude', 'longitude', 'id', 'user_id', [this.modals.sequelize.literal('(Select state_name from table_states as state where state.id = user_addresses.state_id)'), 'state_name'], [this.modals.sequelize.literal('(Select name from table_cities as city where city.id = user_addresses.city_id)'), 'city_name'], [this.modals.sequelize.literal('(Select name from table_localities as locality where locality.id = user_addresses.locality_id)'), 'locality_name'], [this.modals.sequelize.literal('(Select pin_code from table_localities as locality where locality.id = user_addresses.locality_id)'), 'pin_code']];
     filterOptions.order = [['address_type']];
     return await this.modals.user_addresses.findAll(filterOptions);
   }
 
   async retrieveUserAddress(filterOptions) {
-    filterOptions.attributes = [
-      'address_type', 'address_line_1', 'address_line_2',
-      'city_id', 'state_id', 'locality_id', 'pin', 'latitude',
-      'longitude', 'id', [
-        this.modals.sequelize.literal(
-            '(Select state_name from table_states as state where state.id = user_addresses.state_id)'),
-        'state_name'], [
-        this.modals.sequelize.literal(
-            '(Select name from table_cities as city where city.id = user_addresses.city_id)'),
-        'city_name'], [
-        this.modals.sequelize.literal(
-            '(Select name from table_localities as locality where locality.id = user_addresses.locality_id)'),
-        'locality_name'], [
-        this.modals.sequelize.literal(
-            '(Select pin_code from table_localities as locality where locality.id = user_addresses.locality_id)'),
-        'pin_code']];
+    filterOptions.attributes = ['address_type', 'address_line_1', 'address_line_2', 'city_id', 'state_id', 'locality_id', 'pin', 'latitude', 'longitude', 'id', [this.modals.sequelize.literal('(Select state_name from table_states as state where state.id = user_addresses.state_id)'), 'state_name'], [this.modals.sequelize.literal('(Select name from table_cities as city where city.id = user_addresses.city_id)'), 'city_name'], [this.modals.sequelize.literal('(Select name from table_localities as locality where locality.id = user_addresses.locality_id)'), 'locality_name'], [this.modals.sequelize.literal('(Select pin_code from table_localities as locality where locality.id = user_addresses.locality_id)'), 'pin_code']];
     let address = await this.modals.user_addresses.findOne(filterOptions);
 
     return address ? address.toJSON() : {};
@@ -451,9 +383,7 @@ class UserAdaptor {
 
   async retrieveUserIndexes(options) {
     const result = await this.modals.user_index.findAll(options);
-    return result && result.length > 0 ?
-        result.map(item => item.toJSON()) :
-        undefined;
+    return result && result.length > 0 ? result.map(item => item.toJSON()) : undefined;
   }
 
   async updateUserIndexedData(updateValues, filterOptions) {
@@ -467,21 +397,19 @@ class UserAdaptor {
   async retrieveOrUpdateUserIndexedData(options, defaults) {
     let result = await this.modals.user_index.findOne(options);
 
-    const userIndex = result ? result.toJSON() : {user_id: defaults.user_id};
+    const userIndex = result ? result.toJSON() : { user_id: defaults.user_id };
     if (defaults.credit_id) {
-      userIndex.wallet_seller_credit_ids = userIndex.wallet_seller_credit_ids ||
-          [];
+      userIndex.wallet_seller_credit_ids = userIndex.wallet_seller_credit_ids || [];
       userIndex.wallet_seller_credit_ids.push(defaults.credit_id);
     }
     if (defaults.point_id) {
-      userIndex.wallet_seller_loyalty_ids = userIndex.wallet_seller_loyalty_ids ||
-          [];
+      userIndex.wallet_seller_loyalty_ids = userIndex.wallet_seller_loyalty_ids || [];
       userIndex.wallet_seller_loyalty_ids.push(defaults.point_id);
     }
     if (defaults.seller_id) {
-      userIndex.my_seller_ids = userIndex.my_seller_ids || [];
-      userIndex.my_seller_ids.push(defaults.seller_id);
-      userIndex.my_seller_ids = _.uniq(userIndex.my_seller_ids);
+      userIndex.my_seller_ids = (userIndex.my_seller_ids || []).map(item => parseInt(item.toString()));
+      userIndex.my_seller_ids.push(parseInt(defaults.seller_id));
+      userIndex.my_seller_ids = _lodash2.default.uniq(userIndex.my_seller_ids);
     }
     if (result) {
       await result.updateAttributes(userIndex);
@@ -493,4 +421,4 @@ class UserAdaptor {
   }
 }
 
-export default UserAdaptor;
+exports.default = UserAdaptor;

@@ -23,6 +23,9 @@ export default (sequelize, DataTypes) => {
         is_modified: {
           type: DataTypes.BOOLEAN,
         },
+        in_review: {
+          type: DataTypes.BOOLEAN,
+        },
         order_type: {
           type: DataTypes.INTEGER,
         },

@@ -21,6 +21,9 @@ exports.default = (sequelize, DataTypes) => {
     user_id: {
       type: DataTypes.INTEGER
     },
+    order_id: {
+      type: DataTypes.INTEGER
+    },
     transaction_type: {
       type: DataTypes.INTEGER,
       comment: 'Credit: 1, Debit: 2'
@@ -65,15 +68,14 @@ exports.default = (sequelize, DataTypes) => {
       onUpdate: 'cascade'
     });
     credit_wallet.belongsTo(models.cashback_jobs, { foreignKey: 'job_id', onDelete: 'cascade', onUpdate: 'cascade' });
+    credit_wallet.belongsTo(models.order, { foreignKey: 'order_id', onDelete: 'cascade', onUpdate: 'cascade' });
     credit_wallet.belongsTo(models.users, {
       foreignKey: 'user_id', as: 'user',
       onDelete: 'cascade', onUpdate: 'cascade'
     });
     credit_wallet.belongsTo(models.statuses, {
-      foreignKey: 'status_type',
-      targetKey: 'status_type',
-      onDelete: 'cascade',
-      onUpdate: 'cascade'
+      foreignKey: 'status_type', targetKey: 'status_type',
+      onDelete: 'cascade', onUpdate: 'cascade'
     });
   };
   return credit_wallet;

@@ -5,19 +5,19 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _notification = require('../Adaptors/notification');
+var _notification = require('../adaptors/notification');
 
 var _notification2 = _interopRequireDefault(_notification);
 
-var _ehome = require('../Adaptors/ehome');
+var _ehome = require('../adaptors/ehome');
 
 var _ehome2 = _interopRequireDefault(_ehome);
 
-var _dashboard = require('../Adaptors/dashboard');
+var _dashboard = require('../adaptors/dashboard');
 
 var _dashboard2 = _interopRequireDefault(_dashboard);
 
-var _user = require('../Adaptors/user');
+var _user = require('../adaptors/user');
 
 var _user2 = _interopRequireDefault(_user);
 

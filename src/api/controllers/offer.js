@@ -2,7 +2,7 @@
 'use strict';
 
 import shared from '../../helpers/shared';
-import OfferAdaptor from '../Adaptors/offer';
+import OfferAdaptor from '../adaptors/offer';
 import config from '../../config/main';
 
 let modals;

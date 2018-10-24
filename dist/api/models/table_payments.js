@@ -5,35 +5,36 @@ Object.defineProperty(exports, "__esModule", {
 });
 
 exports.default = (sequelize, DataTypes) => {
-  const order = sequelize.define('order', {
-    user_id: {
-      type: DataTypes.INTEGER
+  const payments = sequelize.define('payments', {
+    signature: {
+      type: DataTypes.STRING
     },
-    delivery_user_id: {
+    description: {
+      type: DataTypes.STRING
+    },
+    ref_id: {
+      type: DataTypes.STRING
+    },
+    order_id: {
       type: DataTypes.INTEGER
     },
     seller_id: {
       type: DataTypes.INTEGER
     },
-    job_id: {
+    user_id: {
       type: DataTypes.INTEGER
     },
-    expense_id: {
+    amount: {
+      type: DataTypes.FLOAT
+    },
+    updated_by: {
       type: DataTypes.INTEGER
     },
-    user_address_id: {
-      type: DataTypes.INTEGER
+    payment_mode_id: {
+      type: DataTypes.INTEGER,
+      defaultValue: 1
     },
-    is_modified: {
-      type: DataTypes.BOOLEAN
-    },
-    in_review: {
-      type: DataTypes.BOOLEAN
-    },
-    order_type: {
-      type: DataTypes.INTEGER
-    },
-    order_details: {
+    payment_detail: {
       type: DataTypes.JSONB
     },
     status_type: {
@@ -53,50 +54,40 @@ exports.default = (sequelize, DataTypes) => {
     defaultPrimaryKey: true,
     timestamps: true,
     underscored: true,
-    tableName: 'table_orders'
+    tableName: 'table_payments'
   });
 
-  order.associate = models => {
-    order.belongsTo(models.sellers, {
+  payments.associate = models => {
+    payments.belongsTo(models.users, {
+      foreignKey: 'updated_by',
+      as: 'updater',
+      onDelete: 'cascade',
+      onUpdate: 'cascade'
+    });
+    payments.belongsTo(models.sellers, {
       foreignKey: 'seller_id',
       as: 'seller',
       onDelete: 'cascade',
       onUpdate: 'cascade'
     });
-    order.belongsTo(models.users, {
+    payments.belongsTo(models.order, { foreignKey: 'order_id', onDelete: 'cascade', onUpdate: 'cascade' });
+    payments.belongsTo(models.users, {
       foreignKey: 'user_id',
       as: 'user',
       onDelete: 'cascade',
       onUpdate: 'cascade'
     });
-    order.belongsTo(models.assisted_service_users, {
-      foreignKey: 'delivery_user_id',
-      as: 'delivery_user',
-      onDelete: 'cascade',
-      onUpdate: 'cascade'
-    });
-    order.belongsTo(models.user_addresses, {
-      foreignKey: 'user_address_id',
-      as: 'user_address',
-      onDelete: 'cascade',
-      onUpdate: 'cascade'
-    });
-    order.belongsTo(models.statuses, {
+    payments.belongsTo(models.statuses, {
       foreignKey: 'status_type',
       targetKey: 'status_type',
       onDelete: 'cascade',
       onUpdate: 'cascade'
     });
-    order.belongsTo(models.cashback_jobs, {
-      foreignKey: 'job_id',
-      onDelete: 'cascade',
-      onUpdate: 'cascade'
-    });
-    order.belongsTo(models.products, {
-      foreignKey: 'expense_id',
+    payments.belongsTo(models.table_payment_mode, {
+      foreignKey: 'payment_mode_id',
       onDelete: 'cascade',
       onUpdate: 'cascade'
     });
   };
-  return order;
+  return payments;
 };

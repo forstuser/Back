@@ -6,6 +6,13 @@ Object.defineProperty(exports, "__esModule", {
 exports.default = {
   HOUSEHOLD_CATEGORY_ID: process.env.HOUSEHOLD_CATEGORY_ID,
   DEFAULT_SELLER_IDS: (process.env.DEFAULT_SELLER_IDS || '').split(','),
+  SELLER_REFERAL_CASH_BACK: process.env.SELLER_REFERAL_CASH_BACK,
+  MILK_SKU_CASH_BACK_PERCENT: process.env.MILK_SKU_CASH_BACK_PERCENT,
+  API_HOST: process.env.API_HOST,
+  CASH_FREE: {
+    POST_BACK_URL: process.env.CASH_FREE_POST_BACK_URL,
+    SECRET_KEY: process.env.CASH_FREE_SECRET_KEY
+  },
   SMS: {
     AUTH_KEY: process.env.SMS_AUTH_KEY,
     HOST_NAME: 'http://api.msg91.com',
@@ -106,7 +113,6 @@ exports.default = {
     RECOMMENDED_VERSION: process.env.ANDROID_RECOMMENDED_VERSION
   },
   GST: {
-
     HOST: process.env.GST_HOST,
     ROUTE: process.env.GST_ROUTE,
     ID: process.env.GST_ID,

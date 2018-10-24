@@ -927,6 +927,8 @@ export function prepareSellerRoutes(modal, route, middleware, socket) {
             minimum_points: [joi.number(), joi.allow(null)],
             user_id: [joi.number(), joi.allow(null)],
             points_per_item: [joi.number(), joi.allow(null)],
+            order_value: [joi.number(), joi.allow(null)],
+            allow_auto_loyalty: [joi.boolean(), joi.allow(null)],
             output: 'data',
             parse: true,
           },
@@ -1222,6 +1224,14 @@ export function prepareSellerRoutes(modal, route, middleware, socket) {
         auth: 'jwt', handler: controller.linkCustomers,
         description: 'Link Consumer with Seller',
         tags: ['api', 'Seller', 'Consumer'],
+        validate: {
+          payload: {
+            credit_limit: [joi.number(), joi.allow(null)],
+            is_credit_allowed: [joi.boolean(), joi.allow(null)],
+            output: 'data',
+            parse: true,
+          },
+        },
         plugins: {
           'hapi-swagger': {
             responseMessages: [
@@ -1248,6 +1258,8 @@ export function prepareSellerRoutes(modal, route, middleware, socket) {
         tags: ['api', 'Seller', 'Consumer'],
         validate: {
           payload: {
+            credit_limit: [joi.number(), joi.allow(null)],
+            is_credit_allowed: [joi.boolean(), joi.allow(null)],
             mobile_no: joi.string().required(),
             full_name: [joi.string(), joi.allow(null)],
             email: [joi.string(), joi.allow(null)],

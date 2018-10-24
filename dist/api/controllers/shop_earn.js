@@ -9,7 +9,7 @@ var _shared = require('../../helpers/shared');
 
 var _shared2 = _interopRequireDefault(_shared);
 
-var _shop_earn = require('../Adaptors/shop_earn');
+var _shop_earn = require('../adaptors/shop_earn');
 
 var _shop_earn2 = _interopRequireDefault(_shop_earn);
 
@@ -21,23 +21,23 @@ var _bluebird = require('bluebird');
 
 var _bluebird2 = _interopRequireDefault(_bluebird);
 
-var _job = require('../Adaptors/job');
+var _job = require('../adaptors/job');
 
 var _job2 = _interopRequireDefault(_job);
 
-var _product = require('../Adaptors/product');
+var _product = require('../adaptors/product');
 
 var _product2 = _interopRequireDefault(_product);
 
-var _sellers = require('../Adaptors/sellers');
+var _sellers = require('../adaptors/sellers');
 
 var _sellers2 = _interopRequireDefault(_sellers);
 
-var _category = require('../Adaptors/category');
+var _category = require('../adaptors/category');
 
 var _category2 = _interopRequireDefault(_category);
 
-var _user = require('../Adaptors/user');
+var _user = require('../adaptors/user');
 
 var _user2 = _interopRequireDefault(_user);
 
@@ -49,7 +49,7 @@ var _main = require('../../config/main');
 
 var _main2 = _interopRequireDefault(_main);
 
-var _notification = require('../Adaptors/notification');
+var _notification = require('../adaptors/notification');
 
 var _notification2 = _interopRequireDefault(_notification);
 
@@ -75,13 +75,14 @@ class ShopEarnController {
       // this is where make us of adapter
       try {
         const result = await modals.users.findOne({
-          where: { id: user.id || user.ID }, attributes: [[modals.sequelize.literal('(Select my_seller_ids from table_user_index as "user_index" where "users".id = "user_index".user_id)'), 'my_seller_ids'], 'location', 'id']
+          where: { id: user.id || user.ID }, attributes: [[modals.sequelize.literal('(Select my_seller_ids from table_user_index as "user_index" where "users".id = "user_index".user_id)'), 'my_seller_ids'], 'location', 'id', 'mobile_no']
         });
         user = result ? result.toJSON() : user;
         const seller_list = user.my_seller_ids ? await sellerAdaptor.retrieveSellersOnInit({
-          where: {
-            id: user.my_seller_ids, is_onboarded: true, is_fmcg: true
-          },
+          where: JSON.parse(JSON.stringify({
+            id: user.my_seller_ids, is_onboarded: true, is_fmcg: true,
+            contact_no: { $ne: user.mobile_no }
+          })),
           attributes: ['id', 'seller_name', 'seller_type_id', 'address', 'is_data_manually_added', [modals.sequelize.literal(`(Select count(*) from table_seller_provider_types as provider_type where provider_type.seller_id = sellers.id)`), 'provider_counts'], [modals.sequelize.literal(`(Select count(*) from table_sku_seller_mapping as sku_seller where sku_seller.seller_id = sellers.id)`), 'sku_seller_counts']]
         }) : undefined;
         const sku_result = await shopEarnAdaptor.retrieveSKUs({
@@ -721,14 +722,14 @@ class ShopEarnController {
         const utcOffset = 330;
         const seller = await sellerAdaptor.retrieveSellerDetail({ where: { id: seller_id }, attributes: ['seller_name'] });
         const seller_cashback = await jobAdaptor.retrieveSellerCashBack({
-          where: { seller_id, id, status_type: 13 }, attributes: ['job_id', 'id', 'user_id', 'amount', 'status_type', 'created_at', [modals.sequelize.literal(`(Select user_id from table_sellers as seller where seller.id = ${seller_id})`), 'seller_user_id'], [modals.sequelize.literal(`(Select full_name from users as "user" where "user".id = cashback_wallet.user_id)`), 'user_name']]
+          where: { seller_id, id, status_type: 13 }, attributes: ['job_id', 'id', 'user_id', 'amount', 'status_type', 'created_at', [modals.sequelize.literal(`(Select user_id from table_sellers as seller where seller.id = ${seller_id})`), 'seller_user_id'], [modals.sequelize.literal(`(Select full_name from users as "user" where "user".id = cashback_wallet.user_id)`), 'user_name'], [modals.sequelize.literal(`(Select sum(purchase_cost) from consumer_products as "product" where "product".job_id in (Select job_id from table_cashback_jobs as job where job.id = cashback_wallet.job_id))`), 'purchase_cost'], [modals.sequelize.literal(`(Select id from table_orders as "order" where "order".job_id = cashback_wallet.job_id)`), 'order_id']]
         });
         if (seller_cashback) {
           const startOfMonth = (0, _moment2.default)(seller_cashback.created_at).startOf('month').utcOffset(utcOffset).format();
           const endOfMonth = (0, _moment2.default)(seller_cashback.created_at).endOf('month').utcOffset(utcOffset).format();
           const startOfDay = (0, _moment2.default)(seller_cashback.created_at).startOf('day').utcOffset(utcOffset).format();
           const endOfDay = (0, _moment2.default)(seller_cashback.created_at).endOf('day').utcOffset(utcOffset).format();
-          const [cash_back_job, user_cash_back_month, user_cash_back_day, user_limit_rules, user_default_limit_rules] = await _bluebird2.default.all([jobAdaptor.retrieveCashBackJobs({ id: seller_cashback.job_id }), jobAdaptor.retrieveUserCashBack({
+          const [cash_back_job, user_cash_back_month, user_cash_back_day, user_limit_rules, user_default_limit_rules, seller_loyalty_rules] = await _bluebird2.default.all([jobAdaptor.retrieveCashBackJobs({ id: seller_cashback.job_id }), jobAdaptor.retrieveUserCashBack({
             where: {
               user_id: seller_cashback.user_id,
               status_type: [16], created_at: {
@@ -744,29 +745,37 @@ class ShopEarnController {
             }, attributes: [[modals.sequelize.literal('sum(amount)'), 'total_amount']], group: 'user_id'
           }), categoryAdaptor.retrieveLimitRules({
             where: {
-              $or: {
-                user_id: seller_cashback.user_id,
-                seller_id
-              }
+              $or: { user_id: seller_cashback.user_id, seller_id }
             }
-          }), categoryAdaptor.retrieveLimitRules({ where: { user_id: 1 } })]);
+          }), categoryAdaptor.retrieveLimitRules({ where: { user_id: 1 } }), sellerAdaptor.retrieveSellerLoyaltyRules(JSON.parse(JSON.stringify({ seller_id })))]);
 
           const cash_back_month = user_cash_back_month ? user_cash_back_month.total_amount : 0;
           const cash_back_day = user_cash_back_day ? user_cash_back_day.total_amount : 0;
           const { verified_seller, digitally_verified, home_delivered, online_order } = cash_back_job;
           const { seller_user_id, user_name } = seller_cashback;
-
-          return reply.response({
-            status: true,
-            result: await jobAdaptor.cashBackApproval({
-              cash_back_month, user_limit_rules, seller_user_id,
-              user_default_limit_rules, cash_back_day, user_name,
-              verified_seller, digitally_verified, online_order, seller_id,
-              transaction_type: 1, cashback_source: 1,
-              job_id: seller_cashback.job_id, home_delivered,
-              job: cash_back_job, amount: seller_cashback.amount
-            }, seller.seller_name)
-          });
+          const result = await jobAdaptor.cashBackApproval({
+            cash_back_month, user_limit_rules, seller_user_id,
+            user_default_limit_rules, cash_back_day, user_name,
+            verified_seller, digitally_verified, online_order,
+            seller_id, transaction_type: 1, cashback_source: 1,
+            job_id: seller_cashback.job_id, home_delivered,
+            job: cash_back_job, amount: seller_cashback.amount,
+            order_id: seller_cashback.order_id,
+            purchase_cost: seller_cashback.purchase_cost,
+            seller_loyalty_rules
+          }, seller.seller_name);
+          if (seller_loyalty_rules.order_value && seller_loyalty_rules.order_value > 0 && !seller_cashback.order_id) {
+            const seller_points = await sellerAdaptor.retrieveOrCreateSellerPoints({ seller_id, user_id: seller_cashback.user_id }, {
+              amount: Math.floor(seller_cashback.purchase_cost / seller_loyalty_rules.order_value * seller_loyalty_rules.points_per_item),
+              transaction_type: 1,
+              status_type: 16,
+              user_id: seller_cashback.user_id,
+              seller_id,
+              job_id: seller_cashback.job_id
+            }, seller.seller_name, seller_id);
+            await userAdaptor.retrieveOrUpdateUserIndexedData({ user_id: seller_cashback.user_id }, { point_id: seller_points.id, user_id: seller_cashback.user_id });
+          }
+          return reply.response({ status: true, result });
         }
 
         return reply.response({

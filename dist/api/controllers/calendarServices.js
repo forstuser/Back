@@ -5,7 +5,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _calendarServices = require('../Adaptors/calendarServices');
+var _calendarServices = require('../adaptors/calendarServices');
 
 var _calendarServices2 = _interopRequireDefault(_calendarServices);
 

@@ -1,14 +1,17 @@
 'use strict';
 
 export default (sequelize, DataTypes) => {
-  const credit_wallet = sequelize.define('credit_wallet', {
-        title: {
+  const payments = sequelize.define('payments', {
+        signature: {
           type: DataTypes.STRING,
         },
         description: {
           type: DataTypes.STRING,
         },
-        job_id: {
+        ref_id: {
+          type: DataTypes.STRING,
+        },
+        order_id: {
           type: DataTypes.INTEGER,
         },
         seller_id: {
@@ -17,22 +20,22 @@ export default (sequelize, DataTypes) => {
         user_id: {
           type: DataTypes.INTEGER,
         },
-        order_id: {
-          type: DataTypes.INTEGER,
-        },
-        transaction_type: {
-          type: DataTypes.INTEGER,
-          comment: 'Credit: 1, Debit: 2',
-        },
         amount: {
           type: DataTypes.FLOAT,
         },
         updated_by: {
           type: DataTypes.INTEGER,
         },
+        payment_mode_id: {
+          type: DataTypes.INTEGER,
+          defaultValue: 1,
+        },
+        payment_detail: {
+          type: DataTypes.JSONB,
+        },
         status_type: {
           type: DataTypes.INTEGER,
-          defaultValue: 16,
+          defaultValue: 13,
         },
         created_at: {
           type: DataTypes.DATE,
@@ -48,38 +51,46 @@ export default (sequelize, DataTypes) => {
         defaultPrimaryKey: true,
         timestamps: true,
         underscored: true,
-        tableName: 'table_wallet_seller_credit',
+        tableName: 'table_payments',
       });
 
-  credit_wallet.associate = (models) => {
-    credit_wallet.belongsTo(models.users,
+  payments.associate = (models) => {
+    payments.belongsTo(models.users,
         {
           foreignKey: 'updated_by',
           as: 'updater',
           onDelete: 'cascade',
           onUpdate: 'cascade',
         });
-    credit_wallet.belongsTo(models.sellers,
+    payments.belongsTo(models.sellers,
         {
           foreignKey: 'seller_id',
           as: 'seller',
           onDelete: 'cascade',
           onUpdate: 'cascade',
         });
-    credit_wallet.belongsTo(models.cashback_jobs,
-        {foreignKey: 'job_id', onDelete: 'cascade', onUpdate: 'cascade'});
-    credit_wallet.belongsTo(models.order,
+    payments.belongsTo(models.order,
         {foreignKey: 'order_id', onDelete: 'cascade', onUpdate: 'cascade'});
-    credit_wallet.belongsTo(models.users,
+    payments.belongsTo(models.users,
         {
-          foreignKey: 'user_id', as: 'user',
-          onDelete: 'cascade', onUpdate: 'cascade',
+          foreignKey: 'user_id',
+          as: 'user',
+          onDelete: 'cascade',
+          onUpdate: 'cascade',
         });
-    credit_wallet.belongsTo(models.statuses,
+    payments.belongsTo(models.statuses,
         {
-          foreignKey: 'status_type', targetKey: 'status_type',
-          onDelete: 'cascade', onUpdate: 'cascade',
+          foreignKey: 'status_type',
+          targetKey: 'status_type',
+          onDelete: 'cascade',
+          onUpdate: 'cascade',
+        });
+    payments.belongsTo(models.table_payment_mode,
+        {
+          foreignKey: 'payment_mode_id',
+          onDelete: 'cascade',
+          onUpdate: 'cascade',
         });
   };
-  return credit_wallet;
+  return payments;
 };

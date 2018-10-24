@@ -2,7 +2,7 @@
 'use strict';
 
 import shared from '../../helpers/shared';
-import BrandAdaptor from '../Adaptors/brands';
+import BrandAdaptor from '../adaptors/brands';
 
 let modals;
 let brandAdaptor;

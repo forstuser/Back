@@ -44,7 +44,8 @@ class DashboardAdaptor {
 
       seller = seller.toJSON();
       const user_id = seller.customer_ids && seller.customer_ids.length > 0 ?
-          seller.customer_ids : undefined;
+          (seller.customer_ids || []).map(item => item.customer_id || item) :
+          undefined;
 
       let job_id = cashback_jobs.map(item => {
         item = item.toJSON();
@@ -55,15 +56,13 @@ class DashboardAdaptor {
       }).filter(item => item);
       job_id = job_id.length > 0 ? job_id : undefined;
       id = id.length > 0 ? id : undefined;
-      let [total_transactions, credits, debit_credits, loyalty_points, debit_loyalty_points, assisted_count, user_cashback] = await Promise.all(
+      let [total_transactions, credits, debit_credits, loyalty_points, debit_loyalty_points, assisted_count, user_cashback, lost_order_counts, lost_order_details] = await Promise.all(
           [
             this.modals.products.aggregate('purchase_cost', 'sum',
                 {
                   where: JSON.parse(JSON.stringify(
                       {
-                        seller_id,
-                        status_type: [5, 11],
-                        user_id,
+                        seller_id, status_type: [5, 11], user_id,
                         $or: {job_id, id},
                       })),
                 }),
@@ -71,20 +70,16 @@ class DashboardAdaptor {
                 {
                   where: JSON.parse(
                       JSON.stringify({
-                        seller_id,
-                        status_type: 16,
-                        transaction_type: 1,
-                        user_id,
+                        seller_id, status_type: 16,
+                        transaction_type: 1, user_id,
                       })),
                 }),
             this.modals.credit_wallet.aggregate('amount', 'sum',
                 {
                   where: JSON.parse(
                       JSON.stringify({
-                        seller_id,
-                        status_type: [16, 14],
-                        transaction_type: 2,
-                        user_id,
+                        seller_id, status_type: [16, 14],
+                        transaction_type: 2, user_id,
                       })),
                 }),
             this.modals.loyalty_wallet.aggregate('amount', 'sum',
@@ -102,15 +97,29 @@ class DashboardAdaptor {
             this.modals.seller_service_types.aggregate('service_user_id',
                 'count', {
                   where: {seller_id, service_type_id: {$not: 0}},
-                  distinct: true,
-                  group: ['seller_id'],
+                  distinct: true, group: ['seller_id'],
                 }),
             this.modals.cashback_wallet.aggregate('amount', 'sum',
                 {
                   where: {
                     seller_id, transaction_type: [1, 2], status_type: [16, 14],
                   },
-                })]);
+                }),
+            this.modals.order.aggregate('id', 'count',
+                {where: {seller_id, status_type: 2}}),
+            this.modals.order.findAll({
+              where: {seller_id, status_type: 2},
+              attributes: ['order_details'],
+            })]);
+      lost_order_details = lost_order_details.map(item => {
+        item = item.toJSON();
+        let mrp = 0;
+        (item.order_details || []).forEach(odItem => {
+          mrp += parseFloat(((odItem.sku_measurement || {mrp: 0}).mrp || 0).toString());
+        });
+        return {mrp};
+      });
+      console.log(lost_order_details);
       return {
         status: true,
         message: 'Dashboard restore Successful',
@@ -126,6 +135,7 @@ class DashboardAdaptor {
         notification_count: 0,
         assisted_count: assisted_count || 0,
         user_cashback: user_cashback || 0,
+        lost_order_counts, lost_order_sum: _.sumBy(lost_order_details, 'mrp'),
       };
     } catch (err) {
       console.log(err);

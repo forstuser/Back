@@ -5,7 +5,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.executeCron = executeCron;
 
-var _notification = require('./api/Adaptors/notification');
+var _notification = require('./api/adaptors/notification');
 
 var _notification2 = _interopRequireDefault(_notification);
 

@@ -59,5 +59,17 @@ class OrderAdaptor {
       return item;
     }) : result;
   }
+
+  async retrieveOrUpdatePaymentDetails(options, defaults) {
+    let result = await this.modals.payments.findOne(options);
+    if (result) {
+      await result.updateAttributes(defaults);
+    } else {
+      console.log(JSON.stringify({ defaults }));
+      result = await this.modals.payments.create(defaults, options);
+    }
+
+    return result.toJSON();
+  }
 }
 exports.default = OrderAdaptor;

@@ -5,7 +5,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _whatToServices = require('../Adaptors/whatToServices');
+var _whatToServices = require('../adaptors/whatToServices');
 
 var _whatToServices2 = _interopRequireDefault(_whatToServices);
 

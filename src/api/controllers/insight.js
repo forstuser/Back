@@ -1,7 +1,7 @@
 /*jshint esversion: 6 */
 'use strict';
 
-import InsightAdaptor from '../Adaptors/insight';
+import InsightAdaptor from '../adaptors/insight';
 import shared from '../../helpers/shared';
 
 let insightAdaptor;

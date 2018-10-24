@@ -9,19 +9,19 @@ var _shared = require('../../helpers/shared');
 
 var _shared2 = _interopRequireDefault(_shared);
 
-var _shop_earn = require('../Adaptors/shop_earn');
+var _shop_earn = require('../adaptors/shop_earn');
 
 var _shop_earn2 = _interopRequireDefault(_shop_earn);
 
-var _job = require('../Adaptors/job');
+var _job = require('../adaptors/job');
 
 var _job2 = _interopRequireDefault(_job);
 
-var _user = require('../Adaptors/user');
+var _user = require('../adaptors/user');
 
 var _user2 = _interopRequireDefault(_user);
 
-var _sellers = require('../Adaptors/sellers');
+var _sellers = require('../adaptors/sellers');
 
 var _sellers2 = _interopRequireDefault(_sellers);
 
@@ -29,11 +29,11 @@ var _google = require('../../helpers/google');
 
 var _google2 = _interopRequireDefault(_google);
 
-var _category = require('../Adaptors/category');
+var _category = require('../adaptors/category');
 
 var _category2 = _interopRequireDefault(_category);
 
-var _notification = require('../Adaptors/notification');
+var _notification = require('../adaptors/notification');
 
 var _notification2 = _interopRequireDefault(_notification);
 
@@ -551,9 +551,16 @@ class SellerController {
         if (seller) {
           let { seller_offer_ids, my_seller_ids } = user_index_data || {};
           let { customer_ids } = seller;
-          customer_ids = customer_ids || [];
-          customer_ids.push(user_id);
-          customer_ids = _lodash2.default.uniq(customer_ids);
+          customer_ids = (customer_ids || []).map(item => item.customer_id ? item : { customer_id: item, is_credit_allowed: false, credit_limit: 0 });
+          const customer_id = customer_ids.find(item => item.customer_id && item.customer_id.toString() === user_id.toString());
+          if (!customer_id) {
+            customer_ids.push({
+              customer_id: user_id,
+              is_credit_allowed: false,
+              credit_limit: 0
+            });
+          }
+          customer_ids = _lodash2.default.uniqBy(customer_ids, 'customer_id');
           my_seller_ids = my_seller_ids || [];
           const already_in_list = my_seller_ids.includes(parseInt(request.params.id));
           sellerAdaptor.retrieveOrUpdateSellerDetail({ where: { id: request.params.id } }, { customer_ids });
@@ -642,9 +649,8 @@ class SellerController {
         let { customer_ids } = seller_detail.toJSON();
         my_seller_ids = (my_seller_ids || []).filter(item => item !== parseInt(request.params.id));
         await userAdaptor.updateUserIndexedData({ my_seller_ids }, { where: { user_id, id } });
-        customer_ids = customer_ids.filter(item => parseInt(item) !== user_id);
+        customer_ids = (customer_ids || []).map(item => item.customer_id ? item : { customer_id: item, is_credit_allowed: false, credit_limit: 0 }).filter(item => item.customer_id && item.customer_id.toString() !== user_id.toString());
         await seller_detail.updateAttributes({ customer_ids });
-
         return reply.response({
           status: true,
           message: 'Seller removed from my seller list.'
@@ -712,8 +718,15 @@ class SellerController {
         const message = `Yay! Your Customer ${name || ''} has invited you to BinBill Partner - for online orders & much more. Get your Free App Now, contact us on 8800850275!`;
         let already_in_my_seller_list;
         if (seller) {
-          customer_ids = customer_ids || [];
-          customer_ids.push(user_id);
+          customer_ids = (customer_ids || []).map(item => item.customer_id ? item : { customer_id: item, is_credit_allowed: false, credit_limit: 0 });
+          const customer_id = customer_ids.find(item => item.customer_id && item.customer_id.toString() === user_id.toString());
+          if (!customer_id) {
+            customer_ids.push({
+              customer_id: user_id,
+              is_credit_allowed: false,
+              credit_limit: 0
+            });
+          }
           already_in_my_seller_list = my_seller_ids.includes(parseInt(seller.id));
           seller_contact_no.push(seller.contact_no);
         } else {
@@ -722,7 +735,7 @@ class SellerController {
         }
         seller_contact_no = _lodash2.default.uniq(seller_contact_no);
         my_seller_ids = _lodash2.default.uniq(my_seller_ids);
-        customer_ids = _lodash2.default.uniq(customer_ids);
+        customer_ids = _lodash2.default.uniqBy(customer_ids, 'customer_id');
         if (!user_index_data) {
           if (seller) {
             my_seller_ids.push(parseInt(seller.id));
@@ -1248,6 +1261,7 @@ class SellerController {
     try {
       let token_user = _shared2.default.verifyAuthorization(request.headers);
       const { seller_id, customer_id } = request.params || {};
+      const { credit_limit, is_credit_allowed } = request.payload;
       let { id: user_id } = token_user;
       let [seller_data] = await _bluebird2.default.all([sellerAdaptor.retrieveSellerDetail({
         where: { id: seller_id, user_id },
@@ -1257,9 +1271,42 @@ class SellerController {
         attributes: ['id', 'user_id', 'my_seller_ids']
       }, { seller_id: parseInt(seller_id), user_id: customer_id })]);
       seller_data.customer_invite_detail = seller_data.customer_invite_detail || [];
-      seller_data.customer_ids = seller_data.customer_ids || [];
-      seller_data.customer_ids.push(parseInt(customer_id));
-      seller_data.customer_ids = _lodash2.default.uniq(seller_data.customer_ids);
+      let customer_id_exist = false;
+      seller_data.customer_ids = (seller_data.customer_ids || []).map(item => {
+        if (item.customer_id) {
+          if (item.customer_id === parseInt(customer_id)) {
+            customer_id_exist = true;
+            item.is_credit_allowed = !is_credit_allowed && is_credit_allowed !== false ? item.is_credit_allowed || false : is_credit_allowed;
+            item.credit_limit = !credit_limit && credit_limit !== 0 ? item.credit_limit || 0 : credit_limit;
+            return item;
+          }
+          item.is_credit_allowed = item.is_credit_allowed || false;
+          item.credit_limit = item.credit_limit || 0;
+          return item;
+        }
+
+        if (parseInt((item || 0).toString()) === parseInt(customer_id)) {
+          customer_id_exist = true;
+          return {
+            customer_id: parseInt((item || 0).toString()),
+            is_credit_allowed: is_credit_allowed || false,
+            credit_limit: credit_limit || 0
+          };
+        }
+        return {
+          customer_id: parseInt((item || 0).toString()),
+          is_credit_allowed: false,
+          credit_limit: 0
+        };
+      });
+      if (!customer_id_exist) {
+        seller_data.customer_ids.push({
+          customer_id: parseInt(customer_id),
+          is_credit_allowed: is_credit_allowed || false,
+          credit_limit: credit_limit || 0
+        });
+      }
+      seller_data.customer_ids = _lodash2.default.uniqBy(seller_data.customer_ids, 'customer_id');
       seller_data.customer_invite_detail.push({ customer_id, invited_date: (0, _moment2.default)().utcOffset(330) });
       seller_data.customer_invite_detail = _lodash2.default.uniqBy(seller_data.customer_invite_detail, 'customer_id');
       replyObject.seller_detail = JSON.parse(JSON.stringify((await sellerAdaptor.retrieveOrUpdateSellerDetail({ where: JSON.parse(JSON.stringify({ id: seller_id })) }, seller_data, true)) || {}));
@@ -1294,20 +1341,64 @@ class SellerController {
     };
     try {
       let token_user = _shared2.default.verifyAuthorization(request.headers);
-      const { mobile_no, full_name, email } = request.payload || {};
+      const { mobile_no, full_name, email, is_credit_allowed, credit_limit } = request.payload || {};
       const { seller_id } = request.params || {};
       let { id: user_id } = token_user;
       let [seller_data, user_data] = await _bluebird2.default.all([sellerAdaptor.retrieveSellerDetail({
         where: { id: seller_id, user_id },
-        attributes: ['customer_ids', 'seller_name', 'id']
+        attributes: ['customer_ids', 'customer_invite_detail', 'seller_name', 'id']
       }), userAdaptor.createUserForSeller(JSON.parse(JSON.stringify({ mobile_no })), JSON.parse(JSON.stringify({
         mobile_no, full_name, email,
         user_status_type: 2, role_type: 5
       })), seller_id)]);
-      await userAdaptor.createUserIndexedData({ user_id: user_data.id, my_seller_ids: [parseInt(seller_id)] });
-      seller_data.customer_ids = seller_data.customer_ids || [];
-      seller_data.customer_ids.push(user_data.id);
-      seller_data.customer_ids = _lodash2.default.uniq(seller_data.customer_ids);
+      await userAdaptor.retrieveOrUpdateUserIndexedData({
+        where: { user_id: user_data.id },
+        attributes: ['my_seller_ids', 'id']
+      }, { seller_id, user_id: user_data.id });
+      let customer_id_exist = false;
+      seller_data.customer_invite_detail = seller_data.customer_invite_detail || [];
+      seller_data.customer_ids = (seller_data.customer_ids || []).map(item => {
+        if (item.customer_id) {
+          if (item.customer_id === parseInt(user_data.id)) {
+            customer_id_exist = true;
+            item.is_credit_allowed = is_credit_allowed || item.is_credit_allowed || false;
+            item.credit_limit = credit_limit || item.credit_limit || 0;
+            return item;
+          }
+          item.is_credit_allowed = item.is_credit_allowed || false;
+          item.credit_limit = item.credit_limit || 0;
+          return item;
+        }
+
+        if (parseInt((item || 0).toString()) === parseInt(user_data.id)) {
+          customer_id_exist = true;
+          return {
+            customer_id: parseInt((item || 0).toString()),
+            is_credit_allowed: is_credit_allowed || false,
+            credit_limit: credit_limit || 0
+          };
+        }
+        return {
+          customer_id: parseInt((item || 0).toString()),
+          is_credit_allowed: false,
+          credit_limit: 0
+        };
+      });
+
+      if (!customer_id_exist) {
+        seller_data.customer_ids.push({
+          customer_id: parseInt(user_data.id),
+          is_credit_allowed: is_credit_allowed || false,
+          credit_limit: credit_limit || 0
+        });
+      }
+
+      seller_data.customer_ids = _lodash2.default.uniqBy(seller_data.customer_ids, 'customer_id');
+      seller_data.customer_invite_detail.push({
+        customer_id: parseInt(user_data.id),
+        invited_date: (0, _moment2.default)().utcOffset(330)
+      });
+      seller_data.customer_invite_detail = _lodash2.default.uniqBy(seller_data.customer_invite_detail, 'customer_id');
       replyObject.seller_detail = JSON.parse(JSON.stringify((await sellerAdaptor.retrieveOrUpdateSellerDetail({ where: JSON.parse(JSON.stringify({ id: seller_id })) }, seller_data, true, user_data)) || {}));
       const message = `Yay! Seller ${seller_data.seller_name} has invited you to BinBill for online orders, faster delivery, home services & ongoing offers. 
 Download Now: http://bit.ly/binbill`;
@@ -1392,12 +1483,9 @@ Download Now: http://bit.ly/binbill`;
     };
     try {
       const { seller_id } = request.params || {};
-      const seller_provider_types = await _bluebird2.default.all(request.payload.provider_type_detail.map(item => {
+      const seller_provider_types = await _bluebird2.default.all((request.payload.provider_type_detail.length ? request.payload.provider_type_detail : [{ brand_ids: [], category_4_id: 0 }]).map(item => {
         const { provider_type_id, sub_category_id, category_brands, category_4_id, brand_ids } = item;
-        return sellerAdaptor.retrieveOrCreateSellerProviderBrands(JSON.parse(JSON.stringify({
-          provider_type_id, seller_id,
-          sub_category_id
-        })), JSON.parse(JSON.stringify({
+        return sellerAdaptor.retrieveOrCreateSellerProviderBrands(JSON.parse(JSON.stringify({ provider_type_id, seller_id, sub_category_id })), JSON.parse(JSON.stringify({
           provider_type_id, seller_id, sub_category_id,
           category_brands
         })), category_4_id, brand_ids);
@@ -1681,11 +1769,11 @@ Download Now: http://bit.ly/binbill`;
     try {
 
       const { id: seller_id } = request.params || {};
-      const { id, item_value, rule_type, minimum_points, points_per_item, user_id } = request.payload;
+      const { id, item_value, rule_type, minimum_points, points_per_item, user_id, order_value, allow_auto_loyalty } = request.payload;
       replyObject.loyalty_rules = await sellerAdaptor.retrieveOrCreateSellerLoyaltyRules(JSON.parse(JSON.stringify({ id, user_id, seller_id })), JSON.parse(JSON.stringify({
-        id, item_value, rule_type, seller_id,
+        id, item_value, rule_type, seller_id, allow_auto_loyalty,
         minimum_points: minimum_points || points_per_item,
-        points_per_item, user_id, status_type: 1
+        points_per_item, user_id, status_type: 1, order_value
       })));
       return reply.response(JSON.parse(JSON.stringify(replyObject))).code(201);
     } catch (err) {
@@ -2316,8 +2404,8 @@ Download Now: http://bit.ly/binbill`;
     try {
       if (!request.pre.forceUpdate) {
         const { seller_id } = request.params;
-        const { mobile_no, offer_id, is_linked_offers, linked_only } = request.query || {};
-        const seller_customers = await sellerAdaptor.retrieveSellerConsumers(seller_id, mobile_no, offer_id);
+        const { mobile_no, offer_id, is_linked_offers, linked_only, user_status_type } = request.query || {};
+        const seller_customers = await sellerAdaptor.retrieveSellerConsumers(seller_id, mobile_no, offer_id, user_status_type);
         return reply.response({
           status: true,
           message: 'Successful',
@@ -2483,7 +2571,7 @@ Download Now: http://bit.ly/binbill`;
           where: JSON.parse(JSON.stringify({
             seller_id, user_id: customer_id, admin_status: { $ne: 2 }
           })),
-          attributes: ['id', 'home_delivered', 'cashback_status', 'copies', [modals.sequelize.literal(`(select sum(purchase_cost) from consumer_products as product where product.user_id = "cashback_jobs"."user_id" and product.job_id = "cashback_jobs"."job_id" and product.seller_id = ${seller_id})`), 'amount_paid'], [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where seller_credit.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 1 and seller_credit.user_id = "cashback_jobs"."user_id" and seller_credit.seller_id = ${seller_id})`), 'total_credits'], [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where seller_credit.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 2 and seller_credit.user_id = "cashback_jobs"."user_id" and seller_credit.seller_id = ${seller_id})`), 'redeemed_credits'], 'created_at', [modals.sequelize.literal(`(select full_name from users where users.id = "cashback_jobs"."user_id")`), 'user_name'], [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_loyalty as loyalty_wallet where loyalty_wallet.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 1 and loyalty_wallet.user_id = "cashback_jobs"."user_id" and loyalty_wallet.seller_id = ${seller_id})`), 'total_loyalty'], [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_loyalty as loyalty_wallet where loyalty_wallet.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 2 and loyalty_wallet.user_id = "cashback_jobs"."user_id" and loyalty_wallet.seller_id = ${seller_id})`), 'redeemed_loyalty'], [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_cashback as user_wallet where user_wallet.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 1 and user_wallet.user_id = "cashback_jobs"."user_id" and user_wallet.seller_id = ${seller_id})`), 'total_cashback'], [modals.sequelize.literal(`(select count(*) from table_expense_sku as expense_skus where expense_skus.user_id = "cashback_jobs"."user_id" and expense_skus.seller_id = ${seller_id} and expense_skus.job_id = "cashback_jobs"."job_id" )`), 'item_counts']],
+          attributes: ['id', 'home_delivered', 'cashback_status', 'copies', [modals.sequelize.literal(`(select sum(purchase_cost) from consumer_products as product where product.user_id = "cashback_jobs"."user_id" and product.job_id = "cashback_jobs"."job_id" and product.seller_id = ${seller_id})`), 'amount_paid'], [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where seller_credit.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 1 and seller_credit.user_id = "cashback_jobs"."user_id" and seller_credit.seller_id = ${seller_id})`), 'total_credits'], [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where seller_credit.job_id = "cashback_jobs"."id" and status_type in (16,14) and transaction_type = 2 and seller_credit.user_id = "cashback_jobs"."user_id" and seller_credit.seller_id = ${seller_id})`), 'redeemed_credits'], 'created_at', [modals.sequelize.literal(`(select full_name from users where users.id = "cashback_jobs"."user_id")`), 'user_name'], [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_loyalty as loyalty_wallet where loyalty_wallet.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 1 and loyalty_wallet.user_id = "cashback_jobs"."user_id" and loyalty_wallet.seller_id = ${seller_id})`), 'total_loyalty'], [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_loyalty as loyalty_wallet where loyalty_wallet.job_id = "cashback_jobs"."id" and status_type in (16, 14) and transaction_type = 2 and loyalty_wallet.user_id = "cashback_jobs"."user_id" and loyalty_wallet.seller_id = ${seller_id})`), 'redeemed_loyalty'], [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_cashback as user_wallet where user_wallet.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 1 and user_wallet.user_id = "cashback_jobs"."user_id" and user_wallet.seller_id = ${seller_id})`), 'total_cashback'], [modals.sequelize.literal(`(select count(*) from table_expense_sku as expense_skus where expense_skus.user_id = "cashback_jobs"."user_id" and expense_skus.seller_id = ${seller_id} and expense_skus.job_id = "cashback_jobs"."id" )`), 'item_counts']],
           order: [['created_at', 'desc']]
         });
 

@@ -1,4 +1,4 @@
-import NotificationAdaptor from './api/Adaptors/notification';
+import NotificationAdaptor from './api/adaptors/notification';
 import schedule from 'node-schedule';
 import models from './api/models';
 import moment from 'moment';

@@ -3,8 +3,8 @@
 
 import google from '../../helpers/google';
 import shared from '../../helpers/shared';
-import ServiceCenterAdaptor from '../Adaptors/serviceCenter';
-import BrandAdaptor from '../Adaptors/brands';
+import ServiceCenterAdaptor from '../adaptors/serviceCenter';
+import BrandAdaptor from '../adaptors/brands';
 
 let modals;
 let serviceCenterAdaptor;

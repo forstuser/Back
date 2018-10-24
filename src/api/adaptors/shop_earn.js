@@ -476,8 +476,8 @@ export default class ShopEarnAdaptor {
   }
 
   async retrieveSKUMeasurements(options, location) {
-    const sku_measurement_attributes = (location && location.toLowerCase() ===
-        'other') || !location ? [
+    const sku_measurement_attributes = (location && location.toLowerCase() !==
+        'other') ? [
       'measurement_type', 'measurement_value', 'mrp',
       'pack_numbers', 'cashback_percent', 'bar_code',
       'id', 'sku_id', [
@@ -1267,5 +1267,10 @@ export default class ShopEarnAdaptor {
     } catch (e) {
       throw e;
     }
+  }
+
+  async retrieveUserSKUExpenses(options) {
+    const sku_expenses = await this.modals.expense_sku_items.findAll(options);
+    return sku_expenses.map(item => item.toJSON());
   }
 }

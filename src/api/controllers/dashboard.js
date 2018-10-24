@@ -1,10 +1,10 @@
 /*jshint esversion: 6 */
 'use strict';
 
-import NotificationAdaptor from '../Adaptors/notification';
-import EHomeAdaptor from '../Adaptors/ehome';
-import DashboardAdaptor from '../Adaptors/dashboard';
-import UserAdaptor from '../Adaptors/user';
+import NotificationAdaptor from '../adaptors/notification';
+import EHomeAdaptor from '../adaptors/ehome';
+import DashboardAdaptor from '../adaptors/dashboard';
+import UserAdaptor from '../adaptors/user';
 import shared from '../../helpers/shared';
 
 let dashboardAdaptor;

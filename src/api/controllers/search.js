@@ -2,7 +2,7 @@
 'use strict';
 
 import shared from '../../helpers/shared';
-import SearchAdaptor from '../Adaptors/search';
+import SearchAdaptor from '../adaptors/search';
 
 let modals;
 let searchAdaptor;

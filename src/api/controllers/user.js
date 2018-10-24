@@ -8,16 +8,17 @@ import GoogleHelper from '../../helpers/google';
 import OTPHelper from '../../helpers/otp';
 import shared from '../../helpers/shared';
 import trackingHelper from '../../helpers/tracking';
-import DashboardAdaptor from '../Adaptors/dashboard';
-import FCMManager from '../Adaptors/fcm';
-import NearByAdaptor from '../Adaptors/nearby';
-import NotificationAdaptor from '../Adaptors/notification';
-import UserAdaptor from '../Adaptors/user';
+import DashboardAdaptor from '../adaptors/dashboard';
+import FCMManager from '../adaptors/fcm';
+import NearByAdaptor from '../adaptors/nearby';
+import NotificationAdaptor from '../adaptors/notification';
+import UserAdaptor from '../adaptors/user';
 import authentication from './authentication';
 import S3FS from 's3fs';
 import Promise from 'bluebird';
-import SellerAdaptor from '../Adaptors/sellers';
-import CategoryAdaptor from '../Adaptors/category';
+import SellerAdaptor from '../adaptors/sellers';
+import CategoryAdaptor from '../adaptors/category';
+import _ from 'lodash';
 
 const PUBLIC_KEY = new RSA(config.TRUECALLER_PUBLIC_KEY,
     {signingScheme: 'sha512'});
@@ -59,6 +60,49 @@ let loginOrRegisterUser = async parameters => {
   try {
     let userData = await userAdaptor.loginOrRegister(userWhere, userInput);
     if (!userData[1]) {
+
+      const user_detail = userData[0] ? userData[0].toJSON() : undefined;
+      if (user_detail && user_detail.user_status_type === 2) {
+        let seller_detail = await modals.sellers.findAll({
+          where: {
+            customer_invite_detail: {
+              $or: [
+                {$contains: [{'customer_id': user_detail.id}]},
+                {$contains: [{'customer_id': user_detail.id.toString()}]}],
+            },
+            is_onboarded: true, seller_type_id: 1,
+          },
+          attributes: ['id', 'customer_invite_detail', 'user_id'],
+        });
+        seller_detail = _.orderBy(seller_detail.map(item => {
+          item = item.toJSON();
+          const customer_invite_detail = item.customer_invite_detail.find(
+              cidItem => cidItem.customer_id.toString() ===
+                  user_detail.id.toString());
+          item.invited_date = (customer_invite_detail ||
+              {invited_date: moment()}).invited_date;
+          item.customer_id = (customer_invite_detail ||
+              {invited_date: moment()}).customer_id;
+          return item;
+        }), ['invited_date'], ['asc']);
+        if (seller_detail.length > 0) {
+          await modals.seller_wallet.create(
+              {
+                status_type: 16, cashback_source: 3,
+                amount: config.SELLER_REFERAL_CASH_BACK,
+                seller_id: seller_detail[0].id, user_id: user_detail.id,
+              });
+
+          await notificationAdaptor.notifyUserCron({
+            seller_user_id: seller_detail[0].user_id,
+            payload: {
+              title: `You have recieved cash back ${config.SELLER_REFERAL_CASH_BACK}.`,
+              description: `Cash back ₹${config.SELLER_REFERAL_CASH_BACK} has been credited to your wallet as your user with mobile number ${user_detail.mobile_no} has joined bin bill.`,
+              notification_type: 3, notification_id: Math.random(),
+            },
+          });
+        }
+      }
       userData = await Promise.all([
         Promise.try(() => userData[0].updateAttributes(userInput)),
         userData[1]]);

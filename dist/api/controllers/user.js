@@ -40,23 +40,23 @@ var _tracking = require('../../helpers/tracking');
 
 var _tracking2 = _interopRequireDefault(_tracking);
 
-var _dashboard = require('../Adaptors/dashboard');
+var _dashboard = require('../adaptors/dashboard');
 
 var _dashboard2 = _interopRequireDefault(_dashboard);
 
-var _fcm = require('../Adaptors/fcm');
+var _fcm = require('../adaptors/fcm');
 
 var _fcm2 = _interopRequireDefault(_fcm);
 
-var _nearby = require('../Adaptors/nearby');
+var _nearby = require('../adaptors/nearby');
 
 var _nearby2 = _interopRequireDefault(_nearby);
 
-var _notification = require('../Adaptors/notification');
+var _notification = require('../adaptors/notification');
 
 var _notification2 = _interopRequireDefault(_notification);
 
-var _user = require('../Adaptors/user');
+var _user = require('../adaptors/user');
 
 var _user2 = _interopRequireDefault(_user);
 
@@ -72,13 +72,17 @@ var _bluebird = require('bluebird');
 
 var _bluebird2 = _interopRequireDefault(_bluebird);
 
-var _sellers = require('../Adaptors/sellers');
+var _sellers = require('../adaptors/sellers');
 
 var _sellers2 = _interopRequireDefault(_sellers);
 
-var _category = require('../Adaptors/category');
+var _category = require('../adaptors/category');
 
 var _category2 = _interopRequireDefault(_category);
+
+var _lodash = require('lodash');
+
+var _lodash2 = _interopRequireDefault(_lodash);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -116,6 +120,42 @@ let loginOrRegisterUser = async parameters => {
   try {
     let userData = await userAdaptor.loginOrRegister(userWhere, userInput);
     if (!userData[1]) {
+
+      const user_detail = userData[0] ? userData[0].toJSON() : undefined;
+      if (user_detail && user_detail.user_status_type === 2) {
+        let seller_detail = await modals.sellers.findAll({
+          where: {
+            customer_invite_detail: {
+              $or: [{ $contains: [{ 'customer_id': user_detail.id }] }, { $contains: [{ 'customer_id': user_detail.id.toString() }] }]
+            },
+            is_onboarded: true, seller_type_id: 1
+          },
+          attributes: ['id', 'customer_invite_detail', 'user_id']
+        });
+        seller_detail = _lodash2.default.orderBy(seller_detail.map(item => {
+          item = item.toJSON();
+          const customer_invite_detail = item.customer_invite_detail.find(cidItem => cidItem.customer_id.toString() === user_detail.id.toString());
+          item.invited_date = (customer_invite_detail || { invited_date: (0, _moment2.default)() }).invited_date;
+          item.customer_id = (customer_invite_detail || { invited_date: (0, _moment2.default)() }).customer_id;
+          return item;
+        }), ['invited_date'], ['asc']);
+        if (seller_detail.length > 0) {
+          await modals.seller_wallet.create({
+            status_type: 16, cashback_source: 3,
+            amount: _main2.default.SELLER_REFERAL_CASH_BACK,
+            seller_id: seller_detail[0].id, user_id: user_detail.id
+          });
+
+          await notificationAdaptor.notifyUserCron({
+            seller_user_id: seller_detail[0].user_id,
+            payload: {
+              title: `You have recieved cash back ${_main2.default.SELLER_REFERAL_CASH_BACK}.`,
+              description: `Cash back ₹${_main2.default.SELLER_REFERAL_CASH_BACK} has been credited to your wallet as your user with mobile number ${user_detail.mobile_no} has joined bin bill.`,
+              notification_type: 3, notification_id: Math.random()
+            }
+          });
+        }
+      }
       userData = await _bluebird2.default.all([_bluebird2.default.try(() => userData[0].updateAttributes(userInput)), userData[1]]);
     } else {
       userData = await _bluebird2.default.all([userData[0], userData[1]]);

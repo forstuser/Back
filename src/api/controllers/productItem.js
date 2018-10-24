@@ -1,16 +1,16 @@
 import moment from 'moment/moment';
 import shared from '../../helpers/shared';
-import InsuranceAdaptor from '../Adaptors/insurances';
-import AMCAdaptor from '../Adaptors/amcs';
-import PUCAdaptor from '../Adaptors/pucs';
-import RegCertificateAdaptor from '../Adaptors/reg_certificates';
-import WarrantyAdaptor from '../Adaptors/warranties';
-import RepairAdaptor from '../Adaptors/repairs';
-import SellerAdaptor from '../Adaptors/sellers';
-import CategoryAdaptor from '../Adaptors/category';
-import ProductAdaptor from '../Adaptors/product';
-import JobAdaptor from '../Adaptors/job';
-import FuelAdaptor from '../Adaptors/refueling';
+import InsuranceAdaptor from '../adaptors/insurances';
+import AMCAdaptor from '../adaptors/amcs';
+import PUCAdaptor from '../adaptors/pucs';
+import RegCertificateAdaptor from '../adaptors/reg_certificates';
+import WarrantyAdaptor from '../adaptors/warranties';
+import RepairAdaptor from '../adaptors/repairs';
+import SellerAdaptor from '../adaptors/sellers';
+import CategoryAdaptor from '../adaptors/category';
+import ProductAdaptor from '../adaptors/product';
+import JobAdaptor from '../adaptors/job';
+import FuelAdaptor from '../adaptors/refueling';
 
 let repairAdaptor;
 let sellerAdaptor;
