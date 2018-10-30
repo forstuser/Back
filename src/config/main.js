@@ -2,13 +2,30 @@
 
 export default {
   HOUSEHOLD_CATEGORY_ID: process.env.HOUSEHOLD_CATEGORY_ID,
+  MILK_SKU_CATEGORY: process.env.MILK_SKU_CATEGORY,
+  MILK_SKU_MAIN_CATEGORY: process.env.MILK_SKU_MAIN_CATEGORY,
   DEFAULT_SELLER_IDS: (process.env.DEFAULT_SELLER_IDS || '').split(','),
   SELLER_REFERAL_CASH_BACK: process.env.SELLER_REFERAL_CASH_BACK,
   MILK_SKU_CASH_BACK_PERCENT: process.env.MILK_SKU_CASH_BACK_PERCENT,
+  FIXED_CASHBACK: process.env.FIXED_CASHBACK,
+  SKU_LIMIT: process.env.SKU_LIMIT,
+  SELLER_FILTER_DISTANCE: process.env.SELLER_FILTER_DISTANCE,
   API_HOST: process.env.API_HOST,
+  ADMIN: {
+    CREDENTIALS: {
+      email: process.env.ADMIN_EMAIL,
+      password: process.env.ADMIN_PASS,
+    },
+    HOST: process.env.ADMIN_HOST,
+    LOGIN_API:process.env.ADMIN_LOGIN_API,
+    APPROVAL_API:process.env.ADMIN_APPROVAL_API
+  },
   CASH_FREE:{
     POST_BACK_URL: process.env.CASH_FREE_POST_BACK_URL,
     SECRET_KEY: process.env.CASH_FREE_SECRET_KEY,
+    HOST:process.env.CASH_FREE_API_HOST,
+    STATUS_API:process.env.CASH_FREE_STATUS_API,
+    APP_ID:process.env.CASH_FREE_APP_ID,
   },
   SMS: {
     AUTH_KEY: process.env.SMS_AUTH_KEY,

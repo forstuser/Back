@@ -200,13 +200,13 @@ class JobAdaptor {
 
       await Promise.all([this.notificationAdaptor.notifyUserCron({
         user_id, payload: {
-          title: `Hurray! You can redeem your Cashback ₹ ${total_amount} in your next order with Seller ${seller_name || ''}!`,
+          title: `Hurray! You can redeem your CashBack ₹ ${total_amount} in your next order with Seller ${seller_name || ''}!`,
           description: 'Please click here for more detail.',
           notification_type: 34
         }
       }), home_delivered ? this.notificationAdaptor.notifyUserCron({
         seller_user_id, payload: {
-          title: `Hurray! You have received Cashback on Home Delivery to ${user_name || ''} in your BB Wallet!`,
+          title: `Hurray! You have received CashBack on Home Delivery to ${user_name || ''} in your BB Wallet!`,
           description: 'Please click here for more detail.',
           notification_type: 3, notification_id: Math.random()
         }
@@ -221,13 +221,13 @@ class JobAdaptor {
           }), home_delivered ? this.approveHomeDeliveryCashback({ job_id, status_type: 16, seller_id }) : '']);
           await Promise.all([this.notificationAdaptor.notifyUserCron({
             user_id, payload: {
-              title: `Your Seller ${seller_name || ''} has verified your transaction for Cashback Redemption.`,
+              title: `Your Seller ${seller_name || ''} has verified your transaction for CashBack Redemption.`,
               description: 'Please click here for more detail.',
               notification_type: 34
             }
           }), home_delivered ? this.notificationAdaptor.notifyUserCron({
             seller_user_id, payload: {
-              title: `Hurray! You have received Cashback on Home Delivery to ${user_name || ''} in your BB Wallet!`,
+              title: `Hurray! You have received CashBack on Home Delivery to ${user_name || ''} in your BB Wallet!`,
               description: 'Please click here for more detail.',
               notification_type: 3, notification_id: Math.random()
             }
@@ -244,13 +244,13 @@ class JobAdaptor {
 
           await Promise.all([this.notificationAdaptor.notifyUserCron({
             user_id, payload: {
-              title: `Your Seller ${seller_name || ''} has verified your transaction for Cashback Redemption.`,
+              title: `Your Seller ${seller_name || ''} has verified your transaction for CashBack Redemption.`,
               description: 'Please click here for more detail.',
               notification_type: 34
             }
           }), home_delivered ? this.notificationAdaptor.notifyUserCron({
             seller_user_id, payload: {
-              title: `Hurray! You have received Cashback on Home Delivery to ${user_name || ''} in your BB Wallet!`,
+              title: `Hurray! You have received CashBack on Home Delivery to ${user_name || ''} in your BB Wallet!`,
               description: 'Please click here for more detail.',
               notification_type: 3, notification_id: Math.random()
             }
@@ -266,13 +266,13 @@ class JobAdaptor {
         }), home_delivered ? this.approveHomeDeliveryCashback({ job_id, status_type: 16, seller_id }) : '']);
         await Promise.all([this.notificationAdaptor.notifyUserCron({
           user_id, payload: {
-            title: `Your Seller ${seller_name || ''} has verified your transaction for Cashback Redemption.`,
+            title: `Your Seller ${seller_name || ''} has verified your transaction for CashBack Redemption.`,
             description: 'Please click here for more detail.',
             notification_type: 34
           }
         }), home_delivered ? this.notificationAdaptor.notifyUserCron({
           seller_user_id, payload: {
-            title: `Hurray! You have received Cashback on Home Delivery to ${user_name || ''} in your BB Wallet!`,
+            title: `Hurray! You have received CashBack on Home Delivery to ${user_name || ''} in your BB Wallet!`,
             description: 'Please click here for more detail.',
             notification_type: 3, notification_id: Math.random()
           }
@@ -301,7 +301,7 @@ class JobAdaptor {
       user_id, transaction_type: 1, cashback_source: 2
     }), this.notificationAdaptor.notifyUserCron({
       seller_user_id, payload: {
-        title: `${user_name || ''} has opted for cashback redemption & it has been credited to your BB Wallet.`,
+        title: `${user_name || ''} has opted for CashBack redemption & it has been credited to your BB Wallet.`,
         description: 'Please click here for more detail.',
         notification_type: 3, notification_id: Math.random()
       }

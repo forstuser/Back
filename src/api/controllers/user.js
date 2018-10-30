@@ -96,8 +96,8 @@ let loginOrRegisterUser = async parameters => {
           await notificationAdaptor.notifyUserCron({
             seller_user_id: seller_detail[0].user_id,
             payload: {
-              title: `You have recieved cash back ${config.SELLER_REFERAL_CASH_BACK}.`,
-              description: `Cash back ₹${config.SELLER_REFERAL_CASH_BACK} has been credited to your wallet as your user with mobile number ${user_detail.mobile_no} has joined bin bill.`,
+              title: `Yay! ₹${config.SELLER_REFERAL_CASH_BACK} credited to you.`,
+              description: `Congratulations! ₹${config.SELLER_REFERAL_CASH_BACK} has been credited to your BB Wallet as your user with mobile number ${user_detail.mobile_no} has registered with us.`,
               notification_type: 3, notification_id: Math.random(),
             },
           });

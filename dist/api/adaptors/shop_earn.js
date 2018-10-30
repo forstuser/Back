@@ -83,7 +83,7 @@ class ShopEarnAdaptor {
       const seller_sku_ids = seller_skus.map(item => item.sku_id);
       const seller_sku_measurement_ids = seller_skus.map(item => item.sku_measurement_id);
       title = { $iLike: `%${title || ''}%` };
-      limit = limit || 100;
+      limit = limit || _main2.default.SKU_LIMIT;
       offset = offset || 0;
       measurement_values = (measurement_values || '').trim().split(',').filter(item => !!item);
       measurement_types = (measurement_types || '').trim().split(',').filter(item => !!item);
@@ -249,7 +249,7 @@ class ShopEarnAdaptor {
             bar_code
           })),
           attributes: sku_measurement_attributes,
-          required: false
+          required: true
         }], order: [['priority_index'], ['title']], limit, offset,
         attributes: sku_attributes
       });
@@ -415,7 +415,8 @@ class ShopEarnAdaptor {
           category_ids: {
             $contains: [{ 'category_id': item.id }]
           }
-        }, order: [['brand_index'], ['brand_name']]
+        }, order: [['brand_index'], ['brand_name']],
+        attributes: ['brand_id', 'brand_name', 'brand_index', 'status_type']
       })));
       categories = categories.map((item, index) => {
         item.sub_categories = sub_categories.filter(bItem => bItem.ref_id === item.id);
@@ -516,7 +517,7 @@ class ShopEarnAdaptor {
           model: this.modals.user_wallet,
           attributes: ['seller_id', 'amount', 'transaction_type', 'cashback_source', 'is_paytm', 'status_type']
         }],
-        attributes: ['id', 'admin_status', 'ce_status', 'home_delivered', 'cashback_status', 'seller_status', 'copies', [this.modals.sequelize.literal(`(select sum(purchase_cost) from consumer_products as product where product.user_id = "cashback_jobs"."user_id" and product.job_id = "cashback_jobs"."job_id")`), 'amount_paid'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where seller_credit.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 1 and seller_credit.user_id = "cashback_jobs"."user_id")`), 'total_credits'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where seller_credit.job_id = "cashback_jobs"."id" and (status_type in (14) or (status_type in (16) and transaction_type = 2)) and seller_credit.user_id = "cashback_jobs"."user_id")`), 'redeemed_credits'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_loyalty as loyalty_wallet where loyalty_wallet.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 1 and loyalty_wallet.user_id = "cashback_jobs"."user_id")`), 'total_loyalty'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_loyalty as loyalty_wallet where loyalty_wallet.job_id = "cashback_jobs"."id" and (status_type in (14) or (status_type in (16) and transaction_type = 2)) and loyalty_wallet.user_id = "cashback_jobs"."user_id")`), 'redeemed_loyalty'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_user_cashback as user_wallet where user_wallet.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 1 and user_wallet.user_id = "cashback_jobs"."user_id")`), 'total_cashback'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_user_cashback as user_wallet where user_wallet.job_id = "cashback_jobs"."id" and status_type in (14) and user_wallet.user_id = "cashback_jobs"."user_id")`), 'redeemed_cashback'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_user_cashback as user_wallet where user_wallet.job_id = "cashback_jobs"."id" and status_type in (13) and transaction_type = 1 and user_wallet.user_id = "cashback_jobs"."user_id")`), 'pending_cashback'], [this.modals.sequelize.literal(`(select count(*) from table_expense_sku as expense_skus where expense_skus.user_id = "cashback_jobs"."user_id" and expense_skus.job_id = "cashback_jobs"."id" )`), 'item_counts'], 'created_at', 'updated_at', 'reason_id', 'verified_seller', 'digitally_verified'],
+        attributes: ['id', 'admin_status', 'ce_status', 'home_delivered', 'cashback_status', 'seller_status', 'copies', 'limit_rule_id', [this.modals.sequelize.literal(`(select sum(purchase_cost) from consumer_products as product where product.user_id = "cashback_jobs"."user_id" and product.job_id = "cashback_jobs"."job_id")`), 'amount_paid'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where seller_credit.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 1 and seller_credit.user_id = "cashback_jobs"."user_id")`), 'total_credits'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where seller_credit.job_id = "cashback_jobs"."id" and (status_type in (14) or (status_type in (16) and transaction_type = 2)) and seller_credit.user_id = "cashback_jobs"."user_id")`), 'redeemed_credits'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_loyalty as loyalty_wallet where loyalty_wallet.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 1 and loyalty_wallet.user_id = "cashback_jobs"."user_id")`), 'total_loyalty'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_loyalty as loyalty_wallet where loyalty_wallet.job_id = "cashback_jobs"."id" and (status_type in (14) or (status_type in (16) and transaction_type = 2)) and loyalty_wallet.user_id = "cashback_jobs"."user_id")`), 'redeemed_loyalty'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_user_cashback as user_wallet where user_wallet.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 1 and user_wallet.user_id = "cashback_jobs"."user_id")`), 'total_cashback'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_user_cashback as user_wallet where user_wallet.job_id = "cashback_jobs"."id" and status_type in (14) and user_wallet.user_id = "cashback_jobs"."user_id")`), 'redeemed_cashback'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_user_cashback as user_wallet where user_wallet.job_id = "cashback_jobs"."id" and status_type in (13) and transaction_type = 1 and user_wallet.user_id = "cashback_jobs"."user_id")`), 'pending_cashback'], [this.modals.sequelize.literal(`(select count(*) from table_expense_sku as expense_skus where expense_skus.user_id = "cashback_jobs"."user_id" and expense_skus.job_id = "cashback_jobs"."id" )`), 'item_counts'], 'created_at', 'updated_at', 'reason_id', 'verified_seller', 'digitally_verified'],
         order: [['updated_at', 'desc'], ['id', 'desc']]
       })]);
       return transaction_detail.map(item => {
@@ -546,10 +547,10 @@ class ShopEarnAdaptor {
           item.expense_sku_items = item.expense_sku_items.filter(esItem => esItem.timely_added);
         }
 
-        const { admin_status, ce_status, cashback_status, seller_status, total_cashback, verified_seller, pending_cashback, digitally_verified } = item;
+        const { admin_status, ce_status, cashback_status, limit_rule_id, seller_status, total_cashback, verified_seller, pending_cashback, digitally_verified } = item;
         switch (admin_status) {
           case 4:
-            item.status_message = 'Thank you for submitting your Bill.\n' + 'You will receive notification once the verification process is complete for Cashback Claim\n';
+            item.status_message = 'Thank you for submitting your Bill.\n' + 'You will receive notification once the verification process is complete for CashBack Claim\n';
             break;
           case 8:
             switch (ce_status) {
@@ -558,7 +559,7 @@ class ShopEarnAdaptor {
                 item.status_message = reason.description;
                 break;
               case 5:
-                item.status_message = 'Your Cashback has been Approved. Your Cashback amount will be credited in your Wallet shortly.';
+                item.status_message = 'Your CashBack has been Approved. Your CashBack amount will be credited in your Wallet shortly.';
                 break;
               default:
                 item.status_message = 'Your Bill has been accepted and our team is calculating cashback for the same.';
@@ -574,9 +575,9 @@ class ShopEarnAdaptor {
             switch (cashback_status) {
               case 16:
                 if (verified_seller || digitally_verified) {
-                  item.status_message = `You have Received Cashback "₹${total_cashback}" `;
+                  item.status_message = limit_rule_id ? `We have credited only "₹${total_cashback}" in your Wallet as you have reached your CashBack limit below bifurcation could vary as they depend on items you mentioned and fixed CashBack.` : `You have Received CashBack "₹${total_cashback}" `;
                 } else {
-                  item.status_message = `You have received "₹${total_cashback}" cashback on your bill. To avail Cashback on FMCG items, please complete your Bill Verification Process through either of the following steps: \n\n\t\t 1) Add Your Seller in the BinBill Network so he can verify your Bills.\n\t\t2) Create your Shopping List in our Shop & Earn section before uploading your Shopping Bills.\n\t\t3) Make a Digital Bill Payments.`;
+                  item.status_message = `You have received "₹${total_cashback}" cashback on your bill. To avail CashBack on FMCG items, please complete your Bill Verification Process through either of the following steps: \n\n\t\t 1) Add Your Seller in the BinBill Network so he can verify your Bills.\n\t\t2) Create your Shopping List in our Shop & Earn section before uploading your Shopping Bills.\n\t\t3) Make a Digital Bill Payments.`;
                 }
                 break;
               default:
@@ -586,10 +587,10 @@ class ShopEarnAdaptor {
                     break;
                   case 16:
                   case 14:
-                    item.status_message = `You have Received Cashback "₹${total_cashback}".`;
+                    item.status_message = limit_rule_id ? `We have credited only "₹${total_cashback}" in your Wallet as you have reached your CashBack limit below bifurcation could vary as they depend on items you mentioned and fixed CashBack.` : `You have Received CashBack "₹${total_cashback}" `;
                     break;
                   case 18:
-                    item.status_message = `Your claim for cashback has been rejected by the seller. You have received "₹${(item.fixed_cashback || { amount: 0 }).amount}" the fixed BinBill Cashback.`;
+                    item.status_message = `Your claim for cashback has been rejected by the seller. You have received "₹${(item.fixed_cashback || { amount: 0 }).amount}" the fixed BinBill CashBack.`;
                     break;
                   default:
                     item.status_message = `Your claim for cashback has been cancelled as your seller hasn't taken any action.`;
@@ -903,13 +904,13 @@ class ShopEarnAdaptor {
     try {
       const { seller_id } = options;
       const transaction_detail = await this.modals.cashback_jobs.findAll({
-        where: { seller_id, seller_status: 13 },
+        where: { seller_id, seller_status: 13, admin_status: 5 },
         attributes: ['id', 'home_delivered', 'cashback_status', 'copies', 'user_id', [this.modals.sequelize.literal(`(select sum(purchase_cost) from consumer_products as product where product.user_id = "cashback_jobs"."user_id" and product.job_id = "cashback_jobs"."job_id")`), 'amount_paid'], 'created_at', [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where seller_credit.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 1 and seller_credit.user_id = "cashback_jobs"."user_id")`), 'total_credits'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where seller_credit.job_id = "cashback_jobs"."id" and (status_type in (14) or (status_type in (16) and transaction_type = 2)) and seller_credit.user_id = "cashback_jobs"."user_id")`), 'redeemed_credits'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_loyalty as loyalty_wallet where loyalty_wallet.job_id = "cashback_jobs"."id" and status_type in (16) and transaction_type = 1 and loyalty_wallet.user_id = "cashback_jobs"."user_id")`), 'total_loyalty'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_loyalty as loyalty_wallet where loyalty_wallet.job_id = "cashback_jobs"."id" and (status_type in (14) or (status_type in (16) and transaction_type = 2)) and loyalty_wallet.user_id = "cashback_jobs"."user_id")`), 'redeemed_loyalty'], [this.modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_cashback as user_wallet where user_wallet.job_id = "cashback_jobs"."id" and status_type in (13) and transaction_type = 1 and user_wallet.user_id = "cashback_jobs"."user_id")`), 'pending_cashback'], [this.modals.sequelize.literal(`(select id from table_wallet_seller_cashback as user_wallet where user_wallet.job_id = "cashback_jobs"."id" and status_type in (13) and transaction_type = 1 and user_wallet.user_id = "cashback_jobs"."user_id")`), 'cashback_id'], [this.modals.sequelize.literal(`(select status_name from statuses where statuses.status_type = "cashback_jobs"."cashback_status")`), 'status_name'], [this.modals.sequelize.literal(`(select full_name from users where users.id = "cashback_jobs"."user_id")`), 'user_name'], [this.modals.sequelize.literal(`(select count(*) from table_expense_sku as expense_skus where expense_skus.user_id = "cashback_jobs"."user_id" and expense_skus.job_id = "cashback_jobs"."id" )`), 'item_counts']]
       });
       return transaction_detail.map(item => {
         item = item.toJSON();
         item.pending_cashback = item.pending_cashback || 0;
-        item.is_pending = item.pending_cashback > 0 && item.total_cashback === 0;
+        item.is_pending = item.total_cashback === 0;
         return item;
       });
     } catch (e) {
@@ -926,7 +927,7 @@ class ShopEarnAdaptor {
       });
       const item = transaction_detail.toJSON();
       item.pending_cashback = item.pending_cashback || 0;
-      item.is_pending = item.pending_cashback > 0 && item.total_cashback === 0;
+      item.is_pending = item.total_cashback === 0;
       return item;
     } catch (e) {
       throw e;

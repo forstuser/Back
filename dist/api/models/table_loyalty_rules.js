@@ -31,7 +31,7 @@ exports.default = (sequelize, DataTypes) => {
     },
     allow_auto_loyalty: {
       type: DataTypes.BOOLEAN,
-      defaultValue: 0
+      defaultValue: false
     },
     item_value: {
       type: DataTypes.STRING,

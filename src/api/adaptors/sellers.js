@@ -4,6 +4,7 @@ import CategoryAdaptor from './category';
 import UserAdaptor from './user';
 import Promise from 'bluebird';
 import moment from 'moment';
+import config from '../../config/main';
 
 export default class SellerAdaptor {
   constructor(modals, notificationAdaptor) {
@@ -176,22 +177,6 @@ export default class SellerAdaptor {
           notification_type: 35,
         },
       });
-    }
-    return result;
-  }
-
-  async retrieveOrUpdateInvitedSellerDetail(
-      query_options, seller_detail, is_create) {
-    let result = await this.modals.invited_sellers.findOne(query_options);
-    if (!result && is_create) {
-      result = await this.modals.invited_sellers.create(seller_detail);
-    }
-
-    if (result) {
-      await seller_detail ?
-          result.updateAttributes(JSON.parse(JSON.stringify(seller_detail))) :
-          seller_detail;
-      return result.toJSON();
     }
     return result;
   }
@@ -419,16 +404,17 @@ export default class SellerAdaptor {
       if (item.addresses) {
         const {address_line_1, address_line_2, city_name, state_name, locality_name, pin_code} = (item.addresses ||
             {});
-        item.user_address_detail = (`${address_line_1}${address_line_2 ?
-            ` ${address_line_2}` :
-            ''},${locality_name},${city_name},${state_name}-${pin_code}`).
-            split('null').join(',').
-            split('undefined').join(',').
-            split(',,').join(',').
-            split(',,').join(',').
-            split(',-,').join(',').
-            split(',,').join(',').
-            split(',,').join(',');
+        item.user_address_detail = (`${address_line_1 ?
+            address_line_1 : ''}${address_line_2 ?
+            ` ${address_line_2}` : ''}${locality_name ||
+        city_name || state_name ? ',' : pin_code ? '-' : ''}${locality_name ?
+            locality_name : ''}${city_name || state_name ?
+            ',' : pin_code ? '-' : ''}${city_name ?
+            city_name : ''}${state_name ? ',' : pin_code ? '-' : ''}${state_name ? state_name : ''}${pin_code ? '- ' : ''}${pin_code ? pin_code : ''}`).
+            split('null').join(',').split('undefined').join(',').
+            split(',,').join(',').split(',-,').join(',').
+            split(',,').join(',').split(',,').join(',');
+        item.user_address_detail = item.user_address_detail.trim();
       }
       return item;
     });
@@ -509,16 +495,17 @@ export default class SellerAdaptor {
       if (item.addresses) {
         const {address_line_1, address_line_2, city_name, state_name, locality_name, pin_code} = (item.addresses ||
             {});
-        item.user_address_detail = (`${address_line_1}${address_line_2 ?
-            ` ${address_line_2}` :
-            ''},${locality_name},${city_name},${state_name}-${pin_code}`).
-            split('null').join(',').
-            split('undefined').join(',').
-            split(',,').join(',').
-            split(',,').join(',').
-            split(',-,').join(',').
-            split(',,').join(',').
-            split(',,').join(',');
+        item.user_address_detail = (`${address_line_1 ?
+            address_line_1 : ''}${address_line_2 ?
+            ` ${address_line_2}` : ''}${locality_name ||
+        city_name || state_name ? ',' : pin_code ? '-' : ''}${locality_name ?
+            locality_name : ''}${city_name || state_name ?
+            ',' : pin_code ? '-' : ''}${city_name ?
+            city_name : ''}${state_name ? ',' : pin_code ? '-' : ''}${state_name ? state_name : ''}${pin_code ? '- ' : ''}${pin_code ? pin_code : ''}`).
+            split('null').join(',').split('undefined').join(',').
+            split(',,').join(',').split(',-,').join(',').
+            split(',,').join(',').split(',,').join(',');
+        item.user_address_detail = item.user_address_detail.trim();
       }
 
       return item;
@@ -1163,7 +1150,7 @@ export default class SellerAdaptor {
 
       return _.orderBy(final_result.filter(
           (elem) => (!!elem.distance &&
-              parseFloat(elem.distance) <= 100)), ['distance'], ['asc']);
+              parseFloat(elem.distance) <= config.SELLER_FILTER_DISTANCE)), ['distance'], ['asc']);
     }
   }
 

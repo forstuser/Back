@@ -28,6 +28,10 @@ var _moment = require('moment');
 
 var _moment2 = _interopRequireDefault(_moment);
 
+var _main = require('../../config/main');
+
+var _main2 = _interopRequireDefault(_main);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 class SellerAdaptor {
@@ -173,19 +177,6 @@ class SellerAdaptor {
     return result;
   }
 
-  async retrieveOrUpdateInvitedSellerDetail(query_options, seller_detail, is_create) {
-    let result = await this.modals.invited_sellers.findOne(query_options);
-    if (!result && is_create) {
-      result = await this.modals.invited_sellers.create(seller_detail);
-    }
-
-    if (result) {
-      (await seller_detail) ? result.updateAttributes(JSON.parse(JSON.stringify(seller_detail))) : seller_detail;
-      return result.toJSON();
-    }
-    return result;
-  }
-
   async retrieveSellerDetail(query_options) {
     const result = await this.modals.sellers.findOne(query_options);
     return result ? result.toJSON() : result;
@@ -307,7 +298,8 @@ class SellerAdaptor {
       item.addresses = addresses.find(aItem => item.id === aItem.user_id) || {};
       if (item.addresses) {
         const { address_line_1, address_line_2, city_name, state_name, locality_name, pin_code } = item.addresses || {};
-        item.user_address_detail = `${address_line_1}${address_line_2 ? ` ${address_line_2}` : ''},${locality_name},${city_name},${state_name}-${pin_code}`.split('null').join(',').split('undefined').join(',').split(',,').join(',').split(',,').join(',').split(',-,').join(',').split(',,').join(',').split(',,').join(',');
+        item.user_address_detail = `${address_line_1 ? address_line_1 : ''}${address_line_2 ? ` ${address_line_2}` : ''}${locality_name || city_name || state_name ? ',' : pin_code ? '-' : ''}${locality_name ? locality_name : ''}${city_name || state_name ? ',' : pin_code ? '-' : ''}${city_name ? city_name : ''}${state_name ? ',' : pin_code ? '-' : ''}${state_name ? state_name : ''}${pin_code ? '- ' : ''}${pin_code ? pin_code : ''}`.split('null').join(',').split('undefined').join(',').split(',,').join(',').split(',-,').join(',').split(',,').join(',').split(',,').join(',');
+        item.user_address_detail = item.user_address_detail.trim();
       }
       return item;
     });
@@ -358,7 +350,8 @@ class SellerAdaptor {
       item.addresses = addresses.find(aItem => aItem.user_id === item.id) || {};
       if (item.addresses) {
         const { address_line_1, address_line_2, city_name, state_name, locality_name, pin_code } = item.addresses || {};
-        item.user_address_detail = `${address_line_1}${address_line_2 ? ` ${address_line_2}` : ''},${locality_name},${city_name},${state_name}-${pin_code}`.split('null').join(',').split('undefined').join(',').split(',,').join(',').split(',,').join(',').split(',-,').join(',').split(',,').join(',').split(',,').join(',');
+        item.user_address_detail = `${address_line_1 ? address_line_1 : ''}${address_line_2 ? ` ${address_line_2}` : ''}${locality_name || city_name || state_name ? ',' : pin_code ? '-' : ''}${locality_name ? locality_name : ''}${city_name || state_name ? ',' : pin_code ? '-' : ''}${city_name ? city_name : ''}${state_name ? ',' : pin_code ? '-' : ''}${state_name ? state_name : ''}${pin_code ? '- ' : ''}${pin_code ? pin_code : ''}`.split('null').join(',').split('undefined').join(',').split(',,').join(',').split(',-,').join(',').split(',,').join(',').split(',,').join(',');
+        item.user_address_detail = item.user_address_detail.trim();
       }
 
       return item;
@@ -832,7 +825,7 @@ class SellerAdaptor {
         final_result.push(sellers_with_location[i]);
       }
 
-      return _lodash2.default.orderBy(final_result.filter(elem => !!elem.distance && parseFloat(elem.distance) <= 100), ['distance'], ['asc']);
+      return _lodash2.default.orderBy(final_result.filter(elem => !!elem.distance && parseFloat(elem.distance) <= _main2.default.SELLER_FILTER_DISTANCE), ['distance'], ['asc']);
     }
   }
 

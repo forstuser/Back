@@ -17,7 +17,7 @@ var _main2 = _interopRequireDefault(_main);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-class NotificationAdaptor {
+class PayTMAdaptor {
   constructor(modals) {
     this.modals = modals;
     this.genCheckSumByString = _checksum.genCheckSumByString;
@@ -62,4 +62,4 @@ class NotificationAdaptor {
   }
 }
 
-exports.default = NotificationAdaptor;
+exports.default = PayTMAdaptor;

@@ -126,13 +126,16 @@ class ShopEarnController {
       try {
         request.params.seller_id = user.seller_id;
         const seller_id = request.params.seller_id;
-        const [seller_list, sku_items] = await _bluebird2.default.all([sellerAdaptor.retrieveSellersOnInit({
+        const { sku_measurement_id } = request.query;
+        const [seller_list, sku_items, sku_measurement] = await _bluebird2.default.all([sellerAdaptor.retrieveSellersOnInit({
           where: { id: seller_id },
           attributes: ['id', 'seller_name', 'seller_type_id', 'address', 'is_data_manually_added', [modals.sequelize.literal(`(Select count(*) from table_seller_provider_types as provider_type where provider_type.seller_id = sellers.id)`), 'provider_counts'], [modals.sequelize.literal(`(Select count(*) from table_sku_seller_mapping as sku_seller where sku_seller.seller_id = sellers.id)`), 'sku_seller_counts']]
         }), shopEarnAdaptor.retrieveSKUData({
           where: { id: request.params.sku_id },
           attributes: ['sub_category_id', 'category_id', 'main_category_id']
-        })]);
+        }), sku_measurement_id ? shopEarnAdaptor.retrieveSKUMeasurement({
+          where: { sku_id: request.params.sku_id, id: sku_measurement_id }
+        }) : {}]);
         const sku_item = sku_items[0];
         if (sku_item.sub_category_id) {
           request.params.category_id = (sku_item.category_id || '').toString();
@@ -140,11 +143,51 @@ class ShopEarnController {
           request.params.sub_category_ids = (sku_item.sub_category_id || '').toString();
           request.params.limit = request.query.limit;
           request.params.offset = request.query.offset;
-          const sku_result = await shopEarnAdaptor.retrieveSellerSKUs({
+          let sku_result = await shopEarnAdaptor.retrieveSellerSKUs({
             queryOptions: request.params, seller_list
           });
+
+          const sku_ratio = sku_measurement.mrp && sku_measurement.mrp > 0 ? sku_measurement.measurement_value / sku_measurement.mrp : -1;
+          const matching_skus = sku_result.filter(item => !!item.sku_measurements.find(mItem => mItem.measurement_value === sku_measurement.measurement_value && mItem.measurement_type === sku_measurement.measurement_type));
+          sku_result = sku_result.filter(item => {
+            return !item.sku_measurements.find(mItem => mItem.measurement_value === sku_measurement.measurement_value && mItem.measurement_type === sku_measurement.measurement_type);
+          });
+          sku_result.sort((a, b) => {
+            let a_sku_ratio = 0,
+                b_sku_ratio = 0;
+            if (a.sku_measurements.length > 0 && b.sku_measurements.length > 0) {
+              if (a.sku_measurements.length >= b.sku_measurements.length) {
+                a.sku_measurements.forEach((item, index) => {
+                  const b_item = b.sku_measurements[index];
+                  a_sku_ratio += item.mrp > 0 ? item.measurement_value / item.mrp : -1;
+                  if (b_item) {
+                    b_sku_ratio += b_item.mrp > 0 ? b_item.measurement_value / b_item.mrp : -1;
+                  }
+                });
+              } else {
+                b.sku_measurements.forEach((item, index) => {
+                  const a_item = a.sku_measurements[index];
+                  b_sku_ratio += item.mrp > 0 ? item.measurement_value / item.mrp : -1;
+                  if (a_item) {
+                    a_sku_ratio += a_item.mrp > 0 ? a_item.measurement_value / a_item.mrp : -1;
+                  }
+                });
+              }
+
+              if (a_sku_ratio < sku_ratio && b_sku_ratio >= sku_ratio) {
+                return 1;
+              }
+              if (a_sku_ratio >= sku_ratio && b_sku_ratio < sku_ratio) {
+                return -1;
+              }
+              return Math.abs(sku_ratio - a_sku_ratio) - Math.abs(sku_ratio - b_sku_ratio);
+            }
+
+            return a.sku_measurements.length > 0 ? 1 : -1;
+          });
           return reply.response({
-            status: true, result: sku_result
+            status: true,
+            result: [...matching_skus, ...sku_result]
           });
         }
 
@@ -544,7 +587,7 @@ class ShopEarnController {
         return reply.response({
           status: true,
           product, cashback_jobs, wishlist_items, past_selections,
-          message: 'Product, Cashback Job and Job are initialized.'
+          message: 'Product, CashBack Job and Job are initialized.'
         });
       } else {
         return _shared2.default.preValidation(request.pre, reply);
@@ -773,7 +816,7 @@ class ShopEarnController {
               seller_id,
               job_id: seller_cashback.job_id
             }, seller.seller_name, seller_id);
-            await userAdaptor.retrieveOrUpdateUserIndexedData({ user_id: seller_cashback.user_id }, { point_id: seller_points.id, user_id: seller_cashback.user_id });
+            await userAdaptor.retrieveOrUpdateUserIndexedData({ where: { user_id: seller_cashback.user_id } }, { point_id: seller_points.id, user_id: seller_cashback.user_id });
           }
           return reply.response({ status: true, result });
         }
@@ -1135,7 +1178,7 @@ class ShopEarnController {
         return reply.response({
           status: true,
           reasons: await categoryAdaptor.retrieveRejectReasons({ where: { query_type: 3 } }),
-          result: result.filter(item => item.pending_cashback && item.cashback_id)
+          result: result.filter(item => item.cashback_id && item.pending_cashback >= 0)
         });
       } catch (err) {
         console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);

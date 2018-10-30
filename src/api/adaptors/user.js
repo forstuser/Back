@@ -98,7 +98,7 @@ class UserAdaptor {
 
     const user_detail = result.toJSON();
     await this.retrieveOrUpdateUserIndexedData(
-        {where: {user_id: user_detail.id}, attributes: ['my_seller_ids', 'id']},
+        {where: {user_id: user_detail.id}, attributes: ['my_seller_ids', 'id', 'user_id']},
         {seller_id, user_id: user_detail.id});
 
     return user_detail;

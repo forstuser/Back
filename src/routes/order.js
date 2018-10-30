@@ -283,6 +283,27 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
         validate: {
           payload: {
             seller_id: joi.number().required(),
+            payment_mode: [joi.number(), joi.allow(null)]
+          },
+        },
+      },
+    });
+
+
+    routeObject.push({
+      method: 'PUT',
+      path: '/consumer/orders/{order_id}/delete/{sku_id}',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {method: middleware.updateUserActiveStatus, assign: 'userExist'},
+        ],
+        handler: ControllerObject.deleteSKUFromOrderDetail,
+        description: 'Delete SKU Item on behalf of Consumer from order.',
+        validate: {
+          payload: {
+            seller_id: joi.number().required(),
           },
         },
       },
@@ -464,7 +485,16 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
       path: '/consumer/payments',
       config: {
         handler: ControllerObject.paymentPostBackUrl,
-        description: 'Generate Signature for Consumer Payment Using Cash Free.',
+        description: 'Payment STATUS POST BACK URL for Cash Free.',
+      },
+    });
+
+    routeObject.push({
+      method: 'GET',
+      path: '/consumer/payments/{order_id}',
+      config: {
+        handler: ControllerObject.retrievePaymentStatus,
+        description: 'Retrieve Payment Status.',
       },
     });
   }

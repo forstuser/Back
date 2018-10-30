@@ -761,7 +761,7 @@ export function retrieveMailTemplate(user, templateType) {
                                         -webkit-margin-after: 0;margin:0 auto;font-weight:normal;font-size:15px;padding-left:20px;padding-right:20px; "><b>Instant Groceries:</b> Need some grocery in an instant? Create your Shopping List and connect with your local kirana store online for quick, on demand grocery needs!</li>
                                     ${(user.location &&
           user.location.toLowerCase() !== 'other') ?
-          '<li style="-webkit-margin-before: 0;margin-bottom: 5% !important; -webkit-margin-after: 0;margin:0 auto;font-weight:normal;font-size:15px;padding-left:20px;padding-right:20px; "><b>Cashback on every Grocery Bill:</b> Now upload your Grocery Bill to avail a Fixed Cashback & Bonus Cashback on multiple items.</li>' :
+          '<li style="-webkit-margin-before: 0;margin-bottom: 5% !important; -webkit-margin-after: 0;margin:0 auto;font-weight:normal;font-size:15px;padding-left:20px;padding-right:20px; "><b>CashBack on every Grocery Bill:</b> Now upload your Grocery Bill to avail a Fixed CashBack & Bonus CashBack on multiple items.</li>' :
           ''}
                                     <li style="-webkit-margin-before: 0;margin-bottom: 5% !important;
                                         -webkit-margin-after: 0;margin:0 auto;font-weight:normal;font-size:15px;padding-left:20px;padding-right:20px; "><b>Attractive Loyalty Points & Offers:</b> Connect with your local Kirana Stores for Loyalty Discounts & be the first to know of ongoing Attractive Offers.</li>
