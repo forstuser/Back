@@ -2290,19 +2290,28 @@ class UploadController {
 
   static async retrieveSKUImage(request, reply) {
     if (!request.pre.forceUpdate) {
+      const {id, measurement_id} = request.params;
+      let sku_detail;
+      const fsImplSKU = new S3FS(
+          `${config.AWS.S3.BUCKET}/${config.AWS.S3.SKU_IMAGE}${request.params.file_type
+              ? `/${request.params.file_type}` : ''}`,
+          config.AWS.ACCESS_DETAILS);
       try {
-        const fsImplSKU = new S3FS(
-            `${config.AWS.S3.BUCKET}/${config.AWS.S3.SKU_IMAGE}${request.params.file_type
-                ? `/${request.params.file_type}` : ''}`,
-            config.AWS.ACCESS_DETAILS);
-        let sku_detail = await modals.sku.findOne({
+        sku_detail = await modals.sku.findOne({
           where: {id: request.params.id},
           attributes: ['id', 'brand_id', 'image_code', 'main_category_id'],
         });
         if (sku_detail) {
           sku_detail = sku_detail.toJSON();
           console.log(sku_detail);
-          if (sku_detail.image_code) {
+          if (measurement_id) {
+            const fileResult = await fsImplSKU.readFile(
+                `${id}-${measurement_id}.png`, 'utf8');
+            return reply.response(fileResult.Body).
+                header('Content-Type', fileResult.ContentType).
+                header('Content-Disposition',
+                    `attachment; filename=${id}-${measurement_id}.png`);
+          } else if (sku_detail.image_code) {
             const fileResult = await fsImplSKU.readFile(
                 `${request.params.id}.png`, 'utf8');
             return reply.response(fileResult.Body).
@@ -2320,7 +2329,6 @@ class UploadController {
                 header('Content-Type', fileResult.ContentType).
                 header('Content-Disposition',
                     `attachment; filename=${sku_detail.brand_id}.png`);
-
           }
         }
 
@@ -2332,25 +2340,83 @@ class UploadController {
       } catch (err) {
         console.log(
             `Error on ${new Date()} retrieving sku image is as follow: \n \n ${err}`);
-        modals.logs.create({
-          api_action: request.method,
-          api_path: request.url.pathname,
-          log_type: 2,
-          user_id: 1,
-          log_content: JSON.stringify({
-            params: request.params,
-            query: request.query,
-            headers: request.headers,
-            payload: request.payload,
+        try {
+          if (measurement_id) {
+            const fileResult = await fsImplSKU.readFile(
+                `${request.params.id}.png`, 'utf8');
+            return reply.response(fileResult.Body).
+                header('Content-Type', fileResult.ContentType).
+                header('Content-Disposition',
+                    `attachment; filename=${request.params.id}.png`);
+          } else if ((sku_detail || {}).brand_id) {
+            const fsImplBrand = new S3FS(
+                `${config.AWS.S3.BUCKET}/${config.AWS.S3.BRAND_IMAGE}${request.params.file_type
+                    ? `/${request.params.file_type}` : ''}`,
+                config.AWS.ACCESS_DETAILS);
+            const fileResult = await fsImplBrand.readFile(
+                `${sku_detail.brand_id}.png`, 'utf8');
+            return reply.response(fileResult.Body).
+                header('Content-Type', fileResult.ContentType).
+                header('Content-Disposition',
+                    `attachment; filename=${sku_detail.brand_id}.png`);
+          }
+        } catch (err) {
+          console.log(
+              `Error on ${new Date()} retrieving sku image is as follow: \n \n ${err}`);
+          try {
+            if ((sku_detail || {}).brand_id) {
+              const fsImplBrand = new S3FS(
+                  `${config.AWS.S3.BUCKET}/${config.AWS.S3.BRAND_IMAGE}${request.params.file_type
+                      ? `/${request.params.file_type}` : ''}`,
+                  config.AWS.ACCESS_DETAILS);
+              const fileResult = await fsImplBrand.readFile(
+                  `${sku_detail.brand_id}.png`, 'utf8');
+              return reply.response(fileResult.Body).
+                  header('Content-Type', fileResult.ContentType).
+                  header('Content-Disposition',
+                      `attachment; filename=${sku_detail.brand_id}.png`);
+            }
+          } catch (e) {
+            modals.logs.create({
+              api_action: request.method,
+              api_path: request.url.pathname,
+              log_type: 2,
+              user_id: 1,
+              log_content: JSON.stringify({
+                params: request.params,
+                query: request.query,
+                headers: request.headers,
+                payload: request.payload,
+                err,
+              }),
+            }).catch((ex) => console.log('error while logging on db,', ex));
+            return reply.response({
+              status: false,
+              message: 'Unable to retrieve image',
+              err,
+              forceUpdate: request.pre.forceUpdate,
+            });
+          }
+          modals.logs.create({
+            api_action: request.method,
+            api_path: request.url.pathname,
+            log_type: 2,
+            user_id: 1,
+            log_content: JSON.stringify({
+              params: request.params,
+              query: request.query,
+              headers: request.headers,
+              payload: request.payload,
+              err,
+            }),
+          }).catch((ex) => console.log('error while logging on db,', ex));
+          return reply.response({
+            status: false,
+            message: 'Unable to retrieve image',
             err,
-          }),
-        }).catch((ex) => console.log('error while logging on db,', ex));
-        return reply.response({
-          status: false,
-          message: 'Unable to retrieve image',
-          err,
-          forceUpdate: request.pre.forceUpdate,
-        });
+            forceUpdate: request.pre.forceUpdate,
+          });
+        }
       }
     } else {
       return reply.response({

@@ -1641,8 +1641,7 @@ export default class ProductAdaptor {
           const {email, id, name} = dbProduct.consumer;
           product.accessories = accessories;
           product.brand = brand.toJSON();
-          this.sendProductAccessoryMail(
-              {email, id, name, product});
+          //this.sendProductAccessoryMail({email, id, name, product});
         }
       }
       product.flag = flag;

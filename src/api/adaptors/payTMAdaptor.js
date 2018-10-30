@@ -5,7 +5,7 @@ import {genCheckSumByString} from '../../helpers/payTM/checksum';
 import request from 'request-promise';
 import config from '../../config/main';
 
-class NotificationAdaptor {
+class PayTMAdaptor {
   constructor(modals) {
     this.modals = modals;
     this.genCheckSumByString = genCheckSumByString;
@@ -51,4 +51,4 @@ class NotificationAdaptor {
   }
 }
 
-export default NotificationAdaptor;
+export default PayTMAdaptor;

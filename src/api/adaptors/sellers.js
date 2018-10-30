@@ -4,6 +4,7 @@ import CategoryAdaptor from './category';
 import UserAdaptor from './user';
 import Promise from 'bluebird';
 import moment from 'moment';
+import config from '../../config/main';
 
 export default class SellerAdaptor {
   constructor(modals, notificationAdaptor) {
@@ -196,22 +197,6 @@ export default class SellerAdaptor {
     return result;
   }
 
-  async retrieveOrUpdateInvitedSellerDetail(
-      query_options, seller_detail, is_create) {
-    let result = await this.modals.invited_sellers.findOne(query_options);
-    if (!result && is_create) {
-      result = await this.modals.invited_sellers.create(seller_detail);
-    }
-
-    if (result) {
-      await seller_detail ?
-          result.updateAttributes(JSON.parse(JSON.stringify(seller_detail))) :
-          seller_detail;
-      return result.toJSON();
-    }
-    return result;
-  }
-
   async retrieveSellerDetail(query_options) {
     const result = await this.modals.sellers.findOne(query_options);
     return result ? result.toJSON() : result;
@@ -262,8 +247,8 @@ export default class SellerAdaptor {
     return result ? result.toJSON() : result;
   }
 
-  async retrieveSellerConsumers(
-      seller_id, mobile_no, offer_id, user_status_type) {
+  async retrieveSellerConsumers(parameters) {
+    let {seller_id, mobile_no, offer_id, user_status_type, page_no} = parameters;
     let seller_users, id, user_index_data;
     user_status_type = user_status_type || 1;
     mobile_no = mobile_no ? {$iLike: `${mobile_no}%`} : undefined;
@@ -287,44 +272,50 @@ export default class SellerAdaptor {
     id = (seller_users.customer_ids || []).map(
         item => item.customer_id || item);
     const {latitude, longitude, address, city_name: city} = seller_users;
-    const result = await this.modals.users.findAll({
-      where: JSON.parse(
-          JSON.stringify(mobile_no ? {mobile_no} : {id, user_status_type})),
-      attributes: [
-        ['full_name', 'name'], 'image_name', 'email', 'created_at',
-        'mobile_no', 'location', 'id', 'user_status_type', [
-          this.modals.sequelize.literal(
-              `(select sum(seller_cashback.amount) from table_wallet_seller_cashback as seller_cashback where status_type in (16) and transaction_type = 1 and seller_cashback.user_id = "users"."id" and seller_cashback.seller_id = ${seller_id})`),
-          'cashback_total'], [
-          this.modals.sequelize.literal(
-              `(select sum(seller_cashback.amount) from table_wallet_seller_cashback as seller_cashback where status_type in (16,14) and transaction_type = 2 and seller_cashback.user_id = "users"."id" and seller_cashback.seller_id = ${seller_id})`),
-          'redeemed_cashback'], [
-          this.modals.sequelize.literal(
-              `(select sum(amount) from table_wallet_seller_loyalty as seller_loyalty where status_type in (16) and transaction_type = 1 and seller_loyalty.user_id = "users"."id" and seller_loyalty.seller_id = ${seller_id})`),
-          'loyalty_total'], [
-          this.modals.sequelize.literal(
-              `(select sum(amount) from table_wallet_seller_loyalty as seller_loyalty where status_type in (16,14) and transaction_type = 2 and seller_loyalty.user_id = "users"."id" and seller_loyalty.seller_id = ${seller_id})`),
-          'redeemed_loyalty'], [
-          this.modals.sequelize.literal(
-              `(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16) and transaction_type = 1 and seller_credit.user_id = "users"."id" and seller_credit.seller_id = ${seller_id})`),
-          'credit_total'], [
-          this.modals.sequelize.literal(
-              `(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16,14) and transaction_type = 2 and seller_credit.user_id = "users"."id" and seller_credit.seller_id = ${seller_id})`),
-          'redeemed_credits'], [
-          this.modals.sequelize.literal(
-              `(select count(*) from table_cashback_jobs as cashback_jobs where cashback_jobs.user_id = "users"."id" and cashback_jobs.admin_status <> 2 and cashback_jobs.seller_id = ${seller_id})`),
-          'transaction_counts'], [
-          this.modals.sequelize.literal(
-              `(select count(*) from table_orders as order_detail where order_detail.user_id = "users"."id" and order_detail.seller_id = ${seller_id} and order_detail.job_id is null and order_detail.status_type = 5)`),
-          'order_counts'], [
-          this.modals.sequelize.literal(
-              `(select seller_offer_ids from table_user_index as user_index where user_index.user_id = "users"."id")`),
-          'seller_offer_ids']],
-    });
+    const result = await Promise.all([
+      this.modals.users.findAll({
+        where: JSON.parse(
+            JSON.stringify(mobile_no ? {mobile_no} : {id, user_status_type})),
+        limit: !page_no ? 100 : config.CONSUMER_LIMIT, offset: !page_no ||
+        (page_no && (page_no.toString() === '0' || isNaN(page_no))) ? 0 :
+            config.CONSUMER_LIMIT * parseInt(page_no), attributes: [
+          ['full_name', 'name'], 'image_name', 'email', 'created_at',
+          'mobile_no', 'location', 'id', 'user_status_type', [
+            this.modals.sequelize.literal(
+                `(select sum(seller_cashback.amount) from table_wallet_seller_cashback as seller_cashback where status_type in (16) and transaction_type = 1 and seller_cashback.user_id = "users"."id" and seller_cashback.seller_id = ${seller_id})`),
+            'cashback_total'], [
+            this.modals.sequelize.literal(
+                `(select sum(seller_cashback.amount) from table_wallet_seller_cashback as seller_cashback where status_type in (16,14) and transaction_type = 2 and seller_cashback.user_id = "users"."id" and seller_cashback.seller_id = ${seller_id})`),
+            'redeemed_cashback'], [
+            this.modals.sequelize.literal(
+                `(select sum(amount) from table_wallet_seller_loyalty as seller_loyalty where status_type in (16) and transaction_type = 1 and seller_loyalty.user_id = "users"."id" and seller_loyalty.seller_id = ${seller_id})`),
+            'loyalty_total'], [
+            this.modals.sequelize.literal(
+                `(select sum(amount) from table_wallet_seller_loyalty as seller_loyalty where status_type in (16,14) and transaction_type = 2 and seller_loyalty.user_id = "users"."id" and seller_loyalty.seller_id = ${seller_id})`),
+            'redeemed_loyalty'], [
+            this.modals.sequelize.literal(
+                `(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16) and transaction_type = 1 and seller_credit.user_id = "users"."id" and seller_credit.seller_id = ${seller_id})`),
+            'credit_total'], [
+            this.modals.sequelize.literal(
+                `(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16,14) and transaction_type = 2 and seller_credit.user_id = "users"."id" and seller_credit.seller_id = ${seller_id})`),
+            'redeemed_credits'], [
+            this.modals.sequelize.literal(
+                `(select count(*) from table_cashback_jobs as cashback_jobs where cashback_jobs.user_id = "users"."id" and cashback_jobs.admin_status <> 2 and cashback_jobs.seller_id = ${seller_id})`),
+            'transaction_counts'], [
+            this.modals.sequelize.literal(
+                `(select count(*) from table_orders as order_detail where order_detail.user_id = "users"."id" and order_detail.seller_id = ${seller_id} and order_detail.job_id is null and order_detail.status_type = 5)`),
+            'order_counts'], [
+            this.modals.sequelize.literal(
+                `(select seller_offer_ids from table_user_index as user_index where user_index.user_id = "users"."id")`),
+            'seller_offer_ids']],
+      }), this.modals.users.count({
+        where: JSON.parse(
+            JSON.stringify(mobile_no ? {mobile_no} : {id, user_status_type})),
+      })]);
     seller_users.customer_ids = (seller_users.customer_ids || []).map(
         cId => cId.customer_id ? cId :
             {customer_id: cId, is_credit_allowed: false, credit_limit: 0});
-    const user_list = result.map(item => {
+    const user_list = result[0].map(item => {
       item = item.toJSON();
       const seller_customer = (seller_users.customer_ids || []).find(
           cId => cId.customer_id && cId.customer_id.toString() ===
@@ -345,42 +336,50 @@ export default class SellerAdaptor {
                 filter(item => item),
           },
         })).map(item => item.toJSON());
-    return await this.orderUserByLocation(latitude, longitude, city,
-        user_list.map(item => {
-          const linked_user = (seller_users.customer_ids || []).find(
-              suItem => suItem.customer_id && suItem.customer_id.toString() ===
-                  item.id.toString());
-          item.linked = !!linked_user;
-          item.cashback_total = parseInt(item.cashback_total || 0);
-          item.redeemed_cashback = parseInt(item.redeemed_cashback || 0);
-          item.loyalty_total = parseInt(item.loyalty_total || 0) -
-              parseInt(item.redeemed_loyalty || 0);
-          item.credit_total = parseInt(item.credit_total || 0) -
-              parseInt(item.redeemed_credits || 0);
-          item.addresses = (addresses || []).find(
-              aItem => aItem.user_id === item.id) || {};
-          item.transaction_counts = parseInt(item.transaction_counts || 0);
-          item.order_counts = parseInt(item.order_counts || 0);
-          if (item.addresses) {
-            const {address_line_1, address_line_2, city_name, state_name, locality_name, pin_code} = (item.addresses ||
-                {});
-            item.address = (`${address_line_1}${address_line_2 ?
-                ` ${address_line_2}` :
-                ''},${locality_name},${city_name},${state_name}-${pin_code}`).
-                split('null').join(',').
-                split('undefined').join(',').
-                split(',,').join(',').
-                split(',-,').join(',').
-                split(',,').join(',').
-                split(',,').join(',');
-          }
-          if (offer_id) {
-            const seller_offer_id = (item.seller_offer_ids || []).find(
-                item => item.toString() === (offer_id).toString());
-            item.linked_offer = !!seller_offer_id;
-          }
-          return item;
-        }));
+    return {
+      seller_customers: await this.orderUserByLocation(latitude, longitude,
+          city,
+          user_list.map(item => {
+            const linked_user = (seller_users.customer_ids || []).find(
+                suItem => suItem.customer_id &&
+                    suItem.customer_id.toString() ===
+                    item.id.toString());
+            item.linked = !!linked_user;
+            item.cashback_total = parseInt(item.cashback_total || 0);
+            item.redeemed_cashback = parseInt(item.redeemed_cashback || 0);
+            item.loyalty_total = parseInt(item.loyalty_total || 0) -
+                parseInt(item.redeemed_loyalty || 0);
+            item.credit_total = parseInt(item.credit_total || 0) -
+                parseInt(item.redeemed_credits || 0);
+            item.addresses = (addresses || []).find(
+                aItem => aItem.user_id === item.id) || {};
+            item.transaction_counts = parseInt(item.transaction_counts || 0);
+            item.order_counts = parseInt(item.order_counts || 0);
+            if (item.addresses) {
+              const {address_line_1, address_line_2, city_name, state_name, locality_name, pin_code} = (item.addresses ||
+                  {});
+              item.address = (`${address_line_1}${address_line_2 ?
+                  ` ${address_line_2}` :
+                  ''},${locality_name},${city_name},${state_name}-${pin_code}`).
+                  split('null').join(',').
+                  split('undefined').join(',').
+                  split(',,').join(',').
+                  split(',-,').join(',').
+                  split(',,').join(',').
+                  split(',,').join(',');
+            }
+            if (offer_id) {
+              const seller_offer_id = (item.seller_offer_ids || []).find(
+                  item => item.toString() === (offer_id).toString());
+              item.linked_offer = !!seller_offer_id;
+            }
+            return item;
+          })),
+      customer_count: result[1],
+      last_page: result[1] > config.CONSUMER_LIMIT ?
+          Math.ceil(result[1] / config.CONSUMER_LIMIT) - 1 :
+          0,
+    };
   }
 
   async retrieveSellerConsumerCashBack(seller_id, mobile_no) {
@@ -419,16 +418,21 @@ export default class SellerAdaptor {
       if (item.addresses) {
         const {address_line_1, address_line_2, city_name, state_name, locality_name, pin_code} = (item.addresses ||
             {});
-        item.user_address_detail = (`${address_line_1}${address_line_2 ?
-            ` ${address_line_2}` :
-            ''},${locality_name},${city_name},${state_name}-${pin_code}`).
-            split('null').join(',').
-            split('undefined').join(',').
-            split(',,').join(',').
-            split(',,').join(',').
-            split(',-,').join(',').
-            split(',,').join(',').
-            split(',,').join(',');
+        item.user_address_detail = (`${address_line_1 ?
+            address_line_1 : ''}${address_line_2 ?
+            ` ${address_line_2}` : ''}${locality_name ||
+        city_name || state_name ? ',' : pin_code ? '-' : ''}${locality_name ?
+            locality_name : ''}${city_name || state_name ?
+            ',' : pin_code ? '-' : ''}${city_name ?
+            city_name : ''}${state_name ?
+            ',' :
+            pin_code ? '-' : ''}${state_name ? state_name : ''}${pin_code ?
+            '- ' :
+            ''}${pin_code ? pin_code : ''}`).
+            split('null').join(',').split('undefined').join(',').
+            split(',,').join(',').split(',-,').join(',').
+            split(',,').join(',').split(',,').join(',');
+        item.user_address_detail = item.user_address_detail.trim();
       }
       return item;
     });
@@ -509,16 +513,21 @@ export default class SellerAdaptor {
       if (item.addresses) {
         const {address_line_1, address_line_2, city_name, state_name, locality_name, pin_code} = (item.addresses ||
             {});
-        item.user_address_detail = (`${address_line_1}${address_line_2 ?
-            ` ${address_line_2}` :
-            ''},${locality_name},${city_name},${state_name}-${pin_code}`).
-            split('null').join(',').
-            split('undefined').join(',').
-            split(',,').join(',').
-            split(',,').join(',').
-            split(',-,').join(',').
-            split(',,').join(',').
-            split(',,').join(',');
+        item.user_address_detail = (`${address_line_1 ?
+            address_line_1 : ''}${address_line_2 ?
+            ` ${address_line_2}` : ''}${locality_name ||
+        city_name || state_name ? ',' : pin_code ? '-' : ''}${locality_name ?
+            locality_name : ''}${city_name || state_name ?
+            ',' : pin_code ? '-' : ''}${city_name ?
+            city_name : ''}${state_name ?
+            ',' :
+            pin_code ? '-' : ''}${state_name ? state_name : ''}${pin_code ?
+            '- ' :
+            ''}${pin_code ? pin_code : ''}`).
+            split('null').join(',').split('undefined').join(',').
+            split(',,').join(',').split(',-,').join(',').
+            split(',,').join(',').split(',,').join(',');
+        item.user_address_detail = item.user_address_detail.trim();
       }
 
       return item;
@@ -790,9 +799,10 @@ export default class SellerAdaptor {
           ',').replace(',,', ',').replace(',,', ',');
       seller.cashback_total = seller.cashback_total || 0;
       seller.cashback_redeemed = seller.cashback_redeemed || 0;
-      seller.cashback_total = seller.cashback_total - seller.cashback_redeemed;
+      seller.cashback_total = _.round(
+          seller.cashback_total - seller.cashback_redeemed, 2);
       seller.offer_count = seller.offer_count || 0;
-      seller.ratings = seller.ratings || 0;
+      seller.ratings = _.round(seller.ratings || 0, 2);
       if (seller.seller_details) {
         seller.seller_details = _.omit(seller.seller_details,
             ['offers', 'assisted_type_images']);
@@ -1124,46 +1134,61 @@ export default class SellerAdaptor {
     }
     const sellers_with_location = [];
     const final_result = [];
-    sellers.forEach((item) => {
-      const seller = item;
-      seller.geo_location = seller.latitude && seller.longitude &&
-      seller.latitude.toString() !== '0' &&
-      seller.longitude.toString() !== '0' ?
-          `${seller.latitude}, ${seller.longitude}` : '';
-      if (seller.geo_location) {
-        destinations.push(seller.geo_location);
-      } else if (seller.address) {
-        destinations.push(seller.address);
-      }
+    try {
+      if (config.ALLOW_GEO_FILTER &&
+          config.ALLOW_GEO_FILTER.toString().toLowerCase() === 'true') {
+        sellers.forEach((item) => {
+          const seller = item;
+          seller.geo_location = seller.latitude && seller.longitude &&
+          seller.latitude.toString() !== '0' &&
+          seller.longitude.toString() !== '0' ?
+              `${seller.latitude}, ${seller.longitude}` : '';
+          if (seller.geo_location) {
+            destinations.push(seller.geo_location);
+          } else if (seller.address) {
+            destinations.push(seller.address);
+          }
 
-      if (origins.length > 0 && destinations.length > 0) {
-        sellers_with_location.push(seller);
-      } else {
-        final_result.push(seller);
-      }
-    });
+          if (origins.length > 0 && destinations.length > 0) {
+            sellers_with_location.push(seller);
+          } else {
+            final_result.push(seller);
+          }
+        });
 
-    if (origins.length > 0 && destinations.length > 0) {
-      const result = await google.distanceMatrix(origins, destinations);
-      for (let i = 0; i < sellers_with_location.length; i += 1) {
-        if (result.length > 0) {
-          const tempMatrix = result[i];
-          sellers_with_location[i].distanceMetrics = 'km';
-          sellers_with_location[i].distance = tempMatrix &&
-          (tempMatrix.distance) ?
-              parseFloat((tempMatrix.distance.value / 1000).toFixed(2)) :
-              null;
-        } else {
-          sellers_with_location[i].distanceMetrics = 'km';
-          sellers_with_location[i].distance = parseFloat(500.001);
+        if (origins.length > 0 && destinations.length > 0) {
+          const result = await google.distanceMatrix(origins, destinations);
+          for (let i = 0; i < sellers_with_location.length; i += 1) {
+            if (result.length > 0) {
+              const tempMatrix = result[i];
+              sellers_with_location[i].distanceMetrics = 'km';
+              sellers_with_location[i].distance = tempMatrix &&
+              (tempMatrix.distance) ?
+                  parseFloat((tempMatrix.distance.value / 1000).toFixed(2)) :
+                  null;
+            } else {
+              sellers_with_location[i].distanceMetrics = 'km';
+              sellers_with_location[i].distance = parseFloat(500.001);
+            }
+
+            final_result.push(sellers_with_location[i]);
+          }
+
+          return _.orderBy(final_result.filter(
+              (elem) => (!!elem.distance &&
+                  parseFloat(elem.distance) <= config.SELLER_FILTER_DISTANCE)),
+              ['distance'], ['asc']);
         }
-
-        final_result.push(sellers_with_location[i]);
       }
 
-      return _.orderBy(final_result.filter(
-          (elem) => (!!elem.distance &&
-              parseFloat(elem.distance) <= 100)), ['distance'], ['asc']);
+      return sellers;
+    } catch (e) {
+      await this.modals.logs.create({
+        api_action: 'google.distanceMatrix',
+        api_path: 'Distance Matrix', log_type: 1,
+        log_content: JSON.stringify({latitude, longitude, city, e}),
+      });
+      return sellers;
     }
   }
 

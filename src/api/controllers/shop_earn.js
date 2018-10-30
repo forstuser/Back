@@ -34,41 +34,62 @@ class ShopEarnController {
     if (request.pre.userExist && !request.pre.forceUpdate) {
       // this is where make us of adapter
       try {
-        const result = await modals.users.findOne({
-          where: {id: (user.id || user.ID)}, attributes: [
-            [
-              modals.sequelize.literal(
-                  '(Select my_seller_ids from table_user_index as "user_index" where "users".id = "user_index".user_id)'),
-              'my_seller_ids'], 'location', 'id', 'mobile_no'],
-        });
-        user = result ? result.toJSON() : user;
-        const seller_list = user.my_seller_ids ?
-            await sellerAdaptor.retrieveSellersOnInit({
-              where: JSON.parse(JSON.stringify({
-                id: user.my_seller_ids, is_onboarded: true, is_fmcg: true,
-                contact_no: {$ne: user.mobile_no},
-              })),
-              attributes: [
-                'id', 'seller_name', 'seller_type_id', 'address',
-                'is_data_manually_added', [
-                  modals.sequelize.literal(
-                      `(Select count(*) from table_seller_provider_types as provider_type where provider_type.seller_id = sellers.id)`),
-                  'provider_counts'], [
-                  modals.sequelize.literal(
-                      `(Select count(*) from table_sku_seller_mapping as sku_seller where sku_seller.seller_id = sellers.id)`),
-                  'sku_seller_counts']],
-            }) : undefined;
-        const sku_result = await shopEarnAdaptor.retrieveSKUs({
-          location: user.location, user_id: user.id,
-          queryOptions: request.query, seller_list,
-        });
+        let {main_category_id, category_id, brand_ids, sub_category_ids, measurement_values, measurement_types, bar_code, title, limit, offset, id, seller_id} = request.query ||
+        {};
+        if (main_category_id || category_id || brand_ids || sub_category_ids ||
+            measurement_values || measurement_types || bar_code || title ||
+            limit || id || seller_id) {
+          const result = await modals.users.findOne({
+            where: {id: (user.id || user.ID)}, attributes: [
+              [
+                modals.sequelize.literal(
+                    '(Select my_seller_ids from table_user_index as "user_index" where "users".id = "user_index".user_id)'),
+                'my_seller_ids'], 'location', 'id', 'mobile_no'],
+          });
+          user = result ? result.toJSON() : user;
+          const seller_list = user.my_seller_ids ?
+              await sellerAdaptor.retrieveSellersOnInit({
+                where: JSON.parse(JSON.stringify({
+                  id: user.my_seller_ids, is_onboarded: true, is_fmcg: true,
+                  contact_no: {$ne: user.mobile_no},
+                })),
+                attributes: [
+                  'id', 'seller_name', 'seller_type_id', 'address',
+                  'is_data_manually_added', [
+                    modals.sequelize.literal(
+                        `(Select count(*) from table_seller_provider_types as provider_type where provider_type.seller_id = sellers.id)`),
+                    'provider_counts'], [
+                    modals.sequelize.literal(
+                        `(Select count(*) from table_sku_seller_mapping as sku_seller where sku_seller.seller_id = sellers.id)`),
+                    'sku_seller_counts']],
+              }) : undefined;
+          let sku_result = await shopEarnAdaptor.retrieveSKUs({
+            location: user.location, user_id: user.id,
+            queryOptions: request.query, seller_list,
+          });
+          if (request.query && request.query.title) {
+            const matching_skus = sku_result.sku_items.filter(
+                item => (item.sub_category_name || '').toLowerCase() ===
+                    request.query.title.toLowerCase());
+            const distinct_skus = sku_result.sku_items.filter(
+                item => (item.sub_category_name || '').toLowerCase() !==
+                    request.query.title.toLowerCase());
+            sku_result.sku_items = [...matching_skus, ...distinct_skus];
+          }
+          return reply.response({
+            status: true, result: sku_result,
+            max_wish_list_items: config.MAX_WISH_LIST_ITEMS,
+            seller_list: (seller_list || []).filter(
+                item => parseInt(item.provider_counts || 0) > 0 ||
+                    parseInt(item.sku_seller_counts || 0) > 0 ||
+                    item.is_data_manually_added),
+          });
+        }
+
         return reply.response({
-          status: true, result: sku_result,
+          status: true, result: {sku_items: [], brands: []},
           max_wish_list_items: config.MAX_WISH_LIST_ITEMS,
-          seller_list: (seller_list || []).filter(
-              item => parseInt(item.provider_counts || 0) > 0 ||
-                  parseInt(item.sku_seller_counts || 0) > 0 ||
-                  item.is_data_manually_added),
+          seller_list: [],
         });
       } catch (err) {
         console.log(`Error on ${new Date()} for user ${user.id ||
@@ -105,7 +126,8 @@ class ShopEarnController {
       try {
         request.params.seller_id = user.seller_id;
         const seller_id = request.params.seller_id;
-        const [seller_list, sku_items] = await Promise.all([
+        const {sku_measurement_id} = request.query;
+        const [seller_list, sku_items, sku_measurement] = await Promise.all([
           sellerAdaptor.retrieveSellersOnInit({
             where: {id: seller_id},
             attributes: [
@@ -117,11 +139,12 @@ class ShopEarnController {
                 modals.sequelize.literal(
                     `(Select count(*) from table_sku_seller_mapping as sku_seller where sku_seller.seller_id = sellers.id)`),
                 'sku_seller_counts']],
-          }),
-          shopEarnAdaptor.retrieveSKUData({
+          }), shopEarnAdaptor.retrieveSKUData({
             where: {id: request.params.sku_id},
             attributes: ['sub_category_id', 'category_id', 'main_category_id'],
-          })]);
+          }), sku_measurement_id ? shopEarnAdaptor.retrieveSKUMeasurement({
+            where: {sku_id: request.params.sku_id, id: sku_measurement_id},
+          }) : {}]);
         const sku_item = sku_items[0];
         if (sku_item.sub_category_id) {
           request.params.category_id = (sku_item.category_id || '').toString();
@@ -131,11 +154,150 @@ class ShopEarnController {
               '').toString();
           request.params.limit = request.query.limit;
           request.params.offset = request.query.offset;
-          const sku_result = await shopEarnAdaptor.retrieveSellerSKUs({
+          let sku_result = [];
+          let sku_list = await shopEarnAdaptor.retrieveSellerSKUs({
             queryOptions: request.params, seller_list,
           });
+          sku_list.forEach((skuItem) => {
+            const {sub_category_name, brand_id, category_id, sub_category_id, main_category_id, title, id, priority_index} = skuItem;
+            sku_result.push(...skuItem.sku_measurements.map(item => ({
+              sub_category_name, brand_id, category_id,
+              sub_category_id, main_category_id,
+              title, id, priority_index, sku_measurements: [item],
+            })));
+          });
+          switch (sku_measurement.measurement_type) {
+            case 2:
+              sku_measurement.temp_measurement_value = parseFloat(
+                  (sku_measurement.measurement_value || 0).toString()) *
+                  1000;
+              break;
+            case 4:
+              sku_measurement.temp_measurement_value = parseFloat(
+                  (sku_measurement.measurement_value || 0).toString()) *
+                  1000;
+              break;
+            case 11:
+              sku_measurement.temp_measurement_value = parseFloat(
+                  (sku_measurement.measurement_value || 0).toString()) /
+                  1000;
+              break;
+            default:
+              sku_measurement.temp_measurement_value = parseFloat(
+                  (sku_measurement.measurement_value || 0).toString());
+          }
+          const sku_ratio = sku_measurement.temp_measurement_value &&
+          sku_measurement.temp_measurement_value > 0 ?
+              sku_measurement.mrp / sku_measurement.temp_measurement_value :
+              -1;
+          const matching_skus = sku_result.filter(
+              item => !!(item.sku_measurements.find(
+                  mItem => {
+                    switch (mItem.measurement_type) {
+                      case 2:
+                        mItem.temp_measurement_value = parseFloat(
+                            (mItem.measurement_value || 0).toString()) *
+                            1000;
+                        break;
+                      case 4:
+                        mItem.temp_measurement_value = parseFloat(
+                            (mItem.measurement_value || 0).toString()) *
+                            1000;
+                        break;
+                      case 11:
+                        mItem.temp_measurement_value = parseFloat(
+                            (mItem.measurement_value || 0).toString()) /
+                            1000;
+                        break;
+                      default:
+                        mItem.temp_measurement_value = parseFloat(
+                            (mItem.measurement_value || 0).toString());
+                    }
+                    return mItem.temp_measurement_value ===
+                        sku_measurement.measurement_value &&
+                        mItem.measurement_type ===
+                        sku_measurement.measurement_type;
+                  })));
+          console.log(JSON.stringify({matching_skus}));
+          matching_skus.sort((a, b) => {
+            let a_sku_ratio = 0, b_sku_ratio = 0;
+            const a_item = a.sku_measurements[0];
+            const b_item = b.sku_measurements[0];
+            a_sku_ratio += a_item && a_item.temp_measurement_value > 0 ?
+                a_item.mrp / a_item.temp_measurement_value : -1;
+            b_sku_ratio += b_item && b_item.temp_measurement_value > 0 ?
+                b_item.mrp / b_item.temp_measurement_value : -1;
+            return Math.abs(sku_ratio - a_sku_ratio) <
+            Math.abs(sku_ratio - b_sku_ratio) ? -1 :
+                Math.abs(sku_ratio - a_sku_ratio) ===
+                Math.abs(sku_ratio - b_sku_ratio) ? 0 : 1;
+          });
+          sku_result = sku_result.filter(
+              item => {
+                return !(item.sku_measurements.find(
+                    mItem => mItem.measurement_value ===
+                        sku_measurement.measurement_value &&
+                        mItem.measurement_type ===
+                        sku_measurement.measurement_type));
+              });
+          sku_result.sort((a, b) => {
+            let a_sku_ratio = 0, b_sku_ratio = 0;
+            const a_item = a.sku_measurements[0];
+            const b_item = b.sku_measurements[0];
+            switch (a_item.measurement_type) {
+              case 2:
+                a_item.temp_measurement_value = parseFloat(
+                    (a_item.measurement_value || 0).toString()) *
+                    1000;
+                break;
+              case 4:
+                a_item.temp_measurement_value = parseFloat(
+                    (a_item.measurement_value || 0).toString()) *
+                    1000;
+                break;
+              case 11:
+                a_item.temp_measurement_value = parseFloat(
+                    (a_item.measurement_value || 0).toString()) /
+                    1000;
+                break;
+              default:
+                a_item.temp_measurement_value = parseFloat(
+                    (a_item.measurement_value || 0).toString());
+            }
+
+            switch (b_item.measurement_type) {
+              case 2:
+                b_item.temp_measurement_value = parseFloat(
+                    (b_item.measurement_value || 0).toString()) *
+                    1000;
+                break;
+              case 4:
+                b_item.temp_measurement_value = parseFloat(
+                    (b_item.measurement_value || 0).toString()) *
+                    1000;
+                break;
+              case 11:
+                b_item.temp_measurement_value = parseFloat(
+                    (b_item.measurement_value || 0).toString()) /
+                    1000;
+                break;
+              default:
+                b_item.temp_measurement_value = parseFloat(
+                    (b_item.measurement_value || 0).toString());
+            }
+            a_sku_ratio += a_item && a_item.temp_measurement_value > 0 ?
+                a_item.mrp / a_item.temp_measurement_value : -1;
+            b_sku_ratio += b_item && b_item.temp_measurement_value > 0 ?
+                b_item.mrp / b_item.temp_measurement_value : -1;
+            return Math.abs(sku_ratio - a_sku_ratio) <
+            Math.abs(sku_ratio - b_sku_ratio) ? -1 :
+                Math.abs(sku_ratio - a_sku_ratio) ===
+                Math.abs(sku_ratio - b_sku_ratio) ? 0 : 1;
+          });
           return reply.response({
-            status: true, result: sku_result,
+            status: true,
+            result: _.slice([...matching_skus, ...sku_result], 0,
+                config.MAX_SELLER_SUGGESTIONS),
           });
         }
 
@@ -396,9 +558,10 @@ class ShopEarnController {
           total_cashback: _.sumBy(
               result.filter(item => item.transaction_type === 1), 'amount') -
               _.sumBy(result.filter(
-                  item => (item.status_type === 14 || item.status_type === 13 ||
-                      item.transaction_type ===
-                      2) && item.is_paytm),
+                  item => (item.status_type === 13 && item.is_paytm) ||
+                      (item.status_type === 14 ||
+                          item.transaction_type ===
+                          2)),
                   /*Only amount redeemed on payTM will be subtracted not all*/
                   'amount'),
           result,
@@ -596,7 +759,7 @@ class ShopEarnController {
         return reply.response({
           status: true,
           product, cashback_jobs, wishlist_items, past_selections,
-          message: 'Product, Cashback Job and Job are initialized.',
+          message: 'Product, CashBack Job and Job are initialized.',
         });
       } else {
         return shared.preValidation(request.pre, reply);
@@ -880,7 +1043,7 @@ class ShopEarnController {
                   job_id: seller_cashback.job_id,
                 }, seller.seller_name, seller_id);
             await userAdaptor.retrieveOrUpdateUserIndexedData(
-                {user_id: seller_cashback.user_id},
+                {where: {user_id: seller_cashback.user_id}},
                 {point_id: seller_points.id, user_id: seller_cashback.user_id});
           }
           return reply.response({status: true, result});
@@ -1297,7 +1460,7 @@ class ShopEarnController {
           reasons: await categoryAdaptor.retrieveRejectReasons(
               {where: {query_type: 3}}),
           result: result.filter(
-              item => item.pending_cashback && item.cashback_id),
+              item => item.cashback_id && item.pending_cashback >= 0),
         });
       } catch (err) {
         console.log(`Error on ${new Date()} for user ${user.id ||

@@ -98,7 +98,7 @@ class UserAdaptor {
 
     const user_detail = result.toJSON();
     await this.retrieveOrUpdateUserIndexedData(
-        {where: {user_id: user_detail.id}, attributes: ['my_seller_ids', 'id']},
+        {where: {user_id: user_detail.id}, attributes: ['my_seller_ids', 'id', 'user_id']},
         {seller_id, user_id: user_detail.id});
 
     return user_detail;
@@ -205,7 +205,7 @@ class UserAdaptor {
       user.addresses = result[1].map(item => item.toJSON());
       user.hasPin = !!(user.password);
       user = _.omit(user, 'password');
-      user.wallet_value = (user.wallet_value || 0) - (user.redeemed_value || 0);
+      user.wallet_value = _.round((user.wallet_value || 0) - (user.redeemed_value || 0), 2);
       return JSON.parse(JSON.stringify(user));
     }
 
@@ -483,6 +483,11 @@ class UserAdaptor {
       userIndex.my_seller_ids = (userIndex.my_seller_ids || []).map(item => parseInt(item.toString()));
       userIndex.my_seller_ids.push(parseInt(defaults.seller_id));
       userIndex.my_seller_ids = _.uniq(userIndex.my_seller_ids);
+    }
+
+    if (defaults.pop_up_counter) {
+      userIndex.pop_up_counter = userIndex.pop_up_counter || 0;
+      userIndex.pop_up_counter += defaults.pop_up_counter
     }
     if (result) {
       await result.updateAttributes(userIndex);

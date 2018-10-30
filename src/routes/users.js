@@ -121,6 +121,44 @@ export function prepareAuthRoutes(modal, routeObject, middleware) {
       },
     });
 
+    /*Update FCM of Seller*/
+    routeObject.push({
+      method: 'POST',
+      path: '/sellers/subscribe',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: middleware.logSellerAction,
+            assign: 'seller_action',
+          },
+        ],
+        handler: ControllerObject.subscribeSellerUser,
+        description: 'Update Seller User FCM Server ID.',
+        validate: {
+          payload: {
+            fcm_id: [joi.string(), joi.allow(null)],
+            platform: [joi.number(), joi.allow(null)],
+            selected_language: [joi.string(), joi.allow(null)],
+            output: 'data',
+            parse: true,
+          },
+        },
+        plugins: {
+          'hapi-swagger': {
+            responseMessages: [
+              {code: 202, message: 'Authenticated'},
+              {code: 400, message: 'Bad Request'},
+              {code: 401, message: 'Invalid Credentials'},
+              {code: 404, message: 'Not Found'},
+              {code: 500, message: 'Internal Server Error'},
+            ],
+          },
+        },
+      },
+    });
+
     /*Update Consumer Profile*/
     routeObject.push({
       method: 'PUT',

@@ -142,15 +142,15 @@ let loginOrRegisterUser = async parameters => {
         if (seller_detail.length > 0) {
           await modals.seller_wallet.create({
             status_type: 16, cashback_source: 3,
-            amount: _main2.default.SELLER_REFERAL_CASH_BACK,
+            amount: _main2.default.SELLER_REFERRAL_CASH_BACK,
             seller_id: seller_detail[0].id, user_id: user_detail.id
           });
 
           await notificationAdaptor.notifyUserCron({
             seller_user_id: seller_detail[0].user_id,
             payload: {
-              title: `You have recieved cash back ${_main2.default.SELLER_REFERAL_CASH_BACK}.`,
-              description: `Cash back ₹${_main2.default.SELLER_REFERAL_CASH_BACK} has been credited to your wallet as your user with mobile number ${user_detail.mobile_no} has joined bin bill.`,
+              title: `Yay! ₹${_main2.default.SELLER_REFERRAL_CASH_BACK} credited to you.`,
+              description: `Congratulations! ₹${_main2.default.SELLER_REFERRAL_CASH_BACK} has been credited to your BB Wallet as your user with mobile number ${user_detail.mobile_no} has registered with us.`,
               notification_type: 3, notification_id: Math.random()
             }
           });
@@ -249,6 +249,53 @@ class UserController {
             userId: user.id || user.ID,
             fcmId: request.payload.fcmId,
             platformId: request.payload.platform || 1,
+            selected_language: request.payload.selected_language
+          });
+        }
+        return reply.response(replyObject).code(201);
+      } else {
+        replyObject.status = false;
+        replyObject.message = 'Forbidden';
+        return reply.response(replyObject);
+      }
+    } catch (err) {
+
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err
+        })
+      }).catch(ex => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to update fcm details.',
+        forceUpdate: request.pre.forceUpdate,
+        err
+      });
+    }
+  }
+
+  static async subscribeSellerUser(request, reply) {
+    const user = _shared2.default.verifyAuthorization(request.headers);
+    try {
+      replyObject = {
+        status: true,
+        message: 'success',
+        forceUpdate: request.pre.forceUpdate
+      };
+      if (!request.pre.forceUpdate) {
+        if (request.payload && request.payload.fcmId) {
+          await fcmManager.insertSellerFcmDetails({
+            seller_user_id: user.id || user.ID,
+            fcm_id: request.payload.fcm_id,
+            platform_id: request.payload.platform || 1,
             selected_language: request.payload.selected_language
           });
         }

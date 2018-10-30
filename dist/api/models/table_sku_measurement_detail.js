@@ -30,6 +30,9 @@ exports.default = (sequelize, DataTypes) => {
     mrp: {
       type: DataTypes.FLOAT
     },
+    tax: {
+      type: DataTypes.FLOAT
+    },
     updated_by: {
       type: DataTypes.INTEGER
     },

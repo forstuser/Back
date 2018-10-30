@@ -585,6 +585,24 @@ function prepareUploadRoutes(modal, routeObject, middleware) {
       }
     });
 
+    /*Retrieve SKU images*/
+    routeObject.push({
+      method: 'GET',
+      path: '/skus/{id}/measurements/{measurement_id}/images',
+      config: {
+        handler: _upload2.default.retrieveSKUImage
+      }
+    });
+
+    /*Retrieve SKU images*/
+    routeObject.push({
+      method: 'GET',
+      path: '/skus/{id}/measurements/{measurement_id}/images/{file_type}',
+      config: {
+        handler: _upload2.default.retrieveSKUImage
+      }
+    });
+
     /*Retrieve Provider images*/
     routeObject.push({
       method: 'GET',

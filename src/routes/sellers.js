@@ -131,6 +131,19 @@ export function prepareSellerRoutes(modal, route, middleware, socket) {
     });
 
     route.push({
+      method: 'PUT',
+      path: '/sellers/{id}/online/{flag}',
+      handler: controller.updateSellerPayOnline,
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {method: middleware.logSellerAction, assign: 'seller_action'},
+        ],
+      },
+    });
+
+    route.push({
       method: 'DELETE',
       path: '/sellers/{id}/link',
       config: {
@@ -374,6 +387,7 @@ export function prepareSellerRoutes(modal, route, middleware, socket) {
             close_time: [joi.string(), joi.allow(null)],
             home_delivery: [joi.boolean(), joi.allow(null)],
             home_delivery_remarks: [joi.string(), joi.allow(null)],
+            pay_online: [joi.boolean(), joi.allow(null)],
             payment_modes: [joi.string(), joi.allow(null)],
             output: 'data',
             parse: true,

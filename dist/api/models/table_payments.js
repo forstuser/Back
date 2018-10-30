@@ -39,7 +39,7 @@ exports.default = (sequelize, DataTypes) => {
     },
     status_type: {
       type: DataTypes.INTEGER,
-      defaultValue: 13
+      defaultValue: 4
     },
     created_at: {
       type: DataTypes.DATE,

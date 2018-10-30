@@ -18,6 +18,9 @@ exports.default = (sequelize, DataTypes) => {
     seller_id: {
       type: DataTypes.INTEGER
     },
+    order_id: {
+      type: DataTypes.INTEGER
+    },
     user_id: {
       type: DataTypes.INTEGER
     },
@@ -76,6 +79,7 @@ exports.default = (sequelize, DataTypes) => {
       onUpdate: 'cascade'
     });
     seller_wallet.belongsTo(models.cashback_jobs, { foreignKey: 'job_id', onDelete: 'cascade', onUpdate: 'cascade' });
+    seller_wallet.belongsTo(models.order, { foreignKey: 'order_id', onDelete: 'cascade', onUpdate: 'cascade' });
     seller_wallet.belongsTo(models.users, {
       foreignKey: 'user_id',
       as: 'user',

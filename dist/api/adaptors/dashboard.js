@@ -56,6 +56,10 @@ var _lodash = require('lodash');
 
 var _lodash2 = _interopRequireDefault(_lodash);
 
+var _main = require('../../config/main');
+
+var _main2 = _interopRequireDefault(_main);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 class DashboardAdaptor {
@@ -177,7 +181,7 @@ class DashboardAdaptor {
 
   async retrieveDashboardResult(user, request) {
     try {
-      let [upcomingServices, recentSearches, notificationCount] = await _bluebird2.default.all([this.filterUpcomingService(user, request), this.retrieveRecentSearch(user), this.modals.mailBox.count({ where: { user_id: user.id || user.ID, status_id: 4 } })]);
+      let [upcomingServices, recentSearches, notificationCount, user_index] = await _bluebird2.default.all([this.filterUpcomingService(user, request), this.retrieveRecentSearch(user), this.modals.mailBox.count({ where: { user_id: user.id || user.ID, status_id: 4 } }), this.userAdaptor.retrieveOrUpdateUserIndexedData({ where: { user_id: user.id || user.ID } }, { pop_up_counter: 1 })]);
       return {
         status: true,
         message: 'Dashboard restore Successful',
@@ -186,6 +190,10 @@ class DashboardAdaptor {
           const search = item.toJSON();
           return search.searchValue;
         }).slice(0, 5)),
+        pop_up_content: _main2.default.POP_UP_CONTENT,
+        pop_up_title: _main2.default.POP_UP_TITLE,
+        pop_up_counter: parseInt(_main2.default.POP_UP_COUNTER || '0'),
+        current_counter: user_index.pop_up_counter,
         upcomingServices: await this.evaluateUpcomingServices(upcomingServices),
         forceUpdate: request.pre.forceUpdate
       };

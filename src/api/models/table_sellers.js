@@ -66,6 +66,10 @@ export default (sequelize, DataTypes) => {
           type: DataTypes.BOOLEAN,
           defaultValue: false,
         },
+        /*pay_online: {
+          type: DataTypes.BOOLEAN,
+          defaultValue: false,
+        },*/
         latitude: {
           type: DataTypes.FLOAT,
           allowNull: true,
