@@ -5,11 +5,11 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _product = require('../Adaptors/product');
+var _product = require('../adaptors/product');
 
 var _product2 = _interopRequireDefault(_product);
 
-var _notification = require('../Adaptors/notification');
+var _notification = require('../adaptors/notification');
 
 var _notification2 = _interopRequireDefault(_notification);
 
@@ -71,7 +71,7 @@ class ProductController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user ? user.id || user.ID : undefined,
+          user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -119,29 +119,13 @@ class ProductController {
         } = request.payload;
         const user_id = user.id || user.ID;
         const productBody = {
-          user_id,
-          product_name,
-          main_category_id,
-          category_id,
-          sub_category_id,
-          brand_id,
-          colour_id,
-          purchase_cost: value,
-          taxes,
-          updated_by: user_id,
-          seller_name,
-          seller_contact,
-          seller_email,
-          seller_address,
-          seller_id,
-          status_type: 11,
-          model: model || '',
-          new_drop_down: isNewModel,
-          ref_id,
-          document_number,
-          accessory_part_id,
-          document_date: document_date ? _moment2.default.utc(document_date, _moment2.default.ISO_8601).isValid() ? _moment2.default.utc(document_date, _moment2.default.ISO_8601).startOf('day').format('YYYY-MM-DD') : _moment2.default.utc(document_date, 'DD MMM YY').startOf('day').format('YYYY-MM-DD') : undefined,
-          brand_name
+          user_id, product_name, main_category_id, category_id,
+          sub_category_id, brand_id, colour_id,
+          purchase_cost: value, taxes, updated_by: user_id,
+          seller_name, seller_contact, seller_email, seller_address,
+          seller_id, status_type: 11, model: model || '',
+          new_drop_down: isNewModel, ref_id, document_number,
+          accessory_part_id, document_date: document_date ? _moment2.default.utc(document_date, _moment2.default.ISO_8601).isValid() ? _moment2.default.utc(document_date, _moment2.default.ISO_8601).startOf('day').format('YYYY-MM-DD') : _moment2.default.utc(document_date, 'DD MMM YY').startOf('day').format('YYYY-MM-DD') : undefined, brand_name
         };
 
         const otherItems = { warranty, insurance, puc, amc, repair };
@@ -179,7 +163,7 @@ class ProductController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user ? user.id || user.ID : undefined,
+          user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -250,7 +234,7 @@ class ProductController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user ? user.id || user.ID : undefined,
+          user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -311,7 +295,7 @@ class ProductController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -359,7 +343,7 @@ class ProductController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -433,7 +417,7 @@ class ProductController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,

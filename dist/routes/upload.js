@@ -188,6 +188,113 @@ function prepareUploadRoutes(modal, routeObject, middleware) {
       }
     });
 
+    routeObject.push({
+      method: 'POST',
+      path: '/sellers/{id}/upload/{type}',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        files: {
+          relativeTo: _path2.default.join(__dirname, '../static/src')
+        },
+        handler: _upload2.default.uploadSellerFiles,
+        payload: {
+          output: 'stream',
+          parse: true,
+          uploads: 'up_files',
+          timeout: 3003400,
+          allow: 'multipart/form-data',
+          failAction: 'log',
+          maxBytes: 209715200
+        },
+        timeout: {
+          socket: false
+        }
+      }
+    });
+
+    routeObject.push({
+      method: 'POST',
+      path: '/sellers/{id}/upload/{type}/images/{index}',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        files: {
+          relativeTo: _path2.default.join(__dirname, '../static/src')
+        },
+        handler: _upload2.default.uploadSellerFiles,
+        payload: {
+          output: 'stream',
+          parse: true,
+          uploads: 'up_files',
+          timeout: 3003400,
+          allow: 'multipart/form-data',
+          failAction: 'log',
+          maxBytes: 209715200
+        },
+        timeout: {
+          socket: false
+        }
+      }
+    });
+
+    routeObject.push({
+      method: 'GET',
+      path: '/sellers/{id}/upload/{type}/images/{index}',
+      config: {
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        handler: _upload2.default.retrieveSellerImages
+      }
+    });
+
+    routeObject.push({
+      method: 'GET',
+      path: '/assisted/{id}/images',
+      config: {
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        handler: _upload2.default.retrieveAssistedTypeImages
+      }
+    });
+
+    routeObject.push({
+      method: 'GET',
+      path: '/consumer/sellers/{id}/upload/{type}/images/{index}',
+      config: {
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        handler: _upload2.default.retrieveSellerImagesForConsumer
+      }
+    });
+
+    routeObject.push({
+      method: 'DELETE',
+      path: '/sellers/{id}/upload/{type}/images/{index}',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        handler: _upload2.default.deleteSellerImages
+      }
+    });
+
+    routeObject.push({
+      method: 'DELETE',
+      path: '/sellers/{id}/details',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        handler: _upload2.default.deleteSellerDetails
+      }
+    });
+
+    routeObject.push({
+      method: 'DELETE',
+      path: '/sellers/{id}/details/{type}',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        handler: _upload2.default.deleteSellerDetails
+      }
+    });
+
     /*Retrieve user job copies*/
     routeObject.push({
       method: 'GET',
@@ -230,6 +337,19 @@ function prepareUploadRoutes(modal, routeObject, middleware) {
       }
     });
 
+    routeObject.push({
+      method: 'GET',
+      path: '/customer/{id}/images',
+      config: {
+        // auth: 'jwt',
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, {
+          method: middleware.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _upload2.default.retrieveUserImageForSeller
+      }
+    });
+
     /*Retrieve Category images*/
     routeObject.push({
       method: 'GET',
@@ -261,6 +381,105 @@ function prepareUploadRoutes(modal, routeObject, middleware) {
       path: '/offer/{offer_id}/banners',
       config: {
         handler: _upload2.default.retrieveOfferBannerImage
+      }
+    });
+
+    routeObject.push({
+      method: 'GET',
+      path: '/offer/{offer_id}/images/{index}',
+      config: {
+        handler: _upload2.default.retrieveSellerOfferImages
+      }
+    });
+
+    routeObject.push({
+      method: 'POST',
+      path: '/offer/{offer_id}/images/{index}',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        files: {
+          relativeTo: _path2.default.join(__dirname, '../static/src')
+        },
+        handler: _upload2.default.uploadSellerOfferImages,
+        payload: {
+          output: 'stream',
+          parse: true,
+          uploads: 'up_files',
+          timeout: 3003400,
+          allow: 'multipart/form-data',
+          failAction: 'log',
+          maxBytes: 209715200
+        },
+        timeout: {
+          socket: false
+        }
+      }
+    });
+
+    routeObject.push({
+      method: 'GET',
+      path: '/assisted/{id}/profile',
+      config: {
+        handler: _upload2.default.retrieveAssistedProfile
+      }
+    });
+
+    routeObject.push({
+      method: 'GET',
+      path: '/assisted/{id}/documents/{index}',
+      config: {
+        handler: _upload2.default.retrieveAssistedDocument
+      }
+    });
+
+    routeObject.push({
+      method: 'POST',
+      path: '/assisted/{id}/profile/{index}',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        files: {
+          relativeTo: _path2.default.join(__dirname, '../static/src')
+        },
+        handler: _upload2.default.uploadSellerAssistedProfile,
+        payload: {
+          output: 'stream',
+          parse: true,
+          uploads: 'up_files',
+          timeout: 3003400,
+          allow: 'multipart/form-data',
+          failAction: 'log',
+          maxBytes: 209715200
+        },
+        timeout: {
+          socket: false
+        }
+      }
+    });
+
+    routeObject.push({
+      method: 'POST',
+      path: '/assisted/{id}/documents/{index}',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        files: {
+          relativeTo: _path2.default.join(__dirname, '../static/src')
+        },
+        handler: _upload2.default.uploadSellerAssistedDocuments,
+        payload: {
+          output: 'stream',
+          parse: true,
+          uploads: 'up_files',
+          timeout: 3003400,
+          allow: 'multipart/form-data',
+          failAction: 'log',
+          maxBytes: 209715200
+        },
+        timeout: {
+          socket: false
+        }
       }
     });
 
@@ -321,6 +540,48 @@ function prepareUploadRoutes(modal, routeObject, middleware) {
       path: '/brands/{id}/images',
       config: {
         handler: _upload2.default.retrieveBrandImage
+      }
+    });
+
+    routeObject.push({
+      method: 'POST',
+      path: '/sku/{id}/images',
+      config: {
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        files: {
+          relativeTo: _path2.default.join(__dirname, '../static/src')
+        },
+        handler: _upload2.default.uploadSKUImage,
+        payload: {
+          output: 'stream',
+          parse: true,
+          uploads: 'up_files',
+          timeout: 3003400,
+          allow: 'multipart/form-data',
+          failAction: 'log',
+          maxBytes: 209715200
+        },
+        timeout: {
+          socket: false
+        }
+      }
+    });
+
+    /*Retrieve SKU images*/
+    routeObject.push({
+      method: 'GET',
+      path: '/skus/{id}/images',
+      config: {
+        handler: _upload2.default.retrieveSKUImage
+      }
+    });
+
+    /*Retrieve SKU images*/
+    routeObject.push({
+      method: 'GET',
+      path: '/skus/{id}/images/{file_type}',
+      config: {
+        handler: _upload2.default.retrieveSKUImage
       }
     });
 

@@ -214,6 +214,7 @@ function prepareGeneralRoutes(modal, routeObject, middleware) {
             brand_name: [_joi2.default.string(), _joi2.default.allow(null)],
             main_category_id: _joi2.default.number(),
             category_id: _joi2.default.number(),
+            sub_category_id: [_joi2.default.number(), _joi2.default.allow(null)],
             brand_id: [_joi2.default.number(), _joi2.default.allow(null)],
             colour_id: [_joi2.default.number(), _joi2.default.allow(null)],
             value: [_joi2.default.number(), _joi2.default.allow(null)],
@@ -258,6 +259,24 @@ function prepareGeneralRoutes(modal, routeObject, middleware) {
       config: {
         handler: _general2.default.sesComplaintHandler,
         description: 'Handling Complaints from SES.'
+      }
+    });
+
+    routeObject.push({
+      method: 'POST',
+      path: '/message',
+      config: {
+        handler: _general2.default.sendMessages,
+        description: 'Handling Messages from server.'
+      }
+    });
+
+    routeObject.push({
+      method: 'GET',
+      path: '/sendsms',
+      config: {
+        handler: _general2.default.sendMessages,
+        description: 'Handling SMS from server.'
       }
     });
   }

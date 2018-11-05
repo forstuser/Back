@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", {
 
 exports.default = (sequelize, DataTypes) => {
   const onlineSellers = sequelize.define('onlineSellers', {
-    sid: {
+    id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
@@ -28,6 +28,9 @@ exports.default = (sequelize, DataTypes) => {
       type: DataTypes.STRING
     },
     updated_by: {
+      type: DataTypes.INTEGER
+    },
+    created_by: {
       type: DataTypes.INTEGER
     },
     status_type: {
@@ -54,7 +57,7 @@ exports.default = (sequelize, DataTypes) => {
 
     onlineSellers.belongsTo(models.statuses, { foreignKey: 'status_type', targetKey: 'status_type' });
     onlineSellers.hasMany(models.bills, { foreignKey: 'seller_id' });
-    onlineSellers.hasMany(models.sellerReviews, { foreignKey: 'seller_id', as: 'sellerReviews' });
+    onlineSellers.hasMany(models.seller_reviews, { foreignKey: 'seller_id', as: 'sellerReviews' });
   };
   return onlineSellers;
 };

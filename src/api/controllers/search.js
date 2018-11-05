@@ -2,7 +2,7 @@
 'use strict';
 
 import shared from '../../helpers/shared';
-import SearchAdaptor from '../Adaptors/search';
+import SearchAdaptor from '../adaptors/search';
 
 let modals;
 let searchAdaptor;
@@ -33,12 +33,12 @@ class SearchController {
             request.query.searchvalue, request.language));
       }
     } catch (err) {
-
+      console.log(err);
       modals.logs.create({
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,

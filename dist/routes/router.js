@@ -33,7 +33,7 @@ var _product_item = require('./product_item');
 
 var _general = require('./general');
 
-var _auth = require('./auth');
+var _users = require('./users');
 
 var _brand = require('./brand');
 
@@ -41,11 +41,17 @@ var _accessory_routes = require('./accessory_routes');
 
 var _offer = require('./offer');
 
+var _shop_earn = require('./shop_earn');
+
+var _sellers = require('./sellers');
+
+var _order = require('./order');
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 let middleware;
 
-exports.default = (app, modals) => {
+exports.default = (app, modals, socket_server) => {
   middleware = (0, _middleware2.default)(modals);
   // Initializing route groups
   const authRoutes = [];
@@ -65,34 +71,42 @@ exports.default = (app, modals) => {
   const whatToServiceRoutes = [];
   const accessoryServicesRoutes = [];
   const offerRoutes = [];
+  const shopEarnRoutes = [];
+  const orderRoutes = [];
   const searchController = new _search2.default(modals);
-  (0, _auth.prepareAuthRoutes)(modals, authRoutes, middleware);
+  (0, _users.prepareAuthRoutes)(modals, authRoutes, middleware, socket_server);
 
-  (0, _category.prepareCategoryRoutes)(modals, categoryRoutes, middleware);
+  (0, _category.prepareCategoryRoutes)(modals, categoryRoutes, middleware, socket_server);
 
-  (0, _brand.prepareBrandRoutes)(modals, brandRoutes, middleware);
+  (0, _brand.prepareBrandRoutes)(modals, brandRoutes, middleware, socket_server);
 
-  (0, _service_center.prepareServiceCenterRoutes)(modals, serviceCenterRoutes, middleware);
+  (0, _service_center.prepareServiceCenterRoutes)(modals, serviceCenterRoutes, middleware, socket_server);
 
-  (0, _upload.prepareUploadRoutes)(modals, uploadFileRoute, middleware);
+  (0, _upload.prepareUploadRoutes)(modals, uploadFileRoute, middleware, socket_server);
 
-  (0, _dashboard.prepareDashboardRoutes)(modals, dashboardRoutes, middleware);
+  (0, _dashboard.prepareDashboardRoutes)(modals, dashboardRoutes, middleware, socket_server);
 
-  (0, _product.prepareProductRoutes)(modals, productRoutes, middleware);
+  (0, _product.prepareProductRoutes)(modals, productRoutes, middleware, socket_server);
 
-  (0, _insight.prepareInsightRoutes)(modals, insightRoutes, middleware);
+  (0, _insight.prepareInsightRoutes)(modals, insightRoutes, middleware, socket_server);
 
-  (0, _general.prepareGeneralRoutes)(modals, generalRoutes, middleware);
+  (0, _general.prepareGeneralRoutes)(modals, generalRoutes, middleware, socket_server);
 
-  (0, _product_item.prepareProductItemRoutes)(modals, repairRoutes, middleware);
+  (0, _product_item.prepareProductItemRoutes)(modals, repairRoutes, middleware, socket_server);
 
-  (0, _calendar_service.prepareCalendarServiceRoutes)(modals, calendarRoutes, middleware);
+  (0, _calendar_service.prepareCalendarServiceRoutes)(modals, calendarRoutes, middleware, socket_server);
 
-  (0, _what_to_service.prepareWhatToServiceRoutes)(modals, whatToServiceRoutes, middleware);
+  (0, _what_to_service.prepareWhatToServiceRoutes)(modals, whatToServiceRoutes, middleware, socket_server);
 
-  (0, _accessory_routes.prepareAccessoryRoute)(modals, accessoryServicesRoutes, middleware);
+  (0, _accessory_routes.prepareAccessoryRoute)(modals, accessoryServicesRoutes, middleware, socket_server);
 
-  (0, _offer.prepareOfferRoutes)(modals, offerRoutes, middleware);
+  (0, _offer.prepareOfferRoutes)(modals, offerRoutes, middleware, socket_server);
+
+  (0, _shop_earn.prepareShopEarnRoute)(modals, shopEarnRoutes, middleware, socket_server);
+
+  (0, _sellers.prepareSellerRoutes)(modals, sellerRoutes, middleware, socket_server);
+
+  (0, _order.prepareOrderRoutes)(modals, orderRoutes, middleware, socket_server);
 
   if (searchController) {
     searchRoutes.push({
@@ -115,8 +129,8 @@ exports.default = (app, modals) => {
     });
   }
 
-  [...authRoutes, ...categoryRoutes, ...brandRoutes, ...sellerRoutes, ...serviceCenterRoutes, ...billManagementRoutes, ...uploadFileRoute, ...dashboardRoutes, ...productRoutes, ...insightRoutes, ...searchRoutes, ...generalRoutes, ...repairRoutes, ...calendarRoutes, ...whatToServiceRoutes, ...accessoryServicesRoutes, ...offerRoutes].forEach(routeItem => app.route(routeItem));
-  const handler = function (request, h, err) {
+  [...authRoutes, ...categoryRoutes, ...brandRoutes, ...sellerRoutes, ...serviceCenterRoutes, ...billManagementRoutes, ...uploadFileRoute, ...dashboardRoutes, ...productRoutes, ...insightRoutes, ...searchRoutes, ...generalRoutes, ...repairRoutes, ...calendarRoutes, ...whatToServiceRoutes, ...accessoryServicesRoutes, ...offerRoutes, ...shopEarnRoutes, ...orderRoutes].forEach(routeItem => app.route(routeItem));
+  const handler = (request, h, err) => {
     console.log(err);
     return h.response('The page was not found').code(404);
   };

@@ -1,10 +1,10 @@
 /*jshint esversion: 6 */
 'use strict';
 
-import NotificationAdaptor from '../Adaptors/notification';
-import EHomeAdaptor from '../Adaptors/ehome';
-import DashboardAdaptor from '../Adaptors/dashboard';
-import UserAdaptor from '../Adaptors/user';
+import NotificationAdaptor from '../adaptors/notification';
+import EHomeAdaptor from '../adaptors/ehome';
+import DashboardAdaptor from '../adaptors/dashboard';
+import UserAdaptor from '../adaptors/user';
 import shared from '../../helpers/shared';
 
 let dashboardAdaptor;
@@ -53,7 +53,46 @@ class DashboardController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to retrieve dashboard.',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
+  static async getSellerDashboard(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    try {
+      if (!request.pre.forceUpdate) {
+        const {seller_id} = request.params;
+        const {seller_type_id} = user;
+        return reply.response(
+            await dashboardAdaptor.retrieveSellerDashboard({seller_id},
+                request, seller_type_id));
+      } else {
+        return reply.response({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate,
+        });
+      }
+    } catch (err) {
+      console.log(err);
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -570,7 +609,7 @@ class DashboardController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -620,7 +659,7 @@ class DashboardController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -683,7 +722,7 @@ class DashboardController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -740,7 +779,7 @@ class DashboardController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -783,7 +822,7 @@ class DashboardController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -832,7 +871,7 @@ class DashboardController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -849,10 +888,18 @@ class DashboardController {
     }
   }
 
-  static notifyUser(request, reply) {
-    const payload = request.payload ||
-        {userId: '', data: {title: '', description: ''}};
-    notificationAdaptor.notifyUser(payload.userId || '', payload.data, reply);
+  static async notifyUser(request, reply) {
+    try {
+      const payload = request.payload;
+      return await notificationAdaptor.notifyUser({
+        seller_user_id: payload.seller_user_id,
+        userId: payload.userId,
+        payload: payload.data,
+        reply,
+      });
+    } catch (e) {
+      console.log(e);
+    }
   }
 }
 

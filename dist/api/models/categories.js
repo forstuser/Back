@@ -18,6 +18,9 @@ exports.default = (sequelize, DataTypes) => {
     category_name_hi: {
       type: DataTypes.STRING
     },
+    category_name_en: {
+      type: DataTypes.STRING
+    },
     category_name_ta: {
       type: DataTypes.STRING
     },
@@ -58,10 +61,16 @@ exports.default = (sequelize, DataTypes) => {
       'type': DataTypes.STRING
     },
     updated_by: {
-      type: DataTypes.INTEGER
+      type: DataTypes.INTEGER,
+      defaultValue: 1
+    },
+    created_by: {
+      type: DataTypes.INTEGER,
+      defaultValue: 1
     },
     status_type: {
-      type: DataTypes.INTEGER
+      type: DataTypes.INTEGER,
+      defaultValue: 1
     },
     created_at: {
       type: DataTypes.DATE,
@@ -71,8 +80,15 @@ exports.default = (sequelize, DataTypes) => {
       type: DataTypes.DATE,
       defaultValue: sequelize.literal('NOW()')
     },
+    brand_ids: {
+      type: DataTypes.JSONB
+    },
     dual_warranty_item: {
       type: DataTypes.STRING
+    },
+    priority_index: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0
     }
   }, {
     freezeTableName: true,
@@ -84,6 +100,7 @@ exports.default = (sequelize, DataTypes) => {
 
   categories.associate = models => {
     categories.belongsTo(models.users, { foreignKey: 'updated_by' });
+    categories.belongsTo(models.users, { foreignKey: 'created_by' });
     categories.belongsTo(models.categories, { foreignKey: 'ref_id' });
     categories.hasMany(models.categories, { foreignKey: 'ref_id', as: 'subCategories' });
     categories.hasMany(models.products, { foreignKey: 'category_id', as: 'products' });

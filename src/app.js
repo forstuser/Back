@@ -7,10 +7,10 @@ import vision from 'vision';
 import models from './api/models';
 import config from './config/main';
 import routers from './routes/router';
+import SocketServer from './api/socket';
 // Create a server with a host and port
-
+let socket_server;
 const PORT = config.APP.PORT || 8443;
-
 const init = async () => {
   const server = new Hapi.Server({
     port: PORT,
@@ -18,10 +18,13 @@ const init = async () => {
       log: {collect: true},
       cors: {
         origin: ['*'],
-        headers: ['Accept', 'Content-Type', 'Authorization', 'language'],
+        headers: [
+          'Accept', 'Content-Type', 'Authorization'],
+        additionalHeaders: ['language', 'app-version', 'ios-app-version'],
       },
     },
   });
+
   try {
     await server.register(
         {
@@ -45,9 +48,15 @@ const init = async () => {
         {
           key: jwtKey.toString(),
           validate: async (decoded, request) => {
-            let userList = await models.users.findAll({
-              where: JSON.parse(JSON.stringify({role_type: 5, id: decoded.id})),
-            });
+            let userList = await (decoded.seller_detail ?
+                models.seller_users.findAll({
+                  where: JSON.parse(
+                      JSON.stringify({role_type: 6, id: decoded.id})),
+                }) :
+                models.users.findAll({
+                  where: JSON.parse(
+                      JSON.stringify({role_type: 5, id: decoded.id})),
+                }));
             const people = {};
             userList.forEach((item) => {
               item = item.toJSON();
@@ -56,8 +65,10 @@ const init = async () => {
 
             if (!people[decoded.id]) {
               return {isValid: false};
-            }
-            else {
+            } else if (decoded.seller_detail &&
+                people[decoded.id].is_logged_out) {
+              return {isValid: false};
+            } else {
               return {isValid: true};
             }
           },
@@ -75,7 +86,12 @@ const init = async () => {
         });
       }
     });
-    routers(server, models);
+    if (!socket_server) {
+      socket_server = new SocketServer({server, models});
+    }
+    if (socket_server) {
+      routers(server, models, SocketServer);
+    }
     await server.start();
   } catch (e) {
     console.log(e);

@@ -1,16 +1,16 @@
 import moment from 'moment/moment';
 import shared from '../../helpers/shared';
-import InsuranceAdaptor from '../Adaptors/insurances';
-import AMCAdaptor from '../Adaptors/amcs';
-import PUCAdaptor from '../Adaptors/pucs';
-import RegCertificateAdaptor from '../Adaptors/reg_certificates';
-import WarrantyAdaptor from '../Adaptors/warranties';
-import RepairAdaptor from '../Adaptors/repairs';
-import SellerAdaptor from '../Adaptors/sellers';
-import CategoryAdaptor from '../Adaptors/category';
-import ProductAdaptor from '../Adaptors/product';
-import JobAdaptor from '../Adaptors/job';
-import FuelAdaptor from '../Adaptors/refueling';
+import InsuranceAdaptor from '../adaptors/insurances';
+import AMCAdaptor from '../adaptors/amcs';
+import PUCAdaptor from '../adaptors/pucs';
+import RegCertificateAdaptor from '../adaptors/reg_certificates';
+import WarrantyAdaptor from '../adaptors/warranties';
+import RepairAdaptor from '../adaptors/repairs';
+import SellerAdaptor from '../adaptors/sellers';
+import CategoryAdaptor from '../adaptors/category';
+import ProductAdaptor from '../adaptors/product';
+import JobAdaptor from '../adaptors/job';
+import FuelAdaptor from '../adaptors/refueling';
 
 let repairAdaptor;
 let sellerAdaptor;
@@ -26,7 +26,7 @@ let regCertificateAdaptor;
 let fuelAdaptor;
 
 class ProductItemController {
-  constructor(modal) {
+  constructor(modal, socket) {
     modals = modal;
     repairAdaptor = new RepairAdaptor(modal);
     sellerAdaptor = new SellerAdaptor(modal);
@@ -36,7 +36,7 @@ class ProductItemController {
     warrantyAdaptor = new WarrantyAdaptor(modal);
     categoryAdaptor = new CategoryAdaptor(modal);
     productAdaptor = new ProductAdaptor(modal);
-    jobAdaptor = new JobAdaptor(modal);
+    jobAdaptor = new JobAdaptor(modal, socket);
     regCertificateAdaptor = new RegCertificateAdaptor(modal);
     fuelAdaptor = new FuelAdaptor(modals);
   }
@@ -60,7 +60,7 @@ class ProductItemController {
         const sellerPromise = !request.payload.seller_id &&
         (request.payload.seller_contact ||
             request.payload.seller_name) ?
-            sellerAdaptor.retrieveOrCreateOfflineSellers({
+            sellerAdaptor.retrieveOrCreateSellers({
                   seller_name: request.payload.seller_name,
                   contact_no: request.payload.seller_contact,
                 },
@@ -76,7 +76,7 @@ class ProductItemController {
         const sellerList = await Promise.all([sellerPromise]);
         const product_id = parseInt(request.params.id);
         const repairId = parseInt(request.params.repairId);
-        const newSellerId = sellerList[0] ? sellerList[0].sid : undefined;
+        const newSellerId = sellerList[0] ? sellerList[0].id : undefined;
         const document_date = request.payload.document_date ? moment.utc(
             request.payload.document_date,
             moment.ISO_8601).isValid() ?
@@ -131,7 +131,7 @@ class ProductItemController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -182,7 +182,7 @@ class ProductItemController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -324,7 +324,7 @@ class ProductItemController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -376,7 +376,7 @@ class ProductItemController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -412,7 +412,7 @@ class ProductItemController {
         const sellerPromise = !request.payload.seller_id &&
         (request.payload.seller_contact ||
             request.payload.seller_name) ?
-            sellerAdaptor.retrieveOrCreateOfflineSellers({
+            sellerAdaptor.retrieveOrCreateSellers({
                   seller_name: request.payload.seller_name,
                   contact_no: request.payload.seller_contact,
                 },
@@ -461,7 +461,7 @@ class ProductItemController {
           status_type: 11, product_id,
           job_id: request.payload.job_id || productResult.jobId,
           renewal_cost: request.payload.value,
-          seller_id: sellerList ? sellerList.sid : request.payload.seller_id,
+          seller_id: sellerList ? sellerList.id : request.payload.seller_id,
           expiry_date: effective_date ?
               moment.utc(expiry_date).format('YYYY-MM-DD') : undefined,
           effective_date: effective_date ? moment.utc(effective_date).
@@ -501,7 +501,7 @@ class ProductItemController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -552,7 +552,7 @@ class ProductItemController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -588,7 +588,7 @@ class ProductItemController {
         const sellerPromise = !request.payload.seller_id &&
         (request.payload.seller_contact ||
             request.payload.seller_name) ?
-            sellerAdaptor.retrieveOrCreateOfflineSellers({
+            sellerAdaptor.retrieveOrCreateSellers({
                   seller_name: request.payload.seller_name,
                   contact_no: request.payload.seller_contact,
                 },
@@ -641,7 +641,7 @@ class ProductItemController {
           product_id,
           job_id: request.payload.job_id || productResult.jobId,
           seller_id: sellerList ?
-              sellerList.sid :
+              sellerList.id :
               request.payload.seller_id,
           expiry_date: effective_date ?
               moment.utc(expiry_date).format('YYYY-MM-DD') :
@@ -684,7 +684,7 @@ class ProductItemController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -735,7 +735,7 @@ class ProductItemController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -874,7 +874,7 @@ class ProductItemController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -925,7 +925,7 @@ class ProductItemController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -1036,7 +1036,7 @@ class ProductItemController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -1088,7 +1088,7 @@ class ProductItemController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -1183,7 +1183,7 @@ class ProductItemController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -1234,7 +1234,7 @@ class ProductItemController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,

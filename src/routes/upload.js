@@ -189,6 +189,113 @@ export function prepareUploadRoutes(modal, routeObject, middleware) {
       },
     });
 
+    routeObject.push({
+      method: 'POST',
+      path: '/sellers/{id}/upload/{type}',
+      config: {
+        auth: 'jwt',
+        pre: [{method: middleware.checkAppVersion, assign: 'forceUpdate'}],
+        files: {
+          relativeTo: Path.join(__dirname, '../static/src'),
+        },
+        handler: ControllerObject.uploadSellerFiles,
+        payload: {
+          output: 'stream',
+          parse: true,
+          uploads: 'up_files',
+          timeout: 3003400,
+          allow: 'multipart/form-data',
+          failAction: 'log',
+          maxBytes: 209715200,
+        },
+        timeout: {
+          socket: false,
+        },
+      },
+    });
+
+    routeObject.push({
+      method: 'POST',
+      path: '/sellers/{id}/upload/{type}/images/{index}',
+      config: {
+        auth: 'jwt',
+        pre: [{method: middleware.checkAppVersion, assign: 'forceUpdate'}],
+        files: {
+          relativeTo: Path.join(__dirname, '../static/src'),
+        },
+        handler: ControllerObject.uploadSellerFiles,
+        payload: {
+          output: 'stream',
+          parse: true,
+          uploads: 'up_files',
+          timeout: 3003400,
+          allow: 'multipart/form-data',
+          failAction: 'log',
+          maxBytes: 209715200,
+        },
+        timeout: {
+          socket: false,
+        },
+      },
+    });
+
+    routeObject.push({
+      method: 'GET',
+      path: '/sellers/{id}/upload/{type}/images/{index}',
+      config: {
+        pre: [{method: middleware.checkAppVersion, assign: 'forceUpdate'}],
+        handler: ControllerObject.retrieveSellerImages,
+      },
+    });
+
+    routeObject.push({
+      method: 'GET',
+      path: '/assisted/{id}/images',
+      config: {
+        pre: [{method: middleware.checkAppVersion, assign: 'forceUpdate'}],
+        handler: ControllerObject.retrieveAssistedTypeImages,
+      },
+    });
+
+    routeObject.push({
+      method: 'GET',
+      path: '/consumer/sellers/{id}/upload/{type}/images/{index}',
+      config: {
+        pre: [{method: middleware.checkAppVersion, assign: 'forceUpdate'}],
+        handler: ControllerObject.retrieveSellerImagesForConsumer,
+      },
+    });
+
+    routeObject.push({
+      method: 'DELETE',
+      path: '/sellers/{id}/upload/{type}/images/{index}',
+      config: {
+        auth: 'jwt',
+        pre: [{method: middleware.checkAppVersion, assign: 'forceUpdate'}],
+        handler: ControllerObject.deleteSellerImages,
+      },
+    });
+
+    routeObject.push({
+      method: 'DELETE',
+      path: '/sellers/{id}/details',
+      config: {
+        auth: 'jwt',
+        pre: [{method: middleware.checkAppVersion, assign: 'forceUpdate'}],
+        handler: ControllerObject.deleteSellerDetails,
+      },
+    });
+
+    routeObject.push({
+      method: 'DELETE',
+      path: '/sellers/{id}/details/{type}',
+      config: {
+        auth: 'jwt',
+        pre: [{method: middleware.checkAppVersion, assign: 'forceUpdate'}],
+        handler: ControllerObject.deleteSellerDetails,
+      },
+    });
+
     /*Retrieve user job copies*/
     routeObject.push({
       method: 'GET',
@@ -240,6 +347,22 @@ export function prepareUploadRoutes(modal, routeObject, middleware) {
       },
     });
 
+    routeObject.push({
+      method: 'GET',
+      path: '/customer/{id}/images',
+      config: {
+        // auth: 'jwt',
+        pre: [
+          {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {
+            method: middleware.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: ControllerObject.retrieveUserImageForSeller,
+      },
+    });
+
     /*Retrieve Category images*/
     routeObject.push({
       method: 'GET',
@@ -274,6 +397,105 @@ export function prepareUploadRoutes(modal, routeObject, middleware) {
       },
     });
 
+    routeObject.push({
+      method: 'GET',
+      path: '/offer/{offer_id}/images/{index}',
+      config: {
+        handler: ControllerObject.retrieveSellerOfferImages,
+      },
+    });
+
+    routeObject.push({
+      method: 'POST',
+      path: '/offer/{offer_id}/images/{index}',
+      config: {
+        auth: 'jwt',
+        pre: [{method: middleware.checkAppVersion, assign: 'forceUpdate'}],
+        files: {
+          relativeTo: Path.join(__dirname, '../static/src'),
+        },
+        handler: ControllerObject.uploadSellerOfferImages,
+        payload: {
+          output: 'stream',
+          parse: true,
+          uploads: 'up_files',
+          timeout: 3003400,
+          allow: 'multipart/form-data',
+          failAction: 'log',
+          maxBytes: 209715200,
+        },
+        timeout: {
+          socket: false,
+        },
+      },
+    });
+
+    routeObject.push({
+      method: 'GET',
+      path: '/assisted/{id}/profile',
+      config: {
+        handler: ControllerObject.retrieveAssistedProfile,
+      },
+    });
+
+    routeObject.push({
+      method: 'GET',
+      path: '/assisted/{id}/documents/{index}',
+      config: {
+        handler: ControllerObject.retrieveAssistedDocument,
+      },
+    });
+
+    routeObject.push({
+      method: 'POST',
+      path: '/assisted/{id}/profile/{index}',
+      config: {
+        auth: 'jwt',
+        pre: [{method: middleware.checkAppVersion, assign: 'forceUpdate'}],
+        files: {
+          relativeTo: Path.join(__dirname, '../static/src'),
+        },
+        handler: ControllerObject.uploadSellerAssistedProfile,
+        payload: {
+          output: 'stream',
+          parse: true,
+          uploads: 'up_files',
+          timeout: 3003400,
+          allow: 'multipart/form-data',
+          failAction: 'log',
+          maxBytes: 209715200,
+        },
+        timeout: {
+          socket: false,
+        },
+      },
+    });
+
+    routeObject.push({
+      method: 'POST',
+      path: '/assisted/{id}/documents/{index}',
+      config: {
+        auth: 'jwt',
+        pre: [{method: middleware.checkAppVersion, assign: 'forceUpdate'}],
+        files: {
+          relativeTo: Path.join(__dirname, '../static/src'),
+        },
+        handler: ControllerObject.uploadSellerAssistedDocuments,
+        payload: {
+          output: 'stream',
+          parse: true,
+          uploads: 'up_files',
+          timeout: 3003400,
+          allow: 'multipart/form-data',
+          failAction: 'log',
+          maxBytes: 209715200,
+        },
+        timeout: {
+          socket: false,
+        },
+      },
+    });
+
     /*Retrieve Category images*/
     routeObject.push({
       method: 'GET',
@@ -290,7 +512,6 @@ export function prepareUploadRoutes(modal, routeObject, middleware) {
         handler: ControllerObject.retrieveAccessoryCategoryImage,
       },
     });
-
 
     /*Retrieve Category images*/
     routeObject.push({
@@ -332,6 +553,50 @@ export function prepareUploadRoutes(modal, routeObject, middleware) {
       path: '/brands/{id}/images',
       config: {
         handler: ControllerObject.retrieveBrandImage,
+      },
+    });
+
+    routeObject.push({
+      method: 'POST',
+      path: '/sku/{id}/images',
+      config: {
+        pre: [
+          {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+        ],
+        files: {
+          relativeTo: Path.join(__dirname, '../static/src'),
+        },
+        handler: ControllerObject.uploadSKUImage,
+        payload: {
+          output: 'stream',
+          parse: true,
+          uploads: 'up_files',
+          timeout: 3003400,
+          allow: 'multipart/form-data',
+          failAction: 'log',
+          maxBytes: 209715200,
+        },
+        timeout: {
+          socket: false,
+        },
+      },
+    });
+
+    /*Retrieve SKU images*/
+    routeObject.push({
+      method: 'GET',
+      path: '/skus/{id}/images',
+      config: {
+        handler: ControllerObject.retrieveSKUImage,
+      },
+    });
+
+    /*Retrieve SKU images*/
+    routeObject.push({
+      method: 'GET',
+      path: '/skus/{id}/images/{file_type}',
+      config: {
+        handler: ControllerObject.retrieveSKUImage,
       },
     });
 

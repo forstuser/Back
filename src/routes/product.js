@@ -27,6 +27,7 @@ export function prepareProductRoutes(modal, routeObject, middleware) {
             ratings: [joi.number(), joi.allow(null)],
             feedback: [joi.string(), joi.allow(null)],
             comments: [joi.string(), joi.allow(null)],
+            order_id: [joi.number(), joi.allow(null)],
             output: 'data',
             parse: true,
           },

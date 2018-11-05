@@ -38,6 +38,7 @@ function prepareProductRoutes(modal, routeObject, middleware) {
             ratings: [_joi2.default.number(), _joi2.default.allow(null)],
             feedback: [_joi2.default.string(), _joi2.default.allow(null)],
             comments: [_joi2.default.string(), _joi2.default.allow(null)],
+            order_id: [_joi2.default.number(), _joi2.default.allow(null)],
             output: 'data',
             parse: true
           }

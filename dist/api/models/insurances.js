@@ -87,7 +87,7 @@ exports.default = (sequelize, DataTypes) => {
     insurances.belongsTo(models.statuses, { foreignKey: 'status_type', targetKey: 'status_type' });
     insurances.belongsTo(models.jobs, { as: 'jobs', foreignKey: 'job_id' });
     insurances.belongsTo(models.onlineSellers, { foreignKey: 'online_seller_id', as: 'onlineSellers' });
-    insurances.belongsTo(models.offlineSellers, { foreignKey: 'seller_id', as: 'sellers' });
+    insurances.belongsTo(models.sellers, { foreignKey: 'seller_id', as: 'sellers' });
     insurances.belongsTo(models.insuranceBrands, { foreignKey: 'provider_id', as: 'provider' });
     insurances.belongsTo(models.renewalTypes, { foreignKey: 'renewal_type', targetKey: 'type' });
   };

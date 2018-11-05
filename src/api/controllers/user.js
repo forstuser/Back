@@ -8,14 +8,17 @@ import GoogleHelper from '../../helpers/google';
 import OTPHelper from '../../helpers/otp';
 import shared from '../../helpers/shared';
 import trackingHelper from '../../helpers/tracking';
-import DashboardAdaptor from '../Adaptors/dashboard';
-import FCMManager from '../Adaptors/fcm';
-import NearByAdaptor from '../Adaptors/nearby';
-import NotificationAdaptor from '../Adaptors/notification';
-import UserAdaptor from '../Adaptors/user';
+import DashboardAdaptor from '../adaptors/dashboard';
+import FCMManager from '../adaptors/fcm';
+import NearByAdaptor from '../adaptors/nearby';
+import NotificationAdaptor from '../adaptors/notification';
+import UserAdaptor from '../adaptors/user';
 import authentication from './authentication';
 import S3FS from 's3fs';
 import Promise from 'bluebird';
+import SellerAdaptor from '../adaptors/sellers';
+import CategoryAdaptor from '../adaptors/category';
+import _ from 'lodash';
 
 const PUBLIC_KEY = new RSA(config.TRUECALLER_PUBLIC_KEY,
     {signingScheme: 'sha512'});
@@ -26,15 +29,9 @@ let replyObject = {
   message: 'success',
 };
 
-let userModel;
-let userRelationModel;
-let modals;
-let dashboardAdaptor;
-let userAdaptor;
-let nearByAdaptor;
-let notificationAdaptor;
-let fcmModel;
-let fcmManager;
+let userModel, userRelationModel, modals, dashboardAdaptor, userAdaptor,
+    nearByAdaptor, notificationAdaptor, fcmModel, fcmManager, sellerAdaptor,
+    categoryAdaptor;
 
 const validatePayloadSignature = function(payload, signature) {
   return PUBLIC_KEY.verify(payload, signature, '', 'base64');
@@ -63,6 +60,49 @@ let loginOrRegisterUser = async parameters => {
   try {
     let userData = await userAdaptor.loginOrRegister(userWhere, userInput);
     if (!userData[1]) {
+
+      const user_detail = userData[0] ? userData[0].toJSON() : undefined;
+      if (user_detail && user_detail.user_status_type === 2) {
+        let seller_detail = await modals.sellers.findAll({
+          where: {
+            customer_invite_detail: {
+              $or: [
+                {$contains: [{'customer_id': user_detail.id}]},
+                {$contains: [{'customer_id': user_detail.id.toString()}]}],
+            },
+            is_onboarded: true, seller_type_id: 1,
+          },
+          attributes: ['id', 'customer_invite_detail', 'user_id'],
+        });
+        seller_detail = _.orderBy(seller_detail.map(item => {
+          item = item.toJSON();
+          const customer_invite_detail = item.customer_invite_detail.find(
+              cidItem => cidItem.customer_id.toString() ===
+                  user_detail.id.toString());
+          item.invited_date = (customer_invite_detail ||
+              {invited_date: moment()}).invited_date;
+          item.customer_id = (customer_invite_detail ||
+              {invited_date: moment()}).customer_id;
+          return item;
+        }), ['invited_date'], ['asc']);
+        if (seller_detail.length > 0) {
+          await modals.seller_wallet.create(
+              {
+                status_type: 16, cashback_source: 3,
+                amount: config.SELLER_REFERAL_CASH_BACK,
+                seller_id: seller_detail[0].id, user_id: user_detail.id,
+              });
+
+          await notificationAdaptor.notifyUserCron({
+            seller_user_id: seller_detail[0].user_id,
+            payload: {
+              title: `Yay! ₹${config.SELLER_REFERAL_CASH_BACK} credited to you.`,
+              description: `Congratulations! ₹${config.SELLER_REFERAL_CASH_BACK} has been credited to your BB Wallet as your user with mobile number ${user_detail.mobile_no} has registered with us.`,
+              notification_type: 3, notification_id: Math.random(),
+            },
+          });
+        }
+      }
       userData = await Promise.all([
         Promise.try(() => userData[0].updateAttributes(userInput)),
         userData[1]]);
@@ -130,12 +170,14 @@ class UserController {
     userModel = modal.users;
     userRelationModel = modal.users_temp;
     modals = modal;
-    fcmModel = modal.fcmDetails;
-    fcmManager = new FCMManager(modal.fcmDetails);
+    fcmModel = modal.fcm_details;
+    fcmManager = new FCMManager(modal.fcm_details);
     dashboardAdaptor = new DashboardAdaptor(modals);
     userAdaptor = new UserAdaptor(modals);
     nearByAdaptor = new NearByAdaptor(modals);
     notificationAdaptor = new NotificationAdaptor(modals);
+    sellerAdaptor = new SellerAdaptor(modals);
+    categoryAdaptor = new CategoryAdaptor(modals);
   }
 
   static async subscribeUser(request, reply) {
@@ -177,7 +219,7 @@ class UserController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -214,10 +256,11 @@ class UserController {
       if (!request.pre.hasMultipleAccounts) {
         const [otpStatus, user] = await Promise.all([
           OTPHelper.sendOTPToUser(request.payload.PhoneNo,
-              (request.headers.ios_app_version &&
-                  request.headers.ios_app_version <
+              (request.headers['ios-app-version'] &&
+                  request.headers['ios-app-version'] <
                   14) ||
-              (request.headers.app_version && request.headers.app_version <
+              (request.headers['app-version'] &&
+                  request.headers['app-version'] <
                   13) ? 6 : 4),
           userAdaptor.retrieveSingleUser({
             where: {
@@ -269,6 +312,95 @@ class UserController {
     }
   }
 
+  static async dispatchSellerOTP(request, reply) {
+    replyObject = {
+      status: true,
+      message: 'success',
+    };
+    try {
+
+      if (!request.pre.hasSellerMultipleAccounts) {
+        const {mobile_no, gstin, pan, email} = request.payload || {};
+        const [is_valid_phone_no, gst_detail] = await Promise.all([
+          GoogleHelper.isValidPhoneNumber(mobile_no),
+          gstin ? GoogleHelper.isValidGSTIN(gstin) : true]);
+        if (!is_valid_phone_no) {
+          console.log(`Phone number: ${mobile_no} is not a valid phone number`);
+          replyObject.status = false;
+          replyObject.message = 'Invalid Phone number';
+          return reply.response(replyObject);
+        } else if (!gst_detail) {
+          console.log(`GSTIN number ${gstin} is not a valid`);
+          replyObject.status = false;
+          replyObject.message = 'Invalid GST number.';
+          return reply.response(replyObject);
+        }
+        let seller_updates = JSON.parse(JSON.stringify(
+            (gst_detail && gst_detail === true) ? {gstin, pan} : {
+              gstin, pan, seller_name: gst_detail.lgnm || undefined,
+              pincode: gst_detail.pradr.addr.pncd || undefined,
+              state: gst_detail.pradr.addr.stcd || undefined,
+              city: gst_detail.pradr.addr.city || undefined,
+              latitude: gst_detail.pradr.addr.lt || undefined,
+              longitude: gst_detail.pradr.addr.lg || undefined,
+              address: `${gst_detail.pradr.addr.bno}, ${gst_detail.pradr.addr.flno} ${gst_detail.pradr.addr.bnm}, ${gst_detail.pradr.addr.st}, ${gst_detail.pradr.addr.loc}`,
+            }));
+        const [otpStatus, user, seller_detail] = await Promise.all([
+          OTPHelper.sendOTPToUser(mobile_no, 4),
+          userAdaptor.retrieveSellerUser(
+              {where: JSON.parse(JSON.stringify({mobile_no, email}))}),
+          gstin || pan ? sellerAdaptor.retrieveOrUpdateSellerDetail(
+              {where: JSON.parse(JSON.stringify({$or: {gstin, pan}}))},
+              seller_updates, false) : undefined]);
+
+        if (otpStatus.type === 'success') {
+          console.log('SMS SENT WITH ID: ', otpStatus.message);
+          replyObject.mobile_no = mobile_no;
+          replyObject.seller_detail = JSON.parse(
+              JSON.stringify(seller_detail || seller_updates || {}));
+          if (user) {
+            replyObject.name = user.name;
+            replyObject.image_url = user.image_url;
+            return reply.response(JSON.parse(JSON.stringify(replyObject))).
+                code(201);
+          } else {
+            return reply.response(JSON.parse(JSON.stringify(replyObject))).
+                code(201);
+          }
+        } else {
+          replyObject.status = false;
+          replyObject.message = response[0].ErrorMessage;
+          replyObject.error = response[0].ErrorMessage;
+          return reply.response(replyObject).code(403);
+        }
+      } else {
+        replyObject.status = false;
+        replyObject.message = 'User with same mobile number or email exist.';
+        return reply.response(replyObject);
+      }
+    } catch (err) {
+      console.log(err);
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to send OTP on provided number.',
+        forceUpdate: request.pre.forceUpdate,
+        err,
+      });
+    }
+  }
+
   static async dispatchOTPOverEmail(request, reply) {
     replyObject = {
       status: true,
@@ -278,9 +410,10 @@ class UserController {
     try {
       if (request.pre.isValidEmail) {
         const response = await OTPHelper.sendOTPOverEmail(request.payload.email,
-            request.user.name, (request.headers.ios_app_version &&
-                request.headers.ios_app_version < 14) ||
-            (request.headers.app_version && request.headers.app_version < 13) ?
+            request.user.name, (request.headers['ios-app-version'] &&
+                request.headers['ios-app-version'] < 14) ||
+            (request.headers['app-version'] && request.headers['app-version'] <
+                13) ?
                 6 : 4);
         await userAdaptor.updateUserDetail({
           email: request.payload.email.toLowerCase(),
@@ -304,7 +437,7 @@ class UserController {
       modals.logs.create({
         api_action: request.method,
         api_path: request.url.pathname,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
         log_type: 2,
         log_content: JSON.stringify({
           params: request.params,
@@ -383,7 +516,7 @@ class UserController {
 
     let userWhere = {
       mobile_no: trueObject.PhoneNo,
-      user_status_type: 1,
+      user_status_type: [1, 2],
       role_type: 5,
     };
     const userInput = {
@@ -398,7 +531,7 @@ class UserController {
     try {
       if (!request.pre.forceUpdate) {
         if (request.payload.BBLogin_Type === 1) {
-          if (trueObject.PhoneNo !== '8750568036' && trueObject.PhoneNo !==
+          if (trueObject.PhoneNo !== '7589145713' && trueObject.PhoneNo !==
               '9661086188') {
             const data = await OTPHelper.verifyOTPForUser(trueObject.PhoneNo,
                 request.payload.Token);
@@ -432,11 +565,7 @@ class UserController {
             userInput.mobile_no = trueObject.PhoneNo;
             userInput.user_status_type = 1;
             return await loginOrRegisterUser({
-              userWhere,
-              userInput,
-              trueObject,
-              request,
-              reply,
+              userWhere, userInput, trueObject, request, reply,
             });
           }
         } else if (request.payload.BBLogin_Type === 3) {
@@ -445,7 +574,7 @@ class UserController {
           if (fbSecret) {
             const fbResult = await requestPromise({
               uri: config.FB_GRAPH_ROUTE +
-              'me?fields=id,email,name,picture{url}',
+                  'me?fields=id,email,name,picture{url}',
               qs: {
                 access_token: fbSecret,
               },
@@ -482,6 +611,84 @@ class UserController {
               reply,
             });
           }
+        }
+      } else {
+        replyObject.status = false;
+        replyObject.message = 'Forbidden';
+        return reply.response(replyObject);
+      }
+    } catch (err) {
+      console.log(err);
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to validate.',
+        forceUpdate: request.pre.forceUpdate,
+        err,
+      });
+    }
+  }
+
+  static async validateSellerOTP(request, reply) {
+    replyObject = {
+      status: true,
+      message: 'success',
+      forceUpdate: request.pre.forceUpdate,
+    };
+    try {
+      let {mobile_no, gstin, pan, email, fcm_id, seller_detail, platform, login_type, token} = request.payload ||
+      {};
+      let userWhere = JSON.parse(JSON.stringify({
+        where: {
+          mobile_no, email, status_type: 1,
+        },
+      }));
+
+      if (!request.pre.forceUpdate) {
+        const data = await OTPHelper.verifyOTPForUser(mobile_no, token);
+        console.log('VALIDATE OTP RESPONSE: ', data);
+        if (data.type === 'success') {
+          let user_detail = await userAdaptor.retrieveSellerUser(userWhere,
+              true, {mobile_no, email, status_type: 1, is_logged_out: false});
+          let [seller_detail] = await Promise.all([
+            sellerAdaptor.retrieveOrUpdateSellerDetail(
+                {
+                  where: JSON.parse(JSON.stringify({user_id: user_detail.id})),
+                  attributes: ['seller_type_id', 'id'],
+                },
+                false, false),
+            fcmManager.insertSellerFcmDetails({
+              seller_user_id: user_detail.id,
+              fcm_id, platform_id: platform || 1,
+            })]);
+          if (seller_detail) {
+            user_detail.seller_type_id = seller_detail.seller_type_id;
+            user_detail.seller_id = seller_detail.id;
+          }
+          user_detail.seller_detail = true;
+
+          replyObject.authorization = `bearer ${authentication.generateSellerToken(
+              JSON.parse(JSON.stringify(user_detail))).token}`;
+          replyObject.seller = seller_detail;
+          replyObject.status = true;
+          return reply.response(replyObject).code(201);
+
+        } else {
+          replyObject.status = false;
+          replyObject.message = 'Invalid/Expired OTP';
+
+          return reply.response(replyObject);
         }
       } else {
         replyObject.status = false;
@@ -693,20 +900,22 @@ class UserController {
       if ((request.pre.userExist || request.pre.userExist === 0) &&
           !request.pre.forceUpdate) {
         if (request.payload && request.payload.fcmId) {
-          await fcmManager.deleteFcmDetails({
-            user_id: user.id || user.ID,
+          await fcmManager.deleteFcmDetails(JSON.parse(JSON.stringify({
+            user_id: !user.seller_details ? user.id : undefined,
+            seller_user_id: user.seller_details ? user.id : undefined,
             fcm_id: request.payload.fcmId,
             platform_id: request.payload.platform || 1,
-          });
+          })));
         }
 
-        await userAdaptor.updateUserDetail({
-          last_logout_at: moment.utc().format('YYYY-MM-DD HH:mm:ss'),
-        }, {
-          where: {
-            id: user.id || user.ID,
-          },
-        });
+        await (!user.seller_details ?
+            userAdaptor.updateUserDetail(
+                {last_logout_at: moment.utc().format('YYYY-MM-DD HH:mm:ss')},
+                {where: {id: user.id}}) :
+            sellerAdaptor.retrieveOrUpdateSellerDetail(
+                {where: JSON.parse(JSON.stringify({id: user.id}))},
+                {last_logout_at: moment.utc().format('YYYY-MM-DD HH:mm:ss')},
+                false));
         return reply.response(replyObject).code(201);
       } else if (!request.pre.userExist) {
         replyObject.status = false;
@@ -722,7 +931,68 @@ class UserController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to logout user.',
+        forceUpdate: request.pre.forceUpdate,
+        err,
+      });
+    }
+  }
+
+  static async logoutSeller(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    replyObject = {
+      status: true,
+      message: 'success',
+      forceUpdate: request.pre.forceUpdate,
+    };
+    try {
+      if (!request.pre.forceUpdate) {
+        await Promise.all([
+          fcmManager.updateFcmDetails(JSON.parse(JSON.stringify({
+            user_id: !user.seller_details ? user.id : undefined,
+            seller_user_id: user.seller_details ? user.id : undefined,
+            platform_id: request.payload.platform || 1,
+          }))),
+          userAdaptor.retrieveSellerUser({where: {id: user.id}}, false,
+              {is_logged_out: true})]);
+
+        await (!user.seller_details ?
+            userAdaptor.updateUserDetail(
+                {last_logout_at: moment.utc().format('YYYY-MM-DD HH:mm:ss')},
+                {where: {id: user.id}}) :
+            sellerAdaptor.retrieveOrUpdateSellerDetail(
+                {where: JSON.parse(JSON.stringify({id: user.id}))},
+                {
+                  last_logout_at: moment.utc().format('YYYY-MM-DD HH:mm:ss'),
+                },
+                false));
+        return reply.response(replyObject).code(201);
+      } else if (!request.pre.userExist) {
+        replyObject.status = false;
+        replyObject.message = 'Unauthorized';
+        return reply.response(replyObject).code(401);
+      } else {
+        replyObject.status = false;
+        replyObject.message = 'Forbidden';
+        return reply.response(replyObject);
+      }
+    } catch (err) {
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -777,7 +1047,7 @@ class UserController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -826,7 +1096,7 @@ class UserController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -845,7 +1115,7 @@ class UserController {
   }
 
   static async updateUserProfile(request, reply) {
-    const user = shared.verifyAuthorization(request.headers);
+    let user = shared.verifyAuthorization(request.headers);
     try {
       if (request.pre.isValidEmail && request.pre.userExist &&
           !request.pre.forceUpdate) {
@@ -883,7 +1153,205 @@ class UserController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to update profile.',
+        forceUpdate: request.pre.forceUpdate,
+        err,
+      });
+    }
+  }
+
+  static async retrieveUserAddresses(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    try {
+      if (request.pre.userExist && !request.pre.forceUpdate) {
+        return reply.response({
+          status: true,
+          result: await userAdaptor.retrieveUserAddresses({
+            where: JSON.parse(
+                JSON.stringify({user_id: user.id || user.ID})),
+          }),
+        });
+      } else if (request.pre.userExist === 0) {
+        return reply.response({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate,
+        }).code(402);
+      } else if (!request.pre.userExist) {
+        return reply.response(
+            {
+              message: 'Invalid Token',
+              status: false,
+              forceUpdate: request.pre.forceUpdate,
+            });
+      } else {
+        return reply.response({
+          message: 'Forbidden',
+          status: false,
+          forceUpdate: request.pre.forceUpdate,
+        });
+      }
+    } catch (err) {
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to retrieve user addresses.',
+        forceUpdate: request.pre.forceUpdate,
+        err,
+      });
+    }
+  }
+
+  static async deleteUserAddress(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    try {
+      if (request.pre.userExist && !request.pre.forceUpdate) {
+        const {id} = request.params;
+        return reply.response({
+          status: true,
+          result: await userAdaptor.deleteUserAddress({
+            where: JSON.parse(
+                JSON.stringify({user_id: user.id || user.ID, id})),
+          }),
+        });
+      } else if (request.pre.userExist === 0) {
+        return reply.response({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate,
+        }).code(402);
+      } else if (!request.pre.userExist) {
+        return reply.response(
+            {
+              message: 'Invalid Token',
+              status: false,
+              forceUpdate: request.pre.forceUpdate,
+            });
+      } else {
+        return reply.response({
+          message: 'Forbidden',
+          status: false,
+          forceUpdate: request.pre.forceUpdate,
+        });
+      }
+    } catch (err) {
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+          err,
+        }),
+      }).catch((ex) => console.log('error while logging on db,', ex));
+      return reply.response({
+        status: false,
+        message: 'Unable to retrieve user addresses.',
+        forceUpdate: request.pre.forceUpdate,
+        err,
+      });
+    }
+  }
+
+  static async updateUserAddress(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    try {
+      const user_id = user.id;
+      if (request.pre.userExist &&
+          !request.pre.forceUpdate) {
+        const {id} = request.payload;
+        request.payload.user_id = user_id;
+        request.payload.updated_by = user_id;
+        request.payload.address_type = request.payload.address_type || 2;
+
+        const address_count = modals.user_addresses.count(
+            {where: {user_id, address_type: 1}});
+        const locality = request.payload.pin ?
+            await categoryAdaptor.retrieveLocalities(
+                {where: {pin_code: request.payload.pin}}) :
+            undefined;
+        request.payload.address_type = address_count && address_count > 0 ?
+            2 :
+            1;
+        if (locality && locality.length > 0) {
+          request.payload.city_id = locality[0].city_id;
+          request.payload.state_id = locality[0].state_id;
+          request.payload.locality_id = locality[0].id;
+        }
+        if (request.payload.address_type === 1) {
+          await userAdaptor.updateUserAddress(
+              JSON.parse(JSON.stringify({address_type: 2})), {
+                where: {user_id},
+              });
+        }
+        if (id) {
+          return reply.response({
+            status: true,
+            result: await userAdaptor.updateUserAddress(
+                JSON.parse(JSON.stringify(request.payload)), {
+                  where: {user_id, id},
+                }),
+          });
+        } else {
+          return reply.response({
+            status: true,
+            result: await userAdaptor.createUserAddress(
+                JSON.parse(JSON.stringify(request.payload))),
+          });
+        }
+      } else if (request.pre.userExist === 0) {
+        return reply.response({
+          status: false,
+          message: 'Inactive User',
+          forceUpdate: request.pre.forceUpdate,
+        }).code(402);
+      } else if (!request.pre.userExist) {
+        return reply.response(
+            {
+              message: 'Invalid Token',
+              status: false,
+              forceUpdate: request.pre.forceUpdate,
+            });
+      } else {
+        return reply.response({
+          status: false,
+          message: 'Forbidden',
+          forceUpdate: request.pre.forceUpdate,
+        });
+      }
+    } catch (err) {
+      modals.logs.create({
+        api_action: request.method,
+        api_path: request.url.pathname,
+        log_type: 2,
+        user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,

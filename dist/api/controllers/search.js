@@ -9,7 +9,7 @@ var _shared = require('../../helpers/shared');
 
 var _shared2 = _interopRequireDefault(_shared);
 
-var _search = require('../Adaptors/search');
+var _search = require('../adaptors/search');
 
 var _search2 = _interopRequireDefault(_search);
 
@@ -43,12 +43,12 @@ class SearchController {
         return reply.response((await searchAdaptor.prepareSearchResult(user, request.query.searchvalue, request.language)));
       }
     } catch (err) {
-
+      console.log(err);
       modals.logs.create({
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,

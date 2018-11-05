@@ -13,14 +13,17 @@ import {prepareWhatToServiceRoutes} from './what_to_service';
 import {prepareCalendarServiceRoutes} from './calendar_service';
 import {prepareProductItemRoutes} from './product_item';
 import {prepareGeneralRoutes} from './general';
-import {prepareAuthRoutes} from './auth';
+import {prepareAuthRoutes} from './users';
 import {prepareBrandRoutes} from './brand';
 import {prepareAccessoryRoute} from './accessory_routes';
 import {prepareOfferRoutes} from './offer';
+import {prepareShopEarnRoute} from './shop_earn';
+import {prepareSellerRoutes} from './sellers';
+import {prepareOrderRoutes} from './order';
 
 let middleware;
 
-export default (app, modals) => {
+export default (app, modals, socket_server) => {
   middleware = Middleware(modals);
   // Initializing route groups
   const authRoutes = [];
@@ -40,34 +43,46 @@ export default (app, modals) => {
   const whatToServiceRoutes = [];
   const accessoryServicesRoutes = [];
   const offerRoutes = [];
+  const shopEarnRoutes = [];
+  const orderRoutes = [];
   const searchController = new SearchController(modals);
-  prepareAuthRoutes(modals, authRoutes, middleware);
+  prepareAuthRoutes(modals, authRoutes, middleware, socket_server);
 
-  prepareCategoryRoutes(modals, categoryRoutes, middleware);
+  prepareCategoryRoutes(modals, categoryRoutes, middleware, socket_server);
 
-  prepareBrandRoutes(modals, brandRoutes, middleware);
+  prepareBrandRoutes(modals, brandRoutes, middleware, socket_server);
 
-  prepareServiceCenterRoutes(modals, serviceCenterRoutes, middleware);
+  prepareServiceCenterRoutes(modals, serviceCenterRoutes, middleware,
+      socket_server);
 
-  prepareUploadRoutes(modals, uploadFileRoute, middleware);
+  prepareUploadRoutes(modals, uploadFileRoute, middleware, socket_server);
 
-  prepareDashboardRoutes(modals, dashboardRoutes, middleware);
+  prepareDashboardRoutes(modals, dashboardRoutes, middleware, socket_server);
 
-  prepareProductRoutes(modals, productRoutes, middleware);
+  prepareProductRoutes(modals, productRoutes, middleware, socket_server);
 
-  prepareInsightRoutes(modals, insightRoutes, middleware);
+  prepareInsightRoutes(modals, insightRoutes, middleware, socket_server);
 
-  prepareGeneralRoutes(modals, generalRoutes, middleware);
+  prepareGeneralRoutes(modals, generalRoutes, middleware, socket_server);
 
-  prepareProductItemRoutes(modals, repairRoutes, middleware);
+  prepareProductItemRoutes(modals, repairRoutes, middleware, socket_server);
 
-  prepareCalendarServiceRoutes(modals, calendarRoutes, middleware);
+  prepareCalendarServiceRoutes(modals, calendarRoutes, middleware,
+      socket_server);
 
-  prepareWhatToServiceRoutes(modals, whatToServiceRoutes, middleware);
+  prepareWhatToServiceRoutes(modals, whatToServiceRoutes, middleware,
+      socket_server);
 
-  prepareAccessoryRoute(modals, accessoryServicesRoutes, middleware);
+  prepareAccessoryRoute(modals, accessoryServicesRoutes, middleware,
+      socket_server);
 
-  prepareOfferRoutes(modals, offerRoutes, middleware);
+  prepareOfferRoutes(modals, offerRoutes, middleware, socket_server);
+
+  prepareShopEarnRoute(modals, shopEarnRoutes, middleware, socket_server);
+
+  prepareSellerRoutes(modals, sellerRoutes, middleware, socket_server);
+
+  prepareOrderRoutes(modals, orderRoutes, middleware, socket_server);
 
   if (searchController) {
     searchRoutes.push({
@@ -117,8 +132,9 @@ export default (app, modals) => {
     ...whatToServiceRoutes,
     ...accessoryServicesRoutes,
     ...offerRoutes,
+    ...shopEarnRoutes, ...orderRoutes,
   ]).forEach((routeItem) => app.route(routeItem));
-  const handler = function(request, h, err) {
+  const handler = (request, h, err) => {
     console.log(err);
     return h.response('The page was not found').code(404);
   };

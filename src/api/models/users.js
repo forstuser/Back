@@ -23,6 +23,9 @@ export default (sequelize, DataTypes) => {
     location: {
       type: DataTypes.STRING,
     },
+    last_active: {
+      type: DataTypes.INTEGER,
+    },
     latitude: {
       type: DataTypes.FLOAT,
       allowNull: true,
@@ -93,6 +96,9 @@ export default (sequelize, DataTypes) => {
     otp_created_at: {
       type: DataTypes.DATE,
     },
+    socket_id: {
+      type: DataTypes.STRING,
+    },
   }, {
     freezeTableName: true,
     defaultPrimaryKey: true,
@@ -111,10 +117,10 @@ export default (sequelize, DataTypes) => {
   });
 
   users.associate = (models) => {
-    users.hasMany(models.userAddress, {as: 'addresses'});
+    users.hasMany(models.user_addresses, {as: 'addresses'});
     users.hasMany(models.jobs,
         {foreignKey: 'user_id', onDelete: 'cascade', hooks: true});
-    users.hasMany(models.fcmDetails,
+    users.hasMany(models.fcm_details,
         {foreignKey: 'user_id', onDelete: 'cascade', hooks: true});
     users.hasMany(models.jobs, {foreignKey: 'uploaded_by'});
     users.hasMany(models.jobs, {foreignKey: 'updated_by'});
@@ -122,7 +128,11 @@ export default (sequelize, DataTypes) => {
         {foreignKey: 'role_type', targetKey: 'role_type'});
     users.belongsTo(models.statuses,
         {foreignKey: 'user_status_type', targetKey: 'status_type'});
-    users.hasMany(models.jobCopies, {foreignKey: 'updated_by'});
+    users.hasMany(models.cashback_wallet, {foreignKey: 'user_id'});
+    users.hasMany(models.credit_wallet, {foreignKey: 'user_id'});
+    users.hasMany(models.loyalty_wallet, {foreignKey: 'user_id'});
+    users.hasMany(models.user_wallet, {foreignKey: 'user_id'});
+    users.hasMany(models.cashback_jobs, {foreignKey: 'user_id'});
 
     users.hasMany(models.jobs, {foreignKey: 'assigned_to_ce'});
     users.hasMany(models.jobs, {foreignKey: 'assigned_to_qe'});

@@ -5,31 +5,31 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _notification = require('../Adaptors/notification');
+var _notification = require('../adaptors/notification');
 
 var _notification2 = _interopRequireDefault(_notification);
 
-var _category = require('../Adaptors/category');
+var _category = require('../adaptors/category');
 
 var _category2 = _interopRequireDefault(_category);
 
-var _brands = require('../Adaptors/brands');
+var _brands = require('../adaptors/brands');
 
 var _brands2 = _interopRequireDefault(_brands);
 
-var _sellers = require('../Adaptors/sellers');
+var _sellers = require('../adaptors/sellers');
 
 var _sellers2 = _interopRequireDefault(_sellers);
 
-var _job = require('../Adaptors/job');
+var _job = require('../adaptors/job');
 
 var _job2 = _interopRequireDefault(_job);
 
-var _product = require('../Adaptors/product');
+var _product = require('../adaptors/product');
 
 var _product2 = _interopRequireDefault(_product);
 
-var _user = require('../Adaptors/user');
+var _user = require('../adaptors/user');
 
 var _user2 = _interopRequireDefault(_user);
 
@@ -49,6 +49,8 @@ var _main = require('../../config/main');
 
 var _main2 = _interopRequireDefault(_main);
 
+var _sms = require('../../helpers/sms');
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 let contactModel;
@@ -61,12 +63,12 @@ let productAdaptor;
 let userAdaptor;
 
 class GeneralController {
-  constructor(modal) {
+  constructor(modal, socket) {
     contactModel = modal.contactUs;
     categoryAdaptor = new _category2.default(modal);
     brandAdaptor = new _brands2.default(modal);
     sellerAdaptor = new _sellers2.default(modal);
-    jobAdaptor = new _job2.default(modal);
+    jobAdaptor = new _job2.default(modal, socket);
     productAdaptor = new _product2.default(modal);
     userAdaptor = new _user2.default(modal);
     modals = modal;
@@ -74,8 +76,8 @@ class GeneralController {
 
   static async checkForAppUpdate(request, reply) {
     try {
-      if (request.headers.app_version !== undefined || request.headers.ios_app_version !== undefined) {
-        const id = request.headers.ios_app_version ? 2 : 1;
+      if (request.headers['app-version'] !== undefined || request.headers['ios-app-version'] !== undefined) {
+        const id = request.headers['ios-app-version'] ? 2 : 1;
 
         const result = await modals.appVersion.findOne({
           where: { id },
@@ -138,8 +140,9 @@ class GeneralController {
             status_type: 1
           })]);
         } else if (request.query.mainCategoryId) {
+          const category_id = request.query.mainCategoryId.toString() === '2' ? [11, 12] : request.query.mainCategoryId;
           results = await categoryAdaptor.retrieveCategories({
-            options: { category_id: request.query.mainCategoryId },
+            options: { category_id },
             isSubCategoryRequiredForAll: true,
             isBrandFormRequired: false,
             language: request.language,
@@ -181,7 +184,7 @@ class GeneralController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -209,7 +212,7 @@ class GeneralController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -298,12 +301,16 @@ class GeneralController {
 
   static async retrieveFAQs(request, reply) {
     try {
+      let user_location, user;
+      if (request.headers) {
+        user = _shared2.default.verifyAuthorization(request.headers);
+        user_location = user.seller_detail ? await modals.seller_users.findOne({ where: { id: user.id }, attributes: ['id'] }) : await modals.users.findOne({ where: { id: user.id }, attributes: ['location'] });
+        user_location = user_location.toJSON();
+      }
+
+      const type = user ? user.seller_detail ? 3 : user_location && user_location.location && user_location.location.toLowerCase() === 'other' || !user_location.location ? 1 : [1, 2] : undefined;
       const faq = await modals.faqs.findAll({
-        where: {
-          status_id: {
-            $ne: 3
-          }
-        },
+        where: JSON.parse(JSON.stringify({ status_id: { $ne: 3 }, type })),
         order: [['id']]
       });
       return reply.response({ status: true, faq }).code(200);
@@ -430,7 +437,7 @@ class GeneralController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -550,7 +557,7 @@ class GeneralController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -617,7 +624,7 @@ class GeneralController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -668,7 +675,7 @@ class GeneralController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -721,7 +728,7 @@ class GeneralController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -754,6 +761,7 @@ class GeneralController {
           user_id: user.id || user.ID,
           main_category_id: request.payload.main_category_id,
           category_id: request.payload.category_id,
+          sub_category_id: request.payload.sub_category_id,
           brand_id: request.payload.brand_id,
           colour_id: request.payload.colour_id,
           purchase_cost: request.payload.purchase_cost,
@@ -799,7 +807,7 @@ class GeneralController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -835,7 +843,7 @@ class GeneralController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user ? user.id || user.ID : undefined,
+          user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -900,10 +908,29 @@ class GeneralController {
           payload: request.payload
         })
       });
-      return reply.response().code(200);
+      return reply.response({ status: true }).code(200);
     } catch (e) {
       console.log('error while logging on db,', ex);
-      return reply.response().code(200);
+      return reply.response({ status: false }).code(200);
+    }
+  }
+
+  static async sendMessages(request, reply) {
+    try {
+      await modals.logs.create({
+        log_type: 100,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload
+        })
+      });
+      (0, _sms.sendSMS)(request.query.billDetails, request.query.number);
+      return reply.response({ status: true }).code(200);
+    } catch (e) {
+      console.log('error while logging on db,', ex);
+      return reply.response({ status: false }).code(200);
     }
   }
 
@@ -947,7 +974,7 @@ class GeneralController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,

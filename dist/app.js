@@ -37,12 +37,15 @@ var _router = require('./routes/router');
 
 var _router2 = _interopRequireDefault(_router);
 
+var _socket = require('./api/socket');
+
+var _socket2 = _interopRequireDefault(_socket);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 // Create a server with a host and port
-
+let socket_server;
 const PORT = _main2.default.APP.PORT || 8443;
-
 const init = async () => {
   const server = new _hapi2.default.Server({
     port: PORT,
@@ -50,10 +53,12 @@ const init = async () => {
       log: { collect: true },
       cors: {
         origin: ['*'],
-        headers: ['Accept', 'Content-Type', 'Authorization', 'language']
+        headers: ['Accept', 'Content-Type', 'Authorization'],
+        additionalHeaders: ['language', 'app-version', 'ios-app-version']
       }
     }
   });
+
   try {
     await server.register({
       plugin: _inert2.default
@@ -75,9 +80,11 @@ const init = async () => {
     server.auth.strategy('jwt', 'jwt', {
       key: jwtKey.toString(),
       validate: async (decoded, request) => {
-        let userList = await _models2.default.users.findAll({
+        let userList = await (decoded.seller_detail ? _models2.default.seller_users.findAll({
+          where: JSON.parse(JSON.stringify({ role_type: 6, id: decoded.id }))
+        }) : _models2.default.users.findAll({
           where: JSON.parse(JSON.stringify({ role_type: 5, id: decoded.id }))
-        });
+        }));
         const people = {};
         userList.forEach(item => {
           item = item.toJSON();
@@ -85,6 +92,8 @@ const init = async () => {
         });
 
         if (!people[decoded.id]) {
+          return { isValid: false };
+        } else if (decoded.seller_detail && people[decoded.id].is_logged_out) {
           return { isValid: false };
         } else {
           return { isValid: true };
@@ -104,7 +113,12 @@ const init = async () => {
         });
       }
     });
-    (0, _router2.default)(server, _models2.default);
+    if (!socket_server) {
+      socket_server = new _socket2.default({ server, models: _models2.default });
+    }
+    if (socket_server) {
+      (0, _router2.default)(server, _models2.default, _socket2.default);
+    }
     await server.start();
   } catch (e) {
     console.log(e);

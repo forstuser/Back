@@ -88,7 +88,7 @@ export default (sequelize, DataTypes) => {
     insurances.belongsTo(models.jobs, {as: 'jobs', foreignKey: 'job_id'});
     insurances.belongsTo(models.onlineSellers,
         {foreignKey: 'online_seller_id', as: 'onlineSellers'});
-    insurances.belongsTo(models.offlineSellers,
+    insurances.belongsTo(models.sellers,
         {foreignKey: 'seller_id', as: 'sellers'});
     insurances.belongsTo(models.insuranceBrands,
         {foreignKey: 'provider_id', as: 'provider'});

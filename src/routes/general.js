@@ -221,6 +221,7 @@ export function prepareGeneralRoutes(modal, routeObject, middleware) {
             brand_name: [joi.string(), joi.allow(null)],
             main_category_id: joi.number(),
             category_id: joi.number(),
+            sub_category_id: [joi.number(), joi.allow(null)],
             brand_id: [joi.number(), joi.allow(null)],
             colour_id: [joi.number(), joi.allow(null)],
             value: [joi.number(), joi.allow(null)],
@@ -268,6 +269,24 @@ export function prepareGeneralRoutes(modal, routeObject, middleware) {
       config: {
         handler: ControllerObject.sesComplaintHandler,
         description: 'Handling Complaints from SES.',
+      },
+    });
+
+    routeObject.push({
+      method: 'POST',
+      path: '/message',
+      config: {
+        handler: ControllerObject.sendMessages,
+        description: 'Handling Messages from server.',
+      },
+    });
+
+    routeObject.push({
+      method: 'GET',
+      path: '/sendsms',
+      config: {
+        handler: ControllerObject.sendMessages,
+        description: 'Handling SMS from server.',
       },
     });
   }

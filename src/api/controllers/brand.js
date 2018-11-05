@@ -2,7 +2,7 @@
 'use strict';
 
 import shared from '../../helpers/shared';
-import BrandAdaptor from '../Adaptors/brands';
+import BrandAdaptor from '../adaptors/brands';
 
 let modals;
 let brandAdaptor;
@@ -21,39 +21,34 @@ class BrandController {
       if (!user && !isWebMode) {
         return reply.response({status: false, message: 'Unauthorized'});
       } else if (!request.pre.forceUpdate) {
-        const categoryId = request.query.categoryid || undefined;
-
-        const options = {
-          status_type: 1,
-          category_id: categoryId,
-        };
-
-        if (categoryId) {
-          options.category_id = categoryId;
-        }
         let results = [];
-        if (categoryId) {
-          results = await
-              modals.brands.findAll({
-                where: {
-                  status_type: 1,
-                },
-                include: [
-                  {
-                    model: modals.brandDetails,
-                    as: 'details',
-                    where: options,
-                    required: true,
-                  }, {
-                    model: modals.serviceCenters,
-                    as: 'centers',
-                    attributes: [],
-                    required: true,
-                  },
-                ],
-                order: [['brand_name', 'ASC']],
-                attributes: [['brand_name', 'brandName'], ['brand_id', 'id']],
-              });
+        if (request.query.categoryid) {
+          let category_id = (request.query.categoryid || '').split(',');
+
+          const options = JSON.parse(JSON.stringify({
+            status_type: 1,
+            category_id: category_id.length > 0 ? category_id : undefined,
+          }));
+
+          results = await modals.brands.findAll({
+            where: {
+              status_type: 1,
+            },
+            include: [
+              {
+                model: modals.brandDetails,
+                as: 'details',
+                where: options,
+                required: true,
+              }, {
+                model: modals.serviceCenters,
+                as: 'centers',
+                attributes: [],
+                required: true,
+              }],
+            order: [['brand_name', 'ASC']],
+            attributes: [['brand_name', 'brandName'], ['brand_id', 'id']],
+          });
         } else {
           results = await
               modals.brands.findAll({
@@ -91,7 +86,7 @@ class BrandController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,

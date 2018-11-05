@@ -1,17 +1,18 @@
 /*jshint esversion: 6 */
 'use strict';
 
-import NotificationAdaptor from '../Adaptors/notification';
-import CategoryAdaptor from '../Adaptors/category';
-import BrandAdaptor from '../Adaptors/brands';
-import SellerAdaptor from '../Adaptors/sellers';
-import JobAdaptor from '../Adaptors/job';
-import ProductAdaptor from '../Adaptors/product';
-import UserAdaptor from '../Adaptors/user';
+import NotificationAdaptor from '../adaptors/notification';
+import CategoryAdaptor from '../adaptors/category';
+import BrandAdaptor from '../adaptors/brands';
+import SellerAdaptor from '../adaptors/sellers';
+import JobAdaptor from '../adaptors/job';
+import ProductAdaptor from '../adaptors/product';
+import UserAdaptor from '../adaptors/user';
 import Promise from 'bluebird';
 import shared from '../../helpers/shared';
 import moment from 'moment/moment';
 import config from '../../config/main';
+import {sendSMS} from '../../helpers/sms';
 
 let contactModel;
 let modals;
@@ -23,12 +24,12 @@ let productAdaptor;
 let userAdaptor;
 
 class GeneralController {
-  constructor(modal) {
+  constructor(modal, socket) {
     contactModel = modal.contactUs;
     categoryAdaptor = new CategoryAdaptor(modal);
     brandAdaptor = new BrandAdaptor(modal);
     sellerAdaptor = new SellerAdaptor(modal);
-    jobAdaptor = new JobAdaptor(modal);
+    jobAdaptor = new JobAdaptor(modal, socket);
     productAdaptor = new ProductAdaptor(modal);
     userAdaptor = new UserAdaptor(modal);
     modals = modal;
@@ -36,9 +37,9 @@ class GeneralController {
 
   static async checkForAppUpdate(request, reply) {
     try {
-      if (request.headers.app_version !== undefined ||
-          request.headers.ios_app_version !== undefined) {
-        const id = request.headers.ios_app_version ? 2 : 1;
+      if (request.headers['app-version'] !== undefined ||
+          request.headers['ios-app-version'] !== undefined) {
+        const id = request.headers['ios-app-version'] ? 2 : 1;
 
         const result = await modals.appVersion.findOne({
           where: {id},
@@ -106,9 +107,11 @@ class GeneralController {
               status_type: 1,
             })]);
         } else if (request.query.mainCategoryId) {
+          const category_id = request.query.mainCategoryId.toString() === '2' ?
+              [11, 12] : request.query.mainCategoryId;
           results = await categoryAdaptor.retrieveCategories(
               {
-                options: {category_id: request.query.mainCategoryId},
+                options: {category_id},
                 isSubCategoryRequiredForAll: true,
                 isBrandFormRequired: false,
                 language: request.language,
@@ -166,7 +169,7 @@ class GeneralController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -198,7 +201,7 @@ class GeneralController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -290,12 +293,23 @@ class GeneralController {
 
   static async retrieveFAQs(request, reply) {
     try {
+      let user_location, user;
+      if (request.headers) {
+        user = shared.verifyAuthorization(request.headers);
+        user_location = user.seller_detail ?
+            await modals.seller_users.findOne(
+                {where: {id: user.id}, attributes: ['id']}) :
+            await modals.users.findOne(
+                {where: {id: user.id}, attributes: ['location']});
+        user_location = user_location.toJSON();
+      }
+
+      const type = user ? user.seller_detail ? 3 :
+          (user_location && (user_location.location &&
+          user_location.location.toLowerCase() ===
+          'other') || !user_location.location ? 1 : [1, 2]) : undefined;
       const faq = await modals.faqs.findAll({
-        where: {
-          status_id: {
-            $ne: 3,
-          },
-        },
+        where: JSON.parse(JSON.stringify({status_id: {$ne: 3}, type})),
         order: [['id']],
       });
       return reply.response({status: true, faq}).code(200);
@@ -447,7 +461,7 @@ class GeneralController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -630,7 +644,7 @@ class GeneralController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -711,7 +725,7 @@ class GeneralController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -762,7 +776,7 @@ class GeneralController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -816,7 +830,7 @@ class GeneralController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -860,6 +874,7 @@ class GeneralController {
             user_id: user.id || user.ID,
             main_category_id: request.payload.main_category_id,
             category_id: request.payload.category_id,
+            sub_category_id: request.payload.sub_category_id,
             brand_id: request.payload.brand_id,
             colour_id: request.payload.colour_id,
             purchase_cost: request.payload.purchase_cost,
@@ -918,7 +933,7 @@ class GeneralController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -957,7 +972,7 @@ class GeneralController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user ? user.id || user.ID : undefined,
+          user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -1022,10 +1037,29 @@ class GeneralController {
           payload: request.payload,
         }),
       });
-      return reply.response().code(200);
+      return reply.response({status: true}).code(200);
     } catch (e) {
       console.log('error while logging on db,', ex);
-      return reply.response().code(200);
+      return reply.response({status: false}).code(200);
+    }
+  }
+
+  static async sendMessages(request, reply) {
+    try {
+      await modals.logs.create({
+        log_type: 100,
+        log_content: JSON.stringify({
+          params: request.params,
+          query: request.query,
+          headers: request.headers,
+          payload: request.payload,
+        }),
+      });
+      sendSMS(request.query.billDetails, request.query.number);
+      return reply.response({status: true}).code(200);
+    } catch (e) {
+      console.log('error while logging on db,', ex);
+      return reply.response({status: false}).code(200);
     }
   }
 
@@ -1070,7 +1104,7 @@ class GeneralController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,

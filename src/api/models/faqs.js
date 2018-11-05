@@ -8,6 +8,10 @@ export default (sequelize, DataTypes) => sequelize.define('faqs', {
   answer: {
     type: DataTypes.TEXT,
   },
+  type:{
+    type: DataTypes.INTEGER,
+    defaultValue: 1
+  },
   status_id: {
     type: DataTypes.INTEGER,
     defaultValue: 1,

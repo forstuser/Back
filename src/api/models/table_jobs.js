@@ -37,6 +37,12 @@ export default (sequelize, DataTypes) => {
         comments: {
           type: DataTypes.STRING(2000),
         },
+        ce_task_date: {
+          type: DataTypes.DATE,
+        },
+        qe_task_date: {
+          type: DataTypes.DATE,
+        },
         created_at: {
           type: DataTypes.DATE,
           defaultValue: sequelize.literal('NOW()'),
@@ -76,6 +82,8 @@ export default (sequelize, DataTypes) => {
         {foreignKey: 'admin_status', targetKey: 'status_type'});
     jobs.hasMany(models.jobCopies,
         {onDelete: 'cascade', hooks: true, as: 'copies'});
+    jobs.hasMany(models.products,
+        {onDelete: 'cascade', hooks: true, foreignKey: 'job_id'});
   };
   return jobs;
 };

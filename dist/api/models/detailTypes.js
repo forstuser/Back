@@ -25,6 +25,10 @@ exports.default = (sequelize, DataTypes) => {
       type: DataTypes.DATE,
       defaultValue: sequelize.literal('NOW()')
     },
+    created_by: {
+      type: DataTypes.INTEGER,
+      defaultValue: 1
+    },
     updated_at: {
       type: DataTypes.DATE,
       defaultValue: sequelize.literal('NOW()')

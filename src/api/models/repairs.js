@@ -77,7 +77,7 @@ export default (sequelize, DataTypes) => {
     repairs.belongsTo(models.jobs, {as: 'jobs', foreignKey: 'job_id'});
     repairs.belongsTo(models.onlineSellers,
         {foreignKey: 'online_seller_id', as: 'onlineSellers'});
-    repairs.belongsTo(models.offlineSellers,
+    repairs.belongsTo(models.sellers,
         {foreignKey: 'seller_id', as: 'sellers'});
   };
 

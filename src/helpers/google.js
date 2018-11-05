@@ -2,7 +2,7 @@
 'use strict';
 
 import {createClient} from '@google/maps';
-import Bluebird from 'bluebird';
+import request from 'request-promise';
 import Promise from 'bluebird';
 import {PhoneNumberUtil} from 'google-libphonenumber';
 import _ from 'lodash';
@@ -10,35 +10,35 @@ import config from '../config/main';
 
 const phoneUtil = PhoneNumberUtil.getInstance();
 const googleMapsClient = createClient({
-	key: config.GOOGLE.API_KEY
+  key: config.GOOGLE.API_KEY,
 });
-Bluebird.promisifyAll(googleMapsClient);
+Promise.promisifyAll(googleMapsClient);
 
 const distanceMatrix = (origins, destinations) => {
-	if (destinations.length > 25) {
-		destinations = _.chunk(destinations, 25);
-	}
+  if (destinations.length > 25) {
+    destinations = _.chunk(destinations, 25);
+  }
 
-	const promises = destinations.map((destinationsElem) => {
-		return googleMapsClient.distanceMatrixAsync({
-			origins: origins,
-			destinations: destinationsElem
-		});
-	});
+  const promises = destinations.map((destinationsElem) => {
+    return googleMapsClient.distanceMatrixAsync({
+      origins: origins,
+      destinations: destinationsElem,
+    });
+  });
 
-	return Bluebird.all(promises).then((result) => {
-		const rows = result.map((elem) => {
-			return elem.json.rows;
-		});
+  return Promise.all(promises).then((result) => {
+    const rows = result.map((elem) => {
+      return elem.json.rows;
+    });
 
     return _.chain(rows).flatten().map((elem) => {
       return elem.elements;
     }).flatten().value();
-	});
+  });
 };
 
-const isValidPhoneNumber = phone => {
-  return Promise.try(() => {
+const isValidPhoneNumber = async phone => {
+  return await Promise.try(() => {
     const regionCode = phoneUtil.getRegionCodeForCountryCode('91');
     if (regionCode.toUpperCase() === 'ZZ') {
       return false;
@@ -61,7 +61,28 @@ const isValidPhoneNumber = phone => {
   });
 };
 
+const isValidGSTIN = async gstin => {
+  const qs = {
+    aspid: config.GST.ID, password: config.GST.PASSWORD, gstin,
+    Action: config.GST.ACTION,
+  };
+  if (config.GST.ENABLED) {
+    const gstDetails = await request({
+      uri: `${config.GST.HOST}${config.GST.ROUTE}`,
+      qs, json: true,
+    });
+
+    if (gstDetails.error && gstDetails.sts.toLowerCase() !== 'active') {
+      return false;
+    }
+
+    return gstDetails;
+  }
+  return true;
+};
+
 export default {
   distanceMatrix,
   isValidPhoneNumber,
+  isValidGSTIN,
 };

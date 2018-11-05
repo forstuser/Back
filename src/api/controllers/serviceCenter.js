@@ -3,8 +3,8 @@
 
 import google from '../../helpers/google';
 import shared from '../../helpers/shared';
-import ServiceCenterAdaptor from '../Adaptors/serviceCenter';
-import BrandAdaptor from '../Adaptors/brands';
+import ServiceCenterAdaptor from '../adaptors/serviceCenter';
+import BrandAdaptor from '../adaptors/brands';
 
 let modals;
 let serviceCenterAdaptor;
@@ -25,14 +25,10 @@ class ServiceCenterController {
       if ((request.pre.userExist || isWebMode) && !request.pre.forceUpdate) {
         console.log(request.payload);
         const payload = request.payload || {
-          location: '',
-          city: '',
-          searchValue: '',
-          longitude: '',
-          latitude: '',
-          categoryId: '',
-          masterCategoryId: '',
-          brandId: '',
+          location: '', city: '',
+          searchValue: '', longitude: '',
+          latitude: '', categoryId: '',
+          masterCategoryId: '', brandId: '',
         };
         let latitude = '';
         let longitude = '';
@@ -52,18 +48,13 @@ class ServiceCenterController {
         const categoryId = request.query.categoryid || payload.categoryId || 0;
         const brandId = request.query.brandid || payload.brandId || 0;
         const whereClause = {
-          center_city: {
-            $iLike: `%${city}%`,
-          },
-          brand_id: brandId,
-          category_id: categoryId,
-          $and: [
+          center_city: {$iLike: `%${city}%`},
+          brand_id: brandId, category_id: categoryId, $and: [
             modals.sequelize.where(
                 modals.sequelize.col('"centerDetails"."category_id"'),
                 categoryId),
             modals.sequelize.where(modals.sequelize.col('"brands"."brand_id"'),
-                brandId),
-          ],
+                brandId)],
         };
 
         const origins = [];
@@ -204,7 +195,7 @@ class ServiceCenterController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,

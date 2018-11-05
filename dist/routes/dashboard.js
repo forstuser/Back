@@ -122,19 +122,27 @@ function prepareDashboardRoutes(modal, routeObject, middleware) {
       path: '/consumer/notify',
       config: {
         auth: 'jwt',
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, {
-          method: middleware.updateUserActiveStatus,
-          assign: 'userExist'
-        }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
         handler: _dashboard2.default.notifyUser,
         validate: {
           payload: _joi2.default.object({
+            seller_user_id: [_joi2.default.number(), _joi2.default.allow(null)],
             userId: [_joi2.default.number(), _joi2.default.allow(null)],
             data: _joi2.default.object(),
             output: 'data',
             parse: true
           }).allow(null)
         }
+      }
+    });
+
+    routeObject.push({
+      method: 'GET',
+      path: '/sellers/{seller_id}/dashboard',
+      config: {
+        auth: 'jwt',
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        handler: _dashboard2.default.getSellerDashboard
       }
     });
   }
