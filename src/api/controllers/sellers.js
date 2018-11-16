@@ -88,7 +88,7 @@ class SellerController {
                   [
                     modals.sequelize.literal(
                         `"sellers"."seller_details"->'basic_details'->'home_delivery'`),
-                    'rush_hours'], 'is_fmcg', 'is_assisted', 'has_pos', [
+                    'home_delivery'], 'is_fmcg', 'is_assisted', 'has_pos', [
                     modals.sequelize.literal(
                         `(select minimum_points from table_loyalty_rules as loyalty_rules where (loyalty_rules.user_id = ${user_id} or loyalty_rules.user_id is null) and loyalty_rules.seller_id = "sellers"."id" limit 1)`),
                     'minimum_points'], [
@@ -231,28 +231,20 @@ class SellerController {
                       seller_type_id: [1, 2],
                     })),
                     attributes: [
-                      'id',
-                      ['seller_name', 'name'],
-                      'owner_name',
-                      [
+                      'id', ['seller_name', 'name'], 'owner_name', [
                         modals.sequelize.literal(
                             `"sellers"."seller_details"->'basic_details'`),
-                        'basic_details'],
-                      [
+                        'basic_details'], [
                         modals.sequelize.literal(
                             `"sellers"."seller_details"->'basic_details'->'home_delivery'`),
-                        'rush_hours'],
-                      'is_fmcg',
-                      'is_assisted',
-                      'has_pos',
-                      [
+                        'home_delivery'], 'is_fmcg',
+                      'is_assisted', 'has_pos', [
                         modals.sequelize.literal(
                             `${seller_offer_ids && seller_offer_ids.length > 0 ?
                                 `(select count(*) from table_seller_offers as seller_offers where status_type in (1) and seller_offers.id in (${(seller_offer_ids ||
                                     []).join(
                                     ',')}) and seller_offers.seller_id = "sellers"."id")` :
-                                0}`), 'offer_count'],
-                      [
+                                0}`), 'offer_count'], [
                         modals.sequelize.literal(
                             `(select AVG(seller_reviews.review_ratings) from table_seller_reviews as seller_reviews where seller_reviews.offline_seller_id = "sellers"."id")`),
                         'ratings']],
@@ -644,7 +636,7 @@ class SellerController {
                     'cashback_redeemed'], 'seller_details', [
                     modals.sequelize.literal(
                         `"sellers"."seller_details"->'basic_details'->'home_delivery'`),
-                    'rush_hours'], 'is_assisted', [
+                    'home_delivery'], 'is_assisted', [
                     modals.sequelize.literal(
                         `(select sum(seller_cashback.amount) from table_seller_wallet as seller_cashback where status_type in (16) and seller_cashback.seller_id = "sellers"."id")`),
                     'cashback_total'], 'is_fmcg', [
