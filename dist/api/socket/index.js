@@ -151,9 +151,7 @@ class SocketServer {
     }
     await notificationAdaptor.notifyUserCron({
       user_id, payload: {
-        user_id,
-        order_id: order.id,
-        order,
+        user_id, order_id: order.id, order,
         order_type: order.order_type,
         collect_at_store: order.collect_at_store,
         status_type: order.status_type,
@@ -598,12 +596,10 @@ class SocketServer {
               order_type: order.order_type,
               collect_at_store: order.collect_at_store,
               status_type: order.status_type,
-              is_modified: order.is_modified,
-              user_id,
+              is_modified: order.is_modified, user_id,
               title: `Service has been initiated${order.service_user ? ` by ${order.service_user.name || ''}.` : '.'}`,
               description: 'Please click here for more details.',
-              notification_type: 1,
-              notification_id: order.id,
+              notification_type: 1, notification_id: order.id,
               start_date: order.order_type === 2 ? order.order_details.start_date : undefined
             }
           });
@@ -738,8 +734,7 @@ class SocketServer {
             user_id,
             title: `Service has been completed ${order.service_user ? `by ${order.service_user.name || ''}.` : '.'}`,
             description: 'Please click here for further detail.',
-            notification_type: 1,
-            notification_id: order.id,
+            notification_type: 1, notification_id: order.id,
             start_date: order.order_type === 2 ? order.order_details.start_date : undefined,
             end_date: order.order_type === 2 ? order.order_details.end_date : undefined
           }
@@ -1311,14 +1306,11 @@ class SocketServer {
         await notificationAdaptor.notifyUserCron({
           seller_user_id: seller_detail.user_id,
           payload: {
-            order_id: order.id,
-            status_type: order.status_type,
-            is_modified: order.is_modified,
-            user_id,
+            order_id: order.id, status_type: order.status_type,
+            is_modified: order.is_modified, user_id,
             title: `Oops! Looks like ${user_index_data.user_name || ''} is not satisfied by modification in order and rejected the order.`,
             description: 'Please click here for more details.',
-            notification_type: 1,
-            notification_id: order.id,
+            notification_type: 1, notification_id: order.id,
             order_type: order.order_type,
             collect_at_store: order.collect_at_store
           }
@@ -1412,10 +1404,8 @@ class SocketServer {
         await notificationAdaptor.notifyUserCron({
           seller_user_id: seller_detail.user_id,
           payload: {
-            order_id: order.id,
-            status_type: order.status_type,
-            is_modified: order.is_modified,
-            user_id,
+            order_id: order.id, status_type: order.status_type,
+            is_modified: order.is_modified, user_id,
             title: `Oops! ${user_index_data.user_name || ''} has cancelled the order.`,
             description: 'Please click here for more details.',
             notification_type: 1,
@@ -1775,8 +1765,7 @@ class SocketServer {
             seller_type_id: seller_detail.seller_type_id,
             order_id: order.id,
             result: payment_details,
-            order,
-            user_id,
+            order, user_id,
             status_type: order.status_type,
             is_modified: order.is_modified,
             title: `Your Order has been successfully completed!`,
