@@ -18,9 +18,10 @@ class PayTMAdaptor {
         config.PAYTM.PAYTMMKEY);
   }
 
-  async salesToUserCredit(options) {
+  async salesToUserCredit(options, is_seller) {
     try {
-      const request = config.PAYTM.REQUEST;
+      const request = is_seller ?
+          config.PAYTM.SELLERREQUEST : config.PAYTM.REQUEST;
       const {order_id, amount, mobile_no, email, comment, ip} = options;
       request.request.merchantOrderId = order_id.toString();
       request.request.amount = amount.toString();

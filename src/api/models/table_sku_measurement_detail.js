@@ -29,6 +29,10 @@ export default (sequelize, DataTypes) => {
         tax: {
           type: DataTypes.FLOAT,
         },
+        has_images: {
+          type: DataTypes.BOOLEAN,
+          defaultValue: false
+        },
         updated_by: {
           type: DataTypes.INTEGER,
         },

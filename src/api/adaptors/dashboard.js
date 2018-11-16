@@ -172,7 +172,8 @@ class DashboardAdaptor {
             this.modals.mailBox.count(
                 {where: {user_id: user.id || user.ID, status_id: 4}}),
             this.userAdaptor.retrieveOrUpdateUserIndexedData(
-                {where: {user_id: user.id || user.ID}}, {pop_up_counter: 1})]);
+                {where: {user_id: user.id || user.ID}},
+                {pop_up_counter: 1, user_id: user.id || user.ID})]);
       return {
         status: true,
         message: 'Dashboard restore Successful',

@@ -169,7 +169,7 @@ class GeneralController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -201,7 +201,7 @@ class GeneralController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -306,8 +306,8 @@ class GeneralController {
 
       const type = user ? user.seller_detail ? 3 :
           (user_location && (user_location.location &&
-          user_location.location.toLowerCase() ===
-          'other') || !user_location.location ? 1 : [1, 2]) : undefined;
+              user_location.location.toLowerCase() ===
+              'other') || !user_location.location ? 1 : [1, 2]) : undefined;
       const faq = await modals.faqs.findAll({
         where: JSON.parse(JSON.stringify({status_id: {$ne: 3}, type})),
         order: [['id']],
@@ -461,7 +461,7 @@ class GeneralController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -644,7 +644,7 @@ class GeneralController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -725,7 +725,7 @@ class GeneralController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -776,7 +776,7 @@ class GeneralController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -830,7 +830,7 @@ class GeneralController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -857,8 +857,7 @@ class GeneralController {
           user_id: user.id || user.ID,
           updated_by: user.id || user.ID,
           uploaded_by: user.id || user.ID,
-          user_status: 8,
-          admin_status: 2,
+          user_status: 8, admin_status: 2,
           comments: request.query ?
               request.query.productId ?
                   `This job is sent for product id ${request.query.productId}` :
@@ -880,8 +879,7 @@ class GeneralController {
             purchase_cost: request.payload.purchase_cost,
             taxes: request.payload.taxes,
             updated_by: user.id || user.ID,
-            seller_id: request.payload.seller_id,
-            status_type: 8,
+            seller_id: request.payload.seller_id, status_type: 8,
             document_number: request.payload.document_number,
             document_date: request.payload.document_date ?
                 moment.utc(request.payload.document_date,
@@ -894,19 +892,13 @@ class GeneralController {
                     moment.utc(request.payload.document_date, 'DD MMM YY').
                         startOf('day').
                         format('YYYY-MM-DD') :
-                undefined,
-            brand_name: request.payload.brand_name,
+                undefined, brand_name: request.payload.brand_name,
             copies: [],
           }), categoryAdaptor.retrieveSubCategories(
-              {category_id: request.payload.category_id}, true),
-          categoryAdaptor.retrieveRenewalTypes({
-            status_type: 1,
-          })]);
+              {category_id: request.payload.category_id}, true, 'en', user),
+          categoryAdaptor.retrieveRenewalTypes({status_type: 1})]);
         return reply.response({
-          status: true,
-          product,
-          categories,
-          renewalTypes,
+          status: true, product, categories, renewalTypes,
           message: 'Product and Job is initialized.',
         });
       } else if (request.pre.userExist === 0) {
@@ -933,7 +925,7 @@ class GeneralController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,
@@ -972,7 +964,7 @@ class GeneralController {
           api_action: request.method,
           api_path: request.url.pathname,
           log_type: 2,
-          user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
+          user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
           log_content: JSON.stringify({
             params: request.params,
             query: request.query,
@@ -1104,7 +1096,7 @@ class GeneralController {
         api_action: request.method,
         api_path: request.url.pathname,
         log_type: 2,
-        user_id: user && !user.seller_detail  ? user.id || user.ID : undefined,
+        user_id: user && !user.seller_detail ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
           params: request.params,
           query: request.query,

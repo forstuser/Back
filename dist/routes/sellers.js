@@ -498,7 +498,11 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
         validate: {
           payload: {
             id: [_joi2.default.number(), _joi2.default.allow(null)],
-            title: _joi2.default.string().required(),
+            sku_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            sku_measurement_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            offer_discount: [_joi2.default.number(), _joi2.default.allow(null)],
+            bar_code: [_joi2.default.string(), _joi2.default.allow(null)],
+            title: [_joi2.default.string(), _joi2.default.allow(null)],
             description: [_joi2.default.string(), _joi2.default.allow(null)],
             document_details: [_joi2.default.array(), _joi2.default.allow(null)],
             start_date: _joi2.default.string().required(),

@@ -330,7 +330,7 @@ class JobAdaptor {
   async sellerCashBackRedemptionAtPayTM(options) {
     let { seller_id, transaction_type, amount, user_id, mobile_no, email, job_id } = options;
     const order_id = `${Math.random().toString(36).substr(2, 9)}${user_id.toString(36)}`;
-    const pay_TM_response = JSON.parse((await this.payTMAdaptor.salesToUserCredit({ amount, order_id, mobile_no, email })));
+    const pay_TM_response = JSON.parse((await this.payTMAdaptor.salesToUserCredit({ amount, order_id, mobile_no, email }, true)));
     console.log(JSON.stringify(pay_TM_response));
     if (pay_TM_response && pay_TM_response.status !== 'SUCCESS' && pay_TM_response.status !== 'PENDING' && pay_TM_response.status.toLowerCase() !== 'init') {
       throw Error(_main2.default.PAYTM.ERROR[pay_TM_response.statusCode] || 'Unable to redeem amount on PayTM for now.');

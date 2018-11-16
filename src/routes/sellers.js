@@ -607,7 +607,11 @@ export function prepareSellerRoutes(modal, route, middleware, socket) {
         validate: {
           payload: {
             id: [joi.number(), joi.allow(null)],
-            title: joi.string().required(),
+            sku_id: [joi.number(), joi.allow(null)],
+            sku_measurement_id: [joi.number(), joi.allow(null)],
+            offer_discount: [joi.number(), joi.allow(null)],
+            bar_code: [joi.string(), joi.allow(null)],
+            title: [joi.string(), joi.allow(null)],
             description: [joi.string(), joi.allow(null)],
             document_details: [joi.array(), joi.allow(null)],
             start_date: joi.string().required(),

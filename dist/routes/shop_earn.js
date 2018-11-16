@@ -73,6 +73,22 @@ function prepareShopEarnRoute(modal, route, middleware, socket) {
 
     route.push({
       method: 'GET',
+      path: '/sellers/sku/{bar_code}/item',
+      handler: _shop_earn2.default.getSellerSKUItem,
+      config: {
+        auth: 'jwt',
+        pre: [{
+          method: middleware.checkAppVersion,
+          assign: 'forceUpdate'
+        }, {
+          method: middleware.logSellerAction,
+          assign: 'log_seller_action'
+        }]
+      }
+    });
+
+    route.push({
+      method: 'GET',
       path: '/sku/{id}/detail',
       handler: _shop_earn2.default.getSKUItem,
       config: {
@@ -150,34 +166,60 @@ function prepareShopEarnRoute(modal, route, middleware, socket) {
         handler: _shop_earn2.default.createSKUWishList,
         validate: {
           payload: {
-            'id': [_joi2.default.number(), _joi2.default.allow(null)],
-            'brand_id': [_joi2.default.number(), _joi2.default.allow(null)],
-            'main_category_id': [_joi2.default.number(), _joi2.default.allow(null)],
-            'category_id': [_joi2.default.number(), _joi2.default.allow(null)],
-            'sub_category_id': [_joi2.default.number(), _joi2.default.allow(null)],
-            'title': _joi2.default.string().required(),
-            'hsn_code': [_joi2.default.string(), _joi2.default.allow(null)],
-            'image_code': [_joi2.default.string(), _joi2.default.allow(null)],
-            'image_name': [_joi2.default.string(), _joi2.default.allow(null)],
-            'added_date': [_joi2.default.string(), _joi2.default.allow(null)],
-            'sub_category_name': [_joi2.default.string(), _joi2.default.allow(null)],
-            'mrp': [_joi2.default.number(), _joi2.default.allow(null)],
-            'priority_index': [_joi2.default.number(), _joi2.default.allow(null)],
-            'quantity': _joi2.default.number().required(),
-            'created_at': [_joi2.default.string(), _joi2.default.allow(null)],
-            'sku_measurement': [_joi2.default.object().keys({
-              'id': [_joi2.default.number(), _joi2.default.allow(null)],
-              'sku_id': [_joi2.default.number(), _joi2.default.allow(null)],
-              'measurement_type': [_joi2.default.number(), _joi2.default.allow(null)],
-              'measurement_value': [_joi2.default.number(), _joi2.default.allow(null)],
-              'pack_numbers': [_joi2.default.number(), _joi2.default.allow(null)],
-              'cashback_percent': [_joi2.default.number(), _joi2.default.allow(null)],
-              'discount_percent': [_joi2.default.number(), _joi2.default.allow(null)],
-              'bar_code': [_joi2.default.string(), _joi2.default.allow(null)],
-              'mrp': [_joi2.default.number(), _joi2.default.allow(null)],
-              'selected': [_joi2.default.number(), _joi2.default.allow(null)],
-              'measurement_acronym': [_joi2.default.string(), _joi2.default.allow(null)]
+            id: [_joi2.default.number(), _joi2.default.allow(null)],
+            brand_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            main_category_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            category_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            sub_category_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            seller_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            title: _joi2.default.string().required(),
+            hsn_code: [_joi2.default.string(), _joi2.default.allow(null)],
+            image_code: [_joi2.default.string(), _joi2.default.allow(null)],
+            image_name: [_joi2.default.string(), _joi2.default.allow(null)],
+            added_date: [_joi2.default.string(), _joi2.default.allow(null)],
+            sub_category_name: [_joi2.default.string(), _joi2.default.allow(null)],
+            mrp: [_joi2.default.number(), _joi2.default.allow(null)],
+            priority_index: [_joi2.default.number(), _joi2.default.allow(null)],
+            quantity: _joi2.default.number().required(),
+            created_at: [_joi2.default.string(), _joi2.default.allow(null)],
+            offer_discount: [_joi2.default.number(), _joi2.default.allow(null)],
+            sku_measurement: [_joi2.default.object().keys({
+              id: [_joi2.default.number(), _joi2.default.allow(null)],
+              sku_id: [_joi2.default.number(), _joi2.default.allow(null)],
+              measurement_type: [_joi2.default.number(), _joi2.default.allow(null)],
+              measurement_value: [_joi2.default.number(), _joi2.default.allow(null)],
+              pack_numbers: [_joi2.default.number(), _joi2.default.allow(null)],
+              cashback_percent: [_joi2.default.number(), _joi2.default.allow(null)],
+              offer_discount: [_joi2.default.number(), _joi2.default.allow(null)],
+              discount_percent: [_joi2.default.number(), _joi2.default.allow(null)],
+              bar_code: [_joi2.default.string(), _joi2.default.allow(null)],
+              mrp: [_joi2.default.number(), _joi2.default.allow(null)],
+              selected: [_joi2.default.number(), _joi2.default.allow(null)],
+              measurement_acronym: [_joi2.default.string(), _joi2.default.allow(null)]
             }), _joi2.default.allow(null)]
+          }
+        }
+      }
+    });
+
+    route.push({
+      method: 'PUT',
+      path: '/offer/sku/wishlist',
+      config: {
+        auth: 'jwt',
+        pre: [{
+          method: middleware.checkAppVersion,
+          assign: 'forceUpdate'
+        }, {
+          method: middleware.updateUserActiveStatus,
+          assign: 'userExist'
+        }],
+        handler: _shop_earn2.default.addOfferSKUWishList,
+        validate: {
+          payload: {
+            sku_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            seller_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            sku_measurement_id: [_joi2.default.number(), _joi2.default.allow(null)]
           }
         }
       }
@@ -198,29 +240,32 @@ function prepareShopEarnRoute(modal, route, middleware, socket) {
         handler: _shop_earn2.default.addToPastSelection,
         validate: {
           payload: {
-            'id': [_joi2.default.number(), _joi2.default.allow(null)],
-            'brand_id': [_joi2.default.number(), _joi2.default.allow(null)],
-            'main_category_id': [_joi2.default.number(), _joi2.default.allow(null)],
-            'category_id': [_joi2.default.number(), _joi2.default.allow(null)],
-            'sub_category_id': [_joi2.default.number(), _joi2.default.allow(null)],
-            'sub_category_name': [_joi2.default.string(), _joi2.default.allow(null)],
-            'image_code': [_joi2.default.string(), _joi2.default.allow(null)],
-            'image_name': [_joi2.default.string(), _joi2.default.allow(null)],
-            'title': _joi2.default.string().required(),
-            'hsn_code': [_joi2.default.string(), _joi2.default.allow(null)],
-            'mrp': [_joi2.default.number(), _joi2.default.allow(null)],
-            'priority_index': [_joi2.default.number(), _joi2.default.allow(null)],
-            'quantity': _joi2.default.number().required(),
-            'added_date': [_joi2.default.string(), _joi2.default.allow(null)],
-            'sku_measurement': [_joi2.default.object().keys({
-              'id': [_joi2.default.number(), _joi2.default.allow(null)],
-              'sku_id': [_joi2.default.number(), _joi2.default.allow(null)],
-              'measurement_type': [_joi2.default.number(), _joi2.default.allow(null)],
-              'measurement_value': [_joi2.default.number(), _joi2.default.allow(null)],
-              'pack_numbers': [_joi2.default.number(), _joi2.default.allow(null)],
-              'cashback_percent': [_joi2.default.number(), _joi2.default.allow(null)],
-              'discount_percent': [_joi2.default.number(), _joi2.default.allow(null)],
-              'bar_code': [_joi2.default.string(), _joi2.default.allow(null)]
+            id: [_joi2.default.number(), _joi2.default.allow(null)],
+            brand_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            main_category_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            category_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            sub_category_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            sub_category_name: [_joi2.default.string(), _joi2.default.allow(null)],
+            image_code: [_joi2.default.string(), _joi2.default.allow(null)],
+            image_name: [_joi2.default.string(), _joi2.default.allow(null)],
+            title: _joi2.default.string().required(),
+            hsn_code: [_joi2.default.string(), _joi2.default.allow(null)],
+            mrp: [_joi2.default.number(), _joi2.default.allow(null)],
+            priority_index: [_joi2.default.number(), _joi2.default.allow(null)],
+            quantity: _joi2.default.number().required(),
+            seller_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            offer_discount: [_joi2.default.number(), _joi2.default.allow(null)],
+            added_date: [_joi2.default.string(), _joi2.default.allow(null)],
+            sku_measurement: [_joi2.default.object().keys({
+              id: [_joi2.default.number(), _joi2.default.allow(null)],
+              sku_id: [_joi2.default.number(), _joi2.default.allow(null)],
+              measurement_type: [_joi2.default.number(), _joi2.default.allow(null)],
+              measurement_value: [_joi2.default.number(), _joi2.default.allow(null)],
+              pack_numbers: [_joi2.default.number(), _joi2.default.allow(null)],
+              cashback_percent: [_joi2.default.number(), _joi2.default.allow(null)],
+              discount_percent: [_joi2.default.number(), _joi2.default.allow(null)],
+              offer_discount: [_joi2.default.number(), _joi2.default.allow(null)],
+              bar_code: [_joi2.default.string(), _joi2.default.allow(null)]
             }), _joi2.default.allow(null)]
           }
         }

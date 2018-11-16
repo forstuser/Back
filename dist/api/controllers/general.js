@@ -751,8 +751,7 @@ class GeneralController {
           user_id: user.id || user.ID,
           updated_by: user.id || user.ID,
           uploaded_by: user.id || user.ID,
-          user_status: 8,
-          admin_status: 2,
+          user_status: 8, admin_status: 2,
           comments: request.query ? request.query.productId ? `This job is sent for product id ${request.query.productId}` : request.query.productName ? `This job is sent for product name ${request.query.productName}` : '' : ``
         });
         const [product, categories, renewalTypes] = await _bluebird2.default.all([productAdaptor.createEmptyProduct({
@@ -767,20 +766,13 @@ class GeneralController {
           purchase_cost: request.payload.purchase_cost,
           taxes: request.payload.taxes,
           updated_by: user.id || user.ID,
-          seller_id: request.payload.seller_id,
-          status_type: 8,
+          seller_id: request.payload.seller_id, status_type: 8,
           document_number: request.payload.document_number,
-          document_date: request.payload.document_date ? _moment2.default.utc(request.payload.document_date, _moment2.default.ISO_8601).isValid() ? _moment2.default.utc(request.payload.document_date, _moment2.default.ISO_8601).startOf('day').format('YYYY-MM-DD') : _moment2.default.utc(request.payload.document_date, 'DD MMM YY').startOf('day').format('YYYY-MM-DD') : undefined,
-          brand_name: request.payload.brand_name,
+          document_date: request.payload.document_date ? _moment2.default.utc(request.payload.document_date, _moment2.default.ISO_8601).isValid() ? _moment2.default.utc(request.payload.document_date, _moment2.default.ISO_8601).startOf('day').format('YYYY-MM-DD') : _moment2.default.utc(request.payload.document_date, 'DD MMM YY').startOf('day').format('YYYY-MM-DD') : undefined, brand_name: request.payload.brand_name,
           copies: []
-        }), categoryAdaptor.retrieveSubCategories({ category_id: request.payload.category_id }, true), categoryAdaptor.retrieveRenewalTypes({
-          status_type: 1
-        })]);
+        }), categoryAdaptor.retrieveSubCategories({ category_id: request.payload.category_id }, true, 'en', user), categoryAdaptor.retrieveRenewalTypes({ status_type: 1 })]);
         return reply.response({
-          status: true,
-          product,
-          categories,
-          renewalTypes,
+          status: true, product, categories, renewalTypes,
           message: 'Product and Job is initialized.'
         });
       } else if (request.pre.userExist === 0) {
