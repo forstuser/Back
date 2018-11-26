@@ -610,6 +610,7 @@ export function prepareSellerRoutes(modal, route, middleware, socket) {
             sku_id: [joi.number(), joi.allow(null)],
             sku_measurement_id: [joi.number(), joi.allow(null)],
             offer_discount: [joi.number(), joi.allow(null)],
+            seller_mrp: [joi.number(), joi.allow(null)],
             bar_code: [joi.string(), joi.allow(null)],
             title: [joi.string(), joi.allow(null)],
             description: [joi.string(), joi.allow(null)],

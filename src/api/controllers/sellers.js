@@ -206,7 +206,7 @@ class SellerController {
         let {search_value, limit, offset, latitude, longitude, city, is_fmcg, is_assisted, is_pos} = request.query ||
         {};
         const {seller_offer_ids, my_seller_ids: id} = user_index_data || {};
-        if (id) {
+        if (id && id.length > 0) {
           search_value = search_value || '';
           let contact_no, seller_name = {$or: {}};
           const reg = /^\d+$/;
@@ -224,50 +224,43 @@ class SellerController {
             $and.contact_no = {$ne: user_detail.mobile_no};
           }
           seller_name.$or.$iLike = `%${search_value}%`;
-          if (seller_offer_ids && seller_offer_ids.length > 0) {
-            return reply.response({
-              status: true,
-              result: await sellerAdaptor.retrieveOfferSellers(
-                  {
-                    user_id, seller_offer_ids, limit, offset,
-                    latitude, longitude, city,
-                  }, {
-                    where: JSON.parse(JSON.stringify({
-                      id, $or: {seller_name, contact_no},
-                      is_fmcg, is_assisted, is_pos,
-                      seller_type_id: [1, 2],$and
-                    })),
-                    attributes: [
-                      'id', ['seller_name', 'name'], 'owner_name', [
-                        modals.sequelize.literal(
-                            `"sellers"."seller_details"->'basic_details'`),
-                        'basic_details'], [
-                        modals.sequelize.literal(
-                            `"sellers"."seller_details"->'basic_details'->'home_delivery'`),
-                        'home_delivery'], 'is_fmcg',
-                      'is_assisted', 'has_pos', [
-                        modals.sequelize.literal(
-                            `${seller_offer_ids && seller_offer_ids.length > 0 ?
-                                `(select count(*) from table_seller_offers as seller_offers where status_type in (1) and seller_offers.id in (${(seller_offer_ids ||
-                                    []).join(
-                                    ',')}) and seller_offers.seller_id = "sellers"."id")` :
-                                0}`), 'offer_count'], [
-                        modals.sequelize.literal(
-                            `(select AVG(seller_reviews.review_ratings) from table_seller_reviews as seller_reviews where seller_reviews.offline_seller_id = "sellers"."id")`),
-                        'ratings']],
-                  }),
-            });
-          }
+          const result = await sellerAdaptor.retrieveOfferSellers(
+              {
+                user_id, seller_offer_ids, limit, offset,
+                latitude, longitude, city,
+              }, {
+                where: JSON.parse(JSON.stringify({
+                  id, $or: {seller_name, contact_no},
+                  is_fmcg, is_assisted, is_pos,
+                  seller_type_id: [1, 2], $and,
+                })),
+                attributes: [
+                  'id', ['seller_name', 'name'], 'owner_name', [
+                    modals.sequelize.literal(
+                        `"sellers"."seller_details"->'basic_details'`),
+                    'basic_details'], [
+                    modals.sequelize.literal(
+                        `"sellers"."seller_details"->'basic_details'->'home_delivery'`),
+                    'home_delivery'], 'is_fmcg',
+                  'is_assisted', 'has_pos', [
+                    modals.sequelize.literal(
+                        `${seller_offer_ids && seller_offer_ids.length > 0 ?
+                            `(select count(*) from table_seller_offers as seller_offers where status_type in (1) and seller_offers.id in (${(seller_offer_ids ||
+                                []).join(
+                                ',')}) and seller_offers.seller_id = "sellers"."id")` :
+                            0}`), 'offer_count'], [
+                    modals.sequelize.literal(
+                        `(select AVG(seller_reviews.review_ratings) from table_seller_reviews as seller_reviews where seller_reviews.offline_seller_id = "sellers"."id")`),
+                    'ratings']],
+              });
           return reply.response({
-            status: true, result: [],
-            message: 'No offer from any seller for you.',
+            status: true, result, message: config.NO_OFFER_MSG,
           });
-
         }
 
         return reply.response({
           status: true, result: [],
-          message: 'Please add a seller in your my seller list.',
+          message: config.OFFER_NO_SELLER_MSG,
         });
       } catch (err) {
         console.log(`Error on ${new Date()} for user ${user.id ||
@@ -315,7 +308,8 @@ class SellerController {
         const id = user_index_data &&
         (user_index_data.my_seller_ids || []).length > 0 ?
             JSON.parse(
-                JSON.stringify({$notIn: user_index_data.my_seller_ids})) : undefined;
+                JSON.stringify({$notIn: user_index_data.my_seller_ids})) :
+            undefined;
         const is_service = (is_default && is_default.toLowerCase() ===
             'true') || !search_value ? true : undefined;
         search_value = search_value || '';
@@ -2072,7 +2066,8 @@ Download Now: http://bit.ly/binbill`;
     };
     try {
       const {id: seller_id} = request.params || {};
-      const {start_date, end_date, title, description, id, document_details, sku_id, sku_measurement_id, offer_discount} = request.payload;
+      let {start_date, end_date, title, description, id, document_details, sku_id, sku_measurement_id, seller_mrp, offer_discount} = request.payload;
+      seller_mrp = seller_mrp && seller_mrp > 0 ? seller_mrp : undefined;
       const [seller_offer] = await Promise.all([
         sellerAdaptor.retrieveOrCreateSellerOffers(
             JSON.parse(
@@ -2080,7 +2075,7 @@ Download Now: http://bit.ly/binbill`;
             JSON.parse(JSON.stringify(
                 {
                   seller_id, start_date, end_date, title,
-                  sku_id, sku_measurement_id, description,
+                  sku_id, sku_measurement_id, description, seller_mrp,
                   document_details, on_sku: !!(sku_id), offer_discount,
                 }))), sku_id ? sellerAdaptor.retrieveOrCreateSellerSKU(
             {seller_id, sku_id, sku_measurement_id},
@@ -2734,7 +2729,7 @@ Download Now: http://bit.ly/binbill`;
           }, attributes: [
             'id', 'seller_id', 'title', 'description', 'on_sku',
             'start_date', 'end_date', 'document_details', 'sku_id',
-            'sku_measurement_id', 'offer_discount', [
+            'sku_measurement_id', 'offer_discount', 'seller_mrp', [
               modals.sequelize.literal(
                   '(select title from table_sku_global as sku where sku.id = seller_offers.sku_id)'),
               'sku_title'], [
@@ -2755,7 +2750,8 @@ Download Now: http://bit.ly/binbill`;
 
         seller_offers = seller_offers.map(item => {
           if (item.on_sku === true) {
-            const {sku_title, measurement_value, acronym, mrp, bar_code, offer_discount} = item;
+            let {sku_title, measurement_value, acronym, mrp, bar_code, offer_discount, seller_mrp} = item;
+            mrp = seller_mrp || mrp;
             item.sku = {
               sku_title, measurement_value, acronym, mrp,
               bar_code, offer_discount,

@@ -65,8 +65,6 @@ var _requestPromise = require('request-promise');
 
 var _requestPromise2 = _interopRequireDefault(_requestPromise);
 
-var _shared = require('../../helpers/shared');
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 class ProductAdaptor {
@@ -969,19 +967,6 @@ class ProductAdaptor {
         let [accessories, brand, fcm_detail] = await _bluebird2.default.all([this.retrieveAccessoryForProducts({ category_id: productBody.category_id }), this.modals.brands.findById(product.brand_id), this.modals.fcm_details.findAll({ where: { user_id: product.user_id } })]);
 
         console.log('\n\n\n\n\n\n', JSON.stringify({ fcm_detail, accessories }));
-        if (fcm_detail && accessories.length > 0) {
-          fcm_detail = fcm_detail.map(item => item.toJSON());
-          (0, _shared.notifyUser)(id, {
-            title: `Add some zing to your ${product.product_name || `${product.brand.brand_name} ${product.model || ''}`}!.`,
-            description: `Check out Trendy Accessories for your ${product.product_name || `${product.brand.brand_name} ${product.model || ''}`} in our Deals section.`,
-            notification_type: 5,
-            link: 'http://bit.ly/2NXhJGC' || `https://www.binbill.com/deals/accessories/${product.category_id}?product_id=${product.id}`,
-            id: product.id
-          }, {
-            title: `Add some zing to your ${product.product_name || `${product.brand.brand_name} ${product.model || ''}`}!.`,
-            body: `Check out Trendy Accessories for your ${product.product_name || `${product.brand.brand_name} ${product.model || ''}`} in our Deals section.`
-          }, fcm_detail);
-        }
         if (dbProduct.consumer.email && accessories.length > 0) {
           const { email, id, name } = dbProduct.consumer;
           product.accessories = accessories;

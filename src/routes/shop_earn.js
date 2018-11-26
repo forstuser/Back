@@ -191,6 +191,7 @@ export function prepareShopEarnRoute(modal, route, middleware, socket) {
             hsn_code: [joi.string(), joi.allow(null)],
             image_code: [joi.string(), joi.allow(null)],
             image_name: [joi.string(), joi.allow(null)],
+            has_measurements: [joi.boolean(), joi.allow(null)],
             added_date: [joi.string(), joi.allow(null)],
             sub_category_name: [joi.string(), joi.allow(null)],
             mrp: [joi.number(), joi.allow(null)],

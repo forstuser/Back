@@ -102,10 +102,6 @@ class SellerAdaptor {
     const result = await this.modals.sellers.findAll(query_options);
     let sellers = result.map(item => item.toJSON());
     if (sellers.length > 0) {
-      if (latitude && longitude) {
-        sellers = await this.orderSellerByLocation(latitude, longitude, city, sellers);
-      }
-
       let seller_id = sellers.map(item => item.id);
       const $or = seller_offer_ids && seller_offer_ids.length > 0 ? { id: seller_offer_ids, on_sku: true } : { on_sku: true };
       const seller_offers = await this.retrieveSellerOffersForConsumer({ seller_id, $or }, seller_id);
@@ -113,7 +109,7 @@ class SellerAdaptor {
       sellers = sellers.map(item => {
         item.offer_count = item.offer_count || 0;
         item.ratings = item.ratings || 0;
-        item.offers = seller_offers.filter(offerItem => item.id === offerItem.seller_id);
+        item.offers = seller_offers.filter(offerItem => item.id === offerItem.seller_id && (offerItem.on_sku && offerItem.offer_discount > 0 || !offerItem.on_sku));
         return item;
       });
     }
@@ -465,7 +461,7 @@ class SellerAdaptor {
         seller = await this.retrieveSellerByLocation(latitude, longitude, city, seller);
       }
       const $or = seller_offer_ids && seller_offer_ids.length > 0 ? { id: seller_offer_ids, on_sku: true } : { on_sku: true };
-      const [seller_categories, seller_cash_backs, seller_loyalty_points, seller_offers, seller_credits, seller_cities, seller_states, seller_locations, seller_reviews, service_types, assisted_services] = await _bluebird2.default.all([this.retrieveSellerCategories({ seller_id }), user_id ? this.retrieveSellerCashBack({ seller_id, user_id }) : [], user_id ? this.retrieveSellerLoyaltyPoints({ seller_id, user_id }) : [], this.retrieveSellerOffersForConsumer({ seller_id, $or }, seller_id), user_id ? this.retrieveSellerCredits({ seller_id, user_id }) : [], city_id ? this.retrieveSellerCities({ id: city_id }) : [], state_id ? this.retrieveSellerStates({ id: state_id }) : [], locality_id ? this.retrieveSellerLocations({ id: locality_id }) : [], this.retrieveSellerReviews({ offline_seller_id: seller_id }), this.retrieveAssistedServiceTypes({}), this.retrieveSellerAssistedServiceUsers({
+      const [seller_categories, seller_cash_backs, seller_loyalty_points, seller_credits, seller_cities, seller_states, seller_locations, seller_reviews, service_types, assisted_services] = await _bluebird2.default.all([this.retrieveSellerCategories({ seller_id }), user_id ? this.retrieveSellerCashBack({ seller_id, user_id }) : [], user_id ? this.retrieveSellerLoyaltyPoints({ seller_id, user_id }) : [], user_id ? this.retrieveSellerCredits({ seller_id, user_id }) : [], city_id ? this.retrieveSellerCities({ id: city_id }) : [], state_id ? this.retrieveSellerStates({ id: state_id }) : [], locality_id ? this.retrieveSellerLocations({ id: locality_id }) : [], this.retrieveSellerReviews({ offline_seller_id: seller_id }), this.retrieveAssistedServiceTypes({}), this.retrieveSellerAssistedServiceUsers({
         include: {
           as: 'service_types', where: { seller_id },
           model: this.modals.seller_service_types, required: true,
@@ -475,7 +471,6 @@ class SellerAdaptor {
       seller.categories = seller_categories;
       seller.seller_cash_backs = seller_cash_backs;
       seller.seller_loyalty_points = seller_loyalty_points;
-      seller.seller_offers = seller_offers;
       seller.seller_credits = seller_credits;
       seller.city = seller_cities[0];
       seller.state = seller_states[0];
@@ -640,9 +635,13 @@ class SellerAdaptor {
   async retrieveSellerOffersForConsumer(options) {
     options.end_date = { $gte: _moment2.default.utc() };
     let seller_offers = await this.modals.seller_offers.findAll({
-      where: JSON.parse(JSON.stringify(options)), attributes: ['id', 'seller_id', 'title', 'description', 'on_sku', 'start_date', 'end_date', 'document_details', 'sku_id', 'sku_measurement_id', 'offer_discount', [this.modals.sequelize.literal('(select title from table_sku_global as sku where sku.id = seller_offers.sku_id)'), 'sku_title'], [this.modals.sequelize.literal(`(select measurement_value from table_sku_measurement_detail as sku_measure where sku_measure.id = seller_offers.sku_measurement_id)`), 'measurement_value'], [this.modals.sequelize.literal(`(Select acronym from table_sku_measurement as measure where measure.id = (select measurement_type from table_sku_measurement_detail as sku_measure where sku_measure.id = seller_offers.sku_measurement_id limit 1))`), 'acronym'], [this.modals.sequelize.literal(`(select mrp from table_sku_measurement_detail as sku_measure where sku_measure.id = seller_offers.sku_measurement_id)`), 'mrp'], [this.modals.sequelize.literal(`(select bar_code from table_sku_measurement_detail as sku_measure where sku_measure.id = seller_offers.sku_measurement_id)`), 'bar_code']]
+      where: JSON.parse(JSON.stringify(options)), attributes: ['id', 'seller_id', 'title', 'description', 'on_sku', 'start_date', 'end_date', 'document_details', 'sku_id', 'sku_measurement_id', 'offer_discount', 'seller_mrp', [this.modals.sequelize.literal('(select title from table_sku_global as sku where sku.id = seller_offers.sku_id)'), 'sku_title'], [this.modals.sequelize.literal(`(select measurement_value from table_sku_measurement_detail as sku_measure where sku_measure.id = seller_offers.sku_measurement_id)`), 'measurement_value'], [this.modals.sequelize.literal(`(Select acronym from table_sku_measurement as measure where measure.id = (select measurement_type from table_sku_measurement_detail as sku_measure where sku_measure.id = seller_offers.sku_measurement_id limit 1))`), 'acronym'], [this.modals.sequelize.literal(`(select mrp from table_sku_measurement_detail as sku_measure where sku_measure.id = seller_offers.sku_measurement_id)`), 'mrp'], [this.modals.sequelize.literal(`(select bar_code from table_sku_measurement_detail as sku_measure where sku_measure.id = seller_offers.sku_measurement_id)`), 'bar_code']]
     });
-    seller_offers = seller_offers.map(item => item.toJSON());
+    seller_offers = seller_offers.map(item => {
+      item = item.toJSON();
+      item.mrp = item.seller_mrp || item.mrp;
+      return item;
+    });
     return seller_offers;
   }
 
@@ -1021,7 +1020,7 @@ class SellerAdaptor {
     let seller_offer = await this.modals.seller_offers.findOne({
       where: options
     });
-    if (seller_offer && options.id && seller_offer.id.toString() === options.id.toString()) {
+    if (seller_offer && (options.id && seller_offer.id.toString() === options.id.toString() || options.sku_id && seller_offer.sku_id.toString() === options.sku_id.toString() && options.sku_measurement_id && seller_offer.sku_measurement_id.toString() === options.sku_measurement_id.toString())) {
       const seller_offer_result = seller_offer.toJSON();
       defaults.status_type = seller_offer_result.status_type || 1;
       await seller_offer.updateAttributes(defaults);

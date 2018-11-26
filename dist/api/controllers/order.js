@@ -292,12 +292,13 @@ class OrderController {
     try {
       if (!request.pre.forceUpdate) {
         const user_id = !user.seller_detail ? user.id : undefined;
-        let user_index_data;
+        let user_index_data, message;
         if (!user.seller_detail) {
           user_index_data = await userAdaptor.retrieveUserIndexedData({
             where: { user_id }, attributes: ['my_seller_ids']
           });
         }
+        message = user_index_data && (user_index_data.my_seller_ids && user_index_data.my_seller_ids.length === 0 || !user_index_data.my_seller_ids) || !user_index_data ? _main2.default.ORDER_NO_SELLER_MSG : _main2.default.NO_ORDER_MSG;
         const { seller_id } = request.params;
         let { status_type, page_no } = request.query;
         status_type = status_type ? status_type : !user.seller_detail ? [2, 4, 16, 19, 20, 21] : [4, 16, 19, 20, 21];
@@ -327,7 +328,8 @@ class OrderController {
           result: orderResult.orders,
           order_count: orderResult.order_count,
           last_page: orderResult.order_count > _main2.default.ORDER_LIMIT ? Math.ceil(orderResult.order_count / _main2.default.ORDER_LIMIT) - 1 : 0,
-          seller_exist: !!(user_index_data && user_index_data.my_seller_ids && user_index_data.my_seller_ids.length > 0), status: true
+          seller_exist: !!(user_index_data && user_index_data.my_seller_ids && user_index_data.my_seller_ids.length > 0), status: true,
+          message
         });
       } else {
         return reply.response({

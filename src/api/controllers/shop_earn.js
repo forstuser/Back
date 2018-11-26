@@ -86,10 +86,20 @@ class ShopEarnController {
                     (item.title || '').toLowerCase(),
                     searchTerm.toLowerCase())) || splittedSearchTerm.filter(
                     searchItem => _.includes((item.title || '').toLowerCase(),
-                        searchItem.toLowerCase())).length === splittedSearchTerm.length);
+                        searchItem.toLowerCase())).length ===
+                    splittedSearchTerm.length);
             const distinct_skus = sku_result.sku_items.filter(
-                item => (item.sub_category_name || '').toLowerCase() !==
-                    searchTerm.toLowerCase());
+                item => {
+                  return !((item.sub_category_name || '').toLowerCase() ===
+                      searchTerm.toLowerCase() || (_.includes(
+                          (item.title || '').toLowerCase(),
+                          searchTerm.toLowerCase())) ||
+                      splittedSearchTerm.filter(
+                          searchItem => _.includes(
+                              (item.title || '').toLowerCase(),
+                              searchItem.toLowerCase())).length ===
+                      splittedSearchTerm.length);
+                });
             sku_result.sku_items = [
               ...milk_skus, ...matching_skus, ...distinct_skus];
           }
@@ -746,7 +756,7 @@ class ShopEarnController {
             });
         const {sku_id, sku_measurement_id, seller_id} = request.payload;
         const sku = await shopEarnAdaptor.retrieveSKUItem(
-            {id: sku_id, location: user.location});
+            {id: sku_id, location: user.location}, seller_id);
         sku.sku_measurement = sku.sku_measurements.find(
             item => item.id.toString() === sku_measurement_id.toString());
         request.payload = JSON.parse(
@@ -1647,7 +1657,7 @@ class ShopEarnController {
         const {sku_id} = request.params;
         return reply.response({
           status: true,
-          result: await shopEarnAdaptor.retrieveSKUMeasurements({sku_id}),
+          result: await shopEarnAdaptor.retrieveSKUMeasurements({options: {sku_id}}),
         });
       } catch (err) {
         console.log(`Error on ${new Date()} for user ${user.id ||

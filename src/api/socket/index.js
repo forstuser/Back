@@ -202,7 +202,9 @@ export default class SocketServer {
                   seller_id, on_sku: true,
                   end_date: {$gte: moment().format()},
                 },
-                attributes: ['sku_id', 'sku_measurement_id', 'offer_discount'],
+                attributes: [
+                  'sku_id', 'sku_measurement_id',
+                  'offer_discount', 'seller_mrp'],
               }) : [],
           SocketServer.linkSellerWithUser(seller_id, user_id)]);
     if (!user_address_id && !user_address_detail) {
@@ -223,10 +225,9 @@ export default class SocketServer {
                   skuItem.sku_measurement_id.toString());
           console.log({seller_sku_detail});
           const offer_discount = (seller_sku_detail || {}).offer_discount || 0;
-          const unit_price = (seller_sku_detail || {}).selling_price ||
+          const unit_price = (seller_sku_detail || {}).seller_mrp ||
               (sku_measurement || {}).mrp || 0;
-          let selling_price = (seller_sku_detail || {}).selling_price ||
-              (((sku_measurement || {}).mrp || 0) * item.quantity);
+          let selling_price = unit_price * item.quantity;
           selling_price = _.round(selling_price -
               (selling_price * offer_discount / 100), 2);
           return {
@@ -525,7 +526,11 @@ export default class SocketServer {
             seller_id, on_sku: true,
             end_date: {$gte: moment().format()},
           },
-          attributes: ['sku_id', 'sku_measurement_id', 'offer_discount'],
+          attributes: [
+            'sku_id',
+            'sku_measurement_id',
+            'offer_discount',
+            'seller_mrp'],
         })]);
     if (order_data) {
       order_data.order_details = order_details || order_data.order_details;
@@ -609,7 +614,12 @@ export default class SocketServer {
                           measurement_id);
                   item.suggestion.offer_discount = (seller_sku ||
                       {}).offer_discount || 0;
-                  item.suggestion.sku_measurement.offer_discount = item.suggestion.offer_discount;
+                  if (item.suggestion.sku_measurement) {
+                    item.suggestion.sku_measurement.mrp = (seller_sku ||
+                        {}).seller_mrp || item.suggestion.sku_measurement.mrp ||
+                        0;
+                    item.suggestion.sku_measurement.offer_discount = item.suggestion.offer_discount;
+                  }
                 }
               }
 

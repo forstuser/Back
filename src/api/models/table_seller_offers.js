@@ -31,6 +31,10 @@ export default (sequelize, DataTypes) => {
           type: DataTypes.FLOAT,
           defaultValue: 0,
         },
+        seller_mrp: {
+          type: DataTypes.FLOAT,
+          defaultValue: 0,
+        },
         status_type: {
           type: DataTypes.INTEGER,
           defaultValue: 1,

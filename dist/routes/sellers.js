@@ -501,6 +501,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
             sku_id: [_joi2.default.number(), _joi2.default.allow(null)],
             sku_measurement_id: [_joi2.default.number(), _joi2.default.allow(null)],
             offer_discount: [_joi2.default.number(), _joi2.default.allow(null)],
+            seller_mrp: [_joi2.default.number(), _joi2.default.allow(null)],
             bar_code: [_joi2.default.string(), _joi2.default.allow(null)],
             title: [_joi2.default.string(), _joi2.default.allow(null)],
             description: [_joi2.default.string(), _joi2.default.allow(null)],
