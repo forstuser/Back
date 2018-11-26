@@ -1,6 +1,11 @@
 'use strict';
 
 export default {
+  ORDER_NO_SELLER_MSG: 'You have not placed any Order. Please invite your neighbourhood Seller Or simply Add from the list of your nearby Sellers in ‘My seller’ section to place an Order & avail exciting Offers.',
+  OFFER_NO_SELLER_MSG: 'Invite your neighbourhood Seller/s Or simply Add from the list of your nearby Sellers in ‘My seller’ section to avail Exciting Offers.',
+  NO_OFFER_MSG: 'There are no Offers available from your Seller/s currently.',
+  NO_ORDER_MSG: 'You do not have any Active Order. Place an Order with your Seller Now and avail Cashback!',
+  SKU_SEARCH_LIMIT: process.env.SKU_SEARCH_LIMIT,
   HOUSEHOLD_CATEGORY_ID: process.env.HOUSEHOLD_CATEGORY_ID,
   MILK_SKU_CATEGORY: process.env.MILK_SKU_CATEGORY,
   MILK_SKU_IDS: (process.env.MILK_SKU_IDS || '').split(','),

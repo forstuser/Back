@@ -80,24 +80,25 @@ const init = async () => {
     server.auth.strategy('jwt', 'jwt', {
       key: jwtKey.toString(),
       validate: async (decoded, request) => {
-        let userList = await (decoded.seller_detail ? _models2.default.seller_users.findAll({
+        let userList = decoded ? await (decoded.seller_detail ? _models2.default.seller_users.findAll({
           where: JSON.parse(JSON.stringify({ role_type: 6, id: decoded.id }))
         }) : _models2.default.users.findAll({
           where: JSON.parse(JSON.stringify({ role_type: 5, id: decoded.id }))
-        }));
+        })) : [];
         const people = {};
         userList.forEach(item => {
           item = item.toJSON();
           people[item.id] = item;
         });
-
-        if (!people[decoded.id]) {
-          return { isValid: false };
-        } else if (decoded.seller_detail && people[decoded.id].is_logged_out) {
-          return { isValid: false };
-        } else {
-          return { isValid: true };
+        if (decoded) {
+          if (!people[decoded.id]) {
+            return { isValid: false };
+          } else if (decoded.seller_detail && people[decoded.id].is_logged_out) {
+            return { isValid: false };
+          }
         }
+
+        return { isValid: true };
       },
       verifyOptions: { algorithms: ['HS512'] } // pick a strong algorithm
     });

@@ -101,7 +101,9 @@ class ShopEarnController {
                 searchTerm = '';
             searchTerm = splittedSearchTerm.length > 1 ? splittedSearchTerm.join(' ') : splittedSearchTerm.join('');
             const matching_skus = sku_result.sku_items.filter(item => (item.sub_category_name || '').toLowerCase() === searchTerm.toLowerCase() || _lodash2.default.includes((item.title || '').toLowerCase(), searchTerm.toLowerCase()) || splittedSearchTerm.filter(searchItem => _lodash2.default.includes((item.title || '').toLowerCase(), searchItem.toLowerCase())).length === splittedSearchTerm.length);
-            const distinct_skus = sku_result.sku_items.filter(item => (item.sub_category_name || '').toLowerCase() !== searchTerm.toLowerCase());
+            const distinct_skus = sku_result.sku_items.filter(item => {
+              return !((item.sub_category_name || '').toLowerCase() === searchTerm.toLowerCase() || _lodash2.default.includes((item.title || '').toLowerCase(), searchTerm.toLowerCase()) || splittedSearchTerm.filter(searchItem => _lodash2.default.includes((item.title || '').toLowerCase(), searchItem.toLowerCase())).length === splittedSearchTerm.length);
+            });
             sku_result.sku_items = [...milk_skus, ...matching_skus, ...distinct_skus];
           }
           return reply.response({
@@ -382,11 +384,16 @@ class ShopEarnController {
   static async getSellerSKUItem(request, reply) {
     if (!request.pre.forceUpdate) {
       // this is where make us of adapter
+      let user = _shared2.default.verifyAuthorization(request.headers);
       try {
+        user = await sellerAdaptor.retrieveSellerDetail({
+          where: { user_id: user.id },
+          attributes: ['id', 'user_id', 'contact_no']
+        });
         const sku_item = await shopEarnAdaptor.retrieveSKUItem({
           bar_code: (request.params || {}).bar_code,
           id: (request.params || {}).id, is_seller: true
-        });
+        }, user.id);
         if ((request.params || {}).bar_code && sku_item) {
           sku_item.sku_measurement = sku_item.sku_measurements.find(item => item.bar_code.toLowerCase() === (request.params || {}).bar_code.toLowerCase());
         }
@@ -623,7 +630,7 @@ class ShopEarnController {
           attributes: ['mobile_no', 'location', 'id', 'full_name', 'email']
         });
         const { sku_id, sku_measurement_id, seller_id } = request.payload;
-        const sku = await shopEarnAdaptor.retrieveSKUItem({ id: sku_id, location: user.location });
+        const sku = await shopEarnAdaptor.retrieveSKUItem({ id: sku_id, location: user.location }, seller_id);
         sku.sku_measurement = sku.sku_measurements.find(item => item.id.toString() === sku_measurement_id.toString());
         request.payload = JSON.parse(JSON.stringify(_lodash2.default.omit(sku, 'sku_measurements')));
         request.payload.added_date = (0, _moment2.default)().format();
@@ -1387,7 +1394,7 @@ class ShopEarnController {
         const { sku_id } = request.params;
         return reply.response({
           status: true,
-          result: await shopEarnAdaptor.retrieveSKUMeasurements({ sku_id })
+          result: await shopEarnAdaptor.retrieveSKUMeasurements({ options: { sku_id } })
         });
       } catch (err) {
         console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);

@@ -483,12 +483,16 @@ class OrderController {
     try {
       if (!request.pre.forceUpdate) {
         const user_id = !user.seller_detail ? user.id : undefined;
-        let user_index_data;
+        let user_index_data, message;
         if (!user.seller_detail) {
           user_index_data = await userAdaptor.retrieveUserIndexedData({
             where: {user_id}, attributes: ['my_seller_ids'],
           });
         }
+        message = (user_index_data && ((user_index_data.my_seller_ids &&
+            user_index_data.my_seller_ids.length === 0) ||
+            !user_index_data.my_seller_ids)) || !user_index_data ?
+            config.ORDER_NO_SELLER_MSG : config.NO_ORDER_MSG;
         const {seller_id} = request.params;
         let {status_type, page_no} = request.query;
         status_type = status_type ? status_type :
@@ -607,6 +611,7 @@ class OrderController {
               orderResult.order_count / config.ORDER_LIMIT) - 1 : 0,
           seller_exist: !!(user_index_data && user_index_data.my_seller_ids &&
               user_index_data.my_seller_ids.length > 0), status: true,
+          message,
         });
       } else {
         return reply.response({
@@ -1674,7 +1679,13 @@ class OrderController {
                         'basic_details'], [
                         modals.sequelize.literal(
                             `"seller"."seller_details"->'business_details'`),
-                        'business_details']],
+                        'business_details'], [
+                        modals.sequelize.literal(
+                            `(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16) and transaction_type = 1 and seller_credit.user_id = ${user_id} and seller_credit.seller_id = "seller"."id")`),
+                        'credit_total'], [
+                        modals.sequelize.literal(
+                            `(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16, 14) and transaction_type = 2 and seller_credit.user_id = ${user_id} and seller_credit.seller_id = "seller"."id")`),
+                        'redeemed_credits']],
                   }, {
                     model: modals.user_addresses,
                     as: 'user_address',
@@ -1761,7 +1772,6 @@ class OrderController {
               (result.seller.redeemed_credits || 0) -
               (result.seller.credit_total || 0);
           return reply.response({result, status: true});
-
         } else if (result && result === false) {
           return reply.response(
               {message: 'Unable to return sku from order.', status: false});

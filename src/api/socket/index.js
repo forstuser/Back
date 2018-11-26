@@ -202,7 +202,9 @@ export default class SocketServer {
                   seller_id, on_sku: true,
                   end_date: {$gte: moment().format()},
                 },
-                attributes: ['sku_id', 'sku_measurement_id', 'offer_discount'],
+                attributes: [
+                  'sku_id', 'sku_measurement_id',
+                  'offer_discount', 'seller_mrp'],
               }) : [],
           SocketServer.linkSellerWithUser(seller_id, user_id)]);
     if (!user_address_id && !user_address_detail) {
@@ -223,10 +225,9 @@ export default class SocketServer {
                   skuItem.sku_measurement_id.toString());
           console.log({seller_sku_detail});
           const offer_discount = (seller_sku_detail || {}).offer_discount || 0;
-          const unit_price = (seller_sku_detail || {}).selling_price ||
+          const unit_price = (seller_sku_detail || {}).seller_mrp ||
               (sku_measurement || {}).mrp || 0;
-          let selling_price = (seller_sku_detail || {}).selling_price ||
-              (((sku_measurement || {}).mrp || 0) * item.quantity);
+          let selling_price = unit_price * item.quantity;
           selling_price = _.round(selling_price -
               (selling_price * offer_discount / 100), 2);
           return {
@@ -525,7 +526,11 @@ export default class SocketServer {
             seller_id, on_sku: true,
             end_date: {$gte: moment().format()},
           },
-          attributes: ['sku_id', 'sku_measurement_id', 'offer_discount'],
+          attributes: [
+            'sku_id',
+            'sku_measurement_id',
+            'offer_discount',
+            'seller_mrp'],
         })]);
     if (order_data) {
       order_data.order_details = order_details || order_data.order_details;
@@ -609,7 +614,12 @@ export default class SocketServer {
                           measurement_id);
                   item.suggestion.offer_discount = (seller_sku ||
                       {}).offer_discount || 0;
-                  item.suggestion.sku_measurement.offer_discount = item.suggestion.offer_discount;
+                  if (item.suggestion.sku_measurement) {
+                    item.suggestion.sku_measurement.mrp = (seller_sku ||
+                        {}).seller_mrp || item.suggestion.sku_measurement.mrp ||
+                        0;
+                    item.suggestion.sku_measurement.offer_discount = item.suggestion.offer_discount;
+                  }
                 }
               }
 
@@ -1495,6 +1505,7 @@ export default class SocketServer {
             customer_id: seller_detail.customer_ids,
             is_credit_allowed: false, credit_limit: 0,
           };
+      const seller_sku_mapping = [];
       if (order_data) {
         order_data.order_details = order_details || order_data.order_details;
         if (order_data.order_type === 1) {
@@ -1508,6 +1519,22 @@ export default class SocketServer {
             item.selling_price = parseFloat(
                 (item.unit_price * item.quantity).toString());
             const mrp = (item.sku_measurement ? item.sku_measurement.mrp : 0);
+            if (mrp.toString() !== item.unit_price.toString()) {
+              seller_sku_mapping.push(
+                  sellerAdaptor.retrieveOrCreateSellerOffers(
+                      JSON.parse(
+                          JSON.stringify({
+                            seller_id, sku_id: item.id,
+                            sku_measurement_id: item.sku_measurement.id,
+                          })),
+                      JSON.parse(JSON.stringify(
+                          {
+                            seller_id, start_date: moment(), end_date: moment(),
+                            seller_mrp: item.unit_price, sku_id: item.id,
+                            sku_measurement_id: item.sku_measurement.id,
+                            on_sku: true, offer_discount: 0,
+                          }))));
+            }
             item.offer_discount = parseFloat(
                 ((offer || {}).offer_discount || item.offer_discount ||
                     0).toString());
@@ -1522,52 +1549,53 @@ export default class SocketServer {
 
         order_data.status_type = status_type || 19;
         order_data.delivery_user_id = delivery_user_id;
-        let order = await orderAdaptor.retrieveOrUpdateOrder(
-            {
-              where: {id: order_id, user_id, seller_id, status_type: 16},
-              include: [
-                {
-                  model: modals.users, as: 'user', attributes: [
-                    'id', ['full_name', 'name'], 'mobile_no', 'email',
-                    'email_verified', 'email_secret', 'location',
-                    'latitude', 'longitude', 'image_name', 'password',
-                    'gender', [
-                      modals.sequelize.fn('CONCAT', '/consumer/',
-                          modals.sequelize.col('user.id'), '/images'),
-                      'imageUrl'], [
-                      modals.sequelize.literal(
-                          `(Select sum(amount) from table_wallet_user_cashback where user_id = ${user_id} and status_type in (16) group by user_id)`),
-                      'wallet_value']],
-                }, {
-                  model: modals.sellers, as: 'seller', attributes: [
-                    'seller_name', 'address', 'contact_no', 'email', [
-                      modals.sequelize.literal(
-                          `"seller"."seller_details"->'basic_details'`),
-                      'basic_details'], [
-                      modals.sequelize.literal(
-                          `"seller"."seller_details"->'business_details'`),
-                      'business_details']],
-                },
-                {
-                  model: modals.user_addresses, as: 'user_address',
-                  attributes: [
-                    'address_type', 'address_line_1', 'address_line_2',
-                    'city_id', 'state_id', 'locality_id', 'pin',
-                    'latitude', 'longitude', [
-                      modals.sequelize.literal(
-                          '(Select state_name from table_states as state where state.id = user_address.state_id)'),
-                      'state_name'], [
-                      modals.sequelize.literal(
-                          '(Select name from table_cities as city where city.id = user_address.city_id)'),
-                      'city_name'], [
-                      modals.sequelize.literal(
-                          '(Select name from table_localities as locality where locality.id = user_address.locality_id)'),
-                      'locality_name'], [
-                      modals.sequelize.literal(
-                          '(Select pin_code from table_localities as locality where locality.id = user_address.locality_id)'),
-                      'pin_code']],
-                }],
-            }, order_data, false);
+        let [order] = await Promise.all([
+          orderAdaptor.retrieveOrUpdateOrder(
+              {
+                where: {id: order_id, user_id, seller_id, status_type: 16},
+                include: [
+                  {
+                    model: modals.users, as: 'user', attributes: [
+                      'id', ['full_name', 'name'], 'mobile_no', 'email',
+                      'email_verified', 'email_secret', 'location',
+                      'latitude', 'longitude', 'image_name', 'password',
+                      'gender', [
+                        modals.sequelize.fn('CONCAT', '/consumer/',
+                            modals.sequelize.col('user.id'), '/images'),
+                        'imageUrl'], [
+                        modals.sequelize.literal(
+                            `(Select sum(amount) from table_wallet_user_cashback where user_id = ${user_id} and status_type in (16) group by user_id)`),
+                        'wallet_value']],
+                  }, {
+                    model: modals.sellers, as: 'seller', attributes: [
+                      'seller_name', 'address', 'contact_no', 'email', [
+                        modals.sequelize.literal(
+                            `"seller"."seller_details"->'basic_details'`),
+                        'basic_details'], [
+                        modals.sequelize.literal(
+                            `"seller"."seller_details"->'business_details'`),
+                        'business_details']],
+                  },
+                  {
+                    model: modals.user_addresses, as: 'user_address',
+                    attributes: [
+                      'address_type', 'address_line_1', 'address_line_2',
+                      'city_id', 'state_id', 'locality_id', 'pin',
+                      'latitude', 'longitude', [
+                        modals.sequelize.literal(
+                            '(Select state_name from table_states as state where state.id = user_address.state_id)'),
+                        'state_name'], [
+                        modals.sequelize.literal(
+                            '(Select name from table_cities as city where city.id = user_address.city_id)'),
+                        'city_name'], [
+                        modals.sequelize.literal(
+                            '(Select name from table_localities as locality where locality.id = user_address.locality_id)'),
+                        'locality_name'], [
+                        modals.sequelize.literal(
+                            '(Select pin_code from table_localities as locality where locality.id = user_address.locality_id)'),
+                        'pin_code']],
+                  }],
+              }, order_data, false), ...seller_sku_mapping]);
 
         if (order) {
           /*if (total_amount) {

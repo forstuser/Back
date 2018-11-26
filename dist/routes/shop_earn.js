@@ -176,6 +176,7 @@ function prepareShopEarnRoute(modal, route, middleware, socket) {
             hsn_code: [_joi2.default.string(), _joi2.default.allow(null)],
             image_code: [_joi2.default.string(), _joi2.default.allow(null)],
             image_name: [_joi2.default.string(), _joi2.default.allow(null)],
+            has_measurements: [_joi2.default.boolean(), _joi2.default.allow(null)],
             added_date: [_joi2.default.string(), _joi2.default.allow(null)],
             sub_category_name: [_joi2.default.string(), _joi2.default.allow(null)],
             mrp: [_joi2.default.number(), _joi2.default.allow(null)],

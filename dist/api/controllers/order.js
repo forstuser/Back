@@ -292,12 +292,13 @@ class OrderController {
     try {
       if (!request.pre.forceUpdate) {
         const user_id = !user.seller_detail ? user.id : undefined;
-        let user_index_data;
+        let user_index_data, message;
         if (!user.seller_detail) {
           user_index_data = await userAdaptor.retrieveUserIndexedData({
             where: { user_id }, attributes: ['my_seller_ids']
           });
         }
+        message = user_index_data && (user_index_data.my_seller_ids && user_index_data.my_seller_ids.length === 0 || !user_index_data.my_seller_ids) || !user_index_data ? _main2.default.ORDER_NO_SELLER_MSG : _main2.default.NO_ORDER_MSG;
         const { seller_id } = request.params;
         let { status_type, page_no } = request.query;
         status_type = status_type ? status_type : !user.seller_detail ? [2, 4, 16, 19, 20, 21] : [4, 16, 19, 20, 21];
@@ -327,7 +328,8 @@ class OrderController {
           result: orderResult.orders,
           order_count: orderResult.order_count,
           last_page: orderResult.order_count > _main2.default.ORDER_LIMIT ? Math.ceil(orderResult.order_count / _main2.default.ORDER_LIMIT) - 1 : 0,
-          seller_exist: !!(user_index_data && user_index_data.my_seller_ids && user_index_data.my_seller_ids.length > 0), status: true
+          seller_exist: !!(user_index_data && user_index_data.my_seller_ids && user_index_data.my_seller_ids.length > 0), status: true,
+          message
         });
       } else {
         return reply.response({
@@ -1199,7 +1201,7 @@ class OrderController {
             include: [{
               model: modals.users, as: 'user', attributes: ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', 'location', 'latitude', 'longitude', 'image_name', 'password', 'gender', [modals.sequelize.fn('CONCAT', '/consumer/', modals.sequelize.col('user.id'), '/images'), 'imageUrl'], [modals.sequelize.literal(`(Select sum(amount) from table_wallet_user_cashback where user_id = ${user_id} and status_type in (16) group by user_id)`), 'wallet_value']]
             }, {
-              model: modals.sellers, as: 'seller', attributes: ['seller_name', 'address', 'contact_no', 'email', 'user_id', 'customer_ids', [modals.sequelize.literal(`"seller"."seller_details"->'basic_details'->'pay_online'`), 'pay_online'], [modals.sequelize.literal(`"seller"."seller_details"->'basic_details'`), 'basic_details'], [modals.sequelize.literal(`"seller"."seller_details"->'business_details'`), 'business_details']]
+              model: modals.sellers, as: 'seller', attributes: ['seller_name', 'address', 'contact_no', 'email', 'user_id', 'customer_ids', [modals.sequelize.literal(`"seller"."seller_details"->'basic_details'->'pay_online'`), 'pay_online'], [modals.sequelize.literal(`"seller"."seller_details"->'basic_details'`), 'basic_details'], [modals.sequelize.literal(`"seller"."seller_details"->'business_details'`), 'business_details'], [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16) and transaction_type = 1 and seller_credit.user_id = ${user_id} and seller_credit.seller_id = "seller"."id")`), 'credit_total'], [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16, 14) and transaction_type = 2 and seller_credit.user_id = ${user_id} and seller_credit.seller_id = "seller"."id")`), 'redeemed_credits']]
             }, {
               model: modals.user_addresses,
               as: 'user_address',

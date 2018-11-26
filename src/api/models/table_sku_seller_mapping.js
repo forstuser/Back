@@ -19,7 +19,6 @@ export default (sequelize, DataTypes) => {
         },
         selling_price: {
           type: DataTypes.FLOAT,
-          defaultValue: 0,
         },
         offer_discount: {
           type: DataTypes.FLOAT,
@@ -54,7 +53,8 @@ export default (sequelize, DataTypes) => {
         {foreignKey: 'updated_by', onDelete: 'cascade', onUpdate: 'cascade'});
     sku_seller.belongsTo(models.sku,
         {foreignKey: 'sku_id', onDelete: 'cascade', onUpdate: 'cascade'});
-    sku_seller.belongsTo(models.seller_offers, {foreignKey: 'offer_id', onDelete: null});
+    sku_seller.belongsTo(models.seller_offers,
+        {foreignKey: 'offer_id', onDelete: null});
     sku_seller.belongsTo(models.sku_measurement,
         {
           foreignKey: 'sku_measurement_id',

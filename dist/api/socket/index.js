@@ -210,7 +210,7 @@ class SocketServer {
         seller_id, on_sku: true,
         end_date: { $gte: (0, _moment2.default)().format() }
       },
-      attributes: ['sku_id', 'sku_measurement_id', 'offer_discount']
+      attributes: ['sku_id', 'sku_measurement_id', 'offer_discount', 'seller_mrp']
     }) : [], SocketServer.linkSellerWithUser(seller_id, user_id)]);
     if (!user_address_id && !user_address_detail) {
       return false;
@@ -224,8 +224,8 @@ class SocketServer {
           const seller_sku_detail = seller_sku_offers.find(skuItem => skuItem.sku_id.toString() === id.toString() && sku_measurement_id.toString() === skuItem.sku_measurement_id.toString());
           console.log({ seller_sku_detail });
           const offer_discount = (seller_sku_detail || {}).offer_discount || 0;
-          const unit_price = (seller_sku_detail || {}).selling_price || (sku_measurement || {}).mrp || 0;
-          let selling_price = (seller_sku_detail || {}).selling_price || ((sku_measurement || {}).mrp || 0) * item.quantity;
+          const unit_price = (seller_sku_detail || {}).seller_mrp || (sku_measurement || {}).mrp || 0;
+          let selling_price = unit_price * item.quantity;
           selling_price = _lodash2.default.round(selling_price - selling_price * offer_discount / 100, 2);
           return {
             item_availability: true, id, title, brand_id,
@@ -407,7 +407,7 @@ class SocketServer {
         seller_id, on_sku: true,
         end_date: { $gte: (0, _moment2.default)().format() }
       },
-      attributes: ['sku_id', 'sku_measurement_id', 'offer_discount']
+      attributes: ['sku_id', 'sku_measurement_id', 'offer_discount', 'seller_mrp']
     })]);
     if (order_data) {
       order_data.order_details = order_details || order_data.order_details;
@@ -459,7 +459,10 @@ class SocketServer {
               item.suggestion.measurement_value = measurement_value;
               item.suggestion.sku_measurement = sku_measurement_detail.find(mdItem => (mdItem.id || '').toString() === measurement_id);
               item.suggestion.offer_discount = (seller_sku || {}).offer_discount || 0;
-              item.suggestion.sku_measurement.offer_discount = item.suggestion.offer_discount;
+              if (item.suggestion.sku_measurement) {
+                item.suggestion.sku_measurement.mrp = (seller_sku || {}).seller_mrp || item.suggestion.sku_measurement.mrp || 0;
+                item.suggestion.sku_measurement.offer_discount = item.suggestion.offer_discount;
+              }
             }
           }
 
@@ -976,6 +979,7 @@ class SocketServer {
         customer_id: seller_detail.customer_ids,
         is_credit_allowed: false, credit_limit: 0
       };
+      const seller_sku_mapping = [];
       if (order_data) {
         order_data.order_details = order_details || order_data.order_details;
         if (order_data.order_type === 1) {
@@ -985,6 +989,17 @@ class SocketServer {
             item.unit_price = parseFloat((item.unit_price || 0).toString());
             item.selling_price = parseFloat((item.unit_price * item.quantity).toString());
             const mrp = item.sku_measurement ? item.sku_measurement.mrp : 0;
+            if (mrp.toString() !== item.unit_price.toString()) {
+              seller_sku_mapping.push(sellerAdaptor.retrieveOrCreateSellerOffers(JSON.parse(JSON.stringify({
+                seller_id, sku_id: item.id,
+                sku_measurement_id: item.sku_measurement.id
+              })), JSON.parse(JSON.stringify({
+                seller_id, start_date: (0, _moment2.default)(), end_date: (0, _moment2.default)(),
+                seller_mrp: item.unit_price, sku_id: item.id,
+                sku_measurement_id: item.sku_measurement.id,
+                on_sku: true, offer_discount: 0
+              }))));
+            }
             item.offer_discount = parseFloat(((offer || {}).offer_discount || item.offer_discount || 0).toString());
             item.selling_price = item.selling_price > 0 ? item.selling_price : (mrp || 0) * item.quantity;
             item.selling_price = _lodash2.default.round(item.selling_price - item.selling_price * item.offer_discount / 100, 2);
@@ -994,7 +1009,7 @@ class SocketServer {
 
         order_data.status_type = status_type || 19;
         order_data.delivery_user_id = delivery_user_id;
-        let order = await orderAdaptor.retrieveOrUpdateOrder({
+        let [order] = await _bluebird2.default.all([orderAdaptor.retrieveOrUpdateOrder({
           where: { id: order_id, user_id, seller_id, status_type: 16 },
           include: [{
             model: modals.users, as: 'user', attributes: ['id', ['full_name', 'name'], 'mobile_no', 'email', 'email_verified', 'email_secret', 'location', 'latitude', 'longitude', 'image_name', 'password', 'gender', [modals.sequelize.fn('CONCAT', '/consumer/', modals.sequelize.col('user.id'), '/images'), 'imageUrl'], [modals.sequelize.literal(`(Select sum(amount) from table_wallet_user_cashback where user_id = ${user_id} and status_type in (16) group by user_id)`), 'wallet_value']]
@@ -1004,7 +1019,7 @@ class SocketServer {
             model: modals.user_addresses, as: 'user_address',
             attributes: ['address_type', 'address_line_1', 'address_line_2', 'city_id', 'state_id', 'locality_id', 'pin', 'latitude', 'longitude', [modals.sequelize.literal('(Select state_name from table_states as state where state.id = user_address.state_id)'), 'state_name'], [modals.sequelize.literal('(Select name from table_cities as city where city.id = user_address.city_id)'), 'city_name'], [modals.sequelize.literal('(Select name from table_localities as locality where locality.id = user_address.locality_id)'), 'locality_name'], [modals.sequelize.literal('(Select pin_code from table_localities as locality where locality.id = user_address.locality_id)'), 'pin_code']]
           }]
-        }, order_data, false);
+        }, order_data, false), ...seller_sku_mapping]);
 
         if (order) {
           /*if (total_amount) {

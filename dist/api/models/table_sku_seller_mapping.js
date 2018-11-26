@@ -22,8 +22,7 @@ exports.default = (sequelize, DataTypes) => {
       type: DataTypes.JSONB
     },
     selling_price: {
-      type: DataTypes.FLOAT,
-      defaultValue: 0
+      type: DataTypes.FLOAT
     },
     offer_discount: {
       type: DataTypes.FLOAT,

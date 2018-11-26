@@ -301,14 +301,17 @@ class GeneralController {
 
   static async retrieveFAQs(request, reply) {
     try {
-      let user_location, user;
+      let user_location, user, type;
       if (request.headers) {
         user = _shared2.default.verifyAuthorization(request.headers);
+      }
+      if (user) {
         user_location = user.seller_detail ? await modals.seller_users.findOne({ where: { id: user.id }, attributes: ['id'] }) : await modals.users.findOne({ where: { id: user.id }, attributes: ['location'] });
         user_location = user_location.toJSON();
+
+        type = user ? user.seller_detail ? 3 : user_location && user_location.location && user_location.location.toLowerCase() === 'other' || !user_location.location ? 1 : [1, 2] : undefined;
       }
 
-      const type = user ? user.seller_detail ? 3 : user_location && user_location.location && user_location.location.toLowerCase() === 'other' || !user_location.location ? 1 : [1, 2] : undefined;
       const faq = await modals.faqs.findAll({
         where: JSON.parse(JSON.stringify({ status_id: { $ne: 3 }, type })),
         order: [['id']]
