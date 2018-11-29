@@ -120,7 +120,9 @@ export default class SellerAdaptor {
         item.offer_count = item.offer_count || 0;
         item.ratings = item.ratings || 0;
         item.offers = seller_offers.filter(
-            offerItem => item.id === offerItem.seller_id && ((offerItem.on_sku && offerItem.offer_discount > 0) || !offerItem.on_sku));
+            offerItem => item.id === offerItem.seller_id &&
+                ((offerItem.on_sku && offerItem.offer_discount > 0) ||
+                    !offerItem.on_sku));
         return item;
       });
     }
@@ -956,7 +958,7 @@ export default class SellerAdaptor {
               'mrp'], [
               this.modals.sequelize.literal(
                   `(select bar_code from table_sku_measurement_detail as sku_measure where sku_measure.id = seller_offers.sku_measurement_id)`),
-              'bar_code']],
+              'bar_code']], order: [['updated_at', 'desc']],
         });
     seller_offers = seller_offers.map(item => {
       item = item.toJSON();

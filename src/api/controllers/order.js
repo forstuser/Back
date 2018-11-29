@@ -103,8 +103,7 @@ class OrderController {
             modals.measurement.findAll({where: {status_type: 1}}),
             userAdaptor.retrieveUserAddress({
               where: JSON.parse(JSON.stringify({id: result.user_address_id})),
-            }),
-            result.delivery_user_id ?
+            }), result.delivery_user_id && result.order_details.length > 0 ?
                 sellerAdaptor.retrieveAssistedServiceUser({
                   where: JSON.parse(
                       JSON.stringify({id: result.delivery_user_id})),
@@ -112,7 +111,9 @@ class OrderController {
                     'id', 'name', 'mobile_no',
                     'reviews', 'document_details'], include: {
                     as: 'service_types', where: JSON.parse(JSON.stringify({
-                      service_type_id: result.order_details[0].service_type_id,
+                      service_type_id: result.order_type === 2 ?
+                          result.order_details[0].service_type_id : undefined,
+                      seller_id: result.seller_id,
                     })), model: modals.seller_service_types, required: true,
                     attributes: ['service_type_id', 'seller_id', 'price', 'id'],
                   },
@@ -1670,16 +1671,16 @@ class OrderController {
                   }, {
                     model: modals.sellers, as: 'seller', attributes: [
                       'seller_name', 'address', 'contact_no', 'email',
-                      'user_id', 'customer_ids', [
-                        modals.sequelize.literal(
-                            `"seller"."seller_details"->'basic_details'->'pay_online'`),
-                        'pay_online'], [
+                      'user_id', [
                         modals.sequelize.literal(
                             `"seller"."seller_details"->'basic_details'`),
                         'basic_details'], [
                         modals.sequelize.literal(
                             `"seller"."seller_details"->'business_details'`),
-                        'business_details'], [
+                        'business_details'], 'customer_ids', [
+                        modals.sequelize.literal(
+                            `"seller"."seller_details"->'basic_details'->'pay_online'`),
+                        'pay_online'], [
                         modals.sequelize.literal(
                             `(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16) and transaction_type = 1 and seller_credit.user_id = ${user_id} and seller_credit.seller_id = "seller"."id")`),
                         'credit_total'], [
@@ -1826,27 +1827,59 @@ class OrderController {
   static async generateSignature(request, reply) {
     try {
       if (!request.pre.forceUpdate) {
-        const {appId, orderId, orderAmount, orderCurrency, orderNote, customerName, customerPhone, customerEmail, returnUrl, notifyUrl, paymentModes, pc} = request.payload;
+        let {appId, orderId, orderAmount, orderCurrency, orderNote, customerName, customerPhone, customerEmail, returnUrl, notifyUrl, paymentModes, pc} = request.payload;
         let postData = request.payload,
             secretKey = config.CASH_FREE.SECRET_KEY,
             sorted_keys = Object.keys(postData),
             signatureData = '', k;
         postData.returnUrl = `${config.API_HOST}${config.CASH_FREE.POST_BACK_URL}`;
         postData.notifyUrl = `${config.API_HOST}${config.CASH_FREE.POST_BACK_URL}`;
-        let order_detail = await modals.order.findOne({where: {id: orderId}});
+        let order_detail = await modals.order.findOne({
+          where: {id: orderId},
+          attributes: [
+            'id', 'order_details',
+            'order_type', 'collect_at_store', 'in_review', 'status_type',
+            'seller_id', 'user_id', 'created_at', 'updated_at', 'is_modified',
+            'user_address_id', 'delivery_user_id', 'job_id', 'expense_id', [
+              modals.sequelize.literal(
+                  '(Select cashback_status from table_cashback_jobs as jobs where jobs.id = "order".job_id)'),
+              'cashback_status'], [
+              modals.sequelize.literal(
+                  '(Select copies from table_cashback_jobs as jobs where jobs.id = "order".job_id)'),
+              'copies'], [
+              modals.sequelize.literal(
+                  '(Select job_id from table_cashback_jobs as jobs where jobs.id = "order".job_id)'),
+              'upload_id'], [
+              modals.sequelize.literal(
+                  '(Select admin_status from table_cashback_jobs as jobs where jobs.id = "order".job_id)'),
+              'admin_status'], [
+              modals.sequelize.literal(
+                  '(Select purchase_cost from consumer_products as expense where expense.id = "order".expense_id)'),
+              'total_amount'], [
+              modals.sequelize.literal(
+                  '(Select sum(amount) from table_wallet_user_cashback as user_wallet where user_wallet.job_id = "order".job_id)'),
+              'available_cashback']],
+        });
         order_detail = order_detail ? order_detail.toJSON() : order_detail;
         if (order_detail) {
+          order_detail.order_details = order_detail.order_type === 1 ?
+              order_detail.order_details.map(item => {
+                item.selling_price = parseFloat(
+                    (item.selling_price || 0).toString());
+                return item;
+              }) : order_detail.order_details;
           const {seller_id, user_id, id: order_id} = order_detail;
+          orderAmount = _.sumBy(order_detail.order_details,
+              order_detail.order_type && order_detail.order_type === 1 ?
+                  'selling_price' : 'total_amount');
+          postData.orderAmount = orderAmount.toString();
           const defaults = {
             order_id, user_id, seller_id,
-            amount: orderAmount,
-            payment_mode_id: 4,
+            amount: orderAmount, payment_mode_id: 4,
             ref_id: `${(user_id).toString(36)}ABBA${(order_id).toString(
                 36)}ABBA${Math.random().toString(36).
                 substr(2, 9)}ABBA${(seller_id).toString(36)}${(appId).toString(
-                36)}`,
-            updated_by: user_id,
-            status_type: 4,
+                36)}`, updated_by: user_id, status_type: 4,
           };
           let payment_detail = await orderAdaptor.retrieveOrUpdatePaymentDetails(
               {where: {order_id, seller_id, user_id}}, defaults);

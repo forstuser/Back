@@ -1580,7 +1580,7 @@ Download Now: http://bit.ly/binbill`;
     try {
       const { id: service_user_id, seller_id } = request.params || {};
       let { service_type_id, price, id } = request.payload;
-      const seller_service_types = await sellerAdaptor.retrieveOrCreateSellerAssistedServiceTypes(JSON.parse(JSON.stringify({ id, service_user_id, seller_id })), JSON.parse(JSON.stringify({
+      const seller_service_types = await sellerAdaptor.retrieveOrCreateSellerAssistedServiceTypes(JSON.parse(JSON.stringify({ id, service_type_id, service_user_id, seller_id })), JSON.parse(JSON.stringify({
         service_type_id, price, seller_id, service_user_id
       })));
 

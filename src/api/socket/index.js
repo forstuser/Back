@@ -320,7 +320,7 @@ export default class SocketServer {
               },
             }), sendSMS(`${user_index_data.user_name ||
                 ''} has placed an order, Check out the Order details in BinBill Partner App.`,
-                seller_detail.contact_no)]);
+                [seller_detail.contact_no])]);
           console.log(
               {
                 soket_status: io.sockets.adapter.rooms[`user-${data.user_id}`],
@@ -527,10 +527,7 @@ export default class SocketServer {
             end_date: {$gte: moment().format()},
           },
           attributes: [
-            'sku_id',
-            'sku_measurement_id',
-            'offer_discount',
-            'seller_mrp'],
+            'sku_id', 'sku_measurement_id', 'offer_discount', 'seller_mrp'],
         })]);
     if (order_data) {
       order_data.order_details = order_details || order_data.order_details;
@@ -982,11 +979,16 @@ export default class SocketServer {
               {
                 where: {id: seller_id},
                 attributes: [
-                  'seller_type_id',
-                  [
+                  'seller_type_id', 'customer_ids', [
                     modals.sequelize.literal(
                         `"sellers"."seller_details"->'basic_details'->'pay_online'`),
-                    'pay_online'], 'seller_name', 'id', 'user_id'],
+                    'pay_online'], [
+                    modals.sequelize.literal(
+                        `(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16) and transaction_type = 1 and seller_credit.user_id = ${user_id} and seller_credit.seller_id = "sellers"."id")`),
+                    'credit_total'], [
+                    modals.sequelize.literal(
+                        `(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16, 14) and transaction_type = 2 and seller_credit.user_id = ${user_id} and seller_credit.seller_id = "sellers"."id")`),
+                    'redeemed_credits'], 'seller_name', 'id', 'user_id'],
               }),
           userAdaptor.retrieveUserIndexedData({
             where: {user_id}, attributes: [
@@ -1057,15 +1059,22 @@ export default class SocketServer {
                     'wallet_value']],
               }, {
                 model: modals.sellers, as: 'seller', attributes: [
-                  'seller_name', 'address', 'contact_no', 'email',
-                  [
+                  'seller_name', 'address', 'contact_no', 'email', [
                     modals.sequelize.literal(
                         `"seller"."seller_details"->'basic_details'`),
-                    'basic_details'],
-                  [
+                    'basic_details'], [
                     modals.sequelize.literal(
                         `"seller"."seller_details"->'business_details'`),
-                    'business_details']],
+                    'business_details'], 'customer_ids', [
+                    modals.sequelize.literal(
+                        `"seller"."seller_details"->'basic_details'->'pay_online'`),
+                    'pay_online'], [
+                    modals.sequelize.literal(
+                        `(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16) and transaction_type = 1 and seller_credit.user_id = ${user_id} and seller_credit.seller_id = "seller"."id")`),
+                    'credit_total'], [
+                    modals.sequelize.literal(
+                        `(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16, 14) and transaction_type = 2 and seller_credit.user_id = ${user_id} and seller_credit.seller_id = "seller"."id")`),
+                    'redeemed_credits']],
               }, {
                 model: modals.user_addresses,
                 as: 'user_address',
@@ -1130,6 +1139,24 @@ export default class SocketServer {
 
               return item;
             }) : order.order_details;
+        seller_detail.customer_ids = (seller_detail.customer_ids || []).find(
+            item => (item.customer_id ? item.customer_id : item).toString() ===
+                user_id.toString());
+        seller_detail.customer_ids = seller_detail.customer_ids &&
+        seller_detail.customer_ids.customer_id ?
+            seller_detail.customer_ids :
+            {
+              customer_id: seller_detail.customer_ids,
+              is_credit_allowed: false, credit_limit: 0,
+            };
+        order.total_amount = order.total_amount ||
+            _.round(order.order_type && order.order_type === 1 ?
+                _.sumBy(order.order_details, 'selling_price') :
+                _.sumBy(order.order_details, 'total_amount'), 2);
+        order.is_credit_allowed = seller_detail.customer_ids.is_credit_allowed;
+        order.credit_limit = seller_detail.customer_ids.credit_limit +
+            (seller_detail.redeemed_credits || 0) -
+            (seller_detail.credit_total || 0);
         if (io.sockets.adapter.rooms[`seller-${seller_detail.user_id}`]) {
           io.sockets.in(`seller-${seller_detail.user_id}`).
               emit(order.order_type === 1 ?
@@ -1464,7 +1491,7 @@ export default class SocketServer {
                     'seller_type_id', [
                       modals.sequelize.literal(
                           `"sellers"."seller_details"->'basic_details'->'pay_online'`),
-                      'basic_pay_online'], 'pay_online', 'seller_name',
+                      'pay_online'], 'seller_name',
                     'id', 'user_id', 'has_pos', 'customer_ids', [
                       modals.sequelize.literal(
                           `(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16) and transaction_type = 1 and seller_credit.user_id = ${user_id} and seller_credit.seller_id = "sellers"."id")`),
@@ -1513,13 +1540,13 @@ export default class SocketServer {
             const offer = seller_sku_offers.find(
                 sItem => sItem.sku_id.toString() === item.id.toString() &&
                     sItem.sku_measurement_id.toString() ===
-                    item.sku_measurement.id.toString());
+                    (item.sku_measurement || {}).id.toString());
             item.quantity = parseFloat(item.quantity.toString());
             item.unit_price = parseFloat((item.unit_price || 0).toString());
             item.selling_price = parseFloat(
                 (item.unit_price * item.quantity).toString());
             const mrp = (item.sku_measurement ? item.sku_measurement.mrp : 0);
-            if (mrp.toString() !== item.unit_price.toString()) {
+            if (mrp.toString() !== item.unit_price.toString() && item.sku_measurement) {
               seller_sku_mapping.push(
                   sellerAdaptor.retrieveOrCreateSellerOffers(
                       JSON.parse(
@@ -1574,7 +1601,16 @@ export default class SocketServer {
                         'basic_details'], [
                         modals.sequelize.literal(
                             `"seller"."seller_details"->'business_details'`),
-                        'business_details']],
+                        'business_details'], 'customer_ids', [
+                        modals.sequelize.literal(
+                            `"seller"."seller_details"->'basic_details'->'pay_online'`),
+                        'pay_online'], [
+                        modals.sequelize.literal(
+                            `(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16) and transaction_type = 1 and seller_credit.user_id = ${user_id} and seller_credit.seller_id = "seller"."id")`),
+                        'credit_total'], [
+                        modals.sequelize.literal(
+                            `(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16, 14) and transaction_type = 2 and seller_credit.user_id = ${user_id} and seller_credit.seller_id = "seller"."id")`),
+                        'redeemed_credits']],
                   },
                   {
                     model: modals.user_addresses, as: 'user_address',
@@ -1598,85 +1634,6 @@ export default class SocketServer {
               }, order_data, false), ...seller_sku_mapping]);
 
         if (order) {
-          /*if (total_amount) {
-            const payment_details = await SocketServer.init_on_payment({
-              user_id, seller_id, has_pos: seller_detail.has_pos,
-              home_delivered: !!order.delivery_user_id,
-              sku_details: order.order_type === 2 ? order.order_details :
-                  order.order_details.map(item => {
-                    let {id: sku_id, quantity, sku_measurement, selling_price} = item;
-                    const {id: sku_measurement_id, cashback_percent} = sku_measurement ||
-                    {};
-                    selling_price = parseFloat((selling_price || 0).toString());
-                    return JSON.parse(JSON.stringify({
-                      sku_id, sku_measurement_id, seller_id, user_id,
-                      updated_by: user_id, quantity,
-                      selling_price: selling_price, status_type: 11,
-                      available_cashback: selling_price && cashback_percent ?
-                          (selling_price * (cashback_percent || 0)) / 100 :
-                          undefined,
-                    }));
-                  }), order_type: order.order_type, collect_at_store:order.collect_at_store,
-              seller_type_id: seller_detail.seller_type_id, total_amount,
-            });
-
-            order_data.expense_id = (payment_details.product || {}).id;
-            order_data.job_id = (payment_details.cashback_jobs || {}).id;
-            order = await orderAdaptor.retrieveOrUpdateOrder(
-                {
-                  where: {
-                    id: order_id, user_id, seller_id,
-                    status_type: [16, 19, 5],
-                  },
-                  include: [
-                    {
-                      model: modals.users, as: 'user', attributes: [
-                        'id', ['full_name', 'name'], 'mobile_no', 'email',
-                        'email_verified', 'email_secret', 'location',
-                        'latitude', 'longitude', 'image_name', 'password',
-                        'gender', [
-                          modals.sequelize.fn('CONCAT', '/consumer/',
-                              modals.sequelize.col('user.id'), '/images'),
-                          'imageUrl'], [
-                          modals.sequelize.literal(
-                              `(Select sum(amount) from table_wallet_user_cashback where user_id = ${user_id} and status_type in (16) group by user_id)`),
-                          'wallet_value']],
-                    },
-                    {
-                      model: modals.sellers, as: 'seller', attributes: [
-                        'seller_name', 'address', 'contact_no', 'email',
-                        [
-                          modals.sequelize.literal(
-                              `"seller"."seller_details"->'basic_details'`),
-                          'basic_details'],
-                        [
-                          modals.sequelize.literal(
-                              `"seller"."seller_details"->'business_details'`),
-                          'business_details']],
-                    },
-                    {
-                      model: modals.user_addresses,
-                      as: 'user_address',
-                      attributes: [
-                        'address_type', 'address_line_1', 'address_line_2',
-                        'city_id', 'state_id', 'locality_id', 'pin',
-                        'latitude', 'longitude', [
-                          modals.sequelize.literal(
-                              '(Select state_name from table_states as state where state.id = user_address.state_id)'),
-                          'state_name'], [
-                          modals.sequelize.literal(
-                              '(Select name from table_cities as city where city.id = user_address.city_id)'),
-                          'city_name'], [
-                          modals.sequelize.literal(
-                              '(Select name from table_localities as locality where locality.id = user_address.locality_id)'),
-                          'locality_name'], [
-                          modals.sequelize.literal(
-                              '(Select pin_code from table_localities as locality where locality.id = user_address.locality_id)'),
-                          'pin_code']],
-                    }],
-                }, order_data, false);
-            order.total_amount = (payment_details.product || {}).purchase_cost;
-          }*/
           console.log(JSON.stringify({order}));
           if (order.order_type === 2 && order.delivery_user_id) {
             order.service_user = await sellerAdaptor.retrieveAssistedServiceUser(
@@ -1770,18 +1727,14 @@ export default class SocketServer {
           order.credit_limit = seller_detail.customer_ids.credit_limit +
               (seller_detail.redeemed_credits || 0) -
               (seller_detail.credit_total || 0);
+          const {id: order_id, is_modified, status_type, order_type, collect_at_store} = order;
           if (io.sockets.adapter.rooms[`user-${data.user_id}`]) {
             io.sockets.in(`user-${data.user_id}`).
-                emit(order.order_type === 1 ?
-                    'order-status-change' :
+                emit(order.order_type === 1 ? 'order-status-change' :
                     'assisted-status-change', JSON.stringify({
-                  order_id: order.id,
-                  is_modified: order.is_modified,
-                  status_type: order.status_type,
+                  order_id, is_modified, status_type,
                   delivery_user: order.delivery_user,
-                  order, user_id,
-                  order_type: order.order_type,
-                  collect_at_store: order.collect_at_store,
+                  order, user_id, order_type, collect_at_store,
                 }));
           }
 
@@ -1879,8 +1832,7 @@ export default class SocketServer {
                   [
                     modals.sequelize.literal(
                         `"seller"."seller_details"->'basic_details'`),
-                    'basic_details'],
-                  [
+                    'basic_details'], [
                     modals.sequelize.literal(
                         `"seller"."seller_details"->'business_details'`),
                     'business_details']],
@@ -2040,12 +1992,10 @@ export default class SocketServer {
               },
               {
                 model: modals.sellers, as: 'seller', attributes: [
-                  'seller_name', 'address', 'contact_no', 'email',
-                  [
+                  'seller_name', 'address', 'contact_no', 'email', [
                     modals.sequelize.literal(
                         `"seller"."seller_details"->'basic_details'`),
-                    'basic_details'],
-                  [
+                    'basic_details'], [
                     modals.sequelize.literal(
                         `"seller"."seller_details"->'business_details'`),
                     'business_details']],
@@ -2135,14 +2085,11 @@ export default class SocketServer {
 
         if (io.sockets.adapter.rooms[`user-${data.user_id}`]) {
           io.sockets.in(`user-${data.user_id}`).
-              emit(order.order_type === 1 ?
-                  'order-status-change' :
+              emit(order.order_type === 1 ? 'order-status-change' :
                   'assisted-status-change', JSON.stringify({
-                order_id: order.id,
-                is_modified: order.is_modified,
+                order_id: order.id, is_modified: order.is_modified,
                 status_type: order.status_type,
-                order,
-                order_type: order.order_type,
+                order, order_type: order.order_type,
                 collect_at_store: order.collect_at_store,
                 user_id,
               }));
@@ -2388,8 +2335,7 @@ export default class SocketServer {
                   [
                     modals.sequelize.literal(
                         `"seller"."seller_details"->'basic_details'`),
-                    'basic_details'],
-                  [
+                    'basic_details'], [
                     modals.sequelize.literal(
                         `"seller"."seller_details"->'business_details'`),
                     'business_details']],
@@ -2497,12 +2443,10 @@ export default class SocketServer {
 
         setTimeout(async () => {
           await SocketServer.auto_cancel_order({
-            order,
-            user_id,
+            order, user_id,
             order_type: order.order_type,
             collect_at_store: order.collect_at_store,
-            seller_detail,
-            user_index_data,
+            seller_detail, user_index_data,
           });
         }, config.AUTO_CANCELLATION_TIMING * 60 * 1000);
         return order;
@@ -2561,8 +2505,7 @@ export default class SocketServer {
                       `${(user_id).toString(36)}ABBA${(order_id).toString(
                           36)}ABBA${Math.random().toString(36).
                           substr(2, 9)}ABBA${(seller_id).toString(
-                          36)}` :
-                      undefined,
+                          36)}` : undefined,
                 })))]);
     let today_sku_expense = 0;
     if (milk_sku_list.length > 0) {
@@ -2630,14 +2573,14 @@ export default class SocketServer {
               return item;
             }) : order.order_details;
         let payment_details = {product: {}};
+        const paid_online = payment_mode.toString() === '4';
+        const {order_type, order_details, delivery_user_id, collect_at_store, expense_id} = order;
         if (!order.expense_id) {
           payment_details = await SocketServer.init_on_payment({
-            user_id,
-            seller_id,
-            has_pos: seller_detail.has_pos,
-            home_delivered: !!order.delivery_user_id,
-            sku_details: order.order_type === 2 ? order.order_details :
-                order.order_details.map(item => {
+            user_id, seller_id, has_pos: seller_detail.has_pos,
+            home_delivered: !!delivery_user_id, paid_online,
+            sku_details: order_type !== 2 ?
+                order_details.map(item => {
                   let {id: sku_id, quantity, sku_measurement, selling_price} = item;
                   let {id: sku_measurement_id, cashback_percent} = sku_measurement ||
                   {};
@@ -2646,27 +2589,22 @@ export default class SocketServer {
                     const milk_sku = milk_sku_list.find(
                         mskuItem => mskuItem.id.toString() ===
                             sku_id.toString());
-                    if (today_sku_expense > 0) {
-                      if (milk_sku) {
-                        cashback_percent = config.MILK_DEFAULT_CASH_BACK_PERCENT;
-                      }
+                    if (today_sku_expense > 0 && milk_sku) {
+                      cashback_percent = config.MILK_DEFAULT_CASH_BACK_PERCENT;
                     }
-
-                    console.log({cashback_percent});
                   }
                   cashback_percent = cashback_percent || 0;
+                  let available_cashback = selling_price && cashback_percent ?
+                      (selling_price * cashback_percent) / 100 : 0;
+                  available_cashback = paid_online ?
+                      available_cashback : available_cashback / 2;
                   return JSON.parse(JSON.stringify({
                     sku_id, sku_measurement_id, seller_id, user_id,
                     updated_by: user_id, quantity,
-                    selling_price, status_type: 11,
-                    available_cashback: selling_price && cashback_percent ?
-                        (selling_price * cashback_percent) / 100 :
-                        0,
+                    selling_price, status_type: 11, available_cashback,
                   }));
-                }),
-            order_type: order.order_type,
-            collect_at_store: order.collect_at_store,
-            expense_id: order.expense_id,
+                }) : order_details,
+            order_type, collect_at_store, expense_id,
             payment_mode_id: order_payment.payment_mode_id,
             seller_type_id: seller_detail.seller_type_id,
           });
@@ -2860,17 +2798,15 @@ export default class SocketServer {
   }
 
   static async init_on_payment(data) {
-    let {user_id, seller_id, sku_details, home_delivered, order_type, collect_at_store, seller_type_id, has_pos, total_amount, payment_mode_id} = data;
-    total_amount = total_amount ?
-        total_amount : order_type && order_type === 1 ?
-            _.sumBy(sku_details, 'selling_price') :
-            _.sumBy(sku_details, 'total_amount');
+    let {user_id, seller_id, sku_details, home_delivered, order_type, collect_at_store, seller_type_id, has_pos, total_amount, payment_mode_id, paid_online} = data;
+    total_amount = total_amount ? total_amount :
+        _.sumBy(sku_details,
+            order_type && order_type === 1 ? 'selling_price' : 'total_amount');
     console.log(JSON.stringify({seller_type_id}));
 
     const jobResult = await jobAdaptor.createJobs(JSON.parse(JSON.stringify({
-      job_id:
-          `${Math.random().toString(36).substr(2, 9)}${(user_id).toString(
-              36)}`, user_id, updated_by: user_id, uploaded_by: user_id,
+      job_id: `${Math.random().toString(36).substr(2, 9)}${(user_id).toString(
+          36)}`, user_id, updated_by: user_id, uploaded_by: user_id,
       user_status: 8, admin_status: 2, comments:
           `This job is sent for online expense`,
     })));
@@ -2886,7 +2822,7 @@ export default class SocketServer {
           }),
           order_type && (order_type === 1 || collect_at_store) ?
               jobAdaptor.createCashBackJobs({
-                job_id: jobResult.id, user_id,
+                job_id: jobResult.id, user_id, paid_online,
                 updated_by: user_id, uploaded_by: user_id,
                 user_status: 8, seller_id,
                 admin_status: seller_type_id.toString() === '1' ? 4 : 2,
