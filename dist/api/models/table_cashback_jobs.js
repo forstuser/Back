@@ -88,8 +88,10 @@ exports.default = (sequelize, DataTypes) => {
     paid_online: {
       type: DataTypes.BOOLEAN,
       defaultValue: false
-    },
-    created_at: {
+    }, delayed_delivery: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    }, created_at: {
       type: DataTypes.DATE,
       defaultValue: sequelize.literal('NOW()')
     },

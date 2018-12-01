@@ -230,6 +230,45 @@ class BrandAdaptor {
 
     return brandData;
   }
+
+  async retrieveBrandOffers(query_options) {
+    const result = await this.modals.brand_offers.findAll(query_options);
+    return result ? result.map(item => item.toJSON()) : result;
+  }
+
+  async retrieveBrandOffer(query_options) {
+    const result = await this.modals.brand_offers.findOne(query_options);
+    return result ? result.toJSON() : result;
+  }
+
+  async updateBrandOffer(query_options, options) {
+    return await this.modals.brand_offers.update(options, query_options);
+  }
+
+  async retrieveOrUnlinkBrandOffers(options) {
+    let seller_offer = await this.modals.seller_offers.findOne(
+        {where: options});
+    if (seller_offer && ((options.id && seller_offer.id.toString() ===
+        options.id.toString()) ||
+        ((options.sku_id && seller_offer.sku_id.toString() ===
+            options.sku_id.toString()) && (options.sku_measurement_id &&
+            seller_offer.sku_measurement_id.toString() ===
+            options.sku_measurement_id.toString())))) {
+      const seller_offer_result = seller_offer.toJSON();
+      await seller_offer.updateAttributes(
+          {brand_offer_id: null, status_type: 2});
+    }
+    return seller_offer.toJSON();
+  }
+
+  async createBrandOfferRequestForSeller(options) {
+    let seller_offer = await this.modals.seller_offer_request.findOne(
+        {where: options});
+    if (!seller_offer) {
+      seller_offer = await this.modals.seller_offer_request.create(options);
+    }
+    return seller_offer.toJSON();
+  }
 }
 
 export default BrandAdaptor;

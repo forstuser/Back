@@ -2134,11 +2134,12 @@ export default class ProductAdaptor {
     seller_name && seller_name.trim() || seller_name === '' ||
     seller_email && seller_email.trim() ||
     seller_address && seller_address.trim() ?
-        this.sellerAdaptor.retrieveOrCreateSellers(sellerOption, JSON.parse(JSON.stringify({
-          seller_name, contact_no: seller_contact,
-          email: seller_email, address: seller_address,
-          updated_by: user_id, created_by: user_id, status_type: 11,
-        }))) : '');
+        this.sellerAdaptor.retrieveOrCreateSellers(sellerOption,
+            JSON.parse(JSON.stringify({
+              seller_name, contact_no: seller_contact,
+              email: seller_email, address: seller_address,
+              updated_by: user_id, created_by: user_id, status_type: 11,
+            }))) : '');
 
     if (amc) {
       let {seller_name, seller_contact} = amc;
@@ -2298,7 +2299,6 @@ export default class ProductAdaptor {
   }
 
   async updateSellerReview(user, seller_id, isOnlineSeller, request) {
-    const payload = request.payload;
     const {ratings: review_ratings, feedback: review_feedback, comments: review_comments, order_id} = request.payload;
     const user_id = user.id || user.ID;
     const status_id = 1;
@@ -2316,17 +2316,66 @@ export default class ProductAdaptor {
       review_ratings, review_feedback, review_comments, order_id,
     }));
     try {
-      const result = await this.modals.seller_reviews.findCreateFind({
-        where: whereClause, defaults: defaultClause,
-      });
-      if (!result[1]) {
-        await result[0].updateAttributes(JSON.parse(JSON.stringify(
-            {review_ratings, review_feedback, review_comments, order_id})));
-      }
+      let [seller_review_result, user_default_limit_rules, order] = await Promise.all(
+          [
+            this.modals.seller_reviews.findCreateFind({
+              where: whereClause, defaults: defaultClause,
+            }), this.categoryAdaptor.retrieveLimitRules({where: {user_id: 1}}),
+            order_id ? this.modals.order.findOne({
+              where: {id: order_id, seller_id}, attributes: [
+                'id', 'delivery_minutes', 'out_for_delivery_time',
+                'order_type', 'collect_at_store', 'status_type',
+                'created_at', 'updated_at', 'is_modified', 'delayed_delivery',
+                'user_address_id', 'delivery_user_id', 'job_id', 'expense_id', [
+                  this.modals.sequelize.literal(
+                      '(Select payment_mode_id from table_payments as payment where payment.order_id = "order".id)'),
+                  'payment_mode_id']],
+            }) : undefined]);
 
+      order = order ? order.toJSON() : order;
+      if (!seller_review_result[1]) {
+        await seller_review_result[0].updateAttributes(
+            JSON.parse(JSON.stringify(
+                {review_ratings, review_feedback, review_comments, order_id})));
+      }
+      if (review_ratings === 5 && order && order.delivery_user_id &&
+          order.delayed_delivery && order.order_type === 1) {
+        const delivery_user = await this.sellerAdaptor.retrieveAssistedServiceUser(
+            {
+              where: JSON.parse(JSON.stringify({id: order.delivery_user_id})),
+              attributes: ['reviews'],
+            });
+        const delivery_user_review = delivery_user.reviews.find(
+            item => item.order_id.toString() === order_id.toString());
+        if (delivery_user_review && delivery_user_review.ratings &&
+            delivery_user_review.ratings.toString() === '5') {
+          const online_payment = order.payment_mode_id.toString() === '4';
+
+          const home_delivery_cash_back = user_default_limit_rules.find(
+              item => item.rule_type === 7 && item.paid_online ===
+                  online_payment);
+          console.log({home_delivery_cash_back, user_default_limit_rules});
+          const seller_delivery_cash_back = await this.modals.seller_wallet.findOne(
+              {
+                where: {
+                  cashback_source: 1, transaction_type: 1,
+                  user_id, seller_id, job_id: order.job_id,
+                },
+              });
+          if (!seller_delivery_cash_back && home_delivery_cash_back) {
+            await this.modals.seller_wallet.create(JSON.parse(JSON.stringify({
+              status_type: 16, order_id, cashback_source: 1,
+              amount: (home_delivery_cash_back || {}).rule_limit,
+              transaction_type: 1, user_id, seller_id, job_id: order.job_id,
+            })));
+          }
+        }
+      }
       return {
-        status: true, message: 'Review Updated Successfully',
-        result: result[0].toJSON(), forceUpdate: request.pre.forceUpdate,
+        status: true,
+        message: 'Review Updated Successfully',
+        result: seller_review_result[0].toJSON(),
+        forceUpdate: request.pre.forceUpdate,
       };
 
     } catch (err) {

@@ -35,12 +35,15 @@ class SellerController {
       // this is where make us of adapter
       try {
         const user_id = user.id || user.ID;
-        const [user_index_data, user_detail] = await Promise.all([
-          userAdaptor.retrieveUserIndexedData({
-            where: {user_id},
-            attributes: [
-              'my_seller_ids', 'seller_offer_ids'],
-          }), userAdaptor.retrieveSingleUser({where: {id: user_id}})]);
+        const [user_index_data, user_detail, user_default_address] = await Promise.all(
+            [
+              userAdaptor.retrieveUserIndexedData({
+                where: {user_id},
+                attributes: ['my_seller_ids', 'seller_offer_ids'],
+              }),
+              userAdaptor.retrieveSingleUser({where: {id: user_id}}),
+              userAdaptor.retrieveUserAddress(
+                  {where: {user_id, address_type: 1}})]);
 
         let {search_value, limit, offset, latitude, longitude, city, is_fmcg, is_assisted, has_pos, for_order, for_claim} = request.query ||
         {};
@@ -72,11 +75,12 @@ class SellerController {
           if (user_detail.mobile_no) {
             where.contact_no = {$ne: user_detail.mobile_no};
           }
-
+          latitude = latitude || user_default_address.latitude;
+          longitude = longitude || user_default_address.longitude;
           const sellers = await sellerAdaptor.retrieveSellers(
               {
                 user_id, seller_offer_ids, limit, offset,
-                latitude, longitude, city,
+                latitude, longitude, city, distance_filter_required: false,
               }, {
                 where: JSON.parse(JSON.stringify(where)),
                 attributes: [
@@ -140,11 +144,13 @@ class SellerController {
               status: true,
               result: for_order && for_order.toLowerCase() === 'true' ?
                   sellers.filter(
-                      item => item.contact_no !== user_detail.mobile_no) :
+                      item => item.contact_no !== user_detail.mobile_no &&
+                          !item.is_logged_out) :
                   for_claim && for_claim.toLowerCase() === 'true' ?
                       sellers.filter(
-                          item => item.contact_no !== user_detail.mobile_no) :
-                      sellers,
+                          item => item.contact_no !== user_detail.mobile_no &&
+                              !item.is_logged_out) :
+                      sellers.filter(item => !item.is_logged_out),
             });
           } else {
             return reply.response({
@@ -232,23 +238,36 @@ class SellerController {
                 where: JSON.parse(JSON.stringify({
                   id, $or: {seller_name, contact_no},
                   is_fmcg, is_assisted, is_pos,
-                  seller_type_id: [1, 2], $and,
-                })),
-                attributes: [
+                  is_onboarded: true, $and,
+                })), attributes: [
                   'id', ['seller_name', 'name'], 'owner_name', [
                     modals.sequelize.literal(
                         `"sellers"."seller_details"->'basic_details'`),
                     'basic_details'], [
                     modals.sequelize.literal(
+                        `(select is_logged_out from table_seller_users as "users" where "users".id = "sellers"."user_id")`),
+                    'is_logged_out'], [
+                    modals.sequelize.literal(
                         `"sellers"."seller_details"->'basic_details'->'home_delivery'`),
-                    'home_delivery'], 'is_fmcg',
-                  'is_assisted', 'has_pos', [
+                    'home_delivery'], [
+                    modals.sequelize.literal(
+                        `"sellers"."seller_details"->'basic_details'->'start_time'`),
+                    'start_time'], [
+                    modals.sequelize.literal(
+                        `"sellers"."seller_details"->'basic_details'->'close_time'`),
+                    'close_time'], [
+                    modals.sequelize.literal(
+                        `"sellers"."seller_details"->'basic_details'->'shop_open_day'`),
+                    'shop_open_day'], 'is_fmcg', 'is_assisted', 'has_pos', [
                     modals.sequelize.literal(
                         `${seller_offer_ids && seller_offer_ids.length > 0 ?
-                            `(select count(*) from table_seller_offers as seller_offers where status_type in (1) and seller_offers.id in (${(seller_offer_ids ||
+                            `(select count(*) from table_seller_offers as seller_offers where status_type = 1 and seller_offers.id in (${(seller_offer_ids ||
                                 []).join(
                                 ',')}) and seller_offers.seller_id = "sellers"."id")` :
                             0}`), 'offer_count'], [
+                    modals.sequelize.literal(
+                        `(select count(*) from table_seller_offers as seller_offers where status_type = 1 and on_sku = true and seller_offers.seller_id = "sellers"."id")`),
+                    'sku_offer_count'], [
                     modals.sequelize.literal(
                         `(select AVG(seller_reviews.review_ratings) from table_seller_reviews as seller_reviews where seller_reviews.offline_seller_id = "sellers"."id")`),
                     'ratings']],
@@ -283,6 +302,58 @@ class SellerController {
         return reply.response({
           status: false,
           message: 'Unable to retrieve seller list',
+        });
+      }
+    } else {
+      return shared.preValidation(request.pre, reply);
+    }
+  }
+
+  static async retrieveSellerOfferList(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    if (request.pre.userExist && !request.pre.forceUpdate) {
+      // this is where make us of adapter
+      try {
+        const user_id = user.id || user.ID;
+        let user_index_data = {};
+        let {seller_id, offer_type} = request.params;
+        if (offer_type === '4') {
+          user_index_data = await userAdaptor.retrieveUserIndexedData({
+            where: {user_id}, attributes: ['my_seller_ids', 'seller_offer_ids'],
+          });
+        }
+        const {seller_offer_ids: id} = user_index_data || {};
+
+        let result = await sellerAdaptor.retrieveSellerOffersForConsumer(
+            {seller_id, offer_type, id}, seller_id);
+        result = offer_type !== '4' ? _.orderBy(result.filter(
+            offerItem => (offerItem.on_sku && offerItem.offer_discount > 0)),
+            ['sub_category_id']) : result;
+
+        return reply.response({
+          status: true, result, message: config.NO_OFFER_MSG,
+        });
+      } catch (err) {
+        console.log(`Error on ${new Date()} for user ${user.id ||
+        user.ID} is as follow: \n \n ${err}`);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user && !user.seller_detail ?
+              user.id || user.ID :
+              undefined,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
+        return reply.response({
+          status: false,
+          message: 'Unable to retrieve offer from seller.',
         });
       }
     } else {
@@ -346,6 +417,7 @@ class SellerController {
               {
                 user_id, seller_offer_ids, latitude, longitude,
                 limit, city, offset, is_onboarded: true,
+                distance_filter_required: true,
               }, {
                 where, attributes: [
                   'id', ['seller_name', 'name'], 'owner_name', 'is_fmcg',
@@ -534,7 +606,7 @@ class SellerController {
                   'is_onboarded', 'address', 'city_id', 'state_id',
                   'locality_id', 'latitude', 'longitude', 'url',
                   'contact_no', 'email', 'seller_type_id', 'seller_details',
-                  'is_fmcg', [
+                  'is_fmcg', 'created_at', [
                     modals.sequelize.literal(
                         `(select sum(seller_cashback.amount) from table_wallet_seller_cashback as seller_cashback where status_type in (16) and seller_cashback.user_id = ${user_id} and seller_cashback.seller_id = "sellers"."id")`),
                     'cashback_total'], [
@@ -592,6 +664,109 @@ class SellerController {
     }
   }
 
+  static async getSellerAddressDistance(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    if (request.pre.userExist && !request.pre.forceUpdate) {
+      // this is where make us of adapter
+      try {
+        const user_id = user.id || user.ID;
+        const {id, address_id} = request.params;
+        return reply.response({
+          status: true,
+          result: await sellerAdaptor.retrieveSellerAddressDifference(
+              {where: JSON.parse(JSON.stringify({user_id, id: address_id}))}, {
+                where: JSON.parse(JSON.stringify({id})),
+                attributes: [
+                  'id', ['seller_name', 'name'], 'address',
+                  'city_id', 'state_id', 'locality_id',
+                  'latitude', 'longitude'],
+              }),
+        });
+      } catch (err) {
+        console.log(`Error on ${new Date()} for user ${user.id ||
+        user.ID} is as follow: \n \n ${err}`);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
+        return reply.response({
+          status: false,
+          message: 'Unable to retrieve seller.',
+        });
+      }
+    } else {
+      return shared.preValidation(request.pre, reply);
+    }
+  }
+
+  static async getSellerHomeDeliveryStatus(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    if (request.pre.userExist && !request.pre.forceUpdate) {
+      // this is where make us of adapter
+      try {
+        const {id} = request.params;
+        let seller_detail = await modals.sellers.findOne({
+          where: JSON.parse(JSON.stringify({id})),
+          attributes: [
+            [
+              modals.sequelize.literal(
+                  `(select is_logged_out from table_seller_users as "users" where "users".id = "sellers"."user_id")`),
+              'is_logged_out'], [
+              modals.sequelize.literal(
+                  `"sellers"."seller_details"->'basic_details'->'home_delivery'`),
+              'home_delivery'], [
+              modals.sequelize.literal(
+                  `"sellers"."seller_details"->'basic_details'->'start_time'`),
+              'start_time'], [
+              modals.sequelize.literal(
+                  `"sellers"."seller_details"->'basic_details'->'close_time'`),
+              'close_time'], [
+              modals.sequelize.literal(
+                  `"sellers"."seller_details"->'basic_details'->'shop_open_day'`),
+              'shop_open_day']],
+        });
+
+        seller_detail = seller_detail ?
+            seller_detail.toJSON() :
+            {home_delivery: false, is_logged_out: true};
+        const {home_delivery, is_logged_out, start_time, close_time, shop_open_day} = seller_detail;
+        return reply.response({
+          status: true, home_delivery, is_logged_out,
+          start_time, close_time, shop_open_day,
+        });
+      } catch (err) {
+        console.log(`Error on ${new Date()} for user ${user.id ||
+        user.ID} is as follow: \n \n ${err}`);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
+        return reply.response({
+          status: false,
+          message: 'Unable to retrieve seller home delivery status.',
+        });
+      }
+    } else {
+      return shared.preValidation(request.pre, reply);
+    }
+  }
+
   static async getSellerDetails(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (!request.pre.forceUpdate) {
@@ -632,7 +807,7 @@ class SellerController {
                   'id', ['seller_name', 'name'], 'owner_name',
                   'has_pos', 'gstin', 'pan_no', 'reg_no', 'is_service',
                   'is_onboarded', 'address', 'city_id', 'state_id',
-                  'locality_id', 'latitude', 'longitude', 'url',
+                  'locality_id', 'latitude', 'longitude', 'url', 'created_at',
                   'contact_no', 'email', 'seller_type_id', [
                     modals.sequelize.literal(
                         `(select sum(seller_cashback.amount) from table_seller_wallet as seller_cashback where seller_cashback.seller_id = "sellers"."id" and (status_type = 14 or (status_type in (14, 13) and is_paytm = true)))`),
@@ -767,8 +942,11 @@ class SellerController {
           my_seller_ids = (my_seller_ids || []);
           const already_in_list = my_seller_ids.includes(
               parseInt(request.params.id));
-          sellerAdaptor.retrieveOrUpdateSellerDetail(
-              {where: {id: request.params.id}}, {customer_ids});
+          await sellerAdaptor.retrieveOrUpdateSellerDetail(
+              {
+                query_options: {where: {id: request.params.id}},
+                seller_detail: {customer_ids},
+              });
           if (!user_index_data) {
             my_seller_ids.push(parseInt(request.params.id));
             await userAdaptor.createUserIndexedData({my_seller_ids, user_id},
@@ -1001,8 +1179,10 @@ class SellerController {
                 {where: {user_id}}),
             seller ?
                 sellerAdaptor.retrieveOrUpdateSellerDetail(
-                    {where: seller_options},
-                    {customer_ids}) :
+                    {
+                      query_options: {where: seller_options},
+                      seller_detail: {customer_ids},
+                    }) :
                 '']);
 
         } else if (!already_in_my_seller_list) {
@@ -1014,7 +1194,10 @@ class SellerController {
                 {my_seller_ids, seller_contact_no}, {where: {user_id}}),
             seller ?
                 sellerAdaptor.retrieveOrUpdateSellerDetail(
-                    {where: seller_options}, {customer_ids}) :
+                    {
+                      query_options: {where: seller_options},
+                      seller_detail: {customer_ids},
+                    }) :
                 '']);
         } else {
           return reply.response({
@@ -1149,9 +1332,11 @@ class SellerController {
         console.log(JSON.stringify(seller_updates));
         let seller_detail = await sellerAdaptor.retrieveOrUpdateSellerDetail(
             {
-              where: JSON.parse(JSON.stringify(
-                  {$or: {contact_no}})),
-            }, seller_updates, true);
+              query_options: {
+                where: JSON.parse(JSON.stringify(
+                    {$or: {contact_no}})),
+              }, seller_detail: seller_updates, is_create: true,
+            });
         replyObject.seller_detail = JSON.parse(
             JSON.stringify(seller_detail || seller_updates || {}));
         /*
@@ -1260,15 +1445,19 @@ class SellerController {
       const [user, sellers] = await Promise.all([
         userAdaptor.retrieveSellerUser({where: {id: user_id}}, false),
         sellerAdaptor.retrieveOrUpdateSellerDetail({
-          where: JSON.parse(
-              JSON.stringify({id})),
-          attributes: ['seller_details', 'id', 'user_id'],
-        }, {user_id: null}, false),
+          query_options: {
+            where: JSON.parse(
+                JSON.stringify({id})),
+            attributes: ['seller_details', 'id', 'user_id'],
+          }, seller_detail: {user_id: null}, is_create: false,
+        }),
         sellerAdaptor.retrieveOrUpdateSellerDetail({
-          where: JSON.parse(
-              JSON.stringify({user_id, $or: {id, gstin, pan_no: pan}})),
-          attributes: ['seller_details', 'id', 'user_id'],
-        }, {user_id: null}, false)]);
+          query_options: {
+            where: JSON.parse(
+                JSON.stringify({user_id, $or: {id, gstin, pan_no: pan}})),
+            attributes: ['seller_details', 'id', 'user_id'],
+          }, seller_detail: {user_id: null}, is_create: false,
+        })]);
 
       let {mobile_no: contact_no, email} = user;
       is_fmcg = !!(category_id || sellers.is_fmcg);
@@ -1286,8 +1475,12 @@ class SellerController {
               }));
 
       let seller_detail = await sellerAdaptor.retrieveOrUpdateSellerDetail(
-          {where: JSON.parse(JSON.stringify({id, $or: {gstin, pan_no: pan}}))},
-          seller_updates, false);
+          {
+            query_options: {
+              where: JSON.parse(
+                  JSON.stringify({id, $or: {gstin, pan_no: pan}})),
+            }, seller_detail: seller_updates, is_create: false,
+          });
       replyObject.mobile_no = contact_no;
       replyObject.seller_detail = JSON.parse(
           JSON.stringify(seller_detail || seller_updates || {}));
@@ -1381,6 +1574,8 @@ class SellerController {
         categories: data_required || !is_onboarded ?
             _.orderBy(categories, ['priority_index', 'name']) :
             undefined,
+        delivery_intervals: (config.DELIVERY_INTERVALS || '').split(',').
+            map(item => item.split('||')[0]),
         main_category_id: (basic_details || {}).category_id ||
             config.HOUSEHOLD_CATEGORY_ID,
         data: data_required || !is_onboarded ? {
@@ -1482,8 +1677,11 @@ class SellerController {
 
       replyObject.seller_detail = JSON.parse(
           JSON.stringify(await sellerAdaptor.retrieveOrUpdateSellerDetail(
-              {where: JSON.parse(JSON.stringify({id}))}, seller_updates,
-              true) || {}));
+              {
+                query_options: {where: JSON.parse(JSON.stringify({id}))},
+                seller_detail: seller_updates,
+                is_create: true,
+              }) || {}));
       await sellerAdaptor.retrieveOrCreateSellerLoyaltyRules(
           JSON.parse(JSON.stringify({seller_id: id})),
           JSON.parse(JSON.stringify(
@@ -1528,8 +1726,11 @@ class SellerController {
 
         replyObject.seller_detail = JSON.parse(
             JSON.stringify(await sellerAdaptor.retrieveOrUpdateSellerDetail(
-                {where: JSON.parse(JSON.stringify({id}))}, {rush_hours},
-                true) || {}));
+                {
+                  query_options: {where: JSON.parse(JSON.stringify({id}))},
+                  seller_detail: {rush_hours},
+                  is_create: true,
+                }) || {}));
         return reply.response(JSON.parse(JSON.stringify(replyObject))).
             code(201);
       }
@@ -1579,8 +1780,11 @@ class SellerController {
 
         replyObject.seller_detail = JSON.parse(
             JSON.stringify(await sellerAdaptor.retrieveOrUpdateSellerDetail(
-                {where: JSON.parse(JSON.stringify({id}))}, {pay_online},
-                true) || {}));
+                {
+                  query_options: {where: JSON.parse(JSON.stringify({id}))},
+                  seller_detail: {pay_online},
+                  is_create: true,
+                }) || {}));
         return reply.response(JSON.parse(JSON.stringify(replyObject))).
             code(201);
       }
@@ -1684,8 +1888,11 @@ class SellerController {
           seller_data.customer_invite_detail, 'customer_id');
       replyObject.seller_detail = JSON.parse(
           JSON.stringify(await sellerAdaptor.retrieveOrUpdateSellerDetail(
-              {where: JSON.parse(JSON.stringify({id: seller_id}))}, seller_data,
-              true) || {}));
+              {
+                query_options: {
+                  where: JSON.parse(JSON.stringify({id: seller_id})),
+                }, seller_detail: seller_data, is_create: true,
+              }) || {}));
       return reply.response(JSON.parse(JSON.stringify(replyObject))).code(201);
     } catch (err) {
       console.log(err);
@@ -1792,8 +1999,11 @@ class SellerController {
           seller_data.customer_invite_detail, 'customer_id');
       replyObject.seller_detail = JSON.parse(
           JSON.stringify(await sellerAdaptor.retrieveOrUpdateSellerDetail(
-              {where: JSON.parse(JSON.stringify({id: seller_id}))}, seller_data,
-              true, user_data) || {}));
+              {
+                query_options: {
+                  where: JSON.parse(JSON.stringify({id: seller_id})),
+                }, seller_detail: seller_data, is_create: true, user: user_data,
+              }) || {}));
       const message = `Yay! Seller ${seller_data.seller_name} has invited you to BinBill for online orders, faster delivery, home services & ongoing offers. 
 Download Now: http://bit.ly/binbill`;
       await sendSMS(message, [mobile_no]);
@@ -1850,7 +2060,11 @@ Download Now: http://bit.ly/binbill`;
             },
           });
       await sellerAdaptor.retrieveOrUpdateSellerDetail(
-          {where: {id: seller_id}}, {is_onboarded: true}, false);
+          {
+            query_options: {where: {id: seller_id}},
+            seller_detail: {is_onboarded: true},
+            is_create: false,
+          });
       replyObject.seller_provider_types = JSON.parse(
           JSON.stringify(seller_provider_types));
       return reply.response(JSON.parse(JSON.stringify(replyObject))).code(201);
@@ -1981,7 +2195,8 @@ Download Now: http://bit.ly/binbill`;
       const {id: service_user_id, seller_id} = request.params || {};
       let {service_type_id, price, id} = request.payload;
       const seller_service_types = await sellerAdaptor.retrieveOrCreateSellerAssistedServiceTypes(
-          JSON.parse(JSON.stringify({id, service_type_id, service_user_id, seller_id})),
+          JSON.parse(JSON.stringify(
+              {id, service_type_id, service_user_id, seller_id})),
           JSON.parse(JSON.stringify({
             service_type_id, price, seller_id, service_user_id,
           })));
@@ -3908,6 +4123,100 @@ Download Now: http://bit.ly/binbill`;
         forceUpdate: request.pre.forceUpdate,
         err,
       });
+    }
+  }
+
+  static async linkNearBySellers(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    if (request.pre.userExist && !request.pre.forceUpdate) {
+      // this is where make us of adapter
+      try {
+        const user_id = user.id || user.ID;
+        let {latitude, longitude} = request.payload || {};
+        const is_service = true;
+        const where = JSON.parse(
+            JSON.stringify({status_type: 1, is_onboarded: true, is_service}));
+        const sellers = await sellerAdaptor.retrieveSellersToLink(
+            {user_id, latitude, longitude}, {
+              where, attributes: [
+                ['seller_name', 'name'], 'owner_name', 'is_fmcg',
+                'is_service', 'id', 'is_onboarded', 'address',
+                'latitude', 'longitude', [
+                  modals.sequelize.literal(
+                      '(Select state_name from table_states as state where state.id = sellers.state_id)'),
+                  'state_name'], [
+                  modals.sequelize.literal(
+                      '(Select name from table_cities as city where city.id = sellers.city_id)'),
+                  'city_name'], [
+                  modals.sequelize.literal(
+                      '(Select name from table_localities as locality where locality.id = sellers.locality_id)'),
+                  'locality_name'], [
+                  modals.sequelize.literal(
+                      '(Select pin_code from table_localities as locality where locality.id = sellers.locality_id)'),
+                  'pin_code']],
+            });
+
+        if (sellers.length > 0) {
+          const add_customer_in_seller = sellers.map(seller => {
+            let {customer_ids} = seller;
+            customer_ids = (customer_ids || []).map(item => item.customer_id ?
+                item :
+                {customer_id: item, is_credit_allowed: false, credit_limit: 0});
+            const customer_id = customer_ids.find(
+                item => item.customer_id && item.customer_id.toString() ===
+                    user_id.toString());
+            if (!customer_id) {
+              customer_ids.push({
+                customer_id: user_id,
+                is_credit_allowed: false,
+                credit_limit: 0,
+              });
+            }
+            customer_ids = _.uniqBy(customer_ids, 'customer_id');
+            return sellerAdaptor.retrieveOrUpdateSellerDetail(
+                {
+                  query_options: {
+                    where: {id: seller.id},
+                    attributes: ['customer_ids', 'id'],
+                  }, seller_detail: {id: seller.id, customer_ids},
+                });
+          });
+
+          await Promise.all([
+            userAdaptor.retrieveOrUpdateUserIndexedData({
+              where: {user_id}, attributes: ['my_seller_ids', 'id', 'user_id'],
+            }, {user_id, my_seller_ids: sellers.map(item => item.id)}),
+            ...add_customer_in_seller]);
+        }
+        return reply.response({
+          status: true,
+          result: sellers.length,
+        });
+      } catch (err) {
+        console.log(`Error on ${new Date()} for user ${user.id ||
+        user.ID} is as follow: \n \n ${err}`);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: user && !user.seller_detail ?
+              user.id || user.ID :
+              undefined,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
+        return reply.response({
+          status: false,
+          message: 'Unable to link near by sellers.',
+        });
+      }
+    } else {
+      return shared.preValidation(request.pre, reply);
     }
   }
 }

@@ -17,7 +17,7 @@ import {sendSMS} from '../../helpers/sms';
 
 let connected_socket, modals, sellerAdaptor, shopEarnAdaptor, io, userAdaptor,
     orderAdaptor, notificationAdaptor, productAdaptor, jobAdaptor,
-    categoryAdaptor, adminAdaptor;
+    categoryAdaptor, adminAdaptor, delivery_intervals;
 
 /*//controller file
 import { io } from "../../server";
@@ -30,6 +30,11 @@ const socketController = async socket => {
 
 export default class SocketServer {
   constructor(props) {
+    delivery_intervals = config.DELIVERY_INTERVALS.split(',').
+        map(item => ({
+          interval: item.split('||')[0],
+          minutes: parseInt((item.split('||')[1] || 0).toString()),
+        }));
     io = SocketIO.listen(props.server.listener);
     modals = props.models;
     shopEarnAdaptor = new ShopEarnAdaptor(modals);
@@ -158,30 +163,28 @@ export default class SocketServer {
     user_address = user_address || {};
     user_address.user_id = user_id;
     user_address.updated_by = user_id;
-    let [seller_detail, user_index_data, user_address_detail, service_users, seller_skus, seller_sku_offers] = await Promise.all(
+    let [user_default_limit_rules, seller_detail, user_index_data, user_address_detail, service_users, seller_skus, seller_sku_offers] = await Promise.all(
         [
-          sellerAdaptor.retrieveSellerDetail(
-              {
-                where: {id: seller_id}, attributes: [
-                  'seller_type_id', [
-                    modals.sequelize.literal(
-                        `"sellers"."seller_details"->'basic_details'->'pay_online'`),
-                    'pay_online'], 'seller_name', 'user_id',
-                  'id', [
-                    modals.sequelize.literal(
-                        `"sellers"."seller_details"->'basic_details'->'home_delivery'`),
-                    'home_delivery'], 'contact_no'],
-              }),
-          userAdaptor.retrieveUserIndexedData({
-            where: {user_id}, attributes: [
-              'wishlist_items', 'assisted_services', [
+          categoryAdaptor.retrieveLimitRules({where: {user_id: 1}}),
+          sellerAdaptor.retrieveSellerDetail({
+            where: {id: seller_id}, attributes: [
+              'seller_type_id', [
                 modals.sequelize.literal(
-                    `(Select full_name from users where users.id = ${user_id})`),
-                'user_name']],
-          }), !user_address_id && user_address ?
+                    `"sellers"."seller_details"->'basic_details'->'pay_online'`),
+                'pay_online'], 'seller_name', 'user_id',
+              'id', [
+                modals.sequelize.literal(
+                    `"sellers"."seller_details"->'basic_details'->'home_delivery'`),
+                'home_delivery'], 'contact_no'],
+          }), userAdaptor.retrieveUserIndexedData({
+          where: {user_id}, attributes: [
+            'wishlist_items', 'assisted_services', [
+              modals.sequelize.literal(
+                  `(Select full_name from users where users.id = ${user_id})`),
+              'user_name']],
+        }), !user_address_id && user_address ?
             userAdaptor.createUserAddress(
-                JSON.parse(JSON.stringify(user_address))) :
-            undefined,
+                JSON.parse(JSON.stringify(user_address))) : undefined,
           service_type_id ? sellerAdaptor.retrieveSellerAssistedServiceUsers({
             include: {
               as: 'service_types', where: {seller_id, service_type_id},
@@ -193,20 +196,16 @@ export default class SocketServer {
                 modals.sequelize.literal(
                     `(Select count(*) as order_counts from table_orders as orders where (orders."order_details"->'service_user'->>'id')::numeric = assisted_service_users.id and orders.status_type = 19)`),
                 'order_counts']],
-          }) : undefined,
-          order_type === 1 ?
-              sellerAdaptor.retrieveSellerSKUs({where: {seller_id}}) : [],
-          order_type === 1 ?
-              sellerAdaptor.retrieveSellerOffers({
-                where: {
-                  seller_id, on_sku: true,
-                  end_date: {$gte: moment().format()},
-                },
-                attributes: [
-                  'sku_id', 'sku_measurement_id',
-                  'offer_discount', 'seller_mrp'],
-              }) : [],
-          SocketServer.linkSellerWithUser(seller_id, user_id)]);
+          }) : undefined, order_type === 1 ?
+            sellerAdaptor.retrieveSellerSKUs({where: {seller_id}}) : [],
+          order_type === 1 ? sellerAdaptor.retrieveSellerOffers({
+            where: {
+              seller_id, on_sku: true,
+              end_date: {$gte: moment().format()},
+            }, attributes: [
+              'sku_id', 'sku_measurement_id', 'offer_type',
+              'offer_discount', ['title', 'offer_title'], 'seller_mrp'],
+          }) : [], SocketServer.linkSellerWithUser(seller_id, user_id)]);
     if (!user_address_id && !user_address_detail) {
       return false;
     }
@@ -225,16 +224,19 @@ export default class SocketServer {
                   skuItem.sku_measurement_id.toString());
           console.log({seller_sku_detail});
           const offer_discount = (seller_sku_detail || {}).offer_discount || 0;
+          const offer_type = (seller_sku_detail || {}).offer_type;
+          const offer_title = (seller_sku_detail || {}).offer_title;
           const unit_price = (seller_sku_detail || {}).seller_mrp ||
               (sku_measurement || {}).mrp || 0;
           let selling_price = unit_price * item.quantity;
           selling_price = _.round(selling_price -
-              (selling_price * offer_discount / 100), 2);
+              (selling_price * (offer_type && offer_type === 1 ?
+                  offer_discount : 0) / 100), 2);
           return {
             item_availability: true, id, title, brand_id,
             uid: `${id}${sku_measurement_id ? `-${sku_measurement_id}` : ''}`,
             quantity, category_id, sub_category_id, main_category_id,
-            unit_price, selling_price, offer_discount,
+            unit_price, selling_price, offer_discount, offer_type, offer_title,
             sku_measurement: sku_measurement ? {
               id: sku_measurement_id, mrp, bar_code, pack_numbers,
               cashback_percent, measurement_type, measurement_value,
@@ -298,6 +300,15 @@ export default class SocketServer {
                         'pin_code']],
                   }],
               }, {}, false);
+
+          const auto_cancel_limit = user_default_limit_rules.find(
+              item => item.rule_type === 11);
+          order.auto_cancel_time = (auto_cancel_limit || {}).rule_limit || 0;
+          order.auto_cancel_remaining_seconds = moment(order.created_at,
+              moment.ISO_8601).add(order.auto_cancel_time, 'minutes').
+              diff(moment(), 'seconds');
+          order.auto_cancel_elapsed_seconds = moment(order.created_at,
+              moment.ISO_8601).diff(moment(), 'seconds');
           if (io.sockets.adapter.rooms[`seller-${seller_detail.user_id}`]) {
             console.log(
                 {
@@ -350,12 +361,12 @@ export default class SocketServer {
 
           await shopEarnAdaptor.updatePastWishList(user_id);
 
-          setTimeout(async () => {
+          /*setTimeout(async () => {
             await SocketServer.auto_cancel_order({
               order, user_id, order_type,
               collect_at_store, seller_detail, user_index_data,
             });
-          }, config.AUTO_CANCELLATION_TIMING * 60 * 1000);
+          }, config.AUTO_CANCELLATION_TIMING * 60 * 1000);*/
           return order;
         }
       } else if (service_users && service_users.length > 0) {
@@ -466,14 +477,14 @@ export default class SocketServer {
               notification_type: 31,
             },
           });
-          setTimeout(async () => {
+          /*setTimeout(async () => {
             await SocketServer.auto_cancel_order({
               order, user_id,
               order_type, collect_at_store,
               seller_detail,
               user_index_data,
             });
-          }, config.AUTO_CANCELLATION_TIMING * 60 * 1000);
+          }, config.AUTO_CANCELLATION_TIMING * 60 * 1000);*/
           return order;
         }
       } else {
@@ -483,9 +494,11 @@ export default class SocketServer {
   }
 
   static async modify_order(data, fn) {
-    let {seller_id, user_id, order_id, order_details, delivery_user_id} = data;
-
-    const [seller_detail, user_index_data, order_data, measurement_types, service_user, seller_sku_offer] = await Promise.all(
+    let {seller_id, user_id, order_id, order_details, delivery_user_id, delivery_minutes} = data;
+    const delivery_interval = delivery_intervals.find(
+        item => item.interval.toString() === delivery_minutes);
+    delivery_minutes = (delivery_interval || {}).minutes;
+    const [seller_detail, user_index_data, order_data, measurement_types, service_user, seller_sku_offer, user_default_limit_rules] = await Promise.all(
         [
           sellerAdaptor.retrieveSellerDetail(
               {
@@ -495,21 +508,19 @@ export default class SocketServer {
                     modals.sequelize.literal(
                         `"sellers"."seller_details"->'basic_details'->'pay_online'`),
                     'pay_online'], 'seller_name', 'user_id', 'id'],
-              }),
-          userAdaptor.retrieveUserIndexedData({
-            where: {user_id}, attributes: [
-              'wishlist_items', 'assisted_services', [
-                modals.sequelize.literal(
-                    `(Select full_name from users where users.id = ${user_id})`),
-                'user_name'], [
-                modals.sequelize.literal(
-                    `(Select location from users where users.id = ${user_id})`),
-                'location']],
-          }),
+              }), userAdaptor.retrieveUserIndexedData({
+          where: {user_id}, attributes: [
+            'wishlist_items', 'assisted_services', [
+              modals.sequelize.literal(
+                  `(Select full_name from users where users.id = ${user_id})`),
+              'user_name'], [
+              modals.sequelize.literal(
+                  `(Select location from users where users.id = ${user_id})`),
+              'location']],
+        }),
           orderAdaptor.retrieveOrUpdateOrder(
               {where: {id: order_id, user_id, seller_id, status_type: 4}}, {},
-              false),
-          modals.measurement.findAll({where: {status_type: 1}}),
+              false), modals.measurement.findAll({where: {status_type: 1}}),
           delivery_user_id ? sellerAdaptor.retrieveAssistedServiceUser({
             where: JSON.parse(
                 JSON.stringify({id: delivery_user_id})), attributes: [
@@ -527,9 +538,31 @@ export default class SocketServer {
             end_date: {$gte: moment().format()},
           },
           attributes: [
-            'sku_id', 'sku_measurement_id', 'offer_discount', 'seller_mrp'],
-        })]);
+            'sku_id', 'sku_measurement_id', 'offer_type',
+            'offer_discount', ['title', 'offer_title'], 'seller_mrp'],
+        }), categoryAdaptor.retrieveLimitRules({where: {user_id: 1}})]);
     if (order_data) {
+
+      const auto_accept_limit = user_default_limit_rules.find(
+          item => item.rule_type === 15);
+      const delay_amount_limit = user_default_limit_rules.find(
+          item => item.rule_type === 14);
+      const delivery_default_limit = user_default_limit_rules.find(
+          item => item.rule_type === 16);
+      const delay_max_cash_back = (delay_amount_limit || {}).rule_limit;
+      const time_diff = moment().
+          diff(moment(order_data.created_at, moment.ISO_8601), 'minutes', true);
+      const FRESH_DELAY_CASH_BACK_AFTER = parseInt(
+          config.ORDER.FRESH_DELAY_CASH_BACK_AFTER || 0);
+      const FRESH_DELAY_CASH_BACK_PER_MIN = parseInt(
+          config.ORDER.FRESH_DELAY_CASH_BACK_PER_MIN || 0);
+      if (time_diff > FRESH_DELAY_CASH_BACK_AFTER) {
+        const minutes_after_fix_delay = time_diff - FRESH_DELAY_CASH_BACK_AFTER;
+        const amount = FRESH_DELAY_CASH_BACK_PER_MIN * minutes_after_fix_delay;
+        await orderAdaptor.handleDelayedCashBack(
+            {order_id, seller_id, amount, user_id, delay_max_cash_back});
+      }
+
       order_data.order_details = order_details || order_data.order_details;
       if (order_data.order_type === 2) {
         order_data.order_details[0].service_user = order_data.order_details[0].service_user ||
@@ -611,6 +644,10 @@ export default class SocketServer {
                           measurement_id);
                   item.suggestion.offer_discount = (seller_sku ||
                       {}).offer_discount || 0;
+                  item.suggestion.offer_type = (seller_sku ||
+                      {}).offer_type || 0;
+                  item.suggestion.offer_title = (seller_sku ||
+                      {}).offer_title;
                   if (item.suggestion.sku_measurement) {
                     item.suggestion.sku_measurement.mrp = (seller_sku ||
                         {}).seller_mrp || item.suggestion.sku_measurement.mrp ||
@@ -629,8 +666,9 @@ export default class SocketServer {
                   parseFloat(item.quantity)).toString());
               item.current_selling_price = _.round(item.current_selling_price -
                   (item.current_selling_price *
-                      parseFloat((item.offer_discount || 0).toString()) / 100),
-                  2);
+                      (item.offer_type && item.offer_type === 1 ?
+                          parseFloat((item.offer_discount || 0).toString()) :
+                          0) / 100), 2);
               item.quantity = parseFloat((item.quantity || 0).toString());
               item.selling_price = _.round(parseFloat(
                   (item.unit_price * item.quantity).toString()), 2);
@@ -642,17 +680,24 @@ export default class SocketServer {
               }
 
               item.selling_price = _.round(
-                  item.suggestion ? item.selling_price - (item.selling_price *
-                      parseFloat(
-                          (item.suggestion.offer_discount || 0).toString()) /
-                      100) : item.selling_price - (item.selling_price *
-                      parseFloat((item.offer_discount || 0).toString()) /
-                      100), 2);
+                  item.suggestion ?
+                      item.selling_price - (item.selling_price *
+                      (item.suggestion.offer_type &&
+                      item.suggestion.offer_type === 1 ?
+                          parseFloat(
+                              (item.suggestion.offer_discount ||
+                                  0).toString()) : 0) / 100) :
+                      item.selling_price - (item.selling_price *
+                      (item.offer_type && item.offer_type === 1 ?
+                          parseFloat((item.offer_discount || 0).toString()) :
+                          0) / 100), 2);
 
               return item;
             });
       }
       order_data.is_modified = true;
+      order_data.delivery_minutes = delivery_minutes ||
+          (delivery_default_limit || {}).rule_limit;
       order_data.delivery_user_id = delivery_user_id;
       let order = await orderAdaptor.retrieveOrUpdateOrder(
           {
@@ -737,6 +782,8 @@ export default class SocketServer {
 
               return item;
             }) : order.order_details;
+
+        order.auto_accept_time = (auto_accept_limit || {}).rule_limit;
         if (io.sockets.adapter.rooms[`user-${data.user_id}`]) {
           console.log(
               {
@@ -1231,8 +1278,11 @@ export default class SocketServer {
   }
 
   static async approve_order(data, fn) {
-    let {seller_id, user_id, order_id, status_type, is_user, order_details} = data;
-    const [seller_detail, user_index_data, order_data, measurement_types, seller_sku_offers] = await Promise.all(
+    let {seller_id, user_id, order_id, status_type, is_user, order_details, delivery_minutes} = data;
+    const delivery_interval = delivery_intervals.find(
+        item => item.interval.toString() === delivery_minutes);
+    delivery_minutes = (delivery_interval || {}).minutes;
+    const [seller_detail, user_index_data, order_data, measurement_types, seller_sku_offers, user_default_limit_rules] = await Promise.all(
         [
           sellerAdaptor.retrieveSellerDetail(
               {
@@ -1243,36 +1293,53 @@ export default class SocketServer {
                     modals.sequelize.literal(
                         `"sellers"."seller_details"->'basic_details'->'pay_online'`),
                     'pay_online'], 'seller_name', 'id', 'user_id'],
-              }),
-          userAdaptor.retrieveUserIndexedData({
-            where: {user_id}, attributes: [
-              'wishlist_items', 'assisted_services', [
-                modals.sequelize.literal(
-                    `(Select full_name from users where users.id = ${user_id})`),
-                'user_name']],
-          }),
-          orderAdaptor.retrieveOrUpdateOrder(
-              {
-                where: {id: order_id, user_id, seller_id, status_type: 4},
-              }, {},
-              false),
-          modals.measurement.findAll({where: {status_type: 1}}),
+              }), userAdaptor.retrieveUserIndexedData({
+          where: {user_id}, attributes: [
+            'wishlist_items', 'assisted_services', [
+              modals.sequelize.literal(
+                  `(Select full_name from users where users.id = ${user_id})`),
+              'user_name']],
+        }), orderAdaptor.retrieveOrUpdateOrder({
+          where: {id: order_id, user_id, seller_id, status_type: 4},
+        }, {}, false), modals.measurement.findAll({where: {status_type: 1}}),
           sellerAdaptor.retrieveSellerOffers({
             where: {
               seller_id, on_sku: true,
               end_date: {$gte: moment().format()},
-            },
-            attributes: ['sku_id', 'sku_measurement_id', 'offer_discount'],
-          })]);
+            }, attributes: [
+              'sku_id', 'sku_measurement_id', ['title', 'offer_title'],
+              'seller_mrp', 'offer_type', 'offer_discount'],
+          }), categoryAdaptor.retrieveLimitRules({where: {user_id: 1}})]);
     if (order_data) {
       if (order_data.order_type === 2) {
         order_data.order_details = (order_details || order_data.order_details);
       } else {
+        if (!is_user) {
+          const time_diff = moment().
+              diff(moment(order_data.created_at, moment.ISO_8601), 'minutes',
+                  true);
+          const FRESH_DELAY_CASH_BACK_AFTER = parseInt(
+              config.ORDER.FRESH_DELAY_CASH_BACK_AFTER || 0);
+          const FRESH_DELAY_CASH_BACK_PER_MIN = parseInt(
+              config.ORDER.FRESH_DELAY_CASH_BACK_PER_MIN || 0);
+          if (time_diff > FRESH_DELAY_CASH_BACK_AFTER) {
+            const minutes_after_fix_delay = time_diff -
+                FRESH_DELAY_CASH_BACK_AFTER;
+            const amount = FRESH_DELAY_CASH_BACK_PER_MIN *
+                minutes_after_fix_delay;
+
+            const delay_amount_limit = user_default_limit_rules.find(
+                item => item.rule_type === 14);
+            const delay_max_cash_back = (delay_amount_limit || {}).rule_limit;
+            await orderAdaptor.handleDelayedCashBack(
+                {order_id, seller_id, amount, user_id, delay_max_cash_back});
+          }
+        }
         order_data.order_details = (order_details ||
             order_data.order_details).map(item => {
 
           if (!item.item_availability && item.suggestion) {
-            const {id, title, measurement_value, sku_measurement: sku_measurement_detail, brand_id, offer_discount} = item.suggestion;
+            const {id, title, measurement_value, sku_measurement: sku_measurement_detail, brand_id, offer_discount, offer_title, offer_type} = item.suggestion;
             item.id = id;
             item.sku_measurement = sku_measurement_detail;
             if (!sku_measurement_detail) {
@@ -1285,6 +1352,8 @@ export default class SocketServer {
             !sku_measurement_id ? `(${measurement_value})` : ''}`;
             item.brand_id = brand_id;
             item.offer_discount = offer_discount;
+            item.offer_title = offer_title;
+            item.offer_type = offer_type;
             item.item_availability = true;
           }
 
@@ -1306,16 +1375,29 @@ export default class SocketServer {
                   item.sku_measurement.id.toString());
           item.offer_discount = parseFloat(
               ((offer || {}).offer_discount || 0).toString());
+          item.offer_type = (offer || {}).offer_type;
+          item.offer_title = (offer || {}).offer_title;
           item.unit_price = parseFloat((item.unit_price || 0).toString());
           item.selling_price = parseFloat((item.unit_price *
               parseFloat(item.quantity.toString())).toString());
           item.selling_price = _.round(
               item.selling_price - (item.selling_price *
-              item.offer_discount / 100), 2);
+              (item.offer_type && item.offer_type === 1 ?
+                  item.offer_discount : 0) / 100), 2);
           return item;
-        }).filter(item => item.item_availability);
+        }).filter(item => item && item.item_availability);
       }
-      order_data.status_type = status_type || 16;
+
+      order_data.status_type = order_data.order_details &&
+      order_data.order_details.length > 0 ? status_type || 16 : 17;
+      if (!is_user) {
+        const delivery_default_limit = user_default_limit_rules.find(
+            item => item.rule_type === 16);
+        order_data.delivery_minutes = delivery_minutes ||
+            (delivery_default_limit || {}).rule_limit;
+      }
+      order_data.delivery_clock_start_time = moment();
+
       let order = await orderAdaptor.retrieveOrUpdateOrder(
           {
             where: {id: order_id, user_id, seller_id, status_type: 4},
@@ -1366,6 +1448,16 @@ export default class SocketServer {
               }],
           }, JSON.parse(JSON.stringify(order_data)), false);
       if (order) {
+        if (order.delivery_clock_start_time && order.delivery_minutes &&
+            moment(order.delivery_clock_start_time, moment.ISO_8601).
+                isValid()) {
+          order.elapsed_seconds = moment(order.delivery_clock_start_time,
+              moment.ISO_8601).diff(moment(), 'seconds');
+          order.remaining_seconds = moment(order.delivery_clock_start_time,
+              moment.ISO_8601).add(order.delivery_minutes, 'minutes').
+              diff(moment(), 'seconds');
+        }
+
         if (order.order_type === 2 && order.delivery_user_id) {
           order.service_user = await sellerAdaptor.retrieveAssistedServiceUser({
             where: JSON.parse(
@@ -1406,8 +1498,7 @@ export default class SocketServer {
               }
 
               return item;
-            }) :
-            order.order_details;
+            }) : order.order_details;
         if (order.order_details.length > 0) {
           if (is_user) {
             if (io.sockets.adapter.rooms[`seller-${seller_detail.user_id}`]) {
@@ -1424,8 +1515,9 @@ export default class SocketServer {
                 is_modified: order.is_modified,
                 user_id,
                 title: `${user_index_data.user_name ||
-                ''} has approved ${order.order_type === 1 ||
-                order.collect_at_store ?
+                ''} has ${order_data.order_details &&
+                order_data.order_details.length > 0 ?
+                    'approved' : 'cancelled'} ${order.order_type === 1 ?
                     `modifications.` :
                     `${order.service_user.name} for assistance.`}`,
                 description: 'Click here for more details.',
@@ -1482,7 +1574,7 @@ export default class SocketServer {
   static async order_out_for_delivery(data, fn) {
     try {
       let {seller_id, user_id, order_id, status_type, delivery_user_id, order_details, total_amount} = data;
-      const [seller_detail, user_index_data, order_data, measurement_types, seller_sku_offers] = await Promise.all(
+      const [seller_detail, user_index_data, order_data, measurement_types, seller_sku_offers, user_default_limit_rules] = await Promise.all(
           [
             sellerAdaptor.retrieveSellerDetail(
                 {
@@ -1518,9 +1610,13 @@ export default class SocketServer {
               where: {
                 seller_id, on_sku: true,
                 end_date: {$gte: moment().format()},
-              },
-              attributes: ['sku_id', 'sku_measurement_id', 'offer_discount'],
-            })]);
+              }, attributes: [
+                'sku_id',
+                'sku_measurement_id',
+                'offer_discount',
+                'offer_type',
+                ['title', 'offer_title']],
+            }), categoryAdaptor.retrieveLimitRules({where: {user_id: 1}})]);
 
       seller_detail.customer_ids = (seller_detail.customer_ids || []).find(
           item => (item.customer_id ? item.customer_id : item).toString() ===
@@ -1534,6 +1630,15 @@ export default class SocketServer {
           };
       const seller_sku_mapping = [];
       if (order_data) {
+
+        const delivery_default_limit = user_default_limit_rules.find(
+            item => item.rule_type === 16);
+        const delivery_minutes = moment().
+            diff(moment(order_data.delivery_clock_start_time,
+                moment.ISO_8601), 'minutes', true);
+        order_data.delayed_delivery = order_data.delivery_minutes !==
+            (delivery_default_limit || {}).rule_limit || delivery_minutes !==
+            (delivery_default_limit || {}).rule_limit;
         order_data.order_details = order_details || order_data.order_details;
         if (order_data.order_type === 1) {
           order_data.order_details = order_data.order_details.map(item => {
@@ -1545,8 +1650,10 @@ export default class SocketServer {
             item.unit_price = parseFloat((item.unit_price || 0).toString());
             item.selling_price = parseFloat(
                 (item.unit_price * item.quantity).toString());
-            const mrp = (item.sku_measurement ? item.sku_measurement.mrp : 0);
-            if (mrp.toString() !== item.unit_price.toString() && item.sku_measurement) {
+            const mrp = (item.sku_measurement && item.sku_measurement.mrp ?
+                item.sku_measurement.mrp : 0);
+            if (mrp.toString() !== item.unit_price.toString() &&
+                item.sku_measurement) {
               seller_sku_mapping.push(
                   sellerAdaptor.retrieveOrCreateSellerOffers(
                       JSON.parse(
@@ -1559,23 +1666,27 @@ export default class SocketServer {
                             seller_id, start_date: moment(), end_date: moment(),
                             seller_mrp: item.unit_price, sku_id: item.id,
                             sku_measurement_id: item.sku_measurement.id,
-                            on_sku: true, offer_discount: 0,
+                            on_sku: true,
                           }))));
             }
             item.offer_discount = parseFloat(
                 ((offer || {}).offer_discount || item.offer_discount ||
                     0).toString());
+            item.offer_type = (offer || {}).offer_type;
+            item.offer_title = (offer || {}).offer_title;
             item.selling_price = item.selling_price > 0 ?
                 item.selling_price : ((mrp || 0) * item.quantity);
             item.selling_price = _.round(
                 item.selling_price - (item.selling_price *
-                item.offer_discount / 100), 2);
+                (item.offer_type && item.offer_type === 1 ?
+                    item.offer_discount : 0) / 100), 2);
             return item;
           });
         }
 
         order_data.status_type = status_type || 19;
         order_data.delivery_user_id = delivery_user_id;
+        order_data.out_for_delivery_time = moment();
         let [order] = await Promise.all([
           orderAdaptor.retrieveOrUpdateOrder(
               {
@@ -1634,6 +1745,15 @@ export default class SocketServer {
               }, order_data, false), ...seller_sku_mapping]);
 
         if (order) {
+          if (order.delivery_clock_start_time && order.delivery_minutes &&
+              moment(order.delivery_clock_start_time, moment.ISO_8601).
+                  isValid()) {
+            order.elapsed_seconds = moment(order.delivery_clock_start_time,
+                moment.ISO_8601).diff(moment(), 'seconds');
+            order.remaining_seconds = moment(order.delivery_clock_start_time,
+                moment.ISO_8601).add(order.delivery_minutes, 'minutes').
+                diff(moment(), 'seconds');
+          }
           console.log(JSON.stringify({order}));
           if (order.order_type === 2 && order.delivery_user_id) {
             order.service_user = await sellerAdaptor.retrieveAssistedServiceUser(
@@ -1778,7 +1898,7 @@ export default class SocketServer {
   }
 
   static async reject_order_by_seller(data, fn) {
-    let {seller_id, user_id, order_id, status_type} = data;
+    let {seller_id, user_id, order_id, status_type, reason_id, reason_text} = data;
     const [seller_detail, user_index_data, order_data, measurement_types] = await Promise.all(
         [
           sellerAdaptor.retrieveSellerDetail(
@@ -1808,6 +1928,8 @@ export default class SocketServer {
           modals.measurement.findAll({where: {status_type: 1}})]);
     if (order_data) {
       order_data.status_type = status_type || 18;
+      order_data.reason_id = reason_id;
+      order_data.reason_text = reason_text;
       let order = await orderAdaptor.retrieveOrUpdateOrder(
           {
             where: {
@@ -1855,7 +1977,7 @@ export default class SocketServer {
                         '(Select pin_code from table_localities as locality where locality.id = user_address.locality_id)'),
                     'pin_code']],
               }],
-          }, order_data, false);
+          }, JSON.parse(JSON.stringify(order_data)), false);
       if (order) {
         if (order.order_type === 2 && order.delivery_user_id) {
           order.service_user = await sellerAdaptor.retrieveAssistedServiceUser({
@@ -1939,7 +2061,7 @@ export default class SocketServer {
   }
 
   static async reject_order_by_user(data, fn) {
-    let {seller_id, user_id, order_id, status_type} = data;
+    let {seller_id, user_id, order_id, status_type, reason_id, reason_text} = data;
     const [seller_detail, user_index_data, order_data, measurement_types] = await Promise.all(
         [
           sellerAdaptor.retrieveSellerDetail(
@@ -1970,6 +2092,8 @@ export default class SocketServer {
           modals.measurement.findAll({where: {status_type: 1}})]);
     if (order_data) {
       order_data.status_type = status_type || 18;
+      order_data.reason_id = reason_id;
+      order_data.reason_text = reason_text;
       let order = await orderAdaptor.retrieveOrUpdateOrder(
           {
             where: {
@@ -2020,7 +2144,7 @@ export default class SocketServer {
                         '(Select pin_code from table_localities as locality where locality.id = user_address.locality_id)'),
                     'pin_code']],
               }],
-          }, order_data, false);
+          }, JSON.parse(JSON.stringify(order_data)), false);
       if (order) {
         if (order.order_type === 2 && order.delivery_user_id) {
           order.service_user = await sellerAdaptor.retrieveAssistedServiceUser({
@@ -2105,15 +2229,14 @@ export default class SocketServer {
   }
 
   static async cancel_order_by_user(data, fn) {
-    let {seller_id, user_id, order_id, status_type} = data;
+    let {seller_id, user_id, order_id, status_type, reason_id, reason_text} = data;
     const [seller_detail, user_index_data, order_data, measurement_types] = await Promise.all(
         [
           sellerAdaptor.retrieveSellerDetail(
               {
                 where: {id: seller_id},
                 attributes: [
-                  'seller_type_id',
-                  [
+                  'seller_type_id', [
                     modals.sequelize.literal(
                         `"sellers"."seller_details"->'basic_details'->'pay_online'`),
                     'pay_online'], 'seller_name', 'id', 'user_id'],
@@ -2128,16 +2251,15 @@ export default class SocketServer {
           orderAdaptor.retrieveOrUpdateOrder(
               {
                 where: {
-                  id: order_id,
-                  user_id,
-                  seller_id,
+                  id: order_id, user_id, seller_id,
                   status_type: [2, 4, 19],
-                },
-                attributes: ['id'],
+                }, attributes: ['id'],
               }, {}, false),
           modals.measurement.findAll({where: {status_type: 1}})]);
     if (order_data) {
       order_data.status_type = status_type || 17;
+      order_data.reason_id = reason_id;
+      order_data.reason_text = reason_text;
       let order = await orderAdaptor.retrieveOrUpdateOrder(
           {
             where: {
@@ -2190,7 +2312,7 @@ export default class SocketServer {
                         '(Select pin_code from table_localities as locality where locality.id = user_address.locality_id)'),
                     'pin_code']],
               }],
-          }, order_data, false);
+          }, JSON.parse(JSON.stringify(order_data)), false);
       if (order) {
         if (order.order_type === 2 && order.delivery_user_id) {
           order.service_user = await sellerAdaptor.retrieveAssistedServiceUser({
@@ -2302,17 +2424,19 @@ export default class SocketServer {
           orderAdaptor.retrieveOrUpdateOrder(
               {
                 where: {id: order_id, user_id, seller_id, status_type: [2, 4]},
-                attributes: ['id'],
-              }, {}, false),
+              }, {status_type: 18}, false),
           modals.measurement.findAll({where: {status_type: 1}})]);
     if (order_data) {
       order_data.status_type = 4;
       order_data.in_review = false;
       order_data.is_modified = false;
-      let order = await orderAdaptor.retrieveOrUpdateOrder(
+      order_data.user_id = user_id;
+      let order = await orderAdaptor.placeNewOrder(
+          _.omit(order_data, ['id', 'created_at', 'updated_at']));
+      order = await orderAdaptor.retrieveOrUpdateOrder(
           {
             where: {
-              id: order_id, user_id, seller_id,
+              id: order.id, user_id, seller_id,
               status_type: [2, 4], is_modified: false,
             },
             include: [
@@ -2360,7 +2484,7 @@ export default class SocketServer {
                         '(Select pin_code from table_localities as locality where locality.id = user_address.locality_id)'),
                     'pin_code']],
               }],
-          }, order_data, false);
+          }, {}, false);
       if (order) {
         if (order.order_type === 2 && order.delivery_user_id) {
           order.service_user = await sellerAdaptor.retrieveAssistedServiceUser({
@@ -2433,22 +2557,21 @@ export default class SocketServer {
                   'assisted-status-change', JSON.stringify({
                 order_id: order.id,
                 is_modified: order.is_modified,
-                status_type: order.status_type,
-                order,
+                status_type: order.status_type, order,
                 order_type: order.order_type,
                 collect_at_store: order.collect_at_store,
                 user_id,
               }));
         }
 
-        setTimeout(async () => {
+        /*setTimeout(async () => {
           await SocketServer.auto_cancel_order({
             order, user_id,
             order_type: order.order_type,
             collect_at_store: order.collect_at_store,
             seller_detail, user_index_data,
           });
-        }, config.AUTO_CANCELLATION_TIMING * 60 * 1000);
+        }, config.AUTO_CANCELLATION_TIMING * 60 * 1000);*/
         return order;
       } else {
         return false;
@@ -2460,8 +2583,9 @@ export default class SocketServer {
 
   static async mark_order_complete(data, fn) {
     let {seller_id, user_id, order_id, status_type, payment_mode} = data;
-    const [cash_back_job_count, seller_detail, user_index_data, order_data, measurement_types, seller_loyalty_rules, milk_sku_list, order_payment] = await Promise.all(
+    const [user_default_limit_rules, cash_back_job_count, seller_detail, user_index_data, order_data, measurement_types, seller_loyalty_rules, milk_sku_list, order_payment] = await Promise.all(
         [
+          categoryAdaptor.retrieveLimitRules({where: {user_id: 1}}),
           modals.cashback_jobs.count(
               {where: {user_id, admin_status: {$gt: 2}}}),
           sellerAdaptor.retrieveSellerDetail(
@@ -2483,8 +2607,31 @@ export default class SocketServer {
               where: {
                 id: order_id, user_id, seller_id,
                 status_type: [16, 19, 21],
-              }, attributes: ['id'],
-            }, {}, false),
+              }, attributes: [
+                'id', 'order_details', 'delivery_clock_start_time',
+                'order_type', 'collect_at_store', 'in_review', 'status_type',
+                'seller_id', 'user_id', 'created_at', 'updated_at',
+                'is_modified', 'user_address_id', 'delivery_user_id',
+                'job_id', 'expense_id', [
+                  modals.sequelize.literal(
+                      '(Select cashback_status from table_cashback_jobs as jobs where jobs.id = "order".job_id)'),
+                  'cashback_status'], 'delivery_minutes', [
+                  modals.sequelize.literal(
+                      '(Select copies from table_cashback_jobs as jobs where jobs.id = "order".job_id)'),
+                  'copies'], 'delayed_delivery', [
+                  modals.sequelize.literal(
+                      '(Select job_id from table_cashback_jobs as jobs where jobs.id = "order".job_id)'),
+                  'upload_id'], [
+                  modals.sequelize.literal(
+                      '(Select admin_status from table_cashback_jobs as jobs where jobs.id = "order".job_id)'),
+                  'admin_status'], [
+                  modals.sequelize.literal(
+                      '(Select purchase_cost from consumer_products as expense where expense.id = "order".expense_id)'),
+                  'total_amount'], [
+                  modals.sequelize.literal(
+                      '(Select sum(amount) from table_wallet_user_cashback as user_wallet where user_wallet.job_id = "order".job_id)'),
+                  'available_cashback']],
+            }, undefined, false),
           modals.measurement.findAll({where: {status_type: 1}}),
           sellerAdaptor.retrieveSellerLoyaltyRules(
               JSON.parse(JSON.stringify({seller_id}))),
@@ -2494,8 +2641,7 @@ export default class SocketServer {
                     JSON.stringify({
                       category_id: config.MILK_SKU_CATEGORY,
                       main_category_id: config.MILK_SKU_MAIN_CATEGORY,
-                    })),
-                attributes: ['id'],
+                    })), attributes: ['id'],
               }), orderAdaptor.retrieveOrUpdatePaymentDetails(
             {where: {order_id, seller_id, user_id}}, JSON.parse(
                 JSON.stringify({
@@ -2520,6 +2666,17 @@ export default class SocketServer {
       });
     }
     if (order_data) {
+      if (payment_mode.toString !== '4' && order_data.order_type === 1 &&
+          !order_data.collect_at_store) {
+        const delivery_default_limit = user_default_limit_rules.find(
+            item => item.rule_type === 16);
+        const delivery_minutes = moment().
+            diff(moment(order_data.delivery_clock_start_time,
+                moment.ISO_8601), 'minutes', true);
+        order_data.delayed_delivery = order_data.delivery_minutes !==
+            (delivery_default_limit || {}).rule_limit ||
+            delivery_minutes > (delivery_default_limit || {}).rule_limit;
+      }
       order_data.status_type = status_type || 5;
       let order = await orderAdaptor.retrieveOrUpdateOrder(
           {
@@ -2537,8 +2694,7 @@ export default class SocketServer {
               'reviews', 'document_details'], include: {
               as: 'service_types',
               where: JSON.parse(JSON.stringify({seller_id})),
-              model: modals.seller_service_types,
-              required: true,
+              model: modals.seller_service_types, required: true,
               attributes: ['service_type_id', 'seller_id', 'price', 'id'],
             },
           });
@@ -2589,8 +2745,12 @@ export default class SocketServer {
                     const milk_sku = milk_sku_list.find(
                         mskuItem => mskuItem.id.toString() ===
                             sku_id.toString());
-                    if (today_sku_expense > 0 && milk_sku) {
-                      cashback_percent = config.MILK_DEFAULT_CASH_BACK_PERCENT;
+                    if (milk_sku) {
+                      if (today_sku_expense > 0) {
+                        cashback_percent = config.MILK_DEFAULT_CASH_BACK_PERCENT;
+                      } else if (today_sku_expense === 0) {
+                        cashback_percent = config.MILK_SKU_CASH_BACK_PERCENT;
+                      }
                     }
                   }
                   cashback_percent = cashback_percent || 0;
@@ -2607,6 +2767,7 @@ export default class SocketServer {
             order_type, collect_at_store, expense_id,
             payment_mode_id: order_payment.payment_mode_id,
             seller_type_id: seller_detail.seller_type_id,
+            delayed_delivery: order.delayed_delivery,
           });
 
           order_data.expense_id = (payment_details.product || {}).id;
@@ -2636,8 +2797,7 @@ export default class SocketServer {
                       modals.sequelize.literal(
                           `(Select sum(amount) from table_wallet_user_cashback where user_id = ${user_id} and status_type in (16) group by user_id)`),
                       'wallet_value']],
-                },
-                {
+                }, {
                   model: modals.sellers, as: 'seller', attributes: [
                     'seller_name', 'address', 'contact_no', 'email',
                     'user_id', [
@@ -2647,10 +2807,8 @@ export default class SocketServer {
                       modals.sequelize.literal(
                           `"seller"."seller_details"->'business_details'`),
                       'business_details']],
-                },
-                {
-                  model: modals.user_addresses,
-                  as: 'user_address',
+                }, {
+                  model: modals.user_addresses, as: 'user_address',
                   attributes: [
                     'address_type', 'address_line_1', 'address_line_2',
                     'city_id', 'state_id', 'locality_id', 'pin',
@@ -2798,7 +2956,7 @@ export default class SocketServer {
   }
 
   static async init_on_payment(data) {
-    let {user_id, seller_id, sku_details, home_delivered, order_type, collect_at_store, seller_type_id, has_pos, total_amount, payment_mode_id, paid_online} = data;
+    let {user_id, seller_id, sku_details, home_delivered, order_type, collect_at_store, seller_type_id, has_pos, total_amount, payment_mode_id, paid_online, delayed_delivery} = data;
     total_amount = total_amount ? total_amount :
         _.sumBy(sku_details,
             order_type && order_type === 1 ? 'selling_price' : 'total_amount');
@@ -2820,11 +2978,11 @@ export default class SocketServer {
             copies: [], main_category_id: 8,
             document_date: moment.utc().startOf('day').format('YYYY-MM-DD'),
           }),
-          order_type && (order_type === 1 || collect_at_store) ?
+          order_type && order_type === 1 ?
               jobAdaptor.createCashBackJobs({
                 job_id: jobResult.id, user_id, paid_online,
                 updated_by: user_id, uploaded_by: user_id,
-                user_status: 8, seller_id,
+                user_status: 8, seller_id, delayed_delivery,
                 admin_status: seller_type_id.toString() === '1' ? 4 : 2,
                 ce_status: seller_type_id.toString() === '1' ? 5 : null,
                 cashback_status: 13, online_order: true,
@@ -2936,7 +3094,10 @@ export default class SocketServer {
           customer_ids = _.uniqBy(customer_ids, 'customer_id');
           my_seller_ids = (my_seller_ids || []);
           sellerAdaptor.retrieveOrUpdateSellerDetail(
-              {where: {id: seller_id}}, {customer_ids});
+              {
+                query_options: {where: {id: seller_id}},
+                seller_detail: {customer_ids},
+              });
           my_seller_ids.push(parseInt(seller_id));
           if (!user_index_data) {
             await userAdaptor.createUserIndexedData({my_seller_ids, user_id},
@@ -3001,18 +3162,29 @@ export default class SocketServer {
 
   }
 
-  static async auto_cancel_order(
-      parameters) {
+  static async auto_cancel_order(parameters) {
     let {order, user_id, order_type, collect_at_store, seller_detail, user_index_data} = parameters;
     let order_exist = await modals.order.findOne(
-        {
-          where: {
-            id: order.id, status_type: 4,
-            is_modified: false, in_review: false,
-          },
-        });
+        {where: {id: order.id, status_type: 4, is_modified: false}});
     if (order_exist) {
-      order_exist.updateAttributes({status_type: 2});
+      const order_data = order_exist.toJSON();
+      const time_diff = moment().
+          diff(moment(order_data.created_at, moment.ISO_8601), 'minutes', true);
+      const FRESH_DELAY_CASH_BACK_AFTER = parseInt(
+          config.ORDER.FRESH_DELAY_CASH_BACK_AFTER || 0);
+      const FRESH_DELAY_CASH_BACK_PER_MIN = parseInt(
+          config.ORDER.FRESH_DELAY_CASH_BACK_PER_MIN || 0);
+      if (time_diff > FRESH_DELAY_CASH_BACK_AFTER) {
+        const minutes_after_fix_delay = time_diff - FRESH_DELAY_CASH_BACK_AFTER;
+        const amount = FRESH_DELAY_CASH_BACK_PER_MIN * minutes_after_fix_delay;
+        await orderAdaptor.handleDelayedCashBack(
+            {
+              order_id: order_data.id, seller_id: order_data.seller_id,
+              amount, user_id,
+            });
+      }
+
+      await order_exist.updateAttributes({status_type: 2});
 
       await notificationAdaptor.notifyUserCron({
         user_id, payload: {

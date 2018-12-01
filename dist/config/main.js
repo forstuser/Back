@@ -9,6 +9,7 @@ exports.default = {
   NO_OFFER_MSG: 'There are no Offers available from your Seller/s currently.',
   NO_ORDER_MSG: 'You do not have any Active Order. Place an Order with your Seller Now and avail Cashback!',
   SKU_SEARCH_LIMIT: process.env.SKU_SEARCH_LIMIT,
+  BRAND_OFFER_LIMIT: process.env.BRAND_OFFER_LIMIT,
   HOUSEHOLD_CATEGORY_ID: process.env.HOUSEHOLD_CATEGORY_ID,
   MILK_SKU_CATEGORY: process.env.MILK_SKU_CATEGORY,
   MILK_SKU_IDS: (process.env.MILK_SKU_IDS || '').split(','),
@@ -20,6 +21,11 @@ exports.default = {
   SKU_LIMIT: process.env.SKU_LIMIT,
   SELLER_FILTER_DISTANCE: process.env.SELLER_FILTER_DISTANCE,
   API_HOST: process.env.API_HOST,
+  ORDER: {
+    FRESH_DELAY_CASH_BACK_PER_MIN: process.env.FRESH_ORDER_DELAY_CASH_BACK_PER_MIN,
+    FRESH_DELAY_CASH_BACK_AFTER: process.env.FRESH_ORDER_DELAY_CASH_BACK_AFTER,
+    FRESH_DELAY_CASH_BACK_MAX: process.env.FRESH_ORDER_DELAY_CASH_BACK_MAX
+  },
   ADMIN: {
     CREDENTIALS: {
       email: process.env.ADMIN_EMAIL,
@@ -213,5 +219,6 @@ exports.default = {
   MILK_DEFAULT_CASH_BACK_PERCENT: process.env.MILK_DEFAULT_CASH_BACK_PERCENT,
   ALLOW_GEO_FILTER: process.env.ALLOW_GEO_FILTER,
   MAX_SELLER_SUGGESTIONS: process.env.MAX_SELLER_SUGGESTIONS,
+  DELIVERY_INTERVALS: '45 mins||45,1 hrs||60,2 hrs||120,3 hrs||180',
   TRUECALLER_PUBLIC_KEY: '-----BEGIN PUBLIC KEY-----\nMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDEpFwIarbm48m6ueG+jhpt2vCGaqXZlwR/HPuL4zH1DQ/eWFbgQtVnrta8QhQz3ywLnbX6s7aecxUzzNJsTtS8VxKAYll4E1lJUqrNdWt8CU+TaUQuFm8vzLoPiYKEXl4bX5rzMQUMqA228gWuYmRFQnpduQTgnYIMO8XVUQXl5wIDAQAB\n-----END PUBLIC KEY-----'
 };

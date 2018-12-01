@@ -29,6 +29,10 @@ var _shop_earn = require('../adaptors/shop_earn');
 
 var _shop_earn2 = _interopRequireDefault(_shop_earn);
 
+var _category = require('../adaptors/category');
+
+var _category2 = _interopRequireDefault(_category);
+
 var _lodash = require('lodash');
 
 var _lodash2 = _interopRequireDefault(_lodash);
@@ -49,9 +53,13 @@ var _requestPromise = require('request-promise');
 
 var _requestPromise2 = _interopRequireDefault(_requestPromise);
 
+var _moment = require('moment');
+
+var _moment2 = _interopRequireDefault(_moment);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-let orderAdaptor, eHomeAdaptor, notificationAdaptor, userAdaptor, modals, socket_instance, sellerAdaptor, shopEarnAdaptor;
+let orderAdaptor, eHomeAdaptor, notificationAdaptor, userAdaptor, modals, socket_instance, sellerAdaptor, shopEarnAdaptor, categoryAdaptor;
 
 const payment_status = {
   SUCCESS: 16,
@@ -71,6 +79,7 @@ class OrderController {
     socket_instance = socket;
     sellerAdaptor = new _sellers2.default(modals, notificationAdaptor);
     shopEarnAdaptor = new _shop_earn2.default(modals);
+    categoryAdaptor = new _category2.default(modals);
   }
 
   static async getOrderDetails(request, reply) {
@@ -79,15 +88,15 @@ class OrderController {
       if (!request.pre.forceUpdate) {
         const { id } = request.params;
         let result = await orderAdaptor.retrieveOrUpdateOrder({
-          where: { id },
-          attributes: ['id', 'order_details', 'order_type', 'collect_at_store', 'in_review', 'status_type', 'seller_id', 'user_id', 'created_at', 'updated_at', 'is_modified', 'user_address_id', 'delivery_user_id', 'job_id', 'expense_id', [modals.sequelize.literal('(Select cashback_status from table_cashback_jobs as jobs where jobs.id = "order".job_id)'), 'cashback_status'], [modals.sequelize.literal('(Select copies from table_cashback_jobs as jobs where jobs.id = "order".job_id)'), 'copies'], [modals.sequelize.literal('(Select job_id from table_cashback_jobs as jobs where jobs.id = "order".job_id)'), 'upload_id'], [modals.sequelize.literal('(Select admin_status from table_cashback_jobs as jobs where jobs.id = "order".job_id)'), 'admin_status'], [modals.sequelize.literal('(Select purchase_cost from consumer_products as expense where expense.id = "order".expense_id)'), 'total_amount'], [modals.sequelize.literal('(Select sum(amount) from table_wallet_user_cashback as user_wallet where user_wallet.job_id = "order".job_id)'), 'available_cashback']]
-        }, {}, false);
+          where: { id }, attributes: ['id', 'order_details', 'delivery_minutes', 'out_for_delivery_time', 'order_type', 'collect_at_store', 'in_review', 'status_type', 'seller_id', 'user_id', 'created_at', 'updated_at', 'is_modified', 'user_address_id', 'delivery_user_id', 'job_id', 'expense_id', [modals.sequelize.literal('(Select cashback_status from table_cashback_jobs as jobs where jobs.id = "order".job_id)'), 'cashback_status'], 'delayed_delivery', [modals.sequelize.literal('(Select copies from table_cashback_jobs as jobs where jobs.id = "order".job_id)'), 'copies'], [modals.sequelize.literal('(Select job_id from table_cashback_jobs as jobs where jobs.id = "order".job_id)'), 'upload_id'], [modals.sequelize.literal('(Select admin_status from table_cashback_jobs as jobs where jobs.id = "order".job_id)'), 'admin_status'], 'delivery_clock_start_time', [modals.sequelize.literal('(Select purchase_cost from consumer_products as expense where expense.id = "order".expense_id)'), 'total_amount'], [modals.sequelize.literal('(Select sum(amount) from table_wallet_user_cashback as user_wallet where user_wallet.job_id = "order".job_id)'), 'available_cashback'], 'is_auto_accept_user']
+        }, undefined, false);
         if (result) {
           result.seller = {};
           result.user = {};
           let measurement_types = [],
               order_payment;
-          [result.seller, result.user, measurement_types, result.user_address, result[result.order_type === 2 ? 'service_user' : 'delivery_user'], result.seller_review, order_payment] = await Promise.all([sellerAdaptor.retrieveSellerDetail({
+          let user_default_limit_rules;
+          [result.seller, result.user, measurement_types, result.user_address, result[result.order_type === 2 ? 'service_user' : 'delivery_user'], result.seller_review, order_payment, user_default_limit_rules] = await Promise.all([sellerAdaptor.retrieveSellerDetail({
             where: { id: result.seller_id }, attributes: ['seller_name', 'address', [modals.sequelize.literal(`"sellers"."seller_details"->'basic_details'->'pay_online'`), 'pay_online'], 'contact_no', 'email', [modals.sequelize.literal(`(select AVG(seller_reviews.review_ratings) from table_seller_reviews as seller_reviews where seller_reviews.offline_seller_id = "sellers"."id")`), 'ratings'], [modals.sequelize.json(`"seller_details"->'basic_details'`), 'basic_details'], [modals.sequelize.literal(`"seller_details"->'business_details'`), 'business_details'], 'customer_ids', [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16) and transaction_type = 1 and seller_credit.user_id = ${result.user_id} and seller_credit.seller_id = "sellers"."id")`), 'credit_total'], [modals.sequelize.literal(`(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16, 14) and transaction_type = 2 and seller_credit.user_id = ${result.user_id} and seller_credit.seller_id = "sellers"."id")`), 'redeemed_credits']]
           }), userAdaptor.retrieveUserById({ id: result.user_id }, result.user_address_id), modals.measurement.findAll({ where: { status_type: 1 } }), userAdaptor.retrieveUserAddress({
             where: JSON.parse(JSON.stringify({ id: result.user_address_id }))
@@ -105,7 +114,24 @@ class OrderController {
               order_id: id, seller_id: result.seller_id,
               user_id: result.user_id
             }
-          })]);
+          }), categoryAdaptor.retrieveLimitRules({ where: { user_id: 1 } })]);
+
+          if (result.status_type === 4) {
+            if (result.is_modified) {
+              const auto_accept_limit = user_default_limit_rules.find(item => item.rule_type === 15);
+              result.auto_accept_time = (auto_accept_limit || {}).rule_limit;
+            } else {
+              const auto_cancel_limit = user_default_limit_rules.find(item => item.rule_type === 11);
+              result.auto_cancel_time = (auto_cancel_limit || {}).rule_limit || 0;
+              result.auto_cancel_remaining_seconds = (0, _moment2.default)(result.created_at, _moment2.default.ISO_8601).add(result.auto_cancel_time, 'minutes').diff((0, _moment2.default)(), 'seconds');
+              result.auto_cancel_elapsed_seconds = (0, _moment2.default)(result.created_at, _moment2.default.ISO_8601).diff((0, _moment2.default)(), 'seconds');
+            }
+          }
+
+          if (result.delivery_clock_start_time && result.delivery_minutes && (0, _moment2.default)(result.delivery_clock_start_time, _moment2.default.ISO_8601).isValid()) {
+            result.elapsed_seconds = (0, _moment2.default)(result.delivery_clock_start_time, _moment2.default.ISO_8601).diff((0, _moment2.default)(), 'seconds');
+            result.remaining_seconds = (0, _moment2.default)(result.delivery_clock_start_time, _moment2.default.ISO_8601).add(result.delivery_minutes, 'minutes').diff((0, _moment2.default)(), 'seconds');
+          }
 
           result.seller.customer_ids = (result.seller.customer_ids || []).find(item => (item.customer_id ? item.customer_id : item).toString() === result.user_id.toString());
           result.seller.customer_ids = result.seller.customer_ids && result.seller.customer_ids.customer_id ? result.seller.customer_ids : {
@@ -146,6 +172,10 @@ class OrderController {
             if (item.updated_measurement && item.updated_measurement.measurement_type) {
               const updated_measurement_type = measurement_types.find(mtItem => mtItem.id.toString() === item.updated_measurement.measurement_type.toString());
               item.updated_measurement.measurement_acronym = updated_measurement_type ? updated_measurement_type.acronym : 'unit';
+            }
+
+            if (result.payment_mode_id && result.payment_mode_id !== 4 && item.sku_measurement) {
+              item.sku_measurement.cashback_percent = item.sku_measurement.cashback_percent / 2;
             }
 
             item.offer_discount = parseFloat((item.offer_discount || 0).toString());
@@ -319,18 +349,20 @@ class OrderController {
           attributes: ['address_type', 'address_line_1', 'address_line_2', 'city_id', 'state_id', 'locality_id', 'pin', 'latitude', 'longitude', [modals.sequelize.literal('(Select state_name from table_states as state where state.id = user_address.state_id)'), 'state_name'], [modals.sequelize.literal('(Select name from table_cities as city where city.id = user_address.city_id)'), 'city_name'], [modals.sequelize.literal('(Select name from table_localities as locality where locality.id = user_address.locality_id)'), 'locality_name'], [modals.sequelize.literal('(Select pin_code from table_localities as locality where locality.id = user_address.locality_id)'), 'pin_code']]
         }];
         console.log('\n\n\n\n\n\n\n', user_index_data, user_index_data && user_index_data.my_seller_ids && user_index_data.my_seller_ids.length > 0);
-        const orderResult = await orderAdaptor.retrieveOrderList({
+        const [orderResult, reasons] = await Promise.all([orderAdaptor.retrieveOrderList({
           where: JSON.parse(JSON.stringify({ seller_id, user_id, status_type })),
           include, order: [['id', 'desc']],
           limit: !page_no ? 100 : _main2.default.ORDER_LIMIT, offset: !page_no || page_no && (page_no.toString() === '0' || isNaN(page_no)) ? 0 : _main2.default.ORDER_LIMIT * parseInt(page_no),
           attributes: ['id', 'order_details', 'order_type', 'collect_at_store', 'status_type', 'seller_id', 'user_id', 'in_review', [modals.sequelize.literal('(Select my_seller_ids from table_user_index as user_index where user_index.user_id = "order".user_id)'), 'my_seller_ids'], [modals.sequelize.literal('(Select purchase_cost from consumer_products as expense where expense.id = "order".expense_id)'), 'total_amount'], 'job_id', 'expense_id', [modals.sequelize.literal('(Select cashback_status from table_cashback_jobs as jobs where jobs.id = "order".job_id)'), 'cashback_status'], [modals.sequelize.literal('(Select admin_status from table_cashback_jobs as jobs where jobs.id = "order".job_id)'), 'admin_status'], 'created_at', 'updated_at', 'is_modified', 'user_address_id', 'delivery_user_id', [modals.sequelize.literal('(Select sum(amount) from table_wallet_user_cashback as user_wallet where user_wallet.job_id = "order".job_id)'), 'available_cashback']]
-        });
+        }), categoryAdaptor.retrieveRejectReasons({ where: { query_type: 4, status_type: 1 } })]);
         return reply.response({
           result: orderResult.orders,
           order_count: orderResult.order_count,
           last_page: orderResult.order_count > _main2.default.ORDER_LIMIT ? Math.ceil(orderResult.order_count / _main2.default.ORDER_LIMIT) - 1 : 0,
-          seller_exist: !!(user_index_data && user_index_data.my_seller_ids && user_index_data.my_seller_ids.length > 0), status: true,
-          message
+          seller_exist: !!(user_index_data && user_index_data.my_seller_ids && user_index_data.my_seller_ids.length > 0),
+          status: true,
+          message,
+          reasons: [...reasons.filter(item => item.id !== 0), reasons.find(item => item.id === 0)]
         });
       } else {
         return reply.response({
@@ -489,9 +521,13 @@ class OrderController {
       if (request.pre.userExist && !request.pre.forceUpdate) {
         const user_id = user.id;
         let { seller_id, order_type, collect_at_store, service_type_id, user_address, user_address_id, service_name } = request.payload;
+        if (!user_address) {
+          user_address = await userAdaptor.retrieveUserAddress({ where: { user_id, address_type: 1 } });
+        }
         user_address = user_address || {};
         user_address.user_id = user_id;
         user_address.updated_by = user_id;
+        user_address_id = user_address.id;
         const result = await socket_instance.place_order({
           seller_id, user_id, order_type, collect_at_store, service_type_id,
           user_address, user_address_id, service_name
@@ -555,9 +591,12 @@ class OrderController {
     try {
       if (!request.pre.forceUpdate) {
         const { seller_id, order_id } = request.params;
-        let { user_id, order_details, delivery_user_id } = request.payload;
+        let { user_id, order_details, delivery_user_id, delivery_minutes } = request.payload;
         console.log(JSON.stringify(request.payload));
-        const result = await socket_instance.modify_order({ seller_id, user_id, order_details, order_id, delivery_user_id });
+        const result = await socket_instance.modify_order({
+          seller_id, user_id, order_details, order_id,
+          delivery_user_id, delivery_minutes
+        });
         if (result) {
           return reply.response({ result, status: true });
         } else if (result && result === false) {
@@ -617,12 +656,13 @@ class OrderController {
     try {
       if (!request.pre.forceUpdate) {
         let { seller_id, order_id } = request.params;
-        let { user_id, seller_id: payload_seller_id, order_details } = request.payload;
+        let { user_id, seller_id: payload_seller_id, order_details, delivery_minutes } = request.payload;
         seller_id = seller_id || payload_seller_id;
         user_id = user_id || user.id;
+        const is_user = !user.seller_detail;
         const result = await socket_instance.approve_order({
           seller_id, user_id, order_id, status_type: 16,
-          is_user: !user.seller_detail, order_details
+          is_user, order_details, delivery_minutes
         });
         if (result) {
           return reply.response({ result, status: true });
@@ -813,9 +853,16 @@ class OrderController {
     try {
       if (!request.pre.forceUpdate) {
         let { order_id } = request.params;
-        let { seller_id } = request.payload;
+        let { seller_id, reason_id, reason_text } = request.payload;
         const user_id = user.id;
-        const result = await socket_instance.reject_order_by_user({ seller_id, user_id, order_id, status_type: 18 });
+        const result = await socket_instance.reject_order_by_user({
+          seller_id,
+          user_id,
+          order_id,
+          status_type: 18,
+          reason_id,
+          reason_text
+        });
         if (result) {
           return reply.response({ result, status: true });
         } else if (result && result === false) {
@@ -875,7 +922,7 @@ class OrderController {
     try {
       if (!request.pre.forceUpdate) {
         let { order_id } = request.params;
-        let { seller_id } = request.payload;
+        let { seller_id, reason_id, reason_text } = request.payload;
         const user_id = user.id;
         const result = await socket_instance.cancel_order_by_user({ seller_id, user_id, order_id, status_type: 17 });
         if (result) {
@@ -999,7 +1046,7 @@ class OrderController {
     try {
       if (!request.pre.forceUpdate) {
         let { order_id, seller_id } = request.params;
-        let { user_id } = request.payload;
+        let { user_id, reason_id, reason_text } = request.payload;
         const result = await socket_instance.reject_order_by_seller({ seller_id, user_id, order_id, status_type: 18 });
         if (result) {
           return reply.response({ status: true });
@@ -1294,12 +1341,19 @@ class OrderController {
             k;
         postData.returnUrl = `${_main2.default.API_HOST}${_main2.default.CASH_FREE.POST_BACK_URL}`;
         postData.notifyUrl = `${_main2.default.API_HOST}${_main2.default.CASH_FREE.POST_BACK_URL}`;
-        let order_detail = await modals.order.findOne({
-          where: { id: orderId },
-          attributes: ['id', 'order_details', 'order_type', 'collect_at_store', 'in_review', 'status_type', 'seller_id', 'user_id', 'created_at', 'updated_at', 'is_modified', 'user_address_id', 'delivery_user_id', 'job_id', 'expense_id', [modals.sequelize.literal('(Select cashback_status from table_cashback_jobs as jobs where jobs.id = "order".job_id)'), 'cashback_status'], [modals.sequelize.literal('(Select copies from table_cashback_jobs as jobs where jobs.id = "order".job_id)'), 'copies'], [modals.sequelize.literal('(Select job_id from table_cashback_jobs as jobs where jobs.id = "order".job_id)'), 'upload_id'], [modals.sequelize.literal('(Select admin_status from table_cashback_jobs as jobs where jobs.id = "order".job_id)'), 'admin_status'], [modals.sequelize.literal('(Select purchase_cost from consumer_products as expense where expense.id = "order".expense_id)'), 'total_amount'], [modals.sequelize.literal('(Select sum(amount) from table_wallet_user_cashback as user_wallet where user_wallet.job_id = "order".job_id)'), 'available_cashback']]
-        });
-        order_detail = order_detail ? order_detail.toJSON() : order_detail;
+        postData.customerName = customerName || customerPhone;
+        let [order_item, user_default_limit_rules] = await Promise.all([modals.order.findOne({
+          where: { id: orderId }, attributes: ['id', 'order_details', 'delivery_clock_start_time', 'order_type', 'collect_at_store', 'in_review', 'status_type', 'seller_id', 'user_id', 'created_at', 'updated_at', 'is_modified', 'user_address_id', 'delivery_user_id', 'job_id', 'expense_id', [modals.sequelize.literal('(Select cashback_status from table_cashback_jobs as jobs where jobs.id = "order".job_id)'), 'cashback_status'], 'delivery_minutes', [modals.sequelize.literal('(Select copies from table_cashback_jobs as jobs where jobs.id = "order".job_id)'), 'copies'], [modals.sequelize.literal('(Select job_id from table_cashback_jobs as jobs where jobs.id = "order".job_id)'), 'upload_id'], [modals.sequelize.literal('(Select admin_status from table_cashback_jobs as jobs where jobs.id = "order".job_id)'), 'admin_status'], [modals.sequelize.literal('(Select purchase_cost from consumer_products as expense where expense.id = "order".expense_id)'), 'total_amount'], 'delayed_delivery', [modals.sequelize.literal('(Select sum(amount) from table_wallet_user_cashback as user_wallet where user_wallet.job_id = "order".job_id)'), 'available_cashback']]
+        }), categoryAdaptor.retrieveLimitRules({ where: { user_id: 1 } })]);
+        let order_detail = order_item ? order_item.toJSON() : order_item;
+
         if (order_detail) {
+          if (order_detail.order_type === 1 && !order_detail.collect_at_store) {
+            const delivery_default_limit = user_default_limit_rules.find(item => item.rule_type === 16);
+            const delivery_minutes = (0, _moment2.default)().diff((0, _moment2.default)(order_detail.delivery_clock_start_time, _moment2.default.ISO_8601), 'minutes', true);
+            let delayed_delivery = order_detail.delivery_minutes !== (delivery_default_limit || {}).rule_limit || delivery_minutes > (delivery_default_limit || {}).rule_limit;
+            await order_item.updateAttributes({ delayed_delivery });
+          }
           order_detail.order_details = order_detail.order_type === 1 ? order_detail.order_details.map(item => {
             item.selling_price = parseFloat((item.selling_price || 0).toString());
             return item;
@@ -1484,8 +1538,8 @@ class OrderController {
         })
       }).catch(ex => console.log('error while logging on db,', ex));
       const { status, txStatus } = JSON.parse(result);
-      if (status === 'OK' && txStatus) {
-        payment_detail.status_type = payment_status[txStatus];
+      if (status === 'OK') {
+        payment_detail.status_type = txStatus ? payment_status[txStatus] : 9;
 
         payment_detail = await orderAdaptor.retrieveOrUpdatePaymentDetails({ where: { ref_id, order_id } }, payment_detail);
         if (payment_detail.status_type === 16) {
@@ -1624,6 +1678,12 @@ class OrderController {
     }
 
     return undefined;
+  }
+
+  static async retrieveCancelOrderReasons(request, reply) {
+    return reply.response({
+      status: true, result: await categoryAdaptor.retrieveRejectReasons({ where: { query_type: 4, status_type: 1 } })
+    });
   }
 }
 

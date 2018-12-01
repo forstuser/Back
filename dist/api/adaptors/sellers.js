@@ -54,12 +54,15 @@ class SellerAdaptor {
   }
 
   async retrieveSellers(options, query_options) {
-    const { latitude, longitude, city, limit, offset } = options;
+    const { latitude, longitude, city, limit, offset, distance_filter_required } = options;
     const result = await this.modals.sellers.findAll(query_options);
     let sellers = result.map(item => item.toJSON());
     if (sellers.length > 0) {
       if (latitude && longitude) {
-        sellers = await this.orderSellerByLocation(latitude, longitude, city, sellers);
+        sellers = await this.orderSellerByLocation({
+          latitude, longitude, city, sellers,
+          distance_filter_required
+        });
       }
       // sellers = _.slice(sellers, offset, limit);
       let seller_id = sellers.map(item => item.id),
@@ -98,23 +101,32 @@ class SellerAdaptor {
   }
 
   async retrieveOfferSellers(options, query_options) {
-    const { seller_offer_ids, latitude, longitude, city, limit, offset } = options;
+    const { latitude, longitude, city } = options;
     const result = await this.modals.sellers.findAll(query_options);
-    let sellers = result.map(item => item.toJSON());
+    let sellers = result.map(item => item.toJSON()).filter(item => !item.is_logged_out);
     if (sellers.length > 0) {
+      if (latitude && longitude) {
+        sellers = await this.orderSellerByLocation({
+          latitude, longitude, city, sellers,
+          distance_filter_required: false
+        });
+      }
+
       let seller_id = sellers.map(item => item.id);
-      const $or = seller_offer_ids && seller_offer_ids.length > 0 ? { id: seller_offer_ids, on_sku: true } : { on_sku: true };
+      const $or = { on_sku: true };
       const seller_offers = await this.retrieveSellerOffersForConsumer({ seller_id, $or }, seller_id);
 
       sellers = sellers.map(item => {
-        item.offer_count = item.offer_count || 0;
+        item.offer_count = parseInt((item.offer_count || 0).toString());
+        item.sku_offer_count = parseInt((item.sku_offer_count || 0).toString());
         item.ratings = item.ratings || 0;
         item.offers = seller_offers.filter(offerItem => item.id === offerItem.seller_id && (offerItem.on_sku && offerItem.offer_discount > 0 || !offerItem.on_sku));
         return item;
       });
     }
 
-    return sellers.filter(item => item.offers && item.offers.length > 0);
+    console.log(JSON.stringify({ sellers }));
+    return sellers.filter(item => item.offer_count > 0 || item.sku_offer_count > 0);
   }
 
   async retrieveSellerOfferSKUs(where, seller_offers) {
@@ -152,7 +164,8 @@ class SellerAdaptor {
     return result ? result.map(item => item.toJSON()) : result;
   }
 
-  async retrieveOrUpdateSellerDetail(query_options, seller_detail, is_create, user) {
+  async retrieveOrUpdateSellerDetail(parameters) {
+    let { query_options, seller_detail, is_create, user } = parameters;
     let result = await this.modals.sellers.findOne(query_options);
     if (!result && is_create) {
       result = await this.modals.sellers.create(seller_detail);
@@ -504,6 +517,22 @@ class SellerAdaptor {
     return seller;
   }
 
+  async retrieveSellerAddressDifference(address_query_options, query_options) {
+    let [seller, user_address] = await _bluebird2.default.all([this.modals.sellers.findOne(query_options), this.userAdaptor.retrieveUserAddress(address_query_options)]);
+    seller = seller ? seller.toJSON() : seller;
+
+    if (seller && user_address) {
+
+      let { latitude, longitude, address_line_1, address_line_2, state_name, city_name, locality_name, pin_code } = user_address;
+
+      if (latitude && longitude) {
+        seller = await this.retrieveSellerByLocation(latitude, longitude, city_name, seller);
+      }
+    }
+
+    return seller;
+  }
+
   async retrieveSellerDetails(options, query_options) {
     const { latitude, longitude, city } = options;
     const result = await this.modals.sellers.findOne(query_options);
@@ -635,7 +664,7 @@ class SellerAdaptor {
   async retrieveSellerOffersForConsumer(options) {
     options.end_date = { $gte: _moment2.default.utc() };
     let seller_offers = await this.modals.seller_offers.findAll({
-      where: JSON.parse(JSON.stringify(options)), attributes: ['id', 'seller_id', 'title', 'description', 'on_sku', 'start_date', 'end_date', 'document_details', 'sku_id', 'sku_measurement_id', 'offer_discount', 'seller_mrp', [this.modals.sequelize.literal('(select title from table_sku_global as sku where sku.id = seller_offers.sku_id)'), 'sku_title'], [this.modals.sequelize.literal(`(select measurement_value from table_sku_measurement_detail as sku_measure where sku_measure.id = seller_offers.sku_measurement_id)`), 'measurement_value'], [this.modals.sequelize.literal(`(Select acronym from table_sku_measurement as measure where measure.id = (select measurement_type from table_sku_measurement_detail as sku_measure where sku_measure.id = seller_offers.sku_measurement_id limit 1))`), 'acronym'], [this.modals.sequelize.literal(`(select mrp from table_sku_measurement_detail as sku_measure where sku_measure.id = seller_offers.sku_measurement_id)`), 'mrp'], [this.modals.sequelize.literal(`(select bar_code from table_sku_measurement_detail as sku_measure where sku_measure.id = seller_offers.sku_measurement_id)`), 'bar_code']], order: [['updated_at', 'desc']]
+      where: JSON.parse(JSON.stringify(options)), attributes: ['id', 'seller_id', 'title', 'description', 'on_sku', 'offer_type', 'start_date', 'end_date', 'document_details', 'sku_id', 'sku_measurement_id', 'offer_discount', 'seller_mrp', [this.modals.sequelize.literal('(select category_name from categories as cat where cat.category_id in (Select sub_category_id from table_sku_global as sku where sku.id = seller_offers.sku_id))'), 'sub_category_name'], [this.modals.sequelize.literal('(Select sub_category_id from table_sku_global as sku where sku.id = seller_offers.sku_id)'), 'sub_category_id'], [this.modals.sequelize.literal('(select title from table_sku_global as sku where sku.id = seller_offers.sku_id)'), 'sku_title'], [this.modals.sequelize.literal(`(select measurement_value from table_sku_measurement_detail as sku_measure where sku_measure.id = seller_offers.sku_measurement_id)`), 'measurement_value'], [this.modals.sequelize.literal(`(Select acronym from table_sku_measurement as measure where measure.id = (select measurement_type from table_sku_measurement_detail as sku_measure where sku_measure.id = seller_offers.sku_measurement_id limit 1))`), 'acronym'], [this.modals.sequelize.literal(`(Select acronym from table_sku_measurement as measure where measure.id = seller_offers.sku_measurement_type)`), 'offer_acronym'], [this.modals.sequelize.literal(`(select mrp from table_sku_measurement_detail as sku_measure where sku_measure.id = seller_offers.sku_measurement_id)`), 'mrp'], [this.modals.sequelize.literal(`(select bar_code from table_sku_measurement_detail as sku_measure where sku_measure.id = seller_offers.sku_measurement_id)`), 'bar_code']], order: [['updated_at', 'desc']]
     });
     seller_offers = seller_offers.map(item => {
       item = item.toJSON();
@@ -813,7 +842,8 @@ class SellerAdaptor {
     return _lodash2.default.orderBy(final_result, ['distance', 'created_at'], ['asc', 'desc']);
   }
 
-  async orderSellerByLocation(latitude, longitude, city, sellers) {
+  async orderSellerByLocation(parameters) {
+    let { latitude, longitude, city, sellers, distance_filter_required } = parameters;
     const lat_long = latitude && longitude ? `${latitude}, ${longitude}` : '';
     const origins = [];
     const destinations = [];
@@ -858,7 +888,7 @@ class SellerAdaptor {
           }
 
           console.log(JSON.stringify(final_result));
-          return _lodash2.default.orderBy(final_result.filter(elem => !!elem.distance && parseFloat(elem.distance) <= _main2.default.SELLER_FILTER_DISTANCE), ['distance'], ['asc']);
+          return distance_filter_required ? _lodash2.default.orderBy(final_result.filter(elem => !!elem.distance && parseFloat(elem.distance) <= _main2.default.SELLER_FILTER_DISTANCE), ['distance'], ['asc']) : _lodash2.default.orderBy(final_result, ['distance'], ['asc']);
         }
       }
 
@@ -893,11 +923,6 @@ class SellerAdaptor {
 
     if (origins.length > 0 && destinations.length > 0) {
       sellers_with_location.push(seller);
-    } else {
-      final_result.push(seller);
-    }
-
-    if (origins.length > 0 && destinations.length > 0) {
       const result = await _google2.default.distanceMatrix(origins, destinations);
       for (let i = 0; i < sellers_with_location.length; i += 1) {
         if (result.length > 0) {
@@ -913,6 +938,10 @@ class SellerAdaptor {
       }
 
       return final_result[0];
+    } else {
+      seller.distanceMetrics = 'km';
+      seller.distance = parseFloat(500.001);
+      return seller;
     }
   }
 
@@ -1121,6 +1150,22 @@ class SellerAdaptor {
   async retrieveSellerLoyaltyRules(options) {
     let loyalty_rules = await this.modals.loyalty_rules.findAll({ where: options });
     return loyalty_rules.map(item => item.toJSON())[0];
+  }
+
+  async retrieveSellersToLink(options, query_options) {
+    const { latitude, longitude, city } = options;
+    const result = await this.modals.sellers.findAll(query_options);
+    let sellers = result.map(item => item.toJSON());
+    if (sellers.length > 0) {
+      if (latitude && longitude) {
+        sellers = await this.orderSellerByLocation({
+          latitude, longitude, city, sellers,
+          distance_filter_required: true
+        });
+      }
+    }
+
+    return sellers;
   }
 
 }

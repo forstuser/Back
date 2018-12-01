@@ -194,7 +194,9 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
         description: 'Reject order on behalf of Consumer.',
         validate: {
           payload: {
-            seller_id: _joi2.default.number().required()
+            seller_id: _joi2.default.number().required(),
+            reason_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            reason_text: [_joi2.default.string(), _joi2.default.allow(null)]
           }
         }
       }
@@ -210,7 +212,9 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
         description: 'Cancel order on behalf of Consumer.',
         validate: {
           payload: {
-            seller_id: _joi2.default.number().required()
+            seller_id: _joi2.default.number().required(),
+            reason_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            reason_text: [_joi2.default.string(), _joi2.default.allow(null)]
           }
         }
       }
@@ -312,7 +316,8 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
           payload: {
             user_id: _joi2.default.number().required(),
             delivery_user_id: [_joi2.default.number(), _joi2.default.allow(null)],
-            order_details: [_joi2.default.array().items(_joi2.default.object()), _joi2.default.allow(null)]
+            order_details: [_joi2.default.array().items(_joi2.default.object()), _joi2.default.allow(null)],
+            delivery_minutes: [_joi2.default.string(), _joi2.default.allow(null)]
           }
         }
       }
@@ -347,7 +352,8 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
         validate: {
           payload: {
             user_id: _joi2.default.number().required(),
-            order_details: [_joi2.default.array().items(_joi2.default.object()), _joi2.default.allow(null)]
+            order_details: [_joi2.default.array().items(_joi2.default.object()), _joi2.default.allow(null)],
+            delivery_minutes: [_joi2.default.string(), _joi2.default.allow(null)]
           }
         }
       }
@@ -363,7 +369,9 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
         description: 'Reject order on behalf of Seller.',
         validate: {
           payload: {
-            user_id: _joi2.default.number().required()
+            user_id: _joi2.default.number().required(),
+            reason_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            reason_text: [_joi2.default.string(), _joi2.default.allow(null)]
           }
         }
       }
@@ -401,7 +409,7 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
             orderAmount: _joi2.default.string().required(),
             orderCurrency: [_joi2.default.string(), _joi2.default.allow(null)],
             orderNote: [_joi2.default.string(), _joi2.default.allow(null)],
-            customerName: _joi2.default.string().required(),
+            customerName: [_joi2.default.string(), _joi2.default.allow(null)],
             customerPhone: _joi2.default.string().required(),
             customerEmail: _joi2.default.string().required(),
             returnUrl: [_joi2.default.string(), _joi2.default.allow(null)],
@@ -439,6 +447,15 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
       config: {
         handler: _order2.default.retrieveDigitalBill,
         description: 'Retrieve Digital Bill.'
+      }
+    });
+
+    routeObject.push({
+      method: 'GET',
+      path: '/consumer/cancel/reasons',
+      config: {
+        handler: _order2.default.retrieveCancelOrderReasons,
+        description: 'Retrieve Reasons to Cancel Order.'
       }
     });
   }

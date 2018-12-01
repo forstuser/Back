@@ -424,7 +424,11 @@ class UserController {
           longitude: gst_detail.pradr.addr.lg || undefined,
           address: `${gst_detail.pradr.addr.bno}, ${gst_detail.pradr.addr.flno} ${gst_detail.pradr.addr.bnm}, ${gst_detail.pradr.addr.st}, ${gst_detail.pradr.addr.loc}`
         }));
-        const [otpStatus, user, seller_detail] = await _bluebird2.default.all([_otp2.default.sendOTPToUser(mobile_no, 4), userAdaptor.retrieveSellerUser({ where: JSON.parse(JSON.stringify({ mobile_no, email })) }), gstin || pan ? sellerAdaptor.retrieveOrUpdateSellerDetail({ where: JSON.parse(JSON.stringify({ $or: { gstin, pan } })) }, seller_updates, false) : undefined]);
+        const [otpStatus, user, seller_detail] = await _bluebird2.default.all([_otp2.default.sendOTPToUser(mobile_no, 4), userAdaptor.retrieveSellerUser({ where: JSON.parse(JSON.stringify({ mobile_no, email })) }), gstin || pan ? sellerAdaptor.retrieveOrUpdateSellerDetail({
+          query_options: {
+            where: JSON.parse(JSON.stringify({ $or: { gstin, pan } }))
+          }, seller_detail: seller_updates, is_create: false
+        }) : undefined]);
 
         if (otpStatus.type === 'success') {
           console.log('SMS SENT WITH ID: ', otpStatus.message);
@@ -713,9 +717,11 @@ class UserController {
         if (data.type === 'success') {
           let user_detail = await userAdaptor.retrieveSellerUser(userWhere, true, { mobile_no, email, status_type: 1, is_logged_out: false });
           let [seller_detail] = await _bluebird2.default.all([sellerAdaptor.retrieveOrUpdateSellerDetail({
-            where: JSON.parse(JSON.stringify({ user_id: user_detail.id })),
-            attributes: ['seller_type_id', 'id']
-          }, false, false), fcmManager.insertSellerFcmDetails({
+            query_options: {
+              where: JSON.parse(JSON.stringify({ user_id: user_detail.id })),
+              attributes: ['seller_type_id', 'id']
+            }, seller_detail: false, is_create: false
+          }), fcmManager.insertSellerFcmDetails({
             seller_user_id: user_detail.id,
             fcm_id, platform_id: platform || 1
           })]);
@@ -946,7 +952,15 @@ class UserController {
           })));
         }
 
-        await (!user.seller_details ? userAdaptor.updateUserDetail({ last_logout_at: _moment2.default.utc().format('YYYY-MM-DD HH:mm:ss') }, { where: { id: user.id } }) : sellerAdaptor.retrieveOrUpdateSellerDetail({ where: JSON.parse(JSON.stringify({ id: user.id })) }, { last_logout_at: _moment2.default.utc().format('YYYY-MM-DD HH:mm:ss') }, false));
+        await (!user.seller_details ? userAdaptor.updateUserDetail({ last_logout_at: _moment2.default.utc().format('YYYY-MM-DD HH:mm:ss') }, { where: { id: user.id } }) : sellerAdaptor.retrieveOrUpdateSellerDetail({
+          query_options: {
+            where: JSON.parse(JSON.stringify({ id: user.id }))
+          },
+          seller_detail: {
+            last_logout_at: _moment2.default.utc().format('YYYY-MM-DD HH:mm:ss')
+          },
+          is_create: false
+        }));
         return reply.response(replyObject).code(201);
       } else if (!request.pre.userExist) {
         replyObject.status = false;
@@ -995,9 +1009,13 @@ class UserController {
           platform_id: request.payload.platform || 1
         }))), userAdaptor.retrieveSellerUser({ where: { id: user.id } }, false, { is_logged_out: true })]);
 
-        await (!user.seller_details ? userAdaptor.updateUserDetail({ last_logout_at: _moment2.default.utc().format('YYYY-MM-DD HH:mm:ss') }, { where: { id: user.id } }) : sellerAdaptor.retrieveOrUpdateSellerDetail({ where: JSON.parse(JSON.stringify({ id: user.id })) }, {
-          last_logout_at: _moment2.default.utc().format('YYYY-MM-DD HH:mm:ss')
-        }, false));
+        await (!user.seller_details ? userAdaptor.updateUserDetail({ last_logout_at: _moment2.default.utc().format('YYYY-MM-DD HH:mm:ss') }, { where: { id: user.id } }) : sellerAdaptor.retrieveOrUpdateSellerDetail({
+          query_options: {
+            where: JSON.parse(JSON.stringify({ id: user.id }))
+          }, seller_detail: {
+            last_logout_at: _moment2.default.utc().format('YYYY-MM-DD HH:mm:ss')
+          }, is_create: false
+        }));
         return reply.response(replyObject).code(201);
       } else if (!request.pre.userExist) {
         replyObject.status = false;

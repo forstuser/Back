@@ -1017,11 +1017,14 @@ class UploadController {
         }
       });
       const seller = await sellerAdaptor.retrieveOrUpdateSellerDetail(
-          {where: {id: seller_data.id}},
-          JSON.parse(JSON.stringify({
-            is_onboarded: type.toString() === '2' ? true : undefined,
-            seller_details,
-          })), false);
+          {
+            query_options: {where: {id: seller_data.id}},
+            seller_detail: JSON.parse(JSON.stringify({
+              is_onboarded: type.toString() === '2' ? true : undefined,
+              seller_details,
+            })),
+            is_create: false
+          });
       return reply.response(JSON.parse(JSON.stringify({
         status: true, message: 'Upload Successful',
         seller: type.toString() === '1' || type.toString() === '2' ?
@@ -1743,7 +1746,11 @@ class UploadController {
             return reply.response({
               status: true,
               seller: await sellerAdaptor.retrieveOrUpdateSellerDetail(
-                  {where: {id}}, seller_data, false),
+                  {
+                    query_options: {where: {id}},
+                    seller_detail: seller_data,
+                    is_create: false
+                  }),
             });
           } else {
 
@@ -1842,7 +1849,11 @@ class UploadController {
           return reply.response({
             status: true,
             seller: await sellerAdaptor.retrieveOrUpdateSellerDetail(
-                {where: {id}}, seller_data, false),
+                {
+                  query_options: {where: {id}},
+                  seller_detail: seller_data,
+                  is_create: false
+                }),
           });
         } else {
 

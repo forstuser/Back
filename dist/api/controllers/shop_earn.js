@@ -107,7 +107,7 @@ class ShopEarnController {
             sku_result.sku_items = [...milk_skus, ...matching_skus, ...distinct_skus];
           }
           return reply.response({
-            status: true, result: sku_result,
+            status: true, result: JSON.parse(JSON.stringify(sku_result)),
             max_wish_list_items: _main2.default.MAX_WISH_LIST_ITEMS,
             seller_list: (seller_list || []).filter(item => parseInt(item.provider_counts || 0) > 0 || parseInt(item.sku_seller_counts || 0) > 0 || item.is_data_manually_added)
           });
@@ -265,8 +265,7 @@ class ShopEarnController {
             return Math.abs(sku_ratio - a_sku_ratio) < Math.abs(sku_ratio - b_sku_ratio) ? -1 : Math.abs(sku_ratio - a_sku_ratio) === Math.abs(sku_ratio - b_sku_ratio) ? 0 : 1;
           });
           return reply.response({
-            status: true,
-            result: _lodash2.default.slice([...matching_skus, ...sku_result], 0, _main2.default.MAX_SELLER_SUGGESTIONS)
+            status: true, result: _lodash2.default.slice(JSON.parse(JSON.stringify([...matching_skus, ...sku_result])), 0, _main2.default.MAX_SELLER_SUGGESTIONS)
           });
         }
 
@@ -354,7 +353,7 @@ class ShopEarnController {
         }
         return reply.response({
           status: true,
-          result: sku_item
+          result: JSON.parse(JSON.stringify(sku_item))
         });
       } catch (err) {
         console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
@@ -399,7 +398,7 @@ class ShopEarnController {
         }
         return reply.response({
           status: true,
-          result: sku_item
+          result: JSON.parse(JSON.stringify(sku_item))
         });
       } catch (err) {
         console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);
@@ -444,12 +443,12 @@ class ShopEarnController {
             id: user.my_seller_ids, is_onboarded: true, is_fmcg: true,
             contact_no: { $ne: user.mobile_no }
           })),
-          attributes: ['id', 'seller_name', 'seller_type_id', 'address', 'is_data_manually_added', [modals.sequelize.literal(`(Select count(*) from table_seller_provider_types as provider_type where provider_type.seller_id = sellers.id)`), 'provider_counts'], [modals.sequelize.literal(`(Select count(*) from table_sku_seller_mapping as sku_seller where sku_seller.seller_id = sellers.id)`), 'sku_seller_counts']]
+          attributes: ['id', 'seller_name', 'seller_type_id', 'address', 'is_data_manually_added', [modals.sequelize.literal(`(select is_logged_out from table_seller_users as "users" where "users".id = "sellers"."user_id")`), 'is_logged_out'], [modals.sequelize.literal(`(Select count(*) from table_seller_provider_types as provider_type where provider_type.seller_id = sellers.id)`), 'provider_counts'], [modals.sequelize.literal(`(Select count(*) from table_sku_seller_mapping as sku_seller where sku_seller.seller_id = sellers.id)`), 'sku_seller_counts']]
         }) : undefined;
         return reply.response({
           status: true,
           result: await shopEarnAdaptor.retrieveReferenceData(),
-          seller_list: (seller_list || []).filter(item => parseInt(item.provider_counts || 0) > 0 || parseInt(item.sku_seller_counts || 0) > 0 || item.is_data_manually_added)
+          seller_list: (seller_list || []).filter(item => !item.is_logged_out)
         });
       } catch (err) {
         console.log(`Error on ${new Date()} for user ${user.id || user.ID} is as follow: \n \n ${err}`);

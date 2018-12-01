@@ -196,4 +196,47 @@ export default class OrderAdaptor {
     cash_back_details = cash_back_details.toJSON();
     return {cash_back_details, wallet_credited};
   }
+
+  async handleDelayedCashBack(options) {
+    let {status_type, order_id, seller_id, amount, transaction_type, user_id, cashback_source, delay_max_cash_back} = options;
+    amount = Math.ceil(amount / 2);
+    amount = amount > delay_max_cash_back ? delay_max_cash_back : amount;
+    const delayed_cash_back_count = await this.modals.user_wallet.count({
+      where: {
+        user_id, seller_id, order_id: {$not: null}, cashback_source: 10,
+        created_at: {
+          $between: [
+            moment().utcOffset(330).startOf('day').format(''),
+            moment().utcOffset(330).format('')],
+        },
+      },
+    });
+
+    console.log(JSON.stringify({delayed_cash_back_count}));
+    if (delayed_cash_back_count === 0) {
+      const [delayed_user_cash_back, deducted_seller_cash_back] = await Promise.all(
+          [
+            this.modals.user_wallet.create(
+                JSON.parse(JSON.stringify(
+                    {
+                      status_type: 16, order_id, cashback_source: 10,
+                      amount, transaction_type: 1, user_id, seller_id,
+                    }))),
+            this.modals.cashback_wallet.create(
+                JSON.parse(JSON.stringify(
+                    {
+                      status_type: 16, order_id, cashback_source: 10,
+                      amount, transaction_type: 1, user_id, seller_id,
+                    }))), this.modals.seller_wallet.create(
+              JSON.parse(JSON.stringify(
+                  {
+                    status_type: 14, order_id, cashback_source: 10,
+                    amount, transaction_type: 2, user_id, seller_id,
+                  })))]);
+      console.log({delayed_user_cash_back, deducted_seller_cash_back});
+      return {delayed_user_cash_back, deducted_seller_cash_back};
+    }
+
+    return false;
+  }
 }

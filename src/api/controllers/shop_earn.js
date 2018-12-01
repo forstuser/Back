@@ -104,7 +104,7 @@ class ShopEarnController {
               ...milk_skus, ...matching_skus, ...distinct_skus];
           }
           return reply.response({
-            status: true, result: sku_result,
+            status: true, result: JSON.parse(JSON.stringify(sku_result)),
             max_wish_list_items: config.MAX_WISH_LIST_ITEMS,
             seller_list: (seller_list || []).filter(
                 item => parseInt(item.provider_counts || 0) > 0 ||
@@ -332,9 +332,9 @@ class ShopEarnController {
                 Math.abs(sku_ratio - b_sku_ratio) ? 0 : 1;
           });
           return reply.response({
-            status: true,
-            result: _.slice([...matching_skus, ...sku_result], 0,
-                config.MAX_SELLER_SUGGESTIONS),
+            status: true, result: _.slice(
+                JSON.parse(JSON.stringify([...matching_skus, ...sku_result])),
+                0, config.MAX_SELLER_SUGGESTIONS),
           });
         }
 
@@ -432,7 +432,7 @@ class ShopEarnController {
         }
         return reply.response({
           status: true,
-          result: sku_item,
+          result: JSON.parse(JSON.stringify(sku_item)),
         });
       } catch (err) {
         console.log(`Error on ${new Date()} for user ${user.id ||
@@ -482,7 +482,7 @@ class ShopEarnController {
         }
         return reply.response({
           status: true,
-          result: sku_item,
+          result: JSON.parse(JSON.stringify(sku_item)),
         });
       } catch (err) {
         console.log(`Error on ${new Date()} for user ${user.id ||
@@ -539,6 +539,9 @@ class ShopEarnController {
                 'id', 'seller_name', 'seller_type_id', 'address',
                 'is_data_manually_added', [
                   modals.sequelize.literal(
+                      `(select is_logged_out from table_seller_users as "users" where "users".id = "sellers"."user_id")`),
+                  'is_logged_out'], [
+                  modals.sequelize.literal(
                       `(Select count(*) from table_seller_provider_types as provider_type where provider_type.seller_id = sellers.id)`),
                   'provider_counts'], [
                   modals.sequelize.literal(
@@ -548,10 +551,7 @@ class ShopEarnController {
         return reply.response({
           status: true,
           result: await shopEarnAdaptor.retrieveReferenceData(),
-          seller_list: (seller_list || []).filter(
-              item => parseInt(item.provider_counts || 0) > 0 ||
-                  parseInt(item.sku_seller_counts || 0) > 0 ||
-                  item.is_data_manually_added),
+          seller_list: (seller_list || []).filter(item => !item.is_logged_out),
         });
       } catch (err) {
         console.log(`Error on ${new Date()} for user ${user.id ||

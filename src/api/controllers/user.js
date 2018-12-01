@@ -397,8 +397,11 @@ class UserController {
           userAdaptor.retrieveSellerUser(
               {where: JSON.parse(JSON.stringify({mobile_no, email}))}),
           gstin || pan ? sellerAdaptor.retrieveOrUpdateSellerDetail(
-              {where: JSON.parse(JSON.stringify({$or: {gstin, pan}}))},
-              seller_updates, false) : undefined]);
+              {
+                query_options: {
+                  where: JSON.parse(JSON.stringify({$or: {gstin, pan}}))
+                }, seller_detail: seller_updates, is_create: false
+              }) : undefined]);
 
         if (otpStatus.type === 'success') {
           console.log('SMS SENT WITH ID: ', otpStatus.message);
@@ -711,10 +714,12 @@ class UserController {
           let [seller_detail] = await Promise.all([
             sellerAdaptor.retrieveOrUpdateSellerDetail(
                 {
-                  where: JSON.parse(JSON.stringify({user_id: user_detail.id})),
-                  attributes: ['seller_type_id', 'id'],
-                },
-                false, false),
+                  query_options: {
+                    where: JSON.parse(
+                        JSON.stringify({user_id: user_detail.id})),
+                    attributes: ['seller_type_id', 'id'],
+                  }, seller_detail: false, is_create: false
+                }),
             fcmManager.insertSellerFcmDetails({
               seller_user_id: user_detail.id,
               fcm_id, platform_id: platform || 1,
@@ -960,9 +965,16 @@ class UserController {
                 {last_logout_at: moment.utc().format('YYYY-MM-DD HH:mm:ss')},
                 {where: {id: user.id}}) :
             sellerAdaptor.retrieveOrUpdateSellerDetail(
-                {where: JSON.parse(JSON.stringify({id: user.id}))},
-                {last_logout_at: moment.utc().format('YYYY-MM-DD HH:mm:ss')},
-                false));
+                {
+                  query_options: {
+                    where: JSON.parse(JSON.stringify({id: user.id}))
+                  },
+                  seller_detail: {
+                    last_logout_at: moment.utc().
+                        format('YYYY-MM-DD HH:mm:ss')
+                  },
+                  is_create: false
+                }));
         return reply.response(replyObject).code(201);
       } else if (!request.pre.userExist) {
         replyObject.status = false;
@@ -1019,11 +1031,13 @@ class UserController {
                 {last_logout_at: moment.utc().format('YYYY-MM-DD HH:mm:ss')},
                 {where: {id: user.id}}) :
             sellerAdaptor.retrieveOrUpdateSellerDetail(
-                {where: JSON.parse(JSON.stringify({id: user.id}))},
                 {
-                  last_logout_at: moment.utc().format('YYYY-MM-DD HH:mm:ss'),
-                },
-                false));
+                  query_options: {
+                    where: JSON.parse(JSON.stringify({id: user.id}))
+                  }, seller_detail: {
+                    last_logout_at: moment.utc().format('YYYY-MM-DD HH:mm:ss'),
+                  }, is_create: false
+                }));
         return reply.response(replyObject).code(201);
       } else if (!request.pre.userExist) {
         replyObject.status = false;

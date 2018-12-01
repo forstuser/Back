@@ -1,19 +1,18 @@
 'use strict';
 
 export default (sequelize, DataTypes) => {
-  const seller_offers = sequelize.define('seller_offers', {
+  const seller_offer_request = sequelize.define('seller_offer_request', {
         title: {type: DataTypes.STRING},
         description: {type: DataTypes.STRING},
-        document_details: {type: DataTypes.JSONB},
         seller_id: {type: DataTypes.INTEGER},
         offer_type: {type: DataTypes.INTEGER, defaultValue: 1},
-        on_sku: {type: DataTypes.BOOLEAN, defaultValue: false},
         updated_by: {type: DataTypes.INTEGER},
         sku_id: {type: DataTypes.INTEGER},
         sku_measurement_id: {type: DataTypes.INTEGER},
         sku_measurement_type: {type: DataTypes.INTEGER},
         brand_offer_id: {type: DataTypes.INTEGER},
-        offer_discount: {type: DataTypes.FLOAT, defaultValue: 0},
+        quantity: {type: DataTypes.INTEGER, defaultValue: 1},
+        offer_value: {type: DataTypes.FLOAT, defaultValue: 0},
         seller_mrp: {type: DataTypes.FLOAT, defaultValue: 0},
         status_type: {type: DataTypes.INTEGER, defaultValue: 1},
         created_at: {
@@ -35,39 +34,39 @@ export default (sequelize, DataTypes) => {
         defaultPrimaryKey: true,
         timestamps: true,
         underscored: true,
-        tableName: 'table_seller_offers',
+        tableName: 'table_seller_offer_request',
       });
 
-  seller_offers.associate = (models) => {
-    seller_offers.belongsTo(models.users,
+  seller_offer_request.associate = (models) => {
+    seller_offer_request.belongsTo(models.users,
         {foreignKey: 'updated_by', onDelete: 'cascade', onUpdate: 'cascade'});
-    seller_offers.belongsTo(models.sellers,
+    seller_offer_request.belongsTo(models.sellers,
         {
           foreignKey: 'seller_id', as: 'seller',
           onDelete: 'cascade', onUpdate: 'cascade',
         });
-    seller_offers.belongsTo(models.statuses,
+    seller_offer_request.belongsTo(models.statuses,
         {
           foreignKey: 'status_type', targetKey: 'status_type',
           onDelete: 'cascade', onUpdate: 'cascade',
         });
-    seller_offers.belongsTo(models.brand_offers,
+    seller_offer_request.belongsTo(models.brand_offers,
         {
           foreignKey: 'brand_offer_id',
           onDelete: 'cascade', onUpdate: 'cascade',
         });
-    seller_offers.belongsTo(models.sku,
+    seller_offer_request.belongsTo(models.sku,
         {foreignKey: 'sku_id', onDelete: 'cascade', onUpdate: 'cascade'});
-    seller_offers.belongsTo(models.sku_measurement,
+    seller_offer_request.belongsTo(models.sku_measurement,
         {
           foreignKey: 'sku_measurement_id',
           onDelete: 'cascade', onUpdate: 'cascade',
         });
-    seller_offers.belongsTo(models.measurement,
+    seller_offer_request.belongsTo(models.measurement,
         {
           foreignKey: 'sku_measurement_type',
           onDelete: 'cascade', onUpdate: 'cascade',
         });
   };
-  return seller_offers;
+  return seller_offer_request;
 };

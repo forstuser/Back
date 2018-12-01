@@ -226,6 +226,8 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
         validate: {
           payload: {
             seller_id: joi.number().required(),
+            reason_id: [joi.number(),joi.allow(null)],
+            reason_text: [joi.string(),joi.allow(null)],
           },
         },
       },
@@ -245,6 +247,8 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
         validate: {
           payload: {
             seller_id: joi.number().required(),
+            reason_id: [joi.number(),joi.allow(null)],
+            reason_text: [joi.string(),joi.allow(null)],
           },
         },
       },
@@ -363,6 +367,7 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
             user_id: joi.number().required(),
             delivery_user_id: [joi.number(), joi.allow(null)],
             order_details: [joi.array().items(joi.object()), joi.allow(null)],
+            delivery_minutes: [joi.string(), joi.allow(null)],
           },
         },
       },
@@ -404,6 +409,7 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
           payload: {
             user_id: joi.number().required(),
             order_details: [joi.array().items(joi.object()), joi.allow(null)],
+            delivery_minutes: [joi.string(), joi.allow(null)],
           },
         },
       },
@@ -423,6 +429,8 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
         validate: {
           payload: {
             user_id: joi.number().required(),
+            reason_id: [joi.number(),joi.allow(null)],
+            reason_text: [joi.string(),joi.allow(null)],
           },
         },
       },
@@ -466,7 +474,7 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
             orderAmount: joi.string().required(),
             orderCurrency: [joi.string(), joi.allow(null)],
             orderNote: [joi.string(), joi.allow(null)],
-            customerName: joi.string().required(),
+            customerName: [joi.string(), joi.allow(null)],
             customerPhone: joi.string().required(),
             customerEmail: joi.string().required(),
             returnUrl: [joi.string(), joi.allow(null)],
@@ -506,5 +514,14 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
         description: 'Retrieve Digital Bill.',
       },
     });
+
+    routeObject.push({
+      method: 'GET',
+      path: '/consumer/cancel/reasons',
+      config:{
+        handler: ControllerObject.retrieveCancelOrderReasons,
+        description: 'Retrieve Reasons to Cancel Order.'
+      }
+    })
   }
 }

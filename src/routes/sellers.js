@@ -93,6 +93,42 @@ export function prepareSellerRoutes(modal, route, middleware, socket) {
 
     route.push({
       method: 'GET',
+      path: '/sellers/{id}/user/address/{address_id}/distance',
+      handler: controller.getSellerAddressDistance,
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {method: middleware.updateUserActiveStatus, assign: 'userExist'}],
+      },
+    });
+
+    route.push({
+      method: 'GET',
+      path: '/sellers/{id}/home/delivery/status',
+      handler: controller.getSellerHomeDeliveryStatus,
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {method: middleware.updateUserActiveStatus, assign: 'userExist'}],
+      },
+    });
+
+    route.push({
+      method: 'GET',
+      path: '/sellers/{seller_id}/offer/{offer_type}/list',
+      handler: controller.retrieveSellerOfferList,
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {method: middleware.updateUserActiveStatus, assign: 'userExist'}],
+      },
+    });
+
+    route.push({
+      method: 'GET',
       path: '/sellers/{id}/details',
       handler: controller.getSellerDetails,
       config: {
@@ -109,8 +145,7 @@ export function prepareSellerRoutes(modal, route, middleware, socket) {
       path: '/sellers/{id}/categories',
       handler: controller.getSellerCategories,
       config: {
-        auth: 'jwt',
-        pre: [
+        auth: 'jwt', pre: [
           {method: middleware.checkAppVersion, assign: 'forceUpdate'},
           {method: middleware.logSellerAction, assign: 'seller_action'},
         ],
@@ -122,8 +157,7 @@ export function prepareSellerRoutes(modal, route, middleware, socket) {
       path: '/sellers/{id}/rush/{flag}',
       handler: controller.updateSellerRushHours,
       config: {
-        auth: 'jwt',
-        pre: [
+        auth: 'jwt', pre: [
           {method: middleware.checkAppVersion, assign: 'forceUpdate'},
           {method: middleware.logSellerAction, assign: 'seller_action'},
         ],
@@ -135,8 +169,7 @@ export function prepareSellerRoutes(modal, route, middleware, socket) {
       path: '/sellers/{id}/online/{flag}',
       handler: controller.updateSellerPayOnline,
       config: {
-        auth: 'jwt',
-        pre: [
+        auth: 'jwt', pre: [
           {method: middleware.checkAppVersion, assign: 'forceUpdate'},
           {method: middleware.logSellerAction, assign: 'seller_action'},
         ],
@@ -147,16 +180,9 @@ export function prepareSellerRoutes(modal, route, middleware, socket) {
       method: 'DELETE',
       path: '/sellers/{id}/link',
       config: {
-        auth: 'jwt',
-        pre: [
-          {
-            method: middleware.checkAppVersion,
-            assign: 'forceUpdate',
-          },
-          {
-            method: middleware.updateUserActiveStatus,
-            assign: 'userExist',
-          },
+        auth: 'jwt', pre: [
+          {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {method: middleware.updateUserActiveStatus, assign: 'userExist'},
         ],
         handler: controller.unLinkSellerWithUser,
         description: 'UnLink Seller with User.',
@@ -166,16 +192,31 @@ export function prepareSellerRoutes(modal, route, middleware, socket) {
       method: 'PUT',
       path: '/sellers/{id}/link',
       config: {
-        auth: 'jwt',
-        pre: [
+        auth: 'jwt', pre: [
           {method: middleware.checkAppVersion, assign: 'forceUpdate'},
-          {
-            method: middleware.updateUserActiveStatus,
-            assign: 'userExist',
-          },
+          {method: middleware.updateUserActiveStatus, assign: 'userExist'},
         ],
         handler: controller.linkSellerWithUser,
         description: 'Link Seller with User.',
+      },
+    });
+
+    route.push({
+      method: 'PUT',
+      path: '/link/near/by/sellers',
+      config: {
+        auth: 'jwt', pre: [
+          {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {method: middleware.updateUserActiveStatus, assign: 'userExist'},
+        ],
+        handler: controller.linkNearBySellers,
+        description: 'Link Near By Seller with User.',
+        validate: {
+          payload: {
+            longitude: joi.string().required(),
+            latitude: joi.string().required(),
+          },
+        },
       },
     });
 
@@ -186,10 +227,7 @@ export function prepareSellerRoutes(modal, route, middleware, socket) {
         auth: 'jwt',
         pre: [
           {method: middleware.checkAppVersion, assign: 'forceUpdate'},
-          {
-            method: middleware.updateUserActiveStatus,
-            assign: 'userExist',
-          },
+          {method: middleware.updateUserActiveStatus, assign: 'userExist'},
         ],
         handler: controller.addInviteSeller,
         description: 'Add Seller to database and invite him on be half of User.',
@@ -608,6 +646,9 @@ export function prepareSellerRoutes(modal, route, middleware, socket) {
           payload: {
             id: [joi.number(), joi.allow(null)],
             sku_id: [joi.number(), joi.allow(null)],
+            brand_offer_id: [joi.number(), joi.allow(null)],
+            offer_type: [joi.number(), joi.allow(null)],
+            sku_measurement_type: [joi.number(), joi.allow(null)],
             sku_measurement_id: [joi.number(), joi.allow(null)],
             offer_discount: [joi.number(), joi.allow(null)],
             seller_mrp: [joi.number(), joi.allow(null)],

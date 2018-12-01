@@ -17,6 +17,9 @@ export default (sequelize, DataTypes) => {
         user_id: {
           type: DataTypes.INTEGER,
         },
+        order_id: {
+          type: DataTypes.INTEGER,
+        },
         transaction_type: {
           type: DataTypes.INTEGER,
           comment: 'Credit: 1, Debit: 2',

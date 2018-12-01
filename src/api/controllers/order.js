@@ -7,14 +7,16 @@ import UserAdaptor from '../adaptors/user';
 import SellerAdaptor from '../adaptors/sellers';
 import shared from '../../helpers/shared';
 import ShopEarnAdaptor from '../adaptors/shop_earn';
+import CategoryAdaptor from '../adaptors/category';
 import _ from 'lodash';
 import SocketServer from '../socket';
 import config from '../../config/main';
 import crypto from 'crypto';
 import rp from 'request-promise';
+import moment from 'moment';
 
 let orderAdaptor, eHomeAdaptor, notificationAdaptor, userAdaptor, modals,
-    socket_instance, sellerAdaptor, shopEarnAdaptor;
+    socket_instance, sellerAdaptor, shopEarnAdaptor, categoryAdaptor;
 
 const payment_status = {
   SUCCESS: 16,
@@ -34,6 +36,7 @@ class OrderController {
     socket_instance = socket;
     sellerAdaptor = new SellerAdaptor(modals, notificationAdaptor);
     shopEarnAdaptor = new ShopEarnAdaptor(modals);
+    categoryAdaptor = new CategoryAdaptor(modals);
   }
 
   static async getOrderDetails(request, reply) {
@@ -42,15 +45,14 @@ class OrderController {
       if (!request.pre.forceUpdate) {
         const {id} = request.params;
         let result = await orderAdaptor.retrieveOrUpdateOrder({
-              where: {id},
-              attributes: [
-                'id', 'order_details',
+              where: {id}, attributes: [
+                'id', 'order_details', 'delivery_minutes', 'out_for_delivery_time',
                 'order_type', 'collect_at_store', 'in_review', 'status_type',
                 'seller_id', 'user_id', 'created_at', 'updated_at', 'is_modified',
                 'user_address_id', 'delivery_user_id', 'job_id', 'expense_id', [
                   modals.sequelize.literal(
                       '(Select cashback_status from table_cashback_jobs as jobs where jobs.id = "order".job_id)'),
-                  'cashback_status'], [
+                  'cashback_status'],'delayed_delivery', [
                   modals.sequelize.literal(
                       '(Select copies from table_cashback_jobs as jobs where jobs.id = "order".job_id)'),
                   'copies'], [
@@ -59,23 +61,26 @@ class OrderController {
                   'upload_id'], [
                   modals.sequelize.literal(
                       '(Select admin_status from table_cashback_jobs as jobs where jobs.id = "order".job_id)'),
-                  'admin_status'], [
+                  'admin_status'], 'delivery_clock_start_time', [
                   modals.sequelize.literal(
                       '(Select purchase_cost from consumer_products as expense where expense.id = "order".expense_id)'),
                   'total_amount'], [
                   modals.sequelize.literal(
                       '(Select sum(amount) from table_wallet_user_cashback as user_wallet where user_wallet.job_id = "order".job_id)'),
-                  'available_cashback']],
+                  'available_cashback'], 'is_auto_accept_user'],
             },
-            {}, false);
+            undefined, false);
         if (result) {
           result.seller = {};
           result.user = {};
           let measurement_types = [], order_payment;
+          let user_default_limit_rules;
           [
-            result.seller, result.user, measurement_types, result.user_address,
+            result.seller, result.user, measurement_types,
+            result.user_address,
             result[result.order_type === 2 ? 'service_user' : 'delivery_user'],
-            result.seller_review, order_payment] = await Promise.all([
+            result.seller_review, order_payment,
+            user_default_limit_rules] = await Promise.all([
             sellerAdaptor.retrieveSellerDetail({
               where: {id: result.seller_id}, attributes: [
                 'seller_name', 'address', [
@@ -126,7 +131,35 @@ class OrderController {
                     order_id: id, seller_id: result.seller_id,
                     user_id: result.user_id,
                   },
-                })]);
+                }), categoryAdaptor.retrieveLimitRules({where: {user_id: 1}})]);
+
+          if (result.status_type === 4) {
+            if (result.is_modified) {
+              const auto_accept_limit = user_default_limit_rules.find(
+                  item => item.rule_type === 15);
+              result.auto_accept_time = (auto_accept_limit || {}).rule_limit;
+            } else {
+              const auto_cancel_limit = user_default_limit_rules.find(
+                  item => item.rule_type === 11);
+              result.auto_cancel_time = (auto_cancel_limit || {}).rule_limit ||
+                  0;
+              result.auto_cancel_remaining_seconds = moment(result.created_at,
+                  moment.ISO_8601).add(result.auto_cancel_time, 'minutes').
+                  diff(moment(), 'seconds');
+              result.auto_cancel_elapsed_seconds = moment(result.created_at,
+                  moment.ISO_8601).diff(moment(), 'seconds');
+            }
+          }
+
+          if (result.delivery_clock_start_time && result.delivery_minutes &&
+              moment(result.delivery_clock_start_time, moment.ISO_8601).
+                  isValid()) {
+            result.elapsed_seconds = moment(result.delivery_clock_start_time,
+                moment.ISO_8601).diff(moment(), 'seconds');
+            result.remaining_seconds = moment(result.delivery_clock_start_time,
+                moment.ISO_8601).add(result.delivery_minutes, 'minutes').
+                diff(moment(), 'seconds');
+          }
 
           result.seller.customer_ids = (result.seller.customer_ids || []).find(
               item => (item.customer_id ? item.customer_id :
@@ -194,6 +227,12 @@ class OrderController {
                           item.updated_measurement.measurement_type.toString());
                   item.updated_measurement.measurement_acronym = updated_measurement_type ?
                       updated_measurement_type.acronym : 'unit';
+                }
+
+                if (result.payment_mode_id && result.payment_mode_id !== 4 &&
+                    item.sku_measurement) {
+                  item.sku_measurement.cashback_percent = item.sku_measurement.cashback_percent /
+                      2;
                 }
 
                 item.offer_discount = parseFloat(
@@ -576,43 +615,50 @@ class OrderController {
         console.log('\n\n\n\n\n\n\n', user_index_data,
             (user_index_data && user_index_data.my_seller_ids &&
                 user_index_data.my_seller_ids.length > 0));
-        const orderResult = await orderAdaptor.retrieveOrderList({
-          where: JSON.parse(
-              JSON.stringify(
-                  {seller_id, user_id, status_type})),
-          include, order: [['id', 'desc']],
-          limit: !page_no ? 100 : config.ORDER_LIMIT, offset: !page_no ||
-          (page_no && (page_no.toString() === '0' || isNaN(page_no))) ? 0 :
-              config.ORDER_LIMIT * parseInt(page_no),
-          attributes: [
-            'id', 'order_details', 'order_type',
-            'collect_at_store', 'status_type', 'seller_id',
-            'user_id', 'in_review', [
-              modals.sequelize.literal(
-                  '(Select my_seller_ids from table_user_index as user_index where user_index.user_id = "order".user_id)'),
-              'my_seller_ids'], [
-              modals.sequelize.literal(
-                  '(Select purchase_cost from consumer_products as expense where expense.id = "order".expense_id)'),
-              'total_amount'], 'job_id', 'expense_id', [
-              modals.sequelize.literal(
-                  '(Select cashback_status from table_cashback_jobs as jobs where jobs.id = "order".job_id)'),
-              'cashback_status'], [
-              modals.sequelize.literal(
-                  '(Select admin_status from table_cashback_jobs as jobs where jobs.id = "order".job_id)'),
-              'admin_status'], 'created_at', 'updated_at',
-            'is_modified', 'user_address_id', 'delivery_user_id', [
-              modals.sequelize.literal(
-                  '(Select sum(amount) from table_wallet_user_cashback as user_wallet where user_wallet.job_id = "order".job_id)'),
-              'available_cashback']],
-        });
+        const [orderResult, reasons] = await Promise.all([
+          orderAdaptor.retrieveOrderList({
+            where: JSON.parse(
+                JSON.stringify(
+                    {seller_id, user_id, status_type})),
+            include, order: [['id', 'desc']],
+            limit: !page_no ? 100 : config.ORDER_LIMIT, offset: !page_no ||
+            (page_no && (page_no.toString() === '0' || isNaN(page_no))) ? 0 :
+                config.ORDER_LIMIT * parseInt(page_no),
+            attributes: [
+              'id', 'order_details', 'order_type',
+              'collect_at_store', 'status_type', 'seller_id',
+              'user_id', 'in_review', [
+                modals.sequelize.literal(
+                    '(Select my_seller_ids from table_user_index as user_index where user_index.user_id = "order".user_id)'),
+                'my_seller_ids'], [
+                modals.sequelize.literal(
+                    '(Select purchase_cost from consumer_products as expense where expense.id = "order".expense_id)'),
+                'total_amount'], 'job_id', 'expense_id', [
+                modals.sequelize.literal(
+                    '(Select cashback_status from table_cashback_jobs as jobs where jobs.id = "order".job_id)'),
+                'cashback_status'], [
+                modals.sequelize.literal(
+                    '(Select admin_status from table_cashback_jobs as jobs where jobs.id = "order".job_id)'),
+                'admin_status'], 'created_at', 'updated_at',
+              'is_modified', 'user_address_id', 'delivery_user_id', [
+                modals.sequelize.literal(
+                    '(Select sum(amount) from table_wallet_user_cashback as user_wallet where user_wallet.job_id = "order".job_id)'),
+                'available_cashback']],
+          }),
+          categoryAdaptor.retrieveRejectReasons(
+              {where: {query_type: 4, status_type: 1}})]);
         return reply.response({
           result: orderResult.orders,
           order_count: orderResult.order_count,
           last_page: orderResult.order_count > config.ORDER_LIMIT ? Math.ceil(
               orderResult.order_count / config.ORDER_LIMIT) - 1 : 0,
           seller_exist: !!(user_index_data && user_index_data.my_seller_ids &&
-              user_index_data.my_seller_ids.length > 0), status: true,
+              user_index_data.my_seller_ids.length > 0),
+          status: true,
           message,
+          reasons: [
+            ...reasons.filter(item => item.id !== 0),
+            reasons.find(item => item.id === 0)],
         });
       } else {
         return reply.response({
@@ -907,9 +953,14 @@ class OrderController {
       if (request.pre.userExist && !request.pre.forceUpdate) {
         const user_id = user.id;
         let {seller_id, order_type, collect_at_store, service_type_id, user_address, user_address_id, service_name} = request.payload;
+        if (!user_address) {
+          user_address = await userAdaptor.retrieveUserAddress(
+              {where: {user_id, address_type: 1}});
+        }
         user_address = user_address || {};
         user_address.user_id = user_id;
         user_address.updated_by = user_id;
+        user_address_id = user_address.id;
         const result = await socket_instance.place_order(
             {
               seller_id, user_id, order_type, collect_at_store, service_type_id,
@@ -976,10 +1027,13 @@ class OrderController {
     try {
       if (!request.pre.forceUpdate) {
         const {seller_id, order_id} = request.params;
-        let {user_id, order_details, delivery_user_id} = request.payload;
+        let {user_id, order_details, delivery_user_id, delivery_minutes} = request.payload;
         console.log(JSON.stringify(request.payload));
         const result = await socket_instance.modify_order(
-            {seller_id, user_id, order_details, order_id, delivery_user_id});
+            {
+              seller_id, user_id, order_details, order_id,
+              delivery_user_id, delivery_minutes,
+            });
         if (result) {
           return reply.response({result, status: true});
         } else if (result && result === false) {
@@ -1041,13 +1095,14 @@ class OrderController {
     try {
       if (!request.pre.forceUpdate) {
         let {seller_id, order_id} = request.params;
-        let {user_id, seller_id: payload_seller_id, order_details} = request.payload;
+        let {user_id, seller_id: payload_seller_id, order_details, delivery_minutes} = request.payload;
         seller_id = seller_id || payload_seller_id;
         user_id = user_id || user.id;
+        const is_user = !user.seller_detail;
         const result = await socket_instance.approve_order(
             {
               seller_id, user_id, order_id, status_type: 16,
-              is_user: !user.seller_detail, order_details,
+              is_user, order_details, delivery_minutes,
             });
         if (result) {
           return reply.response({result, status: true});
@@ -1246,10 +1301,17 @@ class OrderController {
     try {
       if (!request.pre.forceUpdate) {
         let {order_id} = request.params;
-        let {seller_id} = request.payload;
+        let {seller_id, reason_id, reason_text} = request.payload;
         const user_id = user.id;
         const result = await socket_instance.reject_order_by_user(
-            {seller_id, user_id, order_id, status_type: 18});
+            {
+              seller_id,
+              user_id,
+              order_id,
+              status_type: 18,
+              reason_id,
+              reason_text,
+            });
         if (result) {
           return reply.response({result, status: true});
         } else if (result && result === false) {
@@ -1311,7 +1373,7 @@ class OrderController {
     try {
       if (!request.pre.forceUpdate) {
         let {order_id} = request.params;
-        let {seller_id} = request.payload;
+        let {seller_id, reason_id, reason_text} = request.payload;
         const user_id = user.id;
         const result = await socket_instance.cancel_order_by_user(
             {seller_id, user_id, order_id, status_type: 17});
@@ -1441,7 +1503,7 @@ class OrderController {
     try {
       if (!request.pre.forceUpdate) {
         let {order_id, seller_id} = request.params;
-        let {user_id} = request.payload;
+        let {user_id, reason_id, reason_text} = request.payload;
         const result = await socket_instance.reject_order_by_seller(
             {seller_id, user_id, order_id, status_type: 18});
         if (result) {
@@ -1834,34 +1896,47 @@ class OrderController {
             signatureData = '', k;
         postData.returnUrl = `${config.API_HOST}${config.CASH_FREE.POST_BACK_URL}`;
         postData.notifyUrl = `${config.API_HOST}${config.CASH_FREE.POST_BACK_URL}`;
-        let order_detail = await modals.order.findOne({
-          where: {id: orderId},
-          attributes: [
-            'id', 'order_details',
-            'order_type', 'collect_at_store', 'in_review', 'status_type',
-            'seller_id', 'user_id', 'created_at', 'updated_at', 'is_modified',
-            'user_address_id', 'delivery_user_id', 'job_id', 'expense_id', [
-              modals.sequelize.literal(
-                  '(Select cashback_status from table_cashback_jobs as jobs where jobs.id = "order".job_id)'),
-              'cashback_status'], [
-              modals.sequelize.literal(
-                  '(Select copies from table_cashback_jobs as jobs where jobs.id = "order".job_id)'),
-              'copies'], [
-              modals.sequelize.literal(
-                  '(Select job_id from table_cashback_jobs as jobs where jobs.id = "order".job_id)'),
-              'upload_id'], [
-              modals.sequelize.literal(
-                  '(Select admin_status from table_cashback_jobs as jobs where jobs.id = "order".job_id)'),
-              'admin_status'], [
-              modals.sequelize.literal(
-                  '(Select purchase_cost from consumer_products as expense where expense.id = "order".expense_id)'),
-              'total_amount'], [
-              modals.sequelize.literal(
-                  '(Select sum(amount) from table_wallet_user_cashback as user_wallet where user_wallet.job_id = "order".job_id)'),
-              'available_cashback']],
-        });
-        order_detail = order_detail ? order_detail.toJSON() : order_detail;
+        postData.customerName = customerName || customerPhone;
+        let [order_item, user_default_limit_rules] = await Promise.all([
+          modals.order.findOne({
+            where: {id: orderId}, attributes: [
+              'id', 'order_details', 'delivery_clock_start_time', 'order_type',
+              'collect_at_store', 'in_review', 'status_type', 'seller_id',
+              'user_id', 'created_at', 'updated_at', 'is_modified',
+              'user_address_id', 'delivery_user_id', 'job_id', 'expense_id', [
+                modals.sequelize.literal(
+                    '(Select cashback_status from table_cashback_jobs as jobs where jobs.id = "order".job_id)'),
+                'cashback_status'], 'delivery_minutes', [
+                modals.sequelize.literal(
+                    '(Select copies from table_cashback_jobs as jobs where jobs.id = "order".job_id)'),
+                'copies'], [
+                modals.sequelize.literal(
+                    '(Select job_id from table_cashback_jobs as jobs where jobs.id = "order".job_id)'),
+                'upload_id'], [
+                modals.sequelize.literal(
+                    '(Select admin_status from table_cashback_jobs as jobs where jobs.id = "order".job_id)'),
+                'admin_status'], [
+                modals.sequelize.literal(
+                    '(Select purchase_cost from consumer_products as expense where expense.id = "order".expense_id)'),
+                'total_amount'], 'delayed_delivery', [
+                modals.sequelize.literal(
+                    '(Select sum(amount) from table_wallet_user_cashback as user_wallet where user_wallet.job_id = "order".job_id)'),
+                'available_cashback']],
+          }), categoryAdaptor.retrieveLimitRules({where: {user_id: 1}})]);
+        let order_detail = order_item ? order_item.toJSON() : order_item;
+
         if (order_detail) {
+          if (order_detail.order_type === 1 && !order_detail.collect_at_store) {
+            const delivery_default_limit = user_default_limit_rules.find(
+                item => item.rule_type === 16);
+            const delivery_minutes = moment().
+                diff(moment(order_detail.delivery_clock_start_time,
+                    moment.ISO_8601), 'minutes', true);
+            let delayed_delivery = order_detail.delivery_minutes !==
+                (delivery_default_limit || {}).rule_limit ||
+                delivery_minutes > (delivery_default_limit || {}).rule_limit;
+            await order_item.updateAttributes({delayed_delivery});
+          }
           order_detail.order_details = order_detail.order_type === 1 ?
               order_detail.order_details.map(item => {
                 item.selling_price = parseFloat(
@@ -2069,8 +2144,8 @@ class OrderController {
         }),
       }).catch((ex) => console.log('error while logging on db,', ex));
       const {status, txStatus} = JSON.parse(result);
-      if (status === 'OK' && txStatus) {
-        payment_detail.status_type = payment_status[txStatus];
+      if (status === 'OK') {
+        payment_detail.status_type = txStatus ? payment_status[txStatus] : 9;
 
         payment_detail = await orderAdaptor.retrieveOrUpdatePaymentDetails(
             {where: {ref_id, order_id}}, payment_detail);
@@ -2283,6 +2358,13 @@ class OrderController {
     }
 
     return undefined;
+  }
+
+  static async retrieveCancelOrderReasons(request, reply) {
+    return reply.response({
+      status: true, result: await categoryAdaptor.retrieveRejectReasons(
+          {where: {query_type: 4, status_type: 1}}),
+    });
   }
 }
 

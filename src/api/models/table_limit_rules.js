@@ -30,6 +30,10 @@ export default (sequelize, DataTypes) => {
           type: DataTypes.DATE,
           defaultValue: sequelize.literal('NOW()'),
         },
+        paid_online: {
+          type: DataTypes.BOOLEAN,
+          defaultValue: false,
+        }
       },
       {
         freezeTableName: true,

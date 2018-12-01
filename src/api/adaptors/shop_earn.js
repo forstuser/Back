@@ -185,6 +185,16 @@ export default class ShopEarnAdaptor {
               `(select offer_discount from table_seller_offers as offer where offer.sku_id = "sku_measurement".sku_id and offer.sku_measurement_id = "sku_measurement".id and "offer".seller_id = ${seller_id} and "offer".end_date >= '${moment().
                   format('YYYY-MM-DD')}')`), 'offer_discount'], [
           this.modals.sequelize.literal(
+              `(select title from table_seller_offers as offer where offer.sku_id = "sku_measurement".sku_id and offer.sku_measurement_id = "sku_measurement".id and "offer".seller_id = ${seller_id} and "offer".end_date >= '${moment().
+                  format('YYYY-MM-DD')}')`), 'offer_title'], [
+          this.modals.sequelize.literal(
+              `(select offer_type from table_seller_offers as offer where offer.sku_id = "sku_measurement".sku_id and offer.sku_measurement_id = "sku_measurement".id and "offer".seller_id = ${seller_id} and "offer".end_date >= '${moment().
+                  format('YYYY-MM-DD')}')`), 'offer_type'], [
+          this.modals.sequelize.literal(
+              `(Select acronym from table_sku_measurement as measure where measure.id in (select sku_measurement_type from table_seller_offers as offer where offer.sku_id = "sku_measurement".sku_id and offer.sku_measurement_id = "sku_measurement".id and "offer".seller_id = ${seller_id} and "offer".end_date >= '${moment().
+                  format('YYYY-MM-DD')}'))`),
+          'offer_acronym'], [
+          this.modals.sequelize.literal(
               `(select seller_mrp from table_seller_offers as offer where offer.sku_id = "sku_measurement".sku_id and offer.sku_measurement_id = "sku_measurement".id and "offer".seller_id = ${seller_id})`),
           'seller_mrp']);
       }
@@ -198,10 +208,11 @@ export default class ShopEarnAdaptor {
           JSON.stringify(seller_main_categories.length > 0 && !title ? {
             brand_id: brand_ids.length > 0 ? brand_ids : undefined,
             sub_category_id: sub_category_ids.length > 0 ?
-                sub_category_ids : undefined,
+                sub_category_ids : undefined, id: !title ?
+                id ? _.uniq(id) : seller_sku_ids && seller_sku_ids.length > 0 ?
+                    _.uniq(seller_sku_ids) : undefined :
+                undefined, status_type: 1,
             $or: sub_category_id_list.length > 0 ? $or : seller_main_categories,
-            id: id ? _.uniq(id) : seller_sku_ids && seller_sku_ids.length > 0 ?
-                _.uniq(seller_sku_ids) : undefined, status_type: 1,
             title: sub_category_id_list.length === 0 && title ? {
               $or: JSON.parse(JSON.stringify([
                 ...forth_title, {$iLike: first_title},
@@ -265,7 +276,7 @@ export default class ShopEarnAdaptor {
       const sku_measurements = await this.retrieveSKUMeasurements({
         options: {
           where: JSON.parse(JSON.stringify({
-            status_type: 1, id: seller_sku_measurement_ids &&
+            status_type: 1, id: !title && seller_sku_measurement_ids &&
             seller_sku_measurement_ids.length > 0 ?
                 _.uniq(seller_sku_measurement_ids) : undefined,
             measurement_value: measurement_values.length > 0 ?
@@ -404,9 +415,21 @@ export default class ShopEarnAdaptor {
               '(select acronym from table_sku_measurement as measurement where measurement.id = "sku_measurements".measurement_type)'),
           'measurement_acronym'], [
           this.modals.sequelize.literal(
+              `(select title from table_seller_offers as offer where offer.sku_id = "sku_measurements".sku_id and offer.sku_measurement_id = "sku_measurements".id and "offer".seller_id = ${seller_id} and "offer".end_date >= '${moment().
+                  format('YYYY-MM-DD')}')`),
+          'offer_title'], [
+          this.modals.sequelize.literal(
+              `(select offer_type from table_seller_offers as offer where offer.sku_id = "sku_measurements".sku_id and offer.sku_measurement_id = "sku_measurements".id and "offer".seller_id = ${seller_id} and "offer".end_date >= '${moment().
+                  format('YYYY-MM-DD')}')`),
+          'offer_type'], [
+          this.modals.sequelize.literal(
               `(select offer_discount from table_seller_offers as offer where offer.sku_id = "sku_measurements".sku_id and offer.sku_measurement_id = "sku_measurements".id and "offer".seller_id = ${seller_id} and "offer".end_date >= '${moment().
                   format('YYYY-MM-DD')}')`),
           'offer_discount'], [
+          this.modals.sequelize.literal(
+              `(Select acronym from table_sku_measurement as measure where measure.id in (select sku_measurement_type from table_seller_offers as offer where offer.sku_id = "sku_measurements".sku_id and offer.sku_measurement_id = "sku_measurements".id and "offer".seller_id = ${seller_id} and "offer".end_date >= '${moment().
+                  format('YYYY-MM-DD')}'))`),
+          'offer_acronym'], [
           this.modals.sequelize.literal(
               `(select seller_mrp from table_seller_offers as offer where offer.sku_id = "sku_measurements".sku_id and offer.sku_measurement_id = "sku_measurements".id and "offer".seller_id = ${seller_id})`),
           'seller_mrp'], 'mrp', 'bar_code', 'cashback_percent'];
@@ -602,8 +625,7 @@ export default class ShopEarnAdaptor {
           }], attributes: {
           exclude:
               [
-                'status_type', 'updated_by',
-                'updated_at', 'created_at',
+                'status_type', 'updated_by', 'updated_at', 'created_at',
                 'image_code', 'image_name'],
         }, order: [['id']],
       });
@@ -689,9 +711,21 @@ export default class ShopEarnAdaptor {
     if (seller_id) {
       sku_measurement_attributes.push([
         this.modals.sequelize.literal(
+            `(select title from table_seller_offers as offer where offer.sku_id = "sku_measurement".sku_id and offer.sku_measurement_id = "sku_measurement".id and "offer".seller_id = ${seller_id} and "offer".end_date >= '${moment().
+                format('YYYY-MM-DD')}' order by created_at desc limit 1)`),
+        'offer_title'], [
+        this.modals.sequelize.literal(
+            `(select offer_type from table_seller_offers as offer where offer.sku_id = "sku_measurement".sku_id and offer.sku_measurement_id = "sku_measurement".id and "offer".seller_id = ${seller_id} and "offer".end_date >= '${moment().
+                format('YYYY-MM-DD')}' order by created_at desc limit 1)`),
+        'offer_type'], [
+        this.modals.sequelize.literal(
             `(select offer_discount from table_seller_offers as offer where offer.sku_id = "sku_measurement".sku_id and offer.sku_measurement_id = "sku_measurement".id and "offer".seller_id = ${seller_id} and "offer".end_date >= '${moment().
                 format('YYYY-MM-DD')}' order by created_at desc limit 1)`),
         'offer_discount'], [
+        this.modals.sequelize.literal(
+            `(Select acronym from table_sku_measurement as measure where measure.id in (select sku_measurement_type from table_seller_offers as offer where offer.sku_id = "sku_measurement".sku_id and offer.sku_measurement_id = "sku_measurement".id and "offer".seller_id = ${seller_id} and "offer".end_date >= '${moment().
+                format('YYYY-MM-DD')}' order by created_at desc limit 1))`),
+        'offer_acronym'], [
         this.modals.sequelize.literal(
             `(select seller_mrp from table_seller_offers as offer where offer.sku_id = "sku_measurement".sku_id and offer.sku_measurement_id = "sku_measurement".id and "offer".seller_id = ${seller_id} order by created_at desc limit 1)`),
         'seller_mrp']);
@@ -1188,7 +1222,7 @@ export default class ShopEarnAdaptor {
       }
       if (seller_id) {
         wishlist_items = wishlist_items.filter(
-            item => item.seller_id === seller_id);
+            item => item.seller_id === seller_id || !item.seller_id);
       }
 
       console.log(JSON.stringify({wishlist_items, payload: request.payload}));

@@ -491,6 +491,11 @@ class UserAdaptor {
       userIndex.my_seller_ids = _.uniq(userIndex.my_seller_ids);
     }
 
+    if(defaults.my_seller_ids) {
+      userIndex.my_seller_ids = [...(userIndex.my_seller_ids || []), ...defaults.my_seller_ids];
+      userIndex.my_seller_ids = _.uniq(userIndex.my_seller_ids);
+    }
+
     if (defaults.pop_up_counter) {
       userIndex.pop_up_counter = userIndex.pop_up_counter || 0;
       userIndex.pop_up_counter += defaults.pop_up_counter;

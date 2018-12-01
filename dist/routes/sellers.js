@@ -95,6 +95,36 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
 
     route.push({
       method: 'GET',
+      path: '/sellers/{id}/user/address/{address_id}/distance',
+      handler: _sellers2.default.getSellerAddressDistance,
+      config: {
+        auth: 'jwt',
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.updateUserActiveStatus, assign: 'userExist' }]
+      }
+    });
+
+    route.push({
+      method: 'GET',
+      path: '/sellers/{id}/home/delivery/status',
+      handler: _sellers2.default.getSellerHomeDeliveryStatus,
+      config: {
+        auth: 'jwt',
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.updateUserActiveStatus, assign: 'userExist' }]
+      }
+    });
+
+    route.push({
+      method: 'GET',
+      path: '/sellers/{seller_id}/offer/{offer_type}/list',
+      handler: _sellers2.default.retrieveSellerOfferList,
+      config: {
+        auth: 'jwt',
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.updateUserActiveStatus, assign: 'userExist' }]
+      }
+    });
+
+    route.push({
+      method: 'GET',
       path: '/sellers/{id}/details',
       handler: _sellers2.default.getSellerDetails,
       config: {
@@ -108,8 +138,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       path: '/sellers/{id}/categories',
       handler: _sellers2.default.getSellerCategories,
       config: {
-        auth: 'jwt',
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }]
+        auth: 'jwt', pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }]
       }
     });
 
@@ -118,8 +147,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       path: '/sellers/{id}/rush/{flag}',
       handler: _sellers2.default.updateSellerRushHours,
       config: {
-        auth: 'jwt',
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }]
+        auth: 'jwt', pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }]
       }
     });
 
@@ -128,8 +156,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       path: '/sellers/{id}/online/{flag}',
       handler: _sellers2.default.updateSellerPayOnline,
       config: {
-        auth: 'jwt',
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }]
+        auth: 'jwt', pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }]
       }
     });
 
@@ -137,14 +164,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       method: 'DELETE',
       path: '/sellers/{id}/link',
       config: {
-        auth: 'jwt',
-        pre: [{
-          method: middleware.checkAppVersion,
-          assign: 'forceUpdate'
-        }, {
-          method: middleware.updateUserActiveStatus,
-          assign: 'userExist'
-        }],
+        auth: 'jwt', pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.updateUserActiveStatus, assign: 'userExist' }],
         handler: _sellers2.default.unLinkSellerWithUser,
         description: 'UnLink Seller with User.'
       }
@@ -153,13 +173,25 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       method: 'PUT',
       path: '/sellers/{id}/link',
       config: {
-        auth: 'jwt',
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, {
-          method: middleware.updateUserActiveStatus,
-          assign: 'userExist'
-        }],
+        auth: 'jwt', pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.updateUserActiveStatus, assign: 'userExist' }],
         handler: _sellers2.default.linkSellerWithUser,
         description: 'Link Seller with User.'
+      }
+    });
+
+    route.push({
+      method: 'PUT',
+      path: '/link/near/by/sellers',
+      config: {
+        auth: 'jwt', pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.updateUserActiveStatus, assign: 'userExist' }],
+        handler: _sellers2.default.linkNearBySellers,
+        description: 'Link Near By Seller with User.',
+        validate: {
+          payload: {
+            longitude: _joi2.default.string().required(),
+            latitude: _joi2.default.string().required()
+          }
+        }
       }
     });
 
@@ -168,10 +200,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       path: '/sellers/invite',
       config: {
         auth: 'jwt',
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, {
-          method: middleware.updateUserActiveStatus,
-          assign: 'userExist'
-        }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.updateUserActiveStatus, assign: 'userExist' }],
         handler: _sellers2.default.addInviteSeller,
         description: 'Add Seller to database and invite him on be half of User.',
         validate: {
@@ -499,6 +528,9 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
           payload: {
             id: [_joi2.default.number(), _joi2.default.allow(null)],
             sku_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            brand_offer_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            offer_type: [_joi2.default.number(), _joi2.default.allow(null)],
+            sku_measurement_type: [_joi2.default.number(), _joi2.default.allow(null)],
             sku_measurement_id: [_joi2.default.number(), _joi2.default.allow(null)],
             offer_discount: [_joi2.default.number(), _joi2.default.allow(null)],
             seller_mrp: [_joi2.default.number(), _joi2.default.allow(null)],
