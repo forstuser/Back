@@ -95,6 +95,16 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
 
     route.push({
       method: 'GET',
+      path: '/sellers/{id}/home/delivery/status',
+      handler: _sellers2.default.getSellerHomeDeliveryStatus,
+      config: {
+        auth: 'jwt',
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.updateUserActiveStatus, assign: 'userExist' }]
+      }
+    });
+
+    route.push({
+      method: 'GET',
       path: '/sellers/{id}/details',
       handler: _sellers2.default.getSellerDetails,
       config: {

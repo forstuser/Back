@@ -102,6 +102,10 @@ class SellerAdaptor {
     const result = await this.modals.sellers.findAll(query_options);
     let sellers = result.map(item => item.toJSON());
     if (sellers.length > 0) {
+      if (latitude && longitude) {
+        sellers = await this.orderSellerByLocation(latitude, longitude, city, sellers);
+      }
+
       let seller_id = sellers.map(item => item.id);
       const $or = seller_offer_ids && seller_offer_ids.length > 0 ? { id: seller_offer_ids, on_sku: true } : { on_sku: true };
       const seller_offers = await this.retrieveSellerOffersForConsumer({ seller_id, $or }, seller_id);

@@ -592,6 +592,52 @@ class SellerController {
     }
   }
 
+  static async getSellerHomeDeliveryStatus(request, reply) {
+    const user = shared.verifyAuthorization(request.headers);
+    if (request.pre.userExist && !request.pre.forceUpdate) {
+      // this is where make us of adapter
+      try {
+        const {id} = request.params;
+        let seller_detail = await modals.sellers.findOne({
+          where: JSON.parse(JSON.stringify({id})),
+          attributes: [
+            [
+              modals.sequelize.literal(
+                  `"sellers"."seller_details"->'basic_details'->'home_delivery'`),
+              'home_delivery']],
+        });
+
+        seller_detail = seller_detail ?
+            seller_detail.toJSON() :
+            {home_delivery: false};
+        return reply.response({
+          status: seller_detail.home_delivery,
+        });
+      } catch (err) {
+        console.log(`Error on ${new Date()} for user ${user.id ||
+        user.ID} is as follow: \n \n ${err}`);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
+        return reply.response({
+          status: false,
+          message: 'Unable to retrieve seller home delivery status.',
+        });
+      }
+    } else {
+      return shared.preValidation(request.pre, reply);
+    }
+  }
+
   static async getSellerDetails(request, reply) {
     const user = shared.verifyAuthorization(request.headers);
     if (!request.pre.forceUpdate) {
@@ -1981,7 +2027,8 @@ Download Now: http://bit.ly/binbill`;
       const {id: service_user_id, seller_id} = request.params || {};
       let {service_type_id, price, id} = request.payload;
       const seller_service_types = await sellerAdaptor.retrieveOrCreateSellerAssistedServiceTypes(
-          JSON.parse(JSON.stringify({id, service_type_id, service_user_id, seller_id})),
+          JSON.parse(JSON.stringify(
+              {id, service_type_id, service_user_id, seller_id})),
           JSON.parse(JSON.stringify({
             service_type_id, price, seller_id, service_user_id,
           })));
