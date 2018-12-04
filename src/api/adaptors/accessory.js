@@ -30,10 +30,7 @@ export default class AccessoryAdaptor {
             model: this.modals.products,
             as: 'products',
             where: {
-              user_id,
-              status_type: [5, 11],
-              ref_id: null,
-              accessory_id: null,
+              user_id, status_type: [5, 11], ref_id: null, accessory_id: null,
             },
             attributes: [
               'brand_id', 'main_category_id', 'category_id',

@@ -16,7 +16,6 @@ import Promise from 'bluebird';
 import reg_certificate from './reg_certificates';
 import FuelAdaptor from './refueling';
 import re from 'request-promise';
-import {notifyUser} from '../../helpers/shared';
 
 export default class ProductAdaptor {
   constructor(modals) {
@@ -1617,32 +1616,11 @@ export default class ProductAdaptor {
               {where: {user_id: product.user_id}})]);
 
         console.log('\n\n\n\n\n\n', JSON.stringify({fcm_detail, accessories}));
-        if (fcm_detail && accessories.length > 0) {
-          fcm_detail = fcm_detail.map(item => item.toJSON());
-          notifyUser(id, {
-            title: `Add some zing to your ${product.product_name ||
-            `${product.brand.brand_name} ${product.model || ''}`}!.`,
-            description: `Check out Trendy Accessories for your ${product.product_name ||
-            `${product.brand.brand_name} ${product.model ||
-            ''}`} in our Deals section.`,
-            notification_type: 5,
-            link: 'http://bit.ly/2NXhJGC' ||
-                `https://www.binbill.com/deals/accessories/${product.category_id}?product_id=${product.id}`,
-            id: product.id,
-          }, {
-            title: `Add some zing to your ${product.product_name ||
-            `${product.brand.brand_name} ${product.model || ''}`}!.`,
-            body: `Check out Trendy Accessories for your ${product.product_name ||
-            `${product.brand.brand_name} ${product.model ||
-            ''}`} in our Deals section.`,
-          }, fcm_detail);
-        }
         if (dbProduct.consumer.email && accessories.length > 0) {
           const {email, id, name} = dbProduct.consumer;
           product.accessories = accessories;
           product.brand = brand.toJSON();
-          this.sendProductAccessoryMail(
-              {email, id, name, product});
+          //this.sendProductAccessoryMail({email, id, name, product});
         }
       }
       product.flag = flag;

@@ -87,7 +87,6 @@ export default class CategoryAdaptor {
           this.modals.sequelize.fn('CONCAT', '/categories/',
               this.modals.sequelize.literal('"categories"."category_id"'),
               '/images/1/thumbnail'), 'categoryImageUrl']],
-      order: ['category_id'],
     });
     categoryData = result.map(item => {
       const categoryItem = item.toJSON();

@@ -29,9 +29,9 @@ class PayTMAdaptor {
     return await this.genCheckSumByString(JSON.stringify(request), _main2.default.PAYTM.PAYTMMKEY);
   }
 
-  async salesToUserCredit(options) {
+  async salesToUserCredit(options, is_seller) {
     try {
-      const request = _main2.default.PAYTM.REQUEST;
+      const request = is_seller ? _main2.default.PAYTM.SELLERREQUEST : _main2.default.PAYTM.REQUEST;
       const { order_id, amount, mobile_no, email, comment, ip } = options;
       request.request.merchantOrderId = order_id.toString();
       request.request.amount = amount.toString();

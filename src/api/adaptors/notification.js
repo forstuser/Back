@@ -1045,7 +1045,7 @@ class NotificationAdaptor {
                 console.log(error);
               }
               // extract invalid registration for removal
-              if (body.failure > 0 && Array.isArray(body.results) &&
+              /*if (body.failure > 0 && Array.isArray(body.results) &&
                   body.results.length === result.length) {
                 const results = body.results;
                 for (let i = 0; i < result.length; i += 1) {
@@ -1053,7 +1053,7 @@ class NotificationAdaptor {
                     result[i].destroy().then(console.log);
                   }
                 }
-              }
+              }*/
             });
           })(fcm_detail, notification, data, config), index * 50));
     });
@@ -1078,7 +1078,7 @@ class NotificationAdaptor {
               }
 
               // extract invalid registration for removal
-              if (body.failure > 0 && Array.isArray(body.results) &&
+              /*if (body.failure > 0 && Array.isArray(body.results) &&
                   body.results.length === result.length) {
                 const results = body.results;
                 for (let i = 0; i < result.length; i += 1) {
@@ -1086,7 +1086,7 @@ class NotificationAdaptor {
                     result[i].destroy().then(console.log);
                   }
                 }
-              }
+              }*/
             });
           })(fcm_detail, data, config), index * 50));
     });
@@ -1134,7 +1134,7 @@ class NotificationAdaptor {
           }).catch((ex) => console.log('error while logging on db,',
               ex));
           // extract invalid registration for removal
-          if (body.failure > 0 && Array.isArray(body.results) &&
+         /* if (body.failure > 0 && Array.isArray(body.results) &&
               body.results.length === result.length) {
             const results = body.results;
             for (let i = 0; i < result.length; i += 1) {
@@ -1144,7 +1144,7 @@ class NotificationAdaptor {
                 });
               }
             }
-          }
+          }*/
 
           return reply.response({
             status: false,

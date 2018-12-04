@@ -74,8 +74,7 @@ class CategoryAdaptor {
           accessory_id: null, user_id: user.id || user.ID
         })),
         attributes: ['id', 'product_name'], required: false
-      }], attributes: [['category_id', 'id'], ['category_name', 'default_name'], [`${language ? `category_name_${language}` : `category_name`}`, 'name'], ['ref_id', 'refId'], [this.modals.sequelize.fn('CONCAT', '/categories/', this.modals.sequelize.literal('"categories"."category_id"'), '/images/1/thumbnail'), 'categoryImageUrl']],
-      order: ['category_id']
+      }], attributes: [['category_id', 'id'], ['category_name', 'default_name'], [`${language ? `category_name_${language}` : `category_name`}`, 'name'], ['ref_id', 'refId'], [this.modals.sequelize.fn('CONCAT', '/categories/', this.modals.sequelize.literal('"categories"."category_id"'), '/images/1/thumbnail'), 'categoryImageUrl']]
     });
     categoryData = result.map(item => {
       const categoryItem = item.toJSON();

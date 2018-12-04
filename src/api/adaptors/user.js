@@ -98,7 +98,10 @@ class UserAdaptor {
 
     const user_detail = result.toJSON();
     await this.retrieveOrUpdateUserIndexedData(
-        {where: {user_id: user_detail.id}, attributes: ['my_seller_ids', 'id', 'user_id']},
+        {
+          where: {user_id: user_detail.id},
+          attributes: ['my_seller_ids', 'id', 'user_id'],
+        },
         {seller_id, user_id: user_detail.id});
 
     return user_detail;
@@ -189,7 +192,7 @@ class UserAdaptor {
           [
             this.modals.sequelize.literal(
                 `(Select sum(amount) from table_wallet_user_cashback where user_id = ${user.id ||
-                user.ID} and status_type in (16,13,14) and transaction_type = 2 group by user_id)`),
+                user.ID} and status_type in (16,13,14) and transaction_type = 2 and is_paytm = true group by user_id)`),
             'redeemed_value']],
       }),
       this.retrieveUserAddresses({
@@ -205,7 +208,8 @@ class UserAdaptor {
       user.addresses = result[1].map(item => item.toJSON());
       user.hasPin = !!(user.password);
       user = _.omit(user, 'password');
-      user.wallet_value = (user.wallet_value || 0) - (user.redeemed_value || 0);
+      user.wallet_value = _.round(
+          (user.wallet_value || 0) - (user.redeemed_value || 0), 2);
       return JSON.parse(JSON.stringify(user));
     }
 
@@ -468,7 +472,8 @@ class UserAdaptor {
   async retrieveOrUpdateUserIndexedData(options, defaults) {
     let result = await this.modals.user_index.findOne(options);
 
-    const userIndex = result ? result.toJSON() : {user_id: defaults.user_id};
+    const userIndex = result ? result.toJSON() :
+        {user_id: defaults.user_id || options.user_id};
     if (defaults.credit_id) {
       userIndex.wallet_seller_credit_ids = userIndex.wallet_seller_credit_ids ||
           [];
@@ -480,9 +485,15 @@ class UserAdaptor {
       userIndex.wallet_seller_loyalty_ids.push(defaults.point_id);
     }
     if (defaults.seller_id) {
-      userIndex.my_seller_ids = (userIndex.my_seller_ids || []).map(item => parseInt(item.toString()));
+      userIndex.my_seller_ids = (userIndex.my_seller_ids || []).map(
+          item => parseInt(item.toString()));
       userIndex.my_seller_ids.push(parseInt(defaults.seller_id));
       userIndex.my_seller_ids = _.uniq(userIndex.my_seller_ids);
+    }
+
+    if (defaults.pop_up_counter) {
+      userIndex.pop_up_counter = userIndex.pop_up_counter || 0;
+      userIndex.pop_up_counter += defaults.pop_up_counter;
     }
     if (result) {
       await result.updateAttributes(userIndex);

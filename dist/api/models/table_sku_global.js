@@ -36,6 +36,10 @@ exports.default = (sequelize, DataTypes) => {
     priority_index: {
       type: DataTypes.INTEGER
     },
+    has_measurements: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
     updated_by: {
       type: DataTypes.INTEGER
     },

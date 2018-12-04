@@ -17,6 +17,10 @@ exports.default = (sequelize, DataTypes) => {
     seller_contact_no: {
       type: DataTypes.JSONB
     },
+    pop_up_counter: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0
+    },
     product_ids: {
       type: DataTypes.JSONB
     },

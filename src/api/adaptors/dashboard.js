@@ -12,6 +12,7 @@ import UserAdaptor from './user';
 import moment from 'moment';
 import Promise from 'bluebird';
 import _ from 'lodash';
+import config from '../../config/main';
 
 class DashboardAdaptor {
   constructor(modals) {
@@ -115,7 +116,8 @@ class DashboardAdaptor {
         item = item.toJSON();
         let mrp = 0;
         (item.order_details || []).forEach(odItem => {
-          mrp += parseFloat(((odItem.sku_measurement || {mrp: 0}).mrp || 0).toString());
+          mrp += parseFloat(
+              ((odItem.sku_measurement || {mrp: 0}).mrp || 0).toString());
         });
         return {mrp};
       });
@@ -163,12 +165,15 @@ class DashboardAdaptor {
 
   async retrieveDashboardResult(user, request) {
     try {
-      let [upcomingServices, recentSearches, notificationCount] = await Promise.all(
+      let [upcomingServices, recentSearches, notificationCount, user_index] = await Promise.all(
           [
             this.filterUpcomingService(user, request),
             this.retrieveRecentSearch(user),
             this.modals.mailBox.count(
-                {where: {user_id: user.id || user.ID, status_id: 4}})]);
+                {where: {user_id: user.id || user.ID, status_id: 4}}),
+            this.userAdaptor.retrieveOrUpdateUserIndexedData(
+                {where: {user_id: user.id || user.ID}},
+                {pop_up_counter: 1, user_id: user.id || user.ID})]);
       return {
         status: true,
         message: 'Dashboard restore Successful',
@@ -177,6 +182,10 @@ class DashboardAdaptor {
           const search = item.toJSON();
           return search.searchValue;
         }).slice(0, 5)),
+        pop_up_content: config.POP_UP_CONTENT,
+        pop_up_title: config.POP_UP_TITLE,
+        pop_up_counter: parseInt(config.POP_UP_COUNTER || '0'),
+        current_counter: user_index.pop_up_counter,
         upcomingServices: await this.evaluateUpcomingServices(upcomingServices),
         forceUpdate: request.pre.forceUpdate,
       };

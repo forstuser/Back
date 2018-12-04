@@ -18,8 +18,26 @@ exports.default = (sequelize, DataTypes) => {
     seller_id: {
       type: DataTypes.INTEGER
     },
+    on_sku: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
     updated_by: {
       type: DataTypes.INTEGER
+    },
+    sku_id: {
+      type: DataTypes.INTEGER
+    },
+    sku_measurement_id: {
+      type: DataTypes.INTEGER
+    },
+    offer_discount: {
+      type: DataTypes.FLOAT,
+      defaultValue: 0
+    },
+    seller_mrp: {
+      type: DataTypes.FLOAT,
+      defaultValue: 0
     },
     status_type: {
       type: DataTypes.INTEGER,

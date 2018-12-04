@@ -1,6 +1,7 @@
 import CategoryAdaptor from './category';
 import UserAdaptor from './user';
 import _ from 'lodash';
+import moment from 'moment';
 
 export default class OrderAdaptor {
   constructor(modals) {
@@ -20,7 +21,12 @@ export default class OrderAdaptor {
           result.updateAttributes(JSON.parse(JSON.stringify(order))) : order);
     }
 
-    result = result.toJSON();
+    if (!result) {
+      query_options.where = _.omit(query_options.where, 'status_type');
+      result = await this.modals.order.findOne(query_options);
+    }
+
+    result = result ? result.toJSON() : {};
 
     const {address_line_1, address_line_2, city_name, state_name, locality_name, pin_code} = result.user_address ||
     {};
@@ -37,15 +43,12 @@ export default class OrderAdaptor {
         join(',').split(',-,').join(',').split(',,').
         join(',').split(',,').join(',');
     result.user_address_detail = result.user_address_detail.trim();
-    if (result.order_details) {
-      result.order_details = result.order_details.map(item => {
-        item.selling_price = parseFloat((item.selling_price || 0).toString());
-        return item;
-      });
-    }
-    result.total_amount = result.total_amount ||
-        _.sumBy(result.order_details, 'selling_price');
     return result;
+  }
+
+  async retrieveOrderDetail(query_options) {
+    let result = await this.modals.order.findOne(query_options);
+    return result ? result.toJSON() : result;
   }
 
   async placeNewOrder(order) {
@@ -55,46 +58,114 @@ export default class OrderAdaptor {
   }
 
   async retrieveOrderList(query_options) {
-    const result = await this.modals.order.findAll(query_options);
-    return result ? result.map(item => {
-      item = item.toJSON();
-      item.seller_exist = item.my_seller_ids && item.my_seller_ids.length > 0;
-      const {address_line_1, address_line_2, city_name, state_name, locality_name, pin_code} = item.user_address ||
-      {};
-      item.user_address_detail = (`${address_line_1 ?
-          address_line_1 : ''}${address_line_2 ?
-          ` ${address_line_2}` : ''}${locality_name ||
-      city_name || state_name ? ',' : pin_code ? '-' : ''}${locality_name ?
-          locality_name : ''}${city_name || state_name ?
-          ',' : pin_code ? '-' : ''}${city_name ?
-          city_name : ''}${state_name ? ',' : pin_code ? '-' : ''}${state_name ?
-          state_name :
-          ''}${pin_code ? '- ' : ''}${pin_code ? pin_code : ''}`).split('null').
-          join(',').split('undefined').
-          join(',').split(',,').
-          join(',').split(',-,').
-          join(',').split(',,').join(',').split(',,').join(',');
-      item.user_address_detail = item.user_address_detail.trim();
-      item.order_details = item.order_details.map(odItem => {
-        odItem.selling_price = parseFloat(
-            (odItem.selling_price || 0).toString());
-        return odItem;
-      });
-      item.total_amount = item.total_amount ||
-          _.sumBy(item.order_details, 'selling_price');
+    const result = await Promise.all([
+      this.modals.order.findAll(query_options),
+      await this.modals.order.count({where: query_options.where})]);
+    return {
+      orders: result[0] ? result[0].map(item => {
+        item = item.toJSON();
+        item.seller_exist = item.my_seller_ids && item.my_seller_ids.length > 0;
+        const {address_line_1, address_line_2, city_name, state_name, locality_name, pin_code} = item.user_address ||
+        {};
+        item.user_address_detail = (`${address_line_1 ?
+            address_line_1 : ''}${address_line_2 ?
+            ` ${address_line_2}` : ''}${locality_name ||
+        city_name || state_name ? ',' : pin_code ? '-' : ''}${locality_name ?
+            locality_name : ''}${city_name || state_name ?
+            ',' : pin_code ? '-' : ''}${city_name ?
+            city_name : ''}${state_name ? ',' :
+            pin_code ? '-' : ''}${state_name ?
+            state_name : ''}${pin_code ? '- ' : ''}${pin_code ?
+            pin_code : ''}`).split('null').join(',').
+            split('undefined').join(',').split(',,').
+            join(',').split(',-,').join(',').split(',,').
+            join(',').split(',,').join(',');
+        item.user_address_detail = item.user_address_detail.trim();
+        item.order_details = item.order_details.map(odItem => {
+          odItem.offer_discount = parseFloat(
+              (odItem.offer_discount || 0).toString());
+          odItem.current_unit_price = odItem.sku_measurement ?
+              odItem.sku_measurement.mrp :
+              0;
+          if (odItem.suggestion) {
 
-      if (item.order_type === 1) {
-        item.order_item_counts = item.order_details.length;
-        item = _.omit(item, 'order_details');
-      }
-      return item;
-    }) : result;
+            odItem.unit_price = parseFloat(
+                (odItem.unit_price ? odItem.unit_price :
+                    odItem.suggestion && odItem.suggestion.sku_measurement ?
+                        odItem.suggestion.sku_measurement.mrp :
+                        0).toString());
+            odItem.suggestion.offer_discount = parseFloat(
+                (odItem.suggestion.offer_discount || 0).toString());
+            odItem.current_selling_price = parseFloat(
+                (odItem.current_unit_price *
+                    parseFloat(odItem.quantity)).toString());
+          } else {
+            odItem.unit_price = odItem.unit_price ?
+                odItem.unit_price :
+                odItem.current_unit_price;
+            odItem.current_selling_price = parseFloat((odItem.unit_price *
+                parseFloat(odItem.quantity)).toString());
+          }
+
+          odItem.selling_price = parseFloat((odItem.unit_price *
+              parseFloat(odItem.quantity)).toString());
+          if (odItem.updated_quantity) {
+            odItem.selling_price = parseFloat((odItem.unit_price *
+                parseFloat(odItem.updated_quantity)).toString());
+          }
+          odItem.selling_price = parseFloat(
+              (odItem.selling_price || 0).toString());
+
+          odItem.current_selling_price = _.round(odItem.current_selling_price -
+              (odItem.current_selling_price * odItem.offer_discount / 100), 2);
+          odItem.selling_price = _.round(
+              odItem.suggestion ? odItem.selling_price -
+                  (odItem.selling_price * (odItem.suggestion.offer_discount) /
+                      100) : odItem.selling_price -
+                  (odItem.selling_price * (odItem.offer_discount) /
+                      100), 2);
+          return odItem;
+        });
+        item.total_amount = item.total_amount ||
+            _.round(item.order_type && item.order_type === 1 ?
+                _.sumBy(item.order_details, 'selling_price') :
+                _.sumBy(item.order_details, 'total_amount'), 2);
+
+        if (item.order_type === 1 || item.collect_at_store) {
+          item.order_item_counts = item.order_details.length;
+          item = _.omit(item, 'order_details');
+        }
+        return item;
+      }) : result[0],
+      order_count: result[1],
+    };
   }
 
   async retrieveOrUpdatePaymentDetails(options, defaults) {
     let result = await this.modals.payments.findOne(options);
     const payment_data = result ? result.toJSON() : result;
     if (result && defaults) {
+      payment_data.payment_detail = payment_data.payment_detail || {};
+      if (defaults.payment_detail) {
+        payment_data.payment_detail.requests = payment_data.payment_detail.requests ||
+            [];
+        if (defaults.payment_detail.requests) {
+          const orderIds = payment_data.payment_detail.requests.map(
+              item => item.orderId);
+          payment_data.payment_detail.requests.push(
+              ...defaults.payment_detail.requests.filter(
+                  item => !_.includes(orderIds, item.orderId)));
+        }
+
+        defaults.payment_detail = payment_data.payment_detail;
+
+        if (defaults.ref_id) {
+          defaults.payment_detail.ref_ids = (payment_data.payment_detail ||
+              {ref_ids: []}).ref_ids || [];
+          defaults.payment_detail.ref_ids.push(
+              {ref_id: defaults.ref_id, order_time: moment()});
+        }
+      }
       defaults.status_type = payment_data.status_type === 16 ?
           payment_data.status_type : defaults.status_type;
       await result.updateAttributes(defaults);

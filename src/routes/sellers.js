@@ -93,6 +93,18 @@ export function prepareSellerRoutes(modal, route, middleware, socket) {
 
     route.push({
       method: 'GET',
+      path: '/sellers/{id}/home/delivery/status',
+      handler: controller.getSellerHomeDeliveryStatus,
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {method: middleware.updateUserActiveStatus, assign: 'userExist'}],
+      },
+    });
+
+    route.push({
+      method: 'GET',
       path: '/sellers/{id}/details',
       handler: controller.getSellerDetails,
       config: {
@@ -121,6 +133,19 @@ export function prepareSellerRoutes(modal, route, middleware, socket) {
       method: 'PUT',
       path: '/sellers/{id}/rush/{flag}',
       handler: controller.updateSellerRushHours,
+      config: {
+        auth: 'jwt',
+        pre: [
+          {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {method: middleware.logSellerAction, assign: 'seller_action'},
+        ],
+      },
+    });
+
+    route.push({
+      method: 'PUT',
+      path: '/sellers/{id}/online/{flag}',
+      handler: controller.updateSellerPayOnline,
       config: {
         auth: 'jwt',
         pre: [
@@ -374,6 +399,7 @@ export function prepareSellerRoutes(modal, route, middleware, socket) {
             close_time: [joi.string(), joi.allow(null)],
             home_delivery: [joi.boolean(), joi.allow(null)],
             home_delivery_remarks: [joi.string(), joi.allow(null)],
+            pay_online: [joi.boolean(), joi.allow(null)],
             payment_modes: [joi.string(), joi.allow(null)],
             output: 'data',
             parse: true,
@@ -593,7 +619,12 @@ export function prepareSellerRoutes(modal, route, middleware, socket) {
         validate: {
           payload: {
             id: [joi.number(), joi.allow(null)],
-            title: joi.string().required(),
+            sku_id: [joi.number(), joi.allow(null)],
+            sku_measurement_id: [joi.number(), joi.allow(null)],
+            offer_discount: [joi.number(), joi.allow(null)],
+            seller_mrp: [joi.number(), joi.allow(null)],
+            bar_code: [joi.string(), joi.allow(null)],
+            title: [joi.string(), joi.allow(null)],
             description: [joi.string(), joi.allow(null)],
             document_details: [joi.array(), joi.allow(null)],
             start_date: joi.string().required(),

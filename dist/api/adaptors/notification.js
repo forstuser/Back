@@ -931,14 +931,15 @@ class NotificationAdaptor {
             console.log(error);
           }
           // extract invalid registration for removal
-          if (body.failure > 0 && Array.isArray(body.results) && body.results.length === result.length) {
+          /*if (body.failure > 0 && Array.isArray(body.results) &&
+              body.results.length === result.length) {
             const results = body.results;
             for (let i = 0; i < result.length; i += 1) {
               if (results[i].error === 'InvalidRegistration') {
                 result[i].destroy().then(console.log);
               }
             }
-          }
+          }*/
         });
       })(fcm_detail, notification, data, _main2.default), index * 50));
     });
@@ -962,14 +963,15 @@ class NotificationAdaptor {
           }
 
           // extract invalid registration for removal
-          if (body.failure > 0 && Array.isArray(body.results) && body.results.length === result.length) {
+          /*if (body.failure > 0 && Array.isArray(body.results) &&
+              body.results.length === result.length) {
             const results = body.results;
             for (let i = 0; i < result.length; i += 1) {
               if (results[i].error === 'InvalidRegistration') {
                 result[i].destroy().then(console.log);
               }
             }
-          }
+          }*/
         });
       })(fcm_detail, data, _main2.default), index * 50));
     });
@@ -1014,16 +1016,17 @@ class NotificationAdaptor {
             log_content: JSON.stringify({ options, body })
           }).catch(ex => console.log('error while logging on db,', ex));
           // extract invalid registration for removal
-          if (body.failure > 0 && Array.isArray(body.results) && body.results.length === result.length) {
-            const results = body.results;
-            for (let i = 0; i < result.length; i += 1) {
-              if (results[i].error === 'InvalidRegistration') {
-                result[i].destroy().then(rows => {
-                  console.log('FCM ID\'s DELETED: ', rows);
-                });
-              }
-            }
-          }
+          /* if (body.failure > 0 && Array.isArray(body.results) &&
+               body.results.length === result.length) {
+             const results = body.results;
+             for (let i = 0; i < result.length; i += 1) {
+               if (results[i].error === 'InvalidRegistration') {
+                 result[i].destroy().then(rows => {
+                   console.log('FCM ID\'s DELETED: ', rows);
+                 });
+               }
+             }
+           }*/
 
           return reply.response({
             status: false,

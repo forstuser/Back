@@ -95,6 +95,16 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
 
     route.push({
       method: 'GET',
+      path: '/sellers/{id}/home/delivery/status',
+      handler: _sellers2.default.getSellerHomeDeliveryStatus,
+      config: {
+        auth: 'jwt',
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.updateUserActiveStatus, assign: 'userExist' }]
+      }
+    });
+
+    route.push({
+      method: 'GET',
       path: '/sellers/{id}/details',
       handler: _sellers2.default.getSellerDetails,
       config: {
@@ -117,6 +127,16 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
       method: 'PUT',
       path: '/sellers/{id}/rush/{flag}',
       handler: _sellers2.default.updateSellerRushHours,
+      config: {
+        auth: 'jwt',
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }]
+      }
+    });
+
+    route.push({
+      method: 'PUT',
+      path: '/sellers/{id}/online/{flag}',
+      handler: _sellers2.default.updateSellerPayOnline,
       config: {
         auth: 'jwt',
         pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }]
@@ -324,6 +344,7 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
             close_time: [_joi2.default.string(), _joi2.default.allow(null)],
             home_delivery: [_joi2.default.boolean(), _joi2.default.allow(null)],
             home_delivery_remarks: [_joi2.default.string(), _joi2.default.allow(null)],
+            pay_online: [_joi2.default.boolean(), _joi2.default.allow(null)],
             payment_modes: [_joi2.default.string(), _joi2.default.allow(null)],
             output: 'data',
             parse: true
@@ -487,7 +508,12 @@ function prepareSellerRoutes(modal, route, middleware, socket) {
         validate: {
           payload: {
             id: [_joi2.default.number(), _joi2.default.allow(null)],
-            title: _joi2.default.string().required(),
+            sku_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            sku_measurement_id: [_joi2.default.number(), _joi2.default.allow(null)],
+            offer_discount: [_joi2.default.number(), _joi2.default.allow(null)],
+            seller_mrp: [_joi2.default.number(), _joi2.default.allow(null)],
+            bar_code: [_joi2.default.string(), _joi2.default.allow(null)],
+            title: [_joi2.default.string(), _joi2.default.allow(null)],
             description: [_joi2.default.string(), _joi2.default.allow(null)],
             document_details: [_joi2.default.array(), _joi2.default.allow(null)],
             start_date: _joi2.default.string().required(),

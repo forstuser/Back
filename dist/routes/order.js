@@ -277,6 +277,7 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
           payload: {
             seller_id: _joi2.default.number().required(),
             order_type: _joi2.default.number().required(),
+            collect_at_store: [_joi2.default.boolean(), _joi2.default.allow(null)],
             user_address_id: [_joi2.default.number(), _joi2.default.allow(null)],
             user_address: [_joi2.default.object({
               address_line_1: [_joi2.default.string(), _joi2.default.allow(null)],
@@ -429,6 +430,15 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
       config: {
         handler: _order2.default.retrievePaymentStatus,
         description: 'Retrieve Payment Status.'
+      }
+    });
+
+    routeObject.push({
+      method: 'GET',
+      path: '/consumer/{expense_id}/bill/{order_id}',
+      config: {
+        handler: _order2.default.retrieveDigitalBill,
+        description: 'Retrieve Digital Bill.'
       }
     });
   }

@@ -70,6 +70,25 @@ export function prepareShopEarnRoute(modal, route, middleware, socket) {
 
     route.push({
       method: 'GET',
+      path: '/sellers/sku/{bar_code}/item',
+      handler: controller.getSellerSKUItem,
+      config: {
+        auth: 'jwt',
+        pre: [
+          {
+            method: middleware.checkAppVersion,
+            assign: 'forceUpdate',
+          },
+          {
+            method: middleware.logSellerAction,
+            assign: 'log_seller_action',
+          },
+        ],
+      },
+    });
+
+    route.push({
+      method: 'GET',
       path: '/sku/{id}/detail',
       handler: controller.getSKUItem,
       config: {
@@ -162,35 +181,65 @@ export function prepareShopEarnRoute(modal, route, middleware, socket) {
         handler: controller.createSKUWishList,
         validate: {
           payload: {
-            'id': [joi.number(), joi.allow(null)],
-            'brand_id': [joi.number(), joi.allow(null)],
-            'main_category_id': [joi.number(), joi.allow(null)],
-            'category_id': [joi.number(), joi.allow(null)],
-            'sub_category_id': [joi.number(), joi.allow(null)],
-            'title': joi.string().required(),
-            'hsn_code': [joi.string(), joi.allow(null)],
-            'image_code': [joi.string(), joi.allow(null)],
-            'image_name': [joi.string(), joi.allow(null)],
-            'added_date': [joi.string(), joi.allow(null)],
-            'sub_category_name': [joi.string(), joi.allow(null)],
-            'mrp': [joi.number(), joi.allow(null)],
-            'priority_index': [joi.number(), joi.allow(null)],
-            'quantity': joi.number().required(),
-            'created_at': [joi.string(), joi.allow(null)],
-            'sku_measurement': [
+            id: [joi.number(), joi.allow(null)],
+            brand_id: [joi.number(), joi.allow(null)],
+            main_category_id: [joi.number(), joi.allow(null)],
+            category_id: [joi.number(), joi.allow(null)],
+            sub_category_id: [joi.number(), joi.allow(null)],
+            seller_id: [joi.number(), joi.allow(null)],
+            title: joi.string().required(),
+            hsn_code: [joi.string(), joi.allow(null)],
+            image_code: [joi.string(), joi.allow(null)],
+            image_name: [joi.string(), joi.allow(null)],
+            has_measurements: [joi.boolean(), joi.allow(null)],
+            added_date: [joi.string(), joi.allow(null)],
+            sub_category_name: [joi.string(), joi.allow(null)],
+            mrp: [joi.number(), joi.allow(null)],
+            priority_index: [joi.number(), joi.allow(null)],
+            quantity: joi.number().required(),
+            created_at: [joi.string(), joi.allow(null)],
+            offer_discount: [joi.number(), joi.allow(null)],
+            sku_measurement: [
               joi.object().keys({
-                'id': [joi.number(), joi.allow(null)],
-                'sku_id': [joi.number(), joi.allow(null)],
-                'measurement_type': [joi.number(), joi.allow(null)],
-                'measurement_value': [joi.number(), joi.allow(null)],
-                'pack_numbers': [joi.number(), joi.allow(null)],
-                'cashback_percent': [joi.number(), joi.allow(null)],
-                'discount_percent': [joi.number(), joi.allow(null)],
-                'bar_code': [joi.string(), joi.allow(null)],
-                'mrp': [joi.number(), joi.allow(null)],
-                'selected': [joi.number(), joi.allow(null)],
-                'measurement_acronym': [joi.string(), joi.allow(null)],
+                id: [joi.number(), joi.allow(null)],
+                sku_id: [joi.number(), joi.allow(null)],
+                measurement_type: [joi.number(), joi.allow(null)],
+                measurement_value: [joi.number(), joi.allow(null)],
+                pack_numbers: [joi.number(), joi.allow(null)],
+                cashback_percent: [joi.number(), joi.allow(null)],
+                offer_discount: [joi.number(), joi.allow(null)],
+                discount_percent: [joi.number(), joi.allow(null)],
+                bar_code: [joi.string(), joi.allow(null)],
+                mrp: [joi.number(), joi.allow(null)],
+                selected: [joi.number(), joi.allow(null)],
+                measurement_acronym: [joi.string(), joi.allow(null)],
               }), joi.allow(null)],
+          },
+        },
+      },
+    });
+
+    route.push({
+      method: 'PUT',
+      path: '/offer/sku/wishlist',
+      config: {
+        auth: 'jwt',
+        pre: [
+          {
+            method: middleware.checkAppVersion,
+            assign: 'forceUpdate',
+          },
+          {
+            method: middleware.updateUserActiveStatus,
+            assign: 'userExist',
+          },
+        ],
+        handler: controller.addOfferSKUWishList,
+        validate: {
+          payload: {
+            sku_id: [joi.number(), joi.allow(null)],
+            seller_id: [joi.number(), joi.allow(null)],
+            sku_measurement_id: [joi.number(), joi.allow(null)],
           },
         },
       },
@@ -214,30 +263,33 @@ export function prepareShopEarnRoute(modal, route, middleware, socket) {
         handler: controller.addToPastSelection,
         validate: {
           payload: {
-            'id': [joi.number(), joi.allow(null)],
-            'brand_id': [joi.number(), joi.allow(null)],
-            'main_category_id': [joi.number(), joi.allow(null)],
-            'category_id': [joi.number(), joi.allow(null)],
-            'sub_category_id': [joi.number(), joi.allow(null)],
-            'sub_category_name': [joi.string(), joi.allow(null)],
-            'image_code': [joi.string(), joi.allow(null)],
-            'image_name': [joi.string(), joi.allow(null)],
-            'title': joi.string().required(),
-            'hsn_code': [joi.string(), joi.allow(null)],
-            'mrp': [joi.number(), joi.allow(null)],
-            'priority_index': [joi.number(), joi.allow(null)],
-            'quantity': joi.number().required(),
-            'added_date': [joi.string(), joi.allow(null)],
-            'sku_measurement': [
+            id: [joi.number(), joi.allow(null)],
+            brand_id: [joi.number(), joi.allow(null)],
+            main_category_id: [joi.number(), joi.allow(null)],
+            category_id: [joi.number(), joi.allow(null)],
+            sub_category_id: [joi.number(), joi.allow(null)],
+            sub_category_name: [joi.string(), joi.allow(null)],
+            image_code: [joi.string(), joi.allow(null)],
+            image_name: [joi.string(), joi.allow(null)],
+            title: joi.string().required(),
+            hsn_code: [joi.string(), joi.allow(null)],
+            mrp: [joi.number(), joi.allow(null)],
+            priority_index: [joi.number(), joi.allow(null)],
+            quantity: joi.number().required(),
+            seller_id: [joi.number(), joi.allow(null)],
+            offer_discount: [joi.number(), joi.allow(null)],
+            added_date: [joi.string(), joi.allow(null)],
+            sku_measurement: [
               joi.object().keys({
-                'id': [joi.number(), joi.allow(null)],
-                'sku_id': [joi.number(), joi.allow(null)],
-                'measurement_type': [joi.number(), joi.allow(null)],
-                'measurement_value': [joi.number(), joi.allow(null)],
-                'pack_numbers': [joi.number(), joi.allow(null)],
-                'cashback_percent': [joi.number(), joi.allow(null)],
-                'discount_percent': [joi.number(), joi.allow(null)],
-                'bar_code': [joi.string(), joi.allow(null)],
+                id: [joi.number(), joi.allow(null)],
+                sku_id: [joi.number(), joi.allow(null)],
+                measurement_type: [joi.number(), joi.allow(null)],
+                measurement_value: [joi.number(), joi.allow(null)],
+                pack_numbers: [joi.number(), joi.allow(null)],
+                cashback_percent: [joi.number(), joi.allow(null)],
+                discount_percent: [joi.number(), joi.allow(null)],
+                offer_discount: [joi.number(), joi.allow(null)],
+                bar_code: [joi.string(), joi.allow(null)],
               }), joi.allow(null)],
           },
         },
@@ -384,7 +436,7 @@ export function prepareShopEarnRoute(modal, route, middleware, socket) {
             method: middleware.checkAppVersion,
             assign: 'forceUpdate',
           },
-          {method: middleware.logSellerAction, assign: 'seller_action'}
+          {method: middleware.logSellerAction, assign: 'seller_action'},
         ],
         handler: controller.cashBackApproval,
       },
@@ -400,7 +452,7 @@ export function prepareShopEarnRoute(modal, route, middleware, socket) {
             method: middleware.checkAppVersion,
             assign: 'forceUpdate',
           },
-          {method: middleware.logSellerAction, assign: 'seller_action'}
+          {method: middleware.logSellerAction, assign: 'seller_action'},
         ],
         validate: {
           payload: {
@@ -421,7 +473,7 @@ export function prepareShopEarnRoute(modal, route, middleware, socket) {
             method: middleware.checkAppVersion,
             assign: 'forceUpdate',
           },
-          {method: middleware.logSellerAction, assign: 'seller_action'}
+          {method: middleware.logSellerAction, assign: 'seller_action'},
         ],
         handler: controller.retrieveTransactions,
       },
@@ -505,7 +557,7 @@ export function prepareShopEarnRoute(modal, route, middleware, socket) {
           method: middleware.checkAppVersion,
           assign: 'forceUpdate',
         },
-        {method: middleware.logSellerAction, assign: 'seller_action'}
+        {method: middleware.logSellerAction, assign: 'seller_action'},
       ],
       handler: controller.redeemSellerCashBackAtPayTM,
     },

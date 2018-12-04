@@ -16,6 +16,9 @@ export default (sequelize, DataTypes) => {
         },
         expense_id: {
           type: DataTypes.INTEGER,
+        },collect_at_store: {
+          type: DataTypes.BOOLEAN,
+          defaultValue: false,
         },
         user_address_id: {
           type: DataTypes.INTEGER,

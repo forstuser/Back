@@ -283,12 +283,11 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
         validate: {
           payload: {
             seller_id: joi.number().required(),
-            payment_mode: [joi.number(), joi.allow(null)]
+            payment_mode: [joi.number(), joi.allow(null)],
           },
         },
       },
     });
-
 
     routeObject.push({
       method: 'PUT',
@@ -324,6 +323,7 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
           payload: {
             seller_id: joi.number().required(),
             order_type: joi.number().required(),
+            collect_at_store: [joi.boolean(), joi.allow(null)],
             user_address_id: [joi.number(), joi.allow(null)],
             user_address: [
               joi.object({
@@ -495,6 +495,15 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
       config: {
         handler: ControllerObject.retrievePaymentStatus,
         description: 'Retrieve Payment Status.',
+      },
+    });
+
+    routeObject.push({
+      method: 'GET',
+      path: '/consumer/{expense_id}/bill/{order_id}',
+      config: {
+        handler: ControllerObject.retrieveDigitalBill,
+        description: 'Retrieve Digital Bill.',
       },
     });
   }

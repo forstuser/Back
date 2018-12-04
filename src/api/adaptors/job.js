@@ -425,7 +425,7 @@ class JobAdaptor {
         substr(2, 9)}${(user_id).toString(36)}`;
     const pay_TM_response = JSON.parse(
         await this.payTMAdaptor.salesToUserCredit(
-            {amount, order_id, mobile_no, email}));
+            {amount, order_id, mobile_no, email}, true));
     console.log(JSON.stringify(pay_TM_response));
     if (pay_TM_response && pay_TM_response.status !== 'SUCCESS' &&
         pay_TM_response.status !== 'PENDING' &&
