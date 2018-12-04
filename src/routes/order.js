@@ -466,7 +466,7 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
             orderAmount: joi.string().required(),
             orderCurrency: [joi.string(), joi.allow(null)],
             orderNote: [joi.string(), joi.allow(null)],
-            customerName: joi.string().required(),
+            customerName: [joi.string(), joi.allow(null)],
             customerPhone: joi.string().required(),
             customerEmail: joi.string().required(),
             returnUrl: [joi.string(), joi.allow(null)],

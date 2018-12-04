@@ -1545,7 +1545,8 @@ export default class SocketServer {
             item.unit_price = parseFloat((item.unit_price || 0).toString());
             item.selling_price = parseFloat(
                 (item.unit_price * item.quantity).toString());
-            const mrp = (item.sku_measurement ? item.sku_measurement.mrp : 0);
+            const mrp = (item.sku_measurement && item.sku_measurement.mrp ?
+                item.sku_measurement.mrp : 0);
             if (mrp.toString() !== item.unit_price.toString() &&
                 item.sku_measurement) {
               seller_sku_mapping.push(
@@ -2590,8 +2591,12 @@ export default class SocketServer {
                     const milk_sku = milk_sku_list.find(
                         mskuItem => mskuItem.id.toString() ===
                             sku_id.toString());
-                    if (today_sku_expense > 0 && milk_sku) {
-                      cashback_percent = config.MILK_DEFAULT_CASH_BACK_PERCENT;
+                    if (milk_sku) {
+                      if (today_sku_expense > 0) {
+                        cashback_percent = config.MILK_DEFAULT_CASH_BACK_PERCENT;
+                      } else if (today_sku_expense === 0) {
+                        cashback_percent = config.MILK_SKU_CASH_BACK_PERCENT;
+                      }
                     }
                   }
                   cashback_percent = cashback_percent || 0;
