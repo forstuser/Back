@@ -1188,7 +1188,7 @@ export default class ShopEarnAdaptor {
       }
       if (seller_id) {
         wishlist_items = wishlist_items.filter(
-            item => item.seller_id === seller_id);
+            item => item.seller_id === seller_id || !item.seller_id);
       }
 
       console.log(JSON.stringify({wishlist_items, payload: request.payload}));

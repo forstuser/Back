@@ -106,10 +106,7 @@ class ShopEarnController {
           return reply.response({
             status: true, result: sku_result,
             max_wish_list_items: config.MAX_WISH_LIST_ITEMS,
-            seller_list: (seller_list || []).filter(
-                item => parseInt(item.provider_counts || 0) > 0 ||
-                    parseInt(item.sku_seller_counts || 0) > 0 ||
-                    item.is_data_manually_added),
+            seller_list: (seller_list || []),
           });
         }
 
@@ -548,10 +545,7 @@ class ShopEarnController {
         return reply.response({
           status: true,
           result: await shopEarnAdaptor.retrieveReferenceData(),
-          seller_list: (seller_list || []).filter(
-              item => parseInt(item.provider_counts || 0) > 0 ||
-                  parseInt(item.sku_seller_counts || 0) > 0 ||
-                  item.is_data_manually_added),
+          seller_list: (seller_list || []),
         });
       } catch (err) {
         console.log(`Error on ${new Date()} for user ${user.id ||

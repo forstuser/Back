@@ -907,9 +907,14 @@ class OrderController {
       if (request.pre.userExist && !request.pre.forceUpdate) {
         const user_id = user.id;
         let {seller_id, order_type, collect_at_store, service_type_id, user_address, user_address_id, service_name} = request.payload;
+        if (!user_address) {
+          user_address = await userAdaptor.retrieveUserAddress(
+              {where: {user_id, address_type: 1}});
+        }
         user_address = user_address || {};
         user_address.user_id = user_id;
         user_address.updated_by = user_id;
+        user_address_id = user_address.id;
         const result = await socket_instance.place_order(
             {
               seller_id, user_id, order_type, collect_at_store, service_type_id,
@@ -1834,6 +1839,7 @@ class OrderController {
             signatureData = '', k;
         postData.returnUrl = `${config.API_HOST}${config.CASH_FREE.POST_BACK_URL}`;
         postData.notifyUrl = `${config.API_HOST}${config.CASH_FREE.POST_BACK_URL}`;
+        postData.customerName = customerName || customerPhone;
         let order_detail = await modals.order.findOne({
           where: {id: orderId},
           attributes: [
@@ -2069,8 +2075,8 @@ class OrderController {
         }),
       }).catch((ex) => console.log('error while logging on db,', ex));
       const {status, txStatus} = JSON.parse(result);
-      if (status === 'OK' && txStatus) {
-        payment_detail.status_type = payment_status[txStatus];
+      if (status === 'OK') {
+        payment_detail.status_type = txStatus ? payment_status[txStatus] : 9;
 
         payment_detail = await orderAdaptor.retrieveOrUpdatePaymentDetails(
             {where: {ref_id, order_id}}, payment_detail);

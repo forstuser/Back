@@ -1545,7 +1545,8 @@ export default class SocketServer {
             item.unit_price = parseFloat((item.unit_price || 0).toString());
             item.selling_price = parseFloat(
                 (item.unit_price * item.quantity).toString());
-            const mrp = (item.sku_measurement ? item.sku_measurement.mrp : 0);
+            const mrp = (item.sku_measurement && item.sku_measurement.mrp ?
+                item.sku_measurement.mrp : 0);
             if (mrp.toString() !== item.unit_price.toString() &&
                 item.sku_measurement) {
               seller_sku_mapping.push(
@@ -1577,6 +1578,7 @@ export default class SocketServer {
 
         order_data.status_type = status_type || 19;
         order_data.delivery_user_id = delivery_user_id;
+        order_data.out_for_delivery_time = moment();
         let [order] = await Promise.all([
           orderAdaptor.retrieveOrUpdateOrder(
               {
@@ -2484,7 +2486,7 @@ export default class SocketServer {
               where: {
                 id: order_id, user_id, seller_id,
                 status_type: [16, 19, 21],
-              }, attributes: ['id'],
+              }, attributes: ['id', 'job_id', 'expense_id'],
             }, {}, false),
           modals.measurement.findAll({where: {status_type: 1}}),
           sellerAdaptor.retrieveSellerLoyaltyRules(
@@ -2495,8 +2497,7 @@ export default class SocketServer {
                     JSON.stringify({
                       category_id: config.MILK_SKU_CATEGORY,
                       main_category_id: config.MILK_SKU_MAIN_CATEGORY,
-                    })),
-                attributes: ['id'],
+                    })), attributes: ['id'],
               }), orderAdaptor.retrieveOrUpdatePaymentDetails(
             {where: {order_id, seller_id, user_id}}, JSON.parse(
                 JSON.stringify({
@@ -2590,8 +2591,12 @@ export default class SocketServer {
                     const milk_sku = milk_sku_list.find(
                         mskuItem => mskuItem.id.toString() ===
                             sku_id.toString());
-                    if (today_sku_expense > 0 && milk_sku) {
-                      cashback_percent = config.MILK_DEFAULT_CASH_BACK_PERCENT;
+                    if (milk_sku) {
+                      if (today_sku_expense > 0) {
+                        cashback_percent = config.MILK_DEFAULT_CASH_BACK_PERCENT;
+                      } else if (today_sku_expense === 0) {
+                        cashback_percent = config.MILK_SKU_CASH_BACK_PERCENT;
+                      }
                     }
                   }
                   cashback_percent = cashback_percent || 0;
