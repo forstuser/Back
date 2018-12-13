@@ -73,14 +73,8 @@ export function prepareGeneralRoutes(modal, routeObject, middleware) {
       config: {
         auth: 'jwt',
         pre: [
-          {
-            method: middleware.checkAppVersion,
-            assign: 'forceUpdate',
-          },
-          {
-            method: middleware.updateUserActiveStatus,
-            assign: 'userExist',
-          },
+          {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {method: middleware.updateUserActiveStatus, assign: 'userExist'},
         ],
         handler: ControllerObject.retrieveKnowItems,
         description: 'Retrieve Do You Know Items',

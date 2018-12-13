@@ -129,10 +129,7 @@ export function prepareAuthRoutes(modal, routeObject, middleware) {
         auth: 'jwt',
         pre: [
           {method: middleware.checkAppVersion, assign: 'forceUpdate'},
-          {
-            method: middleware.logSellerAction,
-            assign: 'seller_action',
-          },
+          {method: middleware.logSellerAction, assign: 'seller_action',},
         ],
         handler: ControllerObject.subscribeSellerUser,
         description: 'Update Seller User FCM Server ID.',

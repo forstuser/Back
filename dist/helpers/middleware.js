@@ -28,11 +28,11 @@ let MODAL;
 
 
 const checkAppVersion = async (request, reply) => {
-  if (request.headers['app-version'] !== undefined || request.headers['ios-app-version'] !== undefined) {
-    const appVersion = request.headers['ios-app-version'] || request.headers['app-version'];
+  if (request.headers['app-version'] !== undefined || request.headers['ios-app-version'] !== undefined || request.headers['seller-app-version'] !== undefined) {
+    const appVersion = request.headers['ios-app-version'] || request.headers['app-version'] || request.headers['seller-app-version'];
     const currentAppVersion = !isNaN(parseInt(appVersion)) ? parseInt(appVersion) : null;
 
-    const appVersionDetail = request.headers['ios-app-version'] ? _main2.default.IOS : _main2.default.ANDROID;
+    const appVersionDetail = request.headers['ios-app-version'] ? _main2.default.IOS : request.headers['seller-app-version'] ? _main2.default.SELLER.ANDROID : _main2.default.ANDROID;
     if (appVersionDetail && currentAppVersion) {
       const FORCE_VERSION = appVersionDetail.FORCE_VERSION;
       const RECOMMENDED_VERSION = appVersionDetail.RECOMMENDED_VERSION;

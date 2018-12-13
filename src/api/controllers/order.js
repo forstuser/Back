@@ -52,10 +52,10 @@ class OrderController {
                 'user_address_id', 'delivery_user_id', 'job_id', 'expense_id', [
                   modals.sequelize.literal(
                       '(Select cashback_status from table_cashback_jobs as jobs where jobs.id = "order".job_id)'),
-                  'cashback_status'],'delayed_delivery', [
+                  'cashback_status'], 'delayed_delivery', [
                   modals.sequelize.literal(
                       '(Select copies from table_cashback_jobs as jobs where jobs.id = "order".job_id)'),
-                  'copies'], [
+                  'copies'], 'seller_discount', [
                   modals.sequelize.literal(
                       '(Select job_id from table_cashback_jobs as jobs where jobs.id = "order".job_id)'),
                   'upload_id'], [
@@ -102,8 +102,7 @@ class OrderController {
                   modals.sequelize.literal(
                       `(select sum(amount) from table_wallet_seller_credit as seller_credit where status_type in (16, 14) and transaction_type = 2 and seller_credit.user_id = ${result.user_id} and seller_credit.seller_id = "sellers"."id")`),
                   'redeemed_credits']],
-            }),
-            userAdaptor.retrieveUserById({id: result.user_id},
+            }), userAdaptor.retrieveUserById({id: result.user_id},
                 result.user_address_id),
             modals.measurement.findAll({where: {status_type: 1}}),
             userAdaptor.retrieveUserAddress({
@@ -122,16 +121,14 @@ class OrderController {
                     })), model: modals.seller_service_types, required: true,
                     attributes: ['service_type_id', 'seller_id', 'price', 'id'],
                   },
-                }) : undefined,
-            sellerAdaptor.retrieveSellerReviews(
+                }) : undefined, sellerAdaptor.retrieveSellerReviews(
                 {offline_seller_id: result.seller_id, order_id: id}),
-            orderAdaptor.retrieveOrUpdatePaymentDetails(
-                {
-                  where: {
-                    order_id: id, seller_id: result.seller_id,
-                    user_id: result.user_id,
-                  },
-                }), categoryAdaptor.retrieveLimitRules({where: {user_id: 1}})]);
+            orderAdaptor.retrieveOrUpdatePaymentDetails({
+              where: {
+                order_id: id, seller_id: result.seller_id,
+                user_id: result.user_id,
+              },
+            }), categoryAdaptor.retrieveLimitRules({where: {user_id: 1}})]);
 
           if (result.status_type === 4) {
             if (result.is_modified) {
@@ -143,11 +140,16 @@ class OrderController {
                   item => item.rule_type === 11);
               result.auto_cancel_time = (auto_cancel_limit || {}).rule_limit ||
                   0;
+              const auto_cancel_max_cashback = user_default_limit_rules.find(
+                  item => item.rule_type === 14);
+              result.auto_cancel_max_cashback = (auto_cancel_max_cashback ||
+                  {}).rule_limit || 0;
               result.auto_cancel_remaining_seconds = moment(result.created_at,
                   moment.ISO_8601).add(result.auto_cancel_time, 'minutes').
                   diff(moment(), 'seconds');
               result.auto_cancel_elapsed_seconds = moment(result.created_at,
                   moment.ISO_8601).diff(moment(), 'seconds');
+              result.response_information = `If you do not respond within the response time (${result.auto_cancel_time} min.), this Order will be Auto Cancelled & you will lose out on a Sale.`;
             }
           }
 
@@ -237,6 +239,7 @@ class OrderController {
 
                 item.offer_discount = parseFloat(
                     (item.offer_discount || 0).toString());
+                item.offer_type = parseInt((item.offer_type || 0).toString());
 
                 item.current_unit_price = item.sku_measurement ?
                     item.sku_measurement.mrp : 0;
@@ -251,6 +254,8 @@ class OrderController {
                               0).toString());
                   item.suggestion.offer_discount = parseFloat(
                       (item.suggestion.offer_discount || 0).toString());
+                  item.suggestion.offer_type = parseInt(
+                      (item.suggestion.offer_type || 0).toString());
                   item.current_selling_price = parseFloat(
                       (item.current_unit_price *
                           parseFloat(item.quantity)).toString());
@@ -272,20 +277,35 @@ class OrderController {
 
                 item.current_selling_price = _.round(
                     item.current_selling_price -
-                    (item.current_selling_price * item.offer_discount / 100),
+                    (item.current_selling_price *
+                        (item.offer_type === 1 ? item.offer_discount : 0) /
+                        100),
                     2);
                 item.selling_price = _.round(
                     item.suggestion ? item.selling_price -
-                        (item.selling_price * item.suggestion.offer_discount /
+                        (item.selling_price *
+                            (item.suggestion.offer_type === 1 ?
+                                item.suggestion.offer_discount :
+                                0) /
                             100) : item.selling_price -
-                        (item.selling_price * item.offer_discount /
+                        (item.selling_price *
+                            (item.offer_type === 1 ? item.offer_discount : 0) /
                             100), 2);
+                item.selling_price = item.selling_price || 0;
+                item.current_selling_price = item.current_selling_price || 0;
                 return item;
               }) : result.order_details;
-          result.total_amount = result.total_amount ||
-              _.round(result.order_type && result.order_type === 1 ?
-                  _.sumBy(result.order_details, 'selling_price') :
-                  _.sumBy(result.order_details, 'total_amount'), 2);
+
+          if (!result.total_amount) {
+            result.total_amount = _.round(
+                result.order_type && result.order_type === 1 ?
+                    _.sumBy(result.order_details, 'selling_price') :
+                    _.sumBy(result.order_details, 'total_amount'), 2);
+            result.before_discount_amount = result.total_amount;
+            result.total_amount = result.total_amount -
+                (result.seller_discount || 0);
+          }
+
           if (result.user_address) {
             const {address_line_1, address_line_2, city_name, state_name, locality_name, pin_code} = result.user_address ||
             {};
@@ -453,7 +473,7 @@ class OrderController {
               offset: !page_no || (page_no &&
                   (page_no.toString() === '0' || isNaN(page_no))) ? 0 :
                   config.ORDER_LIMIT * parseInt(page_no), attributes: [
-                'id', 'order_details', 'order_type',
+                'id', 'order_details', 'order_type', 'seller_discount',
                 'collect_at_store', 'status_type', 'seller_id',
                 'user_id', 'in_review', [
                   modals.sequelize.literal(
@@ -615,50 +635,42 @@ class OrderController {
         console.log('\n\n\n\n\n\n\n', user_index_data,
             (user_index_data && user_index_data.my_seller_ids &&
                 user_index_data.my_seller_ids.length > 0));
-        const [orderResult, reasons] = await Promise.all([
-          orderAdaptor.retrieveOrderList({
-            where: JSON.parse(
-                JSON.stringify(
-                    {seller_id, user_id, status_type})),
-            include, order: [['id', 'desc']],
-            limit: !page_no ? 100 : config.ORDER_LIMIT, offset: !page_no ||
-            (page_no && (page_no.toString() === '0' || isNaN(page_no))) ? 0 :
-                config.ORDER_LIMIT * parseInt(page_no),
-            attributes: [
-              'id', 'order_details', 'order_type',
-              'collect_at_store', 'status_type', 'seller_id',
-              'user_id', 'in_review', [
-                modals.sequelize.literal(
-                    '(Select my_seller_ids from table_user_index as user_index where user_index.user_id = "order".user_id)'),
-                'my_seller_ids'], [
-                modals.sequelize.literal(
-                    '(Select purchase_cost from consumer_products as expense where expense.id = "order".expense_id)'),
-                'total_amount'], 'job_id', 'expense_id', [
-                modals.sequelize.literal(
-                    '(Select cashback_status from table_cashback_jobs as jobs where jobs.id = "order".job_id)'),
-                'cashback_status'], [
-                modals.sequelize.literal(
-                    '(Select admin_status from table_cashback_jobs as jobs where jobs.id = "order".job_id)'),
-                'admin_status'], 'created_at', 'updated_at',
-              'is_modified', 'user_address_id', 'delivery_user_id', [
-                modals.sequelize.literal(
-                    '(Select sum(amount) from table_wallet_user_cashback as user_wallet where user_wallet.job_id = "order".job_id)'),
-                'available_cashback']],
-          }),
-          categoryAdaptor.retrieveRejectReasons(
-              {where: {query_type: 4, status_type: 1}})]);
+        const orderResult = await orderAdaptor.retrieveOrderList({
+          where: JSON.parse(
+              JSON.stringify(
+                  {seller_id, user_id, status_type})),
+          include, order: [['id', 'desc']],
+          limit: !page_no ? 100 : config.ORDER_LIMIT, offset: !page_no ||
+          (page_no && (page_no.toString() === '0' || isNaN(page_no))) ? 0 :
+              config.ORDER_LIMIT * parseInt(page_no),
+          attributes: [
+            'id', 'order_details', 'order_type', 'seller_discount',
+            'collect_at_store', 'status_type', 'seller_id',
+            'user_id', 'in_review', [
+              modals.sequelize.literal(
+                  '(Select my_seller_ids from table_user_index as user_index where user_index.user_id = "order".user_id)'),
+              'my_seller_ids'], [
+              modals.sequelize.literal(
+                  '(Select purchase_cost from consumer_products as expense where expense.id = "order".expense_id)'),
+              'total_amount'], 'job_id', 'expense_id', [
+              modals.sequelize.literal(
+                  '(Select cashback_status from table_cashback_jobs as jobs where jobs.id = "order".job_id)'),
+              'cashback_status'], [
+              modals.sequelize.literal(
+                  '(Select admin_status from table_cashback_jobs as jobs where jobs.id = "order".job_id)'),
+              'admin_status'], 'created_at', 'updated_at',
+            'is_modified', 'user_address_id', 'delivery_user_id', [
+              modals.sequelize.literal(
+                  '(Select sum(amount) from table_wallet_user_cashback as user_wallet where user_wallet.job_id = "order".job_id)'),
+              'available_cashback']],
+        });
         return reply.response({
           result: orderResult.orders,
           order_count: orderResult.order_count,
           last_page: orderResult.order_count > config.ORDER_LIMIT ? Math.ceil(
               orderResult.order_count / config.ORDER_LIMIT) - 1 : 0,
           seller_exist: !!(user_index_data && user_index_data.my_seller_ids &&
-              user_index_data.my_seller_ids.length > 0),
-          status: true,
-          message,
-          reasons: [
-            ...reasons.filter(item => item.id !== 0),
-            reasons.find(item => item.id === 0)],
+              user_index_data.my_seller_ids.length > 0), status: true, message,
         });
       } else {
         return reply.response({
@@ -1027,12 +1039,12 @@ class OrderController {
     try {
       if (!request.pre.forceUpdate) {
         const {seller_id, order_id} = request.params;
-        let {user_id, order_details, delivery_user_id, delivery_minutes} = request.payload;
+        let {user_id, order_details, delivery_user_id, delivery_minutes, seller_discount} = request.payload;
         console.log(JSON.stringify(request.payload));
         const result = await socket_instance.modify_order(
             {
               seller_id, user_id, order_details, order_id,
-              delivery_user_id, delivery_minutes,
+              delivery_user_id, delivery_minutes, seller_discount,
             });
         if (result) {
           return reply.response({result, status: true});
@@ -1095,14 +1107,14 @@ class OrderController {
     try {
       if (!request.pre.forceUpdate) {
         let {seller_id, order_id} = request.params;
-        let {user_id, seller_id: payload_seller_id, order_details, delivery_minutes} = request.payload;
+        let {user_id, seller_id: payload_seller_id, order_details, delivery_minutes, seller_discount} = request.payload;
         seller_id = seller_id || payload_seller_id;
         user_id = user_id || user.id;
         const is_user = !user.seller_detail;
         const result = await socket_instance.approve_order(
             {
               seller_id, user_id, order_id, status_type: 16,
-              is_user, order_details, delivery_minutes,
+              is_user, order_details, delivery_minutes, seller_discount,
             });
         if (result) {
           return reply.response({result, status: true});
@@ -1305,12 +1317,8 @@ class OrderController {
         const user_id = user.id;
         const result = await socket_instance.reject_order_by_user(
             {
-              seller_id,
-              user_id,
-              order_id,
-              status_type: 18,
-              reason_id,
-              reason_text,
+              seller_id, user_id, order_id,
+              status_type: 18, reason_id, reason_text,
             });
         if (result) {
           return reply.response({result, status: true});
@@ -1567,10 +1575,10 @@ class OrderController {
     try {
       if (!request.pre.forceUpdate) {
         let {seller_id, order_id} = request.params;
-        let {user_id, delivery_user_id, order_details, total_amount} = request.payload;
+        let {user_id, delivery_user_id, order_details, total_amount, seller_discount} = request.payload;
         const result = await socket_instance.order_out_for_delivery(
             {
-              seller_id, user_id, order_id, total_amount,
+              seller_id, user_id, order_id, total_amount, seller_discount,
               status_type: 19, delivery_user_id, order_details,
             });
         if (result) {
@@ -1708,13 +1716,15 @@ class OrderController {
         let {seller_id} = request.payload;
         const user_id = user.id;
         const order = await orderAdaptor.retrieveOrUpdateOrder(
-            {where: {id: order_id, user_id, seller_id}}, {}, false);
+            {where: {id: order_id, user_id, seller_id}}, null, false);
+        order.seller_discount = 0;
         const sku_item = order.order_details.find(
             item => item.id.toString() === sku_id);
         order.order_details = order.order_details.filter(
             item => item.id.toString() !== sku_id);
+        let result;
         if (order.order_details.length > 0) {
-          let result = await orderAdaptor.retrieveOrUpdateOrder(
+          result = await orderAdaptor.retrieveOrUpdateOrder(
               {
                 where: {id: order_id, user_id, seller_id},
                 include: [
@@ -1779,7 +1789,7 @@ class OrderController {
                     'cashback_status'], [
                     modals.sequelize.literal(
                         '(Select status_type from table_payments as payment where payment.order_id = "order".id)'),
-                    'payment_status'], [
+                    'payment_status'], 'seller_discount', [
                     modals.sequelize.literal(
                         '(Select payment_mode_id from table_payments as payment where payment.order_id = "order".id)'),
                     'payment_mode_id'], [
@@ -1814,9 +1824,9 @@ class OrderController {
                 ''}.`, notification_id: result.id,
               },
             });
-          } else {
-            result = await socket_instance.cancel_order_by_user(
-                {seller_id, user_id, order_id, status_type: 17});
+          } else if (result && result === false) {
+            return reply.response(
+                {message: 'Unable to return sku from order.', status: false});
           }
 
           result.seller.customer_ids = (result.seller.customer_ids || []).find(
@@ -1835,17 +1845,28 @@ class OrderController {
               (result.seller.redeemed_credits || 0) -
               (result.seller.credit_total || 0);
           return reply.response({result, status: true});
-        } else if (result && result === false) {
-          return reply.response(
-              {message: 'Unable to return sku from order.', status: false});
+        } else {
+          result = await socket_instance.cancel_order_by_user(
+              {seller_id, user_id, order_id, status_type: 17});
+          result.seller.customer_ids = (result.seller.customer_ids || []).find(
+              item => (item.customer_id ? item.customer_id :
+                  item).toString() === result.user_id.toString());
+          result.seller.customer_ids = result.seller.customer_ids &&
+          result.seller.customer_ids.customer_id ?
+              result.seller.customer_ids :
+              {
+                customer_id: result.seller.customer_ids,
+                is_credit_allowed: false,
+                credit_limit: 0,
+              };
+          result.is_credit_allowed = result.seller.customer_ids.is_credit_allowed;
+          result.credit_limit = result.seller.customer_ids.credit_limit +
+              (result.seller.redeemed_credits || 0) -
+              (result.seller.credit_total || 0);
+          return reply.response({result, status: true});
         }
-
-        return reply.response(
-            {
-              message: 'Make sure order is in cancelled state.',
-              status: false,
-            });
-      } else if (request.pre.userExist === 0) {
+      }
+      if (request.pre.userExist === 0) {
         return reply.response({
           status: false,
           message: 'Inactive User',
@@ -1915,7 +1936,7 @@ class OrderController {
                 'upload_id'], [
                 modals.sequelize.literal(
                     '(Select admin_status from table_cashback_jobs as jobs where jobs.id = "order".job_id)'),
-                'admin_status'], [
+                'admin_status'], 'seller_discount', [
                 modals.sequelize.literal(
                     '(Select purchase_cost from consumer_products as expense where expense.id = "order".expense_id)'),
                 'total_amount'], 'delayed_delivery', [
@@ -1947,6 +1968,7 @@ class OrderController {
           orderAmount = _.sumBy(order_detail.order_details,
               order_detail.order_type && order_detail.order_type === 1 ?
                   'selling_price' : 'total_amount');
+          orderAmount = orderAmount - (order_item.seller_discount || 0);
           postData.orderAmount = orderAmount.toString();
           const defaults = {
             order_id, user_id, seller_id,
@@ -2062,16 +2084,9 @@ class OrderController {
         payment_data.payment_detail.responses = payment_data.payment_detail.responses ||
             [];
         payment_data.payment_detail.responses.push(request.payload);
-        [payment_data, payment_info] = await Promise.all([
-          /*orderAdaptor.retrieveOrUpdatePaymentDetails(
-              {where: {id: payment_data.id}}, {
-                status_type: payment_data.status_type,
-                amount: payment_data.amount,
-              }),*/ orderAdaptor.retrieveOrUpdatePaymentDetails(
+        await Promise.all([
+          orderAdaptor.retrieveOrUpdatePaymentDetails(
               {where: {id: payment_data.id}}, payment_data)]);
-        /*if (payment_data.status_type === 16) {
-          await OrderController.creditPaymentToSeller(payment_data);
-        }*/
         return reply.response(
             '<!DOCTYPE html><html><head> <title>CashFree</title> <style>.loaderDiv{width: 100%; /* center a div insie another div*/ display: flex; flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: center;}.loader{border: 16px solid #f3f3f3; border-radius: 50%; border-top: 16px solid #3498db; width: 120px; height: 120px; -webkit-animation: spin 2s linear infinite; margin: auto; margin-top:50%; animation: spin 2s linear infinite; padding:5px;}/* Safari */ @-webkit-keyframes spin{0%{-webkit-transform: rotate(0deg);}100%{-webkit-transform: rotate(360deg);}}@keyframes spin{0%{transform: rotate(0deg);}100%{transform: rotate(360deg);}}</style></head><body> <div class="loaderDiv"> <div class="loader"></div></div></body></html>');
       }
@@ -2099,91 +2114,107 @@ class OrderController {
   }
 
   static async retrievePaymentStatus(request, reply) {
-    try {
-      const {order_id: ref_id} = request.params;
-      let order_id = parseInt(ref_id.split('ABBA')[1], 36);
-      let secretKey = config.CASH_FREE.SECRET_KEY,
-          appId = config.CASH_FREE.APP_ID;
-      let payment_detail = await orderAdaptor.retrieveOrUpdatePaymentDetails(
-          {where: {ref_id, order_id}});
-      if (payment_detail && payment_detail.status_type !== 13 &&
-          payment_detail.status_type !== 8 && payment_detail.status_type !==
-          4) {
-        if (payment_detail.status_type === 16) {
-          await OrderController.creditPaymentToSeller(payment_detail);
-        }
-        const order_detail = await orderAdaptor.retrieveOrderDetail(
-            {where: {id: order_id}, attributes: ['expense_id']});
-        return reply.response(
-            {
-              status: true,
-              status_type: payment_detail.status_type,
-              expense_id: order_detail.expense_id,
-            });
-      }
-
-      const result = await rp({
-        url: `${config.CASH_FREE.HOST}${config.CASH_FREE.STATUS_API}`,
-        method: 'POST', headers: {
-          'Content-Type': 'content-type: application/x-www-form-urlencoded',
-          'cache-control': 'no-cache',
-        },
-        formData: {appId, secretKey, orderId: ref_id},
-      });
-
-      modals.logs.create({
-        api_action: request.method,
-        api_path: request.url.pathname,
-        log_type: 10,
-        log_content: JSON.stringify({
-          params: request.params,
-          query: request.query,
-          headers: request.headers,
-          payload: request.payload,
-          response: result, order_id,
-        }),
-      }).catch((ex) => console.log('error while logging on db,', ex));
-      const {status, txStatus} = JSON.parse(result);
-      if (status === 'OK') {
-        payment_detail.status_type = txStatus ? payment_status[txStatus] : 9;
-
-        payment_detail = await orderAdaptor.retrieveOrUpdatePaymentDetails(
-            {where: {ref_id, order_id}}, payment_detail);
-        if (payment_detail.status_type === 16) {
-          await OrderController.creditPaymentToSeller(payment_detail);
-        }
-
-        const order_detail = await orderAdaptor.retrieveOrderDetail(
-            {where: {id: order_id}, attributes: ['expense_id']});
-        return reply.response(
-            {
-              status: true,
-              status_type: payment_detail.status_type,
-              expense_id: order_detail.expense_id,
-            });
-      }
-
-      return reply.response({status: false});
-    } catch (err) {
-      console.log(err);
-      modals.logs.create({
-        api_action: request.method,
-        api_path: request.url.pathname,
-        log_type: 2,
-        log_content: JSON.stringify({
-          params: request.params,
-          query: request.query,
-          headers: request.headers,
-          payload: request.payload,
-          err,
-        }),
-      }).catch((ex) => console.log('error while logging on db,', ex));
+    if (request.pre.userExist === 0) {
       return reply.response({
-        status: false,
-        message: 'Unable to retrieve order by id.',
+        status: false, message: 'Inactive User',
         forceUpdate: request.pre.forceUpdate,
-      });
+      }).code(402);
+    } else if (!request.pre.userExist) {
+      return reply.response({
+        status: false, message: 'Unauthorized',
+        forceUpdate: request.pre.forceUpdate,
+      }).code(401);
+    } else if (!request.pre.forceUpdate) {
+      try {
+        const {order_id: ref_id} = request.params;
+        let order_id = parseInt(ref_id.split('ABBA')[1], 36);
+        let secretKey = config.CASH_FREE.SECRET_KEY,
+            appId = config.CASH_FREE.APP_ID;
+        let payment_detail = await orderAdaptor.retrieveOrUpdatePaymentDetails(
+            {where: {ref_id, order_id}});
+        if (payment_detail && payment_detail.status_type !== 13 &&
+            payment_detail.status_type !== 8 && payment_detail.status_type !==
+            4) {
+          if (payment_detail.status_type === 16) {
+            await OrderController.creditPaymentToSeller(payment_detail);
+          }
+          const order_detail = await orderAdaptor.retrieveOrderDetail(
+              {where: {id: order_id}, attributes: ['expense_id']});
+          return reply.response(
+              {
+                status: true,
+                status_type: payment_detail.status_type,
+                expense_id: order_detail.expense_id,
+              });
+        }
+
+        const result = await rp({
+          url: `${config.CASH_FREE.HOST}${config.CASH_FREE.STATUS_API}`,
+          method: 'POST', headers: {
+            'Content-Type': 'content-type: application/x-www-form-urlencoded',
+            'cache-control': 'no-cache',
+          },
+          formData: {appId, secretKey, orderId: ref_id},
+        });
+
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 10,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            response: result, order_id,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
+        const {status, txStatus} = JSON.parse(result);
+        if (status === 'OK') {
+          payment_detail.status_type = txStatus ? payment_status[txStatus] : 9;
+
+          payment_detail = await orderAdaptor.retrieveOrUpdatePaymentDetails(
+              {where: {ref_id, order_id}}, payment_detail);
+          if (payment_detail.status_type === 16) {
+            await OrderController.creditPaymentToSeller(payment_detail);
+          }
+
+          const order_detail = await orderAdaptor.retrieveOrderDetail(
+              {where: {id: order_id}, attributes: ['expense_id']});
+          return reply.response(
+              {
+                status: true, status_type: payment_detail.status_type,
+                expense_id: order_detail.expense_id,
+              });
+        }
+
+        return reply.response({status: false});
+      } catch (err) {
+        console.log(err);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
+        return reply.response({
+          status: false,
+          message: 'Unable to retrieve order by id.',
+          forceUpdate: request.pre.forceUpdate,
+        });
+      }
     }
+
+    return reply.response({
+      status: false, message: 'Forbidden',
+      forceUpdate: request.pre.forceUpdate,
+    });
   }
 
   static async creditPaymentToSeller(payment_detail) {
@@ -2295,7 +2326,7 @@ class OrderController {
       orderAdaptor.retrieveOrderDetail(
           {
             where: {id: order_id}, attributes: [
-              'seller_id', 'job_id', [
+              'seller_id', 'job_id', 'seller_discount', [
                 modals.sequelize.literal(
                     '(Select purchase_cost from consumer_products as expense where expense.id = "order".expense_id)'),
                 'total_amount']],
@@ -2338,6 +2369,9 @@ class OrderController {
       });
 
       payment_item.total_amount = _.round(order.total_amount, 2);
+      payment_item.seller_discount = _.round(order.seller_discount, 2);
+      payment_item.before_discount_amount = _.round(
+          order.total_amount + order.seller_discount, 2);
       payment_item.total_quantity = _.sumBy(expense_sku, 'quantity');
       payment_item.seller_name = seller.seller_name;
       payment_item.gstin = seller.gstin;
@@ -2361,9 +2395,13 @@ class OrderController {
   }
 
   static async retrieveCancelOrderReasons(request, reply) {
+
+    const reasons = await categoryAdaptor.retrieveRejectReasons(
+        {where: {query_type: 4, status_type: 1}});
     return reply.response({
-      status: true, result: await categoryAdaptor.retrieveRejectReasons(
-          {where: {query_type: 4, status_type: 1}}),
+      status: true, result: [
+        ...reasons.filter(item => item.id !== 0),
+        reasons.find(item => item.id === 0)],
     });
   }
 }

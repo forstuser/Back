@@ -8,14 +8,16 @@ import {comparePasswords, hashPassword} from './password';
 
 const checkAppVersion = async (request, reply) => {
   if (request.headers['app-version'] !== undefined ||
-      request.headers['ios-app-version'] !== undefined) {
+      request.headers['ios-app-version'] !== undefined ||
+      request.headers['seller-app-version'] !== undefined) {
     const appVersion = request.headers['ios-app-version'] ||
-        request.headers['app-version'];
+        request.headers['app-version'] || request.headers['seller-app-version'];
     const currentAppVersion = (!isNaN(parseInt(appVersion)) ?
         parseInt(appVersion) : null);
 
     const appVersionDetail = (request.headers['ios-app-version'] ?
-        config.IOS : config.ANDROID);
+        config.IOS : request.headers['seller-app-version'] ?
+            config.SELLER.ANDROID : config.ANDROID);
     if (appVersionDetail && currentAppVersion) {
       const FORCE_VERSION = appVersionDetail.FORCE_VERSION;
       const RECOMMENDED_VERSION = appVersionDetail.RECOMMENDED_VERSION;
@@ -47,14 +49,14 @@ const logSellerAction = async (request, reply) => {
     let seller_user;
     if (userResult) {
       seller_user = userResult.toJSON();
-        await MODAL.logs.create({
-          api_action: method,
-          api_path: url.pathname,
-          log_type: 1, seller_user_id: id,
-          log_content: JSON.stringify({params, query, headers, payload}),
-        });
+      await MODAL.logs.create({
+        api_action: method,
+        api_path: url.pathname,
+        log_type: 1, seller_user_id: id,
+        log_content: JSON.stringify({params, query, headers, payload}),
+      });
 
-      return !seller_user.is_logged_out
+      return !seller_user.is_logged_out;
     }
 
     return null;

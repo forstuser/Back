@@ -114,10 +114,7 @@ function prepareAuthRoutes(modal, routeObject, middleware) {
       path: '/sellers/subscribe',
       config: {
         auth: 'jwt',
-        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, {
-          method: middleware.logSellerAction,
-          assign: 'seller_action'
-        }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         handler: _user2.default.subscribeSellerUser,
         description: 'Update Seller User FCM Server ID.',
         validate: {

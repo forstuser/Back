@@ -29,6 +29,10 @@ var _bluebird = require('bluebird');
 
 var _bluebird2 = _interopRequireDefault(_bluebird);
 
+var _lodash = require('lodash');
+
+var _lodash2 = _interopRequireDefault(_lodash);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 let modals, brandAdaptor, sellerAdaptor;
@@ -173,10 +177,19 @@ class BrandController {
         let offset = page_no && page_no !== '0' && page_no !== '1' ? parseInt(page_no) * _main2.default.BRAND_OFFER_LIMIT : 0;
         let brand_offers = await brandAdaptor.retrieveBrandOffers({
           where: { offer_type, end_date: { $gte: (0, _moment2.default)().format() } },
-          attributes: ['id', 'offer_type', 'title', 'description', 'sku_measurement_type', 'start_date', 'end_date', 'sku_id', 'brand_id', 'brand_mrp', 'excluded_seller_ids', 'sku_measurement_id', 'offer_value', 'has_image', [modals.sequelize.literal('(select title from table_sku_global as sku where sku.id = brand_offers.sku_id)'), 'sku_title'], [modals.sequelize.literal('(select brand_name from brands as brand where brand.brand_id = brand_offers.brand_id)'), 'brand_title'], [modals.sequelize.literal(`(select measurement_value from table_sku_measurement_detail as sku_measure where sku_measure.id = brand_offers.sku_measurement_id)`), 'measurement_value'], [modals.sequelize.literal(`(select acronym from table_sku_measurement as sku_measure where sku_measure.id = brand_offers.sku_measurement_type)`), 'measurement_acronym'], [modals.sequelize.literal(`(Select acronym from table_sku_measurement as measure where measure.id = (select measurement_type from table_sku_measurement_detail as sku_measure where sku_measure.id = brand_offers.sku_measurement_id limit 1))`), 'acronym'], [modals.sequelize.literal(`(select mrp from table_sku_measurement_detail as sku_measure where sku_measure.id = brand_offers.sku_measurement_id)`), 'mrp'], [modals.sequelize.literal(`(select bar_code from table_sku_measurement_detail as sku_measure where sku_measure.id = brand_offers.sku_measurement_id)`), 'bar_code']], limit, offset,
+          attributes: ['id', 'offer_type', 'title', 'description', 'sku_measurement_type', 'start_date', 'end_date', 'sku_id', 'brand_id', 'brand_mrp', 'excluded_seller_ids', 'sku_measurement_id', 'offer_value', 'has_image', [modals.sequelize.literal('(select title from table_sku_global as sku where sku.id = brand_offers.sku_id)'), 'sku_title'], [modals.sequelize.literal(seller_id ? `(select id from table_seller_offers as offer where offer.brand_offer_id = brand_offers.id and offer.seller_id = ${seller_id} and offer.offer_type = brand_offers.offer_type limit 1)` : null), 'seller_offer_id'], [modals.sequelize.literal('(select brand_name from brands as brand where brand.brand_id = brand_offers.brand_id)'), 'brand_title'], [modals.sequelize.literal(`(select measurement_value from table_sku_measurement_detail as sku_measure where sku_measure.id = brand_offers.sku_measurement_id)`), 'measurement_value'], [modals.sequelize.literal(`(select acronym from table_sku_measurement as sku_measure where sku_measure.id = brand_offers.sku_measurement_type)`), 'measurement_acronym'], [modals.sequelize.literal(`(Select acronym from table_sku_measurement as measure where measure.id = (select measurement_type from table_sku_measurement_detail as sku_measure where sku_measure.id = brand_offers.sku_measurement_id limit 1))`), 'acronym'], [modals.sequelize.literal(`(select mrp from table_sku_measurement_detail as sku_measure where sku_measure.id = brand_offers.sku_measurement_id)`), 'mrp'], [modals.sequelize.literal(`(select bar_code from table_sku_measurement_detail as sku_measure where sku_measure.id = brand_offers.sku_measurement_id)`), 'bar_code']], limit, offset,
           order: [['updated_at', 'desc'], ['created_at', 'desc']]
         });
 
+        brand_offers = brand_offers.map(item => {
+          if (item.offer_type === 1) {
+            item.discount = (item.brand_mrp || item.mrp) * item.offer_value / 100;
+            item.discounted_value = (item.brand_mrp || item.mrp) - item.discount;
+          }
+
+          item.has_seller_offer = !!item.seller_offer_id;
+          return item;
+        });
         return reply.response({
           status: true,
           message: 'Successful',
@@ -207,7 +220,7 @@ class BrandController {
       }).catch(ex => console.log('error while logging on db,', ex));
       return reply.response({
         status: false,
-        message: 'Unable to retrieve offers for seller',
+        message: 'Unable to retrieve offers for brand for seller',
         forceUpdate: request.pre.forceUpdate
       });
     }
@@ -264,7 +277,7 @@ class BrandController {
       }).catch(ex => console.log('error while logging on db,', ex));
       return reply.response({
         status: false,
-        message: 'Unable to retrieve offers for seller',
+        message: 'Unable to add offers with seller',
         forceUpdate: request.pre.forceUpdate
       });
     }
@@ -282,7 +295,7 @@ class BrandController {
         brand_offer.excluded_seller_ids = brand_offer.excluded_seller_ids || [];
         brand_offer.excluded_seller_ids.push(seller_id);
         const { sku_id, sku_measurement_id } = brand_offer;
-        const [seller_offer] = await _bluebird2.default.all([brandAdaptor.retrieveOrUnlinkBrandOffers({ seller_id, sku_id, sku_measurement_id, brand_offer_id: id }), brandAdaptor.updateBrandOffer({ excluded_seller_ids: _.uniq(brand_offer.excluded_seller_ids) }, { where: { offer_type, end_date: { $gte: (0, _moment2.default)().format() }, id } })]);
+        const [seller_offer] = await _bluebird2.default.all([brandAdaptor.retrieveOrUnlinkBrandOffers({ seller_id, sku_id, sku_measurement_id, brand_offer_id: id }), brandAdaptor.updateBrandOffer({ excluded_seller_ids: _lodash2.default.uniq(brand_offer.excluded_seller_ids) }, { where: { offer_type, end_date: { $gte: (0, _moment2.default)().format() }, id } })]);
         return reply.response({
           status: true,
           message: 'Successful',

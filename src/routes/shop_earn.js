@@ -75,14 +75,8 @@ export function prepareShopEarnRoute(modal, route, middleware, socket) {
       config: {
         auth: 'jwt',
         pre: [
-          {
-            method: middleware.checkAppVersion,
-            assign: 'forceUpdate',
-          },
-          {
-            method: middleware.logSellerAction,
-            assign: 'log_seller_action',
-          },
+          {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {method: middleware.logSellerAction, assign: 'log_seller_action'},
         ],
       },
     });
@@ -150,14 +144,8 @@ export function prepareShopEarnRoute(modal, route, middleware, socket) {
       config: {
         auth: 'jwt',
         pre: [
-          {
-            method: middleware.checkAppVersion,
-            assign: 'forceUpdate',
-          },
-          {
-            method: middleware.updateUserActiveStatus,
-            assign: 'userExist',
-          },
+          {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {method: middleware.updateUserActiveStatus, assign: 'userExist'},
         ],
         handler: controller.clearSKUWishList,
       },
@@ -199,6 +187,9 @@ export function prepareShopEarnRoute(modal, route, middleware, socket) {
             quantity: joi.number().required(),
             created_at: [joi.string(), joi.allow(null)],
             offer_discount: [joi.number(), joi.allow(null)],
+            offer_acronym: [joi.string(), joi.allow(null)],
+            offer_title: [joi.string(), joi.allow(null)],
+            offer_type: [joi.number(), joi.allow(null)],
             sku_measurement: [
               joi.object().keys({
                 id: [joi.number(), joi.allow(null)],
@@ -228,14 +219,8 @@ export function prepareShopEarnRoute(modal, route, middleware, socket) {
       config: {
         auth: 'jwt',
         pre: [
-          {
-            method: middleware.checkAppVersion,
-            assign: 'forceUpdate',
-          },
-          {
-            method: middleware.updateUserActiveStatus,
-            assign: 'userExist',
-          },
+          {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {method: middleware.updateUserActiveStatus, assign: 'userExist'},
         ],
         handler: controller.addOfferSKUWishList,
         validate: {
@@ -281,6 +266,9 @@ export function prepareShopEarnRoute(modal, route, middleware, socket) {
             quantity: joi.number().required(),
             seller_id: [joi.number(), joi.allow(null)],
             offer_discount: [joi.number(), joi.allow(null)],
+            offer_acronym: [joi.string(), joi.allow(null)],
+            offer_title: [joi.string(), joi.allow(null)],
+            offer_type: [joi.number(), joi.allow(null)],
             added_date: [joi.string(), joi.allow(null)],
             sku_measurement: [
               joi.object().keys({
@@ -438,10 +426,7 @@ export function prepareShopEarnRoute(modal, route, middleware, socket) {
       config: {
         auth: 'jwt',
         pre: [
-          {
-            method: middleware.checkAppVersion,
-            assign: 'forceUpdate',
-          },
+          {method: middleware.checkAppVersion, assign: 'forceUpdate'},
           {method: middleware.logSellerAction, assign: 'seller_action'},
         ],
         handler: controller.cashBackApproval,
@@ -454,10 +439,7 @@ export function prepareShopEarnRoute(modal, route, middleware, socket) {
       config: {
         auth: 'jwt',
         pre: [
-          {
-            method: middleware.checkAppVersion,
-            assign: 'forceUpdate',
-          },
+          {method: middleware.checkAppVersion, assign: 'forceUpdate'},
           {method: middleware.logSellerAction, assign: 'seller_action'},
         ],
         validate: {
@@ -475,10 +457,7 @@ export function prepareShopEarnRoute(modal, route, middleware, socket) {
       config: {
         auth: 'jwt',
         pre: [
-          {
-            method: middleware.checkAppVersion,
-            assign: 'forceUpdate',
-          },
+          {method: middleware.checkAppVersion, assign: 'forceUpdate'},
           {method: middleware.logSellerAction, assign: 'seller_action'},
         ],
         handler: controller.retrieveTransactions,
@@ -559,10 +538,7 @@ export function prepareShopEarnRoute(modal, route, middleware, socket) {
     config: {
       auth: 'jwt',
       pre: [
-        {
-          method: middleware.checkAppVersion,
-          assign: 'forceUpdate',
-        },
+        {method: middleware.checkAppVersion, assign: 'forceUpdate'},
         {method: middleware.logSellerAction, assign: 'seller_action'},
       ],
       handler: controller.redeemSellerCashBackAtPayTM,

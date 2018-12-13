@@ -7,6 +7,7 @@ import SellerAdaptor from '../adaptors/sellers';
 import moment from 'moment';
 import config from '../../config/main';
 import Promise from 'bluebird';
+import _ from 'lodash';
 
 let modals, brandAdaptor, sellerAdaptor;
 
@@ -165,6 +166,9 @@ class BrandController {
               modals.sequelize.literal(
                   '(select title from table_sku_global as sku where sku.id = brand_offers.sku_id)'),
               'sku_title'], [
+              modals.sequelize.literal(seller_id ?
+                  `(select id from table_seller_offers as offer where offer.brand_offer_id = brand_offers.id and offer.seller_id = ${seller_id} and offer.offer_type = brand_offers.offer_type limit 1)` :
+                  null), 'seller_offer_id'], [
               modals.sequelize.literal(
                   '(select brand_name from brands as brand where brand.brand_id = brand_offers.brand_id)'),
               'brand_title'], [
@@ -186,6 +190,17 @@ class BrandController {
           order: [['updated_at', 'desc'], ['created_at', 'desc']],
         });
 
+        brand_offers = brand_offers.map(item => {
+          if (item.offer_type === 1) {
+            item.discount = (item.brand_mrp || item.mrp) * item.offer_value /
+                100;
+            item.discounted_value = (item.brand_mrp || item.mrp) -
+                item.discount;
+          }
+
+          item.has_seller_offer = !!item.seller_offer_id;
+          return item;
+        });
         return reply.response({
           status: true,
           message: 'Successful',
@@ -219,7 +234,7 @@ class BrandController {
       }).catch((ex) => console.log('error while logging on db,', ex));
       return reply.response({
         status: false,
-        message: 'Unable to retrieve offers for seller',
+        message: 'Unable to retrieve offers for brand for seller',
         forceUpdate: request.pre.forceUpdate,
       });
     }
@@ -308,7 +323,7 @@ class BrandController {
       }).catch((ex) => console.log('error while logging on db,', ex));
       return reply.response({
         status: false,
-        message: 'Unable to retrieve offers for seller',
+        message: 'Unable to add offers with seller',
         forceUpdate: request.pre.forceUpdate,
       });
     }

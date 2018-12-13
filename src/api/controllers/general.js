@@ -372,30 +372,21 @@ class GeneralController {
           where: {batch_date: {$lte: moment().endOf('days')}},
           include: [
             {
-              model: modals.tags, as: 'tags',
-              attributes: [
+              model: modals.tags, as: 'tags', attributes: [
                 ['title', 'default_title'],
                 [`${language ? `title_${language}` : `title`}`, 'title'],
-                ['description', 'default_description'],
-                [
+                ['description', 'default_description'], [
                   `${language ? `description_${language}` : `description`}`,
                   'description'],
               ],
-            },
-            {
-              model: modals.users,
-              as: 'users',
-              attributes: ['id'],
-            }],
+            }, {model: modals.users, as: 'users', attributes: ['id']}],
           attributes: [
-            'id',
-            ['title', 'default_title'],
+            'id', ['title', 'default_title'],
             [`${language ? `title_${language}` : `title`}`, 'title'],
-            ['description', 'default_description'],
-            [
+            ['description', 'default_description'], [
               `${language ? `description_${language}` : `description`}`,
               'description'], 'short_url'],
-          order: [['id', 'asc']],
+          order: [['created_at', 'desc']],
           limit: request.query.limit || 10,
         };
 
@@ -484,51 +475,21 @@ class GeneralController {
       let language = (request.headers.language || '').split('-')[0];
       language = supportedLanguages.indexOf(language) >= 0 ? language : '';
       const options = {
-        where: {
-          batch_date: {
-            $lte: moment(),
-          },
-        },
-        include: [
+        where: {batch_date: {$lte: moment()}}, include: [
           {
-            model: modals.tags,
-            as: 'tags',
-            attributes: [
-              [
-                'title',
-                'default_title'],
-              [
-                `${language ? `title_${language}` : `title`}`,
-                'title'],
-              [
-                'description',
-                'default_description'],
-              [
+            model: modals.tags, as: 'tags', attributes: [
+              ['title', 'default_title'],
+              [`${language ? `title_${language}` : `title`}`, 'title'],
+              ['description', 'default_description'], [
                 `${language ? `description_${language}` : `description`}`,
-                'description'],
-            ],
-          },
-          {
-            model: modals.users,
-            as: 'users',
-            attributes: ['id'],
-          }],
+                'description']],
+          }, {model: modals.users, as: 'users', attributes: ['id']}],
         attributes: [
-          'id',
-          [
-            'title',
-            'default_title'],
-          [
-            `${language ? `title_${language}` : `title`}`,
-            'title'],
-          [
-            'description',
-            'default_description'],
-          [
+          'id', ['title', 'default_title'],
+          [`${language ? `title_${language}` : `title`}`, 'title'],
+          ['description', 'default_description'], [
             `${language ? `description_${language}` : `description`}`,
-            'description'],
-          'short_url'],
-        order: [['id', 'asc']],
+            'description'], 'short_url'], order: [['created_at', 'desc']],
       };
       const knowItems = await modals.knowItems.findAll(options);
       return reply.response({
@@ -579,44 +540,19 @@ class GeneralController {
       const options = {
         include: [
           {
-            model: modals.tags,
-            as: 'tags',
-            attributes: [
-              [
-                'title',
-                'default_title'],
-              [
-                `${language ? `title_${language}` : `title`}`,
-                'title'],
-              [
-                'description',
-                'default_description'],
-              [
+            model: modals.tags, as: 'tags', attributes: [
+              ['title', 'default_title'],
+              [`${language ? `title_${language}` : `title`}`, 'title'],
+              ['description', 'default_description'], [
                 `${language ? `description_${language}` : `description`}`,
-                'description'],
-            ],
-          },
-          {
-            model: modals.users,
-            as: 'users',
-            attributes: ['id'],
-          }],
+                'description']],
+          }, {model: modals.users, as: 'users', attributes: ['id']}],
         attributes: [
-          'id',
-          [
-            'title',
-            'default_title'],
-          [
-            `${language ? `title_${language}` : `title`}`,
-            'title'],
-          [
-            'description',
-            'default_description'],
-          [
+          'id', ['title', 'default_title'],
+          [`${language ? `title_${language}` : `title`}`, 'title'],
+          ['description', 'default_description'], [
             `${language ? `description_${language}` : `description`}`,
-            'description'],
-          'short_url'],
-        order: [['created_at', 'desc']],
+            'description'], 'short_url'], order: [['created_at', 'desc']],
       };
 
       const result = await modals.knowItems.findById(request.params.id,

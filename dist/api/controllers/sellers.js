@@ -167,6 +167,7 @@ class SellerController {
     if (request.pre.userExist && !request.pre.forceUpdate) {
       // this is where make us of adapter
       try {
+        const end_date = (0, _moment2.default)().format('');
         const user_id = user.id || user.ID;
         const [user_index_data, user_detail] = await _bluebird2.default.all([userAdaptor.retrieveUserIndexedData({
           where: { user_id },
@@ -202,7 +203,7 @@ class SellerController {
               id, $or: { seller_name, contact_no },
               is_fmcg, is_assisted, is_pos,
               is_onboarded: true, $and
-            })), attributes: ['id', ['seller_name', 'name'], 'owner_name', [modals.sequelize.literal(`"sellers"."seller_details"->'basic_details'`), 'basic_details'], [modals.sequelize.literal(`(select is_logged_out from table_seller_users as "users" where "users".id = "sellers"."user_id")`), 'is_logged_out'], [modals.sequelize.literal(`"sellers"."seller_details"->'basic_details'->'home_delivery'`), 'home_delivery'], [modals.sequelize.literal(`"sellers"."seller_details"->'basic_details'->'start_time'`), 'start_time'], [modals.sequelize.literal(`"sellers"."seller_details"->'basic_details'->'close_time'`), 'close_time'], [modals.sequelize.literal(`"sellers"."seller_details"->'basic_details'->'shop_open_day'`), 'shop_open_day'], 'is_fmcg', 'is_assisted', 'has_pos', [modals.sequelize.literal(`${seller_offer_ids && seller_offer_ids.length > 0 ? `(select count(*) from table_seller_offers as seller_offers where status_type = 1 and seller_offers.id in (${(seller_offer_ids || []).join(',')}) and seller_offers.seller_id = "sellers"."id")` : 0}`), 'offer_count'], [modals.sequelize.literal(`(select count(*) from table_seller_offers as seller_offers where status_type = 1 and on_sku = true and seller_offers.seller_id = "sellers"."id")`), 'sku_offer_count'], [modals.sequelize.literal(`(select AVG(seller_reviews.review_ratings) from table_seller_reviews as seller_reviews where seller_reviews.offline_seller_id = "sellers"."id")`), 'ratings']]
+            })), attributes: ['id', ['seller_name', 'name'], 'owner_name', [modals.sequelize.literal(`"sellers"."seller_details"->'basic_details'`), 'basic_details'], [modals.sequelize.literal(`(select is_logged_out from table_seller_users as "users" where "users".id = "sellers"."user_id")`), 'is_logged_out'], [modals.sequelize.literal(`"sellers"."seller_details"->'basic_details'->'home_delivery'`), 'home_delivery'], [modals.sequelize.literal(`"sellers"."seller_details"->'basic_details'->'start_time'`), 'start_time'], [modals.sequelize.literal(`"sellers"."seller_details"->'basic_details'->'close_time'`), 'close_time'], [modals.sequelize.literal(`"sellers"."seller_details"->'basic_details'->'shop_open_day'`), 'shop_open_day'], 'is_fmcg', 'is_assisted', 'has_pos', [modals.sequelize.literal(`${seller_offer_ids && seller_offer_ids.length > 0 ? `(select count(*) from table_seller_offers as seller_offers where status_type = 1 and seller_offers.id in (${(seller_offer_ids || []).join(',')}) and seller_offers.seller_id = "sellers"."id" and seller_offers.end_date >= '${end_date}')` : 0}`), 'offer_count'], [modals.sequelize.literal(`(select count(*) from table_seller_offers as seller_offers where status_type = 1 and on_sku = true and seller_offers.seller_id = "sellers"."id" and seller_offers.end_date >= '${end_date}')`), 'sku_offer_count'], [modals.sequelize.literal(`(select AVG(seller_reviews.review_ratings) from table_seller_reviews as seller_reviews where seller_reviews.offline_seller_id = "sellers"."id")`), 'ratings']]
           });
           return reply.response({
             status: true, result, message: _main2.default.NO_OFFER_MSG
@@ -246,15 +247,24 @@ class SellerController {
         const user_id = user.id || user.ID;
         let user_index_data = {};
         let { seller_id, offer_type } = request.params;
-        if (offer_type === '4') {
+        let { brand_ids, sub_category_ids, page_no, offset, limit } = request.query;
+        offset = page_no && page_no > 0 ? _main2.default.SKU_LIMIT * page_no : offset || 0;
+        limit = _main2.default.SKU_LIMIT;
+        /*if (offer_type === '4') {
           user_index_data = await userAdaptor.retrieveUserIndexedData({
-            where: { user_id }, attributes: ['my_seller_ids', 'seller_offer_ids']
+            where: {user_id}, attributes: ['my_seller_ids', 'seller_offer_ids'],
           });
         }
-        const { seller_offer_ids: id } = user_index_data || {};
+         const {seller_offer_ids: id} = user_index_data || {};*/
+        brand_ids = (brand_ids || '').split(',').filter(item => item);
+        brand_ids = brand_ids.length > 0 ? brand_ids.join() : undefined;
 
-        let result = await sellerAdaptor.retrieveSellerOffersForConsumer({ seller_id, offer_type, id }, seller_id);
-        result = offer_type !== '4' ? _lodash2.default.orderBy(result.filter(offerItem => offerItem.on_sku && offerItem.offer_discount > 0), ['sub_category_id']) : result;
+        sub_category_ids = (sub_category_ids || '').split(',').filter(item => item);
+
+        sub_category_ids = sub_category_ids.length > 0 ? sub_category_ids.join() : undefined;
+        const $and = brand_ids || sub_category_ids ? modals.sequelize.literal(`sku_id in (select id from table_sku_global as sku where ${brand_ids ? `sku.brand_id in (${brand_ids}) ${sub_category_ids ? `and sku.sub_category_id in (${sub_category_ids})` : ''}` : `${sub_category_ids ? `sku.sub_category_id in (${sub_category_ids})` : ''}`})`) : undefined;
+        let result = await sellerAdaptor.retrieveSellerOffersForConsumer($and ? { seller_id, offer_type, $and } : { seller_id, offer_type }, limit, offset);
+        result = offer_type === '1' ? _lodash2.default.orderBy(result.filter(offerItem => offerItem.on_sku && offerItem.offer_discount > 0), ['sub_category_id']) : result;
 
         return reply.response({
           status: true, result, message: _main2.default.NO_OFFER_MSG
@@ -613,7 +623,11 @@ class SellerController {
         });
       }
     } else {
-      return _shared2.default.preValidation(request.pre, reply);
+      return reply.response({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate
+      });
     }
   }
 
@@ -659,9 +673,12 @@ class SellerController {
           message: 'Unable to retrieve seller.'
         });
       }
-    } else {
-      return _shared2.default.preValidation(request.pre, reply);
     }
+    return reply.response({
+      status: false,
+      message: 'Forbidden',
+      forceUpdate: request.pre.forceUpdate
+    });
   }
 
   static async linkSellerWithUser(request, reply) {
@@ -1249,7 +1266,13 @@ class SellerController {
         forceUpdate: request.pre.forceUpdate,
         err
       });
-    }
+    } /*
+      }
+      return reply.response({
+       status: false,
+       message: 'Forbidden',
+       forceUpdate: request.pre.forceUpdate,
+      });*/
   }
 
   static async updateSellerBasicDetail(request, reply) {
@@ -1347,8 +1370,7 @@ class SellerController {
       return reply.response({
         status: false,
         message: 'Seller is not available in database.',
-        forceUpdate: request.pre.forceUpdate,
-        err
+        forceUpdate: request.pre.forceUpdate
       });
     } catch (err) {
       console.log(err);
@@ -1397,8 +1419,7 @@ class SellerController {
       return reply.response({
         status: false,
         message: 'Seller is not available in database.',
-        forceUpdate: request.pre.forceUpdate,
-        err
+        forceUpdate: request.pre.forceUpdate
       });
     } catch (err) {
       console.log(err);
@@ -1797,8 +1818,7 @@ Download Now: http://bit.ly/binbill`;
       return reply.response({
         status: false,
         message: 'Assisted service user is not available.',
-        forceUpdate: request.pre.forceUpdate,
-        err
+        forceUpdate: request.pre.forceUpdate
       });
     } catch (err) {
       console.log(err);
@@ -1824,18 +1844,32 @@ Download Now: http://bit.ly/binbill`;
   }
 
   static async updateSellerOffers(request, reply) {
-    let replyObject = {
-      status: true,
-      message: 'success'
-    };
+    let replyObject = { status: true, message: 'success' };
     try {
       const { id: seller_id } = request.params || {};
-      let { start_date, end_date, title, description, id, document_details, sku_id, sku_measurement_id, seller_mrp, offer_discount } = request.payload;
+      let {
+        start_date, end_date, title, description, id, document_details, sku_id, sku_measurement_id,
+        seller_mrp, offer_discount, offer_value, brand_mrp, sku_measurement_type, brand_offer_id, offer_type
+      } = request.payload;
+      seller_mrp = seller_mrp || brand_mrp;
       seller_mrp = seller_mrp && seller_mrp > 0 ? seller_mrp : undefined;
-      const [seller_offer] = await _bluebird2.default.all([sellerAdaptor.retrieveOrCreateSellerOffers(JSON.parse(JSON.stringify({ id, seller_id, sku_id, sku_measurement_id })), JSON.parse(JSON.stringify({
-        seller_id, start_date, end_date, title,
+      offer_discount = offer_discount || offer_value || 0;
+      let brand_offer;
+
+      if (brand_offer_id) {
+        brand_offer = modals.brand_offers.findOne({ where: { id: brand_offer_id } });
+        brand_offer = brand_offer ? brand_offer.toJSON() : {};
+        title = title || brand_offer.title;
+      }
+
+      const [seller_offer] = await _bluebird2.default.all([sellerAdaptor.retrieveOrCreateSellerOffers(JSON.parse(JSON.stringify({
+        id, seller_id, sku_id, sku_measurement_id,
+        brand_offer_id: { $or: { $eq: brand_offer_id, $is: null } }
+      })), JSON.parse(JSON.stringify({
+        seller_id, start_date, end_date, title, sku_measurement_type,
         sku_id, sku_measurement_id, description, seller_mrp,
-        document_details, on_sku: !!sku_id, offer_discount
+        document_details, on_sku: !!sku_id, offer_discount,
+        brand_offer_id, offer_type
       }))), sku_id ? sellerAdaptor.retrieveOrCreateSellerSKU({ seller_id, sku_id, sku_measurement_id }, { seller_id, sku_id, sku_measurement_id }) : undefined]);
 
       replyObject.seller_offer = JSON.parse(JSON.stringify(seller_offer));
@@ -1878,7 +1912,6 @@ Download Now: http://bit.ly/binbill`;
       message: 'success'
     };
     try {
-
       const { id: seller_id } = request.params || {};
       const seller = await sellerAdaptor.retrieveSellerDetail({ where: { id: seller_id }, attributes: ['seller_name'] });
       const { id, amount, transaction_type, consumer_id, description } = request.payload;
@@ -1960,7 +1993,6 @@ Download Now: http://bit.ly/binbill`;
       message: 'success'
     };
     try {
-
       const { id: seller_id } = request.params || {};
       const { id, item_value, rule_type, minimum_points, points_per_item, user_id, order_value, allow_auto_loyalty } = request.payload;
       replyObject.loyalty_rules = await sellerAdaptor.retrieveOrCreateSellerLoyaltyRules(JSON.parse(JSON.stringify({ id, user_id, seller_id })), JSON.parse(JSON.stringify({
@@ -1993,36 +2025,44 @@ Download Now: http://bit.ly/binbill`;
   }
 
   static async retrieveSellerLoyaltyRules(request, reply) {
-    let replyObject = {
-      status: true,
-      message: 'success'
-    };
-    try {
+    if (!request.pre.forceUpdate) {
+      let replyObject = {
+        status: true,
+        message: 'success'
+      };
 
-      const { seller_id } = request.params || {};
-      replyObject.loyalty_rules = await sellerAdaptor.retrieveSellerLoyaltyRules(JSON.parse(JSON.stringify({ seller_id })));
-      return reply.response(JSON.parse(JSON.stringify(replyObject))).code(201);
-    } catch (err) {
-      console.log(err);
-      modals.logs.create({
-        api_action: request.method,
-        api_path: request.url.pathname,
-        log_type: 2,
-        log_content: JSON.stringify({
-          params: request.params,
-          query: request.query,
-          headers: request.headers,
-          payload: request.payload,
+      try {
+        const { seller_id } = request.params || {};
+        replyObject.loyalty_rules = await sellerAdaptor.retrieveSellerLoyaltyRules(JSON.parse(JSON.stringify({ seller_id })));
+        return reply.response(JSON.parse(JSON.stringify(replyObject))).code(201);
+      } catch (err) {
+        console.log(err);
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err
+          })
+        }).catch(ex => console.log('error while logging on db,', ex));
+        return reply.response({
+          status: false,
+          message: 'Unable to update seller points.',
+          forceUpdate: request.pre.forceUpdate,
           err
-        })
-      }).catch(ex => console.log('error while logging on db,', ex));
-      return reply.response({
-        status: false,
-        message: 'Unable to update seller points.',
-        forceUpdate: request.pre.forceUpdate,
-        err
-      });
+        });
+      }
     }
+
+    return reply.response({
+      status: false,
+      message: 'Forbidden',
+      forceUpdate: request.pre.forceUpdate
+    });
   }
 
   static async publishSellerOffersToUsers(request, reply) {
@@ -2118,8 +2158,7 @@ Download Now: http://bit.ly/binbill`;
         }
       } else {
         return reply.response({
-          status: false,
-          message: 'Forbidden',
+          status: false, message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
         });
       }
@@ -2346,8 +2385,7 @@ Download Now: http://bit.ly/binbill`;
         const result = await sellerAdaptor.retrieveSellerWalletDetail({
           where: {
             seller_id, $or: [{ status_type: [16, 14] }, { $and: { status_type: [14, 13], is_paytm: true } }]
-          },
-          attributes: ['id', 'seller_id', 'title', 'job_id', 'order_id', 'user_id', 'transaction_type', 'cashback_source', 'amount', 'status_type', 'is_paytm', 'created_at', [modals.sequelize.literal('(select full_name from users where users.id = "seller_wallet".user_id)'), 'user_name']], order: [['created_at', 'desc']]
+          }, attributes: ['id', 'seller_id', 'title', 'job_id', 'order_id', 'user_id', 'transaction_type', 'cashback_source', 'amount', 'status_type', 'is_paytm', 'created_at', [modals.sequelize.literal('(select full_name from users where users.id = "seller_wallet".user_id)'), 'user_name'], [modals.sequelize.literal('(select mobile_no from users where users.id = "seller_wallet".user_id)'), 'mobile_no']], order: [['created_at', 'desc']]
         });
         const assigned_cashback = _lodash2.default.sumBy(result.filter(item => item.transaction_type === 1), 'amount');
         const redeemed_cashback = _lodash2.default.sumBy(result.filter(item => item.transaction_type === 2), 'amount');
@@ -2390,14 +2428,12 @@ Download Now: http://bit.ly/binbill`;
     try {
       if (!request.pre.forceUpdate) {
         const { seller_id } = request.params;
-        let { on_sku } = request.query || {};
-        on_sku = !!(on_sku && on_sku.toLowerCase() === 'true');
+        let { offer_type } = request.query || {};
+        offer_type = offer_type || 1;
         let seller_offers = await sellerAdaptor.retrieveSellerOffers({
           where: {
-            seller_id, on_sku,
-            end_date: { $gte: (0, _moment2.default)().format() }
-          }, attributes: ['id', 'seller_id', 'title', 'description', 'on_sku', 'start_date', 'end_date', 'document_details', 'sku_id', 'sku_measurement_id', 'offer_discount', 'seller_mrp', [modals.sequelize.literal('(select title from table_sku_global as sku where sku.id = seller_offers.sku_id)'), 'sku_title'], [modals.sequelize.literal(`(select measurement_value from table_sku_measurement_detail as sku_measure where sku_measure.id = seller_offers.sku_measurement_id)`), 'measurement_value'], [modals.sequelize.literal(`(Select acronym from table_sku_measurement as measure where measure.id = (select measurement_type from table_sku_measurement_detail as sku_measure where sku_measure.id = seller_offers.sku_measurement_id limit 1))`), 'acronym'], [modals.sequelize.literal(`(select mrp from table_sku_measurement_detail as sku_measure where sku_measure.id = seller_offers.sku_measurement_id)`), 'mrp'], [modals.sequelize.literal(`(select bar_code from table_sku_measurement_detail as sku_measure where sku_measure.id = seller_offers.sku_measurement_id)`), 'bar_code']],
-          order: [['updated_at', 'desc'], ['created_at', 'desc']]
+            seller_id, offer_type, end_date: { $gte: (0, _moment2.default)().format() }
+          }, attributes: ['id', 'seller_id', 'title', 'description', 'on_sku', 'start_date', 'end_date', 'document_details', 'sku_id', 'brand_offer_id', 'sku_measurement_id', 'offer_discount', 'seller_mrp', [modals.sequelize.literal('(select title from table_sku_global as sku where sku.id = seller_offers.sku_id)'), 'sku_title'], [modals.sequelize.literal('(select title from table_brand_offers as brand_offer where brand_offer.id = seller_offers.brand_offer_id)'), 'brand_offer_title'], 'offer_type', [modals.sequelize.literal(`(select measurement_value from table_sku_measurement_detail as sku_measure where sku_measure.id = seller_offers.sku_measurement_id)`), 'measurement_value'], [modals.sequelize.literal(`(Select acronym from table_sku_measurement as measure where measure.id = (select measurement_type from table_sku_measurement_detail as sku_measure where sku_measure.id = seller_offers.sku_measurement_id limit 1))`), 'acronym'], [modals.sequelize.literal(`(select mrp from table_sku_measurement_detail as sku_measure where sku_measure.id = seller_offers.sku_measurement_id)`), 'mrp'], [modals.sequelize.literal(`(select bar_code from table_sku_measurement_detail as sku_measure where sku_measure.id = seller_offers.sku_measurement_id)`), 'bar_code']], order: [['updated_at', 'desc'], ['created_at', 'desc']]
         });
 
         seller_offers = seller_offers.map(item => {
@@ -2410,19 +2446,18 @@ Download Now: http://bit.ly/binbill`;
             };
           }
 
+          item.title = item.title || item.brand_offer_title;
           return _lodash2.default.omit(item, ['sku_title', 'measurement_value', 'acronym', 'mrp', 'bar_code']);
-        }).filter(item => !item.on_sku || item.on_sku && item.sku.offer_discount > 0);
+        }).filter(item => !item.on_sku || item.offer_type !== 1 || item.offer_type === 1 && item.on_sku && item.sku.offer_discount > 0);
 
         return reply.response({
-          status: true,
-          message: 'Successful',
+          status: true, message: 'Successful',
           result: seller_offers,
           forceUpdate: request.pre.forceUpdate
         });
       } else {
         return reply.response({
-          status: false,
-          message: 'Forbidden',
+          status: false, message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
         });
       }
@@ -2626,15 +2661,14 @@ Download Now: http://bit.ly/binbill`;
         let { mobile_no, offer_id, is_linked_offers, linked_only, user_status_type, page_no } = request.query || {};
 
         linked_only = linked_only && linked_only.toString().toLowerCase() === 'true';
-        const { seller_customers, customer_count, last_page } = await sellerAdaptor.retrieveSellerConsumers({ seller_id, mobile_no, offer_id, user_status_type, page_no });
+        const { seller_customers, customer_count, last_page, loyalty_rule } = await sellerAdaptor.retrieveSellerConsumers({ seller_id, mobile_no, offer_id, user_status_type, page_no });
         return reply.response({
-          status: true, message: 'Successful', result: offer_id ? is_linked_offers && is_linked_offers === 'false' ? seller_customers.filter(item => !item.linked_offer) : seller_customers.filter(item => item.linked_offer) : mobile_no || !linked_only ? seller_customers : seller_customers.filter(item => item.linked),
+          status: true, message: 'Successful', result: offer_id ? is_linked_offers && is_linked_offers === 'false' ? seller_customers.filter(item => !item.linked_offer) : seller_customers.filter(item => item.linked_offer) : mobile_no || !linked_only ? seller_customers : seller_customers.filter(item => item.linked), loyalty_rule,
           forceUpdate: request.pre.forceUpdate, customer_count, last_page
         });
       } else {
         return reply.response({
-          status: false,
-          message: 'Forbidden',
+          status: false, message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
         });
       }
@@ -2673,8 +2707,7 @@ Download Now: http://bit.ly/binbill`;
         });
       } else {
         return reply.response({
-          status: false,
-          message: 'Forbidden',
+          status: false, message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
         });
       }
@@ -2714,8 +2747,7 @@ Download Now: http://bit.ly/binbill`;
         });
       } else {
         return reply.response({
-          status: false,
-          message: 'Forbidden',
+          status: false, message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
         });
       }
@@ -2747,18 +2779,15 @@ Download Now: http://bit.ly/binbill`;
         const { seller_id, customer_id } = request.params;
         const { mobile_no } = request.query || {};
         return reply.response({
-          status: true,
-          message: 'Successful',
-          result: await sellerAdaptor.retrieveSellerCustomerDetail(seller_id, customer_id, mobile_no),
-          forceUpdate: request.pre.forceUpdate
-        });
-      } else {
-        return reply.response({
-          status: false,
-          message: 'Forbidden',
-          forceUpdate: request.pre.forceUpdate
+          status: true, message: 'Successful',
+          result: await sellerAdaptor.retrieveSellerCustomerDetail(seller_id, customer_id, mobile_no), forceUpdate: request.pre.forceUpdate
         });
       }
+
+      return reply.response({
+        status: false, message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate
+      });
     } catch (err) {
       console.log(err);
       modals.logs.create({
@@ -2767,11 +2796,8 @@ Download Now: http://bit.ly/binbill`;
         log_type: 2,
         user_id: user && !user.seller_details ? user.id || user.ID : undefined,
         log_content: JSON.stringify({
-          params: request.params,
-          query: request.query,
-          headers: request.headers,
-          payload: request.payload,
-          err
+          params: request.params, query: request.query,
+          headers: request.headers, payload: request.payload, err
         })
       }).catch(ex => console.log('error while logging on db,', ex));
       return reply.response({
@@ -2803,8 +2829,7 @@ Download Now: http://bit.ly/binbill`;
         });
       } else {
         return reply.response({
-          status: false,
-          message: 'Forbidden',
+          status: false, message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
         });
       }
@@ -2903,8 +2928,7 @@ Download Now: http://bit.ly/binbill`;
         });
       } else {
         return reply.response({
-          status: false,
-          message: 'Forbidden',
+          status: false, message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
         });
       }
@@ -3054,8 +3078,7 @@ Download Now: http://bit.ly/binbill`;
         });
       } else {
         return reply.response({
-          status: false,
-          message: 'Forbidden',
+          status: false, message: 'Forbidden',
           forceUpdate: request.pre.forceUpdate
         });
       }

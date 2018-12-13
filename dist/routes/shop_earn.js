@@ -77,13 +77,7 @@ function prepareShopEarnRoute(modal, route, middleware, socket) {
       handler: _shop_earn2.default.getSellerSKUItem,
       config: {
         auth: 'jwt',
-        pre: [{
-          method: middleware.checkAppVersion,
-          assign: 'forceUpdate'
-        }, {
-          method: middleware.logSellerAction,
-          assign: 'log_seller_action'
-        }]
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'log_seller_action' }]
       }
     });
 
@@ -140,13 +134,7 @@ function prepareShopEarnRoute(modal, route, middleware, socket) {
       path: '/sku/wishlist',
       config: {
         auth: 'jwt',
-        pre: [{
-          method: middleware.checkAppVersion,
-          assign: 'forceUpdate'
-        }, {
-          method: middleware.updateUserActiveStatus,
-          assign: 'userExist'
-        }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.updateUserActiveStatus, assign: 'userExist' }],
         handler: _shop_earn2.default.clearSKUWishList
       }
     });
@@ -184,6 +172,9 @@ function prepareShopEarnRoute(modal, route, middleware, socket) {
             quantity: _joi2.default.number().required(),
             created_at: [_joi2.default.string(), _joi2.default.allow(null)],
             offer_discount: [_joi2.default.number(), _joi2.default.allow(null)],
+            offer_acronym: [_joi2.default.string(), _joi2.default.allow(null)],
+            offer_title: [_joi2.default.string(), _joi2.default.allow(null)],
+            offer_type: [_joi2.default.number(), _joi2.default.allow(null)],
             sku_measurement: [_joi2.default.object().keys({
               id: [_joi2.default.number(), _joi2.default.allow(null)],
               sku_id: [_joi2.default.number(), _joi2.default.allow(null)],
@@ -211,13 +202,7 @@ function prepareShopEarnRoute(modal, route, middleware, socket) {
       path: '/offer/sku/wishlist',
       config: {
         auth: 'jwt',
-        pre: [{
-          method: middleware.checkAppVersion,
-          assign: 'forceUpdate'
-        }, {
-          method: middleware.updateUserActiveStatus,
-          assign: 'userExist'
-        }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.updateUserActiveStatus, assign: 'userExist' }],
         handler: _shop_earn2.default.addOfferSKUWishList,
         validate: {
           payload: {
@@ -259,6 +244,9 @@ function prepareShopEarnRoute(modal, route, middleware, socket) {
             quantity: _joi2.default.number().required(),
             seller_id: [_joi2.default.number(), _joi2.default.allow(null)],
             offer_discount: [_joi2.default.number(), _joi2.default.allow(null)],
+            offer_acronym: [_joi2.default.string(), _joi2.default.allow(null)],
+            offer_title: [_joi2.default.string(), _joi2.default.allow(null)],
+            offer_type: [_joi2.default.number(), _joi2.default.allow(null)],
             added_date: [_joi2.default.string(), _joi2.default.allow(null)],
             sku_measurement: [_joi2.default.object().keys({
               id: [_joi2.default.number(), _joi2.default.allow(null)],
@@ -399,10 +387,7 @@ function prepareShopEarnRoute(modal, route, middleware, socket) {
       path: '/sellers/{seller_id}/cashbacks/{id}/approve',
       config: {
         auth: 'jwt',
-        pre: [{
-          method: middleware.checkAppVersion,
-          assign: 'forceUpdate'
-        }, { method: middleware.logSellerAction, assign: 'seller_action' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         handler: _shop_earn2.default.cashBackApproval
       }
     });
@@ -412,10 +397,7 @@ function prepareShopEarnRoute(modal, route, middleware, socket) {
       path: '/sellers/{seller_id}/cashbacks/{id}/reject',
       config: {
         auth: 'jwt',
-        pre: [{
-          method: middleware.checkAppVersion,
-          assign: 'forceUpdate'
-        }, { method: middleware.logSellerAction, assign: 'seller_action' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         validate: {
           payload: {
             reason_id: _joi2.default.number().required()
@@ -430,10 +412,7 @@ function prepareShopEarnRoute(modal, route, middleware, socket) {
       path: '/sellers/{seller_id}/cashbacks',
       config: {
         auth: 'jwt',
-        pre: [{
-          method: middleware.checkAppVersion,
-          assign: 'forceUpdate'
-        }, { method: middleware.logSellerAction, assign: 'seller_action' }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
         handler: _shop_earn2.default.retrieveTransactions
       }
     });
@@ -502,10 +481,7 @@ function prepareShopEarnRoute(modal, route, middleware, socket) {
     path: '/sellers/{seller_id}/wallet/redeem',
     config: {
       auth: 'jwt',
-      pre: [{
-        method: middleware.checkAppVersion,
-        assign: 'forceUpdate'
-      }, { method: middleware.logSellerAction, assign: 'seller_action' }],
+      pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.logSellerAction, assign: 'seller_action' }],
       handler: _shop_earn2.default.redeemSellerCashBackAtPayTM
     }
   });

@@ -30,7 +30,7 @@ exports.default = (sequelize, DataTypes) => {
     },
     updated_by: {
       type: DataTypes.INTEGER
-    },
+    }, is_new: { type: DataTypes.BOOLEAN, defaultValue: false },
     status_type: {
       type: DataTypes.INTEGER,
       defaultValue: 1

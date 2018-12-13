@@ -242,7 +242,7 @@ class BrandAdaptor {
   }
 
   async updateBrandOffer(query_options, options) {
-    return await this.modals.brand_offers.update(options, query_options);
+    return await this.modals.brand_offers.update(query_options, options);
   }
 
   async retrieveOrUnlinkBrandOffers(options) {
@@ -258,7 +258,7 @@ class BrandAdaptor {
       await seller_offer.updateAttributes(
           {brand_offer_id: null, status_type: 2});
     }
-    return seller_offer.toJSON();
+    return seller_offer ? seller_offer.toJSON() : undefined;
   }
 
   async createBrandOfferRequestForSeller(options) {

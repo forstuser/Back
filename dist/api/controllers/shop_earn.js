@@ -158,8 +158,7 @@ class ShopEarnController {
         const seller_id = request.params.seller_id;
         const { sku_measurement_id } = request.query;
         const [seller_list, sku_items, sku_measurement] = await _bluebird2.default.all([sellerAdaptor.retrieveSellersOnInit({
-          where: { id: seller_id },
-          attributes: ['id', 'seller_name', 'seller_type_id', 'address', 'is_data_manually_added', [modals.sequelize.literal(`(Select count(*) from table_seller_provider_types as provider_type where provider_type.seller_id = sellers.id)`), 'provider_counts'], [modals.sequelize.literal(`(Select count(*) from table_sku_seller_mapping as sku_seller where sku_seller.seller_id = sellers.id)`), 'sku_seller_counts']]
+          where: { id: seller_id }, attributes: ['id', 'seller_name', 'seller_type_id', 'address', 'is_data_manually_added', [modals.sequelize.literal(`(Select count(*) from table_seller_provider_types as provider_type where provider_type.seller_id = sellers.id)`), 'provider_counts'], [modals.sequelize.literal(`(Select count(*) from table_sku_seller_mapping as sku_seller where sku_seller.seller_id = sellers.id)`), 'sku_seller_counts']]
         }), shopEarnAdaptor.retrieveSKUData({
           where: { id: request.params.sku_id },
           attributes: ['sub_category_id', 'category_id', 'main_category_id']
@@ -290,9 +289,12 @@ class ShopEarnController {
           message: 'Unable to retrieve SKU list'
         });
       }
-    } else {
-      return _shared2.default.preValidation(request.pre, reply);
     }
+
+    return reply.response({
+      status: false, message: 'Forbidden',
+      forceUpdate: request.pre.forceUpdate
+    });
   }
 
   static async getSellerCategories(request, reply) {
@@ -422,8 +424,7 @@ class ShopEarnController {
       }
     } else {
       return reply.response({
-        status: false,
-        message: 'Forbidden',
+        status: false, message: 'Forbidden',
         forceUpdate: preRequest.forceUpdate
       });
     }
@@ -1324,9 +1325,11 @@ class ShopEarnController {
           status: false,
           message: 'Cash Back not available for request parameters.'
         });
-      } else {
-        return _shared2.default.preValidation(request.pre, reply);
       }
+      return reply.response({
+        status: false, message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate
+      });
     } catch (err) {
       console.log(err);
       modals.logs.create({
@@ -1382,7 +1385,10 @@ class ShopEarnController {
         });
       }
     } else {
-      return _shared2.default.preValidation(request.pre, reply);
+      return reply.response({
+        status: false, message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate
+      });
     }
   }
 
