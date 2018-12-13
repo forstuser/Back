@@ -864,9 +864,8 @@ class UploadController {
                             item => item.index === image_index) :
                         assisted_type_images[image_index] :
                         type.toString() === '4' && offers ?
-                            isNaN(image_index) ?
-                                offers.find(
-                                    item => item.index === image_index) :
+                            isNaN(image_index) ? offers.find(
+                                item => item.index === image_index) :
                                 offers[image_index] : undefined;
           }
           if (type.toString() === '1' && basic_details &&
@@ -1023,7 +1022,7 @@ class UploadController {
               is_onboarded: type.toString() === '2' ? true : undefined,
               seller_details,
             })),
-            is_create: false
+            is_create: false,
           });
       return reply.response(JSON.parse(JSON.stringify({
         status: true, message: 'Upload Successful',
@@ -1626,6 +1625,62 @@ class UploadController {
     }
   }
 
+  static async retrieveSuggestedOfferImages(request, reply) {
+    if (!request.pre.forceUpdate) {
+      try {
+        const user = shared.verifyAuthorization(request.headers);
+        const {id} = request.params || {};
+        let file_name = `${id}.png`;
+        if (file_name) {
+          const fileResult = await fsImpl.readFile(
+              `suggested/offers/${file_name}`,
+              'utf8');
+
+          console.log(fileResult);
+          return reply.response(fileResult.Body).
+              header('Content-Type', fileResult.ContentType).
+              header('Content-Disposition',
+                  `attachment; filename=${file_name}`);
+        } else {
+          return reply.response({
+            status: false,
+            message: 'Look like there is no image for requested id.',
+            forceUpdate: request.pre.forceUpdate,
+          });
+        }
+      } catch (err) {
+        console.log(
+            `Error on ${new Date()} for user while retrieving category image is as follow: \n \n ${err}`);
+
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: 1,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err,
+          }),
+        }).catch((ex) => console.log('error while logging on db,', ex));
+        return reply.response({
+          status: false,
+          message: 'Unable to retrieve image',
+          err,
+          forceUpdate: request.pre.forceUpdate,
+        });
+      }
+    } else {
+      return reply.response({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
+    }
+  }
+
   static async retrieveSellerImagesForConsumer(request, reply) {
     if (!request.pre.forceUpdate) {
       try {
@@ -1749,7 +1804,7 @@ class UploadController {
                   {
                     query_options: {where: {id}},
                     seller_detail: seller_data,
-                    is_create: false
+                    is_create: false,
                   }),
             });
           } else {
@@ -1852,7 +1907,7 @@ class UploadController {
                 {
                   query_options: {where: {id}},
                   seller_detail: seller_data,
-                  is_create: false
+                  is_create: false,
                 }),
           });
         } else {
@@ -2537,8 +2592,19 @@ class UploadController {
         const seller_offer = await sellerAdaptor.retrieveSellerOfferDetail(
             {
               where: {id: offer_id},
-              attributes: ['document_details', 'seller_id'],
+              attributes: ['document_details', 'seller_id', 'brand_offer_id'],
             });
+        if ((seller_offer || {}).brand_offer_id) {
+          const fileResult = await fsImpl.readFile(
+              `suggested/offers/${(seller_offer ||
+                  {}).brand_offer_id}.png`, 'utf8');
+          return reply.response(fileResult.Body).
+              header('Content-Type', fileResult.ContentType).
+              header('Content-Disposition',
+                  `attachment; filename=${(seller_offer ||
+                      {}).brand_offer_id}.png`);
+        }
+
         const document = !isNaN(index) ?
             (seller_offer || {}).document_details[index] :
             (seller_offer || {}).document_details.find(

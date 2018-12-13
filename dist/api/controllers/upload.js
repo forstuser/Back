@@ -1489,6 +1489,56 @@ class UploadController {
     }
   }
 
+  static async retrieveSuggestedOfferImages(request, reply) {
+    if (!request.pre.forceUpdate) {
+      try {
+        const user = _shared2.default.verifyAuthorization(request.headers);
+        const { id } = request.params || {};
+        let file_name = `${id}.png`;
+        if (file_name) {
+          const fileResult = await fsImpl.readFile(`suggested/offers/${file_name}`, 'utf8');
+
+          console.log(fileResult);
+          return reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${file_name}`);
+        } else {
+          return reply.response({
+            status: false,
+            message: 'Look like there is no image for requested id.',
+            forceUpdate: request.pre.forceUpdate
+          });
+        }
+      } catch (err) {
+        console.log(`Error on ${new Date()} for user while retrieving category image is as follow: \n \n ${err}`);
+
+        modals.logs.create({
+          api_action: request.method,
+          api_path: request.url.pathname,
+          log_type: 2,
+          user_id: 1,
+          log_content: JSON.stringify({
+            params: request.params,
+            query: request.query,
+            headers: request.headers,
+            payload: request.payload,
+            err
+          })
+        }).catch(ex => console.log('error while logging on db,', ex));
+        return reply.response({
+          status: false,
+          message: 'Unable to retrieve image',
+          err,
+          forceUpdate: request.pre.forceUpdate
+        });
+      }
+    } else {
+      return reply.response({
+        status: false,
+        message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate
+      });
+    }
+  }
+
   static async retrieveSellerImagesForConsumer(request, reply) {
     if (!request.pre.forceUpdate) {
       try {
@@ -2246,8 +2296,13 @@ class UploadController {
         const { offer_id, index } = request.params;
         const seller_offer = await sellerAdaptor.retrieveSellerOfferDetail({
           where: { id: offer_id },
-          attributes: ['document_details', 'seller_id']
+          attributes: ['document_details', 'seller_id', 'brand_offer_id']
         });
+        if ((seller_offer || {}).brand_offer_id) {
+          const fileResult = await fsImpl.readFile(`suggested/offers/${(seller_offer || {}).brand_offer_id}.png`, 'utf8');
+          return reply.response(fileResult.Body).header('Content-Type', fileResult.ContentType).header('Content-Disposition', `attachment; filename=${(seller_offer || {}).brand_offer_id}.png`);
+        }
+
         const document = !isNaN(index) ? (seller_offer || {}).document_details[index] : (seller_offer || {}).document_details.find(item => item.index && item.index === index);
         let file_name = (document || {}).file_name;
         console.log(`sellers/${(seller_offer || {}).seller_id}/${seller_image_types[4]}/${file_name}`);

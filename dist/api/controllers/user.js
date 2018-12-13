@@ -300,11 +300,12 @@ class UserController {
           });
         }
         return reply.response(replyObject).code(201);
-      } else {
-        replyObject.status = false;
-        replyObject.message = 'Forbidden';
-        return reply.response(replyObject);
       }
+
+      return reply.response({
+        status: false, message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate
+      });
     } catch (err) {
 
       modals.logs.create({
@@ -646,9 +647,7 @@ class UserController {
             console.log(fbResult);
             if (fbResult.email) {
               userWhere.email = { $iLike: fbResult.email };
-              userWhere.$or = [{
-                fb_id: fbResult.id
-              }, { fb_id: null }];
+              userWhere.$or = [{ fb_id: fbResult.id }, { fb_id: null }];
             } else {
               userWhere.fb_id = fbResult.id;
             }
@@ -700,8 +699,7 @@ class UserController {
   static async validateSellerOTP(request, reply) {
     replyObject = {
       status: true,
-      message: 'success',
-      forceUpdate: request.pre.forceUpdate
+      message: 'success'
     };
     try {
       let { mobile_no, gstin, pan, email, fcm_id, seller_detail, platform, login_type, token } = request.payload || {};
@@ -711,39 +709,33 @@ class UserController {
         }
       }));
 
-      if (!request.pre.forceUpdate) {
-        const data = await _otp2.default.verifyOTPForUser(mobile_no, token);
-        console.log('VALIDATE OTP RESPONSE: ', data);
-        if (data.type === 'success') {
-          let user_detail = await userAdaptor.retrieveSellerUser(userWhere, true, { mobile_no, email, status_type: 1, is_logged_out: false });
-          let [seller_detail] = await _bluebird2.default.all([sellerAdaptor.retrieveOrUpdateSellerDetail({
-            query_options: {
-              where: JSON.parse(JSON.stringify({ user_id: user_detail.id })),
-              attributes: ['seller_type_id', 'id']
-            }, seller_detail: false, is_create: false
-          }), fcmManager.insertSellerFcmDetails({
-            seller_user_id: user_detail.id,
-            fcm_id, platform_id: platform || 1
-          })]);
-          if (seller_detail) {
-            user_detail.seller_type_id = seller_detail.seller_type_id;
-            user_detail.seller_id = seller_detail.id;
-          }
-          user_detail.seller_detail = true;
-
-          replyObject.authorization = `bearer ${_authentication2.default.generateSellerToken(JSON.parse(JSON.stringify(user_detail))).token}`;
-          replyObject.seller = seller_detail;
-          replyObject.status = true;
-          return reply.response(replyObject).code(201);
-        } else {
-          replyObject.status = false;
-          replyObject.message = 'Invalid/Expired OTP';
-
-          return reply.response(replyObject);
+      const data = await _otp2.default.verifyOTPForUser(mobile_no, token);
+      console.log('VALIDATE OTP RESPONSE: ', data);
+      if (data.type === 'success') {
+        let user_detail = await userAdaptor.retrieveSellerUser(userWhere, true, { mobile_no, email, status_type: 1, is_logged_out: false });
+        let [seller_detail] = await _bluebird2.default.all([sellerAdaptor.retrieveOrUpdateSellerDetail({
+          query_options: {
+            where: JSON.parse(JSON.stringify({ user_id: user_detail.id })),
+            attributes: ['seller_type_id', 'id']
+          }, seller_detail: false, is_create: false
+        }), fcmManager.insertSellerFcmDetails({
+          seller_user_id: user_detail.id,
+          fcm_id, platform_id: platform || 1
+        })]);
+        if (seller_detail) {
+          user_detail.seller_type_id = seller_detail.seller_type_id;
+          user_detail.seller_id = seller_detail.id;
         }
+        user_detail.seller_detail = true;
+
+        replyObject.authorization = `bearer ${_authentication2.default.generateSellerToken(JSON.parse(JSON.stringify(user_detail))).token}`;
+        replyObject.seller = seller_detail;
+        replyObject.status = true;
+        return reply.response(replyObject).code(201);
       } else {
         replyObject.status = false;
-        replyObject.message = 'Forbidden';
+        replyObject.message = 'Invalid/Expired OTP';
+
         return reply.response(replyObject);
       }
     } catch (err) {
@@ -763,7 +755,6 @@ class UserController {
       return reply.response({
         status: false,
         message: 'Unable to validate.',
-        forceUpdate: request.pre.forceUpdate,
         err
       });
     }
@@ -998,34 +989,23 @@ class UserController {
     const user = _shared2.default.verifyAuthorization(request.headers);
     replyObject = {
       status: true,
-      message: 'success',
-      forceUpdate: request.pre.forceUpdate
+      message: 'success'
     };
     try {
-      if (!request.pre.forceUpdate) {
-        await _bluebird2.default.all([fcmManager.updateFcmDetails(JSON.parse(JSON.stringify({
-          user_id: !user.seller_details ? user.id : undefined,
-          seller_user_id: user.seller_details ? user.id : undefined,
-          platform_id: request.payload.platform || 1
-        }))), userAdaptor.retrieveSellerUser({ where: { id: user.id } }, false, { is_logged_out: true })]);
+      await _bluebird2.default.all([fcmManager.updateFcmDetails(JSON.parse(JSON.stringify({
+        user_id: !user.seller_details ? user.id : undefined,
+        seller_user_id: user.seller_details ? user.id : undefined,
+        platform_id: request.payload.platform || 1
+      }))), userAdaptor.retrieveSellerUser({ where: { id: user.id } }, false, { is_logged_out: true })]);
 
-        await (!user.seller_details ? userAdaptor.updateUserDetail({ last_logout_at: _moment2.default.utc().format('YYYY-MM-DD HH:mm:ss') }, { where: { id: user.id } }) : sellerAdaptor.retrieveOrUpdateSellerDetail({
-          query_options: {
-            where: JSON.parse(JSON.stringify({ id: user.id }))
-          }, seller_detail: {
-            last_logout_at: _moment2.default.utc().format('YYYY-MM-DD HH:mm:ss')
-          }, is_create: false
-        }));
-        return reply.response(replyObject).code(201);
-      } else if (!request.pre.userExist) {
-        replyObject.status = false;
-        replyObject.message = 'Unauthorized';
-        return reply.response(replyObject).code(401);
-      } else {
-        replyObject.status = false;
-        replyObject.message = 'Forbidden';
-        return reply.response(replyObject);
-      }
+      await (!user.seller_details ? userAdaptor.updateUserDetail({ last_logout_at: _moment2.default.utc().format('YYYY-MM-DD HH:mm:ss') }, { where: { id: user.id } }) : sellerAdaptor.retrieveOrUpdateSellerDetail({
+        query_options: {
+          where: JSON.parse(JSON.stringify({ id: user.id }))
+        }, seller_detail: {
+          last_logout_at: _moment2.default.utc().format('YYYY-MM-DD HH:mm:ss')
+        }, is_create: false
+      }));
+      return reply.response(replyObject).code(201);
     } catch (err) {
       modals.logs.create({
         api_action: request.method,

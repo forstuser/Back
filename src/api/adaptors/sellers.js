@@ -5,6 +5,7 @@ import UserAdaptor from './user';
 import Promise from 'bluebird';
 import moment from 'moment';
 import config from '../../config/main';
+import {sendSMS} from '../../helpers/sms';
 
 export default class SellerAdaptor {
   constructor(modals, notificationAdaptor) {
@@ -122,18 +123,27 @@ export default class SellerAdaptor {
       }
 
       let seller_id = sellers.map(item => item.id);
-      const $or = {on_sku: true};
-      const seller_offers = await this.retrieveSellerOffersForConsumer(
-          {seller_id, $or}, seller_id);
+      const seller_offers = await this.retrieveSellerOfferBrandsCategories(
+          {seller_id, on_sku: true, offer_discount: {$gt: 0}}, seller_id);
 
       sellers = sellers.map(item => {
         item.offer_count = parseInt((item.offer_count || 0).toString());
         item.sku_offer_count = parseInt((item.sku_offer_count || 0).toString());
         item.ratings = item.ratings || 0;
-        item.offers = seller_offers.filter(
-            offerItem => item.id === offerItem.seller_id &&
-                ((offerItem.on_sku && offerItem.offer_discount > 0) ||
-                    !offerItem.on_sku));
+        const offers = seller_offers.filter(
+            offerItem => item.id === offerItem.seller_id);
+        const seller_brands = [];
+        const seller_categories = [];
+        offers.forEach(offer_item => {
+          const {brand_id, brand_name, sub_category_id, sub_category_name} = offer_item;
+          seller_brands.push({id: brand_id, name: brand_name});
+          seller_categories.push(
+              {id: sub_category_id, name: sub_category_name});
+        });
+        item.max_page = Math.ceil(offers.length / config.SKU_LIMIT);
+        item.brands = _.sortedUniqBy(_.uniqBy(seller_brands, 'id'), 'name');
+        item.categories = _.sortedUniqBy(_.uniqBy(seller_categories, 'id'),
+            'name');
         return item;
       });
     }
@@ -141,6 +151,29 @@ export default class SellerAdaptor {
     console.log(JSON.stringify({sellers}));
     return sellers.filter(
         item => (item.offer_count > 0 || item.sku_offer_count > 0));
+  }
+
+  async retrieveSellerOfferBrandsCategories(options) {
+    options.end_date = {$gte: moment.utc()};
+    let seller_offers = await this.modals.seller_offers.findAll(
+        {
+          where: JSON.parse(JSON.stringify(options)), attributes: [
+            [
+              this.modals.sequelize.literal(
+                  '(select category_name from categories as cat where cat.category_id in (Select sub_category_id from table_sku_global as sku where sku.id = seller_offers.sku_id))'),
+              'sub_category_name'], [
+              this.modals.sequelize.literal(
+                  '(Select sub_category_id from table_sku_global as sku where sku.id = seller_offers.sku_id)'),
+              'sub_category_id'], [
+              this.modals.sequelize.literal(
+                  '(select brand_id from table_sku_global as sku where sku.id = seller_offers.sku_id)'),
+              'brand_id'], [
+              this.modals.sequelize.literal(
+                  '(select brand_name from brands as brand where brand.brand_id in (Select brand_id from table_sku_global as sku where sku.id = seller_offers.sku_id))'),
+              'brand_name'], 'seller_id'],
+        });
+    seller_offers = seller_offers.map(item => item.toJSON());
+    return seller_offers;
   }
 
   async retrieveSellerOfferSKUs(where, seller_offers) {
@@ -302,8 +335,16 @@ export default class SellerAdaptor {
     mobile_no = mobile_no ? {$iLike: `${mobile_no}%`} : undefined;
     seller_users = await this.retrieveSellerDetail({
       where: {id: seller_id}, attributes: [
-        'customer_ids', 'latitude', 'longitude', 'address',
-        [
+        'customer_ids', 'latitude', 'longitude', 'address', [
+          this.modals.sequelize.literal(
+              '(Select minimum_points from table_loyalty_rules as loyalty_rule where loyalty_rule.seller_id = sellers.id limit 1)'),
+          'minimum_points'], [
+          this.modals.sequelize.literal(
+              '(Select item_value from table_loyalty_rules as loyalty_rule where loyalty_rule.seller_id = sellers.id limit 1)'),
+          'item_value'], [
+          this.modals.sequelize.literal(
+              '(Select points_per_item from table_loyalty_rules as loyalty_rule where loyalty_rule.seller_id = sellers.id limit 1)'),
+          'points_per_item'], [
           this.modals.sequelize.literal(
               '(Select state_name from table_states as state where state.id = sellers.state_id)'),
           'state_name'], [
@@ -319,6 +360,7 @@ export default class SellerAdaptor {
     });
     id = (seller_users.customer_ids || []).map(
         item => item.customer_id || item);
+    const {minimum_points, item_value, points_per_item} = seller_users;
     const {latitude, longitude, address, city_name: city} = seller_users;
     const order = (user_status_type && user_status_type === 2) ?
         [['created_at', 'desc'], ['full_name', 'asc']] : [['full_name', 'asc']];
@@ -405,8 +447,7 @@ export default class SellerAdaptor {
       if (item.addresses) {
         const {address_line_1, address_line_2, city_name, state_name, locality_name, pin_code} = (item.addresses ||
             {});
-        item.address = `${address_line_1 ? address_line_1 :
-            ''}${address_line_2 ? ` ${address_line_2}` :
+        item.address = `${address_line_2 ? `${address_line_2}` :
             ''}${locality_name || city_name || state_name ?
             ',' : pin_code ? '-' : ''}${locality_name ? locality_name :
             ''}${city_name || state_name ? ',' :
@@ -429,10 +470,9 @@ export default class SellerAdaptor {
       seller_customers: (user_status_type && user_status_type === 2) ?
           user_list : await this.orderUserByLocation(latitude, longitude,
               city, user_list),
-      customer_count: result[1],
-      last_page: result[1] > config.CONSUMER_LIMIT ?
+      customer_count: result[1], last_page: result[1] > config.CONSUMER_LIMIT ?
           Math.ceil(result[1] / config.CONSUMER_LIMIT) - 1 :
-          0,
+          0, loyalty_rule: {item_value, minimum_points, points_per_item},
     };
   }
 
@@ -478,14 +518,14 @@ export default class SellerAdaptor {
         city_name || state_name ? ',' : pin_code ? '-' : ''}${locality_name ?
             locality_name : ''}${city_name || state_name ?
             ',' : pin_code ? '-' : ''}${city_name ?
-            city_name : ''}${state_name ?
-            ',' :
-            pin_code ? '-' : ''}${state_name ? state_name : ''}${pin_code ?
-            '- ' :
-            ''}${pin_code ? pin_code : ''}`).
-            split('null').join(',').split('undefined').join(',').
-            split(',,').join(',').split(',-,').join(',').
-            split(',,').join(',').split(',,').join(',');
+            city_name : ''}${state_name ? ',' :
+            pin_code ? '-' : ''}${state_name ?
+            state_name : ''}${pin_code ?
+            '- ' : ''}${pin_code ? pin_code : ''}`).split('null').
+            join(',').split('undefined').join(',').
+            split(',,').join(',').split(',-,').
+            join(',').split(',,').join(',').split(',,').
+            join(',');
         item.user_address_detail = item.user_address_detail.trim();
       }
       return item;
@@ -542,7 +582,7 @@ export default class SellerAdaptor {
                   0 ? `"products"."job_id" in (${job_id.join(',')})` :
                       ''} ${expense_id.length > 0 ?
                       `"products"."id" in (${expense_id.join(',')})` :
-                      '' }`}))`),
+                      ''}`}))`),
           'total_transactions']],
     });
     const user_list = result.map(item => item.toJSON());
@@ -577,10 +617,18 @@ export default class SellerAdaptor {
             ',' :
             pin_code ? '-' : ''}${state_name ? state_name : ''}${pin_code ?
             '- ' :
-            ''}${pin_code ? pin_code : ''}`).
-            split('null').join(',').split('undefined').join(',').
-            split(',,').join(',').split(',-,').join(',').
-            split(',,').join(',').split(',,').join(',');
+            ''}${pin_code ? pin_code : ''}`).split('null').
+            join(',').
+            split('undefined').
+            join(',').
+            split(',,').
+            join(',').
+            split(',-,').
+            join(',').
+            split(',,').
+            join(',').
+            split(',,').
+            join(',');
         item.user_address_detail = item.user_address_detail.trim();
       }
 
@@ -962,17 +1010,20 @@ export default class SellerAdaptor {
     return seller_cash_back;
   }
 
-  async retrieveSellerOffersForConsumer(options) {
+  async retrieveSellerOffersForConsumer(options, limit, offset) {
     options.end_date = {$gte: moment.utc()};
+    const $and = options.$and;
+    options = JSON.parse(JSON.stringify(_.omit(options, '$and')));
+    if ($and) options.$and = $and;
     let seller_offers = await this.modals.seller_offers.findAll(
         {
-          where: JSON.parse(JSON.stringify(options)), attributes: [
+          where: options, attributes: [
             'id', 'seller_id', 'title', 'description', 'on_sku', 'offer_type',
             'start_date', 'end_date', 'document_details', 'sku_id',
             'sku_measurement_id', 'offer_discount', 'seller_mrp', [
               this.modals.sequelize.literal(
                   '(select category_name from categories as cat where cat.category_id in (Select sub_category_id from table_sku_global as sku where sku.id = seller_offers.sku_id))'),
-              'sub_category_name'], [
+              'sub_category_name'], 'brand_offer_id', [
               this.modals.sequelize.literal(
                   '(Select sub_category_id from table_sku_global as sku where sku.id = seller_offers.sku_id)'),
               'sub_category_id'], [
@@ -986,6 +1037,9 @@ export default class SellerAdaptor {
                   `(Select acronym from table_sku_measurement as measure where measure.id = (select measurement_type from table_sku_measurement_detail as sku_measure where sku_measure.id = seller_offers.sku_measurement_id limit 1))`),
               'acronym'], [
               this.modals.sequelize.literal(
+                  `(Select title from table_brand_offers as brand_offer where brand_offer.id = seller_offers.brand_offer_id limit 1)`),
+              'brand_offer_title'], [
+              this.modals.sequelize.literal(
                   `(Select acronym from table_sku_measurement as measure where measure.id = seller_offers.sku_measurement_type)`),
               'offer_acronym'], [
               this.modals.sequelize.literal(
@@ -993,11 +1047,12 @@ export default class SellerAdaptor {
               'mrp'], [
               this.modals.sequelize.literal(
                   `(select bar_code from table_sku_measurement_detail as sku_measure where sku_measure.id = seller_offers.sku_measurement_id)`),
-              'bar_code']], order: [['updated_at', 'desc']],
+              'bar_code']], order: [['updated_at', 'desc']], limit, offset,
         });
     seller_offers = seller_offers.map(item => {
       item = item.toJSON();
       item.mrp = item.seller_mrp || item.mrp;
+      item.title = item.title || item.brand_offer_title;
       return item;
     });
     return seller_offers;
@@ -1575,15 +1630,33 @@ export default class SellerAdaptor {
       await loyalty_wallet.updateAttributes(defaults);
     } else if (!options.id) {
       loyalty_wallet = await this.modals.loyalty_wallet.create(defaults);
-      if (defaults.status_type === 16) {
-        await this.notificationAdaptor.notifyUserCron({
-          user_id: defaults.user_id, payload: {
-            title: `Yay! You have received ${defaults.amount} Loyalty Points from your Seller ${seller_name ||
-            ''}!`,
-            description: 'Please click here for more detail.',
-            notification_type: 32, seller_id,
-          },
-        });
+      if (loyalty_wallet) {
+        const loyalty_wallet_data = loyalty_wallet.toJSON();
+        let [user_detail, loyalty_rules] = await Promise.all([
+          this.modals.users.findOne({
+            where: {id: loyalty_wallet_data.user_id},
+            attributes: ['user_status_type', 'mobile_no'],
+          }), this.retrieveSellerLoyaltyRules(JSON.parse(
+              JSON.stringify({seller_id: loyalty_wallet_data.seller_id})))]);
+        user_detail = user_detail ? user_detail.toJSON() : {};
+        if (loyalty_wallet_data.status_type === 16) {
+          await Promise.all([
+            this.notificationAdaptor.notifyUserCron({
+              user_id: defaults.user_id, payload: {
+                title: `Yay! You have received ${defaults.amount} Loyalty Points from your Seller ${seller_name ||
+                ''}!`,
+                description: 'Please click here for more detail.',
+                notification_type: 32, seller_id,
+              },
+            }), sendSMS(`Hurray! ${seller_name ||
+                'BinBill partner'} has credited ${loyalty_wallet_data.amount} Loyalty Points equivalent to ₹${(loyalty_wallet_data.amount /
+                loyalty_rules.points_per_item) *
+                loyalty_rules.item_value}/- in your Wallet.${user_detail.user_status_type ===
+                1 ?
+                '' :
+                'Download BinBill App Now to redeem your reward! http://bit.ly/binbill'}`,
+                [user_detail.mobile_no])]);
+        }
       }
     }
     return loyalty_wallet ? loyalty_wallet.toJSON() : loyalty_wallet;
@@ -1624,5 +1697,4 @@ export default class SellerAdaptor {
 
     return sellers;
   }
-
 }

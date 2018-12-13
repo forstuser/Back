@@ -1,8 +1,8 @@
 'use strict';
 
 export default {
-  ORDER_NO_SELLER_MSG: 'You have not placed any Order. Please invite your neighbourhood Seller Or simply Add from the list of your nearby Sellers in ‘My seller’ section to place an Order & avail exciting Offers.',
-  OFFER_NO_SELLER_MSG: 'Invite your neighbourhood Seller/s Or simply Add from the list of your nearby Sellers in ‘My seller’ section to avail Exciting Offers.',
+  ORDER_NO_SELLER_MSG: 'You have not placed any Order. Please invite your neighbourhood Seller Or simply Add from the list of your nearby Sellers in ‘My Seller’ section to place an Order & avail exciting Offers.',
+  OFFER_NO_SELLER_MSG: 'Invite your neighbourhood Seller/s Or simply Add from the list of your nearby Sellers in ‘My Seller’ section to avail Exciting Offers.',
   NO_OFFER_MSG: 'There are no Offers available from your Seller/s currently.',
   NO_ORDER_MSG: 'You do not have any Active Order. Place an Order with your Seller Now and avail Cashback!',
   SKU_SEARCH_LIMIT: process.env.SKU_SEARCH_LIMIT,
@@ -45,9 +45,8 @@ export default {
     PATH: '/api/v2/sendsms',
   },
   FB_GRAPH_ROUTE: process.env.FB_GRAPH_ROUTE,
-  MESSAGE: process.env.MESSAGE,
+  MESSAGE: 'New Job has been added with single file for consumer on Test',
   FIXED_CASH_BACK: process.env.FIXED_CASH_BACK,
-  AUTO_CANCELLATION_TIMING: process.env.AUTO_CANCELLATION_TIMING,
   AWS: {
     S3: {
       BUCKET: process.env.AWS_S3_BUCKET,
@@ -98,10 +97,7 @@ export default {
     logging: process.env.NODE_ENV !== 'production',
     port: process.env.DATABASE_PORT,
     pool: {
-      max: 25,
-      min: 0,
-      idle: 10000,
-      acquire: 30000,
+      max: 25, min: 0, idle: 10000, acquire: 30000,
     },
     retry: {
       match: [
@@ -144,6 +140,15 @@ export default {
   ANDROID: {
     FORCE_VERSION: process.env.ANDROID_FORCE_VERSION,
     RECOMMENDED_VERSION: process.env.ANDROID_RECOMMENDED_VERSION,
+  }, SELLER: {
+    IOS: {
+      FORCE_VERSION: process.env.SELLER_IOS_FORCE_VERSION,
+      RECOMMENDED_VERSION: process.env.SELLER_IOS_RECOMMENDED_VERSION,
+    },
+    ANDROID: {
+      FORCE_VERSION: process.env.SELLER_ANDROID_FORCE_VERSION,
+      RECOMMENDED_VERSION: process.env.SELLER_ANDROID_RECOMMENDED_VERSION,
+    },
   },
   GST: {
     HOST: process.env.GST_HOST,

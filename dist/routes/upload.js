@@ -25,21 +25,14 @@ function prepareUploadRoutes(modal, routeObject, middleware) {
       config: {
         auth: 'jwt',
         pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, {
-          method: middleware.updateUserActiveStatus,
-          assign: 'userExist'
+          method: middleware.updateUserActiveStatus, assign: 'userExist'
         }],
-        files: {
-          relativeTo: _path2.default.join(__dirname, '../static/src')
-        },
+        files: { relativeTo: _path2.default.join(__dirname, '../static/src') },
         handler: _upload2.default.uploadUserImage,
         payload: {
-          output: 'stream',
-          parse: true,
-          uploads: 'up_files',
-          timeout: 30034,
-          allow: 'multipart/form-data',
-          failAction: 'log',
-          maxBytes: 209715200
+          output: 'stream', parse: true, uploads: 'up_files',
+          timeout: 30034, allow: 'multipart/form-data',
+          failAction: 'log', maxBytes: 209715200
         }
       }
     });
@@ -59,13 +52,9 @@ function prepareUploadRoutes(modal, routeObject, middleware) {
         },
         handler: _upload2.default.uploadProductImage,
         payload: {
-          output: 'stream',
-          parse: true,
-          uploads: 'up_files',
-          timeout: 30034,
-          allow: 'multipart/form-data',
-          failAction: 'log',
-          maxBytes: 209715200
+          output: 'stream', parse: true, uploads: 'up_files',
+          timeout: 30034, allow: 'multipart/form-data',
+          failAction: 'log', maxBytes: 209715200
         }
       }
     });
@@ -244,6 +233,15 @@ function prepareUploadRoutes(modal, routeObject, middleware) {
       config: {
         pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
         handler: _upload2.default.retrieveSellerImages
+      }
+    });
+
+    routeObject.push({
+      method: 'GET',
+      path: '/suggested/offers/{id}/images',
+      config: {
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }],
+        handler: _upload2.default.retrieveSuggestedOfferImages
       }
     });
 

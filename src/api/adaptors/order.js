@@ -120,17 +120,26 @@ export default class OrderAdaptor {
               (odItem.current_selling_price * odItem.offer_discount / 100), 2);
           odItem.selling_price = _.round(
               odItem.suggestion ? odItem.selling_price -
-                  (odItem.selling_price * (odItem.suggestion.offer_discount) /
-                      100) : odItem.selling_price -
-                  (odItem.selling_price * (odItem.offer_discount) /
-                      100), 2);
+                  (odItem.selling_price *
+                      (odItem.suggestion.offer_type &&
+                      odItem.suggestion.offer_type.toString() === '1' ?
+                          odItem.suggestion.offer_discount :
+                          0) / 100) : odItem.selling_price -
+                  (odItem.selling_price *
+                      (odItem.offer_type && odItem.offer_type.toString() ===
+                      '1' ?
+                          odItem.offer_discount :
+                          0) / 100), 2);
           return odItem;
         });
-        item.total_amount = item.total_amount ||
-            _.round(item.order_type && item.order_type === 1 ?
-                _.sumBy(item.order_details, 'selling_price') :
-                _.sumBy(item.order_details, 'total_amount'), 2);
 
+        if (!item.total_amount) {
+          item.total_amount = _.round(item.order_type && item.order_type === 1 ?
+              _.sumBy(item.order_details, 'selling_price') :
+              _.sumBy(item.order_details, 'total_amount'), 2);
+          item.before_discount_amount = item.total_amount;
+          item.total_amount = item.total_amount - (item.seller_discount || 0);
+        }
         if (item.order_type === 1 || item.collect_at_store) {
           item.order_item_counts = item.order_details.length;
           item = _.omit(item, 'order_details');
@@ -182,14 +191,28 @@ export default class OrderAdaptor {
     console.log(JSON.stringify(options));
     let wallet_credited = false;
     let cash_back_details = await this.modals.seller_wallet.findOne(
-        JSON.parse(JSON.stringify({where: {order_id}})));
+        JSON.parse(JSON.stringify(
+            {where: {order_id, seller_id, user_id, cashback_source}})));
+    console.log({cash_back_details: cash_back_details ? cash_back_details.toJSON(): {}});
+    modals.logs.create({
+      api_action: 'addPaymentToSellerWallet',
+      log_type: 10,
+      log_content: JSON.stringify({
+        cash_back_details: cash_back_details ? cash_back_details.toJSON(): {}, options,
+      }),
+    }).catch((ex) => console.log('error while logging on db,', ex));
     if (!cash_back_details) {
-      cash_back_details = await this.modals.seller_wallet.create(
-          JSON.parse(JSON.stringify(
-              {
-                status_type: status_type || 16, order_id, cashback_source,
-                amount, transaction_type, user_id, seller_id,
-              })));
+      cash_back_details = await this.modals.seller_wallet.findCreateFind({
+        where: JSON.parse(JSON.stringify(
+            {order_id, seller_id, user_id, cashback_source})),
+        defaults: JSON.parse(JSON.stringify(
+            {
+              status_type: status_type || 16, order_id, cashback_source,
+              amount, transaction_type, user_id, seller_id,
+            })),
+      });
+
+      cash_back_details = cash_back_details[0];
       wallet_credited = true;
     }
 
@@ -198,9 +221,10 @@ export default class OrderAdaptor {
   }
 
   async handleDelayedCashBack(options) {
-    let {status_type, order_id, seller_id, amount, transaction_type, user_id, cashback_source, delay_max_cash_back} = options;
+    let {order_id, seller_id, amount, user_id, auto_cancel_max_cash_back} = options;
     amount = Math.ceil(amount / 2);
-    amount = amount > delay_max_cash_back ? delay_max_cash_back : amount;
+    amount = amount > auto_cancel_max_cash_back ?
+        auto_cancel_max_cash_back : amount;
     const delayed_cash_back_count = await this.modals.user_wallet.count({
       where: {
         user_id, seller_id, order_id: {$not: null}, cashback_source: 10,
@@ -234,7 +258,10 @@ export default class OrderAdaptor {
                     amount, transaction_type: 2, user_id, seller_id,
                   })))]);
       console.log({delayed_user_cash_back, deducted_seller_cash_back});
-      return {delayed_user_cash_back, deducted_seller_cash_back};
+      return {
+        delayed_user_cash_back, deducted_seller_cash_back,
+        delayed_cash_back_count,
+      };
     }
 
     return false;

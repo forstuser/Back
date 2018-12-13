@@ -226,8 +226,8 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
         validate: {
           payload: {
             seller_id: joi.number().required(),
-            reason_id: [joi.number(),joi.allow(null)],
-            reason_text: [joi.string(),joi.allow(null)],
+            reason_id: [joi.number(), joi.allow(null)],
+            reason_text: [joi.string(), joi.allow(null)],
           },
         },
       },
@@ -247,8 +247,8 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
         validate: {
           payload: {
             seller_id: joi.number().required(),
-            reason_id: [joi.number(),joi.allow(null)],
-            reason_text: [joi.string(),joi.allow(null)],
+            reason_id: [joi.number(), joi.allow(null)],
+            reason_text: [joi.string(), joi.allow(null)],
           },
         },
       },
@@ -368,6 +368,7 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
             delivery_user_id: [joi.number(), joi.allow(null)],
             order_details: [joi.array().items(joi.object()), joi.allow(null)],
             delivery_minutes: [joi.string(), joi.allow(null)],
+            seller_discount: [joi.number(), joi.allow(null)],
           },
         },
       },
@@ -410,6 +411,7 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
             user_id: joi.number().required(),
             order_details: [joi.array().items(joi.object()), joi.allow(null)],
             delivery_minutes: [joi.string(), joi.allow(null)],
+            seller_discount: [joi.number(), joi.allow(null)],
           },
         },
       },
@@ -429,8 +431,8 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
         validate: {
           payload: {
             user_id: joi.number().required(),
-            reason_id: [joi.number(),joi.allow(null)],
-            reason_text: [joi.string(),joi.allow(null)],
+            reason_id: [joi.number(), joi.allow(null)],
+            reason_text: [joi.string(), joi.allow(null)],
           },
         },
       },
@@ -453,6 +455,7 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
             delivery_user_id: [joi.number(), joi.allow(null)],
             total_amount: [joi.number(), joi.allow(null)],
             order_details: [joi.array().items(joi.object()), joi.allow(null)],
+            seller_discount: [joi.number(), joi.allow(null)],
           },
         },
       },
@@ -501,6 +504,10 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
       method: 'GET',
       path: '/consumer/payments/{order_id}',
       config: {
+        pre: [
+          {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {method: middleware.updateUserActiveStatus, assign: 'userExist'},
+        ],
         handler: ControllerObject.retrievePaymentStatus,
         description: 'Retrieve Payment Status.',
       },
@@ -510,6 +517,10 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
       method: 'GET',
       path: '/consumer/{expense_id}/bill/{order_id}',
       config: {
+        pre: [
+          {method: middleware.checkAppVersion, assign: 'forceUpdate'},
+          {method: middleware.updateUserActiveStatus, assign: 'userExist'},
+        ],
         handler: ControllerObject.retrieveDigitalBill,
         description: 'Retrieve Digital Bill.',
       },
@@ -518,10 +529,10 @@ export function prepareOrderRoutes(modal, routeObject, middleware, socket) {
     routeObject.push({
       method: 'GET',
       path: '/consumer/cancel/reasons',
-      config:{
+      config: {
         handler: ControllerObject.retrieveCancelOrderReasons,
-        description: 'Retrieve Reasons to Cancel Order.'
-      }
-    })
+        description: 'Retrieve Reasons to Cancel Order.',
+      },
+    });
   }
 }

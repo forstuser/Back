@@ -317,7 +317,8 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
             user_id: _joi2.default.number().required(),
             delivery_user_id: [_joi2.default.number(), _joi2.default.allow(null)],
             order_details: [_joi2.default.array().items(_joi2.default.object()), _joi2.default.allow(null)],
-            delivery_minutes: [_joi2.default.string(), _joi2.default.allow(null)]
+            delivery_minutes: [_joi2.default.string(), _joi2.default.allow(null)],
+            seller_discount: [_joi2.default.number(), _joi2.default.allow(null)]
           }
         }
       }
@@ -353,7 +354,8 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
           payload: {
             user_id: _joi2.default.number().required(),
             order_details: [_joi2.default.array().items(_joi2.default.object()), _joi2.default.allow(null)],
-            delivery_minutes: [_joi2.default.string(), _joi2.default.allow(null)]
+            delivery_minutes: [_joi2.default.string(), _joi2.default.allow(null)],
+            seller_discount: [_joi2.default.number(), _joi2.default.allow(null)]
           }
         }
       }
@@ -390,7 +392,8 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
             user_id: _joi2.default.number().required(),
             delivery_user_id: [_joi2.default.number(), _joi2.default.allow(null)],
             total_amount: [_joi2.default.number(), _joi2.default.allow(null)],
-            order_details: [_joi2.default.array().items(_joi2.default.object()), _joi2.default.allow(null)]
+            order_details: [_joi2.default.array().items(_joi2.default.object()), _joi2.default.allow(null)],
+            seller_discount: [_joi2.default.number(), _joi2.default.allow(null)]
           }
         }
       }
@@ -436,6 +439,7 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
       method: 'GET',
       path: '/consumer/payments/{order_id}',
       config: {
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.updateUserActiveStatus, assign: 'userExist' }],
         handler: _order2.default.retrievePaymentStatus,
         description: 'Retrieve Payment Status.'
       }
@@ -445,6 +449,7 @@ function prepareOrderRoutes(modal, routeObject, middleware, socket) {
       method: 'GET',
       path: '/consumer/{expense_id}/bill/{order_id}',
       config: {
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.updateUserActiveStatus, assign: 'userExist' }],
         handler: _order2.default.retrieveDigitalBill,
         description: 'Retrieve Digital Bill.'
       }

@@ -1534,7 +1534,6 @@ class ProductAdaptor {
           const online_payment = order.payment_mode_id.toString() === '4';
 
           const home_delivery_cash_back = user_default_limit_rules.find(item => item.rule_type === 7 && item.paid_online === online_payment);
-          console.log({ home_delivery_cash_back, user_default_limit_rules });
           const seller_delivery_cash_back = await this.modals.seller_wallet.findOne({
             where: {
               cashback_source: 1, transaction_type: 1,

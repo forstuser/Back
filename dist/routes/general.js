@@ -86,13 +86,7 @@ function prepareGeneralRoutes(modal, routeObject, middleware) {
       path: '/know/items',
       config: {
         auth: 'jwt',
-        pre: [{
-          method: middleware.checkAppVersion,
-          assign: 'forceUpdate'
-        }, {
-          method: middleware.updateUserActiveStatus,
-          assign: 'userExist'
-        }],
+        pre: [{ method: middleware.checkAppVersion, assign: 'forceUpdate' }, { method: middleware.updateUserActiveStatus, assign: 'userExist' }],
         handler: _general2.default.retrieveKnowItems,
         description: 'Retrieve Do You Know Items',
         validate: {

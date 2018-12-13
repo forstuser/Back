@@ -15,6 +15,7 @@ export default (sequelize, DataTypes) => {
     order_details: {type: DataTypes.JSONB},
     status_type: {type: DataTypes.INTEGER, defaultValue: 13},
     reason_id: {type: DataTypes.INTEGER},
+    seller_discount: {type: DataTypes.FLOAT, defaultValue: 0},
     reason_text: {type: DataTypes.STRING}, created_at: {
       type: DataTypes.DATE, defaultValue: sequelize.literal('NOW()'),
     }, updated_at: {

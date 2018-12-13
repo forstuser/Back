@@ -183,7 +183,7 @@ export default class ShopEarnAdaptor {
         sku_measurement_attributes.push([
           this.modals.sequelize.literal(
               `(select offer_discount from table_seller_offers as offer where offer.sku_id = "sku_measurement".sku_id and offer.sku_measurement_id = "sku_measurement".id and "offer".seller_id = ${seller_id} and "offer".end_date >= '${moment().
-                  format('YYYY-MM-DD')}')`), 'offer_discount'], [
+                  format('YYYY-MM-DD')}')`), 'offer_discount']/*, [
           this.modals.sequelize.literal(
               `(select title from table_seller_offers as offer where offer.sku_id = "sku_measurement".sku_id and offer.sku_measurement_id = "sku_measurement".id and "offer".seller_id = ${seller_id} and "offer".end_date >= '${moment().
                   format('YYYY-MM-DD')}')`), 'offer_title'], [
@@ -193,7 +193,7 @@ export default class ShopEarnAdaptor {
           this.modals.sequelize.literal(
               `(Select acronym from table_sku_measurement as measure where measure.id in (select sku_measurement_type from table_seller_offers as offer where offer.sku_id = "sku_measurement".sku_id and offer.sku_measurement_id = "sku_measurement".id and "offer".seller_id = ${seller_id} and "offer".end_date >= '${moment().
                   format('YYYY-MM-DD')}'))`),
-          'offer_acronym'], [
+          'offer_acronym']*/, [
           this.modals.sequelize.literal(
               `(select seller_mrp from table_seller_offers as offer where offer.sku_id = "sku_measurement".sku_id and offer.sku_measurement_id = "sku_measurement".id and "offer".seller_id = ${seller_id})`),
           'seller_mrp']);
@@ -231,30 +231,6 @@ export default class ShopEarnAdaptor {
             id: !title ? id ? id : seller_sku_ids && seller_sku_ids.length > 0 ?
                 seller_sku_ids : undefined : undefined, status_type: 1,
           }));
-      /*const sku_brand_options = JSON.parse(
-          JSON.stringify(seller_main_categories.length > 0 ? {
-            status_type: 1,
-            $or: sub_category_id_list.length > 0 ? $or : seller_main_categories,
-            sub_category_id: sub_category_ids.length > 0 ?
-                sub_category_ids : undefined,
-            id: id ? id : seller_sku_ids && seller_sku_ids.length > 0 ?
-                seller_sku_ids : undefined,
-          } : {
-            status_type: 1,
-            main_category_id: main_category_id.length > 0 ?
-                main_category_id : undefined,
-            category_id: category_id.length > 0 ?
-                category_id : undefined,
-            sub_category_id: sub_category_ids.length > 0 ?
-                sub_category_ids : undefined,
-            $or, id: id ? id : seller_sku_ids && seller_sku_ids.length > 0 ?
-                seller_sku_ids : undefined,
-          }));
-      sku_brand_options.$and = this.modals.sequelize.literal(
-          '(select count(id) from table_sku_measurement_detail as measure where measure.sku_id = sku.id and measure.status_type = 1) > 0');*/
-      /*sku_options.$and = this.modals.sequelize.literal(
-          `(select count(id) from table_sku_measurement_detail as measure where measure.sku_id = sku.id and measure.status_type = 1 ${title ?
-              '' : 'and has_images=true'}) > 0`);*/
       console.log('\n\n\n\n\n', has_milk_title, offset.toString() === '0',
           config.MILK_SKU_IDS.length > 0);
       let [skuItems, brands] = await Promise.all([
@@ -410,29 +386,11 @@ export default class ShopEarnAdaptor {
       measurement_types = (measurement_types || '').trim().
           split(',').filter(item => !!item);
       const sku_measurement_attributes = [
-        'id', 'pack_numbers', 'measurement_type', 'measurement_value', [
+        'id', 'pack_numbers', 'measurement_type', 'measurement_value',
+        'sku_id', 'mrp', [
           this.modals.sequelize.literal(
-              '(select acronym from table_sku_measurement as measurement where measurement.id = "sku_measurements".measurement_type)'),
-          'measurement_acronym'], [
-          this.modals.sequelize.literal(
-              `(select title from table_seller_offers as offer where offer.sku_id = "sku_measurements".sku_id and offer.sku_measurement_id = "sku_measurements".id and "offer".seller_id = ${seller_id} and "offer".end_date >= '${moment().
-                  format('YYYY-MM-DD')}')`),
-          'offer_title'], [
-          this.modals.sequelize.literal(
-              `(select offer_type from table_seller_offers as offer where offer.sku_id = "sku_measurements".sku_id and offer.sku_measurement_id = "sku_measurements".id and "offer".seller_id = ${seller_id} and "offer".end_date >= '${moment().
-                  format('YYYY-MM-DD')}')`),
-          'offer_type'], [
-          this.modals.sequelize.literal(
-              `(select offer_discount from table_seller_offers as offer where offer.sku_id = "sku_measurements".sku_id and offer.sku_measurement_id = "sku_measurements".id and "offer".seller_id = ${seller_id} and "offer".end_date >= '${moment().
-                  format('YYYY-MM-DD')}')`),
-          'offer_discount'], [
-          this.modals.sequelize.literal(
-              `(Select acronym from table_sku_measurement as measure where measure.id in (select sku_measurement_type from table_seller_offers as offer where offer.sku_id = "sku_measurements".sku_id and offer.sku_measurement_id = "sku_measurements".id and "offer".seller_id = ${seller_id} and "offer".end_date >= '${moment().
-                  format('YYYY-MM-DD')}'))`),
-          'offer_acronym'], [
-          this.modals.sequelize.literal(
-              `(select seller_mrp from table_seller_offers as offer where offer.sku_id = "sku_measurements".sku_id and offer.sku_measurement_id = "sku_measurements".id and "offer".seller_id = ${seller_id})`),
-          'seller_mrp'], 'mrp', 'bar_code', 'cashback_percent'];
+              '(select acronym from table_sku_measurement as measurement where measurement.id = "sku_measurement".measurement_type)'),
+          'measurement_acronym'], 'bar_code', 'cashback_percent'];
       const sku_attributes = [
         [
           this.modals.sequelize.literal(
@@ -465,29 +423,36 @@ export default class ShopEarnAdaptor {
           },
         },
       };
-      const skuItems = await this.modals.sku.findAll({
+      let skuItems = await this.modals.sku.findAll({
         where: JSON.parse(JSON.stringify(sku_options)),
-        include: [
-          {
-            model: this.modals.sku_measurement,
-            where: JSON.parse(JSON.stringify({
-              status_type: 1,
-              id: seller_sku_measurement_ids &&
-              seller_sku_measurement_ids.length > 0 ?
-                  seller_sku_measurement_ids : undefined,
-              measurement_value: measurement_values.length > 0 ?
-                  measurement_values : undefined,
-              measurement_type: measurement_types.length > 0 ?
-                  measurement_types : undefined,
-              bar_code,
-            })),
-            attributes: sku_measurement_attributes,
-            required: true,
-          }], order: [['title']],
         attributes: sku_attributes,
       });
 
-      return skuItems.map(item => item.toJSON()).filter(
+      skuItems = skuItems.map(item => item.toJSON());
+      const sku_measurements = await this.retrieveSKUMeasurements({
+        options: {
+          where: JSON.parse(JSON.stringify({
+            status_type: 1,
+            id: seller_sku_measurement_ids &&
+            seller_sku_measurement_ids.length > 0 ?
+                seller_sku_measurement_ids : undefined,
+            sku_id: skuItems.map(item => item.id),
+            measurement_value: measurement_values.length > 0 ?
+                measurement_values : undefined,
+            measurement_type: measurement_types.length > 0 ?
+                measurement_types : undefined, bar_code,
+          })), attributes: sku_measurement_attributes,
+        },
+      });
+      return skuItems.map(item => {
+        item.sku_measurements = sku_measurements.filter(
+            measureItem => measureItem.sku_id === item.id).
+            map(measureItem => {
+              measureItem.offer_discount = measureItem.offer_discount || 0;
+              return measureItem;
+            });
+        return item;
+      }).filter(
           item => item.sku_measurements && item.sku_measurements.length >
               0).map(item => {
         item.sku_measurements = _.sortBy(item.sku_measurements, [
@@ -675,8 +640,7 @@ export default class ShopEarnAdaptor {
         skuItem.sku_measurements = (await this.retrieveSKUMeasurements(
             {
               options: {status_type: 1, sku_id: skuItem.id},
-              location: location,
-              is_seller: is_seller,
+              location: location, is_seller: is_seller,
             })).map(
             item => {
               item.selected = item.bar_code.toLowerCase() ===
@@ -1169,8 +1133,15 @@ export default class ShopEarnAdaptor {
               where: {
                 seller_id, on_sku: true, sku_id: id, sku_measurement_id,
                 end_date: {$gte: moment().format()},
-              },
-              attributes: ['sku_id', 'sku_measurement_id', 'offer_discount'],
+              }, attributes: [
+                'sku_id', 'sku_measurement_id', 'offer_discount', 'title',
+                'offer_type', [
+                  this.modals.sequelize.literal(
+                      `(Select title from table_brand_offers as brand_offer where brand_offer.id = seller_offers.brand_offer_id limit 1)`),
+                  'brand_offer_title'], [
+                  this.modals.sequelize.literal(
+                      `(Select acronym from table_sku_measurement as measure where measure.id = seller_offers.sku_measurement_type)`),
+                  'offer_acronym']],
             }) : undefined]);
       let {wishlist_items, past_selections} = (userSKUWishList || {});
       past_selections = past_selections || [];
@@ -1179,34 +1150,58 @@ export default class ShopEarnAdaptor {
       if (id) {
         wishlist_items = (wishlist_items && wishlist_items.length > 0 ?
             wishlist_items.map((item) => {
-              let {measurement_type: item_measurement_type, measurement_value: item_measurement_value} = (item.sku_measurement ||
+              let {measurement_type: item_measurement_type, measurement_value: item_measurement_value, offer_title, offer_type, offer_acronym} = (item.sku_measurement ||
                   {});
+              let {quantity} = item;
 
               if (item.id === id && item_measurement_type ===
                   measurement_type && item_measurement_value ===
                   measurement_value) {
-                item.offer_discount = (seller_sku || {}).offer_discount || 0;
-                item.seller_id = seller_id;
                 if (request.payload.quantity === 0) {
                   return undefined;
                 }
                 item = request.payload;
+                item.offer_discount = (seller_sku || {}).offer_discount || 0;
+                item.offer_title = offer_title || (seller_sku || {}).title ||
+                    (seller_sku || {}).brand_offer_title;
+                item.offer_type = offer_type || (seller_sku || {}).offer_type;
+                item.offer_acronym = offer_acronym ||
+                    (seller_sku || {}).offer_acronym;
+                item.seller_id = seller_id;
+                item.quantity = item.quantity || quantity + 1;
                 payload_added = true;
               }
               return item;
             }) : [{}].map(item => {
               item = request.payload;
               payload_added = true;
+              let {measurement_type: item_measurement_type, measurement_value: item_measurement_value, offer_title, offer_type, offer_acronym} = (item.sku_measurement ||
+                  {});
               item.seller_id = seller_id;
               if (item.quantity === 0) {
                 return undefined;
               }
               item.offer_discount = (seller_sku || {}).offer_discount || 0;
+              item.offer_title = offer_title || (seller_sku || {}).title ||
+                  (seller_sku || {}).brand_offer_title;
+              item.offer_type = offer_type || (seller_sku || {}).offer_type;
+              item.offer_acronym = offer_acronym ||
+                  (seller_sku || {}).offer_acronym;
               return item;
             })).filter(item => !!item);
         if (!payload_added) {
+          let {measurement_type: item_measurement_type, measurement_value: item_measurement_value, offer_title, offer_type, offer_acronym} = (request.payload.sku_measurement ||
+              {});
           request.payload.offer_discount = (seller_sku || {}).offer_discount ||
               0;
+          request.payload.offer_title = offer_title ||
+              (seller_sku || {}).title ||
+              (seller_sku || {}).brand_offer_title;
+          request.payload.offer_type = offer_type ||
+              (seller_sku || {}).offer_type;
+          request.payload.offer_acronym = offer_acronym ||
+              (seller_sku || {}).offer_acronym;
+          payload_added = true;
           wishlist_items.push(JSON.parse(JSON.stringify(_.omit(request.payload,
               ['status_type', 'updated_by', 'created_at', 'updated_at']))));
         }
@@ -1234,9 +1229,7 @@ export default class ShopEarnAdaptor {
         status: true,
         result: {wishlist_items, past_selections},
       });
-    }
-
-    catch (err) {
+    } catch (err) {
       this.modals.logs.create({
         api_action: request.method,
         api_path: request.url.pathname,

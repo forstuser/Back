@@ -2354,7 +2354,6 @@ export default class ProductAdaptor {
           const home_delivery_cash_back = user_default_limit_rules.find(
               item => item.rule_type === 7 && item.paid_online ===
                   online_payment);
-          console.log({home_delivery_cash_back, user_default_limit_rules});
           const seller_delivery_cash_back = await this.modals.seller_wallet.findOne(
               {
                 where: {

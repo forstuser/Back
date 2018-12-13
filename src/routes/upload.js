@@ -13,22 +13,15 @@ export function prepareUploadRoutes(modal, routeObject, middleware) {
         pre: [
           {method: middleware.checkAppVersion, assign: 'forceUpdate'},
           {
-            method: middleware.updateUserActiveStatus,
-            assign: 'userExist',
+            method: middleware.updateUserActiveStatus, assign: 'userExist',
           },
         ],
-        files: {
-          relativeTo: Path.join(__dirname, '../static/src'),
-        },
+        files: {relativeTo: Path.join(__dirname, '../static/src')},
         handler: ControllerObject.uploadUserImage,
         payload: {
-          output: 'stream',
-          parse: true,
-          uploads: 'up_files',
-          timeout: 30034,
-          allow: 'multipart/form-data',
-          failAction: 'log',
-          maxBytes: 209715200,
+          output: 'stream', parse: true, uploads: 'up_files',
+          timeout: 30034, allow: 'multipart/form-data',
+          failAction: 'log', maxBytes: 209715200,
         },
       },
     });
@@ -51,13 +44,9 @@ export function prepareUploadRoutes(modal, routeObject, middleware) {
         },
         handler: ControllerObject.uploadProductImage,
         payload: {
-          output: 'stream',
-          parse: true,
-          uploads: 'up_files',
-          timeout: 30034,
-          allow: 'multipart/form-data',
-          failAction: 'log',
-          maxBytes: 209715200,
+          output: 'stream', parse: true, uploads: 'up_files',
+          timeout: 30034, allow: 'multipart/form-data',
+          failAction: 'log', maxBytes: 209715200,
         },
       },
     });
@@ -247,6 +236,16 @@ export function prepareUploadRoutes(modal, routeObject, middleware) {
         handler: ControllerObject.retrieveSellerImages,
       },
     });
+
+    routeObject.push({
+      method: 'GET',
+      path: '/suggested/offers/{id}/images',
+      config: {
+        pre: [{method: middleware.checkAppVersion, assign: 'forceUpdate'}],
+        handler: ControllerObject.retrieveSuggestedOfferImages,
+      },
+    });
+
 
     routeObject.push({
       method: 'GET',

@@ -166,8 +166,7 @@ class ShopEarnController {
         const {sku_measurement_id} = request.query;
         const [seller_list, sku_items, sku_measurement] = await Promise.all([
           sellerAdaptor.retrieveSellersOnInit({
-            where: {id: seller_id},
-            attributes: [
+            where: {id: seller_id}, attributes: [
               'id', 'seller_name', 'seller_type_id', 'address',
               'is_data_manually_added', [
                 modals.sequelize.literal(
@@ -341,7 +340,7 @@ class ShopEarnController {
         return reply.response({status: true, result: []});
       } catch (err) {
         console.log(
-            `Error on ${new Date()} for seller user ${user.id } is as follow: \n \n ${err}`);
+            `Error on ${new Date()} for seller user ${user.id} is as follow: \n \n ${err}`);
         modals.logs.create({
           api_action: request.method,
           api_path: request.url.pathname,
@@ -360,9 +359,12 @@ class ShopEarnController {
           message: 'Unable to retrieve SKU list',
         });
       }
-    } else {
-      return shared.preValidation(request.pre, reply);
     }
+
+    return reply.response({
+      status: false, message: 'Forbidden',
+      forceUpdate: request.pre.forceUpdate,
+    });
   }
 
   static async getSellerCategories(request, reply) {
@@ -509,8 +511,7 @@ class ShopEarnController {
       }
     } else {
       return reply.response({
-        status: false,
-        message: 'Forbidden',
+        status: false, message: 'Forbidden',
         forceUpdate: preRequest.forceUpdate,
       });
     }
@@ -1589,9 +1590,11 @@ class ShopEarnController {
           status: false,
           message: 'Cash Back not available for request parameters.',
         });
-      } else {
-        return shared.preValidation(request.pre, reply);
       }
+      return reply.response({
+        status: false, message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
     } catch (err) {
       console.log(err);
       modals.logs.create({
@@ -1651,7 +1654,10 @@ class ShopEarnController {
         });
       }
     } else {
-      return shared.preValidation(request.pre, reply);
+      return reply.response({
+        status: false, message: 'Forbidden',
+        forceUpdate: request.pre.forceUpdate,
+      });
     }
   }
 
