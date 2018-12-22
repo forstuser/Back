@@ -1834,8 +1834,7 @@ class OrderController {
                   item).toString() === result.user_id.toString());
           result.seller.customer_ids = result.seller.customer_ids &&
           result.seller.customer_ids.customer_id ?
-              result.seller.customer_ids :
-              {
+              result.seller.customer_ids : {
                 customer_id: result.seller.customer_ids,
                 is_credit_allowed: false,
                 credit_limit: 0,
@@ -2172,7 +2171,15 @@ class OrderController {
         const {status, txStatus} = JSON.parse(result);
         if (status === 'OK') {
           payment_detail.status_type = txStatus ? payment_status[txStatus] : 9;
-
+          if (payment_detail.status_type === 13) {
+            const pending_payment_detail = _.omit(payment_detail,
+                ['created_at', 'updated_at', 'id']);
+            pending_payment_detail.payment_id = payment_detail.id;
+            console.log({pending_payment_detail});
+            await modals.pending_payments.create(
+                JSON.parse(JSON.stringify(pending_payment_detail)));
+            payment_detail.status_type = 9;
+          }
           payment_detail = await orderAdaptor.retrieveOrUpdatePaymentDetails(
               {where: {ref_id, order_id}}, payment_detail);
           if (payment_detail.status_type === 16) {

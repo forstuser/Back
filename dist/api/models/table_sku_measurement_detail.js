@@ -9,6 +9,9 @@ exports.default = (sequelize, DataTypes) => {
     sku_id: {
       type: DataTypes.INTEGER
     },
+    seller_id: {
+      type: DataTypes.INTEGER
+    },
     measurement_type: {
       type: DataTypes.INTEGER
     },
@@ -62,6 +65,7 @@ exports.default = (sequelize, DataTypes) => {
   sku_measurement.associate = models => {
     sku_measurement.belongsTo(models.users, { foreignKey: 'updated_by', onDelete: 'cascade', onUpdate: 'cascade' });
     sku_measurement.belongsTo(models.sku, { foreignKey: 'sku_id', onDelete: 'cascade', onUpdate: 'cascade' });
+    sku_measurement.belongsTo(models.sellers, { foreignKey: 'seller_id', onDelete: 'cascade', onUpdate: 'cascade' });
     sku_measurement.belongsTo(models.measurement, {
       foreignKey: 'measurement_type',
       onDelete: 'cascade',

@@ -371,7 +371,7 @@ class GeneralController {
           include: [{
             model: modals.tags, as: 'tags', attributes: [['title', 'default_title'], [`${language ? `title_${language}` : `title`}`, 'title'], ['description', 'default_description'], [`${language ? `description_${language}` : `description`}`, 'description']]
           }, { model: modals.users, as: 'users', attributes: ['id'] }],
-          attributes: ['id', ['title', 'default_title'], [`${language ? `title_${language}` : `title`}`, 'title'], ['description', 'default_description'], [`${language ? `description_${language}` : `description`}`, 'description'], 'short_url'],
+          attributes: ['id', ['title', 'default_title'], 'created_at', [`${language ? `title_${language}` : `title`}`, 'title'], ['description', 'default_description'], [`${language ? `description_${language}` : `description`}`, 'description'], 'short_url'],
           order: [['created_at', 'desc']],
           limit: request.query.limit || 10
         };

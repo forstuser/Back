@@ -246,7 +246,7 @@ class UserController {
         forceUpdate: request.pre.forceUpdate,
       };
       if (!request.pre.forceUpdate) {
-        if (request.payload && request.payload.fcmId) {
+        if (request.payload && request.payload.fcm_id) {
           await fcmManager.insertSellerFcmDetails({
             seller_user_id: user.id || user.ID,
             fcm_id: request.payload.fcm_id,

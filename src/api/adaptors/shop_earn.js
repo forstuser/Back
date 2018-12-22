@@ -221,10 +221,8 @@ export default class ShopEarnAdaptor {
           } : {
             main_category_id: main_category_id.length > 0 ?
                 main_category_id : undefined,
-            category_id: category_id.length > 0 ?
-                category_id : undefined,
-            brand_id: brand_ids.length > 0 ?
-                brand_ids : undefined,
+            category_id: category_id.length > 0 ? category_id : undefined,
+            brand_id: brand_ids.length > 0 ? brand_ids : undefined,
             has_measurements: !(title) ? true : undefined,
             sub_category_id: sub_category_ids.length > 0 ?
                 sub_category_ids : undefined, $or,
@@ -261,6 +259,7 @@ export default class ShopEarnAdaptor {
                 measurement_types : undefined, bar_code,
             sku_id: skuItems.map(item => item.id),
             has_images: title ? undefined : true,
+            seller_id: {$or: {$is: null, $eq: seller_id}},
           })),
           attributes: sku_measurement_attributes,
         },

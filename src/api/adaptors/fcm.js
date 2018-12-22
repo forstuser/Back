@@ -48,11 +48,7 @@ class FCMManager {
   async deleteFcmDetails(parameters) {
     let {user_id, fcm_id, platform_id} = parameters;
     return await this.fcmModal.destroy({
-      where: {
-        user_id,
-        fcm_id,
-        platform_id,
-      },
+      where: {user_id, fcm_id, platform_id},
     });
   }
 

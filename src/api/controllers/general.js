@@ -381,7 +381,7 @@ class GeneralController {
               ],
             }, {model: modals.users, as: 'users', attributes: ['id']}],
           attributes: [
-            'id', ['title', 'default_title'],
+            'id', ['title', 'default_title'], 'created_at',
             [`${language ? `title_${language}` : `title`}`, 'title'],
             ['description', 'default_description'], [
               `${language ? `description_${language}` : `description`}`,

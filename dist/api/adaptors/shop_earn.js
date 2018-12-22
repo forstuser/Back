@@ -211,7 +211,8 @@ class ShopEarnAdaptor {
             measurement_value: measurement_values.length > 0 ? measurement_values : undefined,
             measurement_type: measurement_types.length > 0 ? measurement_types : undefined, bar_code,
             sku_id: skuItems.map(item => item.id),
-            has_images: title ? undefined : true
+            has_images: title ? undefined : true,
+            seller_id: { $or: { $is: null, $eq: seller_id } }
           })),
           attributes: sku_measurement_attributes
         }

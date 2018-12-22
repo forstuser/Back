@@ -1047,7 +1047,7 @@ export default class SellerAdaptor {
               'mrp'], [
               this.modals.sequelize.literal(
                   `(select bar_code from table_sku_measurement_detail as sku_measure where sku_measure.id = seller_offers.sku_measurement_id)`),
-              'bar_code']], order: [['updated_at', 'desc']], limit, offset,
+              'bar_code']], order: [['updated_at', 'desc']], /*limit, offset,*/
         });
     seller_offers = seller_offers.map(item => {
       item = item.toJSON();

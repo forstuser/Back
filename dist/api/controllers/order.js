@@ -1557,7 +1557,13 @@ class OrderController {
         const { status, txStatus } = JSON.parse(result);
         if (status === 'OK') {
           payment_detail.status_type = txStatus ? payment_status[txStatus] : 9;
-
+          if (payment_detail.status_type === 13) {
+            const pending_payment_detail = _lodash2.default.omit(payment_detail, ['created_at', 'updated_at', 'id']);
+            pending_payment_detail.payment_id = payment_detail.id;
+            console.log({ pending_payment_detail });
+            await modals.pending_payments.create(JSON.parse(JSON.stringify(pending_payment_detail)));
+            payment_detail.status_type = 9;
+          }
           payment_detail = await orderAdaptor.retrieveOrUpdatePaymentDetails({ where: { ref_id, order_id } }, payment_detail);
           if (payment_detail.status_type === 16) {
             await OrderController.creditPaymentToSeller(payment_detail);

@@ -953,8 +953,7 @@ class SellerController {
           let {seller_offer_ids, my_seller_ids} = user_index_data || {};
           let {customer_ids} = seller;
           customer_ids = (customer_ids || []).map(item => item.customer_id ?
-              item :
-              {customer_id: item, is_credit_allowed: false, credit_limit: 0});
+              item : {customer_id: item, is_credit_allowed: false, credit_limit: 0});
           const customer_id = customer_ids.find(
               item => item.customer_id && item.customer_id.toString() ===
                   user_id.toString());
@@ -1083,8 +1082,7 @@ class SellerController {
         await userAdaptor.updateUserIndexedData({my_seller_ids},
             {where: {user_id, id}});
         customer_ids = (customer_ids || []).map(item => item.customer_id ?
-            item :
-            {
+            item : {
               customer_id: item,
               is_credit_allowed: false,
               credit_limit: 0,
@@ -1965,11 +1963,7 @@ class SellerController {
         sellerAdaptor.retrieveSellerDetail(
             {
               where: {id: seller_id, user_id},
-              attributes: [
-                'customer_ids',
-                'customer_invite_detail',
-                'seller_name',
-                'id'],
+              attributes: ['customer_ids', 'customer_invite_detail', 'seller_name', 'id'],
             }), userAdaptor.createUserForSeller(
             JSON.parse(JSON.stringify({mobile_no})), JSON.parse(
                 JSON.stringify(
@@ -2994,7 +2988,8 @@ Download Now: http://bit.ly/binbill`;
         let seller_offers = await sellerAdaptor.retrieveSellerOffers({
           where: {
             seller_id, offer_type, end_date: {$gte: moment().format()},
-          }, attributes: [
+          },
+          attributes: [
             'id', 'seller_id', 'title', 'description',
             'on_sku', 'start_date', 'end_date', 'document_details',
             'sku_id', 'brand_offer_id', 'sku_measurement_id',
@@ -3016,7 +3011,8 @@ Download Now: http://bit.ly/binbill`;
               'mrp'], [
               modals.sequelize.literal(
                   `(select bar_code from table_sku_measurement_detail as sku_measure where sku_measure.id = seller_offers.sku_measurement_id)`),
-              'bar_code']], order: [['updated_at', 'desc'], ['created_at', 'desc']],
+              'bar_code']],
+          order: [['updated_at', 'desc'], ['created_at', 'desc']],
         });
 
         seller_offers = seller_offers.map(item => {
@@ -4183,7 +4179,7 @@ Download Now: http://bit.ly/binbill`;
               where, attributes: [
                 ['seller_name', 'name'], 'owner_name', 'is_fmcg',
                 'is_service', 'id', 'is_onboarded', 'address',
-                'latitude', 'longitude', [
+                'latitude', 'longitude', 'customer_ids', [
                   modals.sequelize.literal(
                       '(Select state_name from table_states as state where state.id = sellers.state_id)'),
                   'state_name'], [
@@ -4202,8 +4198,7 @@ Download Now: http://bit.ly/binbill`;
           const add_customer_in_seller = sellers.map(seller => {
             let {customer_ids} = seller;
             customer_ids = (customer_ids || []).map(item => item.customer_id ?
-                item :
-                {customer_id: item, is_credit_allowed: false, credit_limit: 0});
+                item : {customer_id: item, is_credit_allowed: false, credit_limit: 0});
             const customer_id = customer_ids.find(
                 item => item.customer_id && item.customer_id.toString() ===
                     user_id.toString());
